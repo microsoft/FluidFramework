@@ -44,6 +44,7 @@ import {
 	HasLineage,
 	IdRange,
 	CellMark,
+	CellId,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -55,6 +56,7 @@ import {
 	MoveEffectTable,
 	PairedMarkUpdate,
 	isMoveSource,
+	isMoveDestination,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
@@ -233,7 +235,7 @@ class RebaseQueue<T> {
 		newMarks: Changeset<T>,
 		private readonly metadata: RevisionMetadataSource,
 		genId: IdAllocator,
-		moveEffects: MoveEffectTable<T>,
+		private readonly moveEffects: MoveEffectTable<T>,
 	) {
 		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, false, genId);
 		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, true, genId);
@@ -246,7 +248,6 @@ class RebaseQueue<T> {
 	public pop(): RebaseMarks<T> {
 		const baseMark = this.baseMarks.peek();
 		const newMark = this.newMarks.peek();
-
 		assert(
 			!(baseMark === undefined && newMark === undefined),
 			0x722 /* Cannot pop from empty queue */,
@@ -259,15 +260,7 @@ class RebaseQueue<T> {
 				newMark: dequeuedNewMark,
 			};
 		} else if (newMark === undefined) {
-			const dequeuedBaseMark = this.baseMarks.dequeue();
-			return {
-				baseMark: dequeuedBaseMark,
-				newMark: generateNoOpWithCellId(
-					dequeuedBaseMark,
-					this.baseMarks.revision,
-					this.metadata,
-				),
-			};
+			return this.dequeueBase();
 		} else if (areInputCellsEmpty(baseMark) && areInputCellsEmpty(newMark)) {
 			const cmp = compareCellPositions(
 				this.baseMarks.revision,
@@ -276,15 +269,7 @@ class RebaseQueue<T> {
 				this.metadata,
 			);
 			if (cmp < 0) {
-				const dequeuedBaseMark = this.baseMarks.dequeueUpTo(-cmp);
-				return {
-					baseMark: dequeuedBaseMark,
-					newMark: generateNoOpWithCellId(
-						dequeuedBaseMark,
-						this.baseMarks.revision,
-						this.metadata,
-					),
-				};
+				return this.dequeueBase(-cmp);
 			} else if (cmp > 0) {
 				const dequeuedNewMark = this.newMarks.dequeueUpTo(cmp);
 				return {
@@ -303,11 +288,26 @@ class RebaseQueue<T> {
 		}
 	}
 
-	private dequeueBase(): RebaseMarks<T> {
-		const baseMark = this.baseMarks.dequeue();
+	private dequeueBase(length?: number): RebaseMarks<T> {
+		const baseMark =
+			length !== undefined ? this.baseMarks.dequeueUpTo(length) : this.baseMarks.dequeue();
+
+		const movedMark = getMovedMarkFromBaseMark(
+			this.moveEffects,
+			baseMark,
+			this.baseMarks.revision,
+		);
+		const newMark =
+			movedMark !== undefined
+				? withCellId(
+						movedMark,
+						getInputCellId(baseMark, this.baseMarks.revision, undefined),
+				  )
+				: generateNoOpWithCellId(baseMark, this.baseMarks.revision, this.metadata);
+
 		return {
 			baseMark,
-			newMark: generateNoOpWithCellId(baseMark, this.baseMarks.revision, this.metadata),
+			newMark,
 		};
 	}
 
@@ -324,6 +324,11 @@ class RebaseQueue<T> {
 			0x69c /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
 		const length = Math.min(newMark.count, baseMark.count);
+		assert(
+			getMovedMarkFromBaseMark(this.moveEffects, baseMark, this.baseMarks.revision) ===
+				undefined,
+			"A new mark should not be moved to the location of an existing new mark",
+		);
 		return {
 			baseMark: this.baseMarks.dequeueUpTo(length),
 			newMark: this.newMarks.dequeueUpTo(length),
@@ -349,7 +354,26 @@ function rebaseMark<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
-	let rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
+	const rebasedMark = rebaseNodeChange(cloneMark(currMark), baseMark, rebaseChild);
+	return rebaseMarkIgnoreChild(
+		rebasedMark,
+		baseMark,
+		baseRevision,
+		metadata,
+		moveEffects,
+		nodeExistenceState,
+	);
+}
+
+function rebaseMarkIgnoreChild<TNodeChange>(
+	currMark: Mark<TNodeChange>,
+	baseMark: Mark<TNodeChange>,
+	baseRevision: RevisionTag,
+	metadata: RevisionMetadataSource,
+	moveEffects: MoveEffectTable<TNodeChange>,
+	nodeExistenceState: NodeExistenceState,
+): Mark<TNodeChange> {
+	let rebasedMark = currMark;
 	if (markEmptiesCells(baseMark)) {
 		// TODO: Should also check if this is a transient move source
 		if (isMoveSource(baseMark)) {
@@ -410,19 +434,6 @@ function rebaseMark<TNodeChange>(
 		const baseCellId = getDetachCellId(baseMark, baseRevision, metadata);
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		if (isMoveMark(baseMark)) {
-			const movedMark = getMovedMark(
-				moveEffects,
-				baseMark.revision ?? baseRevision,
-				baseMark.id,
-				baseMark.count,
-			);
-
-			if (movedMark !== undefined) {
-				return movedMark;
-			}
-		}
-
 		if (isMoveMark(rebasedMark)) {
 			if (
 				(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
@@ -447,9 +458,24 @@ function rebaseMark<TNodeChange>(
 				);
 			}
 		}
-		rebasedMark = withoutCellId(rebasedMark);
+		rebasedMark = withCellId(rebasedMark, undefined);
 	} else if (isTransientEffect(baseMark)) {
-		rebasedMark.cellId = getOutputCellId(baseMark, baseRevision, metadata);
+		rebasedMark = rebaseMarkIgnoreChild(
+			rebasedMark,
+			{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
+			baseRevision,
+			metadata,
+			moveEffects,
+			nodeExistenceState,
+		);
+		rebasedMark = rebaseMarkIgnoreChild(
+			rebasedMark,
+			{ ...baseMark.detach, count: baseMark.count },
+			baseRevision,
+			metadata,
+			moveEffects,
+			nodeExistenceState,
+		);
 	}
 	return rebasedMark;
 }
@@ -548,9 +574,11 @@ function makeDetachedMark<T>(mark: Mark<T>, cellId: ChangeAtomId): Mark<T> {
 	return { ...mark, cellId };
 }
 
-function withoutCellId<T, TMark extends Mark<T>>(mark: TMark): TMark {
-	const newMark = { ...mark };
-	delete newMark.cellId;
+function withCellId<TMark extends Mark<unknown>>(mark: TMark, cellId: CellId | undefined): TMark {
+	const newMark = { ...mark, cellId };
+	if (cellId === undefined) {
+		delete newMark.cellId;
+	}
 	return newMark;
 }
 
@@ -603,31 +631,51 @@ function amendRebaseI<TNodeChange>(
 				0x70c /* Non-empty RebaseQueue should not provide two empty marks */,
 			);
 			factory.push(withNodeChange(newMark, rebaseChild(newMark.changes, undefined)));
+			continue;
 		}
 
-		if (
-			baseMark !== undefined &&
-			(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo")
-		) {
-			const movedMark = getMovedMark(
-				moveEffects,
-				baseMark.revision ?? baseRevision,
-				baseMark.id,
-				baseMark.count,
+		const movedMark = getMovedMarkFromBaseMark(moveEffects, baseMark, baseRevision);
+		if (movedMark !== undefined) {
+			assert(
+				newMark === undefined ||
+					(newMark.type === NoopMarkType && newMark.changes === undefined),
+				"A new mark should not be moved to the location of an existing new mark",
 			);
-			if (movedMark !== undefined) {
-				factory.push(movedMark);
-				factory.pushOffset(-getInputLength(movedMark));
-			}
+			factory.push(rebaseNodeChange(cloneMark(movedMark), baseMark, rebaseChild));
+			continue;
 		}
 
-		if (newMark !== undefined && baseMark !== undefined) {
+		if (newMark !== undefined) {
 			const rebasedMark = rebaseNodeChange(cloneMark(newMark), baseMark, rebaseChild);
 			factory.push(rebasedMark);
 		}
 	}
 
 	return factory.list;
+}
+
+function getMovedMarkFromBaseMark<T>(
+	moveEffects: MoveEffectTable<T>,
+	baseMark: Mark<T>,
+	baseRevision: RevisionTag | undefined,
+): Mark<T> | undefined {
+	if (isMoveDestination(baseMark)) {
+		return getMovedMark(
+			moveEffects,
+			baseMark.revision ?? baseRevision,
+			baseMark.id,
+			baseMark.count,
+		);
+	} else if (isTransientEffect(baseMark) && isMoveDestination(baseMark.attach)) {
+		return getMovedMark(
+			moveEffects,
+			baseMark.attach.revision ?? baseMark.revision ?? baseRevision,
+			baseMark.attach.id,
+			baseMark.count,
+		);
+	} else {
+		return undefined;
+	}
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.

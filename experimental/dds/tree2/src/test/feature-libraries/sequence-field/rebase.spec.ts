@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SequenceField as SF } from "../../../feature-libraries";
-import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
+import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { createFakeRepair, fakeRepair } from "../../utils";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
@@ -718,7 +718,6 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
-	// TODO: Is it necessary to record lineage to transient detach events?
 	it("rebasing over transient adds lineage", () => {
 		const insert = Change.insert(0, 1);
 		const transient = [Mark.transient(Mark.insert(2, brand(0)), Mark.delete(2, brand(2)))];
@@ -730,6 +729,49 @@ describe("SequenceField - Rebase", () => {
 			}),
 		];
 
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("delete ↷ [move, delete]", () => {
+		const moveAndDelete = [
+			Mark.moveOut(1, brand(0)),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+		];
+
+		const del = Change.delete(0, 1);
+		const rebased = rebase(del, moveAndDelete);
+		const expected = [
+			{ count: 1 },
+			Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(1) } }),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("revive ↷ [revive, move]", () => {
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const reviveAndMove = [
+			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1)),
+		];
+		const revive = Change.intentionalRevive(0, 1, cellId);
+		const rebased = rebase(revive, reviveAndMove, tag2);
+		const expected = Change.redundantRevive(1, 1, cellId, undefined, true);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("revive ↷ [revive, move, delete]", () => {
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const reviveMoveDelete = [
+			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
+		];
+		const revive = Change.intentionalRevive(0, 1, cellId);
+		const rebased = rebase(revive, reviveMoveDelete, tag2);
+		const expected = Change.intentionalRevive(1, 1, { revision: tag2, localId: brand(2) });
 		assert.deepEqual(rebased, expected);
 	});
 });
