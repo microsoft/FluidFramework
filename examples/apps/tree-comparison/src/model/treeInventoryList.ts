@@ -6,7 +6,10 @@
 import {
 	AllowedUpdateType,
 	ForestType,
+	leaf,
+	SchemaBuilder,
 	typeboxValidator,
+	Typed,
 	TypedTreeChannel,
 	TypedTreeFactory,
 } from "@fluid-experimental/tree2";
@@ -16,7 +19,31 @@ import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 import { InventoryItem } from "./inventoryItem";
-import { InventoryNode, InventoryField, InventoryItemNode, schema } from "./schema";
+
+// By importing the leaf library we don't have to define our own string and number types.
+const builder = new SchemaBuilder({ scope: "inventory app" });
+
+const inventoryItem = builder.struct("Contoso:InventoryItem-1.0.0", {
+	id: leaf.string,
+	name: leaf.string,
+	quantity: leaf.number,
+});
+type InventoryItemNode = Typed<typeof inventoryItem>;
+
+// REV: Building this up as a series of builder invocations makes it hard to read the schema.
+// Would be nice if instead we could define some single big Serializable or similar that laid the
+// schema out and then pass that in.
+const inventory = builder.struct("Contoso:Inventory-1.0.0", {
+	inventoryItems: builder.sequence(inventoryItem),
+});
+type InventoryNode = Typed<typeof inventory>;
+
+// REV: The rootField feels extra to me.  Is there a way to omit it?  Something like
+// builder.intoDocumentSchema(inventory)
+const inventoryField = SchemaBuilder.required(inventory);
+type InventoryField = Typed<typeof inventoryField>;
+
+const schema = builder.toDocumentSchema(inventoryField);
 
 const factory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,
