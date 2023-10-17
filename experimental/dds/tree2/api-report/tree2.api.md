@@ -881,6 +881,7 @@ type _InlineTrick = 0;
 
 // @alpha
 interface Insert<TTree = ProtoNode> extends HasModifications<TTree>, CanReplaceContent<TTree> {
+    readonly buildId?: DetachedNodeId;
     readonly content: readonly TTree[];
     readonly detachId?: DetachedNodeId;
     // (undocumented)
