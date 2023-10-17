@@ -51,6 +51,13 @@ export interface ChangeAtomId {
 }
 
 /**
+ * @returns true iff `a` and `b` are the same.
+ */
+export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
+	return a.localId === b.localId && a.revision === b.revision;
+}
+
+/**
  * @returns a `RevisionTag` from the given string, or fails if the string is not a valid `RevisionTag`
  */
 export function assertIsRevisionTag(revision: string): RevisionTag {

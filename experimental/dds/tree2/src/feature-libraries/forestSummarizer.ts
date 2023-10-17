@@ -99,12 +99,16 @@ export class ForestSummarizer implements Summarizable {
 			// forest summary format.
 			const fields = parse(treeBufferString) as [FieldKey, JsonableTree[]][];
 
-			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
-				const insert: Delta.Insert = {
-					type: Delta.MarkType.Insert,
-					content: content.map(singleTextCursor),
-				};
-				return [fieldKey, [insert]];
+			let minor = 0;
+			const delta: [FieldKey, Delta.FieldChanges][] = fields.map(([fieldKey, content]) => {
+				const buildId = { minor: minor++ };
+				return [
+					fieldKey,
+					{
+						build: [{ id: buildId, trees: content.map(singleTextCursor) }],
+						attached: [{ count: content.length, attach: buildId }],
+					},
+				];
 			});
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

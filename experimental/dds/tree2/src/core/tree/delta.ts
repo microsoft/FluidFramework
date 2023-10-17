@@ -147,25 +147,33 @@ export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
  */
 export type FieldsChanges<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
+export interface DetachedNodeChanges<TTree = ProtoNode> {
+	readonly id: DetachedNodeId;
+	readonly fields: FieldsChanges<TTree>;
+}
+
+export interface DetachedNodeBuild<TTree = ProtoNode> {
+	readonly id: DetachedNodeId | undefined; // Remove undefined
+	readonly trees: readonly TTree[];
+}
+
+export interface DetachedNodeRelocation {
+	readonly id: DetachedNodeId;
+	readonly count: number;
+	readonly destination: DetachedNodeId;
+}
+
+export interface DetachedNodeDestruction {
+	readonly id: DetachedNodeId;
+	readonly count: number;
+}
+
 export interface FieldChanges<TTree = ProtoNode> {
 	readonly attached?: MarkList<TTree>;
-	readonly detached?: {
-		readonly id: DetachedNodeId;
-		readonly fields: FieldsChanges<TTree>;
-	}[];
-	readonly build?: {
-		readonly id: DetachedNodeId | undefined;
-		readonly trees: TTree[];
-	}[];
-	readonly relocate?: {
-		readonly id: DetachedNodeId;
-		readonly count: number;
-		readonly destination: DetachedNodeId;
-	}[];
-	readonly destroy?: {
-		readonly id: DetachedNodeId;
-		readonly count: number;
-	}[];
+	readonly detached?: readonly DetachedNodeChanges<TTree>[];
+	readonly build?: readonly DetachedNodeBuild<TTree>[];
+	readonly relocate?: readonly DetachedNodeRelocation[];
+	readonly destroy?: readonly DetachedNodeDestruction[];
 }
 
 // const concurBuild: DetachedNodeId = { minor: 0 };

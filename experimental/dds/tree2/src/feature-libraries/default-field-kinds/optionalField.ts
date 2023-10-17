@@ -13,6 +13,8 @@ import {
 	ChangeAtomId,
 	RevisionTag,
 	JsonableTree,
+	areEqualChangeAtomIds,
+	makeDetachedNodeId,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -515,12 +517,10 @@ export function optionalFieldIntoDelta(
 		if (Object.prototype.hasOwnProperty.call(update, "set")) {
 			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
 			const content = [singleTextCursor(setUpdate.set)];
-			const buildId: Delta.DetachedNodeId = {
-				minor: setUpdate.buildId.localId,
-			};
-			if (setUpdate.buildId.revision !== undefined) {
-				buildId.major = setUpdate.buildId.revision;
-			}
+			const buildId = makeDetachedNodeId(
+				setUpdate.buildId.revision,
+				setUpdate.buildId.localId,
+			);
 			mark.attach = buildId;
 			delta.build = [{ id: buildId, trees: content }];
 		} else {
@@ -550,5 +550,5 @@ function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
 		return a === b;
 	}
 
-	return a.revision === b.revision && a.localId === b.localId;
+	return areEqualChangeAtomIds(a, b);
 }

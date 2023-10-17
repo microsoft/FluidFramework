@@ -92,6 +92,6 @@ export { Delta };
 
 export { SparseNode, getDescendant } from "./sparseTree";
 
-export { isSkipMark, emptyDelta } from "./deltaUtil";
+export { deltaForRootInitialization, makeDetachedNodeId, emptyDelta } from "./deltaUtil";
 
 export { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex";

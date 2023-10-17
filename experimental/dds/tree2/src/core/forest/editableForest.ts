@@ -11,10 +11,10 @@ import {
 	Delta,
 	Anchor,
 	ITreeCursorSynchronous,
-	rootFieldKey,
 	DeltaVisitor,
 	applyDelta,
 	makeDetachedFieldIndex,
+	deltaForRootInitialization,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -55,8 +55,8 @@ export function initializeForest(
 	content: readonly ITreeCursorSynchronous[],
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-	applyDelta(new Map([[rootFieldKey, [insert]]]), forest, makeDetachedFieldIndex("init"));
+	const delta: Delta.Root = deltaForRootInitialization(content);
+	applyDelta(delta, forest, makeDetachedFieldIndex("init"));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

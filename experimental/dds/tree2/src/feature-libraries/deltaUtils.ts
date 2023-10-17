@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, FieldKey } from "../core";
+import { ChangeAtomId, Delta, FieldKey, makeDetachedNodeId } from "../core";
 import { Mutable } from "../util";
+
+export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): Delta.DetachedNodeId {
+	return makeDetachedNodeId(changeAtom.revision, changeAtom.localId);
+}
 
 /**
  * Converts a `Delta.FieldMarks` whose tree content is represented with by `TIn` instances

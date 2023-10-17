@@ -88,19 +88,19 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	intoDelta: (
 		{ change }: TaggedChange<GenericChangeset>,
 		deltaFromChild: ToDelta,
-	): Delta.MarkList => {
+	): Delta.FieldChanges => {
 		let nodeIndex = 0;
-		const delta: Delta.Mark[] = [];
+		const markList: Delta.Mark[] = [];
 		for (const { index, nodeChange } of change) {
 			if (nodeIndex < index) {
 				const offset = index - nodeIndex;
-				delta.push(offset);
+				markList.push({ count: offset });
 				nodeIndex = index;
 			}
-			delta.push(deltaFromChild(nodeChange));
+			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
-		return delta;
+		return { attached: markList };
 	},
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };

@@ -3,10 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { Mark, Root, Skip } from "./delta";
+import { ITreeCursorSynchronous } from "./cursor";
+import { Root, DetachedNodeId } from "./delta";
+import { rootFieldKey } from "./types";
 
 export const emptyDelta: Root<never> = new Map();
 
-export function isSkipMark(mark: Mark<unknown>): mark is Skip {
-	return typeof mark === "number";
+export function deltaForRootInitialization(content: readonly ITreeCursorSynchronous[]) {
+	const buildId = { minor: 0 };
+	const delta: Root = new Map([
+		[
+			rootFieldKey,
+			{
+				build: [{ id: buildId, trees: content }],
+				attached: [{ count: content.length, attach: buildId }],
+			},
+		],
+	]);
+	return delta;
+}
+
+export function makeDetachedNodeId(
+	major: DetachedNodeId["major"],
+	minor: DetachedNodeId["minor"],
+): DetachedNodeId {
+	const out: DetachedNodeId = { minor };
+	if (major !== undefined) {
+		out.major = major;
+	}
+	return out;
 }
