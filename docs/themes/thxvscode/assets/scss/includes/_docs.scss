@@ -166,17 +166,17 @@
 	padding: 0;
 }
 
-.nested-nav {
-    padding-left: 20px; /* Increase indentation */
+.type-definitions {
+	&.collapsed > ul {
+		display: none;
+	}
+	&.expanded > ul {
+		display: block;
+	}
 }
 
-.nested-nav .sub-heading {
-    font-weight: bold;  /* Make sub-heading bold */
-    margin-top: 10px;   /* Add some spacing */
-}
-
-.nested-nav ul {
-    padding-left: 20px; /* Further indentation for nested items */
+.definition-type {
+	padding-left: 30px;
 }
 
 #docs-navbar .nav {
@@ -204,6 +204,10 @@
 	> li li > a {
 		padding: 5px 25px;
 		position: relative;
+
+		&.sub-heading {
+			padding: 5px 35px;
+		}
 	}
 
 	.docs-home {
@@ -290,7 +294,7 @@
 	font-weight: bold;
 }
 
-#docs-navbar > .nav .active .active a:before {
+#docs-navbar > .nav .active .active .packages:before {
 	content: "";
 	position: absolute;
 	height: 7px;
