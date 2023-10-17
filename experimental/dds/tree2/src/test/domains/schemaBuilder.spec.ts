@@ -139,13 +139,13 @@ describe("domains - SchemaBuilder", () => {
 			});
 		});
 
-		it("named list", () => {
+		describe("named list", () => {
 			it("implicit normalizes", () => {
 				const builder = new SchemaBuilder({ scope: "scope" });
 
 				const list = builder.list("Foo", builder.number);
 				assert(schemaIsFieldNode(list));
-				assert.equal(list.name, `scope2.Foo`);
+				assert.equal(list.name, `scope.Foo`);
 				assert(
 					list.structFields
 						.get("")
