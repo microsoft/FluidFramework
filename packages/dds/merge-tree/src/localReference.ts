@@ -191,18 +191,20 @@ export function* filterLocalReferencePositions(
 }
 
 /**
+ * Injectable hook for validating that the refCount property matches the
+ * expected value
+ */
+let validateRefCount: ((collection?: LocalReferenceCollection) => void) | undefined;
+
+export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection) => void) {
+	validateRefCount = cb;
+}
+
+/**
  * Represents a collection of {@link LocalReferencePosition}s associated with
  * one segment in a merge-tree.
  */
 export class LocalReferenceCollection {
-	/**
-	 * Injectable hook for validating that the refCount property matches the
-	 * expected value
-	 *
-	 * @internal
-	 */
-	public static validateRefCount?: (collection?: LocalReferenceCollection) => void;
-
 	public static append(seg1: ISegment, seg2: ISegment) {
 		if (seg2.localRefs && !seg2.localRefs.empty) {
 			if (!seg1.localRefs) {
@@ -218,8 +220,8 @@ export class LocalReferenceCollection {
 			// segments that had no local references. Account for them now by padding the array.
 			seg1.localRefs.refsByOffset.length += seg2.cachedLength;
 		}
-		LocalReferenceCollection.validateRefCount?.(seg1.localRefs);
-		LocalReferenceCollection.validateRefCount?.(seg2.localRefs);
+		validateRefCount?.(seg1.localRefs);
+		validateRefCount?.(seg2.localRefs);
 	}
 
 	/**
@@ -293,7 +295,7 @@ export class LocalReferenceCollection {
 	 * @internal
 	 */
 	public get empty() {
-		LocalReferenceCollection.validateRefCount?.(this);
+		validateRefCount?.(this);
 		return this.refCount === 0;
 	}
 
@@ -313,7 +315,7 @@ export class LocalReferenceCollection {
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);
 		}
-		LocalReferenceCollection.validateRefCount?.(this);
+		validateRefCount?.(this);
 		return ref;
 	}
 
@@ -342,7 +344,7 @@ export class LocalReferenceCollection {
 			}
 			this.refCount++;
 		}
-		LocalReferenceCollection.validateRefCount?.(this);
+		validateRefCount?.(this);
 	}
 
 	/**
@@ -362,7 +364,7 @@ export class LocalReferenceCollection {
 				this.hierRefCount--;
 			}
 			this.refCount--;
-			LocalReferenceCollection.validateRefCount?.(this);
+			validateRefCount?.(this);
 			return lref;
 		}
 	}
@@ -470,7 +472,7 @@ export class LocalReferenceCollection {
 			// shrink the offset array when empty and splitting
 			this.refsByOffset.length = offset;
 		}
-		LocalReferenceCollection.validateRefCount?.(this);
+		validateRefCount?.(this);
 	}
 
 	/**
@@ -508,7 +510,7 @@ export class LocalReferenceCollection {
 				}
 			}
 		}
-		LocalReferenceCollection.validateRefCount?.(this);
+		validateRefCount?.(this);
 	}
 	/**
 	 * @remarks This method should only be called by mergeTree.
@@ -542,7 +544,7 @@ export class LocalReferenceCollection {
 				}
 			}
 		}
-		LocalReferenceCollection.validateRefCount?.(this);
+		validateRefCount?.(this);
 	}
 
 	/**

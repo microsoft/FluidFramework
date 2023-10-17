@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { ReferencePosition } from "../referencePositions";
 import { ReferenceType } from "../ops";
-import { LocalReferenceCollection, SlidingPreference } from "../localReference";
+import { setValidateRefCount, SlidingPreference } from "../localReference";
 import {
 	IMergeTreeOperationRunnerConfig,
 	removeRange,
@@ -33,11 +33,11 @@ const defaultOptions: Record<"initLen" | "modLen", IConfigRange> & IMergeTreeOpe
 
 describe("MergeTree.Client", () => {
 	beforeEach(() => {
-		LocalReferenceCollection.validateRefCount = validateRefCount;
+		setValidateRefCount(validateRefCount);
 	});
 
 	afterEach(() => {
-		LocalReferenceCollection.validateRefCount = undefined;
+		setValidateRefCount(undefined);
 	});
 
 	// Generate a list of single character client names, support up to 69 clients

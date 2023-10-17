@@ -11,11 +11,7 @@ import { toRemovalInfo } from "../mergeTreeNodes";
 import { MergeTreeDeltaType, ReferenceType } from "../ops";
 import { TextSegment } from "../textSegment";
 import { DetachedReferencePosition } from "../referencePositions";
-import {
-	LocalReferenceCollection,
-	LocalReferencePosition,
-	SlidingPreference,
-} from "../localReference";
+import { setValidateRefCount, LocalReferencePosition, SlidingPreference } from "../localReference";
 import { getSlideToSegoff } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { validateRefCount } from "./testUtils";
@@ -36,11 +32,11 @@ function getSlideOnRemoveReferencePosition(
 
 describe("MergeTree.Client", () => {
 	beforeEach(() => {
-		LocalReferenceCollection.validateRefCount = validateRefCount;
+		setValidateRefCount(validateRefCount);
 	});
 
 	afterEach(() => {
-		LocalReferenceCollection.validateRefCount = undefined;
+		setValidateRefCount(undefined);
 	});
 
 	it("Remove segment of non-sliding local reference", () => {
