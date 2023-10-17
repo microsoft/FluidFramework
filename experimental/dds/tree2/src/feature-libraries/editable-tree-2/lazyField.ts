@@ -224,6 +224,14 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	}
 }
 
+function assertIsLazySequence<TTypesSource extends AllowedTypes>(
+	sourceField: unknown,
+): sourceField is LazySequence<TTypesSource> {
+	// TODO: determine support for move across different sequence types
+	assert(sourceField instanceof LazySequence, "Unsupported sequence implementation.");
+	return true;
+}
+
 export class LazySequence<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
 	implements Sequence<TTypes>
@@ -328,35 +336,33 @@ export class LazySequence<TTypes extends AllowedTypes>
 		sourceEnd: number,
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
-		if (source !== undefined) {
-			// TODO: determine support for move across different sequence types
-			assert(source instanceof LazySequence, "Unsupported sequence implementation.");
-		}
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
-		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
-		if (this.schema.types !== undefined && sourceField !== this) {
-			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode = sourceField.at(sourceStart);
-				if (!this.schema.types.has(sourceNode.schema.name)) {
-					throw new Error("Type in source sequence is not allowed in destination.");
+		if (assertIsLazySequence(sourceField)) {
+			assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
+			if (this.schema.types !== undefined && sourceField !== this) {
+				for (let i = sourceStart; i < sourceEnd; i++) {
+					const sourceNode = sourceField.at(sourceStart);
+					if (!this.schema.types.has(sourceNode.schema.name)) {
+						throw new Error("Type in source sequence is not allowed in destination.");
+					}
 				}
 			}
+			const count = sourceEnd - sourceStart;
+			let destinationIndex = index;
+			if (sourceField === this) {
+				destinationIndex -= count;
+			}
+			assertValidIndex(destinationIndex, this, true);
+			const sourceFieldPath = sourceField.getFieldPath();
+			const destinationFieldPath = this.getFieldPath();
+			this.context.editor.move(
+				sourceFieldPath,
+				sourceStart,
+				count,
+				destinationFieldPath,
+				destinationIndex,
+			);
 		}
-		const count = sourceEnd - sourceStart;
-		let destinationIndex = index;
-		if (sourceField === this) {
-			destinationIndex -= count;
-		}
-		assertValidIndex(destinationIndex, this, true);
-		const sourceFieldPath = (sourceField as LazySequence<TTypesSource>).getFieldPath();
-		const destinationFieldPath = this.getFieldPath();
-		this.context.editor.move(
-			sourceFieldPath,
-			sourceStart,
-			count,
-			destinationFieldPath,
-			destinationIndex,
-		);
 	}
 }
 
