@@ -159,6 +159,7 @@ export {
 	validateStructFieldName,
 	Unenforced,
 	AllowedTypeSet,
+	markEager,
 	MapFieldSchema,
 } from "./typed-schema";
 
