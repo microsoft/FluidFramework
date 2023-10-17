@@ -197,27 +197,30 @@ export type CanBeTransient = Partial<Transient>;
 export const CanBeTransient = Type.Partial(Transient);
 
 export interface Insert<TNodeChange = NodeChangeType>
-	extends HasMarkFields<TNodeChange>,
+	extends HasReattachFields<TNodeChange>,
 		HasRevisionTag,
 		CanBeTransient {
 	type: "Insert";
-	content: ProtoNode[];
+	/**
+	 * The content to insert. Only populated for new attaches.
+	 */
+	content?: ProtoNode[];
 }
 export const Insert = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Composite(
 		[
-			HasMarkFields(tNodeChange),
+			HasReattachFields(tNodeChange),
 			HasRevisionTag,
 			CanBeTransient,
 			Type.Object({
 				type: Type.Literal("Insert"),
-				content: Type.Array(ProtoNode),
+				content: Type.Optional(Type.Array(ProtoNode)),
 			}),
 		],
 		noAdditionalProps,
 	);
 
-export interface MoveIn extends HasMoveId, HasMarkFields, HasRevisionTag {
+export interface MoveIn extends HasMoveId, HasReattachFields, HasRevisionTag {
 	type: "MoveIn";
 	/**
 	 * When true, the corresponding MoveOut has a conflict.
@@ -229,7 +232,7 @@ export interface MoveIn extends HasMoveId, HasMarkFields, HasRevisionTag {
 export const MoveIn = Type.Composite(
 	[
 		HasMoveId,
-		HasMarkFields(Type.Undefined()),
+		HasReattachFields(Type.Undefined()),
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
@@ -288,47 +291,6 @@ export const MoveOut = <Schema extends TSchema>(tNodeChange: Schema) =>
 		noAdditionalProps,
 	);
 
-export interface Revive<TNodeChange = NodeChangeType>
-	extends HasReattachFields<TNodeChange>,
-		HasRevisionTag,
-		CanBeTransient {
-	type: "Revive";
-}
-export const Revive = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Composite(
-		[
-			HasReattachFields(tNodeChange),
-			HasRevisionTag,
-			CanBeTransient,
-			Type.Object({
-				type: Type.Literal("Revive"),
-			}),
-		],
-		noAdditionalProps,
-	);
-
-export interface ReturnTo extends HasReattachFields, HasRevisionTag, HasMoveId {
-	type: "ReturnTo";
-
-	/**
-	 * When true, the corresponding ReturnFrom has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isSrcConflicted?: true;
-}
-export const ReturnTo = Type.Composite(
-	[
-		HasReattachFields(Type.Undefined()),
-		HasRevisionTag,
-		HasMoveId,
-		Type.Object({
-			type: Type.Literal("ReturnTo"),
-			isSrcConflicted: OptionalTrue,
-		}),
-	],
-	noAdditionalProps,
-);
-
 export interface ReturnFrom<TNodeChange = NodeChangeType>
 	extends HasRevisionTag,
 		HasMoveId,
@@ -357,20 +319,9 @@ export const ReturnFrom = <Schema extends TSchema>(tNodeChange: Schema) =>
 		noAdditionalProps,
 	);
 
-/**
- * An attach mark that allocates new cells.
- */
-export type NewAttach<TNodeChange = NodeChangeType> = Insert<TNodeChange> | MoveIn;
-export const NewAttach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Insert(tNodeChange), MoveIn]);
-
-export type Reattach<TNodeChange = NodeChangeType> = Revive<TNodeChange> | ReturnTo;
-export const Reattach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([Revive(tNodeChange), ReturnTo]);
-
-export type Attach<TNodeChange = NodeChangeType> = NewAttach<TNodeChange> | Reattach<TNodeChange>;
+export type Attach<TNodeChange = NodeChangeType> = Insert<TNodeChange> | MoveIn;
 export const Attach = <Schema extends TSchema>(tNodeChange: Schema) =>
-	Type.Union([NewAttach(tNodeChange), Reattach(tNodeChange)]);
+	Type.Union([Insert(tNodeChange), MoveIn]);
 
 export type Detach<TNodeChange = NodeChangeType> =
 	| Delete<TNodeChange>

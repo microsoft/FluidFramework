@@ -3,18 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import * as path from "path";
 import { strict as assert } from "assert";
 import {
 	AcceptanceCondition,
 	combineReducersAsync as combineReducers,
 	AsyncReducer as Reducer,
 } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import {
+	DDSFuzzModel,
+	DDSFuzzSuiteOptions,
+	DDSFuzzTestState,
+} from "@fluid-internal/test-dds-utils";
+import {
+	IChannelAttributes,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions";
 import { PropertySet } from "@fluidframework/merge-tree";
-import { revertSharedStringRevertibles, SharedStringRevertible } from "../revertibles";
-import { SharedStringFactory } from "../sequenceFactory";
-import { SharedString } from "../sharedString";
-import { Side } from "../intervalCollection";
+import { revertSharedStringRevertibles, SharedStringRevertible } from "../../revertibles";
+import { SharedStringFactory } from "../../sequenceFactory";
+import { SharedString } from "../../sharedString";
+import { Side } from "../../intervalCollection";
+import { assertEquivalentSharedStrings } from "../intervalUtils";
 
 export type RevertibleSharedString = SharedString & {
 	revertibles: SharedStringRevertible[];
@@ -95,8 +106,8 @@ export type TextOperation = AddText | RemoveRange;
 
 export type ClientOperation = IntervalOperation | TextOperation;
 
-export type Operation = ClientOperation;
 export type RevertOperation = OperationWithRevert | TextOperation;
+export type Operation = RevertOperation;
 
 export type FuzzTestState = DDSFuzzTestState<SharedStringFactory>;
 
@@ -300,3 +311,97 @@ export function createSharedStringGeneratorOperations(
 		isShorterThanMaxLength,
 	};
 }
+
+export class SharedStringFuzzFactory extends SharedStringFactory {
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		attributes: IChannelAttributes,
+	): Promise<SharedString> {
+		runtime.options.intervalStickinessEnabled = true;
+		return super.load(runtime, id, services, attributes);
+	}
+
+	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
+		document.options.intervalStickinessEnabled = true;
+		return super.create(document, id);
+	}
+}
+
+export const baseModel: Omit<
+	DDSFuzzModel<SharedStringFactory, Operation, FuzzTestState>,
+	"workloadName" | "generatorFactory"
+> = {
+	reducer:
+		// makeReducer supports a param for logging output which tracks the provided intervalId over time:
+		// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
+		makeReducer(),
+	validateConsistency: assertEquivalentSharedStrings,
+	factory: new SharedStringFuzzFactory(),
+	minimizationTransforms: [
+		(op) => {
+			if (op.type !== "addText") {
+				return;
+			}
+			op.content = op.content.slice(1);
+		},
+		(op) => {
+			switch (op.type) {
+				case "addText":
+					if (op.index > 0) {
+						op.index -= 1;
+					}
+					break;
+				case "removeRange":
+				case "addInterval":
+				case "changeInterval":
+					if (op.start > 0) {
+						op.start -= 1;
+					}
+					if (op.end > 0) {
+						op.end -= 1;
+					}
+					break;
+				default:
+					break;
+			}
+		},
+		(op) => {
+			if (
+				op.type !== "removeRange" &&
+				op.type !== "addInterval" &&
+				op.type !== "changeInterval"
+			) {
+				return;
+			}
+			if (op.end > 0) {
+				op.end -= 1;
+			}
+		},
+	],
+};
+
+export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
+	validationStrategy: { type: "fixedInterval", interval: 10 },
+	reconnectProbability: 0.1,
+	numberOfClients: 3,
+	clientJoinOptions: {
+		maxNumberOfClients: 6,
+		clientAddProbability: 0.1,
+	},
+	defaultTestCount: 100,
+	saveFailures: { directory: path.join(__dirname, "../../../src/test/fuzz/results") },
+	parseOperations: (serialized: string) => {
+		const operations: Operation[] = JSON.parse(serialized);
+		// Replace this value with some other interval ID and uncomment to filter replay of the test
+		// suite to only include interval operations with this ID.
+		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
+		// if (filterIntervalId) {
+		// 	return operations.filter((entry) =>
+		// 		[undefined, filterIntervalId].includes((entry as any).id),
+		// 	);
+		// }
+		return operations;
+	},
+};
