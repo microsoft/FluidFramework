@@ -481,7 +481,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 // @public
 export const isFluidBrowserPackage: (maybePkg: unknown) => maybePkg is Readonly<IFluidBrowserPackage>;
 
-// @public (undocumented)
+// @public
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
 // @public
