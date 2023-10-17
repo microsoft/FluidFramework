@@ -78,7 +78,7 @@
 	},
 	"devDependencies": {
 		"@fluid-private/readme-command": "workspace:*",
-		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-common": "^2.0.2",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@microsoft/api-extractor": "^7.36.1",
 		"@oclif/test": "~2.3.27",
