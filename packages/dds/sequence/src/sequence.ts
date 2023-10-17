@@ -68,7 +68,7 @@ const contentPath = "content";
 /**
  * Events emitted in response to changes to the sequence data.
  *
- * @remarks @public
+ * @remarks
  *
  * The following is the list of events emitted.
  *
@@ -97,6 +97,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
+ * @public
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
