@@ -23,7 +23,9 @@ FLAGS
   --base=<value>                         The base version. This will be read from lerna.json/package.json if not
                                          provided.
   --build=<value>                        (required) The CI build number.
-  --packageTypes=<option>                [default: none] Include package.json types field.
+  --packageTypes=<option>                [default: none] If provided, the version generated will include extra strings
+                                         based on the TypeScript types that are expected to be used. This flag should
+                                         only be used in the Fluid Framework CI pipeline.
                                          <options: none|alpha|beta|public|untrimmed>
   --patch=<value>                        Indicates the build is a patch build.
   --release=<option>                     Indicates the build is a release build.
