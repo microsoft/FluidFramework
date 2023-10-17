@@ -1763,23 +1763,33 @@ declare namespace SchemaAware {
 export { SchemaAware }
 
 // @alpha @sealed
-export class SchemaBuilder<TScope extends string = string> extends SchemaBuilderBase<TScope, typeof FieldKinds.required> {
+export class SchemaBuilder<TScope extends string = string, TName extends string | number = string> extends SchemaBuilderBase<TScope, typeof FieldKinds.required, TName> {
     constructor(options: SchemaBuilderOptions<TScope>);
     // (undocumented)
     readonly boolean: TreeSchema<"com.fluidframework.leaf.boolean", {
-    leafValue: import("..").ValueSchema.Boolean;
+        leafValue: import("..").ValueSchema.Boolean;
     }>;
     // (undocumented)
     readonly handle: TreeSchema<"com.fluidframework.leaf.handle", {
-    leafValue: import("..").ValueSchema.FluidHandle;
+        leafValue: import("..").ValueSchema.FluidHandle;
+    }>;
+    list<const T extends TreeSchema | Any | readonly TreeSchema[]>(allowedTypes: T): TreeSchema<`${TScope}.List<${string}>`, {
+        structFields: {
+            [""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+        };
+    }>;
+    list<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeSchema<`${TScope}.${Name}`, {
+        structFields: {
+            [""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+        };
     }>;
     // (undocumented)
     readonly null: TreeSchema<"com.fluidframework.leaf.null", {
-    leafValue: import("..").ValueSchema.Null;
+        leafValue: import("..").ValueSchema.Null;
     }>;
     // (undocumented)
     readonly number: TreeSchema<"com.fluidframework.leaf.number", {
-    leafValue: import("..").ValueSchema.Number;
+        leafValue: import("..").ValueSchema.Number;
     }>;
     static optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Optional, NormalizeAllowedTypes<T>>;
     readonly optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Optional, NormalizeAllowedTypes<T>>;
@@ -1789,7 +1799,7 @@ export class SchemaBuilder<TScope extends string = string> extends SchemaBuilder
     readonly sequence: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => FieldSchema<Sequence, NormalizeAllowedTypes<T>>;
     // (undocumented)
     readonly string: TreeSchema<"com.fluidframework.leaf.string", {
-    leafValue: import("..").ValueSchema.String;
+        leafValue: import("..").ValueSchema.String;
     }>;
 }
 
