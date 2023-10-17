@@ -13,30 +13,18 @@ import { getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/bu
 import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
 
-async function readStdin(): Promise<string> {
-	return new Promise((resolve) => {
-		const stdin = process.openStdin();
-		stdin.setEncoding("utf8");
-
-		let data = "";
-		stdin.on("data", (chunk) => {
-			data += chunk;
-		});
-
-		stdin.on("end", () => {
-			resolve(data);
-		});
-
-		if (stdin.isTTY) {
-			resolve("");
-		}
-	});
-}
-
 type policyAction = "handle" | "resolve" | "final";
 
 interface HandlerExclusions {
 	[rule: string]: RegExp[];
+}
+
+interface CheckPolicyCommandProperties {
+  pathRegex: RegExp,
+  exclusions: RegExp[],
+  handlers: Handler[],
+  handlerExclusions: HandlerExclusions,
+  gitRoot: string,
 }
 
 /**
@@ -97,7 +85,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	static handlerActionPerf = new Map<policyAction, Map<string, number>>();
 	private processed = 0;
 	private count = 0;
-	private pathToGitRoot = "";
 
 	async run(): Promise<void> {
 		let handlersToRun: Handler[] = policyHandlers.filter((h) => {
@@ -161,54 +148,53 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		const filePathsToCheck: string[] = [];
+		const context = await this.getContext();
+		const pathToGitRoot = context.repo.resolvedRoot;
 
 		if (this.flags.stdin) {
 			const stdInput = await readStdin();
 
 			if (stdInput !== undefined) {
 				filePathsToCheck.push(...stdInput.split("\n"));
-				try {
-					filePathsToCheck.map((line: string) =>
-						this.handleLine(
-							line,
-							pathRegex,
-							exclusions,
-							handlersToRun,
-							handlerExclusions,
-						),
-					);
-				} finally {
-					try {
-						runPolicyCheck(handlersToRun, this.flags.fix, this.pathToGitRoot);
-					} finally {
-						this.logStats();
-					}
-				}
 			}
+		} else {
+			const repo = new Repository({ baseDir: pathToGitRoot });
+			const gitFiles = await repo.gitClient.raw(
+				"ls-files",
+				"-co",
+				"--exclude-standard",
+				"--full-name",
+			);
 
-			return;
+			filePathsToCheck.push(...gitFiles.split("\n"));
 		}
 
-		const context = await this.getContext();
-		this.pathToGitRoot = context.repo.resolvedRoot;
-
-		const repo = new Repository({ baseDir: this.pathToGitRoot });
-
-		const results = await repo.gitClient.raw(
-			"ls-files",
-			"-co",
-			"--exclude-standard",
-			"--full-name",
+		await this.executePolicy(
+			filePathsToCheck,
+			pathRegex,
+			exclusions,
+			handlersToRun,
+			handlerExclusions,
+			pathToGitRoot,
 		);
+	}
 
-		filePathsToCheck.push(...results.split("\n"));
+	// eslint-disable-next-line max-params
+	private async executePolicy(
+		pathsToCheck: string[],
+		pathRegex: RegExp,
+		exclusions: RegExp[],
+		handlers: Handler[],
+		handlerExclusions: HandlerExclusions,
+		gitRoot: string,
+	): Promise<void> {
 		try {
-			filePathsToCheck.map((line: string) =>
-				this.handleLine(line, pathRegex, exclusions, handlersToRun, handlerExclusions),
+			pathsToCheck.map((line: string) =>
+				this.handleLine(line, pathRegex, exclusions, handlers, handlerExclusions, gitRoot),
 			);
 		} finally {
 			try {
-				runPolicyCheck(handlersToRun, this.flags.fix, this.pathToGitRoot);
+				runPolicyCheck(handlers, this.flags.fix, gitRoot);
 			} finally {
 				this.logStats();
 			}
@@ -217,7 +203,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 	// route files to their handlers by regex testing their full paths
 	// synchronize output, exit code, and resolve decision for all handlers
-	routeToHandlers(file: string, handlers: Handler[], handlerExclusions: HandlerExclusions): void {
+	private routeToHandlers(
+		file: string,
+		handlers: Handler[],
+		handlerExclusions: HandlerExclusions,
+		gitRoot: string,
+	): void {
 		handlers
 			.filter((handler) => handler.match.test(file))
 			// eslint-disable-next-line unicorn/no-array-for-each
@@ -230,7 +221,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				}
 
 				const result = runWithPerf(handler.name, "handle", () =>
-					handler.handler(file, this.pathToGitRoot),
+					handler.handler(file, gitRoot),
 				);
 				if (result !== undefined && result !== "") {
 					let output = `${newline}file failed policy check: ${file}${newline}${result}`;
@@ -238,7 +229,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					if (this.flags.fix && resolver) {
 						output += `${newline}attempting to resolve: ${file}`;
 						const resolveResult = runWithPerf(handler.name, "resolve", () =>
-							resolver(file, this.pathToGitRoot),
+							resolver(file, gitRoot),
 						);
 
 						if (resolveResult?.message !== undefined) {
@@ -261,7 +252,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			});
 	}
 
-	logStats(): void {
+	private logStats(): void {
 		this.log(
 			`Statistics: ${this.processed} processed, ${this.count - this.processed} excluded, ${
 				this.count
@@ -275,14 +266,16 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	handleLine(
+	// eslint-disable-next-line max-params
+	private handleLine(
 		line: string,
 		pathRegex: RegExp,
 		exclusions: RegExp[],
 		handlers: Handler[],
 		handlerExclusions: HandlerExclusions,
+		gitRoot: string,
 	): void {
-		const filePath = path.join(this.pathToGitRoot, line).trim().replace(/\\/g, "/");
+		const filePath = path.join(gitRoot, line).trim().replace(/\\/g, "/");
 
 		if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
 			return;
@@ -295,7 +288,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		try {
-			this.routeToHandlers(filePath, handlers, handlerExclusions);
+			this.routeToHandlers(filePath, handlers, handlerExclusions, gitRoot);
 		} catch (error: unknown) {
 			throw new Error(`Line error: ${error}`);
 		}
@@ -329,3 +322,24 @@ function runPolicyCheck(handlers: Handler[], fix: boolean, pathToGitRoot: string
 		}
 	}
 }
+
+async function readStdin(): Promise<string> {
+	return new Promise((resolve) => {
+		const stdin = process.openStdin();
+		stdin.setEncoding("utf8");
+
+		let data = "";
+		stdin.on("data", (chunk) => {
+			data += chunk;
+		});
+
+		stdin.on("end", () => {
+			resolve(data);
+		});
+
+		if (stdin.isTTY) {
+			resolve("");
+		}
+	});
+}
+
