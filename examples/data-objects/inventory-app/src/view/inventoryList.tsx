@@ -4,12 +4,24 @@
  */
 
 import * as React from "react";
+import { node } from "@fluid-experimental/tree2";
 import { Inventory } from "../schema";
 import { Counter } from "./counter";
 
 export const MainView: React.FC<{ inventory: Inventory }> = ({ inventory }) => {
-	// TODO: offer an API to subscribe to invalidation from a field to avoid depending on the whole document here.
-	// useTreeContext(tree.context);
+	// This proof-of-concept implementation allocates a state variable this is modified
+	// when the tree changes to trigger re-render.
+	const [invalidations, setInvalidations] = React.useState(0);
+
+	// Register for tree deltas when the component mounts
+	React.useEffect(() => {
+		// Returns the cleanup function to be invoked when the component unmounts.
+		const u = node(inventory).on("subtreeChanging", () => {
+			setInvalidations((i) => i + 1);
+		});
+
+		return u;
+	}, [invalidations, inventory]);
 
 	const counters: JSX.Element[] = [];
 
