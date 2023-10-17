@@ -19,6 +19,7 @@ import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtim
 import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import * as path from "path-browserify";
+import { RedBlackTree } from "@fluidframework/merge-tree";
 import {
 	IDirectory,
 	IDirectoryEvents,
@@ -198,7 +199,8 @@ export interface ICreateInfo {
 	/**
 	 * Sequence number at which this subdirectory was created.
 	 */
-	csn: number;
+	// csn: number;
+	csn: SeqNumCollection;
 
 	/**
 	 * clientids of the clients which created this sub directory.
@@ -313,6 +315,64 @@ export class DirectoryFactory implements IChannelFactory {
 	}
 }
 
+interface SeqNumCollection {
+	seq: number;
+	clientSeq?: number;
+}
+
+const seqCollectionComparator = (a: SeqNumCollection, b: SeqNumCollection) => {
+	if (a.seq >= 0) {
+		if (b.seq >= 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return a.seq !== b.seq ? a.seq - b.seq : a.clientSeq! - b.clientSeq!;
+		} else {
+			return -1;
+		}
+	} else {
+		return b.seq >= 0 ? 1 : b.seq - a.seq;
+	}
+};
+
+/**
+ * A utility class for tracking associations between subdir names and their creation indices.
+ * This is relevant to support directory iteration in insertion order
+ */
+class DirectoryCreationTracker {
+	readonly indexToKey: RedBlackTree<SeqNumCollection, string>;
+
+	readonly keyToIndex: Map<string, SeqNumCollection>;
+
+	constructor() {
+		this.indexToKey = new RedBlackTree<SeqNumCollection, string>(seqCollectionComparator);
+		this.keyToIndex = new Map<string, SeqNumCollection>();
+	}
+
+	set(key: string, seqCollection: SeqNumCollection): void {
+		this.indexToKey.put(seqCollection, key);
+		this.keyToIndex.set(key, seqCollection);
+	}
+
+	has(keyOrSeqCollection: string | SeqNumCollection): boolean {
+		return typeof keyOrSeqCollection === "string"
+			? this.keyToIndex.has(keyOrSeqCollection)
+			: this.indexToKey.get(keyOrSeqCollection) !== undefined;
+	}
+
+	delete(keyOrSeqCollection: string | SeqNumCollection): void {
+		if (this.has(keyOrSeqCollection)) {
+			if (typeof keyOrSeqCollection === "string") {
+				const seqCollection = this.keyToIndex.get(keyOrSeqCollection) as SeqNumCollection;
+				this.keyToIndex.delete(keyOrSeqCollection);
+				this.indexToKey.remove(seqCollection);
+			} else {
+				const key = this.indexToKey.get(keyOrSeqCollection)?.data as string;
+				this.indexToKey.remove(keyOrSeqCollection);
+				this.keyToIndex.delete(key);
+			}
+		}
+	}
+}
+
 /**
  * {@inheritDoc ISharedDirectory}
  *
@@ -371,7 +431,7 @@ export class SharedDirectory
 	 * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
 	 */
 	private readonly root: SubDirectory = new SubDirectory(
-		0,
+		{ seq: 0 },
 		new Set(),
 		this,
 		this.runtime,
@@ -662,7 +722,10 @@ export class SharedDirectory
 							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
 							// sub directory. This could be done at serialization time too, but we need to maintain
 							// back compat too and also we will actually know the state when it was serialized.
-							createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
+							createInfo !== undefined && createInfo.csn.seq > -1
+								? createInfo.csn
+								: { seq: 0 },
+							// createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
 							createInfo !== undefined
 								? new Set<string>(createInfo.ccIds)
 								: new Set(),
@@ -1135,6 +1198,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private readonly pendingClearMessageIds: number[] = [];
 
+	private localCreationSeq: number = -1;
+
+	private readonly localCreationSeqTracker: DirectoryCreationTracker;
+
+	private readonly ackedCreationSeqTracker: DirectoryCreationTracker;
+
 	/**
 	 * Constructor.
 	 * @param sequenceNumber - Message seq number at which this was created.
@@ -1145,7 +1214,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param absolutePath - The absolute path of this IDirectory
 	 */
 	public constructor(
-		private sequenceNumber: number,
+		// private sequenceNumber: SeqNumCollection,
+		private readonly seqNumCollection: SeqNumCollection,
 		private readonly clientIds: Set<string>,
 		private readonly directory: SharedDirectory,
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -1153,6 +1223,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		public readonly absolutePath: string,
 	) {
 		super();
+		this.localCreationSeqTracker = new DirectoryCreationTracker();
+		this.ackedCreationSeqTracker = new DirectoryCreationTracker();
 	}
 
 	public dispose(error?: Error): void {
@@ -1263,6 +1335,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const subDir = this._subdirectories.get(subdirName);
 		assert(subDir !== undefined, 0x5aa /* subdirectory should exist after creation */);
 
+		// this.localCreationSeqTracker.set(subdirName, subDir.seqNumCollection);
+
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
 			return subDir;
@@ -1288,8 +1362,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * last set while detached will now be known to any new client, until they are changed).
 	 * TODO: Convert these conventions to named constants. The semantics used here match those for merge-tree.
 	 */
-	private getLocalSeq(): number {
-		return this.directory.isAttached() ? -1 : 0;
+	private getLocalSeq(): SeqNumCollection {
+		return this.directory.isAttached()
+			? { seq: -1, clientSeq: ++this.localCreationSeq }
+			: { seq: 0, clientSeq: ++this.localCreationSeq };
 	}
 
 	/**
@@ -1666,7 +1742,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 		assertNonNullClientId(msg.clientId);
-		this.createSubDirectoryCore(op.subdirName, local, msg.sequenceNumber, msg.clientId);
+		this.createSubDirectoryCore(
+			op.subdirName,
+			local,
+			{ seq: msg.sequenceNumber, clientSeq: msg.clientSequenceNumber },
+			msg.clientId,
+		);
 	}
 
 	/**
@@ -1959,7 +2040,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public getSerializableCreateInfo() {
 		this.throwIfDisposed();
 		const createInfo: ICreateInfo = {
-			csn: this.sequenceNumber,
+			// csn: this.sequenceNumber,
+			csn: this.seqNumCollection,
 			ccIds: Array.from(this.clientIds),
 		};
 		return createInfo;
@@ -2173,7 +2255,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return (
 			(msg.clientId !== null && this.clientIds.has(msg.clientId)) ||
 			this.clientIds.has("detached") ||
-			(this.sequenceNumber !== -1 && this.sequenceNumber <= msg.referenceSequenceNumber)
+			(this.seqNumCollection.seq !== -1 &&
+				this.seqNumCollection.seq <= msg.referenceSequenceNumber)
+			// (this.sequenceNumber !== -1 && this.sequenceNumber <= msg.referenceSequenceNumber)
 		);
 	}
 
@@ -2236,7 +2320,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					// In case of delete op, we need to reset the creation seq number and client ids of
 					// creators as the previous directory is getting deleted and we will initialize again when
 					// we will receive op for the create again.
-					directory.sequenceNumber = -1;
+					directory.seqNumCollection.seq = -1;
+					// directory.sequenceNumber = -1;
 					directory.clientIds.clear();
 					// Do the same thing for the subtree of the directory. If create is not pending for a child, then just
 					// delete it.
@@ -2250,12 +2335,44 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					}
 				};
 				const subDirectory = this._subdirectories.get(op.subdirName);
+				// Clear the creation tracker record
+				this.localCreationSeqTracker.delete(op.subdirName);
+				this.ackedCreationSeqTracker.delete(op.subdirName);
 				resetSubDirectoryTree(subDirectory);
 			}
 			if (op.type === "createSubDirectory") {
 				const dir = this._subdirectories.get(op.subdirName);
 				// Child sub directory create seq number can't be lower than the parent subdirectory.
 				// The sequence number for multiple ops can be the same when multiple createSubDirectory occurs with grouped batching enabled, thus <= and not just <.
+				if (
+					this.seqNumCollection.seq !== -1 &&
+					this.seqNumCollection.seq <= msg.sequenceNumber
+				) {
+					if (dir?.seqNumCollection.seq === -1) {
+						// Only set the seq on the first message, could be more
+						dir.seqNumCollection.seq = msg.sequenceNumber;
+						dir.seqNumCollection.clientSeq = msg.clientSequenceNumber;
+					}
+					// The client created the dir at or after the dirs seq, so list its client id as a creator.
+					if (
+						dir !== undefined &&
+						!dir.clientIds.has(msg.clientId) &&
+						dir.seqNumCollection.seq <= msg.sequenceNumber
+					) {
+						dir.clientIds.add(msg.clientId);
+					}
+				}
+
+				if (!this.ackedCreationSeqTracker.has(op.subdirName)) {
+					this.ackedCreationSeqTracker.set(op.subdirName, {
+						seq: msg.sequenceNumber,
+						clientSeq: msg.clientSequenceNumber,
+					});
+					if (local) {
+						this.localCreationSeqTracker.delete(op.subdirName);
+					}
+				}
+				/*
 				if (this.sequenceNumber !== -1 && this.sequenceNumber <= msg.sequenceNumber) {
 					if (dir?.sequenceNumber === -1) {
 						// Only set the seq on the first message, could be more
@@ -2269,7 +2386,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					) {
 						dir.clientIds.add(msg.clientId);
 					}
-				}
+				} */
 			}
 			return false;
 		}
@@ -2357,20 +2474,28 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private createSubDirectoryCore(
 		subdirName: string,
 		local: boolean,
-		seq: number,
+		// seq: number,
+		seqNumCollection: SeqNumCollection,
 		clientId: string,
 	): boolean {
 		const subdir = this._subdirectories.get(subdirName);
 		if (subdir === undefined) {
 			const absolutePath = posix.join(this.absolutePath, subdirName);
 			const subDir = new SubDirectory(
-				seq,
+				seqNumCollection,
 				new Set([clientId]),
 				this.directory,
 				this.runtime,
 				this.serializer,
 				absolutePath,
 			);
+			// Record the creation seq at the parent directory
+			if (local) {
+				this.localCreationSeqTracker.set(subdirName, seqNumCollection);
+			} else {
+				this.ackedCreationSeqTracker.set(subdirName, seqNumCollection);
+			}
+
 			this.registerEventsOnSubDirectory(subDir, subdirName);
 			this._subdirectories.set(subdirName, subDir);
 			this.emit("subDirectoryCreated", subdirName, local, this);
@@ -2401,6 +2526,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Might want to consider cleaning out the structure more exhaustively though? But not when rollback.
 		if (previousValue !== undefined) {
 			this._subdirectories.delete(subdirName);
+			if (local) {
+				this.localCreationSeqTracker.delete(subdirName);
+			} else {
+				this.ackedCreationSeqTracker.delete(subdirName);
+			}
 			this.disposeSubDirectoryTree(previousValue);
 			this.emit("subDirectoryDeleted", subdirName, local, this);
 		}
