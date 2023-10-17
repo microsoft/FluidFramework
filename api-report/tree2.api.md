@@ -469,7 +469,6 @@ export interface DeltaVisitor {
     enterNode(index: NodeIndex): void;
     exitField(key: FieldKey): void;
     exitNode(index: NodeIndex): void;
-    // (undocumented)
     free(): void;
     replace(newContentSource: FieldKey, range: Range_2, oldContentDestination: FieldKey): void;
 }
@@ -843,7 +842,6 @@ export interface IDefaultEditBuilder {
 
 // @alpha
 export interface IEditableForest extends IForestSubscription {
-    // (undocumented)
     acquireVisitor(): DeltaVisitor;
     readonly anchors: AnchorSet;
 }
