@@ -42,7 +42,7 @@ export class ShimDeltaConnection implements IDeltaConnection {
 
 	// The underlying ChannelDeltaConnection can only attach one IDeltaHandler.
 	// Maybe we could do this in the constructor?
-	public attachShimDeltaHandler(): void {
+	private attachShimDeltaHandler(): void {
 		assert(this.shimDeltaHandler.hasTreeDeltaHandler(), "No tree handler to process op");
 		this.deltaConnection.attach(this.shimDeltaHandler);
 		this.isShimDeltaHandlerAttachedToConnection = true;

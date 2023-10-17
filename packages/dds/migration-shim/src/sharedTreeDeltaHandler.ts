@@ -49,16 +49,19 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	public setConnectionState(connected: boolean): void {
 		return this.handler.setConnectionState(connected);
 	}
+
+	// Resubmitting v1 ops should fail. We should not be resubmitting v1 ops.
 	public reSubmit(message: unknown, localOpMetadata: unknown): void {
-		// Blow up on V1 ops if new handler
 		return this.handler.reSubmit(message, localOpMetadata);
 	}
+
+	// We are not capable of applying stashed v1 ops.
 	public applyStashedOp(message: unknown): unknown {
-		// Blow up on V1 ops if new handler
 		return this.handler.applyStashedOp(message);
 	}
+
+	// We cannot rollback v1 ops.
 	public rollback?(message: unknown, localOpMetadata: unknown): void {
-		// Blow up on V1 ops if new handler
 		return this.handler.rollback?.(message, localOpMetadata);
 	}
 }
