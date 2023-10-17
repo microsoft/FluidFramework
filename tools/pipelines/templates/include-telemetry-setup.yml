@@ -50,6 +50,10 @@ jobs:
     # Install
     - template: include-use-node-version.yml
 
+    - template: include-install-pnpm.yml
+      parameters:
+        buildDirectory: $(Build.SourcesDirectory)
+
     - task: Bash@3
       displayName: Print Parameters
       inputs:
