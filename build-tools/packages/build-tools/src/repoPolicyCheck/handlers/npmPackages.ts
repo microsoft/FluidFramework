@@ -1174,16 +1174,6 @@ export const handlers: Handler[] = [
 				return;
 			}
 
-			if (json.types === undefined && json.typings === undefined) {
-				throw new Error(
-					"The 'types' and 'typings' field are both undefined. At least one must be defined.",
-				);
-			}
-
-			if (json.main === undefined) {
-				throw new Error("The 'main' field is undefined. It must have a value.");
-			}
-
 			const exportsField = json.exports;
 			if (exportsField === undefined) {
 				return "Missing 'exports' field in package.json.";
