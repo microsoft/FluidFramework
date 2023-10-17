@@ -188,7 +188,7 @@ export {
 	UntypedTreeOrPrimitive,
 	AllowedTypes,
 	TreeSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	FieldSchema,
@@ -279,6 +279,7 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	is,
+	Typed,
 } from "./feature-libraries";
 
 export {

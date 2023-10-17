@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import {
 	type IChannelAttributes,
 	type IFluidDataStoreRuntime,
@@ -15,18 +16,19 @@ import {
 } from "@fluid-experimental/tree";
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
 import { MigrationShim } from "./migrationShim";
+import { attributesMatch } from "./utils";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link MigrationShim}.
  *
  * Creates the migration shim that allows a migration from legacy shared tree to shared tree.
- * Note: There may be a need for 3 different factories for different parts of the migration.
- * That or three different shims.
+ * @remarks
+ *
+ * It takes over the attributes of the legacy factory, so that it is loaded instead of the normal legacy factory.  Once migration finishes, the shim it produces will change its attributes to those of the new factory - meaning that on the next summarization the shim will write a summary that will cause future clients to load a different factory and shim (the SharedTreeShimFactory and SharedTreeShim).
  * 1. pre-migration
- * 2. after a summary has been generated but there may still be potential v1 ops
- * 3. post-migration after a summary has been generated and the msn has moved far enough forward for only v2 ops
  *
  * @sealed
+ * @internal
  */
 export class MigrationShimFactory implements IChannelFactory {
 	public constructor(
@@ -39,7 +41,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	) {}
 
 	/**
-	 * TODO: type documentation
+	 * This factory takes over the type of the oldFactory to load in its place.  The user must not include the MigrationShimFactory and the oldFactory in the same registry to avoid conflict.
 	 *
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
@@ -48,7 +50,7 @@ export class MigrationShimFactory implements IChannelFactory {
 	}
 
 	/**
-	 * TODO: attributes documentation
+	 * Should be the LegacySharedTree attributes
 	 *
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
@@ -59,7 +61,8 @@ export class MigrationShimFactory implements IChannelFactory {
 	/**
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.load}
 	 *
-	 * TODO: load documentation
+	 * Should be loading the MigrationShim - it should just load the old tree as this makes the factory's
+	 * responsibility simple. Trying to follow the Single Responsibility Principle here.
 	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -67,7 +70,8 @@ export class MigrationShimFactory implements IChannelFactory {
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<MigrationShim> {
-		// assert check that the attributes match the old factory
+		// TODO: remove attributes check and move it to an automated test that constructing a MigrationShimFactory and checking its attributes/type matches the oldFactory.
+		assert(attributesMatch(attributes, this.oldFactory.attributes), "Attributes do not match");
 		const migrationShim = new MigrationShim(
 			id,
 			runtime,
@@ -75,16 +79,19 @@ export class MigrationShimFactory implements IChannelFactory {
 			this.newFactory,
 			this.populateNewChannelFn,
 		);
-		// the old shared object will need to be loaded here
+		await migrationShim.load(services);
 		return migrationShim;
 	}
 
 	/**
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory.create}
 	 *
-	 * TODO: create documentation
+	 * Create MigrationShim that can hot swap from one DDS to a new DDS. We want the capability of creating an old tree
+	 * as when this code rolls out, there may be clients on the v1 version of the code, and we may want to have a dark
+	 * rollout capability.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim {
+		// Maybe this should throw an error.
 		const migrationShim = new MigrationShim(
 			id,
 			runtime,
@@ -92,7 +99,7 @@ export class MigrationShimFactory implements IChannelFactory {
 			this.newFactory,
 			this.populateNewChannelFn,
 		);
-		// the old shared object will need to be loaded
+		migrationShim.create();
 		return migrationShim;
 	}
 }

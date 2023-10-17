@@ -139,7 +139,7 @@ export {
 	TreeSchema,
 	AllowedTypes,
 	FieldSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	Any,
 	SchemaLibraryData,
 	LazyTreeSchema,
@@ -265,6 +265,7 @@ export {
 	SharedTreeObject,
 	is,
 	ProxyRoot,
+	Typed,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
