@@ -181,7 +181,9 @@ export class MockRuntime
 			this.processBlobsP.reject(new Error("fake error"));
 		}
 		this.processBlobsP = new Deferred<void>();
-		await Promise.allSettled(blobPs).catch(() => {});
+		await Promise.allSettled(blobPs)
+			.then()
+			.catch(() => {});
 	}
 
 	public async processHandles() {
