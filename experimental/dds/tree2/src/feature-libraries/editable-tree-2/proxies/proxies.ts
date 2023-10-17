@@ -168,7 +168,7 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				if (key === treeNodeSym) {
 					return { schema };
 				}
-				return undefined;
+				return Reflect.get(target, key);
 			},
 			set(target, key, value) {
 				const fieldSchema = content.schema.structFields.get(key as FieldKey);
@@ -331,7 +331,7 @@ staticDispatchMap[Symbol.iterator] = {
 /* eslint-enable @typescript-eslint/unbound-method */
 /* eslint-enable @typescript-eslint/ban-types */
 
-const prototype = Object.create(null, staticDispatchMap);
+const prototype = Object.create(Object.prototype, staticDispatchMap);
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
