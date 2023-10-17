@@ -366,52 +366,6 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	}
 
 	/**
-	 * Undoes the last change made by the client. If there is no change to undo then this method has no effect.
-	 * This method will error if no {@link UndoRedoManager} was provided when this branch was constructed.
-	 * It is invalid to call this method while a transaction is open (this will be supported in the future).
-	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to undo
-	 */
-	// public undo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
-	// 	assert(
-	// 		this.undoRedoManager !== undefined,
-	// 		0x686 /* Must construct branch with an `UndoRedoManager` in order to undo. */,
-	// 	);
-	// 	// TODO: allow this once it becomes possible to compose the changesets created by edits made
-	// 	// within transactions and edits that represent completed transactions.
-	// 	assert(!this.isTransacting(), 0x66a /* Undo is not yet supported during transactions */);
-
-	// 	const undoChange = this.undoRedoManager?.undo(this.getHead());
-	// 	if (undoChange !== undefined) {
-	// 		return this.applyChange(undoChange, mintRevisionTag(), LocalCommitSource.Undo);
-	// 	}
-
-	// 	return undefined;
-	// }
-
-	/**
-	 * Redoes the last change made by the client. If there is no change to redo then this method has no effect.
-	 * This method will error if no {@link UndoRedoManager} was provided when this branch was constructed.
-	 * It is invalid to call this method while a transaction is open (this will be supported in the future).
-	 * @returns the change to this branch and the new head commit, or undefined if there was nothing to redo
-	 */
-	// public redo(): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
-	// 	assert(
-	// 		this.undoRedoManager !== undefined,
-	// 		0x687 /* Must construct branch with an `UndoRedoManager` in order to redo. */,
-	// 	);
-	// 	// TODO: allow this once it becomes possible to compose the changesets created by edits made
-	// 	// within transactions and edits that represent completed transactions.
-	// 	assert(!this.isTransacting(), 0x67e /* Redo is not yet supported during transactions */);
-
-	// 	const redoChange = this.undoRedoManager?.redo(this.getHead());
-	// 	if (redoChange !== undefined) {
-	// 		return this.applyChange(redoChange, mintRevisionTag(), LocalCommitSource.Redo);
-	// 	}
-
-	// 	return undefined;
-	// }
-
-	/**
 	 * Spawn a new branch that is based off of the current state of this branch.
 	 * Changes made to the new branch will not be applied to this branch until the new branch is merged back in.
 	 *
