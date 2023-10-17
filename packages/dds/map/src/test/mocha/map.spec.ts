@@ -745,7 +745,8 @@ describe("Map", () => {
 				 * It is an unusual scenario, the client of map1 executes an invalid delete (since "foo" does not exist in its keys),
 				 * but it can remotely delete the "foo" which is locally inserted in map2 but not ack'd yet.
 				 *
-				 * Please communicate any concerns about this design to the DDS team.
+				 * This merge outcome might be undesirable: this test case is mostly here to document Map's behavior.
+				 * Please communicate any concerns about the merge outcome to the DDS team.
 				 */
 				it("Can remotely delete a key which should be unknown to the local client", () => {
 					map1.set("foo", 1);
