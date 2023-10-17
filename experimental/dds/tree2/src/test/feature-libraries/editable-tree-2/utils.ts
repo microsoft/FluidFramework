@@ -10,7 +10,7 @@ import {
 	ImplicitFieldSchema,
 	ProxyField,
 	ProxyRoot,
-	TypedSchemaCollection,
+	DocumentSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries";
@@ -22,10 +22,7 @@ import { TestTreeProviderLite, forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 import { SchemaBuilder } from "../../../domains";
 
-export function getReadonlyContext(
-	forest: IEditableForest,
-	schema: TypedSchemaCollection,
-): Context {
+export function getReadonlyContext(forest: IEditableForest, schema: DocumentSchema): Context {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
 	return getTreeContext(
@@ -54,7 +51,7 @@ export function createTree(): ISharedTree {
 }
 
 export function createTreeView<TRoot extends FieldSchema>(
-	schema: TypedSchemaCollection<TRoot>,
+	schema: DocumentSchema<TRoot>,
 	initialTree: any,
 ): ISharedTreeView {
 	return createTree().schematize({
@@ -75,10 +72,10 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 	return builder.toDocumentSchema(root);
 }
 
-export function itWithRoot<TSchema extends TypedSchemaCollection<any>>(
+export function itWithRoot<TRoot extends FieldSchema>(
 	title: string,
-	schema: TSchema,
-	initialTree: ProxyRoot<TSchema, "javaScript">,
+	schema: DocumentSchema<TRoot>,
+	initialTree: ProxyRoot<DocumentSchema<TRoot>, "javaScript">,
 	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {
@@ -88,7 +85,9 @@ export function itWithRoot<TSchema extends TypedSchemaCollection<any>>(
 	});
 }
 
-/** Similar to JSON stringify, but preserves 'undefined' and leaves numbers as-is. */
-export function pretty(arg: any) {
+/**
+ * Similar to JSON stringify, but preserves `undefined` and numbers numbers as-is at the root.
+ */
+export function pretty(arg: unknown): number | undefined | string {
 	return arg === undefined ? "undefined" : typeof arg === "number" ? arg : JSON.stringify(arg);
 }

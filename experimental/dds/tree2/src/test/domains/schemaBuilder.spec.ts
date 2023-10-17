@@ -9,7 +9,7 @@ import {
 	Any,
 	FieldKinds,
 	FieldSchema,
-	Sequence2,
+	Sequence,
 	TreeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
@@ -35,7 +35,7 @@ describe("domains - SchemaBuilder", () => {
 						.equals(FieldSchema.create(FieldKinds.sequence, [Any])),
 				);
 				type ListAny = UnboxNode<typeof listAny>;
-				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence2<readonly [Any]>>>;
+				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence<readonly [Any]>>>;
 
 				assert.equal(builder.list(Any), listAny);
 			});
@@ -53,7 +53,7 @@ describe("domains - SchemaBuilder", () => {
 				);
 				type ListAny = UnboxNode<typeof listImplicit>;
 				type _check = requireTrue<
-					areSafelyAssignable<ListAny, Sequence2<readonly [typeof builder.number]>>
+					areSafelyAssignable<ListAny, Sequence<readonly [typeof builder.number]>>
 				>;
 
 				assert.equal(builder.list(builder.number), listImplicit);
@@ -93,7 +93,7 @@ describe("domains - SchemaBuilder", () => {
 				type _check = requireTrue<
 					areSafelyAssignable<
 						ListAny,
-						Sequence2<readonly [typeof builder.number, typeof builder.boolean]>
+						Sequence<readonly [typeof builder.number, typeof builder.boolean]>
 					>
 				>;
 				// TODO: this should compile: ideally EditableTree's use of AllowedTypes would be compile time order independent like it is runtime order independent, but its currently not.
@@ -101,7 +101,7 @@ describe("domains - SchemaBuilder", () => {
 					// @ts-expect-error Currently not order independent: ideally this would compile
 					areSafelyAssignable<
 						ListAny,
-						Sequence2<readonly [typeof builder.boolean, typeof builder.number]>
+						Sequence<readonly [typeof builder.boolean, typeof builder.number]>
 					>
 				>;
 
@@ -124,7 +124,7 @@ describe("domains - SchemaBuilder", () => {
 				);
 				type ListAny = UnboxNode<typeof list>;
 				type _check = requireTrue<
-					areSafelyAssignable<ListAny, Sequence2<readonly [typeof builder.number]>>
+					areSafelyAssignable<ListAny, Sequence<readonly [typeof builder.number]>>
 				>;
 
 				// Not cached for structural use
