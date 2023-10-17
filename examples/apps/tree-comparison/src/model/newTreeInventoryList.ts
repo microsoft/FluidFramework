@@ -6,7 +6,6 @@
 import {
 	AllowedUpdateType,
 	ForestType,
-	leaf,
 	SchemaBuilder,
 	typeboxValidator,
 	Typed,
@@ -20,13 +19,12 @@ import { v4 as uuid } from "uuid";
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 import { InventoryItem } from "./inventoryItem";
 
-// By importing the leaf library we don't have to define our own string and number types.
 const builder = new SchemaBuilder({ scope: "inventory app" });
 
 const inventoryItem = builder.struct("Contoso:InventoryItem-1.0.0", {
-	id: leaf.string,
-	name: leaf.string,
-	quantity: leaf.number,
+	id: builder.string,
+	name: builder.string,
+	quantity: builder.number,
 });
 type InventoryItemNode = Typed<typeof inventoryItem>;
 
