@@ -495,15 +495,10 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
 // @alpha
-export interface DocumentSchema<out T extends FieldSchema = FieldSchema> {
-    // (undocumented)
+export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
     readonly adapters: Adapters;
-    // (undocumented)
     readonly policy: FullSchemaPolicy;
-    // (undocumented)
     readonly rootFieldSchema: T;
-    // (undocumented)
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
 // @alpha
@@ -1878,16 +1873,18 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 }
 
 // @alpha
+export interface SchemaCollection extends StoredSchemaCollection {
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+}
+
+// @alpha
 export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
     readonly schema: DocumentSchema<TRoot>;
 }
 
 // @alpha
-export interface SchemaData {
-    // (undocumented)
+export interface SchemaData extends StoredSchemaCollection {
     readonly rootFieldSchema: FieldStoredSchema;
-    // (undocumented)
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
 }
 
 // @alpha
@@ -1900,20 +1897,16 @@ export interface SchemaEvents {
 export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema;
 
 // @alpha
-export interface SchemaLibrary extends DocumentSchema {
+export interface SchemaLibrary extends SchemaCollection {
     readonly libraries: ReadonlySet<SchemaLibraryData>;
 }
 
 // @alpha
-export interface SchemaLibraryData {
+export interface SchemaLibraryData extends SchemaCollection {
     // (undocumented)
     readonly adapters: Adapters;
     // (undocumented)
     readonly name: string;
-    // (undocumented)
-    readonly rootFieldSchema?: FieldSchema;
-    // (undocumented)
-    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }
 
 // @alpha
@@ -2046,6 +2039,11 @@ type Skip = number;
 
 // @alpha
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
+
+// @alpha
+export interface StoredSchemaCollection {
+    readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
+}
 
 // @alpha
 export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, SchemaData {
