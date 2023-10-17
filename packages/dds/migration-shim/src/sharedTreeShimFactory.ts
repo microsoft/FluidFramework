@@ -80,6 +80,7 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeShim {
 		const sharedTreeShim = new SharedTreeShim(id, runtime, this.factory);
+		sharedTreeShim.create();
 		return sharedTreeShim;
 	}
 }
