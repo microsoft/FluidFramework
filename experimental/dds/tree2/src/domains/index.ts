@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+export { SchemaBuilder } from "./schemaBuilder";
+
 export {
 	cursorToJsonObject,
 	jsonArray,
@@ -18,8 +20,7 @@ export {
 
 export { nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "./nodeKey";
 
-import * as leaf from "./leafDomain";
-export { leaf };
+export { leaf } from "./leafDomain";
 
 import * as testRecursiveDomain from "./testRecursiveDomain";
 export { testRecursiveDomain };

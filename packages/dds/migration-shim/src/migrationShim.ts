@@ -23,8 +23,11 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { type SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
 import { type ISharedTree } from "@fluid-experimental/tree2";
+
 /**
  * Interface for migration events.
+ *
+ * @public
  */
 export interface IMigrationEvent extends IEvent {
 	/**
@@ -53,6 +56,8 @@ export interface IMigrationOp {
 
 /**
  * Create skeleton Migration Shim that can hot swap from one DDS to a new DDS.
+ *
+ * @public
  */
 export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
 	public constructor(
