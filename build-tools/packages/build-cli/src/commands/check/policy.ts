@@ -13,7 +13,7 @@ import { getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/bu
 import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
 
-const readStdin: () => Promise<string | undefined> = async () => {
+async function readStdin(): Promise<string> {
 	return new Promise((resolve) => {
 		const stdin = process.openStdin();
 		stdin.setEncoding("utf8");
@@ -31,7 +31,7 @@ const readStdin: () => Promise<string | undefined> = async () => {
 			resolve("");
 		}
 	});
-};
+}
 
 type policyAction = "handle" | "resolve" | "final";
 
@@ -160,22 +160,23 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			}
 		}
 
-		if (this.flags.stdin) {
-			const pipeString = await readStdin();
+		const filePathsToCheck: string[] = [];
 
-			if (pipeString !== undefined) {
+		if (this.flags.stdin) {
+			const stdInput = await readStdin();
+
+			if (stdInput !== undefined) {
+				filePathsToCheck.push(...stdInput.split("\n"));
 				try {
-					pipeString
-						.split("\n")
-						.map((line: string) =>
-							this.handleLine(
-								line,
-								pathRegex,
-								exclusions,
-								handlersToRun,
-								handlerExclusions,
-							),
-						);
+					filePathsToCheck.map((line: string) =>
+						this.handleLine(
+							line,
+							pathRegex,
+							exclusions,
+							handlersToRun,
+							handlerExclusions,
+						),
+					);
 				} finally {
 					try {
 						runPolicyCheck(handlersToRun, this.flags.fix, this.pathToGitRoot);
@@ -200,13 +201,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			"--full-name",
 		);
 
-		const scriptOutput = results;
+		filePathsToCheck.push(...results.split("\n"));
 		try {
-			scriptOutput
-				.split("\n")
-				.map((line: string) =>
-					this.handleLine(line, pathRegex, exclusions, handlersToRun, handlerExclusions),
-				);
+			filePathsToCheck.map((line: string) =>
+				this.handleLine(line, pathRegex, exclusions, handlersToRun, handlerExclusions),
+			);
 		} finally {
 			try {
 				runPolicyCheck(handlersToRun, this.flags.fix, this.pathToGitRoot);
