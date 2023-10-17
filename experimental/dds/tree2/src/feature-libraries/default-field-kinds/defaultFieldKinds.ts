@@ -45,7 +45,11 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
 	 */
-	set(newValue: ITreeCursor, id: ChangesetLocalId): OptionalChangeset;
+	set(
+		newValue: ITreeCursor,
+		setId: ChangesetLocalId,
+		buildId: ChangesetLocalId,
+	): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -65,8 +69,11 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
-		optionalFieldEditor.set(newContent, false, id),
+	set: (
+		newContent: ITreeCursor,
+		setId: ChangesetLocalId,
+		buildId: ChangesetLocalId,
+	): OptionalChangeset => optionalFieldEditor.set(newContent, false, setId, buildId),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {

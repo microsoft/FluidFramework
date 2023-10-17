@@ -308,6 +308,12 @@ export interface Insert<TTree = ProtoNode>
 	readonly content: readonly TTree[];
 
 	/**
+	 * Id associated with the tree being built.
+	 * If not specified, a random unique ID will be used.
+	 */
+	readonly buildId?: DetachedNodeId;
+
+	/**
 	 * The ID to assign the first node being replaced.
 	 * Subsequent replaced nodes should be assigned incrementing IDs.
 	 * Populated iff the insertion is transient.
