@@ -1361,6 +1361,34 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		},
 	);
 
+	it("close while uploading blob test", async function () {
+		const container = await loadOffline(provider, { url });
+		const dataStore = await requestFluidObject<ITestFluidObject>(container.container, "default");
+		const map = await dataStore.getSharedObject<SharedMap>(mapId);
+
+
+		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+		const pendingOpsP = container.container.closeAndGetPendingLocalState?.();
+		const handle = await blobP;
+		map.set("blob handle", handle);
+		const pendingOps = await pendingOpsP;
+
+		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
+
+		await provider.ensureSynchronized();
+		assert.strictEqual(
+			bufferToString(await map1.get("blob handle").get(), "utf8"),
+			"blob contents",
+		);
+		assert.strictEqual(
+			bufferToString(await map2.get("blob handle").get(), "utf8"),
+			"blob contents",
+		);
+	});
+
+
 	it("load offline from stashed ops with pending blob", async function () {
 		const container = await loadOffline(provider, { url });
 		const dataStore = await requestFluidObject<ITestFluidObject>(

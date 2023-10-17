@@ -198,6 +198,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+	private blobsStashed: boolean = false;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -530,6 +531,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
+		if(this.blobsStashed){
+			return;
+		}
 		if (entry.abortSignal?.aborted === true && !entry.opsent) {
 			this.deletePendingBlob(localId);
 			return;
@@ -599,10 +603,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const pendingEntry = this.pendingBlobs.get(localId);
 
 		if (!blobId) {
-			// Ignore blobs that could not get uploaded/attached during stashing
-			if (!(pendingEntry?.opsent === true && !!pendingEntry?.storageId)) {
-				return;
-			}
+			// We submitted this op while offline. The blob should have been uploaded by now.
+			assert(
+				pendingEntry?.opsent === true && !!pendingEntry?.storageId,
+				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
+			);
 			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
@@ -939,6 +944,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				if (this.pendingBlobs.size === 0) {
 					return;
 				}
+				this.blobsStashed = true;
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
 				const abortPromise = new Promise<void>((resolve, reject) => {
@@ -955,9 +961,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
-							if (!entry.opsent) {
-								this.sendBlobAttachOp(id, entry.storageId);
-							}
 							entry.handleP.resolve(this.getBlobHandle(id));
 							attachBlobsP.push(
 								new Promise<void>((resolve) => {
@@ -984,6 +987,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						continue;
 					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
+					if (!entry.opsent) {
+						this.sendBlobAttachOp(id, entry.storageId);
+					}
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,
