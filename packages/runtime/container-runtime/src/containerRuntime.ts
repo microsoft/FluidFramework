@@ -3814,16 +3814,6 @@ export class ContainerRuntime
 	}
 
 	private async closeStaleSummarizer(codePath: string): Promise<void> {
-		this.mc.logger.sendTelemetryEvent(
-			{
-				eventName: "ClosingSummarizerOnSummaryStale",
-				codePath,
-				message: "Stopping fetch from storage",
-				closeSummarizerDelayMs: this.closeSummarizerDelayMs,
-			},
-			new GenericError("Restarting summarizer instead of refreshing"),
-		);
-
 		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
 		await delay(this.closeSummarizerDelayMs);
 		this._summarizer?.stop("latestSummaryStateStale");
