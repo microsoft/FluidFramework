@@ -15,7 +15,6 @@ import {
 	getIntention,
 } from "../modular-schema";
 import {
-	getInputLength,
 	isDetach,
 	isNewAttach,
 	cloneMark,
