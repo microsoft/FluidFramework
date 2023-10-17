@@ -11,12 +11,9 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createRemoveRangeOp,
-	Marker,
-	ReferenceType,
-	TextSegment,
 	IMergeTreeDeltaOp,
 } from "@fluidframework/merge-tree";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString, Marker, ReferenceType, TextSegment } from "@fluidframework/sequence";
 import { exampleSetup } from "prosemirror-example-setup";
 import { DOMSerializer, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";

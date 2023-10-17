@@ -5,9 +5,14 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { ICombiningOp, ReferencePosition, PropertySet } from "@fluidframework/merge-tree";
+import { ICombiningOp } from "@fluidframework/merge-tree";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { IntervalType, SequenceDeltaEvent } from "@fluidframework/sequence";
+import {
+	IntervalType,
+	SequenceDeltaEvent,
+	ReferencePosition,
+	PropertySet,
+} from "@fluidframework/sequence";
 import {
 	positionToRowCol,
 	rowColToPosition,

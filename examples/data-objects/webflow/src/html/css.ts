@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@fluidframework/merge-tree";
+import { ISegment } from "@fluidframework/sequence";
 import { getCss } from "../document/index.js";
 import { areStringsEquivalent } from "../util/index.js";
 

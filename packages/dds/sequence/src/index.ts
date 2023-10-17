@@ -85,3 +85,24 @@ export {
 	SharedIntervalCollectionFactory,
 } from "./sharedIntervalCollection";
 export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence";
+
+export {
+	ISegment,
+	Marker,
+	BaseSegment,
+	ReferencePosition,
+	ReferenceType,
+	PropertySet,
+	MapLike,
+	TextSegment,
+	MergeTreeDeltaType,
+	appendToMergeTreeDeltaRevertibles,
+	revertMergeTreeDeltaRevertibles,
+	discardMergeTreeDeltaRevertible,
+	MergeTreeDeltaRevertible,
+	reservedMarkerIdKey,
+	reservedTileLabelsKey,
+	reservedRangeLabelsKey,
+	TrackingGroup,
+	LocalReferencePosition,
+} from "@fluidframework/merge-tree";

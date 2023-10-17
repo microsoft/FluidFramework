@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICombiningOp, PropertySet } from "@fluidframework/merge-tree";
+import { ICombiningOp } from "@fluidframework/merge-tree";
+import { PropertySet } from "@fluidframework/sequence";
 
 export type TableDocumentItem = any;
 

@@ -16,13 +16,12 @@ import {
 } from "@fluidframework/core-interfaces";
 import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
-import { SharedString } from "@fluidframework/sequence";
+import { SharedString, ReferenceType, reservedTileLabelsKey } from "@fluidframework/sequence";
 
 import { PresenceManager } from "./presence";
 

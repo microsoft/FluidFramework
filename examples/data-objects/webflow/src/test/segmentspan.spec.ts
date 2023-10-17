@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { TextSegment } from "@fluidframework/merge-tree";
+import { TextSegment } from "@fluidframework/sequence";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluid-internal/test-version-utils";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LocalReferencePosition } from "@fluidframework/merge-tree";
+import { LocalReferencePosition } from "@fluidframework/sequence";
 import { debug } from "../document/debug.js";
 import { FlowDocument } from "../document/index.js";
 

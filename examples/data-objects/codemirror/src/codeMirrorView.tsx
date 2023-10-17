@@ -4,13 +4,15 @@
  */
 
 import {
+	getTextAndMarkers,
+	SharedString,
+	SequenceDeltaEvent,
 	MergeTreeDeltaType,
 	TextSegment,
 	ReferenceType,
 	reservedTileLabelsKey,
 	Marker,
-} from "@fluidframework/merge-tree";
-import { getTextAndMarkers, SharedString, SequenceDeltaEvent } from "@fluidframework/sequence";
+} from "@fluidframework/sequence";
 import CodeMirror from "codemirror";
 import React, { useEffect, useRef } from "react";
 
