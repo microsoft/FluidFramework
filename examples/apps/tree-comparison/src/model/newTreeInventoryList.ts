@@ -45,7 +45,7 @@ type InventoryField = Typed<typeof inventoryField>;
 
 const schema = builder.toDocumentSchema(inventoryField);
 
-const factory = new TypedTreeFactory({
+const newTreeFactory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,
 	// REV: I copied this from another example but I have no idea what it means - documentation is
 	// self-referencing.
@@ -57,7 +57,7 @@ const factory = new TypedTreeFactory({
 
 const sharedTreeKey = "sharedTree";
 
-export class TreeInventoryList extends DataObject implements IInventoryList {
+export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	private _sharedTree: TypedTreeChannel | undefined;
 	private get sharedTree(): TypedTreeChannel {
 		if (this._sharedTree === undefined) {
@@ -91,7 +91,10 @@ export class TreeInventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(undefined, factory.type) as TypedTreeChannel;
+		this._sharedTree = this.runtime.createChannel(
+			undefined,
+			newTreeFactory.type,
+		) as TypedTreeChannel;
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 	}
 
@@ -205,9 +208,9 @@ export class TreeInventoryList extends DataObject implements IInventoryList {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const TreeInventoryListFactory = new DataObjectFactory<TreeInventoryList>(
-	"tree-inventory-list",
-	TreeInventoryList,
-	[factory],
+export const NewTreeInventoryListFactory = new DataObjectFactory<NewTreeInventoryList>(
+	"new-tree-inventory-list",
+	NewTreeInventoryList,
+	[newTreeFactory],
 	{},
 );
