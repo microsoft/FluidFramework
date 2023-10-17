@@ -22,7 +22,9 @@ import { attributesMatch } from "./utils";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link MigrationShim}.
  *
  * Creates the migration shim that allows a migration from legacy shared tree to shared tree.
- * Its only concern is creating a pre-migration shim that can hot swap from one DDS to a new DDS.
+ * @remarks
+ *
+ * It takes over the attributes of the legacy factory, so that it is loaded instead of the normal legacy factory.  Once migration finishes, the shim it produces will change its attributes to those of the new factory - meaning that on the next summarization the shim will write a summary that will cause future clients to load a different factory and shim (the SharedTreeShimFactory and SharedTreeShim).
  * 1. pre-migration
  *
  * @sealed
