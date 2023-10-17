@@ -48,7 +48,7 @@ export const REQUIRED_PRERELEASE_IDENTIFIER = "internal";
  * @param internalVersion - A version in the Fluid internal version scheme.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * `REQUIRED_PRERELEASE_IDENTIFIER`.
  *
  * @returns A tuple of [publicVersion, internalVersion, prereleaseIdentifier]
  */
@@ -112,7 +112,7 @@ export function fromInternalScheme(
  * @param version - The internal version.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param prereleaseIdentifier - The prerelease indentifier to use in the Fluid internal version. Defaults to
- * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * `REQUIRED_PRERELEASE_IDENTIFIER`.
  *
  * @returns A version in the Fluid internal version scheme.
  */
@@ -221,7 +221,7 @@ export function validateVersionScheme(
  * @param version - The version to check. If it is `undefined`, returns false.
  * @param allowPrereleases - If true, allow prerelease Fluid internal versions.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * `REQUIRED_PRERELEASE_IDENTIFIER`.
  * @returns True if the version matches the Fluid internal version scheme.
  */
 export function isInternalVersionScheme(
@@ -246,7 +246,7 @@ export function isInternalVersionScheme(
  *
  * @param range - The range string to check.
  * @param allowAnyPrereleaseId - If true, allows any prerelease identifier string. When false, only allows
- * {@link REQUIRED_PRERELEASE_IDENTIFIER}.
+ * `REQUIRED_PRERELEASE_IDENTIFIER`.
  * @returns True if the range string matches the Fluid internal version scheme.
  */
 export function isInternalVersionRange(range: string, allowAnyPrereleaseId = false): boolean {

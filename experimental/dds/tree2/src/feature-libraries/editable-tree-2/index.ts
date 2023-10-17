@@ -24,9 +24,22 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	Typed,
 } from "./editableTreeTypes";
 
-export { getProxyForField, List } from "./proxies";
+export {
+	getProxyForField,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
+	ProxyRoot,
+} from "./proxies";
 export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
 
 export {

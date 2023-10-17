@@ -18,9 +18,10 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
-	TypedSchemaCollection,
+	DocumentSchema,
 	Unenforced,
 	AllowedTypeSet,
+	MapFieldSchema,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
@@ -35,7 +36,7 @@ export {
 	schemaLintDefault,
 } from "./schemaCollection";
 
-export { FlexList } from "./flexList";
+export { FlexList, markEager } from "./flexList";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypedSchemaTypes from "./internal";

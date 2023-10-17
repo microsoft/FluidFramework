@@ -34,6 +34,7 @@ const snapshotFileName = "header";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link AttributableMap}.
  *
  * @sealed
+ * @public
  */
 export class MapFactory implements IChannelFactory {
 	/**
@@ -92,6 +93,8 @@ export class MapFactory implements IChannelFactory {
 
 /**
  * {@inheritDoc ISharedMap}
+ *
+ * @public
  */
 export class AttributableMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
 	/**

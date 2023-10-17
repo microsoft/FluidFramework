@@ -9,7 +9,9 @@ import { ISequencedDocumentMessage, ISignalMessage } from "./protocol";
 import { ITokenClaims } from "./tokens";
 
 /**
- * Message sent to connect to the given document
+ * Message sent to connect to the given document.
+ *
+ * @public
  */
 export interface IConnect {
 	/**
@@ -77,7 +79,9 @@ export interface IConnect {
 }
 
 /**
- * Message sent to indicate a client has connected to the server
+ * Message sent to indicate a client has connected to the server.
+ *
+ * @public
  */
 export interface IConnected {
 	/**

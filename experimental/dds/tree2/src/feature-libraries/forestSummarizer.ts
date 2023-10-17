@@ -106,7 +106,7 @@ export class ForestSummarizer implements Summarizable {
 			});
 
 			const forest = this.getForest();
-			assert(forest.isEmpty, "forest must be empty");
+			assert(forest.isEmpty, 0x797 /* forest must be empty */);
 			applyDelta(new Map(delta), forest, makeDetachedFieldIndex("init"));
 		}
 	}
