@@ -1151,9 +1151,11 @@ describe("SequenceField - Compose", () => {
 
 		const composed = shallowCompose([move1, move2, return1]);
 		const expected = [
-			Mark.moveOut(1, { revision: tag1, localId: brand(0) }),
-			{ count: 1 },
-			Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
+			{ count: 2 },
+			Mark.transient(
+				Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
+				Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
+			),
 			{ count: 1 },
 			Mark.transient(
 				Mark.moveIn(1, { revision: tag2, localId: brand(0) }),
