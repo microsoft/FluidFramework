@@ -1127,7 +1127,7 @@ export const handlers: Handler[] = [
 			return result;
 		},
 	},
-  {
+	{
 		name: "npm-package-types-field",
 		match,
 		handler: (file) => {
