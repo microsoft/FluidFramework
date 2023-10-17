@@ -8165,11 +8165,7 @@ importers:
       '@fluidframework/build-common': 2.0.1
       '@fluidframework/build-tools': 0.25.0_@types+node@16.18.53
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
-<<<<<<< HEAD
       '@microsoft/api-extractor': 7.37.0_@types+node@16.18.53
-=======
-      '@microsoft/api-extractor': 7.38.0
->>>>>>> e3da9a6f162d9dacec9a0d06031657ada647f77b
       '@types/mocha': 9.1.1
       '@types/node': 16.18.53
       '@types/sinon': 7.5.2
