@@ -81,10 +81,6 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		const inventoryNode: BuildNode = {
 			definition: "inventory",
 			traits: {
-				// REV: If I try to remove these sample items (leaving inventoryItems as an empty array)
-				// the trait is removed entirely (undefined).  It seems that empty traits are discarded?
-				// This is a problem when later I want to iterate over it (in hasInitialized, when
-				// building up my initial set of InventoryItem objects), since I'll get a not-iterable error.
 				inventoryItems: [
 					{
 						definition: "inventoryItem",
@@ -206,11 +202,16 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		const inventoryItemsNodeIds = this.tree.currentView
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
-			.traits.get("inventoryItems" as TraitLabel)!;
-		for (const inventoryItemNodeId of inventoryItemsNodeIds) {
-			const inventoryItemNode = this.tree.currentView.getViewNode(inventoryItemNodeId);
-			const newInventoryItem = this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
-			this._inventoryItems.set(newInventoryItem.id, newInventoryItem);
+			.traits.get("inventoryItems" as TraitLabel);
+		// Legacy SharedTree eliminates the "inventoryItems" trait entirely if the list becomes empty, so we need to guard against
+		// that case before attempting to iterate over its members.
+		if (inventoryItemsNodeIds !== undefined) {
+			for (const inventoryItemNodeId of inventoryItemsNodeIds) {
+				const inventoryItemNode = this.tree.currentView.getViewNode(inventoryItemNodeId);
+				const newInventoryItem =
+					this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
+				this._inventoryItems.set(newInventoryItem.id, newInventoryItem);
+			}
 		}
 	}
 
