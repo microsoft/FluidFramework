@@ -20,6 +20,7 @@ import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { GroupTask } from "./groupTask";
 import { Task } from "./task";
+import { FlubListTask, FlubCheckLayerTask, FlubCheckPolicyTask } from "./leaf/flubTasks";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
@@ -37,6 +38,9 @@ const executableToLeafTask: {
 	"gen-version": GenVerTask,
 	"gf": GoodFence,
 	"api-extractor": ApiExtractorTask,
+	"flub list": FlubListTask,
+	"flub check layers": FlubCheckLayerTask,
+	"flub check policy": FlubCheckPolicyTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
 };

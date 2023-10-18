@@ -123,7 +123,7 @@ export class Package {
 	 * The name of the package including the scope.
 	 */
 	public get name(): string {
-		return this.packageJson.name;
+		return this.isReleaseGroupRoot ? `[group]${this.monoRepo!.kind}` : this.packageJson.name;
 	}
 
 	/**

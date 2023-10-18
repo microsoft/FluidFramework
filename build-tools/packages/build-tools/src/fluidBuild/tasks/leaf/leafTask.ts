@@ -455,7 +455,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
-			if (doneFileExpectedContent) {
+			if (doneFileExpectedContent !== undefined) {
 				const doneFileContent = await readFileAsync(doneFileFullPath, "utf8");
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
@@ -476,7 +476,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * Subclass could override this to provide an alternative done file name
 	 */
 	protected get doneFile(): string {
-		const name = path.parse(this.executable).name;
+		const name = path.parse(this.executable).name.replace(/\s/g, "_");
 		// use 8 char of the sha256 hash of the command to distinguish different tasks
 		const hash = crypto.createHash("sha256").update(this.command).digest("hex").substring(0, 8);
 		return `${name}-${hash}.done.build.log`;
