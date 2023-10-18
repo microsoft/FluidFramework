@@ -71,10 +71,11 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		runtime.on("signal", (message) => {
 			if (message?.type === SignalType.ExternalDataChanged) {
 				const externalTaskListId = (
-					message?.content as
-						| { externalTaskListId?: unknown; taskList?: unknown }
-						| undefined
+					message?.content as { externalTaskListId?: unknown } | undefined
 				)?.externalTaskListId as string;
+				if (externalTaskListId === undefined) {
+					throw new Error("Signal with undefined externalTaskListId");
+				}
 				const taskList = taskListCollection.getTaskList(externalTaskListId);
 				if (taskList === undefined) {
 					throw new Error(

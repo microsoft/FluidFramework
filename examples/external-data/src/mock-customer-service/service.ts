@@ -56,7 +56,7 @@ function echoExternalDataWebhookToFluid(
 	const messageBody: BroadcastSignalBodyInterface = {
 		signalContent: {
 			contents: {
-				content: { taskData, externalTaskListId },
+				content: { externalTaskListId },
 				type: "ExternalDataChanged_V1.0.0",
 			},
 		},
