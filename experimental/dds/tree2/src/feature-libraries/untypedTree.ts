@@ -315,10 +315,10 @@ export interface EditableTreeEvents {
 	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
 	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link Sequence}
 	 * field the following will happen:
-	 *   - {@link beforeChange} will fire once before either new node is present in the tree.
-	 *   - {@link afterChange} will fire once after the first node is present in the tree, but the second one isn't.
-	 *   - {@link beforeChange} will fire once before the second node is present in the tree, but the first one already is.
-	 *   - {@link afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
+	 * - {@link beforeChange} will fire once before either new node is present in the tree.
+	 * - {@link afterChange} will fire once after the first node is present in the tree, but the second one isn't.
+	 * - {@link beforeChange} will fire once before the second node is present in the tree, but the first one already is.
+	 * - {@link afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
 	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
 	 *
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
@@ -342,10 +342,10 @@ export interface EditableTreeEvents {
 	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
 	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link Sequence}
 	 * field the following will happen:
-	 *   - {@link beforeChange} will fire once before either new node is present in the tree.
-	 *   - {@link afterChange} will fire once after the first node is present in the tree, but the second one isn't.
-	 *   - {@link beforeChange} will fire once before the second node is present in the tree, but the first one already is.
-	 *   - {@link afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
+	 * - {@link beforeChange} will fire once before either new node is present in the tree.
+	 * - {@link afterChange} will fire once after the first node is present in the tree, but the second one isn't.
+	 * - {@link beforeChange} will fire once before the second node is present in the tree, but the first one already is.
+	 * - {@link afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
 	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
 	 *
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
