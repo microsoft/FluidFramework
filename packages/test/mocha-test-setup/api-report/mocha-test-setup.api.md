@@ -4,8 +4,6 @@
 
 ```ts
 
-/// <reference types="mocha" />
-
 // @public (undocumented)
 export const mochaHooks: {
     beforeAll(): void;
