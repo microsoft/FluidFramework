@@ -345,6 +345,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				return DiscardResult.Success;
 			},
 		};
+		this.revertibles.add(revertible);
 		return revertible;
 	}
 
