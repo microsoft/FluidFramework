@@ -13,4 +13,5 @@ export {
 	ProxyNodeUnion,
 	SharedTreeMap,
 	SharedTreeObject,
+	ProxyRoot,
 } from "./types";

@@ -472,7 +472,7 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 		}
 
 		const field = this.tryGetField(key);
-		assert(field instanceof LazyNodeKeyField, "unexpected node key field");
+		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
 		// 	field.is(FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),

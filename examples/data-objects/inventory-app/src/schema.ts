@@ -5,7 +5,7 @@
 
 import { SchemaBuilder, TypedField, TypedNode, leaf } from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "inventory app", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "inventory app" });
 
 export const part = builder.struct("Contoso:Part-1.0.0", {
 	name: leaf.string,

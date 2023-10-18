@@ -81,12 +81,18 @@ import {
 import { RemoteChannelContext } from "./remoteChannelContext";
 import { FluidObjectHandle } from "./fluidHandle";
 
+/**
+ * @public
+ */
 export enum DataStoreMessageType {
 	// Creates a new channel
 	Attach = "attach",
 	ChannelOp = "op",
 }
 
+/**
+ * @public
+ */
 export interface ISharedObjectRegistry {
 	// TODO consider making this async. A consequence is that either the creation of a distributed data type
 	// is async or we need a new API to split the synchronous vs. asynchronous creation.
@@ -95,6 +101,8 @@ export interface ISharedObjectRegistry {
 
 /**
  * Base data store class
+ *
+ * @public
  */
 export class FluidDataStoreRuntime
 	extends TypedEventEmitter<IFluidDataStoreRuntimeEvents>
@@ -1114,6 +1122,8 @@ export class FluidDataStoreRuntime
  * Request handler is only called when data store can't resolve request, i.e. for custom requests.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @param requestHandler - request handler to mix in
+ *
+ * @public
  */
 export const mixinRequestHandler = (
 	requestHandler: (request: IRequest, runtime: FluidDataStoreRuntime) => Promise<IResponse>,
@@ -1134,6 +1144,8 @@ export const mixinRequestHandler = (
  * @param handler - handler that returns info about blob to be added to summary.
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
+ *
+ * @public
  */
 export const mixinSummaryHandler = (
 	handler: (

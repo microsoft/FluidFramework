@@ -5,6 +5,6 @@
 "@fluid-experimental/tree2": minor
 ---
 
-Rename "Value" Multiplicity and FieldKind
+tree2: Rename "Value" Multiplicity and FieldKind
 
 `Multiplicity.Value` has been renamed to `Multiplicity.Single` and `FieldKinds.value` has been renamed to `FieldKinds.required`.

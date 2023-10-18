@@ -173,7 +173,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 				if (destination !== undefined) {
 					assert(
 						!this.forest.roots.fields.has(destination),
-						"Destination must be a new empty detached field",
+						0x7af /* Destination must be a new empty detached field */,
 					);
 					if (newField.length > 0) {
 						this.forest.roots.fields.set(destination, newField);
@@ -196,7 +196,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			): void {
 				assert(
 					newContentSource !== oldContentDestination,
-					"Replace detached source field and detached destination field must be different",
+					0x7b0 /* Replace detached source field and detached destination field must be different */,
 				);
 				this.forest.invalidateDependents();
 				this.detachEdit(range, oldContentDestination);

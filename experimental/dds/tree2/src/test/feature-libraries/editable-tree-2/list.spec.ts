@@ -4,11 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { ProxyField, SchemaBuilder, SharedTreeList } from "../../../feature-libraries";
-import { leaf } from "../../../domains";
+import { leaf, SchemaBuilder } from "../../../domains";
+import { ProxyField, SharedTreeList } from "../../../feature-libraries";
 import { createTreeView } from "./utils";
 
-const builder = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "test" });
 
 export const stringList = builder.fieldNode("List<string>", builder.sequence(leaf.string));
 

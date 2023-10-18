@@ -302,7 +302,7 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 	}
 	return isAny
 		? SchemaBuilder.field(fieldKind, Any)
-		: SchemaBuilder.field(fieldKind, ...allowedTypes);
+		: SchemaBuilder.field(fieldKind, [...allowedTypes]);
 }
 
 const builtinBuilder = new SchemaBuilder({

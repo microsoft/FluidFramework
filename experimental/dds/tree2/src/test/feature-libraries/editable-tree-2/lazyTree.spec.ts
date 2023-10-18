@@ -19,7 +19,6 @@ import {
 import {
 	Any,
 	PrimitiveValue,
-	SchemaBuilder,
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
@@ -63,7 +62,7 @@ import {
 import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
-import { leaf as leafDomain } from "../../../domains";
+import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
 import { forestWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
@@ -178,7 +177,6 @@ describe("LazyTree", () => {
 
 		const schemaBuilder = new SchemaBuilder({
 			scope: "testShared",
-			libraries: [leafDomain.library],
 		});
 
 		const fieldNodeOptionalAnySchema = schemaBuilder.fieldNode(
@@ -454,7 +452,7 @@ describe("LazyStruct", () => {
 });
 
 describe("buildLazyStruct", () => {
-	const schemaBuilder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
+	const schemaBuilder = new SchemaBuilder({ scope: "test" });
 	const structNodeSchema = schemaBuilder.struct("struct", {
 		optional: SchemaBuilder.optional(leafDomain.string),
 		required: SchemaBuilder.required(leafDomain.boolean),

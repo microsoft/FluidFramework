@@ -33,9 +33,6 @@ export const SlidingPreference = {
  */
 export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
-/**
- * @internal
- */
 function _validateReferenceType(refType: ReferenceType) {
 	let exclusiveCount = 0;
 	if (refTypeIncludesFlag(refType, ReferenceType.Transient)) {
@@ -194,7 +191,18 @@ export function* filterLocalReferencePositions(
 }
 
 /**
- * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
+ * Injectable hook for validating that the refCount property matches the
+ * expected value
+ */
+let validateRefCount: ((collection?: LocalReferenceCollection) => void) | undefined;
+
+export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection) => void) {
+	validateRefCount = cb;
+}
+
+/**
+ * Represents a collection of {@link LocalReferencePosition}s associated with
+ * one segment in a merge-tree.
  */
 export class LocalReferenceCollection {
 	public static append(seg1: ISegment, seg2: ISegment) {
@@ -212,6 +220,8 @@ export class LocalReferenceCollection {
 			// segments that had no local references. Account for them now by padding the array.
 			seg1.localRefs.refsByOffset.length += seg2.cachedLength;
 		}
+		validateRefCount?.(seg1.localRefs);
+		validateRefCount?.(seg2.localRefs);
 	}
 
 	private readonly refsByOffset: (IRefsAtOffset | undefined)[];
@@ -276,31 +286,8 @@ export class LocalReferenceCollection {
 	 * @remarks This method should only be called by mergeTree.
 	 * @internal
 	 */
-	public clear() {
-		this.refCount = 0;
-		const detachSegments = (refs: List<LocalReference> | undefined) => {
-			if (refs) {
-				for (const r of refs) {
-					this.removeLocalRef(r.data);
-				}
-			}
-		};
-		for (let i = 0; i < this.refsByOffset.length; i++) {
-			const refsAtOffset = this.refsByOffset[i];
-			if (refsAtOffset) {
-				detachSegments(refsAtOffset.before);
-				detachSegments(refsAtOffset.at);
-				detachSegments(refsAtOffset.after);
-				this.refsByOffset[i] = undefined;
-			}
-		}
-	}
-
-	/**
-	 * @remarks This method should only be called by mergeTree.
-	 * @internal
-	 */
 	public get empty() {
+		validateRefCount?.(this);
 		return this.refCount === 0;
 	}
 
@@ -320,6 +307,7 @@ export class LocalReferenceCollection {
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);
 		}
+		validateRefCount?.(this);
 		return ref;
 	}
 
@@ -345,6 +333,7 @@ export class LocalReferenceCollection {
 
 			this.refCount++;
 		}
+		validateRefCount?.(this);
 	}
 
 	/**
@@ -358,9 +347,10 @@ export class LocalReferenceCollection {
 			const node = lref.getListNode();
 			node?.list?.remove(node);
 
-			lref.link(lref.getSegment(), lref.getOffset(), undefined);
+			lref.link(undefined, 0, undefined);
 
 			this.refCount--;
+			validateRefCount?.(this);
 			return lref;
 		}
 	}
@@ -393,6 +383,7 @@ export class LocalReferenceCollection {
 		}
 
 		this.refsByOffset.push(...other.refsByOffset);
+		other.refsByOffset.length = 0;
 	}
 	/**
 	 * Returns true of the local reference is in the collection, otherwise false.
@@ -461,6 +452,7 @@ export class LocalReferenceCollection {
 			// shrink the offset array when empty and splitting
 			this.refsByOffset.length = offset;
 		}
+		validateRefCount?.(this);
 	}
 
 	/**
@@ -495,6 +487,7 @@ export class LocalReferenceCollection {
 				}
 			}
 		}
+		validateRefCount?.(this);
 	}
 	/**
 	 * @remarks This method should only be called by mergeTree.
@@ -525,6 +518,7 @@ export class LocalReferenceCollection {
 				}
 			}
 		}
+		validateRefCount?.(this);
 	}
 
 	/**
