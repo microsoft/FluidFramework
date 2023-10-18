@@ -19,6 +19,8 @@ import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
 
+// To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
+// The final schema object will later be used as an argument to the schematize call.  AB#5967
 const builder = new SchemaBuilder({ scope: "inventory app" });
 
 const inventoryItemSchema = builder.struct("Contoso:InventoryItem-1.0.0", {
@@ -31,9 +33,6 @@ const inventoryItemSchema = builder.struct("Contoso:InventoryItem-1.0.0", {
 });
 type InventoryItemNode = Typed<typeof inventoryItemSchema>;
 
-// REV: Building this up as a series of builder invocations makes it hard to read the schema.
-// Would be nice if instead we could define some single big Serializable or similar that laid the
-// schema out and then pass that in.
 // TODO: Convert this to use builder.list() rather than builder.sequence when ready.
 const inventorySchema = builder.struct("Contoso:Inventory-1.0.0", {
 	inventoryItems: builder.sequence(inventoryItemSchema),
@@ -45,6 +44,7 @@ type InventoryNode = Typed<typeof inventorySchema>;
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 type InventoryField = Typed<typeof inventoryFieldSchema>;
 
+// This call finalizes the schema into an object we can pass to schematize.
 const schema = builder.toDocumentSchema(inventoryFieldSchema);
 
 const newTreeFactory = new TypedTreeFactory({
@@ -75,8 +75,8 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		return this._inventoryItemNode.quantity;
 	}
 	public set quantity(newQuantity: number) {
-		// REV: This still seems surprising to me that it's making the remote change, I think
-		// it would be more apparent as .setContent() rather than using the setter.
+		// Note that modifying the content here is actually changing the data stored in the SharedTree legitimately
+		// (i.e. results in an op sent and changes reflected on all clients).  AB#5970
 		this._inventoryItemNode.boxedQuantity.content = newQuantity;
 	}
 	public constructor(
@@ -84,9 +84,8 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		private readonly _removeItemFromTree: () => void,
 	) {
 		super();
-		// REV: I personally find the deviation from standard EventEmitter API
-		// surprising/unintuitive/inconvenient, in particular here as it requires storing a reference
-		// to the unregister callback.
+		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
+		// but instead "on" returns a callback to unregister the event.  AB#5973
 		this._unregisterChangingEvent = this._inventoryItemNode.on("changing", () => {
 			this.emit("quantityChanged");
 		});
@@ -138,10 +137,15 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			newTreeFactory.type,
 		) as TypedTreeChannel;
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
+		// Convenient repro for bug AB#5975
+		// const retrievedSharedTree = await this._sharedTree.handle.get();
+		// if (this._sharedTree !== retrievedSharedTree) {
+		// 	console.log(this._sharedTree, retrievedSharedTree);
+		// 	throw new Error("handle doesn't roundtrip on initial creation");
+		// }
 	}
 
-	// REV: Have to use initializingFromExisting here rather than hasInitialized due to a bug - getting
-	// the handle on the creating client retrieves the wrong object.
+	// This would usually live in hasInitialized - I'm using initializingFromExisting here due to bug AB#5975.
 	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this._sharedTree = await this.root
@@ -150,8 +154,8 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	}
 
 	protected async hasInitialized(): Promise<void> {
-		// REV: I don't particularly like the combined schematize/initialize.  My preference would be for
-		// separate schematize/initialize calls.
+		// Note that although we always pass initialTree, it's only actually used on the first load and
+		// is ignored on subsequent loads.  AB#5974
 		this._inventory = this.sharedTree.schematize({
 			initialTree: {
 				inventoryItems: [
@@ -170,8 +174,8 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
 		});
-		// REV: This event feels overly-broad for what I'm looking for, but I'm having issues with
-		// more node-specific events ("changing", etc.).
+		// REV: This event feels overly-broad for what I'm looking for - is there a more localized event that
+		// could work?
 		this.inventory.context.on("afterChange", () => {
 			// Since "afterChange" doesn't provide event args, we need to scan the tree and compare
 			// it to our InventoryItems to find what changed.  This event handler fires for any
