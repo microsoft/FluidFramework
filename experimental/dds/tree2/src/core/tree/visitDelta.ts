@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { assert } from "@fluidframework/core-utils";
 
-import { brand } from "../../util";
 import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { NodeIndex, PlaceIndex, Range } from "./pathTree";
@@ -75,8 +75,8 @@ type RootTransfers = Map<
 		 * Used to delete the entry from the tree index once the root is transferred.
 		 * If undefined, the root was created due to an insert.
 		 */
-		nodeId?: Delta.DetachedNodeId;
-		destination: ForestRootId;
+		originId: Delta.DetachedNodeId;
+		destinationId: Delta.DetachedNodeId;
 	}
 >;
 
@@ -101,22 +101,31 @@ function transferRoots(
 	rootChanges: Map<ForestRootId, Delta.FieldsChanges>,
 	detachedFieldIndex: DetachedFieldIndex,
 	visitor: DeltaVisitor,
-) {
-	for (const [source, { nodeId, destination }] of rootTransfers) {
-		rootTransfers.delete(source);
-		const fields = rootChanges.get(source);
-		if (fields !== undefined) {
-			rootChanges.delete(source);
-			rootChanges.set(destination, fields);
+): void {
+	while (rootTransfers.size > 0) {
+		const priorSize = rootTransfers.size;
+		for (const [source, { originId, destinationId }] of rootTransfers) {
+			if (detachedFieldIndex.tryGetEntry(destinationId) !== undefined) {
+				// The destination field is already occupied.
+				// This can happen when its contents also need to be relocated.
+				// We'll try this transfer again on the next pass.
+			} else {
+				rootTransfers.delete(source);
+				const { root: destination } = detachedFieldIndex.createEntry(destinationId);
+				const fields = rootChanges.get(source);
+				if (fields !== undefined) {
+					rootChanges.delete(source);
+					rootChanges.set(destination, fields);
+				}
+				const sourceField = detachedFieldIndex.toFieldKey(source);
+				const destinationField = detachedFieldIndex.toFieldKey(destination);
+				visitor.enterField(sourceField);
+				visitor.detach({ start: 0, end: 1 }, destinationField);
+				visitor.exitField(sourceField);
+				detachedFieldIndex.deleteEntry(originId);
+			}
 		}
-		const sourceField = detachedFieldIndex.toFieldKey(source);
-		const destinationField = detachedFieldIndex.toFieldKey(destination);
-		visitor.enterField(sourceField);
-		visitor.detach({ start: 0, end: 1 }, destinationField);
-		visitor.exitField(sourceField);
-		if (nodeId !== undefined) {
-			detachedFieldIndex.deleteEntry(nodeId);
-		}
+		assert(rootTransfers.size < priorSize, "transferRoots should make progress");
 	}
 }
 
@@ -248,28 +257,6 @@ function offsetDetachId(
 	};
 }
 
-function addRootReplaces(
-	count: number,
-	config: PassConfig,
-	destination: ForestRootId,
-	source: ForestRootId,
-	sourceNodeId?: Delta.DetachedNodeId,
-) {
-	// It's possible for a detached node to be revived transiently such that it ends up back in the same detached field.
-	// Making such a transfer wouldn't just be inefficient, it would lead us to mistakenly think we have moved all content
-	// out of the source detached field, and would lead us to delete the tree index entry for that source detached field.
-	// This would effectively result in the tree index missing an entry for the detached field.
-	// This if statement prevents that from happening.
-	if (source !== destination) {
-		for (let i = 0; i < count; i += 1) {
-			config.rootTransfers.set(brand(source + i), {
-				destination: brand(destination + i),
-				nodeId: offsetDetachId(sourceNodeId, i),
-			});
-		}
-	}
-}
-
 /**
  * Preforms the following:
  * - Performs all root creations
@@ -299,10 +286,23 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 	}
 	if (delta.relocate !== undefined) {
 		for (const { id, count, destination } of delta.relocate) {
-			const { root: sourceRoot } = config.detachedFieldIndex.getOrCreateEntry(id);
-			const { root: destinationRoot } =
-				config.detachedFieldIndex.getOrCreateEntry(destination);
-			addRootReplaces(count, config, destinationRoot, sourceRoot, id);
+			// It's possible for a detached node to be revived transiently such that it ends up back in the same detached field.
+			// Making such a transfer wouldn't just be inefficient, it would lead us to mistakenly think we have moved all content
+			// out of the source detached field, and would lead us to delete the tree index entry for that source detached field.
+			// This would effectively result in the tree index missing an entry for the detached field.
+			// This if statement prevents that from happening.
+			if (id.major !== destination.major || id.minor !== destination.minor) {
+				for (let i = 0; i < count; i += 1) {
+					const originId = offsetDetachId(id, i);
+					const destinationId = offsetDetachId(destination, i);
+					const { root: sourceRoot } =
+						config.detachedFieldIndex.getOrCreateEntry(originId);
+					config.rootTransfers.set(sourceRoot, {
+						originId,
+						destinationId,
+					});
+				}
+			}
 		}
 	}
 	if (delta.attached !== undefined) {

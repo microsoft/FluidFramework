@@ -655,26 +655,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				const content: JsonCompatible[] = [1, 2];
 				initializeForest(forest, content.map(singleJsonCursor));
 
-				const mark: Delta.Mark = {
-					count: 1,
-					attach: buildId,
-					fields: new Map([
-						[
-							brand("newField"),
-							{
-								build: [
-									{
-										id: buildId2,
-										trees: [
-											singleTextCursor({ type: leaf.number.name, value: 4 }),
-										],
-									},
-								],
-								attached: [{ count: 1, attach: buildId2 }],
-							},
-						],
-					]),
-				};
 				const delta: Delta.Root = new Map([
 					[
 						rootFieldKey,
@@ -685,7 +665,31 @@ export function testForest(config: ForestTestConfiguration): void {
 									trees: [singleTextCursor({ type: leaf.number.name, value: 3 })],
 								},
 							],
-							attached: [mark],
+							detached: [
+								{
+									id: buildId,
+									fields: new Map([
+										[
+											brand("newField"),
+											{
+												build: [
+													{
+														id: buildId2,
+														trees: [
+															singleTextCursor({
+																type: leaf.number.name,
+																value: 4,
+															}),
+														],
+													},
+												],
+												attached: [{ count: 1, attach: buildId2 }],
+											},
+										],
+									]),
+								},
+							],
+							attached: [{ count: 1, attach: buildId }],
 						},
 					],
 				]);
