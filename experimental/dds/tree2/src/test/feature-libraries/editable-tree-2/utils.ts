@@ -69,7 +69,7 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 		scope: `test.schema.${Math.random().toString(36).slice(2)}`,
 	});
 	const root = fn(builder);
-	return builder.toDocumentSchema(root);
+	return builder.intoSchema(root);
 }
 
 export function itWithRoot<TRoot extends FieldSchema>(

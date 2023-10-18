@@ -219,7 +219,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.struct("empty", {});
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: {},
 	},
@@ -231,7 +231,7 @@ const tcs: TestCase[] = [
 				number: leaf.number,
 				string: leaf.string,
 			});
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: {
 			boolean: false,
@@ -247,7 +247,7 @@ const tcs: TestCase[] = [
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
 			});
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: {},
 	},
@@ -259,7 +259,7 @@ const tcs: TestCase[] = [
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
 			});
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: {
 			boolean: true,
@@ -277,7 +277,7 @@ const tcs: TestCase[] = [
 				nested: inner,
 			});
 
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: { nested: {} },
 	},
@@ -285,7 +285,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(0)", _.sequence(leaf.string));
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: [],
 	},
@@ -293,7 +293,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(1)", _.sequence(leaf.string));
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: ["A"],
 	},
@@ -301,7 +301,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(2)", _.sequence(leaf.string));
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: ["A", "B"],
 	},
@@ -373,7 +373,7 @@ describe("Object-like", () => {
 			const parent = _.struct("parent", {
 				child,
 			});
-			const schema = _.toDocumentSchema(parent);
+			const schema = _.intoSchema(parent);
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
@@ -398,7 +398,7 @@ describe("Object-like", () => {
 			const parent = _.struct("parent", {
 				child: _.optional(child),
 			});
-			const schema = _.toDocumentSchema(parent);
+			const schema = _.intoSchema(parent);
 
 			const before = { objId: 0 };
 			const after = { objId: 1 };
@@ -424,7 +424,7 @@ describe("Object-like", () => {
 			// const parent = _.struct("parent", {
 			// 	list,
 			// });
-			// const schema = _.toDocumentSchema(parent);
+			// const schema = _.intoSchema(parent);
 			// const before: string[] = [];
 			// const after = ["A"];
 			// itWithRoot(
@@ -445,7 +445,7 @@ describe("Object-like", () => {
 			// const parent = _.struct("parent", {
 			// 	list: _.optional(list),
 			// });
-			// const schema = _.toDocumentSchema(parent);
+			// const schema = _.intoSchema(parent);
 			// const before: string[] = [];
 			// const after = ["A"];
 			// itWithRoot(

@@ -165,7 +165,7 @@ export class SchemaBuilderBase<
 	 * @remarks
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
+	public intoSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
 	): TreeSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
@@ -306,7 +306,7 @@ export class SchemaBuilderBase<
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
 	 * @returns a {@link FieldSchema} which can be used as a struct field (see {@link SchemaBuilderBase.struct}),
-	 * a map field (see {@link SchemaBuilderBase.map}), a field node(see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.toDocumentSchema}).
+	 * a map field (see {@link SchemaBuilderBase.map}), a field node(see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.intoSchema}).
 	 *
 	 * @privateRemarks
 	 * TODO:

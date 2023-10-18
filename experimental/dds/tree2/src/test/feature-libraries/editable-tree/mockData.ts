@@ -249,7 +249,7 @@ export function buildTestSchema<TSchema extends ImplicitFieldSchema>(
 	return new SchemaBuilder({
 		scope: "buildTestSchema",
 		libraries: [personSchemaLibrary],
-	}).toDocumentSchema(rootField);
+	}).intoSchema(rootField);
 }
 
 export function getReadonlyEditableTreeContext(

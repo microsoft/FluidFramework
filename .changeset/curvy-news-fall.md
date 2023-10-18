@@ -4,3 +4,6 @@
 ---
 
 Rename DocumentSchema to TreeSchema
+
+Rename DocumentSchema to TreeSchema.
+Rename toDocumentSchema to intoSchema.
