@@ -14,16 +14,19 @@ import {
 } from "@fluid-experimental/tree2";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
-import { InventoryItem } from "./inventoryItem";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
 
 const builder = new SchemaBuilder({ scope: "inventory app" });
 
 const inventoryItemSchema = builder.struct("Contoso:InventoryItem-1.0.0", {
+	// Some unique identifier appropriate for the inventory scenario (e.g. a UPC or model number)
 	id: builder.string,
+	// A user-friendly name
 	name: builder.string,
+	// The number in stock
 	quantity: builder.number,
 });
 type InventoryItemNode = Typed<typeof inventoryItemSchema>;
@@ -55,6 +58,46 @@ const newTreeFactory = new TypedTreeFactory({
 });
 
 const sharedTreeKey = "sharedTree";
+
+/**
+ * InventoryItem is the local object with the friendly interface for the view to use.
+ * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
+ */
+class InventoryItem extends TypedEmitter<IInventoryItemEvents> implements IInventoryItem {
+	private readonly _unregisterChangingEvent: () => void;
+	public get id() {
+		return this._inventoryItemNode.id;
+	}
+	public get name() {
+		return this._inventoryItemNode.name;
+	}
+	public get quantity() {
+		return this._inventoryItemNode.quantity;
+	}
+	public set quantity(newQuantity: number) {
+		// REV: This still seems surprising to me that it's making the remote change, I think
+		// it would be more apparent as .setContent() rather than using the setter.
+		this._inventoryItemNode.boxedQuantity.content = newQuantity;
+	}
+	public constructor(
+		private readonly _inventoryItemNode: InventoryItemNode,
+		private readonly _removeItemFromTree: () => void,
+	) {
+		super();
+		// REV: I personally find the deviation from standard EventEmitter API
+		// surprising/unintuitive/inconvenient, in particular here as it requires storing a reference
+		// to the unregister callback.
+		this._unregisterChangingEvent = this._inventoryItemNode.on("changing", () => {
+			this.emit("quantityChanged");
+		});
+	}
+	public readonly deleteItem = () => {
+		// TODO: Maybe expose a public dispose() method for disposing the InventoryItem without
+		// modifying the tree?
+		this._unregisterChangingEvent();
+		this._removeItemFromTree();
+	};
+}
 
 export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	private _sharedTree: TypedTreeChannel | undefined;
@@ -128,27 +171,19 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			schema,
 		});
 		// REV: This event feels overly-broad for what I'm looking for, but I'm having issues with
-		// more node-specific events ("changing", etc.).  I also personally find the deviation from
-		// standard EventEmitter API surprising/unintuitive/inconvenient.
+		// more node-specific events ("changing", etc.).
 		this.inventory.context.on("afterChange", () => {
 			// Since "afterChange" doesn't provide event args, we need to scan the tree and compare
 			// it to our InventoryItems to find what changed.  This event handler fires for any
 			// change to the tree, so it needs to handle all possibilities (change, add, remove).
 			for (const inventoryItemNode of this.inventory.inventoryItems) {
-				const upToDateQuantity = inventoryItemNode.quantity;
-				const inventoryItem = this._inventoryItems.get(inventoryItemNode.id);
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.
-				if (inventoryItem === undefined) {
+				if (!this._inventoryItems.has(inventoryItemNode.id)) {
 					const newInventoryItem =
 						this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
 					this._inventoryItems.set(inventoryItemNode.id, newInventoryItem);
 					this.emit("itemAdded");
-				}
-				// If the quantity of our tracking item is different from the tree, then the
-				// quantity must have changed in this change.
-				if (inventoryItem !== undefined && inventoryItem.quantity !== upToDateQuantity) {
-					inventoryItem.handleQuantityUpdate(upToDateQuantity);
 				}
 			}
 
@@ -178,27 +213,14 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	private makeInventoryItemFromInventoryItemNode(
 		inventoryItemNode: InventoryItemNode,
 	): InventoryItem {
-		const setQuantity = (newQuantity: number) => {
-			// REV: This still seems surprising to me that it's making the remote change, I think
-			// it would be more apparent as .setContent() rather than using the setter.
-			inventoryItemNode.boxedQuantity.content = newQuantity;
-		};
-		const deleteItem = () => {
+		const removeItemFromTree = () => {
 			// REV: Is this the best way to do this?  Was hoping for maybe just an inventoryItemNode.delete().
+			// This means I need to either pass in this capability as a callback, or else pass the whole inventory in
+			// to provide access to the removeAt call.
 			this.inventory.inventoryItems.removeAt(inventoryItemNode.parentField.index);
 		};
-		// REV: Per-node events seem buggy (this fires twice per change, presumably for local change + ack?)
-		// inventoryItemNode.on("changing", () => {
-		// 	console.log(`changing: ${inventoryItemNode.quantity}`);
-		// 	inventoryItem.handleQuantityUpdate(inventoryItemNode.quantity);
-		// });
-		return new InventoryItem(
-			inventoryItemNode.id,
-			inventoryItemNode.name,
-			inventoryItemNode.quantity,
-			setQuantity,
-			deleteItem,
-		);
+		const inventoryItem = new InventoryItem(inventoryItemNode, removeItemFromTree);
+		return inventoryItem;
 	}
 }
 
