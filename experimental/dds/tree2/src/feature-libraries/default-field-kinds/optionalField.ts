@@ -441,31 +441,43 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * Creates a change which replaces the field with `newContent`
 	 * @param newContent - the new content for the field
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param id - the ID associated with the change.
+	 * @param changeId - the ID associated with the replacement of the current content.
+	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
 	set(
-		newContent: ITreeCursor | undefined,
+		newContent: ITreeCursor,
 		wasEmpty: boolean,
-		id: ChangesetLocalId,
+		changeId: ChangesetLocalId,
+		buildId: ChangesetLocalId,
 	): OptionalChangeset;
+
+	/**
+	 * Creates a change which clears the field's contents (if any).
+	 * @param wasEmpty - whether the field is empty when creating this change
+	 * @param changeId - the ID associated with the change.
+	 */
+	clear(wasEmpty: boolean, changeId: ChangesetLocalId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
-		newContent: ITreeCursor | undefined,
+		newContent: ITreeCursor,
 		wasEmpty: boolean,
 		id: ChangesetLocalId,
+		buildId: ChangesetLocalId,
 	): OptionalChangeset => ({
 		fieldChange: {
 			id,
-			newContent:
-				newContent === undefined
-					? undefined
-					: {
-							set: jsonableTreeFromCursor(newContent),
-					  },
+			newContent: {
+				set: jsonableTreeFromCursor(newContent),
+				buildId: { localId: buildId },
+			},
 			wasEmpty,
 		},
+	}),
+
+	clear: (wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset => ({
+		fieldChange: { id, wasEmpty },
 	}),
 
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
@@ -520,12 +532,20 @@ export function optionalFieldIntoDelta(
 			};
 		}
 		if (Object.prototype.hasOwnProperty.call(update, "set")) {
-			const content = [singleTextCursor((update as { set: JsonableTree }).set)];
+			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
+			const content = [singleTextCursor(setUpdate.set)];
+			const buildId: Delta.DetachedNodeId = {
+				minor: setUpdate.buildId.localId,
+			};
+			if (setUpdate.buildId.revision !== undefined) {
+				buildId.major = setUpdate.buildId.revision;
+			}
 			return [
 				{
 					type: Delta.MarkType.Insert,
 					...hasNewFieldChanges,
 					...hasOldContent,
+					buildId,
 					content,
 				},
 			];
