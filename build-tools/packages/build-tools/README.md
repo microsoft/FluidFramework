@@ -171,7 +171,7 @@ For example:
 ```
 
 When building release group, by default, it will trigger the task on all the packages within the release group. That also mean
-that scripts at the release group root is not considered.
+that scripts at the release group root are not considered.
 
 Release group root scripts support can be enabled by adding `fluidBuild.tasks` to the release group's `package.json`. `fluid-build`
 will follow the definition if specified for the task, or it will trigger the root script if the script doesn't invoke `fluid-build`.
