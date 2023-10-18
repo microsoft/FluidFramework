@@ -4,7 +4,7 @@
  */
 
 import fetch from "node-fetch";
-import * as fs from "fs/promises";
+import * as fs from "node:fs/promises";
 import { Flags } from "@oclif/core";
 import { Logger } from "@fluidframework/build-tools";
 import { BaseCommand } from "../../base";

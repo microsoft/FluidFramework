@@ -1153,8 +1153,8 @@ leafValue: import("../..").ValueSchema.Number;
 leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
 leafValue: import("../..").ValueSchema.String;
-}>, TreeSchema<"com.fluidframework.json.null", {
-structFields: {};
+}>, TreeSchema<"com.fluidframework.leaf.null", {
+leafValue: import("../..").ValueSchema.Null;
 }>]>;
 }>, () => TreeSchema<"com.fluidframework.json.array", any>, TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("../..").ValueSchema.Number;
@@ -1162,15 +1162,10 @@ leafValue: import("../..").ValueSchema.Number;
 leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
 leafValue: import("../..").ValueSchema.String;
-}>, TreeSchema<"com.fluidframework.json.null", {
-structFields: {};
+}>, TreeSchema<"com.fluidframework.leaf.null", {
+leafValue: import("../..").ValueSchema.Null;
 }>]>;
 };
-}>;
-
-// @alpha @deprecated (undocumented)
-export const jsonBoolean: TreeSchema<"com.fluidframework.leaf.boolean", {
-leafValue: import("../..").ValueSchema.Boolean;
 }>;
 
 // @alpha
@@ -1187,16 +1182,6 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 };
 
 // @alpha (undocumented)
-export const jsonNull: TreeSchema<"com.fluidframework.json.null", {
-structFields: {};
-}>;
-
-// @alpha @deprecated (undocumented)
-export const jsonNumber: TreeSchema<"com.fluidframework.leaf.number", {
-leafValue: import("../..").ValueSchema.Number;
-}>;
-
-// @alpha (undocumented)
 export const jsonObject: TreeSchema<"com.fluidframework.json.object", {
 mapFields: FieldSchema<Optional, readonly [() => TreeSchema<"com.fluidframework.json.object", any>, () => TreeSchema<"com.fluidframework.json.array", {
 structFields: {
@@ -1206,8 +1191,8 @@ leafValue: import("../..").ValueSchema.Number;
 leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
 leafValue: import("../..").ValueSchema.String;
-}>, TreeSchema<"com.fluidframework.json.null", {
-structFields: {};
+}>, TreeSchema<"com.fluidframework.leaf.null", {
+leafValue: import("../..").ValueSchema.Null;
 }>]>;
 };
 }>, TreeSchema<"com.fluidframework.leaf.number", {
@@ -1216,18 +1201,13 @@ leafValue: import("../..").ValueSchema.Number;
 leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
 leafValue: import("../..").ValueSchema.String;
-}>, TreeSchema<"com.fluidframework.json.null", {
-structFields: {};
+}>, TreeSchema<"com.fluidframework.leaf.null", {
+leafValue: import("../..").ValueSchema.Null;
 }>]>;
 }>;
 
 // @alpha (undocumented)
 export const jsonSchema: SchemaLibrary;
-
-// @alpha @deprecated (undocumented)
-export const jsonString: TreeSchema<"com.fluidframework.leaf.string", {
-leafValue: import("../..").ValueSchema.String;
-}>;
 
 // @alpha
 export interface JsonValidator {
@@ -1259,6 +1239,9 @@ export const leaf: {
     handle: TreeSchema<"com.fluidframework.leaf.handle", {
     leafValue: ValueSchema.FluidHandle;
     }>;
+    null: TreeSchema<"com.fluidframework.leaf.null", {
+    leafValue: ValueSchema.Null;
+    }>;
     primitives: readonly [TreeSchema<"com.fluidframework.leaf.number", {
     leafValue: ValueSchema.Number;
     }>, TreeSchema<"com.fluidframework.leaf.boolean", {
@@ -1268,6 +1251,8 @@ export const leaf: {
     }>];
     all: readonly [TreeSchema<"com.fluidframework.leaf.handle", {
     leafValue: ValueSchema.FluidHandle;
+    }>, TreeSchema<"com.fluidframework.leaf.null", {
+    leafValue: ValueSchema.Null;
     }>, TreeSchema<"com.fluidframework.leaf.number", {
     leafValue: ValueSchema.Number;
     }>, TreeSchema<"com.fluidframework.leaf.boolean", {
@@ -1789,6 +1774,10 @@ export class SchemaBuilder<TScope extends string = string> extends SchemaBuilder
     leafValue: import("..").ValueSchema.FluidHandle;
     }>;
     // (undocumented)
+    readonly null: TreeSchema<"com.fluidframework.leaf.null", {
+    leafValue: import("..").ValueSchema.Null;
+    }>;
+    // (undocumented)
     readonly number: TreeSchema<"com.fluidframework.leaf.number", {
     leafValue: import("..").ValueSchema.Number;
     }>;
@@ -2206,6 +2195,7 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
     [ValueSchema.String]: string;
     [ValueSchema.Boolean]: boolean;
     [ValueSchema.FluidHandle]: IFluidHandle;
+    [ValueSchema.Null]: null;
 }[TSchema]
 ][_InlineTrick];
 
@@ -2300,6 +2290,7 @@ type TypedValue<TValue extends ValueSchema> = {
     [ValueSchema.String]: string;
     [ValueSchema.Boolean]: boolean;
     [ValueSchema.FluidHandle]: IFluidHandle;
+    [ValueSchema.Null]: null;
 }[TValue];
 
 // @alpha
@@ -2468,6 +2459,8 @@ export enum ValueSchema {
     Boolean = 2,
     // (undocumented)
     FluidHandle = 3,
+    // (undocumented)
+    Null = 4,
     // (undocumented)
     Number = 0,
     // (undocumented)

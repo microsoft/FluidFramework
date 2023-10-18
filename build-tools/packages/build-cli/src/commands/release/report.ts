@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 import { ux, Flags, Command } from "@oclif/core";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import chalk from "chalk";
 import { differenceInBusinessDays, formatDistanceToNow } from "date-fns";
 import { writeJson } from "fs-extra";
 import inquirer from "inquirer";
-import path from "path";
+import path from "node:path";
 import sortJson from "sort-json";
 import { table } from "table";
 

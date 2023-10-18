@@ -8,13 +8,9 @@ export { SchemaBuilder } from "./schemaBuilder";
 export {
 	cursorToJsonObject,
 	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
 	jsonObject,
 	jsonRoot,
 	jsonSchema,
-	jsonString,
 	singleJsonCursor,
 } from "./json";
 

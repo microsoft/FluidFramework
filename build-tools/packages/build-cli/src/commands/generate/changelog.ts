@@ -7,7 +7,7 @@ import { Package, FluidRepo } from "@fluidframework/build-tools";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
@@ -97,7 +97,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			  [context.fullPackageMap.get(releaseGroup)!];
 
-		const installed = await FluidRepo.ensureInstalled(packagesToCheck, true);
+		const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 
 		if (!installed) {
 			this.error(`Error installing dependencies for: ${releaseGroup}`);

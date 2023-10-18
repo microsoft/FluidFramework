@@ -5,7 +5,7 @@
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
 
-import { jsonObject, jsonString, singleJsonCursor } from "../../domains";
+import { jsonObject, leaf, singleJsonCursor } from "../../domains";
 import {
 	rootFieldKey,
 	UpPath,
@@ -204,7 +204,7 @@ describe("Editing", () => {
 				.insert(0, singleTextCursor({ type: jsonObject.name, fields: { foo: [] } }));
 
 			const aEditor = tree3.editor.sequenceField({ parent: rootNode, field: brand("foo") });
-			aEditor.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+			aEditor.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
 
 			tree1.merge(tree2, false);
 			tree1.merge(tree3, false);
@@ -443,7 +443,7 @@ describe("Editing", () => {
 
 			const parent = { parent: undefined, parentField: rootFieldKey, parentIndex: 1 };
 			const editor = tree1.editor.valueField({ parent, field: brand("foo") });
-			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
+			editor.set(singleTextCursor({ type: leaf.string.name, value: "C" }));
 
 			// Move B before A.
 			tree2.editor.move(rootField, 1, 1, rootField, 0);
@@ -464,7 +464,7 @@ describe("Editing", () => {
 			tree1.editor.move(rootField, 1, 1, rootField, 0);
 
 			const editor = tree1.editor.valueField({ parent: rootNode, field: brand("foo") });
-			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
+			editor.set(singleTextCursor({ type: leaf.string.name, value: "C" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -489,7 +489,7 @@ describe("Editing", () => {
 				parent: { parent: fooList, parentField: brand(""), parentIndex: 0 },
 				field: brand("baz"),
 			});
-			editor.set(singleTextCursor({ type: jsonString.name, value: "C" }));
+			editor.set(singleTextCursor({ type: leaf.string.name, value: "C" }));
 
 			// Move A after B.
 			tree2.editor.move(
@@ -984,9 +984,9 @@ describe("Editing", () => {
 			tree.transaction.start();
 			// inserts nodes to move
 			const field = tree.editor.sequenceField({ parent: fooList, field: brand("") });
-			field.insert(0, singleTextCursor({ type: jsonString.name, value: "C" }));
-			field.insert(0, singleTextCursor({ type: jsonString.name, value: "B" }));
-			field.insert(0, singleTextCursor({ type: jsonString.name, value: "A" }));
+			field.insert(0, singleTextCursor({ type: leaf.string.name, value: "C" }));
+			field.insert(0, singleTextCursor({ type: leaf.string.name, value: "B" }));
+			field.insert(0, singleTextCursor({ type: leaf.string.name, value: "A" }));
 			// Move nodes from foo into bar.
 			tree.editor.move(
 				{ parent: fooList, field: brand("") },
@@ -1407,7 +1407,7 @@ describe("Editing", () => {
 
 			tree1.editor
 				.valueField({ parent: nodeB, field: brand("baz") })
-				.set(singleTextCursor({ type: jsonString.name, value: "b" }));
+				.set(singleTextCursor({ type: leaf.string.name, value: "b" }));
 			tree2.editor.sequenceField({ parent: foo1, field: brand("bar") }).delete(0, 1);
 
 			tree.merge(tree1, false);
@@ -1486,7 +1486,7 @@ describe("Editing", () => {
 				parent: rootNode,
 				field: brand("foo"),
 			});
-			field.insert(1, [singleTextCursor({ type: jsonString.name, value: "C" })]);
+			field.insert(1, [singleTextCursor({ type: leaf.string.name, value: "C" })]);
 			assert.equal(valueAfterInsert, "C");
 			unsubscribePathVisitor();
 		});
@@ -1712,7 +1712,7 @@ describe("Editing", () => {
 			tree2.editor.optionalField(rootField).set(singleJsonCursor({ foo: "42" }), true);
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
-			editor.set(singleTextCursor({ type: jsonString.name, value: "43" }));
+			editor.set(singleTextCursor({ type: leaf.string.name, value: "43" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -1732,7 +1732,7 @@ describe("Editing", () => {
 				.set(singleJsonCursor("456"), false);
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
-			editor.set(singleTextCursor({ type: jsonString.name, value: "42" }));
+			editor.set(singleTextCursor({ type: leaf.string.name, value: "42" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -1749,7 +1749,7 @@ describe("Editing", () => {
 			tree1.undo();
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
-			editor.set(singleTextCursor({ type: jsonString.name, value: "42" }));
+			editor.set(singleTextCursor({ type: leaf.string.name, value: "42" }));
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);
@@ -1873,7 +1873,7 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				treeSequence.insert(0, singleTextCursor({ type: jsonString.name, value: "bar" }));
+				treeSequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "bar" }));
 
 				const tree2 = tree.fork();
 
@@ -1909,7 +1909,7 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				treeSequence.insert(0, singleTextCursor({ type: jsonString.name, value: "bar" }));
+				treeSequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "bar" }));
 
 				const tree2 = tree.fork();
 
@@ -1924,7 +1924,7 @@ describe("Editing", () => {
 					parentIndex: 0,
 				});
 				const tree2Sequence = tree2.editor.sequenceField(rootField);
-				tree2Sequence.insert(1, singleTextCursor({ type: jsonString.name, value: "b" }));
+				tree2Sequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "b" }));
 				tree2.transaction.commit();
 
 				tree.merge(tree2, false);
@@ -1954,7 +1954,7 @@ describe("Editing", () => {
 				// Should not be inserted because b has been concurrently deleted
 				tree2RootSequence.insert(
 					0,
-					singleTextCursor({ type: jsonString.name, value: "c" }),
+					singleTextCursor({ type: leaf.string.name, value: "c" }),
 				);
 				tree2.transaction.commit();
 
@@ -1982,7 +1982,7 @@ describe("Editing", () => {
 				tree2.transaction.start();
 				tree2.editor.addNodeExistsConstraint(bPath);
 				const sequence = tree2.editor.sequenceField(rootField);
-				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "c" }));
+				sequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "c" }));
 				tree2.transaction.commit();
 
 				tree.merge(tree2, false);
@@ -1999,7 +1999,7 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
+				optional.set(singleTextCursor({ type: leaf.string.name, value: "x" }), true);
 
 				const tree2 = tree.fork();
 
@@ -2032,7 +2032,7 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				optional.set(singleTextCursor({ type: jsonString.name, value: "x" }), true);
+				optional.set(singleTextCursor({ type: leaf.string.name, value: "x" }), true);
 
 				const tree2 = tree.fork();
 
@@ -2063,14 +2063,14 @@ describe("Editing", () => {
 				// Insert "a"
 				// State should be: ["a"]
 				const sequence = tree.editor.sequenceField(rootField);
-				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+				sequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
 
 				// Insert "b" after "a" with constraint that "a" exists.
 				// State should be: ["a", "b"]
 				tree.transaction.start();
 				tree.editor.addNodeExistsConstraint(rootNode);
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(1, singleTextCursor({ type: jsonString.name, value: "b" }));
+				rootSequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "b" }));
 				tree.transaction.commit();
 
 				// Make a concurrent edit to rebase over that inserts into root sequence
@@ -2078,7 +2078,7 @@ describe("Editing", () => {
 				const tree2RootSequence = tree2.editor.sequenceField(rootField);
 				tree2RootSequence.insert(
 					0,
-					singleTextCursor({ type: jsonString.name, value: "c" }),
+					singleTextCursor({ type: leaf.string.name, value: "c" }),
 				);
 
 				tree.merge(tree2, false);
@@ -2098,7 +2098,7 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+				sequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
 
 				tree.editor.addNodeExistsConstraint({
 					parent: rootNode,
@@ -2106,13 +2106,13 @@ describe("Editing", () => {
 					parentIndex: 0,
 				});
 				const rootSequence = tree.editor.sequenceField(rootField);
-				rootSequence.insert(1, singleTextCursor({ type: jsonString.name, value: "b" }));
+				rootSequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "b" }));
 				tree.transaction.commit();
 
 				// Insert "c" concurrently so that we rebase over something
 				// State should be (to tree2): [{}, "c"]
 				const tree2Sequence = tree2.editor.sequenceField(rootField);
-				tree2Sequence.insert(1, singleTextCursor({ type: jsonString.name, value: "c" }));
+				tree2Sequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "c" }));
 
 				tree.merge(tree2, false);
 				tree2.rebaseOnto(tree);
@@ -2138,7 +2138,7 @@ describe("Editing", () => {
 					parent: rootNode,
 					field: brand("foo"),
 				});
-				sequence.insert(0, singleTextCursor({ type: jsonString.name, value: "a" }));
+				sequence.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
 
 				tree2.editor.addNodeExistsConstraint({
 					parent: rootNode,
@@ -2146,7 +2146,7 @@ describe("Editing", () => {
 					parentIndex: 0,
 				});
 				const rootSequence = tree2.editor.sequenceField(rootField);
-				rootSequence.insert(1, singleTextCursor({ type: jsonString.name, value: "b" }));
+				rootSequence.insert(1, singleTextCursor({ type: leaf.string.name, value: "b" }));
 				tree2.transaction.commit();
 
 				tree.merge(tree2);
@@ -2248,7 +2248,7 @@ describe("Editing", () => {
 				const tree2RootSequence = tree2.editor.sequenceField(rootField);
 				tree2RootSequence.insert(
 					2,
-					singleTextCursor({ type: jsonString.name, value: "b" }),
+					singleTextCursor({ type: leaf.string.name, value: "b" }),
 				);
 				tree2.transaction.commit();
 

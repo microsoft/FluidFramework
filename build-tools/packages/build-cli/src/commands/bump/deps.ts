@@ -234,7 +234,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 		if (updatedPackages.length > 0) {
 			if (shouldInstall) {
-				if (!(await FluidRepo.ensureInstalled(updatedPackages, false))) {
+				if (!(await FluidRepo.ensureInstalled(updatedPackages))) {
 					this.error("Install failed.");
 				}
 			} else {

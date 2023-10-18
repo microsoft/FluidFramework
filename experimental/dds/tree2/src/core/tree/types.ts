@@ -124,6 +124,8 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 		[ValueSchema.String]: string;
 		[ValueSchema.Boolean]: boolean;
 		[ValueSchema.FluidHandle]: IFluidHandle;
+		// eslint-disable-next-line @rushstack/no-new-null
+		[ValueSchema.Null]: null;
 	}[TSchema],
 ][_InlineTrick];
 

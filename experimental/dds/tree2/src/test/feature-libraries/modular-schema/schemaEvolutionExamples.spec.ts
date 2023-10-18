@@ -229,6 +229,7 @@ describe("Schema Evolution Examples", () => {
 			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean));
 			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string));
 			assert(stored.tryUpdateTreeSchema(leaf.handle.name, leaf.handle));
+			assert(stored.tryUpdateTreeSchema(leaf.null.name, leaf.null));
 
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.

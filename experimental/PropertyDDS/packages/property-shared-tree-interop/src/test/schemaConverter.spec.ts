@@ -301,8 +301,8 @@ describe("schema converter", () => {
 				],
 			);
 
-			// 61 types (all types (including built in leaf types), their arrays and maps)
-			assert.equal(fullSchemaData.treeSchema.size, 61);
+			// 62 types (all types (including built in leaf types), their arrays and maps)
+			assert.equal(fullSchemaData.treeSchema.size, 62);
 			const nodePropertySchemaLookedUp = fullSchemaData.treeSchema.get(
 				brand("com.fluidframework.PropertyDDSBuiltIn.NodeProperty"),
 			);
