@@ -18,6 +18,7 @@
 		"server.js"
 	],
 	"scripts": {
+		"clean": "rimraf --glob nyc",
 		"coverage": "run-s -c init:default coverage:all term",
 		"coverage:all": "c8 mocha",
 		"coverage:basic": "RANDOMIZE_FILE_ORDER=1 nyc --report-dir coverage/basic mocha --opts test/basic/mocha.opts",
@@ -36,8 +37,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"clean": "rimraf --glob 'nyc'"
+		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
 		"report-dir": "nyc/report",
