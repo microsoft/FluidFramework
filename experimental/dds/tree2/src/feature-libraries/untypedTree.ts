@@ -332,7 +332,7 @@ export interface EditableTreeEvents {
 	 * @param upPath - The path (upward) corresponding to the location of the node raising the event. Note that this is not
 	 * necessarily the node that changed; the change could be in a descendant of the node the `upPath` points to.
 	 *
-	 * * @remarks
+	 * @remarks
 	 * What exactly qualifies as a change that triggers this event (or {@link beforeChange}) is dependent on the
 	 * implementation of SharedTree. In general, these events will fire once for every atomic editing operation supported
 	 * by SharedTree; {@link beforeChange} before the change is applied, and {@link afterChange} after it is.
