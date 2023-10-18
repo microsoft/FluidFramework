@@ -131,7 +131,7 @@ const testCases: {
 		initialState: [{ child: "x" }],
 		editedState: [],
 		undoState: [{}],
-		// TODO: when acting on the view, the undo state is [{ child: "x" }]
+		// TODO:#5111 unskip once inserts and removes under removed nodes are supported
 		skip: true,
 	},
 ];
