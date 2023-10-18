@@ -55,7 +55,7 @@ export interface IParsedUrl {
  * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  */
-export function parseIResolvedUrlUrlIntoParts(url: string): IParsedUrl | undefined {
+export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = parse(url, true);
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
