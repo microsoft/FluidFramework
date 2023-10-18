@@ -11,8 +11,13 @@ import { GitRepo } from "../../../common/gitRepo";
 export class FlubListTask extends LeafWithDoneFileTask {
 	private getResourceGroup() {
 		const split = this.command.split(" ");
-		const index = split.indexOf("-g");
-		return index >= 0 ? split[index + 1] : undefined;
+		for (let i = 0; i < split.length; i++) {
+			const arg = split[i];
+			if (arg === "-g" || arg === "--releaseGroup") {
+				return split[i + 1];
+			}
+		}
+		return undefined;
 	}
 	public async getDoneFileContent(): Promise<string | undefined> {
 		const resourceGroup = this.getResourceGroup();
