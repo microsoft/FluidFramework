@@ -306,19 +306,20 @@ export interface EditableTreeEvents {
 	 * necessarily the node that is about to change; the change could be in a descendant of the node the `upPath` points to.
 	 *
 	 * @remarks
-	 * What exactly qualifies as a change that triggers this event (or {@link afterChange}) is dependent on the
-	 * implementation of SharedTree. In general, these events will fire once for every atomic editing operation supported
-	 * by SharedTree; {@link beforeChange} before the change is applied, and {@link afterChange} after it is.
+	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.afterChange}) is dependent
+	 * on the implementation of SharedTree. In general, these events will fire once for every atomic editing operation
+	 * supported by SharedTree; {@link EditableTreeEvents.beforeChange} before the change is applied, and
+	 * {@link EditableTreeEvents.afterChange} after it is.
 	 *
 	 * {@link Sequence} fields present two exceptions:
 	 *
 	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
 	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link Sequence}
 	 * field the following will happen:
-	 * - {@link beforeChange} will fire once before either new node is present in the tree.
-	 * - {@link afterChange} will fire once after the first node is present in the tree, but the second one isn't.
-	 * - {@link beforeChange} will fire once before the second node is present in the tree, but the first one already is.
-	 * - {@link afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
+	 * - {@link EditableTreeEvents.beforeChange} will fire once before either new node is present in the tree.
+	 * - {@link EditableTreeEvents.afterChange} will fire once after the first node is present in the tree, but the second one isn't.
+	 * - {@link EditableTreeEvents.beforeChange} will fire once before the second node is present in the tree, but the first one already is.
+	 * - {@link EditableTreeEvents.afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
 	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
 	 *
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
@@ -333,19 +334,20 @@ export interface EditableTreeEvents {
 	 * necessarily the node that changed; the change could be in a descendant of the node the `upPath` points to.
 	 *
 	 * @remarks
-	 * What exactly qualifies as a change that triggers this event (or {@link beforeChange}) is dependent on the
-	 * implementation of SharedTree. In general, these events will fire once for every atomic editing operation supported
-	 * by SharedTree; {@link beforeChange} before the change is applied, and {@link afterChange} after it is.
+	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.beforeChange}) is dependent
+	 * on the implementation of SharedTree. In general, these events will fire once for every atomic editing operation supported
+	 * by SharedTree; {@link EditableTreeEvents.beforeChange} before the change is applied, and
+	 * {@link EditableTreeEvents.afterChange} after it is.
 	 *
 	 * {@link Sequence} fields present two exceptions:
 	 *
 	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
 	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link Sequence}
 	 * field the following will happen:
-	 * - {@link beforeChange} will fire once before either new node is present in the tree.
-	 * - {@link afterChange} will fire once after the first node is present in the tree, but the second one isn't.
-	 * - {@link beforeChange} will fire once before the second node is present in the tree, but the first one already is.
-	 * - {@link afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
+	 * - {@link EditableTreeEvents.beforeChange} will fire once before either new node is present in the tree.
+	 * - {@link EditableTreeEvents.afterChange} will fire once after the first node is present in the tree, but the second one isn't.
+	 * - {@link EditableTreeEvents.beforeChange} will fire once before the second node is present in the tree, but the first one already is.
+	 * - {@link EditableTreeEvents.afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
 	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
 	 *
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
