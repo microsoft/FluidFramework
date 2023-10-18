@@ -158,8 +158,10 @@ export class SharedTree
 		});
 		this.viewForSummarization = this.view;
 
+		// If the attach summary is requested when there's a pending transaction, we need to load from the state before
+		// that transaction was open (else other clients will load from the intermediate state of the transaction).
+		// We guarantee this by forking the view we should use to summarize if a transaction is opened while detached.
 		let activeTransactionCount = 0;
-
 		const beginTransaction = () => {
 			if (activeTransactionCount === 0) {
 				this.viewForSummarization = this.view.fork();

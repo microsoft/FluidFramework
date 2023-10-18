@@ -2093,11 +2093,8 @@ export function toDownPath(upPath: UpPath): DownPath;
 
 // @alpha
 export interface TransactionEvents {
-    // (undocumented)
     abort(): void;
-    // (undocumented)
     commit(): void;
-    // (undocumented)
     start(): void;
 }
 

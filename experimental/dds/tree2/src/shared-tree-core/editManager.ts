@@ -333,7 +333,12 @@ export class EditManager<
 		// B) The contents of such a branch should be computed on demand based on the trunk.
 		// Note that option (A) would be a simple change to `addSequencedChange` whereas (B) would likely require
 		// rebasing trunk changes over the inverse of trunk changes.
-		// TODO: update w.r.t above comment
+		//
+		// We tolerate mismatch between the trunk and the local branch in the case where the local branch is transacting;
+		// this should only ever happen if an attach summary is generated while the application has an open transaction.
+		// In this case, it's also correct to not include local branch changes in the attach summary, since other clients
+		// should load from the state prior to opening the transaction (i.e. they should not see intermediate edits made
+		// as part of the transaction).
 		assert(
 			this.localBranch.getHead() === this.trunk.getHead() || this.localBranch.isTransacting(),
 			0x428 /* Clients with local changes cannot be used to generate summaries */,

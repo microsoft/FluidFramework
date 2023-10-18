@@ -329,10 +329,25 @@ export interface ITransaction {
  * @alpha
  */
 export interface TransactionEvents {
+	/**
+	 * A transaction is about to be opened.
+	 *
+	 * @remarks - This fires for nested transactions as well.
+	 */
 	start(): void;
 
+	/**
+	 * A transaction was just committed.
+	 *
+	 * @remarks - There may still be an outer transaction in progress if the committed transaction was nested.
+	 */
 	commit(): void;
 
+	/**
+	 * A transaction was just aborted.
+	 *
+	 * @remarks - There may still be an outer transaction in progress if the aborted transaction was nested.
+	 */
 	abort(): void;
 }
 
@@ -349,15 +364,15 @@ class Transaction implements ITransaction {
 		this.branch.editor.enterTransaction();
 	}
 	public commit(): TransactionResult.Commit {
-		this.events.emit("commit");
 		this.branch.commitTransaction();
 		this.branch.editor.exitTransaction();
+		this.events.emit("commit");
 		return TransactionResult.Commit;
 	}
 	public abort(): TransactionResult.Abort {
-		this.events.emit("abort");
 		this.branch.abortTransaction();
 		this.branch.editor.exitTransaction();
+		this.events.emit("abort");
 		return TransactionResult.Abort;
 	}
 	public inProgress(): boolean {

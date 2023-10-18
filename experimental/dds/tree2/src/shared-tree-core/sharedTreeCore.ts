@@ -119,7 +119,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
 
 	/**
-	 * @param getSummarizables - Summarizers for all indexes used by this tree TODO update doc
+	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
 	 * @param id - The id of the shared object
