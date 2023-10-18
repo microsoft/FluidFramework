@@ -6,11 +6,11 @@ import { strict as assert } from "assert";
 
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
-import { FieldKinds, SchemaBuilder } from "../../../feature-libraries";
+import { FieldKinds } from "../../../feature-libraries";
 import { TypedTreeFactory } from "../../../typed-tree";
 import { ForestType } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
-import { AllowedUpdateType, leaf } from "../../..";
+import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
