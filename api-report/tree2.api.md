@@ -1007,6 +1007,9 @@ interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @alpha
+export function is<TSchema extends StructSchema>(x: unknown, schema: TSchema): x is SharedTreeObject<TSchema>;
+
+// @alpha
 type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @alpha
@@ -1052,7 +1055,7 @@ export interface ISharedTreeView extends AnchorLocator {
     redo(): void;
     get root(): UnwrappedEditableField;
     // (undocumented)
-    root2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>): any;
+    root2<TRoot extends FieldSchema>(viewSchema: TypedSchemaCollection<TRoot>): ProxyField<TRoot>;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     // @deprecated (undocumented)
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
@@ -1506,6 +1509,13 @@ type NormalizeStructFieldsInner<T extends Fields> = {
 };
 
 // @alpha
+export type ObjectFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>, API extends "javaScript" | "sharedTree" = "sharedTree"> = {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: ProxyField<TFields[key], API>;
+} & {
+    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: ProxyField<TFields[key], API>;
+};
+
+// @alpha
 type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<MapKey, MapValue> & {
     get<TKey extends keyof ObjectMap>(key: TKey): ObjectMap[TKey];
 };
@@ -1624,6 +1634,20 @@ type ProtoNode = ITreeCursorSynchronous;
 
 // @alpha
 type ProtoNodes = readonly ProtoNode[];
+
+// @alpha
+export type ProxyField<TSchema extends FieldSchema, API extends "javaScript" | "sharedTree" = "sharedTree", Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty"> = ProxyFieldInner<TSchema["kind"], TSchema["allowedTypes"], API, Emptiness>;
+
+// @alpha
+export type ProxyFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree", Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? never : Kind extends typeof FieldKinds.required ? ProxyNodeUnion<TTypes, API> : Kind extends typeof FieldKinds.optional ? ProxyNodeUnion<TTypes, API> | (Emptiness extends "notEmpty" ? never : undefined) : unknown;
+
+// @alpha
+export type ProxyNode<TSchema extends TreeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? API extends "sharedTree" ? SharedTreeMap<TSchema> : Map<string, ProxyField<TSchema["mapFields"], API>> : TSchema extends FieldNodeSchema ? API extends "sharedTree" ? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API> : readonly ProxyNodeUnion<TSchema["structFieldsObject"][""]["allowedTypes"], API>[] : TSchema extends StructSchema ? SharedTreeObject<TSchema, API> : unknown;
+
+// @alpha
+export type ProxyNodeUnion<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> = TTypes extends readonly [Any] ? unknown : {
+    [Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<infer InnerType> ? InnerType extends TreeSchema ? ProxyNode<InnerType, API> : never : never;
+}[number];
 
 // @alpha
 export const proxyTargetSymbol: unique symbol;
@@ -1935,6 +1959,26 @@ export class SharedTreeFactory implements IChannelFactory {
     // (undocumented)
     type: string;
 }
+
+// @alpha
+export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
+    insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
+    insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+    insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+    moveToEnd(sourceStart: number, sourceEnd: number): void;
+    moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence2<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    moveToStart(sourceStart: number, sourceEnd: number): void;
+    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence2<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    removeAt(index: number): void;
+    removeRange(start?: number, end?: number): void;
+}
+
+// @alpha
+export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
+
+// @alpha
+export type SharedTreeObject<TSchema extends StructSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["structFieldsObject"], API>;
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {

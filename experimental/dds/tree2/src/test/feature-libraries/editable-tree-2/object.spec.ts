@@ -32,7 +32,7 @@ function testObjectLike(testCases: TestCase[]) {
 			for (const { schema, initialTree } of testCases) {
 				const view = createTreeView(schema, initialTree);
 				const real = structuredClone(initialTree);
-				const proxy = view.root2(schema);
+				const proxy = view.root2(schema) as object;
 
 				const expected = fn(real);
 

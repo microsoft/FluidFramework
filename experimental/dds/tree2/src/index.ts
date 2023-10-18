@@ -279,6 +279,15 @@ export {
 	schemaIsFieldNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
 } from "./feature-libraries";
 
 export {
