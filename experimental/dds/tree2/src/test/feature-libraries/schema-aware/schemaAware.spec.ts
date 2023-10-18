@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { AllowedUpdateType, TreeSchemaIdentifier } from "../../../core";
+import { AllowedUpdateType, TreeNodeSchemaIdentifier } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -29,7 +29,7 @@ import {
 	typeNameSymbol,
 	ContextuallyTypedNodeDataObject,
 	UntypedTreeCore,
-	TreeSchema,
+	TreeNodeSchema,
 	FieldSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
@@ -41,7 +41,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
 {
-	type BrandedName = "X" & TreeSchemaIdentifier;
+	type BrandedName = "X" & TreeNodeSchemaIdentifier;
 	type Unbranded = UnbrandedName<BrandedName>;
 	type _check = requireTrue<areSafelyAssignable<Unbranded, "X">>;
 }
@@ -93,7 +93,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	{
 		// Recursive objects don't get this type checking automatically, so confirm it
-		type _check = requireAssignableTo<typeof boxSchema, TreeSchema>;
+		type _check = requireAssignableTo<typeof boxSchema, TreeNodeSchema>;
 	}
 
 	type x = typeof numberSchema.name;
@@ -256,7 +256,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
 			type _check4 = requireAssignableTo<
 				ChildSchemaTypes,
-				InternalTypedSchemaTypes.FlexList<TreeSchema>
+				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 			>;
 			type NormalizedChildSchemaTypes =
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
@@ -292,7 +292,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 		{
 			// Recursive objects don't get this type checking automatically, so confirm it
-			type _check1 = requireAssignableTo<RecObjectSchema, TreeSchema>;
+			type _check1 = requireAssignableTo<RecObjectSchema, TreeNodeSchema>;
 			type _check2 = requireAssignableTo<RecFieldSchema, FieldSchema>;
 		}
 
@@ -368,7 +368,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
 			type _check4 = requireAssignableTo<
 				ChildSchemaTypes,
-				InternalTypedSchemaTypes.FlexList<TreeSchema>
+				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 			>;
 			type NormalizedChildSchemaTypes =
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
@@ -462,7 +462,7 @@ describe("SchemaAware Editing", () => {
 		const rootNodeSchema = builder.struct("Test", {
 			children: SchemaBuilder.sequence(leaf.string),
 		});
-		const schema = builder.toDocumentSchema(
+		const schema = builder.intoSchema(
 			FieldSchema.create(FieldKinds.required, [rootNodeSchema]),
 		);
 		const view = createSharedTreeView().schematize({

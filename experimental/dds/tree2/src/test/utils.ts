@@ -84,8 +84,8 @@ import {
 	TreeSchemaBuilder,
 	treeSchema,
 	FieldUpPath,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
@@ -624,7 +624,7 @@ const jsonSequenceRootField = SchemaBuilder.sequence(jsonRoot);
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).toDocumentSchema(jsonSequenceRootField);
+}).intoSchema(jsonSequenceRootField);
 
 export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
 	schema: jsonSequenceRootSchema,
@@ -875,11 +875,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
  */
 export function namedTreeSchema(
 	data: TreeSchemaBuilder & Named<string>,
-): Named<TreeSchemaIdentifier> & TreeStoredSchema {
+): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),
@@ -900,7 +900,7 @@ export const wrongSchema = new SchemaBuilder({
 	lint: {
 		rejectEmpty: false,
 	},
-}).toDocumentSchema(SchemaBuilder.sequence(Any));
+}).intoSchema(SchemaBuilder.sequence(Any));
 
 /**
  * Schematize config Schema which is not correct.

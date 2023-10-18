@@ -10,7 +10,7 @@ import {
 	FieldKinds,
 	FieldSchema,
 	Sequence,
-	TreeSchema,
+	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
 } from "../../feature-libraries";
@@ -128,7 +128,7 @@ describe("domains - SchemaBuilder", () => {
 				>;
 
 				// Not cached for structural use
-				assert((builder.list(builder.number) as TreeSchema) !== list);
+				assert((builder.list(builder.number) as TreeNodeSchema) !== list);
 				// Creating again errors instead or reuses
 				assert.throws(() => builder.list("Foo", builder.number));
 			});

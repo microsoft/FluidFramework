@@ -11,7 +11,7 @@ import {
 	valueSymbol,
 	Multiplicity,
 	FieldSchema,
-	TreeSchema,
+	TreeNodeSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
 } from "../../..";
@@ -96,12 +96,12 @@ export type EditableSequenceField<TypedChild> = UntypedSequenceField & MarkedArr
  * @alpha
  */
 export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
-	T extends InternalTypedSchemaTypes.FlexList<TreeSchema>
+	T extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 		? InternalTypedSchemaTypes.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
 					Assume<
 						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>,
-						readonly TreeSchema[]
+						readonly TreeNodeSchema[]
 					>
 				>
 		  >
@@ -109,14 +109,14 @@ export type AllowedTypesToTypedTrees<T extends AllowedTypes> = [
 ][_InlineTrick];
 
 /**
- * Takes in `TreeSchema[]` and returns a TypedTree union.
+ * Takes in `TreeNodeSchema[]` and returns a TypedTree union.
  * @alpha
  */
-export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
+export type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<Assume<Head, TreeSchema>>,
-				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeSchema[]>>,
+				TypedNode<Assume<Head, TreeNodeSchema>>,
+				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeNodeSchema[]>>,
 		  ]
 		: [],
 ][_InlineTrick];
@@ -130,7 +130,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
  * That mens it will show up in IntelliSense and errors.
  * @alpha
  */
-export type TypedNode<TSchema extends TreeSchema> = CollectOptions<
+export type TypedNode<TSchema extends TreeNodeSchema> = CollectOptions<
 	TypedFields<TSchema["structFieldsObject"]>,
 	TSchema["leafValue"]
 >;
@@ -140,4 +140,4 @@ export type TypedNode<TSchema extends TreeSchema> = CollectOptions<
  * @alpha
  */
 // TODO: make TypedSchema.FlattenKeys work here for recursive types?
-export type SimpleNodeDataFor<TSchema extends TreeSchema> = TypedNode<TSchema>;
+export type SimpleNodeDataFor<TSchema extends TreeNodeSchema> = TypedNode<TSchema>;

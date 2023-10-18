@@ -11,8 +11,8 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	mapCursorFields,
 	CursorLocationType,
 	FieldAnchor,
@@ -126,11 +126,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.context.forest.anchors.forget(anchor);
 	}
 
-	public get typeName(): TreeSchemaIdentifier {
+	public get typeName(): TreeNodeSchemaIdentifier {
 		return this.cursor.type;
 	}
 
-	public get type(): TreeStoredSchema {
+	public get type(): TreeNodeStoredSchema {
 		return (
 			this.context.schema.treeSchema.get(this.typeName) ??
 			fail("requested type does not exist in schema")

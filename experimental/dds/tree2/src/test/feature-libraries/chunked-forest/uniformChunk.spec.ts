@@ -13,7 +13,7 @@ import {
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite";
 import { cursorToJsonObject, singleJsonCursor } from "../../../domains";
-import { EmptyKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
+import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks";
 import {
@@ -64,7 +64,7 @@ describe("uniformChunk", () => {
 		cursorName: "uniformChunk",
 		builders: {
 			withKeys: (keys) => {
-				const schema: TreeSchemaIdentifier = mapSchema.name;
+				const schema: TreeNodeSchemaIdentifier = mapSchema.name;
 				const withKeysShape = new TreeShape(
 					schema,
 					false,

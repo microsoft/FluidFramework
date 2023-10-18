@@ -4,12 +4,12 @@
  */
 
 export {
-	TreeSchema,
+	TreeNodeSchema,
 	FieldSchema,
 	Any,
 	allowedTypesToTypeSet,
 	AllowedTypes,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
@@ -18,10 +18,11 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
-	DocumentSchema,
+	TreeSchema,
 	Unenforced,
 	AllowedTypeSet,
 	MapFieldSchema,
+	SchemaCollection,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";
@@ -32,7 +33,7 @@ export {
 	validateStructFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
-	buildViewSchemaCollection,
+	aggregateSchemaLibraries,
 	schemaLintDefault,
 } from "./schemaCollection";
 

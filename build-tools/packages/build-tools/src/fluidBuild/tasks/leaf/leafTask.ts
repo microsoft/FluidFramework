@@ -26,6 +26,7 @@ import { Task, TaskExec } from "../task";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
+const traceTaskCheck = registerDebug("fluid-build:task:check");
 const traceTaskInitDep = registerDebug("fluid-build:task:init:dep");
 const traceTaskInitWeight = registerDebug("fluid-build:task:init:weight");
 const traceTaskQueue = registerDebug("fluid-build:task:exec:queue");
@@ -315,8 +316,13 @@ export abstract class LeafTask extends Task {
 			return false;
 		}
 
-		const leafIsUpToDate =
-			(await this.checkDependentLeafTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
+		if (!(await this.checkDependentLeafTasksIsUpToDate())) {
+			return false;
+		}
+
+		const start = Date.now();
+		const leafIsUpToDate = await this.checkLeafIsUpToDate();
+		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
 			this.node.buildContext.taskStats.leafUpToDateCount++;
 			this.traceExec(`Skipping Leaf Task`);
@@ -455,7 +461,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
-			if (doneFileExpectedContent) {
+			if (doneFileExpectedContent !== undefined) {
 				const doneFileContent = await readFileAsync(doneFileFullPath, "utf8");
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
@@ -476,7 +482,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * Subclass could override this to provide an alternative done file name
 	 */
 	protected get doneFile(): string {
-		const name = path.parse(this.executable).name;
+		const name = path.parse(this.executable).name.replace(/\s/g, "_");
 		// use 8 char of the sha256 hash of the command to distinguish different tasks
 		const hash = crypto.createHash("sha256").update(this.command).digest("hex").substring(0, 8);
 		return `${name}-${hash}.done.build.log`;

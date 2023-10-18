@@ -41,7 +41,7 @@ const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
 	children: builder.sequence(childSchema),
 });
 
-const fullSchemaData = builder.toDocumentSchema(parentSchema);
+const fullSchemaData = builder.intoSchema(parentSchema);
 
 const initialTestJsonTree = {
 	type: parentSchema.name,
