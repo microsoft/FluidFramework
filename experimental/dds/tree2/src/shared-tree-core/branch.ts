@@ -118,6 +118,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
+	// set of revertibles maintained for automatic disposal
+	private readonly revertibles = new Set<Revertible>();
 	private readonly revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
 	private disposed = false;
@@ -326,7 +328,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		kind: RevertibleKind,
 	): Revertible {
 		this.revertibleCommits.set(commit.revision, commit);
-		return {
+		const revertible = {
 			kind,
 			origin: {
 				// This is currently always the case, but we may want to support reverting remote ops
@@ -339,9 +341,11 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			discard: () => {
 				// TODO: delete the repair data from the forest
 				this.revertibleCommits.delete(commit.revision);
+				this.revertibles.delete(revertible);
 				return DiscardResult.Success;
 			},
 		};
+		return revertible;
 	}
 
 	private revert(
@@ -518,6 +522,9 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		while (this.isTransacting()) {
 			this.abortTransaction();
 		}
+
+		this.revertibles.forEach((revertible) => revertible.discard());
+
 		this.disposed = true;
 		this.emit("dispose");
 	}
