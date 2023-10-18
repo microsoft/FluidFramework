@@ -195,8 +195,9 @@ describe("mock-customer-service", () => {
 			expect(webhookChangeNotification).toMatchObject({
 				data: taskDataUpdate,
 			});
+		// eslint-disable-next-line no-useless-catch
 		} catch (error) {
-			fail(error);
+			throw error;
 		} finally {
 			await closeServer(localService);
 		}
@@ -258,7 +259,7 @@ describe("mock-customer-service", () => {
 			});
 			// eslint-disable-next-line no-useless-catch
 		} catch (error) {
-			fail(error);
+			throw error;
 		} finally {
 			await closeServer(localService);
 		}
@@ -349,8 +350,9 @@ describe("mock-customer-service", () => {
 			await delay(1000);
 			// Verify that we did not recieve a new change notification
 			expect(webhookChangeNotification).toBeUndefined();
+		// eslint-disable-next-line no-useless-catch
 		} catch (error) {
-			fail(error);
+			throw error;
 		} finally {
 			await closeServer(localService);
 		}
