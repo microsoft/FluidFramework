@@ -60,10 +60,10 @@ const newTreeFactory = new TypedTreeFactory({
 const sharedTreeKey = "sharedTree";
 
 /**
- * InventoryItem is the local object with the friendly interface for the view to use.
+ * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
-class InventoryItem extends TypedEmitter<IInventoryItemEvents> implements IInventoryItem {
+class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements IInventoryItem {
 	private readonly _unregisterChangingEvent: () => void;
 	public get id() {
 		return this._inventoryItemNode.id;
@@ -92,7 +92,7 @@ class InventoryItem extends TypedEmitter<IInventoryItemEvents> implements IInven
 		});
 	}
 	public readonly deleteItem = () => {
-		// TODO: Maybe expose a public dispose() method for disposing the InventoryItem without
+		// TODO: Maybe expose a public dispose() method for disposing the NewTreeInventoryItem without
 		// modifying the tree?
 		this._unregisterChangingEvent();
 		this._removeItemFromTree();
@@ -114,7 +114,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		}
 		return this._inventory.content;
 	}
-	private readonly _inventoryItems = new Map<string, InventoryItem>();
+	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
 	public readonly addItem = (name: string, quantity: number) => {
 		this.inventory.inventoryItems.insertAtEnd([
@@ -212,14 +212,14 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 
 	private makeInventoryItemFromInventoryItemNode(
 		inventoryItemNode: InventoryItemNode,
-	): InventoryItem {
+	): NewTreeInventoryItem {
 		const removeItemFromTree = () => {
 			// REV: Is this the best way to do this?  Was hoping for maybe just an inventoryItemNode.delete().
 			// This means I need to either pass in this capability as a callback, or else pass the whole inventory in
 			// to provide access to the removeAt call.
 			this.inventory.inventoryItems.removeAt(inventoryItemNode.parentField.index);
 		};
-		const inventoryItem = new InventoryItem(inventoryItemNode, removeItemFromTree);
+		const inventoryItem = new NewTreeInventoryItem(inventoryItemNode, removeItemFromTree);
 		return inventoryItem;
 	}
 }
