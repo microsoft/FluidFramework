@@ -67,7 +67,9 @@ export class FlubCheckPolicyTask extends LeafWithDoneFileTask {
 			]),
 		);
 		// We are using the "commit" as a summary of the state of unchanged files to speed this up
-		// However, that would mean that it will break incremental for this task when committed.
+		// However, that would mean that the task will activated when the commit is made or file
+		// is stage, even when the file content didn't change.
+		// We probably can do some more complicated but more precise if there are significant benefits.
 		return JSON.stringify({
 			commit: await gitRepo.getCurrentSha(),
 			modifiedFiles: await fileHashP,
