@@ -13,7 +13,6 @@ import {
 	FullSchemaPolicy,
 	Multiplicity,
 	SchemaAware,
-	SchemaBuilder,
 	SchemaLibrary,
 	TreeSchema,
 	TypedSchemaCollection,
@@ -25,7 +24,7 @@ import {
 	valueSymbol,
 } from "../feature-libraries";
 import { TreeContent } from "../shared-tree";
-import { leaf } from "../domains";
+import { leaf, SchemaBuilder } from "../domains";
 
 interface TestTree {
 	readonly name: string;
@@ -90,7 +89,7 @@ export function treeContentFromTestTree(test: TestTree): TreeContent {
 	};
 }
 
-const builder = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "test" });
 export const minimal = builder.struct("minimal", {});
 export const hasMinimalValueField = builder.struct("hasMinimalValueField", {
 	field: minimal,

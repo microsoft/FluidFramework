@@ -10,13 +10,7 @@ import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 import { TreeContent } from "../../../shared-tree";
-import {
-	type AllowedTypes,
-	Any,
-	type FieldKind,
-	FieldKinds,
-	SchemaBuilder,
-} from "../../../feature-libraries";
+import { type AllowedTypes, Any, type FieldKind, FieldKinds } from "../../../feature-libraries";
 import {
 	FieldAnchor,
 	FieldKey,
@@ -26,7 +20,7 @@ import {
 	UpPath,
 } from "../../../core";
 import { forestWithContent } from "../../utils";
-import { leaf as leafDomain } from "../../../domains";
+import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { brand } from "../../../util";
 import { type Context } from "../../../feature-libraries/editable-tree-2/context";
 import {

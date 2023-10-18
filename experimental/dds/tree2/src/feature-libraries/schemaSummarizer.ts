@@ -191,7 +191,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		if (isJsonObject(op) && op.type === "SchemaOp") {
 			assert(
 				this.formatValidator.check(op.data),
-				"unexpected format for resubmitted schema op",
+				0x79b /* unexpected format for resubmitted schema op */,
 			);
 			const schemaOp: SchemaOp = {
 				type: op.type,

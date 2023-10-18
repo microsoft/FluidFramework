@@ -37,7 +37,9 @@ import type { Socket } from "socket.io-client";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
- * Represents a connection to a stream of delta updates
+ * Represents a connection to a stream of delta updates.
+ *
+ * @public
  */
 export class DocumentDeltaConnection
 	extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>

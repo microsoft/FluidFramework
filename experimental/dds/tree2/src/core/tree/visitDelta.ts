@@ -64,7 +64,10 @@ export function visitDelta(
 		for (const insert of creations) {
 			creations.delete(insert);
 			const firstRoot = insertToRootId.get(insert);
-			assert(firstRoot !== undefined, "Expected to find a root ID for the creation");
+			assert(
+				firstRoot !== undefined,
+				0x7ac /* Expected to find a root ID for the creation */,
+			);
 			for (let i = 0; i < insert.content.length; i += 1) {
 				const root: ForestRootId = brand(firstRoot + i);
 				const field = detachedFieldIndex.toFieldKey(root);
@@ -503,7 +506,7 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 				const rootSource = config.insertToRootId.get(mark);
 				assert(
 					rootSource !== undefined,
-					"content should've been created in the detach pass",
+					0x7ad /* content should've been created in the detach pass */,
 				);
 				nodeId = mark.detachId;
 				fields = mark.fields;

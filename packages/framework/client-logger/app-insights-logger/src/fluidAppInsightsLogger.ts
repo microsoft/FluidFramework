@@ -14,7 +14,9 @@ import {
  * that routes Fluid telemetry events to Azure App Insights using the App Insights trackEvent API.
  * The provided ApplicationInsights instance MUST be initialized with client.loadAppInsights()
  * or else logging will not occur.
+ *
  * @sealed
+ * @public
  */
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**

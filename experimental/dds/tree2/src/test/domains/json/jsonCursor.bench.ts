@@ -21,7 +21,6 @@ import {
 	singleMapTreeCursor,
 	singleTextCursor,
 	buildChunkedForest,
-	SchemaBuilder,
 } from "../../../feature-libraries";
 import {
 	initializeForest,
@@ -35,7 +34,7 @@ import {
 	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
-import { jsonRoot } from "../../../domains";
+import { jsonRoot, SchemaBuilder } from "../../../domains";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, Twitter } from "./twitter";

@@ -11,8 +11,8 @@ import { Format, makeSchemaCodec } from "../../feature-libraries/schemaIndexForm
 
 import { FieldKindIdentifier, SchemaData } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { jsonSchema, jsonRoot } from "../../domains";
-import { defaultSchemaPolicy, allowsRepoSuperset, SchemaBuilder } from "../../feature-libraries";
+import { jsonSchema, jsonRoot, SchemaBuilder } from "../../domains";
+import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 

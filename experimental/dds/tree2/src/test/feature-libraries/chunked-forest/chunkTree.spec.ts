@@ -5,11 +5,10 @@
 
 import { strict as assert } from "assert";
 import { CursorLocationType, EmptyKey, mapCursorField, Value } from "../../../core";
-import { jsonNull, jsonObject, leaf } from "../../../domains";
+import { jsonNull, jsonObject, leaf, SchemaBuilder } from "../../../domains";
 import {
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	SchemaBuilder,
 	singleTextCursor,
 	TreeChunk,
 } from "../../../feature-libraries";
@@ -43,7 +42,7 @@ import {
 } from "./fieldCursorTestUtilities";
 import { polygonTree, testData } from "./uniformChunkTestData";
 
-const builder = new SchemaBuilder({ scope: "chunkTree", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "chunkTree" });
 const empty = builder.struct("empty", {});
 const valueField = SchemaBuilder.required(leaf.number);
 const structValue = builder.struct("structValue", { x: valueField });

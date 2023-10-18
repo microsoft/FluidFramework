@@ -28,7 +28,10 @@ import {
 	unlinkAsync,
 } from "./utils";
 
-const { log, verbose, errorLog: error } = defaultLogger;
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
+
+const { log, errorLog: error } = defaultLogger;
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
@@ -114,7 +117,7 @@ export class Package {
 			: existsSync(yarnLockPath)
 			? "yarn"
 			: "npm";
-		verbose(`Package loaded: ${this.nameColored}`);
+		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
 

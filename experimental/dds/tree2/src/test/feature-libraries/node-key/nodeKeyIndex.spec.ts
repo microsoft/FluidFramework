@@ -5,9 +5,14 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { leaf, nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
 import {
 	SchemaBuilder,
+	leaf,
+	nodeKeyField,
+	nodeKeySchema,
+	nodeKeyTreeSchema,
+} from "../../../domains";
+import {
 	FieldKinds,
 	NodeKeyIndex,
 	LocalNodeKey,

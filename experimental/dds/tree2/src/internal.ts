@@ -24,4 +24,4 @@ export {
 	BrandedKeyContent,
 } from "./util";
 
-export { NormalizeField, DefaultFieldKind, NormalizeAllowedTypes } from "./feature-libraries";
+export { NormalizeField, NormalizeAllowedTypes } from "./feature-libraries";

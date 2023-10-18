@@ -67,6 +67,7 @@ declare function get_current_ClassDeclaration_BaseSegment():
 declare function use_old_ClassDeclaration_BaseSegment(
     use: TypeOnly<old.BaseSegment>);
 use_old_ClassDeclaration_BaseSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_BaseSegment());
 
 /*
@@ -309,6 +310,7 @@ declare function get_current_InterfaceDeclaration_IConsensusInfo():
 declare function use_old_InterfaceDeclaration_IConsensusInfo(
     use: TypeOnly<old.IConsensusInfo>);
 use_old_InterfaceDeclaration_IConsensusInfo(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*
@@ -1089,6 +1091,7 @@ declare function get_current_ClassDeclaration_LocalReferenceCollection():
 declare function use_old_ClassDeclaration_LocalReferenceCollection(
     use: TypeOnly<old.LocalReferenceCollection>);
 use_old_ClassDeclaration_LocalReferenceCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalReferenceCollection());
 
 /*
@@ -1161,6 +1164,7 @@ declare function get_current_ClassDeclaration_Marker():
 declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Marker());
 
 /*
@@ -2074,6 +2078,7 @@ declare function get_current_ClassDeclaration_TextSegment():
 declare function use_old_ClassDeclaration_TextSegment(
     use: TypeOnly<old.TextSegment>);
 use_old_ClassDeclaration_TextSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_TextSegment());
 
 /*

@@ -14,7 +14,7 @@ import {
 } from "../../core";
 import { JsonCompatible } from "../../util";
 import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
-import * as leaf from "../leafDomain";
+import { leaf } from "../leafDomain";
 import { jsonArray, jsonNull, jsonObject } from "./jsonDomainSchema";
 
 const adapter: CursorAdapter<JsonCompatible> = {

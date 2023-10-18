@@ -145,7 +145,28 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [],
+                  "treeSchema": [
+                    {
+                      "name": "com.fluidframework.leaf.boolean",
+                      "structFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
+                      "structFields": [],
+                      "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "structFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "structFields": [],
+                      "leafValue": 1
+                    }
+                  ],
                   "rootFieldSchema": {
                     "kind": "Sequence"
                   }
