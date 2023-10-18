@@ -435,7 +435,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(
 						sweepTimeoutMs,
-						/*includeDds*/ true,
+						/* includeDds */ true,
 					);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
