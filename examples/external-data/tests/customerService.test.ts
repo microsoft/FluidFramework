@@ -145,7 +145,7 @@ describe("mock-customer-service", () => {
 		const tenantId = "tinylicious";
 		const documentId = "container1";
 
-		localServiceApp.post(`${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
+		localServiceApp.post(`/${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			webhookChangeNotification = request.body;
 			wasFluidNotifiedForChange = true;
@@ -195,7 +195,7 @@ describe("mock-customer-service", () => {
 			expect(webhookChangeNotification).toMatchObject({
 				data: taskDataUpdate,
 			});
-		// eslint-disable-next-line no-useless-catch
+			// eslint-disable-next-line no-useless-catch
 		} catch (error) {
 			throw error;
 		} finally {
@@ -350,7 +350,7 @@ describe("mock-customer-service", () => {
 			await delay(1000);
 			// Verify that we did not recieve a new change notification
 			expect(webhookChangeNotification).toBeUndefined();
-		// eslint-disable-next-line no-useless-catch
+			// eslint-disable-next-line no-useless-catch
 		} catch (error) {
 			throw error;
 		} finally {
