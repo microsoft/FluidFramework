@@ -322,7 +322,7 @@ export interface EditableTreeEvents {
 	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
 	 *
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
-	 * while they are being detached from their source location, and once they are being attached at the target location.
+	 * while they are being detached from their source location, and once when they are being attached at the target location.
 	 */
 	beforeChange(upPath: UpPath): void;
 
@@ -349,7 +349,7 @@ export interface EditableTreeEvents {
 	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
 	 *
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
-	 * while they are being detached from their source location, and once they are being attached at the target location.
+	 * while they are being detached from their source location, and once when they are being attached at the target location.
 	 */
 	afterChange(upPath: UpPath): void;
 }
