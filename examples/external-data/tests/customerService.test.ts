@@ -246,7 +246,7 @@ describe("mock-customer-service", () => {
 			}
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.
-			await delay(5000);
+			await delay(1000);
 
 			// Verify our listener was notified of data change.
 			expect(webhookChangeNotification).toMatchObject({
