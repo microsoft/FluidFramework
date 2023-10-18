@@ -21,17 +21,16 @@ export interface BroadcastSignalBodyInterface {
 	 */
 	signalContent: {
 		/**
-		 * Required parameter. Required by server. User may add more parameters than the required `type` and `content` below.
+		 * Required by server. User may add more properties besides `type` and `content` below.
 		 */
 		contents: {
 			/**
-			 * Required parameter. User defined content. User defined content that will be pass
-			 * unchanged to client.
+			 * Required by server. User defined content that will be passed unchanged to client.
 			 */
-			content: JSON | string;
+			content: unknown;
 			/**
-			 * Required parameter. User defined content that will be pass unchanged to client.
-			 * User may consider using this type to differentiate between multiple diffrent signal types,
+			 * Required. User defined content that will be passed unchanged to client.
+			 * User may consider using this type to differentiate between different signal types,
 			 * and possibly use it for versioning as well.
 			 */
 			type: string;
@@ -54,14 +53,14 @@ function echoExternalDataWebhookToFluid(
 		`CUSTOMER SERVICE: External data has been updated. Notifying Fluid Service at ${fluidService}`,
 	);
 
-	const messageBody = {
+	const messageBody: BroadcastSignalBodyInterface = {
 		signalContent: {
 			contents: {
 				content: { taskData, externalTaskListId },
 				type: "ExternalDataChanged_V1.0.0",
 			},
 		},
-	} as unknown as BroadcastSignalBodyInterface;
+	};
 
 	fetch(fluidService, {
 		method: "POST",
