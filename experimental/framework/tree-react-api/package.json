@@ -73,7 +73,6 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
-		"@rushstack/eslint-config": "^3.4.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"@types/react": "^17.0.44",
