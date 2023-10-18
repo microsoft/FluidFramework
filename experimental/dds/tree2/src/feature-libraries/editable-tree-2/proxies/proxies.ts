@@ -9,17 +9,27 @@ import {
 	FieldNodeSchema,
 	FieldSchema,
 	StructSchema,
-	TreeSchema,
+	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
-import { FieldNode, TreeNode, TypedField, TypedNodeUnion } from "../editableTreeTypes";
+import {
+	FieldNode,
+	OptionalField,
+	RequiredField,
+	TreeNode,
+	TypedField,
+	TypedNodeUnion,
+} from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
+import { getBoxedField } from "../lazyTree";
+import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
+import { createNodeApi, nodeSym } from "./node";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
 const treeNodeSym = Symbol("TreeNode");
@@ -55,12 +65,13 @@ function cacheProxy(
 }
 
 /** If there has already been a proxy created to wrap the given tree node, return it */
-function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
-	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeSchema> })[proxyCacheSym];
+function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefined {
+	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeNodeSchema> })[proxyCacheSym];
 }
 
 /**
  * Checks if the given object is a {@link SharedTreeObject}
+ * @alpha
  */
 export function is<TSchema extends StructSchema>(
 	x: unknown,
@@ -84,17 +95,32 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			return getProxyForNode(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			fail(`"not implemented"`);
+			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.optional>>;
+
+			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
+			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
+			//       inner field.
+
+			const maybeContent = asValue.boxedContent;
+
+			// Normally, empty fields are unreachable due to the behavior of 'tryGetField'.  However, the
+			// root field is a special case where the field is always present (even if empty).
+			return (
+				maybeContent === undefined ? undefined : getProxyForNode(maybeContent)
+			) as ProxyField<TSchema>;
 		}
+		// TODO: Remove if/when 'FieldNode' is removed.
 		case FieldKinds.sequence: {
-			fail("not implemented");
+			// 'getProxyForNode' handles FieldNodes by unconditionally creating a list proxy, making
+			// this case unreachable as long as users follow the 'list recipe'.
+			fail("'sequence' field is unexpected.");
 		}
 		default:
 			fail("invalid field kind");
 	}
 }
 
-export function getProxyForNode<TSchema extends TreeSchema>(
+export function getProxyForNode<TSchema extends TreeNodeSchema>(
 	treeNode: TreeNode,
 ): ProxyNode<TSchema> {
 	const schema = treeNode.schema;
@@ -124,6 +150,8 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
+	const nodeApi = createNodeApi(content);
+
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
 	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
@@ -139,15 +167,39 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				if (field !== undefined) {
 					return getProxyForField(field);
 				}
-				// TODO: Do this a better way.
-				if (key === treeNodeSym) {
-					return { schema };
+				switch (key) {
+					case treeNodeSym:
+						return content;
+					case nodeSym:
+						return nodeApi;
+					default:
+						return Reflect.get(target, key);
 				}
-				return undefined;
 			},
 			set(target, key, value) {
-				// TODO: Implement set
-				return false;
+				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+
+				if (fieldSchema === undefined) {
+					return false;
+				}
+
+				// TODO: Is it safe to assume 'content' is a LazyEntity?
+				const field = getBoxedField(content as LazyEntity, key as FieldKey, fieldSchema);
+
+				switch (field.schema.kind) {
+					case FieldKinds.required: {
+						(field as RequiredField<AllowedTypes>).content = value;
+						break;
+					}
+					case FieldKinds.optional: {
+						(field as OptionalField<AllowedTypes>).content = value;
+						break;
+					}
+					default:
+						fail("invalid FieldKind");
+				}
+
+				return true;
 			},
 			has: (target, key) => {
 				return schema.structFields.has(key as FieldKey);
@@ -285,7 +337,7 @@ staticDispatchMap[Symbol.iterator] = {
 /* eslint-enable @typescript-eslint/unbound-method */
 /* eslint-enable @typescript-eslint/ban-types */
 
-const prototype = Object.create(null, staticDispatchMap);
+const prototype = Object.create(Object.prototype, staticDispatchMap);
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
@@ -317,6 +369,12 @@ export function createListProxy<TTypes extends AllowedTypes>(
 				return getField(this).length;
 			},
 			set() {},
+			enumerable: false,
+			configurable: false,
+		},
+		[nodeSym]: {
+			value: createNodeApi(treeNode),
+			writable: false,
 			enumerable: false,
 			configurable: false,
 		},

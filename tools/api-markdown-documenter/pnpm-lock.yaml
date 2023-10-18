@@ -7,7 +7,7 @@ importers:
 
   .:
     specifiers:
-      '@fluidframework/build-common': ^2.0.1
+      '@fluidframework/build-common': ^2.0.2
       '@fluidframework/build-tools': ^0.25.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/mocha-test-setup': ~2.0.0-internal.6.2.0
@@ -45,7 +45,7 @@ importers:
       '@rushstack/node-core-library': 3.55.2_@types+node@18.15.11
       chalk: 4.1.2
     devDependencies:
-      '@fluidframework/build-common': 2.0.1
+      '@fluidframework/build-common': 2.0.2
       '@fluidframework/build-tools': 0.25.0_@types+node@18.15.11
       '@fluidframework/eslint-config-fluid': 2.0.0_flcvfono3v34oogyclggnmpgme
       '@fluidframework/mocha-test-setup': 2.0.0-internal.6.2.0
@@ -184,8 +184,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/build-common/2.0.1:
-    resolution: {integrity: sha512-0oow40mp6jrePJtarVScGPbMkogmRNNvc/aIRoxYQO2iTNquQZ/WE6CpJqtabZurpJdd5zISDhie1ShFxOtXfw==}
+  /@fluidframework/build-common/2.0.2:
+    resolution: {integrity: sha512-lqAsi/EuncrcJVSP4mOlh+Aci9LAjHlvc2tkymidXXqMaJcATCyqUuaSXaZutgNkJ4wZZNZvWCQRJyqL4dtfWA==}
     hasBin: true
     dev: true
 

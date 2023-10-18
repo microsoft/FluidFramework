@@ -170,3 +170,7 @@ export const getLumberBaseProperties = (documentId: string, tenantId: string) =>
 	[BaseTelemetryProperties.tenantId]: tenantId,
 	[BaseTelemetryProperties.documentId]: documentId,
 });
+
+export interface ILumberFormatter {
+	transform(lumber: Lumber<string>): void;
+}

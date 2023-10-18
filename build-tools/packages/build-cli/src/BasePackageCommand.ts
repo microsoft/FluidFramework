@@ -25,7 +25,7 @@ import { filterFlags, selectionFlags } from "./flags";
 export abstract class PackageCommand<
 	T extends typeof Command & { flags: typeof PackageCommand.flags },
 > extends BaseCommand<T> {
-	static flags = {
+	static readonly flags = {
 		concurrency: Flags.integer({
 			description: "The number of tasks to execute concurrently.",
 			default: 25,

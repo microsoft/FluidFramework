@@ -95,6 +95,11 @@
                       "leafValue": 3
                     },
                     {
+                      "name": "com.fluidframework.leaf.null",
+                      "structFields": [],
+                      "leafValue": 4
+                    },
+                    {
                       "name": "com.fluidframework.leaf.number",
                       "structFields": [],
                       "leafValue": 0

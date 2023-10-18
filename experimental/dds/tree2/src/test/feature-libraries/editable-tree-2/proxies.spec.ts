@@ -4,17 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	FieldSchema,
-	ProxyField,
-	TypedSchemaCollection,
-	is,
-	typeNameSymbol,
-} from "../../../feature-libraries";
+import { is, typeNameSymbol } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
-
-import { ISharedTreeView } from "../../../shared-tree";
-import { createTreeView } from "./utils";
+import { itWithRoot } from "./utils";
 
 describe("SharedTree proxies", () => {
 	const sb = new SchemaBuilder({
@@ -139,23 +131,3 @@ describe("SharedTreeObject", () => {
 		},
 	);
 });
-
-function itWithRoot<TRoot extends FieldSchema>(
-	title: string,
-	schema: TypedSchemaCollection<TRoot>,
-	initialTree: any,
-	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
-): void {
-	it(title, () => {
-		const view = createTypedTreeView(schema, initialTree);
-		const root = view.root2(schema);
-		fn(root);
-	});
-}
-
-function createTypedTreeView<TRoot extends FieldSchema>(
-	schema: TypedSchemaCollection<TRoot>,
-	initialTree: any,
-): ISharedTreeView & { root2: (viewSchema: TypedSchemaCollection<TRoot>) => ProxyField<TRoot> } {
-	return createTreeView(schema, initialTree);
-}

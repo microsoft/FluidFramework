@@ -11,8 +11,8 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	mapCursorFields,
 	CursorLocationType,
 	FieldAnchor,
@@ -125,11 +125,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.context.forest.anchors.forget(anchor);
 	}
 
-	public get typeName(): TreeSchemaIdentifier {
+	public get typeName(): TreeNodeSchemaIdentifier {
 		return this.cursor.type;
 	}
 
-	public get type(): TreeStoredSchema {
+	public get type(): TreeNodeStoredSchema {
 		return (
 			this.context.schema.treeSchema.get(this.typeName) ??
 			fail("requested type does not exist in schema")
@@ -460,6 +460,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 export function isEditableTree(field: UnwrappedEditableField): field is EditableTree {
 	return (
 		typeof field === "object" &&
+		field !== null &&
 		isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
 }

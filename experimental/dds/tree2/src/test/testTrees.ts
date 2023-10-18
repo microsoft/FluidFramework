@@ -14,8 +14,8 @@ import {
 	Multiplicity,
 	SchemaAware,
 	SchemaLibrary,
-	TreeSchema,
-	TypedSchemaCollection,
+	TreeNodeSchema,
+	DocumentSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -28,12 +28,12 @@ import { leaf, SchemaBuilder } from "../domains";
 
 interface TestTree {
 	readonly name: string;
-	readonly schemaData: TypedSchemaCollection;
+	readonly schemaData: DocumentSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: () => JsonableTree[];
 }
 
-function testTree<T extends TreeSchema>(
+function testTree<T extends TreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
@@ -134,6 +134,7 @@ export const library = builder.finalize();
 
 export const testTrees: readonly TestTree[] = [
 	testField("empty", library, SchemaBuilder.optional([]), undefined),
+	testTree("null", library, leaf.null, null),
 	testTree("minimal", library, minimal, {}),
 	testTree("numeric", library, leaf.number, 5),
 	testField("numericSequence", library, SchemaBuilder.sequence(leaf.number), [1, 2, 3]),

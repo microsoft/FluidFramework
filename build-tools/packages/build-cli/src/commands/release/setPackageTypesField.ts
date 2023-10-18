@@ -9,7 +9,7 @@ import { ExtractorConfig } from "@microsoft/api-extractor";
 import { CommandLogger } from "../../logging";
 import path from "node:path";
 import { strict as assert } from "node:assert";
-import * as fs from "fs";
+import * as fs from "node:fs";
 
 /**
  * Represents a list of package categorized into two arrays

@@ -84,8 +84,8 @@ import {
 	TreeSchemaBuilder,
 	treeSchema,
 	FieldUpPath,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
@@ -106,9 +106,9 @@ import {
 	cursorToJsonObject,
 	jsonRoot,
 	jsonSchema,
-	jsonString,
 	singleJsonCursor,
 	SchemaBuilder,
+	leaf,
 } from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
 
@@ -687,7 +687,7 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 
@@ -884,11 +884,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
  */
 export function namedTreeSchema(
 	data: TreeSchemaBuilder & Named<string>,
-): Named<TreeSchemaIdentifier> & TreeStoredSchema {
+): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),

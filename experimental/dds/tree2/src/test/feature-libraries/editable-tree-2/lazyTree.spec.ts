@@ -33,7 +33,7 @@ import {
 	FieldKind,
 	AllowedTypes,
 	typeNameSymbol,
-	TreeSchema,
+	TreeNodeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 	DefaultEditBuilder,
@@ -112,7 +112,7 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 /**
  * Test {@link LazyTree} implementation.
  */
-class TestLazyTree<TSchema extends TreeSchema> extends LazyTree<TSchema> {}
+class TestLazyTree<TSchema extends TreeNodeSchema> extends LazyTree<TSchema> {}
 
 /**
  * Creates an {@link Anchor} and an {@link AnchorNode} for the provided cursor's location.
@@ -542,7 +542,7 @@ function checkPropertyInvariants(root: Tree): void {
 		assert(typeof child !== "function");
 		assert(typeof key !== "symbol");
 
-		if (typeof child === "object") {
+		if (typeof child === "object" && child !== null) {
 			if (treeValues.has(child)) {
 				assertAllowedValue(child);
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
@@ -557,7 +557,7 @@ function checkPropertyInvariants(root: Tree): void {
 				const prototypeInner = Object.getPrototypeOf(prototype);
 				assert(prototypeInner === LazyStruct.prototype);
 			}
-		} else if (isPrimitiveValue(child)) {
+		} else if (isPrimitiveValue(child) || child === null) {
 			// TODO: more robust check for schema names
 			if (key === "type") {
 				assert(typeof child === "string");

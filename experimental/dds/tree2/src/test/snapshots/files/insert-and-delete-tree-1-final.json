@@ -73,15 +73,11 @@
                             "com.fluidframework.leaf.number",
                             "com.fluidframework.leaf.boolean",
                             "com.fluidframework.leaf.string",
-                            "com.fluidframework.json.null"
+                            "com.fluidframework.leaf.null"
                           ],
                           "name": ""
                         }
                       ]
-                    },
-                    {
-                      "name": "com.fluidframework.json.null",
-                      "structFields": []
                     },
                     {
                       "name": "com.fluidframework.json.object",
@@ -93,7 +89,7 @@
                           "com.fluidframework.leaf.number",
                           "com.fluidframework.leaf.boolean",
                           "com.fluidframework.leaf.string",
-                          "com.fluidframework.json.null"
+                          "com.fluidframework.leaf.null"
                         ]
                       },
                       "structFields": []
@@ -107,6 +103,11 @@
                       "name": "com.fluidframework.leaf.handle",
                       "structFields": [],
                       "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.null",
+                      "structFields": [],
+                      "leafValue": 4
                     },
                     {
                       "name": "com.fluidframework.leaf.number",
@@ -127,7 +128,7 @@
                       "com.fluidframework.leaf.number",
                       "com.fluidframework.leaf.boolean",
                       "com.fluidframework.leaf.string",
-                      "com.fluidframework.json.null"
+                      "com.fluidframework.leaf.null"
                     ]
                   }
                 },

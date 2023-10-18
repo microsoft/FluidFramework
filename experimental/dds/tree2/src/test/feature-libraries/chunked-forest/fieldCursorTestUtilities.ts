@@ -12,7 +12,7 @@ import {
 	mapCursorField,
 	rootFieldKey,
 } from "../../../core";
-import { jsonArray, jsonNumber } from "../../../domains";
+import { jsonArray, leaf } from "../../../domains";
 import { jsonableTreeFromCursor, singleTextCursor, TreeChunk } from "../../../feature-libraries";
 import { checkFieldTraversal } from "../../cursorTestSuite";
 
@@ -34,7 +34,7 @@ export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): Js
 export function numberSequenceField(length: number): JsonableTree[] {
 	const field: JsonableTree[] = [];
 	for (let index = 0; index < length; index++) {
-		field.push({ type: jsonNumber.name, value: index });
+		field.push({ type: leaf.number.name, value: index });
 	}
 	return field;
 }

@@ -9,7 +9,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { TestField, emptySchema } from "../../cursorTestSuite";
-import { jsonArray, jsonNumber, jsonObject } from "../../../domains";
+import { jsonArray, leaf, jsonObject } from "../../../domains";
 import { brand, makeArray } from "../../../util";
 import { EmptyKey, FieldKey } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
@@ -20,7 +20,7 @@ export const emptyShape = new TreeShape(emptySchema.name, false, []);
 export const xField: FieldKey = brand("x");
 export const yField: FieldKey = brand("y");
 
-const numberShape = new TreeShape(jsonNumber.name, true, []);
+const numberShape = new TreeShape(leaf.number.name, true, []);
 const withChildShape = new TreeShape(jsonObject.name, false, [[xField, numberShape, 1]]);
 const pointShape = new TreeShape(jsonObject.name, false, [
 	[xField, numberShape, 1],
@@ -45,8 +45,8 @@ export const polygonTree = {
 			[EmptyKey]: makeArray(sides, (index) => ({
 				type: jsonObject.name,
 				fields: {
-					x: [{ type: jsonNumber.name, value: index * 2 }],
-					y: [{ type: jsonNumber.name, value: index * 2 + 1 }],
+					x: [{ type: leaf.number.name, value: index * 2 }],
+					y: [{ type: leaf.number.name, value: index * 2 + 1 }],
 				},
 			})),
 		},
@@ -57,15 +57,15 @@ const testTrees = [
 	{
 		name: "number",
 		dataFactory: () => new UniformChunk(numberShape.withTopLevelLength(1), [5]),
-		reference: [{ type: jsonNumber.name, value: 5 }],
+		reference: [{ type: leaf.number.name, value: 5 }],
 	},
 	{
 		name: "root sequence",
 		dataFactory: () => new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
 		reference: [
-			{ type: jsonNumber.name, value: 1 },
-			{ type: jsonNumber.name, value: 2 },
-			{ type: jsonNumber.name, value: 3 },
+			{ type: leaf.number.name, value: 1 },
+			{ type: leaf.number.name, value: 2 },
+			{ type: leaf.number.name, value: 3 },
 		],
 	},
 	{
@@ -82,9 +82,9 @@ const testTrees = [
 				type: jsonArray.name,
 				fields: {
 					[EmptyKey]: [
-						{ type: jsonNumber.name, value: 1 },
-						{ type: jsonNumber.name, value: 2 },
-						{ type: jsonNumber.name, value: 3 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
 				},
 			},
@@ -97,7 +97,7 @@ const testTrees = [
 			{
 				type: jsonObject.name,
 				fields: {
-					x: [{ type: jsonNumber.name, value: 1 }],
+					x: [{ type: leaf.number.name, value: 1 }],
 				},
 			},
 		],
@@ -109,8 +109,8 @@ const testTrees = [
 			{
 				type: jsonObject.name,
 				fields: {
-					x: [{ type: jsonNumber.name, value: 1 }],
-					y: [{ type: jsonNumber.name, value: 2 }],
+					x: [{ type: leaf.number.name, value: 1 }],
+					y: [{ type: leaf.number.name, value: 2 }],
 				},
 			},
 		],

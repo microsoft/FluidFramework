@@ -30,6 +30,7 @@ import { IFluidCodeDetails, IFluidPackage, IProvideFluidCodeDetailsComparer } fr
 
 /**
  * Encapsulates a module entry point with corresponding code details.
+ * @public
  */
 export interface IFluidModuleWithDetails {
 	/**
@@ -49,6 +50,7 @@ export interface IFluidModuleWithDetails {
 /**
  * Fluid code loader resolves a code module matching the document schema, i.e. code details, such as
  * a package name and package version range.
+ * @public
  */
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
 	/**
@@ -63,6 +65,7 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 /**
  * The interface returned from a IFluidCodeResolver which represents IFluidCodeDetails
  * that have been resolved and are ready to load
+ * @public
  */
 export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 	/**
@@ -81,6 +84,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
  * The Fluid code resolver is coupled to a specific cdn and knows how to resolve
  * the code detail for loading from that cdn. This include resolving to the most recent
  * version of package that supports the provided code details.
+ * @public
  */
 export interface IFluidCodeResolver {
 	/**
@@ -94,6 +98,7 @@ export interface IFluidCodeResolver {
 
 /**
  * Events emitted by the {@link IContainer} "upwards" to the Loader and Host.
+ * @public
  */
 export interface IContainerEvents extends IEvent {
 	/**
@@ -253,6 +258,7 @@ export interface IContainerEvents extends IEvent {
 /**
  * Namespace for the different connection states a container can be in.
  * PLEASE NOTE: The sequence of the numerical values does no correspond to the typical connection state progression.
+ * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ConnectionState {
@@ -282,6 +288,7 @@ export namespace ConnectionState {
 
 /**
  * Type defining the different states of connectivity a Container can be in.
+ * @public
  */
 export type ConnectionState =
 	| ConnectionState.Disconnected
@@ -291,6 +298,7 @@ export type ConnectionState =
 
 /**
  * The Host's view of a Container and its connection to storage
+ * @public
  */
 // eslint-disable-next-line import/no-deprecated
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
@@ -499,6 +507,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 
 /**
  * The Runtime's view of the Loader, used for loading Containers
+ * @public
  */
 export interface ILoader extends Partial<IProvideLoader> {
 	/**
@@ -526,6 +535,7 @@ export interface ILoader extends Partial<IProvideLoader> {
 
 /**
  * The Host's view of the Loader, used for loading Containers
+ * @public
  */
 export interface IHostLoader extends ILoader {
 	/**
@@ -541,6 +551,9 @@ export interface IHostLoader extends ILoader {
 	rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
 }
 
+/**
+ * @public
+ */
 export type ILoaderOptions = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key in string | number]: any;
@@ -573,6 +586,7 @@ export type ILoaderOptions = {
 
 /**
  * Accepted header keys for requests coming to the Loader
+ * @public
  */
 export enum LoaderHeader {
 	/**
@@ -603,6 +617,9 @@ export enum LoaderHeader {
 	version = "version",
 }
 
+/**
+ * @public
+ */
 export interface IContainerLoadMode {
 	opsBeforeReturn?: /*
 	 * No trailing ops are applied before container is returned.
@@ -656,6 +673,7 @@ export interface IContainerLoadMode {
 
 /**
  * Set of Request Headers that the Loader understands and may inspect or modify
+ * @public
  */
 export interface ILoaderHeader {
 	/**
@@ -673,6 +691,9 @@ export interface ILoaderHeader {
 	[LoaderHeader.version]: string | undefined;
 }
 
+/**
+ * @public
+ */
 export interface IProvideLoader {
 	readonly ILoader: ILoader;
 }
@@ -681,6 +702,7 @@ export interface IProvideLoader {
  * @deprecated 0.48, This API will be removed in 0.50
  * No replacement since it is not expected anyone will depend on this outside container-loader
  * See {@link https://github.com/microsoft/FluidFramework/issues/9711} for context.
+ * @public
  */
 export interface IPendingLocalState {
 	url: string;
@@ -692,6 +714,7 @@ export interface IPendingLocalState {
  * in separate property: {@link ISnapshotTreeWithBlobContents.blobsContents}.
  *
  * @remarks This is used as the `ContainerContext`'s base snapshot when attaching.
+ * @public
  */
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 	blobsContents: { [path: string]: ArrayBufferLike };

@@ -6,8 +6,8 @@ import { Interfaces } from "@oclif/core";
 import { default as BaseReadme } from "oclif/lib/commands/readme";
 
 export default class Readme extends BaseReadme {
-	static summary = "Adds commands to README.md in current directory.";
-	static description = `The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
+	static readonly summary = "Adds commands to README.md in current directory.";
+	static readonly description = `The readme must have any of the following tags inside of it for it to be replaced or else it will do nothing:
 
 # Usage
 <!-- usage -->
