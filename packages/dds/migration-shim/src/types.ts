@@ -16,12 +16,6 @@ export interface IShimDeltaHandler extends IDeltaHandler {
 	attachTreeDeltaHandler(treeDeltaHandler: IDeltaHandler): void;
 
 	/**
-	 * Allows the handler to preprocess the message content (aka stamp the v2 ops) before submitting.
-	 * @param messageContent - the content that needs stamping
-	 */
-	stampV2Ops(messageContent: unknown): void;
-
-	/**
 	 * The delta handler needs to be attached to the IShimDeltaHandler before attaching it to the delta connection.
 	 * Otherwise the IShimDeltaHandler will not be able to process ops.
 	 */

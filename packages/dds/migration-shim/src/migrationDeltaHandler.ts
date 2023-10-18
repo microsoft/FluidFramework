@@ -27,10 +27,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 			localOpMetadata: unknown,
 		) => boolean,
 	) {}
-
-	public stampV2Ops(messageContent: unknown): void {
-		throw new Error("Method not implemented.");
-	}
+	// Note: we may only need to stamp v2 ops as v1 ops can be considered non-stamped ops.
 
 	// Introduction of invariant, we always expect an old handler.
 	public hasTreeDeltaHandler(): boolean {

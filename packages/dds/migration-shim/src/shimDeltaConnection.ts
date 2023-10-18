@@ -5,7 +5,6 @@
 
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IDeltaConnection, type IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { assert } from "@fluidframework/core-utils";
 import { type IShimDeltaHandler } from "./types";
 
 /**
@@ -36,16 +35,7 @@ export class ShimDeltaConnection implements IDeltaConnection {
 	// Should we be adding some metadata here?
 	public submit(messageContent: unknown, localOpMetadata: unknown): void {
 		// TODO: stamp messageContent with V2 metadata - this is not the final implementation
-		this.shimDeltaHandler.stampV2Ops(messageContent);
 		this.deltaConnection.submit(messageContent, localOpMetadata);
-	}
-
-	// The underlying ChannelDeltaConnection can only attach one IDeltaHandler.
-	// Maybe we could do this in the constructor?
-	private attachShimDeltaHandler(): void {
-		assert(this.shimDeltaHandler.hasTreeDeltaHandler(), "No tree handler to process op");
-		this.deltaConnection.attach(this.shimDeltaHandler);
-		this.isShimDeltaHandlerAttachedToConnection = true;
 	}
 
 	// We only want to call attach on the underlying delta connection once, as we'll hit an assert if we call it twice.
@@ -56,7 +46,8 @@ export class ShimDeltaConnection implements IDeltaConnection {
 		// ops. Post migration v1 ops can be considered "shim" ops as they are dropped.
 		this.shimDeltaHandler.attachTreeDeltaHandler(handler);
 		if (!this.isShimDeltaHandlerAttachedToConnection) {
-			this.attachShimDeltaHandler();
+			this.deltaConnection.attach(this.shimDeltaHandler);
+			this.isShimDeltaHandlerAttachedToConnection = true;
 		}
 	}
 	public dirty(): void {

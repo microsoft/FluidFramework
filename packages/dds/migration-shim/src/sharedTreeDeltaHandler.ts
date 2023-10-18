@@ -30,7 +30,6 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		this._handler = handler;
 	}
 
-	public stampV2Ops(messageContent: unknown): void {}
 	public hasTreeDeltaHandler(): boolean {
 		return this._handler !== undefined;
 	}
