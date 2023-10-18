@@ -443,7 +443,7 @@ describe("AnchorSet", () => {
 		assert.strictEqual(afterCounter, 5);
 	});
 
-	it.only("arguments for beforeChange and afterChange events are the expected object", () => {
+	it("arguments for beforeChange and afterChange events are the expected object", () => {
 		const insertMark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
 			content: [node].map(singleTextCursor),

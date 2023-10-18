@@ -197,7 +197,7 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(afterCounter, 17);
 	});
 
-	it.only("event argument contains the expected node", () => {
+	it("event argument contains the expected node", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({
 			initialTree: {
