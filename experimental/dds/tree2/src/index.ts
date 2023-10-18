@@ -280,6 +280,8 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	is,
+	node,
+	SharedTreeNode,
 	Typed,
 	SchemaCollection,
 } from "./feature-libraries";
