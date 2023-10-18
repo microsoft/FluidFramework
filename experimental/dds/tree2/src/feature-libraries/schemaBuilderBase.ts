@@ -9,17 +9,20 @@ import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
 import {
 	SchemaLibraryData,
 	SchemaLintConfiguration,
-	buildViewSchemaCollection,
+	aggregateSchemaLibraries,
 	schemaLintDefault,
 	AllowedTypes,
 	TreeSchema,
 	FieldSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	FlexList,
 	Unenforced,
 	Any,
+	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
+import { defaultSchemaPolicy } from "./default-field-kinds";
 
 /**
  * Configuration for a SchemaBuilder.
@@ -129,15 +132,17 @@ export class SchemaBuilderBase<
 		this.treeSchema.set(schema.name, schema as TreeSchema);
 	}
 
-	private finalizeCommon(): void {
+	private finalizeCommon(field?: FieldSchema): SchemaLibraryData {
 		assert(!this.finalized, 0x79a /* SchemaBuilder can only be finalized once. */);
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
-			rootFieldSchema: undefined,
 			treeSchema: this.treeSchema,
 			adapters: this.adapters,
 		});
+
+		// Check for errors and aggregate data
+		return aggregateSchemaLibraries(this.name, this.lintConfiguration, this.libraries, field);
 	}
 
 	/**
@@ -145,16 +150,14 @@ export class SchemaBuilderBase<
 	 * May only be called once after adding content to builder is complete.
 	 */
 	public finalize(): SchemaLibrary {
-		this.finalizeCommon();
+		const aggregated = this.finalizeCommon();
 
-		// Check for errors:
-		const collection = buildViewSchemaCollection(this.lintConfiguration, this.libraries);
-
-		return { ...collection, libraries: this.libraries };
+		// Full library set (instead of just aggregated) is kept since it is required to handle deduplication of libraries included through different paths.
+		return { treeSchema: aggregated.treeSchema, libraries: this.libraries };
 	}
 
 	/**
-	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
+	 * Produce a DocumentSchema which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
 	 * Can be used with schematize to provide schema aware access to document content.
 	 *
 	 * @remarks
@@ -162,23 +165,16 @@ export class SchemaBuilderBase<
 	 */
 	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
-	): TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> {
+	): DocumentSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
-		const field = this.normalizeField(root);
-		this.finalizeCommon();
-		const rootLibrary: SchemaLibraryData = {
-			name: this.name,
+		const field: NormalizeField<TSchema, TDefaultKind> = this.normalizeField(root);
+		const library = this.finalizeCommon(field);
+
+		const typed: DocumentSchema<NormalizeField<TSchema, TDefaultKind>> = {
+			treeSchema: library.treeSchema,
+			adapters: library.adapters,
 			rootFieldSchema: field,
-			treeSchema: new Map(),
-			adapters: {},
-		};
-		const collection = buildViewSchemaCollection(this.lintConfiguration, [
-			rootLibrary,
-			...this.libraries,
-		]);
-		const typed: TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> = {
-			...collection,
-			rootFieldSchema: field,
+			policy: defaultSchemaPolicy,
 		};
 		return typed;
 	}
@@ -231,12 +227,12 @@ export class SchemaBuilderBase<
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a {@link MapNode}.
 	 */
-	public map<Name extends TName, const T extends ImplicitFieldSchema>(
+	public map<Name extends TName, const T extends MapFieldSchema>(
 		name: Name,
 		fieldSchema: T,
-	): TreeSchema<`${TScope}.${Name}`, { mapFields: NormalizeField<T, TDefaultKind> }> {
+	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
 		const schema = new TreeSchema(this, this.scoped(name), {
-			mapFields: this.normalizeField(fieldSchema),
+			mapFields: fieldSchema,
 		});
 		this.addNodeSchema(schema);
 		return schema;
@@ -250,11 +246,11 @@ export class SchemaBuilderBase<
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(
+	public mapRecursive<Name extends TName, const T extends Unenforced<MapFieldSchema>>(
 		name: Name,
 		t: T,
 	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
-		return this.map(name, t as unknown as ImplicitFieldSchema) as unknown as TreeSchema<
+		return this.map(name, t as unknown as MapFieldSchema) as unknown as TreeSchema<
 			`${TScope}.${Name}`,
 			{ mapFields: T }
 		>;
@@ -355,7 +351,7 @@ export class SchemaBuilderBase<
  * Can be aggregated into other libraries by adding to their builders.
  * @alpha
  */
-export interface SchemaLibrary extends TypedSchemaCollection {
+export interface SchemaLibrary extends SchemaCollection {
 	/**
 	 * Schema data aggregated from a collection of libraries by a SchemaBuilder.
 	 */

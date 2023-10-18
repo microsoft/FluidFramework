@@ -20,7 +20,7 @@ import {
 	getEditableTreeContext,
 	FieldSchema,
 	Any,
-	TypedSchemaCollection,
+	DocumentSchema,
 	NormalizeField,
 	ImplicitFieldSchema,
 	SchemaAware,
@@ -245,7 +245,7 @@ export function getPerson(): Person {
  */
 export function buildTestSchema<TSchema extends ImplicitFieldSchema>(
 	rootField: TSchema,
-): TypedSchemaCollection<NormalizeField<TSchema, typeof FieldKinds.required>> {
+): DocumentSchema<NormalizeField<TSchema, typeof FieldKinds.required>> {
 	return new SchemaBuilder({
 		scope: "buildTestSchema",
 		libraries: [personSchemaLibrary],
@@ -262,7 +262,7 @@ export function getReadonlyEditableTreeContext(
 }
 
 export function setupForest<T extends FieldSchema>(
-	schema: TypedSchemaCollection<T>,
+	schema: DocumentSchema<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(schema);

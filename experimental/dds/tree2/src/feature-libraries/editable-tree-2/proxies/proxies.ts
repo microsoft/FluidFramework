@@ -29,6 +29,7 @@ import { FieldKey } from "../../../core";
 import { getBoxedField } from "../lazyTree";
 import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
+import { createNodeApi, nodeSym } from "./node";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
 const treeNodeSym = Symbol("TreeNode");
@@ -149,6 +150,8 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
+	const nodeApi = createNodeApi(content);
+
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
 	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
@@ -164,11 +167,14 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				if (field !== undefined) {
 					return getProxyForField(field);
 				}
-				// TODO: Do this a better way.
-				if (key === treeNodeSym) {
-					return { schema };
+				switch (key) {
+					case treeNodeSym:
+						return content;
+					case nodeSym:
+						return nodeApi;
+					default:
+						return Reflect.get(target, key);
 				}
-				return undefined;
 			},
 			set(target, key, value) {
 				const fieldSchema = content.schema.structFields.get(key as FieldKey);
@@ -331,7 +337,7 @@ staticDispatchMap[Symbol.iterator] = {
 /* eslint-enable @typescript-eslint/unbound-method */
 /* eslint-enable @typescript-eslint/ban-types */
 
-const prototype = Object.create(null, staticDispatchMap);
+const prototype = Object.create(Object.prototype, staticDispatchMap);
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
@@ -363,6 +369,12 @@ export function createListProxy<TTypes extends AllowedTypes>(
 				return getField(this).length;
 			},
 			set() {},
+			enumerable: false,
+			configurable: false,
+		},
+		[nodeSym]: {
+			value: createNodeApi(treeNode),
+			writable: false,
 			enumerable: false,
 			configurable: false,
 		},

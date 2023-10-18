@@ -5,7 +5,7 @@
 import { strict as assert, fail } from "assert";
 import {
 	Any,
-	TypedSchemaCollection,
+	DocumentSchema,
 	FieldSchema,
 	FieldKinds,
 	allowsRepoSuperset,
@@ -133,7 +133,7 @@ describe("schematizeTree", () => {
 
 	describe("schematize", () => {
 		describe("noop upgrade", () => {
-			const testCases: [string, TypedSchemaCollection][] = [
+			const testCases: [string, DocumentSchema][] = [
 				["empty", emptySchema],
 				["basic-optional", schema],
 				["basic-value", schemaValueRoot],
