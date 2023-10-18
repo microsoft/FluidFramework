@@ -81,6 +81,7 @@ export {
 	MapTree,
 	LocalCommitSource,
 	forbiddenFieldKindIdentifier,
+	StoredSchemaCollection,
 } from "./core";
 
 export {
@@ -188,12 +189,7 @@ export {
 	UntypedTreeOrPrimitive,
 	AllowedTypes,
 	TreeSchema,
-	Required,
-	Optional,
-	Sequence,
-	NodeKeyFieldKind,
-	Forbidden,
-	TypedSchemaCollection,
+	DocumentSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	FieldSchema,
@@ -252,7 +248,7 @@ export {
 	MapNode,
 	OptionalField,
 	RequiredField,
-	Sequence2,
+	Sequence,
 	Struct,
 	StructTyped,
 	AssignableFieldKinds,
@@ -284,6 +280,8 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	is,
+	Typed,
+	SchemaCollection,
 } from "./feature-libraries";
 
 export {

@@ -8,6 +8,8 @@ import {
 	Adapters,
 	EmptyKey,
 	FieldKey,
+	SchemaData,
+	StoredSchemaCollection,
 	TreeSchemaIdentifier,
 	TreeTypeSet,
 	ValueSchema,
@@ -469,16 +471,47 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  * Strongly typed over its rootFieldSchema.
  *
  * @remarks
- * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
- * The actual type used will include detailed schema information for all the types in the collection.
- * This pattern is used to implement SchemaAware APIs.
+ * The type of the rootFieldSchema is used to implement SchemaAware APIs.
+ * Cases that do not require being compile time schema aware can omit the explicit type for it.
  *
  * @alpha
  */
 
-export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
+export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
+	/**
+	 * Schema for the root field which contains the whole tree.
+	 */
 	readonly rootFieldSchema: T;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	/**
+	 * Extra configuration for how this schema is handled at runtime.
+	 */
 	readonly policy: FullSchemaPolicy;
+	/**
+	 * Compatibility information how how to interact with content who's stored schema is not directly compatible with this schema.
+	 */
 	readonly adapters: Adapters;
+}
+
+{
+	// It is convenient that DocumentSchema can be used as a SchemaData with no conversion.
+	// This type check ensures this ability is not broken on accident (if it needs to be broken on purpose for some reason thats fine: just delete this check).
+	// Since TypeScript does not allow extending two types with the same field (even if they are compatible),
+	// this check cannot be done by adding an extends clause to DocumentSchema.
+	type _check = requireAssignableTo<DocumentSchema, SchemaData>;
+}
+
+/**
+ * Schema data that can be be used to view a document.
+ * @alpha
+ *
+ * @privateRemarks
+ * It is convenient that this can be used as a StoredSchemaCollection with no conversion.
+ * There there isn't a design requirement for this however, so this extends clause can be removed later if needed.
+ */
+
+export interface SchemaCollection extends StoredSchemaCollection {
+	/**
+	 * {@inheritdoc SchemaCollection}
+	 */
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }

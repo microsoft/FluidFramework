@@ -15,7 +15,7 @@ import {
 	Compatibility,
 } from "../../core";
 import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema";
-import { TypedSchemaCollection } from "./typedTreeSchema";
+import { DocumentSchema } from "./typedTreeSchema";
 
 /**
  * A collection of View information for schema, including policy.
@@ -24,7 +24,7 @@ export class ViewSchema {
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		public readonly schema: TypedSchemaCollection,
+		public readonly schema: DocumentSchema,
 	) {}
 
 	/**

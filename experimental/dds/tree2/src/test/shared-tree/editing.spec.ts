@@ -1757,6 +1757,25 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], [{ foo: "42" }]);
 		});
 
+		// This test failed with 0x370 at the time of writing for two reasons:
+		// 1. Optional field doesn't cancel the deletion + reinsertion of "2" when rebasing tree2's edit over tree1
+		// 2. Asymmetry exists between a change and its rollback: we never roll back the creation of new trees.
+		//    That's a problem when a changeset gets reapplied as the result of a rebase sandwich as is the case
+		//    with the second rebaseOnto call. The resulting forest logic thus duplicates creation of "2".
+		it.skip("can rebase over successive sets", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+
+			tree1.editor.optionalField(rootField).set(singleJsonCursor("1"), true);
+			tree2.editor.optionalField(rootField).set(singleJsonCursor("2"), true);
+
+			tree2.rebaseOnto(tree1);
+			tree1.editor.optionalField(rootField).set(singleJsonCursor("1 again"), false);
+
+			tree2.rebaseOnto(tree1);
+			expectJsonTree(tree2, ["2"]);
+		});
+
 		it("can replace and restore a node", () => {
 			const tree1 = makeTreeFromJson(["42"]);
 

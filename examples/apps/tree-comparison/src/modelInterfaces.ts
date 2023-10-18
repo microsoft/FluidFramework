@@ -18,7 +18,7 @@ export interface IInventoryListAppModel {
 	/**
 	 * An inventory tracker list using the new shared tree.
 	 */
-	readonly treeInventoryList: IInventoryList;
+	readonly newTreeInventoryList: IInventoryList;
 }
 
 export interface IInventoryItemEvents {
