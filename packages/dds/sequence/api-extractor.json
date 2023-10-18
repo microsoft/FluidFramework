@@ -6,6 +6,7 @@
 	"dtsRollup": {
 		// This package has a root module named "sequence" which conflicts with the default naming here.
 		// TODO: remove this override once the base config has been updated to append `-untrimmed` globally.
+		"enabled": false,
 		"untrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-untrimmed.d.ts"
 	},
 	"messages": {
