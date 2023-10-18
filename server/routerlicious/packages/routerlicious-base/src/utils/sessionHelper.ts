@@ -161,7 +161,9 @@ async function updateExistingSession(
 		isSessionActive: false,
 	};
 	// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
-	if (updatedMessageBrokerId) updatedSession.messageBrokerId = updatedMessageBrokerId;
+	if (updatedMessageBrokerId) {
+		updatedSession.messageBrokerId = updatedMessageBrokerId;
+	}
 	try {
 		const result = await documentRepository.findOneAndUpdate(
 			{
