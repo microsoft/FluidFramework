@@ -309,6 +309,10 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 		let index = 0;
 		for (const mark of delta.attached) {
 			if (mark.fields !== undefined) {
+				assert(
+					mark.attach === undefined || mark.detach !== undefined,
+					"Invalid nested changes on an additive mark",
+				);
 				visitNode(index, mark.fields, visitor, config);
 			}
 			if (mark.detach !== undefined) {

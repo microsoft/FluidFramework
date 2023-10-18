@@ -9,6 +9,15 @@ import { rootFieldKey } from "./types";
 
 export const emptyDelta: Root<never> = new Map();
 
+export function isEmptyFieldChanges(fieldChanges: FieldChanges): boolean {
+	return (
+		fieldChanges.attached === undefined &&
+		fieldChanges.detached === undefined &&
+		fieldChanges.build === undefined &&
+		fieldChanges.relocate === undefined
+	);
+}
+
 export function deltaForRootInitialization(content: readonly ITreeCursorSynchronous[]): Root {
 	if (content.length === 0) {
 		return emptyDelta;

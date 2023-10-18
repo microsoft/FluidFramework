@@ -94,18 +94,16 @@ export type ProtoNode = ITreeCursorSynchronous;
  */
 export type ProtoNodes = readonly ProtoNode[];
 
-/**
- * Represents a change being made to a part of the tree.
- * @alpha
- */
 export interface Mark<TTree = ProtoNode> {
 	/**
 	 * The number of nodes affected.
 	 * Must be 1 when `fields` is populated.
 	 */
 	readonly count: number;
+
 	/**
 	 * Modifications to the pre-existing content.
+	 * Must be undefined when `attach` is set but `detach` is not.
 	 */
 	readonly fields?: FieldsChanges<TTree>;
 

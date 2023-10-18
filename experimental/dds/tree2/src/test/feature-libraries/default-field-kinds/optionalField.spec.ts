@@ -393,10 +393,9 @@ describe("optionalField", () => {
 		it("can be converted to a delta when field was empty", () => {
 			const expected: Delta.FieldChanges = {
 				build: [{ id: { minor: 41 }, trees: [testTreeCursor("tree1")] }],
-				attached: [
+				detached: [
 					{
-						count: 1,
-						attach: { minor: 41 },
+						id: { minor: 41 },
 						fields: new Map([
 							[
 								fooKey,
@@ -419,6 +418,7 @@ describe("optionalField", () => {
 						]),
 					},
 				],
+				attached: [{ count: 1, attach: { minor: 41 } }],
 			};
 
 			const actual = optionalFieldIntoDelta(change1, (change) =>

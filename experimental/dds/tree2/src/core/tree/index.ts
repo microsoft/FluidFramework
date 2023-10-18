@@ -95,6 +95,7 @@ export { SparseNode, getDescendant } from "./sparseTree";
 export {
 	deltaForRootInitialization,
 	deltaForSet,
+	isEmptyFieldChanges,
 	makeDetachedNodeId,
 	emptyDelta,
 } from "./deltaUtil";

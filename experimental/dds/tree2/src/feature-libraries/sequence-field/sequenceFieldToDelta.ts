@@ -114,6 +114,11 @@ export function sequenceFieldToDelta<TNodeChange>(
 					assert(mark.cellId !== undefined, "Active insert mark must have CellId");
 					const buildId = nodeIdFromChangeAtom(mark.cellId);
 					deltaMark.attach = buildId;
+					if (deltaMark.fields) {
+						// Nested changes are represented on the node in its starting location
+						detached.push({ id: buildId, fields: deltaMark.fields });
+						delete deltaMark.fields;
+					}
 					if (isNewAttach(mark)) {
 						assert(mark.content !== undefined, "New insert must have content");
 						build.push({
@@ -130,6 +135,18 @@ export function sequenceFieldToDelta<TNodeChange>(
 					unreachableCase(type);
 			}
 		}
+	}
+	// Remove trailing no-op marks
+	while (attached.length > 0) {
+		const lastMark = attached[attached.length - 1];
+		if (
+			lastMark.attach !== undefined ||
+			lastMark.detach !== undefined ||
+			lastMark.fields !== undefined
+		) {
+			break;
+		}
+		attached.pop();
 	}
 	if (attached.length > 0) {
 		delta.attached = attached;

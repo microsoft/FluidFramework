@@ -23,7 +23,7 @@ import {
 	singleTextCursor,
 } from "../../feature-libraries";
 
-import { brand } from "../../util";
+import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
 import { testChangeReceiver } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
@@ -99,8 +99,8 @@ describe("ModularChangeFamily integration", () => {
 			);
 			const [remove, move, expected] = getChanges();
 			const rebased = family.rebase(move, tagChange(remove, mintRevisionTag()));
-			const rebasedDelta = family.intoDelta(makeAnonChange(rebased));
-			const expectedDelta = family.intoDelta(makeAnonChange(expected));
+			const rebasedDelta = normalizeDelta(family.intoDelta(makeAnonChange(rebased)));
+			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
 	});
@@ -193,7 +193,6 @@ describe("ModularChangeFamily integration", () => {
 			const composed = family.compose([returnTagged, makeAnonChange(moveAndInsert)]);
 			const actual = family.intoDelta(makeAnonChange(composed));
 			const expected: Delta.Root = new Map([
-				[fieldA, {}],
 				[
 					fieldB,
 					{
@@ -248,8 +247,8 @@ describe("ModularChangeFamily integration", () => {
 			);
 			const [move1, move2, expected] = getChanges();
 			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
-			const actualDelta = family.intoDelta(makeAnonChange(composed));
-			const expectedDelta = family.intoDelta(makeAnonChange(expected));
+			const actualDelta = normalizeDelta(family.intoDelta(makeAnonChange(composed)));
+			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
 			assert.deepEqual(actualDelta, expectedDelta);
 		});
 	});
@@ -283,19 +282,19 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			};
 			const moveOut1: Delta.Mark = {
-				detach: { minor: 0 },
+				detach: { major: tag1, minor: 0 },
 				count: 1,
 			};
 			const moveIn1: Delta.Mark = {
-				attach: { minor: 0 },
+				attach: { major: tag1, minor: 0 },
 				count: 1,
 			};
 			const moveOut2: Delta.Mark = {
-				detach: { minor: 1 },
+				detach: { major: tag2, minor: 0 },
 				count: 2,
 			};
 			const moveIn2: Delta.Mark = {
-				attach: { minor: 1 },
+				attach: { major: tag2, minor: 0 },
 				count: 2,
 			};
 			const expected: Delta.Root = new Map([
@@ -308,74 +307,79 @@ describe("ModularChangeFamily integration", () => {
 	});
 });
 
-// function normalizeDelta(
-// 	delta: Delta.Root,
-// 	idAllocator?: () => Delta.MoveId,
-// 	idMap?: Map<Delta.MoveId, Delta.MoveId>,
-// ): Delta.Root {
-// 	const genId = idAllocator ?? newIdAllocator();
-// 	const map = idMap ?? new Map();
+function normalizeDelta(
+	delta: Delta.Root,
+	idAllocator?: IdAllocator,
+	idMap?: Map<number, number>,
+): Delta.Root {
+	const genId = idAllocator ?? idAllocatorFromMaxId();
+	const map = idMap ?? new Map();
 
-// 	const normalized = new Map();
-// 	for (const [field, marks] of delta) {
-// 		if (marks.length > 0) {
-// 			normalized.set(field, normalizeDeltaField(marks, genId, map));
-// 		}
-// 	}
+	const normalized = new Map();
+	for (const [field, fieldChanges] of delta) {
+		normalized.set(field, normalizeDeltaFieldChanges(fieldChanges, genId, map));
+	}
 
-// 	return normalized;
-// }
+	return normalized;
+}
 
-// function normalizeDeltaField(
-// 	delta: Delta.MarkList,
-// 	genId: () => Delta.MoveId,
-// 	idMap: Map<Delta.MoveId, Delta.MoveId>,
-// ): Delta.MarkList {
-// 	const normalized = [];
-// 	for (const origMark of delta) {
-// 		if (isSkipMark(origMark)) {
-// 			normalized.push(origMark);
-// 			continue;
-// 		}
+function normalizeDeltaFieldChanges(
+	delta: Delta.FieldChanges,
+	genId: IdAllocator,
+	idMap: Map<number, number>,
+): Delta.FieldChanges {
+	const normalized: Mutable<Delta.FieldChanges> = {};
+	if (delta.attached !== undefined && delta.attached.length > 0) {
+		normalized.attached = delta.attached.map((mark) => normalizeDeltaMark(mark, genId, idMap));
+	}
+	if (delta.build !== undefined && delta.build.length > 0) {
+		normalized.build = delta.build.map(({ id, trees }) => ({
+			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
+			trees,
+		}));
+	}
+	if (delta.detached !== undefined && delta.detached.length > 0) {
+		normalized.detached = delta.detached.map(({ id, fields }) => ({
+			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
+			fields: normalizeDelta(fields, genId, idMap),
+		}));
+	}
+	if (delta.relocate !== undefined && delta.relocate.length > 0) {
+		normalized.relocate = delta.relocate.map(({ id, count, destination }) => ({
+			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
+			count,
+			destination: normalizeDeltaDetachedNodeId(destination, genId, idMap),
+		}));
+	}
 
-// 		const mark: Mutable<Delta.Mark> = { ...origMark };
-// 		switch (mark.type) {
-// 			case Delta.MarkType.MoveIn:
-// 			case Delta.MarkType.MoveOut: {
-// 				let newId = idMap.get(mark.moveId);
-// 				if (newId === undefined) {
-// 					newId = genId();
-// 					idMap.set(mark.moveId, newId);
-// 				}
+	return normalized;
+}
 
-// 				mark.moveId = newId;
-// 				break;
-// 			}
-// 			default:
-// 				break;
-// 		}
+function normalizeDeltaMark(
+	delta: Delta.Mark,
+	genId: IdAllocator,
+	idMap: Map<number, number>,
+): Delta.Mark {
+	const normalized: Mutable<Delta.Mark> = { ...delta };
+	if (normalized.attach !== undefined) {
+		normalized.attach = normalizeDeltaDetachedNodeId(normalized.attach, genId, idMap);
+	}
+	if (normalized.detach !== undefined) {
+		normalized.detach = normalizeDeltaDetachedNodeId(normalized.detach, genId, idMap);
+	}
+	if (normalized.fields !== undefined) {
+		normalized.fields = normalizeDelta(normalized.fields, genId, idMap);
+	}
+	return normalized;
+}
 
-// 		switch (mark.type) {
-// 			case Delta.MarkType.Modify:
-// 			case Delta.MarkType.Remove:
-// 			case Delta.MarkType.Insert:
-// 			case Delta.MarkType.MoveOut: {
-// 				if (mark.fields !== undefined) {
-// 					mark.fields = normalizeDelta(mark.fields, genId, idMap);
-// 				}
-// 				break;
-// 			}
-// 			default:
-// 				break;
-// 		}
-
-// 		normalized.push(mark);
-// 	}
-
-// 	return normalized;
-// }
-
-// function newIdAllocator(): () => Delta.MoveId {
-// 	let maxId = 0;
-// 	return () => brand(maxId++);
-// }
+function normalizeDeltaDetachedNodeId(
+	delta: Delta.DetachedNodeId,
+	genId: IdAllocator,
+	idMap: Map<number, number>,
+): Delta.DetachedNodeId {
+	assert(delta.major === undefined, "Normalize only supports minor detached node IDs");
+	const minor = idMap.get(delta.minor) ?? genId.allocate();
+	idMap.set(delta.minor, minor);
+	return { minor };
+}

@@ -20,6 +20,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 	ChangesetLocalId,
+	isEmptyFieldChanges,
 } from "../../core";
 import {
 	brand,
@@ -727,7 +728,9 @@ export class ModularChangeFamily
 					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
 				idAllocator,
 			);
-			delta.set(field, deltaField);
+			if (!isEmptyFieldChanges(deltaField)) {
+				delta.set(field, deltaField);
+			}
 		}
 		return delta;
 	}

@@ -521,11 +521,6 @@ export function optionalFieldIntoDelta(
 	if (update === undefined) {
 		// The field is being cleared
 	} else {
-		const hasNewFieldChanges: { fields?: Delta.FieldsChanges } = {};
-		if (update.changes !== undefined) {
-			const fields = deltaFromChild(update.changes);
-			hasNewFieldChanges.fields = fields;
-		}
 		if (Object.prototype.hasOwnProperty.call(update, "set")) {
 			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
 			const content = [singleTextCursor(setUpdate.set)];
@@ -542,6 +537,10 @@ export function optionalFieldIntoDelta(
 				minor: changeId.localId,
 			};
 			mark.attach = restoreId;
+		}
+		if (update.changes !== undefined) {
+			const fields = deltaFromChild(update.changes);
+			delta.detached = [{ id: mark.attach, fields }];
 		}
 	}
 	return delta;
