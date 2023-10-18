@@ -193,28 +193,29 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		}, heartbeatTimeoutMs);
 
 		// Kill workers when they take too long to spawn.
-		cluster.on("fork", (worker) => {
-			const timeout = setTimeout(
-				() => {
-					Lumberjack.error("Timed out waiting for worker to spawn.", {
-						id: worker.id,
-						pid: worker.process.pid,
-					});
+		// cluster.on("fork", (worker) => {
+		// 	const timeout = setTimeout(
+		// 		() => {
+		// 			Lumberjack.error("Timed out waiting for worker to spawn.", {
+		// 				id: worker.id,
+		// 				pid: worker.process.pid,
+		// 			});
 
-					// Make sure worker dies.
-					this.killWorker(worker);
+		// 			// Make sure worker dies.
+		// 			this.killWorker(worker);
 
-					// Remove timeout from map.
-					this.newForkTimeouts.delete(worker.id);
-				},
-				this.clusterConfig?.workerForkTimeoutMs,
-			);
-			this.newForkTimeouts.set(worker.id, timeout);
-		});
-		cluster.on("listening", (worker, address) => {
-			clearTimeout(this.newForkTimeouts.get(worker.id));
-			this.newForkTimeouts.delete(worker.id);
-		});
+		// 			// Remove timeout from map.
+		// 			this.newForkTimeouts.delete(worker.id);
+		// 		},
+		// 		this.clusterConfig?.workerForkTimeoutMs,
+		// 	);
+		// 	this.newForkTimeouts.set(worker.id, timeout);
+		// });
+		// cluster.on("listening", (worker, address) => {
+        //     Lumberjack.info(`Worker is listening.`, { address: address.address, port: address.port });
+		// 	clearTimeout(this.newForkTimeouts.get(worker.id));
+		// 	this.newForkTimeouts.delete(worker.id);
+		// });
 
 		// Listen for exiting workers.
 		cluster.on("exit", (worker, code, signal) => {
