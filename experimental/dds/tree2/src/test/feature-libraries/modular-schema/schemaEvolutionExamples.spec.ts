@@ -15,8 +15,8 @@ import {
 } from "../../../feature-libraries";
 import {
 	FieldStoredSchema,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	InMemoryStoredSchemaRepository,
 	Adapters,
 	Compatibility,
@@ -52,8 +52,8 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	 * @returns true iff update was performed.
 	 */
 	public tryUpdateTreeSchema(
-		identifier: TreeSchemaIdentifier,
-		schema: TreeStoredSchema,
+		identifier: TreeNodeSchemaIdentifier,
+		schema: TreeNodeStoredSchema,
 	): boolean {
 		const original = this.treeSchema.get(identifier);
 		if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
@@ -377,7 +377,7 @@ describe("Schema Evolution Examples", () => {
 	// 	// In this version of the app,
 	// 	// we decided that text should be organized into a hierarchy of formatting ranges.
 	// 	// We are doing this schema change in an incompatible way, and thus introducing a new identifier:
-	// 	const formattedTextIdentifier: TreeSchemaIdentifier = brand(
+	// 	const formattedTextIdentifier: TreeNodeSchemaIdentifier = brand(
 	// 		"2cbc277e-8820-41ef-a3f4-0a00de8ef934",
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);

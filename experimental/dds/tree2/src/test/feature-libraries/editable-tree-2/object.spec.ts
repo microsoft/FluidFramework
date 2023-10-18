@@ -318,7 +318,7 @@ describe("Object-like", () => {
 			(root) => {
 				assert.throws(() => {
 					// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
-					(root as any).foo = 3;
+					(root as unknown as any).foo = 3;
 				}, "attempting to set an invalid field must throw.");
 			},
 		);

@@ -7,8 +7,8 @@ import { Named, fail } from "../../util";
 import {
 	FieldStoredSchema,
 	FieldKey,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	SchemaData,
 	Adapters,
 	AdaptedViewSchema,
@@ -102,7 +102,7 @@ export class ViewSchema {
 
 		const adapted = {
 			rootFieldSchema: this.adaptField(stored.rootFieldSchema),
-			treeSchema: new Map<TreeSchemaIdentifier, TreeStoredSchema>(),
+			treeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(),
 		};
 
 		for (const [key, schema] of stored.treeSchema) {
@@ -119,7 +119,7 @@ export class ViewSchema {
 	 */
 	private adaptField(original: FieldStoredSchema): FieldStoredSchema {
 		if (original.types !== undefined) {
-			const types: Set<TreeSchemaIdentifier> = new Set(original.types);
+			const types: Set<TreeNodeSchemaIdentifier> = new Set(original.types);
 			for (const treeAdapter of this.adapters?.tree ?? []) {
 				if (types.has(treeAdapter.input)) {
 					types.delete(treeAdapter.input);
@@ -132,7 +132,7 @@ export class ViewSchema {
 		return original;
 	}
 
-	private adaptTree(original: TreeStoredSchema): TreeStoredSchema {
+	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
 		const structFields: Map<FieldKey, FieldStoredSchema> = new Map();
 		for (const [key, schema] of original.structFields) {
 			// TODO: support missing field adapters.
