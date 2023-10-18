@@ -8,6 +8,7 @@ import {
 	AllowedTypes,
 	FieldNodeSchema,
 	FieldSchema,
+	MapSchema,
 	StructSchema,
 	TreeSchema,
 	schemaIsFieldNode,
@@ -18,6 +19,7 @@ import {
 import { FieldKinds } from "../../default-field-kinds";
 import {
 	FieldNode,
+	MapNode,
 	OptionalField,
 	RequiredField,
 	TreeNode,
@@ -28,7 +30,7 @@ import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { getBoxedField } from "../lazyTree";
 import { LazyEntity } from "../lazyEntity";
-import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
+import { ProxyField, ProxyNode, SharedTreeList, SharedTreeMap, SharedTreeObject } from "./types";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
 const treeNodeSym = Symbol("TreeNode");
@@ -53,7 +55,7 @@ const proxyCacheSym = Symbol("ProxyCache");
 /** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
 function cacheProxy(
 	target: TreeNode,
-	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema> | SharedTreeMap<MapSchema>,
 ): void {
 	Object.defineProperty(target, proxyCacheSym, {
 		value: proxy,
@@ -125,7 +127,14 @@ export function getProxyForNode<TSchema extends TreeSchema>(
 	const schema = treeNode.schema;
 
 	if (schemaIsMap(schema)) {
-		fail("Map not implemented");
+		const cachedProxy = getCachedProxy(treeNode);
+		if (cachedProxy !== undefined) {
+			return cachedProxy as ProxyNode<TSchema>;
+		}
+
+		const proxy = createMapProxy(treeNode);
+		cacheProxy(treeNode, proxy);
+		return proxy as ProxyNode<TSchema>;
 	}
 	if (schemaIsLeaf(schema)) {
 		return treeNode.value as ProxyNode<TSchema>;
@@ -232,7 +241,8 @@ const getField = <TTypes extends AllowedTypes>(target: object) => {
 // For brevity, the current implementation dynamically builds a property descriptor map from a list of
 // functions we want to re-expose via the proxy.
 
-const staticDispatchMap: PropertyDescriptorMap = {};
+const listStaticDispatchMap: PropertyDescriptorMap = {};
+const mapStaticDispatchMap: PropertyDescriptorMap = {};
 
 // TODO: Historically I've been impressed by V8's ability to inline compositions of functions, but it's
 // still worth seeing if manually inlining 'thisContext' can improve performance.
@@ -241,16 +251,16 @@ const staticDispatchMap: PropertyDescriptorMap = {};
 /* eslint-disable @typescript-eslint/unbound-method */
 
 /**
- * Adds a PropertyDescriptor for the given function to the 'staticDispatchMap'.  The 'thisContext' function
+ * Adds a PropertyDescriptor for the given function to a property descriptor map.  The 'thisContext' function
  * receives the original 'this' argument (which is the proxy) and returns the desired 'this' context
- * for the function call.  (We use 'thisContext' to redirect calls to the underlying LazySequence.)
+ * for the function call.  (We use 'thisContext' to redirect calls to the underlying node.)
  */
 function addDescriptor(
-	map: PropertyDescriptorMap,
+	descriptorMap: PropertyDescriptorMap,
 	fn: Function,
 	thisContext: (self: object) => object,
 ) {
-	map[fn.name] = {
+	descriptorMap[fn.name] = {
 		get: () =>
 			function (this: any, ...args: any[]) {
 				return fn.apply(thisContext(this), args) as unknown;
@@ -259,6 +269,8 @@ function addDescriptor(
 		configurable: false,
 	};
 }
+
+// #region Create dispatch map for lists
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
 // to the list proxy.  Over time, we should replace these with efficient implementations on LazySequence
@@ -303,7 +315,7 @@ function addDescriptor(
 	// Array.prototype.unshift,
 	Array.prototype.values,
 ].forEach((fn) => {
-	addDescriptor(staticDispatchMap, fn, (proxy) => proxy);
+	addDescriptor(listStaticDispatchMap, fn, (proxy) => proxy);
 });
 
 // These are methods implemented by LazySequence that we expose through the proxy.
@@ -317,11 +329,11 @@ function addDescriptor(
 	LazySequence.prototype.moveToEnd,
 	LazySequence.prototype.moveToIndex,
 ].forEach((fn) => {
-	addDescriptor(staticDispatchMap, fn, getField);
+	addDescriptor(listStaticDispatchMap, fn, getField);
 });
 
 // [Symbol.iterator] is an alias for 'Array.prototype.values', as 'Function.name' returns 'values'.
-staticDispatchMap[Symbol.iterator] = {
+listStaticDispatchMap[Symbol.iterator] = {
 	value: Array.prototype[Symbol.iterator],
 	writable: false,
 	enumerable: false,
@@ -331,7 +343,9 @@ staticDispatchMap[Symbol.iterator] = {
 /* eslint-enable @typescript-eslint/unbound-method */
 /* eslint-enable @typescript-eslint/ban-types */
 
-const prototype = Object.create(null, staticDispatchMap);
+const listPrototype = Object.create(null, listStaticDispatchMap);
+
+// #endregion
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
@@ -357,7 +371,7 @@ export function createListProxy<TTypes extends AllowedTypes>(
 	// (e.g., 'length', which is defined below).
 	//
 	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
-	const dispatch = Object.create(prototype, {
+	const dispatch = Object.create(listPrototype, {
 		length: {
 			get(this: object) {
 				return getField(this).length;
@@ -433,6 +447,98 @@ export function createListProxy<TTypes extends AllowedTypes>(
 				};
 			}
 			return Reflect.getOwnPropertyDescriptor(dispatch, key);
+		},
+	});
+}
+
+// #region Create dispatch map for maps
+
+[
+	/* eslint-disable @typescript-eslint/unbound-method */
+	Map.prototype.clear,
+	Map.prototype.delete,
+	Map.prototype.entries,
+	Map.prototype.forEach,
+	Map.prototype.get,
+	Map.prototype.has,
+	Map.prototype.keys,
+	Map.prototype.set,
+	Map.prototype.values,
+	/* eslint-enable @typescript-eslint/unbound-method */
+].forEach((fn) => {
+	addDescriptor(mapStaticDispatchMap, fn, (proxy) => proxy);
+});
+
+mapStaticDispatchMap[Symbol.iterator] = {
+	value: Map.prototype[Symbol.iterator],
+	writable: false,
+	enumerable: false,
+	configurable: false,
+};
+
+const mapPrototype = Object.create(null, mapStaticDispatchMap);
+
+// #endregion
+
+const getMapNode = <TSchema extends MapSchema>(target: object): MapNode<TSchema> => {
+	return getTreeNode(target) as MapNode<TSchema>;
+};
+
+function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTreeMap<TSchema> {
+	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
+	// Own properties on the dispatch object are surfaced as own properties of the proxy.
+	// (e.g., 'size', which is defined below).
+	//
+	// Properties normally inherited from 'Map.prototype' are surfaced via the prototype chain.
+	const dispatch = Object.create(mapPrototype, {
+		size: {
+			get(this: object) {
+				return getMapNode(this).size;
+			},
+			set() {},
+			enumerable: false,
+			configurable: false,
+		},
+	});
+
+	setTreeNode(dispatch, treeNode);
+
+	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
+	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
+	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
+	// prototype chains.
+
+	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
+	// a dispatch object to see if it improves performance.
+	return new Proxy<SharedTreeMap<TSchema>>(new Map(), {
+		get: (target, key, receiver): unknown => {
+			console.log(`get "${String(key)}"`);
+			return Reflect.get(dispatch, key);
+		},
+		getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
+			if (key === "size") {
+				// TODO: this appears to be inaccurate for map.size
+				// To satisfy 'deepEquals' level scrutiny, the property descriptor for 'size' must be a simple
+				// value property (as opposed to using getter) and be declared writable / non-configurable.
+				return {
+					value: getMapNode(dispatch).size,
+					writable: false, // TODO: verify this is okay
+					enumerable: false,
+					configurable: false,
+				};
+			}
+			return Reflect.getOwnPropertyDescriptor(dispatch, key);
+		},
+		has: (target, key) => {
+			return Reflect.has(dispatch, key);
+		},
+		set: (target, key, newValue): boolean => {
+			// For MVP, we otherwise disallow setting properties (mutation is only available via the map mutation APIs).
+			return false;
+		},
+		ownKeys: (target) => {
+			// TODO: double check that this is all we require here
+			return ["size"];
 		},
 	});
 }
