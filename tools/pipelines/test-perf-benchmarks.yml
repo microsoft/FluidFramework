@@ -82,7 +82,7 @@ stages:
         value: ${{ variables.testWorkspace }}/benchmarkOutput
         readonly: true
     jobs:
-    - template: templates/include-test-perf-benchmarks.yml
+    - template: templates/include-telemetry-setup.yml
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
@@ -240,7 +240,7 @@ stages:
         value: ${{ variables.testWorkspace }}/memoryTestsOutput
         readonly: true
     jobs:
-    - template: templates/include-test-perf-benchmarks.yml
+    - template: templates/include-telemetry-setup.yml
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
@@ -413,7 +413,7 @@ stages:
           value: ${{ replace(replace(variables.testPackage, '@', '' ), '/', '-') }}
           readonly: true
       jobs:
-      - template: templates/include-test-perf-benchmarks.yml
+      - template: templates/include-telemetry-setup.yml
         parameters:
           poolBuild: ${{ parameters.poolBuild }}
           testWorkspace: ${{ variables.testWorkspace }}
@@ -625,7 +625,7 @@ stages:
       - perf_e2e_tests_frs
 
     jobs:
-      - template: templates/include-test-perf-benchmarks.yml
+      - template: templates/include-telemetry-setup.yml
         parameters:
           poolBuild: ${{ parameters.poolBuild }}
           testWorkspace: ${{ variables.testWorkspace }}

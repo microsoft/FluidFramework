@@ -143,10 +143,8 @@ variables:
   - name: toolAbsolutePath
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
-  - name: testWorkspace
-    value: $(Pipeline.Workspace)/test
-  - name: loggerPackage
-    value: '@ff-internal/aria-logger'
+  - name: pipelineTelemetryWorkdir
+    value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
   - group: ado-feeds
 
 stages:
@@ -637,10 +635,9 @@ stages:
       - build
 
     jobs:
-      - template: include-test-perf-benchmarks.yml
+      - template: include-telemetry-setup.yml
         parameters:
-            testWorkspace: ${{ variables.testWorkspace }}
-            loggerPackage: ${{ variables.loggerPackage }}
+            testWorkspace: ${{ variables.pipelineTelemetryWorkdir }}
             poolBuild: Small
             customSteps:
 
@@ -651,14 +648,14 @@ stages:
                 workingDirectory: $(toolAbsolutePath)
                 script: |
                   echo "creating output folder"
-                  mkdir -p ${{ variables.testWorkspace }}/timingOutput
+                  mkdir -p ${{ variables.pipelineTelemetryWorkdir }}/timingOutput
                   echo "Executing curl command ..."
                   echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
-                  curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+                  curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json
                   pwd;
-                  ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-                  cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+                  ls -laR ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json;
+                  cat ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json;
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.pipelineTelemetryWorkdir }}/timingOutput/';
               env:
                 BUILD_ID: $(Build.BuildId)
                 ADO_API_TOKEN: $(System.AccessToken)
