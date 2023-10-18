@@ -13,7 +13,13 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
-import { InMemoryStoredSchemaRepository, makeDetachedFieldIndex } from "../core";
+import {
+	InMemoryStoredSchemaRepository,
+	SimpleDependee,
+	cachedValue,
+	makeDetachedFieldIndex,
+	recordDependency,
+} from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
@@ -118,14 +124,19 @@ export class SharedTree
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
 		const removedTrees = makeDetachedFieldIndex("repair");
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(() => this.viewForSummarization.forest);
-		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(
-			() => this.viewForSummarization.removedTrees,
-		);
 		const changeFamily = new DefaultChangeFamily(options);
+		const summarizableDependee = new SimpleDependee("summarizables");
+		const summarizables = cachedValue((observer) => {
+			recordDependency(observer, summarizableDependee);
+			return [
+				new SchemaSummarizer(runtime, schema, options),
+				new ForestSummarizer(this.viewForSummarization.forest),
+				new DetachedFieldIndexSummarizer(this.viewForSummarization.removedTrees),
+			];
+		});
+
 		super(
-			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
+			summarizables,
 			changeFamily,
 			options,
 			id,
@@ -149,22 +160,24 @@ export class SharedTree
 
 		let activeTransactionCount = 0;
 
-		const transactionStart = () => {
+		const beginTransaction = () => {
 			if (activeTransactionCount === 0) {
 				this.viewForSummarization = this.view.fork();
+				summarizableDependee.invalidateDependents();
 			}
 			activeTransactionCount++;
 		};
-		const transactionFinish = () => {
+		const endTransaction = () => {
 			activeTransactionCount--;
 			if (activeTransactionCount === 0) {
 				this.viewForSummarization.dispose();
 				this.viewForSummarization = this.view;
+				summarizableDependee.invalidateDependents();
 			}
 		};
-		const deregisterStart = this.view.transaction.events.on("start", transactionStart);
-		const deregisterAbort = this.view.transaction.events.on("abort", transactionFinish);
-		const deregisterCommit = this.view.transaction.events.on("commit", transactionFinish);
+		const deregisterStart = this.view.transaction.events.on("start", beginTransaction);
+		const deregisterAbort = this.view.transaction.events.on("abort", endTransaction);
+		const deregisterCommit = this.view.transaction.events.on("commit", endTransaction);
 		this.deregisterViewClone = () => {
 			deregisterStart();
 			deregisterAbort();

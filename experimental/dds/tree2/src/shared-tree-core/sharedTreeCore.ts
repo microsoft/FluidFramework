@@ -22,7 +22,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
-import { ChangeFamily, Delta, ChangeFamilyEditor, GraphCommit } from "../core";
+import { ChangeFamily, Delta, ChangeFamilyEditor, GraphCommit, ICachedValue } from "../core";
 import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
@@ -82,7 +82,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	TransformEvents<ISharedTreeCoreEvents, ISharedObjectEvents>
 > {
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly summarizables: readonly Summarizable[];
+	private readonly getSummarizables: () => readonly Summarizable[];
 
 	/** Iff false, calls to `submitOp` will have no effect */
 	private submitOps = true;
@@ -119,7 +119,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	private readonly messageCodec: IJsonCodec<DecodedMessage<TChange>, unknown>;
 
 	/**
-	 * @param summarizables - Summarizers for all indexes used by this tree
+	 * @param getSummarizables - Summarizers for all indexes used by this tree TODO update doc
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
 	 * @param id - The id of the shared object
@@ -128,7 +128,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	 * @param telemetryContextPrefix - the context for any telemetry logs/errors emitted
 	 */
 	public constructor(
-		summarizables: readonly Summarizable[],
+		summarizables: ICachedValue<readonly Summarizable[]>,
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		// Base class arguments
@@ -178,16 +178,17 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			}
 		});
 
-		this.summarizables = [
-			new EditManagerSummarizer(this.editManager, options),
-			...summarizables,
-		];
-		assert(
-			new Set(this.summarizables.map((e) => e.key)).size === this.summarizables.length,
-			0x350 /* Index summary element keys must be unique */,
-		);
-
 		this.messageCodec = makeMessageCodec(changeFamily.codecs.resolve(formatVersion).json);
+		const editManagerSummarizable = new EditManagerSummarizer(this.editManager, options);
+		this.getSummarizables = () => {
+			const summarizablesCurrent = [editManagerSummarizable, ...summarizables.get()];
+			assert(
+				new Set(summarizablesCurrent.map((e) => e.key)).size ===
+					summarizablesCurrent.length,
+				0x350 /* Index summary element keys must be unique */,
+			);
+			return summarizablesCurrent;
+		};
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -196,10 +197,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
+		const summarizables = this.getSummarizables();
+
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
-		for (const s of this.summarizables) {
+		for (const s of summarizables) {
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(
@@ -216,7 +219,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
-		const loadSummaries = this.summarizables.map(async (summaryElement) =>
+		const summarizables = this.getSummarizables();
+		const loadSummaries = summarizables.map(async (summaryElement) =>
 			summaryElement.load(
 				scopeStorageService(services, summarizablesTreeKey, summaryElement.key),
 				(contents) => this.serializer.parse(contents),
@@ -331,7 +335,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 
 	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
 		const gcNodes: IGarbageCollectionData["gcNodes"] = super.getGCData(fullGC).gcNodes;
-		for (const s of this.summarizables) {
+		const summarizables = this.getSummarizables();
+		for (const s of summarizables) {
 			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
 				gcNodes[id] ??= [];
 				for (const route of routes) {

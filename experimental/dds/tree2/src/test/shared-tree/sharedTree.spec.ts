@@ -391,35 +391,113 @@ describe("SharedTree", () => {
 		validateRootField(tree2, ["A", "B", "C"]);
 	});
 
-	it("can tolerate incomplete transactions when attaching", async () => {
-		const onCreate = (tree: SharedTree) => {
-			tree.storedSchema.update(jsonSequenceRootSchema);
-			tree.view.transaction.start();
-			insert(tree.view, 0, "A");
-			insert(tree.view, 1, "C");
-			validateRootField(tree.view, ["A", "C"]);
-		};
-		const provider = await TestTreeProvider.create(
-			1,
-			SummarizeType.onDemand,
-			new SharedTreeTestFactory(onCreate),
-		);
-		const tree1 = provider.trees[0].view;
-		validateRootField(tree1, ["A", "C"]);
-		const tree2 = (await provider.createTree()).view;
-		tree1.transaction.commit();
-		// Check that the joining tree was initialized with data from the attach summary
-		validateRootField(tree2, []);
+	describe("can tolerate incomplete transactions when attaching", () => {
+		const schemaConfig = {
+			initialTree: [],
+			schema: jsonSequenceRootSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		} as const;
+		it("when completed", async () => {
+			const onCreate = (tree: SharedTree) => {
+				const view = tree.schematize(schemaConfig);
+				view.transaction.start();
+				insert(view, 0, "A");
+				insert(view, 1, "C");
+				validateRootField(view, ["A", "C"]);
+			};
+			const provider = await TestTreeProvider.create(
+				1,
+				SummarizeType.onDemand,
+				new SharedTreeTestFactory(onCreate),
+			);
+			const tree1 = provider.trees[0].schematize(schemaConfig);
+			validateRootField(tree1, ["A", "C"]);
+			const tree2 = (await provider.createTree()).schematize(schemaConfig);
+			tree1.transaction.commit();
+			// Check that the joining tree was initialized with data from the attach summary
+			validateRootField(tree2, []);
 
-		await provider.ensureSynchronized();
-		validateRootField(tree1, ["A", "C"]);
-		validateRootField(tree2, ["A", "C"]);
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["A", "C"]);
+			validateRootField(tree2, ["A", "C"]);
 
-		// Check that further edits are interpreted properly
-		insert(tree1, 1, "B");
-		await provider.ensureSynchronized();
-		validateRootField(tree1, ["A", "B", "C"]);
-		validateRootField(tree2, ["A", "B", "C"]);
+			// Check that further edits are interpreted properly
+			insert(tree1, 1, "B");
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["A", "B", "C"]);
+			validateRootField(tree2, ["A", "B", "C"]);
+		});
+
+		it("when aborted", async () => {
+			const onCreate = (tree: SharedTree) => {
+				const view = tree.schematize(schemaConfig);
+				view.transaction.start();
+				insert(view, 0, "A");
+				insert(view, 1, "C");
+				validateRootField(view, ["A", "C"]);
+			};
+			const provider = await TestTreeProvider.create(
+				1,
+				SummarizeType.onDemand,
+				new SharedTreeTestFactory(onCreate),
+			);
+			const tree1 = provider.trees[0].schematize(schemaConfig);
+			validateRootField(tree1, ["A", "C"]);
+			const tree2 = (await provider.createTree()).schematize(schemaConfig);
+			tree1.transaction.abort();
+			insert(tree1, 0, "D");
+			// Check that the joining tree was initialized with data from the attach summary
+			validateRootField(tree2, []);
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["D"]);
+			validateRootField(tree2, ["D"]);
+
+			// Check that further edits are interpreted properly
+			insert(tree1, 1, "B");
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["D", "B"]);
+			validateRootField(tree2, ["D", "B"]);
+		});
+
+		it("when nested", async () => {
+			const onCreate = (tree: SharedTree) => {
+				const view = tree.schematize(schemaConfig);
+				view.transaction.start();
+				insert(view, 0, "A");
+				view.transaction.start();
+				insert(view, 1, "C");
+				validateRootField(view, ["A", "C"]);
+			};
+			const provider = await TestTreeProvider.create(
+				1,
+				SummarizeType.onDemand,
+				new SharedTreeTestFactory(onCreate),
+			);
+			const tree1 = provider.trees[0].schematize(schemaConfig);
+			validateRootField(tree1, ["A", "C"]);
+			const tree2 = (await provider.createTree()).schematize(schemaConfig);
+			tree1.transaction.commit();
+
+			await provider.ensureSynchronized();
+
+			validateRootField(tree1, ["A", "C"]);
+			// Check that the joining tree was initialized with data from the attach summary
+			validateRootField(tree2, []);
+
+			tree1.transaction.commit();
+			validateRootField(tree2, []);
+
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["A", "C"]);
+			validateRootField(tree2, ["A", "C"]);
+
+			// Check that further edits are interpreted properly
+			insert(tree1, 1, "B");
+			await provider.ensureSynchronized();
+			validateRootField(tree1, ["A", "B", "C"]);
+			validateRootField(tree2, ["A", "B", "C"]);
+		});
 	});
 
 	it("has bounded memory growth in EditManager", () => {

@@ -36,7 +36,7 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	public constructor(private readonly getForest: () => IEditableForest) {}
+	public constructor(private readonly forest: IEditableForest) {}
 
 	/**
 	 * Synchronous monolithic summarization of tree content.
@@ -46,15 +46,13 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		const forest = this.getForest();
-		const cursor = forest.allocateCursor();
-		forest.moveCursorToPath(undefined, cursor);
+		const cursor = this.forest.allocateCursor();
+		this.forest.moveCursorToPath(undefined, cursor);
 		const fields = mapCursorFields(cursor, (c) => [
 			cursor.getFieldKey(),
 			mapCursorField(c, jsonableTreeFromCursor),
 		]);
 		cursor.clear();
-		cursor.free();
 		return stringify(fields);
 	}
 
@@ -105,9 +103,8 @@ export class ForestSummarizer implements Summarizable {
 				return [fieldKey, [insert]];
 			});
 
-			const forest = this.getForest();
-			assert(forest.isEmpty, 0x797 /* forest must be empty */);
-			applyDelta(new Map(delta), forest, makeDetachedFieldIndex("init"));
+			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
+			applyDelta(new Map(delta), this.forest, makeDetachedFieldIndex("init"));
 		}
 	}
 }
