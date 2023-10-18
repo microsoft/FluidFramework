@@ -236,7 +236,9 @@ export function create(
 						isSessionActive: false,
 					};
 					// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
-					if (messageBrokerId) session.messageBrokerId = messageBrokerId;
+					if (messageBrokerId) {
+						session.messageBrokerId = messageBrokerId;
+					}
 					responseBody.session = session;
 				}
 				handleResponse(

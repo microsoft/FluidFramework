@@ -257,7 +257,9 @@ export class DocumentStorage implements IDocumentStorage {
 		};
 
 		// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
-		if (messageBrokerId) session.messageBrokerId = messageBrokerId;
+		if (messageBrokerId) {
+			session.messageBrokerId = messageBrokerId;
+		}
 
 		Lumberjack.info(
 			`Create session with enableDiscovery as ${enableDiscovery}: ${JSON.stringify(session)}`,

@@ -31,7 +31,9 @@ async function createNewSession(
 		isSessionActive: false,
 	};
 	// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
-	if (messageBrokerId) newSession.messageBrokerId = messageBrokerId;
+	if (messageBrokerId) {
+		newSession.messageBrokerId = messageBrokerId;
+	}
 	try {
 		await documentRepository.updateOne(
 			{
