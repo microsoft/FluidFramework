@@ -49,9 +49,8 @@ export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
  *
  * @remarks
  * Allowing more than just numbers here could be interesting. E.g. `(depth: number) => number` to allow biasing away from
- * changing the root field for more interesting merge outcomes.
- *
- * Alternatively, we might be able to accomplish similar goals by exposing field filtering to the caller.
+ * changing the root field for more interesting merge outcomes. The `filter` parameter can already accomplish this, but is
+ * a bit less efficient in doing so (it'd need to walk to the root repeatedly to compute depth)
  */
 export interface FieldSelectionWeights {
 	/**
@@ -61,7 +60,7 @@ export interface FieldSelectionWeights {
 	/**
 	 * Select the current Fuzz node's "requiredF" field
 	 */
-	value: number;
+	required: number;
 	/**
 	 * Select the current Fuzz node's "sequenceF" field
 	 */
@@ -70,13 +69,21 @@ export interface FieldSelectionWeights {
 	 * Select a direct child of the current Fuzz node, uniformly at random
 	 */
 	recurse: number;
+
+	/**
+	 * Whether the selected field is acceptable for use.
+	 *
+	 * @remarks - This can be helpful for restricting tests to only use certain types of fields
+	 */
+	filter?: FieldFilter;
 }
 
 const defaultFieldSelectionWeights: FieldSelectionWeights = {
 	optional: 1,
-	value: 1,
+	required: 1,
 	sequence: 1,
 	recurse: 4,
+	filter: () => true,
 };
 
 export interface EditGeneratorOpWeights {
@@ -142,7 +149,12 @@ export const makeEditGenerator = (
 
 	const insert = (state: FuzzTestState): FieldEditTypes => {
 		const tree = state.client.channel;
-		const fieldInfo = selectTreeField(tree.view, state.random, weights.fieldSelection);
+		const fieldInfo = selectTreeField(
+			tree.view,
+			state.random,
+			weights.fieldSelection,
+			weights.fieldSelection.filter,
+		);
 		switch (fieldInfo.type) {
 			case "optional":
 			case "required": {
@@ -178,7 +190,9 @@ export const makeEditGenerator = (
 	};
 
 	const deletableFieldFilter: FieldFilter = (fieldInfo) =>
-		isNonEmptyField(fieldInfo) && fieldInfo.type !== "required";
+		isNonEmptyField(fieldInfo) &&
+		fieldInfo.type !== "required" &&
+		(weights.fieldSelection.filter?.(fieldInfo) ?? true);
 
 	const deleteContent = (state: FuzzTestState): FieldEditTypes => {
 		const tree = state.client.channel;
@@ -234,7 +248,17 @@ export const makeEditGenerator = (
 	};
 
 	const fieldEdit = createWeightedGenerator<FieldEditTypes, FuzzTestState>([
-		[insert, weights.insert],
+		[
+			insert,
+			weights.insert,
+			({ client, random }) =>
+				trySelectTreeField(
+					client.channel.view,
+					random,
+					weights.fieldSelection,
+					weights.fieldSelection.filter,
+				) !== "no-valid-fields",
+		],
 		[
 			deleteContent,
 			weights.delete,
@@ -414,7 +438,7 @@ const isNonEmptyField: FieldFilter = (field) =>
 function selectField(
 	node: FuzzNode,
 	random: IRandom,
-	weights: FieldSelectionWeights,
+	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
 	const alreadyPickedOptions = new Set<string>();
@@ -477,12 +501,13 @@ function selectField(
 	};
 
 	// If the test author passed any weights of 0, we don't want to rerun the below generator repeatedly when it will never
-	const weightsArray = [weights.optional, weights.value, weights.sequence, weights.recurse];
+	// produce other results.
+	const weightsArray = [weights.optional, weights.required, weights.sequence, weights.recurse];
 	const nonZeroWeights = weightsArray.filter((weight) => weight > 0);
 	const hasNotAlreadySelected = (name: string) => () => !alreadyPickedOptions.has(name);
 	const generator = createWeightedGenerator<FuzzField | "no-valid-fields", BaseFuzzTestState>([
 		[optional, weights.optional, hasNotAlreadySelected("optional")],
-		[value, weights.value, hasNotAlreadySelected("required")],
+		[value, weights.required, hasNotAlreadySelected("required")],
 		[sequence, weights.sequence, hasNotAlreadySelected("sequence")],
 		[recurse, weights.recurse, hasNotAlreadySelected("child")],
 		[
@@ -503,7 +528,7 @@ function selectField(
 function trySelectTreeField(
 	tree: ISharedTreeView,
 	random: IRandom,
-	weights: FieldSelectionWeights,
+	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
 	const editable = getEditableTree(tree);
@@ -549,7 +574,7 @@ function trySelectTreeField(
 function selectTreeField(
 	tree: ISharedTreeView,
 	random: IRandom,
-	weights: FieldSelectionWeights,
+	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField {
 	const result = trySelectTreeField(tree, random, weights, filter);

@@ -85,7 +85,7 @@ describe("Fuzz - anchor stability", () => {
 			// (as of now, they're off as "set" can delete notes which causes the same problems as above)
 			fieldSelection: {
 				optional: 0,
-				value: 0,
+				required: 0,
 				sequence: 2,
 				recurse: 1,
 			},
@@ -147,7 +147,7 @@ describe("Fuzz - anchor stability", () => {
 			// (as of now, they're off as "set" can delete notes which causes the same problems as above)
 			fieldSelection: {
 				optional: 0,
-				value: 0,
+				required: 0,
 				sequence: 2,
 				recurse: 1,
 			},
