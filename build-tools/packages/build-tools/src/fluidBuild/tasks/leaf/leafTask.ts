@@ -44,6 +44,7 @@ export abstract class LeafTask extends Task {
 	private directParentLeafTasks: LeafTask[] = [];
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
+
 	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
 		super(node, command, taskName);
 		if (!this.isDisabled) {
@@ -280,9 +281,10 @@ export abstract class LeafTask extends Task {
 				this.node.buildContext.taskStats.leafUpToDateCount;
 			const elapsedTime = (Date.now() - startTime) / 1000;
 			const workerMsg = worker ? "[worker] " : "";
+			const suffix = this.isIncremental ? "" : " (non-incremental)";
 			const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
 				this.node.pkg.nameColored
-			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
+			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${suffix}`;
 			log(statusString);
 			if (status === BuildResult.Failed) {
 				this.node.buildContext.failedTaskLines.push(statusString);
@@ -384,6 +386,9 @@ export abstract class LeafTask extends Task {
 	 * Subclass should override these to configure the leaf task
 	 */
 
+	// After the task is done, indicate whether the command can be incremental next time.
+	protected abstract get isIncremental();
+
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
@@ -415,6 +420,11 @@ export abstract class LeafTask extends Task {
 }
 
 export abstract class LeafWithDoneFileTask extends LeafTask {
+	private _isIncremental: boolean = false;
+
+	protected get isIncremental() {
+		return this._isIncremental;
+	}
 	protected get doneFileFullPath() {
 		return this.getPackageFileFullPath(this.doneFile);
 	}
@@ -445,6 +455,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			const content = await this.getDoneFileContent();
 			if (content !== undefined) {
 				await writeFileAsync(doneFileFullPath, content);
+				this._isIncremental = true;
 			} else {
 				console.warn(
 					`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`,
@@ -497,6 +508,14 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 }
 
 export class UnknownLeafTask extends LeafTask {
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
+	}
+
+	protected get isIncremental() {
+		return this.command === "";
+	}
+
 	protected async checkLeafIsUpToDate() {
 		if (this.command === "") {
 			// Empty command is always up to date.
