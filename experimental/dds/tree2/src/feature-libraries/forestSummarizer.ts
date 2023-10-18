@@ -25,7 +25,7 @@ import {
 	SchemaData,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { TreeCompressionStratagy } from "../shared-tree";
+import { TreeCompressionStrategy } from "../shared-tree";
 import { FullSchemaPolicy } from "./modular-schema";
 import { decode, schemaCompressedEncode, uncompressedEncode, EncodedChunk } from "./chunked-forest";
 
@@ -44,13 +44,13 @@ export class ForestSummarizer implements Summarizable {
 
 	private readonly schema: SchemaData;
 	private readonly policy: FullSchemaPolicy;
-	private readonly encodeType: TreeCompressionStratagy;
+	private readonly encodeType: TreeCompressionStrategy;
 
 	public constructor(
 		private readonly forest: IEditableForest,
 		schema: SchemaData,
 		policy: FullSchemaPolicy,
-		encodeType: TreeCompressionStratagy = TreeCompressionStratagy.Compressed,
+		encodeType: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 	) {
 		this.cursor = this.forest.allocateCursor();
 		this.schema = schema;
@@ -138,12 +138,12 @@ function encodeSummary(
 	cursor: ITreeCursorSynchronous,
 	schema: SchemaData,
 	policy: FullSchemaPolicy,
-	encodeType: TreeCompressionStratagy,
+	encodeType: TreeCompressionStrategy,
 ): EncodedChunk {
 	switch (encodeType) {
-		case TreeCompressionStratagy.Compressed:
+		case TreeCompressionStrategy.Compressed:
 			return schemaCompressedEncode(schema, policy, cursor);
-		case TreeCompressionStratagy.Uncompressed:
+		case TreeCompressionStrategy.Uncompressed:
 			return uncompressedEncode(cursor);
 		default:
 			return schemaCompressedEncode(schema, policy, cursor);

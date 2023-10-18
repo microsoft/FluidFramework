@@ -251,31 +251,37 @@
                       "shapes": [
                         {
                           "c": {
-                            "type": "com.fluidframework.leaf.string",
-                            "value": true,
+                            "extraFields": 1,
                             "fields": []
                           }
                         },
                         {
-                          "a": 2
-                        },
-                        {
-                          "d": 0
+                          "a": 0
                         }
                       ],
                       "data": [
                         1,
                         [
-                          0,
+                          "com.fluidframework.leaf.string",
+                          true,
                           "x",
-                          0,
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
                           "y",
-                          0,
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
                           "a",
-                          0,
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
                           "b",
-                          0,
-                          "c"
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "c",
+                          []
                         ]
                       ]
                     }

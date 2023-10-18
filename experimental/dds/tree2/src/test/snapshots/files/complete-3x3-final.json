@@ -3918,125 +3918,166 @@
                     "FieldA",
                     {
                       "version": 1,
-                      "identifiers": [
-                        "FieldA",
-                        "FieldB",
-                        "FieldC"
-                      ],
+                      "identifiers": [],
                       "shapes": [
                         {
                           "c": {
-                            "type": "com.fluidframework.leaf.string",
-                            "value": true,
+                            "extraFields": 1,
                             "fields": []
                           }
                         },
                         {
-                          "c": {
-                            "type": "test trees.TestInner",
-                            "value": false,
-                            "fields": [],
-                            "extraFields": 2
-                          }
-                        },
-                        {
-                          "a": 3
-                        },
-                        {
-                          "d": 0
+                          "a": 0
                         }
                       ],
                       "data": [
-                        2,
+                        1,
                         [
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "1",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "2",
-                              0,
-                              "3"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "3",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "4",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "5",
-                              0,
-                              "6"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "6",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "7",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "8",
-                              0,
-                              "9"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "9",
+                              []
                             ]
                           ],
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "10",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "11",
-                              0,
-                              "12"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "12",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "13",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "14",
-                              0,
-                              "15"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "15",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "16",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "17",
-                              0,
-                              "18"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "18",
+                              []
                             ]
                           ],
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "19",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "20",
-                              0,
-                              "21"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "21",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "22",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "23",
-                              0,
-                              "24"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "24",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "25",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "26",
-                              0,
-                              "27"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "27",
+                              []
                             ]
                           ]
                         ]
@@ -4047,125 +4088,166 @@
                     "FieldB",
                     {
                       "version": 1,
-                      "identifiers": [
-                        "FieldA",
-                        "FieldB",
-                        "FieldC"
-                      ],
+                      "identifiers": [],
                       "shapes": [
                         {
                           "c": {
-                            "type": "com.fluidframework.leaf.string",
-                            "value": true,
+                            "extraFields": 1,
                             "fields": []
                           }
                         },
                         {
-                          "c": {
-                            "type": "test trees.TestInner",
-                            "value": false,
-                            "fields": [],
-                            "extraFields": 2
-                          }
-                        },
-                        {
-                          "a": 3
-                        },
-                        {
-                          "d": 0
+                          "a": 0
                         }
                       ],
                       "data": [
-                        2,
+                        1,
                         [
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "28",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "29",
-                              0,
-                              "30"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "30",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "31",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "32",
-                              0,
-                              "33"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "33",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "34",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "35",
-                              0,
-                              "36"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "36",
+                              []
                             ]
                           ],
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "37",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "38",
-                              0,
-                              "39"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "39",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "40",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "41",
-                              0,
-                              "42"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "42",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "43",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "44",
-                              0,
-                              "45"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "45",
+                              []
                             ]
                           ],
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "46",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "47",
-                              0,
-                              "48"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "48",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "49",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "50",
-                              0,
-                              "51"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "51",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "52",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "53",
-                              0,
-                              "54"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "54",
+                              []
                             ]
                           ]
                         ]
@@ -4176,125 +4258,166 @@
                     "FieldC",
                     {
                       "version": 1,
-                      "identifiers": [
-                        "FieldA",
-                        "FieldB",
-                        "FieldC"
-                      ],
+                      "identifiers": [],
                       "shapes": [
                         {
                           "c": {
-                            "type": "com.fluidframework.leaf.string",
-                            "value": true,
+                            "extraFields": 1,
                             "fields": []
                           }
                         },
                         {
-                          "c": {
-                            "type": "test trees.TestInner",
-                            "value": false,
-                            "fields": [],
-                            "extraFields": 2
-                          }
-                        },
-                        {
-                          "a": 3
-                        },
-                        {
-                          "d": 0
+                          "a": 0
                         }
                       ],
                       "data": [
-                        2,
+                        1,
                         [
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "55",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "56",
-                              0,
-                              "57"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "57",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "58",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "59",
-                              0,
-                              "60"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "60",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "61",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "62",
-                              0,
-                              "63"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "63",
+                              []
                             ]
                           ],
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "64",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "65",
-                              0,
-                              "66"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "66",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "67",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "68",
-                              0,
-                              "69"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "69",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "70",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "71",
-                              0,
-                              "72"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "72",
+                              []
                             ]
                           ],
-                          1,
+                          "test trees.TestInner",
+                          false,
                           [
-                            0,
+                            "FieldA",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "73",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "74",
-                              0,
-                              "75"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "75",
+                              []
                             ],
-                            1,
+                            "FieldB",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "76",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "77",
-                              0,
-                              "78"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "78",
+                              []
                             ],
-                            2,
+                            "FieldC",
                             [
-                              0,
+                              "com.fluidframework.leaf.string",
+                              true,
                               "79",
-                              0,
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
                               "80",
-                              0,
-                              "81"
+                              [],
+                              "com.fluidframework.leaf.string",
+                              true,
+                              "81",
+                              []
                             ]
                           ]
                         ]

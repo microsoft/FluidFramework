@@ -10,7 +10,7 @@ import {
 	ISharedTreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
-	TreeCompressionStratagy,
+	TreeCompressionStrategy,
 	runSynchronous,
 } from "../../shared-tree";
 import {
@@ -35,7 +35,7 @@ import { leaf } from "../../domains";
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
-	summaryEncodeType: TreeCompressionStratagy.Compressed,
+	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
 const builder = new SchemaBuilder({ scope: "test trees", libraries: [leaf.library] });

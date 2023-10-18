@@ -9,7 +9,7 @@ export {
 	SharedTreeOptions,
 	SharedTree,
 	ForestType,
-	TreeCompressionStrategy as TreeCompressionStratagy,
+	TreeCompressionStrategy,
 } from "./sharedTree";
 
 export {

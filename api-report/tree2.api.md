@@ -1931,7 +1931,7 @@ export class SharedTreeFactory implements IChannelFactory {
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
     // (undocumented)
-    summaryEncodeType?: TreeCompressionStratagy;
+    summaryEncodeType?: TreeCompressionStrategy;
 }
 
 // @alpha
@@ -2040,7 +2040,7 @@ export interface TreeAdapter {
 }
 
 // @alpha
-export enum TreeCompressionStratagy {
+export enum TreeCompressionStrategy {
     Compressed = 0,
     Uncompressed = 1
 }
