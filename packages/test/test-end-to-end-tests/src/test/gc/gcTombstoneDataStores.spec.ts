@@ -28,7 +28,13 @@ import {
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IErrorBase, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IFluidHandle,
+	IFluidHandleContext,
+	IRequest,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
@@ -108,6 +114,22 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 		return summarizeNow(summarizer);
 	};
+	/**
+	 * We manufacture a handle to simulate a bug where an object is unrefenced in GC's view
+	 * (and reminder, interactive clients never update their GC data after loading),
+	 * but someone still has a handle to it.
+	 */
+	async function manufactureHandle<T>(
+		container: IContainer,
+		url: string,
+	): Promise<IFluidHandle<T>> {
+		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
+		const handleContext: IFluidHandleContext = defaultDataObject._runtime.IFluidHandleContext;
+
+		const serializer = new FluidSerializer(handleContext, () => {});
+		const handle: IFluidHandle<T> = parseHandles({ type: "__fluid_handle__", url }, serializer);
+		return handle;
+	}
 
 	// This function creates an unreferenced datastore and returns the datastore's id and the summary version that
 	// datastore was unreferenced in.
@@ -158,6 +180,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		return {
 			unreferencedId,
+			ddsUrl: testDataObject._root.handle.absolutePath, // To use to manufacture a handle to the DDS
 			summarizingContainer: summarizingContainer2,
 			summarizer: summarizer2,
 			summaryVersion,
@@ -397,7 +420,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		}
 
 		itExpects(
-			"Requesting tombstoned datastores fails in interactive client loaded after sweep timeout",
+			"Requesting tombstoned datastores fails in interactive client loaded after sweep timeout (but DDS load is allowed)",
 			[
 				// Interactive client's request
 				{
@@ -419,13 +442,20 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				},
 			],
 			async () => {
-				const { unreferencedId, summarizingContainer, summarizer } =
+				const { unreferencedId, ddsUrl, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
 				const container = await loadContainer(summaryVersion);
+
+				// Getting the tombstoned DDS via handle is allowed
+				const ddsHandle = await manufactureHandle(container, ddsUrl);
+				await assert.doesNotReject(
+					async () => ddsHandle.get(),
+					"Should be able to get a handle to a tombstoned DDS",
+				);
 
 				// This request fails since the datastore is tombstoned
 				const tombstoneErrorResponse = await containerRuntime_resolveHandle(container, {
