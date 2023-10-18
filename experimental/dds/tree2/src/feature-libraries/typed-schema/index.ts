@@ -4,12 +4,12 @@
  */
 
 export {
-	TreeSchema,
+	TreeNodeSchema,
 	FieldSchema,
 	Any,
 	allowedTypesToTypeSet,
 	AllowedTypes,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,

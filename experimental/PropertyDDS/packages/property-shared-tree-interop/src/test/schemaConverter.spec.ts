@@ -10,7 +10,7 @@ import {
 	FieldKinds,
 	fail,
 	Any,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	FieldSchema,
 	getPrimaryField,
 	isPrimitive,
@@ -321,7 +321,9 @@ describe("schema converter", () => {
 				(nodeSchema.structFields.get(brand("childArray")) as FieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(arrayField.kind, FieldKinds.optional);
-			const arrayTypeName: TreeSchemaIdentifier = brand("converted.array<Test:Child-1.0.0>");
+			const arrayTypeName: TreeNodeSchemaIdentifier = brand(
+				"converted.array<Test:Child-1.0.0>",
+			);
 			assert.deepEqual([...(arrayField.types ?? fail("expected types"))], [arrayTypeName]);
 			const arraySchema = fullSchemaData.treeSchema.get(arrayTypeName);
 			assert(arraySchema !== undefined);
@@ -348,7 +350,7 @@ describe("schema converter", () => {
 				(nodeSchema.structFields.get(brand("childMap")) as FieldSchema) ??
 				fail("expected field schema");
 			assert.deepEqual(mapField.kind, FieldKinds.optional);
-			const mapTypeName: TreeSchemaIdentifier = brand("converted.map<Test:Child-1.0.0>");
+			const mapTypeName: TreeNodeSchemaIdentifier = brand("converted.map<Test:Child-1.0.0>");
 			assert.deepEqual([...(mapField.types ?? fail("expected types"))], [mapTypeName]);
 			const mapSchema = fullSchemaData.treeSchema.get(mapTypeName);
 			assert(mapSchema !== undefined);
@@ -484,10 +486,10 @@ describe("schema converter", () => {
 			const childFieldKey: FieldKey = brand("child");
 			const parentFieldKey: FieldKey = brand("parent");
 
-			const convertedChildTypeName: TreeSchemaIdentifier = brand(
+			const convertedChildTypeName: TreeNodeSchemaIdentifier = brand(
 				`converted.${childTypeName}`,
 			);
-			const convertedParentTypeName: TreeSchemaIdentifier = brand(
+			const convertedParentTypeName: TreeNodeSchemaIdentifier = brand(
 				`converted.${parentTypeName}`,
 			);
 
