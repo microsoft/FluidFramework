@@ -101,8 +101,8 @@ describe("visit", () => {
 			deltaForSet(content, { minor: 42 }),
 			[
 				["enterField", rootKey],
-				["exitField", rootKey],
 				["create", [content], field0],
+				["exitField", rootKey],
 				["enterField", rootKey],
 				["attach", field0, 1, 0],
 				["exitField", rootKey],
@@ -125,10 +125,10 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
+			["create", [content], field0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
-			["create", [content], field0],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -195,25 +195,31 @@ describe("visit", () => {
 			{ field: field0, id: { minor: 42 }, root: 0 },
 		]);
 	});
-	it("remove under insert", () => {
+	it("changes under insert", () => {
 		const index = makeDetachedFieldIndex("");
-		const remove: Delta.Mark = {
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			detach: { minor: 42 },
+			detach: moveId,
+		};
+		const moveIn: Delta.Mark = {
+			count: 1,
+			attach: moveId,
 		};
 		const delta: Delta.FieldChanges = {
 			build: [{ id: { minor: 43 }, trees: [content] }],
-			attached: [
+			detached: [
 				{
-					count: 1,
-					fields: new Map([[fooKey, { attached: [{ count: 42 }, remove] }]]),
+					id: { minor: 43 },
+					fields: new Map([[fooKey, { attached: [{ count: 42 }, moveOut, moveIn] }]]),
 				},
 			],
+			attached: [{ count: 1, attach: { minor: 43 } }],
 		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
-			["exitField", rootKey],
 			["create", [content], field0],
+			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -225,14 +231,13 @@ describe("visit", () => {
 			["attach", field0, 1, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
+			["attach", field1, 1, 42],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
-		]);
+		assert.equal(index.entries().next().done, true);
 	});
 	it("move node to the right", () => {
 		const index = makeDetachedFieldIndex("");
@@ -339,7 +344,7 @@ describe("visit", () => {
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
-	it("move-in under remove", () => {
+	it("changes under remove", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId = { minor: 1 };
 		const moveOut: Delta.Mark = {
@@ -353,75 +358,34 @@ describe("visit", () => {
 		const remove: Delta.Mark = {
 			detach: { minor: 42 },
 			count: 1,
-			fields: new Map([[fooKey, { attached: [moveIn] }]]),
+			fields: new Map([[fooKey, { attached: [moveOut, moveIn] }]]),
 		};
-		const delta = { attached: [remove, moveOut] };
+		const delta = { attached: [remove] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
+			["detach", { start: 0, end: 1 }, field0],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", rootKey],
 			["enterField", rootKey],
 			["exitField", rootKey],
-			["enterField", field0],
+			["enterField", field1],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field1, 1, 0],
+			["attach", field0, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["exitField", field0],
+			["exitField", field1],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 42 }, root: 0 },
+			{ field: field1, id: { minor: 42 }, root: 1 },
 		]);
 	});
-	it("move-out under remove", () => {
-		const index = makeDetachedFieldIndex("");
-		const moveId = { minor: 1 };
-		const moveOut: Delta.Mark = {
-			count: 1,
-			detach: moveId,
-		};
-		const moveIn: Delta.Mark = {
-			count: 1,
-			attach: moveId,
-		};
-		const remove: Delta.Mark = {
-			detach: { minor: 42 },
-			count: 1,
-			fields: new Map([[fooKey, { attached: [moveOut] }]]),
-		};
-		const delta = { attached: [remove, moveIn] };
-		const expected: VisitScript = [
-			["enterField", rootKey],
-			["enterNode", 0],
-			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field1],
-			["exitField", fooKey],
-			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field0],
-			["exitField", rootKey],
-			["enterField", rootKey],
-			["attach", field1, 1, 0],
-			["exitField", rootKey],
-			["enterField", field0],
-			["enterNode", 0],
-			["enterField", fooKey],
-			["exitField", fooKey],
-			["exitNode", 0],
-			["exitField", field0],
-		];
-		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 42 }, root: 0 },
-		]);
-	});
-	it("move-in under move-out", () => {
+	it("changes under move-out", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
@@ -440,23 +404,23 @@ describe("visit", () => {
 		const moveOut1: Delta.Mark = {
 			count: 1,
 			detach: moveId1,
-			fields: new Map([[fooKey, { attached: [moveIn2] }]]),
+			fields: new Map([[fooKey, { attached: [moveOut2, moveIn2] }]]),
 		};
-		const delta = { attached: [moveOut1, moveOut2, moveIn1] };
+		const delta = { attached: [moveOut1, moveIn1] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
+			["detach", { start: 0, end: 1 }, field0],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field0, 1, 0],
+			["attach", field1, 1, 0],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field1, 1, 0],
+			["attach", field0, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -464,43 +428,98 @@ describe("visit", () => {
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
-	it("remove under move-out", () => {
+	it("changes under replaced node", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId1 = { minor: 1 };
-		const moveIn: Delta.Mark = {
+		const moveId2 = { minor: 2 };
+		const moveOut2: Delta.Mark = {
 			count: 1,
-			attach: moveId1,
+			detach: moveId2,
 		};
-		const remove: Delta.Mark = {
-			detach: { minor: 42 },
+		const moveOut1: Delta.Mark = {
 			count: 1,
-		};
-		const moveOut: Delta.Mark = {
 			detach: moveId1,
-			count: 1,
-			fields: new Map([[fooKey, { attached: [remove] }]]),
 		};
-		const delta = { attached: [moveOut, moveIn] };
+		const moveIn2: Delta.Mark = {
+			count: 1,
+			attach: moveId2,
+		};
+		const replace: Delta.Mark = {
+			count: 1,
+			detach: { minor: 42 },
+			attach: moveId1,
+			fields: new Map([[fooKey, { attached: [moveOut2, moveIn2] }]]),
+		};
+		const delta = { attached: [replace, moveOut1] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field0],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field0],
+			["detach", { start: 1, end: 2 }, field1],
 			["exitField", rootKey],
 			["enterField", rootKey],
-			["attach", field0, 1, 0],
+			["replace", field1, { start: 0, end: 1 }, field2],
+			["exitField", rootKey],
+			["enterField", field2],
 			["enterNode", 0],
 			["enterField", fooKey],
+			["attach", field0, 1, 0],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", field2],
+		];
+		testTreeVisit(delta, expected, index);
+		assert.deepEqual(Array.from(index.entries()), [
+			{ field: field2, id: { minor: 42 }, root: 2 },
+		]);
+	});
+	it("changes under replacement node", () => {
+		const index = makeDetachedFieldIndex("");
+		const moveId1 = { minor: 1 };
+		const moveId2 = { minor: 2 };
+		const moveOut2: Delta.Mark = {
+			count: 1,
+			detach: moveId2,
+		};
+		const moveIn2: Delta.Mark = {
+			count: 1,
+			attach: moveId2,
+		};
+		const moveOut1: Delta.Mark = {
+			count: 1,
+			detach: moveId1,
+			fields: new Map([[fooKey, { attached: [moveOut2, moveIn2] }]]),
+		};
+		const replace: Delta.Mark = {
+			count: 1,
+			detach: { minor: 42 },
+			attach: moveId1,
+		};
+		const delta = { attached: [replace, moveOut1] };
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["enterNode", 1],
+			["enterField", fooKey],
+			["detach", { start: 0, end: 1 }, field0],
+			["exitField", fooKey],
+			["exitNode", 1],
+			["detach", { start: 1, end: 2 }, field1],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["replace", field1, { start: 0, end: 1 }, field2],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["attach", field0, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
+			{ field: field2, id: { minor: 42 }, root: 2 },
 		]);
 	});
 	it("transient insert", () => {
@@ -511,20 +530,20 @@ describe("visit", () => {
 		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
-			["exitField", rootKey],
 			["create", [content], field0],
-			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
+			["enterField", rootKey],
+			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
+			{ field: field1, id: { minor: 43 }, root: 1 },
 		]);
 	});
-	it("move-out under transient", () => {
+	it("changes under transient", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId = { minor: 1 };
 		const moveOut: Delta.Mark = {
@@ -535,61 +554,40 @@ describe("visit", () => {
 			count: 1,
 			attach: moveId,
 		};
-		const transientInsert: Delta.FieldChanges = {
-			build: [{ id: { minor: 42 }, trees: [content] }],
-			detached: [{ id: { minor: 42 }, fields: new Map([[barKey, { attached: [moveOut] }]]) }],
-			relocate: [{ id: { minor: 42 }, count: 1, destination: { minor: 43 } }],
-		};
 		const delta: Delta.FieldChanges = {
-			attached: [
-				{
-					count: 1,
-					fields: new Map([
-						[fooKey, transientInsert],
-						[barKey, { attached: [moveIn] }],
-					]),
-				},
+			build: [{ id: { minor: 42 }, trees: [content] }],
+			detached: [
+				{ id: { minor: 42 }, fields: new Map([[barKey, { attached: [moveOut, moveIn] }]]) },
 			],
+			relocate: [{ id: { minor: 42 }, count: 1, destination: { minor: 43 } }],
 		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
-			["enterNode", 0],
-			["enterField", fooKey],
-			["exitField", fooKey],
-			["enterField", barKey],
-			["exitField", barKey],
-			["exitNode", 0],
-			["exitField", rootKey],
 			["create", [content], field0],
+			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", barKey],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field2],
 			["exitField", barKey],
 			["exitNode", 0],
+			["exitField", field0],
+			["enterField", field0],
+			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
 			["enterField", rootKey],
-			["enterNode", 0],
-			["enterField", fooKey],
-			["exitField", fooKey],
-			["enterField", barKey],
-			["attach", field1, 1, 0],
-			["exitField", barKey],
-			["exitNode", 0],
 			["exitField", rootKey],
-			["enterField", field0],
-			["detach", { start: 0, end: 1 }, field2],
-			["exitField", field0],
-			["enterField", field2],
+			["enterField", field1],
 			["enterNode", 0],
 			["enterField", barKey],
+			["attach", field2, 1, 0],
 			["exitField", barKey],
 			["exitNode", 0],
-			["exitField", field2],
+			["exitField", field1],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field2, id: { minor: 42 }, root: 2 },
+			{ field: field1, id: { minor: 43 }, root: 1 },
 		]);
 	});
 	it("restore", () => {
@@ -615,7 +613,7 @@ describe("visit", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const moveId = { minor: 1 };
+		const moveId = { minor: 2 };
 		const relocate: Delta.DetachedNodeRelocation = {
 			count: 1,
 			id: node1,
@@ -642,11 +640,11 @@ describe("visit", () => {
 		testTreeVisit(delta, expected, index);
 		assert.equal(index.entries().next().done, true);
 	});
-	it("modify removed node", () => {
+	it("changes under removed node", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const moveId = { minor: 1 };
+		const moveId = { minor: 2 };
 		const moveOut: Delta.Mark = {
 			count: 1,
 			detach: moveId,
@@ -685,7 +683,7 @@ describe("visit", () => {
 			{ field: field0, id: { minor: 1 }, root: 0 },
 		]);
 	});
-	it("transient move-in and modify", () => {
+	it("changes under  transient move-in", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId1 = { minor: 1 };
 		const moveId2 = { minor: 2 };
@@ -714,27 +712,27 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field1],
+			["detach", { start: 0, end: 1 }, field2],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["detach", { start: 0, end: 1 }, field0],
 			["exitField", rootKey],
+			["enterField", field0],
+			["detach", { start: 0, end: 1 }, field1],
+			["exitField", field0],
 			["enterField", rootKey],
 			["exitField", rootKey],
-			["enterField", field0],
-			["detach", { start: 0, end: 1 }, field2],
-			["exitField", field0],
-			["enterField", field2],
+			["enterField", field1],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field1, 1, 0],
+			["attach", field2, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
-			["exitField", field2],
+			["exitField", field1],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field2, id: { minor: 42 }, root: 2 },
+			{ field: field1, id: { minor: 42 }, root: 1 },
 		]);
 	});
 	it("transient restore", () => {
@@ -750,15 +748,58 @@ describe("visit", () => {
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
+			["enterField", rootKey],
+			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [
 			{ field: field1, id: { minor: 42 }, root: 1 },
 		]);
+	});
+	describe("update detached node", () => {
+		for (const flip of [false, true]) {
+			it(`relocate order flipped: ${flip}`, () => {
+				const index = makeDetachedFieldIndex("");
+				const node1 = { minor: 1 };
+				index.createEntry(node1);
+				const buildId = { minor: 2 };
+				const relocateOldNode: Delta.DetachedNodeRelocation = {
+					count: 1,
+					id: node1,
+					destination: { minor: 42 },
+				};
+				const relocateNewNode: Delta.DetachedNodeRelocation = {
+					count: 1,
+					id: buildId,
+					destination: node1,
+				};
+				const delta = {
+					build: [{ id: buildId, trees: [content] }],
+					relocate: flip
+						? [relocateNewNode, relocateOldNode]
+						: [relocateOldNode, relocateNewNode],
+				};
+				const expected: VisitScript = [
+					["enterField", rootKey],
+					["create", [content], field1],
+					["exitField", rootKey],
+					["enterField", field0],
+					["detach", { start: 0, end: 1 }, field2],
+					["exitField", field0],
+					["enterField", field1],
+					["detach", { start: 0, end: 1 }, field0],
+					["exitField", field1],
+					["enterField", rootKey],
+					["exitField", rootKey],
+				];
+				testTreeVisit(delta, expected, index);
+				assert.deepEqual(Array.from(index.entries()), [
+					{ field: field2, id: { minor: 42 }, root: 2 },
+				]);
+			});
+		}
 	});
 });

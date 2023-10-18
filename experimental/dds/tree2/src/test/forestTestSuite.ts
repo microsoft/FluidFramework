@@ -593,18 +593,19 @@ export function testForest(config: ForestTestConfiguration): void {
 					count: 1,
 					attach: moveId,
 				};
-				const mark: Delta.Mark = {
-					count: 1,
-					attach: buildId,
-					detach: detachId,
-					fields: new Map([[xField, { attached: [moveOut] }]]),
-				};
 				const delta: Delta.Root = new Map([
 					[
 						rootFieldKey,
 						{
 							build: [{ id: buildId, trees: [singleJsonCursor({ x: 0 })] }],
-							attached: [mark, moveIn],
+							detached: [
+								{
+									id: buildId,
+									fields: new Map([[xField, { attached: [moveOut] }]]),
+								},
+							],
+							attached: [moveIn],
+							relocate: [{ id: buildId, count: 1, destination: detachId }],
 						},
 					],
 				]);
