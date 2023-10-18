@@ -137,6 +137,7 @@ interface PendingBlob {
 	acked?: boolean;
 	abortSignal?: AbortSignal;
 	pendingStashed?: boolean;
+	unableToStash?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -198,7 +199,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
-	private stashing: boolean = false;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -531,13 +531,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if (this.stashing) {
-			// It means blob finished uploading while stashing. It can lead to scenarios
-			// which are not worth covering given the fact we are already making a huge effort to get
-			// the blob and its intention back once we reload pending state.
-			return;
-		}
-		if (entry.abortSignal?.aborted === true && !entry.opsent) {
+		if ((entry.abortSignal?.aborted === true && !entry.opsent) || entry.unableToStash) {
 			this.deletePendingBlob(localId);
 			return;
 		}
@@ -947,7 +941,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				if (this.pendingBlobs.size === 0) {
 					return;
 				}
-				this.stashing = true;
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
 				const abortPromise = new Promise<void>((resolve, reject) => {
@@ -987,6 +980,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 				for (const [id, entry] of this.pendingBlobs) {
 					if (stopWaitingAttachingSignal?.aborted && !entry.attached) {
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "UnableToStashBlob",
+							id,
+						});
+						entry.unableToStash = true;
 						continue;
 					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
