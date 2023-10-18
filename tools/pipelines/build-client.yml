@@ -15,7 +15,7 @@ parameters:
     - prerelease
     - release
 # Parameter for modifying the 'types' field in the package.json.
-# If none is provided, the 'types' field in package.json will remain unchanged.
+# If the value `none` is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
   displayName: Change package types (default = none)
   type: string
