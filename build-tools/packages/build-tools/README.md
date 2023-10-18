@@ -175,9 +175,8 @@ that scripts at the release group root is not considered.
 
 Release group root scripts support can be enabled by adding `fluidBuild.tasks` to the release group's `package.json`. `fluid-build`
 will follow the definition if specified for the task, or it will trigger the root script if the script doesn't invoke `fluid-build`.
-Otherwise, (if the script doesn't exist or if it starts with `fluid-build`), it is go back to the original default to trigger the task
-on all the packages within the release group. There is no global definitions support and definitions in `fluidBuild.config.cjs` only
-applies to packages, and not release group root.
+If the script doesn't exist or if it starts with `fluid-build`, then fluid-build will fall back to the default behavior of triggering the task
+on all the packages within the release group. There is no support for "global definitions." Task definitions in `fluidBuild.config.cjs` only apply to packages, not release group roots. Release group root scripts must be defined in the `fluidBuild.tasks` section of the root's `package.json`.
 
 ### Concurrency
 
