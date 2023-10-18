@@ -361,8 +361,13 @@ export class SharedTreeView implements ISharedTreeBranchView {
 				}
 			}
 		});
-		branch.on("revertible", (type) => {
-			this.events.emit("revertible", type);
+		branch.on("revertible", (revertible) => {
+			// if there are no listeners, discard the revertible to avoid memory leaks
+			if (!this.events.hasListeners("revertible")) {
+				revertible.discard();
+			} else {
+				this.events.emit("revertible", revertible);
+			}
 		});
 	}
 
