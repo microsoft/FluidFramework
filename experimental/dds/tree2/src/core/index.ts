@@ -178,4 +178,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./undo";
+export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";

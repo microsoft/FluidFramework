@@ -496,9 +496,7 @@ export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRa
 
 // @alpha
 export enum DiscardResult {
-    // (undocumented)
     Failure = 1,
-    // (undocumented)
     Success = 0
 }
 
@@ -1753,9 +1751,7 @@ export enum RevertibleKind {
 
 // @alpha
 export enum RevertResult {
-    // (undocumented)
     Failure = 1,
-    // (undocumented)
     Success = 0
 }
 

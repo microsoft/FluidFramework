@@ -44,7 +44,9 @@ export enum RevertibleKind {
  * @alpha
  */
 export enum RevertResult {
+	/** The revert was successful. */
 	Success,
+	/** The revert failed. */
 	Failure,
 }
 
@@ -54,6 +56,8 @@ export enum RevertResult {
  * @alpha
  */
 export enum DiscardResult {
+	/** The discard was successful. */
 	Success,
+	/** The discard failed. */
 	Failure,
 }
