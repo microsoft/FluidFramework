@@ -13,7 +13,5 @@ import { MainView } from "./view/inventoryList";
 
 export const fluidExport = new ContainerViewRuntimeFactory(
 	InventoryListFactory,
-	(model: InventoryList) => React.createElement(
-		MainView,
-		{ inventory: model.inventory }),
+	(model: InventoryList) => React.createElement(MainView, { inventory: model.inventory }),
 );
