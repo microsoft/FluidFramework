@@ -17,7 +17,7 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	allowsRepoSuperset,
-	TypedSchemaCollection,
+	DocumentSchema,
 	SchemaAware,
 	FieldSchema,
 	ViewSchema,
@@ -40,7 +40,7 @@ import { ViewEvents } from "./sharedTreeView";
  */
 export function initializeContent(
 	storedSchema: StoredSchemaRepository,
-	schema: TypedSchemaCollection,
+	schema: DocumentSchema,
 	setInitialTree: () => void,
 ): void {
 	assert(schemaDataIsEmpty(storedSchema), 0x743 /* cannot initialize after a schema is set */);
@@ -191,7 +191,7 @@ export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: TypedSchemaCollection<TRoot>;
+	readonly schema: DocumentSchema<TRoot>;
 }
 
 /**

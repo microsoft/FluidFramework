@@ -138,7 +138,16 @@ describe("ModularChangeFamily integration", () => {
 							count: 1,
 							moveId: brand(0),
 							fields: new Map([
-								[fieldC, [{ type: Delta.MarkType.Insert, content: [newNode] }]],
+								[
+									fieldC,
+									[
+										{
+											type: Delta.MarkType.Insert,
+											buildId: { minor: 1 },
+											content: [newNode],
+										},
+									],
+								],
 							]),
 						},
 					],
@@ -190,7 +199,16 @@ describe("ModularChangeFamily integration", () => {
 						{
 							type: Delta.MarkType.Modify,
 							fields: new Map([
-								[fieldC, [{ type: Delta.MarkType.Insert, content: [newNode] }]],
+								[
+									fieldC,
+									[
+										{
+											type: Delta.MarkType.Insert,
+											buildId: { major: tag2, minor: 1 },
+											content: [newNode],
+										},
+									],
+								],
 							]),
 						},
 					],

@@ -18,7 +18,7 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
-	TypedSchemaCollection,
+	DocumentSchema,
 	Unenforced,
 	AllowedTypeSet,
 } from "./typedTreeSchema";
