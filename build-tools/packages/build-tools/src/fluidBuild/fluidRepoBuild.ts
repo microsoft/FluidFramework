@@ -71,7 +71,7 @@ export class FluidRepoBuild extends FluidRepo {
 
 			options.releaseGroups.forEach((releaseGroupName) => {
 				const releaseGroup = this.releaseGroups.get(releaseGroupName);
-				if (!releaseGroup) {
+				if (releaseGroup === undefined) {
 					throw new Error(
 						`Release group '${releaseGroupName}' specified is not defined in the repo.`,
 					);
