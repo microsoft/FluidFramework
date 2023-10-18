@@ -111,7 +111,7 @@ export class BuildPackage {
 	private getTaskDefinition(taskName: string) {
 		let taskDefinition = this._taskDefinitions[taskName];
 		if (taskDefinition === undefined && this.pkg.isReleaseGroupRoot) {
-			// Only enable release group root script if it is explicitly defined, for places that hasn't migrated to to use it yet
+			// Only enable release group root script if it is explicitly defined, for places that don't use it yet
 			const script = this.pkg.getScript(taskName);
 			if (
 				this.pkg.packageJson.fluidBuild?.tasks === undefined ||
