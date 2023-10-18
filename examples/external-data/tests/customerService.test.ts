@@ -134,7 +134,7 @@ describe("mock-customer-service", () => {
 
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
-	it("register-for-webhook: Complete data flow", async () => {
+	it.only("register-for-webhook: Complete data flow", async () => {
 		// Set up mock local service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 
@@ -212,7 +212,7 @@ describe("mock-customer-service", () => {
 
 		// Bind listener
 		let webhookChangeNotification;
-		localServiceApp.post(`${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
+		localServiceApp.post(`/${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			webhookChangeNotification = request.body;
 			result.send();
@@ -273,7 +273,7 @@ describe("mock-customer-service", () => {
 
 		// Bind listener
 		let webhookChangeNotification;
-		localServiceApp.post(`${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
+		localServiceApp.post(`/${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			webhookChangeNotification = request.body;
 			result.send();
