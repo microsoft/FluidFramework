@@ -93,7 +93,7 @@ describe("Schema Evolution Examples", () => {
 		y: leaf.number,
 	});
 
-	const defaultContentLibrary = contentTypesBuilder.finalize();
+	const defaultContentLibrary = contentTypesBuilder.intoLibrary();
 
 	const containersBuilder = new SchemaBuilder({
 		scope: "test",
@@ -114,7 +114,7 @@ describe("Schema Evolution Examples", () => {
 
 	const tolerantRoot = FieldSchema.create(FieldKinds.optional, [canvas]);
 
-	const treeViewSchema = containersBuilder.finalize();
+	const treeViewSchema = containersBuilder.intoLibrary();
 
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the

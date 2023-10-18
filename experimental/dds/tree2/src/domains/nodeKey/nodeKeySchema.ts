@@ -43,4 +43,4 @@ export const nodeKeyField = {
  * Required to use {@link nodeKeyField}.
  * @alpha
  */
-export const nodeKeySchema = builder.finalize();
+export const nodeKeySchema = builder.intoLibrary();

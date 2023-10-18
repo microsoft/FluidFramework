@@ -151,7 +151,7 @@ export class SchemaBuilderBase<
 	 * Produce SchemaLibraries which capture the content added to this builder, as well as any additional SchemaLibraries that were added to it.
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public finalize(): SchemaLibrary {
+	public intoLibrary(): SchemaLibrary {
 		const aggregated = this.finalizeCommon();
 
 		// Full library set (instead of just aggregated) is kept since it is required to handle deduplication of libraries included through different paths.

@@ -100,7 +100,7 @@ export const arraySchema = builder.fieldNode(
 
 export const rootPersonSchema = FieldSchema.create(FieldKinds.optional, [personSchema]);
 
-export const personSchemaLibrary = builder.finalize();
+export const personSchemaLibrary = builder.intoLibrary();
 
 export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
