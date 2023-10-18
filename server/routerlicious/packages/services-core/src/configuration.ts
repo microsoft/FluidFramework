@@ -58,6 +58,9 @@ export interface IDeliServerConfiguration {
 
 	// enables marking leave ops with a flag when they were the last client
 	enableLeaveOpNoClientServerMetadata: boolean;
+
+	// Interval to emit deli checkpointing metrics
+	checkpointMetricInterval: number;
 }
 
 export interface ICheckpointHeuristicsServerConfiguration {
@@ -109,6 +112,9 @@ export interface IScribeServerConfiguration {
 
 	// Controls how often scribe should checkpoint
 	checkpointHeuristics: ICheckpointHeuristicsServerConfiguration;
+
+	// Interval to emit deli checkpointing metrics
+	checkpointMetricInterval: number;
 }
 
 export interface IDeliSummaryNackMessagesServerConfiguration {
@@ -218,6 +224,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 		skipSummarizeAugmentationForSingleCommmit: false,
 		disableNoClientMessage: false,
 		enableLeaveOpNoClientServerMetadata: false,
+		checkpointMetricInterval: 60 * 1000,
 	},
 	broadcaster: {
 		includeEventInMessageBatchName: false,
@@ -233,6 +240,7 @@ export const DefaultServiceConfiguration: IServiceConfiguration = {
 			maxTime: 1 * 60 * 1000,
 			maxMessages: 500,
 		},
+		checkpointMetricInterval: 60 * 1000,
 	},
 	moira: {
 		enable: false,

@@ -1794,7 +1794,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 	}
 
 	private setApiCounterTimer() {
-		if (!this.serviceConfiguration.deliCheckpointMetricInterval) {
+		if (!this.serviceConfiguration.deli.checkpointMetricInterval) {
 			return;
 		}
 		this.clearApiCounterTimer();
@@ -1804,7 +1804,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 			}
 			Lumberjack.info("Deli checkpoint api counters", this.apiCounter.getCounters());
 			this.apiCounter.resetAllCounters();
-		}, this.serviceConfiguration.deliCheckpointMetricInterval);
+		}, this.serviceConfiguration.deli.checkpointMetricInterval);
 	}
 
 	private clearApiCounterTimer() {
@@ -2012,7 +2012,7 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						Lumberjack.error("Error writing checkpoint", lumberjackProperties, error);
 					});
 				const checkpointReason = CheckpointReason[checkpointParams.reason];
-				if (this.serviceConfiguration.deliCheckpointMetricInterval > 0) {
+				if (this.serviceConfiguration.deli.checkpointMetricInterval > 0) {
 					this.apiCounter.incrementCounter(checkpointReason);
 				}
 			})

@@ -140,14 +140,16 @@ export async function scribeCreate(
 
 	const externalOrdererUrl = config.get("worker:serverUrl");
 	const enforceDiscoveryFlow: boolean = config.get("worker:enforceDiscoveryFlow");
-	const scribeCheckpointMetricInterval: number = config.get(
+	const checkpointMetricInterval: number = config.get(
 		"apiCounters:scribeCheckpointMetricMs",
 	);
 	const serviceConfiguration: IServiceConfiguration = {
 		...DefaultServiceConfiguration,
 		externalOrdererUrl,
 		enforceDiscoveryFlow,
-		scribeCheckpointMetricInterval,
+		scribe: {
+			checkpointMetricInterval,
+		}
 	};
 
 	const checkpointService = new core.CheckpointService(

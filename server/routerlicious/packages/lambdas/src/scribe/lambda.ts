@@ -486,7 +486,7 @@ export class ScribeLambda implements IPartitionLambda {
 		this.checkpointCore(checkpoint, message, this.clearCache, skipKafkaCheckpoint);
 		this.lastOffset = message.offset;
 		const reason = CheckpointReason[checkpointReason];
-		if (this.serviceConfiguration.scribeCheckpointMetricInterval > 0) {
+		if (this.serviceConfiguration.scribe.checkpointMetricInterval > 0) {
 			this.apiCounter.incrementCounter(reason);
 		}
 	}
@@ -820,7 +820,7 @@ export class ScribeLambda implements IPartitionLambda {
 	}
 
 	private setApiCounterTimer() {
-		if (!this.serviceConfiguration.scribeCheckpointMetricInterval) {
+		if (!this.serviceConfiguration.scribe.checkpointMetricInterval) {
 			return;
 		}
 		this.clearApiCounterTimer();
@@ -830,7 +830,7 @@ export class ScribeLambda implements IPartitionLambda {
 			}
 			Lumberjack.info("Scribe checkpoint api counters", this.apiCounter.getCounters());
 			this.apiCounter.resetAllCounters();
-		}, this.serviceConfiguration.scribeCheckpointMetricInterval);
+		}, this.serviceConfiguration.scribe.checkpointMetricInterval);
 	}
 
 	private clearApiCounterTimer() {
@@ -868,7 +868,7 @@ export class ScribeLambda implements IPartitionLambda {
 						this.clearCache,
 					);
 					const reason = CheckpointReason[CheckpointReason.IdleTime];
-					if (this.serviceConfiguration.scribeCheckpointMetricInterval > 0) {
+					if (this.serviceConfiguration.scribe.checkpointMetricInterval > 0) {
 						this.apiCounter.incrementCounter(reason);
 					}
 				}
