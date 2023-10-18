@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
+import { AsyncReducer, combineReducers } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { DownPath, TreeField, TreeNode, singleTextCursor } from "../../../feature-libraries";
 import { fail } from "../../../util";
@@ -19,39 +19,35 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
-import { fuzzNode, getEditableTree } from "./fuzzUtils";
+import { fuzzNode, fuzzViewFromTree, getEditableTree } from "./fuzzUtils";
 
-export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
-	edit: async (state, operation) => {
+const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
+	edit: (state, operation) => {
 		const { contents } = operation;
 		switch (contents.type) {
 			case "fieldEdit": {
 				const tree = state.client.channel;
-				applyFieldEdit(tree.view, contents);
+				applyFieldEdit(fuzzViewFromTree(state.client.channel), contents);
 				break;
 			}
 			default:
 				break;
 		}
-		return state;
 	},
-	transaction: async (state, operation) => {
-		const { contents } = operation;
-		const tree = state.client.channel;
-		applyTransactionEdit(tree.view, contents);
-		return state;
+	transaction: (state, operation) => {
+		applyTransactionEdit(fuzzViewFromTree(state.client.channel), operation.contents);
 	},
-	undoRedo: async (state, operation) => {
-		const { contents } = operation;
-		const tree = state.client.channel;
-		applyUndoRedoEdit(tree.view, contents);
-		return state;
+	undoRedo: (state, operation) => {
+		applyUndoRedoEdit(fuzzViewFromTree(state.client.channel), operation.contents);
 	},
-	synchronizeTrees: async (state) => {
+	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
-		return state;
 	},
 });
+export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFactory>> = async (
+	state,
+	operation,
+) => syncFuzzReducer(state, operation);
 
 export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 	for (const tree of trees) {

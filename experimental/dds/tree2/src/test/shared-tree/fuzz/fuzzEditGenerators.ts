@@ -33,7 +33,7 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes";
-import { FuzzNode, fuzzNode, getEditableTree } from "./fuzzUtils";
+import { FuzzNode, fuzzNode, fuzzViewFromTree, getEditableTree } from "./fuzzUtils";
 
 export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
 
@@ -150,7 +150,7 @@ export const makeEditGenerator = (
 	const insert = (state: FuzzTestState): FieldEditTypes => {
 		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(
-			tree.view,
+			fuzzViewFromTree(tree),
 			state.random,
 			weights.fieldSelection,
 			weights.fieldSelection.filter,
@@ -197,7 +197,7 @@ export const makeEditGenerator = (
 	const deleteContent = (state: FuzzTestState): FieldEditTypes => {
 		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(
-			tree.view,
+			fuzzViewFromTree(tree),
 			state.random,
 			weights.fieldSelection,
 			deletableFieldFilter,
@@ -253,7 +253,7 @@ export const makeEditGenerator = (
 			weights.insert,
 			({ client, random }) =>
 				trySelectTreeField(
-					client.channel.view,
+					fuzzViewFromTree(client.channel),
 					random,
 					weights.fieldSelection,
 					weights.fieldSelection.filter,
@@ -264,7 +264,7 @@ export const makeEditGenerator = (
 			weights.delete,
 			({ client, random }) =>
 				trySelectTreeField(
-					client.channel.view,
+					fuzzViewFromTree(client.channel),
 					random,
 					weights.fieldSelection,
 					deletableFieldFilter,
@@ -302,9 +302,13 @@ export const makeTransactionEditGenerator = (
 		[
 			commit,
 			passedOpWeights.commit,
-			({ client }) => transactionsInProgress(client.channel.view),
+			({ client }) => transactionsInProgress(fuzzViewFromTree(client.channel)),
 		],
-		[abort, passedOpWeights.abort, ({ client }) => transactionsInProgress(client.channel.view)],
+		[
+			abort,
+			passedOpWeights.abort,
+			({ client }) => transactionsInProgress(fuzzViewFromTree(client.channel)),
+		],
 	]);
 
 	return (state) => {

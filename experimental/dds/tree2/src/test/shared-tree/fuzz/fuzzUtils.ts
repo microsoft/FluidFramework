@@ -12,9 +12,10 @@ import {
 	clonePath,
 	compareUpPaths,
 	forEachNodeInSubtree,
+	AllowedUpdateType,
 } from "../../../core";
 import { FieldKinds, FieldSchema, StructTyped, TypedField } from "../../../feature-libraries";
-import { SharedTree, ISharedTreeView } from "../../../shared-tree";
+import { SharedTree, ISharedTreeView, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
@@ -29,6 +30,14 @@ export type FuzzNodeSchema = typeof fuzzNode;
 export type FuzzNode = StructTyped<FuzzNodeSchema>;
 
 export const fuzzSchema = builder.toDocumentSchema(fuzzNode.structFieldsObject.optionalF);
+
+export function fuzzViewFromTree(tree: ISharedTree): ISharedTreeView {
+	return tree.schematize({
+		initialTree: undefined,
+		schema: fuzzSchema,
+		allowedSchemaModifications: AllowedUpdateType.None,
+	});
+}
 
 export const onCreate = (tree: SharedTree) => {
 	tree.storedSchema.update(fuzzSchema);
