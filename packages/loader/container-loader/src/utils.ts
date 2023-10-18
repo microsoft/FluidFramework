@@ -23,9 +23,22 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };
 }
 
+/**
+ * Interface to represent the parsed parts of IResolvedUrl.url to help
+ * in getting info about different parts of the url.
+ */
 export interface IParsedUrl {
+	/**
+	 * It is combination of tenantid/docId part of the url.
+	 */
 	id: string;
+	/**
+	 * It is the deep link path in the url.
+	 */
 	path: string;
+	/**
+	 * Query string part of the url.
+	 */
 	query: string;
 	/**
 	 * Null means do not use snapshots, undefined means load latest snapshot
@@ -38,6 +51,8 @@ export interface IParsedUrl {
 /**
  * Utility api to parse the IResolvedUrl.url into specific parts like querystring, path to get
  * deep link info etc.
+ * Warning - This function may not be compatible with any Url Resolver's resolved url. It works
+ * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
  */
 export function parseIResolvedUrlUrlIntoParts(url: string): IParsedUrl | undefined {
