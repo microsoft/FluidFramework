@@ -125,6 +125,8 @@ export class SharedTree
 				: buildForest();
 		const removedTrees = makeDetachedFieldIndex("repair");
 		const changeFamily = new DefaultChangeFamily(options);
+		// Note: SchemaSummarizer maintains meaningful summarization state, so avoiding recreating it
+		// when possible is desirable.
 		const summarizableDependee = new SimpleDependee("summarizables");
 		const summarizables = cachedValue((observer) => {
 			recordDependency(observer, summarizableDependee);
