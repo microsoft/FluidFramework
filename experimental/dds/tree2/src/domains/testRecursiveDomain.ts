@@ -10,11 +10,12 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-import { AllowedTypes, FieldKinds, FieldSchema, SchemaBuilder } from "../feature-libraries";
+import { AllowedTypes, FieldKinds, FieldSchema } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
-import * as leaf from "./leafDomain";
+import { leaf } from "./leafDomain";
+import { SchemaBuilder } from "./schemaBuilder";
 
-const builder = new SchemaBuilder({ scope: "Test Recursive Domain", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
 
 /**
  * @alpha

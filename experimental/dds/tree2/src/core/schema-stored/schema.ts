@@ -53,12 +53,18 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
  * @alpha
+ *
+ * @privateRemarks
+ * This is currently leaked into some persisted formats.
+ * A full audit of persisted formats is needed,
+ * and all types which are used in them should be moved to locations which indicated they are persisted, or duplicated into a persisted and non-persisted version with explicit encoding between them.
  */
 export enum ValueSchema {
 	Number,
 	String,
 	Boolean,
 	FluidHandle,
+	Null,
 }
 
 /**
@@ -185,13 +191,31 @@ export interface TreeStoredSchema {
 }
 
 /**
- * View of schema data that can be stored in a document.
+ * Document schema data that can be stored in a document.
  *
+ * @remarks
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
  * @alpha
  */
-export interface SchemaData {
+export interface SchemaData extends StoredSchemaCollection {
+	/**
+	 * Schema for the root field which contains the whole tree.
+	 */
 	readonly rootFieldSchema: FieldStoredSchema;
+}
+
+/**
+ * Collection of TreeSchema data that can be stored in a document.
+ *
+ * @remarks
+ * Note: the owner of this may modify it over time:
+ * thus if needing to hand onto a specific version, make a copy.
+ * @alpha
+ */
+export interface StoredSchemaCollection {
+	/**
+	 * {@inheritdoc StoredSchemaCollection}
+	 */
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
 }

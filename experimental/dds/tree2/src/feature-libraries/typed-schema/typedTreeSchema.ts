@@ -8,6 +8,8 @@ import {
 	Adapters,
 	EmptyKey,
 	FieldKey,
+	SchemaData,
+	StoredSchemaCollection,
 	TreeSchemaIdentifier,
 	TreeTypeSet,
 	ValueSchema,
@@ -24,7 +26,7 @@ import {
 } from "../../util";
 import { FieldKinds } from "../default-field-kinds";
 import { FieldKind, FullSchemaPolicy } from "../modular-schema";
-import { LazyItem, normalizeFlexList } from "./flexList";
+import { LazyItem } from "./flexList";
 import { ObjectToMap, WithDefault, objectToMapTyped } from "./typeUtils";
 
 // TODO: tests for this file
@@ -172,6 +174,10 @@ export function schemaIsLeaf(schema: TreeSchema): schema is LeafSchema {
 	return schema.leafValue !== undefined;
 }
 
+/**
+ * Checks if a {@link TreeSchema} is a {@link FieldNodeSchema}.
+ * @alpha
+ */
 export function schemaIsFieldNode(schema: TreeSchema): schema is FieldNodeSchema {
 	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey);
 }
@@ -247,7 +253,7 @@ export function allowedTypesIsAny(t: AllowedTypes): t is readonly [Any] {
 }
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilder.struct}.
+ * `TreeSchemaSpecification` for {@link SchemaBuilderBase.struct}.
  * @alpha
  */
 export interface StructSchemaSpecification {
@@ -255,7 +261,7 @@ export interface StructSchemaSpecification {
 }
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilder.map}.
+ * `TreeSchemaSpecification` for {@link SchemaBuilderBase.map}.
  * @alpha
  */
 export interface MapSchemaSpecification {
@@ -270,7 +276,7 @@ export interface MapSchemaSpecification {
 export type MapFieldSchema = FieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilder.leaf}.
+ * `TreeSchemaSpecification` for {@link Leaf}.
  * @alpha
  */
 export interface LeafSchemaSpecification {
@@ -297,11 +303,15 @@ export type TreeSchemaSpecification = [
  * @remarks
  * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
  *
- * @sealed @alpha
+ * @typeParam TKind - The kind of field.
+ * @typeParam TTypes - The types allowed by the field.
+ *
+ * @sealed
+ * @alpha
  */
 export class FieldSchema<
-	out Kind extends FieldKind = FieldKind,
-	const out Types extends Unenforced<AllowedTypes> = AllowedTypes,
+	out TKind extends FieldKind = FieldKind,
+	const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes,
 > {
 	/**
 	 * Schema for a field which must always be empty.
@@ -313,10 +323,10 @@ export class FieldSchema<
 	 * @privateRemarks
 	 * Alias for the constructor, but with extends clause for the `Types` parameter that {@link FieldSchema} can not have (due to recursive type issues).
 	 */
-	public static create<Kind extends FieldKind, const Types extends AllowedTypes>(
-		kind: Kind,
+	public static create<TKind extends FieldKind, const Types extends AllowedTypes>(
+		kind: TKind,
 		allowedTypes: Types,
-	): FieldSchema<Kind, Types> {
+	): FieldSchema<TKind, Types> {
 		return new FieldSchema(kind, allowedTypes);
 	}
 
@@ -326,10 +336,10 @@ export class FieldSchema<
 	 * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
 	 * Prefer {@link FieldSchema.create} when possible.
 	 */
-	public static createUnsafe<Kind extends FieldKind, const Types>(
-		kind: Kind,
+	public static createUnsafe<TKind extends FieldKind, const Types>(
+		kind: TKind,
 		allowedTypes: Types,
-	): FieldSchema<Kind, Types> {
+	): FieldSchema<TKind, Types> {
 		return new FieldSchema(kind, allowedTypes);
 	}
 
@@ -338,7 +348,7 @@ export class FieldSchema<
 	/**
 	 * This is computed lazily since types can be recursive, which makes evaluating this have to happen after all the schema are defined.
 	 */
-	private readonly lazyTypes: Lazy<TreeTypeSet>;
+	private readonly lazyTypes: Lazy<{ names: TreeTypeSet; schema: AllowedTypeSet }>;
 
 	/**
 	 * @param kind - The {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of this field.
@@ -346,25 +356,46 @@ export class FieldSchema<
 	 * @param allowedTypes - What types of tree nodes are allowed in this field.
 	 */
 	private constructor(
-		public readonly kind: Kind,
-		public readonly allowedTypes: Types,
+		public readonly kind: TKind,
+		public readonly allowedTypes: TTypes,
 	) {
 		// Since this class can't have the desired extends clause, do some extra runtime validation:
-		assert(Array.isArray(allowedTypes), "Invalid allowedTypes");
+		assert(Array.isArray(allowedTypes), 0x7bc /* Invalid allowedTypes */);
 		for (const allowedType of allowedTypes) {
 			if (allowedType === Any) {
-				assert(allowedTypes.length === 1, "Invalid Any in allowedTypes");
+				assert(allowedTypes.length === 1, 0x7bd /* Invalid Any in allowedTypes */);
 			} else if (typeof allowedType !== "function") {
-				assert(allowedType instanceof TreeSchema, "Invalid entry in allowedTypes");
+				assert(
+					allowedType instanceof TreeSchema,
+					0x7be /* Invalid entry in allowedTypes */,
+				);
 			}
 		}
-		this.lazyTypes = new Lazy(() =>
-			allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
-		);
+		this.lazyTypes = new Lazy(() => ({
+			names: allowedTypesToTypeSet(this.allowedTypes as unknown as AllowedTypes),
+			schema: allowedTypesSchemaSet(this.allowedTypes as unknown as AllowedTypes),
+		}));
 	}
 
+	/**
+	 * Types which are allowed in this field (by {@link TreeSchemaIdentifier}), in a format optimized for stored schema.
+	 * This is the same set of types in {@link FieldSchema.allowedTypes}, just in a different format.
+	 */
 	public get types(): TreeTypeSet {
-		return this.lazyTypes.value;
+		return this.lazyTypes.value.names;
+	}
+
+	/**
+	 * Types which are allowed in this field.
+	 * This is the same set of types in {@link FieldSchema.allowedTypes}, just as a set with laziness removed.
+	 * @privateRemarks
+	 * TODO:
+	 * 3 ways to access the allowed types are now exposed.
+	 * Reducing this and/or renaming the more friendly options to take the shorter name (`types`)
+	 * would be a good idea.
+	 */
+	public get allowedTypeSet(): AllowedTypeSet {
+		return this.lazyTypes.value.schema;
 	}
 
 	/**
@@ -392,17 +423,44 @@ export class FieldSchema<
 }
 
 /**
+ * Types for use in fields.
+ * This representation is optimized for runtime use in view-schema.
+ *
+ * @remarks
+ * See {@link TreeTypeSet} for a stored-schema compatible version using the {@link TreeSchemaIdentifier}.
+ * See {@link AllowedTypes} for a compile time optimized version.
+ * @alpha
+ */
+export type AllowedTypeSet = Any | ReadonlySet<TreeSchema>;
+
+/**
+ * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
+ * @alpha
+ */
+export function allowedTypesSchemaSet(t: AllowedTypes): AllowedTypeSet {
+	if (allowedTypesIsAny(t)) {
+		return Any;
+	}
+	const list: TreeSchema[] = t.map((value: LazyItem<TreeSchema>) => {
+		if (typeof value === "function") {
+			return value();
+		}
+		return value;
+	});
+	return new Set(list);
+}
+
+/**
  * Convert {@link AllowedTypes} to {@link TreeTypeSet}.
  * @alpha
  */
 export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
-	if (allowedTypesIsAny(t)) {
+	const list = allowedTypesSchemaSet(t);
+	if (list === Any) {
 		return undefined;
 	}
-	const list: readonly (() => TreeSchema)[] = normalizeFlexList(t);
-	const names = list.map((f) => {
-		const type = f();
-		assert(type instanceof TreeSchema, "invalid allowed type");
+	const names = Array.from(list, (type) => {
+		assert(type instanceof TreeSchema, 0x7bf /* invalid allowed type */);
 		return type.name;
 	});
 	return new Set(names);
@@ -413,16 +471,47 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  * Strongly typed over its rootFieldSchema.
  *
  * @remarks
- * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
- * The actual type used will include detailed schema information for all the types in the collection.
- * This pattern is used to implement SchemaAware APIs.
+ * The type of the rootFieldSchema is used to implement SchemaAware APIs.
+ * Cases that do not require being compile time schema aware can omit the explicit type for it.
  *
  * @alpha
  */
 
-export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
+export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
+	/**
+	 * Schema for the root field which contains the whole tree.
+	 */
 	readonly rootFieldSchema: T;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
+	/**
+	 * Extra configuration for how this schema is handled at runtime.
+	 */
 	readonly policy: FullSchemaPolicy;
+	/**
+	 * Compatibility information how how to interact with content who's stored schema is not directly compatible with this schema.
+	 */
 	readonly adapters: Adapters;
+}
+
+{
+	// It is convenient that DocumentSchema can be used as a SchemaData with no conversion.
+	// This type check ensures this ability is not broken on accident (if it needs to be broken on purpose for some reason thats fine: just delete this check).
+	// Since TypeScript does not allow extending two types with the same field (even if they are compatible),
+	// this check cannot be done by adding an extends clause to DocumentSchema.
+	type _check = requireAssignableTo<DocumentSchema, SchemaData>;
+}
+
+/**
+ * Schema data that can be be used to view a document.
+ * @alpha
+ *
+ * @privateRemarks
+ * It is convenient that this can be used as a StoredSchemaCollection with no conversion.
+ * There there isn't a design requirement for this however, so this extends clause can be removed later if needed.
+ */
+
+export interface SchemaCollection extends StoredSchemaCollection {
+	/**
+	 * {@inheritdoc SchemaCollection}
+	 */
+	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 }

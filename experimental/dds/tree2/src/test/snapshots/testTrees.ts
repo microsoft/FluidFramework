@@ -13,13 +13,7 @@ import {
 	TreeCompressionStrategy,
 	runSynchronous,
 } from "../../shared-tree";
-import {
-	Any,
-	FieldKinds,
-	FieldSchema,
-	SchemaBuilder,
-	singleTextCursor,
-} from "../../feature-libraries";
+import { Any, FieldKinds, FieldSchema, singleTextCursor } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
 	TestTreeProviderLite,
@@ -31,14 +25,14 @@ import {
 	wrongSchema,
 } from "../utils";
 import { AllowedUpdateType, FieldKey, JsonableTree, UpPath, rootFieldKey } from "../../core";
-import { leaf } from "../../domains";
+import { leaf, SchemaBuilder } from "../../domains";
 
 const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
 	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
 });
 
-const builder = new SchemaBuilder({ scope: "test trees", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "test trees" });
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.sequence(Any));
 const testSchema = builder.toDocumentSchema(SchemaBuilder.sequence(Any));
 

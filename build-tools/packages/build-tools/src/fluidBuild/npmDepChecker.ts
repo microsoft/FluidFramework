@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { defaultLogger } from "../common/logging";
 import { Package } from "../common/npmPackage";
 import { readFileAsync } from "../common/utils";
 
-const { verbose } = defaultLogger;
+import registerDebug from "debug";
+const traceDepCheck = registerDebug("fluid-build:depCheck");
 
 interface DepCheckRecord {
 	name: string;
@@ -47,8 +47,8 @@ export class NpmDepChecker {
 		private readonly pkg: Package,
 		private readonly checkFiles: string[],
 	) {
-		if (checkFiles.length !== 0) {
-			for (const name of Object.keys(pkg.packageJson.dependencies!)) {
+		if (checkFiles.length !== 0 && pkg.packageJson.dependencies) {
+			for (const name of Object.keys(pkg.packageJson.dependencies)) {
 				if (this.ignored.indexOf(name) !== -1) {
 					continue;
 				}
@@ -74,9 +74,9 @@ export class NpmDepChecker {
 		}
 	}
 
-	public async run() {
+	public async run(apply: boolean) {
 		await this.check();
-		return this.fix();
+		return this.fix(apply);
 	}
 
 	private async check() {
@@ -88,7 +88,7 @@ export class NpmDepChecker {
 					continue;
 				}
 				if (!record.import.test(content) && !record.declare.test(content)) {
-					verbose(`${this.pkg.nameColored}: ${record.name} found in ${tsFile}`);
+					traceDepCheck(`${this.pkg.nameColored}: ${record.name} found in ${tsFile}`);
 					continue;
 				}
 				record.found = true;
@@ -99,7 +99,7 @@ export class NpmDepChecker {
 			}
 		}
 	}
-	private fix() {
+	private fix(apply: boolean) {
 		let changed = false;
 		for (const depCheckRecord of this.records) {
 			const name = depCheckRecord.name;
@@ -110,17 +110,24 @@ export class NpmDepChecker {
 			} else if (!depCheckRecord.found) {
 				if (this.dev.indexOf(name) != -1) {
 					console.warn(`${this.pkg.nameColored}: warning: misplaced dependency ${name}`);
-					this.pkg.packageJson.devDependencies![name] =
-						this.pkg.packageJson.dependencies?.[name];
+					if (apply) {
+						if (!this.pkg.packageJson.devDependencies) {
+							this.pkg.packageJson.devDependencies = {};
+						}
+						this.pkg.packageJson.devDependencies[name] =
+							this.pkg.packageJson.dependencies?.[name];
+					}
 				} else {
 					console.warn(`${this.pkg.nameColored}: warning: unused dependency ${name}`);
 				}
-				changed = true;
-				delete this.pkg.packageJson.dependencies?.[name];
+				if (apply) {
+					changed = true;
+					delete this.pkg.packageJson.dependencies?.[name];
+				}
 			}
 		}
-		changed = this.depcheckTypes() || changed;
-		return this.dupCheck() || changed;
+		changed = this.depcheckTypes(apply) || changed;
+		return this.dupCheck(apply) || changed;
 	}
 
 	private isInDependencies(name: string) {
@@ -132,7 +139,7 @@ export class NpmDepChecker {
 		);
 	}
 
-	private depcheckTypes() {
+	private depcheckTypes(apply: boolean) {
 		let changed = false;
 		for (const { name: dep } of this.pkg.combinedDependencies) {
 			if (dep.startsWith("@types/") && this.foundTypes.indexOf(dep) === -1) {
@@ -145,20 +152,22 @@ export class NpmDepChecker {
 					)
 				) {
 					console.warn(`${this.pkg.nameColored}: warning: unused type dependency ${dep}`);
-					if (this.pkg.packageJson.devDependencies) {
-						delete this.pkg.packageJson.devDependencies[dep];
+					if (apply) {
+						if (this.pkg.packageJson.devDependencies) {
+							delete this.pkg.packageJson.devDependencies[dep];
+						}
+						if (this.pkg.packageJson.dependencies) {
+							delete this.pkg.packageJson.dependencies[dep];
+						}
+						changed = true;
 					}
-					if (this.pkg.packageJson.dependencies) {
-						delete this.pkg.packageJson.dependencies[dep];
-					}
-					changed = true;
 				}
 			}
 		}
 		return changed;
 	}
 
-	private dupCheck() {
+	private dupCheck(apply: boolean) {
 		if (!this.pkg.packageJson.devDependencies || !this.pkg.packageJson.dependencies) {
 			return false;
 		}
@@ -168,8 +177,10 @@ export class NpmDepChecker {
 				console.warn(
 					`${this.pkg.nameColored}: warning: ${name} already in production dependency, deleting dev dependency`,
 				);
-				delete this.pkg.packageJson.devDependencies[name];
-				changed = true;
+				if (apply) {
+					delete this.pkg.packageJson.devDependencies[name];
+					changed = true;
+				}
 			}
 		}
 		return changed;

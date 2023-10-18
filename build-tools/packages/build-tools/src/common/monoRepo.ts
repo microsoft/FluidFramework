@@ -13,6 +13,9 @@ import { Logger, defaultLogger } from "./logging";
 import { Package, PackageJson } from "./npmPackage";
 import { execWithErrorAsync, existsSync, rimrafWithErrorAsync } from "./utils";
 
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
+
 export type PackageManager = "npm" | "pnpm" | "yarn";
 
 /**
@@ -95,7 +98,7 @@ export class MonoRepo {
 
 	private _packageJson: PackageJson;
 
-	static load(group: string, repoPackage: IFluidRepoPackage, log: Logger) {
+	static load(group: string, repoPackage: IFluidRepoPackage) {
 		const { directory, ignoredDirs, defaultInterdependencyRange } = repoPackage;
 		let packageManager: PackageManager;
 		let packageDirs: string[];
@@ -127,7 +130,7 @@ export class MonoRepo {
 			packageDirs = packages.filter((pkg) => pkg.relativeDir !== ".").map((pkg) => pkg.dir);
 
 			if (defaultInterdependencyRange === undefined) {
-				log?.warning(
+				traceInit(
 					`No defaultinterdependencyRange specified for ${group} release group. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
 				);
 			}
@@ -142,7 +145,6 @@ export class MonoRepo {
 			packageManager,
 			packageDirs,
 			ignoredDirs,
-			log,
 		);
 	}
 
@@ -199,7 +201,7 @@ export class MonoRepo {
 			}
 
 			if (lerna.version !== undefined) {
-				logger.verbose(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
+				traceInit(`${kind}: Loading version (${lerna.version}) from ${lernaPath}`);
 				this.version = lerna.version;
 				versionFromLerna = true;
 			}
@@ -214,12 +216,12 @@ export class MonoRepo {
 
 		if (!versionFromLerna) {
 			this.version = this._packageJson.version;
-			logger.verbose(
+			traceInit(
 				`${kind}: Loading version (${this._packageJson.version}) from ${packagePath}`,
 			);
 		}
 
-		logger.verbose(`${kind}: Loading packages from ${packageManager}`);
+		traceInit(`${kind}: Loading packages from ${packageManager}`);
 		for (const pkgDir of packageDirs) {
 			this.packages.push(Package.load(path.join(pkgDir, "package.json"), kind, this));
 		}
@@ -247,7 +249,7 @@ export class MonoRepo {
 	}
 
 	public async install() {
-		this.logger.info(`${this.kind}: Installing - ${this.installCommand}`);
+		this.logger.log(`Release group ${this.kind}: Installing - ${this.installCommand}`);
 		return execWithErrorAsync(this.installCommand, { cwd: this.repoPath }, this.repoPath);
 	}
 	public async uninstall() {

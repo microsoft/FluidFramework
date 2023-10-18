@@ -12,6 +12,8 @@ services:
     build:
       context: .
       target: runner
+      additional_contexts:
+        root: ../..
     expose:
       - "3000"
     command: node packages/routerlicious/dist/alfred/www.js
@@ -25,6 +27,8 @@ services:
     build:
       context: .
       target: runner
+      additional_contexts:
+        root: ../..
     command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
     environment:
       - DEBUG=fluid:*
@@ -36,6 +40,8 @@ services:
     build:
       context: .
       target: runner
+      additional_contexts:
+        root: ../..
     command: node packages/routerlicious/dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
     environment:
       - DEBUG=fluid:*
@@ -47,6 +53,8 @@ services:
     build:
       context: .
       target: runner
+      additional_contexts:
+        root: ../..
     command: node packages/routerlicious/dist/kafka-service/index.js copier /usr/src/server/packages/routerlicious/dist/copier/index.js
     environment:
       - DEBUG=fluid:*
@@ -58,6 +66,8 @@ services:
     build:
       context: .
       target: runner
+      additional_contexts:
+        root: ../..
     command: node packages/routerlicious/dist/kafka-service/index.js scribe /usr/src/server/packages/routerlicious/dist/scribe/index.js
     environment:
       - DEBUG=fluid:*
@@ -69,6 +79,8 @@ services:
     build:
       context: .
       target: runner
+      additional_contexts:
+        root: ../..
     ports:
       - "5000:5000"
     command: node packages/routerlicious/dist/riddler/www.js

@@ -7,7 +7,7 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
-	SchemaData,
+	StoredSchemaCollection,
 	TreeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
@@ -34,14 +34,14 @@ import { NodeShape } from "./nodeShape";
  * TODO: This function should eventually also take in the FieldSchema to more efficiently compress the nodes.
  */
 export function schemaCompressedEncode(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	cursor: ITreeCursorSynchronous,
 ): EncodedChunk {
 	return compressedEncode(cursor, buildCache(schema, policy));
 }
 
-export function buildCache(schema: SchemaData, policy: FullSchemaPolicy): EncoderCache {
+export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
@@ -81,7 +81,7 @@ export function fieldShaper(
  * Selects shapes to use to encode trees.
  */
 export function treeShaper(
-	fullSchema: SchemaData,
+	fullSchema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldHandler: FieldShaper,
 	schemaName: TreeSchemaIdentifier,
@@ -127,6 +127,8 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Boolean:
 		case ValueSchema.FluidHandle:
 			return true;
+		case ValueSchema.Null:
+			return [null];
 		default:
 			unreachableCase(schema);
 	}

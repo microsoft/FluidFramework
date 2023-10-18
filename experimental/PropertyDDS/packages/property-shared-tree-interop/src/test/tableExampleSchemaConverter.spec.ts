@@ -6,11 +6,13 @@
 import { strict as assert } from "assert";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
-	ValueSchema,
 	brand,
 	EmptyKey,
 	FieldKinds,
 	TreeSchemaIdentifier,
+	schemaIsFieldNode,
+	FieldSchema,
+	leaf,
 } from "@fluid-experimental/tree2";
 import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
 
@@ -164,8 +166,14 @@ describe("LlsSchemaConverter", () => {
 		assert(uint64.types !== undefined);
 		expect(uint64.types.has(brand("converted.Uint64"))).toBeTruthy();
 		assert(uint64.types.has(brand("converted.Uint64")));
-		const uint64Type = fullSchemaData.treeSchema.get(brand("converted.Uint64"));
-		assert(uint64Type?.leafValue === ValueSchema.Number);
+		const uint64Type =
+			fullSchemaData.treeSchema.get(brand("converted.Uint64")) ?? fail("missing schema");
+		assert(schemaIsFieldNode(uint64Type));
+		assert(
+			uint64Type.structFields
+				.get(EmptyKey)
+				?.equals(FieldSchema.create(FieldKinds.required, [leaf.number])),
+		);
 	});
 
 	it("Inheritance Translation", () => {

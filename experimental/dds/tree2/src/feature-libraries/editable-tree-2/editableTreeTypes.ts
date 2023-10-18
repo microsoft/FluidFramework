@@ -425,6 +425,11 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 /**
  * A {@link TreeNode} that behaves like struct, providing properties to access its fields.
  *
+ * @privateRemarks
+ *
+ * The corresponding implementation logic for this lives in `LazyTree.ts` under `buildStructClass`.
+ * If you change the signature here, you will need to update that logic to match.
+ *
  * @alpha
  */
 export type StructTyped<TSchema extends StructSchema> = Struct &
@@ -433,33 +438,45 @@ export type StructTyped<TSchema extends StructSchema> = Struct &
 /**
  * Properties to access a struct nodes fields. See {@link StructTyped}.
  *
- * @privateRemarks
- * TODO: support custom field keys
+ * @privateRemarks TODOs:
+ *
+ * 1. Support custom field keys.
+ *
+ * 2. Do we keep assignment operator + "setFoo" methods, or just use methods?
+ * Inconsistency in the API experience could confusing for consumers.
  *
  * @alpha
  */
-export type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> =
-	// Getters
-	{
-		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
-	} & {
-		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
-			TFields[key]
-		>;
-	};
-// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
-// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
-// {
-// 	readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
-// 		content: FlexibleFieldContent<TFields[key]>,
-// 	) => void;
-// };
-// This could be enabled to allow assignment via `=` in some cases.
-// & {
-// 	// Setter properties (when the type system permits)
-// 	[key in keyof TFields]: UnwrappedField<TFields[key]> & StructSetContent<TFields[key]>;
-// }
+export type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> = {
+	// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+	readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+} & {
+	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
+	// If we could map to getters and setters separately, we would preferably do that, but we can't.
+	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? never
+		: key]: UnboxField<TFields[key]>;
+} & {
+	// Add setter (make property writable) when the field is of a kind that has a logical set operation.
+	// If we could map to getters and setters separately, we would preferably do that, but we can't.
+	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? key
+		: never]: UnboxField<TFields[key]>;
+} & {
+	// Setter method (when the field is of a kind that has a logical set operation).
+	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? `set${Capitalize<key & string>}`
+		: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+};
+
+/**
+ * Field kinds that allow value assignment.
+ *
+ * @alpha
+ */
+export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
 
 // #endregion
 
@@ -771,6 +788,14 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
 		  ]
 		: [],
 ][_InlineTrick];
+
+/**
+ * Schema aware specialization of {@link Tree}.
+ * @alpha
+ */
+export type Typed<TSchema extends FieldSchema | TreeSchema> = TSchema extends TreeSchema
+	? TypedNode<TSchema>
+	: TypedField<Assume<TSchema, FieldSchema>>;
 
 /**
  * Schema aware specialization of {@link TreeNode} for a given {@link TreeSchema}.

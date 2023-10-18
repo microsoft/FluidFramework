@@ -36,11 +36,13 @@ import {
 	NewFieldContent,
 	NodeKeyManager,
 	FieldSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	getTreeContext,
 	TypedField,
 	createNodeKeyManager,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
+	getProxyForField,
+	ProxyField,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -236,9 +238,9 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
 	 * using the returned tree is invalid and is likely to error or corrupt the document.
 	 */
-	editableTree2<TRoot extends FieldSchema>(
-		viewSchema: TypedSchemaCollection<TRoot>,
-	): TypedField<TRoot>;
+	editableTree2<TRoot extends FieldSchema>(viewSchema: DocumentSchema<TRoot>): TypedField<TRoot>;
+
+	root2<TRoot extends FieldSchema>(viewSchema: DocumentSchema<TRoot>): ProxyField<TRoot>;
 }
 
 /**
@@ -423,7 +425,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	}
 
 	public editableTree2<TRoot extends FieldSchema>(
-		viewSchema: TypedSchemaCollection<TRoot>,
+		viewSchema: DocumentSchema<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): TypedField<TRoot> {
@@ -435,6 +437,11 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 		);
 		return context.root as TypedField<TRoot>;
+	}
+
+	public root2<TRoot extends FieldSchema>(viewSchema: DocumentSchema<TRoot>) {
+		const rootField = this.editableTree2(viewSchema);
+		return getProxyForField(rootField);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {

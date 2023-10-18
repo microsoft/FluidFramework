@@ -10,7 +10,7 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { updatePackageJsonFile } from "../../common/npmPackage";
+import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
 import { PackageNamePolicyConfig } from "../../common/fluidRepo";
@@ -263,7 +263,6 @@ export function isFeed(str: string | undefined): str is Feed {
 	if (str === undefined) {
 		return false;
 	}
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return feeds.includes(str as any);
 }
 
@@ -829,7 +828,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
@@ -879,7 +878,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts-split",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
@@ -927,7 +926,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-mocha-config",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
 			let json;
 			try {
@@ -965,7 +964,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-jest-config",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
 			let json;
 
@@ -996,6 +995,7 @@ export const handlers: Handler[] = [
 			}
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const config = require(path.resolve(jestConfigFile));
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
@@ -1024,7 +1024,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-esm",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that we have a module field in the package iff we have a ESM build
 			// So that tools like webpack will pack up the right version.
 			let json;
@@ -1061,7 +1061,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-clean-script",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces the "clean" script will delete all the build and test output
 			let json;
 
@@ -1108,7 +1108,7 @@ export const handlers: Handler[] = [
 				}
 			}
 		},
-		resolver: (file, root) => {
+		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
@@ -1125,6 +1125,35 @@ export const handlers: Handler[] = [
 			});
 
 			return result;
+		},
+	},
+	{
+		name: "npm-package-types-field",
+		match,
+		handler: (file) => {
+			// This rule enforces each package has a types field in its package.json
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			if (
+				// Ignore private packages...
+				json.private === true ||
+				// and those without main/module defined
+				(json.main === undefined && json.module === undefined) ||
+				// and packages without a tsconfig
+				!fs.existsSync(path.join(path.dirname(file), "tsconfig.json"))
+			) {
+				return;
+			}
+
+			if (json.types === undefined) {
+				return "Missing 'types' field in package.json.";
+			}
 		},
 	},
 ];

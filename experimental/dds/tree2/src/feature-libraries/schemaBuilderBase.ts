@@ -5,19 +5,62 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeSchemaIdentifier } from "../core";
+import { Assume, RestrictiveReadonlyRecord, transformObjectMap } from "../util";
 import {
 	SchemaLibraryData,
 	SchemaLintConfiguration,
-	buildViewSchemaCollection,
+	aggregateSchemaLibraries,
 	schemaLintDefault,
 	AllowedTypes,
 	TreeSchema,
 	FieldSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	FlexList,
 	Unenforced,
+	Any,
+	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
+import { defaultSchemaPolicy } from "./default-field-kinds";
+
+/**
+ * Configuration for a SchemaBuilder.
+ * @alpha
+ */
+export interface SchemaBuilderOptions<TScope extends string = string> {
+	/**
+	 * Prefix appended to the identifiers of all {@link TreeSchema} produced by this builder.
+	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
+	 */
+	scope: TScope;
+
+	/**
+	 * Name used to refer to this builder in error messages.
+	 * Has no impact on the actual generated schema.
+	 * Defaults to scope.
+	 */
+	name?: string;
+
+	/**
+	 * Optional configuration for "linting".
+	 * See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.
+	 */
+	lint?: Partial<SchemaLintConfiguration>;
+
+	/**
+	 * Libraries to include in this one.
+	 *
+	 * @remarks
+	 * Unlike adding of individual schema, adding of libraries is idempotent.
+	 * If a single library is added multiple times (even indirectly via libraries it was added into),
+	 * only a single copy will be included, so they will not conflict.
+	 * This allows adding any library this one depends on without risk of conflicts for users of this library.
+	 * Contents within the added libraries can still conflict however.
+	 * Such errors will be reported when finalizing this builder into a library or document schema.
+	 */
+	libraries?: SchemaLibrary[];
+}
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -28,7 +71,11 @@ import { FieldKind } from "./modular-schema";
  * or bake in any defaults that might have compatibility implications.
  * All use of such implicit defaults is done by subclasses, which thus get versioning implications.
  */
-export class SchemaBuilderBase<TScope extends string, TName extends number | string = string> {
+export class SchemaBuilderBase<
+	TScope extends string,
+	TDefaultKind extends FieldKind,
+	TName extends number | string = string,
+> {
 	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
@@ -45,18 +92,12 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	public readonly name: string;
 
 	/**
-	 * @param scope - Prefix appended to the identifiers of all {@link TreeSchema} produced by this builder.
-	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
-	 * @param name - Name used to refer to this builder in error messages. Has no impact on the actual generated schema. Defaults to scope.
-	 * @param lint - Optional configuration for "linting". See {@link SchemaLintConfiguration}. Currently defaults to enabling all lints.
-	 * @param libraries - Libraries to include in this one. See `addLibraries` for details.
+	 * @param defaultKind - The default field kind to use when inferring a {@link FieldSchema} from {@link ImplicitAllowedTypes}.
 	 */
-	public constructor(options: {
-		scope: TScope;
-		name?: string;
-		lint?: Partial<SchemaLintConfiguration>;
-		libraries?: SchemaLibrary[];
-	}) {
+	public constructor(
+		private readonly defaultKind: TDefaultKind,
+		options: SchemaBuilderOptions<TScope>,
+	) {
 		this.name = options.name ?? options.scope;
 		this.lintConfiguration = { ...schemaLintDefault, ...options.lint };
 		this.libraries = new Set();
@@ -87,19 +128,21 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	}
 
 	protected addNodeSchema<T extends TreeSchema<string, any>>(schema: T): void {
-		assert(!this.treeSchema.has(schema.name), "Conflicting TreeSchema names");
+		assert(!this.treeSchema.has(schema.name), 0x799 /* Conflicting TreeSchema names */);
 		this.treeSchema.set(schema.name, schema as TreeSchema);
 	}
 
-	private finalizeCommon(): void {
-		assert(!this.finalized, "SchemaBuilder can only be finalized once.");
+	private finalizeCommon(field?: FieldSchema): SchemaLibraryData {
+		assert(!this.finalized, 0x79a /* SchemaBuilder can only be finalized once. */);
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
-			rootFieldSchema: undefined,
 			treeSchema: this.treeSchema,
 			adapters: this.adapters,
 		});
+
+		// Check for errors and aggregate data
+		return aggregateSchemaLibraries(this.name, this.lintConfiguration, this.libraries, field);
 	}
 
 	/**
@@ -107,38 +150,151 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	 * May only be called once after adding content to builder is complete.
 	 */
 	public finalize(): SchemaLibrary {
-		this.finalizeCommon();
+		const aggregated = this.finalizeCommon();
 
-		// Check for errors:
-		const collection = buildViewSchemaCollection(this.lintConfiguration, this.libraries);
-
-		return { ...collection, libraries: this.libraries };
+		// Full library set (instead of just aggregated) is kept since it is required to handle deduplication of libraries included through different paths.
+		return { treeSchema: aggregated.treeSchema, libraries: this.libraries };
 	}
 
 	/**
-	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
+	 * Produce a DocumentSchema which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
+	 * Can be used with schematize to provide schema aware access to document content.
 	 *
+	 * @remarks
 	 * May only be called once after adding content to builder is complete.
 	 */
-	protected toDocumentSchemaInternal<TSchema extends FieldSchema>(
+	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
-	): TypedSchemaCollection<TSchema> {
-		this.finalizeCommon();
-		const rootLibrary: SchemaLibraryData = {
-			name: this.name,
-			rootFieldSchema: root,
-			treeSchema: new Map(),
-			adapters: {},
-		};
-		const collection = buildViewSchemaCollection(this.lintConfiguration, [
-			rootLibrary,
-			...this.libraries,
-		]);
-		const typed: TypedSchemaCollection<TSchema> = {
-			...collection,
-			rootFieldSchema: root,
+	): DocumentSchema<NormalizeField<TSchema, TDefaultKind>> {
+		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
+		const field: NormalizeField<TSchema, TDefaultKind> = this.normalizeField(root);
+		const library = this.finalizeCommon(field);
+
+		const typed: DocumentSchema<NormalizeField<TSchema, TDefaultKind>> = {
+			treeSchema: library.treeSchema,
+			adapters: library.adapters,
+			rootFieldSchema: field,
+			policy: defaultSchemaPolicy,
 		};
 		return typed;
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a {@link Struct} node.
+	 *
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 */
+	public struct<
+		const Name extends TName,
+		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	>(
+		name: Name,
+		t: T,
+	): TreeSchema<
+		`${TScope}.${Name}`,
+		{ structFields: { [key in keyof T]: NormalizeField<T[key], TDefaultKind> } }
+	> {
+		const schema = new TreeSchema(this, this.scoped(name), {
+			structFields: transformObjectMap(
+				t,
+				(field): FieldSchema => this.normalizeField(field),
+			) as {
+				[key in keyof T]: NormalizeField<T[key], TDefaultKind>;
+			},
+		});
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `struct` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See {@link Unenforced} for details.
+	 *
+	 * TODO: Make this work with ImplicitFieldSchema.
+	 */
+	public structRecursive<
+		Name extends TName,
+		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	>(name: Name, t: T): TreeSchema<`${TScope}.${Name}`, { structFields: T }> {
+		return this.struct(
+			name,
+			t as unknown as RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		) as unknown as TreeSchema<`${TScope}.${Name}`, { structFields: T }>;
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a {@link MapNode}.
+	 */
+	public map<Name extends TName, const T extends MapFieldSchema>(
+		name: Name,
+		fieldSchema: T,
+	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
+		const schema = new TreeSchema(this, this.scoped(name), {
+			mapFields: fieldSchema,
+		});
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `map` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See {@link Unenforced} for details.
+	 *
+	 * TODO: Make this work with ImplicitFieldSchema.
+	 */
+	public mapRecursive<Name extends TName, const T extends Unenforced<MapFieldSchema>>(
+		name: Name,
+		t: T,
+	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
+		return this.map(name, t as unknown as MapFieldSchema) as unknown as TreeSchema<
+			`${TScope}.${Name}`,
+			{ mapFields: T }
+		>;
+	}
+
+	/**
+	 * Define (and add to this library) a {@link TreeSchema} for a {@link FieldNode}.
+	 *
+	 * The name must be unique among all TreeSchema in the the document schema.
+	 *
+	 * @privateRemarks
+	 * TODO: Write and link document outlining field vs node data model and the separation of concerns related to that.
+	 * TODO: Maybe find a better name for this.
+	 */
+	public fieldNode<Name extends TName, const T extends ImplicitFieldSchema>(
+		name: Name,
+		fieldSchema: T,
+	): TreeSchema<
+		`${TScope}.${Name}`,
+		{ structFields: { [""]: NormalizeField<T, TDefaultKind> } }
+	> {
+		const schema = new TreeSchema(this, this.scoped(name), {
+			structFields: { [""]: this.normalizeField(fieldSchema) },
+		});
+		this.addNodeSchema(schema);
+		return schema;
+	}
+
+	/**
+	 * Same as `fieldNode` but with less type safety and works for recursive objects.
+	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+	 *
+	 * See {@link Unenforced} for details.
+	 *
+	 * TODO: Make this work with ImplicitFieldSchema.
+	 */
+	public fieldNodeRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(
+		name: Name,
+		t: T,
+	): TreeSchema<`${TScope}.${Name}`, { structFields: { [""]: T } }> {
+		return this.fieldNode(name, t as unknown as ImplicitFieldSchema) as unknown as TreeSchema<
+			`${TScope}.${Name}`,
+			{ structFields: { [""]: T } }
+		>;
 	}
 
 	/**
@@ -147,19 +303,19 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
-	 * @returns a {@link FieldSchema} which can be used as a struct field (see {@link SchemaBuilder.struct}),
-	 * a map field (see {@link SchemaBuilder.map}), a field node(see {@link SchemaBuilder.fieldNode}) or the root field (see {@link SchemaBuilder.toDocumentSchema}).
+	 * @returns a {@link FieldSchema} which can be used as a struct field (see {@link SchemaBuilderBase.struct}),
+	 * a map field (see {@link SchemaBuilderBase.map}), a field node(see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.toDocumentSchema}).
 	 *
 	 * @privateRemarks
 	 * TODO:
 	 * If a solution to FieldSchema not being able to have extends clauses gets found,
 	 * consider just having users do `new FieldSchema` instead?
 	 */
-	public static field<Kind extends FieldKind, T extends AllowedTypes>(
+	public static field<Kind extends FieldKind, T extends ImplicitAllowedTypes>(
 		kind: Kind,
-		...allowedTypes: T
-	): FieldSchema<Kind, T> {
-		return FieldSchema.create(kind, allowedTypes);
+		allowedTypes: T,
+	): FieldSchema<Kind, NormalizeAllowedTypes<T>> {
+		return FieldSchema.create(kind, normalizeAllowedTypes(allowedTypes));
 	}
 
 	/**
@@ -179,6 +335,15 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
 	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
 		return FieldSchema.createUnsafe(kind, allowedTypes);
 	}
+
+	/**
+	 * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema} using this schema builder's `defaultKind`.
+	 */
+	protected normalizeField<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+	): NormalizeField<TSchema, TDefaultKind> {
+		return normalizeField(schema, this.defaultKind);
+	}
 }
 
 /**
@@ -186,9 +351,75 @@ export class SchemaBuilderBase<TScope extends string, TName extends number | str
  * Can be aggregated into other libraries by adding to their builders.
  * @alpha
  */
-export interface SchemaLibrary extends TypedSchemaCollection {
+export interface SchemaLibrary extends SchemaCollection {
 	/**
 	 * Schema data aggregated from a collection of libraries by a SchemaBuilder.
 	 */
 	readonly libraries: ReadonlySet<SchemaLibraryData>;
 }
+
+/**
+ * Generalized version of AllowedTypes allowing for more concise expressions in some cases.
+ * @alpha
+ */
+export type ImplicitAllowedTypes = AllowedTypes | TreeSchema | Any;
+
+/**
+ * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ * @alpha
+ */
+export type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> = TSchema extends TreeSchema
+	? readonly [TSchema]
+	: TSchema extends Any
+	? readonly [Any]
+	: TSchema;
+
+/**
+ * Normalizes an {@link ImplicitAllowedTypes} into  {@link AllowedTypes}.
+ */
+export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
+	schema: TSchema,
+): NormalizeAllowedTypes<TSchema> {
+	if (schema === Any) {
+		return [Any] as unknown as NormalizeAllowedTypes<TSchema>;
+	}
+	if (schema instanceof TreeSchema) {
+		return [schema] as unknown as NormalizeAllowedTypes<TSchema>;
+	}
+	assert(Array.isArray(schema), 0x7c6 /* invalid ImplicitAllowedTypes */);
+	return schema as unknown as NormalizeAllowedTypes<TSchema>;
+}
+
+/**
+ * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema}.
+ * @alpha
+ */
+export type NormalizeField<
+	TSchema extends ImplicitFieldSchema,
+	TDefault extends FieldKind,
+> = TSchema extends FieldSchema
+	? TSchema
+	: FieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
+
+/**
+ * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema}.
+ */
+export function normalizeField<TSchema extends ImplicitFieldSchema, TDefault extends FieldKind>(
+	schema: TSchema,
+	defaultKind: TDefault,
+): NormalizeField<TSchema, TDefault> {
+	if (schema instanceof FieldSchema) {
+		return schema as NormalizeField<TSchema, TDefault>;
+	}
+	const allowedTypes = normalizeAllowedTypes(schema);
+	return FieldSchema.create(defaultKind, allowedTypes) as unknown as NormalizeField<
+		TSchema,
+		TDefault
+	>;
+}
+
+/**
+ * Type that when combined with a default {@link FieldKind} can be normalized into a {@link FieldSchema}.
+ * @alpha
+ */
+export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;

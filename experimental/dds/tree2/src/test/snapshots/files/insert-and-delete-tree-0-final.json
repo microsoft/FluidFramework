@@ -55,37 +55,33 @@
                   "version": "1.0.0",
                   "treeSchema": [
                     {
-                      "name": "Json.Array",
+                      "name": "com.fluidframework.json.array",
                       "structFields": [
                         {
                           "kind": "Sequence",
                           "types": [
-                            "Json.Object",
-                            "Json.Array",
+                            "com.fluidframework.json.object",
+                            "com.fluidframework.json.array",
                             "com.fluidframework.leaf.number",
                             "com.fluidframework.leaf.boolean",
                             "com.fluidframework.leaf.string",
-                            "Json.Null"
+                            "com.fluidframework.leaf.null"
                           ],
                           "name": ""
                         }
                       ]
                     },
                     {
-                      "name": "Json.Null",
-                      "structFields": []
-                    },
-                    {
-                      "name": "Json.Object",
+                      "name": "com.fluidframework.json.object",
                       "mapFields": {
                         "kind": "Optional",
                         "types": [
-                          "Json.Object",
-                          "Json.Array",
+                          "com.fluidframework.json.object",
+                          "com.fluidframework.json.array",
                           "com.fluidframework.leaf.number",
                           "com.fluidframework.leaf.boolean",
                           "com.fluidframework.leaf.string",
-                          "Json.Null"
+                          "com.fluidframework.leaf.null"
                         ]
                       },
                       "structFields": []
@@ -101,6 +97,11 @@
                       "leafValue": 3
                     },
                     {
+                      "name": "com.fluidframework.leaf.null",
+                      "structFields": [],
+                      "leafValue": 4
+                    },
+                    {
                       "name": "com.fluidframework.leaf.number",
                       "structFields": [],
                       "leafValue": 0
@@ -114,12 +115,12 @@
                   "rootFieldSchema": {
                     "kind": "Sequence",
                     "types": [
-                      "Json.Object",
-                      "Json.Array",
+                      "com.fluidframework.json.object",
+                      "com.fluidframework.json.array",
                       "com.fluidframework.leaf.number",
                       "com.fluidframework.leaf.boolean",
                       "com.fluidframework.leaf.string",
-                      "Json.Null"
+                      "com.fluidframework.leaf.null"
                     ]
                   }
                 },

@@ -81,6 +81,7 @@ export {
 	MapTree,
 	LocalCommitSource,
 	forbiddenFieldKindIdentifier,
+	StoredSchemaCollection,
 } from "./core";
 
 export {
@@ -102,6 +103,7 @@ export {
 	BrandedMapSubset,
 	RangeEntry,
 	Named,
+	oneFromSet,
 } from "./util";
 
 export {
@@ -118,16 +120,13 @@ export {
 	cursorToJsonObject,
 	singleJsonCursor,
 	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
 	jsonObject,
-	jsonString,
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
 	leaf,
 	testRecursiveDomain,
+	SchemaBuilder,
 } from "./domains";
 
 export {
@@ -188,15 +187,9 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
-	SchemaBuilder,
 	AllowedTypes,
 	TreeSchema,
-	Required,
-	Optional,
-	Sequence,
-	NodeKeyFieldKind,
-	Forbidden,
-	TypedSchemaCollection,
+	DocumentSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	FieldSchema,
@@ -255,9 +248,10 @@ export {
 	MapNode,
 	OptionalField,
 	RequiredField,
-	Sequence2,
+	Sequence,
 	Struct,
 	StructTyped,
+	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -274,6 +268,20 @@ export {
 	ImplicitFieldSchema,
 	ImplicitAllowedTypes,
 	Unenforced,
+	schemaIsFieldNode,
+	AllowedTypeSet,
+	SchemaBuilderOptions,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
+	Typed,
+	SchemaCollection,
 } from "./feature-libraries";
 
 export {
