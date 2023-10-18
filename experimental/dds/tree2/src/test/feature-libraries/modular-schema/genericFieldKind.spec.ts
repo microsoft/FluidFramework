@@ -12,7 +12,14 @@ import {
 	RevisionMetadataSource,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
-import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
+import {
+	makeAnonChange,
+	tagChange,
+	TaggedChange,
+	Delta,
+	FieldKey,
+	deltaForSet,
+} from "../../../core";
 import { fakeIdAllocator, brand } from "../../../util";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import { IJsonCodec } from "../../../codec";
@@ -112,24 +119,17 @@ const childRebaser = (
 };
 
 const detachId = { minor: 42 };
+const buildId = { minor: 42 };
 
-const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
+const childToDelta = (nodeChange: NodeChangeset): Delta.FieldsChanges => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
-	const nodeDelta: Delta.Modify = {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				valueFieldKey,
-				[
-					{ type: Delta.MarkType.Remove, count: 1, detachId },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(valueChange.new)] },
-				],
-			],
-		]),
-	};
-	return nodeDelta;
+	return deltaForValueChange(valueChange.new);
 };
+
+function deltaForValueChange(newValue: number): Delta.FieldsChanges {
+	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
+}
 
 const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
@@ -368,33 +368,13 @@ describe("Generic FieldKind", () => {
 			},
 		];
 
-		const valueDelta1: Delta.Mark = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					valueFieldKey,
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(1)] },
-					],
-				],
-			]),
+		const expected: Delta.FieldChanges = {
+			attached: [
+				{ count: 1, fields: deltaForValueChange(1) },
+				{ count: 1 },
+				{ count: 1, fields: deltaForValueChange(2) },
+			],
 		};
-
-		const valueDelta2: Delta.Mark = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					valueFieldKey,
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(2)] },
-					],
-				],
-			]),
-		};
-
-		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
 		const actual = genericFieldKind.changeHandler.intoDelta(
 			makeAnonChange(input),

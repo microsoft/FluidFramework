@@ -13,6 +13,7 @@ import {
 	visitDelta,
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
+	deltaForSet,
 } from "../../core";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
@@ -69,7 +70,7 @@ function testVisit(
 }
 
 function testTreeVisit(
-	marks: Delta.MarkList,
+	marks: Delta.FieldChanges,
 	expected: Readonly<VisitScript>,
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
@@ -80,35 +81,28 @@ const rootKey: FieldKey = brand("root");
 const fooKey: FieldKey = brand("foo");
 const barKey: FieldKey = brand("bar");
 const nodeX = { type: leaf.string.name, value: "X" };
-const content = [singleTextCursor(nodeX)];
+const content = singleTextCursor(nodeX);
 const field0: FieldKey = brand("-0");
 const field1: FieldKey = brand("-1");
 const field2: FieldKey = brand("-2");
 
 describe("visit", () => {
 	it("empty delta", () => {
-		testTreeVisit(
-			[],
-			[
-				["enterField", rootKey],
-				["exitField", rootKey],
-				["enterField", rootKey],
-				["exitField", rootKey],
-			],
-		);
+		testTreeVisit({}, [
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", rootKey],
+			["exitField", rootKey],
+		]);
 	});
 	it("insert root", () => {
-		const mark: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content,
-		};
 		const index = makeDetachedFieldIndex("");
 		testTreeVisit(
-			[mark],
+			deltaForSet(content, { minor: 42 }),
 			[
 				["enterField", rootKey],
 				["exitField", rootKey],
-				["create", content, field0],
+				["create", [content], field0],
 				["enterField", rootKey],
 				["attach", field0, 1, 0],
 				["exitField", rootKey],
@@ -119,16 +113,14 @@ describe("visit", () => {
 	});
 	it("insert child", () => {
 		const index = makeDetachedFieldIndex("");
-		const mark = {
-			type: Delta.MarkType.Insert,
-			content,
+		const delta: Delta.FieldChanges = {
+			attached: [
+				{
+					count: 1,
+					fields: new Map([[fooKey, deltaForSet(content, { minor: 42 })]]),
+				},
+			],
 		};
-		const delta: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, mark]]]),
-			},
-		];
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -136,11 +128,11 @@ describe("visit", () => {
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
-			["create", content, field0],
+			["create", [content], field0],
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field0, 1, 42],
+			["attach", field0, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", rootKey],
@@ -150,13 +142,13 @@ describe("visit", () => {
 	});
 	it("remove root", () => {
 		const index = makeDetachedFieldIndex("");
-		const mark: Delta.Remove = {
-			type: Delta.MarkType.Remove,
+		const mark: Delta.Mark = {
 			count: 2,
-			detachId: { minor: 42 },
+			detach: { minor: 42 },
 		};
+		const delta = { attached: [{ count: 1 }, mark] };
 		testTreeVisit(
-			[1, mark],
+			delta,
 			[
 				["enterField", rootKey],
 				["detach", { start: 1, end: 2 }, field0],
@@ -174,17 +166,15 @@ describe("visit", () => {
 	});
 	it("remove child", () => {
 		const index = makeDetachedFieldIndex("");
-		const mark: Delta.Remove = {
-			type: Delta.MarkType.Remove,
+		const remove: Delta.Mark = {
 			count: 1,
-			detachId: { minor: 42 },
+			detach: { minor: 42 },
 		};
-		const delta: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [42, mark]]]),
-			},
-		];
+		const mark: Delta.Mark = {
+			count: 1,
+			fields: new Map([[fooKey, { attached: [{ count: 42 }, remove] }]]),
+		};
+		const delta = { attached: [mark] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -207,22 +197,23 @@ describe("visit", () => {
 	});
 	it("remove under insert", () => {
 		const index = makeDetachedFieldIndex("");
-		const remove: Delta.Remove = {
-			type: Delta.MarkType.Remove,
+		const remove: Delta.Mark = {
 			count: 1,
-			detachId: { minor: 42 },
+			detach: { minor: 42 },
 		};
-		const delta: Delta.MarkList = [
-			{
-				type: Delta.MarkType.Insert,
-				content,
-				fields: new Map([[fooKey, [42, remove]]]),
-			},
-		];
+		const delta: Delta.FieldChanges = {
+			build: [{ id: { minor: 43 }, trees: [content] }],
+			attached: [
+				{
+					count: 1,
+					fields: new Map([[fooKey, { attached: [{ count: 42 }, remove] }]]),
+				},
+			],
+		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
-			["create", content, field0],
+			["create", [content], field0],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -246,18 +237,16 @@ describe("visit", () => {
 	it("move node to the right", () => {
 		const index = makeDetachedFieldIndex("");
 		// start with 0123 then move 1 so the order is 0213
-		const moveId: Delta.MoveId = brand(1);
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId,
+			detach: moveId,
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId,
+			attach: moveId,
 		};
-		const delta = [1, moveOut, 1, moveIn];
+		const delta = { attached: [{ count: 1 }, moveOut, { count: 1 }, moveIn] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["detach", { start: 1, end: 2 }, field0],
@@ -271,23 +260,22 @@ describe("visit", () => {
 	});
 	it("move children to the left", () => {
 		const index = makeDetachedFieldIndex("");
-		const moveId: Delta.MoveId = brand(1);
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 2,
-			moveId,
+			detach: moveId,
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 2,
-			moveId,
+			attach: moveId,
 		};
-		const delta = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [2, moveIn, 3, moveOut]]]),
-			},
-		];
+		const modify: Delta.Mark = {
+			count: 1,
+			fields: new Map([
+				[fooKey, { attached: [{ count: 2 }, moveIn, { count: 3 }, moveOut] }],
+			]),
+		};
+		const delta = { attached: [modify] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -311,26 +299,23 @@ describe("visit", () => {
 	});
 	it("move cousins", () => {
 		const index = makeDetachedFieldIndex("");
-		const moveId: Delta.MoveId = brand(1);
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId,
+			detach: moveId,
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId,
+			attach: moveId,
 		};
-		const delta = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([
-					[fooKey, [moveIn]],
-					[barKey, [moveOut]],
-				]),
-			},
-		];
+		const modify: Delta.Mark = {
+			count: 1,
+			fields: new Map([
+				[fooKey, { attached: [moveIn] }],
+				[barKey, { attached: [moveOut] }],
+			]),
+		};
+		const delta = { attached: [modify] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -356,26 +341,21 @@ describe("visit", () => {
 	});
 	it("move-in under remove", () => {
 		const index = makeDetachedFieldIndex("");
-		const moveId: Delta.MoveId = brand(1);
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId,
+			detach: moveId,
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId,
+			attach: moveId,
 		};
-		const delta = [
-			{
-				type: Delta.MarkType.Remove,
-				detachId: { minor: 42 },
-				count: 1,
-				fields: new Map([[fooKey, [moveIn]]]),
-			},
-			moveOut,
-		];
+		const remove: Delta.Mark = {
+			detach: { minor: 42 },
+			count: 1,
+			fields: new Map([[fooKey, { attached: [moveIn] }]]),
+		};
+		const delta = { attached: [remove, moveOut] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -402,26 +382,21 @@ describe("visit", () => {
 	});
 	it("move-out under remove", () => {
 		const index = makeDetachedFieldIndex("");
-		const moveId: Delta.MoveId = brand(1);
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId,
+			detach: moveId,
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId,
+			attach: moveId,
 		};
-		const delta = [
-			{
-				type: Delta.MarkType.Remove,
-				detachId: { minor: 42 },
-				count: 1,
-				fields: new Map([[fooKey, [moveOut]]]),
-			},
-			moveIn,
-		];
+		const remove: Delta.Mark = {
+			detach: { minor: 42 },
+			count: 1,
+			fields: new Map([[fooKey, { attached: [moveOut] }]]),
+		};
+		const delta = { attached: [remove, moveIn] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -448,33 +423,26 @@ describe("visit", () => {
 	});
 	it("move-in under move-out", () => {
 		const index = makeDetachedFieldIndex("");
-		const moveId1: Delta.MoveId = brand(1);
-		const moveId2: Delta.MoveId = brand(2);
-		const moveIn1: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveId1 = { minor: 1 };
+		const moveId2 = { minor: 2 };
+		const moveIn1: Delta.Mark = {
 			count: 1,
-			moveId: moveId1,
+			attach: moveId1,
 		};
-		const moveOut2: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveOut2: Delta.Mark = {
 			count: 1,
-			moveId: moveId2,
+			detach: moveId2,
 		};
-		const moveIn2: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn2: Delta.Mark = {
 			count: 1,
-			moveId: moveId2,
+			attach: moveId2,
 		};
-		const delta = [
-			{
-				type: Delta.MarkType.MoveOut,
-				count: 1,
-				moveId: moveId1,
-				fields: new Map([[fooKey, [moveIn2]]]),
-			},
-			moveOut2,
-			moveIn1,
-		];
+		const moveOut1: Delta.Mark = {
+			count: 1,
+			detach: moveId1,
+			fields: new Map([[fooKey, { attached: [moveIn2] }]]),
+		};
+		const delta = { attached: [moveOut1, moveOut2, moveIn1] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -498,26 +466,21 @@ describe("visit", () => {
 	});
 	it("remove under move-out", () => {
 		const index = makeDetachedFieldIndex("");
-		const moveId1: Delta.MoveId = brand(1);
-		const moveIn1: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveId1 = { minor: 1 };
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId: moveId1,
+			attach: moveId1,
 		};
-		const remove: Delta.Remove = {
-			type: Delta.MarkType.Remove,
-			detachId: { minor: 42 },
+		const remove: Delta.Mark = {
+			detach: { minor: 42 },
 			count: 1,
 		};
-		const delta = [
-			{
-				type: Delta.MarkType.MoveOut,
-				moveId: moveId1,
-				count: 1,
-				fields: new Map([[fooKey, [remove]]]),
-			},
-			moveIn1,
-		];
+		const moveOut: Delta.Mark = {
+			detach: moveId1,
+			count: 1,
+			fields: new Map([[fooKey, { attached: [remove] }]]),
+		};
+		const delta = { attached: [moveOut, moveIn] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -542,16 +505,14 @@ describe("visit", () => {
 	});
 	it("transient insert", () => {
 		const index = makeDetachedFieldIndex("");
-		const mark: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content,
-			detachId: { minor: 42 },
+		const delta: Delta.FieldChanges = {
+			build: [{ id: { minor: 42 }, trees: [content] }],
+			relocate: [{ id: { minor: 42 }, count: 1, destination: { minor: 43 } }],
 		};
-		const delta = [mark];
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
-			["create", content, field0],
+			["create", [content], field0],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field0],
@@ -565,32 +526,31 @@ describe("visit", () => {
 	});
 	it("move-out under transient", () => {
 		const index = makeDetachedFieldIndex("");
-		const moveId: Delta.MoveId = brand(1);
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId,
+			detach: moveId,
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId,
+			attach: moveId,
 		};
-		const insert: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content,
-			detachId: { minor: 42 },
-			fields: new Map([[barKey, [moveOut]]]),
+		const transientInsert: Delta.FieldChanges = {
+			build: [{ id: { minor: 42 }, trees: [content] }],
+			detached: [{ id: { minor: 42 }, fields: new Map([[barKey, { attached: [moveOut] }]]) }],
+			relocate: [{ id: { minor: 42 }, count: 1, destination: { minor: 43 } }],
 		};
-		const delta = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([
-					[fooKey, [42, insert]],
-					[barKey, [moveIn]],
-				]),
-			},
-		];
+		const delta: Delta.FieldChanges = {
+			attached: [
+				{
+					count: 1,
+					fields: new Map([
+						[fooKey, transientInsert],
+						[barKey, { attached: [moveIn] }],
+					]),
+				},
+			],
+		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -600,7 +560,7 @@ describe("visit", () => {
 			["exitField", barKey],
 			["exitNode", 0],
 			["exitField", rootKey],
-			["create", content, field0],
+			["create", [content], field0],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", barKey],
@@ -636,12 +596,11 @@ describe("visit", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const restore: Delta.Restore = {
-			type: Delta.MarkType.Restore,
+		const restore: Delta.Mark = {
 			count: 1,
-			newContent: { restoreId: node1 },
+			attach: node1,
 		};
-		const delta = [restore];
+		const delta = { attached: [restore] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -656,18 +615,20 @@ describe("visit", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const relocate: Delta.DetachedNodeRelocation = {
 			count: 1,
-			moveId: brand(1),
-			detachedNodeId: node1,
+			id: node1,
+			destination: moveId,
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId: brand(1),
+			attach: moveId,
 		};
-		const delta = [moveOut, moveIn];
+		const delta = {
+			relocate: [relocate],
+			attached: [moveIn],
+		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -685,23 +646,20 @@ describe("visit", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId: brand(1),
+			detach: moveId,
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId: brand(1),
+			attach: moveId,
 		};
-		const delta = [
-			{
-				type: Delta.MarkType.Modify,
-				fields: new Map([[fooKey, [moveOut, moveIn]]]),
-				detachedNodeId: { minor: 1 },
-			},
-		];
+		const modify: Delta.DetachedNodeChanges = {
+			id: { minor: 1 },
+			fields: new Map([[fooKey, { attached: [moveOut, moveIn] }]]),
+		};
+		const delta = { detached: [modify] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -729,35 +687,29 @@ describe("visit", () => {
 	});
 	it("transient move-in and modify", () => {
 		const index = makeDetachedFieldIndex("");
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId1 = { minor: 1 };
+		const moveId2 = { minor: 2 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId: brand(1),
+			detach: moveId1,
 			fields: new Map([
 				[
 					fooKey,
-					[
-						{
-							type: Delta.MarkType.MoveOut,
-							moveId: brand(2),
-							count: 1,
-						},
-						{
-							type: Delta.MarkType.MoveIn,
-							count: 1,
-							moveId: brand(2),
-						},
-					],
+					{
+						attached: [
+							{ count: 1, detach: moveId2 },
+							{ count: 1, attach: moveId2 },
+						],
+					},
 				],
 			]),
 		};
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.DetachedNodeRelocation = {
 			count: 1,
-			moveId: brand(1),
-			detachId: { minor: 42 },
+			id: moveId1,
+			destination: { minor: 42 },
 		};
-		const delta = [moveOut, moveIn];
+		const delta = { attached: [moveOut], relocate: [moveIn] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -789,12 +741,12 @@ describe("visit", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const restore: Delta.Restore = {
-			type: Delta.MarkType.Restore,
+		const restore: Delta.DetachedNodeRelocation = {
 			count: 1,
-			newContent: { restoreId: node1, detachId: { minor: 42 } },
+			id: node1,
+			destination: { minor: 42 },
 		};
-		const delta = [restore];
+		const delta = { relocate: [restore] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],

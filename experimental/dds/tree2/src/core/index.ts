@@ -82,6 +82,7 @@ export {
 	forEachField,
 	PathRootPrefix,
 	deltaForRootInitialization,
+	deltaForSet,
 	makeDetachedNodeId,
 	emptyDelta,
 	AnchorSlot,

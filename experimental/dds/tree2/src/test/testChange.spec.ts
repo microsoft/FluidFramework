@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../feature-libraries";
-import { makeAnonChange, Delta, FieldKey, tagChange, mintRevisionTag } from "../core";
+import { makeAnonChange, Delta, FieldKey, tagChange, mintRevisionTag, deltaForSet } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
 
@@ -62,31 +62,25 @@ describe("TestChange", () => {
 		const tag = mintRevisionTag();
 		const delta = TestChange.toDelta(tagChange(change1, tag));
 		const fooField: FieldKey = brand("foo");
-		const expected = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					fooField,
-					[
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									type: brand("test"),
-									value: "2|3",
-								}),
-							],
-							oldContent: { detachId: { major: tag, minor: 424242 } },
-						},
-					],
-				],
-			]),
-		};
+		const expected = new Map([
+			[
+				fooField,
+				deltaForSet(
+					singleTextCursor({
+						type: brand("test"),
+						value: "2|3",
+					}),
+					{ major: tag, minor: 424243 },
+					{ major: tag, minor: 424242 },
+				),
+			],
+		]);
 
 		assert.deepEqual(delta, expected);
-		assert.deepEqual(TestChange.toDelta(makeAnonChange(TestChange.mint([0, 1], []))), {
-			type: Delta.MarkType.Modify,
-		});
+		assert.deepEqual(
+			TestChange.toDelta(makeAnonChange(TestChange.mint([0, 1], []))),
+			new Map(),
+		);
 	});
 
 	it("can be encoded in JSON", () => {

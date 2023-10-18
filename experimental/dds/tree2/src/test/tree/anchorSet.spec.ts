@@ -25,6 +25,7 @@ import {
 	DetachedPlaceUpPath,
 	DeltaVisitor,
 	getDetachedFieldContainingPath,
+	FieldUpPath,
 } from "../../core";
 import { brand } from "../../util";
 import { announceTestDelta, applyTestDelta, expectEqualPaths } from "../utils";
@@ -36,6 +37,7 @@ const fieldBaz: FieldKey = brand("baz");
 const detachedField: FieldKey = brand("detached");
 const node: JsonableTree = { type: brand("A"), value: "X" };
 const detachId = { minor: 42 };
+const buildId = { minor: 43 };
 
 const path1 = makePath([fieldFoo, 5], [fieldBar, 4]);
 const path2 = makePath([fieldFoo, 3], [fieldBaz, 2]);
@@ -59,19 +61,20 @@ describe("AnchorSet", () => {
 
 		// start with 0123 then move 1 so the order is 0213
 
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId: brand(1),
+			detach: moveId,
 		};
 
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId: brand(1),
+			attach: moveId,
 		};
 
-		const delta = new Map([[rootFieldKey, [1, moveOut, 1, moveIn]]]);
+		const delta = new Map([
+			[rootFieldKey, { attached: [{ count: 1 }, moveOut, { count: 1 }, moveIn] }],
+		]);
 		announceTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor0), makePath([rootFieldKey, 0]));
 		checkEquality(anchors.locate(anchor1), makePath([rootFieldKey, 2]));
@@ -82,12 +85,12 @@ describe("AnchorSet", () => {
 	it("can rebase over insert", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 
-		const insert = {
-			type: Delta.MarkType.Insert,
-			content: [node, node].map(singleTextCursor),
+		const trees = [node, node].map(singleTextCursor);
+		const fieldChanges: Delta.FieldChanges = {
+			build: [{ id: buildId, trees }],
+			attached: [{ count: 4 }, { count: 2, attach: buildId }],
 		};
-
-		announceTestDelta(makeDelta(insert, makePath([fieldFoo, 4])), anchors);
+		announceTestDelta(makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)), anchors);
 
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 7], [fieldBar, 4]));
 		checkEquality(anchors.locate(anchor2), makePath([fieldFoo, 3], [fieldBaz, 2]));
@@ -113,9 +116,8 @@ describe("AnchorSet", () => {
 	it("can rebase over remove", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 		const deleteMark = {
-			type: Delta.MarkType.Remove,
 			count: 1,
-			detachId,
+			detach: detachId,
 		};
 
 		announceTestDelta(makeDelta(deleteMark, makePath([fieldFoo, 4])), anchors);
@@ -172,9 +174,8 @@ describe("AnchorSet", () => {
 	it("can rebase over remove of parent node", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
 		const deleteMark = {
-			type: Delta.MarkType.Remove,
 			count: 1,
-			detachId,
+			detach: detachId,
 		};
 
 		announceTestDelta(makeDelta(deleteMark, makePath([fieldFoo, 5])), anchors);
@@ -203,24 +204,25 @@ describe("AnchorSet", () => {
 
 	it("can rebase over move", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
-		const moveOut: Delta.MoveOut = {
-			type: Delta.MarkType.MoveOut,
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
 			count: 1,
-			moveId: brand(1),
+			detach: moveId,
 		};
 
-		const moveIn: Delta.MoveIn = {
-			type: Delta.MarkType.MoveIn,
+		const moveIn: Delta.Mark = {
 			count: 1,
-			moveId: brand(1),
+			attach: moveId,
 		};
 
-		const modify = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([[fieldBar, [3, moveIn]]]),
+		const modify: Delta.Mark = {
+			count: 1,
+			fields: new Map([[fieldBar, { attached: [{ count: 3 }, moveIn] }]]),
 		};
 
-		const delta = new Map([[fieldFoo, [3, moveOut, 1, modify]]]);
+		const delta = new Map([
+			[fieldFoo, { attached: [{ count: 3 }, moveOut, { count: 1 }, modify] }],
+		]);
 		announceTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
 		checkEquality(
@@ -298,14 +300,13 @@ describe("AnchorSet", () => {
 		anchors.on("childrenChanging", log.logger("root childrenChange"));
 		anchors.on("treeChanging", log.logger("root treeChange"));
 
-		const deleteMark: Delta.Remove = {
-			type: Delta.MarkType.Remove,
+		const deleteMark: Delta.Mark = {
 			count: 1,
-			detachId,
+			detach: detachId,
 		};
 
 		log.expect([]);
-		announceTestDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
+		announceTestDelta(new Map([[rootFieldKey, { attached: [deleteMark] }]]), anchors);
 
 		log.expect([
 			["root childrenChange", 1],
@@ -322,11 +323,27 @@ describe("AnchorSet", () => {
 
 		log.expect([]);
 
-		const insertMark: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content: [singleTextCursor({ type: leaf.string.name, value: "x" })],
+		const insertMark: Delta.Mark = {
+			count: 1,
+			attach: buildId,
 		};
-		announceTestDelta(new Map([[rootFieldKey, [deleteMark, insertMark]]]), anchors);
+		announceTestDelta(
+			new Map([
+				[
+					rootFieldKey,
+					{
+						build: [
+							{
+								id: buildId,
+								trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
+							},
+						],
+						attached: [deleteMark, insertMark],
+					},
+				],
+			]),
+			anchors,
+		);
 
 		log.expect([
 			["root childrenChange", 2],
@@ -342,7 +359,7 @@ describe("AnchorSet", () => {
 		log.expect([["root treeChange", 1]]);
 		log.clear();
 
-		announceTestDelta(new Map([[rootFieldKey, [0, deleteMark]]]), anchors);
+		announceTestDelta(new Map([[rootFieldKey, { attached: [deleteMark] }]]), anchors);
 		log.expect([
 			["root childrenChange", 1],
 			["root treeChange", 1],
@@ -350,24 +367,28 @@ describe("AnchorSet", () => {
 	});
 
 	it("triggers path visitor callbacks", () => {
-		const insertMark: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content: [node].map(singleTextCursor),
-		};
-		const deleteMark: Delta.Remove = {
-			type: Delta.MarkType.Remove,
+		const insertMark: Delta.Mark = {
 			count: 1,
-			detachId,
+			attach: buildId,
 		};
-		const replaceMark: Delta.Insert = {
-			type: Delta.MarkType.Insert,
-			content: [node].map(singleTextCursor),
-			oldContent: { detachId: { minor: 42 } },
+		const deleteMark: Delta.Mark = {
+			count: 1,
+			detach: detachId,
+		};
+		const replaceMark: Delta.Mark = {
+			count: 1,
+			attach: buildId,
+			detach: { minor: 42 },
 		};
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
+		const trees = [singleTextCursor(node)];
+		const fieldChanges: Delta.FieldChanges = {
+			build: [{ id: buildId, trees }],
+			attached: [{ count: 3 }, { count: 1, attach: buildId }],
+		};
 		announceTestDelta(
-			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 3])),
+			makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo, [rootFieldKey, 0])),
 			anchors,
 		);
 		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
@@ -559,6 +580,14 @@ function makePath(...steps: [PathStep, ...PathStep[]]): UpPath {
 	) as UpPath;
 }
 
+function makeFieldPath(field: FieldKey, ...stepsToFieldParent: PathStep[]): FieldUpPath {
+	if (stepsToFieldParent.length === 0) {
+		return { parent: undefined, field };
+	}
+	const pathToParent = makePath(stepsToFieldParent[0], ...stepsToFieldParent.slice(1));
+	return { parent: pathToParent, field };
+}
+
 function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined) {
 	assert.deepEqual(clonePath(actual), clonePath(expected));
 }
@@ -570,16 +599,23 @@ function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp
 }
 
 function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
-	const fields: Delta.Root = new Map([[path.parentField, [path.parentIndex, mark]]]);
+	const fields: Delta.Root = new Map([
+		[path.parentField, { attached: [{ count: path.parentIndex }, mark] }],
+	]);
 	if (path.parent === undefined) {
 		return fields;
 	}
 
-	const modify = {
-		type: Delta.MarkType.Modify,
-		fields,
-	};
-	return makeDelta(modify, path.parent);
+	return makeDelta({ count: 1, fields }, path.parent);
+}
+
+function makeFieldDelta(changes: Delta.FieldChanges, path: FieldUpPath): Delta.Root {
+	const fields: Delta.Root = new Map([[path.field, changes]]);
+	if (path.parent === undefined) {
+		return fields;
+	}
+
+	return makeDelta({ count: 1, fields }, path.parent);
 }
 
 function rangeToString(range: RangeUpPath | DetachedRangeUpPath): string {

@@ -52,6 +52,7 @@ import {
 	FieldSchema,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
+	mapFieldChanges,
 	mapFieldsChanges,
 	mapMarkList,
 	mapTreeFromCursor,
@@ -453,6 +454,15 @@ export function isDeltaVisible(delta: Delta.FieldChanges): boolean {
 		}
 	}
 	return false;
+}
+
+/**
+ * Assert two MarkList are equal, handling cursors.
+ */
+export function assertFieldChangesEqual(a: Delta.FieldChanges, b: Delta.FieldChanges): void {
+	const aTree = mapFieldChanges(a, mapTreeFromCursor);
+	const bTree = mapFieldChanges(b, mapTreeFromCursor);
+	assert.deepStrictEqual(aTree, bTree);
 }
 
 /**

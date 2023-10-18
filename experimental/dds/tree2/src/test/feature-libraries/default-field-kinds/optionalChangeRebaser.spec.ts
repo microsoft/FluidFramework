@@ -64,7 +64,7 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.MarkList {
+function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.FieldChanges {
 	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
 	);

@@ -4,7 +4,7 @@
  */
 
 import { ITreeCursorSynchronous } from "./cursor";
-import { Root, DetachedNodeId } from "./delta";
+import { Root, DetachedNodeId, FieldChanges } from "./delta";
 import { rootFieldKey } from "./types";
 
 export const emptyDelta: Root<never> = new Map();
@@ -21,6 +21,21 @@ export function deltaForRootInitialization(content: readonly ITreeCursorSynchron
 		],
 	]);
 	return delta;
+}
+
+export function deltaForSet(
+	newNode: ITreeCursorSynchronous,
+	buildId: DetachedNodeId,
+	detachId?: DetachedNodeId,
+): FieldChanges {
+	const mark = { count: 1, attach: buildId, detach: detachId };
+	if (detachId === undefined) {
+		delete mark.detach;
+	}
+	return {
+		build: [{ id: buildId, trees: [newNode] }],
+		attached: [mark],
+	};
 }
 
 export function makeDetachedNodeId(

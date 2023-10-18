@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { Delta, FieldKey, MapTree, TreeSchemaIdentifier } from "../../core";
 import { mapFieldsChanges, mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
-import { brand, brandOpaque } from "../../util";
+import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
 const type: TreeSchemaIdentifier = brand("Node");
@@ -14,7 +14,6 @@ const emptyMap = new Map();
 const nodeX = { type, value: "X", fields: emptyMap };
 const nodeXCursor = singleMapTreeCursor(nodeX);
 const fooField = brand<FieldKey>("foo");
-const moveId = brandOpaque<Delta.MoveId>(42);
 const detachId = { minor: 43 };
 
 describe("DeltaUtils", () => {
@@ -23,45 +22,31 @@ describe("DeltaUtils", () => {
 			const nestedCursorInsert = new Map([
 				[
 					fooField,
-					[
-						42,
-						{
-							type: Delta.MarkType.Insert,
-							content: [nodeXCursor],
-						},
-					],
+					{
+						build: [{ id: detachId, trees: [nodeXCursor] }],
+						attached: [
+							{ count: 42 },
+							{
+								count: 1,
+								attach: detachId,
+							},
+						],
+					},
 				],
 			]);
 			const input: Delta.Root = new Map([
 				[
 					fooField,
-					[
-						{
-							type: Delta.MarkType.Modify,
-							fields: nestedCursorInsert,
-						},
-						{
-							type: Delta.MarkType.MoveOut,
-							count: 1,
-							moveId,
-							fields: nestedCursorInsert,
-						},
-						{
-							type: Delta.MarkType.Remove,
-							count: 1,
-							fields: nestedCursorInsert,
-							detachId,
-						},
-						{
-							type: Delta.MarkType.Insert,
-							content: [nodeXCursor],
-							fields: nestedCursorInsert,
-							oldContent: {
-								detachId,
+					{
+						build: [{ id: detachId, trees: [nodeXCursor] }],
+						attached: [
+							{
+								count: 1,
 								fields: nestedCursorInsert,
 							},
-						},
-					],
+						],
+						detached: [{ id: detachId, fields: nestedCursorInsert }],
+					},
 				],
 			]);
 			deepFreeze(input);
@@ -69,45 +54,31 @@ describe("DeltaUtils", () => {
 			const nestedMapTreeInsert = new Map([
 				[
 					fooField,
-					[
-						42,
-						{
-							type: Delta.MarkType.Insert,
-							content: [nodeX],
-						},
-					],
+					{
+						build: [{ id: detachId, trees: [nodeX] }],
+						attached: [
+							{ count: 42 },
+							{
+								count: 1,
+								attach: detachId,
+							},
+						],
+					},
 				],
 			]);
 			const expected: Delta.Root<MapTree> = new Map([
 				[
 					fooField,
-					[
-						{
-							type: Delta.MarkType.Modify,
-							fields: nestedMapTreeInsert,
-						},
-						{
-							type: Delta.MarkType.MoveOut,
-							count: 1,
-							moveId,
-							fields: nestedMapTreeInsert,
-						},
-						{
-							type: Delta.MarkType.Remove,
-							count: 1,
-							fields: nestedMapTreeInsert,
-							detachId,
-						},
-						{
-							type: Delta.MarkType.Insert,
-							content: [nodeX],
-							fields: nestedMapTreeInsert,
-							oldContent: {
-								detachId,
+					{
+						build: [{ id: detachId, trees: [nodeX] }],
+						attached: [
+							{
+								count: 1,
 								fields: nestedMapTreeInsert,
 							},
-						},
-					],
+						],
+						detached: [{ id: detachId, fields: nestedMapTreeInsert }],
+					},
 				],
 			]);
 			deepFreeze(expected);
