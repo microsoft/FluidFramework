@@ -11,7 +11,7 @@ import {
 	ViewSchema,
 	FieldKinds,
 	defaultSchemaPolicy,
-	DocumentSchema,
+	TreeSchema,
 } from "../../../feature-libraries";
 import {
 	FieldStoredSchema,
@@ -127,11 +127,11 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: DocumentSchema = new SchemaBuilder({
+		const viewCollection: TreeSchema = new SchemaBuilder({
 			scope: "test",
 			name: "basic usage",
 			libraries: [treeViewSchema],
-		}).toDocumentSchema(root);
+		}).intoSchema(root);
 
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
@@ -182,7 +182,7 @@ describe("Schema Evolution Examples", () => {
 				scope: "test",
 				name: "basic usage2",
 				libraries: [treeViewSchema],
-			}).toDocumentSchema(tolerantRoot);
+			}).intoSchema(tolerantRoot);
 			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
@@ -259,7 +259,7 @@ describe("Schema Evolution Examples", () => {
 				items: FieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: DocumentSchema = builderWithCounter.toDocumentSchema(
+			const viewCollection3: TreeSchema = builderWithCounter.intoSchema(
 				FieldSchema.create(FieldKinds.optional, [canvas2]),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
@@ -407,7 +407,7 @@ describe("Schema Evolution Examples", () => {
 	// 		items: FieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
-	// 	const viewCollection: SchemaCollection = builder.toDocumentSchema(
+	// 	const viewCollection: SchemaCollection = builder.intoSchema(
 	// 		SchemaBuilder.required(canvas2),
 	// 	);
 

@@ -18,7 +18,7 @@ export {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsStruct,
-	DocumentSchema,
+	TreeSchema,
 	Unenforced,
 	AllowedTypeSet,
 	MapFieldSchema,

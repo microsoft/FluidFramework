@@ -15,7 +15,7 @@ import {
 	SchemaAware,
 	SchemaLibrary,
 	TreeNodeSchema,
-	DocumentSchema,
+	TreeSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -28,7 +28,7 @@ import { leaf, SchemaBuilder } from "../domains";
 
 interface TestTree {
 	readonly name: string;
-	readonly schemaData: DocumentSchema;
+	readonly schemaData: TreeSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: () => JsonableTree[];
 }
@@ -53,7 +53,7 @@ function testField<T extends FieldSchema>(
 		scope: name,
 		lint: { rejectForbidden: false, rejectEmpty: false },
 		libraries: [schemaLibrary],
-	}).toDocumentSchema(rootField);
+	}).intoSchema(rootField);
 	return {
 		name,
 		schemaData: schema,
