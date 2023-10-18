@@ -45,7 +45,6 @@ import {
 	createRuntimeMessage,
 	generateClientId,
 } from "../utils";
-export { IRuntimeSignalEnvelope } from "../utils";
 import {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
