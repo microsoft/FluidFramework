@@ -279,7 +279,13 @@ function addRootReplaces(
 function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
 	if (delta.build !== undefined) {
 		for (const { id, trees } of delta.build) {
-			visitor.create(trees, config.detachedFieldIndex.createEntry(id, trees.length).field);
+			for (let i = 0; i < trees.length; i += 1) {
+				const { field } = config.detachedFieldIndex.createEntry(
+					offsetDetachId(id, i),
+					trees.length,
+				);
+				visitor.create([trees[i]], field);
+			}
 		}
 	}
 	if (delta.detached !== undefined) {

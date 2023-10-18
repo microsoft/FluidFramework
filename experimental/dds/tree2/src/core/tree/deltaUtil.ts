@@ -9,7 +9,10 @@ import { rootFieldKey } from "./types";
 
 export const emptyDelta: Root<never> = new Map();
 
-export function deltaForRootInitialization(content: readonly ITreeCursorSynchronous[]) {
+export function deltaForRootInitialization(content: readonly ITreeCursorSynchronous[]): Root {
+	if (content.length === 0) {
+		return emptyDelta;
+	}
 	const buildId = { minor: 0 };
 	const delta: Root = new Map([
 		[
