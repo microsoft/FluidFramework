@@ -25,7 +25,8 @@ describe("node() API", () => {
 				const log: any[][] = [];
 
 				const api = node(root as SharedTreeNode);
-// TODO: Test `beforeChange` and `afterChange` events when available
+
+				// TODO: Test `beforeChange` and `afterChange` events when available
 				api.on("subtreeChanging", (...args: any[]) => {
 					log.push(args);
 				});

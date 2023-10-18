@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "../../../util";
 import { TreeNode } from "../editableTreeTypes";
 import { SharedTreeNode } from "./types";
 
@@ -13,8 +14,10 @@ export const nodeSym = Symbol("node");
  * @alpha
  */
 export function node(owner: SharedTreeNode): Required<SharedTreeNode>[typeof nodeSym] {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return owner[nodeSym]!;
+	return (
+		(owner[nodeSym] as Required<SharedTreeNode>[typeof nodeSym]) ??
+		fail("owner must be a SharedTreeNode")
+	);
 }
 
 /** Helper for creating the "API" object returned by 'node(..)'. */
