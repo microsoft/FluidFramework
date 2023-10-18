@@ -38,6 +38,7 @@ const updateExternalData = async (data: ITaskData, taskListId: string): Promise<
 				taskList: {
 					...data,
 				},
+				externalTaskListId: taskListId,
 			}),
 		},
 	);

@@ -313,7 +313,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		console.log(
 			formatLogMessage(
 				`Registered containerSessionInfo ${JSON.stringify(
-					containerSessionInfo
+					containerSessionInfo,
 				)} with external query: ${externalTaskListId}".`,
 			),
 		);
