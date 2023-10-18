@@ -4,10 +4,10 @@
  */
 
 /**
- * Interface of managing resources for messages that are broadcasted among services.
- * IServiceMessage is not the message that flows through Kafka and not used explicitly in FluidFramework yet.
- * Its definition is hidden in FluidFramework.
- * This interface is created to properly clean up resources in IResource.dispose function
+ * Interface of managing resources (publisher and consumers) for sending and receiving IServiceMessage.
+ * IServiceMessage is the message broadcasted among services, not the one that flows through Ordering service(Kafka).
+ * It is not used explicitly in FluidFramework yet, so its definition is hidden in FluidFramework.
+ * This interface is created to properly clean up resources in current runner framework.
  */
 export interface IServiceMessageResourceManager {
 	/**
