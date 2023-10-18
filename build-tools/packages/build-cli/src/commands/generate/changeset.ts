@@ -14,8 +14,6 @@ import prompts from "prompts";
 
 import { BaseCommand } from "../../base";
 import { Repository, getDefaultBumpTypeForBranch } from "../../lib";
-import GenerateUpcomingCommand from "./upcoming";
-import { ReleaseGroup } from "../../releaseGroups";
 import { releaseGroupFlag } from "../../flags";
 
 /**
@@ -47,16 +45,16 @@ interface Choice {
 }
 
 export default class GenerateChangesetCommand extends BaseCommand<typeof GenerateChangesetCommand> {
-	static summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
-	static aliases: string[] = [
+	static readonly summary = `Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.`;
+	static readonly aliases: string[] = [
 		// 'add' is the verb that the standard changesets cli uses. It's also shorter than 'generate'.
 		"changeset:add",
 	];
 
 	// Enables the global JSON flag in oclif.
-	static enableJsonFlag = true;
+	static readonly enableJsonFlag = true;
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag(),
 		branch: Flags.string({
 			char: "b",
@@ -80,9 +78,9 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			helpGroup: "EXPERIMENTAL",
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "Create an empty changeset using the --empty flag.",
 			command: "<%= config.bin %> <%= command.id %> --empty",
@@ -163,7 +161,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 					],
 					initial: branch === "next" ? 0 : branch === "main" ? 1 : 2,
 				});
-				branch = answer.selectedBranch;
+				branch = answer.selectedBranch as string;
 			}
 		}
 
@@ -254,6 +252,9 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 			}
 		}
 
+		/* eslint-disable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const questions: prompts.PromptObject[] = [
 			{
 				name: "selectedPackages",
@@ -274,6 +275,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				name: "summary",
 				type: "text",
 				message: "Enter a summary of the change.",
+				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				onState: (state: any) => {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (state.aborted) {
@@ -285,6 +287,7 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				name: "description",
 				type: "text",
 				message: "Enter a longer description of the change.",
+				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				onState: (state: any) => {
 					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 					if (state.aborted) {
@@ -293,15 +296,17 @@ export default class GenerateChangesetCommand extends BaseCommand<typeof Generat
 				},
 			},
 		];
+		/* eslint-enable @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
 		const response = await prompts(questions);
+		// eslint-disable-next-line prefer-destructuring, @typescript-eslint/no-unsafe-assignment
 		const selectedPackages: Package[] = response.selectedPackages;
 		const bumpType = getDefaultBumpTypeForBranch(branch, releaseGroup) ?? "minor";
 
 		const newFile = await createChangesetFile(
 			monorepo.directory ?? context.gitRepo.resolvedRoot,
 			new Map(selectedPackages.map((p) => [p, bumpType])),
-			`${response.summary.trim()}\n\n${response.description}`,
+			`${(response.summary as string).trim()}\n\n${response.description}`,
 		);
 		const changesetPath = path.relative(context.gitRepo.resolvedRoot, newFile);
 

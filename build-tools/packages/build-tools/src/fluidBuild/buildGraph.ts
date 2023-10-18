@@ -22,7 +22,7 @@ import {
 } from "../common/fluidTaskDefinitions";
 import registerDebug from "debug";
 
-const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
+const traceTaskDef = registerDebug("fluid-build:task:definition");
 const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
@@ -76,12 +76,8 @@ export class BuildPackage {
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 	) {
 		this.taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions);
-		traceBuildPackageCreate(
-			`${pkg.nameColored}: created. Task def: ${JSON.stringify(
-				this.taskDefinitions,
-				undefined,
-				2,
-			)}`,
+		traceTaskDef(
+			`${pkg.nameColored}: Task def: ${JSON.stringify(this.taskDefinitions, undefined, 2)}`,
 		);
 	}
 
@@ -97,10 +93,11 @@ export class BuildPackage {
 
 		const pendingInitDep: Task[] = [];
 		const tasks = taskNames
-			.map((value) => this.getTask(value, pendingInitDep)!)
+			.map((value) => this.getTask(value, pendingInitDep))
 			.filter((task) => task !== undefined);
 
 		while (pendingInitDep.length !== 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const task = pendingInitDep.pop()!;
 			task.initializeDependentTasks(pendingInitDep);
 		}
@@ -166,7 +163,9 @@ export class BuildPackage {
 			return dependentTasks;
 		}
 
-		traceTaskDepTask(`${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`);
+		traceTaskDepTask(
+			`Expanding: ${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`,
+		);
 		for (const dep of taskConfig.dependsOn) {
 			let found = false;
 			// should have be replaced already.
@@ -223,6 +222,7 @@ export class BuildPackage {
 				this.tasks.forEach((depTask) => {
 					if (depTask !== task) {
 						traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						depTask.dependentTasks!.push(task);
 					}
 				});
@@ -233,6 +233,7 @@ export class BuildPackage {
 						continue;
 					}
 					traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					depTask.dependentTasks!.push(task);
 				}
 			}
@@ -445,10 +446,8 @@ export class BuildGraph {
 			for (const { name, version } of node.pkg.combinedDependencies) {
 				const dep = packages.get(name);
 				if (dep) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const satisfied =
-						version!.startsWith("workspace:") ||
-						semver.satisfies(dep.version, version!);
+						version.startsWith("workspace:") || semver.satisfies(dep.version, version);
 					if (satisfied) {
 						if (depFilter(dep)) {
 							traceGraph(

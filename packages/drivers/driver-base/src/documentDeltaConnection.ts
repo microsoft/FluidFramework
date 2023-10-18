@@ -37,7 +37,9 @@ import type { Socket } from "socket.io-client";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
- * Represents a connection to a stream of delta updates
+ * Represents a connection to a stream of delta updates.
+ *
+ * @public
  */
 export class DocumentDeltaConnection
 	extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>
@@ -640,8 +642,12 @@ export class DocumentDeltaConnection
 		this.queuedMessages.push(...msgs);
 	};
 
-	protected earlySignalHandler = (msg: ISignalMessage) => {
-		this.queuedSignals.push(msg);
+	protected earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
+		if (Array.isArray(msg)) {
+			this.queuedSignals.push(...msg);
+		} else {
+			this.queuedSignals.push(msg);
+		}
 	};
 
 	private removeEarlyOpHandler() {

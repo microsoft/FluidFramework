@@ -16,7 +16,6 @@ import {
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../default-field-kinds";
-import { NodeKeyManager } from "../node-key";
 import { FieldGenerator, NewFieldContent } from "../contextuallyTyped";
 import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
@@ -127,7 +126,6 @@ export class ProxyContext implements EditableTreeContext {
 		public readonly forest: IEditableForest,
 		public readonly schema: SchemaData,
 		public readonly editor: DefaultEditBuilder,
-		public readonly nodeKeys: NodeKeyManager,
 		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
 		this.eventUnregister = [
@@ -204,18 +202,11 @@ export class ProxyContext implements EditableTreeContext {
  *
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
- * @param nodeKeyManager - an object which handles node key generation and conversion
- * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
- * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
- * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
- * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
 	schema: SchemaData,
 	editor: DefaultEditBuilder,
-	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey?: FieldKey,
 ): EditableTreeContext {
-	return new ProxyContext(forest, schema, editor, nodeKeyManager, nodeKeyFieldKey);
+	return new ProxyContext(forest, schema, editor);
 }

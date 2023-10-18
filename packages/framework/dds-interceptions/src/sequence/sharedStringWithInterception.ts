@@ -24,6 +24,8 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
  * @param propertyInterceptionCallback - The interception callback to be called
  *
  * @returns A new SharedString that intercepts the methods modifying the SharedString properties.
+ *
+ * @public
  */
 export function createSharedStringWithInterception(
 	sharedString: SharedString,

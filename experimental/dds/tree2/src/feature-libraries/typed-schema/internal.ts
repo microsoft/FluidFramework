@@ -17,8 +17,6 @@ export {
 	MapSchemaSpecification,
 	LeafSchemaSpecification,
 	MapFieldSchema,
-	RecursiveTreeSchemaSpecification,
-	RecursiveTreeSchema,
 } from "./typedTreeSchema";
 
 export {

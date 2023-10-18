@@ -194,6 +194,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation && !local) {
 			const op = message.contents as IIncrementOperation;
 

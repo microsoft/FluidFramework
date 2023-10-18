@@ -11,8 +11,8 @@ import {
 	FieldKey,
 	FieldKeySchema,
 	SchemaData,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	ValueSchema,
 } from "../core";
@@ -45,7 +45,7 @@ const TreeSchemaFormat = Type.Object(
 		name: TreeSchemaIdentifierSchema,
 		structFields: Type.Array(NamedFieldSchemaFormat),
 		mapFields: Type.Optional(FieldSchemaFormat),
-		// TODO: don't use external type here.
+		// TODO: don't use external type here!
 		leafValue: Type.Optional(Type.Enum(ValueSchema)),
 	},
 	noAdditionalProps,
@@ -103,7 +103,10 @@ function compareNamed(a: Named<string>, b: Named<string>) {
 	return 0;
 }
 
-function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeSchemaFormat {
+function encodeTree(
+	name: TreeNodeSchemaIdentifier,
+	schema: TreeNodeStoredSchema,
+): TreeSchemaFormat {
 	const out: TreeSchemaFormat = {
 		name,
 		mapFields: schema.mapFields === undefined ? undefined : encodeField(schema.mapFields),
@@ -133,7 +136,7 @@ function encodeNamedField<T>(name: T, schema: FieldStoredSchema): FieldSchemaFor
 }
 
 function decode(f: Format): SchemaData {
-	const treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema> = new Map();
+	const treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const tree of f.treeSchema) {
 		treeSchema.set(brand(tree.name), decodeTree(tree));
 	}
@@ -152,8 +155,8 @@ function decodeField(schema: FieldSchemaFormat): FieldStoredSchema {
 	return out;
 }
 
-function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
-	const out: TreeStoredSchema = {
+function decodeTree(schema: TreeSchemaFormat): TreeNodeStoredSchema {
+	const out: TreeNodeStoredSchema = {
 		mapFields: schema.mapFields === undefined ? undefined : decodeField(schema.mapFields),
 		structFields: new Map(
 			schema.structFields.map((field): [FieldKey, FieldStoredSchema] => [

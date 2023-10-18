@@ -22,13 +22,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
-import {
-	ChangeFamily,
-	Delta,
-	ChangeFamilyEditor,
-	IRepairDataStoreProvider,
-	GraphCommit,
-} from "../core";
+import { ChangeFamily, Delta, ChangeFamilyEditor, GraphCommit } from "../core";
 import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
@@ -136,7 +130,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	public constructor(
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 		options: ICodecOptions,
 		// Base class arguments
 		id: string,
@@ -153,7 +146,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = generateStableId();
-		this.editManager = new EditManager(changeFamily, localSessionId, repairDataStoreProvider);
+		this.editManager = new EditManager(changeFamily, localSessionId);
 		this.editManager.on("newTrunkHead", (head) => {
 			this.changeEvents.emit("newSequencedChange", head.change);
 		});
@@ -231,7 +224,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
-		this.editManager.afterSummaryLoad();
 	}
 
 	/**

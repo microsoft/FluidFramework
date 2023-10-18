@@ -13,7 +13,6 @@ import {
 	findAncestor,
 	findCommonAncestor,
 	GraphCommit,
-	IRepairDataStoreProvider,
 	mintCommit,
 	rebaseChange,
 	RevisionTag,
@@ -137,13 +136,11 @@ export class EditManager<
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
 	 * @param localSessionId - the id of the local session that will be used for local commits
-	 * @param repairDataStoreProvider - used for undoing/redoing the local branch
 	 */
 	public constructor(
 		public readonly changeFamily: TChangeFamily,
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		public readonly localSessionId: SessionId,
-		repairDataStoreProvider: IRepairDataStoreProvider<TChangeset>,
 	) {
 		super("EditManager");
 		this.trunkBase = {
@@ -153,16 +150,10 @@ export class EditManager<
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
 		this.localBranchUndoRedoManager = UndoRedoManager.create(changeFamily);
 		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
-		this.trunk = new SharedTreeBranch(
-			this.trunkBase,
-			changeFamily,
-			repairDataStoreProvider.clone(),
-			this.trunkUndoRedoManager,
-		);
+		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, this.trunkUndoRedoManager);
 		this.localBranch = new SharedTreeBranch(
 			this.trunk.getHead(),
 			changeFamily,
-			repairDataStoreProvider,
 			this.localBranchUndoRedoManager,
 		);
 
@@ -467,19 +458,6 @@ export class EditManager<
 		return Math.max(max, localPath.length);
 	}
 
-	/**
-	 * Needs to be called after a summary is loaded.
-	 * @remarks This is necessary to keep the trunk's repairDataStoreProvider up to date with the
-	 * local's after a summary load.
-	 */
-	public afterSummaryLoad(): void {
-		assert(
-			this.localBranch.repairDataStoreProvider !== undefined,
-			0x6cb /* Local branch must maintain repair data */,
-		);
-		this.trunk.repairDataStoreProvider = this.localBranch.repairDataStoreProvider.clone();
-	}
-
 	public addSequencedChange(
 		newCommit: Commit<TChangeset>,
 		sequenceNumber: SeqNumber,
@@ -577,7 +555,6 @@ export class EditManager<
 
 			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
 		}
-		this.trunk.repairDataStoreProvider?.applyChange(commit.change);
 		this.sequenceMap.set(sequenceId, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceId, sessionId: commit.sessionId });
 		this.events.emit("newTrunkHead", trunkHead);

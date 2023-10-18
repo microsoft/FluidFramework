@@ -77,7 +77,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.25.0",
-		"@fluidframework/build-common": "^2.0.0",
+		"@fluidframework/build-common": "^2.0.2",
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@2.0.0",
@@ -103,6 +103,11 @@
 		"webpack": "^5.82.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IBroadcastSignalEventPayload": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

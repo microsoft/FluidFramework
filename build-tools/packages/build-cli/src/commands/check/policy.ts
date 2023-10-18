@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import * as childProcess from "child_process";
-import * as fs from "fs";
+import * as childProcess from "node:child_process";
+import * as fs from "node:fs";
 import { readJson } from "fs-extra";
-import { EOL as newline } from "os";
-import path from "path";
+import { EOL as newline } from "node:os";
+import path from "node:path";
 
 import { getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
@@ -16,7 +16,7 @@ import { BaseCommand } from "../../base";
 const readStdin: () => Promise<string | undefined> = async () => {
 	return new Promise((resolve) => {
 		const stdin = process.openStdin();
-		stdin.setEncoding("utf-8");
+		stdin.setEncoding("utf8");
 
 		let data = "";
 		stdin.on("data", (chunk) => {
@@ -52,10 +52,10 @@ interface HandlerExclusions {
  * `fluid-repo-policy-check -s` is equivalent to `flub check policy --stdin`
  */
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
-	static description =
+	static readonly description =
 		"Checks and applies policies to the files in the repository, such as ensuring a consistent header comment in files, assert tagging, etc.";
 
-	static flags = {
+	static readonly flags = {
 		fix: Flags.boolean({
 			description: `Fix errors if possible.`,
 			required: false,
@@ -92,14 +92,14 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			exclusive: ["stdin", "path", "fix", "handler"],
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	static handlerActionPerf = new Map<policyAction, Map<string, number>>();
 	static processed = 0;
 	static count = 0;
 	static pathToGitRoot = "";
 
-	async run() {
+	async run(): Promise<void> {
 		let handlersToRun: Handler[] = policyHandlers.filter((h) => {
 			if (this.flags.excludeHandler === undefined || this.flags.excludeHandler.length === 0) {
 				return true;
@@ -143,6 +143,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		const manifest = getFluidBuildConfig(this.flags.root ?? process.cwd());
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const rawExclusions: string[] =
 			this.flags.exclusions === undefined
 				? manifest.policy?.exclusions
@@ -200,6 +201,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		let scriptOutput = "";
 		p.stdout.on("data", (data) => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 			scriptOutput = `${scriptOutput}${data.toString()}`;
 		});
 		p.stdout.on("close", () => {
@@ -244,7 +246,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				);
 				if (result !== undefined && result !== "") {
 					let output = `${newline}file failed policy check: ${file}${newline}${result}`;
-					const resolver = handler.resolver;
+					const { resolver } = handler;
 					if (this.flags.fix && resolver) {
 						output += `${newline}attempting to resolve: ${file}`;
 						const resolveResult = runWithPerf(handler.name, "resolve", () =>
@@ -271,7 +273,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			});
 	}
 
-	logStats() {
+	logStats(): void {
 		this.log(
 			`Statistics: ${CheckPolicy.processed} processed, ${
 				CheckPolicy.count - CheckPolicy.processed
@@ -291,7 +293,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		exclusions: RegExp[],
 		handlers: Handler[],
 		handlerExclusions: HandlerExclusions,
-	) {
+	): void {
 		const filePath = path.join(CheckPolicy.pathToGitRoot, line).trim().replace(/\\/g, "/");
 
 		if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
@@ -306,7 +308,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		try {
 			this.routeToHandlers(filePath, handlers, handlerExclusions);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			throw new Error(`Line error: ${error}`);
 		}
 
@@ -327,9 +329,9 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	return result;
 }
 
-function runPolicyCheck(handlers: Handler[], fix: boolean) {
+function runPolicyCheck(handlers: Handler[], fix: boolean): void {
 	for (const h of handlers) {
-		const final = h.final;
+		const { final } = h;
 		if (final) {
 			const result = runWithPerf(h.name, "final", () =>
 				final(CheckPolicy.pathToGitRoot, fix),

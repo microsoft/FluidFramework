@@ -3,22 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ValueSchema, SchemaAware, typeNameSymbol, valueSymbol, SchemaBuilder } from "../../../";
+import { SchemaAware, typeNameSymbol, valueSymbol, SchemaBuilder, leaf } from "../../../";
 
-const builder = new SchemaBuilder("Simple Schema");
+const builder = new SchemaBuilder({ scope: "Simple Schema" });
 
 // Schema
-export const numberSchema = builder.leaf("number", ValueSchema.Number);
-
 export const pointSchema = builder.struct("point", {
-	x: SchemaBuilder.fieldRequired(numberSchema),
-	y: SchemaBuilder.fieldRequired(numberSchema),
+	x: builder.number,
+	y: builder.number,
 });
 
-export const appSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldSequence(pointSchema));
+export const appSchemaData = builder.toDocumentSchema(builder.sequence(pointSchema));
 
 // Schema aware types
-export type Number = SchemaAware.TypedNode<typeof numberSchema>;
+export type Number = SchemaAware.TypedNode<typeof leaf.number>;
 
 export type Point = SchemaAware.TypedNode<typeof pointSchema>;
 
@@ -29,7 +27,7 @@ function dotProduct(a: Point, b: Point): number {
 
 // More Schema aware APIs
 {
-	type FlexibleNumber = SchemaAware.TypedNode<typeof numberSchema, SchemaAware.ApiMode.Flexible>;
+	type FlexibleNumber = SchemaAware.TypedNode<typeof leaf.number, SchemaAware.ApiMode.Flexible>;
 
 	type FlexiblePoint = SchemaAware.TypedNode<typeof pointSchema, SchemaAware.ApiMode.Flexible>;
 

@@ -72,6 +72,8 @@ export interface ReleaseRanges {
 }
 
 /**
+ * Get the release ranges for a version string.
+ *
  * @param version - The version.
  * @param scheme - If provided, this version scheme will be used. Otherwise the scheme will be detected from the
  * version.

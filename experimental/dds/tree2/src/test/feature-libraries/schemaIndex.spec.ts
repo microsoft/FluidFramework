@@ -11,8 +11,8 @@ import { Format, makeSchemaCodec } from "../../feature-libraries/schemaIndexForm
 
 import { FieldKindIdentifier, SchemaData } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { jsonSchema, jsonRoot } from "../../domains";
-import { defaultSchemaPolicy, allowsRepoSuperset, SchemaBuilder } from "../../feature-libraries";
+import { jsonSchema, jsonRoot, SchemaBuilder } from "../../domains";
+import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
@@ -20,9 +20,10 @@ describe("SchemaIndex", () => {
 	it("roundtrip", () => {
 		// Just test with the Json domain schema for now.
 		// TODO: add more targeted tests, and tests for more cases.
-		const data: SchemaData = new SchemaBuilder("roundtrip", {}, jsonSchema).intoDocumentSchema(
-			SchemaBuilder.fieldOptional(...jsonRoot),
-		);
+		const data: SchemaData = new SchemaBuilder({
+			scope: "roundtrip",
+			libraries: [jsonSchema],
+		}).toDocumentSchema(SchemaBuilder.optional(jsonRoot));
 		const s = codec.encode(data);
 		const parsed = codec.decode(s);
 		const s2 = codec.encode(parsed);

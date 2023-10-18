@@ -14,6 +14,7 @@ import {
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
+	RevisionTag,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
@@ -162,17 +163,21 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(change: TestChange): Delta.Modify {
+function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.Modify {
 	if (change.intentions.length > 0) {
+		const hasMajor: { major?: RevisionTag } = {};
+		if (revision !== undefined) {
+			hasMajor.major = revision;
+		}
 		return {
 			type: Delta.MarkType.Modify,
 			fields: new Map([
 				[
 					brand("foo"),
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
+							oldContent: { detachId: { ...hasMajor, minor: 424242 } },
 							content: [
 								singleTextCursor({
 									type: brand("test"),
@@ -294,7 +299,7 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
+		intoDelta: ({ change }: TaggedChange<TestChange>): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
 }

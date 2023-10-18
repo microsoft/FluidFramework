@@ -10,7 +10,7 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -73,7 +73,7 @@ export function makeField(
 		const anchorNode =
 			context.forest.anchors.locate(fieldAnchor.parent) ??
 			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDelete", () => {
+		anchorNode.on("afterDestroy", () => {
 			targetSequence.free();
 		});
 	}
@@ -88,7 +88,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  * @returns the key, if any, of the primary array field.
  */
 function getPrimaryArrayKey(
-	type: TreeStoredSchema,
+	type: TreeNodeStoredSchema,
 ): { key: FieldKey; schema: FieldStoredSchema } | undefined {
 	const primary = getPrimaryField(type);
 	if (primary === undefined) {
@@ -668,6 +668,7 @@ export function unwrappedField(
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
 	return (
 		typeof field === "object" &&
+		field !== null &&
 		isFieldProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
 }

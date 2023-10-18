@@ -31,7 +31,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
 			script: false,
 		},
 		"build:copy": [],
@@ -42,6 +42,7 @@ module.exports = {
 		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"depcruise": [],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
@@ -167,21 +168,22 @@ module.exports = {
 				"@fluid-example",
 				"@fluid-experimental",
 				"@fluid-internal",
+				"@fluid-private",
 				"@fluid-tools",
 			],
 			// These packages are known unscoped packages.
 			unscopedPackages: ["fluid-framework", "fluidframework-docs", "tinylicious"],
 
 			mustPublish: {
-				// These packages will always be published to npm.
+				// These packages will always be published to npm. This is called the "public" feed.
 				npm: [
 					"@fluidframework",
 					"fluid-framework",
 					"tinylicious",
 					"@fluid-internal/client-utils",
 				],
-				// A list of packages known to be an internally published package but not to npm. Note that packages published
-				// to npm will also be published internally, however. This should be a minimal set required for legacy compat of
+				// A list of packages published to our internal-build feed. Note that packages published
+				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
 				internalFeed: [
 					// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
@@ -194,8 +196,8 @@ module.exports = {
 			mayPublish: {
 				// These packages may be published to npm in some cases. Policy doesn't enforce this.
 				npm: ["@fluid-experimental", "@fluid-tools"],
-				// These packages may be published to the internal feed in some cases. Policy doesn't enforce this.
-				internalFeed: ["@fluid-internal"],
+				// These packages may be published to the internal-build feed in some cases. Policy doesn't enforce this.
+				internalFeed: ["@fluid-internal", "@fluid-private"],
 			},
 		},
 		dependencies: {
@@ -215,13 +217,14 @@ module.exports = {
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
+				["depcruise", "dependency-cruiser"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
 		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
 		// pnpm workspaces should have.
 		pnpmSinglePackageWorkspace: [
-			"@fluid-internal/changelog-generator-wrapper",
+			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",

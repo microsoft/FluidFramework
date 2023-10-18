@@ -91,6 +91,8 @@ const tag2: RevisionTag = mintRevisionTag();
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
 
+const detachId = { major: undefined, minor: 424242 };
+
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
 const valueChange2: ValueChangeset = { old: 1, new: 2 };
@@ -586,23 +588,21 @@ describe("ModularChangeFamily", () => {
 		it("fieldChanges", () => {
 			const valueDelta1: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
 					type: Delta.MarkType.Insert,
 					content: [singleJsonCursor(1)],
+					oldContent: {
+						detachId,
+					},
 				},
 			];
 
 			const valueDelta2: Delta.MarkList = [
 				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
 					type: Delta.MarkType.Insert,
 					content: [singleJsonCursor(2)],
+					oldContent: {
+						detachId,
+					},
 				},
 			];
 
@@ -618,7 +618,7 @@ describe("ModularChangeFamily", () => {
 				[fieldB, valueDelta2],
 			]);
 
-			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
+			assertDeltaEqual(family.intoDelta(makeAnonChange(rootChange1a)), expectedDelta);
 		});
 	});
 

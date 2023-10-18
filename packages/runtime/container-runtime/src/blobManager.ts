@@ -582,8 +582,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				.then(async () => this.uploadBlob(localId, entry.blob));
 			return entry.uploadP;
 		} else {
+			this.deletePendingBlob(localId);
 			entry.handleP.reject(error);
-			throw error;
 		}
 	}
 

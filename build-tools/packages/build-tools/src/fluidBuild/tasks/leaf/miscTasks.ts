@@ -4,14 +4,9 @@
  */
 import * as path from "path";
 
-import { defaultLogger } from "../../../common/logging";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
-
-/* eslint-disable @typescript-eslint/no-empty-function */
-
-const { verbose } = defaultLogger;
 
 export class EchoTask extends LeafTask {
 	protected get taskWeight() {
@@ -43,8 +38,8 @@ export class LesscTask extends LeafTask {
 				this.traceNotUpToDate();
 			}
 			return result;
-		} catch (e: any) {
-			verbose(`${this.node.pkg.nameColored}: ${e.message}`);
+		} catch (e) {
+			this.traceError(`stat error: ${(e as Error).message}`);
 			this.traceTrigger("failed to get file stats");
 			return false;
 		}
