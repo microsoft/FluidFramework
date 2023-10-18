@@ -91,13 +91,10 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
-// @public (undocumented)
+// @public
 export interface IParsedUrl {
-    // (undocumented)
     id: string;
-    // (undocumented)
     path: string;
-    // (undocumented)
     query: string;
     version: string | null | undefined;
 }
@@ -137,9 +134,6 @@ export class Loader implements IHostLoader {
 }
 
 // @public
-export function parseIResolvedUrlUrlIntoParts(url: string): IParsedUrl | undefined;
-
-// @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
 // @public @deprecated
@@ -147,6 +141,9 @@ export function requestResolvedObjectFromContainer(container: IContainer, header
 
 // @public
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @public
+export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;

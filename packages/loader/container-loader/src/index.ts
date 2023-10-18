@@ -20,4 +20,4 @@ export {
 	resolveWithLocationRedirectionHandling,
 } from "./location-redirection-utilities";
 export { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol";
-export { parseIResolvedUrlUrlIntoParts, IParsedUrl } from "./utils";
+export { tryParseCompatibleResolvedUrl, IParsedUrl } from "./utils";
