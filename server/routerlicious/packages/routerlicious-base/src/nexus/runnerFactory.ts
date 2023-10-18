@@ -4,6 +4,9 @@
  */
 
 import * as os from "os";
+import cluster from "cluster";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
 	LocalNodeFactory,
@@ -99,16 +102,29 @@ export class NexusResources implements core.IResources {
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
+		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 	) {
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("nexus:socketIo");
-		this.webServerFactory = new services.SocketIoWebServerFactory(
-			this.redisConfig,
-			socketIoAdapterConfig,
-			httpServerConfig,
-			socketIoConfig,
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"alfred:nodeClusterConfig",
 		);
+		const useNodeCluster = config.get("alfred:useNodeCluster");
+		this.webServerFactory = useNodeCluster
+			? new services.SocketIoNodeClusterWebServerFactory(
+					redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+					nodeClusterConfig,
+			  )
+			: new services.SocketIoWebServerFactory(
+					this.redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+			  );
 	}
 
 	public async dispose(): Promise<void> {
@@ -388,7 +404,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		// Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
 		// Therefore, default clients will ignore server's 16kb message size limit.
 		const verifyMaxMessageSize = config.get("nexus:verifyMaxMessageSize") ?? false;
-		const address = `${await utils.getHostIp()}:4000`;
 
 		// This cache will be used to store connection counts for logging connectionCount metrics.
 		let redisCache: core.ICache;
@@ -420,6 +435,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 
+		const address = `${await utils.getHostIp()}:4000`;
 		const nodeFactory = new LocalNodeFactory(
 			os.hostname(),
 			address,
@@ -431,7 +447,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			deliCheckpointService,
 			scribeCheckpointService,
 			60000,
-			() => new NodeWebSocketServer(4000),
+			() => new NodeWebSocketServer(cluster.isPrimary ? 4000 : 0),
 			maxSendMessageSize,
 			winston,
 		);
@@ -451,6 +467,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			localOrderManager,
 			kafkaOrdererFactory,
 		);
+
+		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
 
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");
@@ -503,6 +521,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			socketTracker,
 			tokenRevocationManager,
 			revokedTokenChecker,
+			collaborationSessionEvents,
 		);
 	}
 }
@@ -528,6 +547,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.socketTracker,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
+			resources.collaborationSessionEvents,
 		);
 	}
 }
