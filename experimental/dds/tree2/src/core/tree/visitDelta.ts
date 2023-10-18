@@ -235,7 +235,7 @@ function ensureCreation(mark: Delta.Insert, config: PassConfig): ForestRootId {
 	if (existing !== undefined) {
 		return existing;
 	}
-	const { root } = config.detachedFieldIndex.createEntry(undefined, mark.content.length);
+	const { root } = config.detachedFieldIndex.createEntry(mark.buildId, mark.content.length);
 	config.insertToRootId.set(mark, root);
 	config.creations.add(mark);
 	return root;
@@ -295,7 +295,7 @@ interface Replace {
 		 * The node ID entry associated with the content.
 		 * Undefined for created content.
 		 */
-		readonly nodeId?: Delta.DetachedNodeId;
+		readonly nodeId: Delta.DetachedNodeId | undefined;
 		/**
 		 * Modifications to the new content.
 		 */
@@ -397,6 +397,7 @@ function asReplaces(
 					const replace: Mutable<Replace> = {};
 					if (mark.detachId === undefined) {
 						replace.newContent = {
+							nodeId: offsetDetachId(mark.buildId, i),
 							source: brand(newContentSource + i),
 							fields: mark.fields,
 						};

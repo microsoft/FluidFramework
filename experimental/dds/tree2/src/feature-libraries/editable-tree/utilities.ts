@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import {
 	FieldKey,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	UpPath,
 	getDetachedFieldContainingPath,
 	rootField,
@@ -30,7 +30,7 @@ import { EditableTree } from "./editableTreeTypes";
  * Checking for this object case is done elsewhere.
  * @alpha
  */
-export function isPrimitive(schema: TreeStoredSchema): boolean {
+export function isPrimitive(schema: TreeNodeStoredSchema): boolean {
 	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.
 	// Since the above is not done yet, use use a heuristic:
 	return (

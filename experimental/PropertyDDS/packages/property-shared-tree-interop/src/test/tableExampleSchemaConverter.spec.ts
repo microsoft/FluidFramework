@@ -9,14 +9,14 @@ import {
 	brand,
 	EmptyKey,
 	FieldKinds,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	schemaIsFieldNode,
 	FieldSchema,
 	leaf,
 } from "@fluid-experimental/tree2";
 import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
 
-const tableTypeName: TreeSchemaIdentifier = brand("Test:Table-1.0.0");
+const tableTypeName: TreeNodeSchemaIdentifier = brand("Test:Table-1.0.0");
 
 function registerPropertySchemas() {
 	// TODO: add support for custom field keys (that differ from the API name), then enable this case to test them.

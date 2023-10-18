@@ -84,8 +84,8 @@ import {
 	TreeSchemaBuilder,
 	treeSchema,
 	FieldUpPath,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
@@ -875,11 +875,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
  */
 export function namedTreeSchema(
 	data: TreeSchemaBuilder & Named<string>,
-): Named<TreeSchemaIdentifier> & TreeStoredSchema {
+): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),

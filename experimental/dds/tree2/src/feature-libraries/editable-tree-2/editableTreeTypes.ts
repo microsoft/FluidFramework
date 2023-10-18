@@ -4,13 +4,13 @@
  */
 
 import * as SchemaAware from "../schema-aware";
-import { FieldKey, TreeSchemaIdentifier, TreeValue } from "../../core";
+import { FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
 import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
 	FieldSchema,
 	InternalTypedSchemaTypes,
-	TreeSchema,
+	TreeNodeSchema,
 	AllowedTypes,
 	FieldNodeSchema,
 	LeafSchema,
@@ -111,7 +111,7 @@ export enum TreeStatus {
  *
  * @alpha
  */
-export interface TreeNode extends Tree<TreeSchema> {
+export interface TreeNode extends Tree<TreeNodeSchema> {
 	/**
 	 * Value stored on this node.
 	 */
@@ -138,14 +138,14 @@ export interface TreeNode extends Tree<TreeSchema> {
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
+	is<TSchema extends TreeNodeSchema>(schema: TSchema): this is TypedNode<TSchema>;
 
 	/**
 	 * Same as `this.schema.name`.
 	 * This is provided as an enumerable own property to aid with JavaScript object traversals of this data-structure.
 	 * See [ReadMe](./README.md) for details.
 	 */
-	readonly type: TreeSchemaIdentifier;
+	readonly type: TreeNodeSchemaIdentifier;
 
 	[boxedIterator](): IterableIterator<TreeField>;
 }
@@ -336,7 +336,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * - When polymorphism over {@link FieldSchema} (and not just a union of {@link AllowedTypes}) is required.
  * For example when encoding a schema for a type like
  * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is the Optional field kind, not TypeScript's `Optional`).
- * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilderBase.field},
+ * Since this schema system only allows `|` of {@link TreeNodeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilderBase.field},
  * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
  * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
  * - When a distinct merge identity is desired for a field.
@@ -765,35 +765,43 @@ export type TypedFieldInner<
  * @alpha
  */
 export type TypedNodeUnion<TTypes extends AllowedTypes> =
-	TTypes extends InternalTypedSchemaTypes.FlexList<TreeSchema>
+	TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 		? InternalTypedSchemaTypes.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
 					Assume<
 						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>,
-						readonly TreeSchema[]
+						readonly TreeNodeSchema[]
 					>
 				>
 		  >
 		: TreeNode;
 
 /**
- * Takes in `TreeSchema[]` and returns a TypedNode union.
+ * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
  * @alpha
  */
-export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
+export type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<Assume<Head, TreeSchema>>,
-				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeSchema[]>>,
+				TypedNode<Assume<Head, TreeNodeSchema>>,
+				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeNodeSchema[]>>,
 		  ]
 		: [],
 ][_InlineTrick];
 
 /**
- * Schema aware specialization of {@link TreeNode} for a given {@link TreeSchema}.
+ * Schema aware specialization of {@link Tree}.
  * @alpha
  */
-export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
+export type Typed<TSchema extends FieldSchema | TreeNodeSchema> = TSchema extends TreeNodeSchema
+	? TypedNode<TSchema>
+	: TypedField<Assume<TSchema, FieldSchema>>;
+
+/**
+ * Schema aware specialization of {@link TreeNode} for a given {@link TreeNodeSchema}.
+ * @alpha
+ */
+export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema
 	? Leaf<TSchema>
 	: TSchema extends MapSchema
 	? MapNode<TSchema>
@@ -850,7 +858,7 @@ export type UnboxFieldInner<
 export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
 	InternalTypedSchemaTypes.LazyItem<infer InnerType>,
 ]
-	? InnerType extends TreeSchema
+	? InnerType extends TreeNodeSchema
 		? UnboxNode<InnerType>
 		: TypedNodeUnion<TTypes>
 	: TypedNodeUnion<TTypes>;
@@ -862,7 +870,7 @@ export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonl
  * Recursively unboxes that content as well if it does unboxing.
  * @alpha
  */
-export type UnboxNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
+export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema
 	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>
 	: TSchema extends MapSchema
 	? MapNode<TSchema>

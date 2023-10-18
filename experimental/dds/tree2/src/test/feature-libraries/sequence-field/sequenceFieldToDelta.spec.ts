@@ -9,7 +9,7 @@ import {
 	Delta,
 	FieldKey,
 	ITreeCursorSynchronous,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	mintRevisionTag,
 	ChangesetLocalId,
 	makeAnonChange,
@@ -29,7 +29,7 @@ import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 import { composeAnonChanges, toDelta } from "./utils";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
 const content = [nodeX];
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
@@ -41,7 +41,7 @@ const tag2: RevisionTag = mintRevisionTag();
 const deltaMoveId = brandOpaque<Delta.MoveId>(0);
 const fooField = brand<FieldKey>("foo");
 
-const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
+const DUMMY_REVIVED_NODE_TYPE: TreeNodeSchemaIdentifier = brand("DummyRevivedNode");
 
 function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
 	return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
@@ -82,6 +82,7 @@ describe("SequenceField - toDelta", () => {
 		const changeset = Change.insert(0, 1);
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
+			buildId: { minor: 0 },
 			content: contentCursor,
 		};
 		const expected: Delta.MarkList = [mark];
@@ -235,6 +236,7 @@ describe("SequenceField - toDelta", () => {
 		};
 		const ins: Delta.Insert = {
 			type: Delta.MarkType.Insert,
+			buildId: { minor: 52 },
 			content: contentCursor,
 		};
 		const expected: Delta.MarkList = [del, 3, ins, 1, childChange1Delta];
@@ -246,6 +248,7 @@ describe("SequenceField - toDelta", () => {
 		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
+			buildId: { minor: 0 },
 			content: [
 				singleTextCursor({
 					type,
@@ -299,6 +302,7 @@ describe("SequenceField - toDelta", () => {
 		]);
 		const mark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
+			buildId: { minor: 0 },
 			content: contentCursor,
 			fields: nestedMoveDelta,
 		};

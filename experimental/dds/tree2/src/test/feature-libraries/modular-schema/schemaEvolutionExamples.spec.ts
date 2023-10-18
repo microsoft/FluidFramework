@@ -11,12 +11,12 @@ import {
 	ViewSchema,
 	FieldKinds,
 	defaultSchemaPolicy,
-	TypedSchemaCollection,
+	DocumentSchema,
 } from "../../../feature-libraries";
 import {
 	FieldStoredSchema,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	InMemoryStoredSchemaRepository,
 	Adapters,
 	Compatibility,
@@ -52,8 +52,8 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	 * @returns true iff update was performed.
 	 */
 	public tryUpdateTreeSchema(
-		identifier: TreeSchemaIdentifier,
-		schema: TreeStoredSchema,
+		identifier: TreeNodeSchemaIdentifier,
+		schema: TreeNodeStoredSchema,
 	): boolean {
 		const original = this.treeSchema.get(identifier);
 		if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
@@ -127,7 +127,7 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: TypedSchemaCollection = new SchemaBuilder({
+		const viewCollection: DocumentSchema = new SchemaBuilder({
 			scope: "test",
 			name: "basic usage",
 			libraries: [treeViewSchema],
@@ -259,7 +259,7 @@ describe("Schema Evolution Examples", () => {
 				items: FieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: TypedSchemaCollection = builderWithCounter.toDocumentSchema(
+			const viewCollection3: DocumentSchema = builderWithCounter.toDocumentSchema(
 				FieldSchema.create(FieldKinds.optional, [canvas2]),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
@@ -377,7 +377,7 @@ describe("Schema Evolution Examples", () => {
 	// 	// In this version of the app,
 	// 	// we decided that text should be organized into a hierarchy of formatting ranges.
 	// 	// We are doing this schema change in an incompatible way, and thus introducing a new identifier:
-	// 	const formattedTextIdentifier: TreeSchemaIdentifier = brand(
+	// 	const formattedTextIdentifier: TreeNodeSchemaIdentifier = brand(
 	// 		"2cbc277e-8820-41ef-a3f4-0a00de8ef934",
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);

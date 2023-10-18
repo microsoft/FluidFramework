@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/www.js",
+	"types": "dist/www.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",
@@ -41,7 +42,7 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.1",
+		"@fluidframework/build-common": "^2.0.2",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
