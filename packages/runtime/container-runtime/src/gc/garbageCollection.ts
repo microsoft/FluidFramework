@@ -878,8 +878,11 @@ export class GarbageCollector implements IGarbageCollector {
 			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
 		});
 
-		// Unless this is a Loaded event, we're done after telemetry tracking
-		if (reason !== "Loaded") {
+		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
+		if (
+			reason !== "Loaded" ||
+			![GCNodeType.Blob, GCNodeType.DataStore].includes(this.runtime.getNodeType(nodePath))
+		) {
 			return;
 		}
 
