@@ -28,7 +28,7 @@ export interface ISharedCounterEvents extends ISharedObjectEvents {
 }
 
 // @public
-export class SharedCounter extends SharedObject<ISharedCounterEvents> implements ISharedCounter {
+export class SharedCounter extends SharedObject<ISharedCounterEvents_2> implements ISharedCounter_2 {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
     protected applyStashedOp(op: unknown): void;

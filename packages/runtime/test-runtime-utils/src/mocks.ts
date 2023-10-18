@@ -186,7 +186,7 @@ export class MockContainerRuntime {
 	}
 
 	/**
-	 * @deprecated - use the associated datastore to create the delta connection
+	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
