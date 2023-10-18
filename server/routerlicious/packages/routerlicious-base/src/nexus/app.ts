@@ -14,15 +14,17 @@ import {
 	alternativeMorganLoggerMiddleware,
 	bindCorrelationId,
 	bindTelemetryContext,
-    bindTimeoutContext,
+	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
 import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 
-export function create(config: Provider,
-					   collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>) {
+export function create(
+	config: Provider,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+) {
 	// Maximum REST request size
 	const requestSize = config.get("nexus:restJsonSize");
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
@@ -45,11 +47,11 @@ export function create(config: Provider,
 	app.set("trust proxy", 1);
 
 	app.use(compression());
-    app.use(bindTelemetryContext());
-    if (httpServerConfig?.connectionTimeoutMs) {
-        // If connectionTimeoutMs configured and not 0, bind timeout context.
-        app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
-    }
+	app.use(bindTelemetryContext());
+	if (httpServerConfig?.connectionTimeoutMs) {
+		// If connectionTimeoutMs configured and not 0, bind timeout context.
+		app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
+	}
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
@@ -60,7 +62,7 @@ export function create(config: Provider,
 					[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
 				};
 				if (req.body?.isEphemeralContainer !== undefined) {
-                    additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
+					additionalProperties.isEphemeralContainer = req.body.isEphemeralContainer;
 				}
 				return additionalProperties;
 			}),

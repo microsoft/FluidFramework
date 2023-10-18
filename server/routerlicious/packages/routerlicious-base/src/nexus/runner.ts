@@ -23,9 +23,10 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
-import { configureWebSocketServices,
-		 ICollaborationSessionEvents
-	   } from "@fluidframework/server-lambdas";
+import {
+	configureWebSocketServices,
+	ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 
@@ -62,8 +63,7 @@ export class NexusRunner implements IRunner {
 		this.runningDeferred = new Deferred<void>();
 
 		// Create the HTTP server and attach nexus to it
-		const nexus = app.create(this.config,
-								this.collaborationSessionEventEmitter);
+		const nexus = app.create(this.config, this.collaborationSessionEventEmitter);
 		nexus.set("port", this.port);
 
 		this.server = this.serverFactory.create(nexus);
@@ -107,45 +107,45 @@ export class NexusRunner implements IRunner {
 		});
 
 		if (cluster.isPrimary && this.server.webSocketServer === null) {
-            // Listen on provided port, on all network interfaces.
-            httpServer.listen(this.port);
-        } else {
-            // Register all the socket.io stuff
-            configureWebSocketServices(
-                this.server.webSocketServer,
-                this.orderManager,
-                this.tenantManager,
-                this.storage,
-                this.clientManager,
-                createMetricClient(this.metricClientConfig),
-                winston,
-                maxNumberOfClientsPerDocument,
-                numberOfMessagesPerTrace,
-                maxTokenLifetimeSec,
-                isTokenExpiryEnabled,
-                isClientConnectivityCountingEnabled,
-                isSignalUsageCountingEnabled,
-                this.redisCache,
-                this.socketConnectTenantThrottler,
-                this.socketConnectClusterThrottler,
-                this.socketSubmitOpThrottler,
-                this.socketSubmitSignalThrottler,
-                this.throttleAndUsageStorageManager,
-                this.verifyMaxMessageSize,
-                this.socketTracker,
-                this.revokedTokenChecker,
-                this.collaborationSessionEventEmitter,
-            );
+			// Listen on provided port, on all network interfaces.
+			httpServer.listen(this.port);
+		} else {
+			// Register all the socket.io stuff
+			configureWebSocketServices(
+				this.server.webSocketServer,
+				this.orderManager,
+				this.tenantManager,
+				this.storage,
+				this.clientManager,
+				createMetricClient(this.metricClientConfig),
+				winston,
+				maxNumberOfClientsPerDocument,
+				numberOfMessagesPerTrace,
+				maxTokenLifetimeSec,
+				isTokenExpiryEnabled,
+				isClientConnectivityCountingEnabled,
+				isSignalUsageCountingEnabled,
+				this.redisCache,
+				this.socketConnectTenantThrottler,
+				this.socketConnectClusterThrottler,
+				this.socketSubmitOpThrottler,
+				this.socketSubmitSignalThrottler,
+				this.throttleAndUsageStorageManager,
+				this.verifyMaxMessageSize,
+				this.socketTracker,
+				this.revokedTokenChecker,
+				this.collaborationSessionEventEmitter,
+			);
 
 			// Listen on primary thread port, on all network interfaces.
-            httpServer.listen(cluster.isPrimary ? this.port : 0);
-			
-            if (this.tokenRevocationManager) {
-                this.tokenRevocationManager.start().catch((error) => {
-                    // Prevent service crash if token revocation manager fails to start
-                    Lumberjack.error("Failed to start token revocation manager.", undefined, error);
-                });
-            }
+			httpServer.listen(cluster.isPrimary ? this.port : 0);
+
+			if (this.tokenRevocationManager) {
+				this.tokenRevocationManager.start().catch((error) => {
+					// Prevent service crash if token revocation manager fails to start
+					Lumberjack.error("Failed to start token revocation manager.", undefined, error);
+				});
+			}
 		}
 		this.stopped = false;
 
@@ -158,20 +158,19 @@ export class NexusRunner implements IRunner {
 			return;
 		}
 		this.stopped = true;
-        Lumberjack.info("AlfredRunner.stop starting.");
-		
-        const runnerServerCloseTimeoutMs =
-            this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
-		
-        await runnerHttpServerStop(
-            this.server,
-            this.runningDeferred,
-            runnerServerCloseTimeoutMs,
-            this.runnerMetric,
-            caller,
-            uncaughtException,
-        );
-		
+		Lumberjack.info("AlfredRunner.stop starting.");
+
+		const runnerServerCloseTimeoutMs =
+			this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
+
+		await runnerHttpServerStop(
+			this.server,
+			this.runningDeferred,
+			runnerServerCloseTimeoutMs,
+			this.runnerMetric,
+			caller,
+			uncaughtException,
+		);
 	}
 
 	/**
@@ -180,9 +179,9 @@ export class NexusRunner implements IRunner {
 	private onError(error) {
 		if (!this.runnerMetric.isCompleted()) {
 			this.runnerMetric.error(
-                `${this.runnerMetric.eventName} encountered an error in http server`,
-                error,
-            );
+				`${this.runnerMetric.eventName} encountered an error in http server`,
+				error,
+			);
 		}
 		if (error.syscall !== "listen") {
 			throw error;
