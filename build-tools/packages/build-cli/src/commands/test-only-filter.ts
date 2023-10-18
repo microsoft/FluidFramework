@@ -6,6 +6,7 @@ import { Package } from "@fluidframework/build-tools";
 import { strict as assert } from "node:assert";
 import { PackageCommand } from "../BasePackageCommand";
 import { PackageWithKind } from "../filter";
+import { Flags } from "@oclif/core";
 
 interface FilterCommandResult {
 	selected: Pick<Package, "name" | "directory">[];
@@ -33,9 +34,17 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 	static readonly description = `This command outputs JSON containing metadata about the packages selected and filtered. This output is parsed in tests. While the --json flag is technically optional, it should always be passed when using this command for testing. Otherwise there is no output to be checked for correctness.`;
 
 	// hide the command from help since it's only supposed to be used for internal testing
-	static readonly hidden = false;
+	static readonly hidden = true;
 
-	static readonly enableJsonFlag = true;
+	// TODO: This global flag seems to not work with recent @oclif/test versions
+	// static readonly enableJsonFlag = true;
+
+	static readonly flags = {
+		json: Flags.boolean({
+			default: true,
+		}),
+		...PackageCommand.flags,
+	} as const;
 
 	protected async processPackage(pkg: Package): Promise<void> {
 		// do nothing
@@ -69,6 +78,9 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 			}),
 		};
 
+		if (this.flags.json) {
+			this.log(JSON.stringify(pkgs, undefined, 2));
+		}
 		return pkgs;
 	}
 }

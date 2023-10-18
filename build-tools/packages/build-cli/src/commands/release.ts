@@ -45,7 +45,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		this.data = undefined;
 	}
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
 			exclusive: ["package"],
 			required: false,
@@ -60,7 +60,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		skipChecks: skipCheckFlag,
 		...checkFlags,
 		...StateMachineCommand.flags,
-	};
+	} as const;
 
 	async init(): Promise<void> {
 		await super.init();

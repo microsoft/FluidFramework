@@ -509,6 +509,16 @@ const cachedStructClasses = new WeakMap<
 	) => LazyStruct<StructSchema>
 >();
 
+export function getBoxedField(
+	struct: LazyEntity,
+	key: FieldKey,
+	fieldSchema: FieldSchema,
+): TreeField {
+	return inCursorField(struct[cursorSymbol], key, (cursor) => {
+		return makeField(struct.context, fieldSchema, cursor);
+	});
+}
+
 function buildStructClass<TSchema extends StructSchema>(
 	schema: TSchema,
 ): new (
@@ -519,16 +529,6 @@ function buildStructClass<TSchema extends StructSchema>(
 ) => LazyStruct<TSchema> {
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
-
-	function getBoxedField(
-		struct: CustomStruct,
-		key: FieldKey,
-		fieldSchema: FieldSchema,
-	): TreeField {
-		return inCursorField(struct[cursorSymbol], key, (cursor) => {
-			return makeField(struct.context, fieldSchema, cursor);
-		});
-	}
 
 	for (const [key, fieldSchema] of schema.structFields) {
 		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;

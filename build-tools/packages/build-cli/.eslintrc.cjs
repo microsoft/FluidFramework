@@ -52,5 +52,23 @@ module.exports = {
 
 		// Deprecated in 2018: https://eslint.org/blog/2018/11/jsdoc-end-of-life/
 		"valid-jsdoc": "off",
+
+		// Disable all perfectionist rules that are inherited from oclif's lint config.
+		"perfectionist/sort-array-includes": "off",
+		"perfectionist/sort-astro-attributes": "off",
+		"perfectionist/sort-classes": "off",
+		"perfectionist/sort-enums": "off",
+		"perfectionist/sort-exports": "off",
+		"perfectionist/sort-imports": "off",
+		"perfectionist/sort-interfaces": "off",
+		"perfectionist/sort-jsx-props": "off",
+		"perfectionist/sort-maps": "off",
+		"perfectionist/sort-named-exports": "off",
+		"perfectionist/sort-named-imports": "off",
+		"perfectionist/sort-object-types": "off",
+		"perfectionist/sort-objects": "off",
+		"perfectionist/sort-svelte-attributes": "off",
+		"perfectionist/sort-union-types": "off",
+		"perfectionist/sort-vue-attributes": "off",
 	},
 };

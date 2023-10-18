@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import { readdirSync } from "fs";
 import { strict as assert } from "assert";
 import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
@@ -18,51 +16,26 @@ import {
 	DDSFuzzSuiteOptions,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelAttributes,
-} from "@fluidframework/datastore-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { SharedStringFactory } from "../sequenceFactory";
 import {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
 	appendDeleteIntervalToRevertibles,
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
-} from "../revertibles";
-import { SharedString } from "../sharedString";
-import { assertEquivalentSharedStrings } from "./intervalUtils";
+} from "../../revertibles";
 import {
-	Operation,
 	FuzzTestState,
 	RevertOperation,
-	makeReducer,
 	RevertibleSharedString,
 	isRevertibleSharedString,
 	IntervalOperationGenerationConfig,
 	RevertSharedStringRevertibles,
-} from "./intervalCollection.fuzzUtils";
+	SharedStringFuzzFactory,
+	baseModel,
+	defaultFuzzOptions,
+} from "./fuzzUtils";
 import { makeOperationGenerator } from "./intervalCollection.fuzz.spec";
-import { minimizeTestFromFailureFile } from "./intervalCollection.fuzzMinimization";
-
-class RevertibleFactory extends SharedStringFactory {
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<SharedString> {
-		runtime.options.intervalStickinessEnabled = true;
-		return super.load(runtime, id, services, attributes);
-	}
-
-	public create(document: IFluidDataStoreRuntime, id: string): SharedString {
-		document.options.intervalStickinessEnabled = true;
-		return super.create(document, id);
-	}
-}
 
 const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 
@@ -112,35 +85,17 @@ emitter.on("clientCreate", (client) => {
 	});
 });
 
-const intervalTestOptions: Partial<DDSFuzzSuiteOptions> = {
-	validationStrategy: { type: "fixedInterval", interval: 10 },
+const defaultRevertiblesFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
+	...defaultFuzzOptions,
 	reconnectProbability: 0,
-	numberOfClients: 3,
 	clientJoinOptions: {
 		maxNumberOfClients: 6,
 		clientAddProbability: 0,
 	},
-	// Once the bugs are resolved, the test count will go back to being set at 100.
-	defaultTestCount: 100,
-	// Uncomment this line to replay a specific seed from its failure file:
-	// replay: 0,
-	saveFailures: { directory: path.join(__dirname, "../../src/test/results") },
-	parseOperations: (serialized: string) => {
-		const operations: Operation[] = JSON.parse(serialized);
-		// Replace this value with some other interval ID and uncomment to filter replay of the test
-		// suite to only include interval operations with this ID.
-		// const filterIntervalId = "00000000-0000-0000-0000-000000000000";
-		// if (filterIntervalId) {
-		// 	return operations.filter((entry) =>
-		// 		[undefined, filterIntervalId].includes((entry as any).id),
-		// 	);
-		// }
-		return operations;
-	},
 };
 
 const optionsWithEmitter: Partial<DDSFuzzSuiteOptions> = {
-	...intervalTestOptions,
+	...defaultRevertiblesFuzzOptions,
 	emitter,
 };
 
@@ -173,7 +128,8 @@ function operationGenerator(
 }
 
 describe("IntervalCollection fuzz testing", () => {
-	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
+	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
+		...baseModel,
 		workloadName: "interval collection with revertibles",
 		generatorFactory: () =>
 			take(
@@ -192,19 +148,14 @@ describe("IntervalCollection fuzz testing", () => {
 					},
 				}),
 			),
-		reducer:
-			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-			makeReducer(),
-		validateConsistency: assertEquivalentSharedStrings,
-		factory: new RevertibleFactory(),
 	};
 
 	createDDSFuzzSuite(model, optionsWithEmitter);
 });
 
 describe("IntervalCollection fuzz testing with rebasing", () => {
-	const model: DDSFuzzModel<RevertibleFactory, RevertOperation, FuzzTestState> = {
+	const model: DDSFuzzModel<SharedStringFuzzFactory, RevertOperation, FuzzTestState> = {
+		...baseModel,
 		workloadName: "interval collection with revertibles and rebasing",
 		generatorFactory: () =>
 			take(
@@ -223,12 +174,6 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 					},
 				}),
 			),
-		reducer:
-			// makeReducer supports a param for logging output which tracks the provided intervalId over time:
-			// { intervalId: "00000000-0000-0000-0000-000000000000", clientIds: ["A", "B", "C"] }
-			makeReducer(),
-		validateConsistency: assertEquivalentSharedStrings,
-		factory: new RevertibleFactory(),
 	};
 
 	createDDSFuzzSuite(model, {
@@ -241,23 +186,4 @@ describe("IntervalCollection fuzz testing with rebasing", () => {
 		// Skipped due to 0x54e, see AB#5337 or comment on "default interval collection" fuzz suite.
 		skip: [13, 16, 17, 20, 21, 23, 30, 37, 41, 43, 44, 49, 51, 55, 62, 69, 70, 73, 84, 91, 95],
 	});
-});
-
-describe.skip("minimize specific seed", () => {
-	const seedToMinimize = 0;
-	minimizeTestFromFailureFile(seedToMinimize);
-});
-
-describe.skip("minimize all seeds", () => {
-	let files;
-	try {
-		files = readdirSync("./results");
-	} catch {
-		return;
-	}
-
-	for (const file of files) {
-		const seedToMinimize = parseInt(file.substring(0, file.length - ".json".length), 10);
-		minimizeTestFromFailureFile(seedToMinimize);
-	}
 });

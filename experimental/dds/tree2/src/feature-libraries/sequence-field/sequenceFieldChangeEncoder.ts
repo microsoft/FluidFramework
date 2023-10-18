@@ -28,12 +28,10 @@ function makeV0Codec<TNodeChange>(
 				switch (type) {
 					case NoopMarkType:
 					case "MoveIn":
-					case "ReturnTo":
 					case "Insert":
 					case "Delete":
 					case "MoveOut":
 					case "ReturnFrom":
-					case "Revive":
 						break;
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");
@@ -57,12 +55,10 @@ function makeV0Codec<TNodeChange>(
 				switch (type) {
 					case NoopMarkType:
 					case "MoveIn":
-					case "ReturnTo":
 					case "Insert":
 					case "Delete":
 					case "MoveOut":
 					case "ReturnFrom":
-					case "Revive":
 						break;
 					case "Placeholder":
 						fail("Should not have placeholders in serialized changeset");
