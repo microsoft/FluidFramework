@@ -9,19 +9,18 @@ import { Inventory } from "../schema";
 import { Counter } from "./counter";
 
 export const MainView: React.FC<{ inventory: Inventory }> = ({ inventory }) => {
-	// This proof-of-concept implementation allocates a state variable this is modified
-	// when the tree changes to trigger re-render.
+	// Use a React effect hook to invalidate this component when the inventory changes.
+	// We do this by incrementing a counter, which is passed as a dependency to the effect hook.
 	const [invalidations, setInvalidations] = React.useState(0);
 
-	// Register for tree deltas when the component mounts
+	// React effect hook that increments the 'invalidation' counter whenever inventory or any of its children change.
 	React.useEffect(() => {
 		// Returns the cleanup function to be invoked when the component unmounts.
-		const u = node(inventory).on("subtreeChanging", () => {
-			// TODO: Remove RAF when we have an "afterChange" event.
+		return node(inventory).on("subtreeChanging", () => {
+			// TODO: RAF required because 'subtreeChanging' event fires prior to applying changes.
+			//       Remove RAF when we have an "afterChange" event.
 			requestAnimationFrame(() => setInvalidations((i) => i + 1));
 		});
-
-		return u;
 	}, [invalidations, inventory]);
 
 	const counters: JSX.Element[] = [];

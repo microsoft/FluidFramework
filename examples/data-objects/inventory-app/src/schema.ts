@@ -3,21 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { ProxyNode, SchemaBuilder, leaf } from "@fluid-experimental/tree2";
+import { ProxyNode, SchemaBuilder } from "@fluid-experimental/tree2";
 
 const builder = new SchemaBuilder({
 	scope: "com.contoso.app.inventory",
 });
 
 export const part = builder.struct("Part", {
-	name: leaf.string,
-	quantity: leaf.number,
+	name: builder.string,
+	quantity: builder.number,
 });
 
-export const partList = builder.fieldNode("List<Part>", builder.sequence(part));
-
 export const inventory = builder.struct("Inventory", {
-	parts: partList,
+	parts: builder.fieldNode("List<Part>", builder.sequence(part)),
 });
 
 export const schema = builder.toDocumentSchema(inventory);

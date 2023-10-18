@@ -8,7 +8,6 @@ import {
 	AllowedUpdateType,
 	ForestType,
 	ISharedTree,
-	ISharedTreeView,
 	SharedTreeFactory,
 	typeboxValidator,
 } from "@fluid-experimental/tree2";
@@ -24,20 +23,11 @@ const factory = new SharedTreeFactory({
 
 export class InventoryList extends DataObject {
 	private _tree?: ISharedTree;
-	private _view?: ISharedTreeView;
-
-	private get tree(): ISharedTree {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this._tree!;
-	}
-
-	public get view(): ISharedTreeView {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this._view!;
-	}
+	private _inventory?: Inventory;
 
 	public get inventory(): Inventory {
-		return this.view.root2(schema) as unknown as Inventory;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this._inventory!;
 	}
 
 	protected async initializingFirstTime() {
@@ -46,12 +36,13 @@ export class InventoryList extends DataObject {
 	}
 
 	protected async initializingFromExisting() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- map populated on creation by 'initializingFirstTime'.
 		this._tree = await this.root.get<IFluidHandle<ISharedTree>>(treeKey)!.get();
 	}
 
 	protected async hasInitialized() {
-		this._view = this.tree.schematize({
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- field initialized by initializing* methods.
+		const view = this._tree!.schematize({
 			initialTree: {
 				parts: [
 					{
@@ -66,7 +57,9 @@ export class InventoryList extends DataObject {
 			},
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
-		} as any);
+		} as any); // TODO: 'list recipe' should not require cast to any.
+
+		this._inventory = view.root2(schema);
 	}
 }
 
