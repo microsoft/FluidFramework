@@ -443,6 +443,85 @@ describe("AnchorSet", () => {
 		assert.strictEqual(afterCounter, 5);
 	});
 
+	it.only("arguments for beforeChange and afterChange events are the expected object", () => {
+		const insertMark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: [node].map(singleTextCursor),
+		};
+		const deleteMark: Delta.Remove = {
+			type: Delta.MarkType.Remove,
+			count: 1,
+			detachId,
+		};
+		const replaceMark: Delta.Insert = {
+			type: Delta.MarkType.Insert,
+			content: [node].map(singleTextCursor),
+			oldContent: { detachId: { minor: 42 } },
+		};
+		const anchors = new AnchorSet();
+
+		// Insert a node at the root to set up listeners on it
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 3])),
+			anchors,
+		);
+		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
+		const node0 = anchors.locate(anchor0) ?? assert.fail();
+
+		let beforeCounter = 0;
+		let afterCounter = 0;
+
+		node0.on("beforeChange", (n: AnchorNode) => {
+			assert.strictEqual(node0, n); // This is the important bit in this test
+			beforeCounter++;
+		});
+		node0.on("afterChange", (n: AnchorNode) => {
+			assert.strictEqual(node0, n); // This is the important bit in this test
+			afterCounter++;
+		});
+
+		// Test an insert delta
+		announceTestDelta(
+			makeDelta(insertMark, makePath([rootFieldKey, 0], [fieldFoo, 4])),
+			anchors,
+		);
+
+		// Test a replace delta
+		announceTestDelta(
+			makeDelta(replaceMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
+
+		// Test a delete delta
+		announceTestDelta(
+			makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
+
+		// Test a move delta
+		// NOTE: This is a special case where the beforeChange and afterChange callbacks are called twice;
+		// once when detaching nodes from the source location, and once when attaching them at the target location.
+		const moveOutMark: Delta.MoveOut = {
+			type: Delta.MarkType.MoveOut,
+			count: 1,
+			moveId: brand(1),
+		};
+		const moveInMark: Delta.MoveIn = {
+			type: Delta.MarkType.MoveIn,
+			count: 1,
+			moveId: moveOutMark.moveId,
+		};
+		const moveDelta = makeFieldDelta(
+			[moveOutMark, 1, moveInMark],
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(moveDelta, anchors);
+
+		// Make sure the listeners were actually called
+		assert.strictEqual(beforeCounter, 5);
+		assert.strictEqual(afterCounter, 5);
+	});
+
 	it("triggers path visitor callbacks", () => {
 		const insertMark: Delta.Insert = {
 			type: Delta.MarkType.Insert,
