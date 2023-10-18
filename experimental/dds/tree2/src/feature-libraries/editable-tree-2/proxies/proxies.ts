@@ -238,12 +238,6 @@ const getField = <TTypes extends AllowedTypes>(target: object) => {
 
 // TODO: Experiment with alternative dispatch methods to see if we can improve performance.
 
-// For brevity, the current implementation dynamically builds a property descriptor map from a list of
-// functions we want to re-expose via the proxy.
-
-const listStaticDispatchMap: PropertyDescriptorMap = {};
-const mapStaticDispatchMap: PropertyDescriptorMap = {};
-
 // TODO: Historically I've been impressed by V8's ability to inline compositions of functions, but it's
 // still worth seeing if manually inlining 'thisContext' can improve performance.
 
@@ -271,6 +265,11 @@ function addDescriptor(
 }
 
 // #region Create dispatch map for lists
+
+// For brevity, the current implementation dynamically builds a property descriptor map from a list of
+// functions we want to re-expose via the proxy.
+
+const listStaticDispatchMap: PropertyDescriptorMap = {};
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
 // to the list proxy.  Over time, we should replace these with efficient implementations on LazySequence
@@ -452,6 +451,8 @@ export function createListProxy<TTypes extends AllowedTypes>(
 }
 
 // #region Create dispatch map for maps
+
+const mapStaticDispatchMap: PropertyDescriptorMap = {};
 
 [
 	/* eslint-disable @typescript-eslint/unbound-method */
