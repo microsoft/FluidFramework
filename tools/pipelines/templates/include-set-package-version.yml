@@ -114,20 +114,20 @@ steps:
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
 
-- ${{ if ne(parameters.packageTypesOverride, 'none') }}:
-  - task: Npm@1
-    displayName: npm run build:docs
-    inputs:
-      command: 'custom'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      customCommand: 'run build:docs'
-  - task: Bash@3
-    displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
+# - ${{ if ne(parameters.packageTypesOverride, 'none') }}:
+#   - task: Npm@1
+#     displayName: npm run build:docs
+#     inputs:
+#       command: 'custom'
+#       workingDirectory: ${{ parameters.buildDirectory }}
+#       customCommand: 'run build:docs'
+#   - task: Bash@3
+#     displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
+#     inputs:
+#       targetType: 'inline'
+#       workingDirectory: ${{ parameters.buildDirectory }}
+#       script: |
+#         flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
 
 - task: Bash@3
   displayName: Update Package Version (flub)

@@ -296,6 +296,14 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ${{ parameters.taskBuild }}'
+          - ${{ if ne(parameters.packageTypesOverride, 'none') }}:
+            - task: Bash@3
+              displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
+              inputs:
+                targetType: 'inline'
+                workingDirectory: ${{ parameters.buildDirectory }}
+                script: |
+                  flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
 
         # Lint
         - ${{ if ne(parameters.taskLint, false) }}:
