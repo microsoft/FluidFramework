@@ -242,9 +242,11 @@ export class BuildPackage {
 			}
 			if (taskConfig.before.includes("*")) {
 				this.tasks.forEach((depTask) => {
+					// initializeDependentTask should have been called on all the task already
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					if (depTask !== task && !task.dependentTasks!.includes(depTask)) {
 						traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+						// initializeDependentTask should have been called on all the task already
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						depTask.dependentTasks!.push(task);
 					}
@@ -256,6 +258,7 @@ export class BuildPackage {
 						continue;
 					}
 					traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+					// initializeDependentTask should have been called on all the task already
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					depTask.dependentTasks!.push(task);
 				}
