@@ -43,6 +43,7 @@ export class FlubCheckLayerTask extends LeafWithDoneFileTask {
 		const infoFilePath = path.join(this.node.pkg.directory, infoFile);
 		return existsSync(infoFilePath) ? readFileAsync(infoFilePath) : undefined;
 	}
+
 	public async getDoneFileContent(): Promise<string | undefined> {
 		const layerInfoFile = await this.getLayerInfoFile();
 		return layerInfoFile
