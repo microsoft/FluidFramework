@@ -14,7 +14,7 @@ import {
 	AllowedTypes,
 	TreeNodeSchema,
 	FieldSchema,
-	DocumentSchema,
+	TreeSchema,
 	FlexList,
 	Unenforced,
 	Any,
@@ -159,7 +159,7 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Produce a DocumentSchema which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
+	 * Produce a TreeSchema which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
 	 * Can be used with schematize to provide schema aware access to document content.
 	 *
 	 * @remarks
@@ -167,12 +167,12 @@ export class SchemaBuilderBase<
 	 */
 	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
-	): DocumentSchema<NormalizeField<TSchema, TDefaultKind>> {
+	): TreeSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
 		const field: NormalizeField<TSchema, TDefaultKind> = this.normalizeField(root);
 		const library = this.finalizeCommon(field);
 
-		const typed: DocumentSchema<NormalizeField<TSchema, TDefaultKind>> = {
+		const typed: TreeSchema<NormalizeField<TSchema, TDefaultKind>> = {
 			treeSchema: library.treeSchema,
 			adapters: library.adapters,
 			rootFieldSchema: field,

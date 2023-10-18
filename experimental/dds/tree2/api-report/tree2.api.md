@@ -495,13 +495,6 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
 // @alpha
-export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
-    readonly adapters: Adapters;
-    readonly policy: FullSchemaPolicy;
-    readonly rootFieldSchema: T;
-}
-
-// @alpha
 function downCast<TSchema extends TreeNodeSchema>(schema: TSchema, tree: UntypedTreeCore<any, any>): tree is TypedNode_2<TSchema>;
 
 // @alpha
@@ -1057,7 +1050,7 @@ export interface ISharedTreeBranchView extends ISharedTreeView {
 // @alpha
 export interface ISharedTreeView extends AnchorLocator {
     readonly context: EditableTreeContext;
-    editableTree2<TRoot extends FieldSchema>(viewSchema: DocumentSchema<TRoot>): TypedField<TRoot>;
+    editableTree2<TRoot extends FieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
     readonly editor: IDefaultEditBuilder;
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
@@ -1068,7 +1061,7 @@ export interface ISharedTreeView extends AnchorLocator {
     redo(): void;
     get root(): UnwrappedEditableField;
     // (undocumented)
-    root2<TRoot extends FieldSchema>(viewSchema: DocumentSchema<TRoot>): ProxyField<TRoot>;
+    root2<TRoot extends FieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     // @deprecated (undocumented)
     schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
@@ -1861,7 +1854,7 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     structRecursive<Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, {
         structFields: T;
     }>;
-    toDocumentSchema<const TSchema extends ImplicitFieldSchema>(root: TSchema): DocumentSchema<NormalizeField_2<TSchema, TDefaultKind>>;
+    toDocumentSchema<const TSchema extends ImplicitFieldSchema>(root: TSchema): TreeSchema<NormalizeField_2<TSchema, TDefaultKind>>;
 }
 
 // @alpha
@@ -1879,7 +1872,7 @@ export interface SchemaCollection extends StoredSchemaCollection {
 
 // @alpha
 export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
-    readonly schema: DocumentSchema<TRoot>;
+    readonly schema: TreeSchema<TRoot>;
 }
 
 // @alpha
@@ -2130,7 +2123,7 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
     // (undocumented)
     readonly nodeKeys: NodeKeys;
     get root(): TreeField;
-    readonly schema: DocumentSchema;
+    readonly schema: TreeSchema;
 }
 
 // @alpha
@@ -2207,6 +2200,13 @@ export interface TreeNodeStoredSchema {
     readonly leafValue?: ValueSchema;
     readonly mapFields?: FieldStoredSchema;
     readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
+}
+
+// @alpha
+export interface TreeSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
+    readonly adapters: Adapters;
+    readonly policy: FullSchemaPolicy;
+    readonly rootFieldSchema: T;
 }
 
 // @alpha

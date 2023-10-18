@@ -15,7 +15,7 @@ import {
 	SchemaAware,
 	SchemaLibrary,
 	TreeNodeSchema,
-	DocumentSchema,
+	TreeSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -28,7 +28,7 @@ import { leaf, SchemaBuilder } from "../domains";
 
 interface TestTree {
 	readonly name: string;
-	readonly schemaData: DocumentSchema;
+	readonly schemaData: TreeSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: () => JsonableTree[];
 }
