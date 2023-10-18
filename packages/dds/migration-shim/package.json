@@ -64,6 +64,7 @@
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-experimental/tree2": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
