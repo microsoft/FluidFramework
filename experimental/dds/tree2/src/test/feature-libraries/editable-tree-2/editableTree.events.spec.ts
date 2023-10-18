@@ -197,6 +197,79 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(afterCounter, 17);
 	});
 
+	it.only("event argument contains the expected node", () => {
+		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		const root = tree.schematize({
+			initialTree: {
+				myString: "initial string",
+				myOptionalNumber: undefined,
+				myNumberSequence: [],
+				child: { myInnerString: "initial string in child" },
+			},
+			schema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}).content;
+
+		let rootBeforeCounter = 0;
+		let rootAfterCounter = 0;
+		let childBeforeCounter = 0;
+		let childAfterCounter = 0;
+
+		// Listeners to validate the root node
+		root.on("beforeChange", (event: unknown) => {
+			assert.strictEqual((event as any).target, root);
+			rootBeforeCounter++;
+		});
+		root.on("afterChange", (event: unknown) => {
+			assert.strictEqual((event as any).target, root);
+			rootAfterCounter++;
+		});
+		// Listeners to validate the child node
+		root.child.on("beforeChange", (event: unknown) => {
+			assert.strictEqual((event as any).target, root.child);
+			childBeforeCounter++;
+		});
+		root.child.on("afterChange", (event: unknown) => {
+			assert.strictEqual((event as any).target, root.child);
+			childAfterCounter++;
+		});
+
+		// Validate changes to fields directly on the node that has the listeners
+		// Replace a node
+		root.myString = "new string";
+		// Add a node where there was none before
+		root.myOptionalNumber = 3;
+		// Delete a node
+		root.myOptionalNumber = undefined;
+		// Insert nodes in a sequence
+		// NOTE: events will fire for each inserted node (so 5 times)
+		root.myNumberSequence.insertAtStart([0, 1, 2, 3, 4]);
+		// Remove nodes from a sequence
+		// NOTE: events will fire for each removed node (so 2 times)
+		root.myNumberSequence.removeRange(3);
+		// Move nodes within a sequence
+		// NOTE: events will fire for each moved node (so 2 time)
+		// NOTE: this is a special case where the beforeChange/afterChange events are fired twice for each node: once when
+		// detaching it from the source location, and again when attaching it at the target location.
+		root.myNumberSequence.moveToEnd(0, 2);
+
+		// Make sure the listeners fired (otherwise assertions might not have executed)
+		assert.strictEqual(rootBeforeCounter, 14);
+		assert.strictEqual(rootAfterCounter, 14);
+
+		// Validate changes to fields of descendant nodes
+		// The listeners on the root node should still see the root node (not the child node, i.e., the one that changed)
+		// as the argument passed to them.
+
+		root.child.myInnerString = "new string in child";
+
+		// Make sure the listeners fired (otherwise assertions might not have executed)
+		assert.strictEqual(rootBeforeCounter, 15);
+		assert.strictEqual(rootAfterCounter, 15);
+		assert.strictEqual(childBeforeCounter, 1);
+		assert.strictEqual(childAfterCounter, 1);
+	});
+
 	it("listeners can be removed successfully", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 		const root = tree.schematize({

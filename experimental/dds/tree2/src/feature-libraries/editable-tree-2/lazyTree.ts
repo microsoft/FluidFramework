@@ -20,6 +20,7 @@ import {
 	EmptyKey,
 	TreeSchemaIdentifier,
 	forEachField,
+	UpPath,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import { ContextuallyTypedNodeData } from "../contextuallyTyped";
@@ -283,14 +284,20 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 			case "beforeChange": {
 				const unsubscribeFromChildrenBeforeChange = this.#anchorNode.on(
 					"beforeChange",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) => {
+						const treeNode = anchorNode.slots.get(lazyTreeSlot);
+						listener({ target: treeNode } as unknown as UpPath);
+					},
 				);
 				return unsubscribeFromChildrenBeforeChange;
 			}
 			case "afterChange": {
 				const unsubscribeFromChildrenAfterChange = this.#anchorNode.on(
 					"afterChange",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) => {
+						const treeNode = anchorNode.slots.get(lazyTreeSlot);
+						listener({ target: treeNode } as unknown as UpPath);
+					},
 				);
 				return unsubscribeFromChildrenAfterChange;
 			}
