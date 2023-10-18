@@ -83,6 +83,8 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		const shouldIncludeInternalVersions =
 			flags.includeInternalVersions?.toLowerCase() === "true";
 		const isAlphaOrBetaTypes = ["alpha", "beta"].includes(flags.packageTypes);
+		// `alphabetaTypePrefix` will be either `alpha-types` or `beta-types`
+		const alphabetaTypePrefix = `${flags.packageTypes}-types`;
 
 		let fileVersion = "";
 
@@ -125,28 +127,26 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 					"ERROR: This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
 				);
 			} else {
-				version = `${simpleVersion}-${flags.packageTypes}-types`;
+				version = `${simpleVersion}-${alphabetaTypePrefix}`;
 			}
 		}
 
 		if (useTestVersion) {
 			version = isAlphaOrBetaTypes
-				? `0.0.0-${flags.build}-test-${flags.packageTypes}-types`
+				? `0.0.0-${flags.build}-test-${alphabetaTypePrefix}`
 				: `0.0.0-${flags.build}-test`;
-		}
 
-		this.log(`version=${version}`);
-		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
-
-		// Output the code version for test builds. This is used in the CI system.
-		// See common/build/build-common/gen_version.js
-		if (useTestVersion) {
+			// Output the code version for test builds. This is used in the CI system.
+			// See common/build/build-common/gen_version.js
 			const codeVersion = isAlphaOrBetaTypes
-				? `${simpleVersion}-test-${flags.packageTypes}-types`
+				? `${simpleVersion}-test-${alphabetaTypePrefix}`
 				: `${simpleVersion}-test`;
 			this.log(`codeVersion=${codeVersion}`);
 			this.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
 		}
+
+		this.log(`version=${version}`);
+		this.log(`##vso[task.setvariable variable=version;isOutput=true]${version}`);
 
 		const context = await this.getContext();
 		const tags = flags.tags ?? (await context.gitRepo.getAllTags());
@@ -167,13 +167,13 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 
 	private getFileVersion(): string {
 		if (fs.existsSync("./lerna.json")) {
-			// eslint-disable-next-line unicorn/prefer-json-parse-buffer, @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			return JSON.parse(fs.readFileSync("./lerna.json", { encoding: "utf8" }))
 				.version as string;
 		}
 
 		if (fs.existsSync("./package.json")) {
-			// eslint-disable-next-line unicorn/prefer-json-parse-buffer, @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			return JSON.parse(fs.readFileSync("./package.json", { encoding: "utf8" }))
 				.version as string;
 		}

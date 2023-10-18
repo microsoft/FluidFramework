@@ -304,6 +304,12 @@ stages:
                 workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
                   flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
+            - task: Npm@1
+              displayName: Build after updating types
+              inputs:
+                command: 'custom'
+                workingDir: ${{ parameters.buildDirectory }}
+                customCommand: 'run ${{ parameters.taskBuild }}'
 
         # Lint
         - ${{ if ne(parameters.taskLint, false) }}:
