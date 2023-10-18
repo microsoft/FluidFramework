@@ -223,15 +223,16 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 				return;
 			}
 
-			const containerUrls = clientManager.getClientSessions(externalTaskListId);
+			const containerSessionRecords = clientManager.getClientSessions(externalTaskListId);
 			console.log(
 				formatLogMessage(
 					`Data update received from external data service. Notifying webhook subscribers.`,
 				),
 			);
-			for (const containerUrl of containerUrls) {
-				const tenantId = containerUrl.TenantId;
-				const documentId = containerUrl.DocumentId;
+			// eslint-disable-next-line unicorn/no-array-for-each
+			containerSessionRecords.forEach((record) => {
+				const tenantId = record.TenantId;
+				const documentId = record.DocumentId;
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
@@ -239,7 +240,7 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 					tenantId,
 					documentId,
 				);
-			}
+			});
 			result.send();
 		}
 	});
@@ -268,14 +269,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		const externalTaskListId = request.body?.externalTaskListId as string;
 		if (tenantId === undefined) {
-			const errorMessage =
-				'No session data provided by client. Expected under "tenantId" property.';
+			const errorMessage = "Required property 'tenantId' not provided in request body";
 			result.status(400).json({ message: errorMessage });
 			return;
 		}
 		if (documentId === undefined) {
-			const errorMessage =
-				'No session data provided by client. Expected under "documentId" property.';
+			const errorMessage = "Required property 'documentId' not provided in request body";
 			result.status(400).json({ message: errorMessage });
 			return;
 		}
@@ -309,12 +308,12 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			});
 		}
 
-		const containerUrl = { TenantId: tenantId, DocumentId: documentId };
-		clientManager.registerClient(containerUrl, externalTaskListId);
+		const containerSessionInfo = { TenantId: tenantId, DocumentId: documentId };
+		clientManager.registerClient(containerSessionInfo, externalTaskListId);
 		console.log(
 			formatLogMessage(
-				`Registered containerUrl ${JSON.stringify(
-					containerUrl,
+				`Registered containerSessionInfo ${JSON.stringify(
+					containerSessionInfo
 				)} with external query: ${externalTaskListId}".`,
 			),
 		);
