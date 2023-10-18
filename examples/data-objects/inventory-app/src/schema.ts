@@ -15,7 +15,7 @@ export const part = builder.struct("Part", {
 });
 
 export const inventory = builder.struct("Inventory", {
-	parts: builder.fieldNode("List<Part>", builder.sequence(part)),
+	parts: builder.list(part),
 });
 
 export const schema = builder.toDocumentSchema(inventory);
