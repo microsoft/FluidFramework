@@ -94,7 +94,7 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {},
-		"disabled": true
+		"disabled": true,
+		"broken": {}
 	}
 }

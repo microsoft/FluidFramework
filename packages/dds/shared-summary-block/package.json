@@ -74,7 +74,7 @@
 		"@fluidframework/build-tools": "^0.25.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/shared-summary-block-previous": "npm:@fluidframework/shared-summary-block@2.0.0-internal.7.0.0",
+		"@fluidframework/shared-summary-block-previous": "npm:@fluidframework/shared-summary-block@2.0.0-internal.7.1.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/benchmark": "^2.1.0",
