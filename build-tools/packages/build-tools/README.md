@@ -170,13 +170,14 @@ For example:
 }
 ```
 
-When building release group, by default, it will trigger the task on all the packages within the release group.  That also mean
-that scripts at the release group root is not considered. 
+When building release group, by default, it will trigger the task on all the packages within the release group. That also mean
+that scripts at the release group root is not considered.
 
-Release group root scripts support can be enabled by adding `fluidBuild.tasks` to the release group's `package.json`.  `fluid-build`
- will follow the definition if specified for the task, or it will trigger the root script if the script isn't invoke `fluid-build`.
-Otherwise, (if the script doesn't exist or if it starts with `fluid-build`) it is go back to the original default of trigger the task 
-on all the packages within the release group. Global definitions in `fluidBuild.config.cjs` doesn't apply to the release group root.
+Release group root scripts support can be enabled by adding `fluidBuild.tasks` to the release group's `package.json`. `fluid-build`
+will follow the definition if specified for the task, or it will trigger the root script if the script doesn't invoke `fluid-build`.
+Otherwise, (if the script doesn't exist or if it starts with `fluid-build`), it is go back to the original default to trigger the task
+on all the packages within the release group. There is no global definitions support and definitions in `fluidBuild.config.cjs` only
+applies to packages, and not release group root.
 
 ### Concurrency
 
