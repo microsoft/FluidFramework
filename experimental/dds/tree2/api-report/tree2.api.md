@@ -1734,7 +1734,6 @@ type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 export interface Revertible {
     // (undocumented)
     discard(): DiscardResult;
-    // (undocumented)
     readonly kind: RevertibleKind;
     // (undocumented)
     readonly origin: {
@@ -1747,6 +1746,7 @@ export interface Revertible {
 // @alpha
 export enum RevertibleKind {
     Default = 0,
+    Rebase = 3,
     Redo = 2,
     Undo = 1
 }

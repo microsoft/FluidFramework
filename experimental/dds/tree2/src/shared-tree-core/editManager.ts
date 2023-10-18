@@ -532,7 +532,9 @@ export class EditManager<
 	}
 
 	private pushToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>, local = false): void {
-		this.trunk.setHead(mintCommit(this.trunk.getHead(), commit));
+		const mintedCommit = mintCommit(this.trunk.getHead(), commit);
+		this.trunk.setHead(mintedCommit);
+		this.localBranch.updateRevertibleCommit(mintedCommit);
 		const trunkHead = this.trunk.getHead();
 		this.sequenceMap.set(sequenceId, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceId, sessionId: commit.sessionId });

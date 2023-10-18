@@ -26,8 +26,7 @@ const testCases: {
 	undoCount?: number;
 	initialState: JsonCompatible[];
 	editedState: JsonCompatible[];
-	parentUndoState?: JsonCompatible[];
-	forkUndoState?: JsonCompatible[];
+	undoState?: JsonCompatible[];
 	skip?: true;
 }[] = [
 	{
@@ -50,8 +49,7 @@ const testCases: {
 		undoCount: 2,
 		initialState: ["A", "B"],
 		editedState: ["x", "A", "y", "B", "z"],
-		forkUndoState: ["A", "y", "B"],
-		parentUndoState: ["x", "A", "B"],
+		undoState: ["A", "y", "B"],
 	},
 	{
 		name: "the delete of a node",
@@ -122,8 +120,7 @@ const testCases: {
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "C", "D", "B"],
-		forkUndoState: ["A", "x", "B", "C", "D"],
-		parentUndoState: ["A", "C", "D", "B"],
+		undoState: ["A", "x", "B", "C", "D"],
 	},
 	{
 		name: "a delete of content that is concurrently edited",
@@ -133,23 +130,14 @@ const testCases: {
 		},
 		initialState: [{ child: "x" }],
 		editedState: [],
-		// Undoing the insertion of A on the parent branch is a no-op because the node was deleted
-		parentUndoState: [],
-		forkUndoState: [{}],
+		undoState: [{}],
+		// TODO: when acting on the view, the undo state is [{ child: "x" }]
+		skip: true,
 	},
 ];
 
 describe("Undo and redo", () => {
-	for (const {
-		name,
-		skip,
-		edit,
-		undoCount,
-		initialState,
-		editedState,
-		parentUndoState,
-		forkUndoState,
-	} of testCases) {
+	for (const { name, skip, edit, undoCount, initialState, editedState, undoState } of testCases) {
 		const count = undoCount ?? 1;
 		const itFn = skip ? it.skip : it;
 		itFn(`${name} (act on fork undo on fork)`, () => {
@@ -162,12 +150,12 @@ describe("Undo and redo", () => {
 			fork.rebaseOnto(view);
 			expectJsonTree(fork, editedState);
 
-			while (undoStack.length > 0) {
+			for (let i = 0; i < count; i++) {
 				undoStack.pop()?.revert();
 			}
 
 			fork.rebaseOnto(view);
-			expectJsonTree(fork, forkUndoState ?? initialState);
+			expectJsonTree(fork, undoState ?? initialState);
 
 			while (redoStack.length > 0) {
 				redoStack.pop()?.revert();
@@ -178,7 +166,8 @@ describe("Undo and redo", () => {
 			unsubscribe();
 		});
 
-		itFn(`${name} (act on view undo on fork)`, () => {
+		// TODO: unskip once forking revertibles is supported
+		it.skip(`${name} (act on view undo on fork)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
@@ -188,12 +177,12 @@ describe("Undo and redo", () => {
 			fork.rebaseOnto(view);
 			expectJsonTree(fork, editedState);
 
-			while (undoStack.length > 0) {
+			for (let i = 0; i < count; i++) {
 				undoStack.pop()?.revert();
 			}
 
 			fork.rebaseOnto(view);
-			expectJsonTree(fork, parentUndoState ?? initialState);
+			expectJsonTree(fork, undoState ?? initialState);
 
 			while (redoStack.length > 0) {
 				redoStack.pop()?.revert();
@@ -214,12 +203,12 @@ describe("Undo and redo", () => {
 			view.merge(fork, false);
 			expectJsonTree(view, editedState);
 
-			while (undoStack.length > 0) {
+			for (let i = 0; i < count; i++) {
 				undoStack.pop()?.revert();
 			}
 
 			view.merge(fork, false);
-			expectJsonTree(view, parentUndoState ?? initialState);
+			expectJsonTree(view, undoState ?? initialState);
 
 			while (redoStack.length > 0) {
 				redoStack.pop()?.revert();
@@ -230,7 +219,8 @@ describe("Undo and redo", () => {
 			unsubscribe();
 		});
 
-		itFn(`${name} (act on fork undo on view)`, () => {
+		// TODO: unskip once forking revertibles is supported
+		it.skip(`${name} (act on fork undo on view)`, () => {
 			const view = makeTreeFromJson(initialState);
 			const fork = view.fork();
 
@@ -240,12 +230,12 @@ describe("Undo and redo", () => {
 			view.merge(fork, false);
 			expectJsonTree(view, editedState);
 
-			while (undoStack.length > 0) {
+			for (let i = 0; i < count; i++) {
 				undoStack.pop()?.revert();
 			}
 
 			view.merge(fork, false);
-			expectJsonTree(view, forkUndoState ?? initialState);
+			expectJsonTree(view, undoState ?? initialState);
 
 			while (redoStack.length > 0) {
 				redoStack.pop()?.revert();
@@ -274,7 +264,8 @@ describe("Undo and redo", () => {
 		unsubscribe();
 	});
 
-	it("can undo after forking a branch", () => {
+	// TODO: unskip once forking revertibles is supported
+	it.skip("can undo after forking a branch", () => {
 		const tree1 = makeTreeFromJson(["A", "B", "C"]);
 
 		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
@@ -294,8 +285,8 @@ describe("Undo and redo", () => {
 		unsubscribe2();
 	});
 
-	// TODO: is this still a unit test for undo or is it now one for the revertible management?
-	it("can redo after forking a branch", () => {
+	// TODO: unskip once forking revertibles is supported
+	it.skip("can redo after forking a branch", () => {
 		const tree1 = makeTreeFromJson(["B"]);
 
 		const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =

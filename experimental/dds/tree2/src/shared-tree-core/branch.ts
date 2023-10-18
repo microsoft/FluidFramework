@@ -118,6 +118,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	SharedTreeBranchEvents<TEditor, TChange>
 > {
 	public readonly editor: TEditor;
+	private readonly revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
 	private disposed = false;
 	/**
@@ -310,10 +311,21 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return [startCommit, commits];
 	}
 
+	/**
+	 * Associate a revertible with a new commit of the same revision.
+	 * This is applicable when a commit is replaced by a rebase or a local commit is sequenced.
+	 */
+	public updateRevertibleCommit(commit: GraphCommit<TChange>) {
+		if (this.revertibleCommits.get(commit.revision) !== undefined) {
+			this.revertibleCommits.set(commit.revision, commit);
+		}
+	}
+
 	private makeSharedTreeRevertible(
 		commit: GraphCommit<TChange>,
 		kind: RevertibleKind,
 	): Revertible {
+		this.revertibleCommits.set(commit.revision, commit);
 		return {
 			kind,
 			origin: {
@@ -321,29 +333,31 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				isLocal: true,
 			},
 			revert: () => {
-				this.revert(commit, kind);
+				this.revert(commit.revision, kind);
 				return RevertResult.Success;
 			},
-			// TODO: implement discard
-			discard: () => DiscardResult.Failure,
+			discard: () => {
+				// TODO: delete the repair data from the forest
+				this.revertibleCommits.delete(commit.revision);
+				return DiscardResult.Success;
+			},
 		};
 	}
 
-	// TODO does this need to be a public api? we might be able to return this as a the "revert" method of the revertible
 	private revert(
-		commit: GraphCommit<TChange>,
+		revision: RevisionTag,
 		revertibleKind: RevertibleKind,
 	): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
 		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
 
-		let change = this.changeFamily.rebaser.invert(
-			tagChange(commit.change, commit.revision),
-			false,
-		);
+		const commit = this.revertibleCommits.get(revision);
+		assert(commit !== undefined, "expected to find a revertible commit");
+
+		let change = this.changeFamily.rebaser.invert(tagChange(commit.change, revision), false);
 
 		const headCommit = this.getHead();
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.
-		if (commit.revision !== headCommit.revision) {
+		if (revision !== headCommit.revision) {
 			const pathAfterUndoable: GraphCommit<TChange>[] = [];
 			const ancestor = findCommonAncestor([commit], [headCommit, pathAfterUndoable]);
 			assert(
@@ -414,6 +428,12 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		this.head = newHead;
 		const newCommits = targetCommits.concat(sourceCommits);
+
+		// update revertible commits that have been rebased
+		sourceCommits.forEach((commit) => {
+			this.updateRevertibleCommit(commit);
+		});
+
 		this.emit("change", {
 			type: "replace",
 			change: change === undefined ? undefined : makeAnonChange(change),

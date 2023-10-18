@@ -10,6 +10,7 @@
  * @alpha
  */
 export interface Revertible {
+	/** Indicates the type of edit that produced this revertible. */
 	readonly kind: RevertibleKind;
 	readonly origin: {
 		readonly isLocal: boolean;
@@ -30,6 +31,11 @@ export enum RevertibleKind {
 	Undo,
 	/** A revertible that is the result of a redo. */
 	Redo,
+	/**
+	 * A revertible that is the result of a rebase and should replace a previously generated revertible.
+	 * todo: improve error reporting in this case
+	 */
+	Rebase,
 }
 
 /**

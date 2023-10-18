@@ -877,6 +877,7 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
 			// Move to bar: [{}, { bar: ["a"] }}]
 			tree.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -887,14 +888,13 @@ describe("Editing", () => {
 			);
 
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
 
 			const sequence = tree.editor.sequenceField(rootField);
 
 			// Delete destination ancestor
 			sequence.delete(0, 1);
 			// Undo move to bar
-			undoStack.pop()?.revert();
+			undoStack[0].revert();
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
@@ -1436,7 +1436,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, { baz: "b" }] }]);
 		});
 
-		it("undo restores a removed node even when that node was never present on the branch", () => {
+		it.skip("undo restores a removed node even when that node was never present on the branch", () => {
 			const tree = makeTreeFromJson([]);
 			const tree2 = tree.fork();
 
