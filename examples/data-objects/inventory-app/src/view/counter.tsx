@@ -7,7 +7,7 @@ import { useTreeContext } from "@fluid-experimental/tree-react-api";
 import { SchemaBuilder, TypedField, leaf } from "@fluid-experimental/tree2";
 import * as React from "react";
 
-const schema = SchemaBuilder.fieldRequired(leaf.number);
+const schema = SchemaBuilder.required(leaf.number);
 
 export interface ICounterProps {
 	title: string;

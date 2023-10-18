@@ -21,7 +21,6 @@ import {
 	singleMapTreeCursor,
 	singleTextCursor,
 	buildChunkedForest,
-	SchemaBuilder,
 } from "../../../feature-libraries";
 import {
 	initializeForest,
@@ -35,7 +34,7 @@ import {
 	makeTreeChunker,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
-import { jsonRoot } from "../../../domains";
+import { jsonRoot, SchemaBuilder } from "../../../domains";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
 import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
@@ -52,11 +51,10 @@ function bench(
 		dataConsumer: (cursor: ITreeCursor, calculate: (...operands: any[]) => void) => any;
 	}[],
 ) {
-	const schemaCollection = new SchemaBuilder(
-		"JsonCursor benchmark",
-		{},
-		jsonSchema,
-	).intoDocumentSchema(SchemaBuilder.fieldOptional(...jsonRoot));
+	const schemaCollection = new SchemaBuilder({
+		scope: "JsonCursor benchmark",
+		libraries: [jsonSchema],
+	}).toDocumentSchema(SchemaBuilder.optional(jsonRoot));
 	const schema = new InMemoryStoredSchemaRepository(schemaCollection);
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {

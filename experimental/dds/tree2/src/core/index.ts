@@ -25,6 +25,13 @@ export {
 	AnchorSet,
 	DetachedField,
 	UpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
 	FieldUpPath,
 	Anchor,
 	RootField,
@@ -56,9 +63,13 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	combineVisitors,
+	announceDelta,
 	applyDelta,
+	makeDetachedFieldIndex,
 	setGenericTreeField,
 	DeltaVisitor,
+	AnnouncedVisitor,
 	PathVisitor,
 	SparseNode,
 	getDescendant,
@@ -83,6 +94,8 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	DetachedFieldIndex,
+	ForestRootId,
 	getDetachedFieldContainingPath,
 } from "./tree";
 
@@ -104,12 +117,12 @@ export {
 export {
 	FieldKey,
 	FieldKeySchema,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	FieldStoredSchema,
 	ValueSchema,
 	PrimitiveValueSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
@@ -127,6 +140,7 @@ export {
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	cloneSchemaData,
+	StoredSchemaCollection,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
@@ -164,7 +178,5 @@ export {
 	TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view";
-
-export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
 
 export { UndoRedoManager, LocalCommitSource } from "./undo";

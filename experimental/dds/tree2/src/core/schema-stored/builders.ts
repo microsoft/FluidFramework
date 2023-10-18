@@ -7,8 +7,8 @@ import { brand } from "../../util";
 import {
 	FieldKindIdentifier,
 	FieldStoredSchema,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "./schema";
 
@@ -35,7 +35,7 @@ export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
  */
 export function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
-	types?: Iterable<TreeSchemaIdentifier>,
+	types?: Iterable<TreeNodeSchemaIdentifier>,
 ): FieldStoredSchema {
 	return {
 		kind,
@@ -44,7 +44,7 @@ export function fieldSchema(
 }
 
 /**
- * See {@link TreeStoredSchema} for details.
+ * See {@link TreeNodeStoredSchema} for details.
  */
 export interface TreeSchemaBuilder {
 	readonly structFields?: { [key: string]: FieldStoredSchema };
@@ -53,9 +53,9 @@ export interface TreeSchemaBuilder {
 }
 
 /**
- * Helper for building {@link TreeStoredSchema}.
+ * Helper for building {@link TreeNodeStoredSchema}.
  */
-export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
+export function treeSchema(data: TreeSchemaBuilder): TreeNodeStoredSchema {
 	const structFields = new Map();
 	const fields = data.structFields ?? {};
 	// eslint-disable-next-line no-restricted-syntax

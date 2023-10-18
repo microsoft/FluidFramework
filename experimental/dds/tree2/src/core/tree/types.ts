@@ -4,13 +4,13 @@
  */
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { FieldKey, TreeSchemaIdentifier, ValueSchema } from "../schema-stored";
+import { FieldKey, TreeNodeSchemaIdentifier, ValueSchema } from "../schema-stored";
 import { _InlineTrick, brand, Brand, extractFromOpaque, Opaque } from "../../util";
 
 /**
  * @alpha
  */
-export type TreeType = TreeSchemaIdentifier;
+export type TreeType = TreeNodeSchemaIdentifier;
 
 /**
  * The empty key ("") is used for unnamed relationships, such as the indexer
@@ -124,6 +124,8 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 		[ValueSchema.String]: string;
 		[ValueSchema.Boolean]: boolean;
 		[ValueSchema.FluidHandle]: IFluidHandle;
+		// eslint-disable-next-line @rushstack/no-new-null
+		[ValueSchema.Null]: null;
 	}[TSchema],
 ][_InlineTrick];
 
@@ -157,5 +159,5 @@ export interface NodeData {
 	 * Provides contexts/semantics for this node and its content.
 	 * Typically used to associate a node with metadata (including a schema) and source code (types, behaviors, etc).
 	 */
-	readonly type: TreeSchemaIdentifier;
+	readonly type: TreeNodeSchemaIdentifier;
 }

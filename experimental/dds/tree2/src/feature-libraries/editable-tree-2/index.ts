@@ -18,12 +18,31 @@ export {
 	Sequence,
 	Struct,
 	StructTyped,
+	AssignableFieldKinds,
 	TypedNode,
 	TypedNodeUnion,
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	Typed,
 } from "./editableTreeTypes";
+
+export {
+	getProxyForField,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
+	ProxyRoot,
+	node,
+	SharedTreeNode,
+} from "./proxies";
+export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
 
 export {
 	visitBipartiteIterableTree,

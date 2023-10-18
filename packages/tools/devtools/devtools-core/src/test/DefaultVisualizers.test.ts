@@ -18,12 +18,11 @@ import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	AllowedUpdateType,
-	FieldKinds,
 	SchemaBuilder,
-	ValueSchema,
 	SharedTreeFactory,
 	valueSymbol,
 	typeNameSymbol,
+	leaf,
 } from "@fluid-experimental/tree2";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces";
@@ -403,32 +402,28 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedTree", async () => {
 		const factory = new SharedTreeFactory();
-		const builder = new SchemaBuilder("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaBuilder({
+			scope: "DefaultVisualizer_SharedTree_Test",
+			libraries: [leaf.library],
+		});
 
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
-		const stringSchema = builder.leaf("string-property", ValueSchema.String);
-		const numberSchema = builder.leaf("number-property", ValueSchema.Number);
-		const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
-		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
-
 		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldRequired(booleanSchema, handleSchema, stringSchema),
+			leafField: [leaf.boolean, leaf.handle, leaf.string],
 		});
 
 		const childSchema = builder.struct("child-item", {
-			childField: SchemaBuilder.fieldRequired(stringSchema, booleanSchema),
-			childData: SchemaBuilder.fieldOptional(leafSchema),
+			childField: [leaf.string, leaf.boolean],
+			childData: builder.optional(leafSchema),
 		});
 
 		const rootNodeSchema = builder.struct("root-item", {
-			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldRequired(numberSchema),
+			childrenOne: builder.sequence(childSchema),
+			childrenTwo: leaf.number,
 		});
 
-		const schema = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.required, rootNodeSchema),
-		);
+		const schema = builder.toDocumentSchema(rootNodeSchema);
 
 		sharedTree.schematize({
 			schema,
@@ -439,7 +434,7 @@ describe("DefaultVisualizers unit tests", () => {
 						childField: "Hello world!",
 						childData: {
 							leafField: {
-								[typeNameSymbol]: stringSchema.name,
+								[typeNameSymbol]: leaf.string.name,
 								[valueSymbol]: "Hello world again!",
 							},
 						},
@@ -448,7 +443,7 @@ describe("DefaultVisualizers unit tests", () => {
 						childField: true,
 						childData: {
 							leafField: {
-								[typeNameSymbol]: booleanSchema.name,
+								[typeNameSymbol]: leaf.boolean.name,
 								[valueSymbol]: false, // TODO: Use a handle here.
 							},
 						},

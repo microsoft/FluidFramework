@@ -366,17 +366,6 @@ stages:
                 failIfCoverageEmpty: true
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
-          # Test - Upload results
-          - ${{ each testResultDir in parameters.testResultDirs }}:
-            - task: PublishTestResults@2
-              displayName: Publish Test Results in ${{ testResultDir }}
-              inputs:
-                testResultsFormat: 'JUnit'
-                testResultsFiles: '**/*junit-report.xml'
-                searchFolder: ${{ parameters.buildDirectory }}/${{ testResultDir }}
-                mergeTestResults: false
-              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-
           # Publish tinylicious log for troubleshooting
           - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
             - task: PublishPipelineArtifact@1
@@ -388,10 +377,11 @@ stages:
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
               continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
-          # Log Test Failures
-          - template: include-log-test-failures.yml
+          # Process test result, include publishing and logging
+          - template: include-process-test-results.yml
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
+              testResultDirs: ${{ parameters.testResultDirs }}
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
@@ -488,9 +478,19 @@ stages:
 
                   echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+
+                  # This is confusing, but we are using the .npmrc here to load dependencies from different feeds. These
+                  # scopes must be loaded from the "dev" feed because that is the only place they are published. Ideally
+                  # this logic will be centralized outside of CI in the future.
                   echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
+                  echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
+
+                  # This scope must be loaded from the "build" feed
                   echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+
+                  # This scope must be loaded from the internal Office feed
                   echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
+
                   echo "always-auth=true" >> ./.npmrc
                   cat .npmrc
 

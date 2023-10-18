@@ -30,8 +30,14 @@ export function isCursor(data: unknown): data is ITreeCursor {
  * A stateful low-level interface for reading tree data.
  * @alpha
  *
- * @remarks Cursor exists so that specialized data formats can be viewed through a common abstraction.
- * This allows performance optimizations to be done based on a data.
+ * @remarks Cursor exists so that specialized data formats can be viewed through
+ * a common abstraction. This allows performance optimizations to be done based
+ * on data.
+ *
+ * A tree cursor is similar to a database cursor in that it allows for the efficient
+ * traversal over the contents of a tree. Note that unlike a database cursor,
+ * tree cursors may be invalidated after any edit to the tree. For a cursor-like
+ * structure that also remains valid across edits, see {@link AnchorNode}.
  */
 export interface ITreeCursor {
 	/**
@@ -45,18 +51,25 @@ export interface ITreeCursor {
 	 *
 	 * @remarks
 	 * Users of cursors frequently need to refer to places in trees, both fields and nodes.
-	 * Approaches other than having the cursor have separate modes for these cases had issues even worse than having the two modes.
+	 * Approaches other than having the cursor have separate modes for these
+	 * cases had issues even worse than having the two modes.
 	 *
-	 * For example, modeling fields as parent + key has issues when there is no parent, and doesn't provide a great way to do iteration over
-	 * fields while also having a nice API and making it easy for the implementation to track state (like its current
-	 * location inside a sequence tree of fields) while traversing without having to allocate some state management for that.
+	 * For example, modeling fields as parent + key has issues when there is no
+	 * parent, and doesn't provide a great way to do iteration over fields while
+	 * also having a nice API and making it easy for the implementation to track
+	 * state (like its current location inside a sequence tree of fields) while
+	 * traversing without having to allocate some state management for that.
 	 *
-	 * Another approach, of using arrays of cursors for fields (like we currently do for inserting content) is very inefficient and
-	 * better addressed by a duel mode cursor.
+	 * Another approach, of using arrays of cursors for fields (like we currently
+	 * do for inserting content) is very inefficient and better addressed by a
+	 * dual mode cursor.
 	 *
-	 * Another approach, of using the first node in a field when referring to the field gets confusing since it's unclear if a given cursor
-	 * means that node, or that node, and the ones after it, and in the second case, it's hard to restore the cursor back to the right state
-	 * when returning. It also doesn't work for empty fields. Overall there just didn't seem to be a way that sucked less than the duel mode API.
+	 * Another approach, of using the first node in a field when referring to
+	 * the field gets confusing since it's unclear if a given cursor means that
+	 * node, or that node, and the ones after it, and in the second case, it's
+	 * hard to restore the cursor back to the right state when returning. It also
+	 * doesn't work for empty fields. Overall there just didn't seem to be a way
+	 * that sucked less than the dual mode API.
 	 */
 	readonly mode: CursorLocationType;
 
@@ -383,7 +396,7 @@ export function* iterateCursorField<T, TCursor extends ITreeCursor = ITreeCursor
 	cursor: TCursor,
 	f: (cursor: TCursor) => T,
 ): IterableIterator<T> {
-	assert(cursor.mode === CursorLocationType.Fields, "should be in fields");
+	assert(cursor.mode === CursorLocationType.Fields, 0x7a8 /* should be in fields */);
 	for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
 		yield f(cursor);
 	}

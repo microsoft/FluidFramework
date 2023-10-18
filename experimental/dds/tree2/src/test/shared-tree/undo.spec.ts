@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { singleTextCursor } from "../../feature-libraries";
-import { jsonString, singleJsonCursor } from "../../domains";
+import { leaf, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath } from "../../core";
 import { ISharedTreeView } from "../../shared-tree";
 import { brand, JsonCompatible } from "../../util";
@@ -128,16 +128,14 @@ const testCases: {
 	{
 		name: "a delete of content that is concurrently edited",
 		edit: (actedOn, other) => {
-			other.editor
-				.valueField({ parent: rootPath, field: brand("child") })
-				.set(singleTextCursor({ type: jsonString.name, value: "y" }));
+			other.editor.sequenceField({ parent: rootPath, field: brand("child") }).delete(0, 1);
 			actedOn.editor.sequenceField(rootField).delete(0, 1);
 		},
 		initialState: [{ child: "x" }],
 		editedState: [],
 		// Undoing the insertion of A on the parent branch is a no-op because the node was deleted
 		parentUndoState: [],
-		forkUndoState: [{ child: "y" }],
+		forkUndoState: [{}],
 	},
 ];
 
@@ -321,7 +319,7 @@ describe("Undo and redo", () => {
  */
 function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField(rootField);
-	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 

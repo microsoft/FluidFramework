@@ -9,7 +9,8 @@
 	},
 	"lumberjack": {
 		"options": {
-			"enableGlobalTelemetryContext": true
+			"enableGlobalTelemetryContext": true,
+			"enableSanitization": false
 		}
 	},
 	"mongo": {

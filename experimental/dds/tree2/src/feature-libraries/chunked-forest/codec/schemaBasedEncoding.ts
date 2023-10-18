@@ -7,8 +7,8 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
-	SchemaData,
-	TreeSchemaIdentifier,
+	StoredSchemaCollection,
+	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
 import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
@@ -33,16 +33,16 @@ import { NodeShape } from "./nodeShape";
  * Optimized for encoded size and encoding performance.
  */
 export function schemaCompressedEncode(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	cursor: ITreeCursorSynchronous,
 ): EncodedChunk {
 	return compressedEncode(cursor, buildCache(schema, policy));
 }
 
-export function buildCache(schema: SchemaData, policy: FullSchemaPolicy): EncoderCache {
+export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
-		(fieldHandler: FieldShaper, schemaName: TreeSchemaIdentifier) =>
+		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
 		(treeHandler: TreeShaper, field: FieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache),
@@ -80,10 +80,10 @@ export function fieldShaper(
  * Selects shapes to use to encode trees.
  */
 export function treeShaper(
-	fullSchema: SchemaData,
+	fullSchema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldHandler: FieldShaper,
-	schemaName: TreeSchemaIdentifier,
+	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
 	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
 
@@ -126,6 +126,8 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Boolean:
 		case ValueSchema.FluidHandle:
 			return true;
+		case ValueSchema.Null:
+			return [null];
 		default:
 			unreachableCase(schema);
 	}

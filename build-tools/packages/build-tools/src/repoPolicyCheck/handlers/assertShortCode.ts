@@ -93,6 +93,7 @@ export const handler: Handler = {
 							return `Duplicate shortcode 0x${numLitValue.toString(
 								16,
 							)} detected\n\t${getCallsiteString(
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 								shortCodes.get(numLitValue)!,
 							)}\n\t${getCallsiteString(numLit)}`;
 						}
