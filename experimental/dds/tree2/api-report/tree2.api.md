@@ -1161,22 +1161,22 @@ export const jsonArray: TreeSchema<"com.fluidframework.json.array", {
 structFields: {
 "": FieldSchema<Sequence_2, readonly [() => TreeSchema<"com.fluidframework.json.object", {
 mapFields: FieldSchema<Optional, readonly [any, () => TreeSchema<"com.fluidframework.json.array", any>, TreeSchema<"com.fluidframework.leaf.number", {
-leafValue: ValueSchema.Number;
+leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
-leafValue: ValueSchema.Boolean;
+leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
-leafValue: ValueSchema.String;
+leafValue: import("../..").ValueSchema.String;
 }>, TreeSchema<"com.fluidframework.leaf.null", {
-leafValue: ValueSchema.Null;
+leafValue: import("../..").ValueSchema.Null;
 }>]>;
 }>, () => TreeSchema<"com.fluidframework.json.array", any>, TreeSchema<"com.fluidframework.leaf.number", {
-leafValue: ValueSchema.Number;
+leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
-leafValue: ValueSchema.Boolean;
+leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
-leafValue: ValueSchema.String;
+leafValue: import("../..").ValueSchema.String;
 }>, TreeSchema<"com.fluidframework.leaf.null", {
-leafValue: ValueSchema.Null;
+leafValue: import("../..").ValueSchema.Null;
 }>]>;
 };
 }>;
@@ -1199,23 +1199,23 @@ export const jsonObject: TreeSchema<"com.fluidframework.json.object", {
 mapFields: FieldSchema<Optional, readonly [() => TreeSchema<"com.fluidframework.json.object", any>, () => TreeSchema<"com.fluidframework.json.array", {
 structFields: {
 "": FieldSchema<Sequence_2, readonly [() => TreeSchema<"com.fluidframework.json.object", any>, any, TreeSchema<"com.fluidframework.leaf.number", {
-leafValue: ValueSchema.Number;
+leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
-leafValue: ValueSchema.Boolean;
+leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
-leafValue: ValueSchema.String;
+leafValue: import("../..").ValueSchema.String;
 }>, TreeSchema<"com.fluidframework.leaf.null", {
-leafValue: ValueSchema.Null;
+leafValue: import("../..").ValueSchema.Null;
 }>]>;
 };
 }>, TreeSchema<"com.fluidframework.leaf.number", {
-leafValue: ValueSchema.Number;
+leafValue: import("../..").ValueSchema.Number;
 }>, TreeSchema<"com.fluidframework.leaf.boolean", {
-leafValue: ValueSchema.Boolean;
+leafValue: import("../..").ValueSchema.Boolean;
 }>, TreeSchema<"com.fluidframework.leaf.string", {
-leafValue: ValueSchema.String;
+leafValue: import("../..").ValueSchema.String;
 }>, TreeSchema<"com.fluidframework.leaf.null", {
-leafValue: ValueSchema.Null;
+leafValue: import("../..").ValueSchema.Null;
 }>]>;
 }>;
 
