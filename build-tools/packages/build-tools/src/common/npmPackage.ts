@@ -123,8 +123,7 @@ export class Package {
 	 * The name of the package including the scope.
 	 */
 	public get name(): string {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.isReleaseGroupRoot ? `[group]${this.monoRepo!.kind}` : this.packageJson.name;
+		return this.packageJson.name;
 	}
 
 	/**

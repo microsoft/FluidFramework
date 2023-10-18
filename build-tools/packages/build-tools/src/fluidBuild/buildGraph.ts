@@ -71,6 +71,8 @@ export class BuildPackage {
 	public readonly dependentPackages = new Array<BuildPackage>();
 	public level: number = -1;
 	private buildP?: Promise<BuildResult>;
+
+	// This field shouldn't be used directly, use getTaskDefinition instead
 	private readonly _taskDefinitions: TaskDefinitions;
 
 	constructor(
