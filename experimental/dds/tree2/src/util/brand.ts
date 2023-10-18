@@ -17,7 +17,7 @@ import { Invariant, isAny } from "./typeCheck";
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
- * @alpha
+ * @beta
  */
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
@@ -35,7 +35,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  * but the compiler may think it's true in some cases.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export abstract class BrandedType<ValueType, Name extends string> {
 	protected _typeCheck?: Invariant<ValueType>;

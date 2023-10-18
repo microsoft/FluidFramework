@@ -93,7 +93,7 @@ export interface MakeNominal {}
  * protected _typeCheck?: Contravariant<T>;
  * ```
  *
- * @alpha
+ * @beta
  */
 export interface Contravariant<in T> {
 	_removeCovariance?: (_: T) => void;
@@ -108,7 +108,7 @@ export interface Contravariant<in T> {
  * protected _typeCheck?: Covariant<T>;
  * ```
  *
- * @alpha
+ * @beta
  */
 export interface Covariant<out T> {
 	_removeContravariance?: T;
@@ -123,7 +123,7 @@ export interface Covariant<out T> {
  * protected _typeCheck?: Invariant<T>;
  * ```
  *
- * @alpha
+ * @beta
  */
 export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
 

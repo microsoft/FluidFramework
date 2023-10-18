@@ -221,7 +221,7 @@ export interface BindTree<T = BindTreeDefault> extends PathStep {
 // @alpha
 export type BindTreeDefault = BindTree;
 
-// @alpha
+// @beta
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @alpha
@@ -245,7 +245,7 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
     set<K2 extends K>(key: K2, value: BrandedKeyContent<K2>): this;
 }
 
-// @alpha @sealed
+// @beta @sealed
 abstract class BrandedType<ValueType, Name extends string> {
     protected readonly _type_brand: Name;
     // (undocumented)
@@ -330,13 +330,13 @@ export interface ContextuallyTypedNodeDataObject {
     [key: string]: ContextuallyTypedFieldData;
 }
 
-// @alpha
+// @beta
 interface Contravariant<in T> {
     // (undocumented)
     _removeCovariance?: (_: T) => void;
 }
 
-// @alpha
+// @beta
 interface Covariant<out T> {
     // (undocumented)
     _removeContravariance?: T;
@@ -1008,7 +1008,7 @@ export class InvalidationToken {
     protected readonly _typeCheck: MakeNominal;
 }
 
-// @alpha
+// @beta
 interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
 
@@ -2192,7 +2192,7 @@ export class TreeNodeSchema<Name extends string = string, T extends Unenforced<T
     readonly structFieldsObject: NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>;
 }
 
-// @alpha
+// @beta
 export type TreeNodeSchemaIdentifier = Brand<string, "tree.TreeNodeSchemaIdentifier">;
 
 // @alpha (undocumented)
