@@ -20,7 +20,6 @@ import {
 	EmptyKey,
 	TreeSchemaIdentifier,
 	forEachField,
-	UpPath,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import { ContextuallyTypedNodeData } from "../contextuallyTyped";
@@ -38,7 +37,7 @@ import {
 	Any,
 	AllowedTypes,
 } from "../typed-schema";
-import { EditableTreeEvents } from "../untypedTree";
+import { EditableTreeEvents, TreeEvent } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { LocalNodeKey } from "../node-key";
 import { Context } from "./context";
@@ -270,14 +269,16 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 			case "changing": {
 				const unsubscribeFromChildrenChange = this.#anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) =>
+						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.#anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) =>
+						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromSubtreeChange;
 			}
@@ -286,7 +287,8 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 					"beforeChange",
 					(anchorNode: AnchorNode) => {
 						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						listener({ target: treeNode } as unknown as UpPath);
+						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
 					},
 				);
 				return unsubscribeFromChildrenBeforeChange;
@@ -296,7 +298,8 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 					"afterChange",
 					(anchorNode: AnchorNode) => {
 						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						listener({ target: treeNode } as unknown as UpPath);
+						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
 					},
 				);
 				return unsubscribeFromChildrenAfterChange;

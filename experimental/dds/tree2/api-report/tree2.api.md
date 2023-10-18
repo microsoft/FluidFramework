@@ -564,8 +564,8 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 
 // @alpha
 export interface EditableTreeEvents {
-    afterChange(upPath: UpPath): void;
-    beforeChange(upPath: UpPath): void;
+    afterChange(event: TreeEvent): void;
+    beforeChange(event: TreeEvent): void;
     changing(upPath: UpPath): void;
     subtreeChanging(upPath: UpPath): PathVisitor | void;
 }
@@ -2132,6 +2132,11 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 export interface TreeDataContext {
     fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
     readonly schema: SchemaData;
+}
+
+// @alpha
+export interface TreeEvent {
+    readonly target: TreeNode;
 }
 
 // @alpha

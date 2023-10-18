@@ -17,7 +17,7 @@ import {
 import { ISubscribable } from "../events";
 import { Named } from "../util";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
-import { TreeStatus } from "./editable-tree-2";
+import { TreeNode, TreeStatus } from "./editable-tree-2";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -269,6 +269,18 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 }
 
 /**
+ * An event raised on a {@link TreeNode}.
+ *
+ * @alpha
+ */
+export interface TreeEvent {
+	/**
+	 * The node of the tree where the listener receiving the event is attached.
+	 */
+	readonly target: TreeNode;
+}
+
+/**
  * A collection of events that can be raised by an {@link EditableTree}.
  * These events are triggered while the internal data structures are being updated.
  * Thus these events must not trigger reading of the anchorSet or forest.
@@ -302,8 +314,7 @@ export interface EditableTreeEvents {
 	/**
 	 * Raised on a node right before a change is applied to one of its fields or the fields of a descendant node.
 	 *
-	 * @param upPath - The path (upward) corresponding to the location of the node raising the event. Note that this is not
-	 * necessarily the node that is about to change; the change could be in a descendant of the node the `upPath` points to.
+	 * @param event - The event object. See {@link TreeEvent} for details.
 	 *
 	 * @remarks
 	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.afterChange}) is dependent
@@ -325,13 +336,12 @@ export interface EditableTreeEvents {
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
 	 * while they are being detached from their source location, and once when they are being attached at the target location.
 	 */
-	beforeChange(upPath: UpPath): void;
+	beforeChange(event: TreeEvent): void;
 
 	/**
 	 * Raised on a node right after a change is applied to one of its fields or the fields of a descendant node.
 	 *
-	 * @param upPath - The path (upward) corresponding to the location of the node raising the event. Note that this is not
-	 * necessarily the node that changed; the change could be in a descendant of the node the `upPath` points to.
+	 * @param event - The event object. See {@link TreeEvent} for details.
 	 *
 	 * @remarks
 	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.beforeChange}) is dependent
@@ -353,5 +363,5 @@ export interface EditableTreeEvents {
 	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
 	 * while they are being detached from their source location, and once when they are being attached at the target location.
 	 */
-	afterChange(upPath: UpPath): void;
+	afterChange(event: TreeEvent): void;
 }

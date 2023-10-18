@@ -280,6 +280,7 @@ export {
 	SharedTreeObject,
 	is,
 	Typed,
+	TreeEvent,
 } from "./feature-libraries";
 
 export {

@@ -39,6 +39,7 @@ import {
 	typeSymbol,
 	contextSymbol,
 	treeStatus,
+	TreeEvent,
 } from "../untypedTree";
 import { TreeStatus } from "../editable-tree-2";
 import { AdaptingProxyHandler, adaptWithProxy, treeStatusFromPath } from "./utilities";
@@ -255,28 +256,38 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			case "changing": {
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) =>
+						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) =>
+						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromSubtreeChange;
 			}
 			case "beforeChange": {
 				const unsubscribeFromChildrenBeforeChange = this.anchorNode.on(
 					"beforeChange",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) => {
+						const treeNode = anchorNode.slots.get(editableTreeSlot);
+						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
+					},
 				);
 				return unsubscribeFromChildrenBeforeChange;
 			}
 			case "afterChange": {
 				const unsubscribeFromChildrenAfterChange = this.anchorNode.on(
 					"afterChange",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) => {
+						const treeNode = anchorNode.slots.get(editableTreeSlot);
+						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
+					},
 				);
 				return unsubscribeFromChildrenAfterChange;
 			}
