@@ -126,7 +126,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	private newTree: ISharedTree | undefined;
 
-	// This is the magic button that tells this Spanner and all other Spanners to swap to the new Shared Object.
+	// Migration occurs once this op is read.
 	public submitMigrateOp(): void {
 		const migrateOp: IMigrationOp = {
 			type: "barrier",
@@ -189,11 +189,14 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	public isAttached(): boolean {
 		return this.currentTree.isAttached();
 	}
+
+	// Only connect to the legacy shared tree
 	public connect(services: IChannelServices): void {
 		const shimServices = this.generateShimServicesOnce(services);
 		this.legacyTree.connect(shimServices);
 	}
 
+	// Only reconnect to the new shared tree this limits us to only migrating
 	private reconnect(): void {
 		assert(this.services !== undefined, "Not connected");
 		assert(this.newTree !== undefined, "New tree not initialized");
