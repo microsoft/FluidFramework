@@ -26,6 +26,7 @@ import { Task, TaskExec } from "../task";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
+const traceTaskCheck = registerDebug("fluid-build:task:check");
 const traceTaskInitDep = registerDebug("fluid-build:task:init:dep");
 const traceTaskInitWeight = registerDebug("fluid-build:task:init:weight");
 const traceTaskQueue = registerDebug("fluid-build:task:exec:queue");
@@ -315,8 +316,13 @@ export abstract class LeafTask extends Task {
 			return false;
 		}
 
-		const leafIsUpToDate =
-			(await this.checkDependentLeafTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
+		if (!(await this.checkDependentLeafTasksIsUpToDate())) {
+			return false;
+		}
+
+		const start = Date.now();
+		const leafIsUpToDate = await this.checkLeafIsUpToDate();
+		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
 			this.node.buildContext.taskStats.leafUpToDateCount++;
 			this.traceExec(`Skipping Leaf Task`);

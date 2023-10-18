@@ -63,7 +63,9 @@ export class FlubCheckPolicyTask extends LeafWithDoneFileTask {
 		const fileHashP = Promise.all(
 			modifiedFiles.map(async (file) => [
 				file,
-				await this.node.buildContext.fileHashCache.getFileHash(file),
+				await this.node.buildContext.fileHashCache.getFileHash(
+					this.getPackageFileFullPath(file),
+				),
 			]),
 		);
 		// We are using the "commit" as a summary of the state of unchanged files to speed this up

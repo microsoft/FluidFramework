@@ -240,6 +240,7 @@ export class BuildPackage {
 			}
 			if (taskConfig.before.includes("*")) {
 				this.tasks.forEach((depTask) => {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					if (depTask !== task && !task.dependentTasks!.includes(depTask)) {
 						traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
