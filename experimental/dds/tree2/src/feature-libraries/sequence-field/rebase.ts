@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { IdAllocator, fail, fakeIdAllocator } from "../../util";
+import { IdAllocator, fail, fakeIdAllocator, getOrAddEmptyToMap } from "../../util";
 import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import {
 	CrossFieldManager,
@@ -44,6 +44,7 @@ import {
 	IdRange,
 	CellMark,
 	CellId,
+	MarkEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -84,7 +85,6 @@ export function rebase<TNodeChange>(
 	revisionMetadata: RevisionMetadataSource,
 	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
 ): Changeset<TNodeChange> {
-	assert(base.revision !== undefined, 0x69b /* Cannot rebase over changeset with no revision */);
 	return rebaseMarkList(
 		change,
 		base.change,
@@ -106,7 +106,7 @@ export type NodeChangeRebaser<TNodeChange> = (
 function rebaseMarkList<TNodeChange>(
 	currMarkList: MarkList<TNodeChange>,
 	baseMarkList: MarkList<TNodeChange>,
-	baseRevision: RevisionTag,
+	baseRevision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	genId: IdAllocator,
@@ -129,18 +129,10 @@ function rebaseMarkList<TNodeChange>(
 	const lineageRecipients: Mark<TNodeChange>[] = [];
 	const lineageEntries: LineageEntry[] = [];
 
-	// List of IDs of detaches encountered in the base changeset which are adjacent to the current position.
-	let detachBlock: IdRange[] = [];
+	// For each revision, stores a list of IDs of detaches encountered in the base changeset which are adjacent to the current position.
+	const detachBlocks = new Map<RevisionTag, IdRange[]>();
 	while (!queue.isEmpty()) {
 		const { baseMark, newMark: currMark } = queue.pop();
-		if ("revision" in baseMark) {
-			// TODO support rebasing over composite changeset
-			assert(
-				baseMark.revision === baseRevision,
-				0x4f3 /* Unable to keep track of the base input offset in composite changeset */,
-			);
-		}
-
 		const rebasedMark = rebaseMark(
 			currMark,
 			baseMark,
@@ -165,47 +157,62 @@ function rebaseMarkList<TNodeChange>(
 				baseMark.count,
 				metadata,
 			);
-		}
 
-		if (areInputCellsEmpty(rebasedMark)) {
-			// TODO: Should this also check for transient effects?
-			if (markEmptiesCells(baseMark)) {
-				assert(isDetach(baseMark), 0x74b /* Only detaches empty cells */);
-				if (baseMark.type === "MoveOut" || baseMark.detachIdOverride === undefined) {
-					setMarkAdjacentCells(rebasedMark, detachBlock);
-				}
-			} else {
-				handleLineage(
-					rebasedMark,
-					lineageRecipients,
-					getIntention(baseRevision, metadata) ?? baseRevision,
-					detachBlock,
-					lineageEntries,
-				);
-			}
-		}
-		factory.push(rebasedMark);
-
-		if (markEmptiesCells(baseMark) || isTransientEffect(baseMark)) {
-			const detachId = getOutputCellId(baseMark, baseRevision, metadata);
-			assert(detachId !== undefined, "Mark which empties cells should have a detach ID");
-			if (detachId.revision === getIntention(baseRevision, metadata) ?? baseRevision) {
-				addIdRange(detachBlock, { id: detachId.localId, count: baseMark.count });
-			} else {
+			if (isInverseAttach(baseMark)) {
 				assert(detachId.revision !== undefined, 0x74c /* Detach ID should have revision */);
 				lineageEntries.push({
 					revision: detachId.revision,
 					id: detachId.localId,
 					count: baseMark.count,
 				});
+			} else {
+				addIdRange(getOrAddEmptyToMap(detachBlocks, detachId.revision), {
+					id: detachId.localId,
+					count: baseMark.count,
+				});
 			}
-		} else if (!areOutputCellsEmpty(baseMark)) {
+
+			assert(
+				areInputCellsEmpty(rebasedMark) && rebasedMark.cellId.revision !== undefined,
+				"Mark should have empty input cells after rebasing over a cell-emptying mark",
+			);
+
+			if (!isInverseAttach(baseMark)) {
+				setMarkAdjacentCells(
+					rebasedMark,
+					detachBlocks.get(rebasedMark.cellId.revision) ?? [],
+				);
+			}
+		}
+
+		if (areInputCellsEmpty(rebasedMark)) {
+			handleLineage(rebasedMark, lineageRecipients, detachBlocks, lineageEntries, metadata);
+		}
+		factory.push(rebasedMark);
+
+		if (!areOutputCellsEmpty(baseMark)) {
 			lineageRecipients.length = 0;
-			detachBlock = [];
+
+			// XXX: Only clear detach blocks for revisions where this cell is known to be full
+			detachBlocks.clear();
 		}
 	}
 
+	// TODO: Should not merge marks until the end of the rebase pass,
+	// since `lineageRecipients` stores direct references to rebased marks.
 	return factory.list;
+}
+
+function isInverseAttach(effect: MarkEffect): boolean {
+	switch (effect.type) {
+		case "Delete":
+		case "ReturnFrom":
+			return effect.detachIdOverride !== undefined;
+		case "Transient":
+			return isInverseAttach(effect.detach);
+		default:
+			return false;
+	}
 }
 
 /**
@@ -347,7 +354,7 @@ interface RebaseMarks<T> {
 function rebaseMark<TNodeChange>(
 	currMark: Mark<TNodeChange>,
 	baseMark: Mark<TNodeChange>,
-	baseRevision: RevisionTag,
+	baseRevision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 	rebaseChild: NodeChangeRebaser<TNodeChange>,
 	moveEffects: MoveEffectTable<TNodeChange>,
@@ -367,7 +374,7 @@ function rebaseMark<TNodeChange>(
 function rebaseMarkIgnoreChild<TNodeChange>(
 	currMark: Mark<TNodeChange>,
 	baseMark: Mark<TNodeChange>,
-	baseRevision: RevisionTag,
+	baseRevision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource,
 	moveEffects: MoveEffectTable<TNodeChange>,
 	nodeExistenceState: NodeExistenceState,
@@ -712,28 +719,25 @@ interface LineageEntry {
 function handleLineage<T>(
 	rebasedMark: Mark<T>,
 	lineageRecipients: Mark<T>[],
-	baseIntention: RevisionTag,
-	detachBlock: IdRange[],
+	detachBlocks: Map<RevisionTag, IdRange[]>,
 	lineageEntries: LineageEntry[],
+	metadata: RevisionMetadataSource,
 ) {
-	// If the changeset we are rebasing over has the same intention as an event in rebasedMark's lineage,
-	// we assume that the base changeset is the inverse of the changeset in the lineage, so we remove the lineage event.
-	// TODO: Handle cases where the base changeset is a composition of multiple revisions.
-	// TODO: Don't remove the lineage event in cases where the event isn't actually inverted by the base changeset,
-	// e.g., if the inverse of the lineage event is muted after rebasing.
 	const lineageHolder = getLineageHolder(rebasedMark);
-	tryRemoveLineageEvents(lineageHolder, baseIntention);
-
 	const cellRevision = getInputCellId(rebasedMark, undefined, undefined)?.revision;
-	if (baseIntention !== cellRevision) {
-		for (const entry of detachBlock) {
-			addLineageEntry(lineageHolder, baseIntention, entry.id, entry.count, entry.count);
+	const index = cellRevision !== undefined ? metadata.getIndex(cellRevision) : undefined;
+
+	for (const entry of lineageEntries) {
+		if (index === undefined || index < metadata.getIndex(entry.revision)) {
+			addLineageEntry(lineageHolder, entry.revision, entry.id, entry.count, entry.count);
 		}
 	}
 
-	for (const entry of lineageEntries) {
-		if (entry.revision !== cellRevision) {
-			addLineageEntry(lineageHolder, entry.revision, entry.id, entry.count, entry.count);
+	for (const [revision, detachBlock] of detachBlocks.entries()) {
+		if (index === undefined || index < metadata.getIndex(revision)) {
+			for (const entry of detachBlock) {
+				addLineageEntry(lineageHolder, revision, entry.id, entry.count, entry.count);
+			}
 		}
 	}
 

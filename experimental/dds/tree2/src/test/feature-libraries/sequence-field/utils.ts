@@ -7,6 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import {
 	MemoizedIdRangeAllocator,
 	RevisionInfo,
+	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
@@ -89,11 +90,17 @@ function composeI<T>(
 	return composed;
 }
 
-export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
+export function rebase(
+	change: TestChangeset,
+	base: TaggedChange<TestChangeset>,
+	revisionMetadata?: RevisionMetadataSource,
+): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
-	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+	const metadata =
+		revisionMetadata ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	let rebasedChange = SF.rebase(

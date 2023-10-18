@@ -255,6 +255,26 @@ describe("SequenceField - Rebaser Axioms", () => {
 			});
 		}
 	});
+
+	describe("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
+		for (const [name1, makeChange1] of testChanges) {
+			for (const [name2, makeChange2] of testChanges) {
+				for (const [name3, makeChange3] of testChanges) {
+					const title = `${name1} ↷ [${name2}, ${name3}]`;
+					it(title, () => {
+						const a = tagChange(makeChange1(1, 1), tag1);
+						const b = tagChange(makeChange2(1, 1), tag2);
+						const c = tagChange(makeChange3(1, 1), tag3);
+						const a2 = rebaseTagged(a, b);
+						const a3 = rebaseTagged(a2, c);
+						const bc = compose([b, c]);
+						const a4 = rebaseTagged(a, makeAnonChange(bc));
+						assert.deepEqual(a3, a4);
+					});
+				}
+			}
+		}
+	});
 });
 
 describe("SequenceField - Sandwich Rebasing", () => {

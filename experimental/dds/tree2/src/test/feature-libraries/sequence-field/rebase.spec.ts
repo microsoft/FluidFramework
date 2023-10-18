@@ -4,12 +4,28 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
+import {
+	RevisionMetadataSource,
+	SequenceField as SF,
+	revisionMetadataSourceFromInfo,
+} from "../../../feature-libraries";
+import {
+	ChangeAtomId,
+	makeAnonChange,
+	mintRevisionTag,
+	RevisionTag,
+	tagChange,
+} from "../../../core";
 import { createFakeRepair, fakeRepair } from "../../utils";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
-import { checkDeltaEquality, composeAnonChanges, rebaseTagged, rebase as rebaseI } from "./utils";
+import {
+	checkDeltaEquality,
+	composeAnonChanges,
+	rebaseTagged,
+	rebase as rebaseI,
+	shallowCompose,
+} from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 const tag1: RevisionTag = mintRevisionTag();
@@ -18,6 +34,14 @@ const tag3: RevisionTag = mintRevisionTag();
 
 function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTag): TestChangeset {
 	return rebaseI(change, tagChange(base, baseRev ?? tag1));
+}
+
+function rebaseOverComposition(
+	change: TestChangeset,
+	base: TestChangeset,
+	metadata: RevisionMetadataSource,
+): TestChangeset {
+	return rebaseI(change, makeAnonChange(base), metadata);
 }
 
 // Rebasing should not change the content of a Revive
@@ -807,5 +831,55 @@ describe("SequenceField - Rebase", () => {
 		];
 
 		assert.deepEqual(rebased, expected);
+	});
+
+	describe("Over composition", () => {
+		it("insert ↷ [delete, delete]", () => {
+			const deletes: TestChangeset = shallowCompose([
+				tagChange(Change.delete(1, 2), tag1),
+				tagChange(Change.delete(0, 2), tag2),
+			]);
+
+			const insert = Change.insert(3, 1);
+			const rebased = rebaseOverComposition(
+				insert,
+				deletes,
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = [
+				Mark.insert(1, {
+					localId: brand(0),
+					lineage: [
+						{ revision: tag1, id: brand(0), count: 2, offset: 2 },
+						{ revision: tag2, id: brand(0), count: 2, offset: 1 },
+					],
+				}),
+			];
+			assert.deepEqual(rebased, expected);
+		});
+
+		it("modify ↷ [delete, delete]", () => {
+			const deletes: TestChangeset = shallowCompose([
+				tagChange(Change.delete(1, 3), tag1),
+				tagChange(Change.delete(0, 2), tag2),
+			]);
+
+			const nodeChange = TestChange.mint([], 0);
+			const modify = Change.modify(3, nodeChange);
+			const rebased = rebaseOverComposition(
+				modify,
+				deletes,
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = Change.modifyDetached(0, nodeChange, {
+				revision: tag1,
+				localId: brand(2),
+				adjacentCells: [{ id: brand(0), count: 3 }],
+				lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 1 }],
+			});
+			assert.deepEqual(rebased, expected);
+		});
 	});
 });
