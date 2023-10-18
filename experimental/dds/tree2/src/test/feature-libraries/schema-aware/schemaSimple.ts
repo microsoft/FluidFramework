@@ -13,7 +13,7 @@ export const pointSchema = builder.struct("point", {
 	y: builder.number,
 });
 
-export const appSchemaData = builder.toDocumentSchema(builder.sequence(pointSchema));
+export const appSchemaData = builder.intoSchema(builder.sequence(pointSchema));
 
 // Schema aware types
 export type Number = SchemaAware.TypedNode<typeof leaf.number>;
