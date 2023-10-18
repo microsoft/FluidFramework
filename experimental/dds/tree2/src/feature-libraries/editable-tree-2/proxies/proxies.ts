@@ -9,7 +9,7 @@ import {
 	FieldNodeSchema,
 	FieldSchema,
 	StructSchema,
-	TreeSchema,
+	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -65,8 +65,8 @@ function cacheProxy(
 }
 
 /** If there has already been a proxy created to wrap the given tree node, return it */
-function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
-	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeSchema> })[proxyCacheSym];
+function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefined {
+	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeNodeSchema> })[proxyCacheSym];
 }
 
 /**
@@ -120,7 +120,7 @@ export function getProxyForField<TSchema extends FieldSchema>(
 	}
 }
 
-export function getProxyForNode<TSchema extends TreeSchema>(
+export function getProxyForNode<TSchema extends TreeNodeSchema>(
 	treeNode: TreeNode,
 ): ProxyNode<TSchema> {
 	const schema = treeNode.schema;

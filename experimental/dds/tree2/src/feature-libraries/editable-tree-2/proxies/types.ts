@@ -16,7 +16,7 @@ import {
 	LeafSchema,
 	MapSchema,
 	StructSchema,
-	TreeSchema,
+	TreeNodeSchema,
 	DocumentSchema,
 } from "../../typed-schema";
 import {
@@ -252,7 +252,7 @@ export type ProxyNodeUnion<
 			[Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<
 				infer InnerType
 			>
-				? InnerType extends TreeSchema
+				? InnerType extends TreeNodeSchema
 					? ProxyNode<InnerType, API>
 					: never
 				: never;
@@ -263,7 +263,7 @@ export type ProxyNodeUnion<
  * @alpha
  */
 export type ProxyNode<
-	TSchema extends TreeSchema,
+	TSchema extends TreeNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends LeafSchema
 	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>

@@ -13,7 +13,13 @@ import {
 	requireFalse,
 	requireTrue,
 } from "../../util";
-import { AllowedTypes, Any, FieldKinds, FieldSchema, TreeSchema } from "../../feature-libraries";
+import {
+	AllowedTypes,
+	Any,
+	FieldKinds,
+	FieldSchema,
+	TreeNodeSchema,
+} from "../../feature-libraries";
 
 import {
 	normalizeAllowedTypes,
@@ -49,7 +55,7 @@ describe("SchemaBuilderBase", () => {
 			const recursiveReference = () => recursiveStruct;
 			type _trickCompilerIntoWorking = requireAssignableTo<
 				typeof recursiveReference,
-				() => TreeSchema
+				() => TreeNodeSchema
 			>;
 			const recursiveStruct = builder.struct("recursiveStruct2", {
 				foo: FieldSchema.create(FieldKinds.optional, [recursiveReference]),
@@ -114,7 +120,7 @@ describe("SchemaBuilderBase", () => {
 		assert.deepEqual(normalizeAllowedTypes(Any), [Any]);
 		assert.deepEqual(normalizeAllowedTypes([]), []);
 		assert.deepEqual(normalizeAllowedTypes([Any]), [Any]);
-		const treeSchema = new TreeSchema({ name: "test" }, "foo", {
+		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
 			leafValue: ValueSchema.String,
 		});
 		assert.deepEqual(normalizeAllowedTypes(treeSchema), [treeSchema]);
@@ -146,7 +152,7 @@ describe("SchemaBuilderBase", () => {
 			),
 		);
 
-		const treeSchema = new TreeSchema({ name: "test" }, "foo", {
+		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
 			leafValue: ValueSchema.String,
 		});
 

@@ -14,7 +14,7 @@ import {
 	Multiplicity,
 	SchemaAware,
 	SchemaLibrary,
-	TreeSchema,
+	TreeNodeSchema,
 	DocumentSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
@@ -33,7 +33,7 @@ interface TestTree {
 	readonly treeFactory: () => JsonableTree[];
 }
 
-function testTree<T extends TreeSchema>(
+function testTree<T extends TreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
