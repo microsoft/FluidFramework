@@ -5,7 +5,7 @@
 
 // Normally we would put tests in the test directory.
 // However in this case,
-// its important that the tests are run with the same compiler settings this library is being used with,
+// it's important that the tests are run with the same compiler settings this library is being used with,
 // since this library does not work for some configurations (ex: with strictNullChecks disabled).
 // Since the tests don't generate any JS: they only produce types,
 // importing them here gets us the validation of the compiler settings we want, with no JS size overhead.
@@ -15,10 +15,11 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * Utilities for manipulating the typescript typechecker.
  *
  * @remarks
- * Note: much of this library (the variance parts)
- * will be able to be replaced with Typescript 4.7 explicit variance annotations.
+ * While it appears the the variance parts of this library are made obsolete by TypeScript 4.7's explicit variance annotations,
+ * many cases still type check with incorrect variance even when using the explicit annotations,
+ * and are fixed by using the patterns in this library.
  *
- * Typescript uses structural typing if there are no private or protected members,
+ * TypeScript uses structural typing if there are no private or protected members,
  * and variance of generic type parameters depends on their usages.
  * Thus when trying to constrain code by adding extra type information,
  * it often fails to actually constrain as desired, and these utilities can help with those cases.
@@ -38,7 +39,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * If compiled with a TypeScript configuration that is not strict enough for these features to work,
  * the test suite should fail to build.
  *
- * Classes in typescript by default allow all assignments:
+ * Classes in TypeScript by default allow all assignments:
  * its only though adding members that any type constraints actually get applied.
  * This library provides types that can be used on a protected member of a class to add the desired constraints.
  *
@@ -74,6 +75,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: MakeNominal;
  * ```
@@ -86,13 +88,14 @@ export interface MakeNominal {}
  * Constrain generic type parameters to Contravariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Contravariant<T>;
  * ```
  *
  * @alpha
  */
-export interface Contravariant<T> {
+export interface Contravariant<in T> {
 	_removeCovariance?: (_: T) => void;
 }
 
@@ -100,48 +103,29 @@ export interface Contravariant<T> {
  * Constrain generic type parameters to Covariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Covariant<T>;
  * ```
  *
  * @alpha
  */
-export interface Covariant<T> {
+export interface Covariant<out T> {
 	_removeContravariance?: T;
-}
-
-/**
- * Constrain generic type parameters to Bivariant.
- * Unused Generic type parameters don't constrain a type at all:
- * Adding Bivariant does the most minimal constraint:
- * it only prevents assignment between types when neither of the two Ts extends the
- * other.
- *
- * @example
- * ```typescript
- * protected _typeCheck?: Bivariant<T>;
- * ```
- *
- * @alpha
- */
-export interface Bivariant<T> {
-	/**
-	 * See {@link Bivariant}
-	 */
-	_constrainToBivariant?(_: T): void;
 }
 
 /**
  * Constrain generic type parameters to Invariant.
  *
  * @example
+ *
  * ```typescript
  * protected _typeCheck?: Invariant<T>;
  * ```
  *
  * @alpha
  */
-export interface Invariant<T> extends Contravariant<T>, Covariant<T> {}
+export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
 
 /**
  * Compile time assert that X is True.

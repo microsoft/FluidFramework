@@ -21,9 +21,7 @@ export class CollaborativeText extends DataObject {
 		return this._text;
 	}
 
-	public static get Name() {
-		return "@fluid-example/collaborative-textarea";
-	}
+	public static readonly Name = "@fluid-example/collaborative-textarea";
 
 	private static readonly factory = new DataObjectFactory(
 		CollaborativeText.Name,

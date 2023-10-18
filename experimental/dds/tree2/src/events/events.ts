@@ -4,7 +4,7 @@
  */
 
 import type { IEvent } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { fail, getOrCreate } from "../util";
 
 /**
@@ -24,15 +24,21 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 
 /**
  * Used to specify the kinds of events emitted by an {@link ISubscribable}.
+ *
+ * @remarks
+ *
+ * Any object type is a valid {@link Events}, but only the event-like properties of that
+ * type will be included.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface MyEvents {
  *   load: (user: string, data: IUserData) => void;
  *   error: (errorCode: number) => void;
  * }
  * ```
- * Any object type is a valid {@link Events}, but only the event-like properties of that
- * type will be included.
+ *
  * @alpha
  */
 export type Events<E> = {
@@ -44,8 +50,10 @@ export type Events<E> = {
  * by an IEventProvider from `@fluidframework/core-interfaces`.
  * @param E - the `Events` type to transform
  * @param Target - an optional `IEvent` type that will be merged into the result along with the transformed `E`
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface MyEvents {
  *   load: (user: string, data: IUserData) => void;
  *   error: (errorCode: number) => void;
@@ -108,7 +116,7 @@ export interface IEmitter<E extends Events<E>> {
 	 * For the majority of use-cases it is recommended to use the standard {@link IEmitter.emit} functionality.
 	 * @param eventName - the name of the event to fire
 	 * @param args - the arguments passed to the event listener functions
-	 * @returns - An array of the return values of each listener, preserving the order listeners were called.
+	 * @returns An array of the return values of each listener, preserving the order listeners were called.
 	 */
 	emitAndCollect<K extends keyof Events<E>>(
 		eventName: K,
@@ -153,9 +161,12 @@ export interface HasListeners<E extends Events<E>> {
 
 /**
  * Provides an API for subscribing to and listening to events.
- * Classes wishing to emit events may either extend this class:
- * @example
- * ```ts
+ *
+ * @remarks Classes wishing to emit events may either extend this class or compose over it.
+ *
+ * @example Extending this class
+ *
+ * ```typescript
  * interface MyEvents {
  *   "loaded": () => void;
  * }
@@ -166,9 +177,10 @@ export interface HasListeners<E extends Events<E>> {
  *   }
  * }
  * ```
- * Or, compose over it:
- * @example
- * ```ts
+ *
+ * @example Composing over this class
+ *
+ * ```typescript
  * class MyClass implements ISubscribable<MyEvents> {
  *   private readonly events = EventEmitter.create<MyEvents>();
  *

@@ -5,7 +5,7 @@
 
 import { AsyncLocalStorage } from "async_hooks";
 import * as querystring from "querystring";
-import type { AxiosRequestHeaders } from "axios";
+import type { RawAxiosRequestHeaders } from "axios";
 import * as git from "@fluidframework/gitresources";
 import {
 	IGetRefParamsExternal,
@@ -66,7 +66,7 @@ export class RestGitService {
 		private readonly isEphemeralContainer?: boolean,
 		private readonly maxCacheableSummarySize?: number,
 	) {
-		const defaultHeaders: AxiosRequestHeaders =
+		const defaultHeaders: RawAxiosRequestHeaders =
 			storageName !== undefined
 				? {
 						"User-Agent": userAgent,
@@ -110,7 +110,7 @@ export class RestGitService {
 			undefined,
 			undefined,
 			undefined,
-			defaultHeaders,
+			defaultHeaders as any,
 			undefined,
 			undefined,
 			undefined,
@@ -308,9 +308,8 @@ export class RestGitService {
 		if (cachedLatestSummarySha === sha) {
 			// If the requested sha is the same as the cached latest summary's sha, we should retrieve it
 			// from cache.
-			const cachedLatestSummary = await this.getCache<IWholeFlatSummary>(
-				latestSummaryCacheKey,
-			);
+			const cachedLatestSummary =
+				await this.getCache<IWholeFlatSummary>(latestSummaryCacheKey);
 			// If latest summary sha is cached, but the summary itself does not exist in cache, retrieve the requested summary
 			// by specific version as normal and do not cache it.
 			if (cachedLatestSummary) {

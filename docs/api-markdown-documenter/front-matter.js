@@ -8,8 +8,7 @@ const {
 	getLinkForApiItem,
 	getUnscopedPackageName,
 	renderNodeAsMarkdown,
-	transformDocNode,
-	getMarkdownRenderContextWithDefaults,
+	transformTsdocNode,
 } = require("@fluid-tools/api-markdown-documenter");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const os = require("os");
@@ -29,7 +28,7 @@ const generatedContentNotice =
  */
 function createHugoFrontMatter(apiItem, config, customRenderers) {
 	function extractSummary() {
-		const summaryParagraph = transformDocNode(
+		const summaryParagraph = transformTsdocNode(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
 			config,
@@ -40,13 +39,9 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 		}
 
 		const documentWriter = createDocumentWriter();
-		renderNodeAsMarkdown(
-			summaryParagraph,
-			documentWriter,
-			getMarkdownRenderContextWithDefaults({
-				renderers: customRenderers,
-			}),
-		);
+		renderNodeAsMarkdown(summaryParagraph, documentWriter, {
+			customRenderers,
+		});
 		return documentWriter.getText().replace(/"/g, "'").trim();
 	}
 

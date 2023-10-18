@@ -10,7 +10,7 @@ import {
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	SchemaBuilder,
+	FieldSchema,
 } from "../../../feature-libraries";
 import { FieldKey, FieldStoredSchema, EmptyKey } from "../../../core";
 import {
@@ -19,19 +19,13 @@ import {
 	keyIsValidIndex,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
-import {
-	arraySchema,
-	buildTestSchema,
-	int32Schema,
-	mapStringSchema,
-	optionalChildSchema,
-	stringSchema,
-} from "./mockData";
+import { leaf } from "../../../domains";
+import { arraySchema, buildTestSchema, mapStringSchema, optionalChildSchema } from "./mockData";
 
 describe("editable-tree utilities", () => {
 	it("isPrimitive", () => {
-		assert(isPrimitive(int32Schema));
-		assert(isPrimitive(stringSchema));
+		assert(isPrimitive(leaf.number));
+		assert(isPrimitive(leaf.string));
 		assert(!isPrimitive(mapStringSchema));
 		assert(!isPrimitive(optionalChildSchema));
 	});
@@ -44,7 +38,7 @@ describe("editable-tree utilities", () => {
 			schema,
 		};
 
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
+		const rootSchema = FieldSchema.create(FieldKinds.required, [arraySchema]);
 		const fullSchemaData = buildTestSchema(rootSchema);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { NodeId, TraitLabel, UuidString } from './Identifiers';
 import { assertNotUndefined } from './Common';
 import { ConstraintEffect, NodeData, Payload, Side, TreeNodeSequence } from './persisted-types';
@@ -35,9 +35,16 @@ export enum ChangeType {
 /**
  * A change that composes an Edit.
  *
+ * @remarks
+ *
  * `Change` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ *
  * @example
+ *
+ * ```typescript
  * Change.insert(sourceId, destination)
+ * ```
+ *
  * @public
  */
 export type Change = Insert | Detach | Build | SetValue | Constraint;
@@ -275,9 +282,14 @@ export const Change = {
  * The anchor (`referenceSibling` or `referenceTrait`) used for a particular `StablePlace` can have an impact in collaborative scenarios.
  *
  * `StablePlace` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ *
  * @example
+ *
+ * ```typescript
  * StablePlace.before(node)
  * StablePlace.atStartOf(trait)
+ * ```
+ *
  * @public
  */
 export interface StablePlace {
@@ -307,9 +319,16 @@ export interface StablePlace {
  *
  * See {@link (StablePlace:interface)} for what it means for a place to be "after" another place.
  *
+ * @remarks
+ *
  * `StableRange` objects can be conveniently constructed with the helper methods exported on a constant of the same name.
+ *
  * @example
+ *
+ * ```typescript
  * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+ * ```
+ *
  * @public
  */
 export interface StableRange {
@@ -358,8 +377,12 @@ export const StablePlace = {
 export const StableRange = {
 	/**
 	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
+	 *
 	 * @example
+	 *
+	 * ```typescript
 	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+	 * ```
 	 */
 	from: (start: StablePlace): { to: (end: StablePlace) => StableRange } => ({
 		to: (end: StablePlace): StableRange => {

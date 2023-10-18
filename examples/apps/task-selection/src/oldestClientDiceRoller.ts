@@ -5,7 +5,7 @@
 
 import { OldestClientObserver } from "@fluid-experimental/oldest-client-observer";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 
 import { IDiceRoller } from "./interface";
 

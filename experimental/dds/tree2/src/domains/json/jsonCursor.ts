@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	ITreeCursor,
 	EmptyKey,
@@ -14,33 +14,27 @@ import {
 } from "../../core";
 import { JsonCompatible } from "../../util";
 import { CursorAdapter, isPrimitiveValue, singleStackTreeCursor } from "../../feature-libraries";
-import {
-	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
-	jsonObject,
-	jsonString,
-} from "./jsonDomainSchema";
+import { leaf } from "../leafDomain";
+import { jsonArray, jsonObject } from "./jsonDomainSchema";
 
 const adapter: CursorAdapter<JsonCompatible> = {
 	value: (node: JsonCompatible) =>
-		typeof node === "object"
-			? undefined // null, arrays, and objects have no defined value
-			: node, // boolean, numbers, and strings are their own value
+		node !== null && typeof node === "object"
+			? undefined // arrays and objects have no defined value
+			: node, // null, boolean, numbers, and strings are their own value
 	type: (node: JsonCompatible) => {
 		const type = typeof node;
 
 		switch (type) {
 			case "number":
-				return jsonNumber.name;
+				return leaf.number.name;
 			case "string":
-				return jsonString.name;
+				return leaf.string.name;
 			case "boolean":
-				return jsonBoolean.name;
+				return leaf.boolean.name;
 			default:
 				if (node === null) {
-					return jsonNull.name;
+					return leaf.null.name;
 				} else if (Array.isArray(node)) {
 					return jsonArray.name;
 				} else {
@@ -112,9 +106,9 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 	const type = reader.type;
 
 	switch (type) {
-		case jsonNumber.name:
-		case jsonBoolean.name:
-		case jsonString.name:
+		case leaf.number.name:
+		case leaf.boolean.name:
+		case leaf.string.name:
 			assert(isPrimitiveValue(reader.value), 0x41f /* expected a primitive value */);
 			return reader.value as JsonCompatible;
 		case jsonArray.name: {
@@ -140,7 +134,7 @@ export function cursorToJsonObject(reader: ITreeCursor): JsonCompatible {
 			return result;
 		}
 		default: {
-			assert(type === jsonNull.name, 0x422 /* unexpected type */);
+			assert(type === leaf.null.name, 0x422 /* unexpected type */);
 			return null;
 		}
 	}

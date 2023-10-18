@@ -40,7 +40,7 @@ describe("PropertyDDS", () => {
 				const containerRuntime =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 				const services = {
-					deltaConnection: containerRuntime.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				};
 				const tree = new SharedPropertyTree(

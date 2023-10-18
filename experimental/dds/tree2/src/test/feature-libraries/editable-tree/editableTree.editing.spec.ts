@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { AllowedUpdateType, JsonableTree, FieldKey, TreeSchemaIdentifier } from "../../../core";
-import { createSharedTreeView, ISharedTree } from "../../../shared-tree";
+import { FieldKey, TreeNodeSchemaIdentifier } from "../../../core";
 import { brand, clone } from "../../../util";
 import {
 	singleTextCursor,
@@ -17,16 +16,16 @@ import {
 	valueSymbol,
 	typeNameSymbol,
 	getPrimaryField,
-	SchemaBuilder,
-	FieldKindTypes,
-	TypedSchemaCollection,
+	FieldKind,
 	UnwrappedEditableField,
-	FieldSchema,
-	NewFieldContent,
 	setField,
 	EditableTree,
+	treeStatus,
+	TreeStatus,
+	FieldSchema,
 } from "../../../feature-libraries";
-import { TestTreeProviderLite } from "../../utils";
+import { viewWithContent } from "../../utils";
+import { SchemaBuilder } from "../../../domains";
 import {
 	fullSchemaData,
 	Person,
@@ -40,50 +39,26 @@ import {
 	float64Schema,
 	Phones,
 	phonesSchema,
-	personJsonableTree,
 	personSchemaLibrary,
 } from "./mockData";
 
 const localFieldKey: FieldKey = brand("foo");
 const otherFieldKey: FieldKey = brand("foo2");
 
-const rootSchemaName: TreeSchemaIdentifier = brand("Test");
+const rootSchemaName: TreeNodeSchemaIdentifier = brand("Test");
 
-function getTestSchema<Kind extends FieldKindTypes>(fieldKind: Kind) {
-	const builder = new SchemaBuilder("getTestSchema", personSchemaLibrary);
+function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
+	const builder = new SchemaBuilder({ scope: "getTestSchema", libraries: [personSchemaLibrary] });
 	const rootNodeSchema = builder.struct("Test", {
-		foo: SchemaBuilder.field(fieldKind, stringSchema),
-		foo2: SchemaBuilder.field(fieldKind, stringSchema),
+		foo: FieldSchema.create(fieldKind, [stringSchema]),
+		foo2: FieldSchema.create(fieldKind, [stringSchema]),
 	});
-	return builder.intoDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
-}
-
-function createSharedTree(
-	schemaData: TypedSchemaCollection<FieldSchema>,
-	data?: JsonableTree[],
-): ISharedTree {
-	// This is explicitly not a function parameter as merge/collaboration is not the focus of this file: tests
-	// involving more than 1 tree should be moved elsewhere.
-	const numberOfTrees = 1;
-	const provider = new TestTreeProviderLite(numberOfTrees);
-	const tree = provider.trees[0];
-	assert(tree.isAttached());
-	tree.schematize({
-		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree: data?.map(singleTextCursor),
-		schema: schemaData,
-	});
-	tree.storedSchema.update(schemaData);
-	if (data !== undefined) {
-		tree.setContent(data.map(singleTextCursor));
-	}
-	provider.processMessages();
-	return tree;
+	return builder.toDocumentSchema(FieldSchema.create(FieldKinds.optional, [rootNodeSchema]));
 }
 
 describe("editable-tree: editing", () => {
 	it("edit using contextually typed API", () => {
-		const tree = createSharedTree(fullSchemaData, [personJsonableTree()]);
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPerson() });
 		assert.equal((tree.root as Person).name, "Adam");
 		// delete optional root
 		tree.setContent(undefined);
@@ -91,7 +66,7 @@ describe("editable-tree: editing", () => {
 
 		// create optional root
 		tree.setContent({ name: "Mike" });
-		assert.deepEqual(clone(tree.root), { name: "Mike" });
+		assert.deepEqual(clone(tree.root, { lossy: true }), { name: "Mike" });
 
 		// replace optional root
 		tree.setContent({ name: "Peter", adult: true });
@@ -112,15 +87,6 @@ describe("editable-tree: editing", () => {
 		} as any; // TODO: schema aware typing.
 		// unambiguous type
 		maybePerson.salary = "not ok";
-		// ambiguous type since there are multiple options which are numbers:
-		assert.throws(
-			() => (maybePerson.salary = 99.99),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"data compatible with more than one type allowed by the schema",
-				),
-		);
 		// explicit typing
 		maybePerson.salary = {
 			[typeNameSymbol]: float64Schema.name,
@@ -185,7 +151,7 @@ describe("editable-tree: editing", () => {
 			}
 		}
 
-		const clonedPerson = clone(maybePerson);
+		const clonedPerson = clone(maybePerson, { lossy: true });
 		assert.deepEqual(clonedPerson, {
 			name: "Peter",
 			age: 150,
@@ -211,14 +177,12 @@ describe("editable-tree: editing", () => {
 	});
 
 	it("edit using typed data model", () => {
-		const tree = createSharedTree(fullSchemaData);
-
-		tree.setContent(getPerson() as NewFieldContent);
+		const tree = viewWithContent({ schema: fullSchemaData, initialTree: getPerson() });
 		const person = tree.root as Person;
 
 		// check initial data
 		{
-			const clonedPerson = clone(person);
+			const clonedPerson = clone(person, { lossy: true });
 			assert.deepEqual(clonedPerson, {
 				name: "Adam",
 				age: 35,
@@ -268,7 +232,7 @@ describe("editable-tree: editing", () => {
 			// replace value field
 			person.address.zip = zip;
 
-			const clonedAddress = clone(person.address);
+			const clonedAddress = clone(person.address, { lossy: true });
 			assert.deepEqual(clonedAddress, {
 				street: "foo",
 				zip: 123,
@@ -290,7 +254,7 @@ describe("editable-tree: editing", () => {
 			person.address.phones[1] = simplePhones;
 			// create primitive node
 			person.address.phones[2] = brand(3);
-			const clonedPerson = clone(person);
+			const clonedPerson = clone(person, { lossy: true });
 			assert.deepEqual(clonedPerson, {
 				name: "Adam",
 				age: 32,
@@ -321,7 +285,7 @@ describe("editable-tree: editing", () => {
 				prefix: "456",
 				extraPhones: ["1234567"],
 			} as unknown as ComplexPhone; // TODO: fix up these strong types to reflect unwrapping
-			assert.deepEqual(clone(person.address.phones), {
+			assert.deepEqual(clone(person.address.phones, { lossy: true }), {
 				"0": "54321",
 				"1": { number: "123", prefix: "456", extraPhones: { "0": "1234567" } },
 				"2": 3,
@@ -331,9 +295,10 @@ describe("editable-tree: editing", () => {
 
 	describe(`can move nodes`, () => {
 		it("to the left within the same field", () => {
-			const tree = createSharedTree(getTestSchema(FieldKinds.sequence), [
-				{ type: rootSchemaName },
-			]);
+			const tree = viewWithContent({
+				schema: getTestSchema(FieldKinds.sequence),
+				initialTree: { foo: [], foo2: [] },
+			});
 			assert(isEditableTree(tree.root));
 			// create using `insertNodes`
 			tree.root[getField](localFieldKey).insertNodes(0, [
@@ -351,9 +316,10 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field_0], ["bar", "foo"]);
 		});
 		it("to the right within the same field", () => {
-			const tree = createSharedTree(getTestSchema(FieldKinds.sequence), [
-				{ type: rootSchemaName },
-			]);
+			const tree = viewWithContent({
+				schema: getTestSchema(FieldKinds.sequence),
+				initialTree: { foo: [], foo2: [] },
+			});
 			assert(isEditableTree(tree.root));
 			// create using `insertNodes`
 			tree.root[getField](localFieldKey).insertNodes(0, [
@@ -371,9 +337,10 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field_0], ["bar", "foo"]);
 		});
 		it("to a different field", () => {
-			const tree = createSharedTree(getTestSchema(FieldKinds.sequence), [
-				{ type: rootSchemaName },
-			]);
+			const tree = viewWithContent({
+				schema: getTestSchema(FieldKinds.sequence),
+				initialTree: { foo: [], foo2: [] },
+			});
 			assert(isEditableTree(tree.root));
 			// create using `insertNodes`
 			tree.root[getField](localFieldKey).insertNodes(0, [
@@ -405,9 +372,8 @@ describe("editable-tree: editing", () => {
 
 	describe(`can create, edit, move and delete`, () => {
 		it("insertNodes in a sequence field", () => {
-			const view = createSharedTreeView().schematize({
+			const view = viewWithContent({
 				schema: getTestSchema(FieldKinds.sequence),
-				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: { foo: [], foo2: [] },
 			});
 			const root = view.root;
@@ -419,7 +385,7 @@ describe("editable-tree: editing", () => {
 			field.insertNodes(0, ["foo", "bar"]);
 			assert.deepEqual([...field], ["foo", "bar"]);
 
-			field.delete();
+			field.remove();
 			// create using `insertNodes()`
 			["third", "second", "first"].forEach((content) => field.insertNodes(0, [content]));
 			assert.deepEqual([...field], ["first", "second", "third"]);
@@ -432,9 +398,8 @@ describe("editable-tree: editing", () => {
 		});
 
 		it("replaceNodes in a sequence field", () => {
-			const view = createSharedTreeView().schematize({
+			const view = viewWithContent({
 				schema: getTestSchema(FieldKinds.sequence),
-				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: { foo: [], foo2: [] },
 			});
 			const root = view.root;
@@ -462,9 +427,8 @@ describe("editable-tree: editing", () => {
 		});
 
 		it("moveNodes in a sequence field", () => {
-			const view = createSharedTreeView().schematize({
+			const view = viewWithContent({
 				schema: getTestSchema(FieldKinds.sequence),
-				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: { foo: ["a", "b", "c"], foo2: [] },
 			});
 			const root = view.root;
@@ -481,9 +445,8 @@ describe("editable-tree: editing", () => {
 		});
 
 		it("assignment and deletion on sequence field", () => {
-			const view = createSharedTreeView().schematize({
+			const view = viewWithContent({
 				schema: getTestSchema(FieldKinds.sequence),
-				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: { foo: [], foo2: [] },
 			});
 			const root = view.root;
@@ -527,16 +490,15 @@ describe("editable-tree: editing", () => {
 				field.setContent(undefined);
 			});
 
-			// delete method
-			field.delete();
+			// remove method
+			field.remove();
 			assert(!(localFieldKey in root));
 			assert.deepEqual([...field], []);
 		});
 
 		it("regression test for sequence setting empty sequence", () => {
-			const view = createSharedTreeView().schematize({
+			const view = viewWithContent({
 				schema: getTestSchema(FieldKinds.sequence),
-				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: { foo: [], foo2: [] },
 			});
 			const root = view.root;
@@ -547,9 +509,8 @@ describe("editable-tree: editing", () => {
 		});
 
 		it("as optional field", () => {
-			const view = createSharedTreeView().schematize({
+			const view = viewWithContent({
 				schema: getTestSchema(FieldKinds.optional),
-				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: { foo: undefined, foo2: undefined },
 			});
 			const root = view.root;
@@ -612,16 +573,15 @@ describe("editable-tree: editing", () => {
 			root[localFieldKey] = "bar";
 			assert.equal(root[localFieldKey], "bar");
 
-			// delete method
-			field.delete();
+			// remove method
+			field.remove();
 			assert(!(localFieldKey in root));
 			assert.equal(root[localFieldKey], undefined);
 		});
 
 		it("as value field", () => {
-			const view = createSharedTreeView().schematize({
-				schema: getTestSchema(FieldKinds.value),
-				allowedSchemaModifications: AllowedUpdateType.None,
+			const view = viewWithContent({
+				schema: getTestSchema(FieldKinds.required),
 				initialTree: { foo: "initial", foo2: "" },
 			});
 			const root = view.root;
@@ -666,9 +626,106 @@ describe("editable-tree: editing", () => {
 				field.setContent(undefined);
 			});
 
-			// delete method
+			// remove method
 			assert.throws(() => {
-				field.delete();
+				field.remove();
+			});
+		});
+	});
+
+	describe("treeStatus", () => {
+		describe("EditableTree", () => {
+			it("root node and non-root node returns TreeStatus.InDocument", () => {
+				const view = viewWithContent({
+					schema: getTestSchema(FieldKinds.sequence),
+					initialTree: { foo: ["foo"], foo2: [] },
+				});
+				const rootNode = view.root;
+				assert(isEditableTree(rootNode));
+				const rootNodeStatus = rootNode[treeStatus]();
+				assert.equal(rootNodeStatus, TreeStatus.InDocument);
+
+				const field = rootNode[localFieldKey];
+				assert(isEditableField(field));
+				const node = field.getNode(0);
+				const nodeStatus = node[treeStatus]();
+				assert.equal(nodeStatus, TreeStatus.InDocument);
+			});
+
+			it("removed node returns TreeStatus.Removed on itself and its contents", () => {
+				const view = viewWithContent({
+					schema: getTestSchema(FieldKinds.sequence),
+					initialTree: { foo: ["foo"], foo2: [] },
+				});
+				const root = view.root;
+				assert(isEditableTree(root));
+				const field = root[localFieldKey];
+				assert(isEditableField(field));
+
+				// Check TreeStatus before remove.
+				const rootStatusBeforeRemove = root[treeStatus]();
+				assert.equal(rootStatusBeforeRemove, TreeStatus.InDocument);
+
+				const node = field.getNode(0);
+				const nodeStatusBeforeRemove = node[treeStatus]();
+				assert.equal(nodeStatusBeforeRemove, TreeStatus.InDocument);
+
+				const rootField = view.context.root;
+				rootField.remove();
+
+				// Check TreeStatus after remove.
+				const rootStatusAfterRemove = root[treeStatus]();
+				assert.equal(rootStatusAfterRemove, TreeStatus.Removed);
+				const nodeStatusAfterRemove = node[treeStatus]();
+				assert.equal(nodeStatusAfterRemove, TreeStatus.Removed);
+			});
+		});
+
+		describe("EditableField", () => {
+			it("root field and non-root field returns TreeStatus.InDocument", () => {
+				const view = viewWithContent({
+					schema: getTestSchema(FieldKinds.sequence),
+					initialTree: { foo: ["foo"], foo2: [] },
+				});
+
+				const rootField = view.context.root;
+				const rootFieldStatus = rootField.treeStatus();
+				assert.equal(rootFieldStatus, TreeStatus.InDocument);
+
+				const rootNode = view.root;
+				assert(isEditableTree(rootNode));
+				const field = rootNode[localFieldKey];
+				assert(isEditableField(field));
+				assert.equal(field.treeStatus(), TreeStatus.InDocument);
+			});
+
+			it("removed field and its contents returns TreeStatus.Removed", () => {
+				const view = viewWithContent({
+					schema: getTestSchema(FieldKinds.sequence),
+					initialTree: { foo: ["foo"], foo2: [] },
+				});
+				const rootNode = view.root;
+				assert(isEditableTree(rootNode));
+				const field = rootNode[localFieldKey];
+				assert(isEditableField(field));
+
+				// Check TreeStatus before remove.
+				const fieldStatusBeforeRemove = field.treeStatus();
+				assert.equal(fieldStatusBeforeRemove, TreeStatus.InDocument);
+
+				const node = field.getNode(0);
+				const nodeStatusBeforeRemove = node[treeStatus]();
+				assert.equal(nodeStatusBeforeRemove, TreeStatus.InDocument);
+
+				const rootField = view.context.root;
+				rootField.remove();
+
+				// Check TreeStatus after remove.
+				const fieldStatusAfterRemove = field.treeStatus();
+				assert.equal(fieldStatusAfterRemove, TreeStatus.Removed);
+
+				const nodeStatusAfterRemove = node[treeStatus]();
+				assert.equal(nodeStatusAfterRemove, TreeStatus.Removed);
 			});
 		});
 	});

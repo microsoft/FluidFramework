@@ -24,6 +24,9 @@
 
 	// Custom dictionary for 'streetsidesoftware.code-spell-checker' extension.
 	"cSpell.words": [
+		"boop",
+		"contoso",
+		"denormalized",
 		"endregion",
 		"fluidframework",
 		"handlecache",
@@ -36,7 +39,9 @@
 		"nonfinite",
 		"pseudorandomly",
 		"Routerlicious",
+		"runtimes",
 		"snapshotlegacy",
+		"snapshotting",
 		"testconsumer",
 		"Tinylicious",
 		"tombstoned",
@@ -44,6 +49,7 @@
 		"unacked",
 		"unaugmented",
 		"undoprovider",
+		"unsequenced",
 	],
 
 	// Enable prettier as default formatter, and disable rules that disagree with it
@@ -76,8 +82,13 @@
 		"**/*build.log": true,
 		"**/*.tsbuildinfo": true,
 		"**/_api-extractor-temp": true,
+		// exclude built `dist` folders
 		"**/dist/*": true,
-		"**/lib/*": true,
+		// exclude built `lib` folders but preserve ./common/lib
+		//   paths with packages container
+		"**/packages/**/lib/*": true,
+		//   other sets known to build `lib`
+		"{common/lib,examples,experimental}/**/lib/*": true,
 		"**/nyc/*": true,
 		"**/*.log": true,
 		"**/DS_Store": true,

@@ -1,7 +1,7 @@
 version: "3.4"
 services:
   alfred:
-    image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     ports:
       - "3003:3000"
     command: node packages/routerlicious/dist/alfred/www.js
@@ -11,7 +11,7 @@ services:
       - IS_FLUID_SERVER=true
     restart: always
   deli:
-    image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     command: node packages/routerlicious/dist/kafka-service/index.js deli /usr/src/server/packages/routerlicious/dist/deli/index.js
     environment:
       - DEBUG=fluid:*
@@ -19,7 +19,7 @@ services:
       - IS_FLUID_SERVER=true
     restart: always
   scriptorium:
-    image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     command: node packages/routerlicious/dist/kafka-service/index.js scriptorium /usr/src/server/packages/routerlicious/dist/scriptorium/index.js
     environment:
       - DEBUG=fluid:*
@@ -27,7 +27,7 @@ services:
       - IS_FLUID_SERVER=true
     restart: always
   copier:
-    image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     command: node packages/routerlicious/dist/kafka-service/index.js copier /usr/src/server/packages/routerlicious/dist/copier/index.js
     environment:
       - DEBUG=fluid:*
@@ -35,7 +35,7 @@ services:
       - IS_FLUID_SERVER=true
     restart: always
   scribe:
-    image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     command: node packages/routerlicious/dist/kafka-service/index.js scribe /usr/src/server/packages/routerlicious/dist/scribe/index.js
     environment:
       - DEBUG=fluid:*
@@ -43,7 +43,7 @@ services:
       - IS_FLUID_SERVER=true
     restart: always
   riddler:
-    image: mcr.microsoft.com/fluidframework/routerlicious/server:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     ports:
       - "5000:5000"
     command: node packages/routerlicious/dist/riddler/www.js
@@ -53,7 +53,7 @@ services:
       - IS_FLUID_SERVER=true
     restart: always
   historian:
-    image: mcr.microsoft.com/fluidframework/routerlicious/historian:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/historian:${HISTORIAN_IMAGE_TAG:-latest}
     ports:
       - "3001:3000"
     environment:
@@ -62,7 +62,7 @@ services:
       - IS_FLUID_SERVER=true
     restart: always
   gitrest:
-    image: mcr.microsoft.com/fluidframework/routerlicious/gitrest:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitrest:${HISTORIAN_IMAGE_TAG:-latest}
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development
@@ -71,7 +71,7 @@ services:
       - git:/home/node/documents
     restart: always
   git:
-    image: mcr.microsoft.com/fluidframework/routerlicious/gitssh:latest
+    image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/gitssh:${HISTORIAN_IMAGE_TAG:-latest}
     ports:
       - "3022:22"
     volumes:

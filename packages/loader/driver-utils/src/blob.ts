@@ -46,7 +46,10 @@ export class TreeTreeEntry {
 	 * @param path - path of entry
 	 * @param value - subtree
 	 */
-	constructor(public readonly path: string, public readonly value: ITree) {}
+	constructor(
+		public readonly path: string,
+		public readonly value: ITree,
+	) {}
 }
 
 /**
@@ -62,7 +65,10 @@ export class AttachmentTreeEntry {
 	 * @param path - path of entry
 	 * @param id - id of external blob attachment
 	 */
-	constructor(public readonly path: string, public readonly id: string) {
+	constructor(
+		public readonly path: string,
+		public readonly id: string,
+	) {
 		this.value = { id };
 	}
 }

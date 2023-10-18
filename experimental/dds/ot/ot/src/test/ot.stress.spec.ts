@@ -88,7 +88,7 @@ describe("SharedOT", () => {
 					const containerRuntimeN =
 						containerRuntimeFactory.createContainerRuntime(dataStoreRuntimeN);
 					const servicesN: IChannelServices = {
-						deltaConnection: containerRuntimeN.createDeltaConnection(),
+						deltaConnection: dataStoreRuntimeN.createDeltaConnection(),
 						objectStorage: new MockStorage(),
 					};
 
@@ -178,6 +178,7 @@ describe("SharedOT", () => {
 
 				// Also dump the current state of the docs.
 				for (const m of docs) {
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					console.log(m.toString());
 				}
 

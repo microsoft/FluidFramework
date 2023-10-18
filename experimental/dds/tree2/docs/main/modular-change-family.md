@@ -49,14 +49,14 @@ are associated with the given revision.
 
 An undefined `revision` field can occur in three cases:
 
-    A) When a revision is specified on an ancestor of the current structure, in which case the changes the current structure (and all nested structures) are associated with that revision.
+    A) When a revision is specified on an ancestor of the current structure, in which case the changes to the current structure (and all nested structures) are associated with that revision.
     B) When the changes in the current structure (or its nested structures) are associated with multiple revisions.
     C) When the changes are associated with an anonymous (i.e., tag-less) edit.
 
 C) Is a special case that will likely be excluded in future implementations.
 For now it is treated as a special case of A).
 
-Note that #1 is special in that A) never applies to is (since it is the root).
+Note that #1 is special in that A) never applies to it (since it is the root).
 Similarly #4 is special in that B) never applies to it (since it only ever represents the change in value prescribed by a single revision).
 
 The above rules mean that, unless a change was contributed by an anonymous edit, at least one populated `revision` field should be encountered when walking down from the root to any given portion of a changeset.
@@ -80,14 +80,14 @@ If none of the three possibilities above yield revision information then an `und
 This can occur in two cases:
 
 -   The changes for the field were contributed by an anonymous change.
--   The change for the field were contributed by multiple changes.
+-   The changes for the field were contributed by multiple changes.
     In this latter case, the `FieldKind`-specific change data
     (which is opaque to `ModularChangeFamily`)
     may contain more precise information about which part of the changes are associated with various revisions,
     but that is entirely left up to the `FieldKind` implementation.
 
 When the `FieldKind`'s `invert` implementation recurses by calling the `NodeChangeInverter`,
-`ModularChangeFamily` is able determine the revision info of the `NodeChangeset` (and nested changes) by taking into account (in order of highest to lowest precedence):
+`ModularChangeFamily` is able to determine the revision info of the `NodeChangeset` (and nested changes) by taking into account (in order of highest to lowest precedence):
 
 -   The revision information associated with the field/value changes for that node (see #2 & #3) if present.
 -   The revision information for the field changes within which the `NodeChangeset` is contained (see #i, #ii, #iii).

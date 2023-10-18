@@ -6,40 +6,12 @@
 import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
 import { ISnapshotTree, ISummaryTree, SummaryObject } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { ReadAndParseBlob } from "@fluidframework/runtime-utils";
 
-/**
- * Return type of refreshSummaryAck function. There can be three different scenarios based on the passed params:
- *
- * 1. The latest summary was not updated.
- *
- * 2. The latest summary was updated and the summary corresponding to the params was tracked by this client.
- *
- * 3. The latest summary was updated but the summary corresponding to the params was not tracked. In this case, the
- * latest snapshot is fetched and the latest summary state is updated based on it.
- */
-export type RefreshSummaryResult =
-	| {
-			latestSummaryUpdated: false;
-	  }
-	| {
-			latestSummaryUpdated: true;
-			wasSummaryTracked: true;
-			summaryRefSeq: number;
-	  }
-	| {
-			latestSummaryUpdated: true;
-			wasSummaryTracked: false;
-			snapshotTree: ISnapshotTree;
-			summaryRefSeq: number;
-	  };
-
-/**
- * Result of snapshot fetch during refreshing latest summary state.
- */
-export interface IFetchSnapshotResult {
-	snapshotTree: ISnapshotTree;
-	snapshotRefSeq: number;
+export interface IRefreshSummaryResult {
+	/** Tells whether this summary is tracked by this client. */
+	isSummaryTracked: boolean;
+	/** Tells whether this summary is newer than the latest one tracked by this client. */
+	isSummaryNewer: boolean;
 }
 
 /**
@@ -70,12 +42,9 @@ export interface ISummarizerNodeRootContract {
 	completeSummary(proposalHandle: string, validate: boolean): void;
 	clearSummary(): void;
 	refreshLatestSummary(
-		proposalHandle: string | undefined,
+		proposalHandle: string,
 		summaryRefSeq: number,
-		fetchLatestSnapshot: () => Promise<IFetchSnapshotResult>,
-		readAndParseBlob: ReadAndParseBlob,
-		correlatedSummaryLogger: ITelemetryLoggerExt,
-	): Promise<RefreshSummaryResult>;
+	): Promise<IRefreshSummaryResult>;
 }
 
 /** Path for nodes in a tree with escaped special characters */

@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import {
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
-	SchemaData,
-	TreeSchemaIdentifier,
+	StoredSchemaCollection,
+	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
-import { FullSchemaPolicy, Multiplicity } from "../../modular-schema";
+import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
 import { fail } from "../../../util";
-import { getFieldKind } from "../../contextuallyTyped";
+import { fieldKinds } from "../../default-field-kinds";
 import { EncodedChunk, EncodedValueShape } from "./format";
 import {
 	EncoderCache,
@@ -33,21 +33,28 @@ import { NodeShape } from "./nodeShape";
  * Optimized for encoded size and encoding performance.
  */
 export function schemaCompressedEncode(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	cursor: ITreeCursorSynchronous,
 ): EncodedChunk {
 	return compressedEncode(cursor, buildCache(schema, policy));
 }
 
-export function buildCache(schema: SchemaData, policy: FullSchemaPolicy): EncoderCache {
+export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
-		(fieldHandler: FieldShaper, schemaName: TreeSchemaIdentifier) =>
+		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
 		(treeHandler: TreeShaper, field: FieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache),
 	);
 	return cache;
+}
+
+export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
+	// TODO:
+	// This module currently is assuming use of defaultFieldKinds.
+	// The field kinds should instead come from a view schema registry thats provided somewhere.
+	return fieldKinds.get(fieldSchema.kind.identifier) ?? fail("missing field kind");
 }
 
 /**
@@ -62,7 +69,7 @@ export function fieldShaper(
 	const type = oneFromSet(field.types);
 	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
 	// eslint-disable-next-line unicorn/prefer-ternary
-	if (kind.multiplicity === Multiplicity.Value) {
+	if (kind.multiplicity === Multiplicity.Single) {
 		return asFieldEncoder(nodeEncoder);
 	} else {
 		return cache.nestedArray(nodeEncoder);
@@ -73,10 +80,10 @@ export function fieldShaper(
  * Selects shapes to use to encode trees.
  */
 export function treeShaper(
-	fullSchema: SchemaData,
+	fullSchema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldHandler: FieldShaper,
-	schemaName: TreeSchemaIdentifier,
+	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
 	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
 
@@ -117,8 +124,10 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Number:
 		case ValueSchema.String:
 		case ValueSchema.Boolean:
-		case ValueSchema.Serializable:
+		case ValueSchema.FluidHandle:
 			return true;
+		case ValueSchema.Null:
+			return [null];
 		default:
 			unreachableCase(schema);
 	}

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, unreachableCase } from "@fluidframework/common-utils";
+import { Uint8ArrayToString } from "@fluid-internal/client-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryTree, ITree, ITreeEntry, SummaryType } from "@fluidframework/protocol-definitions";
 import { AttachmentTreeEntry, BlobTreeEntry, TreeTreeEntry } from "./blob";
 import { isCombinedAppAndProtocolSummary } from "./summaryForCreateNew";

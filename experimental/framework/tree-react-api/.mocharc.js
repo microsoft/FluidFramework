@@ -8,6 +8,6 @@
 const getFluidTestMochaConfig = require("@fluidframework/mocha-test-setup/mocharc-common");
 
 const packageDir = __dirname;
-const config = getFluidTestMochaConfig(packageDir, ["source-map-support/register"]);
+const config = getFluidTestMochaConfig(packageDir);
 config.spec = "dist/test";
 module.exports = config;

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../feature-libraries";
-import { makeAnonChange, Delta, FieldKey } from "../core";
+import { makeAnonChange, Delta, FieldKey, tagChange, mintRevisionTag } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
 
@@ -59,7 +59,8 @@ describe("TestChange", () => {
 
 	it("can be represented as a delta", () => {
 		const change1 = TestChange.mint([0, 1], [2, 3]);
-		const delta = TestChange.toDelta(change1);
+		const tag = mintRevisionTag();
+		const delta = TestChange.toDelta(tagChange(change1, tag));
 		const fooField: FieldKey = brand("foo");
 		const expected = {
 			type: Delta.MarkType.Modify,
@@ -67,7 +68,6 @@ describe("TestChange", () => {
 				[
 					fooField,
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
 						{
 							type: Delta.MarkType.Insert,
 							content: [
@@ -76,6 +76,7 @@ describe("TestChange", () => {
 									value: "2|3",
 								}),
 							],
+							oldContent: { detachId: { major: tag, minor: 424242 } },
 						},
 					],
 				],
@@ -83,7 +84,7 @@ describe("TestChange", () => {
 		};
 
 		assert.deepEqual(delta, expected);
-		assert.deepEqual(TestChange.toDelta(TestChange.mint([0, 1], [])), {
+		assert.deepEqual(TestChange.toDelta(makeAnonChange(TestChange.mint([0, 1], []))), {
 			type: Delta.MarkType.Modify,
 		});
 	});

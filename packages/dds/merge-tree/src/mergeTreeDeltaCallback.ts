@@ -2,8 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { IMergeTreeGroupMsg, IMergeTreeOp, MergeTreeDeltaType } from "./ops";
 import { PropertySet } from "./properties";
 import { ISegment } from "./mergeTreeNodes";
@@ -47,7 +47,7 @@ export const MergeTreeMaintenanceType = {
 	ACKNOWLEDGED: -4,
 } as const;
 export type MergeTreeMaintenanceType =
-	typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+	(typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
@@ -68,6 +68,7 @@ export interface IMergeTreeDeltaOpArgs {
 	 * The group op which contains the operation
 	 * if there operation is part of a group op.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly groupOp?: IMergeTreeGroupMsg;
 	/**
 	 * The merge tree operation

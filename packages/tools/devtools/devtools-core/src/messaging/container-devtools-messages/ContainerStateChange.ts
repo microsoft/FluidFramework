@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { HasContainerKey } from "../../CommonInterfaces";
-import { ContainerStateMetadata } from "../../ContainerMetadata";
-import { IDevtoolsMessage } from "../Messages";
+import { type HasContainerKey } from "../../CommonInterfaces";
+import { type ContainerStateMetadata } from "../../ContainerMetadata";
+import { type IDevtoolsMessage } from "../Messages";
 
 /**
  * Encapsulates types and logic related to {@link ContainerStateChange.Message}.

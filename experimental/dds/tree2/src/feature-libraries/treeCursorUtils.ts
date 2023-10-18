@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	TreeType,
@@ -83,9 +83,7 @@ type SiblingsOrKey<TNode> = readonly TNode[] | readonly FieldKey[];
  */
 export abstract class SynchronousCursor {
 	public readonly [CursorMarker] = true;
-	public get pending(): false {
-		return false;
-	}
+	public readonly pending = false;
 
 	public skipPendingFields(): boolean {
 		return true;
@@ -353,9 +351,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		return this.fieldIndex;
 	}
 
-	public get chunkLength(): number {
-		return 1;
-	}
+	public readonly chunkLength = 1;
 }
 
 /**
@@ -449,7 +445,10 @@ function applyPrefix(prefix: PathRootPrefix, path: UpPath | undefined): UpPath |
 export class PrefixedPath implements UpPath {
 	public readonly parentField: FieldKey;
 	public readonly parentIndex: number;
-	public constructor(public readonly prefix: PathRootPrefix, public readonly path: UpPath) {
+	public constructor(
+		public readonly prefix: PathRootPrefix,
+		public readonly path: UpPath,
+	) {
 		if (path.parent === undefined) {
 			this.parentField = prefix.rootFieldOverride ?? path.parentField;
 			this.parentIndex = path.parentIndex + (prefix.indexOffset ?? 0);

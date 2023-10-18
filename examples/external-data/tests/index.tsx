@@ -106,6 +106,7 @@ setup()
 	.then(() => {
 		console.log("App launched successfully!");
 	})
+	// eslint-disable-next-line unicorn/prefer-top-level-await
 	.catch((error) => {
 		console.error(error);
 		console.log(

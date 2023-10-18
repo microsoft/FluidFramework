@@ -5,6 +5,8 @@
 
 /**
  * Text formatting options.
+ *
+ * @public
  */
 export interface TextFormatting {
 	/**

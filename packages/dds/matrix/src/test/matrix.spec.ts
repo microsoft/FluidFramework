@@ -22,10 +22,9 @@ import { TestConsumer } from "./testconsumer";
 function createConnectedMatrix(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	matrix.connect({
-		deltaConnection: runtimeFactory
-			.createContainerRuntime(dataStoreRuntime)
-			.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	});
 	return matrix;
@@ -43,7 +42,7 @@ function createMatrixForReconnection(
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -69,7 +68,7 @@ describe("Matrix", () => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
 			dataStoreRuntime.local = true;
 
-			// Load the summmary into a newly created 2nd SharedMatrix.
+			// Load the summary into a newly created 2nd SharedMatrix.
 			const matrix2 = new SharedMatrix<T>(
 				dataStoreRuntime,
 				`load(${matrix.id})`,
@@ -276,7 +275,7 @@ describe("Matrix", () => {
 				matrix.insertRows(0, 2);
 				matrix.setCells(0, 0, 2, [0, 1, 2, 3]);
 
-				// The 'matrix' returned by 'expect' is the result of summarizeting and loading 'matrix'.
+				// The 'matrix' returned by 'expect' is the result of summarizing and loading 'matrix'.
 				const matrix2 = await expect([
 					[0, 1],
 					[2, 3],
@@ -681,7 +680,7 @@ describe("Matrix", () => {
 			//           length = 3
 			//           end    = -1 + 3 = 2
 			//
-			//       In which case, pass the empty segment into 'findReconnectionPostition()'.
+			//       In which case, pass the empty segment into 'findReconnectionPosition()'.
 
 			matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 3);
 
@@ -710,7 +709,7 @@ describe("Matrix", () => {
 			//           length = 3
 			//           end    = -1 + 3 = 2
 			//
-			//       In which case, pass the empty segment into 'findReconnectionPostition()'.
+			//       In which case, pass the empty segment into 'findReconnectionPostilion()'.
 
 			matrix1.insertCols(/* colStart: */ 0, /* colCount: */ 3);
 

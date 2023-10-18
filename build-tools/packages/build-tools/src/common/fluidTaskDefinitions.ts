@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { getFluidBuildConfig } from "./fluidUtils";
 import { PackageJson } from "./npmPackage";
 
 /**
@@ -17,13 +16,13 @@ export type TaskDependencies = string[];
 export interface TaskConfig {
 	/**
 	 * Task dependencies as a plain string array.
-	 * The string can specify dependencies:
+	 * The strings specify dependencies for the task
 	 * - "<name>": another task within the package
 	 * - "^<name>": all the task with the name in dependent packages.
 	 *
-	 * When task definition is augmented in the package.json itself the dependencies can be:
+	 * When task definition is augmented in the package.json itself, the dependencies can also be:
 	 * - "<package>#<name>": specific dependent package's task
-	 * - "...": expand to the dependencies in global fluidBuild config
+	 * - "...": expand to the dependencies in global fluidBuild config (default is override)
 	 */
 	dependsOn: TaskDependencies;
 	/**
@@ -31,22 +30,22 @@ export interface TaskConfig {
 	 * in the config file, or the task's config is just a plain string array.
 	 *
 	 * If true, the task will match with the script it the package.json and invoke
-	 * the command once all the dependencies are satisfied.
+	 * the command once all the task's dependencies are satisfied.
 	 *
-	 * If false, the task will only trigger the dependencies. It can be used to define
-	 * group of task for the command line.
+	 * If false, the task will only trigger the dependencies (and not look for the script in package.json).
+	 * It can be used as an alias to a group of tasks.
 	 */
 	script: boolean;
 	/**
-	 * Tasks that this task needs to run before (example clean)
+	 * Tasks that needs to run before the current task (example clean)
 	 * - "<name>": another task within the package
 	 * - "*": any other task within the package
 	 *
-	 * When task definition is augmented in the package.json itself the dependencies can be:
-	 * - "...": expand to the "before in the global fluidBuild config
+	 * When task definition is augmented in the package.json itself, the dependencies can also be:
+	 * - "...": expand to the "before" in the global fluidBuild config
 	 *
-	 * Note that this will affect ordering if the task is already scheduled. It won't
-	 * get the tasks to be scheduled if it isn't already
+	 * Note that this will only affect ordering if matched task is already scheduled. It won't
+	 * get the matched tasks to be scheduled if it isn't already
 	 */
 	before: TaskDependencies;
 }

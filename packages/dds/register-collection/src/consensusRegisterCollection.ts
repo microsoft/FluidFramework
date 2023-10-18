@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, unreachableCase } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
 	IChannelAttributes,
@@ -90,7 +91,9 @@ type PendingResolve = (winner: boolean) => void;
 const snapshotFileName = "header";
 
 /**
- * Implementation of a consensus register collection
+ * {@inheritDoc IConsensusRegisterCollection}
+ *
+ * @public
  */
 export class ConsensusRegisterCollection<T>
 	extends SharedObject<IConsensusRegisterCollectionEvents>

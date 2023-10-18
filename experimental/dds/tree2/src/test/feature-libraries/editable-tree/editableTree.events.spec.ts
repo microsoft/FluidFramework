@@ -13,10 +13,15 @@ import {
 	IEditableForest,
 	PathVisitor,
 	ProtoNodes,
+	DetachedRangeUpPath,
+	DetachedPlaceUpPath,
+	PlaceUpPath,
+	RangeUpPath,
 } from "../../../core";
 import { brand } from "../../../util";
-import { getField, on, singleTextCursor } from "../../../feature-libraries";
+import { getField, jsonableTreeFromCursor, on, singleTextCursor } from "../../../feature-libraries";
 import { IEmitter } from "../../../events";
+import { leaf } from "../../../domains";
 import {
 	fullSchemaData,
 	personData,
@@ -68,11 +73,39 @@ describe("editable-tree: event subscription", () => {
 					visitLog.push(path);
 				},
 				onInsert(path: UpPath, content: ProtoNodes): void {
-					assert.deepEqual(content[0].type, "Test:Address-1.0.0");
-					assert.deepEqual(content[0].value, { zip: "33428" });
+					const jsonable = content.map(jsonableTreeFromCursor);
+					assert.deepEqual(jsonable, [
+						{
+							type: addressSchema.name,
+							fields: {
+								zip: [
+									{
+										type: leaf.number.name,
+										value: 33428,
+									},
+								],
+							},
+						},
+					]);
 					assert.deepEqual(path, node);
 					visitLog.push(path);
 				},
+				afterCreate(content: DetachedRangeUpPath): void {},
+				beforeDestroy(content: DetachedRangeUpPath): void {},
+				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},
+				afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {},
+				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
+				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
+				beforeReplace(
+					newContent: DetachedRangeUpPath,
+					oldContent: RangeUpPath,
+					oldContentDestination: DetachedPlaceUpPath,
+				): void {},
+				afterReplace(
+					newContentSource: DetachedPlaceUpPath,
+					newContent: RangeUpPath,
+					oldContent: DetachedRangeUpPath,
+				): void {},
 			};
 			return visitor;
 		});
@@ -81,7 +114,14 @@ describe("editable-tree: event subscription", () => {
 		const insertContent = [
 			singleTextCursor({
 				type: addressSchema.name,
-				value: { zip: "33428" },
+				fields: {
+					zip: [
+						{
+							type: leaf.number.name,
+							value: 33428,
+						},
+					],
+				},
 			}),
 		];
 		visitors.forEach((visitor) => {
@@ -124,7 +164,7 @@ function accessEmitters(forest: IEditableForest, ...steps: [PathStep, ...PathSte
 
 function retrieveAddressNode() {
 	const forest = setupForest(fullSchemaData, personData);
-	const context = getReadonlyEditableTreeContext(forest);
+	const context = getReadonlyEditableTreeContext(forest, fullSchemaData);
 	const root = context.root.getNode(0);
 	const address = root[getField](fieldAddress).getNode(0);
 	return { address, forest };

@@ -75,6 +75,7 @@ export class CheckpointService implements ICheckpointService {
 					service,
 					checkpoint,
 					this.localCheckpointEnabled,
+					true /* writeToLocalOnFailure */,
 			  ));
 	}
 
@@ -98,8 +99,10 @@ export class CheckpointService implements ICheckpointService {
 		service: string,
 		checkpoint: IScribe | IDeliState,
 		localCheckpointEnabled: boolean,
+		writeToLocalOnFailure: boolean = false,
 	) {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
+		let deleteLocalCheckpoint = true;
 
 		const checkpointFilter = {
 			documentId,
@@ -118,10 +121,27 @@ export class CheckpointService implements ICheckpointService {
 				lumberProperties,
 				error,
 			);
-			throw error;
+			// Only delete local checkpoint if we can successfully write a global checkpoint
+			deleteLocalCheckpoint = false;
+			if (writeToLocalOnFailure && localCheckpointEnabled) {
+				try {
+					Lumberjack.info(
+						`Error writing checkpoint to global database. Writing to local database.`,
+						lumberProperties,
+					);
+					await this.writeLocalCheckpoint(documentId, tenantId, checkpoint);
+				} catch (err) {
+					console.log(
+						`Error writing checkpoint to local database after global database failure.`,
+						lumberProperties,
+						err,
+					);
+					throw err;
+				}
+			}
 		}
 
-		if (localCheckpointEnabled) {
+		if (localCheckpointEnabled && deleteLocalCheckpoint) {
 			try {
 				await this.checkpointRepository.deleteCheckpoint(documentId, tenantId);
 			} catch (error) {

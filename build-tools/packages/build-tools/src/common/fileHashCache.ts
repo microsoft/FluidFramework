@@ -2,22 +2,20 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import crypto from "crypto";
 
+import { sha256 } from "./hash";
 import { readFileAsync } from "./utils";
 
 export class FileHashCache {
 	private fileHashCache = new Map<string, Promise<string>>();
-	private async calcFileHash(path: string) {
-		const content = await readFileAsync(path);
-		return crypto.createHash("sha256").update(content).digest("hex");
-	}
-	public async getFileHash(path: string) {
+
+	public async getFileHash(path: string, hash: (buffer: Buffer) => string = sha256) {
 		const cachedHashP = this.fileHashCache.get(path);
 		if (cachedHashP) {
 			return cachedHashP;
 		}
-		const newHashP = this.calcFileHash(path);
+
+		const newHashP = readFileAsync(path).then(hash);
 		this.fileHashCache.set(path, newHashP);
 		return newHashP;
 	}

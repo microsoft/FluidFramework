@@ -4,13 +4,15 @@
  */
 import React from "react";
 
-import { IMessageRelay } from "@fluid-experimental/devtools-core";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { type IMessageRelay } from "@fluid-experimental/devtools-core";
+import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { DevtoolsView } from "./DevtoolsView";
 import { MessageRelayContext } from "./MessageRelayContext";
 
 /**
  * {@link DevtoolsPanel} input props.
+ *
+ * @public
  */
 export interface DevtoolsPanelProps {
 	/**
@@ -30,17 +32,29 @@ export interface DevtoolsPanelProps {
 	 * inline with the app, it should *not* be used in those cases.
 	 */
 	usageTelemetryLogger?: ITelemetryBaseLogger;
+
+	/**
+	 * Optional function that will be invoked when the React component for the Devtools panel is unloaded.
+	 */
+	unloadCallback?: () => void;
 }
 
 /**
  * Top-level view for the Fluid Devtools.
  *
- * @remarks
+ * @remarks Initializes the message relay context required by internal components.
  *
- * Initializes the message relay context required by internal components.
+ * @public
  */
 export function DevtoolsPanel(props: DevtoolsPanelProps): React.ReactElement {
-	const { usageTelemetryLogger, messageRelay } = props;
+	const { usageTelemetryLogger, messageRelay, unloadCallback } = props;
+
+	React.useEffect(() => {
+		// Called when the React component for the Devtools panel is unloaded.
+		return (): void => {
+			unloadCallback?.();
+		};
+	}, [unloadCallback]);
 
 	return (
 		<MessageRelayContext.Provider value={messageRelay}>

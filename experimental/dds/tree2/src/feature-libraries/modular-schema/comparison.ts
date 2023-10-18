@@ -3,30 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { compareSets, fail } from "../../util";
 import {
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	ValueSchema,
 	FieldStoredSchema,
 	TreeTypeSet,
 	SchemaData,
 	storedEmptyFieldSchema,
 } from "../../core";
-import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
+import { FullSchemaPolicy, Multiplicity, withEditor } from "./fieldKind";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
- * `undefined` TreeStoredSchema means the schema is not present (and thus treated as a NeverTree).
+ * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	original: TreeStoredSchema | undefined,
-	superset: TreeStoredSchema | undefined,
+	original: TreeNodeStoredSchema | undefined,
+	superset: TreeNodeStoredSchema | undefined,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
 		return true;
@@ -92,13 +92,7 @@ export function allowsValueSuperset(
 	original: ValueSchema | undefined,
 	superset: ValueSchema | undefined,
 ): boolean {
-	if (original === superset) {
-		return true;
-	}
-	if (original === undefined) {
-		return false;
-	}
-	return superset === ValueSchema.Serializable;
+	return original === superset;
 }
 
 /**
@@ -112,8 +106,8 @@ export function allowsFieldSuperset(
 	original: FieldStoredSchema,
 	superset: FieldStoredSchema,
 ): boolean {
-	return (
-		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind")
+	return withEditor(
+		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind"),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 
@@ -191,11 +185,11 @@ export function isNeverFieldRecursive(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
 	field: FieldStoredSchema,
-	parentTypeStack: Set<TreeStoredSchema>,
+	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
 	if (
 		(policy.fieldKinds.get(field.kind.identifier) ?? fail("missing field kind"))
-			.multiplicity === Multiplicity.Value &&
+			.multiplicity === Multiplicity.Single &&
 		field.types !== undefined
 	) {
 		for (const type of field.types) {
@@ -226,7 +220,7 @@ export function isNeverFieldRecursive(
 export function isNeverTree(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	tree: TreeStoredSchema | undefined,
+	tree: TreeNodeStoredSchema | undefined,
 ): boolean {
 	return isNeverTreeRecursive(policy, originalData, tree, new Set());
 }
@@ -240,8 +234,8 @@ export function isNeverTree(
 export function isNeverTreeRecursive(
 	policy: FullSchemaPolicy,
 	originalData: SchemaData,
-	tree: TreeStoredSchema | undefined,
-	parentTypeStack: Set<TreeStoredSchema>,
+	tree: TreeNodeStoredSchema | undefined,
+	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
 	if (tree === undefined) {
 		return true;
@@ -255,7 +249,7 @@ export function isNeverTreeRecursive(
 			(
 				policy.fieldKinds.get(normalizeField(tree.mapFields).kind.identifier) ??
 				fail("missing field kind")
-			).multiplicity === Multiplicity.Value
+			).multiplicity === Multiplicity.Single
 		) {
 			return true;
 		}

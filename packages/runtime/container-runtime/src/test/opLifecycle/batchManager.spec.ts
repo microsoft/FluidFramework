@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { BatchManager, BatchMessage, estimateSocketSize } from "../../opLifecycle";
-import { ContainerMessageType } from "../../containerRuntime";
+import { ContainerMessageType } from "../../messageTypes";
 
 describe("BatchManager", () => {
 	const softLimit = 1024;
@@ -19,7 +19,7 @@ describe("BatchManager", () => {
 		({
 			contents: generateStringOfSize(smallMessageSize),
 			type: ContainerMessageType.FluidDataStoreOp,
-		} as any as BatchMessage);
+		}) as any as BatchMessage;
 
 	it("BatchManager's soft limit: a bunch of small messages", () => {
 		const message = { contents: generateStringOfSize(softLimit / 2) } as any as BatchMessage;

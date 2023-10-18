@@ -79,14 +79,17 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 			// SharedCounter was created in beforeEach
 			assert.ok(
 				sharedCounter1,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the counter in container1, instead got ${sharedCounter1}`,
 			);
 			assert.ok(
 				sharedCounter2,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the counter in container2, instead got ${sharedCounter2}`,
 			);
 			assert.ok(
 				sharedCounter3,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the counter in container3, instead got ${sharedCounter3}`,
 			);
 		});

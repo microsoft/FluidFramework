@@ -127,12 +127,12 @@ type Operation = TextOperation | Synchronize;
 interface OperationGenerationConfig {
 	/**
 	 * Maximum length of the SharedString (locally) before no further AddText operations are generated.
-	 * Note due to concurency, during test execution the actual length of the string may exceed this.
+	 * Note due to concurrency, during test execution the actual length of the string may exceed this.
 	 */
 	maxStringLength?: number;
 	/**
 	 * Maximum number of intervals (locally) before no further AddInterval operations are generated.
-	 * Note due to concurency, during test execution the actual number of intervals may exceed this.
+	 * Note due to concurrency, during test execution the actual number of intervals may exceed this.
 	 */
 	maxIntervals?: number;
 	maxInsertLength?: number;
@@ -273,7 +273,7 @@ function createSharedString(
 			const containerRuntime =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 			const services: IChannelServices = {
-				deltaConnection: containerRuntime.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 

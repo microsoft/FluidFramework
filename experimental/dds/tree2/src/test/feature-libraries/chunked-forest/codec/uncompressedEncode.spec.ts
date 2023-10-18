@@ -4,29 +4,26 @@
  */
 
 import { strict as assert } from "assert";
-
 import {
-	decode,
+	makeUncompressedCodec,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding";
-import {
-	uncompressedEncode,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/uncompressedEncode";
+} from "../../../../feature-libraries/chunked-forest/codec/uncompressedCodecs";
 import { testTrees } from "../../../cursorTestSuite";
 import {
 	fieldCursorFromJsonableTrees,
 	jsonableTreesFromFieldCursor,
 } from "../fieldCursorTestUtilities";
+import { typeboxValidator } from "../../../../external-utilities";
 
 describe("uncompressedEncode", () => {
 	describe("test trees", () => {
 		for (const [name, jsonable] of testTrees) {
 			it(name, () => {
 				const input = fieldCursorFromJsonableTrees([jsonable]);
-				const result = uncompressedEncode(input);
-				const decoded = decode(result);
-				const decodedJson = jsonableTreesFromFieldCursor(decoded.cursor());
+				const codec = makeUncompressedCodec({ jsonValidator: typeboxValidator });
+				const result = codec.encode(input);
+				const decoded = codec.decode(result);
+				const decodedJson = jsonableTreesFromFieldCursor(decoded);
 				assert.deepEqual([jsonable], decodedJson);
 			});
 		}

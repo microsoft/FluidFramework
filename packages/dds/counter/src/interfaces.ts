@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-object-base";
+import { type ISharedObject, type ISharedObjectEvents } from "@fluidframework/shared-object-base";
 
 /**
  * Events sent by {@link SharedCounter}.

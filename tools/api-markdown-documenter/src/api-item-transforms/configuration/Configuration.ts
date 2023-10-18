@@ -17,6 +17,8 @@ import {
 
 /**
  * API Item transformation configuration.
+ *
+ * @public
  */
 export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationOptions,
@@ -43,17 +45,20 @@ export interface ApiItemTransformationConfiguration
 /**
  * Gets a complete {@link ApiItemTransformationConfiguration} using the provided partial configuration, and filling
  * in the remainder with the documented defaults.
+ *
+ * @public
  */
 export function getApiItemTransformationConfigurationWithDefaults(
 	inputOptions: ApiItemTransformationConfiguration,
 ): Required<ApiItemTransformationConfiguration> {
+	const logger = inputOptions.logger ?? defaultConsoleLogger;
 	const documentationSuiteOptions = getDocumentationSuiteOptionsWithDefaults(inputOptions);
 	const transformationOptions = getApiItemTransformationOptionsWithDefaults(inputOptions);
 	return {
-		apiModel: inputOptions.apiModel,
-		uriRoot: inputOptions.uriRoot,
-		logger: inputOptions.logger ?? defaultConsoleLogger,
 		...documentationSuiteOptions,
 		...transformationOptions,
+		apiModel: inputOptions.apiModel,
+		uriRoot: inputOptions.uriRoot,
+		logger,
 	};
 }

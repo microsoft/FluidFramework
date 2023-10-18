@@ -65,8 +65,6 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | `build` | `npm run print-config` |
 | `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
 | `format` | `npm run prettier:fix` |
-| `lint` | `npm run prettier` |
-| `lint:fix` | `npm run prettier:fix` |
 | `prettier` | `prettier --check .` |
 | `prettier:fix` | `prettier --write .` |
 | `print-config` | Print all the eslint configs. |

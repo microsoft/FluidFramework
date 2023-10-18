@@ -7,20 +7,18 @@
 import merge from "lodash/merge";
 
 import { v4 as uuid } from "uuid";
-import {
-	TypedEventEmitter,
-	assert,
-	performance,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	IEvent,
 	ITelemetryProperties,
 	TelemetryEventCategory,
 	IRequest,
 	IResponse,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	FluidObject,
+	LogLevel,
 } from "@fluidframework/core-interfaces";
 import {
 	AttachState,
@@ -43,7 +41,6 @@ import {
 	ReadOnlyInfo,
 	isFluidCodeDetails,
 } from "@fluidframework/container-definitions";
-import { GenericError, UsageError } from "@fluidframework/container-utils";
 import {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -92,6 +89,8 @@ import {
 	wrapError,
 	ITelemetryLoggerExt,
 	formatTick,
+	GenericError,
+	UsageError,
 } from "@fluidframework/telemetry-utils";
 import { Audience } from "./audience";
 import { ContainerContext } from "./containerContext";
@@ -123,7 +122,6 @@ import { ConnectionManager } from "./connectionManager";
 import { ConnectionState } from "./connectionState";
 import {
 	IProtocolHandler,
-	OnlyValidTermValue,
 	ProtocolHandler,
 	ProtocolHandlerBuilder,
 	protocolHandlerShouldProcessSignal,
@@ -135,6 +133,8 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
+
+const hasBlobsSummaryTree = ".hasAttachmentBlobs";
 
 /**
  * @internal
@@ -361,7 +361,6 @@ export interface IPendingContainerState {
 	 */
 	savedOps: ISequencedDocumentMessage[];
 	url: string;
-	term: number;
 	clientId?: string;
 }
 
@@ -428,7 +427,11 @@ export class Container
 								// Depending where error happens, we can be attempting to connect to web socket
 								// and continuously retrying (consider offline mode)
 								// Host has no container to close, so it's prudent to do it here
+								// Note: We could only dispose the container instead of just close but that would
+								// the telemetry where users sometimes search for ContainerClose event to look
+								// for load failures. So not removing this at this time.
 								container.close(err);
+								container.dispose(err);
 								onClosed(err);
 							},
 						);
@@ -472,7 +475,11 @@ export class Container
 			container.mc.logger,
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
-				const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+				const deserializedSummary = JSON.parse(snapshot);
+				if (!isCombinedAppAndProtocolSummary(deserializedSummary, hasBlobsSummaryTree)) {
+					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
+				}
+
 				await container.rehydrateDetachedFromSnapshot(deserializedSummary);
 				return container;
 			},
@@ -579,6 +586,7 @@ export class Container
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private baseSnapshot?: ISnapshotTree;
 	private baseSnapshotBlobs?: ISerializableBlobContents;
+	private readonly _containerId: string;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -593,6 +601,10 @@ export class Container
 		return this._deltaManager.connectionManager.connectionMode;
 	}
 
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter(): IFluidRouter {
 		return this;
 	}
@@ -617,7 +629,21 @@ export class Container
 	}
 
 	/**
-	 * Tracks host requiring read-only mode.
+	 * Sends signal to runtime (and data stores) to be read-only.
+	 * Hosts may have read only views, indicating to data stores that no edits are allowed.
+	 * This is independent from this._readonlyPermissions (permissions) and this.connectionMode
+	 * (server can return "write" mode even when asked for "read")
+	 * Leveraging same "readonly" event as runtime & data stores should behave the same in such case
+	 * as in read-only permissions.
+	 * But this.active can be used by some DDSes to figure out if ops can be sent
+	 * (for example, read-only view still participates in code proposals / upgrades decisions)
+	 *
+	 * Forcing Readonly does not prevent DDS from generating ops. It is up to user code to honour
+	 * the readonly flag. If ops are generated, they will accumulate locally and not be sent. If
+	 * there are pending in the outbound queue, it will stop sending until force readonly is
+	 * cleared.
+	 *
+	 * @param readonly - set or clear force readonly.
 	 */
 	public forceReadonly(readonly: boolean) {
 		this._deltaManager.connectionManager.forceReadonly(readonly);
@@ -751,6 +777,7 @@ export class Container
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
+		this._clientId = pendingLocalState?.clientId;
 
 		this._canReconnect = canReconnect ?? true;
 		this.clientDetailsOverride = clientDetailsOverride;
@@ -795,6 +822,8 @@ export class Container
 		const clientType = `${interactive ? "interactive" : "noninteractive"}${
 			type !== undefined && type !== "" ? `/${type}` : ""
 		}`;
+
+		this._containerId = uuid();
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
@@ -802,7 +831,7 @@ export class Container
 			properties: {
 				all: {
 					clientType, // Differentiating summarizer container from main container
-					containerId: uuid(),
+					containerId: this._containerId,
 					docId: () => this.resolvedUrl?.id,
 					containerAttachState: () => this._attachState,
 					containerLifecycleState: () => this._lifecycleState,
@@ -1098,38 +1127,49 @@ export class Container
 	}
 
 	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
-		if (!this.offlineLoadEnabled) {
-			throw new UsageError("Can't get pending local state unless offline load is enabled");
-		}
-		if (this.closed || this._disposed) {
-			throw new UsageError(
-				"Pending state cannot be retried if the container is closed or disposed",
-			);
-		}
-		assert(
-			this.attachState === AttachState.Attached,
-			0x0d1 /* "Container should be attached before close" */,
-		);
-		assert(
-			this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
-			0x0d2 /* "resolved url should be valid Fluid url" */,
-		);
-		assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
-		assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
-		const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
-		const pendingState: IPendingContainerState = {
-			pendingRuntimeState,
-			baseSnapshot: this.baseSnapshot,
-			snapshotBlobs: this.baseSnapshotBlobs,
-			savedOps: this.savedOps,
-			url: this.resolvedUrl.url,
-			term: OnlyValidTermValue,
-			clientId: this.clientId,
-		};
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+				notifyImminentClosure: props.notifyImminentClosure,
+				savedOpsSize: this.savedOps.length,
+				clientId: this.clientId,
+			},
+			async () => {
+				if (!this.offlineLoadEnabled) {
+					throw new UsageError(
+						"Can't get pending local state unless offline load is enabled",
+					);
+				}
+				if (this.closed || this._disposed) {
+					throw new UsageError(
+						"Pending state cannot be retried if the container is closed or disposed",
+					);
+				}
+				assert(
+					this.attachState === AttachState.Attached,
+					0x0d1 /* "Container should be attached before close" */,
+				);
+				assert(
+					this.resolvedUrl !== undefined && this.resolvedUrl.type === "fluid",
+					0x0d2 /* "resolved url should be valid Fluid url" */,
+				);
+				assert(!!this.baseSnapshot, 0x5d4 /* no base snapshot */);
+				assert(!!this.baseSnapshotBlobs, 0x5d5 /* no snapshot blobs */);
+				const pendingRuntimeState = await this.runtime.getPendingLocalState(props);
+				const pendingState: IPendingContainerState = {
+					pendingRuntimeState,
+					baseSnapshot: this.baseSnapshot,
+					snapshotBlobs: this.baseSnapshotBlobs,
+					savedOps: this.savedOps,
+					url: this.resolvedUrl.url,
+					// no need to save this if there is no pending runtime state
+					clientId: pendingRuntimeState !== undefined ? this.clientId : undefined,
+				};
 
-		this.mc.logger.sendTelemetryEvent({ eventName: "GetPendingLocalState" });
-
-		return JSON.stringify(pendingState);
+				return JSON.stringify(pendingState);
+			},
+		);
 	}
 
 	public get attachState(): AttachState {
@@ -1147,7 +1187,7 @@ export class Container
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 		if (this.detachedBlobStorage && this.detachedBlobStorage.size > 0) {
-			combinedSummary.tree[".hasAttachmentBlobs"] = {
+			combinedSummary.tree[hasBlobsSummaryTree] = {
 				type: SummaryType.Blob,
 				content: "true",
 			};
@@ -1304,6 +1344,9 @@ export class Container
 		);
 	}
 
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	public async request(path: IRequest): Promise<IResponse> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -1515,24 +1558,22 @@ export class Container
 		pendingLocalState: IPendingContainerState | undefined,
 		loadToSequenceNumber: number | undefined,
 	) {
+		const timings: Record<string, number> = { phase1: performance.now() };
 		this.service = await this.serviceFactory.createDocumentService(
 			resolvedUrl,
 			this.subLogger,
 			this.client.details.type === summarizerClientType,
 		);
 
-		// Ideally we always connect as "read" by default.
-		// Currently that works with SPO & r11s, because we get "write" connection when connecting to non-existing file.
-		// We should not rely on it by (one of them will address the issue, but we need to address both)
-		// 1) switching create new flow to one where we create file by posting snapshot
-		// 2) Fixing quorum workflows (have retry logic)
-		// That all said, "read" does not work with memorylicious workflows (that opens two simultaneous
-		// connections to same file) in two ways:
-		// A) creation flow breaks (as one of the clients "sees" file as existing, and hits #2 above)
-		// B) Once file is created, transition from view-only connection to write does not work - some bugs to be fixed.
+		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
+		const mode =
+			this.mc.config.getBoolean("Fluid.Container.ForceWriteConnection") === true ||
+			(pendingLocalState?.savedOps.length ?? 0) > 0
+				? "write"
+				: "read";
 		const connectionArgs: IConnectionArgs = {
 			reason: { text: "DocumentOpen" },
-			mode: "write",
+			mode,
 			fetchOpsFromStorage: false,
 		};
 
@@ -1553,6 +1594,7 @@ export class Container
 
 		this._attachState = AttachState.Attached;
 
+		timings.phase2 = performance.now();
 		// Fetch specified snapshot.
 		const { snapshot, versionId } =
 			pendingLocalState === undefined
@@ -1665,11 +1707,13 @@ export class Container
 		// Initialize the protocol handler
 		await this.initializeProtocolStateFromSnapshot(attributes, this.storageAdapter, snapshot);
 
+		timings.phase3 = performance.now();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
 			snapshot,
-			pendingLocalState?.pendingRuntimeState,
+			// give runtime a dummy value so it knows we're loading from a stash blob
+			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
 		);
 
 		// replay saved ops
@@ -1681,13 +1725,6 @@ export class Container
 				await this.runtime.notifyOpReplay?.(message);
 			}
 			pendingLocalState.savedOps = [];
-
-			// now set clientId to stashed clientId so live ops are correctly processed as local
-			assert(
-				this.clientId === undefined,
-				0x5d6 /* Unexpected clientId when setting stashed clientId */,
-			);
-			this._clientId = pendingLocalState?.clientId;
 		}
 
 		// We might have hit some failure that did not manifest itself in exception in this flow,
@@ -1745,7 +1782,15 @@ export class Container
 
 		// Internal context is fully loaded at this point
 		this.setLoaded();
-
+		timings.end = performance.now();
+		this.subLogger.sendTelemetryEvent(
+			{
+				eventName: "LoadStagesTimings",
+				details: JSON.stringify(timings),
+			},
+			undefined,
+			LogLevel.verbose,
+		);
 		return {
 			sequenceNumber: attributes.sequenceNumber,
 			version: versionId,
@@ -1757,7 +1802,6 @@ export class Container
 	private async createDetached(codeDetails: IFluidCodeDetails) {
 		const attributes: IDocumentAttributes = {
 			sequenceNumber: detachedContainerRefSeqNumber,
-			term: OnlyValidTermValue,
 			minimumSequenceNumber: 0,
 		};
 
@@ -1780,12 +1824,13 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-		if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
+		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
 			assert(
 				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
-			delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
 		}
 
 		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
@@ -1823,7 +1868,6 @@ export class Container
 			return {
 				minimumSequenceNumber: 0,
 				sequenceNumber: 0,
-				term: OnlyValidTermValue,
 			};
 		}
 
@@ -1973,6 +2017,7 @@ export class Container
 		client.details.environment = [
 			client.details.environment,
 			` loaderVersion:${pkgVersion}`,
+			` containerId:${this._containerId}`,
 		].join(";");
 		return client;
 	}

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/restrict-plus-operands */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { compareFiniteNumbers, compareFiniteNumbersReversed, fail, Mutable } from '../Common';
 import { FinalCompressedId, LocalCompressedId, SessionSpaceCompressedId } from '../Identifiers';
 import { AppendOnlyDoublySortedMap } from './AppendOnlySortedMap';
@@ -339,7 +339,7 @@ export class SessionIdNormalizer<TRangeObject> {
 		firstAlignedLocal: LocalCompressedId,
 		lastAlignedLocal: LocalCompressedId,
 		lastAlignedFinal: FinalCompressedId,
-		lastFinalRange: FinalRange<TRangeObject>
+		lastFinalRange: FinalRange<TRangeObject>,
 	] {
 		const isSingle = isSingleRange(finalRanges);
 		let lastFinalRange: FinalRange<TRangeObject>;
@@ -466,7 +466,7 @@ export class SessionIdNormalizer<TRangeObject> {
 type FinalRange<TRangeObject> = [
 	firstFinal: FinalCompressedId,
 	lastFinal: FinalCompressedId,
-	rangeObject: TRangeObject
+	rangeObject: TRangeObject,
 ];
 
 type FinalRangesMap<TRangeObject> = AppendOnlyDoublySortedMap<

@@ -227,6 +227,8 @@ export interface IChannelServices {
 /**
  * Definitions of a channel factory.
  *
+ * @remarks
+ *
  * The runtime must be able to produce "channels" of the correct in-memory object type for the collaborative session.
  * Here "channels" are typically distributed data structures (DDSs).
  *
@@ -235,10 +237,12 @@ export interface IChannelServices {
  * (ops), which indicate a new instance of a channel being introduced to the collaboration session, to produce the
  * appropriate in-memory object.
  *
- * @example If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
- * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
+ * Factories follow a common model but enable custom behavior.
  *
- * @remarks Factories follow a common model but enable custom behavior.
+ * @example
+ *
+ * If a collaboration includes a {@link https://fluidframework.com/docs/data-structures/map/ | SharedMap},
+ * the collaborating clients will need to have access to a factory that can produce the `SharedMap` object.
  */
 export interface IChannelFactory {
 	/**

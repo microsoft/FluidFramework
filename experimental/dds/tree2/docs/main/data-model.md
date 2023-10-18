@@ -93,7 +93,7 @@ Values are used to store scalar data, such as numbers and booleans.
 
 From the perspective of the SharedTree data model, values are [**_opaque_**](https://en.wikipedia.org/wiki/Opaque_data_type), immutable byte sequences.
 
-In practice, node values are Fluid [**_serializable_**](https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/datastore-definitions/src/serializable.ts) types and can be interpreted us such using schema information.
+In practice, node values are Fluid [**_serializable_**](https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/datastore-definitions/src/serializable.ts) types and can be interpreted as such using schema information.
 
 ### Field
 
@@ -142,7 +142,7 @@ This section covers fields that receive special treatment in the SharedTree data
 These fields are special because:
 
 -   They have reserved keys
--   They are universally available on all nodes (regardless of schema.)
+-   They are universally available on all nodes (regardless of schema)
 -   They can not be targeted by normal tree operations.
 
 #### Type
@@ -186,6 +186,6 @@ Of note:
 
 # Appendix A: Notes
 
--   We chose the term 'field' in because it is convenient to have a term that is distinct from the 'properties' that result when the domain model is projected to an API.
-    ('field' also happens to align with GraphQL.)
+-   We chose the term 'field' because it is convenient to have a term that is distinct from the 'properties' that result when the domain model is projected to an API
+    ('field' also happens to align with GraphQL).
 -   We chose the term 'key' because it sounds more opaque than 'name' or 'label', both of which conjure the notion of something that is human readable.

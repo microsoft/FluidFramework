@@ -8,11 +8,13 @@ import Sinon from "sinon";
 import { TestEngine1, TestEngine2, TestLumberjack } from "../lumberjackCommonTestUtils";
 import { LumberEventName } from "../lumberEventNames";
 import * as resources from "../resources";
+import { setGlobalLumberjackInstance } from "../lumberjack";
 
 describe("Lumberjack", () => {
 	afterEach(() => {
 		TestLumberjack.reset();
 		Sinon.restore();
+		setGlobalLumberjackInstance(undefined);
 	});
 
 	it("Sets up Lumberjack's global instance and creates a Lumber metric.", () => {

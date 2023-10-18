@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
 	mapCursorFields,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	SimpleObservingDependent,
 	recordDependency,
 	Value,
@@ -17,6 +17,7 @@ import {
 	StoredSchemaRepository,
 	CursorLocationType,
 	SchemaData,
+	StoredSchemaCollection,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
 import { fail } from "../../util";
@@ -90,7 +91,7 @@ export class Chunker implements IChunker {
 	 * Corresponds to the version of the schema in `schema`.
 	 * Cleared when `schema` changes.
 	 */
-	private readonly typeShapes: Map<TreeSchemaIdentifier, ShapeInfo> = new Map();
+	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
 
 	/**
 	 * Tracks the dependencies on `schema`.
@@ -107,8 +108,8 @@ export class Chunker implements IChunker {
 		private readonly tryShapeFromSchema: (
 			schema: SchemaData,
 			policy: FullSchemaPolicy,
-			type: TreeSchemaIdentifier,
-			shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
+			type: TreeNodeSchemaIdentifier,
+			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
 	) {
 		this.dependent = new SimpleObservingDependent(() => this.schemaChanged());
@@ -127,7 +128,7 @@ export class Chunker implements IChunker {
 		);
 	}
 
-	public shapeFromSchema(schema: TreeSchemaIdentifier): ShapeInfo {
+	public shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo {
 		const cached = this.typeShapes.get(schema);
 		if (cached !== undefined) {
 			return cached;
@@ -194,10 +195,10 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
 }
 
 export function shapesFromSchema(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-): Map<TreeSchemaIdentifier, ShapeInfo> {
-	const shapes: Map<TreeSchemaIdentifier, ShapeInfo> = new Map();
+): Map<TreeNodeSchemaIdentifier, ShapeInfo> {
+	const shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
 	for (const identifier of schema.treeSchema.keys()) {
 		tryShapeFromSchema(schema, policy, identifier, shapes);
 	}
@@ -210,10 +211,10 @@ export function shapesFromSchema(
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
 export function tryShapeFromSchema(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-	type: TreeSchemaIdentifier,
-	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
+	type: TreeNodeSchemaIdentifier,
+	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): ShapeInfo {
 	const cached = shapes.get(type);
 	if (cached) {
@@ -243,14 +244,14 @@ export function tryShapeFromSchema(
  * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
  */
 export function tryShapeFromFieldSchema(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	type: FieldStoredSchema,
 	key: FieldKey,
-	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
+	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
 	const kind = policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
-	if (kind.multiplicity !== Multiplicity.Value) {
+	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}
 	if (type.types?.size !== 1) {
@@ -312,7 +313,7 @@ export interface ChunkPolicy {
 	/**
 	 * Returns information about the shapes trees of type `schema` can take.
 	 */
-	shapeFromSchema(schema: TreeSchemaIdentifier): ShapeInfo;
+	shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo;
 }
 
 function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): BasicChunk {
@@ -466,7 +467,7 @@ export function uniformChunkFromCursor(
 	// TODO:
 	// This could have a fast path for consuming already uniformly chunked data with matching shape.
 
-	const values: TreeValue = [];
+	const values: TreeValue[] = [];
 	let topLevelLength = 1;
 	while (topLevelLength <= maxTopLevelLength) {
 		insertValues(cursor, shape, values);

@@ -5,14 +5,16 @@
 import { EventEmitter } from "events";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
-import { assert, performance } from "@fluidframework/common-utils";
-import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import {
+	createChildLogger,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils";
+import { assert } from "@fluidframework/core-utils";
+import { performance } from "@fluid-internal/client-utils";
+import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { DeltaScheduler } from "./deltaScheduler";
 import { pkgVersion } from "./packageVersion";
 import { IBatchMetadata } from "./metadata";
@@ -269,6 +271,7 @@ class ScheduleManagerCore {
 					{
 						runtimeVersion: pkgVersion,
 						batchClientId:
+							// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 							this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 						pauseSequenceNumber: this.pauseSequenceNumber,
 						localBatch: this.currentBatchClientId === this.getClientId(),
@@ -304,6 +307,7 @@ class ScheduleManagerCore {
 			throw new DataCorruptionError("OpBatchIncomplete", {
 				runtimeVersion: pkgVersion,
 				batchClientId:
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 					this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 				pauseSequenceNumber: this.pauseSequenceNumber,
 				localBatch: this.currentBatchClientId === this.getClientId(),

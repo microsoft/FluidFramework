@@ -4,13 +4,18 @@
  */
 
 /**
- * This utility type is meant for internal use by {@link FluidObject}
  * Produces a valid FluidObject key given a type and a property.
+ *
+ * @remarks
+ *
  * A valid FluidObject key is a property that exists on the incoming type
  * as well as on the type of the property itself. For example: `IProvideFoo.IFoo.IFoo`
  * This aligns with the FluidObject pattern expected to be used with all FluidObjects.
  *
+ * This utility type is meant for internal use by {@link FluidObject}
+ *
  * @example
+ *
  * ```typescript
  * interface IProvideFoo{
  *  IFoo: IFoo
@@ -19,9 +24,9 @@
  *  foobar();
  * }
  * ```
- * This pattern enables discovery, and delegation in a standard way which is central
- * to FluidObject pattern
  *
+ * This pattern enables discovery, and delegation in a standard way which is central
+ * to FluidObject pattern.
  */
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp
 	? never
@@ -42,7 +47,9 @@ export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string
  * FluidObject without a generic argument.
  *
  * @example
- * For example, if we have an interface like below
+ *
+ * For example, if we have an interface like the following:
+ *
  * ```typescript
  * interface IProvideFoo{
  *  IFoo: IFoo

@@ -4,8 +4,9 @@
  */
 
 import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils";
-import { delay, performance } from "@fluidframework/common-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { performance } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import { canRetryOnError, getRetryDelayFromError } from "./network";
 import { pkgVersion } from "./packageVersion";
 import { NonRetryableError } from ".";
@@ -80,19 +81,17 @@ export async function runWithRetry<T>(
 						retry: numRetries,
 						duration: performance.now() - startTime,
 						fetchCallName,
-						// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
-						reason: (progress.cancel as AbortSignal & { reason: any }).reason,
+						reason: progress.cancel.reason,
 					},
 					err,
 				);
 				throw new NonRetryableError(
 					"runWithRetry was Aborted",
-					DriverErrorType.genericError,
+					DriverErrorTypes.genericError,
 					{
 						driverVersion: pkgVersion,
 						fetchCallName,
-						// TODO: Remove when typescript version of the repo contains the AbortSignal.reason property (AB#5045)
-						reason: (progress.cancel as AbortSignal & { reason: any }).reason,
+						reason: progress.cancel.reason,
 					},
 				);
 			}
@@ -146,7 +145,7 @@ const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
  * not related to endpoint, in that case we want to try at faster pace and hence the max wait is lesser 8s as compared
  * to when endpoint is reachable in which case it is 30s.
  * @param error - error based on which we decide max wait time.
- * @returns - Max wait time.
+ * @returns Max wait time.
  */
 export function calculateMaxWaitTime(error: unknown): number {
 	return isFluidError(error) && error.getTelemetryProperties().endpointReached === true

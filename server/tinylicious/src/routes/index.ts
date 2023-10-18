@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import { Provider } from "nconf";
@@ -18,9 +21,16 @@ export function create(
 	config: Provider,
 	mongoManager: MongoManager,
 	documentStorage: IDocumentStorage,
+	// eslint-disable-next-line import/no-deprecated
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	return {
-		ordering: ordering.create(config, documentStorage, mongoManager),
+		ordering: ordering.create(
+			config,
+			documentStorage,
+			mongoManager,
+			collaborationSessionEventEmitter,
+		),
 		storage: storage.create(config),
 	};
 }

@@ -20,9 +20,9 @@ function createConnectedSequence(id: string, runtimeFactory: MockContainerRuntim
 		id,
 		SharedObjectSequenceFactory.Attributes,
 	);
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(undefined),
 	};
 	sequence.connect(services);

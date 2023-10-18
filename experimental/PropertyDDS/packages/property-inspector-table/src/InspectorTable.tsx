@@ -239,7 +239,7 @@ class InspectorTable<
 	private readonly columns: any;
 	private readonly debouncedSearchChange: (searchExpression: string) => void;
 	private readonly table;
-	private toTableRowOptions: IToTableRowsOptions;
+	private readonly toTableRowOptions: IToTableRowsOptions;
 	public state: IInspectorTableState;
 
 	public constructor(props: Readonly<IInspectorTableProps<T>>) {
@@ -376,6 +376,7 @@ class InspectorTable<
 
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
+				// eslint-disable-next-line react/no-direct-mutation-state
 				this.state.tableRows = updatedTableRows;
 				// We still need to add it to the new state to trigger a re-render of the table.
 				newState.tableRows = updatedTableRows;

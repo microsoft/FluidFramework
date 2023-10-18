@@ -1,3 +1,4 @@
+// DEPRECATED. USE `api-extractor-base.json` INSTEAD.
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "./api-extractor-common-report.json",

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { MessageLoggingOptions } from "@fluid-experimental/devtools-core";
+import { type MessageLoggingOptions } from "@fluid-experimental/devtools-core";
 
 /**
  * Devtools Script context label for console logging.

@@ -25,7 +25,7 @@ import { Context } from "./context";
  */
 export class Partition extends EventEmitter {
 	private readonly q: QueueObject<IQueuedMessage>;
-	private lambdaP: Promise<IPartitionLambda> | undefined;
+	private lambdaP: Promise<IPartitionLambda> | Promise<void> | undefined;
 	private lambda: IPartitionLambda | undefined;
 	private readonly checkpointManager: CheckpointManager;
 	private readonly context: Context;
@@ -64,8 +64,8 @@ export class Partition extends EventEmitter {
 		}, 1);
 		this.q.pause();
 
-		this.lambdaP = factory.create(undefined, this.context);
-		this.lambdaP
+		this.lambdaP = factory
+			.create(undefined, this.context)
 			.then((lambda) => {
 				this.lambda = lambda;
 				this.lambdaP = undefined;

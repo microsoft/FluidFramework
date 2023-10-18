@@ -11,7 +11,7 @@ import {
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { deepFreeze, isDeltaVisible } from "../../utils";
@@ -26,7 +26,7 @@ import {
 } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -74,7 +74,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 		(i) => [
 			{ count: i },
 			Mark.revive(
-				[singleTextCursor({ type, value: 1 })],
+				1,
 				{
 					revision: tag1,
 					localId: brand(0),
@@ -275,6 +275,18 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertA);
 		assert.deepEqual(insertB3.change, insertB.change);
+	});
+
+	// This test fails due to the rebaser incorrectly interpreting the order of the cell created by `insertT` and the cell targeted by `deleteB`.
+	// See BUG 5351
+	it.skip("(Insert, delete) ↷ adjacent insert", () => {
+		const insertT = tagChange(Change.insert(0, 1), tag1);
+		const insertA = tagChange(Change.insert(0, 1), tag2);
+		const deleteB = tagChange(Change.delete(0, 1), tag3);
+		const insertA2 = rebaseTagged(insertA, insertT);
+		const inverseA = tagRollbackInverse(invert(insertA), tag4, insertA.revision);
+		const deleteB2 = rebaseTagged(deleteB, inverseA, insertT, insertA2);
+		assert.deepEqual(deleteB2.change, deleteB.change);
 	});
 
 	it("Nested inserts composition", () => {

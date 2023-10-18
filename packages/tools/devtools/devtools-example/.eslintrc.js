@@ -21,6 +21,7 @@ module.exports = {
 
 		// Disabled because they conflict with Prettier.
 		"unicorn/no-nested-ternary": "off",
+		"import/no-extraneous-dependencies": "off",
 	},
 	overrides: [
 		{

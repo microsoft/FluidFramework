@@ -4,7 +4,7 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { ChangeRebaser, makeAnonChange } from "../../core";
 
 enum Operation {

@@ -35,7 +35,7 @@ const EncodedChunkShape = Type.Object(
 	unionOptions,
 );
 
-const version = "test format";
+const version = 1.0;
 
 type Constant = Static<typeof Constant>;
 type StringShape = Static<typeof StringShape>;

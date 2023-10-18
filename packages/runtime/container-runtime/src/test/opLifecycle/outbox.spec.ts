@@ -28,10 +28,10 @@ import {
 } from "../../opLifecycle";
 import {
 	CompressionAlgorithms,
-	ContainerMessageType,
 	ICompressionRuntimeOptions,
 	makeLegacySendBatchFn,
 } from "../../containerRuntime";
+import { ContainerMessageType } from "../../messageTypes";
 
 describe("Outbox", () => {
 	const maxBatchSizeInBytes = 1024;

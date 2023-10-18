@@ -6,13 +6,11 @@
 export {
 	FieldStoredSchema,
 	ValueSchema,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
-	TreeSchemaIdentifierSchema,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeSchemaIdentifierSchema as TreeSchemaIdentifierSchema,
 	FieldKey,
 	FieldKeySchema,
-	NamedTreeSchema,
-	Named,
 	TreeTypeSet,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
@@ -21,11 +19,13 @@ export {
 	PrimitiveValueSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
+	StoredSchemaCollection,
 } from "./schema";
 export {
 	StoredSchemaRepository,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	SchemaEvents,
+	cloneSchemaData,
 } from "./storedSchemaRepository";
 export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";

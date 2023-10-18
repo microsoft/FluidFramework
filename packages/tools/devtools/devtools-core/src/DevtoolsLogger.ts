@@ -3,19 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 
 import {
 	GetTelemetryHistory,
 	handleIncomingWindowMessage,
-	IDevtoolsMessage,
-	InboundHandlers,
-	MessageLoggingOptions,
+	type IDevtoolsMessage,
+	type InboundHandlers,
+	type MessageLoggingOptions,
 	postMessagesToWindow,
 	TelemetryHistory,
 	TelemetryEvent,
 } from "./messaging";
-import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
+import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata";
 
 /**
  * Logger implementation that posts all telemetry events to the window (globalThis object).

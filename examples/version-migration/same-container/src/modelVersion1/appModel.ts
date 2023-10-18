@@ -4,7 +4,7 @@
  */
 
 import type { ISameContainerMigrationTool } from "@fluid-example/example-utils";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";

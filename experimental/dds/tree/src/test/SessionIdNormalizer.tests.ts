@@ -302,7 +302,7 @@ function itWithNormalizer(title: string, itFn: (normalizer: SessionIdNormalizer<
 			prevLocal = localExpected;
 			prevFinal = finalExpected;
 
-			const sessionIdExpected = localExpected === undefined ? finalExpected : localExpected;
+			const sessionIdExpected = localExpected ?? finalExpected;
 			const sessionIdActualAll = allIds[i];
 			const sessionIdActualNormalized =
 				finalExpected === undefined ? localExpected : normalizer.getSessionSpaceId(finalExpected);

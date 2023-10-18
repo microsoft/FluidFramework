@@ -13,6 +13,8 @@ import * as base64js from "base64-js";
  * @param encoding - Optional target encoding; only "utf8" and "base64" are
  * supported, with "utf8" being default.
  * @returns The converted string.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
 	switch (encoding) {
@@ -35,6 +37,8 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
  * {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8} string to array buffer.
  *
  * @param encoding - The input string's encoding.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike =>
 	IsoBuffer.from(input, encoding).buffer;
@@ -45,6 +49,8 @@ export const stringToBuffer = (input: string, encoding: string): ArrayBufferLike
  * @param blob - the binary blob
  * @param encoding - output string's encoding
  * @returns the blob in string format
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
 	IsoBuffer.from(blob).toString(encoding);
@@ -60,6 +66,8 @@ export const bufferToString = (blob: ArrayBufferLike, encoding: string): string 
  * ignoring byteOffice, length).
  *
  * @param obj - The object to determine if it is an ArrayBuffer.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export function isArrayBuffer(obj: any): obj is ArrayBuffer {
 	const maybe = obj as (Partial<ArrayBuffer> & Partial<Uint8Array>) | undefined;
@@ -76,6 +84,8 @@ export function isArrayBuffer(obj: any): obj is ArrayBuffer {
 
 /**
  * Minimal implementation of Buffer for our usages in the browser environment.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export class IsoBuffer extends Uint8Array {
 	/**

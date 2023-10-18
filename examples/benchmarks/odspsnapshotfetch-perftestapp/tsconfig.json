@@ -6,7 +6,6 @@
 		"outDir": "lib",
 		"jsx": "react",
 		"composite": true,
-		"types": ["node"],
 	},
 	"include": ["src/**/*"],
 }

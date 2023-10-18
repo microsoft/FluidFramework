@@ -13,9 +13,9 @@ import {
 	ICollection,
 } from "@fluidframework/server-services-core";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { runnerHttpServerStop } from "../utils";
 import * as app from "./app";
 import { ITenantDocument } from "./tenantManager";
 

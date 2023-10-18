@@ -6,9 +6,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ILoader } from "@fluidframework/container-definitions";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createRemoveRangeOp,
 	Marker,
@@ -55,7 +56,10 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 	private state: EditorState;
 	private editorView: EditorView | undefined;
 
-	constructor(private readonly text: SharedString, private readonly loader: ILoader) {
+	constructor(
+		private readonly text: SharedString,
+		private readonly loader: ILoader,
+	) {
 		super();
 
 		this.plugin = new Plugin({
@@ -288,8 +292,10 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					/* eslint-disable import/no-deprecated */
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
+					/* eslint-enable import/no-deprecated */
 
 					break;
 				}
@@ -352,8 +358,10 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 						operations = operations.concat(sliceOperations);
 					}
 
+					/* eslint-disable import/no-deprecated */
 					const groupOp = createGroupOp(...operations);
 					this.text.groupOperation(groupOp);
+					/* eslint-enable import/no-deprecated */
 
 					break;
 				}

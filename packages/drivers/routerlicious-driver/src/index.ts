@@ -8,7 +8,7 @@ export { DefaultTokenProvider } from "./defaultTokenProvider";
 export { ITokenProvider, ITokenResponse, ITokenService } from "./tokens";
 
 // Errors
-export { RouterliciousErrorType } from "./errorUtils";
+export { RouterliciousErrorType, RouterliciousErrorTypes } from "./errorUtils";
 
 // Factory
 export {

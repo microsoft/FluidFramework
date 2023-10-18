@@ -5,9 +5,9 @@
 import crypto from "crypto";
 import fs from "fs";
 
-import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
 import { IEvent, ITelemetryBaseEvent, ITelemetryLogger } from "@fluidframework/core-interfaces";
-import { LazyPromise } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITelemetryBufferedLogger } from "@fluidframework/test-driver-definitions";
 
@@ -63,6 +63,7 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 			const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
 			const data = logs.reduce(
 				(file, event) =>
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
 				schema.join(","),
 			);

@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, TelemetryDataTag } from "@fluidframework/telemetry-utils";
-import { assert, unreachableCase } from "@fluidframework/common-utils";
+import { ITelemetryLoggerExt, TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { FluidObject, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	AliasResult,
@@ -171,7 +170,7 @@ class DataStore implements IDataStore {
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IDataStore.entryPoint}
 	 */
-	get entryPoint(): IFluidHandle<FluidObject> | undefined {
+	get entryPoint(): IFluidHandle<FluidObject> {
 		return this.fluidDataStoreChannel.entryPoint;
 	}
 

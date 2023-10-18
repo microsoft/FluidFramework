@@ -5,6 +5,8 @@
 
 /**
  * A deferred creates a promise and the ability to resolve or reject it
+ *
+ * @deprecated Moved to the `@fluidframework/core-utils` package.
  */
 export class Deferred<T> {
 	private readonly p: Promise<T>;

@@ -8,7 +8,7 @@ import {
 	BatchBindingContext,
 	BinderOptions,
 	BindingType,
-	BindTree,
+	BindPolicy,
 	compileSyntaxTree,
 	createBinderOptions,
 	createDataBinderBuffering,
@@ -30,15 +30,14 @@ import { fieldPhones, retrieveNodes } from "./editableTree.binder.spec";
 
 describe("Data binder benchmarks", () => {
 	describe("Direct data binder", () => {
-		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
-		const options: BinderOptions = createBinderOptions({
-			matchPolicy: "subtree",
-		});
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `Direct data binder: single insert callback`,
 			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+				const { tree, root, address } = retrieveNodes();
+				const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
+				const options: BinderOptions = createBinderOptions({});
+
 				let time = 0;
 				do {
 					const dataBinder: DataBinder<OperationBinderEvents> = createDataBinderDirect(
@@ -64,16 +63,15 @@ describe("Data binder benchmarks", () => {
 	});
 
 	describe("Invalidation data binder", () => {
-		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
-		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
-		});
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `Invalidation data binder: single insert invalidation callback`,
 			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+				const { tree, root, address } = retrieveNodes();
+				const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
+				const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+					autoFlushPolicy: "afterBatch",
+				});
 				let time = 0;
 				do {
 					const dataBinder: FlushableDataBinder<InvalidationBinderEvents> =
@@ -97,16 +95,15 @@ describe("Data binder benchmarks", () => {
 	});
 
 	describe("Buffering data binder", () => {
-		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
-		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
-		});
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `Buffering data binder: single insert callback`,
 			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+				const { tree, root, address } = retrieveNodes();
+				const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
+				const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+					autoFlushPolicy: "afterBatch",
+				});
 				let time = 0;
 				do {
 					const dataBinder: FlushableDataBinder<OperationBinderEvents> =
@@ -131,12 +128,6 @@ describe("Data binder benchmarks", () => {
 
 	for (const listeners of [10, 50, 100, 500, 1000]) {
 		describe(`Buffering data binder, invoke ${listeners} listener of ${2 * listeners}`, () => {
-			const { tree, root, address } = retrieveNodes();
-			const bindTree: BindTree = compileSyntaxTree({ address: true });
-			const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-				autoFlushPolicy: "afterBatch",
-				matchPolicy: "subtree",
-			});
 			benchmark({
 				type: BenchmarkType.Measurement,
 				title: `Buffering data binder: single insert callback, invoke  ${listeners} listener of ${
@@ -144,6 +135,12 @@ describe("Data binder benchmarks", () => {
 				}`,
 				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
 					let time = 0;
+					const { tree, root, address } = retrieveNodes();
+					const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
+					const options: FlushableBinderOptions<ViewEvents> =
+						createFlushableBinderOptions({
+							autoFlushPolicy: "afterBatch",
+						});
 					do {
 						const dataBinder: FlushableDataBinder<OperationBinderEvents> =
 							createDataBinderBuffering(tree.events, options);
@@ -168,16 +165,15 @@ describe("Data binder benchmarks", () => {
 		});
 	}
 	describe("Buffering data binder, batched notification", () => {
-		const { tree, root, address } = retrieveNodes();
-		const bindTree: BindTree = compileSyntaxTree({ address: true });
-		const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
-			autoFlushPolicy: "afterBatch",
-			matchPolicy: "subtree",
-		});
 		benchmark({
 			type: BenchmarkType.Measurement,
 			title: `Buffering data binder: batch callback`,
 			benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+				const { tree, root, address } = retrieveNodes();
+				const bindTree: BindPolicy = compileSyntaxTree({ address: true }, "subtree");
+				const options: FlushableBinderOptions<ViewEvents> = createFlushableBinderOptions({
+					autoFlushPolicy: "afterBatch",
+				});
 				let time = 0;
 				do {
 					const dataBinder: FlushableDataBinder<OperationBinderEvents> =
@@ -205,7 +201,7 @@ function registerLoop(
 	listeners: number,
 	dataBinder: FlushableDataBinder<OperationBinderEvents>,
 	root: EditableTree,
-	bindTree: BindTree,
+	bindTree: BindPolicy,
 ) {
 	for (let i = 0; i < listeners; i++) {
 		dataBinder.register(

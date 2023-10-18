@@ -39,13 +39,10 @@ below steps if you'd like to run a local version of the service or need to make 
 
 #### For Development
 
--   [Node v16.x](https://nodejs.org/en/)
+-   [Node v18.x](https://nodejs.org/en/)
 -   [Node-gyp](https://github.com/nodejs/node-gyp) dependencies
     -   (Notes for Windows users, **not** using [WSL](https://docs.microsoft.com/en-us/windows/wsl/about)):
         -   The easiest way to install the dependencies is with windows-build-tools: `npm install --global --production windows-build-tools`
-        -   The version of `node-gyp` pulled in by our current version of `Node.js` (16.x.x) **is not** compatible with Visual Studio 2022.
-            This has been fixed on more recent versions of `node-gyp`, but until we update to a more recent version of `Node.js`, we recommend using an earlier version of Visual Studio / its build tools.
-            Version 17 seems to be stable.
 
 ### Development
 

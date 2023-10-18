@@ -5,7 +5,7 @@
 import { ApiEnum, ApiEnumMember, ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
 import { DocumentationNode, SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../ApiItemUtilities";
+import { filterByKind } from "../../utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createMemberTables, wrapInSection } from "../helpers";
 
@@ -53,5 +53,5 @@ export function transformApiEnum(
 		}
 	}
 
-	return config.createChildContentSections(apiEnum, sections, config);
+	return config.createDefaultLayout(apiEnum, sections, config);
 }

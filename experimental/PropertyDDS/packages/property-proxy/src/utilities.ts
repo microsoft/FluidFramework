@@ -288,8 +288,7 @@ export namespace Utilities {
 	 * @param key - The key to check.
 	 * @return True if `key` contains a caret.
 	 */
-	export const containsCaret = (key: string) =>
-		String(key) === key && key[key.length - 1] === "^";
+	export const containsCaret = (key: string) => String(key) === key && key.endsWith("^");
 
 	/**
 	 * This method handles the proxification of child properties and also takes care of the special cases,
@@ -358,8 +357,10 @@ export namespace Utilities {
 				const typeid = other_property.getTypeid();
 				const fullTypeid = other_property.getFullTypeid();
 				if (typeid === "Uint64") {
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					return PropertyFactory.create("Uint64", "single", propertyAtKey).toString();
 				} else if (typeid === "Int64") {
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					return PropertyFactory.create("Int64", "single", propertyAtKey).toString();
 				} else if (
 					fullTypeid.includes("<enum<") &&

@@ -48,11 +48,11 @@ export async function ErrorPopup<
 		if (isPromise<K, ReturnType<T>>(result)) {
 			const caughtPromise = result.catch((err) => processError(err));
 			if (catchErr) {
-				return caughtPromise;
+				return await caughtPromise;
 			}
-			return result;
+			return await result;
 		} else {
-			return Promise.resolve(result);
+			return await Promise.resolve(result);
 		}
 	} catch (err: any) {
 		processError(err);

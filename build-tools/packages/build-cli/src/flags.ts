@@ -160,6 +160,7 @@ export const testModeFlag = Flags.boolean({
  * You must use these flags in your command logic in order for them to have any effect.
  *
  * @example
+ *
  * All of the check flags can be used like this:
  *
  * ```
@@ -169,6 +170,7 @@ export const testModeFlag = Flags.boolean({
  * ```
  *
  * @example
+ *
  * You can also use them individually like so:
  *
  * ```

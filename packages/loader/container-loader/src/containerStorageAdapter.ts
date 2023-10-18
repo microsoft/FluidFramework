@@ -5,7 +5,8 @@
 
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions";
 import {
 	FetchSource,
@@ -98,12 +99,6 @@ export class ContainerStorageAdapter implements IDocumentStorageService, IDispos
 				this.addProtocolSummaryIfMissing,
 			);
 		}
-
-		// ensure we did not lose that policy in the process of wrapping
-		assert(
-			storageService.policies?.minBlobSize === this._storageService.policies?.minBlobSize,
-			0x0e0 /* "lost minBlobSize policy" */,
-		);
 	}
 
 	public loadSnapshotForRehydratingContainer(snapshotTree: ISnapshotTreeWithBlobContents) {

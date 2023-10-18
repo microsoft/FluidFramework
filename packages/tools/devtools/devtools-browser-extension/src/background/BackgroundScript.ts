@@ -4,16 +4,16 @@
  */
 
 import {
-	ISourcedDevtoolsMessage,
+	type ISourcedDevtoolsMessage,
 	devtoolsMessageSource,
 	isDevtoolsMessage,
 } from "@fluid-experimental/devtools-core";
 
 import { browser } from "../Globals";
 import {
-	DevToolsInitAcknowledgement,
+	type DevToolsInitAcknowledgement,
 	devToolsInitAcknowledgementType,
-	DevToolsInitMessage,
+	type DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
 	postMessageToPort,
@@ -87,7 +87,9 @@ browser.runtime.onConnect.addListener((devtoolsPort: Port): void => {
 						);
 					}
 
-					tabConnection = browser.tabs.connect(tabId, { name: "Content Script" });
+					tabConnection = browser.tabs.connect(tabId, {
+						name: "Background-Content-Port",
+					});
 
 					console.log(
 						formatBackgroundScriptMessageForLogging(`Connected to tab: ${tabId}.`),

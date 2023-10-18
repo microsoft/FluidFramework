@@ -37,7 +37,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.ContainerRuntime.Test.SummaryStateUpdateMethodV2"] = "restart";
 		settings["Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs"] = 100;
 	});
 
@@ -45,20 +44,17 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing",
 		[
 			{
-				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
-				message: "Stopping fetch from storage",
+				eventName:
+					"fluid:telemetry:Summarizer:Running:RefreshLatestSummaryFromServerFetch_end",
 			},
 			{
 				eventName: "fluid:telemetry:Container:ContainerDispose",
 				category: "generic",
 			},
 			{
-				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
-			},
-			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				category: "generic",
-				error: "disconnected",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			},
 		],
 		async () => {
@@ -84,15 +80,11 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing with two clients",
 		[
 			{
-				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
-				message: "Stopping fetch from storage",
+				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
 			},
 			{
 				eventName: "fluid:telemetry:Container:ContainerDispose",
 				category: "generic",
-			},
-			{
-				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
 			},
 		],
 		async () => {
@@ -126,15 +118,8 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		"Closes the summarizing client instead of refreshing when loading from an older summary",
 		[
 			{
-				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
-				message: "Stopping fetch from storage",
-			},
-			{
 				eventName: "fluid:telemetry:Container:ContainerDispose",
 				category: "generic",
-			},
-			{
-				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
 			},
 		],
 		async () => {
@@ -181,20 +166,17 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 			{ eventName: "fluid:telemetry:Summarizer:Running:GarbageCollection_cancel" },
 			{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
 			{
-				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
-				message: "Stopping fetch from storage",
+				eventName:
+					"fluid:telemetry:Summarizer:Running:RefreshLatestSummaryFromServerFetch_end",
 			},
 			{
 				eventName: "fluid:telemetry:Container:ContainerDispose",
 				category: "generic",
 			},
 			{
-				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
-			},
-			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				category: "generic",
-				error: "disconnected",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			},
 		],
 		async () => {

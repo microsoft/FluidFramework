@@ -14,7 +14,7 @@ graph LR;
         fieldMap--Values-->FieldStoredSchema["Global FieldStoredSchema"]
         stored-->treeMap["Tree Schema Map"]
         treeMap--Keys-->TreeSchemaIdentifiers
-        treeMap--Values-->TreeStoredSchema
+        treeMap--Values-->TreeNodeStoredSchema
         tree[Tree]
         tree-.->TreeSchemaIdentifiers
         tree-.->GlobalFieldKeys
@@ -34,7 +34,7 @@ graph LR;
         vfieldMap--Values-->vFieldSchema["Global FieldStoredSchema"]
         view-->vtreeMap["Tree Schema Map"]
         vtreeMap--Keys-->vTreeSchemaIdentifiers["TreeSchemaIdentifiers"]
-        vtreeMap--Values-->vTreeSchema["TreeStoredSchema"]
+        vtreeMap--Values-->vTreeSchema["TreeNodeStoredSchema"]
     end
 ```
 
@@ -307,7 +307,7 @@ Readonly (for most people) public schema documents would compose interestingly w
 
 Even if we can't make it work as a separate DDS, it should be implemented such that it would be easy to reuse the code as a schema-DDS.
 
-## Typescript Typing
+## TypeScript Typing
 
 It is be possible to have an embedded DSL for schema declaration in the style of [typebox](https://www.npmjs.com/package/@sinclair/typebox) which produces both compile time types and runtime schema data.
 This allows for schema-aware APIs (for example for tree reading and editing) to be provided without code gen.

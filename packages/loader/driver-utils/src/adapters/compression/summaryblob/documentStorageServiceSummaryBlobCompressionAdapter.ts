@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer, assert } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentStorageService, ISummaryContext } from "@fluidframework/driver-definitions";
 import {
 	ISnapshotTree,
@@ -47,9 +48,9 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	}
 
 	/**
-	 * This method returns true if there is a compression markup byte in the blob, otherwise false.
+	 * This method returns `true` if there is a compression markup byte in the blob, otherwise `false`.
 	 * @param blob - The blob to compress.
-	 * @returns - True if there is a compression markup byte in the blob, otherwise false.
+	 * @returns `true` if there is a compression markup byte in the blob, otherwise `false`.
 	 */
 	private static hasPrefix(blob: ArrayBufferLike): boolean {
 		const firstByte = IsoBuffer.from(blob)[0];
@@ -72,7 +73,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * This method writes the given algorithm to the blob as the first byte.
 	 * @param blob - The blob to write the algorithm to.
 	 * @param algorithm - The algorithm to write.
-	 * @returns - The blob with the algorithm as the first byte.
+	 * @returns The blob with the algorithm as the first byte.
 	 */
 	private static writeAlgorithmToBlob(blob: ArrayBufferLike, algorithm: number): ArrayBufferLike {
 		if (algorithm === SummaryCompressionAlgorithm.None) {
@@ -96,7 +97,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	/**
 	 * This method removes the algorithm markup prefix from the blob (1 byte)
 	 * @param blob - The blob to remove the prefix from.
-	 * @returns - The blob without the prefix.
+	 * @returns The blob without the prefix.
 	 */
 	private static removePrefixFromBlobIfPresent(blob: ArrayBufferLike): ArrayBufferLike {
 		const blobView = new Uint8Array(blob);
@@ -108,7 +109,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * it is just returned as is. If the parameter is string, it is converted to Uint8Array using
 	 * TextEncoder.
 	 * @param input - The input to convert to Uint8Array.
-	 * @returns - The Uint8Array representation of the input.
+	 * @returns The Uint8Array representation of the input.
 	 */
 	private static toBinaryArray(input: string | Uint8Array): Uint8Array {
 		return typeof input === "string" ? new TextEncoder().encode(input) : input;
@@ -119,7 +120,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * containing  the compression algorithm.
 	 * @param input - The summary object to encode.
 	 * @param config - The config containing the compression algorithm.
-	 * @returns - The summary object with the encoded blob.
+	 * @returns The summary object with the encoded blob.
 	 */
 	private static readonly blobEncoder = (
 		input: SummaryObject,
@@ -146,7 +147,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	/**
 	 * This method decodes the blob inside the given summary object of the SummaryType.Blob type.
 	 * @param input - The summary object to decode.
-	 * @returns - The summary object with the decoded blob.
+	 * @returns The summary object with the decoded blob.
 	 */
 	private static readonly blobDecoder = (input: SummaryObject): SummaryObject => {
 		if (input.type === SummaryType.Blob) {
@@ -170,7 +171,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * This method encodes the given blob according to the given config.
 	 * @param file - The blob to encode.
 	 * @param config - The config to use for encoding.
-	 * @returns - The encoded blob.
+	 * @returns The encoded blob.
 	 */
 	private static encodeBlob(
 		file: ArrayBufferLike,
@@ -199,7 +200,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	/**
 	 * This method decodes the given blob.
 	 * @param file - The blob to decode.
-	 * @returns - The decoded blob.
+	 * @returns The decoded blob.
 	 */
 	private static decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
@@ -231,7 +232,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param decoder - The decoder function to use.
 	 * @param config - The config to use for encoding.
 	 * @param context - The summary context.
-	 * @returns - The summary object with the encoded/decoded blob.
+	 * @returns The summary object with the encoded/decoded blob.
 	 */
 	private static recursivelyReplace(
 		isEncode: boolean,
@@ -274,7 +275,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * it returns the summary tree containing that blob.
 	 *
 	 * @param summary - The summary tree to traverse.
-	 * @returns - The summary tree containing the metadata blob.
+	 * @returns The summary tree containing the metadata blob.
 	 */
 	private static findMetadataHolderSummary(summary: ISummaryTree): ISummaryTree | undefined {
 		assert(typeof summary === "object", 0x6f7 /* summary must be a non-null object */);
@@ -298,7 +299,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * This method obtains the summary tree containing the metadata blob. It returns the content
 	 * of the tree atribute.
 	 * @param summary - The summary tree to traverse.
-	 * @returns - The content of the tree attribute of the summary tree containing the metadata blob.
+	 * @returns The content of the tree attribute of the summary tree containing the metadata blob.
 	 */
 	private static getMetadataHolderTree(summary: ISummaryTree) {
 		const metadataHolder = this.findMetadataHolderSummary(summary);
@@ -325,7 +326,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * it checks, if the SummaryTree holder of that object also contains the compression markup blob. If it is found,
 	 * it returns true, otherwise false.
 	 * @param snapshot - The snapshot tree to traverse.
-	 * @returns - True if the compression markup blob is found, otherwise false.
+	 * @returns True if the compression markup blob is found, otherwise false.
 	 */
 	private static hasCompressionMarkup(snapshot: ISnapshotTree): boolean {
 		assert(typeof snapshot === "object", 0x6f9 /* snapshot must be a non-null object */);
@@ -353,7 +354,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * This method performs compression of the blobs in the summary tree.
 	 * @param summary - The summary tree to compress.
 	 * @param config - The compression config.
-	 * @returns - The compressed summary tree.
+	 * @returns The compressed summary tree.
 	 */
 	public static compressSummary(
 		summary: ISummaryTree,
@@ -374,7 +375,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	/**
 	 * This method read blob from the storage and decompresses it if it is compressed.
 	 * @param id - The id of the blob to read.
-	 * @returns - The decompressed blob.
+	 * @returns The decompressed blob.
 	 */
 	public override async readBlob(id: string): Promise<ArrayBufferLike> {
 		const originalBlob = await super.readBlob(id);
@@ -394,7 +395,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * algorithm byte prefix and store them.
 	 * @param version - The version of the snapshot tree to load.
 	 * @param scenarioName - The scenario name of the snapshot tree to load.
-	 * @returns - The snapshot tree.
+	 * @returns The snapshot tree.
 	 */
 	public override async getSnapshotTree(
 		version?: IVersion | undefined,
@@ -413,7 +414,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * This method uploads the summary to the storage. It performs compression of the blobs in the summary tree.
 	 * @param summary - The summary tree to upload.
 	 * @param context - The summary context.
-	 * @returns - The ID of the uploaded summary.
+	 * @returns The ID of the uploaded summary.
 	 */
 	public override async uploadSummaryWithContext(
 		summary: ISummaryTree,
@@ -429,7 +430,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	/**
 	 * This method downloads the summary from the storage and then applies decompression on the compressed blobs.
 	 * @param id - The ID of the summary to be downloaded
-	 * @returns - The summary with decompressed blobs
+	 * @returns The summary with decompressed blobs
 	 */
 	public override async downloadSummary(id: ISummaryHandle): Promise<ISummaryTree> {
 		const summary = await super.downloadSummary(id);

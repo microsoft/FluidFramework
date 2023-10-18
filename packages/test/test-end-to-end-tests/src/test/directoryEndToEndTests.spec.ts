@@ -106,14 +106,17 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 			// Directory was created in beforeEach
 			assert.ok(
 				sharedDirectory1,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the directory in root1, instead got ${sharedDirectory1}`,
 			);
 			assert.ok(
 				sharedDirectory2,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the directory in root2, instead got ${sharedDirectory2}`,
 			);
 			assert.ok(
 				sharedDirectory3,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the directory in root3, instead got ${sharedDirectory3}`,
 			);
 		});

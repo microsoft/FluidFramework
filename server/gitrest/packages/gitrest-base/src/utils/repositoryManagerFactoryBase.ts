@@ -54,6 +54,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
 		apiMetricsSamplingPeriod?: number,
+		isEphemeralContainer?: boolean,
 	): IRepositoryManager;
 
 	constructor(
@@ -264,6 +265,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				lumberjackBaseProperties,
 				this.enableRepositoryManagerMetrics,
 				this.apiMetricsSamplingPeriod,
+				params.isEphemeralContainer,
 			);
 		};
 

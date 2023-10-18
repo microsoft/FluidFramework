@@ -2,12 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
+
 import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { singleTextCursor } from "../../../feature-libraries";
 import { brand, fail } from "../../../util";
-import { toJsonableTree, validateTreeConsistency } from "../../utils";
+import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { FieldUpPath } from "../../../core";
 import {
@@ -24,8 +24,8 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 		const { contents } = operation;
 		switch (contents.type) {
 			case "fieldEdit": {
-				const tree = state.channel;
-				applyFieldEdit(tree, contents);
+				const tree = state.client.channel;
+				applyFieldEdit(tree.view, contents);
 				break;
 			}
 			default:
@@ -35,14 +35,14 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 	},
 	transaction: async (state, operation) => {
 		const { contents } = operation;
-		const tree = state.channel;
-		applyTransactionEdit(tree, contents);
+		const tree = state.client.channel;
+		applyTransactionEdit(tree.view, contents);
 		return state;
 	},
 	undoRedo: async (state, operation) => {
 		const { contents } = operation;
-		const tree = state.channel;
-		applyUndoRedoEdit(tree, contents);
+		const tree = state.client.channel;
+		applyUndoRedoEdit(tree.view, contents);
 		return state;
 	},
 	synchronizeTrees: async (state) => {
@@ -52,12 +52,8 @@ export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<Shar
 });
 
 export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
-	const lastTree = toJsonableTree(trees[trees.length - 1]);
-	for (let i = 0; i < trees.length - 1; i++) {
-		const actual = toJsonableTree(trees[i]);
-		// Uncomment to get a merged view of the trees
-		// const mergedView = merge(actual, lastTree);
-		assert.deepEqual(actual, lastTree);
+	for (const tree of trees) {
+		validateTreeConsistency(trees[0], tree);
 	}
 }
 

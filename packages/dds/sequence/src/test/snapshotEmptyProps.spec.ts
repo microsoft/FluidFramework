@@ -27,7 +27,7 @@ describe("SharedString Snapshot Version - Empty Props", () => {
 		const dataStoreRuntime = new MockFluidDataStoreRuntime();
 		const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 		const services = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(JSON.parse(serializedSnapshot)),
 		};
 		const sharedString = new SharedString(dataStoreRuntime, id, SharedStringFactory.Attributes);

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState } from "@fluidframework/container-definitions";
-import { ConnectionState } from "@fluidframework/container-loader";
-import { HasContainerKey } from "./CommonInterfaces";
+import { type AttachState } from "@fluidframework/container-definitions";
+import { type ConnectionState } from "@fluidframework/container-loader";
+import { type HasContainerKey } from "./CommonInterfaces";
 
 /**
  * Metadata describing a {@link @fluidframework/container-definitions#IContainer}'s core state.

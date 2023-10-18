@@ -6,6 +6,7 @@
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
+const Dotenv = require("dotenv-webpack");
 
 const sourceDirectoryPath = path.resolve(__dirname, "src");
 
@@ -48,9 +49,22 @@ module.exports = {
 	module: {
 		rules: [
 			{
+				test: /\.m?js/,
+				type: "javascript/auto",
+			},
+			{
+				test: /\.m?js/,
+				resolve: {
+					fullySpecified: false,
+				},
+			},
+			{
 				test: /\.tsx?$/,
 				loader: "ts-loader",
 				exclude: /node_modules/,
+				resolve: {
+					fullySpecified: false,
+				},
 			},
 		],
 	},
@@ -66,6 +80,10 @@ module.exports = {
 				// Copy HTML resources from source
 				{ from: "**/*.html", to: ".", context: "src" },
 			],
+		}),
+		new Dotenv({
+			path: "./.env",
+			systemvars: true,
 		}),
 	],
 };

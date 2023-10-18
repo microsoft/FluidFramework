@@ -3,4 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export { LabelCellLayout, LabelCellLayoutProps } from "./LabelCellLayout";
+export type { LabelCellLayoutProps } from "./LabelCellLayout";
+export { LabelCellLayout } from "./LabelCellLayout";

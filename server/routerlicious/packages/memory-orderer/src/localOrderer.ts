@@ -292,8 +292,6 @@ export class LocalOrderer implements IOrderer {
 					undefined,
 					undefined,
 					checkpointService,
-					true,
-					true,
 				);
 			},
 		);
@@ -398,6 +396,7 @@ export class LocalOrderer implements IOrderer {
 			true,
 			true,
 			true,
+			this.details.value.isEphemeralContainer,
 		);
 	}
 

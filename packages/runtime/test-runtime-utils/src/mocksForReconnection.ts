@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
@@ -55,9 +55,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 
 		// Let the DDSes know that the connection state changed.
-		this.deltaConnections.forEach((dc) => {
-			dc.setConnectionState(this.connected);
-		});
+		this.dataStoreRuntime.setConnectionState(this.connected, this.clientId);
 	}
 
 	private _connected = true;
