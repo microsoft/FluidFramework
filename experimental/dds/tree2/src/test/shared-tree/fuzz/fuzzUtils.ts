@@ -29,7 +29,7 @@ export type FuzzNodeSchema = typeof fuzzNode;
 
 export type FuzzNode = StructTyped<FuzzNodeSchema>;
 
-export const fuzzSchema = builder.toDocumentSchema(fuzzNode.structFieldsObject.optionalF);
+export const fuzzSchema = builder.intoSchema(fuzzNode.structFieldsObject.optionalF);
 
 export function fuzzViewFromTree(tree: ISharedTree): ISharedTreeView {
 	return tree.schematize({
