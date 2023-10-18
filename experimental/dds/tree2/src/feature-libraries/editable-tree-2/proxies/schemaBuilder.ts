@@ -11,7 +11,7 @@ import {
 	FieldSchema,
 	InternalTypedSchemaTypes,
 	StructSchema,
-	TreeSchema,
+	TreeNodeSchema,
 	Unenforced,
 } from "../../typed-schema";
 import { ProxyNode, SharedTreeObject } from "./types";
@@ -32,7 +32,7 @@ export function getFactoryContent(x: unknown): unknown | undefined {
  * Creates `{@link SharedTreeObject}`s of some type via a `create` method.
  * @alpha
  */
-export interface SharedTreeObjectFactory<TSchema extends TreeSchema<any, any>> {
+export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<any, any>> {
 	/**
 	 * Create a {@link SharedTreeObject} that can be inserted into the tree via assignment `=`.
 	 * @param content - the data making up the {@link SharedTreeObject} to be created.
@@ -45,17 +45,17 @@ export interface SharedTreeObjectFactory<TSchema extends TreeSchema<any, any>> {
 	): SharedTreeObject<Assume<TSchema, StructSchema>>;
 }
 
-class FactoryTreeSchema<
+class FactoryTreeNodeSchema<
 		Name extends string = string,
 		T extends
 			Unenforced<InternalTypedSchemaTypes.TreeSchemaSpecification> = InternalTypedSchemaTypes.TreeSchemaSpecification,
 	>
-	extends TreeSchema<Name, T>
-	implements SharedTreeObjectFactory<TreeSchema<Name, T>>
+	extends TreeNodeSchema<Name, T>
+	implements SharedTreeObjectFactory<TreeNodeSchema<Name, T>>
 {
 	public create(
-		content: ProxyNode<Assume<TreeSchema<Name, T>, StructSchema>, "javaScript">,
-	): SharedTreeObject<Assume<TreeSchema<Name, T>, StructSchema>> {
+		content: ProxyNode<Assume<TreeNodeSchema<Name, T>, StructSchema>, "javaScript">,
+	): SharedTreeObject<Assume<TreeNodeSchema<Name, T>, StructSchema>> {
 		const node = {};
 		// Shallow copy the content and then add the type name symbol to it.
 		// The copy is necessary so that the input `content` object can be re-used as the contents of a different typed/named node in another `create` call.
@@ -69,7 +69,7 @@ class FactoryTreeSchema<
 				enumerable: true,
 			});
 		}
-		return node as SharedTreeObject<Assume<TreeSchema<Name, T>, StructSchema>>;
+		return node as SharedTreeObject<Assume<TreeNodeSchema<Name, T>, StructSchema>>;
 	}
 }
 
@@ -85,8 +85,8 @@ export class StructFactorySchemaBuilder<
 	public override struct<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(name: Name, t: T): TreeSchemaWithObjectFactory<`${TScope}.${Name}`, TDefaultKind, T> {
-		const schema = new FactoryTreeSchema(this, this.scoped(name), {
+	>(name: Name, t: T): TreeNodeSchemaWithObjectFactory<`${TScope}.${Name}`, TDefaultKind, T> {
+		const schema = new FactoryTreeNodeSchema(this, this.scoped(name), {
 			structFields: transformObjectMap(
 				t,
 				(field): FieldSchema => this.normalizeField(field),
@@ -94,23 +94,26 @@ export class StructFactorySchemaBuilder<
 				[key in keyof T]: NormalizeField<T[key], TDefaultKind>;
 			},
 		});
-		this.addNodeSchema(schema as TreeSchema);
+		this.addNodeSchema(schema as TreeNodeSchema);
 		// TODO: It's not clear why this cast is necessary. I'd expect `schema` to satisfy the return type without coercion.
-		return schema as TreeSchemaWithObjectFactory<`${TScope}.${Name}`, TDefaultKind, T>;
+		return schema as TreeNodeSchemaWithObjectFactory<`${TScope}.${Name}`, TDefaultKind, T>;
 	}
 }
 
 /**
- * A {@link TreeSchema} for a tree object which is also a {@link SharedTreeObjectFactory} that can create insertable tree objects of its type.
+ * A {@link TreeNodeSchema} for a tree object which is also a {@link SharedTreeObjectFactory} that can create insertable tree objects of its type.
  * @alpha
  */
-export type TreeSchemaWithObjectFactory<
+export type TreeNodeSchemaWithObjectFactory<
 	Name extends string,
 	TDefaultKind extends FieldKind,
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-> = TreeSchema<Name, { structFields: { [key in keyof T]: NormalizeField<T[key], TDefaultKind> } }> &
+> = TreeNodeSchema<
+	Name,
+	{ structFields: { [key in keyof T]: NormalizeField<T[key], TDefaultKind> } }
+> &
 	SharedTreeObjectFactory<
-		TreeSchema<
+		TreeNodeSchema<
 			Name,
 			{ structFields: { [key in keyof T]: NormalizeField<T[key], TDefaultKind> } }
 		>

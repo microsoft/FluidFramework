@@ -9,7 +9,7 @@ import {
 	Delta,
 	FieldKey,
 	ITreeCursorSynchronous,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	mintRevisionTag,
 	ChangesetLocalId,
 	makeAnonChange,
@@ -29,7 +29,7 @@ import { assertMarkListEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 import { composeAnonChanges, toDelta } from "./utils";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
 const content = [nodeX];
 const contentCursor: ITreeCursorSynchronous[] = [singleTextCursor(nodeX)];
@@ -41,7 +41,7 @@ const tag2: RevisionTag = mintRevisionTag();
 const deltaMoveId = brandOpaque<Delta.MoveId>(0);
 const fooField = brand<FieldKey>("foo");
 
-const DUMMY_REVIVED_NODE_TYPE: TreeSchemaIdentifier = brand("DummyRevivedNode");
+const DUMMY_REVIVED_NODE_TYPE: TreeNodeSchemaIdentifier = brand("DummyRevivedNode");
 
 function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
 	return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));

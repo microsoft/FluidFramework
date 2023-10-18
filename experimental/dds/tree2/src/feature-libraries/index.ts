@@ -136,13 +136,13 @@ export {
 } from "./modular-schema";
 
 export {
-	TreeSchema,
+	TreeNodeSchema,
 	AllowedTypes,
 	FieldSchema,
 	DocumentSchema,
 	Any,
 	SchemaLibraryData,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	InternalTypedSchemaTypes,
 	ViewSchema,
 	SchemaLintConfiguration,
@@ -161,6 +161,7 @@ export {
 	AllowedTypeSet,
 	markEager,
 	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 
 export {
@@ -268,10 +269,12 @@ export {
 	SharedTreeObject,
 	is,
 	ProxyRoot,
+	node,
+	SharedTreeNode,
 	Typed,
 	StructFactorySchemaBuilder,
 	SharedTreeObjectFactory,
-	TreeSchemaWithObjectFactory,
+	TreeNodeSchemaWithObjectFactory,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

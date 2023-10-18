@@ -14,7 +14,7 @@ import {
 	NormalizeAllowedTypes,
 	NormalizeField,
 	SchemaBuilderOptions,
-	TreeSchema,
+	TreeNodeSchema,
 	MapFieldSchema,
 	normalizeField,
 	StructFactorySchemaBuilder,
@@ -46,7 +46,7 @@ export class SchemaBuilder<
 	TScope extends string = string,
 	TName extends string | number = string,
 > extends StructFactorySchemaBuilder<TScope, typeof FieldKinds.required, TName> {
-	private readonly structuralTypes: Map<string, TreeSchema> = new Map();
+	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	public constructor(options: SchemaBuilderOptions<TScope>) {
 		super(FieldKinds.required, {
@@ -56,10 +56,10 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link TreeSchema} for a {@link FieldNode} of a {@link Sequence}.
+	 * Define (and add to this library if not already present) a structurally typed {@link TreeNodeSchema} for a {@link FieldNode} of a {@link Sequence}.
 	 *
 	 * @remarks
-	 * The {@link TreeSchemaIdentifier} for this List is defined as a function of the provided types.
+	 * The {@link TreeNodeSchemaIdentifier} for this List is defined as a function of the provided types.
 	 * It is still scoped to this SchemaBuilder, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
 	 * This does not support recursive types.
 	 *
@@ -72,9 +72,9 @@ export class SchemaBuilder<
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
 	 */
-	public list<const T extends TreeSchema | Any | readonly TreeSchema[]>(
+	public list<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeSchema<
+	): TreeNodeSchema<
 		`${TScope}.List<${string}>`,
 		{
 			structFields: {
@@ -84,14 +84,14 @@ export class SchemaBuilder<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link TreeSchema} for a {@link FieldNode} of a {@link Sequence}.
+	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link FieldNode} of a {@link Sequence}.
 	 *
-	 * The name must be unique among all TreeSchema in the the document schema.
+	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
 	public list<Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
-	): TreeSchema<
+	): TreeNodeSchema<
 		`${TScope}.${Name}`,
 		{
 			structFields: {
@@ -101,9 +101,9 @@ export class SchemaBuilder<
 	>;
 
 	public list<const T extends ImplicitAllowedTypes>(
-		nameOrAllowedTypes: TName | ((T & TreeSchema) | Any | readonly TreeSchema[]),
+		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | Any | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeSchema<
+	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		{
 			structFields: {
@@ -112,11 +112,14 @@ export class SchemaBuilder<
 		}
 	> {
 		if (allowedTypes === undefined) {
-			const types = nameOrAllowedTypes as (T & TreeSchema) | Any | readonly TreeSchema[];
+			const types = nameOrAllowedTypes as
+				| (T & TreeNodeSchema)
+				| Any
+				| readonly TreeNodeSchema[];
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedList(fullName, nameOrAllowedTypes as T),
-			) as TreeSchema<
+			) as TreeNodeSchema<
 				`${TScope}.${string}`,
 				{
 					structFields: {
@@ -129,9 +132,9 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeSchema} for a {@link FieldNode} of a {@link Sequence}.
+	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link FieldNode} of a {@link Sequence}.
 	 *
-	 * The name must be unique among all TreeSchema in the the document schema.
+	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 *
 	 * @privateRemarks
 	 * TODO: If A custom "List" API is added as a subtype of {@link FieldNode}, this would opt into that.
@@ -139,7 +142,7 @@ export class SchemaBuilder<
 	private namedList<Name extends TName | string, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
-	): TreeSchema<
+	): TreeNodeSchema<
 		`${TScope}.${Name}`,
 		{
 			structFields: {
@@ -147,7 +150,7 @@ export class SchemaBuilder<
 			};
 		}
 	> {
-		const schema = new TreeSchema(this, this.scoped(name as TName & Name), {
+		const schema = new TreeNodeSchema(this, this.scoped(name as TName & Name), {
 			structFields: { [""]: this.sequence(allowedTypes) },
 		});
 		this.addNodeSchema(schema);
@@ -155,10 +158,10 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link TreeSchema} for a {@link MapNode}.
+	 * Define (and add to this library if not already present) a structurally typed {@link TreeNodeSchema} for a {@link MapNode}.
 	 *
 	 * @remarks
-	 * The {@link TreeSchemaIdentifier} for this Map is defined as a function of the provided types.
+	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
 	 * It is still scoped to this SchemaBuilder, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
 	 * This does not support recursive types.
 	 *
@@ -167,9 +170,9 @@ export class SchemaBuilder<
 	 * @privateRemarks
 	 * See note on list.
 	 */
-	public override map<const T extends TreeSchema | Any | readonly TreeSchema[]>(
+	public override map<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeSchema<
+	): TreeNodeSchema<
 		`${TScope}.Map<${string}>`,
 		{
 			mapFields: NormalizeField<T, typeof FieldKinds.optional>;
@@ -177,27 +180,30 @@ export class SchemaBuilder<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link TreeSchema} for a {@link MapNode}.
+	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link MapNode}.
 	 */
 	public override map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(
 		name: Name,
 		fieldSchema: T,
-	): TreeSchema<
+	): TreeNodeSchema<
 		`${TScope}.${Name}`,
 		{ mapFields: NormalizeField<T, typeof FieldKinds.optional> }
 	>;
 
 	public override map<const T extends MapFieldSchema | ImplicitAllowedTypes>(
-		nameOrAllowedTypes: TName | ((T & TreeSchema) | Any | readonly TreeSchema[]),
+		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | Any | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeSchema<
+	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		{
 			mapFields: NormalizeField<T, typeof FieldKinds.optional>;
 		}
 	> {
 		if (allowedTypes === undefined) {
-			const types = nameOrAllowedTypes as (T & TreeSchema) | Any | readonly TreeSchema[];
+			const types = nameOrAllowedTypes as
+				| (T & TreeNodeSchema)
+				| Any
+				| readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
 			return getOrCreate(
 				this.structuralTypes,
@@ -206,8 +212,8 @@ export class SchemaBuilder<
 					super.map(
 						fullName as TName,
 						normalizeField(nameOrAllowedTypes as T, FieldKinds.optional),
-					) as TreeSchema,
-			) as TreeSchema<
+					) as TreeNodeSchema,
+			) as TreeNodeSchema<
 				`${TScope}.${string}`,
 				{
 					mapFields: NormalizeField<T, typeof FieldKinds.optional>;
@@ -234,7 +240,7 @@ export class SchemaBuilder<
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.optional` to {@link FieldSchema.create}.
 	 *
-	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link FieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly optional = SchemaBuilder.optional;
@@ -255,7 +261,7 @@ export class SchemaBuilder<
 	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link ImplicitFieldSchema}
 	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link RequiredField}.
 	 *
-	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link FieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly required = SchemaBuilder.required;
@@ -274,7 +280,7 @@ export class SchemaBuilder<
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.sequence` to {@link FieldSchema.create}.
 	 *
-	 * Since this creates a {@link FieldSchema} (and not a {@link TreeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link FieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
@@ -316,19 +322,19 @@ function fieldHelper<Kind extends FieldKind>(kind: Kind) {
 
 export function structuralName<const T extends string>(
 	collectionName: T,
-	allowedTypes: TreeSchema | Any | readonly TreeSchema[],
+	allowedTypes: TreeNodeSchema | Any | readonly TreeNodeSchema[],
 ): `${T}<${string}>` {
 	let inner: string;
 	if (allowedTypes === Any) {
 		inner = "Any";
-	} else if (allowedTypes instanceof TreeSchema) {
+	} else if (allowedTypes instanceof TreeNodeSchema) {
 		return structuralName(collectionName, [allowedTypes]);
 	} else {
 		assert(Array.isArray(allowedTypes), "Types should be an array");
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
-			assert(t instanceof TreeSchema, "invalid type provided");
-			// TypeScript should know `t.name` is a string (from the extends constraint on TreeSchema's name), but the linter objects.
+			assert(t instanceof TreeNodeSchema, "invalid type provided");
+			// TypeScript should know `t.name` is a string (from the extends constraint on TreeNodeSchema's name), but the linter objects.
 			// @ts-expect-error: Apparently TypeScript also fails to apply this constraint for some reason and is giving any:
 			type _check = requireFalse<isAny<typeof t.name>>;
 			// Adding `as string` here would silence the linter, but make this code less type safe (since if this became not a string, it would still build).

@@ -49,4 +49,13 @@ export {
 	storeLocatorInOdspUrl,
 } from "./odspFluidFileLink";
 
-export { parseCompactSnapshotResponse } from "./compactSnapshotParser";
+export {
+	IOdspCache,
+	IPersistedFileCache,
+	INonPersistentCache,
+	IPrefetchSnapshotContents,
+} from "./odspCache";
+export { ICacheAndTracker, type EpochTracker, FetchType, FetchTypeInternal } from "./epochTracker";
+export { IOdspResponse } from "./odspUtils";
+export { SnapshotFormatSupportType } from "./fetchSnapshot";
+export { ISnapshotContentsWithProps, parseCompactSnapshotResponse } from "./compactSnapshotParser";

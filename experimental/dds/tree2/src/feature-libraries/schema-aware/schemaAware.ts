@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { PrimitiveValueSchema, TreeSchemaIdentifier, ValueSchema } from "../../core";
+import { PrimitiveValueSchema, TreeNodeSchemaIdentifier, ValueSchema } from "../../core";
 import {
 	ContextuallyTypedNodeData,
 	FluidSerializableReadOnly,
@@ -15,7 +15,12 @@ import {
 	valueSymbol,
 } from "../contextuallyTyped";
 import { Multiplicity } from "../modular-schema";
-import { InternalTypedSchemaTypes, FieldSchema, TreeSchema, AllowedTypes } from "../typed-schema";
+import {
+	InternalTypedSchemaTypes,
+	FieldSchema,
+	TreeNodeSchema,
+	AllowedTypes,
+} from "../typed-schema";
 import {
 	UntypedField,
 	UntypedTree,
@@ -98,7 +103,7 @@ export type CollectOptions<
 		? TypedValueOrUndefined<TValueSchema> | FlexibleObject<TValueSchema, TName>
 		: FlexibleObject<TValueSchema, TName> & TTypedFields;
 	[ApiMode.Editable]: {
-		[typeNameSymbol]: TName & TreeSchemaIdentifier;
+		[typeNameSymbol]: TName & TreeNodeSchemaIdentifier;
 	} & ValuePropertyFromSchema<TValueSchema> &
 		TTypedFields &
 		UntypedTreeCore;
@@ -133,7 +138,7 @@ export type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> 
  * @alpha
  */
 export type UnbrandedName<TName> = [
-	TName extends infer S & TreeSchemaIdentifier ? S : string,
+	TName extends infer S & TreeNodeSchemaIdentifier ? S : string,
 ][_InlineTrick];
 
 /**
@@ -219,13 +224,13 @@ export type EditableOptionalField<TypedChild> = [
  * @alpha
  */
 export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
-	T extends InternalTypedSchemaTypes.FlexList<TreeSchema>
+	T extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 		? InternalTypedSchemaTypes.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
 					Mode,
 					Assume<
 						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>,
-						readonly TreeSchema[]
+						readonly TreeNodeSchema[]
 					>
 				>
 		  >
@@ -233,14 +238,14 @@ export type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedType
 ][_InlineTrick];
 
 /**
- * Takes in `TreeSchema[]` and returns a TypedTree union.
+ * Takes in `TreeNodeSchema[]` and returns a TypedTree union.
  * @alpha
  */
-export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeSchema[]> = [
+export type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeNodeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<Assume<Head, TreeSchema>, Mode>,
-				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeSchema[]>>,
+				TypedNode<Assume<Head, TreeNodeSchema>, Mode>,
+				...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeNodeSchema[]>>,
 		  ]
 		: [],
 ][_InlineTrick];
@@ -263,7 +268,7 @@ export type UntypedApi<Mode extends ApiMode> = {
  * @alpha
  */
 export type TypedNode<
-	TSchema extends TreeSchema,
+	TSchema extends TreeNodeSchema,
 	Mode extends ApiMode = ApiMode.Editable,
 > = FlattenKeys<
 	CollectOptions<
@@ -282,7 +287,7 @@ export type TypedNode<
  * @alpha
  * @deprecated Use `TypedNode` instead (and reverse the type parameter order).
  */
-export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = TypedNode<
+export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeNodeSchema> = TypedNode<
 	TSchema,
 	Mode
 >;
@@ -293,7 +298,7 @@ export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeSchema> = Type
  * @alpha
  */
 // TODO: tests
-export function downCast<TSchema extends TreeSchema>(
+export function downCast<TSchema extends TreeNodeSchema>(
 	schema: TSchema,
 	tree: UntypedTreeCore<any, any>,
 ): tree is TypedNode<TSchema> {

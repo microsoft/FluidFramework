@@ -14,9 +14,11 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	ProxyRoot,
+	SharedTreeNode,
 } from "./types";
 export {
 	StructFactorySchemaBuilder,
 	SharedTreeObjectFactory,
-	TreeSchemaWithObjectFactory,
+	TreeNodeSchemaWithObjectFactory,
 } from "./schemaBuilder";
+export { node } from "./node";

@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { assertValidIndex } from "../../../util";
-import { FieldKey, TreeSchemaIdentifier, Value } from "../../../core";
+import { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core";
 import { TreeChunk } from "../chunk";
 import { BasicChunk } from "../basicChunk";
 import { SequenceChunk } from "../sequenceChunk";
@@ -221,7 +221,7 @@ function fieldDecoder(
  * Decoder for {@link EncodedTreeShape}s.
  */
 export class TreeDecoder implements ChunkDecoder {
-	private readonly type?: TreeSchemaIdentifier;
+	private readonly type?: TreeNodeSchemaIdentifier;
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
 		private readonly shape: EncodedTreeShape,
@@ -237,7 +237,8 @@ export class TreeDecoder implements ChunkDecoder {
 		this.fieldDecoders = fieldDecoders;
 	}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const type: TreeSchemaIdentifier = this.type ?? readStreamIdentifier(stream, this.cache);
+		const type: TreeNodeSchemaIdentifier =
+			this.type ?? readStreamIdentifier(stream, this.cache);
 		// TODO: Consider typechecking against stored schema in here somewhere.
 
 		const value = readValue(stream, this.shape.value);
