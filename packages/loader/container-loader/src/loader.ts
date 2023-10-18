@@ -41,7 +41,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import { IClientDetails } from "@fluidframework/protocol-definitions";
 import { Container, IPendingContainerState } from "./container";
-import { IParsedUrl, parseUrl } from "./utils";
+import { IParsedUrl, parseIResolvedUrlUrlIntoParts } from "./utils";
 import { pkgVersion } from "./packageVersion";
 import { ProtocolHandlerBuilder } from "./protocol";
 import { DebugLogger } from "./debugLogger";
@@ -280,7 +280,7 @@ export async function requestResolvedObjectFromContainer(
 	headers?: IRequestHeader,
 ): Promise<IResponse> {
 	ensureResolvedUrlDefined(container.resolvedUrl);
-	const parsedUrl = parseUrl(container.resolvedUrl.url);
+	const parsedUrl = parseIResolvedUrlUrlIntoParts(container.resolvedUrl.url);
 
 	if (parsedUrl === undefined) {
 		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
@@ -422,13 +422,13 @@ export class Loader implements IHostLoader {
 		ensureResolvedUrlDefined(resolvedAsFluid);
 
 		// Parse URL into data stores
-		const parsed = parseUrl(resolvedAsFluid.url);
+		const parsed = parseIResolvedUrlUrlIntoParts(resolvedAsFluid.url);
 		if (parsed === undefined) {
 			throw new Error(`Invalid URL ${resolvedAsFluid.url}`);
 		}
 
 		if (pendingLocalState !== undefined) {
-			const parsedPendingUrl = parseUrl(pendingLocalState.url);
+			const parsedPendingUrl = parseIResolvedUrlUrlIntoParts(pendingLocalState.url);
 			if (
 				parsedPendingUrl?.id !== parsed.id ||
 				parsedPendingUrl?.path.replace(/\/$/, "") !== parsed.path.replace(/\/$/, "")

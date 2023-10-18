@@ -35,7 +35,12 @@ export interface IParsedUrl {
 	version: string | null | undefined;
 }
 
-export function parseUrl(url: string): IParsedUrl | undefined {
+/**
+ * Utility api to parse the IResolvedUrl.url into specific parts like querystring, path to get
+ * deep link info etc.
+ * @param url - This is the IResolvedUrl.url part of the resolved url.
+ */
+export function parseIResolvedUrlUrlIntoParts(url: string): IParsedUrl | undefined {
 	const parsed = parse(url, true);
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
