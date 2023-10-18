@@ -252,7 +252,7 @@ export class SharedString
 		markerLabel: string,
 		forwards = true,
 	): Marker | undefined {
-		return this.client.searchForMarker(startPos ?? 0, markerLabel, forwards);
+		return this.client.searchForMarker(startPos, markerLabel, forwards);
 	}
 
 	/**
