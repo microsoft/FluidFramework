@@ -4,23 +4,73 @@
  */
 
 import { strict as assert } from "assert";
+import { SchemaBuilder } from "../../../domains";
 import { is, typeNameSymbol } from "../../../feature-libraries";
-import { leaf, SchemaBuilder } from "../../../domains";
 import { itWithRoot } from "./utils";
+
+describe("SharedTreeObject factories", () => {
+	const sb = new SchemaBuilder({
+		scope: "test",
+	});
+
+	const childA = sb.struct("childA", {
+		content: sb.number,
+	});
+
+	const childB = sb.struct("childB", {
+		content: sb.number,
+	});
+
+	const parent = sb.struct("parent", {
+		child: [childA],
+		poly: [childA, childB],
+		list: sb.fieldNode("list", sb.sequence(sb.number)),
+	});
+
+	const schema = sb.toDocumentSchema(parent);
+
+	const initialTree = {
+		// TODO:#5928: Remove need for typeNameSymbol by calling factory function instead
+		child: { [typeNameSymbol]: "test.childA", content: 42 },
+		poly: { [typeNameSymbol]: "test.childB", content: 42 },
+		list: [42, 42, 42],
+	};
+
+	itWithRoot("correctly construct objects with content", schema, initialTree, (root) => {
+		root.child = childA.create({ content: 43 });
+		assert.equal(root.child.content, 43);
+	});
+
+	itWithRoot("construct objects that work in polymorphic fields", schema, initialTree, (root) => {
+		root.poly = childA.create({ content: 43 });
+		assert.equal(root.poly.content, 43);
+		root.poly = childB.create({ content: 44 });
+		assert.equal(root.poly.content, 44);
+	});
+
+	itWithRoot("can re-use content objects", schema, initialTree, (root) => {
+		// The `create` functions stamp the content with a `[typeNameSymbol]`.
+		// This test ensures that they shallow copy the content before doing the stamp.
+		const content = { content: 43 };
+		root.poly = childA.create(content);
+		content.content = 44;
+		root.poly = childB.create(content);
+		assert.equal(root.poly.content, 44);
+	});
+});
 
 describe("SharedTree proxies", () => {
 	const sb = new SchemaBuilder({
 		scope: "test",
-		libraries: [leaf.library],
 	});
 
 	const childSchema = sb.struct("struct", {
-		content: leaf.number,
+		content: sb.number,
 	});
 
 	const parentSchema = sb.struct("parent", {
 		struct: childSchema,
-		list: sb.fieldNode("list", sb.sequence(leaf.number)),
+		list: sb.fieldNode("list", sb.sequence(sb.number)),
 	});
 
 	const schema = sb.toDocumentSchema(parentSchema);
@@ -48,23 +98,22 @@ describe("SharedTree proxies", () => {
 describe("SharedTreeObject", () => {
 	const sb = new SchemaBuilder({
 		scope: "test",
-		libraries: [leaf.library],
 	});
 
 	const numberChild = sb.struct("numberChild", {
-		content: leaf.number,
+		content: sb.number,
 	});
 
 	const stringChild = sb.struct("stringChild", {
-		content: leaf.string,
+		content: sb.string,
 	});
 
 	const parentSchema = sb.struct("parent", {
-		content: leaf.number,
+		content: sb.number,
 		child: numberChild,
-		polyValue: [leaf.number, leaf.string],
+		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
-		polyValueChild: [leaf.number, numberChild],
+		polyValueChild: [sb.number, numberChild],
 		// map: sb.map("map", sb.optional(leaf.string)), // TODO Test Maps
 		list: sb.fieldNode("list", sb.sequence(numberChild)),
 	});

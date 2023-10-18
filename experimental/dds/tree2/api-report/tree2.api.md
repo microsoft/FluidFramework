@@ -1690,13 +1690,11 @@ leafValue: import("..").ValueSchema.Number;
 }>;
 
 // @alpha (undocumented)
-const recursiveStruct2: TreeSchema<"Test Recursive Domain.struct2", {
-structFields: {
-readonly recursive: FieldSchema<Optional, readonly [() => TreeSchema<"Test Recursive Domain.struct2", any>]>;
-readonly number: FieldSchema<Required_2, readonly [TreeSchema<"com.fluidframework.leaf.number", {
+const recursiveStruct2: TreeSchemaWithObjectFactory<"Test Recursive Domain.struct2", Required_2, {
+readonly recursive: FieldSchema<Optional, readonly [() => TreeSchemaWithObjectFactory<"Test Recursive Domain.struct2", Required_2, any>]>;
+readonly number: TreeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
-}>]>;
-};
+}>;
 }>;
 
 // @alpha
@@ -1780,7 +1778,7 @@ declare namespace SchemaAware {
 export { SchemaAware }
 
 // @alpha @sealed
-export class SchemaBuilder<TScope extends string = string, TName extends string | number = string> extends SchemaBuilderBase<TScope, typeof FieldKinds.required, TName> {
+export class SchemaBuilder<TScope extends string = string, TName extends string | number = string> extends StructFactorySchemaBuilder<TScope, typeof FieldKinds.required, TName> {
     constructor(options: SchemaBuilderOptions<TScope>);
     // (undocumented)
     readonly boolean: TreeSchema<"com.fluidframework.leaf.boolean", {
@@ -2002,6 +2000,11 @@ export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSc
 // @alpha
 export type SharedTreeObject<TSchema extends StructSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["structFieldsObject"], API>;
 
+// @alpha
+export interface SharedTreeObjectFactory<TSchema extends TreeSchema<any, any>> {
+    create(content: ProxyNode<Assume<TSchema, StructSchema>, "javaScript">): SharedTreeObject<Assume<TSchema, StructSchema>>;
+}
+
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
@@ -2044,6 +2047,12 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
 // @alpha
 export interface Struct extends TreeNode {
     readonly localNodeKey?: LocalNodeKey;
+}
+
+// @alpha
+export class StructFactorySchemaBuilder<TScope extends string, TDefaultKind extends FieldKind, TName extends number | string = string> extends SchemaBuilderBase<TScope, TDefaultKind, TName> {
+    // (undocumented)
+    struct<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeSchemaWithObjectFactory<`${TScope}.${Name}`, TDefaultKind, T>;
 }
 
 // @alpha
@@ -2197,6 +2206,17 @@ export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
 type TreeSchemaSpecification = [
 FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
 ][_InlineTrick];
+
+// @alpha
+export type TreeSchemaWithObjectFactory<Name extends string, TDefaultKind extends FieldKind, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = TreeSchema<Name, {
+    structFields: {
+        [key in keyof T]: NormalizeField_2<T[key], TDefaultKind>;
+    };
+}> & SharedTreeObjectFactory<TreeSchema<Name, {
+    structFields: {
+        [key in keyof T]: NormalizeField_2<T[key], TDefaultKind>;
+    };
+}>>;
 
 // @alpha
 export enum TreeStatus {

@@ -13,11 +13,11 @@ import {
 	ImplicitAllowedTypes,
 	NormalizeAllowedTypes,
 	NormalizeField,
-	SchemaBuilderBase,
 	SchemaBuilderOptions,
 	TreeSchema,
 	MapFieldSchema,
 	normalizeField,
+	StructFactorySchemaBuilder,
 } from "../feature-libraries";
 import { getOrCreate, isAny, requireFalse } from "../util";
 
@@ -45,7 +45,7 @@ import { getOrCreate, isAny, requireFalse } from "../util";
 export class SchemaBuilder<
 	TScope extends string = string,
 	TName extends string | number = string,
-> extends SchemaBuilderBase<TScope, typeof FieldKinds.required, TName> {
+> extends StructFactorySchemaBuilder<TScope, typeof FieldKinds.required, TName> {
 	private readonly structuralTypes: Map<string, TreeSchema> = new Map();
 
 	public constructor(options: SchemaBuilderOptions<TScope>) {

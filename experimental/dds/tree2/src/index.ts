@@ -280,6 +280,9 @@ export {
 	SharedTreeObject,
 	is,
 	Typed,
+	StructFactorySchemaBuilder,
+	SharedTreeObjectFactory,
+	TreeSchemaWithObjectFactory,
 } from "./feature-libraries";
 
 export {
