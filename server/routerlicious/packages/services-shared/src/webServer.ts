@@ -192,13 +192,6 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 			}
 		}, heartbeatTimeoutMs);
 
-		// Spawn initial number of workers according to configs or available CPUs
-		const numWorkers = this.clusterConfig?.numMaxWorkers ?? availableParallelism();
-		Lumberjack.info(`Spawning ${numWorkers} cluster workers.`);
-		for (let i = 0; i < numWorkers; i++) {
-			this.spawnWorker();
-		}
-
 		// Kill workers when they take too long to spawn.
 		cluster.on("fork", (worker) => {
 			const timeout = setTimeout(
@@ -246,6 +239,13 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 				this.spawnWorker();
 			}
 		});
+
+		// Spawn initial number of workers according to configs or available CPUs
+		const numWorkers = this.clusterConfig?.numMaxWorkers ?? availableParallelism();
+		Lumberjack.info(`Spawning ${numWorkers} cluster workers.`);
+		for (let i = 0; i < numWorkers; i++) {
+			this.spawnWorker();
+		}
 
 		return server;
 	}
