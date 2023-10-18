@@ -221,9 +221,6 @@ describe("mock-customer-service", () => {
 			result.send();
 		});
 
-		console.log("webhookChangeNotification");
-		console.log(webhookChangeNotification);
-
 		const localService: Server = localServiceApp.listen(localServicePort);
 
 		try {
@@ -234,8 +231,6 @@ describe("mock-customer-service", () => {
 				documentId,
 			);
 			expect(registerSessionUrl.status).toBe(200);
-			console.log("registerSessionUrl");
-			console.log(registerSessionUrl);
 
 			// 2. Update external data within the external data service,
 			// which should relay the changes to the customer notification service.
