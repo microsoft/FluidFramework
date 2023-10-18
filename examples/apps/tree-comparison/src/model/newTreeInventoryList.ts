@@ -38,11 +38,11 @@ const inventorySchema = builder.struct("Contoso:Inventory-1.0.0", {
 type InventoryNode = Typed<typeof inventorySchema>;
 
 // REV: The root inventoryFieldSchema feels extra to me.  Is there a way to omit it?  Something like
-// builder.toDocumentSchema(inventorySchema)
+// builder.intoSchema(inventorySchema)
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 type InventoryField = Typed<typeof inventoryFieldSchema>;
 
-const schema = builder.toDocumentSchema(inventoryFieldSchema);
+const schema = builder.intoSchema(inventoryFieldSchema);
 
 const newTreeFactory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,

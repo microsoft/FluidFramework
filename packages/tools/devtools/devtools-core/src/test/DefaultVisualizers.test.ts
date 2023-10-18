@@ -423,7 +423,7 @@ describe("DefaultVisualizers unit tests", () => {
 			childrenTwo: leaf.number,
 		});
 
-		const schema = builder.toDocumentSchema(rootNodeSchema);
+		const schema = builder.intoSchema(rootNodeSchema);
 
 		sharedTree.schematize({
 			schema,

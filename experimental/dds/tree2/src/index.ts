@@ -189,7 +189,7 @@ export {
 	UntypedTreeOrPrimitive,
 	AllowedTypes,
 	TreeNodeSchema,
-	DocumentSchema,
+	TreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	FieldSchema,
