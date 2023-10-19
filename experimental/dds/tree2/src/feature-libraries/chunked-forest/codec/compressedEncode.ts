@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	CursorLocationType,
 	FieldKey,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ITreeCursorSynchronous,
 	TreeNodeSchemaIdentifier,
 	Value,
@@ -429,7 +429,7 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 		return getOrCreate(this.nestedArrays, inner, () => new NestedArrayShape(inner));
 	}
 
-	public shapeFromField(field: FieldStoredSchema): FieldEncoder {
+	public shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 		return new LazyFieldEncoder(this, field, this.fieldEncoder);
 	}
 }
@@ -439,10 +439,13 @@ export interface TreeShaper {
 }
 
 export interface FieldShaper {
-	shapeFromField(field: FieldStoredSchema): FieldEncoder;
+	shapeFromField(field: TreeFieldStoredSchema): FieldEncoder;
 }
 
-export type FieldShapePolicy = (treeShaper: TreeShaper, field: FieldStoredSchema) => FieldEncoder;
+export type FieldShapePolicy = (
+	treeShaper: TreeShaper,
+	field: TreeFieldStoredSchema,
+) => FieldEncoder;
 
 export type TreeShapePolicy = (
 	fieldShaper: FieldShaper,
@@ -454,7 +457,7 @@ class LazyFieldEncoder implements FieldEncoder {
 
 	public constructor(
 		public readonly cache: TreeShaper,
-		public readonly field: FieldStoredSchema,
+		public readonly field: TreeFieldStoredSchema,
 		private readonly fieldEncoder: FieldShapePolicy,
 	) {}
 	public encodeField(

@@ -146,7 +146,7 @@ stages:
       - stress_tests_frs_canary
 
     jobs:
-      - template: templates/include-test-perf-benchmarks.yml
+      - template: templates/include-telemetry-setup.yml
         parameters:
           testWorkspace: ${{ variables.testWorkspace }}
           poolBuild: Small
