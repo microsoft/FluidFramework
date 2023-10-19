@@ -41,7 +41,7 @@ export type FuzzNode = StructTyped<FuzzNodeSchema>;
 export const fuzzSchema = builder.intoSchema(fuzzNode.structFieldsObject.optionalChild);
 
 export function fuzzViewFromTree(tree: ISharedTree): ISharedTreeView {
-	return tree.schematize({
+	return tree.schematizeView({
 		initialTree: undefined,
 		schema: fuzzSchema,
 		allowedSchemaModifications: AllowedUpdateType.None,
