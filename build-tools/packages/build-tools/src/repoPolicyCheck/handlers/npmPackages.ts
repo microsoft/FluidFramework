@@ -1156,6 +1156,77 @@ export const handlers: Handler[] = [
 			}
 		},
 	},
+	{
+		// This rule enforces each package has an exports field in its package.json. It also verifies that the values in the
+		// exports["."] field match the ones in the main/module/types fields.
+		name: "npm-package-exports-field",
+		match,
+		handler: (file) => {
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			if (!shouldCheckExportsField(json)) {
+				return;
+			}
+
+			const exportsField = json.exports;
+			if (exportsField === undefined) {
+				return "Missing 'exports' field in package.json.";
+			}
+
+			const exportsRoot = exportsField?.["."];
+			if (exportsRoot === undefined) {
+				return "Missing '.' entry in 'exports' field in package.json.";
+			}
+
+			if (json.main === undefined) {
+				return "Missing 'main' extry in package.json.";
+			}
+
+			// CJS exports
+			const requireField =
+				exportsRoot?.require?.default === undefined
+					? undefined
+					: normalizePathField(exportsRoot?.require?.default);
+			const mainField = normalizePathField(json.main);
+			if (requireField !== mainField) {
+				return `Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
+			}
+
+			// ESM exports
+			const importField =
+				exportsRoot?.import?.default === undefined
+					? undefined
+					: normalizePathField(exportsRoot?.import?.default);
+			if (json.module !== undefined) {
+				const moduleField = normalizePathField(json.module);
+				if (importField !== moduleField) {
+					return `Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
+				}
+			}
+		},
+		resolver: (file) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				if (shouldCheckExportsField(json)) {
+					try {
+						const exportsField = generateExportsField(json);
+						json.exports = exportsField;
+					} catch (error: unknown) {
+						result.resolved = false;
+						result.message = (error as Error).message;
+					}
+				}
+			});
+
+			return result;
+		},
+	},
 ];
 
 function missingCleanDirectories(scripts: any) {
@@ -1186,4 +1257,83 @@ function missingCleanDirectories(scripts: any) {
 		expectedClean.push("nyc");
 	}
 	return expectedClean.filter((name) => !scripts.clean?.includes(name));
+}
+
+function generateExportsField(json: PackageJson) {
+	if (json.types === undefined && json.typings === undefined) {
+		throw new Error(
+			"The 'types' and 'typings' field are both undefined. At least one must be defined.",
+		);
+	}
+
+	if (json.main === undefined) {
+		throw new Error("The 'main' field is undefined. It must have a value.");
+	}
+
+	// One of the values is guaranteed to be defined because of earlier checks
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const cjsTypes = normalizePathField((json.types ?? json.typings)!);
+
+	if (json.module === undefined) {
+		const exports = {
+			".": {
+				require: {
+					types: cjsTypes,
+					default: normalizePathField(json.main),
+				},
+			},
+		};
+		return exports;
+	} else {
+		// Assume esm types are the same name as cjs, but in a different path.
+		const esmDir = path.dirname(json.module);
+		const typesFile = path.basename(cjsTypes.toString());
+		const esmTypes = normalizePathField(path.join(esmDir, typesFile));
+
+		const exports = {
+			".": {
+				import: {
+					types: esmTypes,
+					default: normalizePathField(json.module ?? json.main),
+				},
+				require: {
+					types: cjsTypes,
+					default: normalizePathField(json.main),
+				},
+			},
+		};
+		return exports;
+	}
+}
+
+/**
+ * Returns true if the package should be checked for an exports field.
+ */
+function shouldCheckExportsField(json: PackageJson): boolean {
+	if (
+		// skip private packages
+		json.private === true ||
+		// and those with no main entrypoint
+		json.main === undefined ||
+		// packages with browser entrypoints require special attention, so ignoring here.
+		json.browser !== undefined ||
+		// skip if both the types/typings fields are missing
+		(json.types === undefined && json.typings === undefined)
+	) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Normalizes a path value so it has a leading './'
+ */
+function normalizePathField(pathIn: string) {
+	if (pathIn === "" || pathIn === undefined) {
+		throw new Error(`Invalid path!`);
+	}
+	if (pathIn.startsWith("./")) {
+		return pathIn;
+	}
+	return `./${pathIn}`;
 }
