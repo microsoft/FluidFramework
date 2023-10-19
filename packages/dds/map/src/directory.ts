@@ -199,13 +199,18 @@ export interface ICreateInfo {
 	/**
 	 * Sequence number at which this subdirectory was created.
 	 */
-	// csn: number;
-	csn: SeqNumCollection;
+	csn: number;
+	// csn: SeqNumCollection;
 
 	/**
 	 * clientids of the clients which created this sub directory.
 	 */
 	ccIds: string[];
+
+	/**
+	 * Client Sequence number associated with this subdirectory
+	 */
+	ccsn?: number;
 }
 
 /**
@@ -739,14 +744,23 @@ export class SharedDirectory
 					let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
 					if (!newSubDir) {
 						const createInfo = subdirObject.ci;
+						const seqNumCollection =
+							createInfo !== undefined && createInfo.csn > -1
+								? {
+										seq: createInfo.csn,
+										clientSeq:
+											createInfo.ccsn ?? ++currentSubDir.localCreationSeq,
+								  }
+								: { seq: 0, clientSeq: ++currentSubDir.localCreationSeq };
 						newSubDir = new SubDirectory(
 							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
 							// sub directory. This could be done at serialization time too, but we need to maintain
 							// back compat too and also we will actually know the state when it was serialized.
-							createInfo !== undefined && createInfo.csn.seq > -1
-								? createInfo.csn
-								: { seq: 0, clientSeq: ++currentSubDir.localCreationSeq },
+							// createInfo !== undefined && createInfo.csn > -1
+							// 	?  { seq: createInfo.csn, clientSeq: createInfo.ccsn ?? ++currentSubDir.localCreationSeq }
+							//	: { seq: 0, clientSeq: ++currentSubDir.localCreationSeq },
 							// createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
+							seqNumCollection,
 							createInfo !== undefined
 								? new Set<string>(createInfo.ccIds)
 								: new Set(),
@@ -757,11 +771,13 @@ export class SharedDirectory
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
 						// Add the creation sequnce number to the tracker
+						currentSubDir.ackedCreationSeqTracker.set(subdirName, seqNumCollection);
+						/*
 						if (createInfo !== undefined) {
-							if (createInfo.csn.seq > -1) {
+							if (createInfo.csn > -1) {
 								currentSubDir.ackedCreationSeqTracker.set(
 									subdirName,
-									createInfo.csn,
+									{ seq: createInfo.csn, clientSeq: createInfo.ccsn}
 								);
 							} else {
 								currentSubDir.ackedCreationSeqTracker.set(subdirName, {
@@ -769,7 +785,7 @@ export class SharedDirectory
 									clientSeq: ++currentSubDir.localCreationSeq,
 								});
 							}
-						}
+						} */
 					}
 					stack.push([newSubDir, subdirObject]);
 				}
@@ -2105,8 +2121,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		const createInfo: ICreateInfo = {
 			// csn: this.sequenceNumber,
-			csn: this.seqNumCollection,
+			csn: this.seqNumCollection.seq,
 			ccIds: Array.from(this.clientIds),
+			ccsn: this.seqNumCollection.clientSeq,
 		};
 		return createInfo;
 	}
