@@ -61,10 +61,11 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 				"Return packed tarball names (without extension) instead of package names. @-signs will be removed from the name, and slashes are replaced with dashes.",
 			default: false,
 		}),
-		outFile: Flags.string({
+		outFile: Flags.file({
 			description:
 				"Output file to write the list of packages to. If not specified, the list will be written to stdout.",
 			required: false,
+			exists: false
 		}),
 	};
 
