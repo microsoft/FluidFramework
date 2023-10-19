@@ -16,7 +16,7 @@ import {
 } from "../../typed-schema";
 import { ProxyNode, SharedTreeObject } from "./types";
 
-const factoryContent = Symbol("Raw content");
+const factoryContent = Symbol("Node content");
 interface HasFactoryContent<T> {
 	[factoryContent]: T;
 }
@@ -64,8 +64,8 @@ class FactoryTreeNodeSchema<
 		for (const [key] of this.structFields) {
 			Object.defineProperty(node, key, {
 				// TODO: `node` could be made fully readable by recursively constructing/returning objects, maps and lists and values here.
-				get: () => rawStructError(),
-				set: () => rawStructError(),
+				get: () => factoryObjectError(),
+				set: () => factoryObjectError(),
 				enumerable: true,
 			});
 		}
@@ -119,9 +119,9 @@ export type TreeNodeSchemaWithObjectFactory<
 		>
 	>;
 
-function rawStructError(): never {
-	throw new Error(rawStructErrorMessage);
+function factoryObjectError(): never {
+	throw new Error(factoryObjectErrorMessage);
 }
 
-export const rawStructErrorMessage =
+export const factoryObjectErrorMessage =
 	"Newly created node must be inserted into the tree before being queried";
