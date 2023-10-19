@@ -500,6 +500,7 @@ export enum DiscardResult {
     Success = 0
 }
 
+// @alpha
 export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
     readonly adapters: Adapters;
     readonly policy: FullSchemaPolicy;

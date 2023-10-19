@@ -23,6 +23,7 @@ import {
 	DiscardResult,
 } from "../core";
 import { EventEmitter, ISubscribable } from "../events";
+import { fail } from "../util";
 import { TransactionStack } from "./transactionStack";
 
 /**
@@ -163,7 +164,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	private applyChange(
 		change: TChange,
 		revision: RevisionTag,
-		revertibleKind: RevertibleKind | undefined,
+		revertibleKind: RevertibleKind,
 	): [change: TChange, newCommit: GraphCommit<TChange>] {
 		this.assertNotDisposed();
 
@@ -173,7 +174,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		});
 
 		// If this is not part of a transaction, emit a revertible event
-		if (revertibleKind !== undefined && !this.isTransacting()) {
+		if (!this.isTransacting()) {
 			this.emit("revertible", this.makeSharedTreeRevertible(this.head, revertibleKind));
 		}
 
@@ -328,6 +329,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		kind: RevertibleKind,
 	): Revertible {
 		this.revertibleCommits.set(commit.revision, commit);
+		let discarded = false;
 		const revertible = {
 			kind,
 			origin: {
@@ -335,13 +337,24 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				isLocal: true,
 			},
 			revert: () => {
-				this.revert(commit.revision, kind);
-				return RevertResult.Success;
+				if (discarded) {
+					fail("revertible has already been discarded");
+				}
+				const revertCommit = this.revert(commit.revision, kind);
+				if (revertCommit !== undefined) {
+					revertible.discard();
+					return RevertResult.Success;
+				}
+				return RevertResult.Failure;
 			},
 			discard: () => {
+				if (discarded) {
+					fail("revertible has already been discarded");
+				}
 				// TODO: delete the repair data from the forest
 				this.revertibleCommits.delete(commit.revision);
 				this.revertibles.delete(revertible);
+				discarded = true;
 				return DiscardResult.Success;
 			},
 		};
