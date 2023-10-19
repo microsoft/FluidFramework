@@ -24,15 +24,15 @@ interface HasFactoryContent<T> {
 /**
  * Returns the content stored on an object created by a {@link SharedTreeObjectFactory}.
  */
-export function getFactoryContent(x: unknown): unknown | undefined {
-	return (x as Partial<HasFactoryContent<unknown>>)[factoryContent];
+export function getFactoryContent<TSchema extends StructSchema>(x: SharedTreeObject<TSchema>): ProxyNode<TSchema> | undefined {
+	return (x as Partial<HasFactoryContent<ProxyNode<TSchema>>>)[factoryContent];
 }
 
 /**
  * Creates `{@link SharedTreeObject}`s of some type via a `create` method.
  * @alpha
  */
-export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<any, any>> {
+export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, unknown>> {
 	/**
 	 * Create a {@link SharedTreeObject} that can be inserted into the tree via assignment `=`.
 	 * @param content - the data making up the {@link SharedTreeObject} to be created.
@@ -56,7 +56,7 @@ class FactoryTreeNodeSchema<
 	public create(
 		content: ProxyNode<Assume<TreeNodeSchema<Name, T>, StructSchema>, "javaScript">,
 	): SharedTreeObject<Assume<TreeNodeSchema<Name, T>, StructSchema>> {
-		const node = {};
+		const node = Object.create(null);
 		// Shallow copy the content and then add the type name symbol to it.
 		// The copy is necessary so that the input `content` object can be re-used as the contents of a different typed/named node in another `create` call.
 		const namedContent = { ...content, [typeNameSymbol]: this.name };
