@@ -52,7 +52,9 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 
 		const context = await this.getContext();
 		const { assertTagging } = getFluidBuildConfig(context.gitRepo.resolvedRoot);
-		const assertTaggingEnabledPaths = assertTagging?.enabledPaths ?? [];
+		const assertTaggingEnabledPaths = this.flags.disableConfig
+			? undefined
+			: assertTagging?.enabledPaths;
 
 		this.assertionFunctions =
 			assertTagging?.assertionFunctions === undefined
@@ -70,7 +72,7 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 				this.verbose(`Skipping '${pkg.name}' because '${tsconfigPath}' doesn't exist.`);
 				return false;
 			}
-			if (assertTaggingEnabledPaths.length > 0) {
+			if (assertTaggingEnabledPaths !== undefined) {
 				if (assertTaggingEnabledPaths.some((regex) => regex.test(tsconfigPath))) {
 					return true;
 				}
