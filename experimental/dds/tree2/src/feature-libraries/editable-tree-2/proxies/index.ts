@@ -16,9 +16,5 @@ export {
 	ProxyRoot,
 	SharedTreeNode,
 } from "./types";
-export {
-	StructFactorySchemaBuilder,
-	SharedTreeObjectFactory,
-	TreeNodeSchemaWithObjectFactory,
-} from "./schemaBuilder";
+export { SharedTreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
 export { node } from "./node";

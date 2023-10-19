@@ -41,9 +41,9 @@ export {
 	ProxyRoot,
 	node,
 	SharedTreeNode,
-	StructFactorySchemaBuilder,
 	SharedTreeObjectFactory,
-	TreeNodeSchemaWithObjectFactory,
+	FactoryTreeSchema,
+	addFactory,
 } from "./proxies";
 export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
 

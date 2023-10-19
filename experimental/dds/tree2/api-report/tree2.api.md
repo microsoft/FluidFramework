@@ -585,6 +585,16 @@ type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? 
 // @alpha (undocumented)
 type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item> ? Item : unknown;
 
+// @alpha
+export type FactoryStructSchema<TScope extends string, TName extends string | number, Name extends TName, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, {
+    structFields: {
+        [key in keyof T]: NormalizeField_2<T[key], Required_2>;
+    };
+}>>;
+
+// @alpha
+export type FactoryTreeSchema<TSchema extends TreeNodeSchema<string, unknown>> = TSchema & SharedTreeObjectFactory<TSchema>;
+
 // @alpha (undocumented)
 export function fail(message: string): never;
 
@@ -1681,8 +1691,8 @@ leafValue: import("..").ValueSchema.Number;
 }>;
 
 // @alpha (undocumented)
-const recursiveStruct2: TreeNodeSchemaWithObjectFactory<"Test Recursive Domain.struct2", Required_2, {
-readonly recursive: FieldSchema<Optional, readonly [() => TreeNodeSchemaWithObjectFactory<"Test Recursive Domain.struct2", Required_2, any>]>;
+const recursiveStruct2: FactoryStructSchema<"Test Recursive Domain", string, "struct2", {
+readonly recursive: FieldSchema<Optional, readonly [() => FactoryStructSchema<"Test Recursive Domain", string, "struct2", any>]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>;
@@ -1769,7 +1779,7 @@ declare namespace SchemaAware {
 export { SchemaAware }
 
 // @alpha @sealed
-export class SchemaBuilder<TScope extends string = string, TName extends string | number = string> extends StructFactorySchemaBuilder<TScope, typeof FieldKinds.required, TName> {
+export class SchemaBuilder<TScope extends string = string, TName extends string | number = string> extends SchemaBuilderBase<TScope, typeof FieldKinds.required, TName> {
     constructor(options: SchemaBuilderOptions<TScope>);
     // (undocumented)
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", {
@@ -1813,6 +1823,8 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", {
         leafValue: import("..").ValueSchema.String;
     }>;
+    // (undocumented)
+    struct<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): FactoryStructSchema<TScope, TName, Name, T>;
 }
 
 // @alpha
@@ -1998,7 +2010,7 @@ export interface SharedTreeNode {
 export type SharedTreeObject<TSchema extends StructSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["structFieldsObject"], API> & SharedTreeNode;
 
 // @alpha
-export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<any, any>> {
+export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, unknown>> {
     create(content: ProxyNode<Assume<TSchema, StructSchema>, "javaScript">): SharedTreeObject<Assume<TSchema, StructSchema>>;
 }
 
@@ -2049,12 +2061,6 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
 // @alpha
 export interface Struct extends TreeNode {
     readonly localNodeKey?: LocalNodeKey;
-}
-
-// @alpha
-export class StructFactorySchemaBuilder<TScope extends string, TDefaultKind extends FieldKind, TName extends number | string = string> extends SchemaBuilderBase<TScope, TDefaultKind, TName> {
-    // (undocumented)
-    struct<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchemaWithObjectFactory<`${TScope}.${Name}`, TDefaultKind, T>;
 }
 
 // @alpha
@@ -2203,17 +2209,6 @@ export class TreeNodeSchema<Name extends string = string, T extends Unenforced<T
 
 // @alpha
 export type TreeNodeSchemaIdentifier = Brand<string, "tree.TreeNodeSchemaIdentifier">;
-
-// @alpha
-export type TreeNodeSchemaWithObjectFactory<Name extends string, TDefaultKind extends FieldKind, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = TreeNodeSchema<Name, {
-    structFields: {
-        [key in keyof T]: NormalizeField_2<T[key], TDefaultKind>;
-    };
-}> & SharedTreeObjectFactory<TreeNodeSchema<Name, {
-    structFields: {
-        [key in keyof T]: NormalizeField_2<T[key], TDefaultKind>;
-    };
-}>>;
 
 // @alpha (undocumented)
 export interface TreeNodeStoredSchema {

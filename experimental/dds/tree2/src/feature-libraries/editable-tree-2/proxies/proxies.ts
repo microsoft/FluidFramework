@@ -29,7 +29,7 @@ import { FieldKey } from "../../../core";
 import { getBoxedField } from "../lazyTree";
 import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
-import { getFactoryContent } from "./schemaBuilder";
+import { getFactoryContent } from "./objectFactory";
 import { createNodeApi, nodeSym } from "./node";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */

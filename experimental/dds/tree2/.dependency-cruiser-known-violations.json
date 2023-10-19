@@ -440,13 +440,13 @@
 	{
 		"type": "cycle",
 		"from": "src/feature-libraries/editable-tree-2/proxies/proxies.ts",
-		"to": "src/feature-libraries/editable-tree-2/proxies/schemaBuilder.ts",
+		"to": "src/feature-libraries/editable-tree-2/proxies/objectFactory.ts",
 		"rule": {
 			"severity": "error",
 			"name": "no-circular"
 		},
 		"cycle": [
-			"src/feature-libraries/editable-tree-2/proxies/schemaBuilder.ts",
+			"src/feature-libraries/editable-tree-2/proxies/objectFactory.ts",
 			"src/feature-libraries/contextuallyTyped.ts",
 			"src/feature-libraries/editable-tree/index.ts",
 			"src/feature-libraries/editable-tree/editableField.ts",
@@ -458,13 +458,13 @@
 	{
 		"type": "cycle",
 		"from": "src/feature-libraries/editable-tree-2/proxies/index.ts",
-		"to": "src/feature-libraries/editable-tree-2/proxies/schemaBuilder.ts",
+		"to": "src/feature-libraries/editable-tree-2/proxies/objectFactory.ts",
 		"rule": {
 			"severity": "error",
 			"name": "no-circular"
 		},
 		"cycle": [
-			"src/feature-libraries/editable-tree-2/proxies/schemaBuilder.ts",
+			"src/feature-libraries/editable-tree-2/proxies/objectFactory.ts",
 			"src/feature-libraries/contextuallyTyped.ts",
 			"src/feature-libraries/editable-tree/index.ts",
 			"src/feature-libraries/editable-tree/editableField.ts",

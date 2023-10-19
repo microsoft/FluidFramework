@@ -272,9 +272,9 @@ export {
 	node,
 	SharedTreeNode,
 	Typed,
-	StructFactorySchemaBuilder,
 	SharedTreeObjectFactory,
-	TreeNodeSchemaWithObjectFactory,
+	FactoryTreeSchema,
+	addFactory,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

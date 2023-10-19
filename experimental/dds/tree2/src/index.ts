@@ -127,6 +127,7 @@ export {
 	leaf,
 	testRecursiveDomain,
 	SchemaBuilder,
+	FactoryStructSchema,
 } from "./domains";
 
 export {
@@ -283,10 +284,9 @@ export {
 	node,
 	SharedTreeNode,
 	Typed,
-	StructFactorySchemaBuilder,
 	SharedTreeObjectFactory,
-	TreeNodeSchemaWithObjectFactory,
 	SchemaCollection,
+	FactoryTreeSchema,
 } from "./feature-libraries";
 
 export {
