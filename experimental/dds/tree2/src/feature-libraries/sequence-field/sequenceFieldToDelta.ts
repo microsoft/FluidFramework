@@ -35,6 +35,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 		const changes = getEffectiveNodeChanges(mark);
 		if (changes !== undefined) {
 			deltaMark.fields = deltaFromChild(changes);
+			if (deltaMark.fields.size === 0) {
+				delete deltaMark.fields;
+			}
 		}
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 			// Since each cell is associated with exactly one node,
@@ -48,8 +51,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				if (!areEqualChangeAtomIds(mark.cellId, mark.transientDetach)) {
 					// TODO: handle transient move-in/return-to
 					assert(isInsert(mark), "Expected non-insert transient mark");
-					if (isNewAttach(mark)) {
-						assert(mark.content !== undefined, "New insert must have content");
+					if (mark.content !== undefined) {
 						build.push({
 							id: startId,
 							trees: mark.content.map(singleTextCursor),

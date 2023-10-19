@@ -9,6 +9,8 @@ import { rootFieldKey } from "./types";
 
 export const emptyDelta: Root<never> = new Map();
 
+export const emptyFieldChanges: FieldChanges<never> = {};
+
 export function isEmptyFieldChanges(fieldChanges: FieldChanges): boolean {
 	return (
 		fieldChanges.attached === undefined &&

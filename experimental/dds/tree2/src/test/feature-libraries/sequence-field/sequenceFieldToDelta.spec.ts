@@ -15,6 +15,7 @@ import {
 	makeAnonChange,
 	tagChange,
 	deltaForSet,
+	emptyFieldChanges,
 } from "../../../core";
 import {
 	FieldChange,
@@ -72,9 +73,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("empty child change", () => {
 		const actual = toDelta(Change.modify(0, TestChange.emptyChange));
-		const markList: Delta.MarkList = [{ count: 1, fields: new Map() }];
-		const expected: Delta.FieldChanges = { attached: markList };
-		assert.deepEqual(actual, expected);
+		assert.deepEqual(actual, emptyFieldChanges);
 	});
 
 	it("insert", () => {
