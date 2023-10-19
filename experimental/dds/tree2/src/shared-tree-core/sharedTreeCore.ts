@@ -187,7 +187,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.messageCodec = makeMessageCodec(changeFamily.codecs.resolve(formatVersion).json);
+		this.messageCodec = makeMessageCodec(
+			changeFamily.codecs.resolve(formatVersion).json,
+			options,
+		);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
