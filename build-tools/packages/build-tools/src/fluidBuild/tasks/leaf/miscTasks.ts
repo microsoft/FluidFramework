@@ -9,6 +9,9 @@ import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
 export class EchoTask extends LeafTask {
+	protected get isIncremental() {
+		return true;
+	}
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
 	}
@@ -18,6 +21,9 @@ export class EchoTask extends LeafTask {
 }
 
 export class LesscTask extends LeafTask {
+	protected get isIncremental() {
+		return true;
+	}
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
 	}
@@ -151,6 +157,9 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GenVerTask extends LeafTask {
+	protected get isIncremental() {
+		return true;
+	}
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
 	}
