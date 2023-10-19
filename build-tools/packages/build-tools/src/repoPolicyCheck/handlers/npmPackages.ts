@@ -1097,14 +1097,13 @@ export const handlers: Handler[] = [
 					.join("")}`;
 			}
 
-			const clean = scripts["clean"];
-			if (clean && clean.startsWith("rimraf ")) {
-				if (clean.includes('"')) {
-					return "'clean' script using double quotes instead of single quotes";
+			if (cleanScript) {
+				if (cleanScript.includes("'")) {
+					return "'clean' script using single quotes instead of double quotes";
 				}
 
-				if (!clean.includes("'")) {
-					return "'clean' script rimraf argument should have single quotes";
+				if (!cleanScript.includes('"')) {
+					return "'clean' script rimraf glob arguments should have double quotes";
 				}
 			}
 		},
@@ -1112,16 +1111,17 @@ export const handlers: Handler[] = [
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
-				const clean = json.scripts["clean"] ?? "rimraf --glob";
-				if (clean.startsWith("rimraf --glob")) {
+				let clean: string = json.scripts["clean"] ?? "rimraf --glob";
+				if (!clean.startsWith("rimraf --glob")) {
 					result.resolved = false;
 					result.message =
 						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
-				}
-				if (missing.length === 0) {
 					return;
 				}
-				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
+				if (missing.length !== 0) {
+					clean += ` ${missing.map((name) => `"${name}"`).join(" ")}`;
+				}
+				json.scripts["clean"] = clean.replace(/'/g, '"');
 			});
 
 			return result;
