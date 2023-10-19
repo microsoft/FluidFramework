@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { singleTextCursor } from "../feature-libraries";
-import { makeAnonChange, Delta, FieldKey, tagChange, mintRevisionTag, deltaForSet } from "../core";
+import { makeAnonChange, FieldKey, tagChange, mintRevisionTag, deltaForSet } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
 

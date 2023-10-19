@@ -161,8 +161,8 @@ describe("visit", () => {
 			index,
 		);
 		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 42 }, root: 0 },
-			{ field: field1, id: { minor: 43 }, root: 1 },
+			{ id: { minor: 42 }, root: 0 },
+			{ id: { minor: 43 }, root: 1 },
 		]);
 	});
 	it("remove child", () => {
@@ -192,9 +192,7 @@ describe("visit", () => {
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 42 }, root: 0 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 0 }]);
 	});
 	it("changes under insert", () => {
 		const index = makeDetachedFieldIndex("");
@@ -382,9 +380,7 @@ describe("visit", () => {
 			["exitField", field1],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
 	it("changes under move-out", () => {
 		const index = makeDetachedFieldIndex("");
@@ -473,9 +469,7 @@ describe("visit", () => {
 			["exitField", field2],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field2, id: { minor: 42 }, root: 2 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 2 }]);
 	});
 	it("changes under replacement node", () => {
 		const index = makeDetachedFieldIndex("");
@@ -519,9 +513,7 @@ describe("visit", () => {
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field2, id: { minor: 42 }, root: 2 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 2 }]);
 	});
 	it("transient insert", () => {
 		const index = makeDetachedFieldIndex("");
@@ -540,9 +532,7 @@ describe("visit", () => {
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 43 }, root: 1 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 43 }, root: 1 }]);
 	});
 	it("changes under transient", () => {
 		const index = makeDetachedFieldIndex("");
@@ -589,7 +579,7 @@ describe("visit", () => {
 			["exitField", field2],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [{ field: field2, id: detachId, root: 2 }]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: detachId, root: 2 }]);
 	});
 	it("restore", () => {
 		const index = makeDetachedFieldIndex("");
@@ -680,9 +670,7 @@ describe("visit", () => {
 			["exitField", field0],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 1 }, root: 0 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 1 }, root: 0 }]);
 	});
 	it("changes under transient move-in", () => {
 		const index = makeDetachedFieldIndex("");
@@ -733,7 +721,7 @@ describe("visit", () => {
 			["exitField", field2],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [{ field: field2, id: detachId, root: 2 }]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: detachId, root: 2 }]);
 	});
 	it("transient restore", () => {
 		const index = makeDetachedFieldIndex("");
@@ -755,9 +743,7 @@ describe("visit", () => {
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
 	describe("update detached node", () => {
 		for (const flip of [false, true]) {
@@ -798,8 +784,8 @@ describe("visit", () => {
 				];
 				testTreeVisit(delta, expected, index);
 				assert.deepEqual(Array.from(index.entries()), [
-					{ field: field2, id: detachId, root: 2 },
-					{ field: field3, id: node1, root: 3 },
+					{ id: detachId, root: 2 },
+					{ id: node1, root: 3 },
 				]);
 			});
 		}

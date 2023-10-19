@@ -15,11 +15,7 @@ import {
 	makeDetachedNodeId,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import {
-	assertFieldChangesEqual,
-	assertMarkListEqual,
-	defaultRevisionMetadataFromChanges,
-} from "../../utils";
+import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,

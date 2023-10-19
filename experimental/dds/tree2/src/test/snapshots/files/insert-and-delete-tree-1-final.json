@@ -170,7 +170,13 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[[\"beefbeef-beef-4000-8000-000000000004\",1,{\"field\":\"repair-1\",\"root\":1}]]",
+                  "data": [
+                    [
+                      "beefbeef-beef-4000-8000-000000000004",
+                      1,
+                      1
+                    ]
+                  ],
                   "id": 1
                 },
                 "encoding": "utf-8"

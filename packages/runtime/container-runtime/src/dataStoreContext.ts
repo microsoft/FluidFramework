@@ -815,7 +815,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		return {};

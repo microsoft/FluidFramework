@@ -4,12 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { Delta, FieldKey, MapTree, TreeSchemaIdentifier } from "../../core";
+import { Delta, FieldKey, MapTree, TreeNodeSchemaIdentifier } from "../../core";
 import { mapFieldsChanges, mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const emptyMap = new Map();
 const nodeX = { type, value: "X", fields: emptyMap };
 const nodeXCursor = singleMapTreeCursor(nodeX);

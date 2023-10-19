@@ -111,7 +111,7 @@ function transferRoots(
 				// We'll try this transfer again on the next pass.
 			} else {
 				rootTransfers.delete(source);
-				const { root: destination } = detachedFieldIndex.createEntry(destinationId);
+				const destination = detachedFieldIndex.createEntry(destinationId);
 				const fields = rootChanges.get(source);
 				if (fields !== undefined) {
 					rootChanges.delete(source);
@@ -269,17 +269,18 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 	if (delta.build !== undefined) {
 		for (const { id, trees } of delta.build) {
 			for (let i = 0; i < trees.length; i += 1) {
-				const { field } = config.detachedFieldIndex.createEntry(
+				const root = config.detachedFieldIndex.createEntry(
 					offsetDetachId(id, i),
 					trees.length,
 				);
+				const field = config.detachedFieldIndex.toFieldKey(root);
 				visitor.create([trees[i]], field);
 			}
 		}
 	}
 	if (delta.detached !== undefined) {
 		for (const { id, fields } of delta.detached) {
-			const { root } = config.detachedFieldIndex.getOrCreateEntry(id);
+			const root = config.detachedFieldIndex.getOrCreateEntry(id);
 			config.detachPassRoots.set(root, fields);
 			config.attachPassRoots.set(root, fields);
 		}
@@ -295,8 +296,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				for (let i = 0; i < count; i += 1) {
 					const originId = offsetDetachId(id, i);
 					const destinationId = offsetDetachId(destination, i);
-					const { root: sourceRoot } =
-						config.detachedFieldIndex.getOrCreateEntry(originId);
+					const sourceRoot = config.detachedFieldIndex.getOrCreateEntry(originId);
 					config.rootTransfers.set(sourceRoot, {
 						originId,
 						destinationId,
@@ -319,7 +319,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				if (mark.attach === undefined) {
 					// This a simple detach
 					for (let i = 0; i < mark.count; i += 1) {
-						const { root } = config.detachedFieldIndex.getOrCreateEntry(
+						const root = config.detachedFieldIndex.getOrCreateEntry(
 							offsetDetachId(mark.detach, i),
 						);
 						// We may need to do a second pass on the nodes, so keep track of the changes
@@ -355,14 +355,16 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				if (mark.attach !== undefined) {
 					for (let i = 0; i < mark.count; i += 1) {
 						const offsetAttachId = offsetDetachId(mark.attach, i);
-						const { field: sourceField, root: sourceRoot } =
+						const sourceRoot =
 							config.detachedFieldIndex.getOrCreateEntry(offsetAttachId);
+						const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 						if (mark.detach !== undefined) {
 							// This is a true replace.
-							const { field: destinationField, root: rootDestination } =
-								config.detachedFieldIndex.getOrCreateEntry(
-									offsetDetachId(mark.detach, i),
-								);
+							const rootDestination = config.detachedFieldIndex.getOrCreateEntry(
+								offsetDetachId(mark.detach, i),
+							);
+							const destinationField =
+								config.detachedFieldIndex.toFieldKey(rootDestination);
 							visitor.replace(
 								sourceField,
 								{ start: index, end: index + 1 },

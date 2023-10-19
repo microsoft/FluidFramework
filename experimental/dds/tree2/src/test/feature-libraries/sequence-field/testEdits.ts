@@ -11,12 +11,12 @@ import {
 	JsonableTree,
 	mintRevisionTag,
 	RevisionTag,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();
 
 export type TestChangeset = SF.Changeset<TestChange>;

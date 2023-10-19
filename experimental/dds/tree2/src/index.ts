@@ -54,10 +54,10 @@ export {
 	ForestLocation,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	FieldStoredSchema,
 	ValueSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	TreeTypeSet,
@@ -81,6 +81,7 @@ export {
 	MapTree,
 	LocalCommitSource,
 	forbiddenFieldKindIdentifier,
+	StoredSchemaCollection,
 } from "./core";
 
 export {
@@ -187,8 +188,8 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 	AllowedTypes,
+	TreeNodeSchema,
 	TreeSchema,
-	DocumentSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
 	FieldSchema,
@@ -196,7 +197,7 @@ export {
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	FieldGenerator,
 	TreeDataContext,
 	createDataBinderBuffering,
@@ -279,7 +280,10 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	is,
+	node,
+	SharedTreeNode,
 	Typed,
+	SchemaCollection,
 } from "./feature-libraries";
 
 export {

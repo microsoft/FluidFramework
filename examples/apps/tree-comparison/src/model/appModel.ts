@@ -12,6 +12,6 @@ import type { IInventoryListAppModel, IInventoryList } from "../modelInterfaces"
 export class InventoryListAppModel implements IInventoryListAppModel {
 	public constructor(
 		public readonly legacyTreeInventoryList: IInventoryList,
-		public readonly treeInventoryList: IInventoryList,
+		public readonly newTreeInventoryList: IInventoryList,
 	) {}
 }
