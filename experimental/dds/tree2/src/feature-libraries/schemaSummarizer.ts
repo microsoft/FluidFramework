@@ -26,8 +26,8 @@ import {
 	FieldStoredSchema,
 	SchemaData,
 	StoredSchemaRepository,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "../core";
@@ -229,7 +229,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return this.inner.rootFieldSchema;
 	}
 
-	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
+	public get treeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 		return this.inner.treeSchema;
 	}
 

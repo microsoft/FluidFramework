@@ -4,9 +4,9 @@
  */
 
 import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
-import { FieldKey, TreeSchemaIdentifier } from "../../core";
+import { FieldKey, TreeNodeSchemaIdentifier } from "../../core";
 import { BrandedType, capitalize } from "../../util";
-import { StructSchema, TreeSchema } from "../typed-schema";
+import { StructSchema, TreeNodeSchema } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { TreeContext } from "./context";
 import {
@@ -65,7 +65,7 @@ class RawStruct<TSchema extends StructSchema> implements Struct {
 	// Use a symbol here so that it will never collide with a field name
 	public readonly [nodeContent]: FlexibleNodeContent<[TSchema]>;
 
-	public get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		return this.schema.name;
 	}
 
@@ -92,7 +92,7 @@ class RawStruct<TSchema extends StructSchema> implements Struct {
 		return rawStructError();
 	}
 
-	public is<TSchemaCheck extends TreeSchema>(
+	public is<TSchemaCheck extends TreeNodeSchema>(
 		schema: TSchemaCheck,
 	): this is TypedNode<TSchemaCheck> {
 		return rawStructError();

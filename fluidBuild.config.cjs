@@ -31,7 +31,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
 			script: false,
 		},
 		"build:copy": [],
@@ -42,6 +42,7 @@ module.exports = {
 		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"depcruise": [],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
@@ -216,6 +217,7 @@ module.exports = {
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
+				["depcruise", "dependency-cruiser"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work

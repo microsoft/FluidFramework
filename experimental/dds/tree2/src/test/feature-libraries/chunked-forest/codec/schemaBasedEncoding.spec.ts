@@ -4,7 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { FieldStoredSchema, TreeSchemaIdentifier } from "../../../../core";
+import { FieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core";
 import { defaultSchemaPolicy } from "../../../../feature-libraries";
 
 import {
@@ -67,7 +67,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -93,7 +93,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -115,7 +115,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
