@@ -2,145 +2,111 @@
 # Licensed under the MIT License.
 
 parameters:
-- name: poolBuild
-  type: object
-  default: Large
-
-- name: testWorkspace
-  type: string
-
-# Custom steps specified by the "caller" of this template, to actually run perf tests
-- name: customSteps
-  type: stepList
-
 - name: loggerPackage
   type: string
   default: '@ff-internal/aria-logger'
 
-- name: timeoutInMinutes
-  type: number
-  default: 60
+- name: pathToTelemetryGenerator
+  type: string
+  default: '$(Build.SourcesDirectory)/tools/telemetry-generator'
 
-jobs:
-  - job: runTests
-    displayName: Run tests
-    pool: ${{ parameters.poolBuild }}
-    timeoutInMinutes: ${{ parameters.timeoutInMinutes }}
-    variables:
-    - group: ado-feeds
-    - name: isTestBranch
-      value: ${{ startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}
-      readonly: true
-    - name: feed
-      ${{ if eq(variables.isTestBranch, 'true') }}:
-        value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
-      ${{ else }}:
-        value: $(ado-feeds-build) # Comes from the ado-feeds variable group
-    - name: devFeed
-      ${{ if eq(variables.isTestBranch, 'true') }}:
-        value: $(ado-feeds-internal) # Comes from the ado-feeds variable group
-      ${{ else }}:
-        value: $(ado-feeds-dev) # Comes from the ado-feeds variable group
+- name: buildFeedUrl
+  type: string
 
-    steps:
-    # Setup. Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
-    - checkout: self
-      clean: true
+- name: internalFeedUrl
+  type: string
 
-    # Install
-    - template: include-use-node-version.yml
+- name: devFeedUrl
+  type: string
 
-    - task: Bash@3
-      displayName: Print Parameters
-      inputs:
-        targetType: 'inline'
-        # Some of the variables
-        # Variables declared outside this template will only work with "macro syntax": $(name).
-        # Variables declared inside this template would work with "template expression syntax": ${{ variables.name }},
-        # but we use macro syntax for all variables for consistency.
-        script: |
-          echo "
-          Pipeline Parameters:
-            poolBuild=${{ parameters.poolBuild }}
+- name: officeFeedUrl
+  type: string
 
-          Pipeline Variables:
-            isTestBranch=$(isTestBranch)
-            toolAbsolutePath=$(toolAbsolutePath)
-            artifactPipeline=$(artifactPipeline)
-            artifactBuildId=$(artifactBuildId)
-            feed=$(feed)
-            devFeed=$(devFeed)
-            testWorkspace=${{ parameters.testWorkspace }}
-            loggerPackage=${{ parameters.loggerPackage }}
+steps:
+# Set some variables only relevant to the steps in this template
+- task: Bash@3
+  displayName: Set variables for telemetry-generator setup
+  name: templateVariables
+  inputs:
+    targetType: 'inline'
+    ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
+      script: |
+        echo "##vso[task.setvariable variable=feed;isoutput=true]${{ parameters.internalFeedUrl }}"
+        echo "##vso[task.setvariable variable=devFeed;isoutput=true]${{ parameters.internalFeedUrl }}"
+    ${{ else }}:
+      script: |
+        echo "##vso[task.setvariable variable=feed;isoutput=true]${{ parameters.buildFeedUrl }}"
+        echo "##vso[task.setvariable variable=devFeed;isoutput=true]${{ parameters.devFeedUrl }}"
 
-          Build Params
-            SourceBranch=$(Build.SourceBranch)
-          "
+# Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
+- checkout: self
+  clean: true
 
-    - task: Bash@3
-      displayName: Create test directory
-      inputs:
-        targetType: 'inline'
-        script: |
-          mkdir ${{ parameters.testWorkspace }}
+- template: include-use-node-version.yml
 
-    - task: Bash@3
-      displayName: Initialize npmrc
-      inputs:
-        targetType: 'inline'
-        workingDirectory: ${{ parameters.testWorkspace }}
-        # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-        script: |
-          echo Initialize package
-          npm init --yes
+- task: Bash@3
+  displayName: Print parameter/variable values for template
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "
+      Parameters:
+        loggerPackage=${{ parameters.loggerPackage }}
+        pathToTelemetryGenerator=${{ parameters.pathToTelemetryGenerator }}
+        buildFeedUrl={{ parameters.buildFeedUrl }}
+        devFeedUrl={{ parameters.devFeedUrl }}
+        internalFeedUrl={{ parameters.internalFeedUrl }}
+        officeFeedUrl={{ parameters.officeFeedUrl }}
 
-          echo Generating .npmrc
-          echo "registry=https://registry.npmjs.org" >> ./.npmrc
-          echo "always-auth=false" >> ./.npmrc
+      Variables:
+        feed=$(templateVariables.feed)
+        devFeed=$(templateVariables.devFeed)
+      "
 
-          echo "@fluidframework:registry=$(feed)" >> ./.npmrc
-          echo "@fluid-experimental:registry=$(feed)" >> ./.npmrc
-          echo "@fluid-tools:registry=$(feed)" >> ./.npmrc
+- task: Bash@3
+  displayName: Initialize npmrc
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
+    # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
+    script: |
+      echo Initialize package
+      npm init --yes
 
-          # This is confusing, but we are using the .npmrc here to load dependencies from different feeds. These scopes
-          # must be loaded from the "dev" feed because that is the only place they are published. Ideally this logic
-          # will be centralized outside of CI in the future.
-          echo "@fluid-internal:registry=$(devFeed)" >> ./.npmrc
-          echo "@fluid-private:registry=$(devFeed)" >> ./.npmrc
+      echo Generating .npmrc
+      echo "registry=https://registry.npmjs.org" >> ./.npmrc
+      echo "always-auth=false" >> ./.npmrc
 
-          # This scope must be loaded from the "build" feed
-          echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+      echo "@fluidframework:registry=$(templateVariables.feed)" >> ./.npmrc
+      echo "@fluid-experimental:registry=$(templateVariables.feed)" >> ./.npmrc
+      echo "@fluid-tools:registry=$(templateVariables.feed)" >> ./.npmrc
+      echo "@fluid-internal:registry=$(templateVariables.devFeed)" >> ./.npmrc
+      echo "@fluid-private:registry=$(templateVariables.devFeed)" >> ./.npmrc
+      echo "@ff-internal:registry=${{ parameters.buildFeedUrl }}" >> ./.npmrc
+      echo "@microsoft:registry=${{ parameters.officeFeedUrl }}" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+      cat .npmrc
 
-          # This scope must be loaded from the internal Office feed
-          echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
+# Auth to internal feed
+- task: npmAuthenticate@0
+  displayName: 'npm authenticate (internal feed)'
+  inputs:
+    workingFile: ${{ parameters.pathToTelemetryGenerator }}/.npmrc
 
-          echo "always-auth=true" >> ./.npmrc
-          cat .npmrc
+# Install test and logger package
+- task: Npm@1
+  displayName: 'npm install aria logger'
+  inputs:
+    workingDir: ${{ parameters.pathToTelemetryGenerator }}
+    command: 'custom'
+    customCommand: 'install ${{ parameters.loggerPackage }}'
+    customRegistry: 'useNpmrc'
 
-    # Auth to internal feed
-    - task: npmAuthenticate@0
-      displayName: 'npm authenticate (internal feed)'
-      inputs:
-        workingFile: ${{ parameters.testWorkspace }}/.npmrc
-
-    # Install test and logger package
-    - task: Npm@1
-      displayName: 'npm install aria logger'
-      inputs:
-        command: 'custom'
-        workingDir: ${{ parameters.testWorkspace }}
-        customCommand: 'install ${{ parameters.loggerPackage }}'
-        customRegistry: 'useNpmrc'
-
-    - task: Bash@3
-      displayName: 'Prepare telemetry-generator'
-      inputs:
-        targetType: 'inline'
-        workingDirectory: $(toolAbsolutePath)
-        script: |
-          cp ${{ parameters.testWorkspace }}/.npmrc . ;
-          npm install @ff-internal/aria-logger;
-          npm i;
-          npm run build:compile;
-
-    - ${{ parameters.customSteps }}
+- task: Bash@3
+  displayName: 'Prepare telemetry-generator'
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.pathToTelemetryGenerator }}
+    script: |
+      npm i;
+      npm run build:compile;
