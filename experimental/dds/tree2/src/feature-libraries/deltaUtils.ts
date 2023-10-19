@@ -61,8 +61,8 @@ export function mapFieldChanges<TIn, TOut>(
 			trees: trees.map(func),
 		}));
 	}
-	if (fieldChanges.relocate !== undefined) {
-		out.relocate = fieldChanges.relocate;
+	if (fieldChanges.rename !== undefined) {
+		out.rename = fieldChanges.rename;
 	}
 	return out;
 }

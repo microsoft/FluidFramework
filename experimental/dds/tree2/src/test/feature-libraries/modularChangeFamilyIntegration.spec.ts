@@ -344,11 +344,11 @@ function normalizeDeltaFieldChanges(
 			fields: normalizeDelta(fields, genId, idMap),
 		}));
 	}
-	if (delta.relocate !== undefined && delta.relocate.length > 0) {
-		normalized.relocate = delta.relocate.map(({ id, count, destination }) => ({
-			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
+	if (delta.rename !== undefined && delta.rename.length > 0) {
+		normalized.rename = delta.rename.map(({ oldId, count, newId }) => ({
+			oldId: normalizeDeltaDetachedNodeId(oldId, genId, idMap),
 			count,
-			destination: normalizeDeltaDetachedNodeId(destination, genId, idMap),
+			newId: normalizeDeltaDetachedNodeId(newId, genId, idMap),
 		}));
 	}
 

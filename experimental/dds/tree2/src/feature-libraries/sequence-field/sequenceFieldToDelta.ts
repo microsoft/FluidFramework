@@ -28,7 +28,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 	const attached: Delta.Mark[] = [];
 	const detached: Delta.DetachedNodeChanges[] = [];
 	const build: Delta.DetachedNodeBuild[] = [];
-	const relocate: Delta.DetachedNodeRelocation[] = [];
+	const rename: Delta.DetachedNodeRename[] = [];
 
 	for (const mark of change) {
 		const deltaMark: Mutable<Delta.Mark> = { count: mark.count };
@@ -47,25 +47,25 @@ export function sequenceFieldToDelta<TNodeChange>(
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
 			if (markIsTransient(mark)) {
-				const startId = nodeIdFromChangeAtom(mark.cellId);
+				const oldId = nodeIdFromChangeAtom(mark.cellId);
 				if (!areEqualChangeAtomIds(mark.cellId, mark.transientDetach)) {
 					// TODO: handle transient move-in/return-to
 					assert(isInsert(mark), "Expected non-insert transient mark");
 					if (mark.content !== undefined) {
 						build.push({
-							id: startId,
+							id: oldId,
 							trees: mark.content.map(singleTextCursor),
 						});
 					}
-					relocate.push({
-						id: startId,
+					rename.push({
 						count: mark.count,
-						destination: nodeIdFromChangeAtom(mark.transientDetach),
+						oldId,
+						newId: nodeIdFromChangeAtom(mark.transientDetach),
 					});
 				}
 				if (deltaMark.fields) {
 					detached.push({
-						id: startId,
+						id: oldId,
 						fields: deltaMark.fields,
 					});
 				}
@@ -159,8 +159,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 	if (build.length > 0) {
 		delta.build = build;
 	}
-	if (relocate.length > 0) {
-		delta.relocate = relocate;
+	if (rename.length > 0) {
+		delta.rename = rename;
 	}
 	return delta;
 }

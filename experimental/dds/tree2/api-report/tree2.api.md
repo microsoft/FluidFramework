@@ -425,7 +425,7 @@ declare namespace Delta {
         FieldsChanges,
         DetachedNodeChanges,
         DetachedNodeBuild,
-        DetachedNodeRelocation,
+        DetachedNodeRename,
         FieldChanges
     }
 }
@@ -484,19 +484,19 @@ interface DetachedNodeChanges<TTree = ProtoNode> {
 // @alpha
 interface DetachedNodeId {
     // (undocumented)
-    major?: string | number;
+    readonly major?: string | number;
     // (undocumented)
-    minor: number;
+    readonly minor: number;
 }
 
 // @alpha
-interface DetachedNodeRelocation {
+interface DetachedNodeRename {
     // (undocumented)
     readonly count: number;
     // (undocumented)
-    readonly destination: DetachedNodeId;
+    readonly newId: DetachedNodeId;
     // (undocumented)
-    readonly id: DetachedNodeId;
+    readonly oldId: DetachedNodeId;
 }
 
 // @alpha
@@ -615,7 +615,7 @@ interface FieldChanges<TTree = ProtoNode> {
     // (undocumented)
     readonly detached?: readonly DetachedNodeChanges<TTree>[];
     // (undocumented)
-    readonly relocate?: readonly DetachedNodeRelocation[];
+    readonly rename?: readonly DetachedNodeRename[];
 }
 
 // @alpha

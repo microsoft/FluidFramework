@@ -519,7 +519,7 @@ describe("visit", () => {
 		const index = makeDetachedFieldIndex("");
 		const delta: Delta.FieldChanges = {
 			build: [{ id: { minor: 42 }, trees: [content] }],
-			relocate: [{ id: { minor: 42 }, count: 1, destination: { minor: 43 } }],
+			rename: [{ oldId: { minor: 42 }, count: 1, newId: { minor: 43 } }],
 		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
@@ -552,7 +552,7 @@ describe("visit", () => {
 			detached: [
 				{ id: buildId, fields: new Map([[barKey, { attached: [moveOut, moveIn] }]]) },
 			],
-			relocate: [{ id: buildId, count: 1, destination: detachId }],
+			rename: [{ oldId: buildId, count: 1, newId: detachId }],
 		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
@@ -605,17 +605,17 @@ describe("visit", () => {
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
 		const moveId = { minor: 2 };
-		const relocate: Delta.DetachedNodeRelocation = {
+		const rename: Delta.DetachedNodeRename = {
 			count: 1,
-			id: node1,
-			destination: moveId,
+			oldId: node1,
+			newId: moveId,
 		};
 		const moveIn: Delta.Mark = {
 			count: 1,
 			attach: moveId,
 		};
 		const delta = {
-			relocate: [relocate],
+			rename: [rename],
 			attached: [moveIn],
 		};
 		const expected: VisitScript = [
@@ -692,12 +692,12 @@ describe("visit", () => {
 				],
 			]),
 		};
-		const moveIn: Delta.DetachedNodeRelocation = {
+		const moveIn: Delta.DetachedNodeRename = {
 			count: 1,
-			id: moveId1,
-			destination: detachId,
+			oldId: moveId1,
+			newId: detachId,
 		};
-		const delta = { attached: [moveOut], relocate: [moveIn] };
+		const delta = { attached: [moveOut], rename: [moveIn] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -727,12 +727,12 @@ describe("visit", () => {
 		const index = makeDetachedFieldIndex("");
 		const node1 = { minor: 1 };
 		index.createEntry(node1);
-		const restore: Delta.DetachedNodeRelocation = {
+		const restore: Delta.DetachedNodeRename = {
 			count: 1,
-			id: node1,
-			destination: { minor: 42 },
+			oldId: node1,
+			newId: { minor: 42 },
 		};
-		const delta = { relocate: [restore] };
+		const delta = { rename: [restore] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -747,27 +747,25 @@ describe("visit", () => {
 	});
 	describe("update detached node", () => {
 		for (const flip of [false, true]) {
-			it(`relocate order flipped: ${flip}`, () => {
+			it(`rename order flipped: ${flip}`, () => {
 				const index = makeDetachedFieldIndex("");
 				const node1 = { minor: 1 };
 				index.createEntry(node1);
 				const buildId = { minor: 2 };
 				const detachId = { minor: 42 };
-				const relocateOldNode: Delta.DetachedNodeRelocation = {
+				const renameOldNode: Delta.DetachedNodeRename = {
 					count: 1,
-					id: node1,
-					destination: detachId,
+					oldId: node1,
+					newId: detachId,
 				};
-				const relocateNewNode: Delta.DetachedNodeRelocation = {
+				const renameNewNode: Delta.DetachedNodeRename = {
 					count: 1,
-					id: buildId,
-					destination: node1,
+					oldId: buildId,
+					newId: node1,
 				};
 				const delta = {
 					build: [{ id: buildId, trees: [content] }],
-					relocate: flip
-						? [relocateNewNode, relocateOldNode]
-						: [relocateOldNode, relocateNewNode],
+					rename: flip ? [renameNewNode, renameOldNode] : [renameOldNode, renameNewNode],
 				};
 				const expected: VisitScript = [
 					["enterField", rootKey],

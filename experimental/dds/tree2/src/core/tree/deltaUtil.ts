@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Mutable } from "../../util";
 import { ITreeCursorSynchronous } from "./cursor";
 import { Root, DetachedNodeId, FieldChanges } from "./delta";
 import { rootFieldKey } from "./types";
@@ -16,7 +17,7 @@ export function isEmptyFieldChanges(fieldChanges: FieldChanges): boolean {
 		fieldChanges.attached === undefined &&
 		fieldChanges.detached === undefined &&
 		fieldChanges.build === undefined &&
-		fieldChanges.relocate === undefined
+		fieldChanges.rename === undefined
 	);
 }
 
@@ -56,7 +57,7 @@ export function makeDetachedNodeId(
 	major: DetachedNodeId["major"],
 	minor: DetachedNodeId["minor"],
 ): DetachedNodeId {
-	const out: DetachedNodeId = { minor };
+	const out: Mutable<DetachedNodeId> = { minor };
 	if (major !== undefined) {
 		out.major = major;
 	}

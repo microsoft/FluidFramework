@@ -80,8 +80,8 @@ type RootTransfers = Map<
 		 * Used to delete the entry from the tree index once the root is transferred.
 		 * If undefined, the root was created due to an insert.
 		 */
-		originId: Delta.DetachedNodeId;
-		destinationId: Delta.DetachedNodeId;
+		oldId: Delta.DetachedNodeId;
+		newId: Delta.DetachedNodeId;
 	}
 >;
 
@@ -119,25 +119,25 @@ function transferRoots(
 ): void {
 	while (rootTransfers.size > 0) {
 		const priorSize = rootTransfers.size;
-		for (const [source, { originId, destinationId }] of rootTransfers) {
-			if (detachedFieldIndex.tryGetEntry(destinationId) !== undefined) {
+		for (const [oldRootId, { oldId, newId }] of rootTransfers) {
+			if (detachedFieldIndex.tryGetEntry(newId) !== undefined) {
 				// The destination field is already occupied.
 				// This can happen when its contents also need to be relocated.
 				// We'll try this transfer again on the next pass.
 			} else {
-				rootTransfers.delete(source);
-				const destination = detachedFieldIndex.createEntry(destinationId);
-				const fields = mapToUpdate.get(source);
+				rootTransfers.delete(oldRootId);
+				const newRootId = detachedFieldIndex.createEntry(newId);
+				const fields = mapToUpdate.get(oldRootId);
 				if (fields !== undefined) {
-					mapToUpdate.delete(source);
-					mapToUpdate.set(destination, fields);
+					mapToUpdate.delete(oldRootId);
+					mapToUpdate.set(newRootId, fields);
 				}
-				const sourceField = detachedFieldIndex.toFieldKey(source);
-				const destinationField = detachedFieldIndex.toFieldKey(destination);
-				visitor.enterField(sourceField);
-				visitor.detach({ start: 0, end: 1 }, destinationField);
-				visitor.exitField(sourceField);
-				detachedFieldIndex.deleteEntry(originId);
+				const oldField = detachedFieldIndex.toFieldKey(oldRootId);
+				const newField = detachedFieldIndex.toFieldKey(newRootId);
+				visitor.enterField(oldField);
+				visitor.detach({ start: 0, end: 1 }, newField);
+				visitor.exitField(oldField);
+				detachedFieldIndex.deleteEntry(oldId);
 			}
 		}
 		assert(rootTransfers.size < priorSize, "transferRoots should make progress");
@@ -292,21 +292,21 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			config.attachPassRoots.set(root, fields);
 		}
 	}
-	if (delta.relocate !== undefined) {
-		for (const { id, count, destination } of delta.relocate) {
+	if (delta.rename !== undefined) {
+		for (const { oldId, count, newId } of delta.rename) {
 			// It's possible for a detached node to be revived transiently such that it ends up back in the same detached field.
 			// Making such a transfer wouldn't just be inefficient, it would lead us to mistakenly think we have moved all content
 			// out of the source detached field, and would lead us to delete the tree index entry for that source detached field.
 			// This would effectively result in the tree index missing an entry for the detached field.
 			// This if statement prevents that from happening.
-			if (!areDetachedNodeIdsEqual(id, destination)) {
+			if (!areDetachedNodeIdsEqual(oldId, newId)) {
 				for (let i = 0; i < count; i += 1) {
-					const originId = offsetDetachId(id, i);
-					const destinationId = offsetDetachId(destination, i);
-					const sourceRoot = config.detachedFieldIndex.getOrCreateEntry(originId);
+					const ithOldId = offsetDetachId(oldId, i);
+					const ithNewId = offsetDetachId(newId, i);
+					const sourceRoot = config.detachedFieldIndex.getOrCreateEntry(ithOldId);
 					config.rootTransfers.set(sourceRoot, {
-						originId,
-						destinationId,
+						oldId: ithOldId,
+						newId: ithNewId,
 					});
 				}
 			}

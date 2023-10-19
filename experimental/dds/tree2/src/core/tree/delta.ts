@@ -135,8 +135,8 @@ export type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
  * @alpha
  */
 export interface DetachedNodeId {
-	major?: string | number;
-	minor: number;
+	readonly major?: string | number;
+	readonly minor: number;
 }
 
 /**
@@ -171,10 +171,10 @@ export interface DetachedNodeBuild<TTree = ProtoNode> {
  * Represents a detached node being assigned a new `DetachedNodeId`.
  * @alpha
  */
-export interface DetachedNodeRelocation {
-	readonly id: DetachedNodeId;
+export interface DetachedNodeRename {
 	readonly count: number;
-	readonly destination: DetachedNodeId;
+	readonly oldId: DetachedNodeId;
+	readonly newId: DetachedNodeId;
 }
 
 /**
@@ -185,5 +185,5 @@ export interface FieldChanges<TTree = ProtoNode> {
 	readonly attached?: MarkList<TTree>;
 	readonly detached?: readonly DetachedNodeChanges<TTree>[];
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
-	readonly relocate?: readonly DetachedNodeRelocation[];
+	readonly rename?: readonly DetachedNodeRename[];
 }
