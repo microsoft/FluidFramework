@@ -5,9 +5,18 @@
 
 import { strict as assert } from "assert";
 
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import {
+	ITestObjectProvider,
+	createSummarizerFromFactory,
+	summarizeNow,
+} from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { MigrationShim, MigrationShimFactory } from "@fluid-experimental/migration-shim";
+import {
+	MigrationShim,
+	MigrationShimFactory,
+	SharedTreeShim,
+	SharedTreeShimFactory,
+} from "@fluid-experimental/migration-shim";
 import {
 	BuildNode,
 	Change,
@@ -30,12 +39,16 @@ import {
 	SharedTreeFactory,
 	Typed,
 } from "@fluid-experimental/tree2";
+import { LoaderHeader } from "@fluidframework/container-definitions";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
 	private channel?: IChannel;
+	public get _root() {
+		return this.root;
+	}
 
 	// The object starts with a LegacySharedTree
 	public async initializingFirstTime(props?: any): Promise<void> {
@@ -143,7 +156,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			const nodeId = rootNode.traits.get(legacyNodeId)![0];
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
 			const quantity = legacyNode.payload.quantity as number;
-			newTree.schematize({
+			newTree.schematizeView({
 				initialTree: {
 					quantity,
 				},
@@ -153,10 +166,12 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		},
 	);
 
+	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
+
 	const dataObjectFactory2 = new DataObjectFactory(
 		"TestDataObject",
 		TestDataObject,
-		[migrationShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
+		[migrationShimFactory, sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
 		{},
 	);
 
@@ -194,6 +209,8 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
 		const shim1 = testObj1.getTree<MigrationShim>();
+		// Transition the container to write mode so we send the client join op first.
+		testObj1._root.set("a", "value");
 
 		const container2 = await provider.loadContainer(runtimeFactory2);
 		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
@@ -209,12 +226,29 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 
 		await provider.ensureSynchronized();
 
+		// Get premigration sequence number
+		const preMigrationSeqNumber1 = container1.deltaManager.lastKnownSeqNumber;
+		const preMigrationSeqNumber2 = container2.deltaManager.lastKnownSeqNumber;
+
 		// Hot swap
 		shim1.submitMigrateOp();
 
 		// TODO: shim1.on("migrated", () => { ... });
 		// TODO: shim2.on("migrated", () => { ... });
 		await provider.ensureSynchronized();
+
+		// Verify that no ops were generated during migration.
+		const postMigrationSeqNumber1 = container1.deltaManager.lastKnownSeqNumber;
+		const postMigrationSeqNumber2 = container2.deltaManager.lastKnownSeqNumber;
+
+		assert(
+			preMigrationSeqNumber1 + 1 === postMigrationSeqNumber1,
+			"container1 should have migrated with only one op",
+		);
+		assert(
+			preMigrationSeqNumber2 + 1 === postMigrationSeqNumber2,
+			"container2 should have migrated with only one op",
+		);
 
 		// Verify that the trees have been swapped by checking the attributes type
 		assert(
@@ -243,6 +277,77 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			`Failed to migrate values original ${originalValue} migrated 1: ${migratedValue1}, 2: ${migratedValue2}`,
 		);
 
-		// TODO: test that we can modify/send ops with the new Shared Tree
+		// Test that we can modify/send ops with the new Shared Tree
+		treeNode1.quantity = 5;
+		await provider.ensureSynchronized();
+		assert(treeNode2.quantity === treeNode1.quantity, "Failed to update the new tree via op");
+	});
+
+	it("Can Hot Swap, summarize, and load from that summary", async () => {
+		// Setup containers and get Migration Shims instead of LegacySharedTrees
+		const container1 = await provider.loadContainer(runtimeFactory2);
+		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
+		const shim1 = testObj1.getTree<MigrationShim>();
+
+		// Hot swap
+		shim1.submitMigrateOp();
+
+		const migrationCompletion = new Promise<void>((resolve) => {
+			shim1.on("migrated", () => resolve());
+		});
+		await migrationCompletion;
+		await provider.ensureSynchronized();
+
+		// Summarize
+		const { summarizer } = await createSummarizerFromFactory(
+			provider,
+			container1,
+			dataObjectFactory2,
+		);
+		await provider.ensureSynchronized();
+		const { summaryVersion } = await summarizeNow(summarizer);
+
+		// Load a new container
+		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
+		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
+		const shim2 = testObj2.getTree<SharedTreeShim>();
+
+		// Validate that we loaded a shared tree immediately
+		assert(
+			shim2.currentTree.attributes.type === newSharedTreeFactory.type,
+			"should have loaded migrated shim",
+		);
+
+		// Get the migrated values from the new tree
+		const tree1 = shim1.currentTree as ISharedTree;
+		const view1 = getNewTreeView(tree1);
+		const treeNode1 = view1.root as unknown as Typed<typeof inventorySchema>;
+
+		const tree2 = shim2.currentTree;
+		const view2 = getNewTreeView(tree2);
+		const treeNode2 = view2.root as unknown as Typed<typeof inventorySchema>;
+		const migratedValue2 = treeNode2.quantity;
+		assert(
+			migratedValue2 === originalValue,
+			`Failed to load from migrated snapshot values original ${originalValue} migrated snapshot value: ${migratedValue2}`,
+		);
+
+		// Test that we can modify/send ops with the new Shared Tree
+		treeNode2.quantity = 5;
+		await provider.ensureSynchronized();
+		assert(
+			treeNode2.quantity === treeNode1.quantity,
+			"Failed to write from MigrationShim to SharedTreeShim",
+		);
+
+		// Test that we can modify/send ops with the new Shared Tree
+		treeNode1.quantity = 6;
+		await provider.ensureSynchronized();
+		assert(
+			treeNode2.quantity === treeNode1.quantity,
+			"Failed to write from SharedTreeShim to MigrationShim",
+		);
 	});
 });

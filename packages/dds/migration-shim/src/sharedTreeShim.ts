@@ -44,7 +44,7 @@ export class SharedTreeShim implements IChannel {
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;
 	private services?: ShimChannelServices;
 	private _currentTree?: ISharedTree;
-	private get currentTree(): ISharedTree {
+	public get currentTree(): ISharedTree {
 		assert(this._currentTree !== undefined, "No current tree initialized");
 		return this._currentTree;
 	}
