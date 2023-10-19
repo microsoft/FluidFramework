@@ -50,6 +50,9 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 /** Parse the given url and return the origin (host name) */
 export const getOrigin = (url: string) => new URL(url).origin;
 
+/**
+ * @public
+ */
 export interface IOdspResponse<T> {
 	content: T;
 	headers: Map<string, string>;

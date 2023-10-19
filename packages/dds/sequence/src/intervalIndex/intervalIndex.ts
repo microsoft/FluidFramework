@@ -13,6 +13,7 @@ import { ISerializableInterval } from "../intervals";
  * - "find all intervals with start endpoint between these two points"
  * - "find all intervals which overlap this range"
  * etc.
+ * @public
  */
 export interface IntervalIndex<TInterval extends ISerializableInterval> {
 	/**

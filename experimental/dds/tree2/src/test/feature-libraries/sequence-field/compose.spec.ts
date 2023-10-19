@@ -8,7 +8,7 @@ import {
 	RevisionTag,
 	makeAnonChange,
 	tagChange,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	mintRevisionTag,
 	tagRollbackInverse,
 	ChangesetLocalId,
@@ -20,7 +20,7 @@ import { TestChange } from "../../testChange";
 import { cases, ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 import { compose, composeNoVerify, shallowCompose } from "./utils";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();

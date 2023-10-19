@@ -1079,7 +1079,7 @@ export const handlers: Handler[] = [
 			const cleanScript = scripts.clean;
 			if (cleanScript) {
 				// Ignore clean scripts that are root of the release group
-				if (cleanScript.startsWith("pnpm")) {
+				if (cleanScript.startsWith("pnpm") || cleanScript.startsWith("fluid-build")) {
 					return undefined;
 				}
 
