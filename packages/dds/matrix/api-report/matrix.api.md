@@ -55,7 +55,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     // (undocumented)
     getCell(row: number, col: number): MatrixItem<T>;
     // (undocumented)
-    static getFactory(): SharedMatrixFactory_2;
+    static getFactory(): SharedMatrixFactory;
     // (undocumented)
     id: string;
     // (undocumented)
@@ -72,7 +72,7 @@ export class SharedMatrix<T = any> extends SharedObject implements IMatrixProduc
     protected onDisconnect(): void;
     // (undocumented)
     openMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): IMatrixReader<MatrixItem<T>>;
-    openUndo(consumer: IUndoConsumer_2): void;
+    openUndo(consumer: IUndoConsumer): void;
     // (undocumented)
     protected processCore(rawMessage: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processGCDataCore(serializer: SummarySerializer): void;

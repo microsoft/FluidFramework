@@ -122,7 +122,7 @@ export interface IGCMetadata {
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
 	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
-   *
+	 *
 	 * @deprecated use GCFeatureMatrix.sweepGeneration instead. @see GCFeatureMatrix.sweepGeneration
 	 */
 	readonly sweepEnabled?: boolean;

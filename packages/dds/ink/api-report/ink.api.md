@@ -74,17 +74,17 @@ export interface IInkStroke {
 }
 
 // @public @sealed
-export class Ink extends SharedObject<IInkEvents_2> implements IInk_2 {
+export class Ink extends SharedObject<IInkEvents> implements IInk {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
-    appendPointToStroke(point: IInkPoint_2, id: string): IInkStroke_2;
+    appendPointToStroke(point: IInkPoint, id: string): IInkStroke;
     // (undocumented)
     protected applyStashedOp(): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): Ink;
-    createStroke(pen: IPen_2): IInkStroke_2;
-    static getFactory(): InkFactory_2;
-    getStroke(key: string): IInkStroke_2;
-    getStrokes(): IInkStroke_2[];
+    createStroke(pen: IPen): IInkStroke;
+    static getFactory(): InkFactory;
+    getStroke(key: string): IInkStroke;
+    getStrokes(): IInkStroke[];
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
