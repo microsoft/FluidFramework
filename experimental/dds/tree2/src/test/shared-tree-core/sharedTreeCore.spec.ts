@@ -32,7 +32,7 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	singleTextCursor,
 	typeNameSymbol,
 } from "../../feature-libraries";
@@ -331,7 +331,7 @@ describe("SharedTreeCore", () => {
 
 		const b = new SchemaBuilder({ scope: "0x4a6 repro" });
 		const node = b.structRecursive("test node", {
-			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 		});
 		const schema = b.intoSchema(b.optional(node));
 

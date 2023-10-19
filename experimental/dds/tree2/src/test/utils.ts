@@ -48,7 +48,7 @@ import {
 	Any,
 	buildForest,
 	createMockNodeKeyManager,
-	FieldSchema,
+	TreeFieldSchema,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
 	mapFieldMarks,
@@ -70,7 +70,7 @@ import {
 	moveToDetachedField,
 	mapCursorField,
 	JsonableTree,
-	SchemaData,
+	TreeStoredSchema,
 	rootFieldKey,
 	compareUpPaths,
 	UpPath,
@@ -606,7 +606,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function treeWithContent<TRoot extends FieldSchema>(
+export function treeWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;
@@ -713,7 +713,7 @@ export function expectJsonTree(
 export function initializeTestTree(
 	tree: ISharedTreeView,
 	state: JsonableTree | JsonableTree[] | undefined,
-	schema: SchemaData = wrongSchema,
+	schema: TreeStoredSchema = wrongSchema,
 ): void {
 	if (state === undefined) {
 		tree.storedSchema.update(schema);

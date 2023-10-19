@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ITreeCursorSynchronous, SchemaData } from "../../../core";
+import { ITreeCursorSynchronous, TreeStoredSchema } from "../../../core";
 import { fail } from "../../../util";
 import { ICodecOptions, IJsonCodec } from "../../../codec";
 import { FullSchemaPolicy } from "../../modular-schema";
@@ -46,7 +46,7 @@ export function makeCompressedCodec(
 
 export function makeSchemaCompressedCodec(
 	{ jsonValidator: validator }: ICodecOptions,
-	schema: SchemaData,
+	schema: TreeStoredSchema,
 	policy: FullSchemaPolicy,
 ): IJsonCodec<ITreeCursorSynchronous> {
 	const versionedValidator = validator.compile(Versioned);

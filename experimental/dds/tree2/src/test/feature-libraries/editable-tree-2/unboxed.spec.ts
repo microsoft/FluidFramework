@@ -14,7 +14,13 @@ import {
 	rootFieldKey,
 } from "../../../core";
 import { SchemaBuilder, leaf as leafDomain } from "../../../domains";
-import { AllowedTypes, Any, FieldKind, FieldKinds, FieldSchema } from "../../../feature-libraries";
+import {
+	AllowedTypes,
+	Any,
+	FieldKind,
+	FieldKinds,
+	TreeFieldSchema,
+} from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import {
 	unboxedField,
@@ -89,7 +95,7 @@ describe("unboxedField", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const structSchema = builder.structRecursive("struct", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
 		});
 		const fieldSchema = SchemaBuilder.optional(structSchema);
 		const schema = builder.intoSchema(fieldSchema);
@@ -185,7 +191,7 @@ describe("unboxedTree", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
 		const structSchema = builder.structRecursive("struct", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
 		});
 		const rootSchema = builder.optional(structSchema);
 		const schema = builder.intoSchema(rootSchema);

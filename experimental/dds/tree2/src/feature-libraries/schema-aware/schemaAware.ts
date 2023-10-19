@@ -17,7 +17,7 @@ import {
 import { Multiplicity } from "../modular-schema";
 import {
 	InternalTypedSchemaTypes,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeNodeSchema,
 	AllowedTypes,
 } from "../typed-schema";
@@ -149,9 +149,9 @@ export type UnbrandedName<TName> = [
  */
 export type TypedFields<
 	Mode extends ApiMode,
-	TFields extends undefined | { [key: string]: FieldSchema },
+	TFields extends undefined | { [key: string]: TreeFieldSchema },
 > = [
-	TFields extends { [key: string]: FieldSchema }
+	TFields extends { [key: string]: TreeFieldSchema }
 		? {
 				-readonly [key in keyof TFields]: TypedField<
 					TFields[key],
@@ -162,10 +162,10 @@ export type TypedFields<
 ][_InlineTrick];
 
 /**
- * `FieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
+ * `TreeFieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
  * @alpha
  */
-export type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
+export type TypedField<TField extends TreeFieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
 		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
