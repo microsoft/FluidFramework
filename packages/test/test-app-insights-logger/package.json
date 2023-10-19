@@ -36,9 +36,9 @@
 		"applicationinsights": "^2.1.9"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.25.0",
+		"@fluid-tools/build-cli": "0.26.0-202915",
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "^0.25.0",
+		"@fluidframework/build-tools": "0.26.0-202915",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@types/node": "^16.18.38",
 		"eslint": "~8.50.0",

@@ -41,9 +41,9 @@
 		"react-dom": "^17.0.1"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.25.0",
+		"@fluid-tools/build-cli": "0.26.0-202915",
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "^0.25.0",
+		"@fluidframework/build-tools": "0.26.0-202915",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/view-adapters-previous": "npm:@fluidframework/view-adapters@2.0.0-internal.7.1.0",
 		"@microsoft/api-extractor": "^7.37.0",
