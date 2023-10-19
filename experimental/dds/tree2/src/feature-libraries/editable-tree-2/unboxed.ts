@@ -10,7 +10,7 @@ import { fail, oneFromSet } from "../../util";
 import {
 	AllowedTypes,
 	FieldSchema,
-	TreeSchema,
+	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 } from "../typed-schema";
@@ -22,7 +22,7 @@ import { makeField } from "./lazyField";
 /**
  * See {@link UnboxNode} for documentation on what unwrapping this performs.
  */
-export function unboxedTree<TSchema extends TreeSchema>(
+export function unboxedTree<TSchema extends TreeNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,

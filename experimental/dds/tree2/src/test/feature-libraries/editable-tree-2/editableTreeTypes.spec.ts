@@ -36,7 +36,7 @@ import {
 	LeafSchema,
 	MapSchema,
 	StructSchema,
-	TreeSchema,
+	TreeNodeSchema,
 	FieldSchema,
 } from "../../../feature-libraries";
 
@@ -145,7 +145,7 @@ describe("editableTreeTypes", () => {
 		];
 
 		const optionalNumberField = SchemaBuilder.optional(leaf.number);
-		const mapSchema = undefined as unknown as TreeSchema<
+		const mapSchema = undefined as unknown as TreeNodeSchema<
 			"MapIteration",
 			{ mapFields: typeof optionalNumberField }
 		>;

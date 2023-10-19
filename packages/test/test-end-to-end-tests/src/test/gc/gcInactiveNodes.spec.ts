@@ -442,7 +442,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			);
 
 			itExpects(
-				"throwOnInactiveLoad: true; DDS handle.get -- throws but DOESN'T log",
+				"throwOnInactiveLoad: true; DDS handle.get -- Doesn't throw, and DOESN'T log",
 				[
 					// Bug: It SHOULD actually log
 					// {
@@ -502,20 +502,13 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						defaultDataStoreContainer2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
 						ddsUrl,
 					);
-					try {
-						// This throws because the DataStore is inactive and throwOnInactiveLoad is set
-						await handle.get();
-						assert.fail("Expected handle.get to throw");
-					} catch (error: any) {
-						const inactiveError: InactiveLoadError | undefined = error;
-						assert.equal(inactiveError?.code, 404, "Incorrect error status code");
-						assert.equal(inactiveError?.message, `Object is inactive: ${ddsUrl}`);
-						assert.equal(
-							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
-							true,
-							"Inactive error from handle.get should include the tombstone flag",
-						);
-					}
+
+					// Even though the DataStore is inactive and throwOnInactiveLoad is set, we don't throw for DDSes for ease of use
+					await assert.doesNotReject(
+						async () => handle.get(),
+						"handle.get() for the DDS should not throw",
+					);
+
 					// Bug: It SHOULD actually log
 					// mockLogger.assertMatch(
 					// 	[

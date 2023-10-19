@@ -49,4 +49,4 @@ type _1 = requireTrue<
 /**
  * @alpha
  */
-export const library = builder.finalize();
+export const library = builder.intoLibrary();
