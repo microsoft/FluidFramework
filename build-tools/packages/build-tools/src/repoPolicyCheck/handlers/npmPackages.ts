@@ -1181,7 +1181,7 @@ export const handlers: Handler[] = [
 
 			const exportsRoot = exportsField?.["."];
 			if (exportsRoot === undefined) {
-				return "Missing '.' extry in 'exports' field in package.json.";
+				return "Missing '.' entry in 'exports' field in package.json.";
 			}
 
 			if (json.main === undefined) {
@@ -1195,7 +1195,7 @@ export const handlers: Handler[] = [
 					: normalizePathField(exportsRoot?.require?.default);
 			const mainField = normalizePathField(json.main);
 			if (requireField !== mainField) {
-				return `Incorrect 'require' extry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
+				return `Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
 			}
 
 			// ESM exports
@@ -1206,7 +1206,7 @@ export const handlers: Handler[] = [
 			if (json.module !== undefined) {
 				const moduleField = normalizePathField(json.module);
 				if (importField !== moduleField) {
-					return `Incorrect 'import' extry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
+					return `Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
 				}
 			}
 		},
