@@ -1423,7 +1423,7 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
 // @alpha
-export function node(owner: SharedTreeNode): Required<SharedTreeNode>[typeof nodeSym];
+export function node(owner: SharedTreeNode): TreeNode;
 
 // @alpha
 export interface NodeData {
@@ -1991,9 +1991,7 @@ export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSc
 // @alpha
 export interface SharedTreeNode {
     // (undocumented)
-    [nodeSym]?: {
-        on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
-    };
+    [nodeSym]?: TreeNode;
 }
 
 // @alpha

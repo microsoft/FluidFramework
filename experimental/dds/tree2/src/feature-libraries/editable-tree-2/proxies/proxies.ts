@@ -29,7 +29,7 @@ import { FieldKey } from "../../../core";
 import { getBoxedField } from "../lazyTree";
 import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
-import { createNodeApi, nodeSym } from "./node";
+import { nodeSym } from "./node";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
 const treeNodeSym = Symbol("TreeNode");
@@ -150,7 +150,7 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
-	const nodeApi = createNodeApi(content);
+	const nodeApi = content;
 
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
@@ -373,7 +373,7 @@ export function createListProxy<TTypes extends AllowedTypes>(
 			configurable: false,
 		},
 		[nodeSym]: {
-			value: createNodeApi(treeNode),
+			value: treeNode,
 			writable: false,
 			enumerable: false,
 			configurable: false,

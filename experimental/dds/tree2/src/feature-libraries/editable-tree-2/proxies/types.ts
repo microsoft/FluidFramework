@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EditableTreeEvents, SchemaAware } from "../..";
+import { SchemaAware } from "../..";
 import { RestrictiveReadonlyRecord } from "../../../util";
 import { FieldKinds } from "../../default-field-kinds";
 import { FieldKind } from "../../modular-schema";
@@ -24,6 +24,7 @@ import {
 	FlexibleNodeContent,
 	Sequence,
 	AssignableFieldKinds,
+	TreeNode,
 } from "../editableTreeTypes";
 import { nodeSym } from "./node";
 
@@ -33,12 +34,7 @@ import { nodeSym } from "./node";
  */
 export interface SharedTreeNode {
 	// TODO: Make [nodeSym] non-optional when we have factory functions.
-	[nodeSym]?: {
-		on<K extends keyof EditableTreeEvents>(
-			eventName: K,
-			listener: EditableTreeEvents[K],
-		): () => void;
-	};
+	[nodeSym]?: TreeNode;
 }
 
 /**
