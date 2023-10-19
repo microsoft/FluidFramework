@@ -536,4 +536,64 @@ describe("generate:buildVersion for alpha/beta", () => {
 			expect(ctx.stdout).to.contain("version=0.0.0-88879-test");
 			expect(ctx.stdout).to.contain("isLatest=false");
 		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "alpha",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"])
+		.it("tagName: client, release: prerelease, test-build: false, types: alpha", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.0.0-dev.7.1.0.88879-alpha-types");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "beta",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"])
+		.it("tagName: client, release: prerelease, test-build: false, types: beta", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.0.0-dev.7.1.0.88879-beta-types");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "public",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"])
+		.it("tagName: client, release: prerelease, test-build: false, types: public", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.0.0-dev.7.1.0.88879");
+		});
+
+	test.env({
+		VERSION_BUILDNUMBER: "88879",
+		VERSION_TAGNAME: "client",
+		TEST_BUILD: "false",
+		VERSION_RELEASE: "prerelease",
+		VERSION_PATCH: "False",
+		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
+		PACKAGE_TYPES_FIELD: "untrimmed",
+	})
+		.stdout()
+		.command(["generate:buildVersion", "--fileVersion", "2.0.0-dev.7.1.0"])
+		.it("tagName: client, release: prerelease, test-build: false, types: untrimmed", (ctx) => {
+			expect(ctx.stdout).to.contain("version=2.0.0-dev.7.1.0.88879");
+		});
 });
