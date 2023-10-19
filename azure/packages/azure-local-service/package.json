@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/index.js",
-	"typings": "dist/index.d.ts",
+	"types": "dist/index.d.ts",
 	"bin": "dist/index.js",
 	"scripts": {
 		"build": "fluid-build . --task build",
@@ -42,6 +42,7 @@
 		"@microsoft/api-extractor": "^7.37.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
+		"eslint-config-prettier": "~9.0.0",
 		"forever": "^4.0.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",

@@ -11,7 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/index.js",
-	"typings": "dist/index.d.ts",
+	"types": "dist/index.d.ts",
 	"bin": "dist/index.js",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",

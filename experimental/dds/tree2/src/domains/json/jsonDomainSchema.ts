@@ -17,30 +17,7 @@ const builder = new SchemaBuilderInternal({
 	libraries: [leaf.library],
 });
 
-/**
- * @alpha
- * @deprecated Use leaf.number
- */
-export const jsonNumber = leaf.number;
-
-/**
- * @alpha
- * @deprecated Use leaf.string
- */
-export const jsonString = leaf.string;
-
-/**
- * @alpha
- */
-export const jsonNull = builder.struct("null", {});
-
-/**
- * @alpha
- * @deprecated Use leaf.boolean
- */
-export const jsonBoolean = leaf.boolean;
-
-const jsonPrimitives = [...leaf.primitives, jsonNull] as const;
+const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
 
 /**
  * Types allowed as roots of Json content.

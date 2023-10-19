@@ -469,14 +469,13 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  * Strongly typed over its rootFieldSchema.
  *
  * @remarks
- * This type is mainly used as a type constraint to mean that the code working with it requires strongly typed schema.
- * The actual type used will include detailed schema information for all the types in the collection.
- * This pattern is used to implement SchemaAware APIs.
+ * The type of the rootFieldSchema is used to implement SchemaAware APIs.
+ * Cases that do not require being compile time schema aware can omit the explicit type for it.
  *
  * @alpha
  */
 
-export interface TypedSchemaCollection<T extends FieldSchema = FieldSchema> {
+export interface DocumentSchema<out T extends FieldSchema = FieldSchema> {
 	readonly rootFieldSchema: T;
 	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeSchema>;
 	readonly policy: FullSchemaPolicy;

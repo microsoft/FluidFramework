@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { singleTextCursor } from "../../feature-libraries";
-import { jsonString, singleJsonCursor } from "../../domains";
+import { leaf, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath } from "../../core";
 import { ISharedTreeView } from "../../shared-tree";
 import { brand, JsonCompatible } from "../../util";
@@ -319,7 +319,7 @@ describe("Undo and redo", () => {
  */
 function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField(rootField);
-	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 

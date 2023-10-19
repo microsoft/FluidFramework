@@ -17,7 +17,7 @@ import {
 	MapSchema,
 	StructSchema,
 	TreeSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 } from "../../typed-schema";
 import {
 	CheckTypesOverlap,
@@ -26,7 +26,10 @@ import {
 	AssignableFieldKinds,
 } from "../editableTreeTypes";
 
-/** Implements 'readonly T[]' and the list mutation APIs. */
+/**
+ * Implements 'readonly T[]' and the list mutation APIs.
+ * @alpha
+ */
 export interface SharedTreeList<
 	TTypes extends AllowedTypes,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
@@ -261,8 +264,8 @@ export type ProxyNode<
 
 /** The root type (the type of the entire tree) for a given schema collection */
 export type ProxyRoot<
-	TSchema extends TypedSchemaCollection<any>,
+	TSchema extends DocumentSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = TSchema extends TypedSchemaCollection<infer TRootFieldSchema>
+> = TSchema extends DocumentSchema<infer TRootFieldSchema>
 	? ProxyField<TRootFieldSchema, API>
 	: never;

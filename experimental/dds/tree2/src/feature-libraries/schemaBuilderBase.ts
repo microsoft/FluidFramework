@@ -14,7 +14,7 @@ import {
 	AllowedTypes,
 	TreeSchema,
 	FieldSchema,
-	TypedSchemaCollection,
+	DocumentSchema,
 	FlexList,
 	Unenforced,
 	Any,
@@ -154,7 +154,7 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Produce a TypedSchemaCollection which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
+	 * Produce a DocumentSchema which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
 	 * Can be used with schematize to provide schema aware access to document content.
 	 *
 	 * @remarks
@@ -162,7 +162,7 @@ export class SchemaBuilderBase<
 	 */
 	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
-	): TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> {
+	): DocumentSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
 		const field = this.normalizeField(root);
 		this.finalizeCommon();
@@ -176,7 +176,7 @@ export class SchemaBuilderBase<
 			rootLibrary,
 			...this.libraries,
 		]);
-		const typed: TypedSchemaCollection<NormalizeField<TSchema, TDefaultKind>> = {
+		const typed: DocumentSchema<NormalizeField<TSchema, TDefaultKind>> = {
 			...collection,
 			rootFieldSchema: field,
 		};
@@ -355,7 +355,7 @@ export class SchemaBuilderBase<
  * Can be aggregated into other libraries by adding to their builders.
  * @alpha
  */
-export interface SchemaLibrary extends TypedSchemaCollection {
+export interface SchemaLibrary extends DocumentSchema {
 	/**
 	 * Schema data aggregated from a collection of libraries by a SchemaBuilder.
 	 */

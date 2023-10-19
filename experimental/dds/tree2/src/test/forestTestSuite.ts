@@ -26,12 +26,9 @@ import {
 } from "../core";
 import {
 	cursorToJsonObject,
-	jsonNumber,
 	jsonSchema,
 	jsonRoot,
 	singleJsonCursor,
-	jsonBoolean,
-	jsonString,
 	SchemaBuilder,
 	leaf,
 } from "../domains";
@@ -406,9 +403,9 @@ export function testForest(config: ForestTestConfiguration): void {
 			const schema = new InMemoryStoredSchemaRepository(jsonSchema);
 			const forest = factory(schema);
 			const content: JsonableTree[] = [
-				{ type: jsonNumber.name, value: 1 },
-				{ type: jsonBoolean.name, value: true },
-				{ type: jsonString.name, value: "test" },
+				{ type: leaf.number.name, value: 1 },
+				{ type: leaf.boolean.name, value: true },
+				{ type: leaf.string.name, value: "test" },
 			];
 			initializeForest(forest, content.map(singleTextCursor));
 
@@ -463,7 +460,7 @@ export function testForest(config: ForestTestConfiguration): void {
 									type: Delta.MarkType.Insert,
 									content: [
 										singleTextCursor({
-											type: jsonBoolean.name,
+											type: leaf.boolean.name,
 											value: true,
 										}),
 									],
@@ -497,7 +494,7 @@ export function testForest(config: ForestTestConfiguration): void {
 									type: Delta.MarkType.Insert,
 									content: [
 										singleTextCursor({
-											type: jsonBoolean.name,
+											type: leaf.boolean.name,
 											value: true,
 										}),
 									],
@@ -662,14 +659,14 @@ export function testForest(config: ForestTestConfiguration): void {
 
 				const mark: Delta.Insert = {
 					type: Delta.MarkType.Insert,
-					content: [singleTextCursor({ type: jsonNumber.name, value: 3 })],
+					content: [singleTextCursor({ type: leaf.number.name, value: 3 })],
 					fields: new Map([
 						[
 							brand("newField"),
 							[
 								{
 									type: Delta.MarkType.Insert,
-									content: [{ type: jsonNumber.name, value: 4 }].map(
+									content: [{ type: leaf.number.name, value: 4 }].map(
 										singleTextCursor,
 									),
 								},
