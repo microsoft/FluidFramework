@@ -11,27 +11,33 @@ import { Format, makeSchemaCodec } from "../../feature-libraries/schemaIndexForm
 
 import { FieldKindIdentifier, SchemaData } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { jsonSchema, jsonRoot, SchemaBuilder } from "../../domains";
+import { jsonSchema, jsonRoot, SchemaBuilder, leaf } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
+import { makeCodecFamily } from "../../codec";
+import { EncodingTestData, makeEncodingTestSuite } from "../utils";
+import { library } from "../testTrees";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
-describe("SchemaIndex", () => {
-	it("roundtrip", () => {
-		// Just test with the Json domain schema for now.
-		// TODO: add more targeted tests, and tests for more cases.
-		const data: SchemaData = new SchemaBuilder({
-			scope: "roundtrip",
-			libraries: [jsonSchema],
-		}).intoSchema(SchemaBuilder.optional(jsonRoot));
-		const s = codec.encode(data);
-		const parsed = codec.decode(s);
-		const s2 = codec.encode(parsed);
-		assert.deepEqual(s, s2);
-		assert(allowsRepoSuperset(defaultSchemaPolicy, data, parsed));
-		assert(allowsRepoSuperset(defaultSchemaPolicy, parsed, data));
-	});
+const schema1 = new SchemaBuilder({
+	scope: "test",
+	libraries: [jsonSchema],
+}).intoSchema(SchemaBuilder.optional(jsonRoot));
 
+const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
+const schema2 = new SchemaBuilder({
+	scope: "test",
+	libraries: [library],
+}).intoSchema(SchemaBuilder.optional(jsonPrimitives));
+
+const testCases: EncodingTestData<unknown, unknown> = {
+	successes: [
+		["schema 1", schema1],
+		["schema 2", schema2],
+	],
+};
+
+describe("SchemaIndex", () => {
 	it("accepts valid data", () => {
 		// TODO: should test way more cases, and check results are correct.
 		const cases = [
@@ -62,6 +68,17 @@ describe("SchemaIndex", () => {
 		for (const data of badCases) {
 			assert.throws(() => codec.decode(data as unknown as Format));
 		}
+	});
+
+	describe("codec", () => {
+		makeEncodingTestSuite(
+			makeCodecFamily([[0, codec]]),
+			testCases as EncodingTestData<SchemaData, Format>,
+			(a, b) => {
+				assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
+				assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
+			},
+		);
 	});
 
 	// TODO: testing SchemaIndex class itself, specifically for attachment and normal summaries.

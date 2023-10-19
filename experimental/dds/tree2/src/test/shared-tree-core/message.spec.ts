@@ -94,7 +94,7 @@ const testCases = useDeterministicStableId(() => {
 	return data;
 });
 
-describe.only("message codec", () => {
+describe("message codec", () => {
 	const codec = makeMessageCodec(TestChange.codec, {
 		jsonValidator: typeboxValidator,
 	});
