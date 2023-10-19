@@ -11,11 +11,8 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { FieldSchema, TypedField } from "../feature-libraries";
-import {
-	SharedTree,
-	SharedTreeOptions,
-	InitializeAndSchematizeConfiguration,
-} from "../shared-tree";
+import { SharedTree, SharedTreeOptions } from "./sharedTree";
+import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 
 /**
  * Configuration to specialize a Tree DDS for a particular use.

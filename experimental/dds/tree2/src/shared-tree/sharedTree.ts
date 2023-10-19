@@ -34,7 +34,7 @@ import {
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
-import { type TypedTreeChannel } from "../typed-tree";
+import { type TypedTreeChannel } from "./typedTree";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeView,
