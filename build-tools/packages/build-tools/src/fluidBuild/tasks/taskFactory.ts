@@ -14,6 +14,7 @@ import {
 	GoodFence,
 	LesscTask,
 	TypeValidationTask,
+	DepCruiseTask,
 } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
 import { TscTask } from "./leaf/tscTask";
@@ -43,6 +44,7 @@ const executableToLeafTask: {
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
+	"depcruise": DepCruiseTask,
 };
 
 export class TaskFactory {

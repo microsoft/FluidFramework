@@ -139,7 +139,7 @@ export {
 	TreeNodeSchema,
 	AllowedTypes,
 	FieldSchema,
-	DocumentSchema,
+	TreeSchema,
 	Any,
 	SchemaLibraryData,
 	LazyTreeNodeSchema,

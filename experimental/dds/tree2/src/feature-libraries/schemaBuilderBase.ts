@@ -14,7 +14,7 @@ import {
 	AllowedTypes,
 	TreeNodeSchema,
 	FieldSchema,
-	DocumentSchema,
+	TreeSchema,
 	FlexList,
 	Unenforced,
 	Any,
@@ -151,7 +151,7 @@ export class SchemaBuilderBase<
 	 * Produce SchemaLibraries which capture the content added to this builder, as well as any additional SchemaLibraries that were added to it.
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public finalize(): SchemaLibrary {
+	public intoLibrary(): SchemaLibrary {
 		const aggregated = this.finalizeCommon();
 
 		// Full library set (instead of just aggregated) is kept since it is required to handle deduplication of libraries included through different paths.
@@ -159,20 +159,20 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Produce a DocumentSchema which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
+	 * Produce a TreeSchema which captures the content added to this builder, any additional SchemaLibraries that were added to it and a root field.
 	 * Can be used with schematize to provide schema aware access to document content.
 	 *
 	 * @remarks
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public toDocumentSchema<const TSchema extends ImplicitFieldSchema>(
+	public intoSchema<const TSchema extends ImplicitFieldSchema>(
 		root: TSchema,
-	): DocumentSchema<NormalizeField<TSchema, TDefaultKind>> {
+	): TreeSchema<NormalizeField<TSchema, TDefaultKind>> {
 		// return this.toDocumentSchemaInternal(normalizeField(root, DefaultFieldKind));
 		const field: NormalizeField<TSchema, TDefaultKind> = this.normalizeField(root);
 		const library = this.finalizeCommon(field);
 
-		const typed: DocumentSchema<NormalizeField<TSchema, TDefaultKind>> = {
+		const typed: TreeSchema<NormalizeField<TSchema, TDefaultKind>> = {
 			treeSchema: library.treeSchema,
 			adapters: library.adapters,
 			rootFieldSchema: field,
@@ -306,7 +306,7 @@ export class SchemaBuilderBase<
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
 	 * @returns a {@link FieldSchema} which can be used as a struct field (see {@link SchemaBuilderBase.struct}),
-	 * a map field (see {@link SchemaBuilderBase.map}), a field node(see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.toDocumentSchema}).
+	 * a map field (see {@link SchemaBuilderBase.map}), a field node(see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.intoSchema}).
 	 *
 	 * @privateRemarks
 	 * TODO:

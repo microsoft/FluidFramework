@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "assert";
 import { AsyncGenerator, takeAsync } from "@fluid-internal/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -10,17 +11,60 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils";
-import { UpPath, Anchor, Value } from "../../../core";
-import { SharedTreeTestFactory, validateTree } from "../../utils";
+import { UpPath, Anchor, Value, AllowedUpdateType, JsonableTree } from "../../../core";
+import { ISharedTreeView, SharedTree } from "../../../shared-tree";
+import { SchemaAware, typeNameSymbol } from "../../../feature-libraries";
+import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { onCreate, initialTreeState, createAnchors, validateAnchors } from "./fuzzUtils";
+import {
+	createAnchors,
+	validateAnchors,
+	fuzzNode,
+	fuzzSchema,
+	FuzzNodeSchema,
+	failureDirectory,
+} from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 interface AbortFuzzTestState extends FuzzTestState {
 	anchors?: Map<Anchor, [UpPath, Value]>[];
 }
+
+// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
+// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
+const initialTree: SchemaAware.AllowedTypesToTypedTrees<
+	SchemaAware.ApiMode.Flexible,
+	[FuzzNodeSchema]
+> = {
+	[typeNameSymbol]: fuzzNode.name,
+	sequenceChildren: [1, 2, 3],
+	requiredChild: {
+		[typeNameSymbol]: fuzzNode.name,
+		requiredChild: 0,
+		optionalChild: undefined,
+		sequenceChildren: [4, 5, 6],
+	},
+	optionalChild: undefined,
+};
+
+let initialTreeJson: JsonableTree[];
+function setInitialJsonTree(view: ISharedTreeView): void {
+	const jsonTree = toJsonableTree(view);
+	if (initialTreeJson !== undefined) {
+		assert.deepEqual(jsonTree, initialTreeJson);
+	}
+	initialTreeJson = jsonTree;
+}
+
+const onCreate = (tree: SharedTree) => {
+	const view = tree.schematize({
+		schema: fuzzSchema,
+		initialTree,
+		allowedSchemaModifications: AllowedUpdateType.None,
+	});
+	setInitialJsonTree(view);
+};
 
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
@@ -35,18 +79,28 @@ describe("Fuzz - anchor stability", () => {
 	describe("Anchors are unaffected by aborted transaction", () => {
 		// TODO: Add deletes once anchors are stable across removal and reinsertion
 		// TODO: Add moves once we have a generator for them
-		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
+		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+			insert: 1,
+			// When adding deletes/moves, also consider turning on optional/value fields
+			// (as of now, they're off as "set" can delete nodes which causes the same problems as above)
+			fieldSelection: {
+				optional: 0,
+				required: 0,
+				sequence: 2,
+				recurse: 1,
+			},
+		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
-		const generator = generatorFactory() as AsyncGenerator<Operation, AbortFuzzTestState>;
+
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
-			workloadName: "SharedTree",
+			workloadName: "anchors",
 			factory: new SharedTreeTestFactory(onCreate),
-			generatorFactory: () => generator,
+			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
 		};
@@ -62,7 +116,7 @@ describe("Fuzz - anchor stability", () => {
 			// aborts any transactions that may still be in progress
 			const tree = finalState.clients[0].channel.view;
 			tree.transaction.abort();
-			validateTree(tree, [initialTreeState]);
+			validateTree(tree, initialTreeJson);
 			const anchors = finalState.anchors;
 			assert(anchors !== undefined, "Anchors should be defined");
 			validateAnchors(finalState.clients[0].channel.view, anchors[0], true);
@@ -72,6 +126,13 @@ describe("Fuzz - anchor stability", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 1,
 			emitter,
+			saveFailures: {
+				directory: failureDirectory,
+			},
+			// AB#5745: Starting a transaction while detached, submitting edits, then attaching hits 0x428.
+			// Once this is fixed, this fuzz test could also include working from a detached state if desired.
+			detachedStartOptions: { enabled: false, attachProbability: 1 },
+			clientJoinOptions: { maxNumberOfClients: 1, clientAddProbability: 0 },
 		});
 	});
 	describe("Anchors are stable", () => {
@@ -82,6 +143,14 @@ describe("Fuzz - anchor stability", () => {
 			undo: 1,
 			redo: 1,
 			synchronizeTrees: 1,
+			// When adding deletes/moves, also consider turning on optional/value fields
+			// (as of now, they're off as "set" can delete notes which causes the same problems as above)
+			fieldSelection: {
+				optional: 0,
+				required: 0,
+				sequence: 2,
+				recurse: 1,
+			},
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
@@ -91,7 +160,7 @@ describe("Fuzz - anchor stability", () => {
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
-			workloadName: "SharedTree",
+			workloadName: "anchors-undo-redo",
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory: () => generator,
 			reducer: fuzzReducer,
@@ -119,6 +188,9 @@ describe("Fuzz - anchor stability", () => {
 			detachedStartOptions: { enabled: false, attachProbability: 1 },
 			numberOfClients: 2,
 			emitter,
+			saveFailures: {
+				directory: failureDirectory,
+			},
 		});
 	});
 });

@@ -17,7 +17,7 @@ import {
 	MapSchema,
 	StructSchema,
 	TreeNodeSchema,
-	DocumentSchema,
+	TreeSchema,
 } from "../../typed-schema";
 import {
 	CheckTypesOverlap,
@@ -281,8 +281,6 @@ export type ProxyNode<
 
 /** The root type (the type of the entire tree) for a given schema collection */
 export type ProxyRoot<
-	TSchema extends DocumentSchema,
+	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = TSchema extends DocumentSchema<infer TRootFieldSchema>
-	? ProxyField<TRootFieldSchema, API>
-	: never;
+> = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;

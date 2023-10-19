@@ -97,7 +97,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	}
 
 	type x = typeof numberSchema.name;
-	const schemaData = builder.finalize();
+	const schemaData = builder.intoLibrary();
 
 	// Example Use:
 	type BallTree = TypedNode<typeof ballSchema, ApiMode.Flexible>;
@@ -462,7 +462,7 @@ describe("SchemaAware Editing", () => {
 		const rootNodeSchema = builder.struct("Test", {
 			children: SchemaBuilder.sequence(leaf.string),
 		});
-		const schema = builder.toDocumentSchema(
+		const schema = builder.intoSchema(
 			FieldSchema.create(FieldKinds.required, [rootNodeSchema]),
 		);
 		const view = createSharedTreeView().schematize({

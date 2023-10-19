@@ -94,11 +94,11 @@ describe("SchemaBuilderBase", () => {
 		});
 	});
 
-	describe("toDocumentSchema", () => {
+	describe("intoSchema", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 			const empty = schemaBuilder.struct("empty", {});
-			const schema = schemaBuilder.toDocumentSchema(SchemaBuilder.optional(empty));
+			const schema = schemaBuilder.intoSchema(SchemaBuilder.optional(empty));
 
 			assert.equal(schema.treeSchema.size, 1); // "empty"
 			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);
@@ -109,7 +109,7 @@ describe("SchemaBuilderBase", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 			const empty = schemaBuilder.struct("empty", {});
-			const schema = schemaBuilder.finalize();
+			const schema = schemaBuilder.intoLibrary();
 
 			assert.equal(schema.treeSchema.size, 1); // "empty"
 			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);

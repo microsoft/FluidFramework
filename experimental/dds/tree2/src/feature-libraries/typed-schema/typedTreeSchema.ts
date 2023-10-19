@@ -477,7 +477,7 @@ export function allowedTypesToTypeSet(t: AllowedTypes): TreeTypeSet {
  * @alpha
  */
 
-export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
+export interface TreeSchema<out T extends FieldSchema = FieldSchema> extends SchemaCollection {
 	/**
 	 * Schema for the root field which contains the whole tree.
 	 */
@@ -493,11 +493,11 @@ export interface DocumentSchema<out T extends FieldSchema = FieldSchema> extends
 }
 
 {
-	// It is convenient that DocumentSchema can be used as a SchemaData with no conversion.
+	// It is convenient that TreeSchema can be used as a SchemaData with no conversion.
 	// This type check ensures this ability is not broken on accident (if it needs to be broken on purpose for some reason thats fine: just delete this check).
 	// Since TypeScript does not allow extending two types with the same field (even if they are compatible),
-	// this check cannot be done by adding an extends clause to DocumentSchema.
-	type _check = requireAssignableTo<DocumentSchema, SchemaData>;
+	// this check cannot be done by adding an extends clause to TreeSchema.
+	type _check = requireAssignableTo<TreeSchema, SchemaData>;
 }
 
 /**

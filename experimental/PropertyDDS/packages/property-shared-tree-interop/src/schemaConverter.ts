@@ -317,10 +317,10 @@ export const nodePropertySchema = builtinBuilder.map(
 	nodePropertyType,
 	builtinBuilder.optional(Any),
 );
-const builtinLibrary = builtinBuilder.finalize();
+const builtinLibrary = builtinBuilder.intoLibrary();
 
 /**
- * Creates a DocumentSchema out of PropertyDDS schema templates.
+ * Creates a TreeSchema out of PropertyDDS schema templates.
  * The templates must be registered beforehand using {@link PropertyFactory.register}.
  * @param rootFieldKind - The kind of the root field.
  * @param allowedRootTypes - The types of children nodes allowed for the root field.
@@ -359,5 +359,5 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = Field
 		rootFieldKind,
 		...allowedTypes,
 	);
-	return builder.toDocumentSchema(rootSchema);
+	return builder.intoSchema(rootSchema);
 }

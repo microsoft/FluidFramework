@@ -73,7 +73,7 @@ describe("SharedTree proxies", () => {
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
 	});
 
-	const schema = sb.toDocumentSchema(parentSchema);
+	const schema = sb.intoSchema(parentSchema);
 
 	const initialTree = {
 		struct: { content: 42 },
@@ -118,7 +118,7 @@ describe("SharedTreeObject", () => {
 		list: sb.fieldNode("list", sb.sequence(numberChild)),
 	});
 
-	const schema = sb.toDocumentSchema(parentSchema);
+	const schema = sb.intoSchema(parentSchema);
 
 	const initialTree = {
 		content: 42,
