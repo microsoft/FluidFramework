@@ -495,6 +495,12 @@ export type DetachedPlaceUpPath = Brand<Omit<PlaceUpPath, "parent">, "DetachedRa
 export type DetachedRangeUpPath = Brand<Omit<RangeUpPath, "parent">, "DetachedRangeUpPath">;
 
 // @alpha
+export enum DiscardResult {
+    Failure = 1,
+    Success = 0
+}
+
+// @alpha
 function downCast<TSchema extends TreeNodeSchema>(schema: TSchema, tree: UntypedTreeCore<any, any>): tree is TypedNode_2<TSchema>;
 
 // @alpha
@@ -1036,8 +1042,8 @@ export function isEditableTree(field: UnwrappedEditableField): field is Editable
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @alpha
-export interface ISharedTree extends ISharedObject {
-    schematize<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
+export interface ISharedTree extends ISharedObject, TypedTreeChannel {
+    schematizeView<TRoot extends FieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     // @deprecated
     readonly view: ISharedTreeView;
 }
@@ -1058,7 +1064,6 @@ export interface ISharedTreeView extends AnchorLocator {
     merge(view: ISharedTreeBranchView): void;
     merge(view: ISharedTreeBranchView, disposeView: boolean): void;
     rebase(view: ISharedTreeBranchView): void;
-    redo(): void;
     get root(): UnwrappedEditableField;
     // (undocumented)
     root2<TRoot extends FieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
@@ -1068,7 +1073,6 @@ export interface ISharedTreeView extends AnchorLocator {
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: ITransaction;
-    undo(): void;
 }
 
 // @alpha (undocumented)
@@ -1280,13 +1284,6 @@ interface LeafSchemaSpecification {
 
 // @alpha (undocumented)
 const library: SchemaLibrary;
-
-// @alpha
-export enum LocalCommitSource {
-    Default = 0,
-    Redo = 2,
-    Undo = 1
-}
 
 // @alpha
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
@@ -1738,6 +1735,31 @@ interface Restore<TTree = ProtoNode> extends CanReplaceContent<TTree> {
 type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
+
+// @alpha
+export interface Revertible {
+    discard(): DiscardResult;
+    readonly kind: RevertibleKind;
+    // (undocumented)
+    readonly origin: {
+        readonly isLocal: boolean;
+    };
+    revert(): RevertResult;
+}
+
+// @alpha
+export enum RevertibleKind {
+    Default = 0,
+    Rebase = 3,
+    Redo = 2,
+    Undo = 1
+}
+
+// @alpha
+export enum RevertResult {
+    Failure = 1,
+    Success = 0
+}
 
 // @alpha
 type Root<TTree = ProtoNode> = FieldMarks<TTree>;
@@ -2507,7 +2529,7 @@ export const valueSymbol: unique symbol;
 // @alpha
 export interface ViewEvents {
     afterBatch(): void;
-    revertible(source: LocalCommitSource): void;
+    revertible(revertible: Revertible): void;
 }
 
 // @alpha
