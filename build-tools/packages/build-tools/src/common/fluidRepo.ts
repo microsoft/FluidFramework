@@ -154,6 +154,12 @@ export interface PolicyConfig {
 	handlerExclusions?: { [rule: string]: string[] };
 
 	packageNames?: PackageNamePolicyConfig;
+
+	/**
+	 * An array of paths under which assert tagging applies to. Only packages whose paths match the regular expressions in
+	 * this setting will be assert-tagged.
+	 */
+	assertTaggingEnabledPaths?: RegExp[];
 }
 
 /**
