@@ -51,7 +51,7 @@ export enum RevertResult {
 }
 
 /**
- * The result of a revert operation.
+ * The result of a discard operation.
  *
  * @alpha
  */
