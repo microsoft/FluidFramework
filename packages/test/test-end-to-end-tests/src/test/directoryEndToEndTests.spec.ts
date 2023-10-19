@@ -33,6 +33,10 @@ const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
 };
+const groupedBatchingContainerConfig: ITestContainerConfig = {
+	...testContainerConfig,
+	runtimeOptions: { enableGroupedBatching: true },
+};
 
 describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
@@ -1207,5 +1211,36 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.equal(changedEventData.length, 2);
 		assert.equal(changedEventData[1].key, "key2");
 		assert.equal(changedEventData[1].previousValue, undefined);
+	});
+});
+
+describeNoCompat("SharedDirectory", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+	});
+
+	// We need to rebase
+	// -> runtime.ordersequentially(() => runtime.ensureNoDataModelChanged(() => {}))
+	// potentially need to catch case where we process a new op while adding things to a batch
+
+	it.only("test", async () => {
+		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
+		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
+		const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+
+		containerRuntime.orderSequentially(() => {
+			sharedDir.set("testKey", true);
+			containerRuntime.ensureNoDataModelChanges(() => {
+				sharedDir.set("testKey", true);
+			});
+			sharedDir.set("testKey", true);
+		});
+
+		await provider.ensureSynchronized();
+
+		const keys = Array.from(sharedDir.keys());
+		assert.strictEqual(keys.length, 1);
 	});
 });

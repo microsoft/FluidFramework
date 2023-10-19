@@ -2134,8 +2134,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return false;
 		}
 
-		const pendingKeyMessageId = this.pendingKeys.get(op.key);
-		if (pendingKeyMessageId !== undefined) {
+		const pendingKeyMessageIds = this.pendingKeys.get(op.key);
+		if (pendingKeyMessageIds !== undefined) {
 			// Found an NACK op, clear it from the directory if the latest sequence number in the directory
 			// match the message's and don't process the op.
 			if (local) {
@@ -2143,14 +2143,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					localOpMetadata !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
 					0x011 /* pendingMessageId is missing from the local client's operation */,
 				);
-				const pendingMessageIds = this.pendingKeys.get(op.key);
+				// https://github.com/microsoft/FluidFramework/commit/5daae4110c7d77d2fe38f2fc16f4743adae05544#diff-5da3533fe8c2f92f839a9a3d55ee13909efd2bd614b44ed3057b7ce8b285b1f8R1447
 				assert(
-					pendingMessageIds !== undefined &&
-						pendingMessageIds[0] === localOpMetadata.pendingMessageId,
+					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
 					0x331 /* Unexpected pending message received */,
 				);
-				pendingMessageIds.shift();
-				if (pendingMessageIds.length === 0) {
+				pendingKeyMessageIds.shift();
+				if (pendingKeyMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
 				}
 			}
