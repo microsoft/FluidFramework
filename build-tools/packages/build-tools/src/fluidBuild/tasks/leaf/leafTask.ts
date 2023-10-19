@@ -547,7 +547,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			});
 			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
-			this.traceError(`error comparing file times ${e.message}`);
+			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
 			return undefined;
 		}
