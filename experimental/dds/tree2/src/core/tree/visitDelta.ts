@@ -8,14 +8,15 @@ import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { NodeIndex, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
+import { areDetachedNodeIdsEqual } from "./deltaUtil";
 
 /**
  * Implementation notes:
  *
- * The visit is organized in two passes: a detach pass and an attach pass.
+ * The visit is organized into three phases: a detach pass, root transfers, and an attach pass.
  * The core idea is that before content can be attached, it must first exist and be in a detached field.
  * The detach pass is therefore responsible for making sure that all roots that needs to be attached during the
- * attach pass are ready to be attached.
+ * attach pass are detached.
  * In practice, this means the detach pass must:
  * - Create all subtrees that need to be created
  * - Detach all moved nodes
@@ -27,6 +28,9 @@ import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
  * Note that this could theoretically lead to a situation where, in the attach pass, one replace wants to attach
  * a node that has yet to be detached by another replace. This does not occur in practice because we do not support
  * editing operations that would lead to this situation.
+ *
+ * While the detach pass ensures that nodes to be attached are in a detached state, it does not guarantee that they
+ * reside in the correct detach field. That is the responsibility of the root transfers phase.
  */
 
 /**
@@ -37,6 +41,7 @@ import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
  *
  * @param delta - The delta to be crawled.
  * @param visitor - The object to notify of the changes encountered.
+ * @param detachedFieldIndex - Index responsible for keeping track of the existing detached fields.
  */
 export function visitDelta(
 	delta: Delta.Root,
@@ -96,9 +101,19 @@ function visitRoots(
 	}
 }
 
+/**
+ * Transfers roots from one detached field to another.
+ * TODO#5481: update the DetachedFieldIndex instead of moving the nodes around.
+ *
+ * @param rootTransfers - The transfers to perform.
+ * Entries are removed as they are performed.
+ * @param mapToUpdate - A map to update based on the transfers being performed.
+ * @param detachedFieldIndex - The index to update based on the transfers being performed.
+ * @param visitor - The visitor to inform of the transfers being performed.
+ */
 function transferRoots(
 	rootTransfers: RootTransfers,
-	rootChanges: Map<ForestRootId, Delta.FieldsChanges>,
+	mapToUpdate: Map<ForestRootId, unknown>,
 	detachedFieldIndex: DetachedFieldIndex,
 	visitor: DeltaVisitor,
 ): void {
@@ -112,10 +127,10 @@ function transferRoots(
 			} else {
 				rootTransfers.delete(source);
 				const destination = detachedFieldIndex.createEntry(destinationId);
-				const fields = rootChanges.get(source);
+				const fields = mapToUpdate.get(source);
 				if (fields !== undefined) {
-					rootChanges.delete(source);
-					rootChanges.set(destination, fields);
+					mapToUpdate.delete(source);
+					mapToUpdate.set(destination, fields);
 				}
 				const sourceField = detachedFieldIndex.toFieldKey(source);
 				const destinationField = detachedFieldIndex.toFieldKey(destination);
@@ -194,20 +209,14 @@ interface PassConfig {
 	 * Nested changes on roots that need to be visited as part of the detach pass.
 	 * Each entry is removed when its associated changes are visited.
 	 * Some of these roots will attached during the attach pass, in which case the nested changes are visited after
-	 * the attach.
+	 * the node is attached.
 	 * Some of these nodes will never be attached, in which case we visit them in their detached fields at the end of
-	 * the attach pass.
+	 * the attach pass. Note that such a visit might lead to more nodes being attached, including nodes were visited as
+	 * roots.
 	 */
 	readonly attachPassRoots: Map<ForestRootId, Delta.FieldsChanges>;
 	/**
 	 * Represents transfers of roots from one detached field to another.
-	 * In the detach pass, this is used for:
-	 * - Transferring a removed node (that is being moved) to the detached field that corresponds to the move ID
-	 * In the attach pass, this is used for:
-	 * - Transferring a created node (that is transient) to the detached field that corresponds to its detach ID
-	 * - Transferring a restored node (that is transient) to the detached field that corresponds to its detach ID
-	 * - Transferring a moved node (that is removed) to the detached field that corresponds to its detach ID
-	 * TODO#5481: update the DetachedFieldIndex instead of moving the nodes around.
 	 */
 	readonly rootTransfers: RootTransfers;
 }
@@ -261,6 +270,7 @@ function offsetDetachId(
  * Preforms the following:
  * - Performs all root creations
  * - Collects all roots that may need a detach pass
+ * - Collects all roots that may need an attach pass
  * - Collects all relocates
  * - Executes detaches (bottom-up) provided they are not part of a replace
  * (because we want to wait until we are sure content to attach is available as a root)
@@ -289,7 +299,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			// out of the source detached field, and would lead us to delete the tree index entry for that source detached field.
 			// This would effectively result in the tree index missing an entry for the detached field.
 			// This if statement prevents that from happening.
-			if (id.major !== destination.major || id.minor !== destination.minor) {
+			if (!areDetachedNodeIdsEqual(id, destination)) {
 				for (let i = 0; i < count; i += 1) {
 					const originId = offsetDetachId(id, i);
 					const destinationId = offsetDetachId(destination, i);
@@ -319,7 +329,6 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 						const root = config.detachedFieldIndex.getOrCreateEntry(
 							offsetDetachId(mark.detach, i),
 						);
-						// We may need to do a second pass on the nodes, so keep track of the changes
 						if (mark.fields !== undefined) {
 							config.attachPassRoots.set(root, mark.fields);
 						}
@@ -340,9 +349,9 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 
 /**
  * Preforms the following:
- * - Collects all roots that need an attach pass
- * - Executes attaches (top-down)
- * - Executes replaces (top-down)
+ * - Executes attaches (top-down) applying nested changes on the attached nodes
+ * - Executes replaces (top-down) applying nested changes on the attached nodes
+ * - Collects detached roots (from replaces) that need an attach pass
  */
 function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
 	if (delta.attached !== undefined) {
@@ -367,7 +376,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 								{ start: index, end: index + 1 },
 								destinationField,
 							);
-							// We may need to do a second pass on the nodes, so keep track of the changes
+							// We may need to do a second pass on the detached nodes
 							if (mark.fields !== undefined) {
 								config.attachPassRoots.set(rootDestination, mark.fields);
 							}

@@ -7,24 +7,24 @@ import { FieldKey } from "../schema-stored";
 import { ITreeCursorSynchronous } from "./cursor";
 
 /**
- * This format describes changes that must be applied to a document tree in order to update it.
+ * This format describes changes that must be applied to a forest in order to update it.
  * Instances of this format are generated based on incoming changesets and consumed by a view layer (e.g., Forest) to
  * update itself.
  *
  * Because this format is only meant for updating document state, it does not fully represent user intentions.
- * For example, if some edit A inserts content and some subsequent edit B deletes that content, then a Delta that
- * represents the state update for these two edits would not include the insertion and deletion.
- * For the same reason, this format is also not fit to be rebased in the face of concurrent changes.
+ * For example, if some concurrent edits A and B insert content at the same location, then a Delta that represents
+ * represents the state update for edit A would not include information that allows B's insertion to be ordered
+ * relative to A's insertion. This format is therefore not fit to be rebased in the face of concurrent changes.
  * Instead this format is used to describe the end product of rebasing user intentions over concurrent edits.
  *
  * This format is self-contained in the following ways:
  *
- * 1. It uses integer indices (offsets, technically) to describe necessary changes.
- * As such, it does not rely on document nodes being randomly accessible by ID.
+ * 1. It uses integer indices (offsets, technically) to describe the locations of necessary changes.
+ * As such, it does not rely on document nodes being accessible/locatable by ID.
  *
  * 2. This format does not require historical information in order to apply the changes it describes.
  * For example, if a user undoes the deletion of a subtree, then the Delta generated for the undo edit will contain all
- * information necessary to re-create the subtree from scratch.
+ * information necessary to restore that subtree.
  *
  * This format can be generated from any Changeset without having access to the current document state.
  *
@@ -94,6 +94,10 @@ export type ProtoNode = ITreeCursorSynchronous;
  */
 export type ProtoNodes = readonly ProtoNode[];
 
+/**
+ * Represents a change being made to a part of the document tree.
+ * @alpha
+ */
 export interface Mark<TTree = ProtoNode> {
 	/**
 	 * The number of nodes affected.
@@ -145,67 +149,41 @@ export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
  */
 export type FieldsChanges<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
+/**
+ * Represents changes made to a detached node
+ * @alpha
+ */
 export interface DetachedNodeChanges<TTree = ProtoNode> {
 	readonly id: DetachedNodeId;
 	readonly fields: FieldsChanges<TTree>;
 }
 
+/**
+ * Represents the creation of a detached node
+ * @alpha
+ */
 export interface DetachedNodeBuild<TTree = ProtoNode> {
 	readonly id: DetachedNodeId;
 	readonly trees: readonly TTree[];
 }
 
+/**
+ * Represents a detached node being assigned a new `DetachedNodeId`.
+ * @alpha
+ */
 export interface DetachedNodeRelocation {
 	readonly id: DetachedNodeId;
 	readonly count: number;
 	readonly destination: DetachedNodeId;
 }
 
-// export interface DetachedNodeDestruction {
-// 	readonly id: DetachedNodeId;
-// 	readonly count: number;
-// }
-
+/**
+ * Represents the changes to perform on a given field.
+ * @alpha
+ */
 export interface FieldChanges<TTree = ProtoNode> {
 	readonly attached?: MarkList<TTree>;
 	readonly detached?: readonly DetachedNodeChanges<TTree>[];
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
 	readonly relocate?: readonly DetachedNodeRelocation[];
-	// readonly destroy?: readonly DetachedNodeDestruction[];
 }
-
-// const concurBuild: DetachedNodeId = { minor: 0 };
-// const concurSet: DetachedNodeId = { minor: 1 };
-// const local: DetachedNodeId = { minor: 2 };
-
-// const moveId: DetachedNodeId = { minor: 0 };
-// const delId: DetachedNodeId = { minor: 1 };
-
-// const moveAndDelChange: FieldChanges = {
-// 	attached: [{ count: 1, detach: moveId }],
-// 	relocate: [{
-// 		id: moveId,
-// 		count: 1,
-// 		destination: delId,
-// 	}],
-// };
-
-// const optFieldChange: FieldChanges = {
-// 	build: [{ id: concurBuild, tree: [] }],
-// 	relocate: [
-// 		{
-// 			id: local,
-// 			count: 1,
-// 			destination: concurSet,
-// 		},
-// 		{
-// 			id: concurBuild,
-// 			count: 1,
-// 			destination: local,
-// 		},
-// 	],
-// };
-
-// const delta: Root = new Map([
-// 	["root", optFieldChange];
-// ]);

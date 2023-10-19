@@ -24,8 +24,8 @@ import {
 	mapCursorFields,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 import { idAllocatorFromMaxId } from "../util";
+import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
  * The storage key for the blob in the summary containing tree data

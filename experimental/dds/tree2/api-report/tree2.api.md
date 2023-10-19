@@ -465,7 +465,7 @@ export interface Dependent extends NamedComputation {
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {
 }
 
-// @public (undocumented)
+// @alpha
 interface DetachedNodeBuild<TTree = ProtoNode> {
     // (undocumented)
     readonly id: DetachedNodeId;
@@ -473,7 +473,7 @@ interface DetachedNodeBuild<TTree = ProtoNode> {
     readonly trees: readonly TTree[];
 }
 
-// @public (undocumented)
+// @alpha
 interface DetachedNodeChanges<TTree = ProtoNode> {
     // (undocumented)
     readonly fields: FieldsChanges<TTree>;
@@ -489,7 +489,7 @@ interface DetachedNodeId {
     minor: number;
 }
 
-// @public (undocumented)
+// @alpha
 interface DetachedNodeRelocation {
     // (undocumented)
     readonly count: number;
@@ -606,7 +606,7 @@ export interface FieldAnchor {
     parent: Anchor | undefined;
 }
 
-// @public (undocumented)
+// @alpha
 interface FieldChanges<TTree = ProtoNode> {
     // (undocumented)
     readonly attached?: MarkList<TTree>;
@@ -1338,7 +1338,7 @@ export interface MapTree extends NodeData {
     fields: Map<FieldKey, MapTree[]>;
 }
 
-// @public (undocumented)
+// @alpha
 interface Mark<TTree = ProtoNode> {
     readonly attach?: DetachedNodeId;
     readonly count: number;

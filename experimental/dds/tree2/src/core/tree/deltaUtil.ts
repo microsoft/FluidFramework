@@ -62,3 +62,7 @@ export function makeDetachedNodeId(
 	}
 	return out;
 }
+
+export function areDetachedNodeIdsEqual(a: DetachedNodeId, b: DetachedNodeId): boolean {
+	return a.major === b.major && a.minor === b.minor;
+}
