@@ -210,6 +210,7 @@ stages:
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
+                packageTypesOverride='${{ parameters.packageTypesOverride }}'
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -243,7 +244,11 @@ stages:
                   echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
                   exit -1;
                 fi
-              fi
+
+                if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
+                  echo "##vso[task.logissue type=error]This release type is not supported. alpha ***prerelease*** is allowed"
+                  exit -1;
+                fi
 
               if [[ "$(release)" == "prerelease" ]]; then
                 if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
@@ -255,6 +260,11 @@ stages:
               if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
                 if [[ "${{ variables.publish }}" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+                  exit -1;
+                fi
+
+                if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
+                  echo "##vso[task.logissue type=error]This release type is not supported. alpha ***prerelease*** is allowed"
                   exit -1;
                 fi
               fi
