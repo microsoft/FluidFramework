@@ -55,7 +55,7 @@ import {
 	UpPath,
 	Value,
 	moveToDetachedField,
-	SchemaData,
+	TreeStoredSchema,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
 } from "../../core";
@@ -1465,11 +1465,11 @@ describe("SharedTree", () => {
 		});
 
 		itView("properly fork the tree schema", (parent) => {
-			const schemaA: SchemaData = {
+			const schemaA: TreeStoredSchema = {
 				treeSchema: new Map([]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
-			const schemaB: SchemaData = {
+			const schemaB: TreeStoredSchema = {
 				treeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
@@ -1778,7 +1778,7 @@ describe("SharedTree", () => {
 			expectSchemaEquality(otherLoadedTree.storedSchema, jsonSequenceRootSchema);
 		});
 
-		function expectSchemaEquality(actual: SchemaData, expected: SchemaData): void {
+		function expectSchemaEquality(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 			const codec = makeSchemaCodec({ jsonValidator: noopValidator });
 			assert.deepEqual(codec.encode(actual), codec.encode(expected));
 		}

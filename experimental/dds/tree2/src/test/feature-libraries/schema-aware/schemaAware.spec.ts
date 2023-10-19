@@ -30,7 +30,7 @@ import {
 	ContextuallyTypedNodeDataObject,
 	UntypedTreeCore,
 	TreeNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
 	isEditableTree,
@@ -58,14 +58,14 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Check the various ways to refer to child types produce the same results
 	{
-		const numberField1 = FieldSchema.create(required, [numberSchema]);
+		const numberField1 = TreeFieldSchema.create(required, [numberSchema]);
 		const numberField2 = SchemaBuilder.required(numberSchema);
-		const numberField3 = FieldSchema.createUnsafe(required, [numberSchema]);
+		const numberField3 = TreeFieldSchema.createUnsafe(required, [numberSchema]);
 		type check1_ = requireAssignableTo<typeof numberField1, typeof numberField2>;
 		type check2_ = requireAssignableTo<typeof numberField2, typeof numberField3>;
 		type check3_ = requireAssignableTo<typeof numberField3, typeof numberField1>;
 
-		const numberFieldLazy = FieldSchema.create(required, [() => numberSchema]);
+		const numberFieldLazy = TreeFieldSchema.create(required, [() => numberSchema]);
 		type NonLazy = InternalTypedSchemaTypes.FlexListToNonLazyArray<
 			typeof numberFieldLazy.allowedTypes
 		>;
@@ -88,7 +88,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Recursive case:
 	const boxSchema = builder.structRecursive("box", {
-		children: FieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
+		children: TreeFieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
 	});
 
 	{
@@ -247,7 +247,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		// Check child handling
 		{
 			type ChildSchema = typeof parentField;
-			type ChildSchemaTypes = ChildSchema extends FieldSchema<any, infer Types>
+			type ChildSchemaTypes = ChildSchema extends TreeFieldSchema<any, infer Types>
 				? Types
 				: never;
 			type AllowedChildTypes = ChildSchema["allowedTypes"];
@@ -284,7 +284,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwareRecursiveTest" });
 		const rec = builder2.structRecursive("rec", {
-			x: FieldSchema.createUnsafe(optional, [() => rec]),
+			x: TreeFieldSchema.createUnsafe(optional, [() => rec]),
 		});
 
 		type RecObjectSchema = typeof rec;
@@ -293,7 +293,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		{
 			// Recursive objects don't get this type checking automatically, so confirm it
 			type _check1 = requireAssignableTo<RecObjectSchema, TreeNodeSchema>;
-			type _check2 = requireAssignableTo<RecFieldSchema, FieldSchema>;
+			type _check2 = requireAssignableTo<RecFieldSchema, TreeFieldSchema>;
 		}
 
 		// Confirm schema's recursive type is correct.
@@ -359,7 +359,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		// Check child handling
 		{
 			type ChildSchema = typeof boxSchema.structFieldsObject.children;
-			type ChildSchemaTypes = ChildSchema extends FieldSchema<any, infer Types>
+			type ChildSchemaTypes = ChildSchema extends TreeFieldSchema<any, infer Types>
 				? Types
 				: never;
 			type AllowedChildTypes = ChildSchema["allowedTypes"];
@@ -463,7 +463,7 @@ describe("SchemaAware Editing", () => {
 			children: SchemaBuilder.sequence(leaf.string),
 		});
 		const schema = builder.intoSchema(
-			FieldSchema.create(FieldKinds.required, [rootNodeSchema]),
+			TreeFieldSchema.create(FieldKinds.required, [rootNodeSchema]),
 		);
 		const view = createSharedTreeView().schematize({
 			schema,

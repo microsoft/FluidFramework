@@ -6,7 +6,7 @@
 import { brand } from "../../util";
 import {
 	FieldKindIdentifier,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
@@ -30,13 +30,13 @@ export const emptySet: ReadonlySet<never> = new Set();
 export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
- * Helper for building {@link FieldStoredSchema}.
+ * Helper for building {@link TreeFieldStoredSchema}.
  * @alpha
  */
 export function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
 	types?: Iterable<TreeNodeSchemaIdentifier>,
-): FieldStoredSchema {
+): TreeFieldStoredSchema {
 	return {
 		kind,
 		types: types === undefined ? undefined : new Set(types),
@@ -47,8 +47,8 @@ export function fieldSchema(
  * See {@link TreeNodeStoredSchema} for details.
  */
 export interface TreeSchemaBuilder {
-	readonly structFields?: { [key: string]: FieldStoredSchema };
-	readonly mapFields?: FieldStoredSchema;
+	readonly structFields?: { [key: string]: TreeFieldStoredSchema };
+	readonly mapFields?: TreeFieldStoredSchema;
 	readonly leafValue?: ValueSchema;
 }
 
