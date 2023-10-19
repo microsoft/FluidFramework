@@ -120,18 +120,10 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		);
 
 		let version = simpleVersion;
-		if (isAlphaOrBetaTypes) {
-			if (isRelease || flags.release === "none") {
-				this.errorLog(
-					"This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
-				);
-				this.exit();
-			} else {
-				version = `${simpleVersion}-${alphabetaTypePrefix}`;
-			}
-		}
 
 		if (useTestVersion) {
+			// Determine the version string for test builds.
+			// If it's an alpha or beta type, append `alphabetaTypePrefix`.
 			version = isAlphaOrBetaTypes
 				? `0.0.0-${flags.build}-test-${alphabetaTypePrefix}`
 				: `0.0.0-${flags.build}-test`;
@@ -143,6 +135,18 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				: `${simpleVersion}-test`;
 			this.log(`codeVersion=${codeVersion}`);
 			this.log(`##vso[task.setvariable variable=codeVersion;isOutput=true]${codeVersion}`);
+		}
+
+		if (isAlphaOrBetaTypes) {
+			if (isRelease || flags.release === "none") {
+				this.errorLog(
+					"This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
+				);
+				this.exit();
+			} else if (!useTestVersion) {
+				// For prereleases, update the version string with `alphabetaTypePrefix` prefix.
+				version = `${simpleVersion}-${alphabetaTypePrefix}`;
+			}
 		}
 
 		this.log(`version=${version}`);
