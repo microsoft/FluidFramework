@@ -54,15 +54,15 @@ export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
  */
 export interface FieldSelectionWeights {
 	/**
-	 * Select the current Fuzz node's "optionalF" field
+	 * Select the current Fuzz node's "optionalChild" field
 	 */
 	optional: number;
 	/**
-	 * Select the current Fuzz node's "requiredF" field
+	 * Select the current Fuzz node's "requiredChild" field
 	 */
 	required: number;
 	/**
-	 * Select the current Fuzz node's "sequenceF" field
+	 * Select the current Fuzz node's "sequenceChild" field
 	 */
 	sequence: number;
 	/**
@@ -134,7 +134,7 @@ export const makeEditGenerator = (
 			: {
 					type: brand("tree2fuzz.node"),
 					fields: {
-						requiredF: [
+						requiredChild: [
 							{
 								type: brand("com.fluidframework.leaf.number"),
 								value: state.random.integer(
@@ -421,15 +421,15 @@ function maybeDownPathFromNode(node: TreeNode | undefined): DownPath | undefined
 type FuzzField =
 	| {
 			type: "optional";
-			content: FuzzNode["boxedOptionalF"];
+			content: FuzzNode["boxedOptionalChild"];
 	  }
 	| {
 			type: "sequence";
-			content: FuzzNode["boxedSequenceF"];
+			content: FuzzNode["boxedSequenceChildren"];
 	  }
 	| {
 			type: "required";
-			content: FuzzNode["boxedRequiredF"];
+			content: FuzzNode["boxedRequiredChild"];
 	  };
 
 type FieldFilter = (field: FuzzField) => boolean;
@@ -447,7 +447,7 @@ function selectField(
 ): FuzzField | "no-valid-fields" {
 	const alreadyPickedOptions = new Set<string>();
 	const optional = (): FuzzField | "no-valid-fields" => {
-		const field = { type: "optional", content: node.boxedOptionalF } as const;
+		const field = { type: "optional", content: node.boxedOptionalChild } as const;
 		if (filter(field)) {
 			return field;
 		} else {
@@ -457,7 +457,7 @@ function selectField(
 	};
 
 	const value = (): FuzzField | "no-valid-fields" => {
-		const field = { type: "required", content: node.boxedRequiredF } as const;
+		const field = { type: "required", content: node.boxedRequiredChild } as const;
 		if (filter(field)) {
 			return field;
 		} else {
@@ -467,7 +467,7 @@ function selectField(
 	};
 
 	const sequence = (): FuzzField | "no-valid-fields" => {
-		const field = { type: "sequence", content: node.boxedSequenceF } as const;
+		const field = { type: "sequence", content: node.boxedSequenceChildren } as const;
 		if (filter(field)) {
 			return field;
 		} else {
@@ -481,14 +481,14 @@ function selectField(
 		// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
 		// to the .is typeguard.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		if (node.optionalF?.is(fuzzNode)) {
-			childNodes.push(node.optionalF);
+		if (node.optionalChild?.is(fuzzNode)) {
+			childNodes.push(node.optionalChild);
 		}
 
-		if (node.requiredF?.is(fuzzNode)) {
-			childNodes.push(node.requiredF);
+		if (node.requiredChild?.is(fuzzNode)) {
+			childNodes.push(node.requiredChild);
 		}
-		node.sequenceF.map((child) => {
+		node.sequenceChildren.map((child) => {
 			if (child.is(fuzzNode)) {
 				childNodes.push(child);
 			}

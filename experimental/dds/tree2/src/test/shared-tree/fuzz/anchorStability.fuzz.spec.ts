@@ -38,14 +38,14 @@ const initialTree: SchemaAware.AllowedTypesToTypedTrees<
 	[FuzzNodeSchema]
 > = {
 	[typeNameSymbol]: fuzzNode.name,
-	sequenceF: [1, 2, 3],
-	requiredF: {
+	sequenceChildren: [1, 2, 3],
+	requiredChild: {
 		[typeNameSymbol]: fuzzNode.name,
-		requiredF: 0,
-		optionalF: undefined,
-		sequenceF: [4, 5, 6],
+		requiredChild: 0,
+		optionalChild: undefined,
+		sequenceChildren: [4, 5, 6],
 	},
-	optionalF: undefined,
+	optionalChild: undefined,
 };
 
 let initialTreeJson: JsonableTree[];
@@ -82,7 +82,7 @@ describe("Fuzz - anchor stability", () => {
 		const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 			insert: 1,
 			// When adding deletes/moves, also consider turning on optional/value fields
-			// (as of now, they're off as "set" can delete notes which causes the same problems as above)
+			// (as of now, they're off as "set" can delete nodes which causes the same problems as above)
 			fieldSelection: {
 				optional: 0,
 				required: 0,
