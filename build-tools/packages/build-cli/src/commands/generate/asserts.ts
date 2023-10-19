@@ -43,9 +43,6 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 
 	private readonly errors: string[] = [];
 
-	// private readonly regex =
-	// 	/^(packages|experimental|(common\/lib\/common-utils)|(server\/routerlicious\/packages\/protocol-base))/i;
-
 	protected async selectAndFilterPackages(): Promise<void> {
 		await super.selectAndFilterPackages();
 
@@ -103,8 +100,8 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 	}
 
 	private collectAssertData(tsconfigPath: string): void {
-		// this.log(`processing: ${tsconfigPath}`);
 
+    // TODO: this can probably be removed now
 		if (tsconfigPath.includes("test")) {
 			return;
 		}
@@ -232,7 +229,7 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 		}
 	}
 
-	// TODO: the resolve = true may be safe to remove
+	// TODO: the resolve = true may be safe to remove since we always want to resolve when running this command
 	private tagAsserts(resolve: true): void {
 		const errors: string[] = [];
 
