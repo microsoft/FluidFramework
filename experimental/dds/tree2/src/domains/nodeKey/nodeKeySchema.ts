@@ -10,7 +10,7 @@ import {
 	FieldKinds,
 	nodeKeyTreeIdentifier,
 	SchemaBuilderInternal,
-	FieldSchema,
+	TreeFieldSchema,
 } from "../../feature-libraries";
 
 const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" });
@@ -35,7 +35,7 @@ assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, 0x7ae /* mismatched ide
  * @alpha
  */
 export const nodeKeyField = {
-	[nodeKeyFieldKey]: FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
+	[nodeKeyFieldKey]: TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
 };
 
 /**

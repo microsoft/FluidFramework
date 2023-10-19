@@ -8,7 +8,7 @@ import {
 	AllowedUpdateType,
 	Compatibility,
 	SimpleObservingDependent,
-	SchemaData,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	ITreeCursorSynchronous,
 	schemaDataIsEmpty,
@@ -19,7 +19,7 @@ import {
 	allowsRepoSuperset,
 	TreeSchema,
 	SchemaAware,
-	FieldSchema,
+	TreeFieldSchema,
 	ViewSchema,
 } from "../feature-libraries";
 import { fail } from "../util";
@@ -49,7 +49,7 @@ export function initializeContent(
 	const rootKind = rootSchema.kind.identifier;
 
 	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
-	let incrementalSchemaUpdate: SchemaData;
+	let incrementalSchemaUpdate: TreeStoredSchema;
 	if (
 		rootKind === FieldKinds.sequence.identifier ||
 		rootKind === FieldKinds.optional.identifier
@@ -187,7 +187,7 @@ export function schematize(
  *
  * @alpha
  */
-export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
+export interface SchemaConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
@@ -199,7 +199,7 @@ export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
  *
  * @alpha
  */
-export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
+export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaConfiguration<TRoot> {
 	/**
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
@@ -216,7 +216,7 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
  *
  * @alpha
  */
-export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema>
+export interface SchematizeConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaConfiguration<TRoot> {
 	/**
 	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
@@ -229,6 +229,7 @@ export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema
  *
  * @alpha
  */
-export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema = FieldSchema>
-	extends TreeContent<TRoot>,
+export interface InitializeAndSchematizeConfiguration<
+	TRoot extends TreeFieldSchema = TreeFieldSchema,
+> extends TreeContent<TRoot>,
 		SchematizeConfiguration<TRoot> {}

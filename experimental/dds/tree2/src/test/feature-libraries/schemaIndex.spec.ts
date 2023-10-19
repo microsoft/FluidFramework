@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 /* eslint-disable-next-line import/no-internal-modules */
 import { Format, makeSchemaCodec } from "../../feature-libraries/schemaIndexFormat";
 
-import { FieldKindIdentifier, SchemaData } from "../../core";
+import { FieldKindIdentifier, TreeStoredSchema } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { jsonSchema, jsonRoot, SchemaBuilder } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
@@ -20,7 +20,7 @@ describe("SchemaIndex", () => {
 	it("roundtrip", () => {
 		// Just test with the Json domain schema for now.
 		// TODO: add more targeted tests, and tests for more cases.
-		const data: SchemaData = new SchemaBuilder({
+		const data: TreeStoredSchema = new SchemaBuilder({
 			scope: "roundtrip",
 			libraries: [jsonSchema],
 		}).intoSchema(SchemaBuilder.optional(jsonRoot));

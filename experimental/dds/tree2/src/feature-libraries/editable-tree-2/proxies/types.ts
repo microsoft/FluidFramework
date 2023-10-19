@@ -11,7 +11,7 @@ import {
 	AllowedTypes,
 	Any,
 	FieldNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	InternalTypedSchemaTypes,
 	LeafSchema,
 	MapSchema,
@@ -179,7 +179,7 @@ export type SharedTreeObject<
  * @alpha
  */
 export type ObjectFields<
-	TFields extends RestrictiveReadonlyRecord<string, FieldSchema>,
+	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = {
 	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
@@ -209,7 +209,7 @@ export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSc
  * @alpha
  */
 export type ProxyField<
-	TSchema extends FieldSchema,
+	TSchema extends TreeFieldSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
 	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
