@@ -26,6 +26,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 /**
  * Interface to represent the parsed parts of IResolvedUrl.url to help
  * in getting info about different parts of the url.
+ * May not be compatible or relevant for any Url Resolver
  */
 export interface IParsedUrl {
 	/**
