@@ -16,7 +16,7 @@ export function getExecutableFromCommand(command: string) {
 		// Find the first flag argument, and filter them out. Assumes flags come at the end of the command, and that all
 		// subsequent arguments are flags.
 		const flagsStartIndex = commands.findIndex((c) => c.startsWith("-"));
-		toReturn = commands.slice(0, flagsStartIndex).join(" ");
+		toReturn = flagsStartIndex >= 0 ? commands.slice(0, flagsStartIndex).join(" ") : command;
 	} else {
 		toReturn = commands[0];
 	}
