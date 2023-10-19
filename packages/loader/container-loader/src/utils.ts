@@ -54,6 +54,7 @@ export interface IParsedUrl {
  * Warning - This function may not be compatible with any Url Resolver's resolved url. It works
  * with urls of type: protocol://<string>/.../..?<querystring>
  * @param url - This is the IResolvedUrl.url part of the resolved url.
+ * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = parse(url, true);
