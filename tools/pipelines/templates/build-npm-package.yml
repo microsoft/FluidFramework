@@ -246,7 +246,7 @@ stages:
                 fi
 
                 if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
-                  echo "##vso[task.logissue type=error]This release type is not supported. alpha ***prerelease*** is allowed"
+                  echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
                   exit -1;
                 fi
 
@@ -264,7 +264,7 @@ stages:
                 fi
 
                 if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
-                  echo "##vso[task.logissue type=error]This release type is not supported. alpha ***prerelease*** is allowed"
+                  echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
                   exit -1;
                 fi
               fi
