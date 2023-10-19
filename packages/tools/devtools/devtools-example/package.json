@@ -71,7 +71,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-202915",
+		"@fluidframework/build-tools": "0.26.0-203018",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",

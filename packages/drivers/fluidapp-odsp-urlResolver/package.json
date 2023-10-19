@@ -44,10 +44,10 @@
 		"@fluidframework/odsp-driver-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.26.0-202915",
+		"@fluid-tools/build-cli": "0.26.0-203018",
 		"@fluid-tools/fluidapp-odsp-urlresolver-previous": "npm:@fluid-tools/fluidapp-odsp-urlresolver@2.0.0-internal.7.1.0",
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-202915",
+		"@fluidframework/build-tools": "0.26.0-203018",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/mocha": "^9.1.1",

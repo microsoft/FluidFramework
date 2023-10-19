@@ -43,7 +43,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-202915",
+		"@fluidframework/build-tools": "0.26.0-203018",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/mocha": "^9.1.1",
