@@ -8,7 +8,6 @@ import path from "node:path";
 import { PackageCommand } from "../../BasePackageCommand";
 import { Package, getFluidBuildConfig } from "@fluidframework/build-tools";
 import { PackageKind } from "../../filter";
-
 import {
 	NoSubstitutionTemplateLiteral,
 	Node,
@@ -24,7 +23,6 @@ const shortCodes = new Map<number, Node>();
 const newAssetFiles = new Set<SourceFile>();
 const codeToMsgMap = new Map<string, string>();
 let maxShortCode = -1;
-
 const defaultAssertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]]);
 
 export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
@@ -52,46 +50,56 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 
 		const context = await this.getContext();
 		const { assertTagging } = getFluidBuildConfig(context.gitRepo.resolvedRoot);
-		const assertTaggingEnabledPaths = this.flags.disableConfig
-			? undefined
-			: assertTagging?.enabledPaths;
+		this.setAssertionFunctionsBasedOnConfig(assertTagging);
 
+		// Further filter packages based on the path regex
+		this.filterPackagesBasedOnConfig(context, assertTagging?.enabledPaths);
+	}
+
+	private setAssertionFunctionsBasedOnConfig(assertTagging: any): void {
 		this.assertionFunctions =
 			assertTagging?.assertionFunctions === undefined
 				? defaultAssertionFunctions
 				: new Map<string, number>(Object.entries(assertTagging.assertionFunctions));
+	}
 
+	private filterPackagesBasedOnConfig(context: any, assertTaggingEnabledPaths?: string[]): void {
 		// Further filter packages based on the path regex
 		const before = this.filteredPackages?.length ?? 0;
-		this.filteredPackages = this.filteredPackages?.filter((pkg) => {
-			const tsconfigPath = context.repo.relativeToRepo(
-				path.join(pkg.directory, "tsconfig.json"),
-			);
+		this.filteredPackages = this.filteredPackages?.filter((pkg) =>
+			this.packageFilterHelper(context, pkg, assertTaggingEnabledPaths),
+		);
 
-			if (!fs.existsSync(tsconfigPath)) {
-				this.verbose(`Skipping '${pkg.name}' because '${tsconfigPath}' doesn't exist.`);
-				return false;
-			}
-			if (assertTaggingEnabledPaths !== undefined) {
-				if (assertTaggingEnabledPaths.some((regex) => regex.test(tsconfigPath))) {
-					return true;
-				}
-				this.verbose(
-					`Skipping '${pkg.name}' because '${tsconfigPath}' doesn't match configured regexes.`,
-				);
-				return false;
-			}
-
-			return true;
-		});
-
-		const after = this.filteredPackages?.length ?? 0;
-		const difference = before - after;
+		const difference = before - (this.filteredPackages?.length ?? 0);
 		if (difference > 0) {
 			this.info(
 				`Filtered out ${difference} packages by regex or because they had no tsconfig.`,
 			);
 		}
+	}
+
+	private packageFilterHelper(
+		context: any,
+		pkg: Package,
+		assertTaggingEnabledPaths?: string[],
+	): boolean {
+		const tsconfigPath = this.getRelativeTsConfigPath(context, pkg);
+
+		if (!fs.existsSync(tsconfigPath)) {
+			this.verbose(`Skipping '${pkg.name}' because '${tsconfigPath}' doesn't exist.`);
+			return false;
+		}
+		if (
+			assertTaggingEnabledPaths &&
+			!assertTaggingEnabledPaths.some((regex) => regex.test(tsconfigPath))
+		) {
+			this.verbose(
+				`Skipping '${pkg.name}' because '${tsconfigPath}' doesn't match configured regexes.`,
+			);
+			return false;
+		}
+
+		return true;
 	}
 
 	protected async processPackage<TPkg extends Package>(
@@ -103,129 +111,104 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 	}
 
 	public async run(): Promise<void> {
-		// Calls processPackage on all packages to collect assert data.
 		await super.run();
-
-		// Tag asserts based on earlier collected data.
-		this.tagAsserts(true);
+		this.tagAsserts();
 	}
 
 	private collectAssertData(tsconfigPath: string): void {
-		// TODO: this can probably be removed now
 		if (tsconfigPath.includes("test")) {
 			return;
 		}
 
-		// load the project based on the tsconfig
-		const project = new Project({
+		const project = this.createProjectFromTsConfig(tsconfigPath);
+		this.collectDataFromProject(project);
+	}
+
+	private createProjectFromTsConfig(tsconfigPath: string): Project {
+		return new Project({
 			skipFileDependencyResolution: true,
 			tsConfigFilePath: tsconfigPath,
 		});
+	}
 
+	private collectDataFromProject(project: Project): void {
 		const templateErrors: Node[] = [];
 		const otherErrors: Node[] = [];
 
-		// walk all the files in the project
 		for (const sourceFile of project.getSourceFiles()) {
-			// walk the assert message params in the file
-			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
+			assert(this.assertionFunctions, "No assert functions are defined!");
 			for (const msg of getAssertMessageParams(sourceFile, this.assertionFunctions)) {
-				const nodeKind = msg.getKind();
-				switch (nodeKind) {
-					// If it's a number, validate it's a shortcode
-					case SyntaxKind.NumericLiteral: {
-						const numLit = msg as NumericLiteral;
-						if (!numLit.getText().startsWith("0x")) {
-							this.errors.push(
-								`Shortcodes must be provided by automation and be in hex format: ${numLit.getText()}\n\t${getCallsiteString(
-									numLit,
-								)}`,
-							);
-							return;
-						}
-						const numLitValue = numLit.getLiteralValue();
-						if (shortCodes.has(numLitValue)) {
-							// if we find two usages of the same short code then fail
-							this.errors.push(
-								`Duplicate shortcode 0x${numLitValue.toString(
-									16,
-								)} detected\n\t${getCallsiteString(
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									shortCodes.get(numLitValue)!,
-								)}\n\t${getCallsiteString(numLit)}`,
-							);
-							return;
-						}
-						shortCodes.set(numLitValue, numLit);
-						// calculate the maximun short code to ensure we don't duplicate
-						maxShortCode = Math.max(numLitValue, maxShortCode);
-
-						// If comment already exists, extract it for the mapping file
-						const comments = msg.getTrailingCommentRanges();
-						if (comments.length > 0) {
-							let originalErrorText = comments[0]
-								.getText()
-								.replace(/\/\*/g, "")
-								.replace(/\*\//g, "")
-								.trim();
-
-							// Replace leading+trailing double quotes and backticks.
-							// Only do it if the initial and final characters in the string are the only occurrences of
-							// the double quotes / backticks, to avoid messing up comments that use them in a different
-							// way. If we clean up the assert comments that have them, this code could go away.
-							const shouldRemoveSurroundingQuotes = (input: string): boolean => {
-								return (
-									(input.startsWith('"') &&
-										input.indexOf('"', 1) === input.length - 1) ||
-									(input.startsWith("`") &&
-										input.indexOf("`", 1) === input.length - 1)
-								);
-							};
-
-							// eslint-disable-next-line max-depth
-							if (shouldRemoveSurroundingQuotes(originalErrorText)) {
-								// eslint-disable-next-line unicorn/prefer-string-slice
-								originalErrorText = originalErrorText.substring(
-									1,
-									originalErrorText.length - 1,
-								);
-							}
-							codeToMsgMap.set(numLit.getText(), originalErrorText);
-						}
-						break;
-					}
-					// If it's a simple string literal, track the file for replacements later
-					case SyntaxKind.StringLiteral:
-					case SyntaxKind.NoSubstitutionTemplateLiteral: {
-						newAssetFiles.add(sourceFile);
-						break;
-					}
-					// Anything else isn't supported
-					case SyntaxKind.TemplateExpression: {
-						templateErrors.push(msg);
-						break;
-					}
-					case SyntaxKind.BinaryExpression:
-					case SyntaxKind.CallExpression: {
-						// TODO: why are CallExpression and BinaryExpression silently allowed?
-						break;
-					}
-					default: {
-						otherErrors.push(msg);
-						break;
-					}
-				}
+				this.handleMessageNode(msg, templateErrors, otherErrors);
 			}
 		}
 
+		this.processErrorsFromDataCollection(templateErrors, otherErrors);
+	}
+
+	private handleMessageNode(msg: Node, templateErrors: Node[], otherErrors: Node[]): void {
+		const nodeKind = msg.getKind();
+		switch (nodeKind) {
+			case SyntaxKind.NumericLiteral: {
+				// If it's a number, validate it's a shortcode
+				this.handleNumericLiteralNode(msg as NumericLiteral);
+				break;
+			}
+			case SyntaxKind.StringLiteral:
+			case SyntaxKind.NoSubstitutionTemplateLiteral: {
+				// If it's a simple string literal, track the file for replacements later
+				newAssetFiles.add(msg.getSourceFile());
+				break;
+			}
+			case SyntaxKind.TemplateExpression: {
+				templateErrors.push(msg);
+				break;
+			}
+			case SyntaxKind.BinaryExpression:
+			case SyntaxKind.CallExpression: {
+				// TODO: why are CallExpression and BinaryExpression silently allowed?
+				break;
+			}
+			default: {
+				otherErrors.push(msg);
+				break;
+			}
+		}
+	}
+
+	private handleNumericLiteralNode(numLit: NumericLiteral): void {
+		if (!numLit.getText().startsWith("0x")) {
+			this.errors.push(
+				`Shortcodes must be provided by automation and be in hex format: ${numLit.getText()}\n\t${getCallsiteString(
+					numLit,
+				)}`,
+			);
+			return;
+		}
+		const numLitValue = numLit.getLiteralValue();
+		if (shortCodes.has(numLitValue)) {
+			this.errors.push(
+				`Duplicate shortcode 0x${numLitValue.toString(16)} detected\n\t${getCallsiteString(
+					shortCodes.get(numLitValue)!,
+				)}\n\t${getCallsiteString(numLit)}`,
+			);
+			return;
+		}
+		shortCodes.set(numLitValue, numLit);
+		maxShortCode = Math.max(numLitValue, maxShortCode);
+		const comments = msg.getTrailingCommentRanges();
+		if (comments.length > 0) {
+			const originalErrorText = extractErrorTextFromComments(comments);
+			codeToMsgMap.set(numLit.getText(), originalErrorText);
+		}
+	}
+
+	private processErrorsFromDataCollection(templateErrors: Node[], otherErrors: Node[]): void {
 		const errorMessages: string[] = [];
 		if (templateErrors.length > 0) {
 			errorMessages.push(
-				`Template expressions are not supported in assertions (they'll be replaced by a short code anyway). ` +
-					`Use a string literal instead.\n${templateErrors
-						// eslint-disable-next-line unicorn/no-array-callback-reference
-						.map(getCallsiteString)
-						.join("\n")}`,
+				`Template expressions are not supported in assertions. Use a string literal instead.\n${templateErrors
+					.map(getCallsiteString)
+					.join("\n")}`,
 			);
 		}
 		if (otherErrors.length > 0) {
@@ -240,87 +223,62 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		}
 	}
 
-	// TODO: the resolve = true may be safe to remove since we always want to resolve when running this command
-	private tagAsserts(resolve: true): void {
-		const errors: string[] = [];
-
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		function isStringLiteral(msg: Node): msg is StringLiteral | NoSubstitutionTemplateLiteral {
-			const kind = msg.getKind();
-			return (
-				kind === SyntaxKind.StringLiteral ||
-				// eslint-disable-next-line eqeqeq -- TODO: Is this intentional?
-				kind == SyntaxKind.NoSubstitutionTemplateLiteral
-			);
-		}
-
-		// go through all the newly collected asserts and add short codes
+	private tagAsserts(): void {
 		for (const s of newAssetFiles) {
-			// another policy may have changed the file, so reload it
 			s.refreshFromFileSystemSync();
-			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
+			assert(this.assertionFunctions, "No assert functions are defined!");
 			for (const msg of getAssertMessageParams(s, this.assertionFunctions)) {
-				// here we only want to look at those messages that are strings,
-				// as we validated existing short codes above
 				if (isStringLiteral(msg)) {
-					// resolve === fix
-					if (resolve) {
-						// for now we don't care about filling gaps, but possible
-						const shortCode = ++maxShortCode;
-						shortCodes.set(shortCode, msg);
-						const text = msg.getLiteralText();
-						const shortCodeStr = `0x${shortCode.toString(16).padStart(3, "0")}`;
-						// replace the message with shortcode, and put the message in a comment
-						msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
-						codeToMsgMap.set(shortCodeStr, text);
-					} else {
-						// TODO: if we are not in resolve mode we
-						// allow  messages that are not short code. this seems like the right
-						// behavior for main. we may want to enforce shortcodes in release branches in the future
-						// errors.push(`no assert shortcode: ${getCallsiteString(msg)}`);
-						break;
-					}
+					const shortCode = ++maxShortCode;
+					shortCodes.set(shortCode, msg);
+					const text = msg.getLiteralText();
+					const shortCodeStr = `0x${shortCode.toString(16).padStart(3, "0")}`;
+					msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
+					codeToMsgMap.set(shortCodeStr, text);
 				}
 			}
-			if (resolve) {
-				s.saveSync();
-			}
+			s.saveSync();
 		}
 
-		if (resolve) {
-			writeShortCodeMappingFile();
-		}
-		if (errors.length > 0) {
-			this.error(errors.join("\n"), { exit: 1 });
-		}
+		writeShortCodeMappingFile();
 	}
 
 	private async getTsConfigPath(pkg: Package): Promise<string> {
 		const context = await this.getContext();
-		const tsconfigPath = context.repo.relativeToRepo(path.join(pkg.directory, "tsconfig.json"));
-		return tsconfigPath;
+		return context.repo.relativeToRepo(path.join(pkg.directory, "tsconfig.json"));
+	}
+
+	private getRelativeTsConfigPath(context: any, pkg: Package): string {
+		return context.repo.relativeToRepo(path.join(pkg.directory, "tsconfig.json"));
 	}
 }
 
+function isStringLiteral(msg: Node): msg is StringLiteral | NoSubstitutionTemplateLiteral {
+	return (
+		msg.getKind() === SyntaxKind.StringLiteral ||
+		msg.getKind() === SyntaxKind.NoSubstitutionTemplateLiteral
+	);
+}
+
+function extractErrorTextFromComments(comments: any): string {
+	let originalErrorText = comments[0].getText().replace(/\/\*/g, "").replace(/\*\//g, "").trim();
+	if (shouldRemoveSurroundingQuotes(originalErrorText)) {
+		originalErrorText = originalErrorText.substring(1, originalErrorText.length - 1);
+	}
+	return originalErrorText;
+}
+
+function shouldRemoveSurroundingQuotes(input: string): boolean {
+	return (
+		(input.startsWith('"') && input.indexOf('"', 1) === input.length - 1) ||
+		(input.startsWith("`") && input.indexOf("`", 1) === input.length - 1)
+	);
+}
+
 function getCallsiteString(msg: Node): string {
-	// Use filepath:line number so that the error message can be navigated to by clicking on it in vscode.
 	return `${msg.getSourceFile().getFilePath()}:${msg.getStartLineNumber()}`;
 }
 
-/**
- * Map from assertion function name to the index of its message argument.
- *
- * TODO:
- * This should be moved into a configuration file.
- */
-
-/**
- * Given a source file, this function will look for all assert functions contained in it and return the message parameters.
- * This includes both functions named "assert" and ones named "fail"
- * all the functions which is the message parameter
- * @param sourceFile - The file to get the assert message parameters for.
- * @returns An array of all the assert message parameters
- */
 function getAssertMessageParams(
 	sourceFile: SourceFile,
 	assertionFunctions: ReadonlyMap<string, number>,
@@ -331,9 +289,8 @@ function getAssertMessageParams(
 		const messageIndex = assertionFunctions.get(call.getExpression().getText());
 		if (messageIndex !== undefined) {
 			const args = call.getArguments();
-			if (args.length >= messageIndex && args[messageIndex] !== undefined) {
-				const messageArg = args[messageIndex];
-				messageArgs.push(messageArg);
+			if (args[messageIndex]) {
+				messageArgs.push(args[messageIndex]);
 			}
 		}
 	}
@@ -341,23 +298,16 @@ function getAssertMessageParams(
 }
 
 function writeShortCodeMappingFile(): void {
-	// eslint-disable-next-line unicorn/prefer-spread, @typescript-eslint/no-unsafe-assignment
 	const mapContents = Array.from(codeToMsgMap.entries())
 		.sort()
-		// eslint-disable-next-line unicorn/no-array-reduce
 		.reduce((accum, current) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			accum[current[0]] = current[1];
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return accum;
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		}, {} as any);
 	const targetFolder = "packages/runtime/test-runtime-utils/src";
-
 	if (!fs.existsSync(targetFolder)) {
 		fs.mkdirSync(targetFolder, { recursive: true });
 	}
-
 	const fileContents = `/*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
