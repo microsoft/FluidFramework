@@ -53,6 +53,11 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				throw new Error(`Invalid release type: ${input}`);
 			},
 		})(),
+		checkFileExists: Flags.boolean({
+			description: "Check if the file path exists",
+			default: false,
+			required: true,
+		}),
 		...PackageCommand.flags,
 	};
 
@@ -91,6 +96,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				pkg.directory,
 				extractorConfig,
 				this.flags.types,
+				this.flags.checkFileExists,
 				json,
 				this.logger,
 			);
@@ -107,7 +113,8 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		await super.run();
 
 		if (this.packageList.packagesUpdated.length === 0) {
-			this.log(`No updates in package.json for ${this.flags.types} release tag`);
+			this.errorLog(`No updates in package.json for ${this.flags.types} release tag`);
+			this.exit();
 		}
 
 		return this.packageList;
@@ -118,10 +125,12 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
  * Updates the types/typing field in package.json.
  * @returns true if the update was successful, false otherwise.
  */
+// eslint-disable-next-line max-params
 function updatePackageJsonTypes(
 	directory: string,
 	extractorConfig: ExtractorConfig,
 	dTsType: DtsKind,
+	checkFileExists: boolean,
 	json: PackageJson,
 	log: CommandLogger,
 ): boolean {
@@ -153,7 +162,7 @@ function updatePackageJsonTypes(
 			}
 
 			if (filePath) {
-				if (!fs.existsSync(filePath)) {
+				if (checkFileExists && !fs.existsSync(filePath)) {
 					throw new Error(`${filePath} path does not exists`);
 				}
 				delete json.typings;

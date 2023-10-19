@@ -120,12 +120,12 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		);
 
 		let version = simpleVersion;
-
 		if (isAlphaOrBetaTypes) {
-			if (isRelease) {
+			if (isRelease || flags.release === "none") {
 				this.errorLog(
-					"ERROR: This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
+					"This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
 				);
+				this.exit();
 			} else {
 				version = `${simpleVersion}-${alphabetaTypePrefix}`;
 			}

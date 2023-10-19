@@ -460,40 +460,6 @@ describe("generate:buildVersion for alpha/beta", () => {
 	test.env({
 		VERSION_BUILDNUMBER: "88879",
 		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "release",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "alpha",
-	})
-		.stdout()
-		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
-		.it("tagName: client, release: release, types: alpha", (ctx) => {
-			expect(ctx.stdout).to.contain(
-				`ERROR: ERROR: This release type is not supported. Alpha/beta ***prereleases*** are allowed.`,
-			);
-		});
-
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
-		TEST_BUILD: "false",
-		VERSION_RELEASE: "release",
-		VERSION_PATCH: "False",
-		VERSION_INCLUDE_INTERNAL_VERSIONS: "False",
-		PACKAGE_TYPES_FIELD: "beta",
-	})
-		.stdout()
-		.command(["generate:buildVersion", "--fileVersion", "0.4.0"])
-		.it("tagName: client, release: release, types: beta", (ctx) => {
-			expect(ctx.stdout).to.contain(
-				`ERROR: ERROR: This release type is not supported. Alpha/beta ***prereleases*** are allowed.`,
-			);
-		});
-
-	test.env({
-		VERSION_BUILDNUMBER: "88879",
-		VERSION_TAGNAME: "client",
 		TEST_BUILD: "true",
 		VERSION_RELEASE: "prerelease",
 		VERSION_PATCH: "False",

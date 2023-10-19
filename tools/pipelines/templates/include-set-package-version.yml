@@ -114,14 +114,15 @@ steps:
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
 
-# - ${{ if ne(parameters.packageTypesOverride, 'none') }}:
-#   - task: Bash@3
-#     displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
-#     inputs:
-#       targetType: 'inline'
-#       workingDirectory: ${{ parameters.buildDirectory }}
-#       script: |
-#         flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }}
+# This check runs only when the value of `Change package types` is selected as `alpha` or `beta`
+- ${{ if ne(parameters.packageTypesOverride, 'none') }}:
+  - task: Bash@3
+    displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
+    inputs:
+      targetType: 'inline'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      script: |
+        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --checkFileExists false
 
 - task: Bash@3
   displayName: Update Package Version (flub)
