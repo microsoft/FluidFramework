@@ -47,7 +47,10 @@ export class DetachedFieldIndex {
 	) {}
 
 	public clone(): DetachedFieldIndex {
-		const clone = new DetachedFieldIndex(this.name, this.rootIdAllocator);
+		const clone = new DetachedFieldIndex(
+			this.name,
+			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
+		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
 		return clone;
 	}
