@@ -436,5 +436,40 @@
 			"src/feature-libraries/editable-tree/editableTree.ts",
 			"src/feature-libraries/untypedTree.ts"
 		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/proxies/proxies.ts",
+		"to": "src/feature-libraries/editable-tree-2/proxies/schemaBuilder.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/proxies/schemaBuilder.ts",
+			"src/feature-libraries/contextuallyTyped.ts",
+			"src/feature-libraries/editable-tree/index.ts",
+			"src/feature-libraries/editable-tree/editableField.ts",
+			"src/feature-libraries/editable-tree-2/index.ts",
+			"src/feature-libraries/editable-tree-2/proxies/index.ts",
+			"src/feature-libraries/editable-tree-2/proxies/proxies.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/proxies/index.ts",
+		"to": "src/feature-libraries/editable-tree-2/proxies/schemaBuilder.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/proxies/schemaBuilder.ts",
+			"src/feature-libraries/contextuallyTyped.ts",
+			"src/feature-libraries/editable-tree/index.ts",
+			"src/feature-libraries/editable-tree/editableField.ts",
+			"src/feature-libraries/editable-tree-2/index.ts",
+			"src/feature-libraries/editable-tree-2/proxies/index.ts"
+		]
 	}
 ]
