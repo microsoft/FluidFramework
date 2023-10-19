@@ -12,6 +12,7 @@ import {
 	clonePath,
 	compareUpPaths,
 	forEachNodeInSubtree,
+	Revertible,
 	AllowedUpdateType,
 } from "../../../core";
 import { FieldKinds, FieldSchema, StructTyped, TypedField } from "../../../feature-libraries";
@@ -81,6 +82,16 @@ export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value
 	});
 	cursor.free();
 	return anchors;
+}
+
+export type RevertibleSharedTreeView = ISharedTreeView & {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+};
+
+export function isRevertibleSharedTreeView(s: ISharedTreeView): s is RevertibleSharedTreeView {
+	return (s as RevertibleSharedTreeView).undoStack !== undefined;
 }
 
 // KLUDGE:AB#5677: Avoid calling editableTree2 more than once per tree as it currently crashes.

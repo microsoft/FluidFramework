@@ -179,4 +179,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { UndoRedoManager, LocalCommitSource } from "./undo";
+export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";

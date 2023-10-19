@@ -14,7 +14,12 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { UpPath, Anchor, Value, AllowedUpdateType, JsonableTree } from "../../../core";
 import { ISharedTreeView, SharedTree } from "../../../shared-tree";
 import { SchemaAware, typeNameSymbol } from "../../../feature-libraries";
-import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
+import {
+	SharedTreeTestFactory,
+	createTestUndoRedoStacks,
+	toJsonableTree,
+	validateTree,
+} from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import {
@@ -24,6 +29,8 @@ import {
 	fuzzSchema,
 	FuzzNodeSchema,
 	failureDirectory,
+	RevertibleSharedTreeView,
+	fuzzViewFromTree,
 } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
@@ -107,9 +114,9 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
-			const tree = initialState.clients[0].channel.view;
+			const tree = fuzzViewFromTree(initialState.clients[0].channel);
 			tree.transaction.start();
-			initialState.anchors = [createAnchors(initialState.clients[0].channel.view)];
+			initialState.anchors = [createAnchors(tree)];
 		});
 
 		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
@@ -171,7 +178,12 @@ describe("Fuzz - anchor stability", () => {
 		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				initialState.anchors.push(createAnchors(client.channel.view));
+				const view = fuzzViewFromTree(client.channel) as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				view.undoStack = undoStack;
+				view.redoStack = redoStack;
+				view.unsubscribe = unsubscribe;
+				initialState.anchors.push(createAnchors(view));
 			}
 		});
 

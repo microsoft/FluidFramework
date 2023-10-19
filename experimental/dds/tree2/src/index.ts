@@ -79,7 +79,10 @@ export {
 	Adapters,
 	TreeAdapter,
 	MapTree,
-	LocalCommitSource,
+	Revertible,
+	RevertibleKind,
+	RevertResult,
+	DiscardResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 } from "./core";

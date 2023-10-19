@@ -15,13 +15,22 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { UpPath, Anchor, JsonableTree, Value } from "../../../core";
 import {
 	SharedTreeTestFactory,
+	createTestUndoRedoStacks,
 	toJsonableTree,
 	validateTree,
 	validateTreeConsistency,
 } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { createAnchors, failureDirectory, onCreate, validateAnchors } from "./fuzzUtils";
+import {
+	RevertibleSharedTreeView,
+	createAnchors,
+	failureDirectory,
+	fuzzViewFromTree,
+	isRevertibleSharedTreeView,
+	onCreate,
+	validateAnchors,
+} from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 /**
@@ -58,11 +67,16 @@ describe("Fuzz - undo/redo", () => {
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
-			const tree = initialState.clients[0].channel.view;
+			const tree = fuzzViewFromTree(initialState.clients[0].channel);
 			initialState.initialTreeState = toJsonableTree(tree);
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				initialState.anchors.push(createAnchors(client.channel.view));
+				const view = fuzzViewFromTree(client.channel) as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				view.undoStack = undoStack;
+				view.redoStack = redoStack;
+				view.unsubscribe = unsubscribe;
+				initialState.anchors.push(createAnchors(view));
 			}
 		});
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
@@ -72,6 +86,7 @@ describe("Fuzz - undo/redo", () => {
 			// undo all of the changes and validate against initialTreeState for each tree
 			for (const [i, client] of clients.entries()) {
 				const tree = client.channel.view;
+				assert(isRevertibleSharedTreeView(tree));
 
 				// save final tree states to validate redo later
 				finalTreeStates.push(toJsonableTree(tree));
@@ -81,7 +96,7 @@ describe("Fuzz - undo/redo", () => {
 				 * Once the undo stack exposed, remove this array and use the stack to keep track instead.
 				 */
 				for (let j = 0; j < opsPerRun; j++) {
-					tree.undo();
+					tree.undoStack.pop()?.revert();
 				}
 			}
 
@@ -98,10 +113,18 @@ describe("Fuzz - undo/redo", () => {
 
 			// redo all of the undone changes and validate against the finalTreeState for each tree
 			for (const [i, client] of clients.entries()) {
+				const tree = client.channel.view;
+				assert(isRevertibleSharedTreeView(tree));
 				for (let j = 0; j < opsPerRun; j++) {
-					client.channel.view.redo();
+					tree.redoStack.pop()?.revert();
 				}
-				validateTree(client.channel.view, finalTreeStates[i]);
+				validateTree(tree, finalTreeStates[i]);
+			}
+
+			for (const [_, client] of clients.entries()) {
+				const view = client.channel.view;
+				assert(isRevertibleSharedTreeView(view));
+				view.unsubscribe();
 			}
 		});
 		createDDSFuzzSuite(model, {
@@ -137,7 +160,12 @@ describe("Fuzz - undo/redo", () => {
 			initialState.anchors = [];
 			// creates an initial anchor for each tree
 			for (const client of initialState.clients) {
-				initialState.anchors.push(createAnchors(client.channel.view));
+				const view = client.channel.view as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				view.undoStack = undoStack;
+				view.redoStack = redoStack;
+				view.unsubscribe = unsubscribe;
+				initialState.anchors.push(createAnchors(view));
 			}
 		});
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
@@ -154,7 +182,9 @@ describe("Fuzz - undo/redo", () => {
 			finalState.random.shuffle(undoOrderByClientIndex);
 			// call undo() until trees contain no more edits to undo
 			for (const clientIndex of undoOrderByClientIndex) {
-				clients[clientIndex].channel.view.undo();
+				const view = clients[clientIndex].channel.view;
+				assert(isRevertibleSharedTreeView(view));
+				view.undoStack.pop()?.revert();
 			}
 			// synchronize clients after undo
 			finalState.containerRuntimeFactory.processAllMessages();
@@ -165,6 +195,12 @@ describe("Fuzz - undo/redo", () => {
 				assert(finalState.initialTreeState !== undefined);
 				validateTree(client.channel.view, finalState.initialTreeState);
 				validateAnchors(client.channel.view, finalState.anchors[i], true);
+			}
+
+			for (const [_, client] of clients.entries()) {
+				const view = client.channel.view;
+				assert(isRevertibleSharedTreeView(view));
+				view.unsubscribe();
 			}
 		});
 		createDDSFuzzSuite(model, {
@@ -208,6 +244,17 @@ describe("Fuzz - undo/redo", () => {
 			validateConsistency: validateTreeConsistency,
 		};
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+		emitter.on("testStart", (initialState: UndoRedoFuzzTestState) => {
+			// set up undo and redo stacks for each client
+			for (const client of initialState.clients) {
+				const view = client.channel.view as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				view.undoStack = undoStack;
+				view.redoStack = redoStack;
+				view.unsubscribe = unsubscribe;
+			}
+		});
 
 		emitter.on("testEnd", (finalState: UndoRedoFuzzTestState) => {
 			// synchronize clients after undo
