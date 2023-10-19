@@ -8,7 +8,7 @@ import * as semver from "semver";
  * Parses the version from a git tag.
  *
  * @param tag - The tag.
- * @returns - The version string, or undefined if one could not be found.
+ * @returns The version string, or undefined if one could not be found.
  *
  * @internal
  */

@@ -12,6 +12,7 @@ import {
 	ITreeCursor,
 	ChangeFamilyEditor,
 	FieldUpPath,
+	TaggedChange,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -20,7 +21,7 @@ import {
 	FieldChangeset,
 	ModularChangeset,
 } from "../modular-schema";
-import { fieldKinds, optional, sequence, value as valueFieldKind } from "./defaultFieldKinds";
+import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -44,7 +45,7 @@ export class DefaultChangeFamily implements ChangeFamily<DefaultEditBuilder, Def
 		return this.modularFamily.codecs;
 	}
 
-	public intoDelta(change: DefaultChangeset): Delta.Root {
+	public intoDelta(change: TaggedChange<DefaultChangeset>): Delta.Root {
 		return this.modularFamily.intoDelta(change);
 	}
 
@@ -134,8 +135,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		return {
 			set: (newContent: ITreeCursor): void => {
 				const id = this.modularBuilder.generateId();
+				const buildId = this.modularBuilder.generateId();
 				const change: FieldChangeset = brand(
-					valueFieldKind.changeHandler.editor.set(newContent, id),
+					valueFieldKind.changeHandler.editor.set(newContent, id, buildId),
 				);
 				this.modularBuilder.submitChange(field, valueFieldKind.identifier, change);
 			},
@@ -146,9 +148,16 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		return {
 			set: (newContent: ITreeCursor | undefined, wasEmpty: boolean): void => {
 				const id = this.modularBuilder.generateId();
-				const change: FieldChangeset = brand(
-					optional.changeHandler.editor.set(newContent, wasEmpty, id),
-				);
+				const optionalChange =
+					newContent === undefined
+						? optional.changeHandler.editor.clear(wasEmpty, id)
+						: optional.changeHandler.editor.set(
+								newContent,
+								wasEmpty,
+								id,
+								this.modularBuilder.generateId(),
+						  );
+				const change: FieldChangeset = brand(optionalChange);
 				this.modularBuilder.submitChange(field, optional.identifier, change);
 			},
 		};

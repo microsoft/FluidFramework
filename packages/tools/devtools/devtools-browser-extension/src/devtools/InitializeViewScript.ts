@@ -21,4 +21,5 @@ container.style.width = "100%";
 
 document.body.append(container);
 
+// eslint-disable-next-line unicorn/prefer-top-level-await
 initializeDevtoolsView(container).then(() => {}, console.error);

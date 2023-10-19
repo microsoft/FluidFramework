@@ -22,4 +22,11 @@ steps:
       # Use the specified node version
       sudo n ${{ parameters.version }}
       # Output the node version
-      echo "Using node $(node --version)"
+      version=$(node --version)
+      if [ $version != v${{ parameters.version }} ];
+      then
+        echo "Could not configure the required node version ${configuredVersion}";
+        exit 1;
+      else
+        echo "Using node ${version}"
+      fi

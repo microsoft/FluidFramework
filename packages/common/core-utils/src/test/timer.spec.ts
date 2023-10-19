@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import process from "process";
+import { strict as assert } from "node:assert";
+import process from "node:process";
 import { SinonFakeTimers, SinonSandbox, SinonSpy, useFakeTimers, createSandbox } from "sinon";
 import { PromiseTimer, Timer, IPromiseTimerResult } from "../..";
 
@@ -306,7 +306,7 @@ describe("Timers", () => {
 				(result) => {
 					resolveResult = result.timerResult;
 				},
-				(error) => assert.fail(error),
+				(error: Error) => assert.fail(error),
 			);
 		}
 

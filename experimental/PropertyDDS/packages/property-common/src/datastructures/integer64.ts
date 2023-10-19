@@ -26,7 +26,10 @@ const { MSG } = constants;
  * @param high - Higher 32 bit
  */
 export class Integer64 {
-	constructor(protected low = 0, protected high = 0) {}
+	constructor(
+		protected low = 0,
+		protected high = 0,
+	) {}
 
 	/**
 	 * @returns The higher 32 bit integer part
@@ -94,7 +97,7 @@ function _stringToInt64(in_signed: boolean, in_string: string, in_radix = 10): n
 	let negative = false;
 	let high = 0;
 	let low = 0;
-	if (string[0] === "-") {
+	if (string.startsWith("-")) {
 		negative = true;
 		position += 1;
 	}

@@ -22,13 +22,13 @@ import {
  * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
  */
 // Shared tree keys that map to the type used by the Twitter type/dataset
-export namespace Twitter {
-	export namespace SharedTreeFieldKey {
-		export const statuses: FieldKey = brand("statuses");
-		export const retweetCount: FieldKey = brand("retweet_count");
-		export const favoriteCount: FieldKey = brand("favorite_count");
-	}
-}
+export const Twitter = {
+	SharedTreeFieldKey: {
+		statuses: brand<FieldKey>("statuses"),
+		retweetCount: brand<FieldKey>("retweet_count"),
+		favoriteCount: brand<FieldKey>("favorite_count"),
+	},
+};
 
 export interface Twitter {
 	statuses: TwitterStatus[];
@@ -373,14 +373,13 @@ function generateTwitterStatus(
 		const inReplyToStatusId = getRandomNumberString(random, 18, 18);
 		twitterStatus.in_reply_to_status_id =
 			inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
-		twitterStatus.in_reply_to_status_id_str =
-			inReplyToStatusId !== null ? inReplyToStatusId : null;
+		twitterStatus.in_reply_to_status_id_str = inReplyToStatusId ?? null;
 	}
 	if (shouldAddInReplyToUserIdAndScreenName) {
 		const inReplyToUserId = getRandomNumberString(random, 10, 10);
 		twitterStatus.in_reply_to_user_id =
 			inReplyToUserId !== null ? Number(inReplyToUserId) : null;
-		twitterStatus.in_reply_to_user_id_str = inReplyToUserId !== null ? inReplyToUserId : null;
+		twitterStatus.in_reply_to_user_id_str = inReplyToUserId ?? null;
 		twitterStatus.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
 	}
 

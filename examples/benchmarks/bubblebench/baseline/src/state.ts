@@ -16,7 +16,11 @@ export class AppState implements IAppState {
 	public readonly localClient: IClient;
 	public readonly clients: IClient[];
 
-	constructor(private _width: number, private _height: number, numBubbles: number) {
+	constructor(
+		private _width: number,
+		private _height: number,
+		numBubbles: number,
+	) {
 		this.localClient = makeClient(_width, _height, numBubbles);
 		this.clients = [this.localClient];
 	}

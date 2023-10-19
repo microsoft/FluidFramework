@@ -9,7 +9,7 @@ import { IDiceRollerAppModel as IDiceRollerAppModel2 } from "./modelVersion2";
 /**
  * Interface to represent the two possible app models that can be loaded by the model loader.
  *
- * @remarks - This is not necessary in a real-app scenario. It is only used since this example can use the same
+ * @remarks This is not necessary in a real-app scenario. It is only used since this example can use the same
  * model loader to load different versions of app, but this is unlikely in a production app.
  */
 export interface IDiceRollerAppModel {

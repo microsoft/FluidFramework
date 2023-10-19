@@ -15,7 +15,7 @@ import {
 } from "@fluid-experimental/devtools-core";
 
 import { extensionMessageSource } from "../messaging";
-import { Globals } from "../Globals";
+import { type Globals } from "../Globals";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
 type Port = chrome.runtime.Port;

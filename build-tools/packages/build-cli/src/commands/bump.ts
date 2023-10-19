@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { Flags } from "@oclif/core";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import chalk from "chalk";
 import inquirer from "inquirer";
 import * as semver from "semver";
@@ -14,7 +14,6 @@ import {
 	InterdependencyRange,
 	RangeOperators,
 	ReleaseVersion,
-	VersionBumpType,
 	VersionChangeType,
 	VersionScheme,
 	WorkspaceRanges,
@@ -33,16 +32,16 @@ import {
 } from "../lib";
 
 export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
-	static summary =
+	static readonly summary =
 		"Bumps the version of a release group or package to the next minor, major, or patch version, or to a specific version, with control over the interdependency version ranges.";
 
-	static description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release, for example when moving a package from one release group to another.`;
+	static readonly description = `The bump command is used to bump the version of a release groups or individual packages within the repo. Typically this is done as part of the release process (see the release command), but it is sometimes useful to bump without doing a release, for example when moving a package from one release group to another.`;
 
-	static args = {
+	static readonly args = {
 		package_or_release_group: packageOrReleaseGroupArg,
-	};
+	} as const;
 
-	static flags = {
+	static readonly flags = {
 		bumpType: bumpTypeFlag({
 			char: "t",
 			description:
@@ -81,7 +80,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		...BaseCommand.flags,
 	};
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "Bump @fluidframework/build-common to the next minor version.",
 			command: "<%= config.bin %> <%= command.id %> @fluidframework/build-common -t minor",
@@ -116,8 +115,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 	private readonly finalMessages: string[] = [];
 
 	public async run(): Promise<void> {
-		const args = this.args;
-		const flags = this.flags;
+		const { args, flags } = this;
 
 		if (args.package_or_release_group === undefined) {
 			this.error("No dependency provided.");
@@ -133,7 +131,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			: undefined;
 
 		const context = await this.getContext();
-		const bumpType: VersionBumpType | undefined = flags.bumpType;
+		const { bumpType } = flags;
 		const workspaceProtocol =
 			typeof interdependencyRange === "string"
 				? interdependencyRange?.startsWith("workspace:")
@@ -195,10 +193,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}
 
 		const newVersion =
-			exactVersion === null
-				? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				  bumpVersionScheme(repoVersion, bumpType!, scheme)
-				: exactVersion;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			exactVersion ?? bumpVersionScheme(repoVersion, bumpType!, scheme);
 
 		let bumpArg: VersionChangeType;
 		if (bumpType === undefined) {
@@ -219,7 +215,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		this.log(`Bump type: ${chalk.blue(bumpType ?? "exact")}`);
 		this.log(`Scheme: ${chalk.cyan(scheme)}`);
 		this.log(`Workspace protocol: ${workspaceProtocol === true ? chalk.green("yes") : "no"}`);
-		this.log(`Versions: ${newVersion} <== ${repoVersion}`);
+		this.log(`Versions: ${newVersion.version} <== ${repoVersion}`);
 		this.log(
 			`Interdependency range: ${
 				interdependencyRange === "" ? "exact" : interdependencyRange
@@ -255,7 +251,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		);
 
 		if (shouldInstall) {
-			if (!(await FluidRepo.ensureInstalled(updatedPackages, false))) {
+			if (!(await FluidRepo.ensureInstalled(updatedPackages))) {
 				this.error("Install failed.");
 			}
 		} else {

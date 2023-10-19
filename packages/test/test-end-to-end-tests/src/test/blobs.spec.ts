@@ -29,8 +29,6 @@ import {
 } from "@fluid-internal/test-version-utils";
 import { v4 as uuid } from "uuid";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-// eslint-disable-next-line import/no-internal-modules
-import { IPendingRuntimeState, IPendingBlobs } from "@fluidframework/container-runtime/src/test";
 import {
 	driverSupportsBlobs,
 	getUrlFromDetachedBlobStorage,
@@ -644,25 +642,19 @@ describeNoCompat("blobs", (getTestObjectProvider) => {
 		container1.disconnect();
 		container1.connect();
 		await waitForContainerConnection(container1);
-
-		let pendingBlobs: IPendingBlobs = await (container1 as any).runtime
-			.getPendingLocalState()
-			.then((s) => (s as IPendingRuntimeState).pendingAttachmentBlobs);
-		assert.strictEqual(Object.values<any>(pendingBlobs).length, 1);
-		const acked = Object.values<any>(pendingBlobs)[0].acked;
-		assert.strictEqual(acked, false, "reconnection should not reupload pending blobs");
 		// sending some ops to confirm pending blob is not blocking other ops
 		dataStore1._root.set("key", "value");
 		dataStore1._root.set("another key", "another value");
+
+		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const dataStore2 = await requestFluidObject<ITestDataObject>(container2, "default");
 		await provider.ensureSynchronized();
 
-		resolveUploadBlob();
+		assert.strictEqual(dataStore2._root.get("key"), "value");
+		assert.strictEqual(dataStore2._root.get("another key"), "another value");
 
+		resolveUploadBlob();
 		await assert.doesNotReject(handleP);
-		pendingBlobs = await (container1 as any).runtime
-			.getPendingLocalState()
-			.then((s) => (s as IPendingRuntimeState).pendingAttachmentBlobs);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, true);
 		runtimeStorage.uploadBlob = delayedUploadBlob;
 	});
 });

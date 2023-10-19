@@ -3,17 +3,23 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { SchemaBuilder, Any } from "../../feature-libraries";
+import { Any } from "../../feature-libraries";
 import { createSharedTreeView } from "../../shared-tree";
-import { ValueSchema, AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
+import { AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
+import { leaf, SchemaBuilder } from "../../domains";
 
-const builder = new SchemaBuilder("Schematize Tree Tests");
-const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const builder = new SchemaBuilder({
+	scope: "test",
+	name: "Schematize Tree Tests",
+});
+const schema = builder.intoSchema(SchemaBuilder.optional(leaf.number));
 
-const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
-const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Serializable);
-const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const builderGeneralized = new SchemaBuilder({
+	scope: "test",
+	name: "Schematize Tree Tests Generalized",
+});
+
+const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
 
 describe("sharedTreeView", () => {
 	describe("schematize", () => {
@@ -49,7 +55,7 @@ describe("sharedTreeView", () => {
 			assert.throws(() => {
 				tree.schematize({
 					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: "x",
+					initialTree: 5,
 					schema,
 				});
 			});
@@ -60,7 +66,7 @@ describe("sharedTreeView", () => {
 			tree.storedSchema.update(schema);
 			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-				initialTree: "x",
+				initialTree: 5,
 				schema: schemaGeneralized,
 			});
 			// Initial tree should not be applied

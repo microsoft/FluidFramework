@@ -8,7 +8,9 @@
  *
  * @remarks Each Container registered with the Devtools must be assigned a unique `containerKey`.
  *
- * @example "Canvas Container"
+ * @example
+ *
+ * "Canvas Container"
  *
  * @public
  */
@@ -81,4 +83,4 @@ export const EditType = {
 /**
  * @internal
  */
-export type EditType = typeof EditType[keyof typeof EditType];
+export type EditType = (typeof EditType)[keyof typeof EditType];

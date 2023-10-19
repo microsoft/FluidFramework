@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { JsonableTree, ValueSchema } from "../core";
+import { strict as assert } from "assert";
+
+import { ITreeCursorSynchronous, JsonableTree } from "../core";
 import {
 	Any,
 	FieldKinds,
 	FieldSchema,
 	FullSchemaPolicy,
+	Multiplicity,
 	SchemaAware,
-	SchemaBuilder,
 	SchemaLibrary,
+	TreeNodeSchema,
 	TreeSchema,
-	TypedSchemaCollection,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
@@ -22,21 +24,22 @@ import {
 	valueSymbol,
 } from "../feature-libraries";
 import { TreeContent } from "../shared-tree";
+import { leaf, SchemaBuilder } from "../domains";
 
 interface TestTree {
 	readonly name: string;
-	readonly schemaData: TypedSchemaCollection;
+	readonly schemaData: TreeSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: () => JsonableTree[];
 }
 
-function testTree<T extends TreeSchema>(
+function testTree<T extends TreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
 	data: SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, [T]>,
 ): TestTree {
-	const fieldSchema = SchemaBuilder.fieldValue(rootNode);
+	const fieldSchema = FieldSchema.create(FieldKinds.required, [rootNode]);
 	return testField(name, schemaData, fieldSchema, data);
 }
 
@@ -46,11 +49,11 @@ function testField<T extends FieldSchema>(
 	rootField: T,
 	data: SchemaAware.TypedField<T, SchemaAware.ApiMode.Flexible>,
 ): TestTree {
-	const schema = new SchemaBuilder(
-		name,
-		{ rejectForbidden: false, rejectEmpty: false },
-		schemaLibrary,
-	).intoDocumentSchema(rootField);
+	const schema = new SchemaBuilder({
+		scope: name,
+		lint: { rejectForbidden: false, rejectEmpty: false },
+		libraries: [schemaLibrary],
+	}).intoSchema(rootField);
 	return {
 		name,
 		schemaData: schema,
@@ -62,69 +65,85 @@ function testField<T extends FieldSchema>(
 	};
 }
 
+function cursorsToFieldContent(
+	cursors: readonly ITreeCursorSynchronous[],
+	schema: FieldSchema,
+): readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined {
+	if (schema.kind.multiplicity === Multiplicity.Sequence) {
+		return cursors;
+	}
+	if (cursors.length === 1) {
+		return cursors[0];
+	}
+	assert(cursors.length === 0);
+	return undefined;
+}
+
 export function treeContentFromTestTree(test: TestTree): TreeContent {
 	return {
 		schema: test.schemaData,
-		initialTree: test.treeFactory().map(singleTextCursor),
+		initialTree: cursorsToFieldContent(
+			test.treeFactory().map(singleTextCursor),
+			test.schemaData.rootFieldSchema,
+		),
 	};
 }
 
-const builder = new SchemaBuilder("test");
+const builder = new SchemaBuilder({ scope: "test" });
 export const minimal = builder.struct("minimal", {});
-export const numeric = builder.leaf("numeric", ValueSchema.Number);
-export const serializable = builder.leaf("serializable", ValueSchema.Serializable);
 export const hasMinimalValueField = builder.struct("hasMinimalValueField", {
-	field: SchemaBuilder.fieldValue(minimal),
+	field: minimal,
 });
 export const hasNumericValueField = builder.struct("hasNumericValueField", {
-	field: SchemaBuilder.fieldValue(numeric),
+	field: leaf.number,
 });
 export const hasPolymorphicValueField = builder.struct("hasPolymorphicValueField", {
-	field: SchemaBuilder.fieldValue(numeric, minimal),
+	field: [leaf.number, minimal],
 });
 export const hasAnyValueField = builder.struct("hasAnyValueField", {
-	field: SchemaBuilder.fieldValue(Any),
+	field: Any,
 });
 export const hasOptionalField = builder.struct("hasOptionalField", {
-	field: SchemaBuilder.fieldOptional(numeric),
+	field: builder.optional(leaf.number),
 });
 export const allTheFields = builder.struct("allTheFields", {
-	optional: SchemaBuilder.fieldOptional(numeric),
-	value: SchemaBuilder.fieldValue(numeric),
-	sequence: SchemaBuilder.fieldSequence(numeric),
+	optional: builder.optional(leaf.number),
+	valueField: leaf.number,
+	sequence: builder.sequence(leaf.number),
 });
 export const anyFields = builder.struct("anyFields", {
-	optional: SchemaBuilder.fieldOptional(Any),
-	value: SchemaBuilder.fieldValue(Any),
-	sequence: SchemaBuilder.fieldSequence(Any),
+	optional: builder.optional(Any),
+	valueField: Any,
+	sequence: builder.sequence(Any),
 });
 
-export const numericMap = builder.map("numericMap", SchemaBuilder.fieldOptional(numeric));
+export const numericMap = builder.map("numericMap", builder.optional(leaf.number));
 
 type NumericMapData = SchemaAware.AllowedTypesToTypedTrees<
 	SchemaAware.ApiMode.Flexible,
 	[typeof numericMap]
 >;
 
-export const anyMap = builder.map("anyMap", SchemaBuilder.fieldSequence(Any));
+export const anyMap = builder.map("anyMap", builder.sequence(Any));
 
 export const recursiveType = builder.structRecursive("recursiveType", {
-	field: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => recursiveType),
+	field: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
 });
 
 export const library = builder.intoLibrary();
 
 export const testTrees: readonly TestTree[] = [
-	testField("empty", library, SchemaBuilder.fieldOptional(), undefined),
+	testField("empty", library, SchemaBuilder.optional([]), undefined),
+	testTree("null", library, leaf.null, null),
 	testTree("minimal", library, minimal, {}),
-	testTree("numeric", library, numeric, 5),
-	testField("numericSequence", library, SchemaBuilder.fieldSequence(numeric), [1, 2, 3]),
-	testTree("true boolean", library, serializable, {
-		[typeNameSymbol]: "serializable",
+	testTree("numeric", library, leaf.number, 5),
+	testField("numericSequence", library, SchemaBuilder.sequence(leaf.number), [1, 2, 3]),
+	testTree("true boolean", library, leaf.boolean, {
+		[typeNameSymbol]: leaf.boolean.name,
 		[valueSymbol]: true,
 	}),
-	testTree("false boolean", library, serializable, {
-		[typeNameSymbol]: "serializable",
+	testTree("false boolean", library, leaf.boolean, {
+		[typeNameSymbol]: leaf.boolean.name,
 		[valueSymbol]: false,
 	}),
 	testTree("hasMinimalValueField", library, hasMinimalValueField, {
@@ -138,40 +157,40 @@ export const testTrees: readonly TestTree[] = [
 	}),
 	testTree("hasAnyValueField", library, hasAnyValueField, {
 		field: {
-			[typeNameSymbol]: "numeric",
+			[typeNameSymbol]: leaf.number.name,
 			[valueSymbol]: 5,
 		},
 	}),
 	testTree("hasAnyValueFieldRecursive", library, hasAnyValueField, {
 		field: {
-			[typeNameSymbol]: "hasAnyValueField",
+			[typeNameSymbol]: hasAnyValueField.name,
 			field: {
-				[typeNameSymbol]: "numeric",
+				[typeNameSymbol]: leaf.number.name,
 				[valueSymbol]: 5,
 			},
 		},
 	}),
 	testTree("hasOptionalField-empty", library, hasOptionalField, { field: undefined }),
 	testTree("allTheFields-minimal", library, allTheFields, {
-		value: 5,
+		valueField: 5,
 		optional: undefined,
 		sequence: [],
 	}),
 	testTree("allTheFields-full", library, allTheFields, {
-		value: 5,
+		valueField: 5,
 		optional: 5,
 		sequence: [5],
 	}),
 	testTree("anyFields-minimal", library, anyFields, {
-		value: { [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
+		valueField: { [typeNameSymbol]: leaf.number.name, [valueSymbol]: 5 },
 		optional: undefined,
 		sequence: [],
 	}),
 	testTree("anyFields-full", library, anyFields, {
-		value: { [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
-		optional: { [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
+		valueField: { [typeNameSymbol]: leaf.number.name, [valueSymbol]: 5 },
+		optional: { [typeNameSymbol]: leaf.number.name, [valueSymbol]: 5 },
 		sequence: [
-			{ [typeNameSymbol]: numeric.name, [valueSymbol]: 5 },
+			{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 5 },
 			{ [typeNameSymbol]: minimal.name },
 		],
 	}),
@@ -187,10 +206,10 @@ export const testTrees: readonly TestTree[] = [
 
 	testTree("anyMap-full", library, anyMap, {
 		a: [
-			{ [typeNameSymbol]: numeric.name, [valueSymbol]: 1 },
-			{ [typeNameSymbol]: numeric.name, [valueSymbol]: 2 },
+			{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 1 },
+			{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 2 },
 		],
-		b: [{ [typeNameSymbol]: numeric.name, [valueSymbol]: 3 }],
+		b: [{ [typeNameSymbol]: leaf.number.name, [valueSymbol]: 3 }],
 		// TODO: SchemaAware API for map nodes, and remove this cast
 	} as any),
 

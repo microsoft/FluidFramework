@@ -7,6 +7,7 @@
 /* eslint-disable no-bitwise */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable guard-for-in */
+/* eslint-disable @typescript-eslint/no-base-to-string */
 /* eslint-disable @typescript-eslint/no-for-in-array */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
 
@@ -1468,7 +1469,10 @@ export class DocumentTree {
 	id: string | undefined;
 	static randPack = new RandomPack();
 
-	constructor(public name: string, public children: DocumentNode[]) {}
+	constructor(
+		public name: string,
+		public children: DocumentNode[],
+	) {}
 
 	addToMergeTree(client: MergeTree.TestClient, docNode: DocumentNode) {
 		if (typeof docNode === "string") {

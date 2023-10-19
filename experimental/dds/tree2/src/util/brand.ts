@@ -12,7 +12,8 @@ import { Invariant, isAny } from "./typeCheck";
  * Two usages of `Brand` should never use the same `Name`.
  * If they do, the resulting types will be assignable which defeats the point of this type.
  *
- * This type is constructed such that the first line of type errors when assigning mismatched branded types will be:
+ * This type is constructed such that the first line of type errors when assigning
+ * mismatched branded types will be:
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
@@ -22,7 +23,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
 
 /**
  * Helper for {@link Brand}.
- * This is split out into its own as thats the only way to:
+ * This is split out into its own as that's the only way to:
  * - have doc comments for the field.
  * - make the field protected (so you don't accidentally try and read it).
  * - get nominal typing (so types produced without using this class can never be assignable to it).
@@ -31,7 +32,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  * See {@link InternalTypes#MakeNominal} for some more details.
  *
  * Do not use this class with `instanceof`: this will always be false at runtime,
- * but the compiler may think its true in some cases.
+ * but the compiler may think it's true in some cases.
  *
  * @sealed
  * @alpha
@@ -59,7 +60,7 @@ export abstract class BrandedType<ValueType, Name extends string> {
  * however if we assume only code that produces these "opaque" handles does that conversion,
  * they can function like opaque handles.
  *
- * Recommenced usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
+ * Recommended usage is to use `interface` instead of `type` so tooling (such as tsc and refactoring tools)
  * uses the type name instead of expanding it:
  * ```typescript
  * export interface MyType extends Opaque<Brand<string, "myPackage.MyType">>{}
@@ -131,7 +132,7 @@ export function brand<T extends Brand<any, string>>(
 }
 
 /**
- * Adds a type {@link Brand} to a value, returning it as a  {@link Opaque} handle.
+ * Adds a type {@link Brand} to a value, returning it as a {@link Opaque} handle.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
  * @alpha

@@ -16,11 +16,31 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusDiv.id = "focus-div";
 	focusDiv.style.fontSize = "14px";
 
+	const focusMessageDiv = document.createElement("div");
+	focusMessageDiv.id = "message-div";
+	focusMessageDiv.textContent = "Click to focus";
+	focusMessageDiv.style.position = "absolute";
+	focusMessageDiv.style.top = "10px";
+	focusMessageDiv.style.right = "10px";
+	focusMessageDiv.style.color = "red";
+	focusMessageDiv.style.fontWeight = "bold";
+	focusMessageDiv.style.fontSize = "18px";
+	focusMessageDiv.style.border = "2px solid red";
+	focusMessageDiv.style.padding = "10px";
+	focusMessageDiv.style.display = "none";
+	wrapperDiv.appendChild(focusMessageDiv);
+
 	const onFocusChanged = () => {
+		const currentUser = focusTracker.audience.getMyself()?.userName;
+		const focusPresences = focusTracker.getFocusPresences();
+
 		focusDiv.innerHTML = `
-            Current user: ${focusTracker.audience.getMyself()?.userName}</br>
+            Current user: ${currentUser}</br>
             ${getFocusPresencesString("</br>", focusTracker)}
         `;
+
+		focusMessageDiv.style.display =
+			currentUser !== undefined && focusPresences.get(currentUser) === false ? "" : "none";
 	};
 
 	onFocusChanged();
@@ -56,15 +76,15 @@ export function renderMousePresence(
 	const onPositionChanged = () => {
 		div.innerHTML = "";
 		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
-			const posDiv = document.createElement("div");
-			posDiv.textContent = userName;
-			posDiv.style.position = "absolute";
-			posDiv.style.left = `${mousePosition.x}px`;
-			posDiv.style.top = `${mousePosition.y}px`;
 			if (focusTracker.getFocusPresences().get(userName) === true) {
+				const posDiv = document.createElement("div");
+				posDiv.textContent = userName;
+				posDiv.style.position = "absolute";
+				posDiv.style.left = `${mousePosition.x}px`;
+				posDiv.style.top = `${mousePosition.y}px`;
 				posDiv.style.fontWeight = "bold";
+				div.appendChild(posDiv);
 			}
-			div.appendChild(posDiv);
 		});
 	};
 

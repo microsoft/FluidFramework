@@ -72,6 +72,10 @@ export class KafkaRunner implements IRunner {
 
 			this.runnerMetric.setProperties(lumberProperties);
 
+			if (errorData?.errorLabel) {
+				this.runnerMetric.setProperty("errorLabel", errorData.errorLabel);
+			}
+
 			if (errorData && !errorData.restart) {
 				const errorMsg =
 					"KafkaRunner encountered an error that is not configured to trigger restart";
@@ -113,6 +117,8 @@ export class KafkaRunner implements IRunner {
 		this.stopped = true;
 		Lumberjack.info("KafkaRunner.stop starting.");
 		try {
+			this.runnerMetric.setProperty("caller", caller);
+
 			// Stop listening for new updates
 			await this.consumer.pause();
 

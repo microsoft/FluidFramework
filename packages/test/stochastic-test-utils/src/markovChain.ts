@@ -99,11 +99,7 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 					const markovChainRoot = initialChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY];
 					if (markovChainRoot !== undefined) {
 						const currentCount = markovChainRoot[word];
-						if (currentCount !== undefined) {
-							markovChainRoot[word] = currentCount + 1;
-						} else {
-							markovChainRoot[word] = 1;
-						}
+						markovChainRoot[word] = currentCount === undefined ? 1 : currentCount + 1;
 					} else {
 						initialChain[MarkovChain.MARKOV_SENTENCE_BEGIN_KEY] = { [word]: 1 };
 					}
@@ -117,11 +113,8 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 					}
 
 					const currentWordCount = initialChain[prevWord][word];
-					if (currentWordCount !== undefined) {
-						initialChain[prevWord][word] = currentWordCount + 1;
-					} else {
-						initialChain[prevWord][word] = 1;
-					}
+					initialChain[prevWord][word] =
+						currentWordCount === undefined ? 1 : currentWordCount + 1;
 					prevWord = word;
 				}
 			}

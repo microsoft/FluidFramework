@@ -72,6 +72,7 @@ export class FileSnapshotReader
 			return this.docTree;
 		}
 		if (versionRequested.treeId !== FileSnapshotReader.FileStorageVersionTreeId) {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			throw new Error(`Unknown version id: ${versionRequested}`);
 		}
 

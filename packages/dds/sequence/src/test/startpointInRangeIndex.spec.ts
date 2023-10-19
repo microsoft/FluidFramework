@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { Client } from "@fluidframework/merge-tree";
-import { IStartpointInRangeIndex, createStartpointInRangeIndex } from "../intervalIndex";
+import { IStartpointInRangeIndex, StartpointInRangeIndex } from "../intervalIndex";
 import { Interval, intervalHelpers } from "../intervals";
 import {
 	assertPlainNumberIntervals,
@@ -52,7 +52,7 @@ describe("findIntervalsWithStartpointInRange", () => {
 	let results;
 
 	beforeEach(() => {
-		startpointInRangeIndex = createStartpointInRangeIndex(helpers, undefined as any as Client);
+		startpointInRangeIndex = new StartpointInRangeIndex(undefined as any as Client, helpers);
 	});
 
 	describe("finds no intervals", () => {

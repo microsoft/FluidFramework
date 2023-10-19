@@ -11,6 +11,7 @@ import {
 	IRequest,
 	IResponse,
 	FluidObject,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 } from "@fluidframework/core-interfaces";
 import {
@@ -91,10 +92,13 @@ export class RemoteFluidObjectHandle implements IFluidHandle {
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
+			// eslint-disable-next-line import/no-deprecated
 			const object: FluidObject<IFluidRouter> = await this.get();
 			const router = object.IFluidRouter;
 
-			return router !== undefined ? router.request(request) : create404Response(request);
+			return router === undefined
+				? create404Response(request)
+				: await router.request(request);
 		} catch (error) {
 			return exceptionToResponse(error);
 		}

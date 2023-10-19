@@ -47,8 +47,8 @@ export abstract class ReplayController extends ReadDocumentStorageServiceBase {
 	/**
 	 * Initialize reply controller
 	 * @param documentService - the real document service
-	 * @returns - Boolean, indicating if controller should be used.
-	 * If false is returned, caller should fallback to original storage.
+	 * @returns Whether or not the controller should be used.
+	 * If `false` is returned, caller should fallback to original storage.
 	 */
 	public abstract initStorage(documentService: IDocumentService): Promise<boolean>;
 

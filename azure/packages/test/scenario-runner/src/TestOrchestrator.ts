@@ -187,7 +187,7 @@ export class TestOrchestrator {
 	private fillEnvForStage(params: IStageParams): void {
 		for (const key of Object.keys(params)) {
 			const val = params[key];
-			if (typeof val === "string" && val[0] === "$") {
+			if (typeof val === "string" && val.startsWith("$")) {
 				params[key] = this.env.get(val);
 			}
 		}

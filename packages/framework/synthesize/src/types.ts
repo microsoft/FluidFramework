@@ -3,12 +3,17 @@
  * Licensed under the MIT License.
  */
 import { IFluidDependencySynthesizer } from ".";
+
 /**
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type mapped to a string representation
  * of that property.
  *
- * @example - \{ IFoo: "IFoo" \}
+ * @example
+ *
+ * ```typescript
+ * { IFoo: "IFoo" }
+ * ```
  */
 export type FluidObjectSymbolProvider<T> = {
 	[P in keyof T]?: P;

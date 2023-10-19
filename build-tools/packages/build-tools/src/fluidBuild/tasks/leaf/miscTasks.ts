@@ -4,16 +4,14 @@
  */
 import * as path from "path";
 
-import { defaultLogger } from "../../../common/logging";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 
-/* eslint-disable @typescript-eslint/no-empty-function */
-
-const { verbose } = defaultLogger;
-
 export class EchoTask extends LeafTask {
+	protected get isIncremental() {
+		return true;
+	}
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
 	}
@@ -23,6 +21,9 @@ export class EchoTask extends LeafTask {
 }
 
 export class LesscTask extends LeafTask {
+	protected get isIncremental() {
+		return true;
+	}
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
 	}
@@ -43,8 +44,8 @@ export class LesscTask extends LeafTask {
 				this.traceNotUpToDate();
 			}
 			return result;
-		} catch (e: any) {
-			verbose(`${this.node.pkg.nameColored}: ${e.message}`);
+		} catch (e) {
+			this.traceError(`stat error: ${(e as Error).message}`);
 			this.traceTrigger("failed to get file stats");
 			return false;
 		}
@@ -55,6 +56,8 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 	private parsed: boolean = false;
 	private readonly upLevel: number = 0;
 	private readonly copySrcArg: string = "";
+	private readonly ignore: string = "";
+	private readonly flat: boolean = false;
 	private readonly copyDstArg: string = "";
 
 	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
@@ -71,6 +74,21 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 				}
 				this.upLevel = parseInt(args[i + 1]);
 				i++;
+				continue;
+			}
+			if (args[i] === "-e") {
+				if (i + 1 >= args.length) {
+					return;
+				}
+				this.ignore = args[i + 1];
+				i++;
+				continue;
+			}
+			if (args[i] === "-f") {
+				this.flat = true;
+				continue;
+			}
+			if (args[i] === "-V") {
 				continue;
 			}
 			if (this.copySrcArg === "") {
@@ -99,7 +117,10 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 		if (!this._srcFiles) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const srcGlob = path.join(this.node.pkg.directory, this.copySrcArg!);
-			this._srcFiles = await globFn(srcGlob, { nodir: true });
+			this._srcFiles = await globFn(srcGlob, {
+				nodir: true,
+				ignore: this.ignore,
+			});
 		}
 		return this._srcFiles;
 	}
@@ -114,6 +135,9 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 			const dstPath = directory + "/" + this.copyDstArg;
 			const srcFiles = await this.getInputFiles();
 			this._dstFiles = srcFiles.map((match) => {
+				if (this.flat) {
+					return path.join(dstPath, path.basename(match));
+				}
 				const relPath = path.relative(directory, match);
 				let currRelPath = relPath;
 				for (let i = 0; i < this.upLevel; i++) {
@@ -133,6 +157,9 @@ export class CopyfilesTask extends LeafWithFileStatDoneFileTask {
 }
 
 export class GenVerTask extends LeafTask {
+	protected get isIncremental() {
+		return true;
+	}
 	protected get taskWeight() {
 		return 0; // generally cheap relative to other tasks
 	}

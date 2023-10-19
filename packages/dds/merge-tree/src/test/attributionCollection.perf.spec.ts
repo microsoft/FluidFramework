@@ -143,7 +143,10 @@ class TreeAttributionCollection implements IAttributionCollection<AttributionKey
 		compareNumbers,
 	);
 
-	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
+	public constructor(
+		private _length: number,
+		baseEntry?: AttributionKey | null,
+	) {
 		if (baseEntry !== undefined) {
 			this.entries.put(0, baseEntry);
 		}
@@ -157,7 +160,7 @@ class TreeAttributionCollection implements IAttributionCollection<AttributionKey
 		assert(offset >= 0 && offset < this._length, "Requested offset should be valid");
 		const node = this.entries.floor(offset);
 		assert(node !== undefined, "Collection should have at least one entry");
-		return node.data === null ? undefined : node.data;
+		return node.data ?? undefined;
 	}
 
 	public get length(): number {

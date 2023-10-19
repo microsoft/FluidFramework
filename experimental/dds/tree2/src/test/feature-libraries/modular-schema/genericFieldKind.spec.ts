@@ -8,18 +8,13 @@ import {
 	NodeChangeset,
 	GenericChangeset,
 	genericFieldKind,
-	IdAllocator,
 	CrossFieldManager,
 	RevisionMetadataSource,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
 import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
-import { brand } from "../../../util";
-import {
-	EncodingTestData,
-	fakeTaggedRepair as fakeRepair,
-	makeEncodingTestSuite,
-} from "../../utils";
+import { fakeIdAllocator, brand } from "../../../util";
+import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
@@ -61,8 +56,6 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
-const idAllocator: IdAllocator = unexpectedDelegate;
-
 const revisionMetadata: RevisionMetadataSource = {
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	getInfo: () => assert.fail("Unexpected revision info query"),
@@ -75,7 +68,7 @@ const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangese
 	const valueChange = valueHandler.rebaser.compose(
 		valueChanges,
 		unexpectedDelegate,
-		idAllocator,
+		fakeIdAllocator,
 		crossFieldManager,
 		revisionMetadata,
 	);
@@ -87,8 +80,7 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		makeAnonChange(valueChange),
 		unexpectedDelegate,
-		fakeRepair,
-		idAllocator,
+		fakeIdAllocator,
 		crossFieldManager,
 	);
 	return nodeChangeFromValueChange(inverse);
@@ -112,12 +104,14 @@ const childRebaser = (
 		valueChangeA,
 		makeAnonChange(valueChangeB),
 		unexpectedDelegate,
-		idAllocator,
+		fakeIdAllocator,
 		crossFieldManager,
 		revisionMetadata,
 	);
 	return nodeChangeFromValueChange(rebased);
 };
+
+const detachId = { minor: 42 };
 
 const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
@@ -128,7 +122,7 @@ const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
 			[
 				valueFieldKey,
 				[
-					{ type: Delta.MarkType.Delete, count: 1 },
+					{ type: Delta.MarkType.Remove, count: 1, detachId },
 					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(valueChange.new)] },
 				],
 			],
@@ -148,7 +142,7 @@ describe("Generic FieldKind", () => {
 			const actual = genericFieldKind.changeHandler.rebaser.compose(
 				[],
 				childComposer,
-				idAllocator,
+				fakeIdAllocator,
 				crossFieldManager,
 				revisionMetadata,
 			);
@@ -193,7 +187,7 @@ describe("Generic FieldKind", () => {
 			const actual = genericFieldKind.changeHandler.rebaser.compose(
 				[makeAnonChange(changeA), makeAnonChange(changeB)],
 				childComposer,
-				idAllocator,
+				fakeIdAllocator,
 				crossFieldManager,
 				revisionMetadata,
 			);
@@ -238,7 +232,7 @@ describe("Generic FieldKind", () => {
 			const actual = genericFieldKind.changeHandler.rebaser.compose(
 				[makeAnonChange(changeA), makeAnonChange(changeB)],
 				childComposer,
-				idAllocator,
+				fakeIdAllocator,
 				crossFieldManager,
 				revisionMetadata,
 			);
@@ -282,7 +276,7 @@ describe("Generic FieldKind", () => {
 				changeA,
 				makeAnonChange(changeB),
 				childRebaser,
-				idAllocator,
+				fakeIdAllocator,
 				crossFieldManager,
 				revisionMetadata,
 			);
@@ -324,7 +318,7 @@ describe("Generic FieldKind", () => {
 				changeA,
 				makeAnonChange(changeB),
 				childRebaser,
-				idAllocator,
+				fakeIdAllocator,
 				crossFieldManager,
 				revisionMetadata,
 			);
@@ -356,8 +350,7 @@ describe("Generic FieldKind", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			makeAnonChange(forward),
 			childInverter,
-			fakeRepair,
-			idAllocator,
+			fakeIdAllocator,
 			crossFieldManager,
 		);
 		assert.deepEqual(actual, expected);
@@ -381,7 +374,7 @@ describe("Generic FieldKind", () => {
 				[
 					valueFieldKey,
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1, detachId },
 						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(1)] },
 					],
 				],
@@ -394,7 +387,7 @@ describe("Generic FieldKind", () => {
 				[
 					valueFieldKey,
 					[
-						{ type: Delta.MarkType.Delete, count: 1 },
+						{ type: Delta.MarkType.Remove, count: 1, detachId },
 						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(2)] },
 					],
 				],

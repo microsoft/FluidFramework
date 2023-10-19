@@ -44,7 +44,7 @@ export abstract class ServiceAudience<M extends IMember = IMember>
 	 * every `addMember` event. It is mapped `clientId` to `M` to be better work with what the {@link IServiceAudience}
 	 * events provide.
 	 */
-	protected lastMembers: Map<string, M> = new Map();
+	protected lastMembers = new Map<string, M>();
 
 	constructor(
 		/**

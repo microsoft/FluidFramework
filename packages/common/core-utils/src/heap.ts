@@ -5,6 +5,7 @@
 
 /**
  * Interface for a comparer.
+ * @public
  */
 export interface IComparer<T> {
 	/**
@@ -22,6 +23,7 @@ export interface IComparer<T> {
 
 /**
  * A comparer for numbers.
+ * @public
  */
 export const NumberComparer: IComparer<number> = {
 	/**
@@ -38,6 +40,7 @@ export const NumberComparer: IComparer<number> = {
 
 /**
  * Interface to a node in {@link Heap}.
+ * @public
  */
 export interface IHeapNode<T> {
 	value: T;
@@ -46,6 +49,7 @@ export interface IHeapNode<T> {
 
 /**
  * Ordered {@link https://en.wikipedia.org/wiki/Heap_(data_structure) | Heap} data structure implementation.
+ * @public
  */
 export class Heap<T> {
 	private L: IHeapNode<T>[];
@@ -115,7 +119,7 @@ export class Heap<T> {
 		// Move the node we want to remove to the end of the array
 		const position = node.position;
 		this.swap(node.position, this.L.length - 1);
-		this.L.splice(this.L.length - 1);
+		this.L.splice(-1);
 
 		// Update the swapped node assuming we didn't remove the end of the list
 		if (position !== this.L.length) {

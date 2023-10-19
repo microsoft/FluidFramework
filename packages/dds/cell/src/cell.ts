@@ -4,23 +4,31 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
+import { type ISequencedDocumentMessage, MessageType } from "@fluidframework/protocol-definitions";
 import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-	IChannelFactory,
-	Serializable,
+	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IChannelStorageService,
+	type IChannelFactory,
+	type Serializable,
 } from "@fluidframework/datastore-definitions";
-import { AttributionKey, ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
+import {
+	type AttributionKey,
+	type ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
 import {
 	createSingleBlobSummary,
-	IFluidSerializer,
+	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
-import { ISharedCell, ISharedCellEvents, ICellLocalOpMetadata, ICellOptions } from "./interfaces";
+import {
+	type ISharedCell,
+	type ISharedCellEvents,
+	type ICellLocalOpMetadata,
+	type ICellOptions,
+} from "./interfaces";
 
 /**
  * Description of a cell delta operation
@@ -52,6 +60,8 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCell}
+ *
+ * @public
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -242,14 +252,17 @@ export class SharedCell<T = any>
 	 */
 	private applyInnerOp(content: ICellOperation): Serializable<T> | undefined {
 		switch (content.type) {
-			case "setCell":
+			case "setCell": {
 				return this.setCore(this.decode(content.value));
+			}
 
-			case "deleteCell":
+			case "deleteCell": {
 				return this.deleteCore();
+			}
 
-			default:
+			default: {
 				throw new Error("Unknown operation");
+			}
 		}
 	}
 
@@ -289,6 +302,7 @@ export class SharedCell<T = any>
 			return;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation && !local) {
 			const op = message.contents as ICellOperation;
 			// update the attributor

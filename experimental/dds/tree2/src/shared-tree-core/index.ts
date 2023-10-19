@@ -7,6 +7,7 @@ export {
 	SharedTreeBranch,
 	SharedTreeBranchChange,
 	SharedTreeBranchEvents,
+	getChangeReplaceType,
 } from "./branch";
 
 export {

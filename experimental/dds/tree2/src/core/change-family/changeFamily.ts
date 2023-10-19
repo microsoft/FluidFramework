@@ -4,7 +4,7 @@
  */
 
 import { ICodecFamily } from "../../codec";
-import { ChangeRebaser } from "../rebase";
+import { ChangeRebaser, TaggedChange } from "../rebase";
 import { Delta } from "../tree";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
@@ -13,7 +13,7 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	/**
 	 * @param change - The change to convert into a delta.
 	 */
-	intoDelta(change: TChange): Delta.Root;
+	intoDelta(change: TaggedChange<TChange>): Delta.Root;
 
 	readonly rebaser: ChangeRebaser<TChange>;
 	readonly codecs: ICodecFamily<TChange>;

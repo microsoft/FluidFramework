@@ -263,7 +263,7 @@ function createE2EDocsDescribeWithType(testType: BenchmarkTypeDescription): Desc
 			createE2EDocCompatSuite(
 				title,
 				tests,
-				docTypes === undefined ? config?.documents ?? E2EDefaultDocumentTypes : docTypes,
+				docTypes ?? config?.documents ?? E2EDefaultDocumentTypes,
 			),
 		);
 	};

@@ -123,7 +123,6 @@ export class UndoRedoManager<TChange, TEditor extends ChangeFamilyEditor> {
 		let change = this.changeFamily.rebaser.invert(
 			tagChange(commit.change, commit.revision),
 			false,
-			commit.repairData,
 		);
 
 		// Rebase the inverted change onto any commits that occurred after the undoable commits.

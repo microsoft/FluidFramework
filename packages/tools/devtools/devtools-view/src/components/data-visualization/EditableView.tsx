@@ -8,9 +8,9 @@ import React from "react";
 import {
 	Button,
 	Dropdown,
-	DropdownProps,
+	type DropdownProps,
 	Input,
-	InputOnChangeData,
+	type InputOnChangeData,
 	Option,
 	makeStyles,
 	shorthands,
@@ -18,16 +18,16 @@ import {
 } from "@fluentui/react-components";
 import {
 	DataEdit,
-	EditData,
+	type EditData,
 	EditType,
-	FluidObjectValueNode,
-	HasContainerKey,
+	type FluidObjectValueNode,
+	type HasContainerKey,
 } from "@fluid-experimental/devtools-core";
 
-import { Serializable } from "@fluidframework/datastore-definitions";
+import { type Serializable } from "@fluidframework/datastore-definitions";
 import { useMessageRelay } from "../../MessageRelayContext";
 import { TreeHeader } from "./TreeHeader";
-import { HasLabel } from "./CommonInterfaces";
+import { type HasLabel } from "./CommonInterfaces";
 
 /**
  * Input to {@link EditableView}
@@ -135,10 +135,10 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 
 		// This checks if the selected option was the current option, if so it the value stays the same. If not then it clears it.
 		let newValue: Serializable<unknown> | undefined;
-		if (activeEdit !== undefined) {
-			newValue = data.optionText === activeEdit.type ? activeEdit.value : "";
-		} else {
+		if (activeEdit === undefined) {
 			newValue = data.optionText === typeof node.value ? node.value ?? undefined : "";
+		} else {
+			newValue = data.optionText === activeEdit.type ? activeEdit.value : "";
 		}
 		setActiveEdit({
 			type: data.optionText,
@@ -160,7 +160,7 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 	// Determines the editing component to append to the UI
 	let innerView: React.ReactElement;
 	switch (getEditType()) {
-		case "string":
+		case "string": {
 			innerView = (
 				<EditableInputComponent
 					node={node}
@@ -171,7 +171,8 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 				/>
 			);
 			break;
-		case "number":
+		}
+		case "number": {
 			innerView = (
 				<EditableInputComponent
 					node={node}
@@ -182,7 +183,8 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 				/>
 			);
 			break;
-		case "boolean":
+		}
+		case "boolean": {
 			innerView = (
 				<EditableBooleanComponent
 					node={node}
@@ -192,16 +194,20 @@ export function EditableView(props: EditableViewProps): React.ReactElement {
 				/>
 			);
 			break;
-		case "undefined":
+		}
+		case "undefined": {
 			innerView = <i>: undefined</i>;
 			break;
+		}
 
-		case "null":
+		case "null": {
 			innerView = <i>: null</i>;
 			break;
+		}
 
-		default:
+		default: {
 			throw new Error("Unrecognized edit type.");
+		}
 	}
 
 	const styles = useStyles();
@@ -333,7 +339,7 @@ function EditableInputComponent(props: EditableInputComponent): React.ReactEleme
 			size="small"
 			appearance="underline"
 			contentEditable={true}
-			value={activeEdit !== undefined ? (activeEdit.value as string) : (node.value as string)}
+			value={activeEdit === undefined ? (node.value as string) : (activeEdit.value as string)}
 			onKeyDown={onKeyDown}
 			onChange={onChange}
 			type={inputType === "string" ? "text" : "number"}

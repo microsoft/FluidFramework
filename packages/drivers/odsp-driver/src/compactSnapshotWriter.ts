@@ -142,7 +142,7 @@ function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]) {
 /**
  * Converts trees/blobs/ops to binary compact representation.
  * @param snapshotContents - snapshot tree contents to serialize
- * @returns - ReadBuffer - binary representation of the data.
+ * @returns ReadBuffer - binary representation of the data.
  */
 export function convertToCompactSnapshot(snapshotContents: ISnapshotContents): Uint8Array {
 	const builder = new TreeBuilderSerializer();

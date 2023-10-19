@@ -222,10 +222,10 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	private readonly sequencedEdits: Edit<TChange>[] = [];
 	private readonly localEdits: Edit<TChange>[] = [];
 
-	private readonly allEditIds: Map<EditId, OrderedEditId> = new Map();
+	private readonly allEditIds = new Map<EditId, OrderedEditId>();
 	private _earliestAvailableEditIndex = 0;
-	private readonly _editAddedHandlers: Set<EditAddedHandler<TChange>> = new Set();
-	private readonly _editEvictionHandlers: Set<EditEvictionHandler> = new Set();
+	private readonly _editAddedHandlers = new Set<EditAddedHandler<TChange>>();
+	private readonly _editEvictionHandlers = new Set<EditEvictionHandler>();
 
 	/**
 	 * @returns The index of the earliest edit stored in this log.

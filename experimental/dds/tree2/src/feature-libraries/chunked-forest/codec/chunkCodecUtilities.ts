@@ -4,9 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { TreeValue } from "../../../core";
 import { _InlineTrick, assertValidIndex, fail, objectToMap } from "../../../util";
 import { TreeChunk } from "../chunk";
+import { FluidSerializableReadOnly, assertAllowedValue } from "../../contextuallyTyped";
+import { TreeValue } from "../../../core";
 
 /**
  * Utilities related to chunk encoding and decoding that do not depend on specific chunk types or formats.
@@ -114,7 +115,7 @@ export interface StreamCursor {
 	/**
 	 * The data to read.
 	 */
-	readonly data: readonly TreeValue[];
+	readonly data: readonly FluidSerializableReadOnly[];
 	/**
 	 * Location in the data.
 	 */
@@ -124,7 +125,7 @@ export interface StreamCursor {
 /**
  * Read one item from the stream, advancing the stream offset.
  */
-export function readStream(stream: StreamCursor): TreeValue {
+export function readStream(stream: StreamCursor): FluidSerializableReadOnly {
 	const content = getChecked(stream.data, stream.offset);
 	stream.offset++;
 	return content;
@@ -145,6 +146,15 @@ export function readStreamNumber(stream: StreamCursor): number {
 export function readStreamBoolean(stream: StreamCursor): boolean {
 	const content = readStream(stream);
 	assert(typeof content === "boolean", 0x731 /* expected boolean in stream */);
+	return content;
+}
+
+/**
+ * Read one TreeValue from the stream, advancing the stream offset.
+ */
+export function readStreamValue(stream: StreamCursor): TreeValue {
+	const content = readStream(stream);
+	assertAllowedValue(content);
 	return content;
 }
 

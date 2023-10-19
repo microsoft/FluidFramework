@@ -27,9 +27,6 @@ export type SameContainerMigrationState =
 	| "collaborating"
 	| "proposingMigration"
 	| "stoppingCollaboration"
-	| "generatingV1Summary"
-	| "uploadingV1Summary"
-	| "submittingV1Summary"
 	// TODO: "waitingForV2Proposal"?  Not a guarantee that we will issue a proposal here, if we see the proposal during catch up?
 	| "proposingV2Code"
 	| "waitingForV2ProposalCompletion"
@@ -44,9 +41,6 @@ export interface ISameContainerMigrationToolEvents extends IEvent {
 		event:
 			| "proposingMigration"
 			| "stoppingCollaboration"
-			| "generatingV1Summary"
-			| "uploadingV1Summary"
-			| "submittingV1Summary"
 			| "proposingV2Code"
 			| "waitingForV2ProposalCompletion"
 			| "readyForMigration"
@@ -92,4 +86,10 @@ export interface ISameContainerMigrationTool
 	 * @param container - the reference to the IContainer associated with this migration tool
 	 */
 	readonly setContainerRef: (container: IContainer) => void;
+
+	/**
+	 * The sequence number that the proposal was accepted at. It will be defined once we reach the "proposingV2Code" migration state,
+	 * and undefined before reaching that state.
+	 */
+	get acceptedSeqNum(): number | undefined;
 }

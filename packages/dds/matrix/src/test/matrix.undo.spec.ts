@@ -515,10 +515,9 @@ describe("Matrix", () => {
 					"matrix1",
 					SharedMatrixFactory.Attributes,
 				);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				matrix1.connect({
-					deltaConnection: containerRuntimeFactory
-						.createContainerRuntime(dataStoreRuntime1)
-						.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				});
 				consumer1 = new TestConsumer(matrix1);
@@ -532,10 +531,9 @@ describe("Matrix", () => {
 					"matrix2",
 					SharedMatrixFactory.Attributes,
 				);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 				matrix2.connect({
-					deltaConnection: containerRuntimeFactory
-						.createContainerRuntime(dataStoreRuntime2)
-						.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 					objectStorage: new MockStorage(),
 				});
 				consumer2 = new TestConsumer(matrix2);

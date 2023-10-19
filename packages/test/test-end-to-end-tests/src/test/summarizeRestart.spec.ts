@@ -48,16 +48,13 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 					"fluid:telemetry:Summarizer:Running:RefreshLatestSummaryFromServerFetch_end",
 			},
 			{
-				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
-			},
-			{
 				eventName: "fluid:telemetry:Container:ContainerDispose",
 				category: "generic",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				category: "generic",
-				error: "disconnected",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			},
 		],
 		async () => {
@@ -84,9 +81,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 		[
 			{
 				eventName: "fluid:telemetry:SummarizerNode:refreshLatestSummary_end",
-			},
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
 			},
 			{
 				eventName: "fluid:telemetry:Container:ContainerDispose",
@@ -123,9 +117,6 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 	itExpects(
 		"Closes the summarizing client instead of refreshing when loading from an older summary",
 		[
-			{
-				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
-			},
 			{
 				eventName: "fluid:telemetry:Container:ContainerDispose",
 				category: "generic",
@@ -179,16 +170,13 @@ describeNoCompat("Summarizer closes instead of refreshing", (getTestObjectProvid
 					"fluid:telemetry:Summarizer:Running:RefreshLatestSummaryFromServerFetch_end",
 			},
 			{
-				eventName: "fluid:telemetry:ContainerRuntime:ClosingSummarizerOnSummaryStale",
-			},
-			{
 				eventName: "fluid:telemetry:Container:ContainerDispose",
 				category: "generic",
 			},
 			{
 				eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel",
 				category: "generic",
-				error: "disconnected",
+				error: "summary state stale - Unsupported option 'refreshLatestAck'",
 			},
 		],
 		async () => {

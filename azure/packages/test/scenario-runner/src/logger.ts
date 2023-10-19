@@ -63,6 +63,7 @@ class ScenarioRunnerLogger implements ITelemetryBufferedLogger {
 			const schema = [...this.schema].sort((a, b) => b[1] - a[1]).map((v) => v[0]);
 			const data = logs.reduce(
 				(file, event) =>
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					`${file}\n${schema.reduce((line, k) => `${line}${event[k] ?? ""},`, "")}`,
 				schema.join(","),
 			);

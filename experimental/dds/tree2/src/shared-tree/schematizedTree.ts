@@ -17,7 +17,7 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	allowsRepoSuperset,
-	TypedSchemaCollection,
+	TreeSchema,
 	SchemaAware,
 	FieldSchema,
 	ViewSchema,
@@ -40,7 +40,7 @@ import { ViewEvents } from "./sharedTreeView";
  */
 export function initializeContent(
 	storedSchema: StoredSchemaRepository,
-	schema: TypedSchemaCollection,
+	schema: TreeSchema,
 	setInitialTree: () => void,
 ): void {
 	assert(schemaDataIsEmpty(storedSchema), 0x743 /* cannot initialize after a schema is set */);
@@ -57,7 +57,7 @@ export function initializeContent(
 		// These kinds are known to tolerate empty, so use the schema as is:
 		incrementalSchemaUpdate = schema;
 	} else {
-		assert(rootKind === FieldKinds.value.identifier, 0x5c8 /* Unexpected kind */);
+		assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
 		// Replace value kind with optional kind in root field schema:
 		incrementalSchemaUpdate = {
 			treeSchema: schema.treeSchema,
@@ -191,7 +191,7 @@ export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: TypedSchemaCollection<TRoot>;
+	readonly schema: TreeSchema<TRoot>;
 }
 
 /**
@@ -206,7 +206,7 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
 	 * (meaning it does not even have any schema set at all).
 	 */
 	readonly initialTree:
-		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Simple>
+		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
 		| readonly ITreeCursorSynchronous[]
 		| ITreeCursorSynchronous;
 }

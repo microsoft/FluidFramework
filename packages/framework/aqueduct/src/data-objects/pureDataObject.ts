@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { EventEmitter } from "events";
-import { EventForwarder } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import {
 	IEvent,
-	IEventProvider,
 	IFluidHandle,
 	IFluidLoadable,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IProvideFluidHandle,
 	IRequest,
@@ -19,7 +18,7 @@ import {
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { AsyncFluidObjectProvider } from "@fluidframework/synthesize";
-import { defaultFluidObjectRequestHandler } from "../request-handlers";
+import { create404Response } from "@fluidframework/runtime-utils";
 import { DataObjectTypes, IDataObjectProps } from "./types";
 
 /**
@@ -30,11 +29,10 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  * @typeParam I - The optional input types used to strongly type the data object
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
-	extends EventForwarder<I["Events"] & IEvent>
+	extends TypedEventEmitter<I["Events"] & IEvent>
+	// eslint-disable-next-line import/no-deprecated
 	implements IFluidLoadable, IFluidRouter, IProvideFluidHandle
 {
-	private _disposed = false;
-
 	/**
 	 * This is your FluidDataStoreRuntime object
 	 */
@@ -58,17 +56,13 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initializeP: Promise<void> | undefined;
 
-	/**
-	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not provide a functioning built-in disposed flow.
-	 * This member will be removed in an upcoming release.
-	 */
-	public get disposed() {
-		return this._disposed;
-	}
-
 	public get id() {
 		return this.runtime.id;
 	}
+	/**
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
+	// eslint-disable-next-line import/no-deprecated
 	public get IFluidRouter() {
 		return this;
 	}
@@ -91,8 +85,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	public static async getDataObject(runtime: IFluidDataStoreRuntime) {
-		const obj = await runtime.entryPoint?.get();
-		assert(obj !== undefined, 0x0bc /* "The runtime's handle is not initialized yet!" */);
+		const obj = await runtime.entryPoint.get();
 		return obj as PureDataObject;
 	}
 
@@ -108,15 +101,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 			0x0bd /* "Object runtime already has DataObject!" */,
 		);
 		(this.runtime as any)._dataObject = this;
-
-		// Container event handlers
-		this.runtime.once("dispose", () => {
-			this._disposed = true;
-			this.dispose();
-		});
 	}
-
-	// #region IFluidRouter
 
 	/**
 	 * Return this object if someone requests it directly
@@ -127,10 +112,10 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * 2. the request url is empty
 	 */
 	public async request(req: IRequest): Promise<IResponse> {
-		return defaultFluidObjectRequestHandler(this, req);
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
 	}
-
-	// #endregion IFluidRouter
 
 	/**
 	 * Call this API to ensure PureDataObject is fully initialized.
@@ -194,42 +179,4 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * Called every time the data store is initialized after create or existing.
 	 */
 	protected async hasInitialized(): Promise<void> {}
-
-	/**
-	 * Called when the host container closes and disposes itself
-	 * @deprecated 2.0.0-internal.5.2.0 - Dispose does nothing and will be removed in an upcoming release.
-	 */
-	public dispose(): void {
-		super.dispose();
-	}
-
-	/**
-	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
-	 * in a future release.
-	 */
-	protected static isEmitterEvent(event: string): boolean {
-		return super.isEmitterEvent(event);
-	}
-
-	/**
-	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
-	 * in a future release.
-	 */
-	protected forwardEvent(
-		source: EventEmitter | IEventProvider<I["Events"] & IEvent>,
-		...events: string[]
-	): void {
-		super.forwardEvent(source, ...events);
-	}
-
-	/**
-	 * @deprecated 2.0.0-internal.5.2.0 - PureDataObject does not actually set up to forward events, and will not be an EventForwarder
-	 * in a future release.
-	 */
-	protected unforwardEvent(
-		source: EventEmitter | IEventProvider<I["Events"] & IEvent>,
-		...events: string[]
-	): void {
-		super.unforwardEvent(source, ...events);
-	}
 }

@@ -5,12 +5,21 @@
 
 export { IntervalIndex } from "./intervalIndex";
 export { IIdIntervalIndex, createIdIntervalIndex } from "./idIntervalIndex";
-export { IEndpointIndex, createEndpointIndex } from "./endpointIndex";
-export { IEndpointInRangeIndex, createEndpointInRangeIndex } from "./endpointInRangeIndex";
-export { IStartpointInRangeIndex, createStartpointInRangeIndex } from "./startpointInRangeIndex";
+export { IEndpointIndex, createEndpointIndex, EndpointIndex } from "./endpointIndex";
+export {
+	IEndpointInRangeIndex,
+	createEndpointInRangeIndex,
+	EndpointInRangeIndex,
+} from "./endpointInRangeIndex";
+export {
+	IStartpointInRangeIndex,
+	createStartpointInRangeIndex,
+	StartpointInRangeIndex,
+} from "./startpointInRangeIndex";
 export { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
 export {
 	IOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
+	OverlappingIntervalsIndex,
 } from "./overlappingIntervalsIndex";
 export { createOverlappingSequenceIntervalsIndex } from "./overlappingSequenceIntervalsIndex";

@@ -14,8 +14,8 @@ describe("Buffer isomorphism", () => {
 			"比特币", // non-ascii range
 			"😂💁🏼‍♂️💁🏼‍💁‍♂", // surrogate pairs with glyph modifiers
 			"\u0080\u0080", // invalid sequence of utf-8 continuation codes
-			"\ud800", // single utf-16 surrogate without pair
-			"\u2962\u0000\uffff\uaaaa", // garbage
+			"\uD800", // single utf-16 surrogate without pair
+			"\u2962\u0000\uFFFF\uAAAA", // garbage
 		];
 
 		for (const item of testArray) {
@@ -29,6 +29,7 @@ describe("Buffer isomorphism", () => {
 			const nodeBuffer = BufferNode.IsoBuffer.from(testArray[1]);
 			const browserBuffer = BufferBrowser.IsoBuffer.from(testArray[1]);
 			expect(nodeBuffer.toString("utf8")).toEqual(browserBuffer.toString("utf8"));
+			// eslint-disable-next-line unicorn/text-encoding-identifier-case
 			expect(nodeBuffer.toString("utf-8")).toEqual(browserBuffer.toString("utf-8"));
 		}
 	});
@@ -254,10 +255,12 @@ describe("Buffer isomorphism", () => {
 
 		const buffer = BufferBrowser.IsoBuffer.from(test, "base64");
 		expect(BufferBrowser.bufferToString(buffer, "base64")).toEqual(test);
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
 		expect(BufferBrowser.bufferToString(buffer, "utf-8")).toEqual("hellothere");
 
 		const buffer2 = BufferNode.IsoBuffer.from(test, "base64");
 		expect(BufferNode.bufferToString(buffer2, "base64")).toEqual(test);
+		// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
 		expect(BufferNode.bufferToString(buffer2, "utf-8")).toEqual("hellothere");
 	});
 });

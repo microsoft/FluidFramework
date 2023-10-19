@@ -85,3 +85,7 @@ documentation:
 # flag changes to public APIs so they can be reviewed to see if they're breaking
 "public api change":
   - "**/api-report/**"
+
+# Require changesets for server public API changes
+"changeset-required":
+  - "**/routerlicious/api-report/**"

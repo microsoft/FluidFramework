@@ -42,7 +42,7 @@ export {
 	IProvideFluidCodeDetailsComparer,
 } from "./fluidPackage";
 
-// Typescript forgets the index signature when customers augment IRequestHeader if we export *.
+// TypeScript forgets the index signature when customers augment IRequestHeader if we export *.
 // So we export the explicit members as a workaround:
 // https://github.com/microsoft/TypeScript/issues/18877#issuecomment-476921038
 export {

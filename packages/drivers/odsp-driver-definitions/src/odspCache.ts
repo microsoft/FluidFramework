@@ -96,7 +96,7 @@ export interface IPersistedCache {
 /**
  * Api to generate a cache key from cache entry.
  * @param entry - cache entry from which a cache key is generated
- * @returns - key for cache.
+ * @returns The key for cache.
  */
 export function getKeyForCacheEntry(entry: ICacheEntry): string {
 	return `${entry.file.docId}_${entry.type}_${entry.key}`;

@@ -587,7 +587,7 @@ export class MockFluidDataStoreRuntime
 		});
 	}
 
-	public readonly entryPoint?: IFluidHandle<FluidObject>;
+	public readonly entryPoint: IFluidHandle<FluidObject>;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;

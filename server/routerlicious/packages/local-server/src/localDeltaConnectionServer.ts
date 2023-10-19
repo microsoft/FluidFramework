@@ -182,10 +182,14 @@ export class LocalDeltaConnectionServer implements ILocalDeltaConnectionServer {
 			};
 			socket.on("op", earlyOpHandler);
 
-			const earlySignalHandler = (msg: ISignalMessage) => {
+			const earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
 				this.logger.info("Queued early signals");
 				Lumberjack.info("Queued early signals");
-				queuedSignals.push(msg);
+				if (Array.isArray(msg)) {
+					queuedSignals.push(...msg);
+				} else {
+					queuedSignals.push(msg);
+				}
 			};
 			socket.on("signal", earlySignalHandler);
 

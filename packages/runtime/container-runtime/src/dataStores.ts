@@ -67,7 +67,7 @@ import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
 import {
 	GCNodeType,
-	sweepDatastoresKey,
+	disableDatastoreSweepKey,
 	throwOnTombstoneLoadKey,
 	sendGCUnexpectedUsageEvent,
 } from "./gc";
@@ -212,7 +212,7 @@ export class DataStores implements IDisposable {
 
 	public async waitIfPendingAlias(maybeAlias: string): Promise<AliasResult> {
 		const pendingAliasPromise = this.pendingAliases.get(maybeAlias);
-		return pendingAliasPromise === undefined ? "Success" : pendingAliasPromise;
+		return pendingAliasPromise ?? "Success";
 	}
 
 	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -820,11 +820,11 @@ export class DataStores implements IDisposable {
 	 * Delete data stores and its objects that are sweep ready.
 	 * @param sweepReadyDataStoreRoutes - The routes of data stores and its objects that are sweep ready and should
 	 * be deleted.
-	 * @returns - The routes of data stores and its objects that were deleted.
+	 * @returns The routes of data stores and its objects that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: string[]): string[] {
 		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
+		if (this.mc.config.getBoolean(disableDatastoreSweepKey) === true) {
 			return [];
 		}
 		for (const route of sweepReadyDataStoreRoutes) {

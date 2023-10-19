@@ -26,7 +26,7 @@ const CommitBase = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		sessionId: SessionIdSchema,
 	});
 /**
- * @privateRemarks - Commits are generally encoded from `GraphCommit`s, which often contain extra data.
+ * @privateRemarks Commits are generally encoded from `GraphCommit`s, which often contain extra data.
  * This `noAdditionalProps` is especially important in that light.
  */
 const Commit = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>

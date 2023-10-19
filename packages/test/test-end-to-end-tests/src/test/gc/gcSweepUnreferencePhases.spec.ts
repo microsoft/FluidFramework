@@ -79,13 +79,13 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 			this.skip();
 		}
 
-		settings["Fluid.GarbageCollection.Test.SweepDataStores"] = true;
+		settings["Fluid.GarbageCollection.DisableAttachmentBlobSweep"] = true; // Only sweep DataStores
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});
 
-	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to tombstone", async () => {
+	it("GC nodes go from referenced to unreferenced to inactive to sweep ready to swept", async () => {
 		const mainContainer = await provider.makeTestContainer(testContainerConfig);
 		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
 		await waitForContainerConnection(mainContainer);
@@ -93,9 +93,8 @@ describeNoCompat("GC sweep unreference phases", (getTestObjectProvider) => {
 		const { container, summarizer } = await loadSummarizer(mainContainer);
 
 		// create datastore and blob
-		const dataStore = await mainDataStore._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore =
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
 		const dataStoreHandle = dataStore.entryPoint;
 		assert(dataStoreHandle !== undefined, "Expected a handle when creating a datastore");
 		const dataObject = (await dataStoreHandle.get()) as ITestDataObject;

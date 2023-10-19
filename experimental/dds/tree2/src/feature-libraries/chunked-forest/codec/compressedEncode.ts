@@ -9,7 +9,7 @@ import {
 	FieldKey,
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	Value,
 	forEachNode,
 } from "../../../core";
@@ -269,7 +269,10 @@ export class InlineArrayShape
 	/**
 	 * @param length - number of invocations of `inner`.
 	 */
-	public constructor(public readonly length: number, public readonly inner: NodesEncoder) {
+	public constructor(
+		public readonly length: number,
+		public readonly inner: NodesEncoder,
+	) {
 		super();
 	}
 
@@ -395,6 +398,7 @@ export function encodeValue(
 		}
 	} else {
 		if (shape === true) {
+			assert(value !== undefined, 0x78d /* required value must not be missing */);
 			outputBuffer.push(value);
 		} else if (shape === false) {
 			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
@@ -408,14 +412,14 @@ export function encodeValue(
 }
 
 export class EncoderCache implements TreeShaper, FieldShaper {
-	private readonly shapesFromSchema: Map<TreeSchemaIdentifier, NodeEncoder> = new Map();
+	private readonly shapesFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> = new Map();
 	private readonly nestedArrays: Map<NodeEncoder, NestedArrayShape> = new Map();
 	public constructor(
 		private readonly treeEncoder: TreeShapePolicy,
 		private readonly fieldEncoder: FieldShapePolicy,
 	) {}
 
-	public shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 		return getOrCreate(this.shapesFromSchema, schemaName, () =>
 			this.treeEncoder(this, schemaName),
 		);
@@ -431,7 +435,7 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 }
 
 export interface TreeShaper {
-	shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder;
+	shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder;
 }
 
 export interface FieldShaper {
@@ -442,7 +446,7 @@ export type FieldShapePolicy = (treeShaper: TreeShaper, field: FieldStoredSchema
 
 export type TreeShapePolicy = (
 	fieldShaper: FieldShaper,
-	schemaName: TreeSchemaIdentifier,
+	schemaName: TreeNodeSchemaIdentifier,
 ) => NodeEncoder;
 
 class LazyFieldEncoder implements FieldEncoder {

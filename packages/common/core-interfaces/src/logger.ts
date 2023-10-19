@@ -85,7 +85,7 @@ export const LogLevel = {
 /**
  * Specify a level to the log to filter out logs based on the level.
  */
-export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 /**
  * Interface to output telemetry events.
@@ -164,9 +164,10 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	 * @param error - optional error object to log
 	 * @param logLevel - optional level of the log.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	sendTelemetryEvent(
 		event: ITelemetryGenericEvent,
+		// TODO: Use `unknown` instead (API-Breaking)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		error?: any,
 		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
@@ -185,9 +186,10 @@ export interface ITelemetryLogger extends ITelemetryBaseLogger {
 	 * @param error - optional error object to log
 	 * @param logLevel - optional level of the log.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEvent,
+		// TODO: Use `unknown` instead (API-Breaking)
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		error?: any,
 		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;

@@ -6,7 +6,7 @@
 import { MonitoringContext, UsageError } from "@fluidframework/telemetry-utils";
 import { IContainerRuntimeMetadata } from "../summary";
 import {
-	currentGCVersion,
+	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableTombstoneKey,
@@ -15,7 +15,7 @@ import {
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
 	GCVersion,
-	gcVersionUpgradeToV3Key,
+	gcVersionUpgradeToV4Key,
 	IGarbageCollectorConfigs,
 	IGCRuntimeOptions,
 	maxSnapshotCacheExpiryMs,
@@ -107,7 +107,7 @@ export function generateGCConfigs(
 
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	const gcVersionInEffect =
-		mc.config.getBoolean(gcVersionUpgradeToV3Key) === true ? currentGCVersion : stableGCVersion;
+		mc.config.getBoolean(gcVersionUpgradeToV4Key) === true ? nextGCVersion : stableGCVersion;
 
 	// The GC version is up-to-date if the GC version in effect is at least equal to the GC version in base snapshot.
 	// If it is not up-to-date, there is a newer version of GC out there which is more reliable than this. So, GC

@@ -749,12 +749,11 @@ describe("Directory", () => {
 
 				// Now load another directory to send op from that.
 				const dataStoreRuntime3 = new MockFluidDataStoreRuntime();
-				const containerRuntime3 =
-					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime3);
 				const services3 = MockSharedObjectServices.createFromSummary(
 					directory.getAttachSummary().summary,
 				);
-				services3.deltaConnection = containerRuntime3.createDeltaConnection();
+				services3.deltaConnection = dataStoreRuntime3.createDeltaConnection();
 
 				const directory3 = new SharedDirectory(
 					"directory3",

@@ -10,37 +10,22 @@ import {
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	SchemaBuilder,
+	FieldSchema,
 } from "../../../feature-libraries";
-import {
-	FieldKey,
-	FieldStoredSchema,
-	EmptyKey,
-	UpPath,
-	rootFieldKey,
-	rootField,
-} from "../../../core";
+import { FieldKey, FieldStoredSchema, EmptyKey } from "../../../core";
 import {
 	isPrimitive,
 	getOwnArrayKeys,
 	keyIsValidIndex,
-	getDetachedFieldContainingPath,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
-import { brand } from "../../../util";
-import {
-	arraySchema,
-	buildTestSchema,
-	int32Schema,
-	mapStringSchema,
-	optionalChildSchema,
-	stringSchema,
-} from "./mockData";
+import { leaf } from "../../../domains";
+import { arraySchema, buildTestSchema, mapStringSchema, optionalChildSchema } from "./mockData";
 
 describe("editable-tree utilities", () => {
 	it("isPrimitive", () => {
-		assert(isPrimitive(int32Schema));
-		assert(isPrimitive(stringSchema));
+		assert(isPrimitive(leaf.number));
+		assert(isPrimitive(leaf.string));
 		assert(!isPrimitive(mapStringSchema));
 		assert(!isPrimitive(optionalChildSchema));
 	});
@@ -53,7 +38,7 @@ describe("editable-tree utilities", () => {
 			schema,
 		};
 
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
+		const rootSchema = FieldSchema.create(FieldKinds.required, [arraySchema]);
 		const fullSchemaData = buildTestSchema(rootSchema);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);
@@ -90,30 +75,5 @@ describe("editable-tree utilities", () => {
 		assert.equal(keyIsValidIndex(Infinity, 1), false);
 		assert.equal(keyIsValidIndex("NaN", 1), false);
 		assert.equal(keyIsValidIndex("Infinity", 1), false);
-	});
-
-	describe("getDetachedFieldContainingPath", () => {
-		it("returns the DetachedField of a simple path", () => {
-			const path: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
-			const detachedField = getDetachedFieldContainingPath(path);
-			assert.equal(detachedField, rootField);
-		});
-		it("returns the DetachedField of a nested path", () => {
-			const path: UpPath = {
-				parent: {
-					parent: undefined,
-					parentField: rootFieldKey,
-					parentIndex: 0,
-				},
-				parentField: brand("foo"),
-				parentIndex: 0,
-			};
-			const detachedField = getDetachedFieldContainingPath(path);
-			assert.equal(detachedField, rootField);
-		});
 	});
 });

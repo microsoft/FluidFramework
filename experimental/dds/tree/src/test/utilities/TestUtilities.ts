@@ -173,7 +173,7 @@ export function setUpTestSharedTree(
 		};
 		factory = SharedTree.getFactory(writeFormat ?? WriteFormat.v0_1_1, options);
 	}
-	const tree = factory.create(componentRuntime, id === undefined ? 'testSharedTree' : id);
+	const tree = factory.create(componentRuntime, id ?? 'testSharedTree');
 
 	if (options.allowInvalid === undefined || !options.allowInvalid) {
 		tree.on(SharedTreeDiagnosticEvent.DroppedInvalidEdit, () => fail('unexpected invalid edit'));
@@ -270,6 +270,11 @@ export interface LocalServerSharedTreeTestingOptions {
 	 * If set, will be passed to the container on load
 	 */
 	pendingLocalState?: string;
+	/**
+	 * If set, will be added to the configProvider object passed to the loader
+	 * and will take effect for the duration of its lifetime
+	 */
+	featureGates?: Record<string, ConfigTypes>;
 }
 
 const testObjectProviders: TestObjectProvider[] = [];
@@ -302,6 +307,10 @@ export async function setUpLocalServerTestSharedTree(
 		attributionId,
 		pendingLocalState,
 	} = options;
+
+	const featureGates = options.featureGates ?? {};
+	featureGates['Fluid.Container.enableOfflineLoad'] = true;
+	featureGates['Fluid.ContainerRuntime.DisablePartialFlush'] = true;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
@@ -352,10 +361,7 @@ export async function setUpLocalServerTestSharedTree(
 
 		return provider.createLoader([[defaultCodeDetails, fluidEntryPoint]], {
 			options: { maxClientLeaveWaitTime: 1000 },
-			configProvider: configProvider({
-				'Fluid.Container.enableOfflineLoad': true,
-				'Fluid.ContainerRuntime.DisablePartialFlush': true,
-			}),
+			configProvider: configProvider(featureGates),
 		});
 	}
 

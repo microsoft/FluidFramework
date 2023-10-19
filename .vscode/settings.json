@@ -82,8 +82,13 @@
 		"**/*build.log": true,
 		"**/*.tsbuildinfo": true,
 		"**/_api-extractor-temp": true,
+		// exclude built `dist` folders
 		"**/dist/*": true,
-		"**/lib/*": true,
+		// exclude built `lib` folders but preserve ./common/lib
+		//   paths with packages container
+		"**/packages/**/lib/*": true,
+		//   other sets known to build `lib`
+		"{common/lib,examples,experimental}/**/lib/*": true,
 		"**/nyc/*": true,
 		"**/*.log": true,
 		"**/DS_Store": true,

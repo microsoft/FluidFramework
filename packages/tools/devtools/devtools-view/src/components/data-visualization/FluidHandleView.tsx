@@ -8,16 +8,16 @@ import { Spinner } from "@fluentui/react-components";
 import {
 	DataVisualization,
 	GetDataVisualization,
-	ISourcedDevtoolsMessage,
-	InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type InboundHandlers,
 	handleIncomingMessage,
-	HasContainerKey,
-	HasFluidObjectId,
-	FluidObjectNode,
+	type HasContainerKey,
+	type HasFluidObjectId,
+	type FluidObjectNode,
 } from "@fluid-experimental/devtools-core";
 
 import { useMessageRelay } from "../../MessageRelayContext";
-import { HasLabel } from "./CommonInterfaces";
+import { type HasLabel } from "./CommonInterfaces";
 import { TreeDataView } from "./TreeDataView";
 import { TreeItem } from "./TreeItem";
 import { TreeHeader } from "./TreeHeader";

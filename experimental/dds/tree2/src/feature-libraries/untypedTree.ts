@@ -7,17 +7,17 @@ import {
 	Value,
 	FieldKey,
 	FieldStoredSchema,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	ForestEvents,
 	SchemaData,
 	UpPath,
 	PathVisitor,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 } from "../core";
 import { ISubscribable } from "../events";
 import { Named } from "../util";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
-import { TreeStatus } from "./editable-tree";
+import { TreeStatus } from "./editable-tree-2";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -83,7 +83,7 @@ export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeC
 	 * The name of the node type.
 	 */
 	// TODO: remove this favor of typeSymbol once its the view schema
-	readonly [typeNameSymbol]: TreeSchemaIdentifier;
+	readonly [typeNameSymbol]: TreeNodeSchemaIdentifier;
 
 	/**
 	 * Value stored on this node.
@@ -114,7 +114,7 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	 * If this node is well-formed, it must follow this schema.
 	 */
 	// TODO: update implementation to use view schema in typed views.
-	readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
+	readonly [typeSymbol]: TreeNodeStoredSchema & Named<TreeNodeSchemaIdentifier>;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.
@@ -286,7 +286,6 @@ export interface EditableTreeEvents {
 	 * Raised when a specific EditableTree node is changing.
 	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
-	 * @param value - the new value stored in the node.
 	 */
 	changing(upPath: UpPath): void;
 

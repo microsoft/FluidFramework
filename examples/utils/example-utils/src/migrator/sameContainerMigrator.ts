@@ -39,17 +39,25 @@ export class SameContainerMigrator
 	}
 
 	/**
-	 * If migration is in progress, the promise that will resolve when it completes.  Mutually exclusive with
-	 * _migratedLoadP promise.
+	 * Accepted version from the migration tool. This is stored for retry scenarios.
 	 */
-	private _migrationP: Promise<void> | undefined;
-
+	private _acceptedVersion: string | undefined;
 	/**
-	 * If loading the migrated container is in progress, the promise that will resolve when it completes.  Mutually
-	 * exclusive with _migrationP promise.
+	 * Paused model at the accepted sequence number. This is stored for retry scenarios.
 	 */
-	private _migratedLoadP: Promise<void> | undefined;
-
+	private _pausedModel: ISameContainerMigratableModel | undefined;
+	/**
+	 * Exported data from the paused v1 container. This is stored for retry scenarios.
+	 */
+	private _exportedData: unknown | undefined;
+	/**
+	 * Detached model used to import data. This is stored for retry scenarios.
+	 */
+	private _detachedModel: IDetachedModel<ISameContainerMigratableModel> | undefined;
+	/**
+	 * Transformed v1 data ready to be imported into the migrated model. This is stored for retry scenarios.
+	 */
+	private _transformedData: unknown | undefined;
 	/**
 	 * Detached model that is ready to attach. This is stored for retry scenarios.
 	 */
@@ -65,176 +73,120 @@ export class SameContainerMigrator
 		this._currentModel = initialMigratable;
 		this._currentModelId = initialId;
 		this._currentModel.migrationTool.setContainerRef(this._currentModel.container);
-		this.takeAppropriateActionForCurrentMigratable();
+		this.monitorMigration()
+			.then(() => {
+				console.log("done!");
+			})
+			.catch((e) => {
+				// TODO: error handling/retry
+				console.error(e);
+			});
 	}
 
-	/**
-	 * This method makes no assumptions about the state of the current migratable - this is particularly important
-	 * for the case that we just finished loading a migrated container, but that migrated container is also either
-	 * in the process of migrating or already migrated (and thus we need to load again).  It is not safe to assume
-	 * that a freshly-loaded migrated container is in collaborating state.
-	 */
-	private readonly takeAppropriateActionForCurrentMigratable = () => {
-		// TODO: Real stuff
-		// const migrationState = this._currentModel.migrationTool.migrationState;
-		// if (migrationState === "migrating") {
-		// 	this.ensureMigrating();
-		// } else if (migrationState === "migrated") {
-		// 	this.ensureLoading();
-		// } else {
-		// 	this._currentModel.migrationTool.once(
-		// 		"migrating",
-		// 		this.takeAppropriateActionForCurrentMigratable,
-		// 	);
-		// }
-		// TODO: One responsibility here will be generating the v2 summary
+	private readonly startMigration = async () => {
+		this.emit("migrating");
 
-		// TODO: Remove this log when actually using.
-		console.info(
-			"Just logging these to quiet the 'unused member' error: ",
-			this.ensureMigrating,
-			this.ensureLoading,
+		const migratable = this._currentModel;
+		this._acceptedVersion = migratable.migrationTool.acceptedVersion;
+		if (this._acceptedVersion === undefined) {
+			throw new Error("Expect an accepted version before migration starts");
+		}
+
+		const migrationSupported = await this.modelLoader.supportsVersion(this._acceptedVersion);
+		if (!migrationSupported) {
+			this.emit("migrationNotSupported", this._acceptedVersion);
+			return;
+		}
+	};
+
+	private readonly loadPausedModel = async () => {
+		const acceptedSeqNum = this.currentModel.migrationTool.acceptedSeqNum;
+		assert(acceptedSeqNum !== undefined, "acceptedSeqNum should be defined");
+		this._pausedModel = await this.modelLoader.loadExistingPaused(
+			this._currentModelId,
+			acceptedSeqNum,
+		);
+		assert(
+			this._pausedModel.container.deltaManager.lastSequenceNumber === acceptedSeqNum,
+			"paused model should be at accepted sequence number",
 		);
 	};
 
-	private readonly ensureMigrating = () => {
-		// ensureMigrating() is called when we reach the "migrating" state. This should likely only happen once, but
-		// can happen multiple times if we disconnect during the migration process.
-
-		if (!this.connected) {
-			// If we are not connected we should wait until we reconnect and try again. Note: we re-enter the state
-			// machine, since its possible another client has already completed the migration by the time we reconnect.
-			this.currentModel.once("connected", this.takeAppropriateActionForCurrentMigratable);
-			return;
-		}
-
-		if (this._migrationP !== undefined) {
-			return;
-		}
-
-		if (this._migratedLoadP !== undefined) {
-			throw new Error("Cannot perform migration, we are currently trying to load");
-		}
-
-		const migratable = this._currentModel;
-		const acceptedVersion = migratable.migrationTool.acceptedVersion;
-		if (acceptedVersion === undefined) {
-			throw new Error("Expect an accepted version before migration starts");
-		}
-
-		const doTheMigration = async () => {
-			// doTheMigration() is called at the start of migration and should only resolve in two cases. First, is if
-			// either the local or another client successfully completes the migration. Second, is if we disconnect
-			// during the migration process. In both cases we should re-enter the state machine and take the
-			// appropriate action (see then() block below).
-
-			const prepareTheMigration = async () => {
-				// It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
-				// Currently this fails the migration gracefully and emits an event so the app developer can know
-				// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
-				// forward, or at least advise the end user to refresh the page or something.
-				// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
-				// a new ModelLoader?
-				const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
-				if (!migrationSupported) {
-					this.emit("migrationNotSupported", acceptedVersion);
-					this._migrationP = undefined;
-					return;
-				}
-
-				const detachedModel = await this.modelLoader.createDetached(acceptedVersion);
-				const migratedModel = detachedModel.model;
-
-				const exportedData = await migratable.exportData();
-
-				// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
-				// exported data into a format that the new model can import?  If we can determine it early, then
-				// clients with old ModelLoaders can use that opportunity to dispose early and try to get new
-				// ModelLoaders.
-				let transformedData: unknown;
-				if (migratedModel.supportsDataFormat(exportedData)) {
-					// If the migrated model already supports the data format, go ahead with the migration.
-					transformedData = exportedData;
-				} else if (this.dataTransformationCallback !== undefined) {
-					// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
-					// a format that we can import.
-					try {
-						transformedData = await this.dataTransformationCallback(
-							exportedData,
-							migratedModel.version,
-						);
-					} catch {
-						// TODO: This implies that the contract is to throw if the data can't be transformed, which
-						// isn't great.  How should the dataTransformationCallback indicate failure?
-						this.emit("migrationNotSupported", acceptedVersion);
-						this._migrationP = undefined;
-						return;
-					}
-				} else {
-					// We can't get the data into a format that we can import, give up.
-					this.emit("migrationNotSupported", acceptedVersion);
-					this._migrationP = undefined;
-					return;
-				}
-				await migratedModel.importData(transformedData);
-
-				// Store the detached model for later use and retry scenarios
-				this._preparedDetachedModel = detachedModel;
-			};
-
-			const completeTheMigration = async () => {
-				assert(
-					this._preparedDetachedModel !== undefined,
-					"this._preparedDetachedModel should be defined",
-				);
-
-				// TODO: This is substantially different now
-			};
-
-			// Prepare the detached model if we haven't already.
-			if (this._preparedDetachedModel === undefined) {
-				await prepareTheMigration();
-			}
-
-			// Ensure another client has not already completed the migration.
-			// TODO: Real stuff
-			// if (this.migrationState !== "migrating") {
-			// 	return;
-			// }
-
-			await completeTheMigration();
-		};
-
-		this.emit("migrating");
-
-		this._migrationP = doTheMigration()
-			.then(() => {
-				// We assume that if we resolved that either the migration was completed or we disconnected.
-				// In either case, we should re-enter the state machine to take the appropriate action.
-				if (this.connected) {
-					// We assume if we are still connected after exiting the loop, then we should be in the "migrated"
-					// state. The following assert validates this assumption.
-					// assert(
-					// 	this.currentModel.migrationTool.newContainerId !== undefined,
-					// 	"newContainerId should be defined",
-					// );
-				}
-				this._migrationP = undefined;
-				this.takeAppropriateActionForCurrentMigratable();
-			})
-			.catch(console.error);
+	private readonly getExportedData = async () => {
+		assert(this._pausedModel !== undefined, "this._pausedModel should be defined");
+		this._exportedData = await this._pausedModel.exportData();
 	};
 
-	private readonly ensureLoading = () => {
-		// We assume ensureLoading() is called a single time after we reach the "migrated" state.
+	private readonly loadDetachedModel = async () => {
+		// It's possible that our modelLoader is older and doesn't understand the new acceptedVersion.
+		// Currently this fails the migration gracefully and emits an event so the app developer can know
+		// they're stuck. Ideally the app developer would find a way to acquire a new ModelLoader and move
+		// forward, or at least advise the end user to refresh the page or something.
+		// TODO: Does the app developer have everything they need to dispose gracefully when recovering with
+		// a new ModelLoader?
 
-		if (this._migratedLoadP !== undefined) {
+		assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
+		this._detachedModel = await this.modelLoader.createDetached(this._acceptedVersion);
+	};
+
+	private readonly generateTransformedData = async () => {
+		// TODO: Is there a reasonable way to validate at proposal time whether we'll be able to get the
+		// exported data into a format that the new model can import?  If we can determine it early, then
+		// clients with old ModelLoaders can use that opportunity to dispose early and try to get new
+		// ModelLoaders.
+
+		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
+		if (this._detachedModel.model.supportsDataFormat(this._exportedData) === true) {
+			// If the migrated model already supports the data format, go ahead with the migration.
+			this._transformedData = this._exportedData;
 			return;
 		}
 
-		if (this._migrationP !== undefined) {
-			throw new Error("Cannot start loading the migrated before migration is complete");
+		if (this.dataTransformationCallback !== undefined) {
+			// Otherwise, try using the dataTransformationCallback if provided to get the exported data into
+			// a format that we can import.
+			assert(this._acceptedVersion !== undefined, "this._acceptedVersion should be defined");
+			try {
+				this._transformedData = await this.dataTransformationCallback(
+					this._exportedData,
+					this._acceptedVersion,
+				);
+			} catch {
+				// TODO: This implies that the contract is to throw if the data can't be transformed, which
+				// isn't great.  How should the dataTransformationCallback indicate failure?
+				this.emit("migrationNotSupported", this._acceptedVersion);
+				return;
+			}
+		} else {
+			// We can't get the data into a format that we can import, give up.
+			this.emit("migrationNotSupported", this._acceptedVersion);
+			return;
 		}
+	};
+
+	private readonly importDataIntoDetachedModel = async () => {
+		assert(this._detachedModel !== undefined, "this._detachedModel should be defined");
+		assert(this._transformedData !== undefined, "this._transformedData should be defined");
+		await this._detachedModel.model.importData(this._transformedData);
+		// Store the detached model for later use and retry scenarios
+		this._preparedDetachedModel = this._detachedModel;
+	};
+
+	private readonly getV2Summary = async () => {
+		// TODO: Actually generate the v2 summary, currently we wait for a manual button press
+		if (this.currentModel.migrationTool.migrationState !== "migrated") {
+			await new Promise<void>((resolve) => {
+				this._currentModel.migrationTool.once("migrated", resolve);
+			});
+		}
+	};
+
+	private readonly finalizeMigration = async () => {
+		// TODO: Real stuff
+	};
+
+	private readonly loadMigration = async () => {
+		// TODO: Add check here to ensure finalizeMigration() executed as intended
 
 		const migratable = this._currentModel;
 		const acceptedVersion = migratable.migrationTool.acceptedVersion;
@@ -242,34 +194,83 @@ export class SameContainerMigrator
 			throw new Error("Expect an accepted version before migration starts");
 		}
 
-		const doTheLoad = async () => {
-			// doTheLoad() should only be called once. It will resolve once we complete loading.
+		const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
+		if (!migrationSupported) {
+			this.emit("migrationNotSupported", acceptedVersion);
+			return;
+		}
+		// TODO: this should be a reload of the same container basically
+		const migratedId = "foobar";
+		const migrated = await this.modelLoader.loadExisting(migratedId);
+		// Note: I'm choosing not to close the old migratable here, and instead allow the lifecycle management
+		// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
+		// migratable).  It could also be fine to close here, just need to have an explicit contract to clarify
+		// who is responsible for managing that.
+		this._currentModel = migrated;
+		this._currentModelId = migratedId;
+		this.emit("migrated", migrated, migratedId);
 
-			const migrationSupported = await this.modelLoader.supportsVersion(acceptedVersion);
-			if (!migrationSupported) {
-				this.emit("migrationNotSupported", acceptedVersion);
-				this._migratedLoadP = undefined;
-				return;
-			}
-			// TODO this should be a reload of the same container basically
-			const migratedId = "foobar";
-			const migrated = await this.modelLoader.loadExisting(migratedId);
-			// Note: I'm choosing not to close the old migratable here, and instead allow the lifecycle management
-			// of the migratable to be the responsibility of whoever created the Migrator (and handed it its first
-			// migratable).  It could also be fine to close here, just need to have an explicit contract to clarify
-			// who is responsible for managing that.
-			this._currentModel = migrated;
-			this._currentModelId = migratedId;
-			this.emit("migrated", migrated, migratedId);
-			this._migratedLoadP = undefined;
+		// Reset retry values
+		this._acceptedVersion = undefined;
+		this._pausedModel = undefined;
+		this._exportedData = undefined;
+		this._detachedModel = undefined;
+		this._transformedData = undefined;
+		this._preparedDetachedModel = undefined;
+	};
 
-			// Reset retry values
-			this._preparedDetachedModel = undefined;
+	private readonly monitorMigration = async () => {
+		// Ensure we are connected
+		if (!this.currentModel.connected()) {
+			await new Promise<void>((resolve) => this.currentModel.once("connected", resolve));
+		}
+		// Ensure the migration tool has reached the "readyForMigration" stage
+		if (this.currentModel.migrationTool.migrationState !== "readyForMigration") {
+			await new Promise<void>((resolve) =>
+				this.currentModel.migrationTool.once("readyForMigration", resolve),
+			);
+		}
 
-			// Only once we've completely finished with the old migratable, start on the new one.
-			this.takeAppropriateActionForCurrentMigratable();
-		};
+		console.log("Migration stage: startMigration");
+		if (this._acceptedVersion === undefined) {
+			await this.startMigration();
+		}
 
-		this._migratedLoadP = doTheLoad().catch(console.error);
+		console.log("Migration stage: loadPausedModel");
+		if (this._pausedModel === undefined) {
+			await this.loadPausedModel();
+		}
+
+		console.log("Migration stage: getExportedData");
+		if (this._exportedData === undefined) {
+			await this.getExportedData();
+		}
+
+		// These stages are grouped together because we should not try to retry with a detached model that could have
+		// partially imported data.
+		if (this._preparedDetachedModel === undefined) {
+			console.log("Migration stage: loadDetachedModel");
+			await this.loadDetachedModel();
+
+			console.log("Migration stage: generateTransformedData");
+			await this.generateTransformedData();
+
+			console.log("Migration stage: importDataIntoDetachedModel");
+			await this.importDataIntoDetachedModel();
+		}
+
+		console.log("Migration stage: getV2Summary");
+		// TODO: this condition will probably change when we actually implement v2 summary
+		if (this.currentModel.migrationTool.migrationState !== "migrated") {
+			await this.getV2Summary();
+		}
+
+		console.log("Migration stage: finalizeMigration");
+		await this.finalizeMigration();
+
+		console.log("Migration stage: loadMigration");
+		await this.loadMigration();
+
+		console.log("Migration stage: Done!");
 	};
 }

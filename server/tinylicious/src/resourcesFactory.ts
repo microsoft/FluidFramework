@@ -2,7 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
+// eslint-disable-next-line import/no-deprecated
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { LocalOrdererManager } from "@fluidframework/server-local-server";
 import { DocumentStorage } from "@fluidframework/server-services-shared";
 import { Historian } from "@fluidframework/server-services-client";
@@ -74,6 +76,14 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 		const pubsub = new PubSubPublisher(io);
 		const webServerFactory = new WebServerFactory(io);
 
+		// This produces a static object with the merged settings from all the stores in the nconf Provider.
+		// It includes env variables that we probably don't need to pass to the LocalOrderManager, but small price to pay
+		// so we can apply configuration to the lambdas from the tinylicious config file.
+		// Note: using a Proxy doesn't work because this gets eventually lodash-merge()d with other objects, and that looks
+		// for the actual properties of an object, which won't trigger get() calls on the Proxy that we can forward to the
+		// nconf Provider.
+		const frozenConfig = config.get();
+
 		const orderManager = new LocalOrdererManager(
 			storage,
 			databaseManager,
@@ -82,9 +92,13 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 				return new Historian(url, false, false);
 			},
 			winston,
-			undefined /* serviceConfiguration */,
+			frozenConfig,
 			pubsub,
 		);
+
+		const collaborationSessionEventEmitter =
+			// eslint-disable-next-line import/no-deprecated
+			new TypedEventEmitter<ICollaborationSessionEvents>();
 
 		return new TinyliciousResources(
 			config,
@@ -94,6 +108,7 @@ export class TinyliciousResourcesFactory implements IResourcesFactory<Tinyliciou
 			mongoManager,
 			port,
 			webServerFactory,
+			collaborationSessionEventEmitter,
 		);
 	}
 }

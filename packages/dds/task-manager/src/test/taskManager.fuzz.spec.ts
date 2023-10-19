@@ -118,9 +118,11 @@ function makeOperationGenerator(
 		};
 	}
 
-	const canVolunteer = ({ channel }: OpSelectionState): boolean => channel.canVolunteer();
-	const isQueued = ({ channel, taskId }: OpSelectionState): boolean => channel.queued(taskId);
-	const isAssigned = ({ channel, taskId }: OpSelectionState): boolean => channel.assigned(taskId);
+	const canVolunteer = ({ client }: OpSelectionState): boolean => client.channel.canVolunteer();
+	const isQueued = ({ client, taskId }: OpSelectionState): boolean =>
+		client.channel.queued(taskId);
+	const isAssigned = ({ client, taskId }: OpSelectionState): boolean =>
+		client.channel.assigned(taskId);
 
 	const clientBaseOperationGenerator = createWeightedGenerator<Operation, OpSelectionState>([
 		[volunteer, 1, canVolunteer],
@@ -170,11 +172,11 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 		};
 
 	const reducer = combineReducers<Operation, FuzzTestState>({
-		volunteer: async ({ channel }, { taskId }) => {
+		volunteer: async ({ client }, { taskId }) => {
 			// Note: this is fire-and-forget as `volunteerForTask` resolves/rejects its returned
 			// promise based on server responses, which will occur on later operations (and
 			// processing those operations will raise the error directly)
-			channel.volunteerForTask(taskId).catch((e: Error) => {
+			client.channel.volunteerForTask(taskId).catch((e: Error) => {
 				// We expect an error to be thrown if we are disconnected while volunteering
 				const expectedErrors = [
 					"Disconnected before acquiring task assignment",
@@ -185,14 +187,14 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 				}
 			});
 		},
-		abandon: async ({ channel }, { taskId }) => {
-			channel.abandon(taskId);
+		abandon: async ({ client }, { taskId }) => {
+			client.channel.abandon(taskId);
 		},
-		subscribe: async ({ channel }, { taskId }) => {
-			channel.subscribeToTask(taskId);
+		subscribe: async ({ client }, { taskId }) => {
+			client.channel.subscribeToTask(taskId);
 		},
-		complete: async ({ channel }, { taskId }) => {
-			channel.complete(taskId);
+		complete: async ({ client }, { taskId }) => {
+			client.channel.complete(taskId);
 		},
 	});
 

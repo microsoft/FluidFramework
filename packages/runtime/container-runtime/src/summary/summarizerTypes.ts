@@ -104,7 +104,8 @@ export interface ISummarizeOptions {
 	/**
 	 * True to ask the server what the latest summary is first; defaults to false
 	 *
-	 * @deprecated - Summarize will not refresh latest snapshot state anymore.
+	 * @deprecated - Summarize will not refresh latest snapshot state anymore. Instead it updates the cache and closes
+	 * It's expected a new summarizer client will be created, likely by the same parent.
 	 */
 	readonly refreshLatestAck?: boolean;
 }

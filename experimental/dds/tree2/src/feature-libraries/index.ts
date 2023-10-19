@@ -27,8 +27,10 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
+	SubtreePolicy,
 	BindSyntaxTree,
 	indexSymbol,
+	BindPolicy,
 	BindTree,
 	BindTreeDefault,
 	DownPath,
@@ -51,7 +53,6 @@ export {
 	comparePipeline,
 	compileSyntaxTree,
 	setField,
-	TreeStatus,
 } from "./editable-tree";
 
 export {
@@ -77,6 +78,7 @@ export {
 	TreeDataContext,
 	normalizeNewFieldContent,
 	NewFieldContent,
+	assertAllowedValue,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -100,7 +102,6 @@ import * as SequenceField from "./sequence-field";
 export { SequenceField };
 
 export {
-	idAllocatorFromMaxId,
 	isNeverField,
 	ModularEditBuilder,
 	EditDescription,
@@ -113,7 +114,6 @@ export {
 	FieldChangeset,
 	ToDelta,
 	ModularChangeset,
-	IdAllocator,
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
@@ -125,7 +125,6 @@ export {
 	allowsRepoSuperset,
 	GenericChangeset,
 	genericFieldKind,
-	NodeReviver,
 	RevisionIndexer,
 	RevisionMetadataSource,
 	RevisionInfo,
@@ -133,28 +132,52 @@ export {
 	revisionMetadataSourceFromInfo,
 	NodeExistsConstraint,
 	NodeExistenceState,
-	BrandedFieldKind,
+	FieldKindWithEditor,
 } from "./modular-schema";
 
 export {
-	SchemaBuilder,
-	TreeSchema,
+	TreeNodeSchema,
 	AllowedTypes,
 	FieldSchema,
-	TypedSchemaCollection,
+	TreeSchema,
 	Any,
-	SchemaLibrary,
 	SchemaLibraryData,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	InternalTypedSchemaTypes,
 	ViewSchema,
 	SchemaLintConfiguration,
+	FieldNodeSchema,
+	LeafSchema,
+	MapSchema,
+	StructSchema,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsStruct,
+	bannedFieldNames,
+	fieldApiPrefixes,
+	validateStructFieldName,
+	Unenforced,
+	AllowedTypeSet,
+	markEager,
+	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 
-export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
+export {
+	SchemaBuilderBase,
+	SchemaLibrary,
+	ImplicitFieldSchema,
+	NormalizeField,
+	ImplicitAllowedTypes,
+	NormalizeAllowedTypes,
+	SchemaBuilderOptions,
+	normalizeAllowedTypes,
+	normalizeField,
+} from "./schemaBuilderBase";
+export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { ForestRepairDataStore, ForestRepairDataStoreProvider } from "./forestRepairDataStore";
-export { dummyRepairDataStore } from "./fakeRepairDataStore";
+export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -178,12 +201,11 @@ export {
 
 export {
 	FieldKinds,
-	ValueFieldKind,
+	Required,
 	Optional,
-	Sequence,
+	Sequence as SequenceFieldKind,
 	NodeKeyFieldKind,
 	Forbidden,
-	FieldKindTypes,
 	DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
@@ -211,6 +233,49 @@ export {
 	treeStatus,
 } from "./untypedTree";
 
+export {
+	AssignableFieldKinds,
+	FieldNode,
+	FlexibleFieldContent,
+	FlexibleNodeContent,
+	InternalEditableTreeTypes,
+	Leaf,
+	MapNode,
+	OptionalField,
+	RequiredField,
+	Sequence,
+	Skip,
+	Struct,
+	StructTyped,
+	TreeContext,
+	TypedField,
+	TypedNode,
+	TypedNodeUnion,
+	Tree,
+	TreeField,
+	TreeNode,
+	getTreeContext,
+	boxedIterator,
+	CheckTypesOverlap,
+	TreeStatus,
+	getProxyForField,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeList,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
+	ProxyRoot,
+	node,
+	SharedTreeNode,
+	Typed,
+} from "./editable-tree-2";
+
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };
+
+export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer";

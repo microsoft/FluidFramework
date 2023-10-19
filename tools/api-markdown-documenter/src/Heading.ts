@@ -5,6 +5,20 @@
 
 /**
  * Represents a document heading.
+ *
+ * @example Markdown
+ *
+ * ```md
+ * # Documentation 101
+ * ```
+ *
+ * @example HTML
+ *
+ * ```html
+ * <h1>Documentation 101</h1>
+ * ```
+ *
+ * @public
  */
 export interface Heading {
 	/**
