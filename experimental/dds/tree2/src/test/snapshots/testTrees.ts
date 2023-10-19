@@ -12,13 +12,7 @@ import {
 	SharedTreeFactory,
 	runSynchronous,
 } from "../../shared-tree";
-import {
-	Any,
-	FieldKinds,
-	FieldSchema,
-	SchemaBuilder,
-	singleTextCursor,
-} from "../../feature-libraries";
+import { Any, FieldKinds, FieldSchema, singleTextCursor } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
 	TestTreeProviderLite,
@@ -30,13 +24,13 @@ import {
 	wrongSchema,
 } from "../utils";
 import { AllowedUpdateType, FieldKey, JsonableTree, UpPath, rootFieldKey } from "../../core";
-import { leaf } from "../../domains";
+import { leaf, SchemaBuilder } from "../../domains";
 
 const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
 
-const builder = new SchemaBuilder({ scope: "test trees", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "test trees" });
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.sequence(Any));
-const testSchema = builder.toDocumentSchema(SchemaBuilder.sequence(Any));
+const testSchema = builder.intoSchema(SchemaBuilder.sequence(Any));
 
 function generateCompleteTree(
 	fields: FieldKey[],
@@ -274,9 +268,7 @@ export function generateTestTrees() {
 					scope: "has-handle",
 					libraries: [leaf.library],
 				});
-				const docSchema = innerBuilder.toDocumentSchema(
-					SchemaBuilder.optional(leaf.handle),
-				);
+				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(leaf.handle));
 
 				const config = {
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -307,9 +299,7 @@ export function generateTestTrees() {
 					"SeqMap",
 					FieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
 				);
-				const docSchema = innerBuilder.toDocumentSchema(
-					SchemaBuilder.sequence(seqMapSchema),
-				);
+				const docSchema = innerBuilder.intoSchema(SchemaBuilder.sequence(seqMapSchema));
 
 				const config = {
 					allowedSchemaModifications: AllowedUpdateType.None,

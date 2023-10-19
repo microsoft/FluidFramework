@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
@@ -25,7 +26,7 @@ describe("object-forest", () => {
 	};
 	const detachedFieldKey: FieldKey = brand("detached");
 
-	describe("Throws a helpful error for invalid edits", () => {
+	describe("Throws an error for invalid edits", () => {
 		it("attaching content into the detached field it is being transferred from", () => {
 			const forest = buildForest();
 			initializeForest(forest, [singleJsonCursor(content)]);
@@ -33,7 +34,11 @@ describe("object-forest", () => {
 			visitor.enterField(rootFieldKey);
 			assert.throws(
 				() => visitor.attach(rootFieldKey, 1, 0),
-				/Attach source field must be different from current field/,
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						/Attach source field must be different from current field/,
+					),
 			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
@@ -46,7 +51,11 @@ describe("object-forest", () => {
 			visitor.enterField(rootFieldKey);
 			assert.throws(
 				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey),
-				/Detach destination field must be different from current field/,
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						/Detach destination field must be different from current field/,
+					),
 			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();
@@ -59,7 +68,11 @@ describe("object-forest", () => {
 			visitor.enterField(rootFieldKey);
 			assert.throws(
 				() => visitor.replace(detachedFieldKey, { start: 0, end: 1 }, detachedFieldKey),
-				/Replace detached source field and detached destination field must be different/,
+				(e: Error) =>
+					validateAssertionError(
+						e,
+						/Replace detached source field and detached destination field must be different/,
+					),
 			);
 			visitor.exitField(rootFieldKey);
 			visitor.free();

@@ -7,8 +7,8 @@ import { Dependee, SimpleDependee } from "../dependency-tracking";
 import { createEmitter, ISubscribable } from "../../events";
 import {
 	FieldStoredSchema,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	SchemaData,
 	storedEmptyFieldSchema,
 } from "./schema";
@@ -81,7 +81,7 @@ export class InMemoryStoredSchemaRepository
 		return this.data.rootFieldSchema;
 	}
 
-	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
+	public get treeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 		return this.data.treeSchema;
 	}
 
@@ -101,7 +101,7 @@ export class InMemoryStoredSchemaRepository
 
 export interface MutableSchemaData extends SchemaData {
 	rootFieldSchema: FieldStoredSchema;
-	treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema>;
+	treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
 
 export function schemaDataIsEmpty(data: SchemaData): boolean {

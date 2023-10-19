@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { AllowedUpdateType, TreeSchemaIdentifier, ValueSchema } from "../../../core";
+import { AllowedUpdateType, TreeNodeSchemaIdentifier } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -29,20 +29,19 @@ import {
 	typeNameSymbol,
 	ContextuallyTypedNodeDataObject,
 	UntypedTreeCore,
-	SchemaBuilder,
-	TreeSchema,
+	TreeNodeSchema,
 	FieldSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
 	isEditableTree,
 } from "../../../feature-libraries";
 import { createSharedTreeView } from "../../../shared-tree";
-import { leaf } from "../../../domains";
+import { leaf, SchemaBuilder } from "../../../domains";
 import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
 {
-	type BrandedName = "X" & TreeSchemaIdentifier;
+	type BrandedName = "X" & TreeNodeSchemaIdentifier;
 	type Unbranded = UnbrandedName<BrandedName>;
 	type _check = requireTrue<areSafelyAssignable<Unbranded, "X">>;
 }
@@ -52,7 +51,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const { optional, required, sequence } = FieldKinds;
 
 	// Example Schema:
-	const builder = new SchemaBuilder({ scope: "SchemaAwareTests", libraries: [leaf.library] });
+	const builder = new SchemaBuilder({ scope: "SchemaAwareTests" });
 
 	// Declare a simple type which just holds a number.
 	const numberSchema = leaf.number;
@@ -94,11 +93,11 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	{
 		// Recursive objects don't get this type checking automatically, so confirm it
-		type _check = requireAssignableTo<typeof boxSchema, TreeSchema>;
+		type _check = requireAssignableTo<typeof boxSchema, TreeNodeSchema>;
 	}
 
 	type x = typeof numberSchema.name;
-	const schemaData = builder.finalize();
+	const schemaData = builder.intoLibrary();
 
 	// Example Use:
 	type BallTree = TypedNode<typeof ballSchema, ApiMode.Flexible>;
@@ -217,22 +216,22 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test polymorphic cases:
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwarePolymorphicTest" });
-		const bool = builder2.leaf("bool", ValueSchema.Boolean);
-		const str = builder2.leaf("str", ValueSchema.String);
+		const bool = leaf.boolean;
+		const str = leaf.string;
 		const parentField = SchemaBuilder.required([str, bool]);
 		const parent = builder2.struct("parent", { child: parentField });
 
 		type FlexBool =
 			| boolean
 			| {
-					[typeNameSymbol]?: "SchemaAwarePolymorphicTest.bool";
+					[typeNameSymbol]?: UnbrandedName<typeof leaf.boolean.name>;
 					[valueSymbol]: boolean;
 			  };
 
 		type FlexStr =
 			| string
 			| {
-					[typeNameSymbol]?: "SchemaAwarePolymorphicTest.str";
+					[typeNameSymbol]?: UnbrandedName<typeof leaf.string.name>;
 					[valueSymbol]: string;
 			  };
 		interface FlexParent {
@@ -257,7 +256,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
 			type _check4 = requireAssignableTo<
 				ChildSchemaTypes,
-				InternalTypedSchemaTypes.FlexList<TreeSchema>
+				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 			>;
 			type NormalizedChildSchemaTypes =
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
@@ -293,7 +292,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 		{
 			// Recursive objects don't get this type checking automatically, so confirm it
-			type _check1 = requireAssignableTo<RecObjectSchema, TreeSchema>;
+			type _check1 = requireAssignableTo<RecObjectSchema, TreeNodeSchema>;
 			type _check2 = requireAssignableTo<RecFieldSchema, FieldSchema>;
 		}
 
@@ -369,7 +368,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
 			type _check4 = requireAssignableTo<
 				ChildSchemaTypes,
-				InternalTypedSchemaTypes.FlexList<TreeSchema>
+				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 			>;
 			type NormalizedChildSchemaTypes =
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
@@ -459,11 +458,11 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 describe("SchemaAware Editing", () => {
 	it("Use a sequence field", () => {
-		const builder = new SchemaBuilder({ scope: "SchemaAware", libraries: [leaf.library] });
+		const builder = new SchemaBuilder({ scope: "SchemaAware" });
 		const rootNodeSchema = builder.struct("Test", {
 			children: SchemaBuilder.sequence(leaf.string),
 		});
-		const schema = builder.toDocumentSchema(
+		const schema = builder.intoSchema(
 			FieldSchema.create(FieldKinds.required, [rootNodeSchema]),
 		);
 		const view = createSharedTreeView().schematize({

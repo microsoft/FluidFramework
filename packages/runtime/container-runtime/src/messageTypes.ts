@@ -210,7 +210,7 @@ export type InboundSequencedRecentlyAddedContainerRuntimeMessage = ISequencedDoc
  * IMPORTANT: when creating one to be serialized, set the properties in the order they appear here.
  * This way stringified values can be compared.
  *
- * @deprecated - this is an internal type which should not be used outside of the package.
+ * @deprecated this is an internal type which should not be used outside of the package.
  * Internally, it is superseded by `TypedContainerRuntimeMessage`.
  *
  * @internal

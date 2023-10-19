@@ -6,9 +6,9 @@
 export {
 	FieldStoredSchema,
 	ValueSchema,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
-	TreeSchemaIdentifierSchema,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeSchemaIdentifierSchema as TreeSchemaIdentifierSchema,
 	FieldKey,
 	FieldKeySchema,
 	TreeTypeSet,
@@ -19,6 +19,7 @@ export {
 	PrimitiveValueSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
+	StoredSchemaCollection,
 } from "./schema";
 export {
 	StoredSchemaRepository,

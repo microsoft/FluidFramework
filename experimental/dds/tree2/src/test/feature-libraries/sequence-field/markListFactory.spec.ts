@@ -8,14 +8,14 @@ import {
 	ChangesetLocalId,
 	mintRevisionTag,
 	RevisionTag,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import { MarkMaker as Mark } from "./testEdits";
 
 const dummyMark = Mark.delete(1, brand(0));
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = mintRevisionTag();
 
 describe("SequenceField - MarkListFactory", () => {

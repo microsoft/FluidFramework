@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { FieldKey, TreeSchemaIdentifier } from "../../../core";
+import { FieldKey, TreeNodeSchemaIdentifier } from "../../../core";
 import { brand, clone } from "../../../util";
 import {
 	singleTextCursor,
@@ -16,7 +16,6 @@ import {
 	valueSymbol,
 	typeNameSymbol,
 	getPrimaryField,
-	SchemaBuilder,
 	FieldKind,
 	UnwrappedEditableField,
 	setField,
@@ -26,6 +25,7 @@ import {
 	FieldSchema,
 } from "../../../feature-libraries";
 import { viewWithContent } from "../../utils";
+import { SchemaBuilder } from "../../../domains";
 import {
 	fullSchemaData,
 	Person,
@@ -45,7 +45,7 @@ import {
 const localFieldKey: FieldKey = brand("foo");
 const otherFieldKey: FieldKey = brand("foo2");
 
-const rootSchemaName: TreeSchemaIdentifier = brand("Test");
+const rootSchemaName: TreeNodeSchemaIdentifier = brand("Test");
 
 function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
 	const builder = new SchemaBuilder({ scope: "getTestSchema", libraries: [personSchemaLibrary] });
@@ -53,7 +53,7 @@ function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
 		foo: FieldSchema.create(fieldKind, [stringSchema]),
 		foo2: FieldSchema.create(fieldKind, [stringSchema]),
 	});
-	return builder.toDocumentSchema(FieldSchema.create(FieldKinds.optional, [rootNodeSchema]));
+	return builder.intoSchema(FieldSchema.create(FieldKinds.optional, [rootNodeSchema]));
 }
 
 describe("editable-tree: editing", () => {
@@ -87,15 +87,6 @@ describe("editable-tree: editing", () => {
 		} as any; // TODO: schema aware typing.
 		// unambiguous type
 		maybePerson.salary = "not ok";
-		// ambiguous type since there are multiple options which are numbers:
-		assert.throws(
-			() => (maybePerson.salary = 99.99),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"data compatible with more than one type allowed by the schema",
-				),
-		);
 		// explicit typing
 		maybePerson.salary = {
 			[typeNameSymbol]: float64Schema.name,

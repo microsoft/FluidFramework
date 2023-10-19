@@ -15,7 +15,7 @@ import {
 } from "../feature-libraries/modular-schema";
 import { brand, fail } from "../util";
 import { Delta, TaggedChange } from "../core";
-import { jsonNumber } from "../domains";
+import { leaf } from "../domains";
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
 	[0, makeValueCodec(Type.Number())],
@@ -61,7 +61,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 								singleTextCursor({
 									// KLUDGE: Domains should not be depended on by anything.
 									// This is to get around the removal of setValue.
-									type: jsonNumber.name,
+									type: leaf.number.name,
 									value: change,
 								}),
 							],

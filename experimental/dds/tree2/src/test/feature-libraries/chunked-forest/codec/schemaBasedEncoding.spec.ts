@@ -4,8 +4,8 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { FieldStoredSchema, TreeSchemaIdentifier } from "../../../../core";
-import { SchemaBuilder, defaultSchemaPolicy } from "../../../../feature-libraries";
+import { FieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core";
+import { defaultSchemaPolicy } from "../../../../feature-libraries";
 
 import {
 	buildCache,
@@ -44,7 +44,7 @@ import {
 	testTrees,
 } from "../../../testTrees";
 import { typeboxValidator } from "../../../../external-utilities";
-import { leaf } from "../../../../domains";
+import { leaf, SchemaBuilder } from "../../../../domains";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -67,7 +67,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -93,7 +93,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -115,7 +115,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},

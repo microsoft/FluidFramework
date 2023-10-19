@@ -62,7 +62,6 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
-	SchemaBuilder,
 	singleTextCursor,
 	TypedField,
 } from "../feature-libraries";
@@ -85,8 +84,8 @@ import {
 	TreeSchemaBuilder,
 	treeSchema,
 	FieldUpPath,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
@@ -103,7 +102,14 @@ import {
 import { JsonCompatible, Named, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
-import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import {
+	cursorToJsonObject,
+	jsonRoot,
+	jsonSchema,
+	singleJsonCursor,
+	SchemaBuilder,
+	leaf,
+} from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
 
 // Testing utilities
@@ -618,7 +624,7 @@ const jsonSequenceRootField = SchemaBuilder.sequence(jsonRoot);
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).toDocumentSchema(jsonSequenceRootField);
+}).intoSchema(jsonSequenceRootField);
 
 export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
 	schema: jsonSequenceRootSchema,
@@ -672,7 +678,7 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 
@@ -869,11 +875,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
  */
 export function namedTreeSchema(
 	data: TreeSchemaBuilder & Named<string>,
-): Named<TreeSchemaIdentifier> & TreeStoredSchema {
+): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),
@@ -894,7 +900,7 @@ export const wrongSchema = new SchemaBuilder({
 	lint: {
 		rejectEmpty: false,
 	},
-}).toDocumentSchema(SchemaBuilder.sequence(Any));
+}).intoSchema(SchemaBuilder.sequence(Any));
 
 /**
  * Schematize config Schema which is not correct.

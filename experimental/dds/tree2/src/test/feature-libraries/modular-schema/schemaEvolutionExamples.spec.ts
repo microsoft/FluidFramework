@@ -9,16 +9,14 @@ import {
 	FieldSchema,
 	FullSchemaPolicy,
 	ViewSchema,
-	SchemaBuilder,
 	FieldKinds,
 	defaultSchemaPolicy,
-	TypedSchemaCollection,
+	TreeSchema,
 } from "../../../feature-libraries";
 import {
 	FieldStoredSchema,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
-	ValueSchema,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	InMemoryStoredSchemaRepository,
 	Adapters,
 	Compatibility,
@@ -27,6 +25,7 @@ import {
 } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
+import { SchemaBuilder, leaf } from "../../../domains";
 
 class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	public constructor(
@@ -53,8 +52,8 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	 * @returns true iff update was performed.
 	 */
 	public tryUpdateTreeSchema(
-		identifier: TreeSchemaIdentifier,
-		schema: TreeStoredSchema,
+		identifier: TreeNodeSchemaIdentifier,
+		schema: TreeNodeStoredSchema,
 	): boolean {
 		const original = this.treeSchema.get(identifier);
 		if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
@@ -82,8 +81,7 @@ describe("Schema Evolution Examples", () => {
 		name: "Schema Evolution Examples: default content types",
 	});
 
-	const number = contentTypesBuilder.leaf("Number", ValueSchema.Number);
-	const codePoint = contentTypesBuilder.leaf("Primitive.CodePoint", ValueSchema.Number);
+	const codePoint = contentTypesBuilder.fieldNode("Primitive.CodePoint", leaf.number);
 
 	// String made of unicode code points, allowing for sequence editing of a string.
 	const text = contentTypesBuilder.struct("Text", {
@@ -91,11 +89,11 @@ describe("Schema Evolution Examples", () => {
 	});
 
 	const point = contentTypesBuilder.struct("Point", {
-		x: number,
-		y: number,
+		x: leaf.number,
+		y: leaf.number,
 	});
 
-	const defaultContentLibrary = contentTypesBuilder.finalize();
+	const defaultContentLibrary = contentTypesBuilder.intoLibrary();
 
 	const containersBuilder = new SchemaBuilder({
 		scope: "test",
@@ -116,7 +114,7 @@ describe("Schema Evolution Examples", () => {
 
 	const tolerantRoot = FieldSchema.create(FieldKinds.optional, [canvas]);
 
-	const treeViewSchema = containersBuilder.finalize();
+	const treeViewSchema = containersBuilder.intoLibrary();
 
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the
@@ -129,11 +127,11 @@ describe("Schema Evolution Examples", () => {
 	it("basic usage", () => {
 		// Collect our view schema.
 		// This will represent our view schema for a simple canvas application.
-		const viewCollection: TypedSchemaCollection = new SchemaBuilder({
+		const viewCollection: TreeSchema = new SchemaBuilder({
 			scope: "test",
 			name: "basic usage",
 			libraries: [treeViewSchema],
-		}).toDocumentSchema(root);
+		}).intoSchema(root);
 
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
@@ -184,7 +182,7 @@ describe("Schema Evolution Examples", () => {
 				scope: "test",
 				name: "basic usage2",
 				libraries: [treeViewSchema],
-			}).toDocumentSchema(tolerantRoot);
+			}).intoSchema(tolerantRoot);
 			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
@@ -221,12 +219,17 @@ describe("Schema Evolution Examples", () => {
 			// (either eagerly or lazily when first needing to do so when writing into the document).
 			// Once again the order does not matter:
 			assert(stored.tryUpdateTreeSchema(canvas.name, canvas));
-			assert(stored.tryUpdateTreeSchema(number.name, number));
+			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number));
 			assert(stored.tryUpdateTreeSchema(point.name, point));
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem));
 			assert(stored.tryUpdateTreeSchema(text.name, text));
 			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint));
 			assert(stored.tryUpdateRootFieldSchema(tolerantRoot));
+			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number));
+			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean));
+			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string));
+			assert(stored.tryUpdateTreeSchema(leaf.handle.name, leaf.handle));
+			assert(stored.tryUpdateTreeSchema(leaf.null.name, leaf.null));
 
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
@@ -244,7 +247,7 @@ describe("Schema Evolution Examples", () => {
 			});
 
 			const counter = builderWithCounter.struct("Counter", {
-				count: number,
+				count: leaf.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
 			const positionedCanvasItem2 = builderWithCounter.struct("PositionedCanvasItem", {
@@ -256,7 +259,7 @@ describe("Schema Evolution Examples", () => {
 				items: FieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: TypedSchemaCollection = builderWithCounter.toDocumentSchema(
+			const viewCollection3: TreeSchema = builderWithCounter.intoSchema(
 				FieldSchema.create(FieldKinds.optional, [canvas2]),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
@@ -374,7 +377,7 @@ describe("Schema Evolution Examples", () => {
 	// 	// In this version of the app,
 	// 	// we decided that text should be organized into a hierarchy of formatting ranges.
 	// 	// We are doing this schema change in an incompatible way, and thus introducing a new identifier:
-	// 	const formattedTextIdentifier: TreeSchemaIdentifier = brand(
+	// 	const formattedTextIdentifier: TreeNodeSchemaIdentifier = brand(
 	// 		"2cbc277e-8820-41ef-a3f4-0a00de8ef934",
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
@@ -404,7 +407,7 @@ describe("Schema Evolution Examples", () => {
 	// 		items: FieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
-	// 	const viewCollection: SchemaCollection = builder.toDocumentSchema(
+	// 	const viewCollection: SchemaCollection = builder.intoSchema(
 	// 		SchemaBuilder.required(canvas2),
 	// 	);
 
