@@ -28,8 +28,8 @@ import {
 	mixinMonitoringContext,
 	MonitoringContext,
 	createChildLogger,
+	LoggingError,
 } from "@fluidframework/telemetry-utils";
-import { createGenericNetworkError } from "@fluidframework/driver-utils";
 import { BlobManager, IBlobManagerLoadInfo, IBlobManagerRuntime } from "../blobManager";
 import { disableAttachmentBlobSweepKey } from "../gc";
 
@@ -173,24 +173,19 @@ export class MockRuntime
 		this.ops = [];
 	}
 
-	public async processBlobs(resolve: boolean, canRetry: boolean = false, retryAfterMs?: number) {
+	public async processBlobs(
+		resolve: boolean,
+		canRetry: boolean = false,
+		retryAfterSeconds?: number,
+	) {
 		const blobPs = this.blobPs;
 		this.blobPs = [];
 		if (resolve) {
 			this.processBlobsP.resolve();
 		} else {
-			const err = createGenericNetworkError(
-				"fake driver error",
-				// TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/5913
-				{ canRetry, retryAfterMs },
-				{
-					// To avoid using the default retry time added when we don't have retryAfterMs
-					// in the error properties.
-					retryAfterSeconds: retryAfterMs,
-					driverVersion: undefined,
-				},
+			this.processBlobsP.reject(
+				new LoggingError("fake driver error", { canRetry, retryAfterSeconds }),
 			);
-			this.processBlobsP.reject(err);
 		}
 		this.processBlobsP = new Deferred<void>();
 		await Promise.allSettled(blobPs).catch(() => {});

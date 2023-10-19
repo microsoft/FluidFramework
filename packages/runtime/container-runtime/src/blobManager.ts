@@ -27,7 +27,6 @@ import { AttachState, ICriticalContainerError } from "@fluidframework/container-
 import {
 	createChildMonitoringContext,
 	GenericError,
-	isFluidError,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
@@ -39,11 +38,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 
-import {
-	canRetryOnError,
-	createGenericNetworkError,
-	runWithRetry,
-} from "@fluidframework/driver-utils";
+import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
 import {
 	sendGCUnexpectedUsageEvent,
@@ -483,30 +478,12 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 						0x387 /* Must have pending blob entry for blob which failed to upload */,
 					);
 					if (entry.opsent && !canRetryOnError(error)) {
-						if (isFluidError(error)) {
-							error.addTelemetryProperties({ forceRetry: true });
-							throw error;
-						} else {
-							throw wrapError(error, () =>
-								createGenericNetworkError(
-									`uploadBlob error`,
-									{ canRetry: true },
-									{
-										driverVersion: undefined,
-									},
-								),
-							);
-						}
+						throw wrapError(
+							error,
+							() => new LoggingError(`uploadBlob error`, { canRetry: true }),
+						);
 					}
-					if (canRetryOnError(error)) {
-						// runWithRetry will do the work
-						throw error;
-					}
-					// it will only reject if we haven't sent an op
-					// and is a non-retriable error. It will only reject
-					// the promise but not throw any error outside.
-					entry.handleP.reject(error);
-					this.deletePendingBlob(localId);
+					throw error;
 				}
 			},
 			"createBlob",
@@ -515,8 +492,14 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				cancel: this.pendingBlobs.get(localId)?.abortSignal,
 			},
 		).then(
-			(response) => response && this.onUploadResolve(localId, response),
-			() => {},
+			(response) => this.onUploadResolve(localId, response),
+			(error) => {
+				// it will only reject if we haven't sent an op
+				// and is a non-retriable error. It will only reject
+				// the promise but not throw any error outside.
+				this.pendingBlobs.get(localId)?.handleP.reject(error);
+				this.deletePendingBlob(localId);
+			},
 		);
 	}
 
