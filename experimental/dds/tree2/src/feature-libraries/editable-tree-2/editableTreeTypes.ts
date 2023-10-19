@@ -17,10 +17,10 @@ import {
 	MapSchema,
 	StructSchema,
 } from "../typed-schema";
-import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
+import { TreeCore, TreeNodeCore } from "./coreTreeTypes";
 
 /**
  * Allows boxed iteration of a tree/field
@@ -43,13 +43,7 @@ export const boxedIterator = Symbol();
  *
  * @alpha
  */
-export interface Tree<TSchema = unknown> {
-	/**
-	 * Schema for this entity.
-	 * If well-formed, it must follow this schema.
-	 */
-	readonly schema: TSchema;
-
+export interface Tree<out TSchema = unknown> extends TreeCore<TSchema> {
 	/**
 	 * A common context of a "forest" of EditableTrees.
 	 */
@@ -111,19 +105,11 @@ export enum TreeStatus {
  *
  * @alpha
  */
-export interface TreeNode extends Tree<TreeNodeSchema> {
+export interface TreeNode extends Tree<TreeNodeSchema>, TreeNodeCore {
 	/**
 	 * Value stored on this node.
 	 */
 	readonly value?: TreeValue;
-
-	/**
-	 * {@inheritDoc ISubscribable#on}
-	 */
-	on<K extends keyof EditableTreeEvents>(
-		eventName: K,
-		listener: EditableTreeEvents[K],
-	): () => void;
 
 	/**
 	 * Gets a field of this node, if it is not empty.

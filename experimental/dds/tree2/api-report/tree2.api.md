@@ -1420,7 +1420,7 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
 // @alpha
-export function node(owner: SharedTreeNode): TreeNode;
+export function node(owner: SharedTreeNode): TreeNodeCore;
 
 // @alpha
 export interface NodeData {
@@ -2013,7 +2013,7 @@ export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSc
 // @alpha
 export interface SharedTreeNode {
     // (undocumented)
-    [nodeSym]?: TreeNode;
+    [nodeSym]?: TreeNodeCore;
 }
 
 // @alpha
@@ -2118,10 +2118,9 @@ export enum TransactionResult {
 }
 
 // @alpha
-export interface Tree<TSchema = unknown> {
+export interface Tree<out TSchema = unknown> extends TreeCore<TSchema> {
     [boxedIterator](): IterableIterator<Tree>;
     readonly context: TreeContext;
-    readonly schema: TSchema;
     treeStatus(): TreeStatus;
 }
 
@@ -2144,6 +2143,11 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
     readonly nodeKeys: NodeKeys;
     get root(): TreeField;
     readonly schema: TreeSchema;
+}
+
+// @alpha
+export interface TreeCore<out TSchema = unknown> {
+    readonly schema: TSchema;
 }
 
 // @alpha
@@ -2178,12 +2182,10 @@ export const enum TreeNavigationResult {
 }
 
 // @alpha
-export interface TreeNode extends Tree<TreeNodeSchema> {
+export interface TreeNode extends Tree<TreeNodeSchema>, TreeNodeCore {
     // (undocumented)
     [boxedIterator](): IterableIterator<TreeField>;
     is<TSchema extends TreeNodeSchema>(schema: TSchema): this is TypedNode<TSchema>;
-    // (undocumented)
-    on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
     readonly parentField: {
         readonly parent: TreeField;
         readonly index: number;
@@ -2191,6 +2193,12 @@ export interface TreeNode extends Tree<TreeNodeSchema> {
     tryGetField(key: FieldKey): undefined | TreeField;
     readonly type: TreeNodeSchemaIdentifier;
     readonly value?: TreeValue;
+}
+
+// @alpha
+export interface TreeNodeCore extends TreeCore<TreeNodeSchema> {
+    // (undocumented)
+    on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
 }
 
 // @alpha

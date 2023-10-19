@@ -19,12 +19,12 @@ import {
 	TreeNodeSchema,
 	TreeSchema,
 } from "../../typed-schema";
+import { TreeNodeCore } from "../coreTreeTypes";
 import {
 	CheckTypesOverlap,
 	FlexibleNodeContent,
 	Sequence,
 	AssignableFieldKinds,
-	TreeNode,
 } from "../editableTreeTypes";
 import { nodeSym } from "./node";
 
@@ -34,7 +34,7 @@ import { nodeSym } from "./node";
  */
 export interface SharedTreeNode {
 	// TODO: Make [nodeSym] non-optional when we have factory functions.
-	[nodeSym]?: TreeNode;
+	[nodeSym]?: TreeNodeCore;
 }
 
 /**

@@ -27,6 +27,8 @@ export {
 	Typed,
 } from "./editableTreeTypes";
 
+export { TreeNodeCore, TreeCore } from "./coreTreeTypes";
+
 export {
 	getProxyForField,
 	SharedTreeList,

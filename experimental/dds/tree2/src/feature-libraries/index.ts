@@ -272,6 +272,8 @@ export {
 	node,
 	SharedTreeNode,
 	Typed,
+	TreeNodeCore,
+	TreeCore,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

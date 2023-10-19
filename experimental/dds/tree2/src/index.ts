@@ -287,6 +287,8 @@ export {
 	SharedTreeNode,
 	Typed,
 	SchemaCollection,
+	TreeNodeCore,
+	TreeCore,
 } from "./feature-libraries";
 
 export {
