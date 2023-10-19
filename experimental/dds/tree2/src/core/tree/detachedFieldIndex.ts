@@ -134,7 +134,7 @@ export class DetachedFieldIndex {
 		const root = this.rootIdAllocator.allocate(count);
 		if (nodeId !== undefined) {
 			for (let i = 0; i < count; i++) {
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root);
+				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
 			}
 		}
 		return root;
