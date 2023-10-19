@@ -56,4 +56,4 @@ export const jsonArray = builder.fieldNodeRecursive(
 /**
  * @alpha
  */
-export const jsonSchema = builder.finalize();
+export const jsonSchema = builder.intoLibrary();

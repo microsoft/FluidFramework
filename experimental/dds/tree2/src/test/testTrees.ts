@@ -130,7 +130,7 @@ export const recursiveType = builder.structRecursive("recursiveType", {
 	field: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
 });
 
-export const library = builder.finalize();
+export const library = builder.intoLibrary();
 
 export const testTrees: readonly TestTree[] = [
 	testField("empty", library, SchemaBuilder.optional([]), undefined),

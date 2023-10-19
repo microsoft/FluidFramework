@@ -317,7 +317,7 @@ export const nodePropertySchema = builtinBuilder.map(
 	nodePropertyType,
 	builtinBuilder.optional(Any),
 );
-const builtinLibrary = builtinBuilder.finalize();
+const builtinLibrary = builtinBuilder.intoLibrary();
 
 /**
  * Creates a TreeSchema out of PropertyDDS schema templates.

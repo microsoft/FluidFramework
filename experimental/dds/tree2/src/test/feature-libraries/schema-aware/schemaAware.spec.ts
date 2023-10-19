@@ -97,7 +97,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	}
 
 	type x = typeof numberSchema.name;
-	const schemaData = builder.finalize();
+	const schemaData = builder.intoLibrary();
 
 	// Example Use:
 	type BallTree = TypedNode<typeof ballSchema, ApiMode.Flexible>;
