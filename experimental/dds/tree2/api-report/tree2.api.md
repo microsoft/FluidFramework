@@ -1738,14 +1738,12 @@ type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 
 // @alpha
 export interface Revertible {
-    // (undocumented)
     discard(): DiscardResult;
     readonly kind: RevertibleKind;
     // (undocumented)
     readonly origin: {
         readonly isLocal: boolean;
     };
-    // (undocumented)
     revert(): RevertResult;
 }
 

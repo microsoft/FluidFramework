@@ -4,9 +4,9 @@
  */
 
 /**
- * Can be called in order to revert a change. Discard should be called to garbage collect
- * any resources associated with the revertible.
+ * Allows reversion of a change made to SharedTree.
  *
+ * Applications wanting to implement undo/redo support might typically maintain two stacks of Revertibles, with optional eviction policy to free up memory.
  * @alpha
  */
 export interface Revertible {
@@ -15,7 +15,13 @@ export interface Revertible {
 	readonly origin: {
 		readonly isLocal: boolean;
 	};
+	/**
+	 * Can be called in order to revert a change. A successful revert will automatically discard resources.
+	 */
 	revert(): RevertResult;
+	/**
+	 * Should be called to garbage collect any resources associated with the revertible.
+	 */
 	discard(): DiscardResult;
 }
 

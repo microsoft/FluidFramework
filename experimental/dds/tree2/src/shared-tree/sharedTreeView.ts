@@ -68,6 +68,8 @@ export interface ViewEvents {
 
 	/**
 	 * A revertible change has been made to this view.
+	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire, if they so choose (failure to do so will leak memory).
+	 * The provided revertible is inherently bound to the view that raised the event, calling `revert` won't apply to forked views.
 	 *
 	 * @remarks
 	 * This event provides a {@link Revertible} object that can be used to revert the change.
