@@ -27,7 +27,7 @@ describe("SharedTreeObject factories", () => {
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
 	});
 
-	const schema = sb.toDocumentSchema(parent);
+	const schema = sb.intoSchema(parent);
 
 	const initialTree = {
 		// TODO:#5928: Remove need for typeNameSymbol by calling factory function instead
