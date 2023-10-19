@@ -77,8 +77,8 @@ describe("SharedTree", () => {
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: [1],
 		};
-		const tree1 = provider.trees[0].schematize(content);
-		provider.trees[1].schematize(content);
+		const tree1 = provider.trees[0].schematizeView(content);
+		provider.trees[1].schematizeView(content);
 		provider.processMessages();
 
 		validateRootField(tree1, [1]);
@@ -103,7 +103,7 @@ describe("SharedTree", () => {
 			forest: ForestType.Reference,
 		});
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const view = sharedTree.schematize({
+		const view = sharedTree.schematizeView({
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 			initialTree: 1,
 			schema,
@@ -125,7 +125,7 @@ describe("SharedTree", () => {
 		const expectedSchema = schemaCodec.encode(jsonSequenceRootSchema);
 
 		// Apply an edit to the first tree which inserts a node with a value
-		const view1 = provider.trees[0].schematize({
+		const view1 = provider.trees[0].schematizeView({
 			schema: jsonSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: [value],
@@ -145,7 +145,7 @@ describe("SharedTree", () => {
 	it("can summarize and load", async () => {
 		const provider = await TestTreeProvider.create(1, SummarizeType.onDemand);
 		const value = 42;
-		const summarizingTree = provider.trees[0].schematize({
+		const summarizingTree = provider.trees[0].schematizeView({
 			schema: jsonSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: [value],
@@ -165,7 +165,7 @@ describe("SharedTree", () => {
 		const tree3 = (await provider.createTree()).view;
 		const [container1, container2, container3] = provider.containers;
 
-		const tree1 = provider.trees[0].schematize({
+		const tree1 = provider.trees[0].schematizeView({
 			schema: jsonSequenceRootSchema,
 			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: ["Z", "A", "C"],
@@ -431,7 +431,7 @@ describe("SharedTree", () => {
 
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
-		provider.trees[0].schematize(emptyJsonSequenceConfig);
+		provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 
 		const [tree1, tree2] = provider.trees.map((t) => t.view);
 
@@ -464,7 +464,7 @@ describe("SharedTree", () => {
 
 	it("can process changes while detached", async () => {
 		const onCreate = (t: ISharedTree) => {
-			const view = t.schematize(emptyJsonSequenceConfig);
+			const view = t.schematizeView(emptyJsonSequenceConfig);
 			insertFirstNode(view, "B");
 			insertFirstNode(view, "A");
 			validateRootField(view, ["A", "B"]);
@@ -487,9 +487,9 @@ describe("SharedTree", () => {
 		it("can insert and delete a node in a sequence field", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig);
+			const tree2 = provider.trees[1].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
 
 			// Insert node
@@ -516,11 +516,11 @@ describe("SharedTree", () => {
 					initialTree: [0, 1, 2, 3],
 					allowedSchemaModifications: AllowedUpdateType.None,
 				};
-				const tree1 = provider.trees[0].schematize(config);
+				const tree1 = provider.trees[0].schematizeView(config);
 				provider.processMessages();
-				const tree2 = provider.trees[1].schematize(config);
-				const tree3 = provider.trees[2].schematize(config);
-				const tree4 = provider.trees[3].schematize(config);
+				const tree2 = provider.trees[1].schematizeView(config);
+				const tree3 = provider.trees[2].schematizeView(config);
+				const tree4 = provider.trees[3].schematizeView(config);
 				provider.processMessages();
 
 				remove(tree1, index, 1);
@@ -550,9 +550,9 @@ describe("SharedTree", () => {
 				initialTree: value,
 				allowedSchemaModifications: AllowedUpdateType.None,
 			};
-			const tree1 = provider.trees[0].schematize(config);
+			const tree1 = provider.trees[0].schematizeView(config);
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(config);
+			const tree2 = provider.trees[1].schematizeView(config);
 
 			// Delete node
 			tree1.setContent(undefined);
@@ -779,10 +779,10 @@ describe("SharedTree", () => {
 		it("does nothing if there are no commits in the undo stack", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig);
+			const tree2 = provider.trees[1].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
 
 			// Insert node
@@ -827,9 +827,9 @@ describe("SharedTree", () => {
 				initialTree: ["tree2"],
 			};
 			// Do initialization on tree2
-			const tree2 = provider.trees[1].schematize(content);
+			const tree2 = provider.trees[1].schematizeView(content);
 			provider.processMessages();
-			const tree1 = provider.trees[0].schematize(content);
+			const tree1 = provider.trees[0].schematizeView(content);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
 			provider.processMessages();
 
@@ -869,10 +869,10 @@ describe("SharedTree", () => {
 		it("the insert of a node in a sequence field", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig);
+			const tree2 = provider.trees[1].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
 
 			// Insert node
@@ -905,7 +905,7 @@ describe("SharedTree", () => {
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: ["A", "B", "C", "D"],
 			};
-			const tree1 = provider.trees[0].schematize(content);
+			const tree1 = provider.trees[0].schematizeView(content);
 			const tree2 = provider.trees[1].view;
 			const {
 				undoStack: undoStack1,
@@ -1060,7 +1060,7 @@ describe("SharedTree", () => {
 		it("triggers revertible events for local changes", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			const tree2 = provider.trees[1].view;
 			provider.processMessages();
 
@@ -1138,7 +1138,7 @@ describe("SharedTree", () => {
 		it("doesn't trigger a revertible event for rebases", () => {
 			const provider = new TestTreeProviderLite(2);
 			// Initialize the tree
-			const tree1 = provider.trees[0].schematize({
+			const tree1 = provider.trees[0].schematizeView({
 				initialTree: ["A", "B", "C", "D"],
 				schema: jsonSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.None,
@@ -1184,7 +1184,7 @@ describe("SharedTree", () => {
 	describe("Rebasing", () => {
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
-			const view1 = provider.trees[0].schematize({
+			const view1 = provider.trees[0].schematizeView({
 				initialTree: ["a"],
 				schema: jsonSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.None,
@@ -1487,9 +1487,9 @@ describe("SharedTree", () => {
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig);
+			const tree2 = provider.trees[1].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
 			const baseView = tree1.fork();
 			const view = baseView.fork();
@@ -1507,7 +1507,7 @@ describe("SharedTree", () => {
 
 		it("do not squash commits", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -1675,7 +1675,7 @@ describe("SharedTree", () => {
 
 		it("don't send ops before committing", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -1692,7 +1692,7 @@ describe("SharedTree", () => {
 
 		it("send only one op after committing", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -1708,7 +1708,7 @@ describe("SharedTree", () => {
 
 		it("do not send an op after committing if nested", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -1729,7 +1729,7 @@ describe("SharedTree", () => {
 
 		it("process changes while detached", async () => {
 			const onCreate = (parentTree: SharedTree) => {
-				const parent = parentTree.schematize({
+				const parent = parentTree.schematizeView({
 					initialTree: ["A"],
 					schema: jsonSequenceRootSchema,
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -2034,7 +2034,7 @@ function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(provider.trees[0].schematize(config));
+		fn(provider.trees[0].schematizeView(config));
 	});
 
 	it(`${title} (reference view)`, () => {
@@ -2043,7 +2043,7 @@ function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematize(config).fork());
+		fn(provider.trees[0].schematizeView(config).fork());
 	});
 
 	it(`${title} (reference forked view)`, () => {

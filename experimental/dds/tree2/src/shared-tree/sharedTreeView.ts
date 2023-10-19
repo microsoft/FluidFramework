@@ -188,7 +188,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
 	/**
-	 * @deprecated {@link ISharedTree.schematize} which will replace this. View schema should be applied before creating an ISharedTreeView.
+	 * @deprecated {@link ISharedTree.schematizeView} which will replace this. View schema should be applied before creating an ISharedTreeView.
 	 */
 	schematize<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
