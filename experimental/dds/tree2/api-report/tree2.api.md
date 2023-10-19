@@ -591,6 +591,16 @@ type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? 
 // @alpha (undocumented)
 type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item> ? Item : unknown;
 
+// @alpha
+export type FactoryStructSchema<TScope extends string, TName extends string | number, Name extends TName, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, {
+    structFields: {
+        [key in keyof T]: NormalizeField_2<T[key], Required_2>;
+    };
+}>>;
+
+// @alpha
+export type FactoryTreeSchema<TSchema extends TreeNodeSchema<string, unknown>> = TSchema & SharedTreeObjectFactory<TSchema>;
+
 // @alpha (undocumented)
 export function fail(message: string): never;
 
@@ -1655,13 +1665,11 @@ leafValue: import("..").ValueSchema.Number;
 }>;
 
 // @alpha (undocumented)
-const recursiveStruct2: TreeNodeSchema<"Test Recursive Domain.struct2", {
-structFields: {
-readonly recursive: TreeFieldSchema<Optional, readonly [() => TreeNodeSchema<"Test Recursive Domain.struct2", any>]>;
-readonly number: TreeFieldSchema<Required_2, readonly [TreeNodeSchema<"com.fluidframework.leaf.number", {
+const recursiveStruct2: FactoryStructSchema<"Test Recursive Domain", string, "struct2", {
+readonly recursive: TreeFieldSchema<Optional, readonly [() => FactoryStructSchema<"Test Recursive Domain", string, "struct2", any>]>;
+readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
-}>]>;
-};
+}>;
 }>;
 
 // @alpha
@@ -1814,6 +1822,8 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", {
         leafValue: import("..").ValueSchema.String;
     }>;
+    // (undocumented)
+    struct<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): FactoryStructSchema<TScope, TName, Name, T>;
 }
 
 // @alpha
@@ -1992,6 +2002,11 @@ export interface SharedTreeNode {
 
 // @alpha
 export type SharedTreeObject<TSchema extends StructSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["structFieldsObject"], API> & SharedTreeNode;
+
+// @alpha
+export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, unknown>> {
+    create(content: ProxyNode<Assume<TSchema, StructSchema>, "javaScript">): SharedTreeObject<Assume<TSchema, StructSchema>>;
+}
 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {

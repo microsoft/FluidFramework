@@ -13,13 +13,36 @@ import {
 	ImplicitAllowedTypes,
 	NormalizeAllowedTypes,
 	NormalizeField,
-	SchemaBuilderBase,
 	SchemaBuilderOptions,
 	TreeNodeSchema,
 	MapFieldSchema,
 	normalizeField,
+	SchemaBuilderBase,
+	ImplicitFieldSchema,
+	Required,
+	addFactory,
+	StructSchema,
+	FactoryTreeSchema,
 } from "../feature-libraries";
-import { getOrCreate, isAny, requireFalse } from "../util";
+import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
+
+/**
+ * A struct tree schema that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
+ * @privateRemarks
+ * This type exists because TS is not able to correlate the two places where it is used if the body of this type is inlined.
+ * @alpha
+ */
+export type FactoryStructSchema<
+	TScope extends string,
+	TName extends string | number,
+	Name extends TName,
+	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+> = FactoryTreeSchema<
+	TreeNodeSchema<
+		`${TScope}.${Name}`,
+		{ structFields: { [key in keyof T]: NormalizeField<T[key], Required> } }
+	>
+>;
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -53,6 +76,19 @@ export class SchemaBuilder<
 			...options,
 			libraries: [...(options.libraries ?? []), leaf.library],
 		});
+	}
+
+	public override struct<
+		const Name extends TName,
+		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+	>(name: Name, t: T): FactoryStructSchema<TScope, TName, Name, T> {
+		const schema = super.struct(name, t);
+		return addFactory(schema as StructSchema) as unknown as FactoryStructSchema<
+			TScope,
+			TName,
+			Name,
+			T
+		>;
 	}
 
 	/**

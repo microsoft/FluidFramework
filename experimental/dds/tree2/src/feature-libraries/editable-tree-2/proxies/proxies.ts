@@ -29,6 +29,7 @@ import { FieldKey } from "../../../core";
 import { getBoxedField } from "../lazyTree";
 import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
+import { getFactoryContent } from "./objectFactory";
 import { createNodeApi, nodeSym } from "./node";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
@@ -188,11 +189,13 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {
-						(field as RequiredField<AllowedTypes>).content = value;
+						(field as RequiredField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					case FieldKinds.optional: {
-						(field as OptionalField<AllowedTypes>).content = value;
+						(field as OptionalField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					default:
