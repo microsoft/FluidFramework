@@ -145,7 +145,7 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		const view = tree.schematize({
+		tree.schematize({
 			initialTree: {
 				[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
 				child: undefined,
@@ -161,7 +161,7 @@ describe("Node Key Index", () => {
 		await provider.ensureSynchronized();
 		const manager2 = createMockNodeKeyManager();
 		const view2 = tree2
-			.schematize({
+			.schematizeView({
 				initialTree: {
 					[nodeKeyFieldKey]: "not used",
 					child: undefined,

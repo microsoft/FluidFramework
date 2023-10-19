@@ -28,9 +28,13 @@ import {
 	buildChunkedForest,
 	makeTreeChunker,
 	DetachedFieldIndexSummarizer,
+	createNodeKeyManager,
+	nodeKeyFieldKey,
+	TypedField,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly } from "../util";
+import { JsonCompatibleReadOnly, brand } from "../util";
+import { type TypedTreeChannel } from "../typed-tree";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeView,
@@ -47,7 +51,7 @@ import {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject {
+export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	/**
 	 * Get view without schematizing.
 	 *
@@ -82,7 +86,7 @@ export interface ISharedTree extends ISharedObject {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematize<TRoot extends FieldSchema>(
+	schematizeView<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
 }
@@ -143,7 +147,7 @@ export class SharedTree
 		});
 	}
 
-	public schematize<TRoot extends FieldSchema>(
+	public schematizeView<TRoot extends FieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): SharedTreeView {
 		// TODO:
@@ -152,6 +156,14 @@ export class SharedTree
 		// For now, use this as a workaround:
 		schematizeView(this.view, config, this.storedSchema);
 		return this.view;
+	}
+
+	public schematize<TRoot extends FieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): TypedField<TRoot> {
+		const nodeKeyManager = createNodeKeyManager(this.runtime.idCompressor);
+		const view = this.schematizeView(config);
+		return view.editableTree2(config.schema, nodeKeyManager, brand(nodeKeyFieldKey));
 	}
 
 	/**
