@@ -329,7 +329,12 @@ const seqCollectionComparator = (a: SeqNumCollection, b: SeqNumCollection) => {
 			return -1;
 		}
 	} else {
-		return b.seq >= 0 ? 1 : b.seq - a.seq;
+		if (b.seq < 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			return a.seq !== b.seq ? a.seq - b.seq : a.clientSeq! - b.clientSeq!;
+		} else {
+			return 1;
+		}
 	}
 };
 
@@ -370,6 +375,22 @@ class DirectoryCreationTracker {
 				this.keyToIndex.delete(key);
 			}
 		}
+	}
+
+	/**
+	 * Retrieves all subdirectories with creation order that satisfy an optional constraint function.
+	 * @param constraint - An optional constraint function that filters keys.
+	 * @returns An array of keys that satisfy the constraint (or all keys if no constraint is provided).
+	 */
+	keys(constraint?: (key: string) => boolean): string[] {
+		const keys: string[] = [];
+		this.indexToKey.mapRange((node) => {
+			if (!constraint || constraint(node.data)) {
+				keys.push(node.data);
+			}
+			return true;
+		}, keys);
+		return keys;
 	}
 }
 
@@ -724,7 +745,7 @@ export class SharedDirectory
 							// back compat too and also we will actually know the state when it was serialized.
 							createInfo !== undefined && createInfo.csn.seq > -1
 								? createInfo.csn
-								: { seq: 0 },
+								: { seq: 0, clientSeq: ++currentSubDir.localCreationSeq },
 							// createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
 							createInfo !== undefined
 								? new Set<string>(createInfo.ccIds)
@@ -735,6 +756,20 @@ export class SharedDirectory
 							posix.join(currentSubDir.absolutePath, subdirName),
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
+						// Add the creation sequnce number to the tracker
+						if (createInfo !== undefined) {
+							if (createInfo.csn.seq > -1) {
+								currentSubDir.ackedCreationSeqTracker.set(
+									subdirName,
+									createInfo.csn,
+								);
+							} else {
+								currentSubDir.ackedCreationSeqTracker.set(subdirName, {
+									seq: 0,
+									clientSeq: ++currentSubDir.localCreationSeq,
+								});
+							}
+						}
 					}
 					stack.push([newSubDir, subdirObject]);
 				}
@@ -1198,11 +1233,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private readonly pendingClearMessageIds: number[] = [];
 
-	private localCreationSeq: number = -1;
+	public localCreationSeq: number = -1;
 
-	private readonly localCreationSeqTracker: DirectoryCreationTracker;
+	public readonly localCreationSeqTracker: DirectoryCreationTracker;
 
-	private readonly ackedCreationSeqTracker: DirectoryCreationTracker;
+	public readonly ackedCreationSeqTracker: DirectoryCreationTracker;
 
 	/**
 	 * Constructor.
@@ -1214,7 +1249,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param absolutePath - The absolute path of this IDirectory
 	 */
 	public constructor(
-		// private sequenceNumber: SeqNumCollection,
+		// private readonly sequenceNumber: number,
 		private readonly seqNumCollection: SeqNumCollection,
 		private readonly clientIds: Set<string>,
 		private readonly directory: SharedDirectory,
@@ -1415,7 +1450,36 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public subdirectories(): IterableIterator<[string, IDirectory]> {
 		this.throwIfDisposed();
-		return this._subdirectories.entries();
+		const ackedSubdirsInOrder = this.ackedCreationSeqTracker.keys();
+		const localSubdirsInOrder = this.localCreationSeqTracker.keys(
+			(key) => !this.ackedCreationSeqTracker.has(key),
+		);
+
+		const subdirNames = [...ackedSubdirsInOrder, ...localSubdirsInOrder];
+		assert(
+			subdirNames.length === this._subdirectories.size,
+			"The count of keys for iteration should be consistent with the size of actual data",
+		);
+
+		const entriesIterator = {
+			index: 0,
+			dirs: this._subdirectories,
+			next(): IteratorResult<[string, any]> {
+				if (this.index < subdirNames.length) {
+					const subdirName = subdirNames[this.index++];
+					const subdir = this.dirs.get(subdirName);
+					return { value: [subdirName, subdir], done: false };
+				}
+				return { value: undefined, done: true };
+			},
+			[Symbol.iterator](): IterableIterator<[string, any]> {
+				return this;
+			},
+		};
+
+		return entriesIterator;
+
+		// return this._subdirectories.entries();
 	}
 
 	/**
@@ -2352,6 +2416,20 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 						// Only set the seq on the first message, could be more
 						dir.seqNumCollection.seq = msg.sequenceNumber;
 						dir.seqNumCollection.clientSeq = msg.clientSequenceNumber;
+
+						// set the creation seq in tracker
+						if (
+							!this.ackedCreationSeqTracker.has(op.subdirName) &&
+							!this.pendingDeleteSubDirectoriesTracker.has(op.subdirName)
+						) {
+							this.ackedCreationSeqTracker.set(op.subdirName, {
+								seq: msg.sequenceNumber,
+								clientSeq: msg.clientSequenceNumber,
+							});
+							if (local) {
+								this.localCreationSeqTracker.delete(op.subdirName);
+							}
+						}
 					}
 					// The client created the dir at or after the dirs seq, so list its client id as a creator.
 					if (
@@ -2360,16 +2438,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 						dir.seqNumCollection.seq <= msg.sequenceNumber
 					) {
 						dir.clientIds.add(msg.clientId);
-					}
-				}
-
-				if (!this.ackedCreationSeqTracker.has(op.subdirName)) {
-					this.ackedCreationSeqTracker.set(op.subdirName, {
-						seq: msg.sequenceNumber,
-						clientSeq: msg.clientSequenceNumber,
-					});
-					if (local) {
-						this.localCreationSeqTracker.delete(op.subdirName);
 					}
 				}
 				/*
@@ -2526,10 +2594,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Might want to consider cleaning out the structure more exhaustively though? But not when rollback.
 		if (previousValue !== undefined) {
 			this._subdirectories.delete(subdirName);
+			/*
 			if (local) {
 				this.localCreationSeqTracker.delete(subdirName);
 			} else {
 				this.ackedCreationSeqTracker.delete(subdirName);
+			} */
+			if (this.ackedCreationSeqTracker.has(subdirName)) {
+				this.ackedCreationSeqTracker.delete(subdirName);
+			}
+			if (this.localCreationSeqTracker.has(subdirName)) {
+				this.localCreationSeqTracker.delete(subdirName);
 			}
 			this.disposeSubDirectoryTree(previousValue);
 			this.emit("subDirectoryDeleted", subdirName, local, this);
@@ -2553,8 +2628,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	private undeleteSubDirectoryTree(directory: SubDirectory): void {
 		// Restore deleted subdirectory tree. This will unmark "deleted" from the subdirectories from bottom to top.
-		for (const [_, subDirectory] of this._subdirectories.entries()) {
+		for (const [name, subDirectory] of this._subdirectories.entries()) {
 			this.undeleteSubDirectoryTree(subDirectory);
+			// Reset the creation seq for this subdir
+			if (subDirectory.seqNumCollection.seq !== -1) {
+				this.ackedCreationSeqTracker.set(name, subDirectory.seqNumCollection);
+			} else {
+				this.localCreationSeqTracker.set(name, subDirectory.seqNumCollection);
+			}
 		}
 		directory.undispose();
 	}
