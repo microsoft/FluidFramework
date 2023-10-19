@@ -1185,26 +1185,32 @@ export const handlers: Handler[] = [
 			}
 
 			if (json.main === undefined) {
-				return "Missing 'main' extry in package.json.";
+				return "Missing 'main' entry in package.json.";
 			}
 
-			// CJS exports
-			const requireField =
-				exportsRoot?.require?.default === undefined
-					? undefined
-					: normalizePathField(exportsRoot?.require?.default);
-			const mainField = normalizePathField(json.main);
-			if (requireField !== mainField) {
-				return `Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
+			const isCJSOnly = json.module === undefined;
+			const isESMOnly = json.type === "module";
+
+			if (!isESMOnly) {
+				// CJS exports
+				const requireField =
+					exportsRoot?.require?.default === undefined
+						? undefined
+						: normalizePathField(exportsRoot?.require?.default);
+				const mainField = normalizePathField(json.main);
+				if (requireField !== mainField) {
+					return `Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
+				}
 			}
 
-			// ESM exports
-			const importField =
-				exportsRoot?.import?.default === undefined
-					? undefined
-					: normalizePathField(exportsRoot?.import?.default);
-			if (json.module !== undefined) {
-				const moduleField = normalizePathField(json.module);
+			if (!isCJSOnly) {
+				// ESM exports
+				const importField =
+					exportsRoot?.import?.default === undefined
+						? undefined
+						: normalizePathField(exportsRoot?.import?.default);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const moduleField = normalizePathField(json.module!);
 				if (importField !== moduleField) {
 					return `Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
 				}
@@ -1259,10 +1265,13 @@ function missingCleanDirectories(scripts: any) {
 	return expectedClean.filter((name) => !scripts.clean?.includes(name));
 }
 
+/**
+ * Generates an 'exports' field for a package based on the value of other fields in package.json.
+ */
 function generateExportsField(json: PackageJson) {
 	if (json.types === undefined && json.typings === undefined) {
 		throw new Error(
-			"The 'types' and 'typings' field are both undefined. At least one must be defined.",
+			"The 'types' and 'typings' field are both undefined. At least one must be defined (types is preferred).",
 		);
 	}
 
@@ -1274,28 +1283,26 @@ function generateExportsField(json: PackageJson) {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const cjsTypes = normalizePathField((json.types ?? json.typings)!);
 
-	if (json.module === undefined) {
-		const exports = {
+	const isCJSOnly = json.module === undefined;
+	const isESMOnly = json.type === "module";
+
+	if (isESMOnly) {
+		// Package appears to be CJS only
+		return {
 			".": {
-				require: {
+				import: {
+					// Assume the types field is the ESM types since this is an ESM-only package.
 					types: cjsTypes,
 					default: normalizePathField(json.main),
 				},
 			},
 		};
-		return exports;
-	} else {
-		// Assume esm types are the same name as cjs, but in a different path.
-		const esmDir = path.dirname(json.module);
-		const typesFile = path.basename(cjsTypes.toString());
-		const esmTypes = normalizePathField(path.join(esmDir, typesFile));
+	}
 
+	if (isCJSOnly) {
+		// Package appears to be CJS only
 		const exports = {
 			".": {
-				import: {
-					types: esmTypes,
-					default: normalizePathField(json.module ?? json.main),
-				},
 				require: {
 					types: cjsTypes,
 					default: normalizePathField(json.main),
@@ -1304,6 +1311,28 @@ function generateExportsField(json: PackageJson) {
 		};
 		return exports;
 	}
+
+	// Package has both CJS and ESM
+
+	// Assume esm types are the same name as cjs, but in a different path.
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- an earlier check guarantees module is defined
+	const esmDir = path.dirname(json.module!);
+	const typesFile = path.basename(cjsTypes.toString());
+	const esmTypes = normalizePathField(path.join(esmDir, typesFile));
+
+	const exports = {
+		".": {
+			import: {
+				types: esmTypes,
+				default: normalizePathField(json.module ?? json.main),
+			},
+			require: {
+				types: cjsTypes,
+				default: normalizePathField(json.main),
+			},
+		},
+	};
+	return exports;
 }
 
 /**
@@ -1326,7 +1355,11 @@ function shouldCheckExportsField(json: PackageJson): boolean {
 }
 
 /**
- * Normalizes a path value so it has a leading './'
+ * Normalizes a relative path value so it has a leading './'
+ *
+ * @remarks
+ *
+ * Does not work with absolute paths.
  */
 function normalizePathField(pathIn: string) {
 	if (pathIn === "" || pathIn === undefined) {
