@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey, SchemaData, ValueSchema } from "../../core";
+import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
 import { Struct, TreeContext, TreeField, boxedIterator } from "../editable-tree-2";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 
@@ -25,8 +25,8 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, Struct> {
 	/**
 	 * Returns true if the given schema contains the node key type, otherwise false
 	 */
-	public static hasNodeKeyTreeSchema(schema: SchemaData): boolean {
-		// TODO: make SchemaData contain ViewSchema and compare by reference to nodeKeyTreeSchema.
+	public static hasNodeKeyTreeSchema(schema: TreeStoredSchema): boolean {
+		// TODO: make TreeStoredSchema contain ViewSchema and compare by reference to nodeKeyTreeSchema.
 		const treeSchema = schema.treeSchema.get(nodeKeyTreeIdentifier);
 		if (treeSchema === undefined) {
 			return false;

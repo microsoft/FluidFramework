@@ -10,7 +10,7 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { FieldSchema, TypedField } from "../feature-libraries";
+import { TreeFieldSchema, TypedField } from "../feature-libraries";
 import { SharedTree, SharedTreeOptions } from "./sharedTree";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 
@@ -66,7 +66,7 @@ export interface TypedTreeChannel extends IChannel {
 	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
 	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
 	 */
-	schematize<TRoot extends FieldSchema>(
+	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): TypedField<TRoot>;
 }

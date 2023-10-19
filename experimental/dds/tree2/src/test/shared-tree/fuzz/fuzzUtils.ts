@@ -12,23 +12,24 @@ import {
 	clonePath,
 	compareUpPaths,
 	forEachNodeInSubtree,
+	Revertible,
 	AllowedUpdateType,
 } from "../../../core";
-import { FieldKinds, FieldSchema, StructTyped, TypedField } from "../../../feature-libraries";
+import { FieldKinds, TreeFieldSchema, StructTyped, TypedField } from "../../../feature-libraries";
 import { SharedTree, ISharedTreeView, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
 export const fuzzNode = builder.structRecursive("node", {
-	requiredChild: FieldSchema.createUnsafe(FieldKinds.required, [
+	requiredChild: TreeFieldSchema.createUnsafe(FieldKinds.required, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),
-	optionalChild: FieldSchema.createUnsafe(FieldKinds.optional, [
+	optionalChild: TreeFieldSchema.createUnsafe(FieldKinds.optional, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),
-	sequenceChildren: FieldSchema.createUnsafe(FieldKinds.sequence, [
+	sequenceChildren: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),
@@ -81,6 +82,16 @@ export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value
 	});
 	cursor.free();
 	return anchors;
+}
+
+export type RevertibleSharedTreeView = ISharedTreeView & {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+};
+
+export function isRevertibleSharedTreeView(s: ISharedTreeView): s is RevertibleSharedTreeView {
+	return (s as RevertibleSharedTreeView).undoStack !== undefined;
 }
 
 // KLUDGE:AB#5677: Avoid calling editableTree2 more than once per tree as it currently crashes.

@@ -41,16 +41,14 @@ import {
 	createSharedTreeView,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
+	ISharedTreeBranchView,
 	runSynchronous,
 } from "../shared-tree";
 import {
 	Any,
 	buildForest,
 	createMockNodeKeyManager,
-	DefaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
-	FieldSchema,
+	TreeFieldSchema,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
 	mapFieldMarks,
@@ -72,12 +70,11 @@ import {
 	moveToDetachedField,
 	mapCursorField,
 	JsonableTree,
-	SchemaData,
+	TreeStoredSchema,
 	rootFieldKey,
 	compareUpPaths,
 	UpPath,
 	clonePath,
-	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
 	TaggedChange,
@@ -98,6 +95,8 @@ import {
 	makeDetachedFieldIndex,
 	announceDelta,
 	FieldKey,
+	Revertible,
+	RevertibleKind,
 } from "../core";
 import { JsonCompatible, Named, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
@@ -607,7 +606,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function treeWithContent<TRoot extends FieldSchema>(
+export function treeWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;
@@ -714,7 +713,7 @@ export function expectJsonTree(
 export function initializeTestTree(
 	tree: ISharedTreeView,
 	state: JsonableTree | JsonableTree[] | undefined,
-	schema: SchemaData = wrongSchema,
+	schema: TreeStoredSchema = wrongSchema,
 ): void {
 	if (state === undefined) {
 		tree.storedSchema.update(schema);
@@ -753,10 +752,6 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 }
 
 export const mockIntoDelta = (delta: Delta.Root) => delta;
-
-export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
-}
 
 export interface EncodingTestData<TDecoded, TEncoded> {
 	/**
@@ -942,4 +937,23 @@ export function announceTestDelta(
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+}
+
+export function createTestUndoRedoStacks(view: ISharedTreeBranchView | ISharedTreeView): {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+} {
+	const undoStack: Revertible[] = [];
+	const redoStack: Revertible[] = [];
+
+	const unsubscribe = view.events.on("revertible", (revertible) => {
+		if (revertible.kind === RevertibleKind.Undo) {
+			redoStack.push(revertible);
+		} else {
+			undoStack.push(revertible);
+		}
+	});
+
+	return { undoStack, redoStack, unsubscribe };
 }

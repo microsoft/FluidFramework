@@ -10,9 +10,9 @@ import {
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	FieldSchema,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
-import { FieldKey, FieldStoredSchema, EmptyKey } from "../../../core";
+import { FieldKey, TreeFieldStoredSchema, EmptyKey } from "../../../core";
 import {
 	isPrimitive,
 	getOwnArrayKeys,
@@ -33,12 +33,12 @@ describe("editable-tree utilities", () => {
 	it("field utils", () => {
 		const schema =
 			arraySchema.structFields.get(EmptyKey) ?? fail("Expected primary array field");
-		const expectedPrimary: { key: FieldKey; schema: FieldStoredSchema } = {
+		const expectedPrimary: { key: FieldKey; schema: TreeFieldStoredSchema } = {
 			key: EmptyKey,
 			schema,
 		};
 
-		const rootSchema = FieldSchema.create(FieldKinds.required, [arraySchema]);
+		const rootSchema = TreeFieldSchema.create(FieldKinds.required, [arraySchema]);
 		const fullSchemaData = buildTestSchema(rootSchema);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);

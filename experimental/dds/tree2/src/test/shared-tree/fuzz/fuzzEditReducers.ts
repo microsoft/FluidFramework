@@ -10,6 +10,7 @@ import { DownPath, TreeField, TreeNode, singleTextCursor } from "../../../featur
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
+import { Revertible } from "../../../core";
 import {
 	FieldEdit,
 	FuzzDelete,
@@ -19,7 +20,12 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
-import { fuzzNode, fuzzViewFromTree, getEditableTree } from "./fuzzUtils";
+import {
+	fuzzNode,
+	fuzzViewFromTree,
+	getEditableTree,
+	isRevertibleSharedTreeView,
+} from "./fuzzUtils";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {
@@ -37,7 +43,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		applyTransactionEdit(fuzzViewFromTree(state.client.channel), operation.contents);
 	},
 	undoRedo: (state, operation) => {
-		applyUndoRedoEdit(fuzzViewFromTree(state.client.channel), operation.contents);
+		const view = fuzzViewFromTree(state.client.channel);
+		assert(isRevertibleSharedTreeView(view));
+		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.contents);
 	},
 	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
@@ -201,14 +209,18 @@ export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransa
 	}
 }
 
-export function applyUndoRedoEdit(tree: ISharedTreeView, contents: FuzzUndoRedoType): void {
+export function applyUndoRedoEdit(
+	undoStack: Revertible[],
+	redoStack: Revertible[],
+	contents: FuzzUndoRedoType,
+): void {
 	switch (contents.type) {
 		case "undo": {
-			tree.undo();
+			undoStack.pop()?.revert();
 			break;
 		}
 		case "redo": {
-			tree.redo();
+			redoStack.pop()?.revert();
 			break;
 		}
 		default:

@@ -138,7 +138,7 @@ export {
 export {
 	TreeNodeSchema,
 	AllowedTypes,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeSchema,
 	Any,
 	SchemaLibraryData,

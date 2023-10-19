@@ -9,7 +9,7 @@ import {
 	Any,
 	FieldKind,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	ImplicitAllowedTypes,
 	NormalizeAllowedTypes,
 	NormalizeField,
@@ -114,7 +114,7 @@ export class SchemaBuilder<
 		`${TScope}.List<${string}>`,
 		{
 			structFields: {
-				[""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
 	>;
@@ -131,7 +131,7 @@ export class SchemaBuilder<
 		`${TScope}.${Name}`,
 		{
 			structFields: {
-				[""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
 	>;
@@ -143,7 +143,7 @@ export class SchemaBuilder<
 		`${TScope}.${string}`,
 		{
 			structFields: {
-				[""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
 	> {
@@ -159,7 +159,7 @@ export class SchemaBuilder<
 				`${TScope}.${string}`,
 				{
 					structFields: {
-						[""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+						[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 					};
 				}
 			>;
@@ -182,7 +182,7 @@ export class SchemaBuilder<
 		`${TScope}.${Name}`,
 		{
 			structFields: {
-				[""]: FieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
+				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
 	> {
@@ -265,7 +265,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for an {@link OptionalField}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.optional` to {@link FieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.optional` to {@link TreeFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}
 	 */
@@ -274,9 +274,9 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for an {@link OptionalField}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.optional` to {@link FieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.optional` to {@link TreeFieldSchema.create}.
 	 *
-	 * Since this creates a {@link FieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly optional = SchemaBuilder.optional;
@@ -284,7 +284,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for an {@link RequiredField}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.required` to {@link FieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.required` to {@link TreeFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}
 	 */
@@ -293,11 +293,11 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link RequiredField}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.required` to {@link FieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.required` to {@link TreeFieldSchema.create}.
 	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link ImplicitFieldSchema}
 	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link RequiredField}.
 	 *
-	 * Since this creates a {@link FieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly required = SchemaBuilder.required;
@@ -305,7 +305,7 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link Sequence}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.sequence` to {@link FieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.sequence` to {@link TreeFieldSchema.create}.
 	 *
 	 * This method is also available as an instance method on {@link SchemaBuilder}
 	 */
@@ -314,9 +314,9 @@ export class SchemaBuilder<
 	/**
 	 * Define a schema for a {@link Sequence}.
 	 * @remarks
-	 * Shorthand or passing `FieldKinds.sequence` to {@link FieldSchema.create}.
+	 * Shorthand or passing `FieldKinds.sequence` to {@link TreeFieldSchema.create}.
 	 *
-	 * Since this creates a {@link FieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
+	 * Since this creates a {@link TreeFieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
 	 */
 	public readonly sequence = SchemaBuilder.sequence;
@@ -353,7 +353,7 @@ export class SchemaBuilder<
 function fieldHelper<Kind extends FieldKind>(kind: Kind) {
 	return <const T extends ImplicitAllowedTypes>(
 		allowedTypes: T,
-	): FieldSchema<Kind, NormalizeAllowedTypes<T>> => SchemaBuilder.field(kind, allowedTypes);
+	): TreeFieldSchema<Kind, NormalizeAllowedTypes<T>> => SchemaBuilder.field(kind, allowedTypes);
 }
 
 export function structuralName<const T extends string>(

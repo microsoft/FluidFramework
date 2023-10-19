@@ -8,7 +8,7 @@ import {
 	IEditableForest,
 	moveToDetachedField,
 	ForestEvents,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKey,
 } from "../../core";
 import { ISubscribable } from "../../events";
@@ -126,7 +126,7 @@ export class Context implements TreeContext, IDisposable {
 	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
 	 */
 	// TODO: Use this to automatically provide node keys where required.
-	public fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+	public fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**
