@@ -1218,7 +1218,6 @@ export const handlers: Handler[] = [
 		},
 		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
-
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				if (shouldCheckExportsField(json)) {
 					try {
