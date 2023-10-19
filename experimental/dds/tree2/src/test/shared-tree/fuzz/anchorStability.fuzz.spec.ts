@@ -58,7 +58,7 @@ function setInitialJsonTree(view: ISharedTreeView): void {
 }
 
 const onCreate = (tree: SharedTree) => {
-	const view = tree.schematize({
+	const view = tree.schematizeView({
 		schema: fuzzSchema,
 		initialTree,
 		allowedSchemaModifications: AllowedUpdateType.None,
