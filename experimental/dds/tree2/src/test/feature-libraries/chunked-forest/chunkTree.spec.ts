@@ -48,7 +48,7 @@ const valueField = SchemaBuilder.required(leaf.number);
 const structValue = builder.struct("structValue", { x: valueField });
 const optionalField = builder.optional(leaf.number);
 const structOptional = builder.struct("structOptional", { x: optionalField });
-const schema = builder.finalize();
+const schema = builder.intoLibrary();
 
 function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
 	assert.deepEqual(a, b);

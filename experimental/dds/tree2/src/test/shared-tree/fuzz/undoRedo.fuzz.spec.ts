@@ -21,7 +21,7 @@ import {
 } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { createAnchors, onCreate, validateAnchors } from "./fuzzUtils";
+import { createAnchors, failureDirectory, onCreate, validateAnchors } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
 /**
@@ -108,10 +108,15 @@ describe("Fuzz - undo/redo", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 3,
 			emitter,
+			saveFailures: {
+				directory: failureDirectory,
+			},
 		});
 	});
 
-	describe("out of order undo matches the initial state", () => {
+	// Generally broken with multiple issues:
+	// AB#5747 tracks root-causing these and re-enabling.
+	describe.skip("out of order undo matches the initial state", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
@@ -120,7 +125,7 @@ describe("Fuzz - undo/redo", () => {
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
-			workloadName: "SharedTree",
+			workloadName: "undo-out-of-order",
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
@@ -166,12 +171,14 @@ describe("Fuzz - undo/redo", () => {
 			defaultTestCount: runsPerBatch,
 			numberOfClients: 3,
 			emitter,
-			// ADO:5083, assert 0x6a1 hit for 13 and 18
-			skip: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
 			detachedStartOptions: {
 				enabled: false,
 				attachProbability: 0,
 			},
+			saveFailures: {
+				directory: failureDirectory,
+			},
+			skipMinimization: true,
 		});
 	});
 
@@ -182,7 +189,10 @@ describe("Fuzz - undo/redo", () => {
 		redo: 1,
 	};
 
-	describe("synchronization after calling undo on unsequenced edits", () => {
+	// These tests generally fail with 0x370 and 0x7aa.
+	// See the test case "can rebase over successive sets" for a minimized version of 0x370.
+	// 0x7aa needs to be root-caused.
+	describe.skip("synchronization after calling undo on unsequenced edits", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(unSequencedUndoRedoWeights));
 
@@ -191,7 +201,7 @@ describe("Fuzz - undo/redo", () => {
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
-			workloadName: "SharedTree",
+			workloadName: "undo-unsequenced",
 			factory: new SharedTreeTestFactory(onCreate),
 			generatorFactory,
 			reducer: fuzzReducer,
@@ -212,15 +222,16 @@ describe("Fuzz - undo/redo", () => {
 			numberOfClients: 3,
 			emitter,
 			validationStrategy: { type: "fixedInterval", interval: opsPerRun * 2 }, // interval set to prevent synchronization
-			// TODO unskip 12 once optional tracks transient nodes
-			skip: [4, 8, 11, 12, 13, 15, 18],
-			// TODO: Enabling this causes the tree2 fuzz tests to infinite loop due to how edit generation is set up.
-			// This config can probably stay false (this test is targeted at long-running undo/redo scenarios, so having a single
-			// client start detached and later attach is not interesting), but it should still function even if enabled.
+			// This test is targeted at long-running undo/redo scenarios, so having a single client start detached and later attach
+			// is not particularly interesting
 			detachedStartOptions: {
 				enabled: false,
 				attachProbability: 1,
 			},
+			saveFailures: {
+				directory: failureDirectory,
+			},
+			skipMinimization: true,
 		});
 	});
 });

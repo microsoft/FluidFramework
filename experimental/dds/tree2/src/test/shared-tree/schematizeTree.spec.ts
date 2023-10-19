@@ -5,7 +5,7 @@
 import { strict as assert, fail } from "assert";
 import {
 	Any,
-	DocumentSchema,
+	TreeSchema,
 	FieldSchema,
 	FieldKinds,
 	allowsRepoSuperset,
@@ -28,18 +28,18 @@ import { SchemaBuilder, leaf } from "../../domains";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
-const schema = builder.toDocumentSchema(SchemaBuilder.optional(root));
+const schema = builder.intoSchema(SchemaBuilder.optional(root));
 
 const builderGeneralized = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests Generalized",
 });
 
-const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.optional(Any));
+const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
 
 const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
 
-const schemaValueRoot = builderValue.toDocumentSchema(SchemaBuilder.required(Any));
+const schemaValueRoot = builderValue.intoSchema(SchemaBuilder.required(Any));
 
 const emptySchema = new SchemaBuilder({
 	scope: "Empty",
@@ -47,7 +47,7 @@ const emptySchema = new SchemaBuilder({
 		rejectEmpty: false,
 		rejectForbidden: false,
 	},
-}).toDocumentSchema(FieldSchema.empty);
+}).intoSchema(FieldSchema.empty);
 
 function expectSchema(actual: SchemaData, expected: SchemaData): void {
 	// Check schema match
@@ -133,7 +133,7 @@ describe("schematizeTree", () => {
 
 	describe("schematize", () => {
 		describe("noop upgrade", () => {
-			const testCases: [string, DocumentSchema][] = [
+			const testCases: [string, TreeSchema][] = [
 				["empty", emptySchema],
 				["basic-optional", schema],
 				["basic-value", schemaValueRoot],

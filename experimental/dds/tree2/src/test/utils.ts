@@ -84,8 +84,8 @@ import {
 	TreeSchemaBuilder,
 	treeSchema,
 	FieldUpPath,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
@@ -546,7 +546,7 @@ const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
 	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
-	validateViewConsistency(treeA.view, treeB.view);
+	validateViewConsistency(treeA.view, treeB.view, `id: ${treeA.id} vs id: ${treeB.id}`);
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
@@ -562,11 +562,20 @@ export function validateTreeContent(tree: ISharedTreeView, content: TreeContent)
 	assert.deepEqual(schemaCodec.encode(tree.storedSchema), schemaCodec.encode(content.schema));
 }
 
-export function validateViewConsistency(treeA: ISharedTreeView, treeB: ISharedTreeView): void {
-	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
+export function validateViewConsistency(
+	treeA: ISharedTreeView,
+	treeB: ISharedTreeView,
+	idDifferentiator: string | undefined = undefined,
+): void {
+	assert.deepEqual(
+		toJsonableTree(treeA),
+		toJsonableTree(treeB),
+		`Inconsistent json representation: ${idDifferentiator}`,
+	);
 	assert.deepEqual(
 		schemaCodec.encode(treeA.storedSchema),
 		schemaCodec.encode(treeB.storedSchema),
+		`Inconsistent schema: ${idDifferentiator}`,
 	);
 }
 
@@ -624,7 +633,7 @@ const jsonSequenceRootField = SchemaBuilder.sequence(jsonRoot);
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).toDocumentSchema(jsonSequenceRootField);
+}).intoSchema(jsonSequenceRootField);
 
 export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
 	schema: jsonSequenceRootSchema,
@@ -875,11 +884,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
  */
 export function namedTreeSchema(
 	data: TreeSchemaBuilder & Named<string>,
-): Named<TreeSchemaIdentifier> & TreeStoredSchema {
+): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),
@@ -900,7 +909,7 @@ export const wrongSchema = new SchemaBuilder({
 	lint: {
 		rejectEmpty: false,
 	},
-}).toDocumentSchema(SchemaBuilder.sequence(Any));
+}).intoSchema(SchemaBuilder.sequence(Any));
 
 /**
  * Schematize config Schema which is not correct.

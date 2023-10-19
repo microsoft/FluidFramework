@@ -14,7 +14,7 @@ graph LR;
         fieldMap--Values-->FieldStoredSchema["Global FieldStoredSchema"]
         stored-->treeMap["Tree Schema Map"]
         treeMap--Keys-->TreeSchemaIdentifiers
-        treeMap--Values-->TreeStoredSchema
+        treeMap--Values-->TreeNodeStoredSchema
         tree[Tree]
         tree-.->TreeSchemaIdentifiers
         tree-.->GlobalFieldKeys
@@ -34,7 +34,7 @@ graph LR;
         vfieldMap--Values-->vFieldSchema["Global FieldStoredSchema"]
         view-->vtreeMap["Tree Schema Map"]
         vtreeMap--Keys-->vTreeSchemaIdentifiers["TreeSchemaIdentifiers"]
-        vtreeMap--Values-->vTreeSchema["TreeStoredSchema"]
+        vtreeMap--Values-->vTreeSchema["TreeNodeStoredSchema"]
     end
 ```
 

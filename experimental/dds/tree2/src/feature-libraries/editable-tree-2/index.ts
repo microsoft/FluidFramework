@@ -39,6 +39,8 @@ export {
 	SharedTreeObject,
 	is,
 	ProxyRoot,
+	node,
+	SharedTreeNode,
 } from "./proxies";
 export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
 

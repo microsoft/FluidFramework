@@ -10,7 +10,7 @@ import {
 	ImplicitFieldSchema,
 	ProxyField,
 	ProxyRoot,
-	DocumentSchema,
+	TreeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
 } from "../../../feature-libraries";
@@ -22,7 +22,7 @@ import { TestTreeProviderLite, forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 import { SchemaBuilder } from "../../../domains";
 
-export function getReadonlyContext(forest: IEditableForest, schema: DocumentSchema): Context {
+export function getReadonlyContext(forest: IEditableForest, schema: TreeSchema): Context {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
 	return getTreeContext(
@@ -51,10 +51,10 @@ export function createTree(): ISharedTree {
 }
 
 export function createTreeView<TRoot extends FieldSchema>(
-	schema: DocumentSchema<TRoot>,
+	schema: TreeSchema<TRoot>,
 	initialTree: any,
 ): ISharedTreeView {
-	return createTree().schematize({
+	return createTree().schematizeView({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree,
 		schema,
@@ -69,13 +69,13 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 		scope: `test.schema.${Math.random().toString(36).slice(2)}`,
 	});
 	const root = fn(builder);
-	return builder.toDocumentSchema(root);
+	return builder.intoSchema(root);
 }
 
 export function itWithRoot<TRoot extends FieldSchema>(
 	title: string,
-	schema: DocumentSchema<TRoot>,
-	initialTree: ProxyRoot<DocumentSchema<TRoot>, "javaScript">,
+	schema: TreeSchema<TRoot>,
+	initialTree: ProxyRoot<TreeSchema<TRoot>, "javaScript">,
 	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {
