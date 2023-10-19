@@ -208,11 +208,11 @@ export class GitRepo {
 	 * Returns an array containing all the modified files in the repo.
 	 */
 	public async getModifiedFiles(): Promise<string[]> {
-		const results = await this.exec(
-			`ls-files -mo --exclude-standard --deduplicate`,
-			`get modified files`,
-		);
-		return results.split("\n").filter((t) => t !== undefined && t !== "" && t !== null);
+		const results = await this.exec(`status --porcelain`, `get modified files`);
+		return results
+			.split("\n")
+			.filter((t) => t !== "" && !t.startsWith(" D "))
+			.map((t) => t.substring(3));
 	}
 
 	/**
