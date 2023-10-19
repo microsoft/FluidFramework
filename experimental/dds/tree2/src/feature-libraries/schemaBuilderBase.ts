@@ -18,6 +18,7 @@ import {
 	FlexList,
 	Unenforced,
 	Any,
+	MapFieldSchema,
 } from "./typed-schema";
 import { FieldKind } from "./modular-schema";
 
@@ -231,12 +232,12 @@ export class SchemaBuilderBase<
 	/**
 	 * Define (and add to this library) a {@link TreeSchema} for a {@link MapNode}.
 	 */
-	public map<Name extends TName, const T extends ImplicitFieldSchema>(
+	public map<Name extends TName, const T extends MapFieldSchema>(
 		name: Name,
 		fieldSchema: T,
-	): TreeSchema<`${TScope}.${Name}`, { mapFields: NormalizeField<T, TDefaultKind> }> {
+	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
 		const schema = new TreeSchema(this, this.scoped(name), {
-			mapFields: this.normalizeField(fieldSchema),
+			mapFields: fieldSchema,
 		});
 		this.addNodeSchema(schema);
 		return schema;
@@ -250,11 +251,11 @@ export class SchemaBuilderBase<
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public mapRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(
+	public mapRecursive<Name extends TName, const T extends Unenforced<MapFieldSchema>>(
 		name: Name,
 		t: T,
 	): TreeSchema<`${TScope}.${Name}`, { mapFields: T }> {
-		return this.map(name, t as unknown as ImplicitFieldSchema) as unknown as TreeSchema<
+		return this.map(name, t as unknown as MapFieldSchema) as unknown as TreeSchema<
 			`${TScope}.${Name}`,
 			{ mapFields: T }
 		>;

@@ -159,6 +159,7 @@ export {
 	validateStructFieldName,
 	Unenforced,
 	AllowedTypeSet,
+	MapFieldSchema,
 } from "./typed-schema";
 
 export {
@@ -170,6 +171,7 @@ export {
 	NormalizeAllowedTypes,
 	SchemaBuilderOptions,
 	normalizeAllowedTypes,
+	normalizeField,
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
