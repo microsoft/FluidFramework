@@ -55,7 +55,8 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		})(),
 		checkFileExists: Flags.boolean({
 			description: "Check if the file path exists",
-			default: false,
+			default: true,
+			allowNo: true,
 			required: true,
 		}),
 		...PackageCommand.flags,

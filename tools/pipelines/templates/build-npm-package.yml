@@ -249,6 +249,7 @@ stages:
                   echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
                   exit -1;
                 fi
+              fi
 
               if [[ "$(release)" == "prerelease" ]]; then
                 if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then

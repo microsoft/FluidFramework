@@ -247,9 +247,9 @@ USAGE
     client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
-  --checkFileExists      (required) Check if the file path exists
-  --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
-  --types=<value>        (required) Which .d.ts types to include in the published package.
+  --[no-]checkFileExists  (required) Check if the file path exists
+  --concurrency=<value>   [default: 25] The number of tasks to execute concurrently.
+  --types=<value>         (required) Which .d.ts types to include in the published package.
 
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...  Run on all child packages within the specified release groups. This does not include
