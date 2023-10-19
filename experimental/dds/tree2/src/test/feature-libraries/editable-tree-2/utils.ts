@@ -54,7 +54,7 @@ export function createTreeView<TRoot extends FieldSchema>(
 	schema: TreeSchema<TRoot>,
 	initialTree: any,
 ): ISharedTreeView {
-	return createTree().schematize({
+	return createTree().schematizeView({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree,
 		schema,

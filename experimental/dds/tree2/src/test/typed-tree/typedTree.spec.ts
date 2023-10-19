@@ -4,10 +4,9 @@
  */
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { ForestType } from "../../shared-tree";
+import { ForestType, TypedTreeFactory } from "../../shared-tree";
 import { AllowedUpdateType } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { TypedTreeFactory } from "../../typed-tree";
 import { leaf, SchemaBuilder } from "../../domains";
 
 describe("TypedTree", () => {
