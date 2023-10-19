@@ -85,7 +85,6 @@ export {
 } from "./core";
 
 export {
-	Brand,
 	Opaque,
 	extractFromOpaque,
 	brand,

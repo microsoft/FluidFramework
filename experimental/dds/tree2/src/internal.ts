@@ -22,6 +22,7 @@ export {
 	isAny,
 	RestrictiveReadonlyRecord,
 	BrandedKeyContent,
+	Brand,
 } from "./util";
 
 export {

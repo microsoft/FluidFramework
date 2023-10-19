@@ -222,7 +222,7 @@ export interface BindTree<T = BindTreeDefault> extends PathStep {
 export type BindTreeDefault = BindTree;
 
 // @beta
-export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
+type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @alpha
 export function brand<T extends Brand<any, string>>(value: T extends BrandedType<infer ValueType, string> ? ValueType : never): T;
@@ -948,6 +948,7 @@ declare namespace InternalTypes {
         isAny,
         RestrictiveReadonlyRecord,
         BrandedKeyContent,
+        Brand,
         NormalizeField_2 as NormalizeField,
         NormalizeAllowedTypes,
         Required_2 as Required,

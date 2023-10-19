@@ -22,7 +22,7 @@ import { Invariant, isAny } from "./typeCheck";
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 /**
- * Helper for {@link Brand}.
+ * Helper for `Brand`.
  * This is split out into its own as that's the only way to:
  * - have doc comments for the field.
  * - make the field protected (so you don't accidentally try and read it).
@@ -42,7 +42,7 @@ export abstract class BrandedType<ValueType, Name extends string> {
 	/**
 	 * Compile time only marker to make type checking more strict.
 	 * This field will not exist at runtime and accessing it is invalid.
-	 * See {@link Brand} for details.
+	 * See `Brand` for details.
 	 */
 	protected readonly _type_brand!: Name;
 
@@ -120,7 +120,7 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
 }
 
 /**
- * Adds a type {@link Brand} to a value.
+ * Adds a type `Brand` to a value.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
  * @alpha
@@ -132,7 +132,7 @@ export function brand<T extends Brand<any, string>>(
 }
 
 /**
- * Adds a type {@link Brand} to a value, returning it as a {@link Opaque} handle.
+ * Adds a type `Brand` to a value, returning it as a {@link Opaque} handle.
  *
  * Only do this when specifically allowed by the requirements of the type being converted to.
  * @alpha
