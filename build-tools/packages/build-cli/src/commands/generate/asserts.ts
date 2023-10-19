@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import { PackageCommand } from "../../BasePackageCommand";
@@ -24,6 +25,8 @@ const newAssetFiles = new Set<SourceFile>();
 const codeToMsgMap = new Map<string, string>();
 let maxShortCode = -1;
 
+const defaultAssertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]]);
+
 export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 	static readonly summary =
 		"Tags asserts by replacing their message with a unique numerical value.";
@@ -41,14 +44,20 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 		...PackageCommand.flags,
 	};
 
+	private assertionFunctions: ReadonlyMap<string, number> | undefined;
 	private readonly errors: string[] = [];
 
 	protected async selectAndFilterPackages(): Promise<void> {
 		await super.selectAndFilterPackages();
 
 		const context = await this.getContext();
-		const { policy } = getFluidBuildConfig(context.gitRepo.resolvedRoot);
-		const assertTaggingEnabledPaths = policy?.assertTaggingEnabledPaths ?? [];
+		const { assertTagging } = getFluidBuildConfig(context.gitRepo.resolvedRoot);
+		const assertTaggingEnabledPaths = assertTagging?.enabledPaths ?? [];
+
+		this.assertionFunctions =
+			assertTagging?.assertionFunctions === undefined
+				? defaultAssertionFunctions
+				: new Map<string, number>(Object.entries(assertTagging.assertionFunctions));
 
 		// Further filter packages based on the path regex
 		const before = this.filteredPackages?.length ?? 0;
@@ -100,8 +109,7 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 	}
 
 	private collectAssertData(tsconfigPath: string): void {
-
-    // TODO: this can probably be removed now
+		// TODO: this can probably be removed now
 		if (tsconfigPath.includes("test")) {
 			return;
 		}
@@ -118,7 +126,8 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 		// walk all the files in the project
 		for (const sourceFile of project.getSourceFiles()) {
 			// walk the assert message params in the file
-			for (const msg of getAssertMessageParams(sourceFile)) {
+			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
+			for (const msg of getAssertMessageParams(sourceFile, this.assertionFunctions)) {
 				const nodeKind = msg.getKind();
 				switch (nodeKind) {
 					// If it's a number, validate it's a shortcode
@@ -247,7 +256,8 @@ export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
 		for (const s of newAssetFiles) {
 			// another policy may have changed the file, so reload it
 			s.refreshFromFileSystemSync();
-			for (const msg of getAssertMessageParams(s)) {
+			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
+			for (const msg of getAssertMessageParams(s, this.assertionFunctions)) {
 				// here we only want to look at those messages that are strings,
 				// as we validated existing short codes above
 				if (isStringLiteral(msg)) {
@@ -301,7 +311,6 @@ function getCallsiteString(msg: Node): string {
  * TODO:
  * This should be moved into a configuration file.
  */
-const assertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]]);
 
 /**
  * Given a source file, this function will look for all assert functions contained in it and return the message parameters.
@@ -310,7 +319,10 @@ const assertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]])
  * @param sourceFile - The file to get the assert message parameters for.
  * @returns An array of all the assert message parameters
  */
-function getAssertMessageParams(sourceFile: SourceFile): Node[] {
+function getAssertMessageParams(
+	sourceFile: SourceFile,
+	assertionFunctions: ReadonlyMap<string, number>,
+): Node[] {
 	const calls = sourceFile.getDescendantsOfKind(SyntaxKind.CallExpression);
 	const messageArgs: Node[] = [];
 	for (const call of calls) {

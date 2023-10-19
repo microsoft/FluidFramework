@@ -238,17 +238,23 @@ module.exports = {
 			"fluidframework-docs",
 			"tinylicious",
 		],
-    assertTaggingEnabledPaths: [
-      /^common\/lib\/common-utils/i,
-      /^experimental/i,
-      /^packages/i,
-      /^server\/routerlicious\/packages\/protocol-base/i,
-    ],
 		fluidBuildTasks: {
 			tsc: {
 				ignoreTasks: ["tsc:watch"],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
+		},
+	},
+
+	assertTagging: {
+		enabledPaths: [
+			/^common\/lib\/common-utils/i,
+			/^experimental/i,
+			/^packages/i,
+			/^server\/routerlicious\/packages\/protocol-base/i,
+		],
+		assertionFunctions: {
+			assert: 1,
 		},
 	},
 
