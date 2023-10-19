@@ -65,7 +65,7 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 			description:
 				"Output file to write the list of packages to. If not specified, the list will be written to stdout.",
 			required: false,
-			exists: false
+			exists: false,
 		}),
 	};
 
