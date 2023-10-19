@@ -33,6 +33,7 @@ export async function runWithRetry<T>(
 		retryAfterInterval * 2 ** numRetries,
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
+	shouldIgnoreInitialSuccess = false,
 ): Promise<T | undefined> {
 	let result: T | undefined;
 	let retryCount = 0;
@@ -100,7 +101,9 @@ export async function runWithRetry<T>(
 			metric.setProperty("maxRetries", maxRetries);
 			metric.setProperty("retryAfterMs", retryAfterMs);
 			if (success) {
-				metric.success("runWithRetry succeeded");
+				if (!shouldIgnoreInitialSuccess || retryCount > 0) {
+					metric.success("runWithRetry succeeded");
+				}
 			} else {
 				metric.error("runWithRetry failed", metricError);
 			}
