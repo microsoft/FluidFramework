@@ -109,7 +109,15 @@ function cellDeltaFromMark<TNodeChange>(
 				if (isNewAttach(mark)) {
 					assert(mark.cellId !== undefined, "Active insert mark must have CellId");
 					assert(mark.content !== undefined, "New insert must have content");
-					const cursors = mark.content.map(singleTextCursor);
+					// Since these cursors are fieldCursors, round trip them back into node cursors.
+					const cursors = mark.content.map((encodedChunk) =>
+						decode(encodedChunk).cursor(),
+					);
+					const nodeCursors: ITreeCursorSynchronous[] = [];
+					cursors.forEach((cursor) => {
+						nodeCursors.push(...mapCursorField(cursor, (c) => cursor.fork()));
+					});
+
 					const buildId: Delta.DetachedNodeId = {
 						minor: mark.cellId.localId,
 					};
@@ -119,7 +127,7 @@ function cellDeltaFromMark<TNodeChange>(
 					const insertMark: Mutable<Delta.Insert> = {
 						type: Delta.MarkType.Insert,
 						buildId,
-						content: cursors,
+						content: nodeCursors,
 					};
 					if (mark.transientDetach !== undefined) {
 						const majorForTransient = mark.transientDetach.revision ?? revision;
