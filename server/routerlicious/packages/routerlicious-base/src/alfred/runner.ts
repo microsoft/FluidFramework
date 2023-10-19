@@ -113,25 +113,28 @@ export class AlfredRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
-			Lumberjack.newLumberMetric("WebSocket Connections", {
+			const metric = Lumberjack.newLumberMetric("WebSocket Connections", {
 				origin: "upgrade",
 				connections: socket.server._connections,
-			}).success("Connection Upgraded");
+			});
+			metric.success("Connection Upgraded");
 			socket.on("close", (hadError: boolean) => {
-				Lumberjack.newLumberMetric("WebSocket Connections", {
+				const closeMetric = Lumberjack.newLumberMetric("WebSocket Connections", {
 					origin: "close",
 					connections: socket.server._connections,
 					hadError: hadError.toString(),
-				}).success("Connection closed", hadError ? LogLevel.Error : LogLevel.Info);
+				});
+				closeMetric.success("Connection closed", hadError ? LogLevel.Error : LogLevel.Info);
 			});
 			socket.on("error", (error) => {
-				Lumberjack.newLumberMetric("WebSocket Connections", {
+				const errorMetric = Lumberjack.newLumberMetric("WebSocket Connections", {
 					origin: "error",
 					connections: socket.server._connections,
 					bytesRead: socket.bytesRead,
 					bytesWritten: socket.bytesWritten,
 					error: error.toString(),
-				}).success("Connection error", LogLevel.Error);
+				});
+				errorMetric.success("Connection error", LogLevel.Error);
 			});
 		});
 
