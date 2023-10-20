@@ -129,7 +129,7 @@ export interface TreeFieldStoredSchema {
  * @remarks
  * This mainly show up in:
  * 1. The root default field for documents.
- * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
+ * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  *
  * @alpha
  */

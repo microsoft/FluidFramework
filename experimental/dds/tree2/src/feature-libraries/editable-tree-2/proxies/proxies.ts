@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
+import { assert } from "@fluidframework/core-utils";
+import { brand, fail } from "../../../util";
 import {
 	AllowedTypes,
 	FieldNodeSchema,
@@ -13,7 +14,7 @@ import {
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
@@ -26,8 +27,7 @@ import {
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
-import { getBoxedField } from "../lazyTree";
-import { LazyEntity } from "../lazyEntity";
+import { LazyObjectNode, getBoxedField } from "../lazyTree";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
 import { getFactoryContent } from "./objectFactory";
 import { createNodeApi, nodeSym } from "./node";
@@ -133,7 +133,7 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 		return treeNode.value as ProxyNode<TSchema>;
 	}
 	const isFieldNode = schemaIsFieldNode(schema);
-	if (isFieldNode || schemaIsStruct(schema)) {
+	if (isFieldNode || schemaIsObjectNode(schema)) {
 		const cachedProxy = getCachedProxy(treeNode);
 		if (cachedProxy !== undefined) {
 			return cachedProxy as ProxyNode<TSchema>;
@@ -184,8 +184,10 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 					return false;
 				}
 
-				// TODO: Is it safe to assume 'content' is a LazyEntity?
-				const field = getBoxedField(content as LazyEntity, key as FieldKey, fieldSchema);
+				// TODO: Is it safe to assume 'content' is a LazyObjectNode?
+				assert(content instanceof LazyObjectNode, "invalid content");
+				assert(typeof key === "string", "invalid key");
+				const field = getBoxedField(content, brand(key), fieldSchema);
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {

@@ -45,7 +45,7 @@ export {
 	FactoryTreeSchema,
 	addFactory,
 } from "./proxies";
-export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
+export { createRawObjectNode, rawObjectErrorMessage, nodeContent } from "./rawObjectNode";
 
 export {
 	visitBipartiteIterableTree,
