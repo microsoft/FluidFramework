@@ -452,15 +452,10 @@ export interface DeltaVisitor {
     create(content: Delta.ProtoNodes, destination: FieldKey): void;
     destroy(detachedField: FieldKey, count: number): void;
     detach(source: Range_2, destination: FieldKey): void;
-    // (undocumented)
     enterField(key: FieldKey): void;
-    // (undocumented)
     enterNode(index: NodeIndex): void;
-    // (undocumented)
     exitField(key: FieldKey): void;
-    // (undocumented)
     exitNode(index: NodeIndex): void;
-    // (undocumented)
     free(): void;
     replace(newContentSource: FieldKey, range: Range_2, oldContentDestination: FieldKey): void;
 }
@@ -822,7 +817,6 @@ export interface IDefaultEditBuilder {
 
 // @alpha
 export interface IEditableForest extends IForestSubscription {
-    // (undocumented)
     acquireVisitor(): DeltaVisitor;
     readonly anchors: AnchorSet;
 }
