@@ -124,7 +124,10 @@ export class AlfredRunner implements IRunner {
 					connections: socket.server._connections,
 					hadError: hadError.toString(),
 				});
-				closeMetric.success("WebSockets: connection closed", hadError ? LogLevel.Error : LogLevel.Info);
+				closeMetric.success(
+					"WebSockets: connection closed",
+					hadError ? LogLevel.Error : LogLevel.Info,
+				);
 			});
 			socket.on("error", (error) => {
 				const errorMetric = Lumberjack.newLumberMetric("WebSocket Connections", {
