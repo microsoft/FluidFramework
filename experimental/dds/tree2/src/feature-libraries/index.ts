@@ -217,6 +217,7 @@ export {
 } from "./default-field-kinds";
 
 export {
+	TreeEvent,
 	UntypedField,
 	UntypedTree,
 	UntypedTreeContext,
