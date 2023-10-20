@@ -1819,11 +1819,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const pendingMessageIds = this.pendingKeys.get(op.key);
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
-		if (
-			pendingMessageIds !== undefined &&
-			pendingMessageIds[0] === localOpMetadata.pendingMessageId
-		) {
-			pendingMessageIds.shift();
+		if (pendingMessageIds !== undefined) {
+			const index = pendingMessageIds.findIndex(
+				(i) => i === localOpMetadata.pendingMessageId,
+			);
+			if (index === -1) {
+				return;
+			}
+			pendingMessageIds.splice(index, 1);
 			if (pendingMessageIds.length === 0) {
 				this.pendingKeys.delete(op.key);
 			}
