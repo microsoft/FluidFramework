@@ -253,6 +253,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 
 /**
  * Defines list of properties expected for getPendingLocalState
+ * TODO: https://dev.azure.com/fluidframework/internal/_workitems/edit/5993
  * @beta
  */
 export interface IGetPendingLocalStateProps {
