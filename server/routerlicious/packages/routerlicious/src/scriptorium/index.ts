@@ -39,8 +39,8 @@ export async function create(
 	const deletionIntervalMs = config.get("mongo:deletionIntervalMs") as number;
 
 	const enableTelemetry = (config.get("scriptorium:enableTelemetry") as boolean) ?? false;
-	const shouldIgnoreInitialSuccess =
-		(config.get("scriptorium:shouldIgnoreInitialSuccess") as boolean) ?? false;
+	const shouldLogInitialSuccessVerbose =
+		(config.get("scriptorium:shouldLogInitialSuccessVerbose") as boolean) ?? false;
 	const maxDbBatchSize = config.get("scriptorium:maxDbBatchSize") as number;
 	const restartOnCheckpointFailure =
 		(config.get("scriptorium:restartOnCheckpointFailure") as boolean) ?? true;
@@ -123,6 +123,6 @@ export async function create(
 		enableTelemetry,
 		maxDbBatchSize,
 		restartOnCheckpointFailure,
-		shouldIgnoreInitialSuccess,
+		shouldLogInitialSuccessVerbose,
 	});
 }

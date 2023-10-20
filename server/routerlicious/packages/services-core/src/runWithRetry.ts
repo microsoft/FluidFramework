@@ -25,7 +25,7 @@ import { NetworkError } from "@fluidframework/server-services-client";
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
- * @param shouldIgnoreInitialSuccess - whether to log successful telemetry as verbose level if there is no retry, default is false
+ * @param shouldLogInitialSuccessVerbose - whether to log successful telemetry as verbose level if there is no retry, default is false
  */
 export async function runWithRetry<T>(
 	api: () => Promise<T>,
@@ -39,7 +39,7 @@ export async function runWithRetry<T>(
 		retryAfterInterval * 2 ** numRetries,
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
-	shouldIgnoreInitialSuccess = false,
+	shouldLogInitialSuccessVerbose = false,
 ): Promise<T | undefined> {
 	let result: T | undefined;
 	let retryCount = 0;
@@ -107,9 +107,9 @@ export async function runWithRetry<T>(
 			metric.setProperty("maxRetries", maxRetries);
 			metric.setProperty("retryAfterMs", retryAfterMs);
 			if (success) {
-				// If we turn on the flag of shouldIgnoreInitialSuccess and there is no retry,
+				// If we turn on the flag of shouldLogInitialSuccessVerbose and there is no retry,
 				// log as verbose level, otherwise log as info level. By default the flag is off.
-				if (shouldIgnoreInitialSuccess && retryCount === 0) {
+				if (shouldLogInitialSuccessVerbose && retryCount === 0) {
 					metric.success("runWithRetry succeeded", LogLevel.Verbose);
 				} else {
 					metric.success("runWithRetry succeeded");
