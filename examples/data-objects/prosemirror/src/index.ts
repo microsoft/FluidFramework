@@ -59,22 +59,23 @@ class ProseMirrorRuntimeFactory extends RuntimeFactoryHelper {
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<ContainerRuntime> {
-		const registry = new Map<string, Promise<IFluidDataStoreFactory>>([
+		const registryEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 			[smde.type, Promise.resolve(smde)],
 		]);
 
-		const runtime = await ContainerRuntime.load(
+		const runtime = await ContainerRuntime.loadRuntime({
 			context,
-			registry,
+			registryEntries,
 			// eslint-disable-next-line import/no-deprecated
-			buildRuntimeRequestHandler(
+			requestHandler: buildRuntimeRequestHandler(
 				// eslint-disable-next-line import/no-deprecated
 				mountableViewRequestHandler(MountableView, [viewRequestHandler]),
 			),
-			undefined, // runtimeOptions
-			undefined, // containerScope
+			provideEntryPoint: () => {
+				throw new Error("TODO: AB#4990");
+			},
 			existing,
-		);
+		});
 
 		return runtime;
 	}

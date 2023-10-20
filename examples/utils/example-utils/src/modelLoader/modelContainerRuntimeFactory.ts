@@ -37,15 +37,17 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const runtime = await ContainerRuntime.load(
+		const runtime = await ContainerRuntime.loadRuntime({
 			context,
-			this.registryEntries,
+			registryEntries: this.registryEntries,
 			// eslint-disable-next-line import/no-deprecated
-			makeModelRequestHandler(this.createModel.bind(this)),
-			this.runtimeOptions,
-			undefined, // scope
+			requestHandler: makeModelRequestHandler(this.createModel.bind(this)),
+			provideEntryPoint: () => {
+				throw new Error("TODO: AB#4990");
+			},
+			runtimeOptions: this.runtimeOptions,
 			existing,
-		);
+		});
 
 		if (!existing) {
 			await this.containerInitializingFirstTime(runtime);
