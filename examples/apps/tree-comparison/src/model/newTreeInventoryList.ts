@@ -6,7 +6,9 @@
 import {
 	AllowedUpdateType,
 	ForestType,
+	SchemaBuilder,
 	typeboxValidator,
+	Typed,
 	TypedTreeChannel,
 	TypedTreeFactory,
 } from "@fluid-experimental/tree2";
@@ -16,11 +18,33 @@ import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 import { InventoryItem } from "./inventoryItem";
-import { InventoryNode, InventoryField, InventoryItemNode, schema } from "./schema";
 
-const factory = new TypedTreeFactory({
-	// REV: I'm not exactly sure why a validator should be passed here?  Like what it's used for,
-	// so it's hard to know what a "correct" choice would be as a result.
+const builder = new SchemaBuilder({ scope: "inventory app" });
+
+const inventoryItemSchema = builder.struct("Contoso:InventoryItem-1.0.0", {
+	id: builder.string,
+	name: builder.string,
+	quantity: builder.number,
+});
+type InventoryItemNode = Typed<typeof inventoryItemSchema>;
+
+// REV: Building this up as a series of builder invocations makes it hard to read the schema.
+// Would be nice if instead we could define some single big Serializable or similar that laid the
+// schema out and then pass that in.
+// TODO: Convert this to use builder.list() rather than builder.sequence when ready.
+const inventorySchema = builder.struct("Contoso:Inventory-1.0.0", {
+	inventoryItems: builder.sequence(inventoryItemSchema),
+});
+type InventoryNode = Typed<typeof inventorySchema>;
+
+// REV: The root inventoryFieldSchema feels extra to me.  Is there a way to omit it?  Something like
+// builder.toDocumentSchema(inventorySchema)
+const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
+type InventoryField = Typed<typeof inventoryFieldSchema>;
+
+const schema = builder.toDocumentSchema(inventoryFieldSchema);
+
+const newTreeFactory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,
 	// REV: I copied this from another example but I have no idea what it means - documentation is
 	// self-referencing.
@@ -32,7 +56,7 @@ const factory = new TypedTreeFactory({
 
 const sharedTreeKey = "sharedTree";
 
-export class TreeInventoryList extends DataObject implements IInventoryList {
+export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	private _sharedTree: TypedTreeChannel | undefined;
 	private get sharedTree(): TypedTreeChannel {
 		if (this._sharedTree === undefined) {
@@ -52,8 +76,8 @@ export class TreeInventoryList extends DataObject implements IInventoryList {
 	public readonly addItem = (name: string, quantity: number) => {
 		this.inventory.inventoryItems.insertAtEnd([
 			{
-				// REV: I think this might be a good place to use the SharedTree ID generation?
-				// If so, could use a pointer to how to do that?
+				// In a real-world scenario, this is probably a known unique inventory ID (rather than
+				// randomly generated).  Randomly generating here just for convenience.
 				id: uuid(),
 				name,
 				quantity,
@@ -66,7 +90,10 @@ export class TreeInventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(undefined, factory.type) as TypedTreeChannel;
+		this._sharedTree = this.runtime.createChannel(
+			undefined,
+			newTreeFactory.type,
+		) as TypedTreeChannel;
 		this.root.set(sharedTreeKey, this._sharedTree.handle);
 	}
 
@@ -180,9 +207,9 @@ export class TreeInventoryList extends DataObject implements IInventoryList {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const TreeInventoryListFactory = new DataObjectFactory<TreeInventoryList>(
-	"tree-inventory-list",
-	TreeInventoryList,
-	[factory],
+export const NewTreeInventoryListFactory = new DataObjectFactory<NewTreeInventoryList>(
+	"new-tree-inventory-list",
+	NewTreeInventoryList,
+	[newTreeFactory],
 	{},
 );

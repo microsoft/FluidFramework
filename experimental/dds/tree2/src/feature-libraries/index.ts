@@ -159,7 +159,9 @@ export {
 	validateStructFieldName,
 	Unenforced,
 	AllowedTypeSet,
+	markEager,
 	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 
 export {
@@ -267,6 +269,8 @@ export {
 	SharedTreeObject,
 	is,
 	ProxyRoot,
+	node,
+	SharedTreeNode,
 	Typed,
 } from "./editable-tree-2";
 

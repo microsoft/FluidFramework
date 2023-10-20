@@ -11,7 +11,7 @@ export interface IDebugViewProps {
 	model: IInventoryListAppModel;
 }
 
-export const DebugView: React.FC<IDebugViewProps> = (props: IDebugViewProps) => {
+export const DebugView: React.FC<IDebugViewProps> = ({ model }: IDebugViewProps) => {
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>Debug info</h2>

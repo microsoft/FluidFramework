@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaAware } from "../..";
+import { EditableTreeEvents, SchemaAware } from "../..";
 import { RestrictiveReadonlyRecord } from "../../../util";
 import { FieldKinds } from "../../default-field-kinds";
 import { FieldKind } from "../../modular-schema";
@@ -25,6 +25,21 @@ import {
 	Sequence,
 	AssignableFieldKinds,
 } from "../editableTreeTypes";
+import { nodeSym } from "./node";
+
+/**
+ * An object-like SharedTree node.  Includes objects, lists, and maps.
+ * @alpha
+ */
+export interface SharedTreeNode {
+	// TODO: Make [nodeSym] non-optional when we have factory functions.
+	[nodeSym]?: {
+		on<K extends keyof EditableTreeEvents>(
+			eventName: K,
+			listener: EditableTreeEvents[K],
+		): () => void;
+	};
+}
 
 /**
  * Implements 'readonly T[]' and the list mutation APIs.
@@ -33,7 +48,8 @@ import {
 export interface SharedTreeList<
 	TTypes extends AllowedTypes,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
+> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>>,
+		SharedTreeNode {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -160,7 +176,7 @@ export interface SharedTreeList<
 export type SharedTreeObject<
 	TSchema extends StructSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = ObjectFields<TSchema["structFieldsObject"], API>;
+> = ObjectFields<TSchema["structFieldsObject"], API> & SharedTreeNode;
 
 /**
  * Helper for generating the properties of a {@link SharedTreeObject}.
@@ -189,7 +205,8 @@ export type ObjectFields<
  * A map of string keys to tree objects.
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>> &
+	SharedTreeNode;
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.

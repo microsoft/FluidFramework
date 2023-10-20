@@ -81,6 +81,7 @@ export {
 	MapTree,
 	LocalCommitSource,
 	forbiddenFieldKindIdentifier,
+	StoredSchemaCollection,
 } from "./core";
 
 export {
@@ -279,7 +280,10 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	is,
+	node,
+	SharedTreeNode,
 	Typed,
+	SchemaCollection,
 } from "./feature-libraries";
 
 export {
