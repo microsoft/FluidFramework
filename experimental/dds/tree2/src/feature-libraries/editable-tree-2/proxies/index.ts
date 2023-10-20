@@ -14,4 +14,7 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	ProxyRoot,
+	SharedTreeNode,
 } from "./types";
+export { SharedTreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
+export { node } from "./node";

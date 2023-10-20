@@ -4,15 +4,15 @@
  */
 
 import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
-import { FieldKey, TreeSchemaIdentifier } from "../../core";
+import { FieldKey, TreeNodeSchemaIdentifier } from "../../core";
 import { BrandedType, capitalize } from "../../util";
-import { StructSchema, TreeSchema } from "../typed-schema";
+import { ObjectNodeSchema, TreeNodeSchema } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { TreeContext } from "./context";
 import {
 	FlexibleNodeContent,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TreeField,
 	TreeStatus,
 	TypedNode,
@@ -34,12 +34,12 @@ export const nodeContent = Symbol();
  *
  * @privateRemarks TODO: Generate these from schema, and use them to support `=`.
  */
-export function createRawStruct<TSchema extends StructSchema>(
+export function createRawStruct<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 	content: FlexibleNodeContent<[TSchema]>,
-): RawStruct<TSchema> & StructTyped<TSchema> {
+): RawStruct<TSchema> & ObjectNodeTyped<TSchema> {
 	const node = new RawStruct(schema, content);
-	for (const [key] of schema.structFields) {
+	for (const [key] of schema.objectNodeFields) {
 		Object.defineProperty(node, key, {
 			get: () => rawStructError(),
 			set: () => rawStructError(),
@@ -51,10 +51,10 @@ export function createRawStruct<TSchema extends StructSchema>(
 			enumerable: false,
 		});
 	}
-	return node as RawStruct<TSchema> & StructTyped<TSchema>;
+	return node as RawStruct<TSchema> & ObjectNodeTyped<TSchema>;
 }
 
-class RawStruct<TSchema extends StructSchema> implements Struct {
+class RawStruct<TSchema extends ObjectNodeSchema> implements ObjectNode {
 	public constructor(
 		public readonly schema: TSchema,
 		content: FlexibleNodeContent<[TSchema]>,
@@ -65,7 +65,7 @@ class RawStruct<TSchema extends StructSchema> implements Struct {
 	// Use a symbol here so that it will never collide with a field name
 	public readonly [nodeContent]: FlexibleNodeContent<[TSchema]>;
 
-	public get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		return this.schema.name;
 	}
 
@@ -92,7 +92,7 @@ class RawStruct<TSchema extends StructSchema> implements Struct {
 		return rawStructError();
 	}
 
-	public is<TSchemaCheck extends TreeSchema>(
+	public is<TSchemaCheck extends TreeNodeSchema>(
 		schema: TSchemaCheck,
 	): this is TypedNode<TSchemaCheck> {
 		return rawStructError();

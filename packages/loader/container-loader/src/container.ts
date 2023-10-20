@@ -587,6 +587,7 @@ export class Container
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private baseSnapshot?: ISnapshotTree;
 	private baseSnapshotBlobs?: ISerializableBlobContents;
+	private readonly _containerId: string;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -822,6 +823,8 @@ export class Container
 		const clientType = `${interactive ? "interactive" : "noninteractive"}${
 			type !== undefined && type !== "" ? `/${type}` : ""
 		}`;
+
+		this._containerId = uuid();
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
@@ -829,7 +832,7 @@ export class Container
 			properties: {
 				all: {
 					clientType, // Differentiating summarizer container from main container
-					containerId: uuid(),
+					containerId: this._containerId,
 					docId: () => this.resolvedUrl?.id,
 					containerAttachState: () => this._attachState,
 					containerLifecycleState: () => this._lifecycleState,
@@ -1276,7 +1279,7 @@ export class Container
 							}, // progress
 						);
 					}
-					await this.storageAdapter.connectToService(this.service);
+					this.storageAdapter.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
@@ -1586,14 +1589,7 @@ export class Container
 			this.connectToDeltaStream(connectionArgs);
 		}
 
-		if (!pendingLocalState) {
-			await this.storageAdapter.connectToService(this.service);
-		} else {
-			// if we have pendingLocalState we can load without storage; don't wait for connection
-			this.storageAdapter.connectToService(this.service).catch((error) => {
-				this.close(error);
-			});
-		}
+		this.storageAdapter.connectToService(this.service);
 
 		this._attachState = AttachState.Attached;
 
@@ -2020,6 +2016,7 @@ export class Container
 		client.details.environment = [
 			client.details.environment,
 			` loaderVersion:${pkgVersion}`,
+			` containerId:${this._containerId}`,
 		].join(";");
 		return client;
 	}

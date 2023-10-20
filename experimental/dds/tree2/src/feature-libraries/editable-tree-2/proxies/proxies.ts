@@ -7,9 +7,9 @@ import { fail } from "../../../util";
 import {
 	AllowedTypes,
 	FieldNodeSchema,
-	FieldSchema,
-	StructSchema,
-	TreeSchema,
+	TreeFieldSchema,
+	ObjectNodeSchema,
+	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -29,6 +29,8 @@ import { FieldKey } from "../../../core";
 import { getBoxedField } from "../lazyTree";
 import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
+import { getFactoryContent } from "./objectFactory";
+import { createNodeApi, nodeSym } from "./node";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
 const treeNodeSym = Symbol("TreeNode");
@@ -53,7 +55,7 @@ const proxyCacheSym = Symbol("ProxyCache");
 /** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
 function cacheProxy(
 	target: TreeNode,
-	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<ObjectNodeSchema>,
 ): void {
 	Object.defineProperty(target, proxyCacheSym, {
 		value: proxy,
@@ -64,15 +66,15 @@ function cacheProxy(
 }
 
 /** If there has already been a proxy created to wrap the given tree node, return it */
-function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeSchema> | undefined {
-	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeSchema> })[proxyCacheSym];
+function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefined {
+	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeNodeSchema> })[proxyCacheSym];
 }
 
 /**
  * Checks if the given object is a {@link SharedTreeObject}
  * @alpha
  */
-export function is<TSchema extends StructSchema>(
+export function is<TSchema extends ObjectNodeSchema>(
 	x: unknown,
 	schema: TSchema,
 ): x is SharedTreeObject<TSchema> {
@@ -81,12 +83,12 @@ export function is<TSchema extends StructSchema>(
 }
 
 /** Retrieve the associated proxy for the given field. */
-export function getProxyForField<TSchema extends FieldSchema>(
+export function getProxyForField<TSchema extends TreeFieldSchema>(
 	field: TypedField<TSchema>,
 ): ProxyField<TSchema> {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.required>>;
+			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.required>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -94,7 +96,7 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			return getProxyForNode(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.optional>>;
+			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.optional>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -119,7 +121,7 @@ export function getProxyForField<TSchema extends FieldSchema>(
 	}
 }
 
-export function getProxyForNode<TSchema extends TreeSchema>(
+export function getProxyForNode<TSchema extends TreeNodeSchema>(
 	treeNode: TreeNode,
 ): ProxyNode<TSchema> {
 	const schema = treeNode.schema;
@@ -145,10 +147,12 @@ export function getProxyForNode<TSchema extends TreeSchema>(
 	fail("unrecognized node kind");
 }
 
-export function createObjectProxy<TSchema extends StructSchema, TTypes extends AllowedTypes>(
+export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes extends AllowedTypes>(
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
+	const nodeApi = createNodeApi(content);
+
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
 	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
@@ -164,14 +168,17 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				if (field !== undefined) {
 					return getProxyForField(field);
 				}
-				// TODO: Do this a better way.
-				if (key === treeNodeSym) {
-					return { schema };
+				switch (key) {
+					case treeNodeSym:
+						return content;
+					case nodeSym:
+						return nodeApi;
+					default:
+						return Reflect.get(target, key);
 				}
-				return undefined;
 			},
 			set(target, key, value) {
-				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+				const fieldSchema = content.schema.objectNodeFields.get(key as FieldKey);
 
 				if (fieldSchema === undefined) {
 					return false;
@@ -182,11 +189,13 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {
-						(field as RequiredField<AllowedTypes>).content = value;
+						(field as RequiredField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					case FieldKinds.optional: {
-						(field as OptionalField<AllowedTypes>).content = value;
+						(field as OptionalField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					default:
@@ -196,10 +205,10 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				return true;
 			},
 			has: (target, key) => {
-				return schema.structFields.has(key as FieldKey);
+				return schema.objectNodeFields.has(key as FieldKey);
 			},
 			ownKeys: (target) => {
-				return [...schema.structFields.keys()];
+				return [...schema.objectNodeFields.keys()];
 			},
 			getOwnPropertyDescriptor: (target, key) => {
 				const field = content.tryGetField(key as FieldKey);
@@ -331,7 +340,7 @@ staticDispatchMap[Symbol.iterator] = {
 /* eslint-enable @typescript-eslint/unbound-method */
 /* eslint-enable @typescript-eslint/ban-types */
 
-const prototype = Object.create(null, staticDispatchMap);
+const prototype = Object.create(Object.prototype, staticDispatchMap);
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
@@ -363,6 +372,12 @@ export function createListProxy<TTypes extends AllowedTypes>(
 				return getField(this).length;
 			},
 			set() {},
+			enumerable: false,
+			configurable: false,
+		},
+		[nodeSym]: {
+			value: createNodeApi(treeNode),
+			writable: false,
 			enumerable: false,
 			configurable: false,
 		},

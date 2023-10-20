@@ -9,10 +9,10 @@ import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "
 import {
 	Any,
 	FieldNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	allowedTypesIsAny,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -24,13 +24,13 @@ import { FieldKinds } from "../../../feature-libraries";
 
 describe("typedTreeSchema", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
-	const emptyStruct = builder.struct("empty", {});
-	const basicStruct = builder.struct("basicStruct", { foo: builder.optional(Any) });
+	const emptyStruct = builder.object("empty", {});
+	const basicStruct = builder.object("basicStruct", { foo: builder.optional(Any) });
 	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
 
-	const recursiveStruct = builder.structRecursive("recursiveStruct", {
-		foo: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+	const recursiveStruct = builder.objectRecursive("recursiveStruct", {
+		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 	});
 
 	it("schema is", () => {
@@ -65,16 +65,16 @@ describe("typedTreeSchema", () => {
 		assert(!schemaIsMap(recursiveStruct));
 	});
 
-	describe("FieldSchema", () => {
+	describe("TreeFieldSchema", () => {
 		it("types - any", () => {
-			const schema = FieldSchema.create(FieldKinds.optional, [Any]);
+			const schema = TreeFieldSchema.create(FieldKinds.optional, [Any]);
 			assert(allowedTypesIsAny(schema.allowedTypes));
 			assert.equal(schema.allowedTypeSet, Any);
 			assert.equal(schema.types, undefined);
 		});
 
 		it("types - single", () => {
-			const schema = FieldSchema.create(FieldKinds.optional, [leaf.number]);
+			const schema = TreeFieldSchema.create(FieldKinds.optional, [leaf.number]);
 			assert(!allowedTypesIsAny(schema.allowedTypes));
 			assert.deepEqual(schema.allowedTypes, [leaf.number]);
 			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
@@ -82,7 +82,7 @@ describe("typedTreeSchema", () => {
 		});
 
 		it("types - lazy", () => {
-			const schema = FieldSchema.create(FieldKinds.optional, [() => leaf.number]);
+			const schema = TreeFieldSchema.create(FieldKinds.optional, [() => leaf.number]);
 			assert(!allowedTypesIsAny(schema.allowedTypes));
 			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
 			assert.deepEqual(schema.types, new Set([leaf.number.name]));
@@ -94,15 +94,15 @@ describe("typedTreeSchema", () => {
 		type _2a = requireAssignableTo<typeof basicFieldNode, FieldNodeSchema>;
 		type _2 = requireAssignableTo<typeof jsonArray, FieldNodeSchema>;
 		type _3 = requireAssignableTo<typeof jsonObject, MapSchema>;
-		type _4 = requireAssignableTo<typeof emptyStruct, StructSchema>;
-		type _5 = requireAssignableTo<typeof basicStruct, StructSchema>;
+		type _4 = requireAssignableTo<typeof emptyStruct, ObjectNodeSchema>;
+		type _5 = requireAssignableTo<typeof basicStruct, ObjectNodeSchema>;
 	}
 
 	{
 		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof leaf.boolean, FieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, MapSchema>>;
-		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, StructSchema>>;
+		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, ObjectNodeSchema>>;
 	}
 
 	{
@@ -110,20 +110,20 @@ describe("typedTreeSchema", () => {
 		type _2 = requireTrue<isAssignableTo<typeof jsonArray, FieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof jsonArray, MapSchema>>;
 		// TODO: Fix
-		// type _4 = requireFalse<isAssignableTo<typeof jsonArray, StructSchema>>
+		// type _4 = requireFalse<isAssignableTo<typeof jsonArray, ObjectNodeSchema>>
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof jsonObject, LeafSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof jsonObject, FieldNodeSchema>>;
 		type _3 = requireTrue<isAssignableTo<typeof jsonObject, MapSchema>>;
-		type _4 = requireFalse<isAssignableTo<typeof jsonObject, StructSchema>>;
+		type _4 = requireFalse<isAssignableTo<typeof jsonObject, ObjectNodeSchema>>;
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof basicStruct, LeafSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof basicStruct, MapSchema>>;
-		type _4 = requireTrue<isAssignableTo<typeof basicStruct, StructSchema>>;
+		type _4 = requireTrue<isAssignableTo<typeof basicStruct, ObjectNodeSchema>>;
 	}
 });

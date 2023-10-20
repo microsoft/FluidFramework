@@ -18,14 +18,14 @@ import {
 	inCursorField,
 	rootFieldKey,
 	EmptyKey,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	forEachField,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 import {
-	FieldSchema,
-	TreeSchema,
+	TreeFieldSchema,
+	TreeNodeSchema,
 	MapSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -33,7 +33,7 @@ import {
 	schemaIsStruct,
 	FieldNodeSchema,
 	LeafSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	Any,
 	AllowedTypes,
 } from "../typed-schema";
@@ -45,8 +45,8 @@ import {
 	FieldNode,
 	Leaf,
 	MapNode,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TypedField,
 	TypedNode,
 	UnboxField,
@@ -96,7 +96,7 @@ function cleanupTree(anchor: AnchorNode): void {
 
 function buildSubclass(
 	context: Context,
-	schema: TreeSchema,
+	schema: TreeNodeSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
@@ -120,14 +120,14 @@ function buildSubclass(
  * A Proxy target, which together with a `nodeProxyHandler` implements a basic access to
  * the fields of {@link EditableTree} by means of the cursors.
  */
-export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
+export abstract class LazyTree<TSchema extends TreeNodeSchema = TreeNodeSchema>
 	extends LazyEntity<TSchema, Anchor>
 	implements TreeNode
 {
 	/**
 	 * Enumerable own property providing a more JS object friendly alternative to "schema".
 	 */
-	public readonly type: TreeSchemaIdentifier;
+	public readonly type: TreeNodeSchemaIdentifier;
 
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
@@ -150,7 +150,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 
 		assert(
 			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
-			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
+			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 
 		// Setup JS Object API:
@@ -159,14 +159,14 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		this.type = schema.name;
 	}
 
-	public is<TSchemaInner extends TreeSchema>(
+	public is<TSchemaInner extends TreeNodeSchema>(
 		schema: TSchemaInner,
 	): this is TypedNode<TSchemaInner> {
 		assert(
 			this.context.schema.treeSchema.get(schema.name) === schema,
 			0x785 /* Narrowing must be done to a schema that exists in this context */,
 		);
-		return (this.schema as TreeSchema) === schema;
+		return (this.schema as TreeNodeSchema) === schema;
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
@@ -213,7 +213,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
-		let fieldSchema: FieldSchema;
+		let fieldSchema: TreeFieldSchema;
 
 		// Check if the current node is in a detached sequence.
 		if (this.#anchorNode.parent === undefined) {
@@ -235,7 +235,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = FieldSchema.create(FieldKinds.sequence, [Any]);
+				fieldSchema = TreeFieldSchema.create(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();
@@ -435,37 +435,37 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	extends LazyTree<TSchema>
 	implements FieldNode<TSchema>
 {
-	public get content(): UnboxField<TSchema["structFieldsObject"][""]> {
+	public get content(): UnboxField<TSchema["objectNodeFieldsObject"][""]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			unboxedField(
 				this.context,
-				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
+				this.schema.objectNodeFields.get(EmptyKey) ?? fail("missing field schema"),
 				cursor,
 			),
-		) as UnboxField<TSchema["structFieldsObject"][""]>;
+		) as UnboxField<TSchema["objectNodeFieldsObject"][""]>;
 	}
 
-	public get boxedContent(): TypedField<TSchema["structFieldsObject"][""]> {
+	public get boxedContent(): TypedField<TSchema["objectNodeFieldsObject"][""]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			makeField(
 				this.context,
-				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
+				this.schema.objectNodeFields.get(EmptyKey) ?? fail("missing field schema"),
 				cursor,
 			),
-		) as TypedField<TSchema["structFieldsObject"][""]>;
+		) as TypedField<TSchema["objectNodeFieldsObject"][""]>;
 	}
 }
 
-export abstract class LazyStruct<TSchema extends StructSchema>
+export abstract class LazyStruct<TSchema extends ObjectNodeSchema>
 	extends LazyTree<TSchema>
-	implements Struct
+	implements ObjectNode
 {
 	public get localNodeKey(): LocalNodeKey | undefined {
 		// TODO: Optimize this to be in the derived class so it can cache schema lookup.
 		// TODO: Optimize this to avoid allocating the field object.
 
 		const key = this.context.nodeKeyFieldKey;
-		const fieldSchema = this.schema.structFields.get(key);
+		const fieldSchema = this.schema.objectNodeFields.get(key);
 
 		if (fieldSchema === undefined) {
 			return undefined;
@@ -475,7 +475,7 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
-		// 	field.is(FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	field.is(TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
 		// 	"invalid node key field",
 		// );
 
@@ -487,39 +487,39 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 	}
 }
 
-export function buildLazyStruct<TSchema extends StructSchema>(
+export function buildLazyStruct<TSchema extends ObjectNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-): LazyStruct<TSchema> & StructTyped<TSchema> {
+): LazyStruct<TSchema> & ObjectNodeTyped<TSchema> {
 	const structClass = getOrCreate(cachedStructClasses, schema, () => buildStructClass(schema));
 	return new structClass(context, cursor, anchorNode, anchor) as LazyStruct<TSchema> &
-		StructTyped<TSchema>;
+		ObjectNodeTyped<TSchema>;
 }
 
 const cachedStructClasses = new WeakMap<
-	StructSchema,
+	ObjectNodeSchema,
 	new (
 		context: Context,
 		cursor: ITreeSubscriptionCursor,
 		anchorNode: AnchorNode,
 		anchor: Anchor,
-	) => LazyStruct<StructSchema>
+	) => LazyStruct<ObjectNodeSchema>
 >();
 
 export function getBoxedField(
 	struct: LazyEntity,
 	key: FieldKey,
-	fieldSchema: FieldSchema,
+	fieldSchema: TreeFieldSchema,
 ): TreeField {
 	return inCursorField(struct[cursorSymbol], key, (cursor) => {
 		return makeField(struct.context, fieldSchema, cursor);
 	});
 }
 
-function buildStructClass<TSchema extends StructSchema>(
+function buildStructClass<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 ): new (
 	context: Context,
@@ -530,7 +530,7 @@ function buildStructClass<TSchema extends StructSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
-	for (const [key, fieldSchema] of schema.structFields) {
+	for (const [key, fieldSchema] of schema.objectNodeFields) {
 		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
@@ -613,6 +613,6 @@ function buildStructClass<TSchema extends StructSchema>(
 	return CustomStruct;
 }
 
-export function getFieldSchema(field: FieldKey, schema: TreeSchema): FieldSchema {
-	return schema.structFields.get(field) ?? schema.mapFields ?? FieldSchema.empty;
+export function getFieldSchema(field: FieldKey, schema: TreeNodeSchema): TreeFieldSchema {
+	return schema.objectNodeFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
 }

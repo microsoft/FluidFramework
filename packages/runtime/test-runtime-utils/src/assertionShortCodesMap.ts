@@ -1373,7 +1373,7 @@ export const shortCodeMap = {
 	"0x795": "Data store runtime entryPoint does not have request",
 	"0x796": "Data store runtime entryPoint does not have request",
 	"0x797": "forest must be empty",
-	"0x799": "Conflicting TreeSchema names",
+	"0x799": "Conflicting TreeNodeSchema names",
 	"0x79a": "SchemaBuilder can only be finalized once.",
 	"0x79b": "unexpected format for resubmitted schema op",
 	"0x79c": "Range indices are malformed.",

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { FieldStoredSchema, TreeSchemaIdentifier } from "../../../../core";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core";
 import { defaultSchemaPolicy } from "../../../../feature-libraries";
 
 import {
@@ -67,7 +67,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -93,7 +93,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -115,7 +115,7 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
@@ -157,12 +157,12 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 			);
-			const log: FieldStoredSchema[] = [];
+			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
 				library,
 				defaultSchemaPolicy,
 				{
-					shapeFromField(field: FieldStoredSchema): FieldEncoder {
+					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},
@@ -192,12 +192,12 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 			);
-			const log: FieldStoredSchema[] = [];
+			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
 				library,
 				defaultSchemaPolicy,
 				{
-					shapeFromField(field: FieldStoredSchema): FieldEncoder {
+					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},

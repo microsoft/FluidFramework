@@ -10,9 +10,9 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldStoredSchema,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	mapCursorFields,
 	CursorLocationType,
 	FieldAnchor,
@@ -105,7 +105,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		assert(
 			this.context.schema.treeSchema.get(this.typeName) !== undefined,
-			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
+			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 	}
 
@@ -125,11 +125,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.context.forest.anchors.forget(anchor);
 	}
 
-	public get typeName(): TreeSchemaIdentifier {
+	public get typeName(): TreeNodeSchemaIdentifier {
 		return this.cursor.type;
 	}
 
-	public get type(): TreeStoredSchema {
+	public get type(): TreeNodeStoredSchema {
 		return (
 			this.context.schema.treeSchema.get(this.typeName) ??
 			fail("requested type does not exist in schema")
@@ -148,7 +148,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return getFieldKind(this.getFieldSchema(field));
 	}
 
-	public getFieldSchema(field: FieldKey): FieldStoredSchema {
+	public getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
 		return getFieldSchema(field, this.type);
 	}
 
@@ -198,7 +198,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
-		let fieldSchema: FieldStoredSchema;
+		let fieldSchema: TreeFieldStoredSchema;
 
 		// Check if the current node is in a detached sequence.
 		if (this.anchorNode.parent === undefined) {
