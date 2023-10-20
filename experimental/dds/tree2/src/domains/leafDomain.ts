@@ -20,7 +20,7 @@ const nullSchema = builder.leaf("null", ValueSchema.Null);
 const primitives = [number, boolean, string] as const;
 const all = [handle, nullSchema, ...primitives] as const;
 
-const library = builder.finalize();
+const library = builder.intoLibrary();
 
 /**
  * Schema for the built-in {@link Leaf} node types.
@@ -28,7 +28,7 @@ const library = builder.finalize();
  */
 export const leaf = {
 	/**
-	 * {@link TreeSchema} for a {@link Leaf} holding a JavaScript `number`.
+	 * {@link TreeNodeSchema} for a {@link Leaf} holding a JavaScript `number`.
 	 *
 	 * @remarks
 	 * The number is a [double-precision 64-bit binary format IEEE 754](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) value, however there are some exceptions:
@@ -44,12 +44,12 @@ export const leaf = {
 	number,
 
 	/**
-	 * {@link TreeSchema} for a {@link Leaf} holding a boolean.
+	 * {@link TreeNodeSchema} for a {@link Leaf} holding a boolean.
 	 */
 	boolean,
 
 	/**
-	 * {@link TreeSchema} for a {@link Leaf} holding a JavaScript `string`.
+	 * {@link TreeNodeSchema} for a {@link Leaf} holding a JavaScript `string`.
 	 *
 	 * @remarks
 	 * Strings containing unpaired UTF-16 surrogate pair code units may not be handled correctly.
@@ -64,7 +64,7 @@ export const leaf = {
 	string,
 
 	/**
-	 * {@link TreeSchema} for a {@link Leaf} holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 * {@link TreeNodeSchema} for a {@link Leaf} holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
 	 */
 	handle,
 

@@ -26,6 +26,7 @@ import { Task, TaskExec } from "../task";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
+const traceTaskCheck = registerDebug("fluid-build:task:check");
 const traceTaskInitDep = registerDebug("fluid-build:task:init:dep");
 const traceTaskInitWeight = registerDebug("fluid-build:task:init:weight");
 const traceTaskQueue = registerDebug("fluid-build:task:exec:queue");
@@ -43,6 +44,7 @@ export abstract class LeafTask extends Task {
 	private directParentLeafTasks: LeafTask[] = [];
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
+
 	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
 		super(node, command, taskName);
 		if (!this.isDisabled) {
@@ -279,9 +281,10 @@ export abstract class LeafTask extends Task {
 				this.node.buildContext.taskStats.leafUpToDateCount;
 			const elapsedTime = (Date.now() - startTime) / 1000;
 			const workerMsg = worker ? "[worker] " : "";
+			const suffix = this.isIncremental ? "" : " (non-incremental)";
 			const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
 				this.node.pkg.nameColored
-			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
+			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${suffix}`;
 			log(statusString);
 			if (status === BuildResult.Failed) {
 				this.node.buildContext.failedTaskLines.push(statusString);
@@ -315,8 +318,13 @@ export abstract class LeafTask extends Task {
 			return false;
 		}
 
-		const leafIsUpToDate =
-			(await this.checkDependentLeafTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
+		if (!(await this.checkDependentLeafTasksIsUpToDate())) {
+			return false;
+		}
+
+		const start = Date.now();
+		const leafIsUpToDate = await this.checkLeafIsUpToDate();
+		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
 			this.node.buildContext.taskStats.leafUpToDateCount++;
 			this.traceExec(`Skipping Leaf Task`);
@@ -378,6 +386,9 @@ export abstract class LeafTask extends Task {
 	 * Subclass should override these to configure the leaf task
 	 */
 
+	// After the task is done, indicate whether the command can be incremental next time.
+	protected abstract get isIncremental();
+
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
@@ -409,6 +420,11 @@ export abstract class LeafTask extends Task {
 }
 
 export abstract class LeafWithDoneFileTask extends LeafTask {
+	private _isIncremental: boolean = false;
+
+	protected get isIncremental() {
+		return this._isIncremental;
+	}
 	protected get doneFileFullPath() {
 		return this.getPackageFileFullPath(this.doneFile);
 	}
@@ -439,6 +455,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			const content = await this.getDoneFileContent();
 			if (content !== undefined) {
 				await writeFileAsync(doneFileFullPath, content);
+				this._isIncremental = true;
 			} else {
 				console.warn(
 					`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`,
@@ -455,7 +472,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
-			if (doneFileExpectedContent) {
+			if (doneFileExpectedContent !== undefined) {
 				const doneFileContent = await readFileAsync(doneFileFullPath, "utf8");
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
@@ -476,7 +493,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * Subclass could override this to provide an alternative done file name
 	 */
 	protected get doneFile(): string {
-		const name = path.parse(this.executable).name;
+		const name = path.parse(this.executable).name.replace(/\s/g, "_");
 		// use 8 char of the sha256 hash of the command to distinguish different tasks
 		const hash = crypto.createHash("sha256").update(this.command).digest("hex").substring(0, 8);
 		return `${name}-${hash}.done.build.log`;
@@ -491,6 +508,14 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 }
 
 export class UnknownLeafTask extends LeafTask {
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
+	}
+
+	protected get isIncremental() {
+		return this.command === "";
+	}
+
 	protected async checkLeafIsUpToDate() {
 		if (this.command === "") {
 			// Empty command is always up to date.

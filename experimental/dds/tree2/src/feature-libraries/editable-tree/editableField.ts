@@ -10,7 +10,7 @@ import {
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
 	FieldStoredSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -88,7 +88,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  * @returns the key, if any, of the primary array field.
  */
 function getPrimaryArrayKey(
-	type: TreeStoredSchema,
+	type: TreeNodeStoredSchema,
 ): { key: FieldKey; schema: FieldStoredSchema } | undefined {
 	const primary = getPrimaryField(type);
 	if (primary === undefined) {

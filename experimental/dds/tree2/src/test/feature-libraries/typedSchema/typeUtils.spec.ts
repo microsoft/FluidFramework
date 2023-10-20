@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeSchemaIdentifier } from "../../../core";
+import { TreeNodeSchemaIdentifier } from "../../../core";
 import {
 	ArrayToUnion,
 	Unbrand,
@@ -39,6 +39,6 @@ import {
 
 // Test Unbrand
 {
-	type c = Unbrand<"x" & TreeSchemaIdentifier, TreeSchemaIdentifier>;
+	type c = Unbrand<"x" & TreeNodeSchemaIdentifier, TreeNodeSchemaIdentifier>;
 	type check1_ = requireAssignableTo<"x", c>;
 }

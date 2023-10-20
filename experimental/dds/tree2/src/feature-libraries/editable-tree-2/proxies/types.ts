@@ -16,8 +16,8 @@ import {
 	LeafSchema,
 	MapSchema,
 	StructSchema,
+	TreeNodeSchema,
 	TreeSchema,
-	DocumentSchema,
 } from "../../typed-schema";
 import {
 	CheckTypesOverlap,
@@ -252,7 +252,7 @@ export type ProxyNodeUnion<
 			[Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<
 				infer InnerType
 			>
-				? InnerType extends TreeSchema
+				? InnerType extends TreeNodeSchema
 					? ProxyNode<InnerType, API>
 					: never
 				: never;
@@ -263,7 +263,7 @@ export type ProxyNodeUnion<
  * @alpha
  */
 export type ProxyNode<
-	TSchema extends TreeSchema,
+	TSchema extends TreeNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends LeafSchema
 	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>
@@ -281,8 +281,6 @@ export type ProxyNode<
 
 /** The root type (the type of the entire tree) for a given schema collection */
 export type ProxyRoot<
-	TSchema extends DocumentSchema,
+	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = TSchema extends DocumentSchema<infer TRootFieldSchema>
-	? ProxyField<TRootFieldSchema, API>
-	: never;
+> = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;

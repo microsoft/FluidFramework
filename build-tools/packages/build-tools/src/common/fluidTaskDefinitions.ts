@@ -137,19 +137,25 @@ export function getTaskDefinitions(
 		for (const name in packageTaskDefinitions) {
 			const config = packageTaskDefinitions[name];
 			const full = getFullTaskConfig(config);
-			if (full.script && json.scripts?.[name] === undefined) {
-				throw new Error(`Script not found for task definition '${name}'`);
+			if (full.script) {
+				const script = json.scripts?.[name];
+				if (script === undefined) {
+					throw new Error(`Script not found for task definition '${name}'`);
+				} else if (script.startsWith("fluid-build ")) {
+					throw new Error(`Script task should not invoke 'fluid-build' in '${name}'`);
+				}
 			}
 
+			const currentTaskConfig = taskConfig[name];
 			const dependsOn = full.dependsOn.filter((value) => value !== "...");
-			if (taskConfig[name] !== undefined && dependsOn.length !== full.dependsOn.length) {
-				full.dependsOn = dependsOn.concat(taskConfig[name].dependsOn);
+			if (currentTaskConfig !== undefined && dependsOn.length !== full.dependsOn.length) {
+				full.dependsOn = dependsOn.concat(currentTaskConfig.dependsOn);
 			} else {
 				full.dependsOn = dependsOn;
 			}
 			const before = full.before.filter((value) => value !== "...");
-			if (taskConfig[name] !== undefined && before.length !== full.before.length) {
-				full.before = before.concat(taskConfig[name].before);
+			if (currentTaskConfig !== undefined && before.length !== full.before.length) {
+				full.before = before.concat(currentTaskConfig.before);
 			} else {
 				full.before = before;
 			}
