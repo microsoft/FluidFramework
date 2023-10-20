@@ -280,22 +280,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	}
 
 	/**
-	 * Undoes the last completed transaction made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	public undo(): void {
-		this.editManager.localBranch.undo();
-	}
-
-	/**
-	 * Redoes the last completed undo made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	public redo(): void {
-		this.editManager.localBranch.redo();
-	}
-
-	/**
 	 * @returns the head commit of the root local branch
 	 */
 	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {

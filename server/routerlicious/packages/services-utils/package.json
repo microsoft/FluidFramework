@@ -56,7 +56,7 @@
 		"@fluidframework/server-services-client": "workspace:~",
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
-		"debug": "^4.1.1",
+		"debug": "^4.3.4",
 		"express": "^4.17.3",
 		"ioredis": "^5.2.3",
 		"json-stringify-safe": "^5.0.1",

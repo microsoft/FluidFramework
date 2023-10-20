@@ -10,7 +10,7 @@ import {
 	UntypedField,
 	valueSymbol,
 	Multiplicity,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeNodeSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
@@ -52,8 +52,8 @@ export type CollectOptions<TTypedFields, TValueSchema extends ValueSchema | unde
  * Extend this to support global fields.
  * @alpha
  */
-export type TypedFields<TFields extends undefined | { [key: string]: FieldSchema }> = [
-	TFields extends { [key: string]: FieldSchema }
+export type TypedFields<TFields extends undefined | { [key: string]: TreeFieldSchema }> = [
+	TFields extends { [key: string]: TreeFieldSchema }
 		? {
 				[key in keyof TFields]: TypedField<TFields[key]>;
 		  }
@@ -64,7 +64,7 @@ export type TypedFields<TFields extends undefined | { [key: string]: FieldSchema
  * `FieldSchemaTypeInfo` to `TypedTree`
  * @alpha
  */
-export type TypedField<TField extends FieldSchema> = [
+export type TypedField<TField extends TreeFieldSchema> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
 		AllowedTypesToTypedTrees<TField["allowedTypes"]>
@@ -131,7 +131,7 @@ export type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
  * @alpha
  */
 export type TypedNode<TSchema extends TreeNodeSchema> = CollectOptions<
-	TypedFields<TSchema["structFieldsObject"]>,
+	TypedFields<TSchema["objectNodeFieldsObject"]>,
 	TSchema["leafValue"]
 >;
 

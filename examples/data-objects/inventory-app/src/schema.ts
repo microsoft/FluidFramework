@@ -9,12 +9,12 @@ const builder = new SchemaBuilder({
 	scope: "com.contoso.app.inventory",
 });
 
-export const part = builder.struct("Part", {
+export const part = builder.object("Part", {
 	name: builder.string,
 	quantity: builder.number,
 });
 
-export const inventory = builder.struct("Inventory", {
+export const inventory = builder.object("Inventory", {
 	parts: builder.list(part),
 });
 

@@ -6,13 +6,13 @@
 import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 import { FieldKey, TreeNodeSchemaIdentifier } from "../../core";
 import { BrandedType, capitalize } from "../../util";
-import { StructSchema, TreeNodeSchema } from "../typed-schema";
+import { ObjectNodeSchema, TreeNodeSchema } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { TreeContext } from "./context";
 import {
 	FlexibleNodeContent,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TreeField,
 	TreeStatus,
 	TypedNode,
@@ -20,7 +20,7 @@ import {
 } from "./editableTreeTypes";
 
 /**
- * Used to acquire the content of a raw struct
+ * Used to acquire the content of a raw object node.
  */
 export const nodeContent = Symbol();
 
@@ -34,27 +34,27 @@ export const nodeContent = Symbol();
  *
  * @privateRemarks TODO: Generate these from schema, and use them to support `=`.
  */
-export function createRawStruct<TSchema extends StructSchema>(
+export function createRawObjectNode<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 	content: FlexibleNodeContent<[TSchema]>,
-): RawStruct<TSchema> & StructTyped<TSchema> {
-	const node = new RawStruct(schema, content);
-	for (const [key] of schema.structFields) {
+): RawObjectNode<TSchema> & ObjectNodeTyped<TSchema> {
+	const node = new RawObjectNode(schema, content);
+	for (const [key] of schema.objectNodeFields) {
 		Object.defineProperty(node, key, {
-			get: () => rawStructError(),
-			set: () => rawStructError(),
+			get: () => rawObjectNodeError(),
+			set: () => rawObjectNodeError(),
 			enumerable: true,
 		});
 		Object.defineProperty(node, `boxed${capitalize(key)}`, {
-			get: () => rawStructError(),
-			set: () => rawStructError(),
+			get: () => rawObjectNodeError(),
+			set: () => rawObjectNodeError(),
 			enumerable: false,
 		});
 	}
-	return node as RawStruct<TSchema> & StructTyped<TSchema>;
+	return node as RawObjectNode<TSchema> & ObjectNodeTyped<TSchema>;
 }
 
-class RawStruct<TSchema extends StructSchema> implements Struct {
+class RawObjectNode<TSchema extends ObjectNodeSchema> implements ObjectNode {
 	public constructor(
 		public readonly schema: TSchema,
 		content: FlexibleNodeContent<[TSchema]>,
@@ -70,46 +70,46 @@ class RawStruct<TSchema extends StructSchema> implements Struct {
 	}
 
 	public get context(): TreeContext {
-		return rawStructError();
+		return rawObjectNodeError();
 	}
 
 	public get parentField(): { readonly parent: TreeField; readonly index: number } {
-		return rawStructError();
+		return rawObjectNodeError();
 	}
 
 	public tryGetField(key: FieldKey): TreeField | undefined {
-		return rawStructError();
+		return rawObjectNodeError();
 	}
 
 	public [boxedIterator](): IterableIterator<TreeField> {
-		return rawStructError();
+		return rawObjectNodeError();
 	}
 
 	public on<K extends keyof EditableTreeEvents>(
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {
-		return rawStructError();
+		return rawObjectNodeError();
 	}
 
 	public is<TSchemaCheck extends TreeNodeSchema>(
 		schema: TSchemaCheck,
 	): this is TypedNode<TSchemaCheck> {
-		return rawStructError();
+		return rawObjectNodeError();
 	}
 
 	public treeStatus(): TreeStatus {
-		return rawStructError();
+		return rawObjectNodeError();
 	}
 
 	public get localNodeKey(): BrandedType<SessionSpaceCompressedId, "Local Node Key"> | undefined {
-		return rawStructError();
+		return rawObjectNodeError();
 	}
 }
 
-function rawStructError(): never {
-	throw new Error(rawStructErrorMessage);
+function rawObjectNodeError(): never {
+	throw new Error(rawObjectErrorMessage);
 }
 
-export const rawStructErrorMessage =
+export const rawObjectErrorMessage =
 	"Newly created node must be inserted into the tree before being queried";

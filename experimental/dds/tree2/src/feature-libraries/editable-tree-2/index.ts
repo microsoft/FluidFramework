@@ -16,8 +16,8 @@ export {
 	OptionalField,
 	RequiredField,
 	Sequence,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	AssignableFieldKinds,
 	TypedNode,
 	TypedNodeUnion,
@@ -41,8 +41,11 @@ export {
 	ProxyRoot,
 	node,
 	SharedTreeNode,
+	SharedTreeObjectFactory,
+	FactoryTreeSchema,
+	addFactory,
 } from "./proxies";
-export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
+export { createRawObjectNode, rawObjectErrorMessage, nodeContent } from "./rawObjectNode";
 
 export {
 	visitBipartiteIterableTree,

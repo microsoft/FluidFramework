@@ -9,7 +9,7 @@ import { strict as assert } from "assert";
 /* eslint-disable-next-line import/no-internal-modules */
 import { Format, makeSchemaCodec } from "../../feature-libraries/schemaIndexFormat";
 
-import { FieldKindIdentifier, SchemaData } from "../../core";
+import { FieldKindIdentifier, TreeStoredSchema } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { jsonSchema, jsonRoot, SchemaBuilder, leaf } from "../../domains";
 import { defaultSchemaPolicy, allowsRepoSuperset } from "../../feature-libraries";
@@ -73,7 +73,7 @@ describe("SchemaIndex", () => {
 	describe("codec", () => {
 		makeEncodingTestSuite(
 			makeCodecFamily([[0, codec]]),
-			testCases as EncodingTestData<SchemaData, Format>,
+			testCases as EncodingTestData<TreeStoredSchema, Format>,
 			(a, b) => {
 				assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
 				assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));

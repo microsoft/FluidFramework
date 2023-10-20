@@ -420,7 +420,7 @@ export abstract class LeafTask extends Task {
 }
 
 export abstract class LeafWithDoneFileTask extends LeafTask {
-	private _isIncremental: boolean = false;
+	private _isIncremental: boolean = true;
 
 	protected get isIncremental() {
 		return this._isIncremental;
@@ -455,13 +455,14 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			const content = await this.getDoneFileContent();
 			if (content !== undefined) {
 				await writeFileAsync(doneFileFullPath, content);
-				this._isIncremental = true;
 			} else {
+				this._isIncremental = false;
 				console.warn(
 					`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`,
 				);
 			}
 		} catch (error) {
+			this._isIncremental = false;
 			console.warn(
 				`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}\n error: ${error}`,
 			);
@@ -547,7 +548,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			});
 			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
-			this.traceError(`error comparing file times ${e.message}`);
+			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
 			return undefined;
 		}
