@@ -270,6 +270,9 @@ export abstract class LazyTree<TSchema extends TreeNodeSchema = TreeNodeSchema>
 				const unsubscribeFromChildrenChange = this.#anchorNode.on(
 					"childrenChanging",
 					(anchorNode: AnchorNode) =>
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
 						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromChildrenChange;
@@ -278,6 +281,9 @@ export abstract class LazyTree<TSchema extends TreeNodeSchema = TreeNodeSchema>
 				const unsubscribeFromSubtreeChange = this.#anchorNode.on(
 					"subtreeChanging",
 					(anchorNode: AnchorNode) =>
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
 						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromSubtreeChange;
@@ -288,6 +294,9 @@ export abstract class LazyTree<TSchema extends TreeNodeSchema = TreeNodeSchema>
 					(anchorNode: AnchorNode) => {
 						const treeNode = anchorNode.slots.get(lazyTreeSlot);
 						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
 						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
 					},
 				);
@@ -299,6 +308,9 @@ export abstract class LazyTree<TSchema extends TreeNodeSchema = TreeNodeSchema>
 					(anchorNode: AnchorNode) => {
 						const treeNode = anchorNode.slots.get(lazyTreeSlot);
 						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
 						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
 					},
 				);
