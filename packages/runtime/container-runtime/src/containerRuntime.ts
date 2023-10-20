@@ -3746,7 +3746,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			const fetchResult = await this.fetchSnapshotFromStorage(
+			const fetchResult = await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3802,7 +3802,7 @@ export class ContainerRuntime
 
 		// This is a performance optimization as the same parent is likely to be elected again, and would use its
 		// cache to fetch the snapshot instead of the network.
-		await this.fetchSnapshotFromStorage(
+		await this.fetchLatestSnapshotFromStorage(
 			summaryLogger,
 			{
 				eventName: "RefreshLatestSummaryFromServerFetch",
@@ -3828,11 +3828,11 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Downloads snapshot from storage with the given versionId or latest if versionId is null.
+	 * Downloads the latest snapshot from storage.
 	 * By default, it also closes the container after downloading the snapshot. However, this may be
 	 * overridden via options.
 	 */
-	private async fetchSnapshotFromStorage(
+	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
