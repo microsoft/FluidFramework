@@ -55,13 +55,13 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeNodeSchemaIdentifier,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	FieldAnchor,
 	SchemaEvents,
 	ChangesetLocalId,
@@ -79,7 +79,10 @@ export {
 	Adapters,
 	TreeAdapter,
 	MapTree,
-	LocalCommitSource,
+	Revertible,
+	RevertibleKind,
+	RevertResult,
+	DiscardResult,
 	forbiddenFieldKindIdentifier,
 	StoredSchemaCollection,
 } from "./core";
@@ -127,6 +130,7 @@ export {
 	leaf,
 	testRecursiveDomain,
 	SchemaBuilder,
+	FactoryStructSchema,
 } from "./domains";
 
 export {
@@ -192,7 +196,7 @@ export {
 	TreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
-	FieldSchema,
+	TreeFieldSchema,
 	Any,
 	NewFieldContent,
 	NodeExistsConstraint,
@@ -284,7 +288,9 @@ export {
 	SharedTreeNode,
 	Typed,
 	TreeEvent,
+	SharedTreeObjectFactory,
 	SchemaCollection,
+	FactoryTreeSchema,
 } from "./feature-libraries";
 
 export {
@@ -301,13 +307,14 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	ForestType,
+	TypedTreeFactory,
+	TypedTreeOptions,
+	TypedTreeChannel,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
-
-export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typed-tree";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

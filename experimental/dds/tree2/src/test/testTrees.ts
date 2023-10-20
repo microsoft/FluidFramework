@@ -9,7 +9,7 @@ import { ITreeCursorSynchronous, JsonableTree } from "../core";
 import {
 	Any,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	FullSchemaPolicy,
 	Multiplicity,
 	SchemaAware,
@@ -39,11 +39,11 @@ function testTree<T extends TreeNodeSchema>(
 	rootNode: T,
 	data: SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, [T]>,
 ): TestTree {
-	const fieldSchema = FieldSchema.create(FieldKinds.required, [rootNode]);
+	const fieldSchema = TreeFieldSchema.create(FieldKinds.required, [rootNode]);
 	return testField(name, schemaData, fieldSchema, data);
 }
 
-function testField<T extends FieldSchema>(
+function testField<T extends TreeFieldSchema>(
 	name: string,
 	schemaLibrary: SchemaLibrary,
 	rootField: T,
@@ -67,7 +67,7 @@ function testField<T extends FieldSchema>(
 
 function cursorsToFieldContent(
 	cursors: readonly ITreeCursorSynchronous[],
-	schema: FieldSchema,
+	schema: TreeFieldSchema,
 ): readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined {
 	if (schema.kind.multiplicity === Multiplicity.Sequence) {
 		return cursors;
@@ -127,10 +127,10 @@ type NumericMapData = SchemaAware.AllowedTypesToTypedTrees<
 export const anyMap = builder.map("anyMap", builder.sequence(Any));
 
 export const recursiveType = builder.structRecursive("recursiveType", {
-	field: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
+	field: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
 });
 
-export const library = builder.finalize();
+export const library = builder.intoLibrary();
 
 export const testTrees: readonly TestTree[] = [
 	testField("empty", library, SchemaBuilder.optional([]), undefined),

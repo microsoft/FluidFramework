@@ -9,7 +9,7 @@ import { isAssignableTo, requireAssignableTo, requireFalse, requireTrue } from "
 import {
 	Any,
 	FieldNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	LeafSchema,
 	MapSchema,
 	StructSchema,
@@ -30,7 +30,7 @@ describe("typedTreeSchema", () => {
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
 
 	const recursiveStruct = builder.structRecursive("recursiveStruct", {
-		foo: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 	});
 
 	it("schema is", () => {
@@ -65,16 +65,16 @@ describe("typedTreeSchema", () => {
 		assert(!schemaIsMap(recursiveStruct));
 	});
 
-	describe("FieldSchema", () => {
+	describe("TreeFieldSchema", () => {
 		it("types - any", () => {
-			const schema = FieldSchema.create(FieldKinds.optional, [Any]);
+			const schema = TreeFieldSchema.create(FieldKinds.optional, [Any]);
 			assert(allowedTypesIsAny(schema.allowedTypes));
 			assert.equal(schema.allowedTypeSet, Any);
 			assert.equal(schema.types, undefined);
 		});
 
 		it("types - single", () => {
-			const schema = FieldSchema.create(FieldKinds.optional, [leaf.number]);
+			const schema = TreeFieldSchema.create(FieldKinds.optional, [leaf.number]);
 			assert(!allowedTypesIsAny(schema.allowedTypes));
 			assert.deepEqual(schema.allowedTypes, [leaf.number]);
 			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
@@ -82,7 +82,7 @@ describe("typedTreeSchema", () => {
 		});
 
 		it("types - lazy", () => {
-			const schema = FieldSchema.create(FieldKinds.optional, [() => leaf.number]);
+			const schema = TreeFieldSchema.create(FieldKinds.optional, [() => leaf.number]);
 			assert(!allowedTypesIsAny(schema.allowedTypes));
 			assert.deepEqual(schema.allowedTypeSet, new Set([leaf.number]));
 			assert.deepEqual(schema.types, new Set([leaf.number.name]));

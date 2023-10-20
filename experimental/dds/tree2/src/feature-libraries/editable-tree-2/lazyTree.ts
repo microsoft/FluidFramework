@@ -24,7 +24,7 @@ import {
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 import {
-	FieldSchema,
+	TreeFieldSchema,
 	TreeNodeSchema,
 	MapSchema,
 	schemaIsFieldNode,
@@ -150,7 +150,7 @@ export abstract class LazyTree<TSchema extends TreeNodeSchema = TreeNodeSchema>
 
 		assert(
 			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
-			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
+			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 
 		// Setup JS Object API:
@@ -213,7 +213,7 @@ export abstract class LazyTree<TSchema extends TreeNodeSchema = TreeNodeSchema>
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
-		let fieldSchema: FieldSchema;
+		let fieldSchema: TreeFieldSchema;
 
 		// Check if the current node is in a detached sequence.
 		if (this.#anchorNode.parent === undefined) {
@@ -235,7 +235,7 @@ export abstract class LazyTree<TSchema extends TreeNodeSchema = TreeNodeSchema>
 				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = FieldSchema.create(FieldKinds.sequence, [Any]);
+				fieldSchema = TreeFieldSchema.create(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();
@@ -499,7 +499,7 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
-		// 	field.is(FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	field.is(TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
 		// 	"invalid node key field",
 		// );
 
@@ -536,7 +536,7 @@ const cachedStructClasses = new WeakMap<
 export function getBoxedField(
 	struct: LazyEntity,
 	key: FieldKey,
-	fieldSchema: FieldSchema,
+	fieldSchema: TreeFieldSchema,
 ): TreeField {
 	return inCursorField(struct[cursorSymbol], key, (cursor) => {
 		return makeField(struct.context, fieldSchema, cursor);
@@ -637,6 +637,6 @@ function buildStructClass<TSchema extends StructSchema>(
 	return CustomStruct;
 }
 
-export function getFieldSchema(field: FieldKey, schema: TreeNodeSchema): FieldSchema {
-	return schema.structFields.get(field) ?? schema.mapFields ?? FieldSchema.empty;
+export function getFieldSchema(field: FieldKey, schema: TreeNodeSchema): TreeFieldSchema {
+	return schema.structFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
 }

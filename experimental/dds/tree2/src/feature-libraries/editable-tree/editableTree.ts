@@ -10,7 +10,7 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	mapCursorFields,
@@ -106,7 +106,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		assert(
 			this.context.schema.treeSchema.get(this.typeName) !== undefined,
-			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
+			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 	}
 
@@ -149,7 +149,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return getFieldKind(this.getFieldSchema(field));
 	}
 
-	public getFieldSchema(field: FieldKey): FieldStoredSchema {
+	public getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
 		return getFieldSchema(field, this.type);
 	}
 
@@ -199,7 +199,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
-		let fieldSchema: FieldStoredSchema;
+		let fieldSchema: TreeFieldStoredSchema;
 
 		// Check if the current node is in a detached sequence.
 		if (this.anchorNode.parent === undefined) {

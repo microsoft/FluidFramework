@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { join as pathJoin } from "path";
 import {
-	JsonableTree,
-	fieldSchema,
-	SchemaData,
-	rootFieldKey,
 	moveToDetachedField,
 	Anchor,
 	UpPath,
@@ -15,43 +12,45 @@ import {
 	clonePath,
 	compareUpPaths,
 	forEachNodeInSubtree,
+	Revertible,
+	AllowedUpdateType,
 } from "../../../core";
-import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { SharedTree, ISharedTreeView } from "../../../shared-tree";
-import { namedTreeSchema } from "../../utils";
+import { FieldKinds, TreeFieldSchema, StructTyped, TypedField } from "../../../feature-libraries";
+import { SharedTree, ISharedTreeView, ISharedTree } from "../../../shared-tree";
+import { SchemaBuilder, leaf } from "../../../domains";
 
-export const initialTreeState: JsonableTree = {
-	type: brand("Node"),
-	fields: {
-		foo: [
-			{ type: brand("Number"), value: 0 },
-			{ type: brand("Number"), value: 1 },
-			{ type: brand("Number"), value: 2 },
-		],
-		foo2: [
-			{ type: brand("Number"), value: 3 },
-			{ type: brand("Number"), value: 4 },
-			{ type: brand("Number"), value: 5 },
-		],
-	},
-};
-
-const rootFieldSchema = fieldSchema(FieldKinds.required);
-const rootNodeSchema = namedTreeSchema({
-	name: "TestValue",
-	mapFields: fieldSchema(FieldKinds.sequence),
+const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
+export const fuzzNode = builder.structRecursive("node", {
+	requiredChild: TreeFieldSchema.createUnsafe(FieldKinds.required, [
+		() => fuzzNode,
+		...leaf.primitives,
+	]),
+	optionalChild: TreeFieldSchema.createUnsafe(FieldKinds.optional, [
+		() => fuzzNode,
+		...leaf.primitives,
+	]),
+	sequenceChildren: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
+		() => fuzzNode,
+		...leaf.primitives,
+	]),
 });
 
-export const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	rootFieldSchema,
-};
+export type FuzzNodeSchema = typeof fuzzNode;
+
+export type FuzzNode = StructTyped<FuzzNodeSchema>;
+
+export const fuzzSchema = builder.intoSchema(fuzzNode.structFieldsObject.optionalChild);
+
+export function fuzzViewFromTree(tree: ISharedTree): ISharedTreeView {
+	return tree.schematizeView({
+		initialTree: undefined,
+		schema: fuzzSchema,
+		allowedSchemaModifications: AllowedUpdateType.None,
+	});
+}
 
 export const onCreate = (tree: SharedTree) => {
-	tree.storedSchema.update(testSchema);
-	const field = tree.view.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, singleTextCursor(initialTreeState));
+	tree.storedSchema.update(fuzzSchema);
 };
 
 export function validateAnchors(
@@ -84,3 +83,30 @@ export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value
 	cursor.free();
 	return anchors;
 }
+
+export type RevertibleSharedTreeView = ISharedTreeView & {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+};
+
+export function isRevertibleSharedTreeView(s: ISharedTreeView): s is RevertibleSharedTreeView {
+	return (s as RevertibleSharedTreeView).undoStack !== undefined;
+}
+
+// KLUDGE:AB#5677: Avoid calling editableTree2 more than once per tree as it currently crashes.
+const cachedEditableTreeSymbol = Symbol();
+export function getEditableTree(
+	tree: ISharedTreeView,
+): TypedField<typeof fuzzSchema.rootFieldSchema> {
+	if ((tree as any)[cachedEditableTreeSymbol] === undefined) {
+		(tree as any)[cachedEditableTreeSymbol] = tree.editableTree2(fuzzSchema);
+	}
+
+	return (tree as any)[cachedEditableTreeSymbol] as TypedField<typeof fuzzSchema.rootFieldSchema>;
+}
+
+export const failureDirectory = pathJoin(
+	__dirname,
+	"../../../../src/test/shared-tree/fuzz/failures",
+);

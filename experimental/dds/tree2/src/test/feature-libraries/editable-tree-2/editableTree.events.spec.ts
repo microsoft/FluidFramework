@@ -7,8 +7,7 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { FieldKinds } from "../../../feature-libraries";
-import { TypedTreeFactory } from "../../../typed-tree";
-import { ForestType } from "../../../shared-tree";
+import { ForestType, TypedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
 
@@ -26,7 +25,7 @@ describe("beforeChange/afterChange events", () => {
 		myOptionalNumber: SchemaBuilder.optional(leaf.number),
 		myNumberSequence: SchemaBuilder.sequence(leaf.number),
 	});
-	const schema = builder.toDocumentSchema(SchemaBuilder.field(FieldKinds.required, myNodeSchema));
+	const schema = builder.intoSchema(SchemaBuilder.field(FieldKinds.required, myNodeSchema));
 	const factory = new TypedTreeFactory({
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,

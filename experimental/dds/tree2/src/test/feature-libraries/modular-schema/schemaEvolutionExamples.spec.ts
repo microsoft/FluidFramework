@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
-	FieldSchema,
+	TreeFieldSchema,
 	FullSchemaPolicy,
 	ViewSchema,
 	FieldKinds,
@@ -14,14 +14,14 @@ import {
 	TreeSchema,
 } from "../../../feature-libraries";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
 	InMemoryStoredSchemaRepository,
 	Adapters,
 	Compatibility,
 	storedEmptyFieldSchema,
-	SchemaData,
+	TreeStoredSchema,
 } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { allowsFieldSuperset, allowsTreeSuperset } from "../../../feature-libraries/modular-schema";
@@ -30,7 +30,7 @@ import { SchemaBuilder, leaf } from "../../../domains";
 class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
-		data?: SchemaData,
+		data?: TreeStoredSchema,
 	) {
 		super(data);
 	}
@@ -39,7 +39,7 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
 	 * @returns true iff update was performed.
 	 */
-	public tryUpdateRootFieldSchema(schema: FieldStoredSchema): boolean {
+	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
 		if (allowsFieldSuperset(this.policy, this.data, this.rootFieldSchema, schema)) {
 			this.data.rootFieldSchema = schema;
 			this.invalidateDependents();
@@ -85,7 +85,7 @@ describe("Schema Evolution Examples", () => {
 
 	// String made of unicode code points, allowing for sequence editing of a string.
 	const text = contentTypesBuilder.struct("Text", {
-		children: FieldSchema.create(FieldKinds.sequence, [codePoint]),
+		children: TreeFieldSchema.create(FieldKinds.sequence, [codePoint]),
 	});
 
 	const point = contentTypesBuilder.struct("Point", {
@@ -93,7 +93,7 @@ describe("Schema Evolution Examples", () => {
 		y: leaf.number,
 	});
 
-	const defaultContentLibrary = contentTypesBuilder.finalize();
+	const defaultContentLibrary = contentTypesBuilder.intoLibrary();
 
 	const containersBuilder = new SchemaBuilder({
 		scope: "test",
@@ -107,14 +107,14 @@ describe("Schema Evolution Examples", () => {
 		content: text,
 	});
 	const canvas = containersBuilder.struct("Canvas", {
-		items: FieldSchema.create(FieldKinds.sequence, [positionedCanvasItem]),
+		items: TreeFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem]),
 	});
 
-	const root: FieldSchema = FieldSchema.create(FieldKinds.required, [canvas]);
+	const root: TreeFieldSchema = TreeFieldSchema.create(FieldKinds.required, [canvas]);
 
-	const tolerantRoot = FieldSchema.create(FieldKinds.optional, [canvas]);
+	const tolerantRoot = TreeFieldSchema.create(FieldKinds.optional, [canvas]);
 
-	const treeViewSchema = containersBuilder.finalize();
+	const treeViewSchema = containersBuilder.intoLibrary();
 
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the
@@ -256,11 +256,11 @@ describe("Schema Evolution Examples", () => {
 			});
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 			const canvas2 = builderWithCounter.struct("Canvas", {
-				items: FieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
+				items: TreeFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const viewCollection3: TreeSchema = builderWithCounter.intoSchema(
-				FieldSchema.create(FieldKinds.optional, [canvas2]),
+				TreeFieldSchema.create(FieldKinds.optional, [canvas2]),
 			);
 			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
 
@@ -287,12 +287,12 @@ describe("Schema Evolution Examples", () => {
 
 	// TODO: support adapters
 
-	// function makeTolerantRootAdapter(view: SchemaData): FieldAdapter {
+	// function makeTolerantRootAdapter(view: TreeStoredSchema): FieldAdapter {
 	// 	return {
 	// 		field: rootFieldKey,
-	// 		convert: (field): FieldStoredSchema => {
+	// 		convert: (field): TreeFieldStoredSchema => {
 	// 			const allowed = allowsFieldSuperset(defaultSchemaPolicy, view, field, tolerantRoot);
-	// 			const out: FieldStoredSchema = allowed ? root : field;
+	// 			const out: TreeFieldStoredSchema = allowed ? root : field;
 	// 			return out;
 	// 		},
 	// 	};
@@ -382,7 +382,7 @@ describe("Schema Evolution Examples", () => {
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
 	// 	const formattedText = builder.structRecursive(formattedTextIdentifier, {
-	// 		content: FieldSchema.createUnsafe(
+	// 		content: TreeFieldSchema.createUnsafe(
 	// 			FieldKinds.sequence,
 	// 			() => formattedText,
 	// 			codePoint,
@@ -404,7 +404,7 @@ describe("Schema Evolution Examples", () => {
 	// 	});
 	// 	// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 	// 	const canvas2 = builder.struct(canvasIdentifier, {
-	// 		items: FieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
+	// 		items: TreeFieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
 	// 	const viewCollection: SchemaCollection = builder.intoSchema(

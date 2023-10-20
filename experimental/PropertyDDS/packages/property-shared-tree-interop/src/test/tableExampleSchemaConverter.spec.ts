@@ -11,7 +11,7 @@ import {
 	FieldKinds,
 	TreeNodeSchemaIdentifier,
 	schemaIsFieldNode,
-	FieldSchema,
+	TreeFieldSchema,
 	leaf,
 } from "@fluid-experimental/tree2";
 import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
@@ -172,7 +172,7 @@ describe("LlsSchemaConverter", () => {
 		assert(
 			uint64Type.structFields
 				.get(EmptyKey)
-				?.equals(FieldSchema.create(FieldKinds.required, [leaf.number])),
+				?.equals(TreeFieldSchema.create(FieldKinds.required, [leaf.number])),
 		);
 	});
 

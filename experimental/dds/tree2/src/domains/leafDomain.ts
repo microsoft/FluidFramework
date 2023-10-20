@@ -20,7 +20,7 @@ const nullSchema = builder.leaf("null", ValueSchema.Null);
 const primitives = [number, boolean, string] as const;
 const all = [handle, nullSchema, ...primitives] as const;
 
-const library = builder.finalize();
+const library = builder.intoLibrary();
 
 /**
  * Schema for the built-in {@link Leaf} node types.

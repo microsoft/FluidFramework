@@ -16,7 +16,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/comparison";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	ValueSchema,
 	TreeTypeSet,
@@ -33,7 +33,7 @@ import { namedTreeSchema } from "../../utils";
 
 describe("Schema Comparison", () => {
 	/**
-	 * FieldStoredSchema permits anything.
+	 * TreeFieldStoredSchema permits anything.
 	 * Note that children inside the field still have to be in schema.
 	 */
 	const anyField = fieldSchema(FieldKinds.sequence);
@@ -53,7 +53,7 @@ describe("Schema Comparison", () => {
 	};
 
 	/**
-	 * FieldStoredSchema which is impossible for any data to be in schema with.
+	 * TreeFieldStoredSchema which is impossible for any data to be in schema with.
 	 */
 	const neverField = fieldSchema(FieldKinds.required, []);
 
@@ -109,7 +109,9 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField));
 		updateTreeSchema(repo, brand("never"), neverTree);
-		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.required, [brand("never")]);
+		const neverField2: TreeFieldStoredSchema = fieldSchema(FieldKinds.required, [
+			brand("never"),
+		]);
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, storedEmptyFieldSchema), false);
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
@@ -244,8 +246,10 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, brand("never"), neverTree);
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
-		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.required, [brand("never")]);
-		const compare = (a: FieldStoredSchema, b: FieldStoredSchema): boolean =>
+		const neverField2: TreeFieldStoredSchema = fieldSchema(FieldKinds.required, [
+			brand("never"),
+		]);
+		const compare = (a: TreeFieldStoredSchema, b: TreeFieldStoredSchema): boolean =>
 			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [
 			neverField,

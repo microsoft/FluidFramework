@@ -6,10 +6,10 @@
 import {
 	Value,
 	FieldKey,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	ForestEvents,
-	SchemaData,
+	TreeStoredSchema,
 	UpPath,
 	PathVisitor,
 	TreeNodeStoredSchema,
@@ -188,9 +188,9 @@ export interface UntypedField<
 	TUnwrappedChild = UnwrappedUntypedTree<TContext>,
 > extends MarkedArrayLike<TUnwrappedChild> {
 	/**
-	 * The `FieldStoredSchema` of this field.
+	 * The `TreeFieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldStoredSchema;
+	readonly fieldSchema: TreeFieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.
@@ -243,7 +243,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 	 *
 	 * The root's schema is tracked under {@link rootFieldKey}.
 	 */
-	readonly schema: SchemaData;
+	readonly schema: TreeStoredSchema;
 
 	/**
 	 * Call before editing.

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import {
 	fail,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	SchemaBuilder,
 	FieldKind,
 	Any,
@@ -114,7 +114,7 @@ function buildTreeNodeSchema(
 			assert(type === typeid, 0x700 /* Unexpected typeid discrepancy */);
 			const cache: { treeSchema?: TreeNodeSchema } = {};
 			treeSchemaMap.set(typeid, () => cache.treeSchema ?? fail("missing schema"));
-			const fields = new Map<string, FieldSchema>();
+			const fields = new Map<string, TreeFieldSchema>();
 			buildLocalFields(builder, treeSchemaMap, allChildrenByType, typeid, fields);
 			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
 			for (const inheritanceType of inheritanceChain) {
@@ -205,7 +205,7 @@ function buildLocalFields(
 	treeSchemaMap: Map<string, LazyTreeNodeSchema>,
 	allChildrenByType: InheritingChildrenByType,
 	typeid: string,
-	local: Map<string, FieldSchema>,
+	local: Map<string, TreeFieldSchema>,
 ): void {
 	const schemaTemplate = PropertyFactory.getTemplate(typeid);
 	if (schemaTemplate === undefined) {
@@ -284,7 +284,7 @@ function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 	allChildrenByType: InheritingChildrenByType,
 	fieldKind: Kind,
 	...fieldTypes: readonly string[]
-): FieldSchema<Kind> {
+): TreeFieldSchema<Kind> {
 	const allowedTypes: Set<LazyTreeNodeSchema> = new Set();
 	let isAny = false;
 	for (const typeid of fieldTypes) {
@@ -317,7 +317,7 @@ export const nodePropertySchema = builtinBuilder.map(
 	nodePropertyType,
 	builtinBuilder.optional(Any),
 );
-const builtinLibrary = builtinBuilder.finalize();
+const builtinLibrary = builtinBuilder.intoLibrary();
 
 /**
  * Creates a TreeSchema out of PropertyDDS schema templates.

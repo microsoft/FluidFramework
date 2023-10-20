@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKey,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ITreeCursorSynchronous,
 	mapCursorFields,
 	TreeNodeSchemaIdentifier,
@@ -16,7 +16,7 @@ import {
 	TreeValue,
 	StoredSchemaRepository,
 	CursorLocationType,
-	SchemaData,
+	TreeStoredSchema,
 	StoredSchemaCollection,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
@@ -106,7 +106,7 @@ export class Chunker implements IChunker {
 		public readonly uniformChunkNodeCount: number,
 		// eslint-disable-next-line @typescript-eslint/no-shadow
 		private readonly tryShapeFromSchema: (
-			schema: SchemaData,
+			schema: TreeStoredSchema,
 			policy: FullSchemaPolicy,
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
@@ -246,7 +246,7 @@ export function tryShapeFromSchema(
 export function tryShapeFromFieldSchema(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-	type: FieldStoredSchema,
+	type: TreeFieldStoredSchema,
 	key: FieldKey,
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {

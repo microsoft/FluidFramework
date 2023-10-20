@@ -10,7 +10,7 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-import { AllowedTypes, FieldKinds, FieldSchema } from "../feature-libraries";
+import { AllowedTypes, FieldKinds, TreeFieldSchema } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
 import { leaf } from "./leafDomain";
 import { SchemaBuilder } from "./schemaBuilder";
@@ -21,7 +21,7 @@ const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
  * @alpha
  */
 export const recursiveStruct = builder.structRecursive("struct", {
-	recursive: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+	recursive: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 	number: leaf.number,
 });
 
@@ -35,7 +35,7 @@ fixRecursiveReference(recursiveReference);
  * @alpha
  */
 export const recursiveStruct2 = builder.struct("struct2", {
-	recursive: FieldSchema.create(FieldKinds.optional, [recursiveReference]),
+	recursive: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 	number: leaf.number,
 });
 
@@ -49,4 +49,4 @@ type _1 = requireTrue<
 /**
  * @alpha
  */
-export const library = builder.finalize();
+export const library = builder.intoLibrary();

@@ -168,8 +168,8 @@ describe("visit", () => {
 			index,
 		);
 		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 42 }, root: 0 },
-			{ field: field1, id: { minor: 43 }, root: 1 },
+			{ id: { minor: 42 }, root: 0 },
+			{ id: { minor: 43 }, root: 1 },
 		]);
 	});
 	it("remove child", () => {
@@ -201,9 +201,7 @@ describe("visit", () => {
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 42 }, root: 0 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 0 }]);
 	});
 	it("remove under insert", () => {
 		const index = makeDetachedFieldIndex("");
@@ -239,9 +237,7 @@ describe("visit", () => {
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
 	it("move node to the right", () => {
 		const index = makeDetachedFieldIndex("");
@@ -396,9 +392,7 @@ describe("visit", () => {
 			["exitField", field0],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 42 }, root: 0 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 0 }]);
 	});
 	it("move-out under remove", () => {
 		const index = makeDetachedFieldIndex("");
@@ -442,9 +436,7 @@ describe("visit", () => {
 			["exitField", field0],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 42 }, root: 0 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 0 }]);
 	});
 	it("move-in under move-out", () => {
 		const index = makeDetachedFieldIndex("");
@@ -536,9 +528,7 @@ describe("visit", () => {
 			["exitField", rootKey],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
 	it("transient insert", () => {
 		const index = makeDetachedFieldIndex("");
@@ -559,9 +549,7 @@ describe("visit", () => {
 			["exitField", field0],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
 	it("move-out under transient", () => {
 		const index = makeDetachedFieldIndex("");
@@ -628,9 +616,7 @@ describe("visit", () => {
 			["exitField", field2],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field2, id: { minor: 42 }, root: 2 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 2 }]);
 	});
 	it("restore", () => {
 		const index = makeDetachedFieldIndex("");
@@ -723,9 +709,7 @@ describe("visit", () => {
 			["exitField", field0],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field0, id: { minor: 1 }, root: 0 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 1 }, root: 0 }]);
 	});
 	it("transient move-in and modify", () => {
 		const index = makeDetachedFieldIndex("");
@@ -781,9 +765,7 @@ describe("visit", () => {
 			["exitField", field2],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field2, id: { minor: 42 }, root: 2 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 2 }]);
 	});
 	it("transient restore", () => {
 		const index = makeDetachedFieldIndex("");
@@ -805,8 +787,6 @@ describe("visit", () => {
 			["exitField", field0],
 		];
 		testTreeVisit(delta, expected, index);
-		assert.deepEqual(Array.from(index.entries()), [
-			{ field: field1, id: { minor: 42 }, root: 1 },
-		]);
+		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
 });

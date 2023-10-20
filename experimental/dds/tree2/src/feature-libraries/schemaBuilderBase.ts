@@ -13,7 +13,7 @@ import {
 	schemaLintDefault,
 	AllowedTypes,
 	TreeNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeSchema,
 	FlexList,
 	Unenforced,
@@ -92,7 +92,7 @@ export class SchemaBuilderBase<
 	public readonly name: string;
 
 	/**
-	 * @param defaultKind - The default field kind to use when inferring a {@link FieldSchema} from {@link ImplicitAllowedTypes}.
+	 * @param defaultKind - The default field kind to use when inferring a {@link TreeFieldSchema} from {@link ImplicitAllowedTypes}.
 	 */
 	public constructor(
 		private readonly defaultKind: TDefaultKind,
@@ -134,7 +134,7 @@ export class SchemaBuilderBase<
 		this.treeSchema.set(schema.name, schema as TreeNodeSchema);
 	}
 
-	private finalizeCommon(field?: FieldSchema): SchemaLibraryData {
+	private finalizeCommon(field?: TreeFieldSchema): SchemaLibraryData {
 		assert(!this.finalized, 0x79a /* SchemaBuilder can only be finalized once. */);
 		this.finalized = true;
 		this.libraries.add({
@@ -151,7 +151,7 @@ export class SchemaBuilderBase<
 	 * Produce SchemaLibraries which capture the content added to this builder, as well as any additional SchemaLibraries that were added to it.
 	 * May only be called once after adding content to builder is complete.
 	 */
-	public finalize(): SchemaLibrary {
+	public intoLibrary(): SchemaLibrary {
 		const aggregated = this.finalizeCommon();
 
 		// Full library set (instead of just aggregated) is kept since it is required to handle deduplication of libraries included through different paths.
@@ -199,7 +199,7 @@ export class SchemaBuilderBase<
 		const schema = new TreeNodeSchema(this, this.scoped(name), {
 			structFields: transformObjectMap(
 				t,
-				(field): FieldSchema => this.normalizeField(field),
+				(field): TreeFieldSchema => this.normalizeField(field),
 			) as {
 				[key in keyof T]: NormalizeField<T[key], TDefaultKind>;
 			},
@@ -300,24 +300,24 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Define a {@link FieldSchema}.
+	 * Define a {@link TreeFieldSchema}.
 	 *
 	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
-	 * @returns a {@link FieldSchema} which can be used as a struct field (see {@link SchemaBuilderBase.struct}),
+	 * @returns a {@link TreeFieldSchema} which can be used as a struct field (see {@link SchemaBuilderBase.struct}),
 	 * a map field (see {@link SchemaBuilderBase.map}), a field node(see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.intoSchema}).
 	 *
 	 * @privateRemarks
 	 * TODO:
-	 * If a solution to FieldSchema not being able to have extends clauses gets found,
-	 * consider just having users do `new FieldSchema` instead?
+	 * If a solution to TreeFieldSchema not being able to have extends clauses gets found,
+	 * consider just having users do `new TreeFieldSchema` instead?
 	 */
 	public static field<Kind extends FieldKind, T extends ImplicitAllowedTypes>(
 		kind: Kind,
 		allowedTypes: T,
-	): FieldSchema<Kind, NormalizeAllowedTypes<T>> {
-		return FieldSchema.create(kind, normalizeAllowedTypes(allowedTypes));
+	): TreeFieldSchema<Kind, NormalizeAllowedTypes<T>> {
+		return TreeFieldSchema.create(kind, normalizeAllowedTypes(allowedTypes));
 	}
 
 	/**
@@ -334,12 +334,12 @@ export class SchemaBuilderBase<
 		Kind extends FieldKind,
 		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 		T extends FlexList<Unenforced<TreeNodeSchema>>,
-	>(kind: Kind, ...allowedTypes: T): FieldSchema<Kind, T> {
-		return FieldSchema.createUnsafe(kind, allowedTypes);
+	>(kind: Kind, ...allowedTypes: T): TreeFieldSchema<Kind, T> {
+		return TreeFieldSchema.createUnsafe(kind, allowedTypes);
 	}
 
 	/**
-	 * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema} using this schema builder's `defaultKind`.
+	 * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema} using this schema builder's `defaultKind`.
 	 */
 	protected normalizeField<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
@@ -394,35 +394,35 @@ export function normalizeAllowedTypes<TSchema extends ImplicitAllowedTypes>(
 }
 
 /**
- * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema}.
+ * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  * @alpha
  */
 export type NormalizeField<
 	TSchema extends ImplicitFieldSchema,
 	TDefault extends FieldKind,
-> = TSchema extends FieldSchema
+> = TSchema extends TreeFieldSchema
 	? TSchema
-	: FieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
+	: TreeFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
 
 /**
- * Normalizes an {@link ImplicitFieldSchema} into a {@link FieldSchema}.
+ * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
 export function normalizeField<TSchema extends ImplicitFieldSchema, TDefault extends FieldKind>(
 	schema: TSchema,
 	defaultKind: TDefault,
 ): NormalizeField<TSchema, TDefault> {
-	if (schema instanceof FieldSchema) {
+	if (schema instanceof TreeFieldSchema) {
 		return schema as NormalizeField<TSchema, TDefault>;
 	}
 	const allowedTypes = normalizeAllowedTypes(schema);
-	return FieldSchema.create(defaultKind, allowedTypes) as unknown as NormalizeField<
+	return TreeFieldSchema.create(defaultKind, allowedTypes) as unknown as NormalizeField<
 		TSchema,
 		TDefault
 	>;
 }
 
 /**
- * Type that when combined with a default {@link FieldKind} can be normalized into a {@link FieldSchema}.
+ * Type that when combined with a default {@link FieldKind} can be normalized into a {@link TreeFieldSchema}.
  * @alpha
  */
-export type ImplicitFieldSchema = FieldSchema | ImplicitAllowedTypes;
+export type ImplicitFieldSchema = TreeFieldSchema | ImplicitAllowedTypes;
