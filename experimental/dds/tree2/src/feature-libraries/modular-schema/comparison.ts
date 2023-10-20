@@ -52,13 +52,13 @@ export function allowsTreeSuperset(
 
 	if (
 		!compareSets({
-			a: original.structFields,
-			b: superset.structFields,
+			a: original.objectNodeFields,
+			b: superset.objectNodeFields,
 			aExtra: (originalField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.structFields.get(originalField) ?? fail("missing expected field"),
+					original.objectNodeFields.get(originalField) ?? fail("missing expected field"),
 					normalizeField(superset.mapFields),
 				),
 			bExtra: (supersetField) =>
@@ -66,14 +66,14 @@ export function allowsTreeSuperset(
 					policy,
 					originalData,
 					normalizeField(original.mapFields),
-					superset.structFields.get(supersetField) ?? fail("missing expected field"),
+					superset.objectNodeFields.get(supersetField) ?? fail("missing expected field"),
 				),
 			same: (sameField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.structFields.get(sameField) ?? fail("missing expected field"),
-					superset.structFields.get(sameField) ?? fail("missing expected field"),
+					original.objectNodeFields.get(sameField) ?? fail("missing expected field"),
+					superset.objectNodeFields.get(sameField) ?? fail("missing expected field"),
 				),
 		})
 	) {
@@ -253,7 +253,7 @@ export function isNeverTreeRecursive(
 		) {
 			return true;
 		}
-		for (const field of tree.structFields.values()) {
+		for (const field of tree.objectNodeFields.values()) {
 			// TODO: this can recurse infinitely for schema that include themselves in a value field.
 			// This breaks even if there are other allowed types.
 			// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).

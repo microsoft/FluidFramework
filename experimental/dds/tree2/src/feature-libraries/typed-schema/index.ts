@@ -13,7 +13,7 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,

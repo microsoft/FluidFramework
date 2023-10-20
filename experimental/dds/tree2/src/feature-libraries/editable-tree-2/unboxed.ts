@@ -34,7 +34,7 @@ export function unboxedTree<TSchema extends TreeNodeSchema>(
 		cursor.enterField(EmptyKey);
 		const primaryField = makeField(
 			context,
-			schema.structFields.get(EmptyKey) ?? fail("invalid schema"),
+			schema.objectNodeFields.get(EmptyKey) ?? fail("invalid schema"),
 			cursor,
 		);
 		cursor.exitField();

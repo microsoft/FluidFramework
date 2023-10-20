@@ -452,15 +452,10 @@ export interface DeltaVisitor {
     create(content: Delta.ProtoNodes, destination: FieldKey): void;
     destroy(detachedField: FieldKey, count: number): void;
     detach(source: Range_2, destination: FieldKey): void;
-    // (undocumented)
     enterField(key: FieldKey): void;
-    // (undocumented)
     enterNode(index: NodeIndex): void;
-    // (undocumented)
     exitField(key: FieldKey): void;
-    // (undocumented)
     exitNode(index: NodeIndex): void;
-    // (undocumented)
     free(): void;
     replace(newContentSource: FieldKey, range: Range_2, oldContentDestination: FieldKey): void;
 }
@@ -592,8 +587,8 @@ type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? 
 type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item> ? Item : unknown;
 
 // @alpha
-export type FactoryStructSchema<TScope extends string, TName extends string | number, Name extends TName, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, {
-    structFields: {
+export type FactoryObjectNodeSchema<TScope extends string, Name extends number | string, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, {
+    objectNodeFields: {
         [key in keyof T]: NormalizeField_2<T[key], Required_2>;
     };
 }>>;
@@ -666,13 +661,13 @@ type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 // @alpha
 export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
-    readonly boxedContent: TypedField<TSchema["structFieldsObject"][""]>;
-    readonly content: UnboxField<TSchema["structFieldsObject"][""]>;
+    readonly boxedContent: TypedField<TSchema["objectNodeFieldsObject"][""]>;
+    readonly content: UnboxField<TSchema["objectNodeFieldsObject"][""]>;
 }
 
 // @alpha
-export type FieldNodeSchema = StructSchema & {
-    structFieldsObject: {
+export type FieldNodeSchema = ObjectNodeSchema & {
+    objectNodeFieldsObject: {
         [""]: TreeFieldSchema;
     };
 };
@@ -822,7 +817,6 @@ export interface IDefaultEditBuilder {
 
 // @alpha
 export interface IEditableForest extends IForestSubscription {
-    // (undocumented)
     acquireVisitor(): DeltaVisitor;
     readonly anchors: AnchorSet;
 }
@@ -884,7 +878,7 @@ declare namespace InternalEditableTreeTypes {
         TypedFieldInner,
         UnboxFieldInner,
         TypeArrayToTypedTreeArray_2 as TypeArrayToTypedTreeArray,
-        StructFields,
+        ObjectNodeFields,
         UnboxField,
         UnboxNode,
         UnboxNodeUnion,
@@ -902,11 +896,11 @@ declare namespace InternalTypedSchemaTypes {
         UnbrandList,
         ArrayToUnion,
         TreeSchemaSpecification,
-        NormalizeStructFieldsInner,
-        NormalizeStructFields,
+        NormalizeObjectNodeFieldsInner,
+        NormalizeObjectNodeFields,
         NormalizeField,
         Fields,
-        StructSchemaSpecification,
+        ObjectSchemaSpecification,
         MapSchemaSpecification,
         LeafSchemaSpecification,
         MapFieldSchema,
@@ -1006,7 +1000,7 @@ interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @alpha
-export function is<TSchema extends StructSchema>(x: unknown, schema: TSchema): x is SharedTreeObject<TSchema>;
+export function is<TSchema extends ObjectNodeSchema>(x: unknown, schema: TSchema): x is SharedTreeObject<TSchema>;
 
 // @alpha
 type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
@@ -1142,7 +1136,7 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
 // @alpha (undocumented)
 export const jsonArray: TreeNodeSchema<"com.fluidframework.json.array", {
-structFields: {
+objectNodeFields: {
 "": TreeFieldSchema<Sequence_2, readonly [() => TreeNodeSchema<"com.fluidframework.json.object", {
 mapFields: TreeFieldSchema<Optional, readonly [any, () => TreeNodeSchema<"com.fluidframework.json.array", any>, TreeNodeSchema<"com.fluidframework.leaf.number", {
 leafValue: ValueSchema.Number;
@@ -1181,7 +1175,7 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 // @alpha (undocumented)
 export const jsonObject: TreeNodeSchema<"com.fluidframework.json.object", {
 mapFields: TreeFieldSchema<Optional, readonly [() => TreeNodeSchema<"com.fluidframework.json.object", any>, () => TreeNodeSchema<"com.fluidframework.json.array", {
-structFields: {
+objectNodeFields: {
 "": TreeFieldSchema<Sequence_2, readonly [() => TreeNodeSchema<"com.fluidframework.json.object", any>, any, TreeNodeSchema<"com.fluidframework.leaf.number", {
 leafValue: ValueSchema.Number;
 }>, TreeNodeSchema<"com.fluidframework.leaf.boolean", {
@@ -1453,7 +1447,7 @@ interface NodeKeyFieldKind extends FieldKind<"NodeKey", Multiplicity.Single> {
 interface NodeKeys {
     generate(): LocalNodeKey;
     localize(key: StableNodeKey): LocalNodeKey;
-    readonly map: ReadonlyMap<LocalNodeKey, Struct>;
+    readonly map: ReadonlyMap<LocalNodeKey, ObjectNode>;
     stabilize(key: LocalNodeKey): StableNodeKey;
 }
 
@@ -1479,10 +1473,10 @@ type NormalizeField<T extends TreeFieldSchema | undefined> = T extends TreeField
 type NormalizeField_2<TSchema extends ImplicitFieldSchema, TDefault extends FieldKind> = TSchema extends TreeFieldSchema ? TSchema : TreeFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
 
 // @alpha (undocumented)
-type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<WithDefault<T, Record<string, never>>>;
+type NormalizeObjectNodeFields<T extends Fields | undefined> = NormalizeObjectNodeFieldsInner<WithDefault<T, Record<string, never>>>;
 
 // @alpha (undocumented)
-type NormalizeStructFieldsInner<T extends Fields> = {
+type NormalizeObjectNodeFieldsInner<T extends Fields> = {
     [Property in keyof T]: NormalizeField<T[Property]>;
 };
 
@@ -1496,6 +1490,36 @@ export type ObjectFields<TFields extends RestrictiveReadonlyRecord<string, TreeF
 } & {
     readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : TFields[key]["kind"] extends typeof FieldKinds.optional ? never : key]-?: ProxyField<TFields[key], API>;
 };
+
+// @alpha
+export interface ObjectNode extends TreeNode {
+    readonly localNodeKey?: LocalNodeKey;
+}
+
+// @alpha
+type ObjectNodeFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> = {
+    readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+} & {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: UnboxField<TFields[key]>;
+} & {
+    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: UnboxField<TFields[key]>;
+} & {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+};
+
+// @alpha
+export type ObjectNodeSchema = TreeNodeSchema & {
+    [P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
+};
+
+// @alpha
+export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNode & ObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
+
+// @alpha
+interface ObjectSchemaSpecification {
+    // (undocumented)
+    readonly objectNodeFields: RestrictiveReadonlyRecord<string, TreeFieldSchema>;
+}
 
 // @alpha
 type ObjectToMap<ObjectMap, MapKey extends number | string, MapValue> = ReadonlyMap<MapKey, MapValue> & {
@@ -1624,7 +1648,7 @@ export type ProxyField<TSchema extends TreeFieldSchema, API extends "javaScript"
 export type ProxyFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree", Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? never : Kind extends typeof FieldKinds.required ? ProxyNodeUnion<TTypes, API> : Kind extends typeof FieldKinds.optional ? ProxyNodeUnion<TTypes, API> | (Emptiness extends "notEmpty" ? never : undefined) : unknown;
 
 // @alpha
-export type ProxyNode<TSchema extends TreeNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? API extends "sharedTree" ? SharedTreeMap<TSchema> : Map<string, ProxyField<TSchema["mapFields"], API>> : TSchema extends FieldNodeSchema ? API extends "sharedTree" ? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API> : readonly ProxyNodeUnion<TSchema["structFieldsObject"][""]["allowedTypes"], API>[] : TSchema extends StructSchema ? SharedTreeObject<TSchema, API> : unknown;
+export type ProxyNode<TSchema extends TreeNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? API extends "sharedTree" ? SharedTreeMap<TSchema> : Map<string, ProxyField<TSchema["mapFields"], API>> : TSchema extends FieldNodeSchema ? API extends "sharedTree" ? SharedTreeList<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API> : readonly ProxyNodeUnion<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>[] : TSchema extends ObjectNodeSchema ? SharedTreeObject<TSchema, API> : unknown;
 
 // @alpha
 export type ProxyNodeUnion<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> = TTypes extends readonly [Any] ? unknown : {
@@ -1659,9 +1683,9 @@ export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPat
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha (undocumented)
-const recursiveStruct: TreeNodeSchema<"Test Recursive Domain.struct", {
-structFields: {
-readonly recursive: TreeFieldSchema<Optional, readonly [() => TreeNodeSchema<"Test Recursive Domain.struct", any>]>;
+const recursiveObject: TreeNodeSchema<"Test Recursive Domain.object", {
+objectNodeFields: {
+readonly recursive: TreeFieldSchema<Optional, readonly [() => TreeNodeSchema<"Test Recursive Domain.object", any>]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>;
@@ -1669,8 +1693,8 @@ leafValue: import("..").ValueSchema.Number;
 }>;
 
 // @alpha (undocumented)
-const recursiveStruct2: FactoryStructSchema<"Test Recursive Domain", string, "struct2", {
-readonly recursive: TreeFieldSchema<Optional, readonly [() => FactoryStructSchema<"Test Recursive Domain", string, "struct2", any>]>;
+const recursiveObject2: FactoryObjectNodeSchema<"Test Recursive Domain", "object2", {
+readonly recursive: TreeFieldSchema<Optional, readonly [() => FactoryObjectNodeSchema<"Test Recursive Domain", "object2", any>]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>;
@@ -1793,12 +1817,12 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
         leafValue: import("..").ValueSchema.FluidHandle;
     }>;
     list<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.List<${string}>`, {
-        structFields: {
+        objectNodeFields: {
             [""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
         };
     }>;
     list<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchema<`${TScope}.${Name}`, {
-        structFields: {
+        objectNodeFields: {
             [""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
         };
     }>;
@@ -1816,6 +1840,8 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
         leafValue: import("..").ValueSchema.Number;
     }>;
+    // (undocumented)
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): FactoryObjectNodeSchema<TScope, Name, T>;
     static optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Optional, NormalizeAllowedTypes<T>>;
     readonly optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Optional, NormalizeAllowedTypes<T>>;
     static required: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Required_2, NormalizeAllowedTypes<T>>;
@@ -1826,8 +1852,6 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", {
         leafValue: import("..").ValueSchema.String;
     }>;
-    // (undocumented)
-    struct<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): FactoryStructSchema<TScope, TName, Name, T>;
 }
 
 // @alpha
@@ -1837,12 +1861,12 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     protected addNodeSchema<T extends TreeNodeSchema<string, any>>(schema: T): void;
     static field<Kind extends FieldKind, T extends ImplicitAllowedTypes>(kind: Kind, allowedTypes: T): TreeFieldSchema<Kind, NormalizeAllowedTypes<T>>;
     fieldNode<Name extends TName, const T extends ImplicitFieldSchema>(name: Name, fieldSchema: T): TreeNodeSchema<`${TScope}.${Name}`, {
-        structFields: {
+        objectNodeFields: {
             [""]: NormalizeField_2<T, TDefaultKind>;
         };
     }>;
     fieldNodeRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, {
-        structFields: {
+        objectNodeFields: {
             [""]: T;
         };
     }>;
@@ -1857,17 +1881,17 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     }>;
     readonly name: string;
     protected normalizeField<TSchema extends ImplicitFieldSchema>(schema: TSchema): NormalizeField_2<TSchema, TDefaultKind>;
-    readonly scope: TScope;
-    // (undocumented)
-    protected scoped<Name extends TName>(name: Name): `${TScope}.${Name}` & TreeNodeSchemaIdentifier;
-    struct<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, {
-        structFields: {
+    object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, {
+        objectNodeFields: {
             [key in keyof T]: NormalizeField_2<T[key], TDefaultKind>;
         };
     }>;
-    structRecursive<Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, {
-        structFields: T;
+    objectRecursive<Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, {
+        objectNodeFields: T;
     }>;
+    readonly scope: TScope;
+    // (undocumented)
+    protected scoped<Name extends TName>(name: Name): `${TScope}.${Name}` & TreeNodeSchemaIdentifier;
 }
 
 // @alpha
@@ -2005,11 +2029,11 @@ export interface SharedTreeNode {
 }
 
 // @alpha
-export type SharedTreeObject<TSchema extends StructSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["structFieldsObject"], API> & SharedTreeNode;
+export type SharedTreeObject<TSchema extends ObjectNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["objectNodeFieldsObject"], API> & SharedTreeNode;
 
 // @alpha
 export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, unknown>> {
-    create(content: ProxyNode<Assume<TSchema, StructSchema>, "javaScript">): SharedTreeObject<Assume<TSchema, StructSchema>>;
+    create(content: ProxyNode<Assume<TSchema, ObjectNodeSchema>, "javaScript">): SharedTreeObject<Assume<TSchema, ObjectNodeSchema>>;
 }
 
 // @alpha (undocumented)
@@ -2057,36 +2081,6 @@ export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEv
 }
 
 // @alpha
-export interface Struct extends TreeNode {
-    readonly localNodeKey?: LocalNodeKey;
-}
-
-// @alpha
-type StructFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> = {
-    readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
-} & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: UnboxField<TFields[key]>;
-} & {
-    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: UnboxField<TFields[key]>;
-} & {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? `set${Capitalize<key & string>}` : never]: (content: FlexibleFieldContent<TFields[key]>) => void;
-};
-
-// @alpha
-export type StructSchema = TreeNodeSchema & {
-    [P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
-};
-
-// @alpha
-interface StructSchemaSpecification {
-    // (undocumented)
-    readonly structFields: RestrictiveReadonlyRecord<string, TreeFieldSchema>;
-}
-
-// @alpha
-export type StructTyped<TSchema extends StructSchema> = Struct & StructFields<TSchema["structFieldsObject"]>;
-
-// @alpha
 export interface SubtreePolicy {
     // (undocumented)
     maxDepth: number;
@@ -2094,8 +2088,8 @@ export interface SubtreePolicy {
 
 declare namespace testRecursiveDomain {
     export {
-        recursiveStruct,
-        recursiveStruct2,
+        recursiveObject,
+        recursiveObject2,
         library
     }
 }
@@ -2223,9 +2217,9 @@ export class TreeNodeSchema<Name extends string = string, T extends Unenforced<T
     // (undocumented)
     readonly name: Name & TreeNodeSchemaIdentifier;
     // (undocumented)
-    readonly structFields: ObjectToMap<NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>, FieldKey, TreeFieldSchema>;
+    readonly objectNodeFields: ObjectToMap<NormalizeObjectNodeFields<Assume<T, TreeSchemaSpecification>["objectNodeFields"]>, FieldKey, TreeFieldSchema>;
     // (undocumented)
-    readonly structFieldsObject: NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>;
+    readonly objectNodeFieldsObject: NormalizeObjectNodeFields<Assume<T, TreeSchemaSpecification>["objectNodeFields"]>;
 }
 
 // @alpha
@@ -2235,7 +2229,7 @@ export type TreeNodeSchemaIdentifier = Brand<string, "tree.TreeNodeSchemaIdentif
 export interface TreeNodeStoredSchema {
     readonly leafValue?: ValueSchema;
     readonly mapFields?: TreeFieldStoredSchema;
-    readonly structFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
 }
 
 // @alpha
@@ -2247,7 +2241,7 @@ export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema> ext
 
 // @alpha
 type TreeSchemaSpecification = [
-FlattenKeys<(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
+FlattenKeys<(ObjectSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<ObjectSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
 ][_InlineTrick];
 
 // @alpha
@@ -2327,10 +2321,10 @@ TFields extends {
 ][_InlineTrick];
 
 // @alpha
-export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema ? Leaf<TSchema> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? FieldNode<TSchema> : TSchema extends StructSchema ? StructTyped<TSchema> : TreeNode;
+export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema ? Leaf<TSchema> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? FieldNode<TSchema> : TSchema extends ObjectNodeSchema ? ObjectNodeTyped<TSchema> : TreeNode;
 
 // @alpha
-type TypedNode_2<TSchema extends TreeNodeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["structFieldsObject"]>, TSchema["leafValue"], TSchema["name"]>>;
+type TypedNode_2<TSchema extends TreeNodeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["objectNodeFieldsObject"]>, TSchema["leafValue"], TSchema["name"]>>;
 
 // @alpha
 export type TypedNodeUnion<TTypes extends AllowedTypes> = TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray_2<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>, readonly TreeNodeSchema[]>>> : TreeNode;
@@ -2383,7 +2377,7 @@ type UnboxField<TSchema extends TreeFieldSchema, Emptiness extends "maybeEmpty" 
 type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? Sequence<TTypes> : Kind extends typeof FieldKinds.required ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : Kind extends typeof FieldKinds.nodeKey ? NodeKeyField : unknown;
 
 // @alpha
-type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? UnboxField<TSchema["structFieldsObject"][""]> : TSchema extends StructSchema ? StructTyped<TSchema> : unknown;
+type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema ? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? UnboxField<TSchema["objectNodeFieldsObject"][""]> : TSchema extends ObjectNodeSchema ? ObjectNodeTyped<TSchema> : unknown;
 
 // @alpha
 type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [

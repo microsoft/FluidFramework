@@ -41,16 +41,15 @@ export interface Fields {
 /**
  * @alpha
  */
-export type NormalizeStructFieldsInner<T extends Fields> = {
+export type NormalizeObjectNodeFieldsInner<T extends Fields> = {
 	[Property in keyof T]: NormalizeField<T[Property]>;
 };
 
 /**
  * @alpha
  */
-export type NormalizeStructFields<T extends Fields | undefined> = NormalizeStructFieldsInner<
-	WithDefault<T, Record<string, never>>
->;
+export type NormalizeObjectNodeFields<T extends Fields | undefined> =
+	NormalizeObjectNodeFieldsInner<WithDefault<T, Record<string, never>>>;
 
 /**
  * A placeholder to use in extends constraints when using the real type breaks compilation of some recursive types due to [a design limitation of TypeScript](https://github.com/microsoft/TypeScript/issues/55758).
@@ -77,14 +76,14 @@ export class TreeNodeSchema<
 	T extends Unenforced<TreeSchemaSpecification> = TreeSchemaSpecification,
 > {
 	// Allows reading fields through the normal map, but without losing type information.
-	public readonly structFields: ObjectToMap<
-		NormalizeStructFields<Assume<T, TreeSchemaSpecification>["structFields"]>,
+	public readonly objectNodeFields: ObjectToMap<
+		NormalizeObjectNodeFields<Assume<T, TreeSchemaSpecification>["objectNodeFields"]>,
 		FieldKey,
 		TreeFieldSchema
 	>;
 
-	public readonly structFieldsObject: NormalizeStructFields<
-		Assume<T, TreeSchemaSpecification>["structFields"]
+	public readonly objectNodeFieldsObject: NormalizeObjectNodeFields<
+		Assume<T, TreeSchemaSpecification>["objectNodeFields"]
 	>;
 
 	public readonly mapFields: WithDefault<
@@ -108,10 +107,10 @@ export class TreeNodeSchema<
 	) {
 		this.info = info as Assume<T, TreeSchemaSpecification>;
 		this.name = name as Name & TreeNodeSchemaIdentifier;
-		this.structFieldsObject = normalizeStructFields<
-			Assume<T, TreeSchemaSpecification>["structFields"]
-		>(this.info.structFields);
-		this.structFields = objectToMapTyped(this.structFieldsObject);
+		this.objectNodeFieldsObject = normalizeStructFields<
+			Assume<T, TreeSchemaSpecification>["objectNodeFields"]
+		>(this.info.objectNodeFields);
+		this.objectNodeFields = objectToMapTyped(this.objectNodeFieldsObject);
 		this.mapFields = this.info.mapFields as WithDefault<
 			Assume<T, TreeSchemaSpecification>["mapFields"],
 			undefined
@@ -124,7 +123,7 @@ export class TreeNodeSchema<
 }
 
 // TODO: TreeNodeSchema should be a union of the more specific schema type below, rather than containing all the info for all of them.
-// When this change is made, FieldNodeSchema should be properly separated from StructSchema,
+// When this change is made, FieldNodeSchema should be properly separated from ObjectNodeSchema,
 // and the bellow type checks could be done with instanceof tests.
 
 /**
@@ -140,24 +139,24 @@ export type LeafSchema = TreeNodeSchema & LeafSchemaSpecification;
  * TODO: this includes FieldNodeSchema when it shouldn't
  * @alpha
  */
-export type StructSchema = TreeNodeSchema & {
+export type ObjectNodeSchema = TreeNodeSchema & {
 	[P in keyof (MapSchemaSpecification & LeafSchemaSpecification)]?: undefined;
 };
 
 /**
  * @alpha
  *
- * This is the subset of StructSchema that uses {@link EmptyKey} so the the old (editable-tree 1) API unboxes it.
- * TODO: Once that API is removed, this can be cleaned up and properly separated from StructSchema
+ * This is the subset of ObjectNodeSchema that uses {@link EmptyKey} so the the old (editable-tree 1) API unboxes it.
+ * TODO: Once that API is removed, this can be cleaned up and properly separated from ObjectNodeSchema
  */
-export type FieldNodeSchema = StructSchema & {
+export type FieldNodeSchema = ObjectNodeSchema & {
 	/**
 	 * The fields of this node.
 	 * Only uses the {@link EmptyKey}.
 	 *
 	 * TODO: this extra indirection will be removed when refactoring TreeNodeSchema (see other related TODOs for details).
 	 */
-	structFieldsObject: {
+	objectNodeFieldsObject: {
 		/**
 		 * The field this node wraps.
 		 * It is under the {@link EmptyKey}.
@@ -179,10 +178,10 @@ export function schemaIsLeaf(schema: TreeNodeSchema): schema is LeafSchema {
  * @alpha
  */
 export function schemaIsFieldNode(schema: TreeNodeSchema): schema is FieldNodeSchema {
-	return schema.structFields.size === 1 && schema.structFields.has(EmptyKey);
+	return schema.objectNodeFields.size === 1 && schema.objectNodeFields.has(EmptyKey);
 }
 
-export function schemaIsStruct(schema: TreeNodeSchema): schema is StructSchema {
+export function schemaIsStruct(schema: TreeNodeSchema): schema is ObjectNodeSchema {
 	return !schemaIsMap(schema) && !schemaIsLeaf(schema) && !schemaIsFieldNode(schema);
 }
 
@@ -194,9 +193,11 @@ export type NormalizeField<T extends TreeFieldSchema | undefined> = T extends Tr
 	? T
 	: TreeFieldSchema<typeof FieldKinds.forbidden, []>;
 
-function normalizeStructFields<T extends Fields | undefined>(fields: T): NormalizeStructFields<T> {
+function normalizeStructFields<T extends Fields | undefined>(
+	fields: T,
+): NormalizeObjectNodeFields<T> {
 	if (fields === undefined) {
-		return {} as unknown as NormalizeStructFields<T>;
+		return {} as unknown as NormalizeObjectNodeFields<T>;
 	}
 	const out: Record<string, TreeFieldSchema> = {};
 	// eslint-disable-next-line no-restricted-syntax
@@ -206,7 +207,7 @@ function normalizeStructFields<T extends Fields | undefined>(fields: T): Normali
 			out[key] = normalizeField(element);
 		}
 	}
-	return out as NormalizeStructFields<T>;
+	return out as NormalizeObjectNodeFields<T>;
 }
 
 function normalizeField<T extends TreeFieldSchema | undefined>(t: T): NormalizeField<T> {
@@ -253,11 +254,11 @@ export function allowedTypesIsAny(t: AllowedTypes): t is readonly [Any] {
 }
 
 /**
- * `TreeSchemaSpecification` for {@link SchemaBuilderBase.struct}.
+ * `TreeSchemaSpecification` for {@link SchemaBuilderBase.object}.
  * @alpha
  */
-export interface StructSchemaSpecification {
-	readonly structFields: RestrictiveReadonlyRecord<string, TreeFieldSchema>;
+export interface ObjectSchemaSpecification {
+	readonly objectNodeFields: RestrictiveReadonlyRecord<string, TreeFieldSchema>;
 }
 
 /**
@@ -291,8 +292,8 @@ export interface LeafSchemaSpecification {
  */
 export type TreeSchemaSpecification = [
 	FlattenKeys<
-		(StructSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) &
-			Partial<StructSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>
+		(ObjectSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) &
+			Partial<ObjectSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>
 	>,
 ][_InlineTrick];
 

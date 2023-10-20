@@ -15,7 +15,7 @@ export const numberList = builder.fieldNode("List<number>", builder.sequence(lea
 
 // TODO: Using separate arrays for 'numbers' and 'strings' is a workaround for
 //       UnboxNodeUnion not unboxing unions.
-const root = builder.struct("root", {
+const root = builder.object("root", {
 	strings: stringList,
 	numbers: numberList,
 });

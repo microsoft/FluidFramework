@@ -18,12 +18,12 @@ const builder = new SchemaBuilder({
 	scope: "EditableTree Node Keys",
 	libraries: [nodeKeySchema],
 });
-const childNodeSchema = builder.struct("ChildNode", {
+const childNodeSchema = builder.object("ChildNode", {
 	...nodeKeyField,
 	name: leaf.string,
 });
 
-const parentNodeSchema = builder.struct("ParentNode", {
+const parentNodeSchema = builder.object("ParentNode", {
 	...nodeKeyField,
 	children: builder.sequence(childNodeSchema),
 });

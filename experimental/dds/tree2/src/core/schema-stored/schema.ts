@@ -152,10 +152,10 @@ export interface TreeNodeStoredSchema {
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
 	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
-	readonly structFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+	readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
 
 	/**
-	 * Constraint for fields not mentioned in `structFields`.
+	 * Constraint for fields not mentioned in `objectNodeFields`.
 	 * If undefined, all such fields must be empty.
 	 *
 	 * Allows using using the fields as a map, with the keys being

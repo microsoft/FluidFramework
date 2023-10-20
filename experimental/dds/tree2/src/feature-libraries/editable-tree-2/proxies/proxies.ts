@@ -8,7 +8,7 @@ import {
 	AllowedTypes,
 	FieldNodeSchema,
 	TreeFieldSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -55,7 +55,7 @@ const proxyCacheSym = Symbol("ProxyCache");
 /** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
 function cacheProxy(
 	target: TreeNode,
-	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<ObjectNodeSchema>,
 ): void {
 	Object.defineProperty(target, proxyCacheSym, {
 		value: proxy,
@@ -74,7 +74,7 @@ function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefin
  * Checks if the given object is a {@link SharedTreeObject}
  * @alpha
  */
-export function is<TSchema extends StructSchema>(
+export function is<TSchema extends ObjectNodeSchema>(
 	x: unknown,
 	schema: TSchema,
 ): x is SharedTreeObject<TSchema> {
@@ -147,7 +147,7 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 	fail("unrecognized node kind");
 }
 
-export function createObjectProxy<TSchema extends StructSchema, TTypes extends AllowedTypes>(
+export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes extends AllowedTypes>(
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
@@ -178,7 +178,7 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				}
 			},
 			set(target, key, value) {
-				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+				const fieldSchema = content.schema.objectNodeFields.get(key as FieldKey);
 
 				if (fieldSchema === undefined) {
 					return false;
@@ -205,10 +205,10 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				return true;
 			},
 			has: (target, key) => {
-				return schema.structFields.has(key as FieldKey);
+				return schema.objectNodeFields.has(key as FieldKey);
 			},
 			ownKeys: (target) => {
-				return [...schema.structFields.keys()];
+				return [...schema.objectNodeFields.keys()];
 			},
 			getOwnPropertyDescriptor: (target, key) => {
 				const field = content.tryGetField(key as FieldKey);

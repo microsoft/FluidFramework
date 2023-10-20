@@ -91,15 +91,15 @@ export function treeShaper(
 	// consider moving some optional and sequence fields to extra fields if they are commonly empty
 	// to reduce encoded size.
 
-	const structFields: KeyedFieldEncoder[] = [];
-	for (const [key, field] of schema.structFields ?? []) {
-		structFields.push({ key, shape: fieldHandler.shapeFromField(field) });
+	const objectNodeFields: KeyedFieldEncoder[] = [];
+	for (const [key, field] of schema.objectNodeFields ?? []) {
+		objectNodeFields.push({ key, shape: fieldHandler.shapeFromField(field) });
 	}
 
 	const shape = new NodeShape(
 		schemaName,
 		valueShapeFromSchema(schema.leafValue),
-		structFields,
+		objectNodeFields,
 		schema.mapFields === undefined ? undefined : fieldHandler.shapeFromField(schema.mapFields),
 	);
 	return shape;

@@ -167,7 +167,7 @@ export function getPrimaryField(
 	schema: TreeNodeStoredSchema,
 ): { key: FieldKey; schema: TreeFieldStoredSchema } | undefined {
 	// TODO: have a better mechanism for this. See note on EmptyKey.
-	const field = schema.structFields.get(EmptyKey);
+	const field = schema.objectNodeFields.get(EmptyKey);
 	if (field === undefined) {
 		return undefined;
 	}
@@ -179,7 +179,7 @@ export function getFieldSchema(
 	field: FieldKey,
 	schema: TreeNodeStoredSchema,
 ): TreeFieldStoredSchema {
-	return schema.structFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
+	return schema.objectNodeFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
 }
 
 export function getFieldKind(fieldSchema: TreeFieldStoredSchema): FieldKind {
@@ -564,7 +564,7 @@ export function applyTypesFromContext(
 			}
 		}
 
-		for (const key of schema.structFields.keys()) {
+		for (const key of schema.objectNodeFields.keys()) {
 			if (data[key] === undefined) {
 				setFieldForKey(key, context, schema, fields);
 			}
