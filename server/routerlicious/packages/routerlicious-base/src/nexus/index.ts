@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { IAlfredResourcesCustomizations } from "./customizations";
+export { INexusResourcesCustomizations } from "./customizations";
 export { NexusRunner } from "./runner";
 export {
 	NexusResources,
@@ -11,9 +11,4 @@ export {
 	NexusRunnerFactory,
 	OrdererManager,
 } from "./runnerFactory";
-export {
-	DeltaService,
-	DocumentDeleteService,
-	IDocumentDeleteService,
-	StorageNameAllocator,
-} from "./services";
+export { StorageNameAllocator } from "./services";

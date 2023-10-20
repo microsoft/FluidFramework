@@ -1,8 +1,7 @@
-# Alfred
+# Nexus
 
-![Michael Caine as Alfred Pennyworth in The Dark Knight Trilogy](https://upload.wikimedia.org/wikipedia/en/1/18/Alfred_Pennyworth_%28Michael_Caine%29.jpg)
+Nexus is a microservice that handles the Socket.IO that used to belong to Alfred. This means Nexus now handles the operation stream (websocket connections) part of routerlicious while Alfred keeps serving the HTTP document APIs.
 
-Alfred is the entry point to Routerlicious. Clients connect to Alfred via Socket.IO to join the operation stream.
-Joining the stream allows them to receive push notifications for new operations, retrieve old operations, as well as
-create new ones. We make use of Redis for push notifications. New operations are placed inside of Apache Kafka for
-processing.
+In order for the Nexus routing to work correctly, the client must have the Discovery feature enabled. Alfred will then return the deltaStreamURL pointing to a Nexus URL.
+
+Reasons for this split are primarily, ease of scaling and measuring performance of the independent microservices.

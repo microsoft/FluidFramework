@@ -10,12 +10,10 @@ import {
 	IRevokedTokenChecker,
 	IWebSocketTracker,
 } from "@fluidframework/server-services-core";
-import { IDocumentDeleteService } from "./services";
 
-export interface IAlfredResourcesCustomizations {
+export interface INexusResourcesCustomizations {
 	documentRepository?: IDocumentRepository;
 	storageNameAllocator?: IStorageNameAllocator;
-	documentDeleteService?: IDocumentDeleteService;
 	tokenRevocationManager?: ITokenRevocationManager;
 	revokedTokenChecker?: IRevokedTokenChecker;
 	webSocketTracker?: IWebSocketTracker;

@@ -137,17 +137,6 @@
 		"sessionStickinessDurationMs": 3600000,
 		"enableConnectionCountLogging": false,
 		"throttling": {
-			"restCallsPerTenant": {
-				"generalRestCall": "disabled",
-				"createDoc": "disabled",
-				"getDeltas": "disabled",
-				"getSession": "disabled"
-			},
-			"restCallsPerCluster": {
-				"createDoc": "disabled",
-				"getDeltas": "disabled",
-				"getSession": "disabled"
-			},
 			"socketConnectionsPerTenant": "disabled",
 			"socketConnectionsPerCluster": "disabled",
 			"submitOps": "disabled",

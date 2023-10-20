@@ -25,7 +25,7 @@ import * as winston from "winston";
 import * as ws from "ws";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
-import { IAlfredResourcesCustomizations } from ".";
+import { INexusResourcesCustomizations } from ".";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -139,7 +139,7 @@ export class NexusResources implements core.IResources {
 export class NexusResourcesFactory implements core.IResourcesFactory<NexusResources> {
 	public async create(
 		config: Provider,
-		customizations?: IAlfredResourcesCustomizations,
+		customizations?: INexusResourcesCustomizations,
 	): Promise<NexusResources> {
 		const metricClientConfig = config.get("metric");
 		// Producer used to publish messages

@@ -14,7 +14,6 @@ export {
 	IDocumentDeleteService,
 	OrdererManager,
 } from "./alfred";
-
 export { NexusResources, NexusResourcesFactory, NexusRunnerFactory } from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {
