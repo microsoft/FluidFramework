@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { getProxyForField, is } from "./proxies";
+export { getProxyForField } from "./proxies";
 export {
 	SharedTreeList,
 	ObjectFields,

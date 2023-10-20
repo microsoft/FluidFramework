@@ -1004,9 +1004,6 @@ interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {
 }
 
 // @alpha
-export function is<TSchema extends ObjectNodeSchema>(x: unknown, schema: TSchema): x is SharedTreeObject<TSchema>;
-
-// @alpha
 type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @alpha
@@ -1405,7 +1402,13 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
 // @alpha
-export function node(owner: SharedTreeNode): Required<SharedTreeNode>[typeof nodeSym];
+export const node: {
+    schema: (n: SharedTreeNode) => TreeNodeSchema<string, FlattenKeys<(MapSchemaSpecification | LeafSchemaSpecification | ObjectSchemaSpecification) & Partial<ObjectSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>>;
+    is: <TSchema extends TreeNodeSchema<string, FlattenKeys<(MapSchemaSpecification | LeafSchemaSpecification | ObjectSchemaSpecification) & Partial<ObjectSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>>>(u: unknown, schema: TSchema) => u is ProxyNode<TSchema>;
+    parent: (n: SharedTreeNode) => unknown;
+    on: <K extends keyof EditableTreeEvents>(n: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => () => void;
+    status: (n: SharedTreeNode) => TreeStatus;
+};
 
 // @alpha
 export interface NodeData {
@@ -2008,7 +2011,7 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @alpha
-export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>>, SharedTreeNode {
+export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
     insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
     insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
     insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
@@ -2022,18 +2025,13 @@ export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaSc
 }
 
 // @alpha
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>> & SharedTreeNode;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
 
 // @alpha
-export interface SharedTreeNode {
-    // (undocumented)
-    [nodeSym]?: {
-        on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
-    };
-}
+export type SharedTreeNode = SharedTreeList<AllowedTypes> | SharedTreeObject<ObjectNodeSchema> | SharedTreeMap<MapSchema>;
 
 // @alpha
-export type SharedTreeObject<TSchema extends ObjectNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["objectNodeFieldsObject"], API> & SharedTreeNode;
+export type SharedTreeObject<TSchema extends ObjectNodeSchema, API extends "javaScript" | "sharedTree" = "sharedTree"> = ObjectFields<TSchema["objectNodeFieldsObject"], API>;
 
 // @alpha
 export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, unknown>> {

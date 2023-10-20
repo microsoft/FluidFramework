@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EditableTreeEvents, SchemaAware } from "../..";
+import { SchemaAware } from "../..";
 import { RestrictiveReadonlyRecord } from "../../../util";
 import { FieldKinds } from "../../default-field-kinds";
 import { FieldKind } from "../../modular-schema";
@@ -24,22 +24,17 @@ import {
 	FlexibleNodeContent,
 	Sequence,
 	AssignableFieldKinds,
+	TreeNode,
 } from "../editableTreeTypes";
-import { nodeSym } from "./node";
 
 /**
- * An object-like SharedTree node.  Includes objects, lists, and maps.
+ * An object-like SharedTree node. Includes objects, lists, and maps.
  * @alpha
  */
-export interface SharedTreeNode {
-	// TODO: Make [nodeSym] non-optional when we have factory functions.
-	[nodeSym]?: {
-		on<K extends keyof EditableTreeEvents>(
-			eventName: K,
-			listener: EditableTreeEvents[K],
-		): () => void;
-	};
-}
+export type SharedTreeNode =
+	| SharedTreeList<AllowedTypes>
+	| SharedTreeObject<ObjectNodeSchema>
+	| SharedTreeMap<MapSchema>;
 
 /**
  * Implements 'readonly T[]' and the list mutation APIs.
@@ -48,8 +43,7 @@ export interface SharedTreeNode {
 export interface SharedTreeList<
 	TTypes extends AllowedTypes,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>>,
-		SharedTreeNode {
+> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
@@ -176,7 +170,7 @@ export interface SharedTreeList<
 export type SharedTreeObject<
 	TSchema extends ObjectNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = ObjectFields<TSchema["objectNodeFieldsObject"], API> & SharedTreeNode;
+> = ObjectFields<TSchema["objectNodeFieldsObject"], API>;
 
 /**
  * Helper for generating the properties of a {@link SharedTreeObject}.
@@ -223,8 +217,7 @@ export type ObjectFields<
  * A map of string keys to tree objects.
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>> &
-	SharedTreeNode;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.
@@ -302,3 +295,23 @@ export type ProxyRoot<
 	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;
+
+/** Symbol used to store a private/internal reference to the underlying editable tree node. */
+export const treeNodeSym = Symbol("TreeNode");
+
+/** Helper to retrieve the stored tree node. */
+export function getTreeNode(target: unknown): TreeNode | undefined {
+	if (typeof target === "object" && target !== null) {
+		return (target as { [treeNodeSym]?: TreeNode })[treeNodeSym];
+	}
+
+	return undefined;
+}
+
+/** Helper to set the stored tree node. */
+export function setTreeNode(target: any, treeNode: TreeNode) {
+	Object.defineProperty(target, treeNodeSym, {
+		value: treeNode,
+		configurable: true,
+	});
+}

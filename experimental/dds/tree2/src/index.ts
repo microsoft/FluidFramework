@@ -283,7 +283,6 @@ export {
 	ProxyNodeUnion,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	node,
 	SharedTreeNode,
 	Typed,

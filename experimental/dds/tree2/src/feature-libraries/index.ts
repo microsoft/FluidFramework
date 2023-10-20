@@ -268,7 +268,6 @@ export {
 	SharedTreeList,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	ProxyRoot,
 	node,
 	SharedTreeNode,

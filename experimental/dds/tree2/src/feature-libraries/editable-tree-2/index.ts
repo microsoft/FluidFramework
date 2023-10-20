@@ -37,7 +37,6 @@ export {
 	ProxyNodeUnion,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	ProxyRoot,
 	node,
 	SharedTreeNode,
