@@ -23,6 +23,8 @@ import {
 	addFactory,
 	ObjectNodeSchema,
 	FactoryTreeSchema,
+	Unenforced,
+	AllowedTypes,
 } from "../feature-libraries";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
 
@@ -42,6 +44,21 @@ export type FactoryObjectNodeSchema<
 		{ objectNodeFields: { [key in keyof T]: NormalizeField<T[key], Required> } }
 	>
 >;
+
+/**
+ * Same as `FactoryObjectNodeSchema` but with less type safety and works for recursive objects.
+ * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+ *
+ * See {@link Unenforced} for details.
+ *
+ * TODO: Make this work with ImplicitFieldSchema.
+ * @alpha
+ */
+export type FactoryObjectNodeSchemaRecursive<
+	TScope extends string,
+	Name extends number | string,
+	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, { objectNodeFields: T }>>;
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -87,6 +104,16 @@ export class SchemaBuilder<
 			Name,
 			T
 		>;
+	}
+
+	public override objectRecursive<
+		const Name extends TName,
+		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	>(name: Name, t: T): FactoryObjectNodeSchemaRecursive<TScope, Name, T> {
+		return this.object(
+			name,
+			t as unknown as RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		) as unknown as FactoryObjectNodeSchemaRecursive<TScope, Name, T>;
 	}
 
 	/**
@@ -343,6 +370,16 @@ export class SchemaBuilder<
 	 * {@link leaf.null}
 	 */
 	public readonly null = leaf.null;
+
+	/**
+	 * Function which can be used for its compile time sid-effects to tweak the evaluation order of recursive types to make them compile.
+	 * @remarks
+	 * Some related information in https://github.com/microsoft/TypeScript/issues/55758.
+	 *
+	 * Also be aware that code which relies on this (or the "recursive" SchemaBuilder methods tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
+	 * The command `TypeScript: Restart TS Server` should fix it.
+	 */
+	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }
 
 /**

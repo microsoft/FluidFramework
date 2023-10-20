@@ -13,10 +13,11 @@ import {
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
+	ProxyNode,
 } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
-import { areSafelyAssignable, requireTrue } from "../../util";
+import { TypedNode, UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
+import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 
@@ -202,5 +203,78 @@ describe("domains - SchemaBuilder", () => {
 		const foo = builder.object("foo", {});
 		const bar = builder.object("bar", {});
 		assert(structuralName("X", [bar, foo]) !== structuralName("X", doubleName));
+	});
+
+	it("object", () => {
+		const builder = new SchemaBuilder({ scope: "Test Domain" });
+
+		const testObject = builder.object("object", {
+			number: builder.number,
+		});
+
+		type _0 = requireFalse<isAny<typeof testObject>>;
+		type _1 = requireTrue<
+			areSafelyAssignable<ProxyNode<typeof testObject>, { number: number }>
+		>;
+
+		function typeTests(x: ProxyNode<typeof testObject>) {
+			const y: number = x.number;
+		}
+	});
+
+	it("objectRecursive", () => {
+		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
+
+		const recursiveObject = builder.objectRecursive("object", {
+			recursive: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
+			number: SchemaBuilder.required(builder.number),
+		});
+
+		type _0 = requireFalse<isAny<typeof recursiveObject>>;
+		type Proxied = ProxyNode<typeof recursiveObject>;
+		type _1 = requireFalse<isAny<Proxied>>;
+
+		function typeTests(x: Proxied) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+
+		function typeTests2(x: TypedNode<typeof recursiveObject>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+	});
+
+	it("fixRecursiveReference", () => {
+		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
+
+		const recursiveReference = () => recursiveObject2;
+		builder.fixRecursiveReference(recursiveReference);
+
+		// Renaming this to recursiveObject causes IntelliSense to never work for this, instead of work after restarted until this code it touched.
+		const recursiveObject2 = builder.object("object2", {
+			recursive: builder.optional([recursiveReference]),
+			number: leaf.number,
+		});
+
+		type _0 = requireFalse<isAny<typeof recursiveObject2>>;
+		type _1 = requireTrue<
+			areSafelyAssignable<
+				typeof recursiveObject2,
+				ReturnType<
+					(typeof recursiveObject2.objectNodeFieldsObject.recursive.allowedTypes)[0]
+				>
+			>
+		>;
+
+		function typeTests(x: ProxyNode<typeof recursiveObject2>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+
+		function typeTests2(x: TypedNode<typeof recursiveObject2>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
 	});
 });
