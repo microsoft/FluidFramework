@@ -19,7 +19,7 @@ const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 // Schema
 export const stringTaskSchema = builder.fieldNode("StringTask", builder.string);
 // Polymorphic recursive schema:
-export const listTaskSchema = builder.structRecursive("ListTask", {
+export const listTaskSchema = builder.objectRecursive("ListTask", {
 	items: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
 		stringTaskSchema,
 		() => listTaskSchema,

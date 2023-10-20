@@ -43,12 +43,12 @@ describe("Schema Comparison", () => {
 	 * Note that children under the fields still have to be in schema.
 	 */
 	const anyTreeWithoutValue: TreeNodeStoredSchema = {
-		structFields: emptyMap,
+		objectNodeFields: emptyMap,
 		mapFields: anyField,
 	};
 
 	const numberLeaf: TreeNodeStoredSchema = {
-		structFields: emptyMap,
+		objectNodeFields: emptyMap,
 		leafValue: ValueSchema.Number,
 	};
 
@@ -61,32 +61,32 @@ describe("Schema Comparison", () => {
 	 * TreeNodeStoredSchema which is impossible for any data to be in schema with.
 	 */
 	const neverTree: TreeNodeStoredSchema = {
-		structFields: emptyMap,
+		objectNodeFields: emptyMap,
 		mapFields: neverField,
 	};
 
 	const neverTree2: TreeNodeStoredSchema = {
-		structFields: new Map([[brand("x"), neverField]]),
+		objectNodeFields: new Map([[brand("x"), neverField]]),
 	};
 
 	const emptyTree = namedTreeSchema({
 		name: "empty",
-		structFields: {},
+		objectNodeFields: {},
 	});
 
 	const emptyLocalFieldTree = namedTreeSchema({
 		name: "emptyLocalFieldTree",
-		structFields: { x: storedEmptyFieldSchema },
+		objectNodeFields: { x: storedEmptyFieldSchema },
 	});
 
 	const optionalLocalFieldTree = namedTreeSchema({
 		name: "optionalLocalFieldTree",
-		structFields: { x: fieldSchema(FieldKinds.optional, [emptyTree.name]) },
+		objectNodeFields: { x: fieldSchema(FieldKinds.optional, [emptyTree.name]) },
 	});
 
 	const valueLocalFieldTree = namedTreeSchema({
 		name: "valueLocalFieldTree",
-		structFields: { x: fieldSchema(FieldKinds.required, [emptyTree.name]) },
+		objectNodeFields: { x: fieldSchema(FieldKinds.required, [emptyTree.name]) },
 	});
 
 	const valueAnyField = fieldSchema(FieldKinds.required);
@@ -136,7 +136,7 @@ describe("Schema Comparison", () => {
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
 		assert(
 			isNeverTree(defaultSchemaPolicy, repo, {
-				structFields: emptyMap,
+				objectNodeFields: emptyMap,
 				mapFields: neverField,
 			}),
 		);
@@ -144,7 +144,7 @@ describe("Schema Comparison", () => {
 		assert(isNeverTree(defaultSchemaPolicy, repo, undefined));
 		assert.equal(
 			isNeverTree(defaultSchemaPolicy, repo, {
-				structFields: emptyMap,
+				objectNodeFields: emptyMap,
 			}),
 			false,
 		);

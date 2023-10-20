@@ -143,6 +143,10 @@ function transferRoots(
  * @alpha
  */
 export interface DeltaVisitor {
+	/**
+	 * Frees/releases the visitor. Must be called once the visitor is no longer needed, since trying to acquire
+	 * a new one before freeing an existing one is invalid.
+	 */
 	free(): void;
 	/**
 	 * Creates nodes for the given content in a new detached field.
@@ -183,9 +187,44 @@ export interface DeltaVisitor {
 	 */
 	replace(newContentSource: FieldKey, range: Range, oldContentDestination: FieldKey): void;
 
+	/**
+	 * Tells the visitor that it should update its "current location" to be the Node at the specified index
+	 * within the Field that is the current "current location".
+	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
+	 * @param index - The index (within the Field) of the node that should become the new "current location".
+	 *
+	 * @remarks This should only be called when the "current location" is a Field.
+	 */
 	enterNode(index: NodeIndex): void;
+
+	/**
+	 * Tells the visitor that it should update its "current location" to be the Field which contains the Node
+	 * that is the current "current location".
+	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
+	 * @param index - The index (within its Field) of the node that is being exited.
+	 *
+	 * @remarks This should only be called when the "current location" is a Node.
+	 */
 	exitNode(index: NodeIndex): void;
+
+	/**
+	 * Tells the visitor that it should update its "current location" to be the Field with the specified key,
+	 * within the Node that is the current "current location".
+	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
+	 * @param key - The key of the field that should become the new "current location".
+	 *
+	 * @remarks This should only be called when the "current location" is a Node.
+	 */
 	enterField(key: FieldKey): void;
+
+	/**
+	 * Tells the visitor that it should update its "current location" to be the Node which contains the Field
+	 * that is the current "current location".
+	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
+	 * @param key - The key of the field that is being exited.
+	 *
+	 * @remarks This should only be called when the "current location" is a Field.
+	 */
 	exitField(key: FieldKey): void;
 }
 

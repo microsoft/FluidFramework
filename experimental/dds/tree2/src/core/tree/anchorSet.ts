@@ -585,7 +585,15 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	}
 
 	/**
-	 * Updates the anchors according to the changes described in the given delta
+	 * Provides a visitor that can be used to mutate this {@link AnchorSet}.
+	 *
+	 * @returns A visitor that can be used to mutate this {@link AnchorSet}.
+	 *
+	 * @remarks
+	 * Mutating the {@link AnchorSet} does NOT update the forest.
+	 * The visitor must be released after use by calling {@link DeltaVisitor.free} on it.
+	 * It is invalid to acquire a visitor without releasing the previous one,
+	 * and this method will throw an error if this is attempted.
 	 */
 	public acquireVisitor(): AnnouncedVisitor & DeltaVisitor {
 		assert(

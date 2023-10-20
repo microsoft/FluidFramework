@@ -130,7 +130,7 @@ export {
 	leaf,
 	testRecursiveDomain,
 	SchemaBuilder,
-	FactoryStructSchema,
+	FactoryObjectNodeSchema,
 } from "./domains";
 
 export {
@@ -253,8 +253,8 @@ export {
 	OptionalField,
 	RequiredField,
 	Sequence,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
@@ -266,7 +266,7 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
 	ImplicitFieldSchema,

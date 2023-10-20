@@ -138,7 +138,7 @@ function buildTreeNodeSchema(
 				fields.set(nodePropertyField, SchemaBuilder.required(nodePropertySchema));
 			}
 			const fieldsObject = mapToObject(fields);
-			cache.treeSchema = builder.struct(typeid, fieldsObject);
+			cache.treeSchema = builder.object(typeid, fieldsObject);
 			return cache.treeSchema;
 		}
 	} else {

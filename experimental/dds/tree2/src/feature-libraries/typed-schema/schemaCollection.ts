@@ -155,7 +155,7 @@ export function validateSchemaCollection(
 		validateRootField(lintConfiguration, collection, rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
-		for (const [key, field] of tree.structFields) {
+		for (const [key, field] of tree.objectNodeFields) {
 			const description = () =>
 				`Struct field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
 			validateField(lintConfiguration, collection, field, description, errors);

@@ -16,10 +16,10 @@ describe("beforeChange/afterChange events", () => {
 		scope: "beforeChange/afterChange events",
 		libraries: [leaf.library],
 	});
-	const myInnerNodeSchema = builder.struct("myInnerNode", {
+	const myInnerNodeSchema = builder.object("myInnerNode", {
 		myInnerString: SchemaBuilder.required(leaf.string),
 	});
-	const myNodeSchema = builder.struct("myNode", {
+	const myNodeSchema = builder.object("myNode", {
 		child: SchemaBuilder.required(myInnerNodeSchema),
 		myString: SchemaBuilder.required(leaf.string),
 		myOptionalNumber: SchemaBuilder.optional(leaf.number),

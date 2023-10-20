@@ -13,15 +13,15 @@ describe("SharedTreeObject factories", () => {
 		scope: "test",
 	});
 
-	const childA = sb.struct("childA", {
+	const childA = sb.object("childA", {
 		content: sb.number,
 	});
 
-	const childB = sb.struct("childB", {
+	const childB = sb.object("childB", {
 		content: sb.number,
 	});
 
-	const parent = sb.struct("parent", {
+	const parent = sb.object("parent", {
 		child: [childA],
 		poly: [childA, childB],
 		list: sb.fieldNode("list", sb.sequence(sb.number)),

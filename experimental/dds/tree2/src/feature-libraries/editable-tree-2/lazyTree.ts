@@ -33,7 +33,7 @@ import {
 	schemaIsStruct,
 	FieldNodeSchema,
 	LeafSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	Any,
 	AllowedTypes,
 } from "../typed-schema";
@@ -45,8 +45,8 @@ import {
 	FieldNode,
 	Leaf,
 	MapNode,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TypedField,
 	TypedNode,
 	UnboxField,
@@ -471,37 +471,37 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	extends LazyTree<TSchema>
 	implements FieldNode<TSchema>
 {
-	public get content(): UnboxField<TSchema["structFieldsObject"][""]> {
+	public get content(): UnboxField<TSchema["objectNodeFieldsObject"][""]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			unboxedField(
 				this.context,
-				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
+				this.schema.objectNodeFields.get(EmptyKey) ?? fail("missing field schema"),
 				cursor,
 			),
-		) as UnboxField<TSchema["structFieldsObject"][""]>;
+		) as UnboxField<TSchema["objectNodeFieldsObject"][""]>;
 	}
 
-	public get boxedContent(): TypedField<TSchema["structFieldsObject"][""]> {
+	public get boxedContent(): TypedField<TSchema["objectNodeFieldsObject"][""]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			makeField(
 				this.context,
-				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
+				this.schema.objectNodeFields.get(EmptyKey) ?? fail("missing field schema"),
 				cursor,
 			),
-		) as TypedField<TSchema["structFieldsObject"][""]>;
+		) as TypedField<TSchema["objectNodeFieldsObject"][""]>;
 	}
 }
 
-export abstract class LazyStruct<TSchema extends StructSchema>
+export abstract class LazyStruct<TSchema extends ObjectNodeSchema>
 	extends LazyTree<TSchema>
-	implements Struct
+	implements ObjectNode
 {
 	public get localNodeKey(): LocalNodeKey | undefined {
 		// TODO: Optimize this to be in the derived class so it can cache schema lookup.
 		// TODO: Optimize this to avoid allocating the field object.
 
 		const key = this.context.nodeKeyFieldKey;
-		const fieldSchema = this.schema.structFields.get(key);
+		const fieldSchema = this.schema.objectNodeFields.get(key);
 
 		if (fieldSchema === undefined) {
 			return undefined;
@@ -523,26 +523,26 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 	}
 }
 
-export function buildLazyStruct<TSchema extends StructSchema>(
+export function buildLazyStruct<TSchema extends ObjectNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-): LazyStruct<TSchema> & StructTyped<TSchema> {
+): LazyStruct<TSchema> & ObjectNodeTyped<TSchema> {
 	const structClass = getOrCreate(cachedStructClasses, schema, () => buildStructClass(schema));
 	return new structClass(context, cursor, anchorNode, anchor) as LazyStruct<TSchema> &
-		StructTyped<TSchema>;
+		ObjectNodeTyped<TSchema>;
 }
 
 const cachedStructClasses = new WeakMap<
-	StructSchema,
+	ObjectNodeSchema,
 	new (
 		context: Context,
 		cursor: ITreeSubscriptionCursor,
 		anchorNode: AnchorNode,
 		anchor: Anchor,
-	) => LazyStruct<StructSchema>
+	) => LazyStruct<ObjectNodeSchema>
 >();
 
 export function getBoxedField(
@@ -555,7 +555,7 @@ export function getBoxedField(
 	});
 }
 
-function buildStructClass<TSchema extends StructSchema>(
+function buildStructClass<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 ): new (
 	context: Context,
@@ -566,7 +566,7 @@ function buildStructClass<TSchema extends StructSchema>(
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
-	for (const [key, fieldSchema] of schema.structFields) {
+	for (const [key, fieldSchema] of schema.objectNodeFields) {
 		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
@@ -650,5 +650,5 @@ function buildStructClass<TSchema extends StructSchema>(
 }
 
 export function getFieldSchema(field: FieldKey, schema: TreeNodeSchema): TreeFieldSchema {
-	return schema.structFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
+	return schema.objectNodeFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
 }

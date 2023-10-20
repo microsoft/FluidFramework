@@ -130,7 +130,7 @@ function createAnchors(
 describe("LazyTree", () => {
 	it("property names", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
-		const emptyStruct = builder.struct("empty", {});
+		const emptyStruct = builder.object("empty", {});
 		const testSchema = builder.intoSchema(SchemaBuilder.optional(emptyStruct));
 
 		const { cursor, context } = initializeTreeWithContent({
@@ -192,7 +192,7 @@ describe("LazyTree", () => {
 			"valueString",
 			leafDomain.string,
 		);
-		const structNodeSchema = schemaBuilder.struct("struct", {});
+		const structNodeSchema = schemaBuilder.object("object", {});
 		const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.optional(Any));
 		const mapNodeStringSchema = schemaBuilder.map(
 			"mapString",
@@ -385,7 +385,7 @@ describe("LazyStruct", () => {
 		scope: "test",
 		libraries: [leafDomain.library],
 	});
-	const structNodeSchema = schemaBuilder.struct("struct", {
+	const structNodeSchema = schemaBuilder.object("object", {
 		foo: SchemaBuilder.optional(leafDomain.string),
 		bar: SchemaBuilder.sequence(leafDomain.number),
 	});
@@ -453,7 +453,7 @@ describe("LazyStruct", () => {
 
 describe("buildLazyStruct", () => {
 	const schemaBuilder = new SchemaBuilder({ scope: "test" });
-	const structNodeSchema = schemaBuilder.struct("struct", {
+	const structNodeSchema = schemaBuilder.object("object", {
 		optional: SchemaBuilder.optional(leafDomain.string),
 		required: SchemaBuilder.required(leafDomain.boolean),
 		sequence: SchemaBuilder.sequence(leafDomain.number),
