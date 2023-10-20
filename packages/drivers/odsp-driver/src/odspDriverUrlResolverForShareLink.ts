@@ -30,6 +30,7 @@ import { getFileLink } from "./getFileLink";
 
 /**
  * Properties passed to the code responsible for fetching share link for a file.
+ * @public
  */
 export interface ShareLinkFetcherProps {
 	/**
@@ -46,6 +47,7 @@ export interface ShareLinkFetcherProps {
  * Resolver to resolve urls like the ones created by createOdspUrl which is driver inner
  * url format and the ones which have things like driveId, siteId, itemId etc encoded in nav param.
  * This resolver also handles share links and try to generate one for the use by the app.
+ * @public
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	private readonly logger: ITelemetryLoggerExt;

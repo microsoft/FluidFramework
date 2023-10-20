@@ -11,6 +11,7 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/www.js",
+	"types": "dist/www.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",
@@ -33,7 +34,7 @@
 		"body-parser": "^1.17.2",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
-		"debug": "^4.1.1",
+		"debug": "^4.3.4",
 		"express": "^4.17.3",
 		"ioredis": "^5.2.3",
 		"lodash": "^4.17.19",

@@ -14,7 +14,7 @@ import {
 	tagChange,
 	TaggedChange,
 	tagRollbackInverse,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 // TODO: Throughout this file, we use TestChange as the child change type.
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
@@ -32,7 +32,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -41,12 +41,17 @@ const tag5: RevisionTag = mintRevisionTag();
 const tag6: RevisionTag = mintRevisionTag();
 
 const OptionalChange = {
-	set(value: string | undefined, wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
-		return optionalFieldEditor.set(
-			value !== undefined ? singleTextCursor({ type, value }) : undefined,
-			wasEmpty,
-			id,
-		);
+	set(
+		value: string,
+		wasEmpty: boolean,
+		id: ChangesetLocalId = brand(0),
+		buildId: ChangesetLocalId = brand(40),
+	) {
+		return optionalFieldEditor.set(singleTextCursor({ type, value }), wasEmpty, id, buildId);
+	},
+
+	clear(wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
+		return optionalFieldEditor.clear(wasEmpty, id);
 	},
 
 	buildChildChange(childChange: TestChange) {
@@ -144,7 +149,7 @@ const testChanges: [string, OptionalChangeset][] = [
 	// E.g. in the current format, changes A and B cannot disagree on 'wasEmpty' if they share the same base commit.
 	["SetA", OptionalChange.set("A", false)],
 	["SetB", OptionalChange.set("B", false)],
-	["SetUndefined", OptionalChange.set(undefined, false)],
+	["SetUndefined", OptionalChange.clear(false)],
 	["ChangeChild", OptionalChange.buildChildChange(TestChange.mint([], 1))],
 ];
 deepFreeze(testChanges);

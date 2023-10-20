@@ -458,6 +458,11 @@ export abstract class FluidDataStoreContext
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
 		this.bindRuntime(channel);
+		// This data store may have been disposed before the channel is created during realization. If so,
+		// dispose the channel now.
+		if (this.disposed) {
+			channel.dispose();
+		}
 	}
 
 	/**
@@ -815,7 +820,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		return {};

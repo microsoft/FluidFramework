@@ -143,6 +143,10 @@ function transferRoots(
  * @alpha
  */
 export interface DeltaVisitor {
+	/**
+	 * Frees/releases the visitor. Must be called once the visitor is no longer needed, since trying to acquire
+	 * a new one before freeing an existing one is invalid.
+	 */
 	free(): void;
 	/**
 	 * Creates nodes for the given content in a new detached field.
@@ -183,9 +187,44 @@ export interface DeltaVisitor {
 	 */
 	replace(newContentSource: FieldKey, range: Range, oldContentDestination: FieldKey): void;
 
+	/**
+	 * Tells the visitor that it should update its "current location" to be the Node at the specified index
+	 * within the Field that is the current "current location".
+	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
+	 * @param index - The index (within the Field) of the node that should become the new "current location".
+	 *
+	 * @remarks This should only be called when the "current location" is a Field.
+	 */
 	enterNode(index: NodeIndex): void;
+
+	/**
+	 * Tells the visitor that it should update its "current location" to be the Field which contains the Node
+	 * that is the current "current location".
+	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
+	 * @param index - The index (within its Field) of the node that is being exited.
+	 *
+	 * @remarks This should only be called when the "current location" is a Node.
+	 */
 	exitNode(index: NodeIndex): void;
+
+	/**
+	 * Tells the visitor that it should update its "current location" to be the Field with the specified key,
+	 * within the Node that is the current "current location".
+	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
+	 * @param key - The key of the field that should become the new "current location".
+	 *
+	 * @remarks This should only be called when the "current location" is a Node.
+	 */
 	enterField(key: FieldKey): void;
+
+	/**
+	 * Tells the visitor that it should update its "current location" to be the Node which contains the Field
+	 * that is the current "current location".
+	 * Future calls to methods of {@link DeltaVisitor} will assume that's the location where their effects are happening.
+	 * @param key - The key of the field that is being exited.
+	 *
+	 * @remarks This should only be called when the "current location" is a Field.
+	 */
 	exitField(key: FieldKey): void;
 }
 
@@ -235,7 +274,7 @@ function ensureCreation(mark: Delta.Insert, config: PassConfig): ForestRootId {
 	if (existing !== undefined) {
 		return existing;
 	}
-	const { root } = config.detachedFieldIndex.createEntry(undefined, mark.content.length);
+	const root = config.detachedFieldIndex.createEntry(mark.buildId, mark.content.length);
 	config.insertToRootId.set(mark, root);
 	config.creations.add(mark);
 	return root;
@@ -295,7 +334,7 @@ interface Replace {
 		 * The node ID entry associated with the content.
 		 * Undefined for created content.
 		 */
-		readonly nodeId?: Delta.DetachedNodeId;
+		readonly nodeId: Delta.DetachedNodeId | undefined;
 		/**
 		 * Modifications to the new content.
 		 */
@@ -342,7 +381,7 @@ function asReplaces(
 		case Delta.MarkType.Remove: {
 			if (config.name === "detach") {
 				return makeArray(mark.count, (i) => {
-					const { root } = config.detachedFieldIndex.getOrCreateEntry(
+					const root = config.detachedFieldIndex.getOrCreateEntry(
 						offsetDetachId(mark.detachId, i),
 					);
 					return {
@@ -360,7 +399,7 @@ function asReplaces(
 						major: "move",
 						minor: minor + i,
 					};
-					const { root } = config.detachedFieldIndex.getOrCreateEntry(detachId);
+					const root = config.detachedFieldIndex.getOrCreateEntry(detachId);
 					return {
 						oldContent: { fields: mark.fields, destination: root },
 					};
@@ -377,7 +416,7 @@ function asReplaces(
 						major: "move",
 						minor: minor + i,
 					};
-					const { root } = config.detachedFieldIndex.getOrCreateEntry(nodeId);
+					const root = config.detachedFieldIndex.getOrCreateEntry(nodeId);
 					return { newContent: { source: root, nodeId, fields } };
 				});
 			}
@@ -397,16 +436,16 @@ function asReplaces(
 					const replace: Mutable<Replace> = {};
 					if (mark.detachId === undefined) {
 						replace.newContent = {
+							nodeId: offsetDetachId(mark.buildId, i),
 							source: brand(newContentSource + i),
 							fields: mark.fields,
 						};
 					}
 					if (mark.oldContent !== undefined) {
 						// Content is being replaced
-						const { root: oldContentDestination } =
-							config.detachedFieldIndex.getOrCreateEntry(
-								offsetDetachId(mark.oldContent.detachId, i),
-							);
+						const oldContentDestination = config.detachedFieldIndex.getOrCreateEntry(
+							offsetDetachId(mark.oldContent.detachId, i),
+						);
 						replace.oldContent = {
 							fields: mark.oldContent.fields,
 							destination: oldContentDestination,
@@ -427,12 +466,12 @@ function asReplaces(
 					const replace: Mutable<Replace> = {};
 					if (mark.newContent.detachId === undefined) {
 						const nodeId = offsetDetachId(mark.newContent.restoreId, i);
-						const { root: restoredRoot } = config.detachedFieldIndex.getEntry(nodeId);
+						const restoredRoot = config.detachedFieldIndex.getEntry(nodeId);
 						const newContent = { source: restoredRoot, nodeId, fields: mark.fields };
 						replace.newContent = newContent;
 					}
 					if (mark.oldContent !== undefined) {
-						const { root } = config.detachedFieldIndex.getOrCreateEntry(
+						const root = config.detachedFieldIndex.getOrCreateEntry(
 							offsetDetachId(mark.oldContent.detachId, i),
 						);
 						replace.oldContent = { destination: root, fields: mark.oldContent.fields };
@@ -474,8 +513,8 @@ function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 			if (nodeId !== undefined) {
 				const minor = extractFromOpaque(mark.moveId);
 				const destinationNodeId = { major: "move", minor };
-				const { root: rootSource } = config.detachedFieldIndex.getEntry(nodeId);
-				const { root: rootDestination } =
+				const rootSource = config.detachedFieldIndex.getEntry(nodeId);
+				const rootDestination =
 					config.detachedFieldIndex.getOrCreateEntry(destinationNodeId);
 				addRootReplaces(mark.count, config, rootDestination, rootSource, nodeId);
 			}
@@ -489,7 +528,7 @@ function catalogDetachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 			break;
 	}
 	if (nodeId !== undefined && fields !== undefined) {
-		const { root } = config.detachedFieldIndex.getOrCreateEntry(nodeId);
+		const root = config.detachedFieldIndex.getOrCreateEntry(nodeId);
 		config.rootChanges.set(root, fields);
 	}
 }
@@ -512,7 +551,7 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 				fields = mark.fields;
 				if (mark.detachId !== undefined) {
 					const count = mark.content.length;
-					const { root: rootDestination } = config.detachedFieldIndex.getOrCreateEntry(
+					const rootDestination = config.detachedFieldIndex.getOrCreateEntry(
 						mark.detachId,
 						count,
 					);
@@ -532,11 +571,8 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 			if (mark.detachId !== undefined) {
 				const minor = extractFromOpaque(mark.moveId);
 				const sourceNodeId = { major: "move", minor };
-				const { root: rootSource } =
-					config.detachedFieldIndex.getOrCreateEntry(sourceNodeId);
-				const { root: rootDestination } = config.detachedFieldIndex.getOrCreateEntry(
-					mark.detachId,
-				);
+				const rootSource = config.detachedFieldIndex.getOrCreateEntry(sourceNodeId);
+				const rootDestination = config.detachedFieldIndex.getOrCreateEntry(mark.detachId);
 				addRootReplaces(mark.count, config, rootDestination, rootSource, sourceNodeId);
 			}
 			break;
@@ -545,10 +581,10 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 			if (mark.newContent.detachId !== undefined) {
 				nodeId = mark.newContent.detachId;
 				fields = mark.fields;
-				const { root: rootSource } = config.detachedFieldIndex.getOrCreateEntry(
+				const rootSource = config.detachedFieldIndex.getOrCreateEntry(
 					mark.newContent.restoreId,
 				);
-				const { root: rootDestination } = config.detachedFieldIndex.getOrCreateEntry(
+				const rootDestination = config.detachedFieldIndex.getOrCreateEntry(
 					mark.newContent.detachId,
 				);
 				addRootReplaces(
@@ -570,7 +606,7 @@ function catalogAttachPassRootChanges(mark: Exclude<Delta.Mark, number>, config:
 			break;
 	}
 	if (nodeId !== undefined && fields !== undefined) {
-		const { root } = config.detachedFieldIndex.getOrCreateEntry(nodeId);
+		const root = config.detachedFieldIndex.getOrCreateEntry(nodeId);
 		config.rootChanges.set(root, fields);
 	}
 }

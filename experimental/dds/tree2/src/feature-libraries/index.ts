@@ -136,20 +136,20 @@ export {
 } from "./modular-schema";
 
 export {
-	TreeSchema,
+	TreeNodeSchema,
 	AllowedTypes,
-	FieldSchema,
-	TypedSchemaCollection,
+	TreeFieldSchema,
+	TreeSchema,
 	Any,
 	SchemaLibraryData,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	InternalTypedSchemaTypes,
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -159,6 +159,9 @@ export {
 	validateStructFieldName,
 	Unenforced,
 	AllowedTypeSet,
+	markEager,
+	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 
 export {
@@ -170,6 +173,7 @@ export {
 	NormalizeAllowedTypes,
 	SchemaBuilderOptions,
 	normalizeAllowedTypes,
+	normalizeField,
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
@@ -199,7 +203,7 @@ export {
 	FieldKinds,
 	Required,
 	Optional,
-	Sequence,
+	Sequence as SequenceFieldKind,
 	NodeKeyFieldKind,
 	Forbidden,
 	DefaultChangeset,
@@ -239,10 +243,10 @@ export {
 	MapNode,
 	OptionalField,
 	RequiredField,
-	Sequence as Sequence2,
+	Sequence,
 	Skip,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -265,6 +269,12 @@ export {
 	SharedTreeObject,
 	is,
 	ProxyRoot,
+	node,
+	SharedTreeNode,
+	Typed,
+	SharedTreeObjectFactory,
+	FactoryTreeSchema,
+	addFactory,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

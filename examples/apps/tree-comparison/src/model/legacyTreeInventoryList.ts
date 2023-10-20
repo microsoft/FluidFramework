@@ -8,7 +8,6 @@ import {
 	Change,
 	EagerCheckout,
 	SharedTree as LegacySharedTree,
-	NodeId,
 	StablePlace,
 	StableRange,
 	TraitLabel,
@@ -17,16 +16,12 @@ import {
 } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 import { InventoryItem } from "./inventoryItem";
 
 const legacySharedTreeKey = "legacySharedTree";
-
-// TODO: Do I want string here or number?  Prob don't want anything tree-specific
-// since this gets exposed to the view.  I've currently removed any reverse lookups so it doesn't
-// matter too much.
-const nodeIdToInventoryItemId = (nodeId: NodeId) => nodeId.toString();
 
 export class LegacyTreeInventoryList extends DataObject implements IInventoryList {
 	private _tree: LegacySharedTree | undefined;
@@ -43,6 +38,12 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		const addedNode: BuildNode = {
 			definition: "inventoryItem",
 			traits: {
+				id: {
+					definition: "id",
+					// In a real-world scenario, this is probably a known unique inventory ID (rather than
+					// randomly generated).  Randomly generating here just for convenience.
+					payload: uuid(),
+				},
 				name: {
 					definition: "name",
 					payload: name,
@@ -80,20 +81,16 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		const inventoryNode: BuildNode = {
 			definition: "inventory",
 			traits: {
-				// REV: If I try to remove these sample items (leaving inventoryItems as an empty array)
-				// the trait is removed entirely (undefined).  It seems that empty traits are discarded?
-				// This is a problem when later I want to iterate over it (in hasInitialized, when
-				// building up my initial set of InventoryItem objects), since I'll get a not-iterable error.
 				inventoryItems: [
 					{
 						definition: "inventoryItem",
 						traits: {
-							// REV: I tried adding an explicit "ID" trait here and using that for tracking,
-							// rather than the NodeId itself.  However, when deleting a node the "removed" member
-							// of the "viewChange" event args only includes the NodeId and the nodes are already
-							// gone (cannot be retrieved).  So the ID is lost at that point.  I could maintain a
-							// separate NodeId -> ID mapping to track, but this feels kind of clunky and defeats
-							// the point of getting away from direct usage of NodeIds.
+							id: {
+								definition: "id",
+								// In a real-world scenario, this is probably a known unique inventory ID (rather than
+								// randomly generated).  Randomly generating here just for convenience.
+								payload: uuid(),
+							},
 							name: {
 								definition: "name",
 								payload: "nut",
@@ -107,6 +104,10 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 					{
 						definition: "inventoryItem",
 						traits: {
+							id: {
+								definition: "id",
+								payload: uuid(),
+							},
 							name: {
 								definition: "name",
 								payload: "bolt",
@@ -143,31 +144,32 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 			.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
 			.get();
 
-		// REV: Not exactly sure why a checkout is required to get "viewChange" events, seems like it should be able
-		// to fire off the legacy shared tree itself?
+		// We must use a checkout in order to get "viewChange" events - it doesn't change any of the rest of our usage though.
 		const checkout = new EagerCheckout(this._tree);
 		// This event handler fires for any change to the tree, so it needs to handle all possibilities (change, add, remove).
 		checkout.on("viewChange", (before: TreeView, after: TreeView) => {
 			const { changed, added, removed } = before.delta(after);
 			for (const quantityNodeId of changed) {
 				const quantityNode = this.tree.currentView.getViewNode(quantityNodeId);
-				// REV: This is annoying to iterate over since I can't filter until I've retrieved the node object.
-				// When adding a node the "inventory" node changes too, but we don't want to handle that here.
+				// When adding/removing an inventory item the "inventory" node changes too, but we don't want to handle that here.
 				if (quantityNode.definition === "quantity") {
 					const newQuantity = quantityNode.payload as number;
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const inventoryItemNodeId = quantityNode.parentage!.parent;
+					const inventoryItemNode =
+						this.tree.currentView.getViewNode(inventoryItemNodeId);
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					this._inventoryItems
-						.get(nodeIdToInventoryItemId(inventoryItemNodeId))!
-						.handleQuantityUpdate(newQuantity);
+					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
+					const idNode = this.tree.currentView.getViewNode(idNodeId);
+					const inventoryItemId = idNode.payload as string;
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					this._inventoryItems.get(inventoryItemId)!.handleQuantityUpdate(newQuantity);
 				}
 			}
 
 			for (const inventoryNodeId of added) {
 				const inventoryItemNode = this.tree.currentView.getViewNode(inventoryNodeId);
-				// REV: Similar to above, this can't be filtered without grabbing the actual node objects.
-				// This list will include the "name" and "quantity" nodes too, but we only want to handle the "inventoryItem".
+				// Filter to just the inventoryItem nodes.  Each addition will result in four added nodes (inventoryItem, id, name, quantity).
 				if (inventoryItemNode.definition === "inventoryItem") {
 					const addedInventoryItem =
 						this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
@@ -177,14 +179,16 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 			}
 
 			for (const inventoryNodeId of removed) {
-				// REV: A twist on the filtering issue, but would be nice to have a way to filter the nodes prior to iterating.
-				// This list will include the "name" and "quantity" nodes too, but we only want to handle the "inventoryItem".
-				// However, since the nodes were deleted we can't fetch them and filter on definition as for changed/added.
-				// Instead we'll just compare the IDs against the inventory items we're tracking (since the name/quantity won't
-				// be in there).
-				const inventoryItemId = nodeIdToInventoryItemId(inventoryNodeId);
-				const deletedInventoryItem = this._inventoryItems.get(inventoryItemId);
-				if (deletedInventoryItem !== undefined) {
+				// Note that in the removal handling we get nodes from "before" rather than currentView, since they're already
+				// gone in the current view.
+				const inventoryItemNode = before.getViewNode(inventoryNodeId);
+				// Filter to just the inventoryItem nodes.  Each deletion will result in four removed nodes (inventoryItem, id, name, quantity).
+				if (inventoryItemNode.definition === "inventoryItem") {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
+					const idNode = before.getViewNode(idNodeId);
+					const inventoryItemId = idNode.payload as string;
+					const deletedInventoryItem = this._inventoryItems.get(inventoryItemId);
 					this._inventoryItems.delete(inventoryItemId);
 					this.emit("itemDeleted", deletedInventoryItem);
 				}
@@ -192,22 +196,29 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		});
 
 		// Last step of initializing is to populate our map of InventoryItems.
-		// REV: Seems strange that this.tree.currentView.rootNode is private.
+		// Note that this.tree.currentView.root is the ID of the root node, not the root node itself.
 		const rootNode = this.tree.currentView.getViewNode(this.tree.currentView.root);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const inventoryItemsNodeIds = this.tree.currentView
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
-			.traits.get("inventoryItems" as TraitLabel)!;
-		for (const inventoryItemNodeId of inventoryItemsNodeIds) {
-			const inventoryItemNode = this.tree.currentView.getViewNode(inventoryItemNodeId);
-			const newInventoryItem = this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
-			this._inventoryItems.set(newInventoryItem.id, newInventoryItem);
+			.traits.get("inventoryItems" as TraitLabel);
+		// Legacy SharedTree eliminates the "inventoryItems" trait entirely if the list becomes empty, so we need to guard against
+		// that case before attempting to iterate over its members.
+		if (inventoryItemsNodeIds !== undefined) {
+			for (const inventoryItemNodeId of inventoryItemsNodeIds) {
+				const inventoryItemNode = this.tree.currentView.getViewNode(inventoryItemNodeId);
+				const newInventoryItem =
+					this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
+				this._inventoryItems.set(newInventoryItem.id, newInventoryItem);
+			}
 		}
 	}
 
 	private makeInventoryItemFromInventoryItemNode(inventoryItemNode: TreeViewNode): InventoryItem {
-		const id = nodeIdToInventoryItemId(inventoryItemNode.identifier);
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
+		const idNode = this.tree.currentView.getViewNode(idNodeId);
+		const id = idNode.payload as string;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const nameNodeId = inventoryItemNode.traits.get("name" as TraitLabel)![0];

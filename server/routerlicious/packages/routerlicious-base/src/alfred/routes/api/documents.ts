@@ -63,6 +63,13 @@ export function create(
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
 	const externalDeltaStreamUrl: string =
 		config.get("worker:deltaStreamUrl") || externalOrdererUrl;
+	const messageBrokerId: string | undefined =
+		config.get("kafka:lib:eventHubConnString") !== undefined
+			? crypto
+					.createHash("sha1")
+					.update(config.get("kafka:lib:endpoint") ?? "")
+					.digest("hex")
+			: undefined;
 	const sessionStickinessDurationMs: number | undefined = config.get(
 		"alfred:sessionStickinessDurationMs",
 	);
@@ -201,6 +208,7 @@ export function create(
 				values,
 				enableDiscovery,
 				isEphemeral,
+				messageBrokerId,
 			);
 
 			// Handle backwards compatibility for older driver versions.
@@ -227,6 +235,10 @@ export function create(
 						isSessionAlive: false,
 						isSessionActive: false,
 					};
+					// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
+					if (messageBrokerId) {
+						session.messageBrokerId = messageBrokerId;
+					}
 					responseBody.session = session;
 				}
 				handleResponse(
@@ -275,6 +287,7 @@ export function create(
 				documentId,
 				documentRepository,
 				sessionStickinessDurationMs,
+				messageBrokerId,
 			);
 			handleResponse(session, response, false);
 		},
