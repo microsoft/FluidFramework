@@ -27,7 +27,7 @@ let maxShortCode = -1;
 
 const defaultAssertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]]);
 
-export class AssertsCommand extends PackageCommand<typeof AssertsCommand> {
+export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
 	static readonly summary =
 		"Tags asserts by replacing their message with a unique numerical value.";
 
