@@ -2802,7 +2802,7 @@ importers:
       bootstrap: ^3.3.7
       cross-env: ^7.0.3
       css-loader: ^1.0.0
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       events: ^3.1.0
       jest: ^29.6.2
@@ -2986,7 +2986,7 @@ importers:
       '@types/node': ^16.18.38
       c8: ^7.7.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       eslint-import-resolver-typescript: ^3.6.1
       eslint-plugin-import: ~2.28.1
@@ -3219,7 +3219,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       eslint-import-resolver-typescript: ^3.6.1
       eslint-plugin-import: ~2.28.1
@@ -8798,7 +8798,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       double-ended-queue: ^2.1.0-0
       eslint: ~8.50.0
       events: ^3.1.0
@@ -10244,7 +10244,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       diff: ^3.5.0
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -11390,7 +11390,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       events: ^3.1.0
       mocha: ^10.2.0
@@ -11457,7 +11457,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       jwt-decode: ^2.2.0
       mocha: ^10.2.0
@@ -19307,7 +19307,7 @@ packages:
       '@previewjs/type-analyzer': 9.0.1
       assert-never: 1.2.1
       prettier: 2.8.8
-      typescript: 5.2.2
+      typescript: 5.1.6
     dev: true
 
   /@previewjs/storybook-helpers/3.0.0_@types+node@16.18.58:
@@ -19317,7 +19317,7 @@ packages:
       '@previewjs/core': 23.0.1_@types+node@16.18.58
       '@previewjs/serializable-values': 7.0.3
       '@previewjs/type-analyzer': 8.0.2
-      typescript: 5.2.2
+      typescript: 5.1.6
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -19338,7 +19338,7 @@ packages:
       '@previewjs/vfs': 2.0.17
       assert-never: 1.2.1
       prettier: 2.8.8
-      typescript: 5.2.2
+      typescript: 5.1.6
     dev: true
 
   /@previewjs/type-analyzer/9.0.1:
@@ -23358,7 +23358,7 @@ packages:
   /axios/0.21.4_debug@4.3.4:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.3_debug@4.3.4
     transitivePeerDependencies:
       - debug
     dev: true
@@ -23396,7 +23396,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.3_debug@4.3.4
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
