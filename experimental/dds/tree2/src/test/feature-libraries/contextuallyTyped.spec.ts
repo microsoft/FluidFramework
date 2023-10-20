@@ -17,7 +17,7 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped";
-import { FieldKinds, FieldSchema, jsonableTreeFromCursor } from "../../feature-libraries";
+import { FieldKinds, TreeFieldSchema, jsonableTreeFromCursor } from "../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../domains";
 
 describe("ContextuallyTyped", () => {
@@ -169,7 +169,7 @@ describe("ContextuallyTyped", () => {
 
 			const nodeSchema = builder.structRecursive("node", {
 				foo: builder.required(leaf.string),
-				child: FieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
+				child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 			});
 
 			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));

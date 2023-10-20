@@ -5,7 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ITreeCursorSynchronous,
 	StoredSchemaCollection,
 	TreeNodeSchemaIdentifier,
@@ -44,13 +44,13 @@ export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPol
 	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
-		(treeHandler: TreeShaper, field: FieldStoredSchema) =>
+		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache),
 	);
 	return cache;
 }
 
-export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
+export function getFieldKind(fieldSchema: TreeFieldStoredSchema): FieldKind {
 	// TODO:
 	// This module currently is assuming use of defaultFieldKinds.
 	// The field kinds should instead come from a view schema registry thats provided somewhere.
@@ -62,7 +62,7 @@ export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
  */
 export function fieldShaper(
 	treeHandler: TreeShaper,
-	field: FieldStoredSchema,
+	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
 ): FieldEncoder {
 	const kind = getFieldKind(field);

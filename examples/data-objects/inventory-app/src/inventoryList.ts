@@ -43,22 +43,25 @@ export class InventoryList extends DataObject {
 
 	protected async hasInitialized() {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- field initialized by initializing* methods.
-		this._view = this._tree!.schematize({
+		this._view = this._tree!.schematizeView({
 			initialTree: {
-				parts: [
-					{
-						name: "nut",
-						quantity: 0,
-					},
-					{
-						name: "bolt",
-						quantity: 0,
-					},
-				],
+				// TODO: FieldNodes should not require wrapper object
+				parts: {
+					"": [
+						{
+							name: "nut",
+							quantity: 0,
+						},
+						{
+							name: "bolt",
+							quantity: 0,
+						},
+					],
+				},
 			},
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
-		} as any); // TODO: 'list' should not require cast to any.
+		});
 	}
 }
 

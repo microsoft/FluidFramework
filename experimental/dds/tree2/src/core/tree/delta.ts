@@ -46,7 +46,7 @@ import { ITreeCursorSynchronous } from "./cursor";
  * format):
  *
  * 1. All marks that apply to field elements are represented in a single linear structure where marks that affect later
- * element of the document field appear after marks that affect earlier elements of the document field.
+ * elements of the document field appear after marks that affect earlier elements of the document field.
  *
  * If the marks were not ordered in this fashion then a consumer would need to backtrack within the document field.
  *
