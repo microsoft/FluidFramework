@@ -3754,7 +3754,6 @@ export class ContainerRuntime
 					targetSequenceNumber: summaryRefSeq,
 				},
 				readAndParseBlob,
-				null,
 			);
 
 			/**
@@ -3809,7 +3808,6 @@ export class ContainerRuntime
 				eventName: "RefreshLatestSummaryFromServerFetch",
 			},
 			readAndParseBlob,
-			null,
 		);
 
 		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
@@ -3838,7 +3836,6 @@ export class ContainerRuntime
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
-		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
@@ -3860,10 +3857,10 @@ export class ContainerRuntime
 				const trace = Trace.start();
 
 				const versions = await this.storage.getVersions(
-					versionId,
+					null,
 					1,
 					"prefetchLatestSummaryBeforeClose",
-					versionId === null ? FetchSource.noCache : undefined,
+					FetchSource.noCache,
 				);
 				assert(
 					!!versions && !!versions[0],
