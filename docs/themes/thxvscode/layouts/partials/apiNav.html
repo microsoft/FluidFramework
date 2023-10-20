@@ -117,16 +117,17 @@
                                         {{ range $category := slice "Interface" "Class" "Enum" }}
                                             
                                             {{ if isset $apiDetails $category }}
-                                                <li class="panel type-definitions">
-                                                    <a href="#" class="sub-heading {{ lower $category }}-link">{{ $category }}</a>
-                                                    <ul>
+                                            {{ $isCategoryActive := in (trim $current.RelPermalink " ") (trim (lower $category) " ") }}
+                                                <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{else}}collapsed{{end}}">
+                                                    <a href="#" class="sub-heading {{ lower $category }}-link" data-toggle="collapse" data-target="#{{ lower $category }}-content">{{ $category }}</a>
+                                                    <ul id="{{ lower $category }}-content" class="collapse">
                                                         {{ range index $apiDetails $category }}
                                                             {{ $constructedLink := print (relURL "/docs/apis/") $packageKey "/" (lower .) "-" (lower $category) }}
-                                                            {{ $isCategoryActive := strings.HasSuffix (trim $current.RelPermalink " ") (trim (print (lower .) "-" (lower $category) "/") " ") }}
+                                                            {{ $isCategoryActive := in (trim $current.RelPermalink " ") (trim (print (lower .) "-" (lower $category) "/") " ") }}
                                                             <li class="{{if $isCategoryActive }}active expanded{{else}}collapsed{{end}}">
-                                                                <a href="{{ $constructedLink }}"
-                                                                    {{ if $isCategoryActive }}aria-label="Current Page: {{ . | humanize | title }} {{ $category }}"{{ end }}>
-                                                                    {{ . | humanize | title }}
+                                                                <a class="leaf-node" href="{{ $constructedLink }}"
+                                                                    {{ if $isCategoryActive }}aria-label="Current Page: {{ . }} {{ $category }}"{{ end }}>
+                                                                    {{ . }}
                                                                 </a>
                                                             </li>
                                                         {{ end }}
