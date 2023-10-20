@@ -24,7 +24,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,
 	deltaFromChild: ToDelta<TNodeChange>,
 ): Delta.FieldChanges {
-	const delta: Mutable<Delta.FieldChanges> = {};
 	const attached: Delta.Mark[] = [];
 	const detached: Delta.DetachedNodeChanges[] = [];
 	const build: Delta.DetachedNodeBuild[] = [];
@@ -50,7 +49,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				const oldId = nodeIdFromChangeAtom(mark.cellId);
 				if (!areEqualChangeAtomIds(mark.cellId, mark.transientDetach)) {
 					// TODO: handle transient move-in/return-to
-					assert(isInsert(mark), "Expected non-insert transient mark");
+					assert(isInsert(mark), "Unexpected non-insert transient mark");
 					if (mark.content !== undefined) {
 						build.push({
 							id: oldId,
@@ -79,14 +78,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						attach: makeDetachedNodeId(mark.revision ?? revision, mark.id),
 						count: mark.count,
 					});
-					break;
-				}
-				case NoopMarkType: {
-					if (mark.cellId === undefined) {
-						attached.push(deltaMark);
-					} else {
-						// TODO: pass on nested changes if any
-					}
 					break;
 				}
 				case "Delete": {
@@ -131,6 +122,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 					attached.push(deltaMark);
 					break;
 				}
+				case NoopMarkType:
+					fail("Unexpected NoopMarkType where cell is supposed to be affected");
 				case "Placeholder":
 					fail("Should not have placeholders in a changeset being converted to delta");
 				default:
@@ -150,6 +143,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 		}
 		attached.pop();
 	}
+	const delta: Mutable<Delta.FieldChanges> = {};
 	if (attached.length > 0) {
 		delta.attached = attached;
 	}

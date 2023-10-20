@@ -68,8 +68,8 @@ export function mapFieldChanges<TIn, TOut>(
 }
 
 /**
- * Converts a list of `Delta.Mark`s whose tree content is represented with by `TIn` instances
- * into a list of `Delta.Mark`s whose tree content is represented with by `TOut` instances.
+ * Converts a list of `Delta.Mark`s whose tree content is represented by `TIn` instances
+ * into a list of `Delta.Mark`s whose tree content is represented by `TOut` instances.
  *
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.

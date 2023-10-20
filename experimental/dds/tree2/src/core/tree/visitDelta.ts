@@ -59,17 +59,17 @@ export function visitDelta(
 		rootTransfers,
 	};
 	visitFieldMarks(delta, visitor, detachConfig);
-	visitRoots(visitor, detachPassRoots, detachConfig);
+	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
 	transferRoots(rootTransfers, attachPassRoots, detachedFieldIndex, visitor);
 	const attachConfig: PassConfig = {
 		func: attachPass,
+		detachedFieldIndex,
 		detachPassRoots,
 		attachPassRoots,
-		detachedFieldIndex,
 		rootTransfers,
 	};
 	visitFieldMarks(delta, visitor, attachConfig);
-	visitRoots(visitor, attachPassRoots, attachConfig);
+	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
 }
 
 type RootTransfers = Map<
@@ -85,7 +85,15 @@ type RootTransfers = Map<
 	}
 >;
 
-function visitRoots(
+/**
+ * Visits all nodes in `roots` until none are left.
+ * This function tolerates entries being added to and removed from `roots` as part of visits.
+ * @param visitor - The visitor to visit the roots with.
+ * @param roots - The initial set of roots to visit.
+ * Individual entries are removed prior to being visited.
+ * @param config - The configuration to use for visits.
+ */
+function fixedPointVisitOfRoots(
 	visitor: DeltaVisitor,
 	roots: Map<ForestRootId, Delta.FieldMap>,
 	config: PassConfig,
@@ -95,6 +103,7 @@ function visitRoots(
 			roots.delete(root);
 			const field = config.detachedFieldIndex.toFieldKey(root);
 			visitor.enterField(field);
+			// Note: each visit may lead to `roots` being populated with new entries or having some entries removed.
 			visitNode(0, modifications, visitor, config);
 			visitor.exitField(field);
 		}
@@ -245,7 +254,7 @@ interface PassConfig {
 	 */
 	readonly detachPassRoots: Map<ForestRootId, Delta.FieldMap>;
 	/**
-	 * Nested changes on roots that need to be visited as part of the detach pass.
+	 * Nested changes on roots that need to be visited as part of the attach pass.
 	 * Each entry is removed when its associated changes are visited.
 	 * Some of these roots will attached during the attach pass, in which case the nested changes are visited after
 	 * the node is attached.
@@ -302,7 +311,7 @@ function offsetDetachId(
 }
 
 /**
- * Preforms the following:
+ * Performs the following:
  * - Performs all root creations
  * - Collects all roots that may need a detach pass
  * - Collects all roots that may need an attach pass
@@ -396,8 +405,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				if (mark.attach !== undefined) {
 					for (let i = 0; i < mark.count; i += 1) {
 						const offsetAttachId = offsetDetachId(mark.attach, i);
-						const sourceRoot =
-							config.detachedFieldIndex.getOrCreateEntry(offsetAttachId);
+						const sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 						const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 						if (mark.detach !== undefined) {
 							// This is a true replace.
