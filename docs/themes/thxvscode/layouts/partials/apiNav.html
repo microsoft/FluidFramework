@@ -138,7 +138,7 @@
                                     </nav>
                                 {{ end }}
                             </li>
-                        {{- end }}                        
+                        {{- end }}
                     {{- end }}
                 </ul>
             </li>
@@ -151,7 +151,7 @@
         <option value="/docs" {{if .IsHome}}selected{{end}}>Overview</option>
         {{- range (index .Site.Menus .Section) }}
             {{ $menuArea := .Identifier}}
-    
+
             {{- if ne .URL "" -}}
                 {{ $isCurrentPage := eq .URL $current.RelPermalink }}
                 <option value="{{.URL}}" {{ if $isCurrentPage }}selected{{end}}>{{ .Name }}</option>
@@ -164,7 +164,7 @@
                 </optgroup>
             {{ end }}
         {{- end }}
-    
+
         <option value="/docs/apis" {{if $in_api_section}}selected{{end}}>API Overview</option>
         {{- range $grouping, $names :=  $.Site.Data.packages }}
             <optgroup label="{{ $grouping | humanize | title }}">
@@ -184,18 +184,18 @@
                 {{- else }} -->
                     <!-- {{ printf "BEFORE: %#v" $targetPage.RelPermalink }}
                     {{ printf "LEN: %#v" (len (where $packagePages "Params.package" .)) }} -->
-    
+
                 {{- range (where $packagePages "Params.package" .) -}}
                     {{ $targetPage = . }}
                 {{- end }}
                 <!-- {{ printf "AFTER: %#v" $package }}
                     {{ printf "AFTER: %#v" $targetPage.Params.package }} -->
     
-                {{ $isCurrentPage := eq $package $targetPage.Params.package }}
-                {{ if $isCurrentPage }}
-                    {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink }}
-                {{ end }}
-                <option value="{{$targetPage.RelPermalink}}" {{ if $isCurrentPage }}selected{{end}}>
+                    {{ $isCurrentPage := eq $package $targetPage.Params.package }}
+                    {{ if $isCurrentPage }}
+                        {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink }}
+                    {{ end }}
+                    <option value="{{$targetPage.RelPermalink}}" {{ if $isCurrentPage }}selected{{end}}>
                     {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
                 </option>
             <!-- {{- end }} -->
@@ -204,9 +204,11 @@
                 {{ $apiDetails := index $.Site.Data.apiData $packageKey }}
                 {{ range $category := slice "Interface" "Class" "Enum" }}
                     {{ if isset $apiDetails $category }}
-                        <option value="{{ lower $category }}-link">&nbsp;&nbsp;{{ $category }}</option>
+                        <option value="#" disabled>&nbsp;&nbsp;{{ $category }}</option>
                         {{ range index $apiDetails $category }}
-                            <option value="{{ . }}">&nbsp;&nbsp;&nbsp;&nbsp;{{ . }}</option>
+                            {{ $constructedLink := print (relURL "/docs/apis/") $packageKey "/" (lower .) "-" (lower $category) }}
+                            {{ $isCategoryActive := in (trim $current.RelPermalink " ") (trim (print (lower .) "-" (lower $category) "/") " ") }}
+                            <option value="{{ $constructedLink }}" {{ if $isCategoryActive }}selected{{end}}>&nbsp;&nbsp;&nbsp;&nbsp;{{ . }}</option>
                         {{ end }}
                     {{ end }}
                 {{ end }}
@@ -214,5 +216,4 @@
             </optgroup>
         {{- end }}
     </select>
-    </nav>
-    
+</nav>
