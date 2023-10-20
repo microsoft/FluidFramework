@@ -21,10 +21,15 @@ describe("SharedTreeObject factories", () => {
 		content: sb.number,
 	});
 
+	const childOptional = sb.object("childOptional", {
+		content: sb.optional(sb.number),
+	});
+
 	const parent = sb.object("parent", {
 		child: [childA],
 		poly: [childA, childB],
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
+		optional: sb.optional(childOptional),
 	});
 
 	const schema = sb.intoSchema(parent);
@@ -56,5 +61,12 @@ describe("SharedTreeObject factories", () => {
 		content.content = 44;
 		root.poly = childB.create(content);
 		assert.equal(root.poly.content, 44);
+	});
+
+	itWithRoot("don't require optional data to be included", schema, initialTree, (root) => {
+		assert.equal(root.optional, undefined);
+		root.optional = {};
+		assert.deepEqual(root.optional, {});
+		assert.equal(root.optional.content, undefined);
 	});
 });
