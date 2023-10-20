@@ -229,7 +229,7 @@ function isFluidBuildEnabled(root: string, json: PackageJson) {
  */
 function hasTaskDependency(root: string, json: PackageJson, taskName: string, searchDep: string) {
 	const rootConfig = getFluidBuildConfig(root);
-	const taskDefinitions = getTaskDefinitions(json, rootConfig?.tasks);
+	const taskDefinitions = getTaskDefinitions(json, rootConfig?.tasks, false);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
 	if (taskDefinitions[taskName]) {

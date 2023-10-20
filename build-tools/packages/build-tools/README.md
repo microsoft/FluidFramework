@@ -157,12 +157,16 @@ For example:
 {
 	"fluidBuild": {
 		"tasks": {
+         "build": ["...", "build:docs", "copy:docs"]
 			"tsc": ["...", "typetests:gen"], // Depends on "typetests:gen", including dependencies
 			// in default definition (i.e. "^tsc" in the above example)
 			"build:test": [
 				"@fluidframework/merge-tree#build:test" // Overrides default, depends only on "build:test" task
 				// in dependent package "@fluidframework/merge-tree"
 			],
+         "copy:docs": [
+            "after": [ "build:docs" ]                   // if "build:docs" is trigger, "copy:docs" only run after it
+         ],
 			"webpack": ["^tsc"] // Depends on `tsc` task of all of the dependent packages
 			// (if the task exists)
 		}
