@@ -96,7 +96,7 @@ export class GCTelemetryTracker {
 
 	/**
 	 * Returns whether an event should be logged for a node that isn't active anymore. Some scenarios where we won't log:
-	 * 1. When a DDS is changed or loaded. The corresponding data store's event will be logged instead.
+	 * 1. When a DDS is changed. The corresponding data store's event will be logged instead.
 	 * 2. An event is logged only once per container instance per event per node.
 	 */
 	private shouldLogNonActiveEvent(
