@@ -153,7 +153,6 @@ function rebaseComposed(
 	return tagChange(
 		optionalChangeRebaser.rebase(
 			change.change,
-			// TODO: Is anon change good enough here?
 			makeAnonChange(composed),
 			TestChange.rebase as any,
 			idAllocator,
@@ -248,9 +247,6 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 					invert(state.mostRecentEdit.changeset),
 					tagFromIntention(undoIntention),
 				),
-				// TODO: Invert/TestChange has some funky logic around negative intentions being used
-				// for inverses. The handling of intention/revision here might need to be updated.
-				// e.g. Should this be -state.mostRecentEdit.intention?
 				intention: undoIntention,
 				description: `Undo:${state.mostRecentEdit.description}`,
 			},
@@ -458,6 +454,7 @@ describe("OptionalField - Rebaser Axioms", () => {
 									change.revision,
 								),
 							);
+							inverses.reverse();
 
 							const rebasedEditsWithoutCompose: TaggedChange<OptionalChangeset>[] =
 								[];
@@ -466,7 +463,7 @@ describe("OptionalField - Rebaser Axioms", () => {
 							for (let i = 0; i < sourceEdits.length; i++) {
 								const edit = sourceEdits[i];
 								const editsToRebaseOver = [
-									...inverses.slice(0, i),
+									...inverses.slice(sourceEdits.length - i),
 									editToRebaseOver,
 									...rebasedEditsWithoutCompose,
 								];
@@ -488,7 +485,11 @@ describe("OptionalField - Rebaser Axioms", () => {
 								);
 								rebasedEditsWithCompose.push(rebasedEdit);
 								currentComposedEdit = makeAnonChange(
-									compose([inverses[i], currentComposedEdit, rebasedEdit]),
+									compose([
+										inverses[sourceEdits.length - i - 1],
+										currentComposedEdit,
+										rebasedEdit,
+									]),
 								);
 								allTaggedEdits.push(rebasedEdit);
 							}

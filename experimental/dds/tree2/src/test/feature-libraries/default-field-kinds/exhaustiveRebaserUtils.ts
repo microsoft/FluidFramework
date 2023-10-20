@@ -71,7 +71,7 @@ export type ChildStateGenerator<TContent, TChangeset> = (
 	mintIntention: () => number,
 ) => Iterable<FieldStateTree<TContent, TChangeset>>;
 
-function* walkFieldStateTree<TContent, TChangeset>(
+function* depthFirstWalk<TContent, TChangeset>(
 	initialState: FieldStateTree<TContent, TChangeset>,
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
 	depth: number,
@@ -85,7 +85,7 @@ function* walkFieldStateTree<TContent, TChangeset>(
 			tagFromIntention,
 			mintIntention,
 		)) {
-			yield* walkFieldStateTree(
+			yield* depthFirstWalk(
 				childState,
 				generateChildStates,
 				depth - 1,
@@ -101,13 +101,17 @@ function makeIntentionMinter(): () => number {
 	return () => intent++;
 }
 
+/**
+ * Generates all possible sequences of edits of a fixed length.
+ * Revision tags will be prefixed with the provided `tagPrefix`.
+ */
 export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
 	initialState: FieldStateTree<TContent, TChangeset>,
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
 	numberOfEdits: number,
 	tagPrefix: string,
 ): Iterable<NamedChangeset<TChangeset>[]> {
-	for (const state of walkFieldStateTree(
+	for (const state of depthFirstWalk(
 		initialState,
 		generateChildStates,
 		numberOfEdits,
