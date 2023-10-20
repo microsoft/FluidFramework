@@ -15,7 +15,7 @@ import {
 	InternalTypedSchemaTypes,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	TreeNodeSchema,
 	TreeSchema,
 } from "../../typed-schema";
@@ -174,9 +174,9 @@ export interface SharedTreeList<
  * @alpha
  */
 export type SharedTreeObject<
-	TSchema extends StructSchema,
+	TSchema extends ObjectNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = ObjectFields<TSchema["structFieldsObject"], API> & SharedTreeNode;
+> = ObjectFields<TSchema["objectNodeFieldsObject"], API> & SharedTreeNode;
 
 /**
  * Helper for generating the properties of a {@link SharedTreeObject}.
@@ -273,9 +273,9 @@ export type ProxyNode<
 		: Map<string, ProxyField<TSchema["mapFields"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
-		? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API>
-		: readonly ProxyNodeUnion<TSchema["structFieldsObject"][""]["allowedTypes"], API>[]
-	: TSchema extends StructSchema
+		? SharedTreeList<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>
+		: readonly ProxyNodeUnion<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>[]
+	: TSchema extends ObjectNodeSchema
 	? SharedTreeObject<TSchema, API>
 	: unknown;
 

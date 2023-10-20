@@ -45,11 +45,11 @@ export const float64Schema = leaf.number;
 
 export const boolSchema = leaf.boolean;
 
-export const simplePhonesSchema = builder.struct("Test:SimplePhones-1.0.0", {
+export const simplePhonesSchema = builder.object("Test:SimplePhones-1.0.0", {
 	[EmptyKey]: TreeFieldSchema.create(FieldKinds.sequence, [stringSchema]),
 });
 
-export const complexPhoneSchema = builder.struct("Test:Phone-1.0.0", {
+export const complexPhoneSchema = builder.object("Test:Phone-1.0.0", {
 	number: stringSchema,
 	prefix: stringSchema,
 	extraPhones: TreeFieldSchema.create(FieldKinds.optional, [simplePhonesSchema]),
@@ -66,7 +66,7 @@ export const phonesSchema = builder.fieldNode(
 	]),
 );
 
-export const addressSchema = builder.struct("Test:Address-1.0.0", {
+export const addressSchema = builder.object("Test:Address-1.0.0", {
 	zip: [stringSchema, leaf.number],
 	street: TreeFieldSchema.create(FieldKinds.optional, [stringSchema]),
 	city: TreeFieldSchema.create(FieldKinds.optional, [stringSchema]),
@@ -80,7 +80,7 @@ export const mapStringSchema = builder.map(
 	TreeFieldSchema.create(FieldKinds.optional, [stringSchema]),
 );
 
-export const personSchema = builder.struct("Test:Person-1.0.0", {
+export const personSchema = builder.object("Test:Person-1.0.0", {
 	name: stringSchema,
 	age: TreeFieldSchema.create(FieldKinds.optional, [leaf.number]),
 	adult: TreeFieldSchema.create(FieldKinds.optional, [boolSchema]),
@@ -89,7 +89,7 @@ export const personSchema = builder.struct("Test:Person-1.0.0", {
 	address: TreeFieldSchema.create(FieldKinds.optional, [addressSchema]),
 });
 
-export const optionalChildSchema = builder.struct("Test:OptionalChild-1.0.0", {
+export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
 	child: SchemaBuilder.optional(Any),
 });
 

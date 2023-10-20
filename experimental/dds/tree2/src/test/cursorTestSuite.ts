@@ -30,12 +30,12 @@ import { expectEqualFieldPaths, expectEqualPaths } from "./utils";
 
 const schemaBuilder = new SchemaBuilder({ scope: "Cursor Test Suite" });
 
-export const emptySchema = schemaBuilder.struct("Empty Struct", {});
-const emptySchema2 = schemaBuilder.struct("Empty Struct 2", {});
-const emptySchema3 = schemaBuilder.struct("Empty Struct 3", {});
+export const emptySchema = schemaBuilder.object("Empty Struct", {});
+const emptySchema2 = schemaBuilder.object("Empty Struct 2", {});
+const emptySchema3 = schemaBuilder.object("Empty Struct 3", {});
 export const mapSchema = schemaBuilder.map("Map", SchemaBuilder.sequence(Any));
 // Struct with fixed shape
-export const structSchema = schemaBuilder.struct("struct", {
+export const structSchema = schemaBuilder.object("object", {
 	child: leaf.number,
 });
 

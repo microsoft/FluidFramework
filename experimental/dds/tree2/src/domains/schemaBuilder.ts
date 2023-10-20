@@ -21,26 +21,25 @@ import {
 	ImplicitFieldSchema,
 	Required,
 	addFactory,
-	StructSchema,
+	ObjectNodeSchema,
 	FactoryTreeSchema,
 } from "../feature-libraries";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
 
 /**
- * A struct tree schema that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
+ * A {@link ObjectNodeSchema} that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
  * @privateRemarks
- * This type exists because TS is not able to correlate the two places where it is used if the body of this type is inlined.
+ * This type exists because TypeScript is not able to correlate the two places where it is used if the body of this type is inlined.
  * @alpha
  */
-export type FactoryStructSchema<
+export type FactoryObjectNodeSchema<
 	TScope extends string,
-	TName extends string | number,
-	Name extends TName,
+	Name extends number | string,
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = FactoryTreeSchema<
 	TreeNodeSchema<
 		`${TScope}.${Name}`,
-		{ structFields: { [key in keyof T]: NormalizeField<T[key], Required> } }
+		{ objectNodeFields: { [key in keyof T]: NormalizeField<T[key], Required> } }
 	>
 >;
 
@@ -78,14 +77,13 @@ export class SchemaBuilder<
 		});
 	}
 
-	public override struct<
+	public override object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(name: Name, t: T): FactoryStructSchema<TScope, TName, Name, T> {
-		const schema = super.struct(name, t);
-		return addFactory(schema as StructSchema) as unknown as FactoryStructSchema<
+	>(name: Name, t: T): FactoryObjectNodeSchema<TScope, Name, T> {
+		const schema = super.object(name, t);
+		return addFactory(schema as ObjectNodeSchema) as unknown as FactoryObjectNodeSchema<
 			TScope,
-			TName,
 			Name,
 			T
 		>;
@@ -113,7 +111,7 @@ export class SchemaBuilder<
 	): TreeNodeSchema<
 		`${TScope}.List<${string}>`,
 		{
-			structFields: {
+			objectNodeFields: {
 				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
@@ -130,7 +128,7 @@ export class SchemaBuilder<
 	): TreeNodeSchema<
 		`${TScope}.${Name}`,
 		{
-			structFields: {
+			objectNodeFields: {
 				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
@@ -142,7 +140,7 @@ export class SchemaBuilder<
 	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		{
-			structFields: {
+			objectNodeFields: {
 				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
@@ -158,7 +156,7 @@ export class SchemaBuilder<
 			) as TreeNodeSchema<
 				`${TScope}.${string}`,
 				{
-					structFields: {
+					objectNodeFields: {
 						[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 					};
 				}
@@ -181,13 +179,13 @@ export class SchemaBuilder<
 	): TreeNodeSchema<
 		`${TScope}.${Name}`,
 		{
-			structFields: {
+			objectNodeFields: {
 				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
 	> {
 		const schema = new TreeNodeSchema(this, this.scoped(name as TName & Name), {
-			structFields: { [""]: this.sequence(allowedTypes) },
+			objectNodeFields: { [""]: this.sequence(allowedTypes) },
 		});
 		this.addNodeSchema(schema);
 		return schema;

@@ -13,11 +13,11 @@ describe("SharedTree proxies", () => {
 		scope: "test",
 	});
 
-	const childSchema = sb.struct("struct", {
+	const childSchema = sb.object("object", {
 		content: sb.number,
 	});
 
-	const parentSchema = sb.struct("parent", {
+	const parentSchema = sb.object("parent", {
 		struct: childSchema,
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
 	});
@@ -49,15 +49,15 @@ describe("SharedTreeObject", () => {
 		scope: "test",
 	});
 
-	const numberChild = sb.struct("numberChild", {
+	const numberChild = sb.object("numberChild", {
 		content: sb.number,
 	});
 
-	const stringChild = sb.struct("stringChild", {
+	const stringChild = sb.object("stringChild", {
 		content: sb.string,
 	});
 
-	const parentSchema = sb.struct("parent", {
+	const parentSchema = sb.object("parent", {
 		content: sb.number,
 		child: numberChild,
 		polyValue: [sb.number, sb.string],

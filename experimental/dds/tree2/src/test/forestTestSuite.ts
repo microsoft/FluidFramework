@@ -856,7 +856,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 			it("when moving the last node in the field", () => {
 				const builder = new SchemaBuilder({ scope: "moving" });
-				const root = builder.struct("root", {
+				const root = builder.object("root", {
 					x: SchemaBuilder.sequence(leaf.number),
 					y: SchemaBuilder.sequence(leaf.number),
 				});
