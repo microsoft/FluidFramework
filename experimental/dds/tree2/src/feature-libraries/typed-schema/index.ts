@@ -5,7 +5,7 @@
 
 export {
 	TreeNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
 	AllowedTypes,
@@ -13,7 +13,7 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,

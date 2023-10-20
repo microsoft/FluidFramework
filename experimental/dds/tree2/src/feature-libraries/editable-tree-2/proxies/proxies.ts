@@ -7,8 +7,8 @@ import { fail } from "../../../util";
 import {
 	AllowedTypes,
 	FieldNodeSchema,
-	FieldSchema,
-	StructSchema,
+	TreeFieldSchema,
+	ObjectNodeSchema,
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -29,6 +29,7 @@ import { FieldKey } from "../../../core";
 import { getBoxedField } from "../lazyTree";
 import { LazyEntity } from "../lazyEntity";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
+import { getFactoryContent } from "./objectFactory";
 import { createNodeApi, nodeSym } from "./node";
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
@@ -54,7 +55,7 @@ const proxyCacheSym = Symbol("ProxyCache");
 /** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
 function cacheProxy(
 	target: TreeNode,
-	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<ObjectNodeSchema>,
 ): void {
 	Object.defineProperty(target, proxyCacheSym, {
 		value: proxy,
@@ -73,7 +74,7 @@ function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefin
  * Checks if the given object is a {@link SharedTreeObject}
  * @alpha
  */
-export function is<TSchema extends StructSchema>(
+export function is<TSchema extends ObjectNodeSchema>(
 	x: unknown,
 	schema: TSchema,
 ): x is SharedTreeObject<TSchema> {
@@ -82,12 +83,12 @@ export function is<TSchema extends StructSchema>(
 }
 
 /** Retrieve the associated proxy for the given field. */
-export function getProxyForField<TSchema extends FieldSchema>(
+export function getProxyForField<TSchema extends TreeFieldSchema>(
 	field: TypedField<TSchema>,
 ): ProxyField<TSchema> {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.required>>;
+			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.required>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -95,7 +96,7 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			return getProxyForNode(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.optional>>;
+			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.optional>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -146,7 +147,7 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 	fail("unrecognized node kind");
 }
 
-export function createObjectProxy<TSchema extends StructSchema, TTypes extends AllowedTypes>(
+export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes extends AllowedTypes>(
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
@@ -177,7 +178,7 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				}
 			},
 			set(target, key, value) {
-				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+				const fieldSchema = content.schema.objectNodeFields.get(key as FieldKey);
 
 				if (fieldSchema === undefined) {
 					return false;
@@ -188,11 +189,13 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {
-						(field as RequiredField<AllowedTypes>).content = value;
+						(field as RequiredField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					case FieldKinds.optional: {
-						(field as OptionalField<AllowedTypes>).content = value;
+						(field as OptionalField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					default:
@@ -202,10 +205,10 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				return true;
 			},
 			has: (target, key) => {
-				return schema.structFields.has(key as FieldKey);
+				return schema.objectNodeFields.has(key as FieldKey);
 			},
 			ownKeys: (target) => {
-				return [...schema.structFields.keys()];
+				return [...schema.objectNodeFields.keys()];
 			},
 			getOwnPropertyDescriptor: (target, key) => {
 				const field = content.tryGetField(key as FieldKey);

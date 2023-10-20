@@ -23,8 +23,8 @@ import {
 	Dependent,
 	ICachedValue,
 	recordDependency,
-	FieldStoredSchema,
-	SchemaData,
+	TreeFieldStoredSchema,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
@@ -49,7 +49,7 @@ export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
 	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
-	private readonly codec: IJsonCodec<SchemaData, Format>;
+	private readonly codec: IJsonCodec<TreeStoredSchema, Format>;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -145,7 +145,7 @@ interface SchemaOp {
 export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	implements StoredSchemaRepository
 {
-	private readonly codec: IJsonCodec<SchemaData, Format, unknown>;
+	private readonly codec: IJsonCodec<TreeStoredSchema, Format, unknown>;
 	private readonly formatValidator: SchemaValidationFunction<typeof Format>;
 	public constructor(
 		public readonly inner: TRepository,
@@ -203,7 +203,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return false;
 	}
 
-	public update(newSchema: SchemaData): void {
+	public update(newSchema: TreeStoredSchema): void {
 		const op: SchemaOp = { type: "SchemaOp", data: this.codec.encode(newSchema) };
 		this.submit(op);
 		this.inner.update(newSchema);
@@ -225,7 +225,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return this.inner.listDependees?.bind(this.inner);
 	}
 
-	public get rootFieldSchema(): FieldStoredSchema {
+	public get rootFieldSchema(): TreeFieldStoredSchema {
 		return this.inner.rootFieldSchema;
 	}
 
@@ -233,7 +233,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return this.inner.treeSchema;
 	}
 
-	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): SchemaData | undefined {
+	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): TreeStoredSchema | undefined {
 		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
 			return this.codec.decode(encodedOp.data);
 		}

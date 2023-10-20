@@ -60,7 +60,6 @@ const testCases: {
 		editedState: ["C", "D"],
 	},
 	{
-		skip: true, // Blocked on #5263
 		name: "nested deletes",
 		edit: (actedOn) => {
 			const listNode: UpPath = {
@@ -82,7 +81,6 @@ const testCases: {
 		editedState: [],
 	},
 	{
-		skip: true, // Blocked on #5263
 		name: "move out under delete",
 		edit: (actedOn) => {
 			const listNode: UpPath = {

@@ -138,7 +138,7 @@ export {
 export {
 	TreeNodeSchema,
 	AllowedTypes,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeSchema,
 	Any,
 	SchemaLibraryData,
@@ -149,7 +149,7 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
@@ -245,8 +245,8 @@ export {
 	RequiredField,
 	Sequence,
 	Skip,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -272,6 +272,9 @@ export {
 	node,
 	SharedTreeNode,
 	Typed,
+	SharedTreeObjectFactory,
+	FactoryTreeSchema,
+	addFactory,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

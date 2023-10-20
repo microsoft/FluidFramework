@@ -97,7 +97,7 @@ class TestDataObject extends DataObject {
 
 const builder = new SchemaBuilder({ scope: "test" });
 // For now this is the schema of the view.root
-const inventorySchema = builder.struct("abcInventory", {
+const inventorySchema = builder.object("abcInventory", {
 	quantity: builder.number,
 });
 

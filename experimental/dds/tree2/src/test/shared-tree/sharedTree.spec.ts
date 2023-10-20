@@ -55,7 +55,7 @@ import {
 	UpPath,
 	Value,
 	moveToDetachedField,
-	SchemaData,
+	TreeStoredSchema,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
 } from "../../core";
@@ -966,7 +966,7 @@ describe("SharedTree", () => {
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const treeSchema = builder.struct("root", {
+		const treeSchema = builder.object("root", {
 			x: builder.number,
 		});
 		const schema = builder.intoSchema(builder.optional(Any));
@@ -1465,11 +1465,11 @@ describe("SharedTree", () => {
 		});
 
 		itView("properly fork the tree schema", (parent) => {
-			const schemaA: SchemaData = {
+			const schemaA: TreeStoredSchema = {
 				treeSchema: new Map([]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
-			const schemaB: SchemaData = {
+			const schemaB: TreeStoredSchema = {
 				treeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
@@ -1778,7 +1778,7 @@ describe("SharedTree", () => {
 			expectSchemaEquality(otherLoadedTree.storedSchema, jsonSequenceRootSchema);
 		});
 
-		function expectSchemaEquality(actual: SchemaData, expected: SchemaData): void {
+		function expectSchemaEquality(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 			const codec = makeSchemaCodec({ jsonValidator: noopValidator });
 			assert.deepEqual(codec.encode(actual), codec.encode(expected));
 		}
@@ -1790,7 +1790,7 @@ describe("SharedTree", () => {
 
 			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
-			const rootNodeSchema = testSchemaBuilder.structRecursive("Node", {
+			const rootNodeSchema = testSchemaBuilder.objectRecursive("Node", {
 				foo: SchemaBuilder.sequence(leaf.number),
 				foo2: SchemaBuilder.sequence(leaf.number),
 			});

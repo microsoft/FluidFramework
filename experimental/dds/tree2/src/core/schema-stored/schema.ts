@@ -114,7 +114,7 @@ export interface FieldKindSpecifier<T = FieldKindIdentifier> {
 /**
  * @alpha
  */
-export interface FieldStoredSchema {
+export interface TreeFieldStoredSchema {
 	readonly kind: FieldKindSpecifier;
 	/**
 	 * The set of allowed child types.
@@ -135,7 +135,7 @@ export interface FieldStoredSchema {
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
-export const storedEmptyFieldSchema: FieldStoredSchema = {
+export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
 	types: undefined,
 };
@@ -147,25 +147,25 @@ export interface TreeNodeStoredSchema {
 	/**
 	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
 	 *
-	 * This refers to the FieldStoredSchema directly
-	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldStoredSchema map).
+	 * This refers to the TreeFieldStoredSchema directly
+	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
 	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
-	readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
+	readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
 
 	/**
-	 * Constraint for fields not mentioned in `structFields`.
+	 * Constraint for fields not mentioned in `objectNodeFields`.
 	 * If undefined, all such fields must be empty.
 	 *
 	 * Allows using using the fields as a map, with the keys being
-	 * FieldKeys and the values being constrained by this FieldStoredSchema.
+	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
 	 *
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
 	 */
-	readonly mapFields?: FieldStoredSchema;
+	readonly mapFields?: TreeFieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree
@@ -190,11 +190,11 @@ export interface TreeNodeStoredSchema {
  * thus if needing to hand onto a specific version, make a copy.
  * @alpha
  */
-export interface SchemaData extends StoredSchemaCollection {
+export interface TreeStoredSchema extends StoredSchemaCollection {
 	/**
 	 * Schema for the root field which contains the whole tree.
 	 */
-	readonly rootFieldSchema: FieldStoredSchema;
+	readonly rootFieldSchema: TreeFieldStoredSchema;
 }
 
 /**

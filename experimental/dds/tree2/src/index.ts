@@ -55,13 +55,13 @@ export {
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeNodeSchemaIdentifier,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	FieldAnchor,
 	SchemaEvents,
 	ChangesetLocalId,
@@ -130,6 +130,7 @@ export {
 	leaf,
 	testRecursiveDomain,
 	SchemaBuilder,
+	FactoryObjectNodeSchema,
 } from "./domains";
 
 export {
@@ -195,7 +196,7 @@ export {
 	TreeSchema,
 	SchemaLibrary,
 	SchemaLibraryData,
-	FieldSchema,
+	TreeFieldSchema,
 	Any,
 	NewFieldContent,
 	NodeExistsConstraint,
@@ -252,8 +253,8 @@ export {
 	OptionalField,
 	RequiredField,
 	Sequence,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
@@ -265,7 +266,7 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
 	ImplicitFieldSchema,
@@ -286,7 +287,9 @@ export {
 	node,
 	SharedTreeNode,
 	Typed,
+	SharedTreeObjectFactory,
 	SchemaCollection,
+	FactoryTreeSchema,
 } from "./feature-libraries";
 
 export {

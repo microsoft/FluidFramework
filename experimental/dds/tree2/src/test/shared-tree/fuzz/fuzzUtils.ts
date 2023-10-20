@@ -15,21 +15,26 @@ import {
 	Revertible,
 	AllowedUpdateType,
 } from "../../../core";
-import { FieldKinds, FieldSchema, StructTyped, TypedField } from "../../../feature-libraries";
+import {
+	FieldKinds,
+	TreeFieldSchema,
+	ObjectNodeTyped,
+	TypedField,
+} from "../../../feature-libraries";
 import { SharedTree, ISharedTreeView, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
-export const fuzzNode = builder.structRecursive("node", {
-	requiredChild: FieldSchema.createUnsafe(FieldKinds.required, [
+export const fuzzNode = builder.objectRecursive("node", {
+	requiredChild: TreeFieldSchema.createUnsafe(FieldKinds.required, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),
-	optionalChild: FieldSchema.createUnsafe(FieldKinds.optional, [
+	optionalChild: TreeFieldSchema.createUnsafe(FieldKinds.optional, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),
-	sequenceChildren: FieldSchema.createUnsafe(FieldKinds.sequence, [
+	sequenceChildren: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
 		() => fuzzNode,
 		...leaf.primitives,
 	]),
@@ -37,9 +42,9 @@ export const fuzzNode = builder.structRecursive("node", {
 
 export type FuzzNodeSchema = typeof fuzzNode;
 
-export type FuzzNode = StructTyped<FuzzNodeSchema>;
+export type FuzzNode = ObjectNodeTyped<FuzzNodeSchema>;
 
-export const fuzzSchema = builder.intoSchema(fuzzNode.structFieldsObject.optionalChild);
+export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
 
 export function fuzzViewFromTree(tree: ISharedTree): ISharedTreeView {
 	return tree.schematizeView({

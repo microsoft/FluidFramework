@@ -259,7 +259,7 @@
                   "treeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
-                      "structFields": [
+                      "objectNodeFields": [
                         {
                           "kind": "Sequence",
                           "types": [
@@ -287,31 +287,31 @@
                           "com.fluidframework.leaf.null"
                         ]
                       },
-                      "structFields": []
+                      "objectNodeFields": []
                     },
                     {
                       "name": "com.fluidframework.leaf.boolean",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 2
                     },
                     {
                       "name": "com.fluidframework.leaf.handle",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 3
                     },
                     {
                       "name": "com.fluidframework.leaf.null",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 4
                     },
                     {
                       "name": "com.fluidframework.leaf.number",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 0
                     },
                     {
                       "name": "com.fluidframework.leaf.string",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 1
                     }
                   ],

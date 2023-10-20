@@ -4,23 +4,22 @@
  */
 
 import { strict as assert } from "assert";
+import { SchemaBuilder } from "../../../domains";
 import { is, typeNameSymbol } from "../../../feature-libraries";
-import { leaf, SchemaBuilder } from "../../../domains";
 import { itWithRoot } from "./utils";
 
 describe("SharedTree proxies", () => {
 	const sb = new SchemaBuilder({
 		scope: "test",
-		libraries: [leaf.library],
 	});
 
-	const childSchema = sb.struct("struct", {
-		content: leaf.number,
+	const childSchema = sb.object("object", {
+		content: sb.number,
 	});
 
-	const parentSchema = sb.struct("parent", {
+	const parentSchema = sb.object("parent", {
 		struct: childSchema,
-		list: sb.fieldNode("list", sb.sequence(leaf.number)),
+		list: sb.fieldNode("list", sb.sequence(sb.number)),
 	});
 
 	const schema = sb.intoSchema(parentSchema);
@@ -48,23 +47,22 @@ describe("SharedTree proxies", () => {
 describe("SharedTreeObject", () => {
 	const sb = new SchemaBuilder({
 		scope: "test",
-		libraries: [leaf.library],
 	});
 
-	const numberChild = sb.struct("numberChild", {
-		content: leaf.number,
+	const numberChild = sb.object("numberChild", {
+		content: sb.number,
 	});
 
-	const stringChild = sb.struct("stringChild", {
-		content: leaf.string,
+	const stringChild = sb.object("stringChild", {
+		content: sb.string,
 	});
 
-	const parentSchema = sb.struct("parent", {
-		content: leaf.number,
+	const parentSchema = sb.object("parent", {
+		content: sb.number,
 		child: numberChild,
-		polyValue: [leaf.number, leaf.string],
+		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
-		polyValueChild: [leaf.number, numberChild],
+		polyValueChild: [sb.number, numberChild],
 		// map: sb.map("map", sb.optional(leaf.string)), // TODO Test Maps
 		list: sb.fieldNode("list", sb.sequence(numberChild)),
 	});

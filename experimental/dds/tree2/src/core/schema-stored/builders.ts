@@ -6,7 +6,7 @@
 import { brand } from "../../util";
 import {
 	FieldKindIdentifier,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
 	ValueSchema,
@@ -30,13 +30,13 @@ export const emptySet: ReadonlySet<never> = new Set();
 export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
- * Helper for building {@link FieldStoredSchema}.
+ * Helper for building {@link TreeFieldStoredSchema}.
  * @alpha
  */
 export function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
 	types?: Iterable<TreeNodeSchemaIdentifier>,
-): FieldStoredSchema {
+): TreeFieldStoredSchema {
 	return {
 		kind,
 		types: types === undefined ? undefined : new Set(types),
@@ -47,8 +47,8 @@ export function fieldSchema(
  * See {@link TreeNodeStoredSchema} for details.
  */
 export interface TreeSchemaBuilder {
-	readonly structFields?: { [key: string]: FieldStoredSchema };
-	readonly mapFields?: FieldStoredSchema;
+	readonly objectNodeFields?: { [key: string]: TreeFieldStoredSchema };
+	readonly mapFields?: TreeFieldStoredSchema;
 	readonly leafValue?: ValueSchema;
 }
 
@@ -56,17 +56,17 @@ export interface TreeSchemaBuilder {
  * Helper for building {@link TreeNodeStoredSchema}.
  */
 export function treeSchema(data: TreeSchemaBuilder): TreeNodeStoredSchema {
-	const structFields = new Map();
-	const fields = data.structFields ?? {};
+	const objectNodeFields = new Map();
+	const fields = data.objectNodeFields ?? {};
 	// eslint-disable-next-line no-restricted-syntax
 	for (const key in fields) {
 		if (Object.prototype.hasOwnProperty.call(fields, key)) {
-			structFields.set(brand(key), fields[key]);
+			objectNodeFields.set(brand(key), fields[key]);
 		}
 	}
 
 	return {
-		structFields,
+		objectNodeFields,
 		mapFields: data.mapFields,
 		leafValue: data.leafValue,
 	};

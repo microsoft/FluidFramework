@@ -13,7 +13,7 @@
 	"sideEffects": false,
 	"exports": {
 		".": {
-			"require": {
+			"default": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			}
@@ -116,6 +116,7 @@
 		"sort-package-json": "1.57.0",
 		"strip-ansi": "^6.0.1",
 		"table": "^6.8.1",
+		"ts-morph": "^17.0.1",
 		"type-fest": "^2.19.0"
 	},
 	"devDependencies": {

@@ -17,7 +17,7 @@ import {
 	AllowedTypes,
 	Any,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeNodeSchema,
 } from "../../feature-libraries";
 
@@ -35,14 +35,14 @@ describe("SchemaBuilderBase", () => {
 		it("recursive", () => {
 			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 
-			const recursiveStruct = builder.structRecursive("recursiveStruct", {
-				foo: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+			const recursiveStruct = builder.objectRecursive("recursiveStruct", {
+				foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 			});
 
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
@@ -57,15 +57,15 @@ describe("SchemaBuilderBase", () => {
 				typeof recursiveReference,
 				() => TreeNodeSchema
 			>;
-			const recursiveStruct = builder.struct("recursiveStruct2", {
-				foo: FieldSchema.create(FieldKinds.optional, [recursiveReference]),
+			const recursiveStruct = builder.object("recursiveStruct2", {
+				foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 			});
 
 			type _0 = requireFalse<isAny<typeof recursiveStruct>>;
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
@@ -80,15 +80,15 @@ describe("SchemaBuilderBase", () => {
 
 			const recursiveReference = () => recursiveStruct;
 			fixRecursiveReference(recursiveReference);
-			const recursiveStruct = builder.struct("recursiveStruct2", {
-				foo: FieldSchema.create(FieldKinds.optional, [recursiveReference]),
+			const recursiveStruct = builder.object("recursiveStruct2", {
+				foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 			});
 
 			type _0 = requireFalse<isAny<typeof recursiveStruct>>;
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
@@ -97,7 +97,7 @@ describe("SchemaBuilderBase", () => {
 	describe("intoSchema", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-			const empty = schemaBuilder.struct("empty", {});
+			const empty = schemaBuilder.object("empty", {});
 			const schema = schemaBuilder.intoSchema(SchemaBuilder.optional(empty));
 
 			assert.equal(schema.treeSchema.size, 1); // "empty"
@@ -108,7 +108,7 @@ describe("SchemaBuilderBase", () => {
 	describe("intoLibrary", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-			const empty = schemaBuilder.struct("empty", {});
+			const empty = schemaBuilder.object("empty", {});
 			const schema = schemaBuilder.intoLibrary();
 
 			assert.equal(schema.treeSchema.size, 1); // "empty"
@@ -137,17 +137,20 @@ describe("SchemaBuilderBase", () => {
 
 	it("normalizeField", () => {
 		// Check types are normalized correctly
-		const directAny = FieldSchema.create(FieldKinds.optional, [Any]);
+		const directAny = TreeFieldSchema.create(FieldKinds.optional, [Any]);
 		assert(directAny.equals(normalizeField(Any, FieldKinds.optional)));
 		assert(directAny.equals(normalizeField([Any], FieldKinds.optional)));
 		assert(
 			directAny.equals(
-				normalizeField(FieldSchema.create(FieldKinds.optional, [Any]), FieldKinds.optional),
+				normalizeField(
+					TreeFieldSchema.create(FieldKinds.optional, [Any]),
+					FieldKinds.optional,
+				),
 			),
 		);
 
 		assert(
-			FieldSchema.create(FieldKinds.optional, []).equals(
+			TreeFieldSchema.create(FieldKinds.optional, []).equals(
 				normalizeField([], FieldKinds.optional),
 			),
 		);
@@ -157,14 +160,14 @@ describe("SchemaBuilderBase", () => {
 		});
 
 		assert(
-			FieldSchema.create(FieldKinds.optional, [treeSchema]).equals(
+			TreeFieldSchema.create(FieldKinds.optional, [treeSchema]).equals(
 				normalizeField([treeSchema], FieldKinds.optional),
 			),
 		);
 
 		// Check provided field kind is used
 		assert(
-			FieldSchema.create(FieldKinds.required, [treeSchema]).equals(
+			TreeFieldSchema.create(FieldKinds.required, [treeSchema]).equals(
 				normalizeField([treeSchema], FieldKinds.required),
 			),
 		);

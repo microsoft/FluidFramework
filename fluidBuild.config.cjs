@@ -258,6 +258,18 @@ module.exports = {
 		},
 	},
 
+	assertTagging: {
+		enabledPaths: [
+			/^common\/lib\/common-utils/i,
+			/^experimental/i,
+			/^packages/i,
+			/^server\/routerlicious\/packages\/protocol-base/i,
+		],
+		assertionFunctions: {
+			assert: 1,
+		},
+	},
+
 	// This defines the branch release types for type tests. It applies only to the client release group. Settings for
 	// other release groups is in their root fluid-build config.
 	branchReleaseTypes: {
