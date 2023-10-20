@@ -1191,20 +1191,30 @@ export const handlers: Handler[] = [
 			const isCJSOnly = json.module === undefined || json.type === "commonjs";
 			const isESMOnly = json.type === "module";
 
+			// CJS- and ESM-only packages should use default, not import or require.
+			const defaultField =
+				exportsRoot?.default?.default === undefined
+					? undefined
+					: normalizePathField(exportsRoot?.default?.default);
+
+			// CJS-only packages should use default, not import or require.
 			if (isCJSOnly) {
-				// CJS-only packages should use default, not import or require.
-				const defaultField =
-					exportsRoot?.default?.default === undefined
-						? undefined
-						: normalizePathField(exportsRoot?.default?.default);
 				const mainField = normalizePathField(json.main);
 				if (defaultField !== mainField) {
-					return `Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
+					return `${json.name} is a CJS-only package. Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
 				}
 			}
 
+			// ESM-only packages should use default, not import or require.
 			if (isESMOnly) {
-				// ESM exports
+				const mainField = normalizePathField(json.main);
+				if (defaultField !== mainField) {
+					return `${json.name} is an ESM-only package. Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
+				}
+			}
+
+			if (!isESMOnly && !isCJSOnly) {
+				// ESM exports in import field
 				const importField =
 					exportsRoot?.import?.default === undefined
 						? undefined
@@ -1212,11 +1222,9 @@ export const handlers: Handler[] = [
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const moduleField = normalizePathField(json.module!);
 				if (importField !== moduleField) {
-					return `Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
+					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
 				}
-			}
 
-			if (!isESMOnly && !isCJSOnly) {
 				// CJS exports in require field
 				const requireField =
 					exportsRoot?.require?.default === undefined
@@ -1224,7 +1232,7 @@ export const handlers: Handler[] = [
 						: normalizePathField(exportsRoot?.require?.default);
 				const mainField = normalizePathField(json.main);
 				if (requireField !== mainField) {
-					return `Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
+					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
 				}
 			}
 		},
@@ -1301,7 +1309,7 @@ function generateExportsField(json: PackageJson) {
 	if (isESMOnly) {
 		const exports = {
 			".": {
-				import: {
+				default: {
 					// Assume the types field is the ESM types since this is an ESM-only package.
 					types: cjsTypes,
 					default: normalizePathField(json.main),
@@ -1312,7 +1320,8 @@ function generateExportsField(json: PackageJson) {
 	}
 
 	if (isCJSOnly) {
-		// Package appears to be CJS only
+		// This logic is the same as the ESM-only case, but it's separate intentionally to make it easier to refactor
+		// as we learn more about what our exports field should look like for different package types.
 		const exports = {
 			".": {
 				default: {
