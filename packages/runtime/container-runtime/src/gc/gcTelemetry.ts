@@ -110,12 +110,13 @@ export class GCTelemetryTracker {
 			return false;
 		}
 
-		// For sub data store (DDS) nodes, if they are changed or loaded, its data store will also be changed or loaded,
-		// so skip logging to make the telemetry less noisy.
-		if (nodeType === GCNodeType.SubDataStore && usageType !== "Revived") {
+		if (nodeType === GCNodeType.Other) {
 			return false;
 		}
-		if (nodeType === GCNodeType.Other) {
+
+		// For sub data store (DDS) nodes, if they are changed, its data store will also be changed,
+		// so skip logging to make the telemetry less noisy.
+		if (nodeType === GCNodeType.SubDataStore && usageType === "Changed") {
 			return false;
 		}
 
