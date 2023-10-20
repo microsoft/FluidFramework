@@ -9,7 +9,7 @@ import { FieldKinds } from "../default-field-kinds";
 import { fail, oneFromSet } from "../../util";
 import {
 	AllowedTypes,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -34,7 +34,7 @@ export function unboxedTree<TSchema extends TreeNodeSchema>(
 		cursor.enterField(EmptyKey);
 		const primaryField = makeField(
 			context,
-			schema.structFields.get(EmptyKey) ?? fail("invalid schema"),
+			schema.objectNodeFields.get(EmptyKey) ?? fail("invalid schema"),
 			cursor,
 		);
 		cursor.exitField();
@@ -49,7 +49,7 @@ export function unboxedTree<TSchema extends TreeNodeSchema>(
  */
 export function unboxedUnion<TTypes extends AllowedTypes>(
 	context: Context,
-	schema: FieldSchema<FieldKind, TTypes>,
+	schema: TreeFieldSchema<FieldKind, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 ): UnboxNodeUnion<TTypes> {
 	const type = oneFromSet(schema.types);
@@ -65,10 +65,10 @@ export function unboxedUnion<TTypes extends AllowedTypes>(
 
 /**
  * @param context - the common context of the field.
- * @param schema - the FieldStoredSchema of the field.
+ * @param schema - the TreeFieldStoredSchema of the field.
  * @param cursor - the cursor, which must point to the field being proxified.
  */
-export function unboxedField<TSchema extends FieldSchema>(
+export function unboxedField<TSchema extends TreeFieldSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,

@@ -8,7 +8,7 @@ import { SchemaBuilder, leaf } from "../../domains";
 import {
 	Any,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	Sequence,
 	TreeNodeSchema,
 	schemaIsFieldNode,
@@ -30,9 +30,9 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listAny));
 				assert.equal(listAny.name, "scope.List<Any>");
 				assert(
-					listAny.structFields
+					listAny.objectNodeFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [Any])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])),
 				);
 				type ListAny = UnboxNode<typeof listAny>;
 				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence<readonly [Any]>>>;
@@ -47,9 +47,9 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listImplicit));
 				assert.equal(listImplicit.name, `scope2.List<["${builder.number.name}"]>`);
 				assert(
-					listImplicit.structFields
+					listImplicit.objectNodeFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [builder.number])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
 				type ListAny = UnboxNode<typeof listImplicit>;
 				type _check = requireTrue<
@@ -80,10 +80,10 @@ describe("domains - SchemaBuilder", () => {
 					`scope.List<["${builder.boolean.name}","${builder.number.name}"]>`,
 				);
 				assert(
-					listUnion.structFields
+					listUnion.objectNodeFields
 						.get("")
 						.equals(
-							FieldSchema.create(FieldKinds.sequence, [
+							TreeFieldSchema.create(FieldKinds.sequence, [
 								builder.number,
 								builder.boolean,
 							]),
@@ -118,9 +118,9 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(list));
 				assert.equal(list.name, `scope.Foo`);
 				assert(
-					list.structFields
+					list.objectNodeFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [builder.number])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
 				type ListAny = UnboxNode<typeof list>;
 				type _check = requireTrue<
@@ -144,7 +144,7 @@ describe("domains - SchemaBuilder", () => {
 				// Correct name
 				assert.equal(mapAny.name, "scope.Map<Any>");
 				// Infers optional kind
-				assert(mapAny.mapFields.equals(FieldSchema.create(FieldKinds.optional, [Any])));
+				assert(mapAny.mapFields.equals(TreeFieldSchema.create(FieldKinds.optional, [Any])));
 				// Cached and reused
 				assert.equal(builder.map(Any), mapAny);
 			});
@@ -158,7 +158,7 @@ describe("domains - SchemaBuilder", () => {
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							FieldSchema.create(FieldKinds.optional, [builder.number]),
+							TreeFieldSchema.create(FieldKinds.optional, [builder.number]),
 						),
 					);
 				});
@@ -168,13 +168,13 @@ describe("domains - SchemaBuilder", () => {
 
 					const map = builder.map(
 						"Foo",
-						FieldSchema.create(FieldKinds.sequence, [leaf.string]),
+						TreeFieldSchema.create(FieldKinds.sequence, [leaf.string]),
 					);
 					assert(schemaIsMap(map));
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							FieldSchema.create(FieldKinds.sequence, [leaf.string]),
+							TreeFieldSchema.create(FieldKinds.sequence, [leaf.string]),
 						),
 					);
 				});
@@ -196,11 +196,11 @@ describe("domains - SchemaBuilder", () => {
 		);
 		// escaped names
 		const builder = new SchemaBuilder({ scope: "scope" });
-		const doubleName = builder.struct(`bar","scope.foo`, {});
+		const doubleName = builder.object(`bar","scope.foo`, {});
 		assert.equal(structuralName("X", doubleName), `X<["scope.bar\\",\\"scope.foo"]>`);
 		// This escaping ensures named don't collide:
-		const foo = builder.struct("foo", {});
-		const bar = builder.struct("bar", {});
+		const foo = builder.object("foo", {});
+		const bar = builder.object("bar", {});
 		assert(structuralName("X", [bar, foo]) !== structuralName("X", doubleName));
 	});
 });

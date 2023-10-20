@@ -4,7 +4,7 @@
  */
 
 /**
- * @deprecated - This functionality was not intended for public export and will
+ * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
  */
 export class Stack<T> {

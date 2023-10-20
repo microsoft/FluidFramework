@@ -11,13 +11,13 @@ import {
 	AllowedTypes,
 	Any,
 	FieldNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	InternalTypedSchemaTypes,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	TreeNodeSchema,
-	DocumentSchema,
+	TreeSchema,
 } from "../../typed-schema";
 import {
 	CheckTypesOverlap,
@@ -174,16 +174,16 @@ export interface SharedTreeList<
  * @alpha
  */
 export type SharedTreeObject<
-	TSchema extends StructSchema,
+	TSchema extends ObjectNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = ObjectFields<TSchema["structFieldsObject"], API> & SharedTreeNode;
+> = ObjectFields<TSchema["objectNodeFieldsObject"], API> & SharedTreeNode;
 
 /**
  * Helper for generating the properties of a {@link SharedTreeObject}.
  * @alpha
  */
 export type ObjectFields<
-	TFields extends RestrictiveReadonlyRecord<string, FieldSchema>,
+	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = {
 	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
@@ -213,7 +213,7 @@ export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSc
  * @alpha
  */
 export type ProxyField<
-	TSchema extends FieldSchema,
+	TSchema extends TreeFieldSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
 	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
@@ -273,16 +273,14 @@ export type ProxyNode<
 		: Map<string, ProxyField<TSchema["mapFields"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
-		? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API>
-		: readonly ProxyNodeUnion<TSchema["structFieldsObject"][""]["allowedTypes"], API>[]
-	: TSchema extends StructSchema
+		? SharedTreeList<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>
+		: readonly ProxyNodeUnion<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>[]
+	: TSchema extends ObjectNodeSchema
 	? SharedTreeObject<TSchema, API>
 	: unknown;
 
 /** The root type (the type of the entire tree) for a given schema collection */
 export type ProxyRoot<
-	TSchema extends DocumentSchema,
+	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = TSchema extends DocumentSchema<infer TRootFieldSchema>
-	? ProxyField<TRootFieldSchema, API>
-	: never;
+> = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;

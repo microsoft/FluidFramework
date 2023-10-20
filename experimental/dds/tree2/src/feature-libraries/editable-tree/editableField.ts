@@ -9,7 +9,7 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	mapCursorField,
 	CursorLocationType,
@@ -60,7 +60,7 @@ import { ProxyTarget } from "./ProxyTarget";
 
 export function makeField(
 	context: ProxyContext,
-	fieldSchema: FieldStoredSchema,
+	fieldSchema: TreeFieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): EditableField {
 	const fieldAnchor = cursor.buildFieldAnchor();
@@ -89,7 +89,7 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  */
 function getPrimaryArrayKey(
 	type: TreeNodeStoredSchema,
-): { key: FieldKey; schema: FieldStoredSchema } | undefined {
+): { key: FieldKey; schema: TreeFieldStoredSchema } | undefined {
 	const primary = getPrimaryField(type);
 	if (primary === undefined) {
 		return undefined;
@@ -115,7 +115,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public constructor(
 		context: ProxyContext,
 		// TODO: use view schema typed in editableTree
-		public readonly fieldSchema: FieldStoredSchema,
+		public readonly fieldSchema: TreeFieldStoredSchema,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -636,12 +636,12 @@ function unwrappedTree(
 
 /**
  * @param context - the common context of the field.
- * @param fieldSchema - the FieldStoredSchema of the field.
+ * @param fieldSchema - the TreeFieldStoredSchema of the field.
  * @param cursor - the cursor, which must point to the field being proxified.
  */
 export function unwrappedField(
 	context: ProxyContext,
-	fieldSchema: FieldStoredSchema,
+	fieldSchema: TreeFieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): UnwrappedEditableField {
 	const fieldKind = getFieldKind(fieldSchema);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchemaIdentifier, SchemaData } from "../schema-stored";
+import { TreeNodeSchemaIdentifier, TreeStoredSchema } from "../schema-stored";
 
 /**
  * APIs for applying `view schema` to documents.
@@ -71,6 +71,6 @@ export interface Adapters {
 export class AdaptedViewSchema {
 	public constructor(
 		public readonly adapters: Adapters,
-		public readonly adaptedForViewSchema: SchemaData,
+		public readonly adaptedForViewSchema: TreeStoredSchema,
 	) {}
 }

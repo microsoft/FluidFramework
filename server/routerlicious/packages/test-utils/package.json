@@ -59,7 +59,7 @@
 		"@fluidframework/server-services-core": "workspace:~",
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"assert": "^2.0.0",
-		"debug": "^4.1.1",
+		"debug": "^4.3.4",
 		"events": "^3.1.0",
 		"lodash": "^4.17.21",
 		"string-hash": "^1.1.3",
@@ -86,6 +86,11 @@
 		"typescript": "~4.5.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_TestNotImplementedCheckpointService": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

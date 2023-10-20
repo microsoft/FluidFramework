@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
-	DocumentSchema,
+	TreeSchema,
 	ProxyField,
 	ProxyRoot,
 	SharedTreeNode,
@@ -16,7 +16,7 @@ import { itWithRoot, makeSchema } from "./utils";
 
 describe("node() API", () => {
 	describe("events", () => {
-		function check<TSchema extends DocumentSchema<any>>(
+		function check<TSchema extends TreeSchema<any>>(
 			schema: TSchema,
 			initialTree: ProxyRoot<TSchema, "javaScript">,
 			mutate: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
@@ -72,7 +72,7 @@ describe("node() API", () => {
 		describe("object", () => {
 			check(
 				makeSchema((_) =>
-					_.struct("", {
+					_.object("", {
 						content: _.boolean,
 					}),
 				),

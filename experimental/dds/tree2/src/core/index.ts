@@ -119,7 +119,7 @@ export {
 	FieldKeySchema,
 	TreeNodeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
 	PrimitiveValueSchema,
 	TreeNodeStoredSchema,
@@ -128,7 +128,7 @@ export {
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	fieldSchema,
@@ -179,4 +179,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { UndoRedoManager, LocalCommitSource } from "./undo";
+export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";
