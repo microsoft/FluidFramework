@@ -13,7 +13,7 @@
 	"sideEffects": false,
 	"exports": {
 		".": {
-			"require": {
+			"default": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			}

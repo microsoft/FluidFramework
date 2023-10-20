@@ -8,7 +8,7 @@ import { SchemaBuilder, leaf } from "../../domains";
 import {
 	Any,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	Sequence,
 	TreeNodeSchema,
 	schemaIsFieldNode,
@@ -32,7 +32,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(
 					listAny.structFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [Any])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])),
 				);
 				type ListAny = UnboxNode<typeof listAny>;
 				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence<readonly [Any]>>>;
@@ -49,7 +49,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(
 					listImplicit.structFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [builder.number])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
 				type ListAny = UnboxNode<typeof listImplicit>;
 				type _check = requireTrue<
@@ -83,7 +83,7 @@ describe("domains - SchemaBuilder", () => {
 					listUnion.structFields
 						.get("")
 						.equals(
-							FieldSchema.create(FieldKinds.sequence, [
+							TreeFieldSchema.create(FieldKinds.sequence, [
 								builder.number,
 								builder.boolean,
 							]),
@@ -120,7 +120,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(
 					list.structFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [builder.number])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
 				type ListAny = UnboxNode<typeof list>;
 				type _check = requireTrue<
@@ -144,7 +144,7 @@ describe("domains - SchemaBuilder", () => {
 				// Correct name
 				assert.equal(mapAny.name, "scope.Map<Any>");
 				// Infers optional kind
-				assert(mapAny.mapFields.equals(FieldSchema.create(FieldKinds.optional, [Any])));
+				assert(mapAny.mapFields.equals(TreeFieldSchema.create(FieldKinds.optional, [Any])));
 				// Cached and reused
 				assert.equal(builder.map(Any), mapAny);
 			});
@@ -158,7 +158,7 @@ describe("domains - SchemaBuilder", () => {
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							FieldSchema.create(FieldKinds.optional, [builder.number]),
+							TreeFieldSchema.create(FieldKinds.optional, [builder.number]),
 						),
 					);
 				});
@@ -168,13 +168,13 @@ describe("domains - SchemaBuilder", () => {
 
 					const map = builder.map(
 						"Foo",
-						FieldSchema.create(FieldKinds.sequence, [leaf.string]),
+						TreeFieldSchema.create(FieldKinds.sequence, [leaf.string]),
 					);
 					assert(schemaIsMap(map));
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							FieldSchema.create(FieldKinds.sequence, [leaf.string]),
+							TreeFieldSchema.create(FieldKinds.sequence, [leaf.string]),
 						),
 					);
 				});

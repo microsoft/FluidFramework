@@ -4,7 +4,7 @@
  */
 
 import { leaf, SchemaBuilder } from "../../../domains";
-import { FieldKinds, FieldSchema } from "../../../feature-libraries";
+import { FieldKinds, TreeFieldSchema } from "../../../feature-libraries";
 
 const builder = new SchemaBuilder({ scope: "example" });
 
@@ -25,7 +25,7 @@ const invalidChildSchema = ballSchema.structFields.get("z");
 // Declare an recursive aggregate type via struct fields.
 // Note that the type name can be used instead of the schema to allow recursion.
 const diagramSchema = builder.structRecursive("Diagram", {
-	children: FieldSchema.createUnsafe(FieldKinds.sequence, [() => diagramSchema, ballSchema]),
+	children: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [() => diagramSchema, ballSchema]),
 });
 
 const rootField = builder.optional(diagramSchema);

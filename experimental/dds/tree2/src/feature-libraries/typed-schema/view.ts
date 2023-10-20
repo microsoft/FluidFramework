@@ -5,11 +5,11 @@
 
 import { Named, fail } from "../../util";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKey,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
-	SchemaData,
+	TreeStoredSchema,
 	Adapters,
 	AdaptedViewSchema,
 	Compatibility,
@@ -37,7 +37,7 @@ export class ViewSchema {
 	 * TODO: this API violates the parse don't validate design philosophy.
 	 * It should be wrapped with (or replaced by) a parse style API.
 	 */
-	public checkCompatibility(stored: SchemaData): {
+	public checkCompatibility(stored: TreeStoredSchema): {
 		read: Compatibility;
 		write: Compatibility;
 		writeAllowingStoredSchemaUpdates: Compatibility;
@@ -88,7 +88,7 @@ export class ViewSchema {
 	 * TODO: have a way for callers to get invalidated on schema updates.
 	 * Maybe pass in StoredSchemaRepository and optional ObservingDependent?
 	 */
-	public adaptRepo(stored: SchemaData): AdaptedViewSchema {
+	public adaptRepo(stored: TreeStoredSchema): AdaptedViewSchema {
 		// Sanity check on adapters:
 		// it's probably a bug it they use the never types,
 		// since there never is a reason to have a never type as an adapter input,
@@ -117,7 +117,7 @@ export class ViewSchema {
 	/**
 	 * Adapt original such that it allows member types which can be adapted to its specified types.
 	 */
-	private adaptField(original: FieldStoredSchema): FieldStoredSchema {
+	private adaptField(original: TreeFieldStoredSchema): TreeFieldStoredSchema {
 		if (original.types !== undefined) {
 			const types: Set<TreeNodeSchemaIdentifier> = new Set(original.types);
 			for (const treeAdapter of this.adapters?.tree ?? []) {
@@ -133,7 +133,7 @@ export class ViewSchema {
 	}
 
 	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
-		const structFields: Map<FieldKey, FieldStoredSchema> = new Map();
+		const structFields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 		for (const [key, schema] of original.structFields) {
 			// TODO: support missing field adapters.
 			structFields.set(key, this.adaptField(schema));

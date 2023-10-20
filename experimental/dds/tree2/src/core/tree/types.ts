@@ -20,7 +20,7 @@ export type TreeType = TreeNodeSchemaIdentifier;
  * and in some abstractions the APIs for this field should be inlined onto the node.
  *
  * TODO:
- * This has to be a FieldKey since different nodes will have different FieldStoredSchema for it.
+ * This has to be a FieldKey since different nodes will have different TreeFieldStoredSchema for it.
  * This makes it prone to collisions and suggests
  * that this intention may be better conveyed by metadata on the ITreeSchema.
  * @alpha

@@ -24,7 +24,7 @@ import {
 	DefaultChangeset,
 	buildForest,
 	SchemaEditor,
-	FieldSchema,
+	TreeFieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
 	DetachedFieldIndexSummarizer,
@@ -86,7 +86,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematizeView<TRoot extends FieldSchema>(
+	schematizeView<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
 }
@@ -147,7 +147,7 @@ export class SharedTree
 		});
 	}
 
-	public schematizeView<TRoot extends FieldSchema>(
+	public schematizeView<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): SharedTreeView {
 		// TODO:
@@ -158,7 +158,7 @@ export class SharedTree
 		return this.view;
 	}
 
-	public schematize<TRoot extends FieldSchema>(
+	public schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): TypedField<TRoot> {
 		const nodeKeyManager = createNodeKeyManager(this.runtime.idCompressor);

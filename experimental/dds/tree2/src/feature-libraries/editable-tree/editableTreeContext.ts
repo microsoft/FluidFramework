@@ -10,9 +10,9 @@ import {
 	FieldAnchor,
 	Anchor,
 	ForestEvents,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKey,
-	SchemaData,
+	TreeStoredSchema,
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../default-field-kinds";
@@ -74,7 +74,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 * Schema used within this context.
 	 * All data must conform to these schema.
 	 */
-	readonly schema: SchemaData;
+	readonly schema: TreeStoredSchema;
 
 	/**
 	 * Call before editing.
@@ -101,7 +101,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**
 	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
 	 */
-	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+	fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**
@@ -124,7 +124,7 @@ export class ProxyContext implements EditableTreeContext {
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
-		public readonly schema: SchemaData,
+		public readonly schema: TreeStoredSchema,
 		public readonly editor: DefaultEditBuilder,
 		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
@@ -205,7 +205,7 @@ export class ProxyContext implements EditableTreeContext {
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
-	schema: SchemaData,
+	schema: TreeStoredSchema,
 	editor: DefaultEditBuilder,
 ): EditableTreeContext {
 	return new ProxyContext(forest, schema, editor);
