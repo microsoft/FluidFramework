@@ -117,14 +117,14 @@ export class AlfredRunner implements IRunner {
 				origin: "upgrade",
 				connections: socket.server._connections,
 			});
-			metric.success("Connection Upgraded");
+			metric.success("WebSockets: connection upgraded");
 			socket.on("close", (hadError: boolean) => {
 				const closeMetric = Lumberjack.newLumberMetric("WebSocket Connections", {
 					origin: "close",
 					connections: socket.server._connections,
 					hadError: hadError.toString(),
 				});
-				closeMetric.success("Connection closed", hadError ? LogLevel.Error : LogLevel.Info);
+				closeMetric.success("WebSockets: connection closed", hadError ? LogLevel.Error : LogLevel.Info);
 			});
 			socket.on("error", (error) => {
 				const errorMetric = Lumberjack.newLumberMetric("WebSocket Connections", {
@@ -134,7 +134,7 @@ export class AlfredRunner implements IRunner {
 					bytesWritten: socket.bytesWritten,
 					error: error.toString(),
 				});
-				errorMetric.success("Connection error", LogLevel.Error);
+				errorMetric.success("WebSockets: connection error", LogLevel.Error);
 			});
 		});
 
