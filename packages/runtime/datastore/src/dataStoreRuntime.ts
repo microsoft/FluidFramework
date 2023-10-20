@@ -109,27 +109,6 @@ export class FluidDataStoreRuntime
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
-	 * @deprecated - Instantiate the class using its constructor instead.
-	 *
-	 * Loads the data store runtime
-	 * @param context - The data store context
-	 * @param sharedObjectRegistry - The registry of shared objects used by this data store
-	 * @param existing - If loading from an existing file.
-	 */
-	public static load(
-		context: IFluidDataStoreContext,
-		sharedObjectRegistry: ISharedObjectRegistry,
-		existing: boolean,
-	): FluidDataStoreRuntime {
-		return new FluidDataStoreRuntime(
-			context,
-			sharedObjectRegistry,
-			existing,
-			async (dataStoreRuntime) => dataStoreRuntime.entryPoint,
-		);
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.entryPoint}
 	 */
 	public readonly entryPoint: IFluidHandle<FluidObject>;

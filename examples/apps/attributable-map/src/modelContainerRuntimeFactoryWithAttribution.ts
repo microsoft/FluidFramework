@@ -48,17 +48,22 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 		existing: boolean,
 	): Promise<IRuntime> {
 		const attributor = createRuntimeAttributor();
-		const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
+		const containerScope: FluidObject<IProvideRuntimeAttributor> = {
+			IRuntimeAttributor: attributor,
+		};
 
-		const runtime = await containerRuntimeWithAttribution.load(
+		const runtime = await containerRuntimeWithAttribution.loadRuntime({
 			context,
-			this.registryEntries,
+			registryEntries: this.registryEntries,
 			// eslint-disable-next-line import/no-deprecated
-			makeModelRequestHandler(this.createModel.bind(this)),
-			this.runtimeOptions,
-			scope, // scope
+			requestHandler: makeModelRequestHandler(this.createModel.bind(this)),
+			provideEntryPoint: () => {
+				throw new Error("TODO: AB#4990");
+			},
+			runtimeOptions: this.runtimeOptions,
+			containerScope, // scope
 			existing,
-		);
+		});
 
 		if (!existing) {
 			await this.containerInitializingFirstTime(runtime);
