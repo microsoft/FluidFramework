@@ -127,6 +127,7 @@ importers:
       sort-package-json: 1.57.0
       strip-ansi: ^6.0.1
       table: ^6.8.1
+      ts-morph: ^17.0.1
       ts-node: ^10.9.1
       tslib: ^2.6.0
       type-fest: ^2.19.0
@@ -172,6 +173,7 @@ importers:
       sort-package-json: 1.57.0
       strip-ansi: 6.0.1
       table: 6.8.1
+      ts-morph: 17.0.1
       type-fest: 2.19.0
     devDependencies:
       '@fluid-private/readme-command': link:../readme-command
@@ -2155,7 +2157,7 @@ packages:
   /@ts-morph/common/0.18.1:
     resolution: {integrity: sha512-RVE+zSRICWRsfrkAw5qCAK+4ZH9kwEFv5h0+/YeHTLieWP7F4wWq4JsKFuNWG+fYh/KF+8rAtgdj5zb2mm+DVA==}
     dependencies:
-      fast-glob: 3.2.12
+      fast-glob: 3.3.1
       minimatch: 5.1.6
       mkdirp: 1.0.4
       path-browserify: 1.0.1
@@ -5338,7 +5340,6 @@ packages:
       glob-parent: 5.1.2
       merge2: 1.4.1
       micromatch: 4.0.5
-    dev: true
 
   /fast-json-patch/3.1.1:
     resolution: {integrity: sha512-vf6IHUX2SBcA+5/+4883dsIjpBTqmfBjmYiWK1savxQmFk4JfBMLa7ynTYOs1Rolp/T1betJxHiGD3g1Mn8lUQ==}
