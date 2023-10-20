@@ -1821,7 +1821,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// is already deleted, in which case we don't need to submit the op.
 		if (pendingMessageIds !== undefined) {
 			const index = pendingMessageIds.findIndex(
-				(i) => i === localOpMetadata.pendingMessageId,
+				(id) => id === localOpMetadata.pendingMessageId,
 			);
 			if (index === -1) {
 				return;
@@ -2146,7 +2146,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					localOpMetadata !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
 					0x011 /* pendingMessageId is missing from the local client's operation */,
 				);
-				// https://github.com/microsoft/FluidFramework/commit/5daae4110c7d77d2fe38f2fc16f4743adae05544#diff-5da3533fe8c2f92f839a9a3d55ee13909efd2bd614b44ed3057b7ce8b285b1f8R1447
 				assert(
 					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
 					0x331 /* Unexpected pending message received */,
