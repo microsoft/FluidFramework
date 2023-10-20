@@ -1488,9 +1488,13 @@ type NormalizeStructFieldsInner<T extends Fields> = {
 
 // @alpha
 export type ObjectFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>, API extends "javaScript" | "sharedTree" = "sharedTree"> = {
-    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : key]: ProxyField<TFields[key], API>;
+    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? TFields[key]["kind"] extends typeof FieldKinds.optional ? key : never : never]?: ProxyField<TFields[key], API>;
 } & {
-    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? key : never]: ProxyField<TFields[key], API>;
+    -readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? TFields[key]["kind"] extends typeof FieldKinds.optional ? never : key : never]-?: ProxyField<TFields[key], API>;
+} & {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : TFields[key]["kind"] extends typeof FieldKinds.optional ? key : never]?: ProxyField<TFields[key], API>;
+} & {
+    readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds ? never : TFields[key]["kind"] extends typeof FieldKinds.optional ? never : key]-?: ProxyField<TFields[key], API>;
 };
 
 // @alpha
