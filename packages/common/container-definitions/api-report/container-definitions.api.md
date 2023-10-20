@@ -386,7 +386,7 @@ export interface IGetPendingLocalStateProps {
     // (undocumented)
     readonly notifyImminentClosure: boolean;
     // (undocumented)
-    readonly signal?: AbortSignal;
+    readonly stopWaitingAttachingSignal?: AbortSignal;
 }
 
 // @public

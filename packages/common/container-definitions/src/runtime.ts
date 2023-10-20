@@ -257,5 +257,5 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 export interface IGetPendingLocalStateProps {
 	readonly notifyImminentClosure: boolean;
 
-	readonly signal?: AbortSignal;
+	readonly stopWaitingAttachingSignal?: AbortSignal;
 }

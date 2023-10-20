@@ -3892,7 +3892,7 @@ export class ContainerRuntime
 			async (event) => {
 				this.verifyNotClosed();
 				const waitBlobsToAttach = props?.notifyImminentClosure;
-				const stopWaitingAttachingSignal = props?.signal;
+				const stopWaitingAttachingSignal = props?.stopWaitingAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
