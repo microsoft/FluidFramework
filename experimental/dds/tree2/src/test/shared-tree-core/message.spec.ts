@@ -5,7 +5,10 @@
 import { makeCodecFamily } from "../../codec";
 import { mintRevisionTag } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { DecodedMessage, makeMessageCodec } from "../../shared-tree-core";
+// eslint-disable-next-line import/no-internal-modules
+import { makeMessageCodec } from "../../shared-tree-core/messageCodecs";
+// eslint-disable-next-line import/no-internal-modules
+import { DecodedMessage } from "../../shared-tree-core/messageTypes";
 import { useDeterministicStableId } from "../../util";
 import { TestChange } from "../testChange";
 import { EncodingTestData, makeEncodingTestSuite } from "../utils";

@@ -25,5 +25,3 @@ export { makeEditManagerCodec } from "./editManagerCodecs";
 export { EditManagerSummarizer } from "./editManagerSummarizer";
 export { EditManager, minimumPossibleSequenceNumber, SummaryData } from "./editManager";
 export { Commit, SeqNumber, SequencedCommit, SummarySessionBranch } from "./editManagerFormat";
-export { makeMessageCodec } from "./messageCodecs";
-export { DecodedMessage } from "./messageTypes";

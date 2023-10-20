@@ -20,20 +20,20 @@ import { library } from "../testTrees";
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 const schema1 = new SchemaBuilder({
-	scope: "test",
+	scope: "json",
 	libraries: [jsonSchema],
 }).intoSchema(SchemaBuilder.optional(jsonRoot));
 
 const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
 const schema2 = new SchemaBuilder({
-	scope: "test",
+	scope: "testSchemas",
 	libraries: [library],
 }).intoSchema(SchemaBuilder.optional(jsonPrimitives));
 
-const testCases: EncodingTestData<unknown, unknown> = {
+const testCases: EncodingTestData<TreeStoredSchema, Format> = {
 	successes: [
-		["schema 1", schema1],
-		["schema 2", schema2],
+		["json", schema1],
+		["testSchemas", schema2],
 	],
 };
 
@@ -71,14 +71,10 @@ describe("SchemaIndex", () => {
 	});
 
 	describe("codec", () => {
-		makeEncodingTestSuite(
-			makeCodecFamily([[0, codec]]),
-			testCases as EncodingTestData<TreeStoredSchema, Format>,
-			(a, b) => {
-				assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
-				assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
-			},
-		);
+		makeEncodingTestSuite(makeCodecFamily([[0, codec]]), testCases, (a, b) => {
+			assert(allowsRepoSuperset(defaultSchemaPolicy, a, b));
+			assert(allowsRepoSuperset(defaultSchemaPolicy, b, a));
+		});
 	});
 
 	// TODO: testing SchemaIndex class itself, specifically for attachment and normal summaries.
