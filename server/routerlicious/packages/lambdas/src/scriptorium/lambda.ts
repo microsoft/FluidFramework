@@ -50,7 +50,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 		this.telemetryEnabled = this.providerConfig?.enableTelemetry;
-		this.shouldLogInitialSuccessVerbose = this.providerConfig?.shouldLogInitialSuccessVerbose ?? false;
+		this.shouldLogInitialSuccessVerbose =
+			this.providerConfig?.shouldLogInitialSuccessVerbose ?? false;
 		this.maxDbBatchSize = this.providerConfig?.maxDbBatchSize ?? 1000;
 		this.restartOnCheckpointFailure = this.providerConfig?.restartOnCheckpointFailure;
 	}
