@@ -43,7 +43,7 @@ const NamedFieldSchemaFormat = Type.Composite(
 const TreeSchemaFormat = Type.Object(
 	{
 		name: TreeSchemaIdentifierSchema,
-		structFields: Type.Array(NamedFieldSchemaFormat),
+		objectNodeFields: Type.Array(NamedFieldSchemaFormat),
 		mapFields: Type.Optional(FieldSchemaFormat),
 		// TODO: don't use external type here!
 		leafValue: Type.Optional(Type.Enum(ValueSchema)),
@@ -110,7 +110,7 @@ function encodeTree(
 	const out: TreeSchemaFormat = {
 		name,
 		mapFields: schema.mapFields === undefined ? undefined : encodeField(schema.mapFields),
-		structFields: [...schema.structFields]
+		objectNodeFields: [...schema.objectNodeFields]
 			.map(([k, v]) => encodeNamedField(k, v))
 			.sort(compareNamed),
 		leafValue: schema.leafValue,
@@ -158,8 +158,8 @@ function decodeField(schema: FieldSchemaFormat): TreeFieldStoredSchema {
 function decodeTree(schema: TreeSchemaFormat): TreeNodeStoredSchema {
 	const out: TreeNodeStoredSchema = {
 		mapFields: schema.mapFields === undefined ? undefined : decodeField(schema.mapFields),
-		structFields: new Map(
-			schema.structFields.map((field): [FieldKey, TreeFieldStoredSchema] => [
+		objectNodeFields: new Map(
+			schema.objectNodeFields.map((field): [FieldKey, TreeFieldStoredSchema] => [
 				brand(field.name),
 				decodeField(field),
 			]),

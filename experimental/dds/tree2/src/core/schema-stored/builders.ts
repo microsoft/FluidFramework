@@ -47,7 +47,7 @@ export function fieldSchema(
  * See {@link TreeNodeStoredSchema} for details.
  */
 export interface TreeSchemaBuilder {
-	readonly structFields?: { [key: string]: TreeFieldStoredSchema };
+	readonly objectNodeFields?: { [key: string]: TreeFieldStoredSchema };
 	readonly mapFields?: TreeFieldStoredSchema;
 	readonly leafValue?: ValueSchema;
 }
@@ -56,17 +56,17 @@ export interface TreeSchemaBuilder {
  * Helper for building {@link TreeNodeStoredSchema}.
  */
 export function treeSchema(data: TreeSchemaBuilder): TreeNodeStoredSchema {
-	const structFields = new Map();
-	const fields = data.structFields ?? {};
+	const objectNodeFields = new Map();
+	const fields = data.objectNodeFields ?? {};
 	// eslint-disable-next-line no-restricted-syntax
 	for (const key in fields) {
 		if (Object.prototype.hasOwnProperty.call(fields, key)) {
-			structFields.set(brand(key), fields[key]);
+			objectNodeFields.set(brand(key), fields[key]);
 		}
 	}
 
 	return {
-		structFields,
+		objectNodeFields,
 		mapFields: data.mapFields,
 		leafValue: data.leafValue,
 	};

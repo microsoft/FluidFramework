@@ -133,17 +133,17 @@ export class ViewSchema {
 	}
 
 	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
-		const structFields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
-		for (const [key, schema] of original.structFields) {
+		const objectNodeFields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
+		for (const [key, schema] of original.objectNodeFields) {
 			// TODO: support missing field adapters.
-			structFields.set(key, this.adaptField(schema));
+			objectNodeFields.set(key, this.adaptField(schema));
 		}
 		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
 		// so copying the data over manually is better.
 		return {
 			mapFields: original.mapFields,
 			leafValue: original.leafValue,
-			structFields,
+			objectNodeFields,
 		};
 	}
 }

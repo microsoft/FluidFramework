@@ -33,13 +33,13 @@ import { brand } from "../../../util";
 import { ApiMode } from "../../../feature-libraries/schema-aware";
 
 const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
-const nodeSchema = builder.struct("node", {
+const nodeSchema = builder.object("node", {
 	// child: TreeFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
 	// 	[() => nodeSchema,	() => nodeWithKeySchema],
 	// ),
 });
-const nodeWithKeySchema = builder.struct("nodeWithKey", {
+const nodeWithKeySchema = builder.object("nodeWithKey", {
 	...nodeKeyField,
 	// child: TreeFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,

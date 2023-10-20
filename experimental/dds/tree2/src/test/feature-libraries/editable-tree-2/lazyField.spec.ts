@@ -76,7 +76,7 @@ class TestLazyField<TTypes extends AllowedTypes> extends LazyField<
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
-		builder.struct("empty", {});
+		builder.object("empty", {});
 		const schema = builder.intoSchema(SchemaBuilder.optional(Any));
 		const forest = forestWithContent({ schema, initialTree: {} });
 		const context = getReadonlyContext(forest, schema);
@@ -131,7 +131,7 @@ describe("LazyField", () => {
 		// #region Tree and schema initialization
 
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-		const rootSchema = SchemaBuilder.optional(builder.struct("struct", {}));
+		const rootSchema = SchemaBuilder.optional(builder.object("object", {}));
 		const schema = builder.intoSchema(rootSchema);
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
@@ -190,7 +190,7 @@ describe("LazyField", () => {
 
 	it("parent", () => {
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-		const struct = builder.struct("struct", {
+		const struct = builder.object("object", {
 			foo: SchemaBuilder.optional(leafDomain.primitives),
 		});
 		const rootSchema = SchemaBuilder.optional(struct);

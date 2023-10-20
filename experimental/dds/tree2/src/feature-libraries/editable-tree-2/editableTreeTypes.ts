@@ -15,7 +15,7 @@ import {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
@@ -367,7 +367,7 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
 	 * This is a version of {@link FieldNode.boxedContent} but does unboxing.
 	 * Since field node are usually used to wrap fields which don't do unboxing (like {@link Sequence})
 	 */
-	readonly content: UnboxField<TSchema["structFieldsObject"][""]>;
+	readonly content: UnboxField<TSchema["objectNodeFieldsObject"][""]>;
 	/**
 	 * The field this field node wraps.
 	 *
@@ -376,7 +376,7 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
 	 * this is usually the same as {@link FieldNode.content}.
 	 * This is also the same as `[...this][0]`.
 	 */
-	readonly boxedContent: TypedField<TSchema["structFieldsObject"][""]>;
+	readonly boxedContent: TypedField<TSchema["objectNodeFieldsObject"][""]>;
 }
 
 /**
@@ -386,7 +386,7 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
  *
  * @remarks
  * Struct nodes require complex typing, and have been split into two parts for implementation purposes.
- * See {@link StructTyped} for the schema aware extensions to this that provide access to the fields.
+ * See {@link ObjectNodeTyped} for the schema aware extensions to this that provide access to the fields.
  *
  * These "Structs" resemble (and are named after) "Structs" from a wide variety of programming languages
  * (Including Algol 68, C, Go, Rust, C# etc.).
@@ -400,7 +400,7 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
  *
  * @alpha
  */
-export interface Struct extends TreeNode {
+export interface ObjectNode extends TreeNode {
 	/**
 	 * {@link LocalNodeKey} that identifies this node.
 	 */
@@ -432,11 +432,11 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
  *
  * @alpha
  */
-export type StructTyped<TSchema extends StructSchema> = Struct &
-	StructFields<TSchema["structFieldsObject"]>;
+export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNode &
+	ObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
 
 /**
- * Properties to access a struct nodes fields. See {@link StructTyped}.
+ * Properties to access a struct nodes fields. See {@link ObjectNodeTyped}.
  *
  * @privateRemarks TODOs:
  *
@@ -447,7 +447,7 @@ export type StructTyped<TSchema extends StructSchema> = Struct &
  *
  * @alpha
  */
-export type StructFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> = {
+export type ObjectNodeFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> = {
 	// boxed fields (TODO: maybe remove these when same as non-boxed version?)
 	readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
 } & {
@@ -807,8 +807,8 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSche
 	? MapNode<TSchema>
 	: TSchema extends FieldNodeSchema
 	? FieldNode<TSchema>
-	: TSchema extends StructSchema
-	? StructTyped<TSchema>
+	: TSchema extends ObjectNodeSchema
+	? ObjectNodeTyped<TSchema>
 	: TreeNode;
 
 // #endregion
@@ -875,9 +875,9 @@ export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSche
 	: TSchema extends MapSchema
 	? MapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? UnboxField<TSchema["structFieldsObject"][""]>
-	: TSchema extends StructSchema
-	? StructTyped<TSchema>
+	? UnboxField<TSchema["objectNodeFieldsObject"][""]>
+	: TSchema extends ObjectNodeSchema
+	? ObjectNodeTyped<TSchema>
 	: unknown;
 
 // #endregion
