@@ -4,7 +4,12 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
-import { Lumber, LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	LogLevel,
+	Lumber,
+	LumberEventName,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { NetworkError } from "@fluidframework/server-services-client";
 
 /**
@@ -20,6 +25,7 @@ import { NetworkError } from "@fluidframework/server-services-client";
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
+ * @param shouldIgnoreInitialSuccess - whether to log successful telemetry as verbose level if there is no retry, default is false
  */
 export async function runWithRetry<T>(
 	api: () => Promise<T>,
@@ -101,7 +107,11 @@ export async function runWithRetry<T>(
 			metric.setProperty("maxRetries", maxRetries);
 			metric.setProperty("retryAfterMs", retryAfterMs);
 			if (success) {
-				if (!shouldIgnoreInitialSuccess || retryCount > 0) {
+				// If we turn on the flag of shouldIgnoreInitialSuccess and there is no retry,
+				// log as verbose level, otherwise log as info level. By default the flag is off.
+				if (shouldIgnoreInitialSuccess && retryCount === 0) {
+					metric.success("runWithRetry succeeded", LogLevel.Verbose);
+				} else {
 					metric.success("runWithRetry succeeded");
 				}
 			} else {
