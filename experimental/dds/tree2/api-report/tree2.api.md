@@ -419,10 +419,8 @@ declare namespace Delta {
         ProtoNode,
         ProtoNodes,
         Mark,
-        MarkList,
         DetachedNodeId,
         FieldMap,
-        FieldsChanges,
         DetachedNodeChanges,
         DetachedNodeBuild,
         DetachedNodeRename,
@@ -476,7 +474,7 @@ interface DetachedNodeBuild<TTree = ProtoNode> {
 // @alpha
 interface DetachedNodeChanges<TTree = ProtoNode> {
     // (undocumented)
-    readonly fields: FieldsChanges<TTree>;
+    readonly fields: FieldMap<TTree>;
     // (undocumented)
     readonly id: DetachedNodeId;
 }
@@ -608,13 +606,9 @@ export interface FieldAnchor {
 
 // @alpha
 interface FieldChanges<TTree = ProtoNode> {
-    // (undocumented)
-    readonly attached?: MarkList<TTree>;
-    // (undocumented)
+    readonly attached?: readonly Mark<TTree>[];
     readonly build?: readonly DetachedNodeBuild<TTree>[];
-    // (undocumented)
     readonly detached?: readonly DetachedNodeChanges<TTree>[];
-    // (undocumented)
     readonly rename?: readonly DetachedNodeRename[];
 }
 
@@ -660,7 +654,7 @@ export interface FieldLocation {
 }
 
 // @alpha (undocumented)
-type FieldMap<T> = ReadonlyMap<FieldKey, T>;
+type FieldMap<TTree = ProtoNode> = ReadonlyMap<FieldKey, FieldChanges<TTree>>;
 
 // @alpha
 export interface FieldMapObject<TChild> {
@@ -686,9 +680,6 @@ interface Fields {
     // (undocumented)
     readonly [key: string]: FieldSchema;
 }
-
-// @alpha (undocumented)
-type FieldsChanges<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
 
 // @alpha @sealed
 export class FieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes> {
@@ -1343,7 +1334,7 @@ interface Mark<TTree = ProtoNode> {
     readonly attach?: DetachedNodeId;
     readonly count: number;
     readonly detach?: DetachedNodeId;
-    readonly fields?: FieldsChanges<TTree>;
+    readonly fields?: FieldMap<TTree>;
 }
 
 // @alpha
@@ -1353,9 +1344,6 @@ export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLi
     // (undocumented)
     [Symbol.iterator](): IterableIterator<TGet>;
 }
-
-// @alpha
-type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
 
 // @alpha
 export type MatchPolicy = SubtreePolicy | "subtree" | "path";
@@ -1681,7 +1669,7 @@ type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
 };
 
 // @alpha
-type Root<TTree = ProtoNode> = FieldsChanges<TTree>;
+type Root<TTree = ProtoNode> = FieldMap<TTree>;
 
 // @alpha
 export interface RootField {

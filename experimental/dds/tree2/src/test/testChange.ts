@@ -164,7 +164,7 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldsChanges {
+function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldMap {
 	if (change.intentions.length > 0) {
 		const hasMajor: { major?: RevisionTag } = {};
 		if (revision !== undefined) {

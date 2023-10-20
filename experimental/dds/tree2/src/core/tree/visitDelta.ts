@@ -48,8 +48,8 @@ export function visitDelta(
 	visitor: DeltaVisitor,
 	detachedFieldIndex: DetachedFieldIndex,
 ): void {
-	const detachPassRoots: Map<ForestRootId, Delta.FieldsChanges> = new Map();
-	const attachPassRoots: Map<ForestRootId, Delta.FieldsChanges> = new Map();
+	const detachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
+	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const rootTransfers: RootTransfers = new Map();
 	const detachConfig: PassConfig = {
 		func: detachPass,
@@ -87,7 +87,7 @@ type RootTransfers = Map<
 
 function visitRoots(
 	visitor: DeltaVisitor,
-	roots: Map<ForestRootId, Delta.FieldsChanges>,
+	roots: Map<ForestRootId, Delta.FieldMap>,
 	config: PassConfig,
 ) {
 	while (roots.size > 0) {
@@ -204,7 +204,7 @@ interface PassConfig {
 	 * Nested changes on roots that need to be visited as part of the detach pass.
 	 * Each entry is removed when its associated changes are visited.
 	 */
-	readonly detachPassRoots: Map<ForestRootId, Delta.FieldsChanges>;
+	readonly detachPassRoots: Map<ForestRootId, Delta.FieldMap>;
 	/**
 	 * Nested changes on roots that need to be visited as part of the detach pass.
 	 * Each entry is removed when its associated changes are visited.
@@ -214,7 +214,7 @@ interface PassConfig {
 	 * the attach pass. Note that such a visit might lead to more nodes being attached, including nodes were visited as
 	 * roots.
 	 */
-	readonly attachPassRoots: Map<ForestRootId, Delta.FieldsChanges>;
+	readonly attachPassRoots: Map<ForestRootId, Delta.FieldMap>;
 	/**
 	 * Represents transfers of roots from one detached field to another.
 	 */
@@ -223,11 +223,7 @@ interface PassConfig {
 
 type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
 
-function visitFieldMarks(
-	fields: Delta.FieldsChanges,
-	visitor: DeltaVisitor,
-	config: PassConfig,
-): void {
+function visitFieldMarks(fields: Delta.FieldMap, visitor: DeltaVisitor, config: PassConfig): void {
 	for (const [key, field] of fields) {
 		visitor.enterField(key);
 		config.func(field, visitor, config);
@@ -237,7 +233,7 @@ function visitFieldMarks(
 
 function visitNode(
 	index: number,
-	fields: Delta.FieldsChanges | undefined,
+	fields: Delta.FieldMap | undefined,
 	visitor: DeltaVisitor,
 	config: PassConfig,
 ): void {

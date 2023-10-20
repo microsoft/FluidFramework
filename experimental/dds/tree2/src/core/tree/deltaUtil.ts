@@ -5,7 +5,7 @@
 
 import { Mutable } from "../../util";
 import { ITreeCursorSynchronous } from "./cursor";
-import { Root, DetachedNodeId, FieldChanges } from "./delta";
+import { Root, DetachedNodeId, FieldChanges, Mark } from "./delta";
 import { rootFieldKey } from "./types";
 
 export const emptyDelta: Root<never> = new Map();
@@ -43,9 +43,9 @@ export function deltaForSet(
 	buildId: DetachedNodeId,
 	detachId?: DetachedNodeId,
 ): FieldChanges {
-	const mark = { count: 1, attach: buildId, detach: detachId };
-	if (detachId === undefined) {
-		delete mark.detach;
+	const mark: Mutable<Mark> = { count: 1, attach: buildId };
+	if (detachId !== undefined) {
+		mark.detach = detachId;
 	}
 	return {
 		build: [{ id: buildId, trees: [newNode] }],

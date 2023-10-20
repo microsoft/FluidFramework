@@ -21,9 +21,9 @@ export function nodeIdFromChangeAtom(changeAtom: ChangeAtomId): Delta.DetachedNo
  * @param func - The functions used to map tree content.
  */
 export function mapFieldsChanges<TIn, TOut>(
-	fields: Delta.FieldsChanges<TIn>,
+	fields: Delta.FieldMap<TIn>,
 	func: (tree: TIn) => TOut,
-): Delta.FieldsChanges<TOut> {
+): Delta.FieldMap<TOut> {
 	const out: Map<FieldKey, Delta.FieldChanges<TOut>> = new Map();
 	for (const [k, v] of fields) {
 		out.set(k, mapFieldChanges(v, func));
@@ -68,8 +68,8 @@ export function mapFieldChanges<TIn, TOut>(
 }
 
 /**
- * Converts a `Delta.MarkList` whose tree content is represented with by `TIn` instances
- * into a `Delta.MarkList`whose tree content is represented with by `TOut` instances.
+ * Converts a list of `Delta.Mark`s whose tree content is represented with by `TIn` instances
+ * into a list of `Delta.Mark`s whose tree content is represented with by `TOut` instances.
  *
  * This function is useful for converting `Delta`s that represent tree content with cursors
  * into `Delta`s that represent tree content with a deep-comparable representation of the content.
@@ -78,9 +78,9 @@ export function mapFieldChanges<TIn, TOut>(
  * @param func - The functions used to map tree content.
  */
 export function mapMarkList<TIn, TOut>(
-	list: Delta.MarkList<TIn>,
+	list: readonly Delta.Mark<TIn>[],
 	func: (tree: TIn) => TOut,
-): Delta.MarkList<TOut> {
+): Delta.Mark<TOut>[] {
 	return list.map((mark: Delta.Mark<TIn>) => mapMark(mark, func));
 }
 

@@ -468,7 +468,7 @@ export function assertFieldChangesEqual(a: Delta.FieldChanges, b: Delta.FieldCha
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
+export function assertMarkListEqual(a: readonly Delta.Mark[], b: readonly Delta.Mark[]): void {
 	const aTree = mapMarkList(a, mapTreeFromCursor);
 	const bTree = mapMarkList(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
@@ -477,7 +477,7 @@ export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void 
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.FieldsChanges, b: Delta.FieldsChanges): void {
+export function assertDeltaEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
 	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
 	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);

@@ -69,7 +69,7 @@ import { ITreeCursorSynchronous } from "./cursor";
  * Immutable, therefore safe to retain for async processing.
  * @alpha
  */
-export type Root<TTree = ProtoNode> = FieldsChanges<TTree>;
+export type Root<TTree = ProtoNode> = FieldMap<TTree>;
 
 /**
  * The default representation for inserted content.
@@ -109,7 +109,7 @@ export interface Mark<TTree = ProtoNode> {
 	 * Modifications to the pre-existing content.
 	 * Must be undefined when `attach` is set but `detach` is not.
 	 */
-	readonly fields?: FieldsChanges<TTree>;
+	readonly fields?: FieldMap<TTree>;
 
 	/**
 	 * When set, indicates that some pre-existing content is being detached and sent to the given detached field.
@@ -123,14 +123,6 @@ export interface Mark<TTree = ProtoNode> {
 }
 
 /**
- * Represents a list of changes to some range of nodes. The index of each mark within the range of nodes, before
- * applying any of the changes, is not represented explicitly.
- * It corresponds to the sum of `mark.count` values for all previous marks.
- * @alpha
- */
-export type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
-
-/**
  * A globally unique ID for a node in a detached field.
  * @alpha
  */
@@ -142,12 +134,7 @@ export interface DetachedNodeId {
 /**
  * @alpha
  */
-export type FieldMap<T> = ReadonlyMap<FieldKey, T>;
-
-/**
- * @alpha
- */
-export type FieldsChanges<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
+export type FieldMap<TTree = ProtoNode> = ReadonlyMap<FieldKey, FieldChanges<TTree>>;
 
 /**
  * Represents changes made to a detached node
@@ -155,7 +142,7 @@ export type FieldsChanges<TTree = ProtoNode> = FieldMap<FieldChanges<TTree>>;
  */
 export interface DetachedNodeChanges<TTree = ProtoNode> {
 	readonly id: DetachedNodeId;
-	readonly fields: FieldsChanges<TTree>;
+	readonly fields: FieldMap<TTree>;
 }
 
 /**
@@ -182,8 +169,28 @@ export interface DetachedNodeRename {
  * @alpha
  */
 export interface FieldChanges<TTree = ProtoNode> {
-	readonly attached?: MarkList<TTree>;
+	/**
+	 * Represents a list of changes to the nodes in the field.
+	 * The index of each mark within the range of nodes, before
+	 * applying any of the changes, is not represented explicitly.
+	 * It corresponds to the sum of `mark.count` values for all previous marks that cover existing content.
+	 */
+	readonly attached?: readonly Mark<TTree>[];
+	/**
+	 * Changes to apply to detached nodes.
+	 * The ordering has no significance.
+	 */
 	readonly detached?: readonly DetachedNodeChanges<TTree>[];
+	/**
+	 * New detached nodes to be constructed.
+	 * The ordering has no significance.
+	 */
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
+	/**
+	 * Detached whose associated ID needs to be updated.
+	 * The ordering has no significance.
+	 * Note that the renames may need to be performed in a specific order to avoid collisions.
+	 * This ordering problem is left to the consumer of this format.
+	 */
 	readonly rename?: readonly DetachedNodeRename[];
 }

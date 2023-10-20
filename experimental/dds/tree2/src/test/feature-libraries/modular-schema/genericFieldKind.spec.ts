@@ -121,13 +121,13 @@ const childRebaser = (
 const detachId = { minor: 42 };
 const buildId = { minor: 42 };
 
-const childToDelta = (nodeChange: NodeChangeset): Delta.FieldsChanges => {
+const childToDelta = (nodeChange: NodeChangeset): Delta.FieldMap => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
 	return deltaForValueChange(valueChange.new);
 };
 
-function deltaForValueChange(newValue: number): Delta.FieldsChanges {
+function deltaForValueChange(newValue: number): Delta.FieldMap {
 	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
 }
 

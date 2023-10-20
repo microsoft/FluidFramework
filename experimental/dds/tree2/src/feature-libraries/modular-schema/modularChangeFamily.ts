@@ -724,7 +724,7 @@ export class ModularChangeFamily
 			const fieldRevision = fieldChange.revision ?? revision;
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				tagChange(fieldChange.change, fieldRevision),
-				(childChange): Delta.FieldsChanges =>
+				(childChange): Delta.FieldMap =>
 					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
 				idAllocator,
 			);
@@ -738,7 +738,7 @@ export class ModularChangeFamily
 	private deltaFromNodeChange(
 		{ change, revision }: TaggedChange<NodeChangeset>,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.FieldsChanges {
+	): Delta.FieldMap {
 		if (change.fieldChanges !== undefined) {
 			return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 		}

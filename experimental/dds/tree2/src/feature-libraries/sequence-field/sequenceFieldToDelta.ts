@@ -18,7 +18,7 @@ import {
 	markIsTransient,
 } from "./utils";
 
-export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldsChanges;
+export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
 
 export function sequenceFieldToDelta<TNodeChange>(
 	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,

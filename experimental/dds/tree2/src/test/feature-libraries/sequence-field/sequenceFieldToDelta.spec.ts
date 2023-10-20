@@ -66,7 +66,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("child change", () => {
 		const actual = toDelta(Change.modify(0, childChange1), tag);
-		const markList: Delta.MarkList = [{ count: 1, fields: childChange1Delta }];
+		const markList: Delta.Mark[] = [{ count: 1, fields: childChange1Delta }];
 		const expected: Delta.FieldChanges = { attached: markList };
 		assert.deepEqual(actual, expected);
 	});
@@ -107,7 +107,7 @@ describe("SequenceField - toDelta", () => {
 		};
 		const changeset = [Mark.revive(1, { revision: tag, localId: brand(0) }, { changes })];
 		const fieldChanges = new Map([[fooField, {}]]);
-		const deltaFromChild = (child: NodeChangeset): Delta.FieldsChanges => {
+		const deltaFromChild = (child: NodeChangeset): Delta.FieldMap => {
 			assert.deepEqual(child, changes);
 			return fieldChanges;
 		};
@@ -158,7 +158,7 @@ describe("SequenceField - toDelta", () => {
 			attach: { minor: moveId },
 			count: 10,
 		};
-		const markList: Delta.MarkList = [{ count: 42 }, moveOut, { count: 8 }, moveIn];
+		const markList: Delta.Mark[] = [{ count: 42 }, moveOut, { count: 8 }, moveIn];
 		const expected: Delta.FieldChanges = { attached: markList };
 		const actual = toDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -197,7 +197,7 @@ describe("SequenceField - toDelta", () => {
 			attach: { major: tag1, minor: moveId2 },
 			count: 3,
 		};
-		const markList: Delta.MarkList = [moveOut1, moveIn1, moveOut2, moveIn2, moveOut3, moveIn3];
+		const markList: Delta.Mark[] = [moveOut1, moveIn1, moveOut2, moveIn2, moveOut3, moveIn3];
 		const expected: Delta.FieldChanges = { attached: markList };
 		const actual = toDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
@@ -219,7 +219,7 @@ describe("SequenceField - toDelta", () => {
 			count: 1,
 			attach: { minor: 52 },
 		};
-		const markList: Delta.MarkList = [
+		const markList: Delta.Mark[] = [
 			del,
 			{ count: 3 },
 			ins,
@@ -304,7 +304,7 @@ describe("SequenceField - toDelta", () => {
 			detached: [{ id: buildId, fields: nestedMoveDelta }],
 			attached: [{ count: 1, attach: buildId }],
 		};
-		const deltaFromChild = (child: NodeChangeset): Delta.FieldsChanges => {
+		const deltaFromChild = (child: NodeChangeset): Delta.FieldMap => {
 			assert.deepEqual(child, nodeChange);
 			return nestedMoveDelta;
 		};

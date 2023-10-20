@@ -40,10 +40,7 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should modify CrossFieldManager"),
 };
 
-const deltaFromChild1 = ({
-	change,
-	revision,
-}: TaggedChange<NodeChangeset>): Delta.FieldsChanges => {
+const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.FieldMap => {
 	assert.deepEqual(change, nodeChange1);
 	const buildId = makeDetachedNodeId(revision, 1);
 	return new Map([
@@ -63,10 +60,7 @@ const deltaFromChild1 = ({
 	]);
 };
 
-const deltaFromChild2 = ({
-	change,
-	revision,
-}: TaggedChange<NodeChangeset>): Delta.FieldsChanges => {
+const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.FieldMap => {
 	assert.deepEqual(change, nodeChange2);
 	const buildId = makeDetachedNodeId(revision, 1);
 	return new Map([
