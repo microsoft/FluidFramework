@@ -98,21 +98,12 @@
                             </li>
 
                         {{- else }}
-                            <!-- {{ printf "% #v" (len $packagePages) }} -->
-                            <!-- PART 0 -->
-
                             {{- range (where $packagePages "Params.package" .) -}}
-                                <!-- PART 1 -->
                                 {{ $targetPage = . }}
                             {{- end }}
-                            <!-- {{ printf "%#v" $targetPage.Params.package }}
-                            {{ printf "%#v" $package }} -->
+                        
+                            {{ $isCurrentPage := strings.HasPrefix (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
 
-                            {{ $isCurrentPage := eq $package $targetPage.Params.package }}
-                            {{ if $isCurrentPage}}
-                                {{ $isCurrentPage = eq $targetPage.RelPermalink $current.RelPermalink}}
-                                <!-- PART 2 -->
-                            {{ end }}
                             <li {{ if $isCurrentPage }}class="active" {{ end }}>
                                 <a href="{{$targetPage.RelPermalink}}" class="packages"
                                     {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }} "
@@ -122,17 +113,22 @@
                                 {{ if $isCurrentPage }}
                                     {{ $packageKey := index $.Site.Data.packageData $targetPage.Params.package }}
                                     {{ $apiDetails := index $.Site.Data.apiData $packageKey }}
-                                    <!-- {{ printf "%#v" $current.Params.area }} -->
                                     <nav class="leaf-docs-nav">
                                         {{ range $category := slice "Interface" "Class" "Enum" }}
+                                            
                                             {{ if isset $apiDetails $category }}
-                                                {{ $isCurrentCategory := (eq $category $area) }}
-                                                {{ $menuArea := .}}
-                                                <li class="panel type-definitions {{ if $isCurrentCategory }}area expanded{{ else }}collapsed{{ end }}">
+                                                <li class="panel type-definitions">
                                                     <a href="#" class="sub-heading {{ lower $category }}-link">{{ $category }}</a>
                                                     <ul>
                                                         {{ range index $apiDetails $category }}
-                                                            <li class="panel definition-type {{ if isset $.Page.Params.activeSection $category }}expanded{{ else }}collapsed{{ end }}">{{ . }}</li>
+                                                            {{ $constructedLink := print (relURL "/docs/apis/") $packageKey "/" (lower .) "-" (lower $category) }}
+                                                            {{ $isCategoryActive := strings.HasSuffix (trim $current.RelPermalink " ") (trim (print (lower .) "-" (lower $category) "/") " ") }}
+                                                            <li class="{{if $isCategoryActive }}active expanded{{else}}collapsed{{end}}">
+                                                                <a href="{{ $constructedLink }}"
+                                                                    {{ if $isCategoryActive }}aria-label="Current Page: {{ . | humanize | title }} {{ $category }}"{{ end }}>
+                                                                    {{ . | humanize | title }}
+                                                                </a>
+                                                            </li>
                                                         {{ end }}
                                                     </ul>
                                                 </li>
@@ -141,7 +137,7 @@
                                     </nav>
                                 {{ end }}
                             </li>
-                        {{- end }}
+                        {{- end }}                        
                     {{- end }}
                 </ul>
             </li>
