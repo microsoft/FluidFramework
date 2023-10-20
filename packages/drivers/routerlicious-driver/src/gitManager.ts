@@ -9,14 +9,10 @@ import {
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { IGitManager, IHistorian } from "./storageContracts";
-import { IR11sResponse, createR11sResponseFromContent } from "./restWrapper";
+import { IR11sResponse } from "./restWrapper";
 import { IWholeFlatSnapshot } from "./contracts";
 
 export class GitManager implements IGitManager {
-	private readonly blobCache = new Map<string, resources.IBlob>();
-	private readonly commitCache = new Map<string, resources.ICommit>();
-	private readonly treeCache = new Map<string, resources.ITree>();
-
 	constructor(private readonly historian: IHistorian) {}
 
 	/**
@@ -26,26 +22,6 @@ export class GitManager implements IGitManager {
 		sha: string,
 		count: number,
 	): Promise<IR11sResponse<resources.ICommitDetails[]>> {
-		// See if the commit sha is hashed and return it if so
-		const commit = this.commitCache.get(sha);
-		if (commit !== undefined) {
-			return createR11sResponseFromContent([
-				{
-					commit: {
-						author: commit.author,
-						committer: commit.committer,
-						message: commit.message,
-						tree: commit.tree,
-						url: commit.url,
-					},
-					parents: commit.parents,
-					sha: commit.sha,
-					url: commit.url,
-				},
-			]);
-		}
-
-		// Otherwise fall back to the historian
 		return this.historian.getCommits(sha, count);
 	}
 
@@ -53,19 +29,10 @@ export class GitManager implements IGitManager {
 	 * Reads the object with the given ID. We defer to the client implementation to do the actual read.
 	 */
 	public async getTree(root: string, recursive = true): Promise<IR11sResponse<resources.ITree>> {
-		const tree = this.treeCache.get(root);
-		if (tree !== undefined) {
-			return createR11sResponseFromContent(tree);
-		}
-
 		return this.historian.getTree(root, recursive);
 	}
 
 	public async getBlob(sha: string): Promise<IR11sResponse<resources.IBlob>> {
-		const blob = this.blobCache.get(sha);
-		if (blob !== undefined) {
-			return createR11sResponseFromContent(blob);
-		}
 		return this.historian.getBlob(sha);
 	}
 
