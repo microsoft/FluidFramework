@@ -99,7 +99,7 @@ export interface IRuntime extends IDisposable {
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
-	 * @experimental
+	 * @beta
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
@@ -252,7 +252,8 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 }
 
 /**
- * @public
+ * Defines list of properties expected for getPendingLocalState
+ * @beta
  */
 export interface IGetPendingLocalStateProps {
 	readonly notifyImminentClosure: boolean;
