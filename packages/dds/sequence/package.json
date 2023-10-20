@@ -130,7 +130,8 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedString": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
