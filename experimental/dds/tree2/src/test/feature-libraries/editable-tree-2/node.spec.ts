@@ -72,6 +72,7 @@ describe("node API", () => {
 			assert.equal(node.status(o), TreeStatus.Removed);
 		});
 
+		// TODO: Enable a test like this when lists are directly settable
 		// itWithRoot("list", treeSchema, initialTree, (root) => {
 		// 	const l = root.list;
 		// 	assert(l !== undefined);
