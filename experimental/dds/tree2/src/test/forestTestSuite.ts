@@ -347,6 +347,42 @@ export function testForest(config: ForestTestConfiguration): void {
 			);
 		});
 
+		it("can destroy detached fields", () => {
+			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+			const content: JsonCompatible[] = [1, 2];
+			initializeForest(forest, content.map(singleJsonCursor));
+
+			const mark: Delta.Remove = {
+				type: Delta.MarkType.Remove,
+				count: 1,
+				detachId,
+			};
+			const detachedFieldIndex = new DetachedFieldIndex(
+				"test",
+				idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+			);
+			const delta: Delta.Root = new Map([[rootFieldKey, [0, mark]]]);
+			applyTestDelta(delta, forest, detachedFieldIndex);
+
+			const detachedField: DetachedField = brand(
+				detachedFieldIndex.toFieldKey(0 as ForestRootId),
+			);
+			// `1` should be under the detached field
+			const reader = forest.allocateCursor();
+			moveToDetachedField(forest, reader, detachedField);
+			assert(reader.firstNode());
+			assert.equal(reader.value, 1);
+			assert.equal(reader.nextNode(), false);
+			reader.clear();
+
+			forest.acquireVisitor().destroy(detachedFieldAsKey(detachedField), 1);
+
+			// check the detached field no longer exists
+			const detachedCursor = forest.allocateCursor();
+			moveToDetachedField(forest, detachedCursor, detachedField);
+			assert.equal(detachedCursor.getFieldLength(), 0);
+		});
+
 		describe("can clone", () => {
 			it("an empty forest", () => {
 				const schema = new InMemoryStoredSchemaRepository();
@@ -547,41 +583,6 @@ export function testForest(config: ForestTestConfiguration): void {
 				assert(reader.firstNode());
 				assert.equal(reader.value, 2);
 				assert.equal(reader.nextNode(), false);
-			});
-
-			it("delete", () => {
-				const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
-				const content: JsonCompatible[] = [1, 2];
-				initializeForest(forest, content.map(singleJsonCursor));
-
-				const mark: Delta.Remove = {
-					type: Delta.MarkType.Remove,
-					count: 1,
-					detachId,
-				};
-				const detachedFieldIndex = new DetachedFieldIndex(
-					"test",
-					idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-				);
-				const delta: Delta.Root = new Map([[rootFieldKey, [0, mark]]]);
-				applyTestDelta(delta, forest, detachedFieldIndex);
-
-				const detachedField: DetachedField = brand(
-					detachedFieldIndex.toFieldKey(0 as ForestRootId),
-				);
-				// `1` should be under the detached field
-				const reader = forest.allocateCursor();
-				moveToDetachedField(forest, reader, detachedField);
-				assert(reader.firstNode());
-				assert.equal(reader.value, 1);
-				assert.equal(reader.nextNode(), false);
-				reader.clear();
-
-				forest.acquireVisitor().destroy(detachedFieldAsKey(detachedField), 1);
-
-				// check the detached field no longer exists
-				const detachedCursor = forest.allocateCursor();
-				assert.throws(() => moveToDetachedField(forest, detachedCursor, detachedField));
 			});
 
 			it("a skip", () => {
