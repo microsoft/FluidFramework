@@ -5,7 +5,7 @@
 
 export {
 	TreeNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	Any,
 	allowedTypesToTypeSet,
 	AllowedTypes,
@@ -13,12 +13,12 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
-	DocumentSchema,
+	schemaIsObjectNode,
+	TreeSchema,
 	Unenforced,
 	AllowedTypeSet,
 	MapFieldSchema,
@@ -30,7 +30,7 @@ export { ViewSchema } from "./view";
 export {
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	aggregateSchemaLibraries,

@@ -398,7 +398,10 @@ export interface DDSFuzzSuiteOptions {
 	 * when one only cares about the counts or types of errors, and not the
 	 * exact contents of the test cases.
 	 *
-	 * Fuzz test minimization can add a couple seconds of overhead per failing
+	 * Minimization only works when the failure occurs as part of a reducer, and is mostly
+	 * useful if the model being tested defines {@link DDSFuzzModel.minimizationTransforms}.
+	 *
+	 * It can also add a couple seconds of overhead per failing
 	 * test case. See {@link MinimizationTransform} for additional context.
 	 */
 	skipMinimization?: boolean;

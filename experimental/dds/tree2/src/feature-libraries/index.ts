@@ -138,8 +138,8 @@ export {
 export {
 	TreeNodeSchema,
 	AllowedTypes,
-	FieldSchema,
-	DocumentSchema,
+	TreeFieldSchema,
+	TreeSchema,
 	Any,
 	SchemaLibraryData,
 	LazyTreeNodeSchema,
@@ -149,14 +149,14 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	Unenforced,
 	AllowedTypeSet,
 	markEager,
@@ -217,6 +217,7 @@ export {
 } from "./default-field-kinds";
 
 export {
+	TreeEvent,
 	UntypedField,
 	UntypedTree,
 	UntypedTreeContext,
@@ -245,8 +246,8 @@ export {
 	RequiredField,
 	Sequence,
 	Skip,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -272,6 +273,9 @@ export {
 	node,
 	SharedTreeNode,
 	Typed,
+	SharedTreeObjectFactory,
+	FactoryTreeSchema,
+	addFactory,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
