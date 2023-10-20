@@ -70,9 +70,9 @@
 	},
 	"devDependencies": {
 		"@fluid-internal/test-dds-utils": "workspace:~",
-		"@fluid-tools/build-cli": "0.26.0-203018",
+		"@fluid-tools/build-cli": "0.26.0-203096",
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-203018",
+		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/cell-previous": "npm:@fluidframework/cell@2.0.0-internal.7.1.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",

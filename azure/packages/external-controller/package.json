@@ -54,7 +54,7 @@
 	"devDependencies": {
 		"@fluid-experimental/devtools": "workspace:~",
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-203018",
+		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",

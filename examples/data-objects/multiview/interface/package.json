@@ -31,9 +31,9 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.26.0-203018",
+		"@fluid-tools/build-cli": "0.26.0-203096",
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-203018",
+		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@types/expect-puppeteer": "2.2.1",
 		"@types/node": "^16.18.38",

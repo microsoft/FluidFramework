@@ -48,9 +48,9 @@
 		"vue": "~2.6.14"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.26.0-203018",
+		"@fluid-tools/build-cli": "0.26.0-203096",
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-203018",
+		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/expect-puppeteer": "2.2.1",

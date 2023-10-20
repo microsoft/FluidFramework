@@ -60,7 +60,7 @@
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-203018",
+		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@types/events": "^3.0.0",
 		"@types/react": "^17.0.44",
