@@ -1221,7 +1221,7 @@ describeNoCompat("SharedDirectory", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it.only("Rebasing batch doesn't hit 0x331", async () => {
+	it("Rebasing batch doesn't hit 0x331", async () => {
 		// Grouped batching is needed for rebasing to happen
 		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
 		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
