@@ -296,7 +296,7 @@ describe("domains - SchemaBuilder", () => {
 
 /**
  * These build objects are intentionally not holding the data their types make them appear to have as part of a workaround for https://github.com/microsoft/TypeScript/issues/43826.
- * This makes testing that these factory function dod the correct thing a bit non-obvious:
+ * This makes testing that these factory function do the correct thing a bit non-obvious:
  */
 export function checkCreated<TSchema extends ObjectNodeSchema>(
 	created: SharedTreeObject<TSchema>,

@@ -372,7 +372,7 @@ export class SchemaBuilder<
 	public readonly null = leaf.null;
 
 	/**
-	 * Function which can be used for its compile time sid-effects to tweak the evaluation order of recursive types to make them compile.
+	 * Function which can be used for its compile time side-effects to tweak the evaluation order of recursive types to make them compile.
 	 * @remarks
 	 * Some related information in https://github.com/microsoft/TypeScript/issues/55758.
 	 *
