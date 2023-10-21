@@ -22,7 +22,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	extractLogSafeErrorProperties,
@@ -570,6 +570,15 @@ export class DocumentDeltaConnection
 						return;
 					}
 				}
+
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "connect_document_success",
+						pendingClientId: response.clientId,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 
 				this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
