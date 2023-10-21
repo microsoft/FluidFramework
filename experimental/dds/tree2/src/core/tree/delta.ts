@@ -101,6 +101,8 @@ export type ProtoNodes = readonly ProtoNode[];
 export interface Mark<TTree = ProtoNode> {
 	/**
 	 * The number of nodes affected.
+	 * When `isAttachMark(mark)` is true, this is the number of new nodes being attached.
+	 * When `isAttachMark(mark)` is false, this the number of existing nodes affected.
 	 * Must be 1 when `fields` is populated.
 	 */
 	readonly count: number;
@@ -173,7 +175,7 @@ export interface FieldChanges<TTree = ProtoNode> {
 	 * Represents a list of changes to the nodes in the field.
 	 * The index of each mark within the range of nodes, before
 	 * applying any of the changes, is not represented explicitly.
-	 * It corresponds to the sum of `mark.count` values for all previous marks that cover existing content.
+	 * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
 	 */
 	readonly local?: readonly Mark<TTree>[];
 	/**

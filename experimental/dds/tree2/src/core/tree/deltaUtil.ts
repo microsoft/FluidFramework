@@ -13,6 +13,18 @@ export const emptyDelta: Root<never> = new Map();
 
 export const emptyFieldChanges: FieldChanges<never> = {};
 
+export function isAttachMark(mark: Mark): boolean {
+	return mark.attach !== undefined && mark.detach === undefined;
+}
+
+export function isDetachMark(mark: Mark): boolean {
+	return mark.detach !== undefined && mark.attach === undefined;
+}
+
+export function isReplaceMark(mark: Mark): boolean {
+	return mark.detach !== undefined && mark.attach !== undefined;
+}
+
 export function isEmptyFieldChanges(fieldChanges: FieldChanges): boolean {
 	return (
 		fieldChanges.local === undefined &&

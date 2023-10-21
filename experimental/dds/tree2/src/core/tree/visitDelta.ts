@@ -8,7 +8,7 @@ import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { NodeIndex, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
-import { areDetachedNodeIdsEqual } from "./deltaUtil";
+import { areDetachedNodeIdsEqual, isAttachMark, isDetachMark, isReplaceMark } from "./deltaUtil";
 
 /**
  * Implementation notes:
@@ -365,25 +365,19 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				);
 				visitNode(index, mark.fields, visitor, config);
 			}
-			if (mark.detach !== undefined) {
-				if (mark.attach === undefined) {
-					// This a simple detach
-					for (let i = 0; i < mark.count; i += 1) {
-						const root = config.detachedFieldIndex.getOrCreateEntry(
-							offsetDetachId(mark.detach, i),
-						);
-						if (mark.fields !== undefined) {
-							config.attachPassRoots.set(root, mark.fields);
-						}
-						const field = config.detachedFieldIndex.toFieldKey(root);
-						visitor.detach({ start: index, end: index + 1 }, field);
+			if (isDetachMark(mark)) {
+				for (let i = 0; i < mark.count; i += 1) {
+					const root = config.detachedFieldIndex.getOrCreateEntry(
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						offsetDetachId(mark.detach!, i),
+					);
+					if (mark.fields !== undefined) {
+						config.attachPassRoots.set(root, mark.fields);
 					}
-				} else {
-					// This really is a replace.
-					// Delay the detach until we can do it during the attach pass.
-					index += mark.count;
+					const field = config.detachedFieldIndex.toFieldKey(root);
+					visitor.detach({ start: index, end: index + 1 }, field);
 				}
-			} else if (mark.attach === undefined) {
+			} else if (!isAttachMark(mark)) {
 				index += mark.count;
 			}
 		}
@@ -400,44 +394,43 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 	if (delta.local !== undefined) {
 		let index = 0;
 		for (const mark of delta.local) {
-			if (mark.detach === undefined || mark.attach !== undefined) {
-				if (mark.attach !== undefined) {
-					for (let i = 0; i < mark.count; i += 1) {
-						const offsetAttachId = offsetDetachId(mark.attach, i);
-						const sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
-						const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
-						if (mark.detach !== undefined) {
-							// This is a true replace.
-							const rootDestination = config.detachedFieldIndex.getOrCreateEntry(
-								offsetDetachId(mark.detach, i),
-							);
-							const destinationField =
-								config.detachedFieldIndex.toFieldKey(rootDestination);
-							visitor.replace(
-								sourceField,
-								{ start: index, end: index + 1 },
-								destinationField,
-							);
-							// We may need to do a second pass on the detached nodes
-							if (mark.fields !== undefined) {
-								config.attachPassRoots.set(rootDestination, mark.fields);
-							}
-						} else {
-							// This a simple attach
-							visitor.attach(sourceField, 1, index + i);
+			if (isAttachMark(mark) || isReplaceMark(mark)) {
+				for (let i = 0; i < mark.count; i += 1) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const offsetAttachId = offsetDetachId(mark.attach!, i);
+					const sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
+					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
+					if (isReplaceMark(mark)) {
+						const rootDestination = config.detachedFieldIndex.getOrCreateEntry(
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							offsetDetachId(mark.detach!, i),
+						);
+						const destinationField =
+							config.detachedFieldIndex.toFieldKey(rootDestination);
+						visitor.replace(
+							sourceField,
+							{ start: index, end: index + 1 },
+							destinationField,
+						);
+						// We may need to do a second pass on the detached nodes
+						if (mark.fields !== undefined) {
+							config.attachPassRoots.set(rootDestination, mark.fields);
 						}
-						config.detachedFieldIndex.deleteEntry(offsetAttachId);
-						const fields = config.attachPassRoots.get(sourceRoot);
-						if (fields !== undefined) {
-							config.attachPassRoots.delete(sourceRoot);
-							visitNode(index, fields, visitor, config);
-						}
+					} else {
+						// This a simple attach
+						visitor.attach(sourceField, 1, index + i);
 					}
-				} else {
-					if (mark.fields !== undefined) {
-						visitNode(index, mark.fields, visitor, config);
+					config.detachedFieldIndex.deleteEntry(offsetAttachId);
+					const fields = config.attachPassRoots.get(sourceRoot);
+					if (fields !== undefined) {
+						config.attachPassRoots.delete(sourceRoot);
+						visitNode(index, fields, visitor, config);
 					}
 				}
+			} else if (!isDetachMark(mark) && mark.fields !== undefined) {
+				visitNode(index, mark.fields, visitor, config);
+			}
+			if (!isDetachMark(mark)) {
 				index += mark.count;
 			}
 		}
