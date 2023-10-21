@@ -50,6 +50,11 @@ interface CheckPolicyCommandContext {
 }
 
 /**
+ * Stores performance data for each handler. Used to collect and display performance stats.
+ */
+const handlerPerformanceData = new Map<policyAction, Map<string, number>>();
+
+/**
  * This tool enforces policies across the code base via a series of handler functions. The handler functions are
  * associated with a regular expression, and all files matching that expression.
  *
@@ -105,7 +110,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		...BaseCommand.flags,
 	} as const;
 
-	static handlerActionPerf = new Map<policyAction, Map<string, number>>();
 	private processed = 0;
 	private count = 0;
 
@@ -274,7 +278,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				this.count
 			} total`,
 		);
-		for (const [action, handlerPerf] of CheckPolicy.handlerActionPerf.entries()) {
+		for (const [action, handlerPerf] of handlerPerformanceData.entries()) {
 			this.log(`Performance for "${action}":`);
 			for (const [handler, dur] of handlerPerf.entries()) {
 				this.log(`\t${handler}: ${dur}ms`);
@@ -308,7 +312,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 }
 
 function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
-	const actionMap = CheckPolicy.handlerActionPerf.get(action) ?? new Map<string, number>();
+	const actionMap = handlerPerformanceData.get(action) ?? new Map<string, number>();
 	let dur = actionMap.get(name) ?? 0;
 
 	const start = Date.now();
@@ -316,7 +320,7 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	dur += Date.now() - start;
 
 	actionMap.set(name, dur);
-	CheckPolicy.handlerActionPerf.set(action, actionMap);
+	handlerPerformanceData.set(action, actionMap);
 	return result;
 }
 
