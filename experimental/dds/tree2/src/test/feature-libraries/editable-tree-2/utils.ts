@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import {
 	DefaultEditBuilder,
-	FieldSchema,
+	TreeFieldSchema,
 	ImplicitFieldSchema,
 	ProxyField,
 	ProxyRoot,
@@ -50,7 +50,7 @@ export function createTree(): ISharedTree {
 	return tree;
 }
 
-export function createTreeView<TRoot extends FieldSchema>(
+export function createTreeView<TRoot extends TreeFieldSchema>(
 	schema: TreeSchema<TRoot>,
 	initialTree: any,
 ): ISharedTreeView {
@@ -72,7 +72,7 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 	return builder.intoSchema(root);
 }
 
-export function itWithRoot<TRoot extends FieldSchema>(
+export function itWithRoot<TRoot extends TreeFieldSchema>(
 	title: string,
 	schema: TreeSchema<TRoot>,
 	initialTree: ProxyRoot<TreeSchema<TRoot>, "javaScript">,

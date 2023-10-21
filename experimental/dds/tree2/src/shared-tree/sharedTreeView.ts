@@ -34,7 +34,7 @@ import {
 	DefaultEditBuilder,
 	NewFieldContent,
 	NodeKeyManager,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeSchema,
 	getTreeContext,
 	TypedField,
@@ -190,7 +190,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	/**
 	 * @deprecated {@link ISharedTree.schematizeView} which will replace this. View schema should be applied before creating an ISharedTreeView.
 	 */
-	schematize<TRoot extends FieldSchema>(
+	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
 
@@ -207,9 +207,9 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
 	 * using the returned tree is invalid and is likely to error or corrupt the document.
 	 */
-	editableTree2<TRoot extends FieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
+	editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
 
-	root2<TRoot extends FieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
+	root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
 }
 
 /**
@@ -381,14 +381,14 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		return this.branch.editor;
 	}
 
-	public schematize<TRoot extends FieldSchema>(
+	public schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView {
 		schematizeView(this, config, this.storedSchema);
 		return this;
 	}
 
-	public editableTree2<TRoot extends FieldSchema>(
+	public editableTree2<TRoot extends TreeFieldSchema>(
 		viewSchema: TreeSchema<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
@@ -403,7 +403,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		return context.root as TypedField<TRoot>;
 	}
 
-	public root2<TRoot extends FieldSchema>(viewSchema: TreeSchema<TRoot>) {
+	public root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>) {
 		const rootField = this.editableTree2(viewSchema);
 		return getProxyForField(rootField);
 	}
@@ -479,7 +479,7 @@ export class SharedTreeView implements ISharedTreeBranchView {
  * @param storedSchema - provided separate from view since editing schema of view doesn't send ops properly.
  */
 // TODO: once schematize is removed from ISharedTreeView, this should be moved/integrated into SharedTree.
-export function schematizeView<TRoot extends FieldSchema>(
+export function schematizeView<TRoot extends TreeFieldSchema>(
 	view: ISharedTreeView,
 	config: InitializeAndSchematizeConfiguration<TRoot>,
 	storedSchema: StoredSchemaRepository,

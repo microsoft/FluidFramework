@@ -10,7 +10,7 @@ import {
 	genericTreeKeys,
 	getGenericTreeField,
 	JsonableTree,
-	SchemaData,
+	TreeStoredSchema,
 } from "../../../core";
 import { fail, brand } from "../../../util";
 import {
@@ -38,7 +38,7 @@ import {
  * fields to be unwrapped according to {@link UnwrappedEditableField} documentation.
  */
 export function expectTreeEquals(
-	schemaData: SchemaData,
+	schemaData: TreeStoredSchema,
 	inputField: UnwrappedEditableField,
 	expected: JsonableTree,
 ): void {
@@ -94,7 +94,7 @@ export function expectTreeEquals(
  * where every element might be unwrapped on not.
  */
 export function expectTreeSequence(
-	schemaData: SchemaData,
+	schemaData: TreeStoredSchema,
 	field: UnwrappedEditableField,
 	expected: JsonableTree[],
 ): void {
@@ -113,7 +113,7 @@ export function expectTreeSequence(
  * are handled in the same way.
  */
 export function expectFieldEquals(
-	schemaData: SchemaData,
+	schemaData: TreeStoredSchema,
 	field: EditableField,
 	expected: JsonableTree[],
 ): void {
@@ -149,7 +149,7 @@ export function expectFieldEquals(
  * and expecting them to be "non-unwrapped" EditableTrees.
  */
 export function expectNodeEquals(
-	schemaData: SchemaData,
+	schemaData: TreeStoredSchema,
 	node: EditableTree,
 	expected: JsonableTree,
 ): void {

@@ -37,7 +37,7 @@ import {
 	MapSchema,
 	StructSchema,
 	TreeNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
@@ -90,7 +90,7 @@ describe("editableTreeTypes", () => {
 		/**
 		 * Test Recursive Field.
 		 */
-		foo: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 		/**
 		 * Data field.
 		 */

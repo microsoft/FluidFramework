@@ -40,7 +40,7 @@ import {
 	defaultSchemaPolicy,
 	isNeverField,
 	cursorForTypedTreeData,
-	FieldSchema,
+	TreeFieldSchema,
 } from "../feature-libraries";
 import {
 	MockDependent,
@@ -103,7 +103,7 @@ export function testForest(config: ForestTestConfiguration): void {
 					const schema = new InMemoryStoredSchemaRepository();
 					const forest = factory(schema);
 
-					const rootFieldSchema = FieldSchema.create(FieldKinds.optional, jsonRoot);
+					const rootFieldSchema = TreeFieldSchema.create(FieldKinds.optional, jsonRoot);
 					schema.update({
 						...jsonSchema,
 						rootFieldSchema,
