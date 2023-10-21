@@ -135,9 +135,10 @@ stages:
           fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
+  # Capture telemetry about pipeline stages
   - stage: upload_run_telemetry
     displayName: Upload pipeline run telemetry to Kusto
-    condition: always()
+    condition: succeededOrFailed()
     dependsOn:
       - stress_tests_odsp
       - stress_tests_odspdf
@@ -150,6 +151,7 @@ stages:
       pool: Small
       variables:
       - group: ado-feeds
+
       steps:
       - template: templates/include-telemetry-setup.yml
         parameters:

@@ -825,16 +825,16 @@ stages:
               echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
               rm -rf ${{ variables.memoryUsageTestOutputFolder }};
 
+  # Capture telemetry about pipeline stages
   - stage: upload_run_telemetry
     displayName: Upload pipeline run telemetry to Kusto
-    condition: always()
+    condition: succeededOrFailed()
     dependsOn:
       - perf_unit_tests_runtime
       - perf_unit_tests_memory
       - perf_e2e_tests_local
       - perf_e2e_tests_odsp
       - perf_e2e_tests_frs
-
     jobs:
     - job: upload_run_telemetry
       displayName: Upload pipeline run telemetry to Kusto
