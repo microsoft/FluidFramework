@@ -600,10 +600,15 @@ type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? 
 type ExtractListItemType<List extends FlexList> = List extends FlexList<infer Item> ? Item : unknown;
 
 // @alpha
-export type FactoryObjectNodeSchema<TScope extends string, Name extends number | string, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, {
+type FactoryObjectNodeSchema<TScope extends string, Name extends number | string, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, {
     objectNodeFields: {
         [key in keyof T]: NormalizeField_2<T[key], Required_2>;
     };
+}>>;
+
+// @alpha
+type FactoryObjectNodeSchemaRecursive<TScope extends string, Name extends number | string, T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, {
+    objectNodeFields: T;
 }>>;
 
 // @alpha
@@ -944,7 +949,10 @@ declare namespace InternalTypes {
         Optional,
         NodeKeyFieldKind,
         Forbidden,
-        Sequence_2 as SequenceFieldKind
+        Sequence_2 as SequenceFieldKind,
+        FactoryObjectNodeSchema,
+        FactoryObjectNodeSchemaRecursive,
+        testRecursiveDomain
     }
 }
 export { InternalTypes }
@@ -1636,13 +1644,11 @@ export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPat
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha (undocumented)
-const recursiveObject: TreeNodeSchema<"Test Recursive Domain.object", {
-objectNodeFields: {
-readonly recursive: TreeFieldSchema<Optional, readonly [() => TreeNodeSchema<"Test Recursive Domain.object", any>]>;
+const recursiveObject: FactoryObjectNodeSchemaRecursive<"Test Recursive Domain", "object", {
+readonly recursive: TreeFieldSchema<Optional, readonly [() => FactoryObjectNodeSchemaRecursive<"Test Recursive Domain", "object", any>]>;
 readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
 leafValue: import("..").ValueSchema.Number;
 }>;
-};
 }>;
 
 // @alpha (undocumented)
@@ -1744,6 +1750,7 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", {
         leafValue: import("..").ValueSchema.Boolean;
     }>;
+    fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
     // (undocumented)
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", {
         leafValue: import("..").ValueSchema.FluidHandle;
@@ -1774,6 +1781,8 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     }>;
     // (undocumented)
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): FactoryObjectNodeSchema<TScope, Name, T>;
+    // (undocumented)
+    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): FactoryObjectNodeSchemaRecursive<TScope, Name, T>;
     static optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Optional, NormalizeAllowedTypes<T>>;
     readonly optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Optional, NormalizeAllowedTypes<T>>;
     static required: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Required_2, NormalizeAllowedTypes<T>>;
@@ -1818,7 +1827,7 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
             [key in keyof T]: NormalizeField_2<T[key], TDefaultKind>;
         };
     }>;
-    objectRecursive<Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, {
+    objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, {
         objectNodeFields: T;
     }>;
     readonly scope: TScope;
@@ -2022,7 +2031,6 @@ declare namespace testRecursiveDomain {
         library
     }
 }
-export { testRecursiveDomain }
 
 // @alpha
 export function toDownPath(upPath: UpPath): DownPath;
