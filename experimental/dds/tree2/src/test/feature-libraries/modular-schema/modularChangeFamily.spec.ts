@@ -69,7 +69,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
 	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
-		attached: [{ count: 1, fields: deltaFromChild(change) }],
+		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
@@ -591,7 +591,7 @@ describe("ModularChangeFamily", () => {
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
 			const nodeDelta: Delta.FieldChanges = {
-				attached: [
+				local: [
 					{
 						count: 1,
 						fields: new Map([

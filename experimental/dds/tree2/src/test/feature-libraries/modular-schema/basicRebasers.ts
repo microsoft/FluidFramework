@@ -88,7 +88,7 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 			const changeId = makeDetachedNodeId(revision, 424242);
 			const buildId = makeDetachedNodeId(revision, 424243);
 			delta.build = [{ id: buildId, trees: [singleJsonCursor(change.new)] }];
-			delta.attached = [{ count: 1, attach: buildId, detach: changeId }];
+			delta.local = [{ count: 1, attach: buildId, detach: changeId }];
 		}
 		return delta;
 	},

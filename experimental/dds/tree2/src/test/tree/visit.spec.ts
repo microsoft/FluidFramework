@@ -115,7 +115,7 @@ describe("visit", () => {
 	it("insert child", () => {
 		const index = makeDetachedFieldIndex("");
 		const delta: Delta.FieldChanges = {
-			attached: [
+			local: [
 				{
 					count: 1,
 					fields: new Map([[fooKey, deltaForSet(content, { minor: 42 })]]),
@@ -147,7 +147,7 @@ describe("visit", () => {
 			count: 2,
 			detach: { minor: 42 },
 		};
-		const delta = { attached: [{ count: 1 }, mark] };
+		const delta = { local: [{ count: 1 }, mark] };
 		testTreeVisit(
 			delta,
 			[
@@ -173,9 +173,9 @@ describe("visit", () => {
 		};
 		const mark: Delta.Mark = {
 			count: 1,
-			fields: new Map([[fooKey, { attached: [{ count: 42 }, remove] }]]),
+			fields: new Map([[fooKey, { local: [{ count: 42 }, remove] }]]),
 		};
-		const delta = { attached: [mark] };
+		const delta = { local: [mark] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -207,13 +207,13 @@ describe("visit", () => {
 		};
 		const delta: Delta.FieldChanges = {
 			build: [{ id: { minor: 43 }, trees: [content] }],
-			detached: [
+			global: [
 				{
 					id: { minor: 43 },
-					fields: new Map([[fooKey, { attached: [{ count: 42 }, moveOut, moveIn] }]]),
+					fields: new Map([[fooKey, { local: [{ count: 42 }, moveOut, moveIn] }]]),
 				},
 			],
-			attached: [{ count: 1, attach: { minor: 43 } }],
+			local: [{ count: 1, attach: { minor: 43 } }],
 		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
@@ -250,7 +250,7 @@ describe("visit", () => {
 			count: 1,
 			attach: moveId,
 		};
-		const delta = { attached: [{ count: 1 }, moveOut, { count: 1 }, moveIn] };
+		const delta = { local: [{ count: 1 }, moveOut, { count: 1 }, moveIn] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["detach", { start: 1, end: 2 }, field0],
@@ -275,11 +275,9 @@ describe("visit", () => {
 		};
 		const modify: Delta.Mark = {
 			count: 1,
-			fields: new Map([
-				[fooKey, { attached: [{ count: 2 }, moveIn, { count: 3 }, moveOut] }],
-			]),
+			fields: new Map([[fooKey, { local: [{ count: 2 }, moveIn, { count: 3 }, moveOut] }]]),
 		};
-		const delta = { attached: [modify] };
+		const delta = { local: [modify] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -315,11 +313,11 @@ describe("visit", () => {
 		const modify: Delta.Mark = {
 			count: 1,
 			fields: new Map([
-				[fooKey, { attached: [moveIn] }],
-				[barKey, { attached: [moveOut] }],
+				[fooKey, { local: [moveIn] }],
+				[barKey, { local: [moveOut] }],
 			]),
 		};
-		const delta = { attached: [modify] };
+		const delta = { local: [modify] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -357,9 +355,9 @@ describe("visit", () => {
 		const remove: Delta.Mark = {
 			detach: { minor: 42 },
 			count: 1,
-			fields: new Map([[fooKey, { attached: [moveOut, moveIn] }]]),
+			fields: new Map([[fooKey, { local: [moveOut, moveIn] }]]),
 		};
-		const delta = { attached: [remove] };
+		const delta = { local: [remove] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -401,9 +399,9 @@ describe("visit", () => {
 		const moveOut1: Delta.Mark = {
 			count: 1,
 			detach: moveId1,
-			fields: new Map([[fooKey, { attached: [moveOut2, moveIn2] }]]),
+			fields: new Map([[fooKey, { local: [moveOut2, moveIn2] }]]),
 		};
-		const delta = { attached: [moveOut1, moveIn1] };
+		const delta = { local: [moveOut1, moveIn1] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -445,9 +443,9 @@ describe("visit", () => {
 			count: 1,
 			detach: { minor: 42 },
 			attach: moveId1,
-			fields: new Map([[fooKey, { attached: [moveOut2, moveIn2] }]]),
+			fields: new Map([[fooKey, { local: [moveOut2, moveIn2] }]]),
 		};
-		const delta = { attached: [replace, moveOut1] };
+		const delta = { local: [replace, moveOut1] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],
@@ -486,14 +484,14 @@ describe("visit", () => {
 		const moveOut1: Delta.Mark = {
 			count: 1,
 			detach: moveId1,
-			fields: new Map([[fooKey, { attached: [moveOut2, moveIn2] }]]),
+			fields: new Map([[fooKey, { local: [moveOut2, moveIn2] }]]),
 		};
 		const replace: Delta.Mark = {
 			count: 1,
 			detach: { minor: 42 },
 			attach: moveId1,
 		};
-		const delta = { attached: [replace, moveOut1] };
+		const delta = { local: [replace, moveOut1] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 1],
@@ -549,9 +547,7 @@ describe("visit", () => {
 		const detachId = { minor: 43 };
 		const delta: Delta.FieldChanges = {
 			build: [{ id: buildId, trees: [content] }],
-			detached: [
-				{ id: buildId, fields: new Map([[barKey, { attached: [moveOut, moveIn] }]]) },
-			],
+			global: [{ id: buildId, fields: new Map([[barKey, { local: [moveOut, moveIn] }]]) }],
 			rename: [{ oldId: buildId, count: 1, newId: detachId }],
 		};
 		const expected: VisitScript = [
@@ -589,7 +585,7 @@ describe("visit", () => {
 			count: 1,
 			attach: node1,
 		};
-		const delta = { attached: [restore] };
+		const delta = { local: [restore] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -616,7 +612,7 @@ describe("visit", () => {
 		};
 		const delta = {
 			rename: [rename],
-			attached: [moveIn],
+			local: [moveIn],
 		};
 		const expected: VisitScript = [
 			["enterField", rootKey],
@@ -646,9 +642,9 @@ describe("visit", () => {
 		};
 		const modify: Delta.DetachedNodeChanges = {
 			id: { minor: 1 },
-			fields: new Map([[fooKey, { attached: [moveOut, moveIn] }]]),
+			fields: new Map([[fooKey, { local: [moveOut, moveIn] }]]),
 		};
-		const delta = { detached: [modify] };
+		const delta = { global: [modify] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["exitField", rootKey],
@@ -684,7 +680,7 @@ describe("visit", () => {
 				[
 					fooKey,
 					{
-						attached: [
+						local: [
 							{ count: 1, detach: moveId2 },
 							{ count: 1, attach: moveId2 },
 						],
@@ -697,7 +693,7 @@ describe("visit", () => {
 			oldId: moveId1,
 			newId: detachId,
 		};
-		const delta = { attached: [moveOut], rename: [moveIn] };
+		const delta = { local: [moveOut], rename: [moveIn] };
 		const expected: VisitScript = [
 			["enterField", rootKey],
 			["enterNode", 0],

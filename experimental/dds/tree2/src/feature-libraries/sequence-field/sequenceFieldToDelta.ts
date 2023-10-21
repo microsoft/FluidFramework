@@ -24,8 +24,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 	{ change, revision }: TaggedChange<MarkList<TNodeChange>>,
 	deltaFromChild: ToDelta<TNodeChange>,
 ): Delta.FieldChanges {
-	const attached: Delta.Mark[] = [];
-	const detached: Delta.DetachedNodeChanges[] = [];
+	const local: Delta.Mark[] = [];
+	const global: Delta.DetachedNodeChanges[] = [];
 	const build: Delta.DetachedNodeBuild[] = [];
 	const rename: Delta.DetachedNodeRename[] = [];
 
@@ -41,7 +41,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 			// Since each cell is associated with exactly one node,
 			// the cell starting end ending populated means the cell content has not changed.
-			attached.push(deltaMark);
+			local.push(deltaMark);
 		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
@@ -63,7 +63,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					});
 				}
 				if (deltaMark.fields) {
-					detached.push({
+					global.push({
 						id: oldId,
 						fields: deltaMark.fields,
 					});
@@ -74,7 +74,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			switch (type) {
 				case "MoveIn": {
-					attached.push({
+					local.push({
 						attach: makeDetachedNodeId(mark.revision ?? revision, mark.id),
 						count: mark.count,
 					});
@@ -83,7 +83,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				case "Delete": {
 					if (mark.cellId === undefined) {
 						deltaMark.detach = makeDetachedNodeId(mark.revision ?? revision, mark.id);
-						attached.push(deltaMark);
+						local.push(deltaMark);
 					} else {
 						// Removal of already removed content is a no-op.
 						// It does not relocate the content to the detached field that would otherwise be created.
@@ -96,7 +96,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
 					if (mark.cellId === undefined) {
 						deltaMark.detach = detachId;
-						attached.push(deltaMark);
+						local.push(deltaMark);
 					} else {
 						// TODO: relocate content to `detachId` field
 					}
@@ -109,7 +109,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					deltaMark.attach = buildId;
 					if (deltaMark.fields) {
 						// Nested changes are represented on the node in its starting location
-						detached.push({ id: buildId, fields: deltaMark.fields });
+						global.push({ id: buildId, fields: deltaMark.fields });
 						delete deltaMark.fields;
 					}
 					if (isNewAttach(mark)) {
@@ -119,7 +119,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 							trees: mark.content.map(singleTextCursor),
 						});
 					}
-					attached.push(deltaMark);
+					local.push(deltaMark);
 					break;
 				}
 				case NoopMarkType:
@@ -132,8 +132,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 		}
 	}
 	// Remove trailing no-op marks
-	while (attached.length > 0) {
-		const lastMark = attached[attached.length - 1];
+	while (local.length > 0) {
+		const lastMark = local[local.length - 1];
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||
@@ -141,14 +141,14 @@ export function sequenceFieldToDelta<TNodeChange>(
 		) {
 			break;
 		}
-		attached.pop();
+		local.pop();
 	}
 	const delta: Mutable<Delta.FieldChanges> = {};
-	if (attached.length > 0) {
-		delta.attached = attached;
+	if (local.length > 0) {
+		delta.local = local;
 	}
-	if (detached.length > 0) {
-		delta.detached = detached;
+	if (global.length > 0) {
+		delta.global = global;
 	}
 	if (build.length > 0) {
 		delta.build = build;

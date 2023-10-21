@@ -175,12 +175,12 @@ export interface FieldChanges<TTree = ProtoNode> {
 	 * applying any of the changes, is not represented explicitly.
 	 * It corresponds to the sum of `mark.count` values for all previous marks that cover existing content.
 	 */
-	readonly attached?: readonly Mark<TTree>[];
+	readonly local?: readonly Mark<TTree>[];
 	/**
 	 * Changes to apply to detached nodes.
 	 * The ordering has no significance.
 	 */
-	readonly detached?: readonly DetachedNodeChanges<TTree>[];
+	readonly global?: readonly DetachedNodeChanges<TTree>[];
 	/**
 	 * New detached nodes to be constructed.
 	 * The ordering has no significance.

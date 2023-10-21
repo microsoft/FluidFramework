@@ -499,7 +499,7 @@ export function optionalFieldIntoDelta(
 	}
 
 	const mark: Mutable<Delta.Mark> = { count: 1 };
-	delta.attached = [mark];
+	delta.local = [mark];
 
 	if (childChange !== undefined) {
 		mark.fields = deltaFromChild(childChange);
@@ -540,7 +540,7 @@ export function optionalFieldIntoDelta(
 		}
 		if (update.changes !== undefined) {
 			const fields = deltaFromChild(update.changes);
-			delta.detached = [{ id: mark.attach, fields }];
+			delta.global = [{ id: mark.attach, fields }];
 		}
 	}
 	return delta;

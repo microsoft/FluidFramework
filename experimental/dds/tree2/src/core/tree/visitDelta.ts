@@ -78,7 +78,6 @@ type RootTransfers = Map<
 		/**
 		 * The node ID that characterizes the detached field of origin.
 		 * Used to delete the entry from the tree index once the root is transferred.
-		 * If undefined, the root was created due to an insert.
 		 */
 		oldId: Delta.DetachedNodeId;
 		newId: Delta.DetachedNodeId;
@@ -329,8 +328,8 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			}
 		}
 	}
-	if (delta.detached !== undefined) {
-		for (const { id, fields } of delta.detached) {
+	if (delta.global !== undefined) {
+		for (const { id, fields } of delta.global) {
 			const root = config.detachedFieldIndex.getOrCreateEntry(id);
 			config.detachPassRoots.set(root, fields);
 			config.attachPassRoots.set(root, fields);
@@ -356,9 +355,9 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			}
 		}
 	}
-	if (delta.attached !== undefined) {
+	if (delta.local !== undefined) {
 		let index = 0;
-		for (const mark of delta.attached) {
+		for (const mark of delta.local) {
 			if (mark.fields !== undefined) {
 				assert(
 					mark.attach === undefined || mark.detach !== undefined,
@@ -398,9 +397,9 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
  * - Collects detached roots (from replaces) that need an attach pass
  */
 function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig): void {
-	if (delta.attached !== undefined) {
+	if (delta.local !== undefined) {
 		let index = 0;
-		for (const mark of delta.attached) {
+		for (const mark of delta.local) {
 			if (mark.detach === undefined || mark.attach !== undefined) {
 				if (mark.attach !== undefined) {
 					for (let i = 0; i < mark.count; i += 1) {

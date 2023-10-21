@@ -369,7 +369,7 @@ describe("Generic FieldKind", () => {
 		];
 
 		const expected: Delta.FieldChanges = {
-			attached: [
+			local: [
 				{ count: 1, fields: deltaForValueChange(1) },
 				{ count: 1 },
 				{ count: 1, fields: deltaForValueChange(2) },

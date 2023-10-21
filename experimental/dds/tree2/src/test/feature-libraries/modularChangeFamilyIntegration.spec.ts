@@ -132,7 +132,7 @@ describe("ModularChangeFamily integration", () => {
 				[
 					fieldA,
 					{
-						attached: [
+						local: [
 							{
 								count: 1,
 								detach: { minor: 0 },
@@ -141,7 +141,7 @@ describe("ModularChangeFamily integration", () => {
 										fieldC,
 										{
 											build: [{ id: { minor: 1 }, trees: [newNode] }],
-											attached: [{ count: 1, attach: { minor: 1 } }],
+											local: [{ count: 1, attach: { minor: 1 } }],
 										},
 									],
 								]),
@@ -152,7 +152,7 @@ describe("ModularChangeFamily integration", () => {
 				[
 					fieldB,
 					{
-						attached: [{ count: 1, attach: { minor: 0 } }],
+						local: [{ count: 1, attach: { minor: 0 } }],
 					},
 				],
 			]);
@@ -196,7 +196,7 @@ describe("ModularChangeFamily integration", () => {
 				[
 					fieldB,
 					{
-						attached: [
+						local: [
 							{ count: 1 },
 							{
 								count: 1,
@@ -207,7 +207,7 @@ describe("ModularChangeFamily integration", () => {
 											build: [
 												{ id: { major: tag2, minor: 1 }, trees: [newNode] },
 											],
-											attached: [
+											local: [
 												{ count: 1, attach: { major: tag2, minor: 1 } },
 											],
 										},
@@ -298,8 +298,8 @@ describe("ModularChangeFamily integration", () => {
 				count: 2,
 			};
 			const expected: Delta.Root = new Map([
-				[brand("foo"), { attached: [moveOut1, moveIn1] }],
-				[brand("bar"), { attached: [moveOut2, moveIn2] }],
+				[brand("foo"), { local: [moveOut1, moveIn1] }],
+				[brand("bar"), { local: [moveOut2, moveIn2] }],
 			]);
 			const actual = family.intoDelta(makeAnonChange(change));
 			assert.deepEqual(actual, expected);
@@ -329,8 +329,8 @@ function normalizeDeltaFieldChanges(
 	idMap: Map<number, number>,
 ): Delta.FieldChanges {
 	const normalized: Mutable<Delta.FieldChanges> = {};
-	if (delta.attached !== undefined && delta.attached.length > 0) {
-		normalized.attached = delta.attached.map((mark) => normalizeDeltaMark(mark, genId, idMap));
+	if (delta.local !== undefined && delta.local.length > 0) {
+		normalized.local = delta.local.map((mark) => normalizeDeltaMark(mark, genId, idMap));
 	}
 	if (delta.build !== undefined && delta.build.length > 0) {
 		normalized.build = delta.build.map(({ id, trees }) => ({
@@ -338,8 +338,8 @@ function normalizeDeltaFieldChanges(
 			trees,
 		}));
 	}
-	if (delta.detached !== undefined && delta.detached.length > 0) {
-		normalized.detached = delta.detached.map(({ id, fields }) => ({
+	if (delta.global !== undefined && delta.global.length > 0) {
+		normalized.global = delta.global.map(({ id, fields }) => ({
 			id: normalizeDeltaDetachedNodeId(id, genId, idMap),
 			fields: normalizeDelta(fields, genId, idMap),
 		}));

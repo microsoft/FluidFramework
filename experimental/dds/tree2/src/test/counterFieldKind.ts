@@ -14,7 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
 import { brand, fail } from "../util";
-import { Delta, TaggedChange, makeDetachedNodeId } from "../core";
+import { Delta, FieldKey, TaggedChange, makeDetachedNodeId } from "../core";
 import { leaf } from "../domains";
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
@@ -51,14 +51,14 @@ export const counterHandle: FieldChangeHandler<number> = {
 	intoDelta: ({ change, revision }: TaggedChange<number>): Delta.FieldChanges => {
 		const buildId = makeDetachedNodeId(revision, 424243);
 		return {
-			attached: [
+			local: [
 				{
 					count: 1,
-					fields: new Map([
+					fields: new Map<FieldKey, Delta.FieldChanges>([
 						[
 							brand("value"),
 							{
-								attached: [
+								local: [
 									{
 										count: 1,
 										detach: {

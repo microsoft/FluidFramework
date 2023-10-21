@@ -13,6 +13,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	makeDetachedNodeId,
+	FieldKey,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
 import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
@@ -43,12 +44,12 @@ const failCrossFieldManager: CrossFieldManager = {
 const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.FieldMap => {
 	assert.deepEqual(change, nodeChange1);
 	const buildId = makeDetachedNodeId(revision, 1);
-	return new Map([
+	return new Map<FieldKey, Delta.FieldChanges>([
 		[
 			fooKey,
 			{
 				build: [{ id: buildId, trees: [testTreeCursor("nodeChange1")] }],
-				attached: [
+				local: [
 					{
 						count: 1,
 						detach: makeDetachedNodeId(revision, 0),
@@ -63,12 +64,12 @@ const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): Del
 const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.FieldMap => {
 	assert.deepEqual(change, nodeChange2);
 	const buildId = makeDetachedNodeId(revision, 1);
-	return new Map([
+	return new Map<FieldKey, Delta.FieldChanges>([
 		[
 			fooKey,
 			{
 				build: [{ id: buildId, trees: [testTreeCursor("nodeChange2")] }],
-				attached: [
+				local: [
 					{
 						count: 1,
 						detach: makeDetachedNodeId(revision, 0),
@@ -383,10 +384,10 @@ describe("optionalField", () => {
 		it("can be converted to a delta when field was empty", () => {
 			const expected: Delta.FieldChanges = {
 				build: [{ id: { minor: 41 }, trees: [testTreeCursor("tree1")] }],
-				detached: [
+				global: [
 					{
 						id: { minor: 41 },
-						fields: new Map([
+						fields: new Map<FieldKey, Delta.FieldChanges>([
 							[
 								fooKey,
 								{
@@ -396,7 +397,7 @@ describe("optionalField", () => {
 											trees: [testTreeCursor("nodeChange1")],
 										},
 									],
-									attached: [
+									local: [
 										{
 											count: 1,
 											attach: makeDetachedNodeId(tag, 1),
@@ -408,7 +409,7 @@ describe("optionalField", () => {
 						]),
 					},
 				],
-				attached: [{ count: 1, attach: { minor: 41 } }],
+				local: [{ count: 1, attach: { minor: 41 } }],
 			};
 
 			const actual = optionalFieldIntoDelta(change1, (change) =>
@@ -419,7 +420,7 @@ describe("optionalField", () => {
 
 		it("can be converted to a delta when restoring content", () => {
 			const expected: Delta.FieldChanges = {
-				attached: [
+				local: [
 					{
 						count: 1,
 						attach: { major: change2.revision, minor: 2 },
@@ -436,10 +437,10 @@ describe("optionalField", () => {
 
 		it("can be converted to a delta with only child changes", () => {
 			const expected: Delta.FieldChanges = {
-				attached: [
+				local: [
 					{
 						count: 1,
-						fields: new Map([
+						fields: new Map<FieldKey, Delta.FieldChanges>([
 							[
 								fooKey,
 								{
@@ -449,7 +450,7 @@ describe("optionalField", () => {
 											trees: [testTreeCursor("nodeChange2")],
 										},
 									],
-									attached: [
+									local: [
 										{
 											count: 1,
 											attach: { major: tag, minor: 1 },

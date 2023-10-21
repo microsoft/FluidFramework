@@ -67,7 +67,7 @@ describe("SequenceField - toDelta", () => {
 	it("child change", () => {
 		const actual = toDelta(Change.modify(0, childChange1), tag);
 		const markList: Delta.Mark[] = [{ count: 1, fields: childChange1Delta }];
-		const expected: Delta.FieldChanges = { attached: markList };
+		const expected: Delta.FieldChanges = { local: markList };
 		assert.deepEqual(actual, expected);
 	});
 
@@ -87,7 +87,7 @@ describe("SequenceField - toDelta", () => {
 		const changeset = Change.revive(0, 1, { revision: tag, localId: brand(0) });
 		const actual = toDelta(changeset);
 		const expected: Delta.FieldChanges = {
-			attached: [
+			local: [
 				{
 					count: 1,
 					attach: { major: tag, minor: 0 },
@@ -113,13 +113,13 @@ describe("SequenceField - toDelta", () => {
 		};
 		const actual = SF.sequenceFieldToDelta(makeAnonChange(changeset), deltaFromChild);
 		const expected: Delta.FieldChanges = {
-			attached: [
+			local: [
 				{
 					count: 1,
 					attach: { major: tag, minor: 0 },
 				},
 			],
-			detached: [
+			global: [
 				{
 					id: { major: tag, minor: 0 },
 					fields: fieldChanges,
@@ -132,7 +132,7 @@ describe("SequenceField - toDelta", () => {
 	it("delete", () => {
 		const changeset = Change.delete(0, 10, brand(42));
 		const expected: Delta.FieldChanges = {
-			attached: [
+			local: [
 				{
 					count: 10,
 					detach: detachId,
@@ -159,7 +159,7 @@ describe("SequenceField - toDelta", () => {
 			count: 10,
 		};
 		const markList: Delta.Mark[] = [{ count: 42 }, moveOut, { count: 8 }, moveIn];
-		const expected: Delta.FieldChanges = { attached: markList };
+		const expected: Delta.FieldChanges = { local: markList };
 		const actual = toDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -198,7 +198,7 @@ describe("SequenceField - toDelta", () => {
 			count: 3,
 		};
 		const markList: Delta.Mark[] = [moveOut1, moveIn1, moveOut2, moveIn2, moveOut3, moveIn3];
-		const expected: Delta.FieldChanges = { attached: markList };
+		const expected: Delta.FieldChanges = { local: markList };
 		const actual = toDelta(changeset);
 		assert.deepStrictEqual(actual, expected);
 	});
@@ -228,7 +228,7 @@ describe("SequenceField - toDelta", () => {
 		];
 		const expected: Delta.FieldChanges = {
 			build: [{ id: { minor: 52 }, trees: [contentCursor] }],
-			attached: markList,
+			local: markList,
 		};
 		const actual = toDelta(changeset, tag);
 		assert.deepStrictEqual(actual, expected);
@@ -249,8 +249,8 @@ describe("SequenceField - toDelta", () => {
 					],
 				},
 			],
-			detached: [{ id: buildId, fields: childChange1Delta }],
-			attached: [{ count: 1, attach: buildId }],
+			global: [{ id: buildId, fields: childChange1Delta }],
+			local: [{ count: 1, attach: buildId }],
 		};
 		const actual = toDelta(changeset, tag);
 		assertFieldChangesEqual(actual, expected);
@@ -259,7 +259,7 @@ describe("SequenceField - toDelta", () => {
 	it("modify and delete => delete", () => {
 		const changeset = [Mark.delete(1, brand(42), { changes: childChange1 })];
 		const expected: Delta.FieldChanges = {
-			attached: [{ count: 1, detach: detachId, fields: childChange1Delta }],
+			local: [{ count: 1, detach: detachId, fields: childChange1Delta }],
 		};
 		const actual = toDelta(changeset, tag);
 		assertFieldChangesEqual(actual, expected);
@@ -268,9 +268,7 @@ describe("SequenceField - toDelta", () => {
 	it("modify and move-out => move-out", () => {
 		const changeset = [Mark.moveOut(1, moveId, { changes: childChange1 })];
 		const expected: Delta.FieldChanges = {
-			attached: [
-				{ count: 1, detach: { major: tag, minor: moveId }, fields: childChange1Delta },
-			],
+			local: [{ count: 1, detach: { major: tag, minor: moveId }, fields: childChange1Delta }],
 		};
 		const actual = toDelta(changeset, tag);
 		assertFieldChangesEqual(actual, expected);
@@ -286,7 +284,7 @@ describe("SequenceField - toDelta", () => {
 		};
 		const changeset = [Mark.insert(content, brand(0), { changes: nodeChange })];
 		const nestedMoveDelta = new Map([
-			[fooField, { attached: [{ attach: { minor: moveId }, count: 42 }] }],
+			[fooField, { local: [{ attach: { minor: moveId }, count: 42 }] }],
 		]);
 		const buildId = { minor: 0 };
 		const expected: Delta.FieldChanges = {
@@ -301,8 +299,8 @@ describe("SequenceField - toDelta", () => {
 					],
 				},
 			],
-			detached: [{ id: buildId, fields: nestedMoveDelta }],
-			attached: [{ count: 1, attach: buildId }],
+			global: [{ id: buildId, fields: nestedMoveDelta }],
+			local: [{ count: 1, attach: buildId }],
 		};
 		const deltaFromChild = (child: NodeChangeset): Delta.FieldMap => {
 			assert.deepEqual(child, nodeChange);
@@ -347,7 +345,7 @@ describe("SequenceField - toDelta", () => {
 			];
 			const actual = toDelta(changeset, tag);
 			const expected: Delta.FieldChanges = {
-				attached: [{ count: 1 }, { count: 1, fields: childChange1Delta }],
+				local: [{ count: 1 }, { count: 1, fields: childChange1Delta }],
 			};
 			assertFieldChangesEqual(actual, expected);
 		});

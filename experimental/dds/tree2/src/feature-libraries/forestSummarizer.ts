@@ -107,7 +107,7 @@ export class ForestSummarizer implements Summarizable {
 					fieldKey,
 					{
 						build: [{ id: buildId, trees: content.map(singleTextCursor) }],
-						attached: [{ count: content.length, attach: buildId }],
+						local: [{ count: content.length, attach: buildId }],
 					},
 				];
 			});

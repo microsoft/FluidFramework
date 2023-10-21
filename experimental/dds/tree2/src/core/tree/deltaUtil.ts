@@ -4,6 +4,7 @@
  */
 
 import { Mutable } from "../../util";
+import { FieldKey } from "../schema-stored";
 import { ITreeCursorSynchronous } from "./cursor";
 import { Root, DetachedNodeId, FieldChanges, Mark } from "./delta";
 import { rootFieldKey } from "./types";
@@ -14,8 +15,8 @@ export const emptyFieldChanges: FieldChanges<never> = {};
 
 export function isEmptyFieldChanges(fieldChanges: FieldChanges): boolean {
 	return (
-		fieldChanges.attached === undefined &&
-		fieldChanges.detached === undefined &&
+		fieldChanges.local === undefined &&
+		fieldChanges.global === undefined &&
 		fieldChanges.build === undefined &&
 		fieldChanges.rename === undefined
 	);
@@ -26,12 +27,12 @@ export function deltaForRootInitialization(content: readonly ITreeCursorSynchron
 		return emptyDelta;
 	}
 	const buildId = { minor: 0 };
-	const delta: Root = new Map([
+	const delta: Root = new Map<FieldKey, FieldChanges>([
 		[
 			rootFieldKey,
 			{
 				build: [{ id: buildId, trees: content }],
-				attached: [{ count: content.length, attach: buildId }],
+				local: [{ count: content.length, attach: buildId }],
 			},
 		],
 	]);
@@ -49,7 +50,7 @@ export function deltaForSet(
 	}
 	return {
 		build: [{ id: buildId, trees: [newNode] }],
-		attached: [mark],
+		local: [mark],
 	};
 }
 

@@ -73,7 +73,7 @@ describe("AnchorSet", () => {
 		};
 
 		const delta = new Map([
-			[rootFieldKey, { attached: [{ count: 1 }, moveOut, { count: 1 }, moveIn] }],
+			[rootFieldKey, { local: [{ count: 1 }, moveOut, { count: 1 }, moveIn] }],
 		]);
 		announceTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor0), makePath([rootFieldKey, 0]));
@@ -88,7 +88,7 @@ describe("AnchorSet", () => {
 		const trees = [node, node].map(singleTextCursor);
 		const fieldChanges: Delta.FieldChanges = {
 			build: [{ id: buildId, trees }],
-			attached: [{ count: 4 }, { count: 2, attach: buildId }],
+			local: [{ count: 4 }, { count: 2, attach: buildId }],
 		};
 		announceTestDelta(makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo)), anchors);
 
@@ -217,11 +217,11 @@ describe("AnchorSet", () => {
 
 		const modify: Delta.Mark = {
 			count: 1,
-			fields: new Map([[fieldBar, { attached: [{ count: 3 }, moveIn] }]]),
+			fields: new Map([[fieldBar, { local: [{ count: 3 }, moveIn] }]]),
 		};
 
 		const delta = new Map([
-			[fieldFoo, { attached: [{ count: 3 }, moveOut, { count: 1 }, modify] }],
+			[fieldFoo, { local: [{ count: 3 }, moveOut, { count: 1 }, modify] }],
 		]);
 		announceTestDelta(delta, anchors);
 		checkEquality(anchors.locate(anchor1), makePath([fieldFoo, 4], [fieldBar, 5]));
@@ -306,7 +306,7 @@ describe("AnchorSet", () => {
 		};
 
 		log.expect([]);
-		announceTestDelta(new Map([[rootFieldKey, { attached: [deleteMark] }]]), anchors);
+		announceTestDelta(new Map([[rootFieldKey, { local: [deleteMark] }]]), anchors);
 
 		log.expect([
 			["root childrenChange", 1],
@@ -338,7 +338,7 @@ describe("AnchorSet", () => {
 								trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
 							},
 						],
-						attached: [deleteMark, insertMark],
+						local: [deleteMark, insertMark],
 					},
 				],
 			]),
@@ -359,7 +359,7 @@ describe("AnchorSet", () => {
 						trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
 					},
 				],
-				attached: [{ count: 5 }, insertMark],
+				local: [{ count: 5 }, insertMark],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
@@ -368,7 +368,7 @@ describe("AnchorSet", () => {
 		log.expect([["root treeChange", 1]]);
 		log.clear();
 
-		announceTestDelta(new Map([[rootFieldKey, { attached: [deleteMark] }]]), anchors);
+		announceTestDelta(new Map([[rootFieldKey, { local: [deleteMark] }]]), anchors);
 		log.expect([
 			["root childrenChange", 1],
 			["root treeChange", 1],
@@ -388,7 +388,7 @@ describe("AnchorSet", () => {
 						trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
 					},
 				],
-				attached: [{ count: 4 }, insertMark],
+				local: [{ count: 4 }, insertMark],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
@@ -409,7 +409,7 @@ describe("AnchorSet", () => {
 						trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
 					},
 				],
-				attached: [{ count: 5 }, replaceMark],
+				local: [{ count: 5 }, replaceMark],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
@@ -418,7 +418,7 @@ describe("AnchorSet", () => {
 		const trees = [singleTextCursor(node)];
 		const fieldChanges: Delta.FieldChanges = {
 			build: [{ id: buildId, trees }],
-			attached: [{ count: 3 }, { count: 1, attach: buildId }],
+			local: [{ count: 3 }, { count: 1, attach: buildId }],
 		};
 		announceTestDelta(
 			makeFieldDelta(fieldChanges, makeFieldPath(fieldFoo, [rootFieldKey, 0])),
@@ -626,7 +626,7 @@ function checkRemoved(path: UpPath | undefined, expected: FieldKey = brand("Temp
 
 function makeDelta(mark: Delta.Mark, path: UpPath): Delta.Root {
 	const fields: Delta.Root = new Map([
-		[path.parentField, { attached: [{ count: path.parentIndex }, mark] }],
+		[path.parentField, { local: [{ count: path.parentIndex }, mark] }],
 	]);
 	if (path.parent === undefined) {
 		return fields;

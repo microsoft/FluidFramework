@@ -46,11 +46,11 @@ export function mapFieldChanges<TIn, TOut>(
 	func: (tree: TIn) => TOut,
 ): Delta.FieldChanges<TOut> {
 	const out: Mutable<Delta.FieldChanges<TOut>> = {};
-	if (fieldChanges.attached !== undefined) {
-		out.attached = mapMarkList(fieldChanges.attached, func);
+	if (fieldChanges.local !== undefined) {
+		out.local = mapMarkList(fieldChanges.local, func);
 	}
-	if (fieldChanges.detached !== undefined) {
-		out.detached = fieldChanges.detached.map(({ id, fields }) => ({
+	if (fieldChanges.global !== undefined) {
+		out.global = fieldChanges.global.map(({ id, fields }) => ({
 			id,
 			fields: mapFieldsChanges(fields, func),
 		}));

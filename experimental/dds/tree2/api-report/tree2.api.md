@@ -617,9 +617,9 @@ export interface FieldAnchor {
 
 // @alpha
 interface FieldChanges<TTree = ProtoNode> {
-    readonly attached?: readonly Mark<TTree>[];
     readonly build?: readonly DetachedNodeBuild<TTree>[];
-    readonly detached?: readonly DetachedNodeChanges<TTree>[];
+    readonly global?: readonly DetachedNodeChanges<TTree>[];
+    readonly local?: readonly Mark<TTree>[];
     readonly rename?: readonly DetachedNodeRename[];
 }
 

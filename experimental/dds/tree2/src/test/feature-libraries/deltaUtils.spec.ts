@@ -14,17 +14,17 @@ const emptyMap = new Map();
 const nodeX = { type, value: "X", fields: emptyMap };
 const nodeXCursor = singleMapTreeCursor(nodeX);
 const fooField = brand<FieldKey>("foo");
-const detachId = { minor: 43 };
+const detachId: Delta.DetachedNodeId = { minor: 43 };
 
 describe("DeltaUtils", () => {
 	describe("mapFieldMarks", () => {
 		it("maps delta content", () => {
-			const nestedCursorInsert = new Map([
+			const nestedCursorInsert = new Map<FieldKey, Delta.FieldChanges>([
 				[
 					fooField,
 					{
 						build: [{ id: detachId, trees: [nodeXCursor] }],
-						attached: [
+						local: [
 							{ count: 42 },
 							{
 								count: 1,
@@ -34,29 +34,29 @@ describe("DeltaUtils", () => {
 					},
 				],
 			]);
-			const input: Delta.Root = new Map([
+			const input: Delta.Root = new Map<FieldKey, Delta.FieldChanges>([
 				[
 					fooField,
 					{
 						build: [{ id: detachId, trees: [nodeXCursor] }],
-						attached: [
+						local: [
 							{
 								count: 1,
 								fields: nestedCursorInsert,
 							},
 						],
-						detached: [{ id: detachId, fields: nestedCursorInsert }],
+						global: [{ id: detachId, fields: nestedCursorInsert }],
 					},
 				],
 			]);
 			deepFreeze(input);
 			const actual = mapFieldsChanges(input, mapTreeFromCursor);
-			const nestedMapTreeInsert = new Map([
+			const nestedMapTreeInsert = new Map<FieldKey, Delta.FieldChanges<MapTree>>([
 				[
 					fooField,
 					{
 						build: [{ id: detachId, trees: [nodeX] }],
-						attached: [
+						local: [
 							{ count: 42 },
 							{
 								count: 1,
@@ -66,18 +66,18 @@ describe("DeltaUtils", () => {
 					},
 				],
 			]);
-			const expected: Delta.Root<MapTree> = new Map([
+			const expected: Delta.Root<MapTree> = new Map<FieldKey, Delta.FieldChanges<MapTree>>([
 				[
 					fooField,
 					{
 						build: [{ id: detachId, trees: [nodeX] }],
-						attached: [
+						local: [
 							{
 								count: 1,
 								fields: nestedMapTreeInsert,
 							},
 						],
-						detached: [{ id: detachId, fields: nestedMapTreeInsert }],
+						global: [{ id: detachId, fields: nestedMapTreeInsert }],
 					},
 				],
 			]);

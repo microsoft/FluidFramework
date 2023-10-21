@@ -440,7 +440,7 @@ export function spyOnMethod(
  * @returns `true` iff the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(delta: Delta.FieldChanges): boolean {
-	for (const mark of delta.attached ?? []) {
+	for (const mark of delta.local ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
 		}
