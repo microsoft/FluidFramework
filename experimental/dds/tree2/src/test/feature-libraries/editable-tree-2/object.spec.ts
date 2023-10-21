@@ -6,9 +6,7 @@
 import { strict as assert } from "assert";
 import { LeafSchema, TreeSchema } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
-
-// eslint-disable-next-line import/no-internal-modules
-import { TypedValue } from "../../../feature-libraries/schema-aware/internal";
+import { TreeValue } from "../../../core";
 import { createTreeView, itWithRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase {
@@ -328,8 +326,8 @@ describe("Object-like", () => {
 		describe("primitives", () => {
 			function check<const TSchema extends LeafSchema>(
 				schema: LeafSchema,
-				before: TypedValue<TSchema["leafValue"]>,
-				after: TypedValue<TSchema["leafValue"]>,
+				before: TreeValue<TSchema["leafValue"]>,
+				after: TreeValue<TSchema["leafValue"]>,
 			) {
 				describe(`required ${typeof before} `, () => {
 					itWithRoot(
