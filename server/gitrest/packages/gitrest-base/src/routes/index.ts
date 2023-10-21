@@ -17,6 +17,7 @@ import * as repositoryCommits from "./repository/commits";
 import * as contents from "./repository/contents";
 /* eslint-enable import/no-internal-modules */
 import * as summaries from "./summaries";
+import * as ping from "./ping";
 
 export interface IRoutes {
 	git: {
@@ -32,6 +33,7 @@ export interface IRoutes {
 		contents: Router;
 	};
 	summaries: Router;
+    ping: Router;
 }
 
 export function create(
@@ -57,5 +59,6 @@ export function create(
 			contents: contents.create(store, fileSystemManagerFactories, repoManagerFactory),
 		},
 		summaries: summaries.create(store, fileSystemManagerFactories, repoManagerFactory),
+        ping: ping.create(),
 	};
 }

@@ -1159,6 +1159,14 @@ testModes.forEach((mode) => {
 					});
 				});
 			});
+
+            describe("Ping API", () => {
+				it("should respond with ok", async () => {
+					return request(app)
+						.get('/api/v1/ping')
+						.expect(200, 'ok');
+				});
+			});
 		});
 	});
 });
