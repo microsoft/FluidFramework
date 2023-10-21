@@ -182,11 +182,11 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link Struct} node.
+	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link ObjectNode} node.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
-	public struct<
+	public object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(
@@ -194,10 +194,10 @@ export class SchemaBuilderBase<
 		t: T,
 	): TreeNodeSchema<
 		`${TScope}.${Name}`,
-		{ structFields: { [key in keyof T]: NormalizeField<T[key], TDefaultKind> } }
+		{ objectNodeFields: { [key in keyof T]: NormalizeField<T[key], TDefaultKind> } }
 	> {
 		const schema = new TreeNodeSchema(this, this.scoped(name), {
-			structFields: transformObjectMap(
+			objectNodeFields: transformObjectMap(
 				t,
 				(field): TreeFieldSchema => this.normalizeField(field),
 			) as {
@@ -209,21 +209,21 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Same as `struct` but with less type safety and works for recursive objects.
+	 * Same as `object` but with less type safety and works for recursive objects.
 	 * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
 	 *
 	 * See {@link Unenforced} for details.
 	 *
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
-	public structRecursive<
+	public objectRecursive<
 		Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
-	>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, { structFields: T }> {
-		return this.struct(
+	>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, { objectNodeFields: T }> {
+		return this.object(
 			name,
 			t as unknown as RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-		) as unknown as TreeNodeSchema<`${TScope}.${Name}`, { structFields: T }>;
+		) as unknown as TreeNodeSchema<`${TScope}.${Name}`, { objectNodeFields: T }>;
 	}
 
 	/**
@@ -272,10 +272,10 @@ export class SchemaBuilderBase<
 		fieldSchema: T,
 	): TreeNodeSchema<
 		`${TScope}.${Name}`,
-		{ structFields: { [""]: NormalizeField<T, TDefaultKind> } }
+		{ objectNodeFields: { [""]: NormalizeField<T, TDefaultKind> } }
 	> {
 		const schema = new TreeNodeSchema(this, this.scoped(name), {
-			structFields: { [""]: this.normalizeField(fieldSchema) },
+			objectNodeFields: { [""]: this.normalizeField(fieldSchema) },
 		});
 		this.addNodeSchema(schema);
 		return schema;
@@ -292,11 +292,11 @@ export class SchemaBuilderBase<
 	public fieldNodeRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(
 		name: Name,
 		t: T,
-	): TreeNodeSchema<`${TScope}.${Name}`, { structFields: { [""]: T } }> {
+	): TreeNodeSchema<`${TScope}.${Name}`, { objectNodeFields: { [""]: T } }> {
 		return this.fieldNode(
 			name,
 			t as unknown as ImplicitFieldSchema,
-		) as unknown as TreeNodeSchema<`${TScope}.${Name}`, { structFields: { [""]: T } }>;
+		) as unknown as TreeNodeSchema<`${TScope}.${Name}`, { objectNodeFields: { [""]: T } }>;
 	}
 
 	/**
@@ -305,8 +305,8 @@ export class SchemaBuilderBase<
 	 * @param kind - The [kind](https://en.wikipedia.org/wiki/Kind_(type_theory)) of this field.
 	 * Determine the multiplicity, viewing and editing APIs as well as the merge resolution policy.
 	 * @param allowedTypes - What types of children are allowed in this field.
-	 * @returns a {@link TreeFieldSchema} which can be used as a struct field (see {@link SchemaBuilderBase.struct}),
-	 * a map field (see {@link SchemaBuilderBase.map}), a field node(see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.intoSchema}).
+	 * @returns a {@link TreeFieldSchema} which can be used as a object field (see {@link SchemaBuilderBase.object}),
+	 * a map field (see {@link SchemaBuilderBase.map}), a field node (see {@link SchemaBuilderBase.fieldNode}) or the root field (see {@link SchemaBuilderBase.intoSchema}).
 	 *
 	 * @privateRemarks
 	 * TODO:

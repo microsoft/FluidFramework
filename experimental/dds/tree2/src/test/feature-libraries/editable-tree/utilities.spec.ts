@@ -32,7 +32,7 @@ describe("editable-tree utilities", () => {
 
 	it("field utils", () => {
 		const schema =
-			arraySchema.structFields.get(EmptyKey) ?? fail("Expected primary array field");
+			arraySchema.objectNodeFields.get(EmptyKey) ?? fail("Expected primary array field");
 		const expectedPrimary: { key: FieldKey; schema: TreeFieldStoredSchema } = {
 			key: EmptyKey,
 			schema,

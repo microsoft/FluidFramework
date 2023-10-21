@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
+import { assert } from "@fluidframework/core-utils";
+import { brand, fail } from "../../../util";
 import {
 	AllowedTypes,
 	FieldNodeSchema,
 	TreeFieldSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
@@ -26,8 +27,7 @@ import {
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
-import { getBoxedField } from "../lazyTree";
-import { LazyEntity } from "../lazyEntity";
+import { LazyObjectNode, getBoxedField } from "../lazyTree";
 import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
 import { getFactoryContent } from "./objectFactory";
 import { createNodeApi, nodeSym } from "./node";
@@ -55,7 +55,7 @@ const proxyCacheSym = Symbol("ProxyCache");
 /** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
 function cacheProxy(
 	target: TreeNode,
-	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<ObjectNodeSchema>,
 ): void {
 	Object.defineProperty(target, proxyCacheSym, {
 		value: proxy,
@@ -74,7 +74,7 @@ function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefin
  * Checks if the given object is a {@link SharedTreeObject}
  * @alpha
  */
-export function is<TSchema extends StructSchema>(
+export function is<TSchema extends ObjectNodeSchema>(
 	x: unknown,
 	schema: TSchema,
 ): x is SharedTreeObject<TSchema> {
@@ -133,7 +133,7 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 		return treeNode.value as ProxyNode<TSchema>;
 	}
 	const isFieldNode = schemaIsFieldNode(schema);
-	if (isFieldNode || schemaIsStruct(schema)) {
+	if (isFieldNode || schemaIsObjectNode(schema)) {
 		const cachedProxy = getCachedProxy(treeNode);
 		if (cachedProxy !== undefined) {
 			return cachedProxy as ProxyNode<TSchema>;
@@ -147,7 +147,7 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 	fail("unrecognized node kind");
 }
 
-export function createObjectProxy<TSchema extends StructSchema, TTypes extends AllowedTypes>(
+export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes extends AllowedTypes>(
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
@@ -178,14 +178,16 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				}
 			},
 			set(target, key, value) {
-				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+				const fieldSchema = content.schema.objectNodeFields.get(key as FieldKey);
 
 				if (fieldSchema === undefined) {
 					return false;
 				}
 
-				// TODO: Is it safe to assume 'content' is a LazyEntity?
-				const field = getBoxedField(content as LazyEntity, key as FieldKey, fieldSchema);
+				// TODO: Is it safe to assume 'content' is a LazyObjectNode?
+				assert(content instanceof LazyObjectNode, "invalid content");
+				assert(typeof key === "string", "invalid key");
+				const field = getBoxedField(content, brand(key), fieldSchema);
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {
@@ -205,10 +207,10 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				return true;
 			},
 			has: (target, key) => {
-				return schema.structFields.has(key as FieldKey);
+				return schema.objectNodeFields.has(key as FieldKey);
 			},
 			ownKeys: (target) => {
-				return [...schema.structFields.keys()];
+				return [...schema.objectNodeFields.keys()];
 			},
 			getOwnPropertyDescriptor: (target, key) => {
 				const field = content.tryGetField(key as FieldKey);

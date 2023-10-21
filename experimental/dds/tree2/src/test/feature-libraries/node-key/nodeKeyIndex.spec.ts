@@ -30,7 +30,7 @@ import { SummarizeType, TestTreeProvider, treeWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
 const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
-const nodeSchema = builder.structRecursive("node", {
+const nodeSchema = builder.objectRecursive("node", {
 	...nodeKeyField,
 	child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 });
@@ -264,7 +264,7 @@ describe("Node Key Index", () => {
 			scope: "node key index test",
 			libraries: [nodeKeySchema],
 		});
-		const nodeSchemaNoKey = builder2.structRecursive("node", {
+		const nodeSchemaNoKey = builder2.objectRecursive("node", {
 			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
 		});
 		const nodeSchemaDataNoKey = builder2.intoSchema(

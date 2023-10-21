@@ -155,11 +155,11 @@ export function validateSchemaCollection(
 		validateRootField(lintConfiguration, collection, rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
-		for (const [key, field] of tree.structFields) {
+		for (const [key, field] of tree.objectNodeFields) {
 			const description = () =>
-				`Struct field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
+				`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
 			validateField(lintConfiguration, collection, field, description, errors);
-			validateStructFieldName(key, description, errors);
+			validateObjectNodeFieldName(key, description, errors);
 		}
 		if (tree.mapFields !== undefined) {
 			validateField(
@@ -263,7 +263,7 @@ export const bannedFieldNames = new Set([
  */
 export const fieldApiPrefixes = new Set(["set", "boxed"]);
 
-export function validateStructFieldName(
+export function validateObjectNodeFieldName(
 	name: string,
 	describeField: () => string,
 	errors: string[],

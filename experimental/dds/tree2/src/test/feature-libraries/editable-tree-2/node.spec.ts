@@ -72,7 +72,7 @@ describe("node() API", () => {
 		describe("object", () => {
 			check(
 				makeSchema((_) =>
-					_.struct("", {
+					_.object("", {
 						content: _.boolean,
 					}),
 				),

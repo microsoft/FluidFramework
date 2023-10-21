@@ -105,7 +105,7 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
 			const { parent: field, index } = firstNode.parentField;
 			assert(
-				field?.is(fuzzNode.structFieldsObject.sequenceChildren),
+				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
 				"Defined down-path should point to a valid parent",
 			);
 			field.removeRange(index, change.count);
@@ -122,7 +122,7 @@ function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzSet): void {
 	assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
 	const field = parent.tryGetField(change.key);
 	assert(
-		field?.is(fuzzNode.structFieldsObject.requiredChild),
+		field?.is(fuzzNode.objectNodeFieldsObject.requiredChild),
 		"Parent of Value change should have an optional field to modify",
 	);
 	field.content = singleTextCursor(change.value) as any;
@@ -143,7 +143,7 @@ function navigateToNode(tree: ISharedTreeView, path: DownPath | undefined): Tree
 			// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
 			// to the .is typeguard.
 			/* eslint-disable @typescript-eslint/strict-boolean-expressions */
-			if (childField?.is(fuzzNode.structFieldsObject.sequenceChildren)) {
+			if (childField?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren)) {
 				assert(nextStep.index !== undefined);
 				return {
 					field: childField,
@@ -151,8 +151,8 @@ function navigateToNode(tree: ISharedTreeView, path: DownPath | undefined): Tree
 				};
 			} else if (
 				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-				childField?.is(fuzzNode.structFieldsObject.optionalChild) ||
-				childField?.is(fuzzNode.structFieldsObject.requiredChild)
+				childField?.is(fuzzNode.objectNodeFieldsObject.optionalChild) ||
+				childField?.is(fuzzNode.objectNodeFieldsObject.requiredChild)
 			) {
 				return { field: childField, containedNode: childField.content };
 			}
@@ -181,7 +181,7 @@ function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDel
 		}
 		case "delete": {
 			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
-			assert(field?.is(fuzzNode.structFieldsObject.optionalChild));
+			assert(field?.is(fuzzNode.objectNodeFieldsObject.optionalChild));
 			field.content = undefined;
 			break;
 		}

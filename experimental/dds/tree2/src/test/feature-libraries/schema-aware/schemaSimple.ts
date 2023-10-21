@@ -8,7 +8,7 @@ import { SchemaAware, typeNameSymbol, valueSymbol, SchemaBuilder, leaf } from ".
 const builder = new SchemaBuilder({ scope: "Simple Schema" });
 
 // Schema
-export const pointSchema = builder.struct("point", {
+export const pointSchema = builder.object("point", {
 	x: builder.number,
 	y: builder.number,
 });

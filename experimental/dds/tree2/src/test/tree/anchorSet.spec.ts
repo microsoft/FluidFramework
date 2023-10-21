@@ -293,7 +293,7 @@ describe("AnchorSet", () => {
 		});
 	});
 
-	it("triggers events", () => {
+	it("triggers childrenChanging, treeChanging, subtreeChanging, and afterDestroy callbacks", () => {
 		// AnchorSet does not guarantee event ordering within a batch so use UnorderedTestLogger.
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
@@ -375,11 +375,176 @@ describe("AnchorSet", () => {
 		]);
 	});
 
-	it("triggers path visitor callbacks", () => {
-		const insertMark: Delta.Mark = {
+	it("triggers beforeChange and afterChange callbacks in the right order and always as a pair", () => {
+		const deleteMark: Delta.Mark = {
 			count: 1,
-			attach: buildId,
+			detach: detachId,
 		};
+		const anchors = new AnchorSet();
+
+		// Insert a node at the root to set up listeners on it
+		const insertAtFoo3 = makeFieldDelta(
+			{
+				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				local: [{ count: 3 }, { count: 1, attach: buildId }],
+			},
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(insertAtFoo3, anchors);
+		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
+		const node0 = anchors.locate(anchor0) ?? assert.fail();
+
+		let beforeCounter = 0;
+		let afterCounter = 0;
+
+		const unsubscribeBeforeChange = node0.on("beforeChange", (n: AnchorNode) => {
+			beforeCounter++;
+			assert.strictEqual(afterCounter, beforeCounter - 1, "beforeChange fired out of order");
+		});
+		const unsubscribeAfterChange = node0.on("afterChange", (n: AnchorNode) => {
+			afterCounter++;
+			assert.strictEqual(afterCounter, beforeCounter, "afterChange fired out of order");
+		});
+
+		// Test an insert delta
+		const insertAtFoo4 = makeFieldDelta(
+			{
+				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				local: [{ count: 4 }, { count: 1, attach: buildId }],
+			},
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(insertAtFoo4, anchors);
+		assert.strictEqual(beforeCounter, 1);
+		assert.strictEqual(afterCounter, 1);
+
+		// Test a replace delta
+		const replaceAtFoo5 = makeFieldDelta(
+			{
+				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				local: [{ count: 5 }, { count: 1, detach: { minor: 42 }, attach: buildId }],
+			},
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(replaceAtFoo5, anchors);
+		assert.strictEqual(beforeCounter, 2);
+		assert.strictEqual(afterCounter, 2);
+
+		// Test a delete delta
+		announceTestDelta(
+			makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
+		assert.strictEqual(beforeCounter, 3);
+		assert.strictEqual(afterCounter, 3);
+
+		// Test a move delta
+		// NOTE: This is a special case where the beforeChange and afterChange callbacks are called twice;
+		// once when detaching nodes from the source location, and once when attaching them at the target location.
+		const moveOutMark: Delta.Mark = {
+			count: 1,
+			detach: { minor: 1 },
+		};
+		const moveInMark: Delta.Mark = {
+			count: 1,
+			attach: moveOutMark.detach,
+		};
+		const moveDelta = makeFieldDelta(
+			{ local: [moveOutMark, { count: 1 }, moveInMark] },
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(moveDelta, anchors);
+		assert.strictEqual(beforeCounter, 5);
+		assert.strictEqual(afterCounter, 5);
+
+		// Remove listeners and validate another delta doesn't trigger the listeners anymore
+		unsubscribeBeforeChange();
+		unsubscribeAfterChange();
+		announceTestDelta(insertAtFoo4, anchors);
+		assert.strictEqual(beforeCounter, 5);
+		assert.strictEqual(afterCounter, 5);
+	});
+
+	it("arguments for beforeChange and afterChange events are the expected object", () => {
+		const deleteMark: Delta.Mark = {
+			count: 1,
+			detach: detachId,
+		};
+		const anchors = new AnchorSet();
+
+		// Insert a node at the root to set up listeners on it
+		const insertAtFoo3 = makeFieldDelta(
+			{
+				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				local: [{ count: 3 }, { count: 1, attach: buildId }],
+			},
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(insertAtFoo3, anchors);
+		const anchor0 = anchors.track(makePath([rootFieldKey, 0]));
+		const node0 = anchors.locate(anchor0) ?? assert.fail();
+
+		let beforeCounter = 0;
+		let afterCounter = 0;
+
+		node0.on("beforeChange", (n: AnchorNode) => {
+			assert.strictEqual(node0, n); // This is the important bit in this test
+			beforeCounter++;
+		});
+		node0.on("afterChange", (n: AnchorNode) => {
+			assert.strictEqual(node0, n); // This is the important bit in this test
+			afterCounter++;
+		});
+
+		// Test an insert delta
+		const insertAtFoo4 = makeFieldDelta(
+			{
+				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				local: [{ count: 4 }, { count: 1, attach: buildId }],
+			},
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(insertAtFoo4, anchors);
+
+		// Test a replace delta
+		const replaceAtFoo5 = makeFieldDelta(
+			{
+				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				local: [{ count: 5 }, { count: 1, detach: { minor: 42 }, attach: buildId }],
+			},
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(replaceAtFoo5, anchors);
+
+		// Test a delete delta
+		announceTestDelta(
+			makeDelta(deleteMark, makePath([rootFieldKey, 0], [fieldFoo, 5])),
+			anchors,
+		);
+
+		// Test a move delta
+		// NOTE: This is a special case where the beforeChange and afterChange callbacks are called twice;
+		// once when detaching nodes from the source location, and once when attaching them at the target location.
+		const moveOutMark: Delta.Mark = {
+			count: 1,
+			detach: { minor: 1 },
+		};
+		const moveInMark: Delta.Mark = {
+			count: 1,
+			attach: moveOutMark.detach,
+		};
+		const moveDelta = makeFieldDelta(
+			{ local: [moveOutMark, { count: 1 }, moveInMark] },
+			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
+		);
+		announceTestDelta(moveDelta, anchors);
+
+		// Make sure the listeners were actually called
+		assert.strictEqual(beforeCounter, 5);
+		assert.strictEqual(afterCounter, 5);
+	});
+
+	it("triggers path visitor callbacks", () => {
 		const insertAtFoo4 = makeFieldDelta(
 			{
 				build: [
@@ -388,7 +553,7 @@ describe("AnchorSet", () => {
 						trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
 					},
 				],
-				local: [{ count: 4 }, insertMark],
+				local: [{ count: 4 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
 		);
