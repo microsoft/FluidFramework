@@ -573,7 +573,7 @@ export class DocumentDeltaConnection
 
 				this.logger.sendTelemetryEvent(
 					{
-						eventName: "connect_document_success",
+						eventName: "ConnectDocumentSuccess",
 						pendingClientId: response.clientId,
 					},
 					undefined,
