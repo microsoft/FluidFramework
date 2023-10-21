@@ -20,6 +20,7 @@ import {
 	TaskDefinitionsOnDisk,
 	TaskConfig,
 	getTaskDefinitions,
+	normalizeGlobalTaskDefinitions,
 } from "../common/fluidTaskDefinitions";
 import registerDebug from "debug";
 
@@ -79,7 +80,7 @@ export class BuildPackage {
 	constructor(
 		public readonly buildContext: BuildContext,
 		public readonly pkg: Package,
-		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
+		globalTaskDefinitions: TaskDefinitions,
 	) {
 		this._taskDefinitions = getTaskDefinitions(
 			this.pkg.packageJson,
@@ -488,7 +489,7 @@ export class BuildGraph {
 
 	private getBuildPackage(
 		pkg: Package,
-		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
+		globalTaskDefinitions: TaskDefinitions,
 		pendingInitDep: BuildPackage[],
 	) {
 		let buildPackage = this.buildPackages.get(pkg);
@@ -511,9 +512,10 @@ export class BuildGraph {
 	private initializePackages(
 		packages: Map<string, Package>,
 		releaseGroupPackages: Package[],
-		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
+		globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
 	) {
+		const globalTaskDefinitions = normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk);
 		const pendingInitDep: BuildPackage[] = [];
 		for (const pkg of packages.values()) {
 			// Start with only matched packages
