@@ -287,6 +287,7 @@ export {
 	node,
 	SharedTreeNode,
 	Typed,
+	TreeEvent,
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,

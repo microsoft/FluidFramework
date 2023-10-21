@@ -380,23 +380,23 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
 }
 
 /**
- * A {@link TreeNode} that behaves like struct, providing properties to access its fields.
+ * A {@link TreeNode} that behaves like an "object" or "struct", providing properties to access its fields.
  *
- * Struct nodes consist of a finite collection of fields, each with their own (distinct) key and {@link TreeFieldSchema}.
+ * ObjectNodes consist of a finite collection of fields, each with their own (distinct) key and {@link TreeFieldSchema}.
  *
  * @remarks
- * Struct nodes require complex typing, and have been split into two parts for implementation purposes.
+ * ObjectNodes require complex typing, and have been split into two parts for implementation purposes.
  * See {@link ObjectNodeTyped} for the schema aware extensions to this that provide access to the fields.
  *
- * These "Structs" resemble (and are named after) "Structs" from a wide variety of programming languages
+ * These "Objects" resemble "Structs" from a wide variety of programming languages
  * (Including Algol 68, C, Go, Rust, C# etc.).
- * Struct nodes also somewhat resemble JavaScript objects: this analogy is less precise (objects don't have a fixed schema for example),
- * which is why "Struct" nodes are named after "Structs" instead.
+ * ObjectNodes also somewhat resemble JavaScript objects: this analogy is less precise (objects don't have a fixed schema for example),
+ * but for consistency with other systems in the JavaScript ecosystem (like JSON) is "ObjectNodes" nodes are named "Objects".
  *
  * Another common name for this abstraction is [record](https://en.wikipedia.org/wiki/Record_(computer_science)).
- * The name "Record" is avoided (in favor of Struct) here because it has less precise connotations for most TypeScript developers.
+ * The name "Record" is avoided (in favor of Object) here because it has less precise connotations for most TypeScript developers.
  * For example, TypeScript has a built in `Record` type, but it requires all of the fields to have the same type,
- * putting its semantics half way between this library's "Struct" schema and {@link MapNode}.
+ * putting its semantics half way between this library's "Object" schema and {@link MapNode}.
  *
  * @alpha
  */
@@ -423,7 +423,7 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 }
 
 /**
- * A {@link TreeNode} that behaves like struct, providing properties to access its fields.
+ * An {@link ObjectNode} with schema aware accessors for its fields.
  *
  * @privateRemarks
  *
@@ -436,7 +436,7 @@ export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNode &
 	ObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
 
 /**
- * Properties to access a struct nodes fields. See {@link ObjectNodeTyped}.
+ * Properties to access an object node's fields. See {@link ObjectNodeTyped}.
  *
  * @privateRemarks TODOs:
  *
