@@ -1164,7 +1164,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * @deprecated - Use searchForMarker instead.
+	 * @deprecated Use searchForMarker instead.
 	 */
 	findTile(startPos: number, tileLabel: string, preceding = true) {
 		const clientId = this.getClientId();

@@ -419,7 +419,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * Issue a request against the container for a resource.
 	 * @param request - The request to be issued against the container
 	 *
-	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
+	 * @deprecated Requesting an arbitrary URL with headers will not be supported in a future major release.
 	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
 	 * could implement a request paradigm itself)
@@ -429,7 +429,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
@@ -522,12 +522,12 @@ export interface ILoader extends Partial<IProvideLoader> {
 	resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;

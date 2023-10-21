@@ -220,7 +220,7 @@ export class SharedString
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
 	 * Note that Markers receive `ReferenceType.Tile` by default.
-	 * @deprecated - Use `searchForMarker` instead.
+	 * @deprecated Use `searchForMarker` instead.
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
 	 * @param tileLabel - Label of the tile to search for

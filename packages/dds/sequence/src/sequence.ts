@@ -271,7 +271,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
 	 */
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
@@ -398,7 +398,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @deprecated - This method will no longer be public in an upcoming release as it is not safe to use outside of this class
+	 * @deprecated This method will no longer be public in an upcoming release as it is not safe to use outside of this class
 	 */
 	public submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
