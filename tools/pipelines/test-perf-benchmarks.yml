@@ -152,10 +152,10 @@ stages:
             echo "registry=https://registry.npmjs.org" >> ./.npmrc
             echo "always-auth=false" >> ./.npmrc
 
-            echo "@fluidframework:registry=$(ado-feeds-internal)" >> ./.npmrc
-            echo "@fluid-experimental:registry=$(ado-feeds-internal)" >> ./.npmrc
-            echo "@fluid-tools:registry=$(ado-feeds-internal)" >> ./.npmrc
-            echo "@fluid-internal:registry=$(ado-feeds-internal)" >> ./.npmrc
+            echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
+            echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
+            echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
+            echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
             echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
             echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
             echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
@@ -380,10 +380,10 @@ stages:
             echo "registry=https://registry.npmjs.org" >> ./.npmrc
             echo "always-auth=false" >> ./.npmrc
 
-            echo "@fluidframework:registry=$(ado-feeds-internal)" >> ./.npmrc
-            echo "@fluid-experimental:registry=$(ado-feeds-internal)" >> ./.npmrc
-            echo "@fluid-tools:registry=$(ado-feeds-internal)" >> ./.npmrc
-            echo "@fluid-internal:registry=$(ado-feeds-internal)" >> ./.npmrc
+            echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
+            echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
+            echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
+            echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
             echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
             echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
             echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
@@ -625,10 +625,10 @@ stages:
               echo "registry=https://registry.npmjs.org" >> ./.npmrc
               echo "always-auth=false" >> ./.npmrc
 
-              echo "@fluidframework:registry=$(ado-feeds-internal)" >> ./.npmrc
-              echo "@fluid-experimental:registry=$(ado-feeds-internal)" >> ./.npmrc
-              echo "@fluid-tools:registry=$(ado-feeds-internal)" >> ./.npmrc
-              echo "@fluid-internal:registry=$(ado-feeds-internal)" >> ./.npmrc
+              echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
+              echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
+              echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
+              echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
               echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
               echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
               echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
