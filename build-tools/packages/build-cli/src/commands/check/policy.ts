@@ -19,28 +19,43 @@ interface HandlerExclusions {
 	[rule: string]: RegExp[];
 }
 
-interface CheckPolicyCommandProperties {
+/**
+ * A convenience interface used to pass commonly used parameters to functions in this file.
+ */
+interface CheckPolicyCommandContext {
 	/**
-	 * A regular expression
+	 * A regular expression used to filter selected files.
 	 */
 	pathRegex: RegExp;
+
+	/**
+	 * A list of regular expressions used to exclude files from all handlers.
+	 */
 	exclusions: RegExp[];
+
+	/**
+	 * A list of handlers to apply to selected files.
+	 */
 	handlers: Handler[];
+
+	/**
+	 * A per-handler list of regular expressions used to exclude files from specific handlers.
+	 */
 	handlerExclusions: HandlerExclusions;
+
+	/**
+	 * Path to the root of the git repo.
+	 */
 	gitRoot: string;
 }
 
 /**
- * This tool enforces policies across the code base via a series of handlers.
+ * This tool enforces policies across the code base via a series of handler functions. The handler functions are
+ * associated with a regular expression, and all files matching that expression.
  *
  * This command supports piping.
  *
  * i.e. `git ls-files -co --exclude-standard --full-name | flub check policy --stdin --verbose`
- *
- * @remarks
- *
- * This command is equivalent to `fluid-repo-policy-check`.
- * `fluid-repo-policy-check -s` is equivalent to `flub check policy --stdin`
  */
 export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	static readonly description =
@@ -53,13 +68,13 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			char: "f",
 		}),
 		handler: Flags.string({
-			description: `Filter handler names by <regex>.`,
+			description: `Filter policy handler names by <regex>.`,
 			required: false,
 			char: "d",
 		}),
 		excludeHandler: Flags.string({
 			char: "D",
-			description: `Exclude handler by name. Can be specified multiple times to exclude multiple handlers.`,
+			description: `Exclude policy handler by name. Can be specified multiple times to exclude multiple handlers.`,
 			exclusive: ["handler"],
 			multiple: true,
 		}),
@@ -72,6 +87,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			description: `Path to the exclusions.json file.`,
 			exists: true,
 			char: "e",
+			deprecated: {
+				message:
+					"Configure exclusions using the policy.exclusions field in the fluid-build config.",
+				version: "0.26.0",
+			},
 		}),
 		stdin: Flags.boolean({
 			description: `Read list of files from stdin.`,
@@ -172,7 +192,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			filePathsToCheck.push(...gitFiles.split("\n"));
 		}
 
-		const config: CheckPolicyCommandProperties = {
+		const config: CheckPolicyCommandContext = {
 			pathRegex,
 			exclusions,
 			handlers: handlersToRun,
@@ -185,7 +205,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 	private async executePolicy(
 		pathsToCheck: string[],
-		config: CheckPolicyCommandProperties,
+		config: CheckPolicyCommandContext,
 	): Promise<void> {
 		try {
 			pathsToCheck.map((line: string) => this.handleLine(line, config));
@@ -198,9 +218,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	// route files to their handlers by regex testing their full paths
-	// synchronize output, exit code, and resolve decision for all handlers
-	private routeToHandlers(file: string, config: CheckPolicyCommandProperties): void {
+	/**
+	 * Routes files to their handlers by regex testing their full paths. synchronize output, exit code, and resolve
+	 * decision for all handlers.
+	 */
+	private routeToHandlers(file: string, config: CheckPolicyCommandContext): void {
 		const { handlers, handlerExclusions, gitRoot } = config;
 
 		handlers
@@ -255,12 +277,12 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		for (const [action, handlerPerf] of CheckPolicy.handlerActionPerf.entries()) {
 			this.log(`Performance for "${action}":`);
 			for (const [handler, dur] of handlerPerf.entries()) {
-				this.log(`\t${handler}: ${dur / 1000}:`);
+				this.log(`\t${handler}: ${dur}ms`);
 			}
 		}
 	}
 
-	private handleLine(line: string, config: CheckPolicyCommandProperties): void {
+	private handleLine(line: string, config: CheckPolicyCommandContext): void {
 		const { exclusions, gitRoot, pathRegex } = config;
 
 		const filePath = path.join(gitRoot, line).trim().replace(/\\/g, "/");
@@ -298,7 +320,7 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	return result;
 }
 
-function runPolicyCheck(config: CheckPolicyCommandProperties, fix: boolean): void {
+function runPolicyCheck(config: CheckPolicyCommandContext, fix: boolean): void {
 	const { gitRoot, handlers } = config;
 	for (const h of handlers) {
 		const { final } = h;
