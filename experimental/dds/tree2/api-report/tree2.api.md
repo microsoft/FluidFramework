@@ -258,12 +258,6 @@ abstract class BrandedType<ValueType, Name extends string> {
 export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
 
 // @alpha
-interface CanReplaceContent<TTree = ProtoNode> {
-    // (undocumented)
-    readonly oldContent?: OldContent<TTree>;
-}
-
-// @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @alpha
@@ -424,26 +418,15 @@ export interface DeleteBindingContext extends BindingContext {
 declare namespace Delta {
     export {
         Root,
-        IsDetachedMark,
         ProtoNode,
         ProtoNodes,
         Mark,
-        MarkList,
-        Skip,
-        HasModifications,
-        CanReplaceContent,
-        Modify,
-        Remove,
-        MoveOut,
-        MoveIn,
-        OldContent,
-        Insert,
-        Restore,
-        MoveId,
         DetachedNodeId,
         FieldMap,
-        FieldMarks,
-        MarkType
+        DetachedNodeChanges,
+        DetachedNodeBuild,
+        DetachedNodeRename,
+        FieldChanges
     }
 }
 export { Delta }
@@ -478,11 +461,37 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
 }
 
 // @alpha
+interface DetachedNodeBuild<TTree = ProtoNode> {
+    // (undocumented)
+    readonly id: DetachedNodeId;
+    // (undocumented)
+    readonly trees: readonly TTree[];
+}
+
+// @alpha
+interface DetachedNodeChanges<TTree = ProtoNode> {
+    // (undocumented)
+    readonly fields: FieldMap<TTree>;
+    // (undocumented)
+    readonly id: DetachedNodeId;
+}
+
+// @alpha
 interface DetachedNodeId {
     // (undocumented)
-    major?: string | number;
+    readonly major?: string | number;
     // (undocumented)
-    minor: number;
+    readonly minor: number;
+}
+
+// @alpha
+interface DetachedNodeRename {
+    // (undocumented)
+    readonly count: number;
+    // (undocumented)
+    readonly newId: DetachedNodeId;
+    // (undocumented)
+    readonly oldId: DetachedNodeId;
 }
 
 // @alpha
@@ -611,6 +620,14 @@ export interface FieldAnchor {
 }
 
 // @alpha
+interface FieldChanges<TTree = ProtoNode> {
+    readonly build?: readonly DetachedNodeBuild<TTree>[];
+    readonly global?: readonly DetachedNodeChanges<TTree>[];
+    readonly local?: readonly Mark<TTree>[];
+    readonly rename?: readonly DetachedNodeRename[];
+}
+
+// @alpha
 export type FieldGenerator = () => MapTree[];
 
 // @alpha
@@ -652,16 +669,13 @@ export interface FieldLocation {
 }
 
 // @alpha (undocumented)
-type FieldMap<T> = ReadonlyMap<FieldKey, T>;
+type FieldMap<TTree = ProtoNode> = ReadonlyMap<FieldKey, FieldChanges<TTree>>;
 
 // @alpha
 export interface FieldMapObject<TChild> {
     // (undocumented)
     [key: string]: TChild[];
 }
-
-// @alpha (undocumented)
-type FieldMarks<TTree = ProtoNode> = FieldMap<MarkList<TTree>>;
 
 // @alpha
 export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
@@ -789,12 +803,6 @@ export interface HasListeners<E extends Events<E>> {
 }
 
 // @alpha
-interface HasModifications<TTree = ProtoNode> {
-    // (undocumented)
-    readonly fields?: FieldMarks<TTree>;
-}
-
-// @alpha
 export interface ICodecOptions {
     readonly jsonValidator: JsonValidator;
 }
@@ -857,15 +865,6 @@ export interface InitializeAndSchematizeConfiguration<TRoot extends TreeFieldSch
 
 // @alpha
 type _InlineTrick = 0;
-
-// @alpha
-interface Insert<TTree = ProtoNode> extends HasModifications<TTree>, CanReplaceContent<TTree> {
-    readonly buildId?: DetachedNodeId;
-    readonly content: readonly TTree[];
-    readonly detachId?: DetachedNodeId;
-    // (undocumented)
-    readonly type: typeof MarkType.Insert;
-}
 
 // @alpha
 export interface InsertBindingContext extends BindingContext {
@@ -1011,11 +1010,6 @@ type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
 
 // @alpha
 export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeData | undefined): data is ContextuallyTypedNodeDataObject;
-
-// @alpha
-interface IsDetachedMark {
-    readonly detachedNodeId: DetachedNodeId;
-}
 
 // @alpha
 export function isEditableField(field: UnwrappedEditableField): field is EditableField;
@@ -1318,7 +1312,12 @@ export interface MapTree extends NodeData {
 }
 
 // @alpha
-type Mark<TTree = ProtoNode> = Skip | Modify<TTree> | Remove<TTree> | Restore<TTree> | MoveOut<TTree> | MoveIn | Insert<TTree>;
+interface Mark<TTree = ProtoNode> {
+    readonly attach?: DetachedNodeId;
+    readonly count: number;
+    readonly detach?: DetachedNodeId;
+    readonly fields?: FieldMap<TTree>;
+}
 
 // @alpha
 export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLikeMut<TGet, TSet> {
@@ -1329,50 +1328,7 @@ export interface MarkedArrayLike<TGet, TSet extends TGet = TGet> extends ArrayLi
 }
 
 // @alpha
-type MarkList<TTree = ProtoNode> = readonly Mark<TTree>[];
-
-// @alpha (undocumented)
-const MarkType: {
-    readonly Modify: 0;
-    readonly Insert: 1;
-    readonly MoveIn: 2;
-    readonly Remove: 3;
-    readonly MoveOut: 4;
-    readonly Restore: 5;
-};
-
-// @alpha
 export type MatchPolicy = SubtreePolicy | "subtree" | "path";
-
-// @alpha
-interface Modify<TTree = ProtoNode> extends HasModifications<TTree>, Partial<IsDetachedMark> {
-    // (undocumented)
-    readonly count?: never;
-    // (undocumented)
-    readonly type: typeof MarkType.Modify;
-}
-
-// @alpha
-interface MoveId extends Opaque<Brand<number, "delta.MoveId">> {
-}
-
-// @alpha
-interface MoveIn {
-    // (undocumented)
-    readonly count: number;
-    readonly detachId?: DetachedNodeId;
-    readonly moveId: MoveId;
-    // (undocumented)
-    readonly type: typeof MarkType.MoveIn;
-}
-
-// @alpha
-interface MoveOut<TTree = ProtoNode> extends HasModifications<TTree>, Partial<IsDetachedMark> {
-    readonly count: number;
-    readonly moveId: MoveId;
-    // (undocumented)
-    readonly type: typeof MarkType.MoveOut;
-}
 
 // @alpha
 export enum Multiplicity {
@@ -1535,12 +1491,6 @@ export interface ObservingDependent extends Dependent {
     // @override
     listDependees(): Iterable<Dependee>;
     registerDependee(dependee: Dependee): void;
-}
-
-// @alpha
-interface OldContent<TTree = ProtoNode> {
-    readonly detachId: DetachedNodeId;
-    readonly fields?: FieldMarks<TTree>;
 }
 
 // @alpha
@@ -1707,14 +1657,6 @@ leafValue: import("..").ValueSchema.Number;
 // @alpha
 type _RecursiveTrick = never;
 
-// @alpha
-interface Remove<TTree = ProtoNode> extends HasModifications<TTree> {
-    readonly count: number;
-    readonly detachId: DetachedNodeId;
-    // (undocumented)
-    readonly type: typeof MarkType.Remove;
-}
-
 // @alpha (undocumented)
 interface Required_2 extends FieldKind<"Value", Multiplicity.Single> {
 }
@@ -1734,19 +1676,6 @@ type RequiredFields<T> = [
     [P in keyof T as undefined extends T[P] ? never : P]: T[P];
 }
 ][_InlineTrick];
-
-// @alpha
-interface Restore<TTree = ProtoNode> extends CanReplaceContent<TTree> {
-    readonly count: number;
-    readonly fields?: FieldMarks<TTree>;
-    // (undocumented)
-    readonly newContent: {
-        readonly restoreId: DetachedNodeId;
-        readonly detachId?: DetachedNodeId;
-    };
-    // (undocumented)
-    readonly type: typeof MarkType.Restore;
-}
 
 // @alpha
 type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
@@ -1779,7 +1708,7 @@ export enum RevertResult {
 }
 
 // @alpha
-type Root<TTree = ProtoNode> = FieldMarks<TTree>;
+type Root<TTree = ProtoNode> = FieldMap<TTree>;
 
 // @alpha
 export interface RootField {
@@ -2067,9 +1996,6 @@ export function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter
 
 // @alpha
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
-
-// @alpha
-type Skip = number;
 
 // @alpha
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
