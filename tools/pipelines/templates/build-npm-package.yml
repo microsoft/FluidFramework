@@ -278,7 +278,7 @@ stages:
 
         - template: include-use-node-version.yml
 
-        - template: include-install.yml 
+        - template: include-install.yml
           parameters:
             packageManager: ${{ parameters.packageManager }}
             buildDirectory: ${{ parameters.buildDirectory }}
@@ -299,7 +299,7 @@ stages:
               packageTypesOverride: ${{ parameters.packageTypesOverride }}
 
         # Build and Lint
-        - template: include-build-lint.yml 
+        - template: include-build-lint.yml
           parameters:
             taskBuild: ${{ parameters.taskBuild }}
             taskLint: ${{ parameters.taskLint }}
@@ -621,9 +621,7 @@ stages:
         steps:
         - template: include-telemetry-setup.yml
           parameters:
-            buildFeedUrl: $(ado-feeds-build)
             devFeedUrl: $(ado-feeds-dev)
-            internalFeedUrl: $(ado-feeds-internal)
             officeFeedUrl: $(ado-feeds-office)
 
         - task: Bash@3

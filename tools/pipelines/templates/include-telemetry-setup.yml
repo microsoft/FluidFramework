@@ -10,12 +10,6 @@ parameters:
   type: string
   default: '$(Build.SourcesDirectory)/tools/telemetry-generator'
 
-- name: buildFeedUrl
-  type: string
-
-- name: internalFeedUrl
-  type: string
-
 - name: devFeedUrl
   type: string
 
@@ -23,21 +17,6 @@ parameters:
   type: string
 
 steps:
-# Set some variables only relevant to the steps in this template
-- task: Bash@3
-  displayName: Set variables for telemetry-generator setup
-  name: templateVariables
-  inputs:
-    targetType: 'inline'
-    ${{ if startsWith(variables['Build.SourceBranch'], 'refs/heads/test/') }}:
-      script: |
-        echo "##vso[task.setvariable variable=feed;isoutput=true]${{ parameters.internalFeedUrl }}"
-        echo "##vso[task.setvariable variable=devFeed;isoutput=true]${{ parameters.internalFeedUrl }}"
-    ${{ else }}:
-      script: |
-        echo "##vso[task.setvariable variable=feed;isoutput=true]${{ parameters.buildFeedUrl }}"
-        echo "##vso[task.setvariable variable=devFeed;isoutput=true]${{ parameters.devFeedUrl }}"
-
 # Need to checkout the repo in order to run @fluid-tools/telemetry-generator which we don't publish right now.
 - checkout: self
   clean: true
@@ -53,14 +32,8 @@ steps:
       Parameters:
         loggerPackage=${{ parameters.loggerPackage }}
         pathToTelemetryGenerator=${{ parameters.pathToTelemetryGenerator }}
-        buildFeedUrl={{ parameters.buildFeedUrl }}
         devFeedUrl={{ parameters.devFeedUrl }}
-        internalFeedUrl={{ parameters.internalFeedUrl }}
         officeFeedUrl={{ parameters.officeFeedUrl }}
-
-      Variables:
-        feed=$(templateVariables.feed)
-        devFeed=$(templateVariables.devFeed)
       "
 
 - task: Bash@3
@@ -77,12 +50,12 @@ steps:
       echo "registry=https://registry.npmjs.org" >> ./.npmrc
       echo "always-auth=false" >> ./.npmrc
 
-      echo "@fluidframework:registry=$(templateVariables.feed)" >> ./.npmrc
-      echo "@fluid-experimental:registry=$(templateVariables.feed)" >> ./.npmrc
-      echo "@fluid-tools:registry=$(templateVariables.feed)" >> ./.npmrc
-      echo "@fluid-internal:registry=$(templateVariables.devFeed)" >> ./.npmrc
-      echo "@fluid-private:registry=$(templateVariables.devFeed)" >> ./.npmrc
-      echo "@ff-internal:registry=${{ parameters.buildFeedUrl }}" >> ./.npmrc
+      echo "@fluidframework:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
+      echo "@fluid-experimental:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
+      echo "@fluid-tools:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
+      echo "@fluid-internal:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
+      echo "@fluid-private:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
+      echo "@ff-internal:registry=${{ parameters.devFeedUrl }}" >> ./.npmrc
       echo "@microsoft:registry=${{ parameters.officeFeedUrl }}" >> ./.npmrc
       echo "always-auth=true" >> ./.npmrc
       cat .npmrc

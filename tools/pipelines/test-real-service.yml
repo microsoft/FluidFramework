@@ -181,9 +181,7 @@ stages:
       steps:
       - template: templates/include-telemetry-setup.yml
         parameters:
-          buildFeedUrl: $(ado-feeds-build)
           devFeedUrl: $(ado-feeds-dev)
-          internalFeedUrl: $(ado-feeds-internal)
           officeFeedUrl: $(ado-feeds-office)
       - task: Bash@3
         displayName: Retrieve buildId results
