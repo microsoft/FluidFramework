@@ -15,12 +15,11 @@ import {
 	AllowedTypes,
 	InternalTypedSchemaTypes,
 } from "../../..";
-import { ValueSchema } from "../../../core";
+import { TreeValue, ValueSchema } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { UntypedSequenceField } from "../../../feature-libraries/schema-aware/partlyTyped";
 
 import {
-	TypedValue,
 	TypedValueOrUndefined,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAwareUtil";
@@ -31,7 +30,7 @@ import { Assume, _InlineTrick } from "../../../util";
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type ValuePropertyFromSchema<TSchema extends ValueSchema> = {
-	[valueSymbol]: TypedValue<TSchema>;
+	[valueSymbol]: TreeValue<TSchema>;
 };
 
 /**
