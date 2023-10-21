@@ -1,0 +1,122 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# NOTE: This template is specifically intended to be used for common steps required across different stages
+# of test-perf-benchmarks.yml pipeline, and assumes it has access to variables that have been defined/imported
+# in that pipeline (whether globaly or in the stage/job definitions).
+# It also downloads the test files artifact to a location that the test-perf-benchmarks.yml pipeline expects.
+
+# Some assumptions:
+# - The 'ado-feeds' variable group is imported
+
+steps:
+- task: Bash@3
+  displayName: Ensure expected variables are not empty
+  inputs:
+    targetType: 'inline'
+    script: |
+      if [ -z "$(testWorkspace)" ]; then
+        echo "##vso[task.logissue type=error;]Template expects the \"testWorkspace\" variable to have a value"
+        echo "##vso[task.complete result=Failed;]"
+      fi
+      if [ -z "$(artifactPipeline)" ]; then
+        echo "##vso[task.logissue type=error;]Template expects the \"artifactPipeline\" variable to have a value"
+        echo "##vso[task.complete result=Failed;]"
+      fi
+      if [ -z "$(artifactBuildId)" ]; then
+        echo "##vso[task.logissue type=error;]Template expects the \"artifactBuildId\" variable to have a value"
+        echo "##vso[task.complete result=Failed;]"
+      fi
+      if [ -z "$(ado-feeds-dev)" ]; then
+        echo "##vso[task.logissue type=error;]Template expects the \"ado-feeds-dev\" variable to have a value"
+        echo "##vso[task.complete result=Failed;]"
+      fi
+      if [ -z "$(ado-feeds-office)" ]; then
+        echo "##vso[task.logissue type=error;]Template expects the \"ado-feeds-office\" variable to have a value"
+        echo "##vso[task.complete result=Failed;]"
+      fi
+
+- template: include-telemetry-setup.yml
+  parameters:
+    devFeedUrl: $(ado-feeds-dev)
+    officeFeedUrl: $(ado-feeds-office)
+
+- task: Bash@3
+  displayName: Print parameter/variable values for troubleshooting
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "
+      Variables:
+        artifactPipeline=$(artifactPipeline)
+        artifactBuildId=$(artifactBuildId)
+        testWorkspace=$(testWorkspace)
+
+      Build Params
+        SourceBranch=$(Build.SourceBranch)
+      "
+
+# Download artifact with test files
+- task: DownloadPipelineArtifact@2
+  displayName: Download test files
+  inputs:
+    # It seems there's a bug and preferTriggeringPipeline is not respected.
+    # We force the behavior by explicitly specifying:
+    # - buildVersionToDownload: specific
+    # - buildId: <the id of the triggering build>
+    # preferTriggeringPipeline: true
+    source: specific
+    project: internal
+    pipeline: $(artifactPipeline)
+    buildVersionToDownload: specific
+    buildId: $(artifactBuildId)
+    artifact: test-files
+    path: $(Pipeline.Workspace)/test-files/
+    # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+    # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+
+- task: Bash@3
+  displayName: Create test directory
+  inputs:
+    targetType: 'inline'
+    script: |
+      mkdir $(testWorkspace)
+
+- task: Bash@3
+  displayName: Initialize npmrc
+  inputs:
+    targetType: 'inline'
+    workingDirectory: $(testWorkspace)
+    # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
+    script: |
+      echo Initialize package
+      npm init --yes
+
+      echo Generating .npmrc
+      echo "registry=https://registry.npmjs.org" >> ./.npmrc
+      echo "always-auth=false" >> ./.npmrc
+
+      echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
+      echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
+      echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
+      echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
+      echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
+      echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
+      echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+      cat .npmrc
+
+# Auth to internal feed
+- task: npmAuthenticate@0
+  displayName: 'npm authenticate (internal feed)'
+  inputs:
+    workingFile: $(testWorkspace)/.npmrc
+
+# Install aria-logger
+- task: Npm@1
+  displayName: 'npm install aria logger'
+  inputs:
+    workingDir: $(testWorkspace)
+    command: 'custom'
+    customCommand: 'install @ff-internal/aria-logger'
+    customRegistry: 'useNpmrc'

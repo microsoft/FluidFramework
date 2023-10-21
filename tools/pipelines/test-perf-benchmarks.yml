@@ -89,96 +89,12 @@ stages:
       - group: ado-feeds
 
       steps:
-      - template: templates/include-telemetry-setup.yml
-        parameters:
-          devFeedUrl: $(ado-feeds-dev)
-          officeFeedUrl: $(ado-feeds-office)
-
-      - task: Bash@3
-        displayName: Print parameter/variable values for troubleshooting
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo "
-            Variables:
-              artifactPipeline=$(artifactPipeline)
-              artifactBuildId=$(artifactBuildId)
-              testWorkspace=$(testWorkspace)
-              absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-
-            Build Params
-              SourceBranch=$(Build.SourceBranch)
-            "
-
-      # Download artifact with test files
-      - task: DownloadPipelineArtifact@2
-        displayName: Download test files
-        inputs:
-          # It seems there's a bug and preferTriggeringPipeline is not respected.
-          # We force the behavior by explicitly specifying:
-          # - buildVersionToDownload: specific
-          # - buildId: <the id of the triggering build>
-          # preferTriggeringPipeline: true
-          source: specific
-          project: internal
-          pipeline: ${{ variables.artifactPipeline }}
-          buildVersionToDownload: specific
-          buildId: ${{ variables.artifactBuildId }}
-          artifact: test-files
-          path: $(Pipeline.Workspace)/test-files/
-          # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-          # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
-
-      - task: Bash@3
-        displayName: Create test directory
-        inputs:
-          targetType: 'inline'
-          script: |
-            mkdir $(testWorkspace)
-
-      - task: Bash@3
-        displayName: Initialize npmrc
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(testWorkspace)
-          # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-          script: |
-            echo Initialize package
-            npm init --yes
-
-            echo Generating .npmrc
-            echo "registry=https://registry.npmjs.org" >> ./.npmrc
-            echo "always-auth=false" >> ./.npmrc
-
-            echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
-            echo "always-auth=true" >> ./.npmrc
-            cat .npmrc
-
-      # Auth to internal feed
-      - task: npmAuthenticate@0
-        displayName: 'npm authenticate (internal feed)'
-        inputs:
-          workingFile: $(testWorkspace)/.npmrc
-
-      # Install aria-logger
-      - task: Npm@1
-        displayName: 'npm install aria logger'
-        inputs:
-          workingDir: $(testWorkspace)
-          command: 'custom'
-          customCommand: 'install @ff-internal/aria-logger'
-          customRegistry: 'useNpmrc'
+      - template: templates/include-test-perf-benchmarks.yml
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
 
-        # Download artifact for package to be tested
+        # Download package with performance tests
         - task: DownloadPipelineArtifact@2
           displayName: Download test package
           inputs:
@@ -198,7 +114,7 @@ stages:
             # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
             # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
-        # Install package to be tested
+        # Install package with performance tests
         - task: Bash@3
           displayName: Install test package
           inputs:
@@ -330,96 +246,12 @@ stages:
       - group: ado-feeds
 
       steps:
-      - template: templates/include-telemetry-setup.yml
-        parameters:
-          devFeedUrl: $(ado-feeds-dev)
-          officeFeedUrl: $(ado-feeds-office)
-
-      - task: Bash@3
-        displayName: Print parameter/variable values for troubleshooting
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo "
-            Variables:
-              artifactPipeline=$(artifactPipeline)
-              artifactBuildId=$(artifactBuildId)
-              testWorkspace=$(testWorkspace)
-              absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-
-            Build Params
-              SourceBranch=$(Build.SourceBranch)
-            "
-
-      # Download Artifact - Test Files
-      - task: DownloadPipelineArtifact@2
-        displayName: Download test files
-        inputs:
-          # It seems there's a bug and preferTriggeringPipeline is not respected.
-          # We force the behavior by explicitly specifying:
-          # - buildVersionToDownload: specific
-          # - buildId: <the id of the triggering build>
-          # preferTriggeringPipeline: true
-          source: specific
-          project: internal
-          pipeline: ${{ variables.artifactPipeline }}
-          buildVersionToDownload: specific
-          buildId: ${{ variables.artifactBuildId }}
-          artifact: test-files
-          path: $(Pipeline.Workspace)/test-files/
-          # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-          # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
-
-      - task: Bash@3
-        displayName: Create test directory
-        inputs:
-          targetType: 'inline'
-          script: |
-            mkdir $(testWorkspace)
-
-      - task: Bash@3
-        displayName: Initialize npmrc
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(testWorkspace)
-          # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-          script: |
-            echo Initialize package
-            npm init --yes
-
-            echo Generating .npmrc
-            echo "registry=https://registry.npmjs.org" >> ./.npmrc
-            echo "always-auth=false" >> ./.npmrc
-
-            echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-            echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
-            echo "always-auth=true" >> ./.npmrc
-            cat .npmrc
-
-      # Auth to internal feed
-      - task: npmAuthenticate@0
-        displayName: 'npm authenticate (internal feed)'
-        inputs:
-          workingFile: $(testWorkspace)/.npmrc
-
-      # Install aria-logger
-      - task: Npm@1
-        displayName: 'npm install aria logger'
-        inputs:
-          workingDir: $(testWorkspace)
-          command: 'custom'
-          customCommand: 'install @ff-internal/aria-logger'
-          customRegistry: 'useNpmrc'
+      - template: templates/include-test-perf-benchmarks.yml
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
 
-        # Download package artifacts
+        # Download package with performance tests
         - task: DownloadPipelineArtifact@2
           displayName: Download test package
           inputs:
@@ -439,7 +271,7 @@ stages:
             # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
             # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
-        # Install test package
+        # Install package with performance tests
         - task: Bash@3
           displayName: Install test package
           inputs:
@@ -572,28 +404,9 @@ stages:
         - group: ado-feeds
 
         steps:
-        - template: templates/include-telemetry-setup.yml
-          parameters:
-            devFeedUrl: $(ado-feeds-dev)
-            officeFeedUrl: $(ado-feeds-office)
+        - template: templates/include-test-perf-benchmarks.yml
 
-        - task: Bash@3
-          displayName: Print parameter/variable values for troubleshooting
-          inputs:
-            targetType: 'inline'
-            script: |
-              echo "
-              Variables:
-                artifactPipeline=$(artifactPipeline)
-                artifactBuildId=$(artifactBuildId)
-                testWorkspace=$(testWorkspace)
-                absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-
-              Build Params
-                SourceBranch=$(Build.SourceBranch)
-              "
-
-        # Download test package
+        # Download package with performance tests
         - task: DownloadPipelineArtifact@2
           displayName: Download test package
           inputs:
@@ -613,53 +426,7 @@ stages:
             # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
             # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
-        - task: Bash@3
-          displayName: Create test directory
-          inputs:
-            targetType: 'inline'
-            script: |
-              mkdir $(testWorkspace)
-
-        - task: Bash@3
-          displayName: Initialize npmrc
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(testWorkspace)
-            # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-            script: |
-              echo Initialize package
-              npm init --yes
-
-              echo Generating .npmrc
-              echo "registry=https://registry.npmjs.org" >> ./.npmrc
-              echo "always-auth=false" >> ./.npmrc
-
-              echo "@fluidframework:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@fluid-experimental:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@fluid-tools:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@fluid-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@fluid-private:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@ff-internal:registry=$(ado-feeds-dev)" >> ./.npmrc
-              echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
-              echo "always-auth=true" >> ./.npmrc
-              cat .npmrc
-
-        # Auth to internal feed
-        - task: npmAuthenticate@0
-          displayName: 'npm authenticate (internal feed)'
-          inputs:
-            workingFile: $(testWorkspace)/.npmrc
-
-        # Install aria-logger
-        - task: Npm@1
-          displayName: 'npm install aria logger'
-          inputs:
-            workingDir: $(testWorkspace)
-            command: 'custom'
-            customCommand: 'install @ff-internal/aria-logger'
-            customRegistry: 'useNpmrc'
-
-        # Install e2e test package
+        # Install package with performance tests
         - task: Bash@3
           displayName: Install Test Package
           inputs:
