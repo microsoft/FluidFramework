@@ -738,7 +738,11 @@ describe("SequenceField - Rebase", () => {
 		];
 
 		const rebased = rebase(modify, revive, tag2);
-		const expected = Change.modifyDetached(0, change, { revision: tag2, localId: brand(3) });
+		const expected = Change.modifyDetached(0, change, {
+			revision: tag2,
+			localId: brand(3),
+			adjacentCells: [{ id: brand(2), count: 2 }],
+		});
 		assert.deepEqual(rebased, expected);
 	});
 
@@ -767,7 +771,13 @@ describe("SequenceField - Rebase", () => {
 		const rebased = rebase(del, moveAndDelete);
 		const expected = [
 			{ count: 1 },
-			Mark.delete(1, brand(0), { cellId: { revision: tag1, localId: brand(1) } }),
+			Mark.delete(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells: [{ id: brand(1), count: 1 }],
+				},
+			}),
 		];
 
 		assert.deepEqual(rebased, expected);
@@ -795,7 +805,11 @@ describe("SequenceField - Rebase", () => {
 		];
 		const revive = Change.intentionalRevive(0, 1, cellId);
 		const rebased = rebase(revive, reviveMoveDelete, tag2);
-		const expected = Change.intentionalRevive(1, 1, { revision: tag2, localId: brand(2) });
+		const expected = Change.intentionalRevive(1, 1, {
+			revision: tag2,
+			localId: brand(2),
+			adjacentCells: [{ id: brand(2), count: 1 }],
+		});
 		assert.deepEqual(rebased, expected);
 	});
 
@@ -851,8 +865,9 @@ describe("SequenceField - Rebase", () => {
 				Mark.insert(1, {
 					localId: brand(0),
 					lineage: [
+						{ revision: tag2, id: brand(0), count: 1, offset: 1 },
 						{ revision: tag1, id: brand(0), count: 2, offset: 2 },
-						{ revision: tag2, id: brand(0), count: 2, offset: 1 },
+						{ revision: tag2, id: brand(1), count: 1, offset: 0 },
 					],
 				}),
 			];

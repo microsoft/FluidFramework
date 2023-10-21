@@ -766,13 +766,14 @@ export class ModularChangeFamily
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number => {
+	const getIndex = (revision: RevisionTag): number | undefined => {
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
-		return index;
+		return index >= 0 ? index : undefined;
 	};
 	const getInfo = (revision: RevisionTag): RevisionInfo => {
-		return revInfos[getIndex(revision)];
+		const index = getIndex(revision);
+		assert(index !== undefined, "Unknown revisions");
+		return revInfos[index];
 	};
 	return { getIndex, getInfo };
 }

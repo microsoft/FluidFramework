@@ -210,7 +210,7 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
  * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
  * @alpha
  */
-export type RevisionIndexer = (tag: RevisionTag) => number;
+export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 
 /**
  * @alpha

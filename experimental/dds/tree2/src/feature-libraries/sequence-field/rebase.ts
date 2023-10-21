@@ -381,6 +381,9 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 ): Mark<TNodeChange> {
 	let rebasedMark = currMark;
 	if (markEmptiesCells(baseMark)) {
+		assert(isDetach(baseMark), 0x70b /* Only detach marks should empty cells */);
+		const baseCellId = getDetachCellId(baseMark, baseRevision, metadata);
+
 		// TODO: Should also check if this is a transient move source
 		if (isMoveSource(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
@@ -391,7 +394,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 					getEndpoint(baseMark, baseRevision),
 					baseMark.count,
 				);
-				return { count: 0 };
+				return { count: baseMark.count, cellId: cloneCellId(baseCellId) };
 			}
 
 			const modify = rebasedMark.changes;
@@ -434,8 +437,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 				);
 			}
 		}
-		assert(isDetach(baseMark), 0x70b /* Only detach marks should empty cells */);
-		const baseCellId = getDetachCellId(baseMark, baseRevision, metadata);
+
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
 		if (isMoveMark(rebasedMark)) {
@@ -462,9 +464,10 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		}
 		rebasedMark = withCellId(rebasedMark, undefined);
 	} else if (isTransientEffect(baseMark)) {
+		assert(baseMark.cellId !== undefined, "Transient mark should target an empty cell");
 		rebasedMark = rebaseMarkIgnoreChild(
 			rebasedMark,
-			{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
+			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
 			baseRevision,
 			metadata,
 			moveEffects,
@@ -728,13 +731,13 @@ function handleLineage<T>(
 	const index = cellRevision !== undefined ? metadata.getIndex(cellRevision) : undefined;
 
 	for (const entry of lineageEntries) {
-		if (index === undefined || index < metadata.getIndex(entry.revision)) {
+		if (index === undefined || index < getKnownRevisionIndex(entry.revision, metadata)) {
 			addLineageEntry(lineageHolder, entry.revision, entry.id, entry.count, entry.count);
 		}
 	}
 
 	for (const [revision, detachBlock] of detachBlocks.entries()) {
-		if (index === undefined || index < metadata.getIndex(revision)) {
+		if (index === undefined || index < getKnownRevisionIndex(revision, metadata)) {
 			for (const entry of detachBlock) {
 				addLineageEntry(lineageHolder, revision, entry.id, entry.count, entry.count);
 			}
@@ -792,17 +795,10 @@ function addLineageEntry(
 	lineageHolder.lineage.push({ revision, id, count, offset });
 }
 
-function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: RevisionTag) {
-	if (lineageHolder.lineage === undefined) {
-		return;
-	}
-
-	lineageHolder.lineage = lineageHolder.lineage.filter(
-		(event) => event.revision !== revisionToRemove,
-	);
-	if (lineageHolder.lineage.length === 0) {
-		delete lineageHolder.lineage;
-	}
+function getKnownRevisionIndex(revision: RevisionTag, metadata: RevisionMetadataSource): number {
+	const index = metadata.getIndex(revision);
+	assert(index !== undefined, "Unknown revision");
+	return index;
 }
 
 function addIdRange(lineageEntries: IdRange[], range: IdRange): void {
