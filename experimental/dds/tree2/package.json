@@ -126,13 +126,7 @@
 		"disabled": true,
 		"broken": {}
 	},
-	"pnpm": {
-		"comments": [
-			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details.",
-			"Done in this package.json in addition to the one at the root of the repo because the performance benchmarks pipeline does a 'pnpm i' directly on this package."
-		],
-		"overrides": {
-			"nodegit": "npm:empty-npm-package@1.0.0"
-		}
+	"overrides": {
+		"nodegit": "npm:empty-npm-package@1.0.0"
 	}
 }
