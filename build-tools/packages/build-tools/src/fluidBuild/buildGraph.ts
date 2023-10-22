@@ -125,7 +125,7 @@ export class BuildPackage {
 			if (
 				// Only enable release group root script if it is explicitly defined, for places that don't use it yet
 				!isReleaseGroupRootScriptEnabled ||
-				// if there is no script or the script starts with "fluid-build", the use the default
+				// if there is no script or the script starts with "fluid-build", then use the default
 				script === undefined ||
 				script.startsWith("fluid-build ")
 			) {
