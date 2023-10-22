@@ -21,8 +21,9 @@ export interface TaskExec {
 }
 
 export abstract class Task {
-	public dependentTasks?: Task[];
-	private _transitiveDependentLeafTasks: LeafTask[] | undefined | null;
+	private initializedDependsOnTasks = false;
+	public readonly dependentTasks: Task[] = [];
+
 	public static createTaskQueue(): AsyncPriorityQueue<TaskExec> {
 		return priorityQueue(async (taskExec: TaskExec) => {
 			const waitTime = (Date.now() - taskExec.queueTime) / 1000;
@@ -61,51 +62,22 @@ export abstract class Task {
 	// See `BuildPackage.createTasks`
 	public initializeDependentTasks(pendingInitDep: Task[]) {
 		// This function should only be called once
-		assert.strictEqual(this.dependentTasks, undefined);
+		assert.strictEqual(this.initializedDependsOnTasks, false);
 		// This function should only be called by task with task names
 		assert.notStrictEqual(this.taskName, undefined);
+
+		this.initializedDependsOnTasks = true;
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.dependentTasks = this.node.getDependsOnTasks(this, this.taskName!, pendingInitDep);
+		const dependOnTasks = this.node.getDependsOnTasks(this, this.taskName!, pendingInitDep);
+		this.dependentTasks.push(...dependOnTasks);
 	}
 
-	protected get transitiveDependentLeafTask() {
-		if (this._transitiveDependentLeafTasks === null) {
-			// Circular dependency, start unrolling
-			throw [this];
+	protected collectDependentLeafTasks(): Set<LeafTask> {
+		const leafTasks = new Set<LeafTask>();
+		for (const dependentTask of this.dependentTasks) {
+			dependentTask.collectLeafTasks(leafTasks);
 		}
-		try {
-			if (this._transitiveDependentLeafTasks === undefined) {
-				const dependentTasks = this.dependentTasks;
-				this._transitiveDependentLeafTasks = null;
-				if (dependentTasks) {
-					const s = new Set<LeafTask>();
-					for (const dependentTask of dependentTasks) {
-						dependentTask.transitiveDependentLeafTask.forEach((t) => s.add(t));
-						dependentTask.collectLeafTasks(s);
-					}
-					this._transitiveDependentLeafTasks = [...s.values()];
-				} else {
-					// Only unnamed sub task from a group task doesn't the dependentTasks initialized
-					this._transitiveDependentLeafTasks = [];
-					assert.strictEqual(this.taskName, undefined);
-				}
-			}
-			return this._transitiveDependentLeafTasks;
-		} catch (e) {
-			if (Array.isArray(e)) {
-				// Add to the dependency chain
-				e.push(this);
-				if (e[0] === this) {
-					// detected a cycle, convert into a message
-					throw new Error(
-						`Circular dependency in dependent tasks: ${e
-							.map((v) => v.nameColored)
-							.join("->")}`,
-					);
-				}
-			}
-			throw e;
-		}
+		return leafTasks;
 	}
 
 	public async run(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {

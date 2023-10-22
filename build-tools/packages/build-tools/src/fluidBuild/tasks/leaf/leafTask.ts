@@ -37,8 +37,8 @@ interface TaskExecResult extends ExecAsyncResult {
 }
 
 export abstract class LeafTask extends Task {
-	// initialize during initializeDependentLeafTasks
-	private dependentLeafTasks?: Set<LeafTask>;
+	private initializedDependentLeafTasks = false;
+	private readonly dependentLeafTasks = new Set<LeafTask>();
 
 	// set of direct parent that this task will unblock
 	private directParentLeafTasks: LeafTask[] = [];
@@ -53,24 +53,20 @@ export abstract class LeafTask extends Task {
 	}
 
 	public initializeDependentLeafTasks() {
-		this.ensureDependentLeafTasks();
-	}
-
-	private ensureDependentLeafTasks() {
-		if (this.dependentLeafTasks === undefined) {
-			this.dependentLeafTasks = new Set();
-			this.addDependentLeafTasks(this.transitiveDependentLeafTask);
+		// initializeDependentLeafTask may get call multiple times because of inclusion
+		// as subtasks in group tasks
+		if (!this.initializedDependentLeafTasks) {
+			this.initializedDependentLeafTasks = true;
+			this.addDependentLeafTasks(this.collectDependentLeafTasks());
 		}
-		return this.dependentLeafTasks;
 	}
 
 	public addDependentLeafTasks(dependentLeafTasks: Iterable<LeafTask>): void {
-		const dependentLeafTaskSet = this.ensureDependentLeafTasks();
 		for (const task of dependentLeafTasks) {
-			if (!dependentLeafTaskSet.has(task)) {
-				dependentLeafTaskSet.add(task);
-				task.directParentLeafTasks.push(this);
+			if (!this.dependentLeafTasks.has(task)) {
 				traceTaskInitDep(`${this.nameColored} -> ${task.nameColored}`);
+				this.dependentLeafTasks.add(task);
+				task.directParentLeafTasks.push(this);
 			}
 		}
 	}
@@ -80,6 +76,7 @@ export abstract class LeafTask extends Task {
 	}
 
 	public initializeWeight() {
+		assert.strictEqual(this.initializedDependentLeafTasks, true);
 		if (this.parentWeight === -1) {
 			this.parentWeight = this.computeParentWeight() + this.taskWeight;
 			traceTaskInitWeight(`${this.nameColored}: ${this.parentWeight}`);
@@ -95,6 +92,8 @@ export abstract class LeafTask extends Task {
 		return sum;
 	}
 
+	// Gather all tasks that depending on this task, so we can use it compute the weight.
+	// Collecting  to make sure we don't double count the weight of the same task
 	private get parentLeafTasks(): Set<LeafTask> {
 		if (this._parentLeafTasks === null) {
 			// Circular dependency, start unrolling
@@ -117,7 +116,7 @@ export abstract class LeafTask extends Task {
 				if (e[0] === this) {
 					// detected a cycle, convert into a message
 					throw new Error(
-						`Circular dependency in parent leaf tasks: ${e
+						`Circular dependency in leaf tasks: ${e
 							.map((v) => v.nameColored)
 							.join("->")}`,
 					);

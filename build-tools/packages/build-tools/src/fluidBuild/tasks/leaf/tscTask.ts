@@ -422,7 +422,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent() {
 		try {
 			const tsBuildInfoFiles: ITsBuildInfo[] = [];
-			const tscTasks = [...this.getDependentLeafTasks()].filter(
+			const tscTasks = [...this.allDependentTasks].filter(
 				(task) => task.executable === "tsc",
 			);
 			const ownTscTasks = tscTasks.filter((task) => task.package == this.package);
