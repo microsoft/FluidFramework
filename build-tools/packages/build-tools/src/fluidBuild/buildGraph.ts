@@ -206,10 +206,14 @@ export class BuildPackage {
 		traceTaskDepTask(
 			`Expanding dependsOn: ${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`,
 		);
-		return this.getMatchedTasks(task, taskConfig.dependsOn, pendingInitDep);
+		const matchedTasks = this.getMatchedTasks(taskConfig.dependsOn, pendingInitDep);
+		matchedTasks.forEach((matchedTask) => {
+			traceTaskDepTask(`${task.nameColored} -> ${matchedTask.nameColored}`);
+		});
+		return matchedTasks;
 	}
 
-	private getMatchedTasks(task: Task, deps: string[], pendingInitDep: Task[] | undefined) {
+	private getMatchedTasks(deps: string[], pendingInitDep?: Task[]) {
 		const matchedTasks: Task[] = [];
 		for (const dep of deps) {
 			// If pendingInitDep is undefined, that mean we don't expect the task to be found, so pretend that we already found it.
@@ -222,7 +226,6 @@ export class BuildPackage {
 				for (const depPackage of this.dependentPackages) {
 					const depTask = depPackage.getTask(dep.substring(1), pendingInitDep);
 					if (depTask !== undefined) {
-						traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
 						matchedTasks.push(depTask);
 					}
 				}
@@ -232,7 +235,6 @@ export class BuildPackage {
 					if (pkg === depPackage.pkg.name) {
 						const depTask = depPackage.getTask(script, pendingInitDep);
 						if (depTask !== undefined) {
-							traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
 							matchedTasks.push(depTask);
 							found = true;
 						}
@@ -242,7 +244,6 @@ export class BuildPackage {
 			} else {
 				const depTask = this.getTask(dep, pendingInitDep);
 				if (depTask !== undefined) {
-					traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
 					matchedTasks.push(depTask);
 					found = true;
 				}
@@ -293,15 +294,12 @@ export class BuildPackage {
 				traceTaskDepTask(
 					`Expanding before: ${task.nameColored} -> ${JSON.stringify(before)}`,
 				);
-				for (const dep of before) {
-					const depTask = this.tasks.get(dep);
-					if (depTask === undefined) {
-						continue;
-					}
-					traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
+				const matchedTasks = this.getMatchedTasks(before);
+				for (const matchedTask of matchedTasks) {
+					traceTaskDepTask(`${matchedTask.nameColored} -> ${task.nameColored}`);
 					// initializeDependentTask should have been called on all the task already
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					depTask.dependentTasks!.push(task);
+					matchedTask.dependentTasks!.push(task);
 				}
 			}
 
@@ -314,9 +312,13 @@ export class BuildPackage {
 				traceTaskDepTask(
 					`Expanding after: ${task.nameColored} -> ${JSON.stringify(after)}`,
 				);
+				const matchedTasks = this.getMatchedTasks(taskConfig.after);
+				matchedTasks.forEach((matchedTask) => {
+					traceTaskDepTask(`${task.nameColored} -> ${matchedTask.nameColored}`);
+				});
 				// initializeDependentTask should have been called on all the task already
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				task.dependentTasks!.push(...this.getMatchedTasks(task, after, undefined));
+				task.dependentTasks!.push(...matchedTasks);
 			}
 		});
 	}

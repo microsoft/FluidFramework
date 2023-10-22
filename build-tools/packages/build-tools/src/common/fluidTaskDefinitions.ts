@@ -10,21 +10,45 @@ import { PackageJson } from "./npmPackage";
  * Task names are represented as property name on the object and the value the task configuration
  * (type `TaskConfig`). Task configuration can a plain array of string, presenting the task's
  * dependencies or a full description (type `TaskConfigFull`).
+ *
+ * Task Dependencies Expansion:
+ * When specify task dependencies, the following syntax is supported:
+ * - "<name>": another task within the package
+ * - "^<name>": all the task with the name in dependent packages.
+ * - "*": any other task within the package (for 'before' and 'after' only, not allowed for 'dependsOn')
+ *
+ * When task definition is augmented in the package.json itself, the dependencies can also be:
+ * - "<package>#<name>": specific dependent package's task
+ * - "...": expand to the dependencies in global fluidBuild config (default is override)
  */
 
 export type TaskDependencies = string[];
 export interface TaskConfig {
 	/**
 	 * Task dependencies as a plain string array. Matched task will be scheduled to run before the current task.
-	 * The strings specify dependencies for the task
-	 * - "<name>": another task within the package
-	 * - "^<name>": all the task with the name in dependent packages.
-	 *
-	 * When task definition is augmented in the package.json itself, the dependencies can also be:
-	 * - "<package>#<name>": specific dependent package's task
-	 * - "...": expand to the dependencies in global fluidBuild config (default is override)
+	 * The strings specify dependencies for the task. See Task Dependencies Expansion above for details.
 	 */
 	dependsOn: TaskDependencies;
+
+	/**
+	 * Tasks that needs to run before the current task (example clean). See Task Dependencies Expansion above for
+	 * details. As compared to "dependsOn", that this will only affect ordering if matched task is already
+	 * scheduled. It won't cause the matched tasks to be scheduled if it isn't already.
+	 *
+	 * Notes 'before' is disallowed for non-script tasks since it has no effect on non-script tasks because they has no
+	 * action to perform.
+	 */
+	before: TaskDependencies;
+	/**
+	 * Tasks that needs to run after the current task (example copy tasks). See Task Dependencies Expansion above for
+	 * details. As compared to "dependsOn", that this will only affect ordering if matched task is already
+	 * scheduled. It won't cause the matched tasks to be scheduled if it isn't already.
+	 *
+	 * Notes 'after' is disallowed for non-script tasks since it has no effect on non-script tasks because they has no
+	 * action to perform.
+	 */
+	after: TaskDependencies;
+
 	/**
 	 * Specify whether this is a script task or not. Default to true when this is omitted
 	 * in the config file, or the task's config is just a plain string array.
@@ -36,40 +60,6 @@ export interface TaskConfig {
 	 * It can be used as an alias to a group of tasks.
 	 */
 	script: boolean;
-	/**
-	 * Tasks that needs to run before the current task (example clean)
-	 * - "<name>": another task within the package
-	 * - "*": any other task within the package
-	 *
-	 * When task definition is augmented in the package.json itself, the dependencies can also be:
-	 * - "...": expand to the "before" in the global fluidBuild config
-	 *
-	 * As compared to "dependsOn", that this will only affect ordering if matched task is already
-	 * scheduled. It won't cause the matched tasks to be scheduled if it isn't already.
-	 *
-	 * Notes:
-	 * - "^" and "#" are not supported in "before" to avoid dependency inversion, where dependent
-	 *   package's task is dependent on parent package's task.
-	 * - 'before' has no effect on non-script tasks and is disallowed.
-	 */
-	before: TaskDependencies;
-	/**
-	 * Tasks that needs to run after the current task (example copy tasks)
-	 * - "<name>": another task within the package
-	 * - "*": any other task within the package
-	 * - "^<name>": all the task with the name in dependent packages.
-	 *
-	 * When task definition is augmented in the package.json itself, the dependencies can also be:
-	 * - "<package>#<name>": specific dependent package's task
-	 * - "...": expand to the "before" in the global fluidBuild config
-	 *
-	 * As compared to "dependsOn", that this will only affect ordering if matched task is already
-	 * scheduled. It won't cause the matched tasks to be scheduled if it isn't already.
-	 *
-	 * Notes:
-	 * - 'after' has no effect on non-script tasks and is disallowed.
-	 */
-	after: TaskDependencies;
 }
 
 export interface TaskDefinitions {
@@ -141,7 +131,7 @@ export function normalizeGlobalTaskDefinitions(
 			);
 			detectInvalid(
 				full.before,
-				(value) => value === "..." || value.includes("#") || value.startsWith("^"),
+				(value) => value === "..." || value.includes("#"),
 				name,
 				"before",
 				true,
@@ -182,32 +172,17 @@ export function getTaskDefinitions(
 		}
 		taskDefinitions[name] = { ...globalTaskDefinition };
 	}
-
+	const globalAllow = (value) =>
+		value.startsWith("^") ||
+		taskDefinitions[value] !== undefined ||
+		json.scripts?.[value] !== undefined;
+	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
 	// Only keep task or script references that exists
 	for (const name in taskDefinitions) {
 		const taskDefinition = taskDefinitions[name];
-		taskDefinition.dependsOn = taskDefinition.dependsOn.filter(
-			(value) =>
-				// allow "^" in global
-				value.startsWith("^") ||
-				taskDefinitions[value] !== undefined ||
-				json.scripts?.[value] !== undefined,
-		);
-		taskDefinition.before = taskDefinition.before.filter(
-			(value) =>
-				// allow "*" in global
-				value === "*" ||
-				taskDefinitions[value] !== undefined ||
-				json.scripts?.[value] !== undefined,
-		);
-		taskDefinition.after = taskDefinition.after.filter(
-			(value) =>
-				// allow "*" and "^" in global
-				value === "*" ||
-				value.startsWith("^") ||
-				taskDefinitions[value] !== undefined ||
-				json.scripts?.[value] !== undefined,
-		);
+		taskDefinition.dependsOn = taskDefinition.dependsOn.filter(globalAllow);
+		taskDefinition.before = taskDefinition.before.filter(globalAllowExpansionsStar);
+		taskDefinition.after = taskDefinition.after.filter(globalAllowExpansionsStar);
 	}
 
 	const expandDotDotDot = (packageConfig, globalConfig) => {
@@ -250,44 +225,18 @@ export function getTaskDefinitions(
 	// For release group root, the default for any task is to run all the tasks in the group
 	// even if there is not task definition or script for it.
 	if (!isReleaseGroupRoot) {
+		const packageInvalid = (value) =>
+			!value.includes("#") &&
+			!value.startsWith("^") &&
+			taskDefinitions[value] === undefined &&
+			json.scripts?.[value] === undefined;
+		const packageInvalidAllowStar = (value) => value !== "*" && packageInvalid(value);
 		for (const name in taskDefinitions) {
 			const taskDefinition = taskDefinitions[name];
 			// Find any non-existent tasks or scripts in the dependencies
-			detectInvalid(
-				taskDefinition.dependsOn,
-				(value) =>
-					!value.includes("#") &&
-					!value.startsWith("^") &&
-					taskDefinitions[value] === undefined &&
-					json.scripts?.[value] === undefined,
-				name,
-				"dependsOn",
-				false,
-			);
-
-			detectInvalid(
-				taskDefinition.before,
-				(value) =>
-					value !== "*" &&
-					taskDefinitions[value] === undefined &&
-					json.scripts?.[value] === undefined,
-				name,
-				"before",
-				false,
-			);
-
-			detectInvalid(
-				taskDefinition.after,
-				(value) =>
-					value !== "*" &&
-					!value.includes("#") &&
-					!value.startsWith("^") &&
-					taskDefinitions[value] === undefined &&
-					json.scripts?.[value] === undefined,
-				name,
-				"after",
-				false,
-			);
+			detectInvalid(taskDefinition.dependsOn, packageInvalid, name, "dependsOn", false);
+			detectInvalid(taskDefinition.before, packageInvalidAllowStar, name, "before", false);
+			detectInvalid(taskDefinition.after, packageInvalidAllowStar, name, "after", false);
 		}
 	}
 	return taskDefinitions;
