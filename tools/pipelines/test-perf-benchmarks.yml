@@ -187,7 +187,7 @@ stages:
                 # TODO: remove this once the packages for which we run perf tests don't depend on good-fences anymore
                 # or we have a better solution.
                 GOOD_FENCES_FOUND=$(cat package.json | grep "good-fences" | wc -l)
-                if [[ GOOD_FENCES_FOUND == 1 ]]; then
+                if [[ $GOOD_FENCES_FOUND == 1 ]]; then
                   echo "good-fences found in package.json for '${{ testPackage }}'. Removing it to avoid nodegit install issues."
                   npm uninstall good-fences;
                 fi
