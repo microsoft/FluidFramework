@@ -230,6 +230,7 @@ module.exports = {
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
 				["depcruise", "dependency-cruiser"],
+				["copyfiles", "copyfiles"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
