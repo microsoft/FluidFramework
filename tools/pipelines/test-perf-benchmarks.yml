@@ -190,6 +190,8 @@ stages:
                 if [[ $GOOD_FENCES_FOUND == 1 ]]; then
                   echo "good-fences found in package.json for '${{ testPackage }}'. Removing it to avoid nodegit install issues."
                   npm uninstall good-fences;
+                  echo "Deleting fence.spec.ts files to avoid compilation issues."
+                  rm **/fence.spec.ts;
                 fi
 
                 npm i;
