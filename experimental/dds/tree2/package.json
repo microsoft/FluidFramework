@@ -125,8 +125,5 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	},
-	"overrides": {
-		"nodegit": "npm:empty-npm-package@1.0.0"
 	}
 }
