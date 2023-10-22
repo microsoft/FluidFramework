@@ -191,7 +191,8 @@ stages:
                   echo "good-fences found in package.json for '${{ testPackage }}'. Removing it to avoid nodegit install issues."
                   npm uninstall good-fences;
                   echo "Deleting fence.spec.js files that use good-fences."
-                  rm **/fence.spec.js;
+                  # 'rm **/fence.spec.js' works in zsh but not bash
+                  find . -type f -name 'fence.spec.js' -delete;
                 fi
 
                 npm i;
