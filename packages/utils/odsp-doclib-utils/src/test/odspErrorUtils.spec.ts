@@ -35,6 +35,8 @@ describe("OdspErrorUtils", () => {
 				400 /* statusCode */,
 				undefined /* retryAfterSeconds */,
 			);
+
+			assert("statusCode" in networkError);
 			assert(
 				networkError.errorType === DriverErrorTypes.genericNetworkError,
 				"Error should be a genericNetworkError",

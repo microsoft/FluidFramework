@@ -174,7 +174,6 @@ export interface ISnapshotOptions {
     channels?: number;
     // (undocumented)
     deltas?: number;
-    // (undocumented)
     mds?: number;
     // (undocumented)
     timeout?: number;

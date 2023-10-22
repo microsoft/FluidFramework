@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { createOdspNetworkError, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import { NonRetryableError } from "@fluidframework/driver-utils";
-import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions";
+import { IFluidErrorBase } from "@fluidframework/telemetry-utils";
+import {
+	OdspError,
+	OdspErrorTypes,
+	IOdspErrorAugmentations,
+} from "@fluidframework/odsp-driver-definitions";
+import { DriverError } from "@fluidframework/driver-definitions";
 import { IOdspSocketError } from "../contracts";
 import { fetchAndParseAsJSONHelper, getWithRetryForTokenRefresh } from "../odspUtils";
 import { errorObjectFromSocketError } from "../odspError";
@@ -28,6 +34,15 @@ describe("Odsp Error", () => {
 			},
 		},
 	} as Response;
+
+	/**
+	 * Checks is the networkError has type of {@link IFluidErrorBase} & {@link IThrottlingWarning} & {@link IOdspErrorAugmentations}.
+	 */
+	function hasValidType(
+		input: Partial<IFluidErrorBase & { errorType: any }>,
+	): input is DriverError & IOdspErrorAugmentations {
+		return !(input.errorType in OdspErrorTypes); // This line ensures that errorType is not one of the OdspErrorTypes.
+	}
 
 	function createOdspNetworkErrorWithResponse(
 		errorMessage: string,
@@ -78,7 +93,10 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "disconnect");
-		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
+		if (
+			networkError.errorType !== OdspErrorTypes.genericNetworkError ||
+			!hasValidType(networkError)
+		) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
@@ -100,9 +118,13 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
+		if (
+			networkError.errorType !== OdspErrorTypes.genericNetworkError ||
+			!hasValidType(networkError)
+		) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
+			console.log(networkError);
 			assert(
 				networkError.message.includes("error"),
 				"error message should include handler name",
@@ -132,7 +154,10 @@ describe("Odsp Error", () => {
 			},
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (networkError.errorType !== OdspErrorTypes.genericNetworkError) {
+		if (
+			networkError.errorType !== OdspErrorTypes.genericNetworkError ||
+			!hasValidType(networkError)
+		) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
@@ -161,7 +186,10 @@ describe("Odsp Error", () => {
 			retryAfter: 10,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
-		if (networkError.errorType !== OdspErrorTypes.throttlingError) {
+		if (
+			networkError.errorType !== OdspErrorTypes.throttlingError ||
+			!hasValidType(networkError)
+		) {
 			assert.fail("networkError should be a throttlingError");
 		} else {
 			assert(
