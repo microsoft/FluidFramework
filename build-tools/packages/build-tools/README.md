@@ -157,7 +157,7 @@ For example:
 {
 	"fluidBuild": {
 		"tasks": {
-         "build": ["...", "build:docs", "copy:docs"]
+			"build": ["...", "build:docs", "copy:docs"],
 			"tsc": ["...", "typetests:gen"], // Depends on "typetests:gen", including dependencies
 			// in default definition (i.e. "^tsc" in the above example)
 			"build:test": [
