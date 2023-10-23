@@ -4,7 +4,7 @@
  */
 
 import { fail } from "../../../util";
-import { TreeNodeSchema } from "../../typed-schema";
+import { InternalTypedSchemaTypes, TreeNodeSchema } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeNode, TreeStatus } from "../editableTreeTypes";
 import { getProxyForNode } from "./proxies";
@@ -30,7 +30,8 @@ export const nodeAPi = {
 	 * }
 	 * ```
 	 */
-	is: <TSchema extends TreeNodeSchema>(
+	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
+	is: <TSchema extends TreeNodeSchema<string, InternalTypedSchemaTypes.TreeSchemaSpecification>>(
 		value: unknown,
 		schema: TSchema,
 	): value is ProxyNode<TSchema> => {
