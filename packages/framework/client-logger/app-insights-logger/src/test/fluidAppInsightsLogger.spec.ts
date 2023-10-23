@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import type Sinon from "sinon";
 import { assert as sinonAssert, spy } from "sinon";
-import { FluidAppInsightsLogger, TelemetryEventCategory } from "../fluidAppInsightsLogger";
+import { FluidAppInsightsLogger } from "../fluidAppInsightsLogger";
 
 describe("FluidAppInsightsLogger", () => {
 	it("send() routes telemetry events to ApplicationInsights.trackEvent", () => {
@@ -61,7 +61,7 @@ describe("Telemetry Filter - filter mode", () => {
 		});
 
 		const perfCategoryEvent = {
-			category: TelemetryEventCategory.Performance,
+			category: "performance",
 			eventName: "perfCategoryEventName",
 		};
 
@@ -81,7 +81,7 @@ describe("Telemetry Filter - filter mode", () => {
 		});
 
 		const perfCategoryEvent = {
-			category: TelemetryEventCategory.Performance,
+			category: "performance",
 			eventName: "perfCategoryEventName",
 		};
 		for (let i = 0; i < 10; i++) {
@@ -114,25 +114,25 @@ describe("Telemetry Filter - Category filtering", () => {
 				mode: "exclusive",
 				filters: [
 					{
-						category: TelemetryEventCategory.Performance,
+						category: "performance",
 					},
 					{
-						category: TelemetryEventCategory.Generic,
+						category: "generic",
 					},
 				],
 			},
 		});
 
 		const errorCategoryEvent = {
-			category: TelemetryEventCategory.Error,
+			category: "error",
 			eventName: "errorCategoryEventName",
 		};
 		const perfCategoryEvent = {
-			category: TelemetryEventCategory.Performance,
+			category: "performance",
 			eventName: "perfCategoryEventName",
 		};
 		const genericCategoryEvent = {
-			category: TelemetryEventCategory.Generic,
+			category: "generic",
 			eventName: "genericCategoryEventName",
 		};
 
@@ -161,25 +161,25 @@ describe("Telemetry Filter - Category filtering", () => {
 				mode: "inclusive",
 				filters: [
 					{
-						category: TelemetryEventCategory.Performance,
+						category: "performance",
 					},
 					{
-						category: TelemetryEventCategory.Generic,
+						category: "generic",
 					},
 				],
 			},
 		});
 
 		const errorCategoryEvent = {
-			category: TelemetryEventCategory.Error,
+			category: "error",
 			eventName: "errorCategoryEventName",
 		};
 		const perfCategoryEvent = {
-			category: TelemetryEventCategory.Performance,
+			category: "performance",
 			eventName: "perfCategoryEventName",
 		};
 		const genericCategoryEvent = {
-			category: TelemetryEventCategory.Generic,
+			category: "generic",
 			eventName: "genericCategoryEventName",
 		};
 

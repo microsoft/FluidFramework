@@ -8,25 +8,7 @@ import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-
-/**
- * An Enum of Fluid telemetry event categories
- *
- * @public
- */
-export const TelemetryEventCategory = {
-	Performance: "performance",
-	Generic: "generic",
-	Error: "error",
-} as const;
-
-/**
- * {@inheritDoc (TelemetryEventCategory:variable)}
- *
- * @public
- */
-export type TelemetryEventCategory =
-	(typeof TelemetryEventCategory)[keyof typeof TelemetryEventCategory];
+import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
 
 /**
  * The configuration object for the {@link FluidAppInsightsLogger}
@@ -63,13 +45,10 @@ export interface FluidAppInsightsLoggerConfig {
  */
 export interface TelemetryFilter {
 	/**
-	 * The category {@link (TelemetryEventCategory:type)} of telemetry event that this filter applies to
+	 * The category of telemetry event that this filter applies to
 	 */
 	category: TelemetryEventCategory;
 }
-
-// Questions:
-// Do log namespaces include the category as well? Or are they separate?
 
 /**
  * An implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger | ITelemetryBaseLogger}
