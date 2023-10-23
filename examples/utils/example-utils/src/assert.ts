@@ -6,7 +6,7 @@
 /**
  * A browser friendly assert library.
  *
- * @param condition - The condition that should be true, if the condition is false an error will be thrown.
+ * @param condition - The condition that should be true. If the condition is false, an error will be thrown.
  * Only use this API when `false` indicates a logic error in the problem and thus a bug that should be fixed.
  * @param message - The message to include in the error when the condition does not hold.
  *
