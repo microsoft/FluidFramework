@@ -31,6 +31,7 @@ export interface FluidAppInsightsLoggerConfig {
 		mode: "inclusive" | "exclusive";
 		/**
 		 * Controls the default filtering of log events by their category.
+		 * Leaving this undefined will be treated as an empty array.
 		 */
 		filters?: TelemetryFilter[];
 	};
