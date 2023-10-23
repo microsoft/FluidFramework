@@ -36,6 +36,7 @@ export const nodeAPi = {
 	 * }
 	 * ```
 	 */
+	// TODO: Fix this type mess after we understand why API-extractor is non-determistic here. It should just be "TreeNodeSchema"
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 	is: <
 		TSchema extends TreeNodeSchema<
