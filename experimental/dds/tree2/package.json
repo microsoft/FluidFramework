@@ -11,6 +11,38 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/tree2-untrimmed.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/tree2-untrimmed.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+    "./alpha": {
+			"import": {
+				"types": "./lib/tree2-alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/tree2-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+    "./beta": {
+			"import": {
+				"types": "./lib/tree2-beta.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/tree2-beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
@@ -20,7 +52,9 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "npm run build:docs:commonjs && npm run build:docs:esnext",
+		"build:docs:commonjs": "api-extractor run --local",
+		"build:docs:esnext": "api-extractor run --local --config api-extractor.esnext.json",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
@@ -124,5 +158,11 @@
 	"typeValidation": {
 		"disabled": true,
 		"broken": {}
-	}
+	},
+  "build:docs": {
+    "dependsOn": ["build:docs:commonjs", "build:docs:esnext"],
+    "script": false
+  },
+  "build:docs:commonjs": ["tsc"],
+  "build:docs:esnext": ["build:esnext"]
 }
