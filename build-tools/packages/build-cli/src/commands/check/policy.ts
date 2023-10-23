@@ -196,7 +196,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			filePathsToCheck.push(...gitFiles.split("\n"));
 		}
 
-		const config: CheckPolicyCommandContext = {
+		const commandContext: CheckPolicyCommandContext = {
 			pathRegex,
 			exclusions,
 			handlers: handlersToRun,
@@ -204,18 +204,18 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			gitRoot,
 		};
 
-		await this.executePolicy(filePathsToCheck, config);
+		await this.executePolicy(filePathsToCheck, commandContext);
 	}
 
 	private async executePolicy(
 		pathsToCheck: string[],
-		config: CheckPolicyCommandContext,
+		commandContext: CheckPolicyCommandContext,
 	): Promise<void> {
 		try {
-			pathsToCheck.map((line: string) => this.handleLine(line, config));
+			pathsToCheck.map((line: string) => this.handleLine(line, commandContext));
 		} finally {
 			try {
-				runPolicyCheck(config, this.flags.fix);
+				runPolicyCheck(commandContext, this.flags.fix);
 			} finally {
 				this.logStats();
 			}
@@ -223,11 +223,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	}
 
 	/**
-	 * Routes files to their handlers by regex testing their full paths. synchronize output, exit code, and resolve
+	 * Routes files to their handlers by regex testing their full paths. Synchronize the output, exit code, and resolve
 	 * decision for all handlers.
 	 */
-	private routeToHandlers(file: string, config: CheckPolicyCommandContext): void {
-		const { handlers, handlerExclusions, gitRoot } = config;
+	private routeToHandlers(file: string, commandContext: CheckPolicyCommandContext): void {
+		const { handlers, handlerExclusions, gitRoot } = commandContext;
 
 		handlers
 			.filter((handler) => handler.match.test(file))
@@ -286,8 +286,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	private handleLine(line: string, config: CheckPolicyCommandContext): void {
-		const { exclusions, gitRoot, pathRegex } = config;
+	private handleLine(line: string, commandContext: CheckPolicyCommandContext): void {
+		const { exclusions, gitRoot, pathRegex } = commandContext;
 
 		const filePath = path.join(gitRoot, line).trim().replace(/\\/g, "/");
 
@@ -302,7 +302,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		try {
-			this.routeToHandlers(filePath, config);
+			this.routeToHandlers(filePath, commandContext);
 		} catch (error: unknown) {
 			throw new Error(`Line error: ${error}`);
 		}
@@ -324,8 +324,8 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	return result;
 }
 
-function runPolicyCheck(config: CheckPolicyCommandContext, fix: boolean): void {
-	const { gitRoot, handlers } = config;
+function runPolicyCheck(commandContext: CheckPolicyCommandContext, fix: boolean): void {
+	const { gitRoot, handlers } = commandContext;
 	for (const h of handlers) {
 		const { final } = h;
 		if (final) {
