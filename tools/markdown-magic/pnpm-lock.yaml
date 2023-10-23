@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@fluidframework/build-common': ^1.1.0
+      '@fluidframework/build-common': ^2.0.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@tylerbu/markdown-magic': ^2.4.0-tylerbu-1
       chalk: ^2.4.2
@@ -13,7 +13,7 @@ importers:
       prettier: ~3.0.3
       yargs: ^17.6.2
     dependencies:
-      '@fluidframework/build-common': 1.2.0
+      '@fluidframework/build-common': 2.0.1
       '@fluidframework/eslint-config-fluid': 2.0.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 2.4.2
@@ -92,8 +92,8 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: false
 
-  /@fluidframework/build-common/1.2.0:
-    resolution: {integrity: sha512-YZFWe0fv2opDR+zSdsZDakj0ExtwCE5ztIB3/EMXOCI8DTN3HYL4Cv4j81zgxcQc+aomR4JzRSpHEIOB0eejNw==}
+  /@fluidframework/build-common/2.0.1:
+    resolution: {integrity: sha512-0oow40mp6jrePJtarVScGPbMkogmRNNvc/aIRoxYQO2iTNquQZ/WE6CpJqtabZurpJdd5zISDhie1ShFxOtXfw==}
     hasBin: true
     dev: false
 

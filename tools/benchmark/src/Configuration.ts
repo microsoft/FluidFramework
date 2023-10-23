@@ -97,10 +97,16 @@ for (const type of Object.values(TestType)) {
 export type BenchmarkArguments = Titled &
 	(BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments);
 
+/**
+ * @public
+ */
 export type CustomBenchmarkArguments = MochaExclusiveOptions &
 	CustomBenchmark &
 	BenchmarkDescription;
 
+/**
+ * @public
+ */
 export type BenchmarkRunningOptions =
 	| BenchmarkSyncArguments
 	| BenchmarkAsyncArguments
@@ -160,12 +166,18 @@ export interface BenchmarkAsyncFunction extends BenchmarkOptions {
 	benchmarkFnAsync: () => Promise<unknown>;
 }
 
+/**
+ * @public
+ */
 export interface BenchmarkTimer<T> {
 	readonly iterationsPerBatch: number;
 	readonly timer: Timer<T>;
 	recordBatch(duration: number): boolean;
 }
 
+/**
+ * @public
+ */
 export interface CustomBenchmark extends BenchmarkTimingOptions {
 	benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
 }
@@ -422,6 +434,8 @@ export function benchmarkArgumentsIsCustom(
  *
  * @param args - See {@link BenchmarkDescription} and {@link Titled}
  * @returns A formatted tagged title from the supplied `BenchmarkDescription`.
+ *
+ * @public
  */
 export function qualifiedTitle(args: BenchmarkDescription & Titled): string {
 	const benchmarkTypeTag = BenchmarkType[args.type ?? BenchmarkType.Measurement];

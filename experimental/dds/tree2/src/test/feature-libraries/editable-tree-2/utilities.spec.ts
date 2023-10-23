@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { TreeStatus } from "../../../feature-libraries";
-import { FieldKey, AnchorSet, rootFieldKey, keyAsDetachedField, applyDelta } from "../../../core";
+import { FieldKey, AnchorSet, rootFieldKey, keyAsDetachedField } from "../../../core";
 import { brand } from "../../../util";
 import {
 	detachedFieldSlot,
@@ -13,6 +13,7 @@ import {
 	treeStatusFromDetachedField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree-2/utilities";
+import { applyTestDelta } from "../../utils";
 
 describe("editable-tree-2 utilities", () => {
 	describe("treeStatusFromAnchorCache", () => {
@@ -70,7 +71,7 @@ describe("editable-tree-2 utilities", () => {
 			assert(treeStatusFromAnchorCache(anchors, anchorNode0) === TreeStatus.Removed);
 
 			// Applies a dummy delta to increment anchorSet generationNumber.
-			applyDelta(new Map([]), anchors);
+			applyTestDelta(new Map([]), anchors);
 			// Checks that the treeStatus is no longer being read from stale cache.
 			assert(treeStatusFromAnchorCache(anchors, anchorNode0) === TreeStatus.InDocument);
 		});
@@ -99,7 +100,7 @@ describe("editable-tree-2 utilities", () => {
 			assert.deepEqual(anchorNode0.slots.get(detachedFieldSlot), expectedCache);
 
 			// Applies a dummy delta to increment anchorSet generationNumber.
-			applyDelta(new Map([]), anchors);
+			applyTestDelta(new Map([]), anchors);
 
 			// Checks that the cache generationNumber is mismatched with anchorSet generationNumber.
 			assert.notEqual(

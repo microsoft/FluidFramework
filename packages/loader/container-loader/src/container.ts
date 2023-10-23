@@ -134,6 +134,8 @@ const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
+const hasBlobsSummaryTree = ".hasAttachmentBlobs";
+
 /**
  * @internal
  */
@@ -473,7 +475,11 @@ export class Container
 			container.mc.logger,
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
-				const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+				const deserializedSummary = JSON.parse(snapshot);
+				if (!isCombinedAppAndProtocolSummary(deserializedSummary, hasBlobsSummaryTree)) {
+					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
+				}
+
 				await container.rehydrateDetachedFromSnapshot(deserializedSummary);
 				return container;
 			},
@@ -580,6 +586,7 @@ export class Container
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private baseSnapshot?: ISnapshotTree;
 	private baseSnapshotBlobs?: ISerializableBlobContents;
+	private readonly _containerId: string;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -815,6 +822,8 @@ export class Container
 		const clientType = `${interactive ? "interactive" : "noninteractive"}${
 			type !== undefined && type !== "" ? `/${type}` : ""
 		}`;
+
+		this._containerId = uuid();
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
@@ -822,7 +831,7 @@ export class Container
 			properties: {
 				all: {
 					clientType, // Differentiating summarizer container from main container
-					containerId: uuid(),
+					containerId: this._containerId,
 					docId: () => this.resolvedUrl?.id,
 					containerAttachState: () => this._attachState,
 					containerLifecycleState: () => this._lifecycleState,
@@ -1178,7 +1187,7 @@ export class Container
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 		if (this.detachedBlobStorage && this.detachedBlobStorage.size > 0) {
-			combinedSummary.tree[".hasAttachmentBlobs"] = {
+			combinedSummary.tree[hasBlobsSummaryTree] = {
 				type: SummaryType.Blob,
 				content: "true",
 			};
@@ -1264,7 +1273,7 @@ export class Container
 							}, // progress
 						);
 					}
-					await this.storageAdapter.connectToService(this.service);
+					this.storageAdapter.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
@@ -1574,14 +1583,7 @@ export class Container
 			this.connectToDeltaStream(connectionArgs);
 		}
 
-		if (!pendingLocalState) {
-			await this.storageAdapter.connectToService(this.service);
-		} else {
-			// if we have pendingLocalState we can load without storage; don't wait for connection
-			this.storageAdapter.connectToService(this.service).catch((error) => {
-				this.close(error);
-			});
-		}
+		this.storageAdapter.connectToService(this.service);
 
 		this._attachState = AttachState.Attached;
 
@@ -1815,12 +1817,13 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-		if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
+		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
 			assert(
 				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
-			delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
 		}
 
 		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
@@ -2007,6 +2010,7 @@ export class Container
 		client.details.environment = [
 			client.details.environment,
 			` loaderVersion:${pkgVersion}`,
+			` containerId:${this._containerId}`,
 		].join(";");
 		return client;
 	}

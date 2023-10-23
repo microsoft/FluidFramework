@@ -22,7 +22,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	extractLogSafeErrorProperties,
@@ -37,7 +37,9 @@ import type { Socket } from "socket.io-client";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
- * Represents a connection to a stream of delta updates
+ * Represents a connection to a stream of delta updates.
+ *
+ * @public
  */
 export class DocumentDeltaConnection
 	extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>
@@ -569,6 +571,15 @@ export class DocumentDeltaConnection
 					}
 				}
 
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectDocumentSuccess",
+						pendingClientId: response.clientId,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
+
 				this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 
 				this.removeConnectionListeners();
@@ -640,8 +651,12 @@ export class DocumentDeltaConnection
 		this.queuedMessages.push(...msgs);
 	};
 
-	protected earlySignalHandler = (msg: ISignalMessage) => {
-		this.queuedSignals.push(msg);
+	protected earlySignalHandler = (msg: ISignalMessage | ISignalMessage[]) => {
+		if (Array.isArray(msg)) {
+			this.queuedSignals.push(...msg);
+		} else {
+			this.queuedSignals.push(msg);
+		}
 	};
 
 	private removeEarlyOpHandler() {

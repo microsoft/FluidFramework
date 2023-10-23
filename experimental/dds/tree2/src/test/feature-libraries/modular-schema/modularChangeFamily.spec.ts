@@ -28,6 +28,7 @@ import {
 	mintRevisionTag,
 	tagRollbackInverse,
 	assertIsRevisionTag,
+	deltaForSet,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -67,7 +68,9 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: ({ change }, deltaFromChild) => [deltaFromChild(change)],
+	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
+		local: [{ count: 1, fields: deltaFromChild(change) }],
+	}),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
@@ -90,6 +93,9 @@ const tag2: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
+
+const detachId = { minor: 424242 };
+const buildId = { minor: 424243 };
 
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
@@ -584,41 +590,24 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const valueDelta1: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
-					type: Delta.MarkType.Insert,
-					content: [singleJsonCursor(1)],
-				},
-			];
-
-			const valueDelta2: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
-					type: Delta.MarkType.Insert,
-					content: [singleJsonCursor(2)],
-				},
-			];
-
-			const nodeDelta: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					fields: new Map([[fieldA, valueDelta1]]),
-				},
-			];
+			const nodeDelta: Delta.FieldChanges = {
+				local: [
+					{
+						count: 1,
+						fields: new Map([
+							[fieldA, deltaForSet(singleJsonCursor(1), buildId, detachId)],
+						]),
+					},
+				],
+			};
 
 			const expectedDelta: Delta.Root = new Map([
 				[fieldA, nodeDelta],
-				[fieldB, valueDelta2],
+				[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
 			]);
 
-			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
+			const actual = family.intoDelta(makeAnonChange(rootChange1a));
+			assertDeltaEqual(actual, expectedDelta);
 		});
 	});
 

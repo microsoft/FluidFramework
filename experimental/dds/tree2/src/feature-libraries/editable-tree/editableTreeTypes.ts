@@ -5,7 +5,7 @@
 
 import {
 	Value,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	isCursor,
 	FieldKey,
 	ITreeCursorSynchronous,
@@ -64,7 +64,7 @@ export interface EditableTree
 	/**
 	 * The name of the node type.
 	 */
-	readonly [typeNameSymbol]: TreeSchemaIdentifier;
+	readonly [typeNameSymbol]: TreeNodeSchemaIdentifier;
 
 	/**
 	 * {@link LocalNodeKey} that identifies this node.

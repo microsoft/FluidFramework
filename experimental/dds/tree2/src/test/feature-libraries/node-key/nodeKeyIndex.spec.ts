@@ -5,9 +5,14 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { leaf, nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
 import {
 	SchemaBuilder,
+	leaf,
+	nodeKeyField,
+	nodeKeySchema,
+	nodeKeyTreeSchema,
+} from "../../../domains";
+import {
 	FieldKinds,
 	NodeKeyIndex,
 	LocalNodeKey,
@@ -17,18 +22,19 @@ import {
 	TypedField,
 	Any,
 	createMockNodeKeyManager,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKeys } from "../../../feature-libraries/editable-tree-2/nodeKeys";
 import { SummarizeType, TestTreeProvider, treeWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
-const builder = new SchemaBuilder("node key index tests", {}, nodeKeySchema);
-const nodeSchema = builder.structRecursive("node", {
+const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
+const nodeSchema = builder.objectRecursive("node", {
 	...nodeKeyField,
-	child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchema),
+	child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 });
-const nodeSchemaData = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(nodeSchema));
+const nodeSchemaData = builder.intoSchema(SchemaBuilder.optional(nodeSchema));
 
 // TODO: this can probably be removed once daesun's stuff goes in
 function contextualizeKey(view: NodeKeys, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {
@@ -61,10 +67,10 @@ describe("Node Key Index", () => {
 	it("can look up a node that was inserted", () => {
 		const view = treeWithContent({ initialTree: undefined, schema: nodeSchemaData });
 		const key = view.context.nodeKeys.generate();
-		view.setContent({
+		view.content = {
 			child: undefined,
 			...contextualizeKey(view.context.nodeKeys, key),
-		});
+		};
 		assertIds(view.context.nodeKeys, [key]);
 	});
 
@@ -75,7 +81,7 @@ describe("Node Key Index", () => {
 			view.context.nodeKeys.generate(),
 			view.context.nodeKeys.generate(),
 		];
-		view.setContent({
+		view.content = {
 			...contextualizeKey(view.context.nodeKeys, keys[0]),
 			child: {
 				...contextualizeKey(view.context.nodeKeys, keys[1]),
@@ -84,36 +90,36 @@ describe("Node Key Index", () => {
 					child: undefined,
 				},
 			},
-		});
+		};
 		assertIds(view.context.nodeKeys, keys);
 	});
 
 	it("can look up multiple nodes that were inserted over time", () => {
 		const view = createView(undefined);
 		const keyA = view.context.nodeKeys.generate();
-		view.setContent({
+		view.content = {
 			...contextualizeKey(view.context.nodeKeys, keyA),
 			child: undefined,
-		});
+		};
 
 		const node = view.context.nodeKeys.map.get(keyA);
 		assert(node !== undefined);
 		const keyB = view.context.nodeKeys.generate();
 		assert(node.is(nodeSchema));
-		node.boxedChild.setContent({
+		node.boxedChild.content = {
 			[nodeKeyFieldKey]: node.context.nodeKeys.stabilize(keyB),
 			child: undefined,
-		});
+		};
 		assertIds(view.context.nodeKeys, [keyA, keyB]);
 	});
 
 	it("forgets about nodes that are deleted", () => {
 		const view = createView(undefined);
-		view.setContent({
+		view.content = {
 			...contextualizeKey(view.context.nodeKeys, view.context.nodeKeys.generate()),
 			child: undefined,
-		});
-		view.setContent(undefined);
+		};
+		view.content = undefined;
 		assertIds(view.context.nodeKeys, []);
 	});
 
@@ -122,7 +128,7 @@ describe("Node Key Index", () => {
 		const key = view.context.nodeKeys.generate();
 		assert.throws(
 			() =>
-				view.setContent({
+				(view.content = {
 					...contextualizeKey(view.context.nodeKeys, key),
 					child: {
 						...contextualizeKey(view.context.nodeKeys, key),
@@ -139,7 +145,7 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		const view = tree.schematize({
+		tree.schematizeView({
 			initialTree: {
 				[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
 				child: undefined,
@@ -153,9 +159,8 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		const manager2 = createMockNodeKeyManager();
 		const view2 = tree2
-			.schematize({
+			.schematizeView({
 				initialTree: {
 					[nodeKeyFieldKey]: "not used",
 					child: undefined,
@@ -163,9 +168,10 @@ describe("Node Key Index", () => {
 				schema: nodeSchemaData,
 				allowedSchemaModifications: AllowedUpdateType.None,
 			})
-			.editableTree2(nodeSchemaData, manager2);
+			// Since the key was produced with a MockNodeKeyManager, we must use one to process it.
+			.editableTree2(nodeSchemaData, createMockNodeKeyManager());
 		assertIds(view2.context.nodeKeys, [
-			manager2.localizeNodeKey(manager1.stabilizeNodeKey(key)),
+			view2.context.nodeKeys.localize(manager1.stabilizeNodeKey(key)),
 		]);
 	});
 
@@ -190,24 +196,25 @@ describe("Node Key Index", () => {
 	it.skip("errors on nodes which should have keys, but do not", () => {
 		const view = createView(undefined);
 		assert.throws(
-			() =>
-				view.setContent(
-					// @ts-expect-error: Wrong type
-					{
-						child: undefined,
-					},
-				),
+			() => {
+				// @ts-expect-error: Wrong type
+				view.content = {
+					child: undefined,
+				};
+			},
 			(e: Error) => validateAssertionError(e, "Node key absent but required by schema"),
 		);
 	});
 
 	it("is disabled if node type is not in the tree schema", () => {
-		const builder2 = new SchemaBuilder("node key index test", {}, leaf.library);
-		const nodeSchemaNoKey = builder2.map("node", SchemaBuilder.fieldOptional(Any));
+		const builder2 = new SchemaBuilder({
+			scope: "test",
+			name: "node key index test",
+			libraries: [leaf.library],
+		});
+		const nodeSchemaNoKey = builder2.map("node", SchemaBuilder.optional(Any));
 
-		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
-			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
-		);
+		const nodeSchemaDataNoKey = builder2.intoSchema(SchemaBuilder.optional(nodeSchemaNoKey));
 		assert(!nodeSchemaDataNoKey.treeSchema.has(nodeKeyTreeSchema.name));
 
 		const nodeKeyManager = createMockNodeKeyManager();
@@ -238,13 +245,13 @@ describe("Node Key Index", () => {
 			batches += 1;
 		});
 
-		view.setContent({
+		view.content = {
 			...contextualizeKey(view.context.nodeKeys, key),
 			child: undefined,
-		});
+		};
 
 		expectedIds = [];
-		view.setContent(undefined);
+		view.content = undefined;
 		assert.equal(batches, 2);
 	});
 
@@ -253,12 +260,15 @@ describe("Node Key Index", () => {
 	/*
 	it.skip("reacts to schema changes", () => {
 		// This is missing the global node key field on the node
-		const builder2 = new SchemaBuilder("node key index test", {}, nodeKeySchema);
-		const nodeSchemaNoKey = builder2.structRecursive("node", {
-			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => nodeSchemaNoKey),
+		const builder2 = new SchemaBuilder({
+			scope: "node key index test",
+			libraries: [nodeKeySchema],
 		});
-		const nodeSchemaDataNoKey = builder2.intoDocumentSchema(
-			SchemaBuilder.fieldOptional(nodeSchemaNoKey),
+		const nodeSchemaNoKey = builder2.objectRecursive("node", {
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
+		});
+		const nodeSchemaDataNoKey = builder2.intoSchema(
+			SchemaBuilder.optional(nodeSchemaNoKey),
 		);
 
 		const view = createView(undefined);

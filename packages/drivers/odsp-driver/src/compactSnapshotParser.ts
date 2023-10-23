@@ -27,6 +27,7 @@ export const currentReadVersion = "1.0";
 /**
  * The parsing is significantly faster if the position of props is well known instead of dynamic. So these variables
  * represents how many times slower parsing path is executed. This will be then logged into telemetry.
+ * @public
  */
 export interface ISnapshotContentsWithProps extends ISnapshotContents {
 	telemetryProps: Record<string, number>;
@@ -216,6 +217,7 @@ function readSnapshotSection(node: NodeTypes) {
  * Converts snapshot from binary compact representation to tree/blobs/ops.
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
  * @returns Tree, blobs and ops from the snapshot.
+ * @public
  */
 export function parseCompactSnapshotResponse(
 	buffer: Uint8Array,

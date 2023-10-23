@@ -2,6 +2,18 @@
 
 This DDS is not yet ready for public consumption. For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
 
+## Status
+
+Notable consideration that early adopters should be wary of:
+
+-   The persisted format is not stable and long term support for persisted format is not yet in effect.
+    This means clients running more recent versions of SharedTree may find themselves unable to load old document or may corrupt them when editing.
+    Current estimate for LTS is April 2024.
+-   SharedTree currently has unbounded memory growth:
+    -   Removed content is retained forever.
+    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
+-   All changes are atomized by the `visitDelta` function. This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
@@ -326,14 +338,11 @@ flowchart
             schema-view
             forest-->schema-stored
             rebase-->tree
-            change-family-->repair
-            rebase-->repair
             schema-stored-->dependency-tracking
             schema-view-->schema-stored
             dependency-tracking
             forest-->tree
-            undo-->rebase
-            undo-->change-family
+            revertible-->rebase
         end
         core-->events-->util
         core-->id-compressor-->util

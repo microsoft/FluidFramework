@@ -13,7 +13,7 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
-import { InMemoryStoredSchemaRepository } from "../core";
+import { InMemoryStoredSchemaRepository, makeDetachedFieldIndex } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
@@ -23,15 +23,18 @@ import {
 	DefaultEditBuilder,
 	DefaultChangeset,
 	buildForest,
-	ForestRepairDataStoreProvider,
 	SchemaEditor,
-	ModularChangeset,
-	FieldSchema,
+	TreeFieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
+	DetachedFieldIndexSummarizer,
+	createNodeKeyManager,
+	nodeKeyFieldKey,
+	TypedField,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly } from "../util";
+import { JsonCompatibleReadOnly, brand } from "../util";
+import { type TypedTreeChannel } from "./typedTree";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 import {
 	ISharedTreeView,
@@ -48,7 +51,7 @@ import {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject {
+export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	/**
 	 * Get view without schematizing.
 	 *
@@ -83,7 +86,7 @@ export interface ISharedTree extends ISharedObject {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematize<TRoot extends FieldSchema>(
+	schematizeView<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
 }
@@ -116,18 +119,14 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
+		const removedTrees = makeDetachedFieldIndex("repair");
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
+		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
-		const repairProvider = new ForestRepairDataStoreProvider(
-			forest,
-			schema,
-			(change: ModularChangeset) => changeFamily.intoDelta(change),
-		);
 		super(
-			[schemaSummarizer, forestSummarizer],
+			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
 			changeFamily,
-			repairProvider,
 			options,
 			id,
 			runtime,
@@ -143,12 +142,12 @@ export class SharedTree
 			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
-			repairProvider,
 			events: this._events,
+			removedTrees,
 		});
 	}
 
-	public schematize<TRoot extends FieldSchema>(
+	public schematizeView<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): SharedTreeView {
 		// TODO:
@@ -157,6 +156,14 @@ export class SharedTree
 		// For now, use this as a workaround:
 		schematizeView(this.view, config, this.storedSchema);
 		return this.view;
+	}
+
+	public schematize<TRoot extends TreeFieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): TypedField<TRoot> {
+		const nodeKeyManager = createNodeKeyManager(this.runtime.idCompressor);
+		const view = this.schematizeView(config);
+		return view.editableTree2(config.schema, nodeKeyManager, brand(nodeKeyFieldKey));
 	}
 
 	/**
