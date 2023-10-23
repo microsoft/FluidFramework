@@ -128,9 +128,7 @@ export {
 	nodeKeyField,
 	nodeKeySchema,
 	leaf,
-	testRecursiveDomain,
 	SchemaBuilder,
-	FactoryObjectNodeSchema,
 } from "./domains";
 
 export {

@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { PrimitiveValueSchema, TreeNodeSchemaIdentifier, ValueSchema } from "../../core";
+import { PrimitiveValueSchema, TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core";
 import {
 	ContextuallyTypedNodeData,
 	FluidSerializableReadOnly,
@@ -30,7 +30,7 @@ import {
 } from "../untypedTree";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util";
 import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
-import { TypedValue, TypedValueOrUndefined } from "./schemaAwareUtil";
+import { TypedValueOrUndefined } from "./schemaAwareUtil";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
@@ -45,7 +45,7 @@ export type EmptyObject = {};
  * @alpha
  */
 export type ValuePropertyFromSchema<TSchema extends ValueSchema | undefined> =
-	TSchema extends ValueSchema ? { [valueSymbol]: TypedValue<TSchema> } : EmptyObject;
+	TSchema extends ValueSchema ? { [valueSymbol]: TreeValue<TSchema> } : EmptyObject;
 
 /**
  * Different schema aware APIs that can be generated.

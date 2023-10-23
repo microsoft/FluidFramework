@@ -10,7 +10,7 @@
  * Currently we do not have tooling in place to test this in our test suite, and exporting these types here is a temporary crutch to aid in diagnosing this issue.
  */
 
-import { AllowedTypes, FieldKinds, TreeFieldSchema } from "../feature-libraries";
+import { FieldKinds, TreeFieldSchema } from "../feature-libraries";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../util";
 import { leaf } from "./leafDomain";
 import { SchemaBuilder } from "./schemaBuilder";
@@ -25,11 +25,8 @@ export const recursiveObject = builder.objectRecursive("object", {
 	number: leaf.number,
 });
 
-// Some related information in https://github.com/microsoft/TypeScript/issues/55758.
-function fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
-
 const recursiveReference = () => recursiveObject2;
-fixRecursiveReference(recursiveReference);
+builder.fixRecursiveReference(recursiveReference);
 
 /**
  * @alpha

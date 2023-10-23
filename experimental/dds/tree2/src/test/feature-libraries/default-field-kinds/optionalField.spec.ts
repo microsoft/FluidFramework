@@ -12,9 +12,11 @@ import {
 	mintRevisionTag,
 	tagChange,
 	tagRollbackInverse,
+	makeDetachedNodeId,
+	FieldKey,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import { assertMarkListEqual, defaultRevisionMetadataFromChanges } from "../../utils";
+import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
@@ -39,46 +41,44 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should modify CrossFieldManager"),
 };
 
-const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.Modify => {
+const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.FieldMap => {
 	assert.deepEqual(change, nodeChange1);
-	return {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				fooKey,
-				[
+	const buildId = makeDetachedNodeId(revision, 1);
+	return new Map<FieldKey, Delta.FieldChanges>([
+		[
+			fooKey,
+			{
+				build: [{ id: buildId, trees: [testTreeCursor("nodeChange1")] }],
+				local: [
 					{
-						type: Delta.MarkType.Insert,
-						content: [testTreeCursor("nodeChange1")],
-						oldContent: {
-							detachId: { major: revision, minor: 0 },
-						},
+						count: 1,
+						detach: makeDetachedNodeId(revision, 0),
+						attach: buildId,
 					},
 				],
-			],
-		]),
-	};
+			},
+		],
+	]);
 };
 
-const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.Modify => {
+const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.FieldMap => {
 	assert.deepEqual(change, nodeChange2);
-	return {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				fooKey,
-				[
+	const buildId = makeDetachedNodeId(revision, 1);
+	return new Map<FieldKey, Delta.FieldChanges>([
+		[
+			fooKey,
+			{
+				build: [{ id: buildId, trees: [testTreeCursor("nodeChange2")] }],
+				local: [
 					{
-						type: Delta.MarkType.Insert,
-						content: [testTreeCursor("nodeChange2")],
-						oldContent: {
-							detachId: { major: revision, minor: 0 },
-						},
+						count: 1,
+						detach: makeDetachedNodeId(revision, 0),
+						attach: buildId,
 					},
 				],
-			],
-		]),
-	};
+			},
+		],
+	]);
 };
 
 const tag = mintRevisionTag();
@@ -382,76 +382,88 @@ describe("optionalField", () => {
 
 	describe("optionalFieldIntoDelta", () => {
 		it("can be converted to a delta when field was empty", () => {
-			const expected: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Insert,
-					buildId: { minor: 41 },
-					content: [testTreeCursor("tree1")],
-					fields: new Map([
-						[
-							fooKey,
+			const expected: Delta.FieldChanges = {
+				build: [{ id: { minor: 41 }, trees: [testTreeCursor("tree1")] }],
+				global: [
+					{
+						id: { minor: 41 },
+						fields: new Map<FieldKey, Delta.FieldChanges>([
 							[
+								fooKey,
 								{
-									type: Delta.MarkType.Insert,
-									content: [testTreeCursor("nodeChange1")],
-									oldContent: {
-										detachId: { major: tag, minor: 0 },
-									},
+									build: [
+										{
+											id: makeDetachedNodeId(tag, 1),
+											trees: [testTreeCursor("nodeChange1")],
+										},
+									],
+									local: [
+										{
+											count: 1,
+											attach: makeDetachedNodeId(tag, 1),
+											detach: { major: tag, minor: 0 },
+										},
+									],
 								},
 							],
-						],
-					]),
-				},
-			];
+						]),
+					},
+				],
+				local: [{ count: 1, attach: { minor: 41 } }],
+			};
 
 			const actual = optionalFieldIntoDelta(change1, (change) =>
 				deltaFromChild1(tagChange(change, tag)),
 			);
-			assertMarkListEqual(actual, expected);
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("can be converted to a delta when restoring content", () => {
-			const expected: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Restore,
-					count: 1,
-					newContent: {
-						restoreId: { major: change2.revision, minor: 2 },
+			const expected: Delta.FieldChanges = {
+				local: [
+					{
+						count: 1,
+						attach: { major: change2.revision, minor: 2 },
+						detach: { major: revertChange2.revision, minor: 2 },
 					},
-					oldContent: {
-						detachId: { major: revertChange2.revision, minor: 2 },
-					},
-				},
-			];
+				],
+			};
 
 			const actual = optionalFieldIntoDelta(revertChange2, (change) =>
 				deltaFromChild1(tagChange(change, revertChange2.revision)),
 			);
-			assertMarkListEqual(actual, expected);
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("can be converted to a delta with only child changes", () => {
-			const expected: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					fields: new Map([
-						[
-							fooKey,
+			const expected: Delta.FieldChanges = {
+				local: [
+					{
+						count: 1,
+						fields: new Map<FieldKey, Delta.FieldChanges>([
 							[
+								fooKey,
 								{
-									type: Delta.MarkType.Insert,
-									content: [testTreeCursor("nodeChange2")],
-									oldContent: {
-										detachId: { major: tag, minor: 0 },
-									},
+									build: [
+										{
+											id: { major: tag, minor: 1 },
+											trees: [testTreeCursor("nodeChange2")],
+										},
+									],
+									local: [
+										{
+											count: 1,
+											attach: { major: tag, minor: 1 },
+											detach: { major: tag, minor: 0 },
+										},
+									],
 								},
 							],
-						],
-					]),
-				},
-			];
-
-			assertMarkListEqual(
+						]),
+					},
+				],
+			};
+			assertFieldChangesEqual(
 				optionalFieldIntoDelta(change4, (change) =>
 					deltaFromChild2(tagChange(change, tag)),
 				),
