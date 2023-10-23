@@ -22,7 +22,6 @@ import {
 	OptionalField,
 	RequiredField,
 	TreeNode,
-	Typed,
 	TypedField,
 	TypedNodeUnion,
 } from "../editableTreeTypes";
@@ -99,7 +98,7 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 }
 
 export function getProxyForNode<TSchema extends TreeNodeSchema>(
-	treeNode: Typed<TSchema>,
+	treeNode: TreeNode,
 ): ProxyNode<TSchema> {
 	const schema = treeNode.schema;
 

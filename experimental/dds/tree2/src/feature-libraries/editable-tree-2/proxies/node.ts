@@ -6,7 +6,7 @@
 import { fail } from "../../../util";
 import { TreeNodeSchema } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
-import { TreeNode } from "../editableTreeTypes";
+import { TreeNode, TreeStatus } from "../editableTreeTypes";
 import { getProxyForNode } from "./proxies";
 import { ProxyNode, SharedTreeNode, getTreeNode } from "./types";
 
@@ -39,7 +39,7 @@ export const nodeAPi = {
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
-	parent: (node: SharedTreeNode) => {
+	parent: (node: SharedTreeNode): SharedTreeNode | undefined => {
 		const treeNode = assertTreeNode(node).parentField.parent.parent;
 		if (treeNode !== undefined) {
 			return getProxyForNode(treeNode);
@@ -56,13 +56,13 @@ export const nodeAPi = {
 		node: SharedTreeNode,
 		eventName: K,
 		listener: EditableTreeEvents[K],
-	) => {
+	): (() => void) => {
 		return assertTreeNode(node).on(eventName, listener);
 	},
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
-	status: (node: SharedTreeNode) => {
+	status: (node: SharedTreeNode): TreeStatus => {
 		return assertTreeNode(node).treeStatus();
 	},
 };

@@ -1368,8 +1368,8 @@ export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynch
 export const node: {
     schema: (node: SharedTreeNode) => TreeNodeSchema;
     is: <TSchema extends TreeNodeSchema<string, FlattenKeys<(MapSchemaSpecification | LeafSchemaSpecification | ObjectSchemaSpecification) & Partial<ObjectSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>>>(value: unknown, schema: TSchema) => value is ProxyNode<TSchema>;
-    parent: (node: SharedTreeNode) => unknown;
-    on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => () => void;
+    parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
+    on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => (() => void);
     status: (node: SharedTreeNode) => TreeStatus;
 };
 
