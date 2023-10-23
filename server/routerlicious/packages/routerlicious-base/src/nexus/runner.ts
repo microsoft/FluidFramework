@@ -78,34 +78,9 @@ export class NexusRunner implements IRunner {
 
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
-		httpServer.on("upgrade", (req, socket, initialMsgBuffer) => {
-			const metric = Lumberjack.newLumberMetric("WebSocket Connections", {
-				origin: "upgrade",
-				connections: socket.server._connections,
-			});
-			metric.success("WebSockets: connection upgraded");
-			socket.on("close", (hadError: boolean) => {
-				const closeMetric = Lumberjack.newLumberMetric("WebSocket Connections", {
-					origin: "close",
-					connections: socket.server._connections,
-					hadError: hadError.toString(),
-				});
-				closeMetric.success(
-					"WebSockets: connection closed",
-					hadError ? LogLevel.Error : LogLevel.Info,
-				);
-			});
-			socket.on("error", (error) => {
-				const errorMetric = Lumberjack.newLumberMetric("WebSocket Connections", {
-					origin: "error",
-					connections: socket.server._connections,
-					bytesRead: socket.bytesRead,
-					bytesWritten: socket.bytesWritten,
-					error: error.toString(),
-				});
-				errorMetric.success("WebSockets: connection error", LogLevel.Error);
-			});
-		});
+		httpServer.on("upgrade", (req, socket, initialMsgBuffer) =>
+			this.setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer),
+		);
 
 		if (cluster.isPrimary && this.server.webSocketServer === null) {
 			// Listen on provided port, on all network interfaces.
@@ -203,6 +178,39 @@ export class NexusRunner implements IRunner {
 			default:
 				throw error;
 		}
+	}
+
+	/**
+	 * Handles the on "upgrade" event to setup connection count telemetry. This telemetry is updated
+	 * on all socket events: "upgrade", "close", "error"
+	 */
+	private setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer) {
+		const metric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+			origin: "upgrade",
+			connections: socket.server._connections,
+		});
+		metric.success("WebSockets: connection upgraded");
+		socket.on("close", (hadError: boolean) => {
+			const closeMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+				origin: "close",
+				connections: socket.server._connections,
+				hadError: hadError.toString(),
+			});
+			closeMetric.success(
+				"WebSockets: connection closed",
+				hadError ? LogLevel.Error : LogLevel.Info,
+			);
+		});
+		socket.on("error", (error) => {
+			const errorMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+				origin: "error",
+				connections: socket.server._connections,
+				bytesRead: socket.bytesRead,
+				bytesWritten: socket.bytesWritten,
+				error: error.toString(),
+			});
+			errorMetric.success("WebSockets: connection error", LogLevel.Error);
+		});
 	}
 
 	/**
