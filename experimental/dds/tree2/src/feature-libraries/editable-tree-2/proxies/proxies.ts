@@ -22,34 +22,21 @@ import {
 	OptionalField,
 	RequiredField,
 	TreeNode,
-	Typed,
 	TypedField,
 	TypedNodeUnion,
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
-import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
+import {
+	ProxyField,
+	ProxyNode,
+	SharedTreeList,
+	SharedTreeObject,
+	getTreeNode,
+	setTreeNode,
+} from "./types";
 import { getFactoryContent } from "./objectFactory";
-import { createNodeApi, nodeSym } from "./node";
-
-/** Symbol used to store a private/internal reference to the underlying editable tree node. */
-const treeNodeSym = Symbol("TreeNode");
-
-/** Helper to retrieve the stored tree node. */
-export function getTreeNode(target: object): TreeNode {
-	return (target as any)[treeNodeSym] as TreeNode;
-}
-
-/** Helper to set the stored tree node. */
-export function setTreeNode(target: any, treeNode: TreeNode) {
-	Object.defineProperty(target, treeNodeSym, {
-		value: treeNode,
-		writable: false,
-		enumerable: false,
-		configurable: false,
-	});
-}
 
 const proxyCacheSym = Symbol("ProxyCache");
 
@@ -69,18 +56,6 @@ function cacheProxy(
 /** If there has already been a proxy created to wrap the given tree node, return it */
 function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefined {
 	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeNodeSchema> })[proxyCacheSym];
-}
-
-/**
- * Checks if the given object is a {@link SharedTreeObject}
- * @alpha
- */
-export function is<TSchema extends ObjectNodeSchema>(
-	x: unknown,
-	schema: TSchema,
-): x is SharedTreeObject<TSchema> {
-	// TODO: Do this a better way. Perhaps, should `treeNodeSym` be attached to object proxies via `setTreeNode`?
-	return (x as any)[treeNodeSym].schema === schema;
 }
 
 /** Retrieve the associated proxy for the given field. */
@@ -123,7 +98,7 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 }
 
 export function getProxyForNode<TSchema extends TreeNodeSchema>(
-	treeNode: Typed<TSchema>,
+	treeNode: TreeNode,
 ): ProxyNode<TSchema> {
 	const schema = treeNode.schema;
 
@@ -152,8 +127,6 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
-	const nodeApi = createNodeApi(content);
-
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
 	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
@@ -161,7 +134,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	return new Proxy(
+	const proxy = new Proxy(
 		{},
 		{
 			get(target, key): unknown {
@@ -169,14 +142,8 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 				if (field !== undefined) {
 					return getProxyForField(field);
 				}
-				switch (key) {
-					case treeNodeSym:
-						return content;
-					case nodeSym:
-						return nodeApi;
-					default:
-						return Reflect.get(target, key);
-				}
+
+				return Reflect.get(target, key);
 			},
 			set(target, key, value) {
 				const fieldSchema = content.schema.objectNodeFields.get(key as FieldKey);
@@ -231,6 +198,8 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 			},
 		},
 	) as SharedTreeObject<TSchema>;
+	setTreeNode(proxy, content);
+	return proxy;
 }
 
 const getField = <TTypes extends AllowedTypes>(target: object) => {
@@ -375,12 +344,6 @@ export function createListProxy<TTypes extends AllowedTypes>(
 				return getField(this).length;
 			},
 			set() {},
-			enumerable: false,
-			configurable: false,
-		},
-		[nodeSym]: {
-			value: createNodeApi(treeNode),
-			writable: false,
 			enumerable: false,
 			configurable: false,
 		},

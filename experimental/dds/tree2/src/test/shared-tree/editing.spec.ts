@@ -1742,7 +1742,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], [{ foo: "43" }]);
 		});
 
-		it.skip("can rebase a node edit over an unrelated edit", () => {
+		it("can rebase a node edit over an unrelated edit", () => {
 			const tree1 = makeTreeFromJson([{ foo: "40", bar: "123" }]);
 			const tree2 = tree1.fork();
 
@@ -1786,7 +1786,7 @@ describe("Editing", () => {
 		// 2. Asymmetry exists between a change and its rollback: we never roll back the creation of new trees.
 		//    That's a problem when a changeset gets reapplied as the result of a rebase sandwich as is the case
 		//    with the second rebaseOnto call. The resulting forest logic thus duplicates creation of "2".
-		it.skip("can rebase over successive sets", () => {
+		it("can rebase over successive sets", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
 
@@ -1814,7 +1814,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it.skip("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {
+		it("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {
 			const tree = makeTreeFromJson(["42"]);
 			const tree2 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
@@ -1831,7 +1831,8 @@ describe("Editing", () => {
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], ["43"]);
+			expectJsonTree([tree], ["43"]);
+			expectJsonTree([tree2], ["43"]);
 			unsubscribe();
 		});
 
@@ -2076,7 +2077,7 @@ describe("Editing", () => {
 				expectJsonTree([tree, tree2], [{}]);
 			});
 
-			it.skip("revived optional field node exists constraint", () => {
+			it("revived optional field node exists constraint", () => {
 				const tree = makeTreeFromJson([]);
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
 				const rootSequence = tree.editor.sequenceField(rootField);
