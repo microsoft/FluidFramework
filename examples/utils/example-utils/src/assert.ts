@@ -6,7 +6,7 @@
 /**
  * A browser friendly assert library.
  *
- * @param condition - The condition that should be true. If the condition is false, an error will be thrown.
+ * @param condition - The condition that should be true, if the condition is false an error will be thrown.
  * Only use this API when `false` indicates a logic error in the problem and thus a bug that should be fixed.
  * @param message - The message to include in the error when the condition does not hold.
  *
@@ -14,7 +14,7 @@
  * Use this instead of the node's 'assert' package, which needs a polyfill for web and has a big impact on bundle sizes.
  * Can be used to narrow TypeScript types, allowing cases `assert(a instanceof A)` or `assert(typeof b === "number")` to replace `as` casts.
  *
- * See also {@link fail}.
+ * @see {@link fail}.
  *
  * @privateRemarks
  * This is provided instead of just using the `assert` in core-utils since core-utils's `assert` is designed to work with our assert tagging which we don't do for examples.
@@ -23,7 +23,7 @@
  * Using this in examples instead of core-utils reduces the chance of someone accidentally having their app depend on core-utils when it shouldn't.
  * It also allows this API to diverge, for example making the message optional.
  *
- * @public
+ * @internal
  */
 export function assert(condition: boolean, message = "error"): asserts condition {
 	if (!condition) {
@@ -49,9 +49,9 @@ export function assert(condition: boolean, message = "error"): asserts condition
  *
  * Once [throw expressions are added to TypeScript](https://github.com/microsoft/TypeScript/issues/18535), they can be used as a replacement for this API.
  *
- * See also {@link assert}.
+ * @see {@link assert}.
  *
- * @public
+ * @internal
  */
 export function fail(message = "assertion failed"): never {
 	throw new Error(message);

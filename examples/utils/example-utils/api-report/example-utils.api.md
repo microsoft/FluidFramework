@@ -27,7 +27,7 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @internal
 export function assert(condition: boolean, message?: string): asserts condition;
 
 // @public
@@ -39,7 +39,7 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 // @public
 export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
 
-// @public
+// @internal
 export function fail(message?: string): never;
 
 // @public
