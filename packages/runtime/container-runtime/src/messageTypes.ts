@@ -14,6 +14,9 @@ import {
 import { IDataStoreAliasMessage } from "./dataStore";
 import { IChunkedOp } from "./opLifecycle";
 
+/**
+ * @public
+ */
 export enum ContainerMessageType {
 	// An op to be delivered to store
 	FluidDataStoreOp = "component",

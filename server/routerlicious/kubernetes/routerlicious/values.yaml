@@ -130,9 +130,6 @@ mongodb:
   permanentDeletionEnabled: false
   deletionIntervalMs: 3600000
 
-rabbitmq:
-  connectionString: ""
-
 redis:
   url: redis_url
   port: 6379
