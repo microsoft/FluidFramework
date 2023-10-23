@@ -70,7 +70,7 @@ describe("editableTreeTypes", () => {
 
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
 	const emptyStruct = builder.object("empty", {});
-	const basicStruct = builder.object("basicStruct", { foo: builder.optional(Any) });
+	const basicStruct = builder.object("basicObject", { foo: builder.optional(Any) });
 	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
 

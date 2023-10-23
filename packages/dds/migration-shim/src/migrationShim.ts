@@ -27,7 +27,7 @@ import {
 } from "@fluid-experimental/tree";
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
 import { assert } from "@fluidframework/core-utils";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
 import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
 
@@ -50,7 +50,7 @@ export interface IMigrationOp {
 	/**
 	 * Type of the migration operation.
 	 */
-	type: "barrier";
+	type: "hotSwap";
 	/**
 	 * Old channel attributes so we can do verification and understand what changed. This will allow future clients to
 	 * accurately reason about what state of the document was before the migration op initiated at.
@@ -99,15 +99,9 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	// Or we pass in this and have some "process and submit logic here"
 	// The cost is that this class gets big.
 	private readonly processMigrateOp = (message: ISequencedDocumentMessage): boolean => {
-		if (
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-			message.type !== MessageType.Operation ||
-			(message.contents as Partial<IMigrationOp>).type !== "barrier"
-		) {
+		if (message.type !== "migrate") {
 			return false;
 		}
-
-		// TODO: some attribute checking here
 		this.newTree = this.newTreeFactory.create(this.runtime, this.id);
 		this.populateNewSharedObjectFn(this.legacyTree, this.newTree);
 		this.reconnect();
@@ -126,19 +120,12 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	private newTree: ISharedTree | undefined;
 
-	// Migration occurs once this op is read.
+	// This is the magic button that tells this Spanner and all other Spanners to swap to the new Shared Object.
 	public submitMigrateOp(): void {
-		const migrateOp: IMigrationOp = {
-			type: "barrier",
-			oldAttributes: this.legacyTreeFactory.attributes,
-			newAttributes: this.newTreeFactory.attributes,
-		};
-
-		// This is a copy of submit local message from SharedObject
-		if (this.isAttached()) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(migrateOp, undefined);
-		}
+		// These console logs are for compilation purposes
+		console.log(this.newTreeFactory);
+		console.log(this.populateNewSharedObjectFn);
+		throw new Error("Method not implemented.");
 	}
 
 	public get currentTree(): LegacySharedTree | ISharedTree {
@@ -163,15 +150,13 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		this._legacyTree = this.legacyTreeFactory.create(this.runtime, this.id);
 	}
 
-	public get attributes(): IChannelAttributes {
-		return this.currentTree.attributes;
-	}
+	public attributes!: IChannelAttributes;
 	public getAttachSummary(
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined,
 	): ISummaryTreeWithStats {
-		return this.currentTree.getAttachSummary(fullTree, trackState, telemetryContext);
+		throw new Error("Method not implemented.");
 	}
 	public async summarize(
 		fullTree?: boolean | undefined,
@@ -179,24 +164,16 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		telemetryContext?: ITelemetryContext | undefined,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): Promise<ISummaryTreeWithStats> {
-		return this.currentTree.summarize(
-			fullTree,
-			trackState,
-			telemetryContext,
-			incrementalSummaryContext,
-		);
+		throw new Error("Method not implemented.");
 	}
 	public isAttached(): boolean {
-		return this.currentTree.isAttached();
+		throw new Error("Method not implemented.");
 	}
-
-	// Only connect to the legacy shared tree
 	public connect(services: IChannelServices): void {
 		const shimServices = this.generateShimServicesOnce(services);
 		this.legacyTree.connect(shimServices);
 	}
 
-	// Only reconnect to the new shared tree this limits us to only migrating
 	private reconnect(): void {
 		assert(this.services !== undefined, "Not connected");
 		assert(this.newTree !== undefined, "New tree not initialized");
@@ -211,7 +188,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	}
 
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
-		return this.currentTree.getGCData(fullGC);
+		throw new Error("Method not implemented.");
 	}
 	public handle!: IFluidHandle;
 	public IFluidLoadable!: IFluidLoadable;
