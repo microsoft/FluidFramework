@@ -13,12 +13,17 @@ import {
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
+	ProxyNode,
+	ObjectNodeSchema,
+	SharedTreeObject,
 } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
-import { areSafelyAssignable, requireTrue } from "../../util";
+import { TypedNode, UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
+import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
+// eslint-disable-next-line import/no-internal-modules
+import { getFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/objectFactory";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -203,4 +208,108 @@ describe("domains - SchemaBuilder", () => {
 		const bar = builder.object("bar", {});
 		assert(structuralName("X", [bar, foo]) !== structuralName("X", doubleName));
 	});
+
+	it("object", () => {
+		const builder = new SchemaBuilder({ scope: "Test Domain" });
+
+		const testObject = builder.object("object", {
+			number: builder.number,
+		});
+
+		type _0 = requireFalse<isAny<typeof testObject>>;
+		type _1 = requireTrue<
+			areSafelyAssignable<ProxyNode<typeof testObject>, { number: number }>
+		>;
+
+		function typeTests(x: ProxyNode<typeof testObject>) {
+			const y: number = x.number;
+		}
+	});
+
+	it("objectRecursive", () => {
+		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
+
+		const recursiveObject = builder.objectRecursive("object", {
+			recursive: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
+			number: SchemaBuilder.required(builder.number),
+		});
+
+		type _0 = requireFalse<isAny<typeof recursiveObject>>;
+		type Proxied = ProxyNode<typeof recursiveObject>;
+		type _1 = requireFalse<isAny<Proxied>>;
+
+		function typeTests(x: Proxied) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+
+		function typeTests2(x: TypedNode<typeof recursiveObject>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+
+		const inner = recursiveObject.create({ recursive: undefined, number: 5 });
+		const testOptional = recursiveObject.create({ number: 5 });
+
+		const outer1 = recursiveObject.create({ recursive: inner, number: 1 });
+		const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
+
+		checkCreated(inner, { number: 5 });
+		checkCreated(testOptional, { number: 5 });
+		checkCreated(outer1, { number: 1, recursive: { number: 5 } });
+		checkCreated(outer2, { number: 1, recursive: { number: 5 } });
+	});
+
+	it("fixRecursiveReference", () => {
+		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
+
+		const recursiveReference = () => recursiveObject2;
+		builder.fixRecursiveReference(recursiveReference);
+
+		// Renaming this to recursiveObject causes IntelliSense to never work for this, instead of work after restarted until this code it touched.
+		const recursiveObject2 = builder.object("object2", {
+			recursive: builder.optional([recursiveReference]),
+			number: leaf.number,
+		});
+
+		type _0 = requireFalse<isAny<typeof recursiveObject2>>;
+		type _1 = requireTrue<
+			areSafelyAssignable<
+				typeof recursiveObject2,
+				ReturnType<
+					(typeof recursiveObject2.objectNodeFieldsObject.recursive.allowedTypes)[0]
+				>
+			>
+		>;
+
+		function typeTests(x: ProxyNode<typeof recursiveObject2>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+
+		function typeTests2(x: TypedNode<typeof recursiveObject2>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+	});
 });
+
+/**
+ * These build objects are intentionally not holding the data their types make them appear to have as part of a workaround for https://github.com/microsoft/TypeScript/issues/43826.
+ * This makes testing that these factory function do the correct thing a bit non-obvious:
+ */
+export function checkCreated<TSchema extends ObjectNodeSchema>(
+	created: SharedTreeObject<TSchema>,
+	expected: ProxyNode<TSchema>,
+): void {
+	const data = getFactoryContent(created);
+	// Strip symbols and look up factory data
+	const stripped = JSON.parse(
+		JSON.stringify(created, (key, value) =>
+			typeof value !== "object"
+				? (value as unknown)
+				: (getFactoryContent(value) as unknown) ?? (value as unknown),
+		),
+	);
+	assert.deepEqual(stripped, expected);
+}

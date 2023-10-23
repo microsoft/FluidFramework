@@ -69,6 +69,7 @@ export const createSummarizingWarning = (errorMessage: string, logged: boolean) 
  * Summarizer is responsible for coordinating when to generate and send summaries.
  * It is the main entry point for summary work.
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
+ * @public
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	public get ISummarizer() {

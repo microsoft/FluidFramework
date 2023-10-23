@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import * as SchemaAware from "../schema-aware";
 import {
 	Value,
 	Anchor,
@@ -20,6 +19,7 @@ import {
 	EmptyKey,
 	TreeNodeSchemaIdentifier,
 	forEachField,
+	TreeValue,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import { ContextuallyTypedNodeData } from "../contextuallyTyped";
@@ -461,8 +461,8 @@ export class LazyLeaf<TSchema extends LeafSchema>
 		makePropertyEnumerableOwn(this, "value", LazyTreeNode.prototype);
 	}
 
-	public override get value(): SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> {
-		return super.value as SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>;
+	public override get value(): TreeValue<TSchema["leafValue"]> {
+		return super.value as TreeValue<TSchema["leafValue"]>;
 	}
 }
 

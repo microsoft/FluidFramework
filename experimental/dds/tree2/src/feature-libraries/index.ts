@@ -177,7 +177,7 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
+export { mapFieldChanges, mapFieldsChanges, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -268,9 +268,9 @@ export {
 	SharedTreeList,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	ProxyRoot,
 	node,
+	NodeApi,
 	SharedTreeNode,
 	Typed,
 	SharedTreeObjectFactory,

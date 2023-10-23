@@ -84,6 +84,10 @@ export function getAttributesFormatVersion(attributes: ReadFluidDataStoreAttribu
 export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): boolean {
 	return !!attributes.summaryFormatVersion && !attributes.disableIsolatedChannels;
 }
+
+/**
+ * @public
+ */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/** The last message processed at the time of summary. Only primitive property types are added to the summary. */
@@ -98,6 +102,9 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	readonly idCompressorEnabled?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface ICreateContainerMetadata {
 	/** Runtime version of the container when it was first created */
 	createContainerRuntimeVersion?: string;
@@ -105,7 +112,10 @@ export interface ICreateContainerMetadata {
 	createContainerTimestamp?: number;
 }
 
-/** The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary. */
+/**
+ * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
+ * @public
+ */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
 	| "clientId"
