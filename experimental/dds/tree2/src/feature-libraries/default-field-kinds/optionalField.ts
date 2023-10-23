@@ -32,7 +32,7 @@ import {
 	NodeExistenceState,
 	FieldChangeHandler,
 } from "../modular-schema";
-import { NodeUpdate, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
+import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
 type ChangeId = ChangeAtomId | "self";
@@ -138,8 +138,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
-		const trackedCreations: { clearedBy: ChangeAtomId; update: NodeUpdate }[] = [];
-		const transientContent: NodeUpdate[] = [];
 		let index = 0;
 		for (const { change, revision, rollbackOf } of changes) {
 			const { childChanges } = change;
@@ -176,20 +174,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						(c.change.fieldChange?.newContent !== undefined &&
 							"revert" in c.change.fieldChange.newContent &&
 							c.change.fieldChange.newContent.revert.revision === revision) ||
-						c.revision === rollbackOf,
+						(c.revision !== undefined && c.revision === rollbackOf),
 				);
 				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
 
 				if (change.fieldChange.newContent !== undefined) {
-					if ("set" in change.fieldChange.newContent) {
-						trackedCreations.push({
-							clearedBy: { revision: fieldChange.revision, localId: fieldChange.id },
-							update: change.fieldChange.newContent,
-						});
-
-						transientContent.push(change.fieldChange.newContent);
-					}
-
 					if (hasMatchingPriorInverse) {
 						fieldChange = undefined;
 					} else {
@@ -218,7 +207,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					);
 				}
 			}
-
 			index++;
 		}
 
@@ -237,15 +225,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const composed: OptionalChangeset = {};
 
 		if (fieldChange !== undefined) {
-			if (fieldChange.newContent !== undefined && "set" in fieldChange.newContent) {
-				trackedCreations.pop();
-			}
-
 			composed.fieldChange = fieldChange;
-
-			if (trackedCreations.length > 0) {
-				composed.fieldChange.transientContent = trackedCreations;
-			}
 		}
 
 		if (perChildChanges.size > 0) {
@@ -253,10 +233,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				id,
 				composeChild(changeList),
 			]);
-		}
-
-		if (transientContent !== undefined) {
-			composed.transientContent = transientContent;
 		}
 
 		return composed;
