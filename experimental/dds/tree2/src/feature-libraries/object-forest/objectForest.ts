@@ -20,7 +20,7 @@ import {
 	Anchor,
 	ITreeCursor,
 	CursorLocationType,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	MapTree,
 	getMapTreeField,
 	FieldAnchor,
@@ -426,7 +426,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		assert(this.innerCursor !== undefined, 0x43e /* Cursor must be current to be used */);
 		return this.innerCursor.enterField(key);
 	}
-	public get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
 		return this.innerCursor.type;
 	}

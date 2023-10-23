@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaAware } from "../..";
+import { TreeValue } from "../../../core";
 import { RestrictiveReadonlyRecord } from "../../../util";
 import { FieldKinds } from "../../default-field-kinds";
 import { FieldKind } from "../../modular-schema";
@@ -11,20 +11,30 @@ import {
 	AllowedTypes,
 	Any,
 	FieldNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	InternalTypedSchemaTypes,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
+	TreeNodeSchema,
 	TreeSchema,
-	DocumentSchema,
 } from "../../typed-schema";
 import {
 	CheckTypesOverlap,
 	FlexibleNodeContent,
 	Sequence,
 	AssignableFieldKinds,
+	TreeNode,
 } from "../editableTreeTypes";
+
+/**
+ * An object-like SharedTree node. Includes objects, lists, and maps.
+ * @alpha
+ */
+export type SharedTreeNode =
+	| SharedTreeList<AllowedTypes>
+	| SharedTreeObject<ObjectNodeSchema>
+	| SharedTreeMap<MapSchema>;
 
 /**
  * Implements 'readonly T[]' and the list mutation APIs.
@@ -158,31 +168,49 @@ export interface SharedTreeList<
  * @alpha
  */
 export type SharedTreeObject<
-	TSchema extends StructSchema,
+	TSchema extends ObjectNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = ObjectFields<TSchema["structFieldsObject"], API>;
+> = ObjectFields<TSchema["objectNodeFieldsObject"], API>;
 
 /**
  * Helper for generating the properties of a {@link SharedTreeObject}.
+ * @privateRemarks
+ * This type is composed of four subtypes for each mutually exclusive combination of "readonly" and "optional".
+ * If it were possible to map to getters and setters separately, the "readonly" cases would collapse, but this is not currently a feature in TS.
+ * See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
  * @alpha
  */
 export type ObjectFields<
-	TFields extends RestrictiveReadonlyRecord<string, FieldSchema>,
+	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = {
-	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
-	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+	// Filter for properties that are both assignable and optional; mark them `-readonly` and `?`.
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? TFields[key]["kind"] extends typeof FieldKinds.optional
+			? key
+			: never
+		: never]?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are assignable but are optional; mark them `-readonly` and `-?`.
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? TFields[key]["kind"] extends typeof FieldKinds.optional
+			? never
+			: key
+		: never]-?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are not assignable but are optional; mark them `readonly` and `?`.
 	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 		? never
-		: key]: ProxyField<TFields[key], API>;
-} & {
-	// Add setter (make property writable) when the field is of a kind that has a logical set operation.
-	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		: TFields[key]["kind"] extends typeof FieldKinds.optional
 		? key
-		: never]: ProxyField<TFields[key], API>;
+		: never]?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are not assignable and are not optional; mark them `readonly` and `-?`.
+	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? never
+		: TFields[key]["kind"] extends typeof FieldKinds.optional
+		? never
+		: key]-?: ProxyField<TFields[key], API>;
 };
 
 /**
@@ -196,7 +224,7 @@ export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSc
  * @alpha
  */
 export type ProxyField<
-	TSchema extends FieldSchema,
+	TSchema extends TreeFieldSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
 	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
@@ -235,7 +263,7 @@ export type ProxyNodeUnion<
 			[Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<
 				infer InnerType
 			>
-				? InnerType extends TreeSchema
+				? InnerType extends TreeNodeSchema
 					? ProxyNode<InnerType, API>
 					: never
 				: never;
@@ -246,26 +274,45 @@ export type ProxyNodeUnion<
  * @alpha
  */
 export type ProxyNode<
-	TSchema extends TreeSchema,
+	TSchema extends TreeNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends LeafSchema
-	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>
+	? TreeValue<TSchema["leafValue"]>
 	: TSchema extends MapSchema
 	? API extends "sharedTree"
 		? SharedTreeMap<TSchema>
 		: Map<string, ProxyField<TSchema["mapFields"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
-		? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API>
-		: readonly ProxyNodeUnion<TSchema["structFieldsObject"][""]["allowedTypes"], API>[]
-	: TSchema extends StructSchema
+		? SharedTreeList<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>
+		: readonly ProxyNodeUnion<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>[]
+	: TSchema extends ObjectNodeSchema
 	? SharedTreeObject<TSchema, API>
 	: unknown;
 
 /** The root type (the type of the entire tree) for a given schema collection */
 export type ProxyRoot<
-	TSchema extends DocumentSchema,
+	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = TSchema extends DocumentSchema<infer TRootFieldSchema>
-	? ProxyField<TRootFieldSchema, API>
-	: never;
+> = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;
+
+/** Symbol used to store a private/internal reference to the underlying editable tree node. */
+const treeNodeSym = Symbol("TreeNode");
+
+/** Helper to retrieve the stored tree node. */
+export function getTreeNode(target: unknown): TreeNode | undefined {
+	if (typeof target === "object" && target !== null) {
+		return (target as { [treeNodeSym]?: TreeNode })[treeNodeSym];
+	}
+
+	return undefined;
+}
+
+/** Helper to set the stored tree node. */
+export function setTreeNode(target: any, treeNode: TreeNode) {
+	Object.defineProperty(target, treeNodeSym, {
+		value: treeNode,
+		// TODO: Investigate if this can be removed by properly implementing key-related traps in the proxy
+		configurable: true,
+	});
+}

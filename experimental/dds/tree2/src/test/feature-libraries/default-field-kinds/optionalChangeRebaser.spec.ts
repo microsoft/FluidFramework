@@ -14,7 +14,7 @@ import {
 	tagChange,
 	TaggedChange,
 	tagRollbackInverse,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 // TODO: Throughout this file, we use TestChange as the child change type.
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
@@ -32,7 +32,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -64,7 +64,7 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.MarkList {
+function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.FieldChanges {
 	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
 	);

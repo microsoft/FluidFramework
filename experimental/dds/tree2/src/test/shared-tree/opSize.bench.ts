@@ -34,14 +34,14 @@ import { SchemaBuilder, leaf } from "../../domains";
 
 const builder = new SchemaBuilder({ scope: "opSize" });
 
-const childSchema = builder.struct("Test:Opsize-Bench-Child", {
+const childSchema = builder.object("Test:Opsize-Bench-Child", {
 	data: leaf.string,
 });
-const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
+const parentSchema = builder.object("Test:Opsize-Bench-Root", {
 	children: builder.sequence(childSchema),
 });
 
-const fullSchemaData = builder.toDocumentSchema(parentSchema);
+const fullSchemaData = builder.intoSchema(parentSchema);
 
 const initialTestJsonTree = {
 	type: parentSchema.name,

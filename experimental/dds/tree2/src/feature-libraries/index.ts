@@ -136,30 +136,32 @@ export {
 } from "./modular-schema";
 
 export {
-	TreeSchema,
+	TreeNodeSchema,
 	AllowedTypes,
-	FieldSchema,
-	DocumentSchema,
+	TreeFieldSchema,
+	TreeSchema,
 	Any,
 	SchemaLibraryData,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	InternalTypedSchemaTypes,
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	Unenforced,
 	AllowedTypeSet,
+	markEager,
 	MapFieldSchema,
+	SchemaCollection,
 } from "./typed-schema";
 
 export {
@@ -175,7 +177,7 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
+export { mapFieldChanges, mapFieldsChanges, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -215,6 +217,7 @@ export {
 } from "./default-field-kinds";
 
 export {
+	TreeEvent,
 	UntypedField,
 	UntypedTree,
 	UntypedTreeContext,
@@ -243,8 +246,8 @@ export {
 	RequiredField,
 	Sequence,
 	Skip,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -265,9 +268,14 @@ export {
 	SharedTreeList,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	ProxyRoot,
+	node,
+	NodeApi,
+	SharedTreeNode,
 	Typed,
+	SharedTreeObjectFactory,
+	FactoryTreeSchema,
+	addFactory,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.
