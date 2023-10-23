@@ -425,6 +425,7 @@ declare namespace Delta {
         FieldMap,
         DetachedNodeChanges,
         DetachedNodeBuild,
+        DetachedNodeDestruction,
         DetachedNodeRename,
         FieldChanges
     }
@@ -472,6 +473,14 @@ interface DetachedNodeBuild<TTree = ProtoNode> {
 interface DetachedNodeChanges<TTree = ProtoNode> {
     // (undocumented)
     readonly fields: FieldMap<TTree>;
+    // (undocumented)
+    readonly id: DetachedNodeId;
+}
+
+// @alpha
+interface DetachedNodeDestruction {
+    // (undocumented)
+    readonly count: number;
     // (undocumented)
     readonly id: DetachedNodeId;
 }
@@ -627,6 +636,7 @@ export interface FieldAnchor {
 // @alpha
 interface FieldChanges<TTree = ProtoNode> {
     readonly build?: readonly DetachedNodeBuild<TTree>[];
+    readonly destroy?: readonly DetachedNodeDestruction[];
     readonly global?: readonly DetachedNodeChanges<TTree>[];
     readonly local?: readonly Mark<TTree>[];
     readonly rename?: readonly DetachedNodeRename[];
