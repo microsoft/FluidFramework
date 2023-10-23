@@ -145,7 +145,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		// Producer used to publish messages
 		const kafkaEndpoint = config.get("kafka:lib:endpoint");
 		const kafkaLibrary = config.get("kafka:lib:name");
-		const kafkaClientId = config.get("alfred:kafkaClientId");
+		const kafkaClientId = config.get("nexus:kafkaClientId");
 		const topic = config.get("nexus:topic");
 		const kafkaProducerPollIntervalMs = config.get("kafka:lib:producerPollIntervalMs");
 		const kafkaNumberOfPartitions = config.get("kafka:lib:numberOfPartitions");
