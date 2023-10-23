@@ -225,7 +225,7 @@ export function tryShapeFromSchema(
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];
-	for (const [key, field] of treeSchema.structFields) {
+	for (const [key, field] of treeSchema.objectNodeFields) {
 		const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
 		if (fieldShape === undefined) {
 			return polymorphic;

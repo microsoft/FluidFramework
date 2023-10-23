@@ -409,16 +409,16 @@ describe("DefaultVisualizers unit tests", () => {
 
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
-		const leafSchema = builder.struct("leaf-item", {
+		const leafSchema = builder.object("leaf-item", {
 			leafField: [leaf.boolean, leaf.handle, leaf.string],
 		});
 
-		const childSchema = builder.struct("child-item", {
+		const childSchema = builder.object("child-item", {
 			childField: [leaf.string, leaf.boolean],
 			childData: builder.optional(leafSchema),
 		});
 
-		const rootNodeSchema = builder.struct("root-item", {
+		const rootNodeSchema = builder.object("root-item", {
 			childrenOne: builder.sequence(childSchema),
 			childrenTwo: leaf.number,
 		});

@@ -84,11 +84,11 @@ describe("Schema Evolution Examples", () => {
 	const codePoint = contentTypesBuilder.fieldNode("Primitive.CodePoint", leaf.number);
 
 	// String made of unicode code points, allowing for sequence editing of a string.
-	const text = contentTypesBuilder.struct("Text", {
+	const text = contentTypesBuilder.object("Text", {
 		children: TreeFieldSchema.create(FieldKinds.sequence, [codePoint]),
 	});
 
-	const point = contentTypesBuilder.struct("Point", {
+	const point = contentTypesBuilder.object("Point", {
 		x: leaf.number,
 		y: leaf.number,
 	});
@@ -102,11 +102,11 @@ describe("Schema Evolution Examples", () => {
 	});
 
 	// A type that can be used to position items without an inherent position within the canvas.
-	const positionedCanvasItem = containersBuilder.struct("PositionedCanvasItem", {
+	const positionedCanvasItem = containersBuilder.object("PositionedCanvasItem", {
 		position: point,
 		content: text,
 	});
-	const canvas = containersBuilder.struct("Canvas", {
+	const canvas = containersBuilder.object("Canvas", {
 		items: TreeFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem]),
 	});
 
@@ -246,16 +246,16 @@ describe("Schema Evolution Examples", () => {
 				libraries: [defaultContentLibrary],
 			});
 
-			const counter = builderWithCounter.struct("Counter", {
+			const counter = builderWithCounter.object("Counter", {
 				count: leaf.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builderWithCounter.struct("PositionedCanvasItem", {
+			const positionedCanvasItem2 = builderWithCounter.object("PositionedCanvasItem", {
 				position: point,
 				content: [text, counter],
 			});
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-			const canvas2 = builderWithCounter.struct("Canvas", {
+			const canvas2 = builderWithCounter.object("Canvas", {
 				items: TreeFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
 			});
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
@@ -381,7 +381,7 @@ describe("Schema Evolution Examples", () => {
 	// 		"2cbc277e-8820-41ef-a3f4-0a00de8ef934",
 	// 	);
 	// 	const builder = new SchemaBuilder("adapters examples", defaultContentLibrary);
-	// 	const formattedText = builder.structRecursive(formattedTextIdentifier, {
+	// 	const formattedText = builder.objectRecursive(formattedTextIdentifier, {
 	// 		content: TreeFieldSchema.createUnsafe(
 	// 			FieldKinds.sequence,
 	// 			() => formattedText,
@@ -397,13 +397,13 @@ describe("Schema Evolution Examples", () => {
 	// 	// Were we not batching all these examples in one scope, this would reuse the `positionedCanvasItem` name
 	// 	// as no version of the app need both view schema at the same time
 	// 	// (except for some approaches for staging roll-outs which are not covered here).
-	// 	const positionedCanvasItemNew = builder.struct(positionedCanvasItemIdentifier, {
+	// 	const positionedCanvasItemNew = builder.object(positionedCanvasItemIdentifier, {
 	// 		position: (point),
 	// 		// Note that we are specifically excluding the old text here
 	// 		content: (formattedText),
 	// 	});
 	// 	// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-	// 	const canvas2 = builder.struct(canvasIdentifier, {
+	// 	const canvas2 = builder.object(canvasIdentifier, {
 	// 		items: TreeFieldSchema.create(FieldKinds.sequence, positionedCanvasItemNew),
 	// 	});
 
@@ -459,7 +459,7 @@ describe("Schema Evolution Examples", () => {
 	// 		// and don't exclude the old ones.
 	// 		// TODO: add an automated way to determine that this is the needed upgrade (some way to union schema?).
 	// 		const positionedCanvasItemTolerant = treeSchema({
-	// 			structFields: {
+	// 			objectNodeFields: {
 	// 				position: fieldSchema(FieldKinds.required, [pointIdentifier]),
 	// 				// Note that we are specifically supporting both formats here.
 	// 				content: fieldSchema(FieldKinds.required, [

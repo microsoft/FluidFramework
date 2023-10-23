@@ -90,28 +90,28 @@ export function treeContentFromTestTree(test: TestTree): TreeContent {
 }
 
 const builder = new SchemaBuilder({ scope: "test" });
-export const minimal = builder.struct("minimal", {});
-export const hasMinimalValueField = builder.struct("hasMinimalValueField", {
+export const minimal = builder.object("minimal", {});
+export const hasMinimalValueField = builder.object("hasMinimalValueField", {
 	field: minimal,
 });
-export const hasNumericValueField = builder.struct("hasNumericValueField", {
+export const hasNumericValueField = builder.object("hasNumericValueField", {
 	field: leaf.number,
 });
-export const hasPolymorphicValueField = builder.struct("hasPolymorphicValueField", {
+export const hasPolymorphicValueField = builder.object("hasPolymorphicValueField", {
 	field: [leaf.number, minimal],
 });
-export const hasAnyValueField = builder.struct("hasAnyValueField", {
+export const hasAnyValueField = builder.object("hasAnyValueField", {
 	field: Any,
 });
-export const hasOptionalField = builder.struct("hasOptionalField", {
+export const hasOptionalField = builder.object("hasOptionalField", {
 	field: builder.optional(leaf.number),
 });
-export const allTheFields = builder.struct("allTheFields", {
+export const allTheFields = builder.object("allTheFields", {
 	optional: builder.optional(leaf.number),
 	valueField: leaf.number,
 	sequence: builder.sequence(leaf.number),
 });
-export const anyFields = builder.struct("anyFields", {
+export const anyFields = builder.object("anyFields", {
 	optional: builder.optional(Any),
 	valueField: Any,
 	sequence: builder.sequence(Any),
@@ -126,7 +126,7 @@ type NumericMapData = SchemaAware.AllowedTypesToTypedTrees<
 
 export const anyMap = builder.map("anyMap", builder.sequence(Any));
 
-export const recursiveType = builder.structRecursive("recursiveType", {
+export const recursiveType = builder.objectRecursive("recursiveType", {
 	field: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
 });
 

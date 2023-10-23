@@ -30,7 +30,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listAny));
 				assert.equal(listAny.name, "scope.List<Any>");
 				assert(
-					listAny.structFields
+					listAny.objectNodeFields
 						.get("")
 						.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])),
 				);
@@ -47,7 +47,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listImplicit));
 				assert.equal(listImplicit.name, `scope2.List<["${builder.number.name}"]>`);
 				assert(
-					listImplicit.structFields
+					listImplicit.objectNodeFields
 						.get("")
 						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
@@ -80,7 +80,7 @@ describe("domains - SchemaBuilder", () => {
 					`scope.List<["${builder.boolean.name}","${builder.number.name}"]>`,
 				);
 				assert(
-					listUnion.structFields
+					listUnion.objectNodeFields
 						.get("")
 						.equals(
 							TreeFieldSchema.create(FieldKinds.sequence, [
@@ -118,7 +118,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(list));
 				assert.equal(list.name, `scope.Foo`);
 				assert(
-					list.structFields
+					list.objectNodeFields
 						.get("")
 						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
@@ -196,11 +196,11 @@ describe("domains - SchemaBuilder", () => {
 		);
 		// escaped names
 		const builder = new SchemaBuilder({ scope: "scope" });
-		const doubleName = builder.struct(`bar","scope.foo`, {});
+		const doubleName = builder.object(`bar","scope.foo`, {});
 		assert.equal(structuralName("X", doubleName), `X<["scope.bar\\",\\"scope.foo"]>`);
 		// This escaping ensures named don't collide:
-		const foo = builder.struct("foo", {});
-		const bar = builder.struct("bar", {});
+		const foo = builder.object("foo", {});
+		const bar = builder.object("bar", {});
 		assert(structuralName("X", [bar, foo]) !== structuralName("X", doubleName));
 	});
 });

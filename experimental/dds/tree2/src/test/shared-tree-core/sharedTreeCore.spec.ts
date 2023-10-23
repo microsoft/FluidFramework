@@ -330,7 +330,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		const b = new SchemaBuilder({ scope: "0x4a6 repro" });
-		const node = b.structRecursive("test node", {
+		const node = b.objectRecursive("test node", {
 			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 		});
 		const schema = b.intoSchema(b.optional(node));

@@ -49,7 +49,7 @@ const rootSchemaName: TreeNodeSchemaIdentifier = brand("Test");
 
 function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
 	const builder = new SchemaBuilder({ scope: "getTestSchema", libraries: [personSchemaLibrary] });
-	const rootNodeSchema = builder.struct("Test", {
+	const rootNodeSchema = builder.object("Test", {
 		foo: TreeFieldSchema.create(fieldKind, [stringSchema]),
 		foo2: TreeFieldSchema.create(fieldKind, [stringSchema]),
 	});
