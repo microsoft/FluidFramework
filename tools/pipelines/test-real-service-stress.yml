@@ -165,8 +165,8 @@ stages:
           script: |
             echo "creating output folder"
             mkdir -p ${{ variables.testWorkspace }}/timingOutput
-            echo "Executing curl command ..."
-            echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+            echo "Retrieving pipeline run timeline data command ..."
+            echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
             curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
             pwd;
             ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
