@@ -3,36 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { AllowedTypes, FieldKinds, SchemaBuilder } from "../../feature-libraries";
+// Adding this unused import makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
+// Without this import, TypeScript generates inline `import("../..")` statements in the d.ts file,
+// which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
+// TODO: Understand and/or remove the need for this workaround.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+import { ValueSchema } from "../../core";
+
+import {
+	AllowedTypes,
+	FieldKinds,
+	TreeFieldSchema,
+	SchemaBuilderInternal,
+} from "../../feature-libraries";
 import { requireAssignableTo } from "../../util";
-import * as leaf from "../leafDomain";
+import { leaf } from "../leafDomain";
 
-const builder = new SchemaBuilder("Json Domain", {}, leaf.library);
+const builder = new SchemaBuilderInternal({
+	scope: "com.fluidframework.json",
+	libraries: [leaf.library],
+});
 
-/**
- * @alpha
- * @deprecated Use leaf.number
- */
-export const jsonNumber = leaf.number;
-
-/**
- * @alpha
- * @deprecated Use leaf.string
- */
-export const jsonString = leaf.string;
-
-/**
- * @alpha
- */
-export const jsonNull = builder.struct("Json.Null", {});
-
-/**
- * @alpha
- * @deprecated Use leaf.boolean
- */
-export const jsonBoolean = leaf.boolean;
-
-const jsonPrimitives = [...leaf.primitives, jsonNull] as const;
+const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
 
 /**
  * Types allowed as roots of Json content.
@@ -49,16 +41,16 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  * @alpha
  */
 export const jsonObject = builder.mapRecursive(
-	"Json.Object",
-	SchemaBuilder.fieldRecursive(FieldKinds.optional, ...jsonRoot),
+	"object",
+	TreeFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
 /**
  * @alpha
  */
 export const jsonArray = builder.fieldNodeRecursive(
-	"Json.Array",
-	SchemaBuilder.fieldRecursive(FieldKinds.sequence, ...jsonRoot),
+	"array",
+	TreeFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
 /**

@@ -10,7 +10,7 @@ parameters:
 
 - name: testPackage
   type: string
-  default: "@fluid-internal/test-end-to-end-tests"
+  default: "@fluid-private/test-end-to-end-tests"
 
 - name: testWorkspace
   type: string
@@ -206,9 +206,19 @@ jobs:
 
             echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
             echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+
+            # This is confusing, but we are using the .npmrc here to load dependencies from different feeds. These
+            # scopes must be loaded from the "dev" feed because that is the only place they are published. Ideally this
+            # logic will be centralized outside of CI in the future.
             echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
+            echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
+
+            # This scope must be loaded from the "build" feed
             echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+
+            # This scope must be loaded from the internal Office feed
             echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
+
             echo "always-auth=true" >> ./.npmrc
             cat .npmrc
 
@@ -346,7 +356,7 @@ jobs:
           continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
       # Log Test Failures
-      # - template: include-log-test-failures.yml
+      # - template: include-process-test-results.yml
       #   parameters:
       #     buildDirectory: ${{ variables.testPackageDir }}
 

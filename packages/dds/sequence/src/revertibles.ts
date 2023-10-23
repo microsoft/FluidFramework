@@ -33,7 +33,7 @@ export type SharedStringRevertible = MergeTreeDeltaRevertible | IntervalRevertib
 
 const idMap = new Map<string, string>();
 
-type IntervalOpType = typeof IntervalOpType[keyof typeof IntervalOpType];
+type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 /**
  * Data for undoing edits affecting Intervals.
@@ -114,13 +114,19 @@ export function appendDeleteIntervalToRevertibles(
 	string: SharedString,
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
-) {
-	const startSeg = interval.start.getSegment() as SharedStringSegment;
+): SharedStringRevertible[] {
+	const startSeg = interval.start.getSegment() as SharedStringSegment | undefined;
+	if (!startSeg) {
+		return revertibles;
+	}
 	const startType =
 		startSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
 			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
-	const endSeg = interval.end.getSegment() as SharedStringSegment;
+	const endSeg = interval.end.getSegment() as SharedStringSegment | undefined;
+	if (!endSeg) {
+		return revertibles;
+	}
 	const endType =
 		endSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd
@@ -416,11 +422,14 @@ function revertLocalDelete(
 	const startSlidePos = getSlidePosition(string, revertible.start, start);
 	const end = string.localReferencePositionToPosition(revertible.end);
 	const endSlidePos = getSlidePosition(string, revertible.end, end);
-	const type = revertible.interval.intervalType;
 	// reusing the id causes eventual consistency bugs, so it is removed here and recreated in add
 	const { intervalId, ...props } = revertible.interval.properties;
 	if (isValidRange(startSlidePos, endSlidePos, string)) {
-		const int = collection.add(startSlidePos, endSlidePos, type, props);
+		const int = collection.add({
+			start: startSlidePos,
+			end: endSlidePos,
+			props,
+		});
 
 		idMap.forEach((newId, oldId) => {
 			if (intervalId === newId) {

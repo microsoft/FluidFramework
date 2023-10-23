@@ -160,10 +160,8 @@ export class PropertiesManager {
 		newManager: PropertiesManager,
 	): PropertySet | undefined {
 		if (oldProps) {
-			if (!newProps) {
-				// eslint-disable-next-line no-param-reassign
-				newProps = createMap<any>();
-			}
+			// eslint-disable-next-line no-param-reassign
+			newProps ??= createMap<any>();
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}

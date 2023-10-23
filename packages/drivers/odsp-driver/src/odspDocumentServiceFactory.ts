@@ -17,6 +17,7 @@ import { LocalOdspDocumentServiceFactory } from "./localOdspDriver/localOdspDocu
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
  * use the sharepoint implementation.
+ * @public
  */
 export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 	constructor(
@@ -29,6 +30,9 @@ export class OdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
 	}
 }
 
+/**
+ * @public
+ */
 export function createLocalOdspDocumentServiceFactory(
 	localSnapshot: Uint8Array | string,
 ): IDocumentServiceFactory {

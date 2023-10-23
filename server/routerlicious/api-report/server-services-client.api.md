@@ -94,6 +94,9 @@ export function generateUser(): IUser;
 // @public (undocumented)
 export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) => string;
 
+// @internal
+export const getGlobalTimeoutContext: () => ITimeoutContext;
+
 // @public (undocumented)
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
@@ -375,6 +378,7 @@ export interface ISession {
     historianUrl: string;
     isSessionActive: boolean;
     isSessionAlive: boolean;
+    messageBrokerId?: string;
     ordererUrl: string;
 }
 
@@ -392,6 +396,13 @@ export interface ISummaryTree extends ISummaryTree_2 {
 // @public
 export interface ISummaryUploadManager {
     writeSummaryTree(summaryTree: api.ISummaryTree, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number): Promise<string>;
+}
+
+// @internal
+export interface ITimeoutContext {
+    bindTimeout(maxDurationMs: number, callback: () => void): void;
+    bindTimeoutAsync<T>(maxDurationMs: number, callback: () => Promise<T>): Promise<T>;
+    checkTimeout(): void;
 }
 
 // @public (undocumented)
@@ -577,6 +588,9 @@ export abstract class RestWrapper {
     // (undocumented)
     protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 }
+
+// @internal
+export const setGlobalTimeoutContext: (timeoutContext: ITimeoutContext) => void;
 
 // @public
 export class SummaryTreeUploadManager implements ISummaryUploadManager {

@@ -10,15 +10,17 @@ import {
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { ChangesetLocalId, Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
-import { TestChange } from "../../testChange";
 import {
-	assertMarkListEqual,
-	deepFreeze,
-	defaultRevisionMetadataFromChanges,
-	fakeTaggedRepair as fakeRepair,
-} from "../../utils";
-import { brand, fail, IdAllocator, idAllocatorFromMaxId } from "../../../util";
+	ChangesetLocalId,
+	Delta,
+	RevisionTag,
+	TaggedChange,
+	makeAnonChange,
+	tagChange,
+} from "../../../core";
+import { TestChange } from "../../testChange";
+import { assertMarkListEqual, deepFreeze, defaultRevisionMetadataFromChanges } from "../../utils";
+import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -135,8 +137,8 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
-		fakeRepair,
-		() => fail("Sequence fields should not generate IDs during invert"),
+		// Sequence fields should not generate IDs during invert
+		fakeIdAllocator,
 		table,
 	);
 
@@ -147,8 +149,8 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.amendInvert(
 			inverted,
 			change.revision,
-			fakeRepair,
-			() => fail("Sequence fields should not generate IDs during invert"),
+			// Sequence fields should not generate IDs during invert
+			fakeIdAllocator,
 			table,
 		);
 		assert(!table.isInvalidated, "Invert should not need more than one amend pass");
@@ -161,11 +163,13 @@ export function checkDeltaEquality(actual: TestChangeset, expected: TestChangese
 	assertMarkListEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset): Delta.MarkList {
+export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.MarkList {
+	deepFreeze(change);
+	const allocator = MemoizedIdRangeAllocator.fromNextId();
 	return SF.sequenceFieldToDelta(
-		makeAnonChange(change),
-		TestChange.toDelta,
-		MemoizedIdRangeAllocator.fromNextId(),
+		tagChange(change, revision),
+		(childChange) => TestChange.toDelta(tagChange(childChange, revision)),
+		allocator,
 	);
 }
 

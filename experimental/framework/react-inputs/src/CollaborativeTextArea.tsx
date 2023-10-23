@@ -6,6 +6,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ISharedStringHelperTextChangedEventArgs, SharedStringHelper } from "./SharedStringHelper";
 
+/**
+ * {@link CollaborativeTextArea} input props.
+ *
+ * @public
+ */
 export interface ICollaborativeTextAreaProps {
 	/**
 	 * The SharedString that will store the text from the textarea.
@@ -28,6 +33,11 @@ export interface ICollaborativeTextAreaProps {
 	style?: React.CSSProperties;
 }
 
+/**
+ * Given a {@link SharedStringHelper}, will produce a collaborative text area element.
+ *
+ * @public
+ */
 export const CollaborativeTextArea: React.FC<ICollaborativeTextAreaProps> = (
 	props: ICollaborativeTextAreaProps,
 ) => {

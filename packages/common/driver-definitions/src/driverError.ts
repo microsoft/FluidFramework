@@ -104,7 +104,7 @@ export const DriverErrorTypes = {
 	 */
 	outOfStorageError: "outOfStorageError",
 } as const;
-export type DriverErrorTypes = typeof DriverErrorTypes[keyof typeof DriverErrorTypes];
+export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 /**
  * Interface describing errors and warnings raised by any driver code.

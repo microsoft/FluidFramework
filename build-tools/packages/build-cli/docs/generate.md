@@ -16,13 +16,17 @@ This command is used to compute the version number of Fluid packages. The releas
 ```
 USAGE
   $ flub generate buildVersion --build <value> [-v | --quiet] [--testBuild <value>] [--release release|prerelease|none]
-    [--patch <value>] [--base <value>] [--tag <value>] [-i <value>]
+    [--patch <value>] [--base <value>] [--tag <value>] [-i <value>] [--packageTypes none|alpha|beta|public|untrimmed]
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
   --base=<value>                         The base version. This will be read from lerna.json/package.json if not
                                          provided.
   --build=<value>                        (required) The CI build number.
+  --packageTypes=<option>                [default: none] If provided, the version generated will include extra strings
+                                         based on the TypeScript types that are expected to be used. This flag should
+                                         only be used in the Fluid Framework CI pipeline.
+                                         <options: none|alpha|beta|public|untrimmed>
   --patch=<value>                        Indicates the build is a patch build.
   --release=<option>                     Indicates the build is a release build.
                                          <options: release|prerelease|none>
@@ -41,6 +45,8 @@ DESCRIPTION
 EXAMPLES
   $ flub generate buildVersion
 ```
+
+_See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/buildVersion.ts)_
 
 ## `flub generate bundleStats`
 
@@ -62,6 +68,8 @@ DESCRIPTION
   Find all bundle analysis artifacts and copy them into a central location to upload as build artifacts for later
   consumption
 ```
+
+_See code: [src/commands/generate/bundleStats.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleStats.ts)_
 
 ## `flub generate changelog`
 
@@ -90,21 +98,26 @@ EXAMPLES
     $ flub generate changelog --releaseGroup client
 ```
 
+_See code: [src/commands/generate/changelog.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changelog.ts)_
+
 ## `flub generate changeset`
 
 Generates a new changeset file. You will be prompted to select the packages affected by this change. You can also create an empty changeset to include with this change that can be updated later.
 
 ```
 USAGE
-  $ flub generate changeset [-v | --quiet] [--json] [-b <value>] [--empty] [--all] [--uiMode default|simple]
+  $ flub generate changeset [--json] [-v | --quiet] [-b <value>] [--empty -g
+    client|server|azure|build-tools|gitrest|historian] [--all] [--uiMode default|simple]
 
 FLAGS
-  -b, --branch=<value>  [default: main] The branch to compare the current changes against. The current changes will be
-                        compared with this branch to populate the list of changed packages. You must have a valid remote
-                        pointing to the microsoft/FluidFramework repo.
-  --all                 Include ALL packages, including examples and other unpublished packages.
-  --empty               Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
-                        randomly named changeset file will be created every time --empty is used.
+  -b, --branch=<value>         [default: main] The branch to compare the current changes against. The current changes
+                               will be compared with this branch to populate the list of changed packages. You must have
+                               a valid remote pointing to the microsoft/FluidFramework repo.
+  -g, --releaseGroup=<option>  Name of a release group.
+                               <options: client|server|azure|build-tools|gitrest|historian>
+  --all                        Include ALL packages, including examples and other unpublished packages.
+  --empty                      Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
+                               randomly named changeset file will be created every time --empty is used.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -142,13 +155,15 @@ EXAMPLES
     $ flub generate changeset --all
 ```
 
+_See code: [src/commands/generate/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/changeset.ts)_
+
 ## `flub generate upcoming`
 
 Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.
 
 ```
 USAGE
-  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [-v | --quiet] [--json]
+  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [--json] [-v | --quiet]
     [--out <value>]
 
 FLAGS
@@ -174,3 +189,5 @@ EXAMPLES
 
     $ flub generate upcoming -g client -t minor --out testOutput.md
 ```
+
+_See code: [src/commands/generate/upcoming.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/upcoming.ts)_

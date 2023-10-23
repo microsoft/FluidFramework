@@ -8,7 +8,7 @@ import {
 	AllowedUpdateType,
 	Compatibility,
 	SimpleObservingDependent,
-	SchemaData,
+	TreeStoredSchema,
 	StoredSchemaRepository,
 	ITreeCursorSynchronous,
 	schemaDataIsEmpty,
@@ -17,9 +17,9 @@ import {
 	defaultSchemaPolicy,
 	FieldKinds,
 	allowsRepoSuperset,
-	TypedSchemaCollection,
+	TreeSchema,
 	SchemaAware,
-	FieldSchema,
+	TreeFieldSchema,
 	ViewSchema,
 } from "../feature-libraries";
 import { fail } from "../util";
@@ -40,7 +40,7 @@ import { ViewEvents } from "./sharedTreeView";
  */
 export function initializeContent(
 	storedSchema: StoredSchemaRepository,
-	schema: TypedSchemaCollection,
+	schema: TreeSchema,
 	setInitialTree: () => void,
 ): void {
 	assert(schemaDataIsEmpty(storedSchema), 0x743 /* cannot initialize after a schema is set */);
@@ -49,7 +49,7 @@ export function initializeContent(
 	const rootKind = rootSchema.kind.identifier;
 
 	// To keep the data in schema during the update, first define a schema that tolerates the current (empty) tree as well as the final (initial) tree.
-	let incrementalSchemaUpdate: SchemaData;
+	let incrementalSchemaUpdate: TreeStoredSchema;
 	if (
 		rootKind === FieldKinds.sequence.identifier ||
 		rootKind === FieldKinds.optional.identifier
@@ -57,7 +57,7 @@ export function initializeContent(
 		// These kinds are known to tolerate empty, so use the schema as is:
 		incrementalSchemaUpdate = schema;
 	} else {
-		assert(rootKind === FieldKinds.value.identifier, 0x5c8 /* Unexpected kind */);
+		assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
 		// Replace value kind with optional kind in root field schema:
 		incrementalSchemaUpdate = {
 			treeSchema: schema.treeSchema,
@@ -187,11 +187,11 @@ export function schematize(
  *
  * @alpha
  */
-export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
+export interface SchemaConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema> {
 	/**
 	 * The schema which the application wants to view the tree with.
 	 */
-	readonly schema: TypedSchemaCollection<TRoot>;
+	readonly schema: TreeSchema<TRoot>;
 }
 
 /**
@@ -199,7 +199,7 @@ export interface SchemaConfiguration<TRoot extends FieldSchema = FieldSchema> {
  *
  * @alpha
  */
-export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
+export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaConfiguration<TRoot> {
 	/**
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
@@ -216,7 +216,7 @@ export interface TreeContent<TRoot extends FieldSchema = FieldSchema>
  *
  * @alpha
  */
-export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema>
+export interface SchematizeConfiguration<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	extends SchemaConfiguration<TRoot> {
 	/**
 	 * Controls if and how schema from existing documents can be updated to accommodate the view schema.
@@ -229,6 +229,7 @@ export interface SchematizeConfiguration<TRoot extends FieldSchema = FieldSchema
  *
  * @alpha
  */
-export interface InitializeAndSchematizeConfiguration<TRoot extends FieldSchema = FieldSchema>
-	extends TreeContent<TRoot>,
+export interface InitializeAndSchematizeConfiguration<
+	TRoot extends TreeFieldSchema = TreeFieldSchema,
+> extends TreeContent<TRoot>,
 		SchematizeConfiguration<TRoot> {}

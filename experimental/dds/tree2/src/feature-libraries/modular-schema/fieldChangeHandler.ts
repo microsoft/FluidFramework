@@ -13,7 +13,6 @@ import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
- * @alpha
  */
 export interface FieldChangeHandler<
 	TChangeset,
@@ -36,9 +35,6 @@ export interface FieldChangeHandler<
 	isEmpty(change: TChangeset): boolean;
 }
 
-/**
- * @alpha
- */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
@@ -74,7 +70,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
@@ -85,7 +80,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	amendInvert(
 		invertedChange: TChangeset,
 		originalRevision: RevisionTag | undefined,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
@@ -123,12 +117,12 @@ export interface FieldChangeRebaser<TChangeset> {
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (changes: TChangeset[]) => TChangeset;
-	invert: (change: TChangeset, reviver: NodeReviver) => TChangeset;
+	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
-		invert: (change, _invertChild, reviver, _genId) => data.invert(change.change, reviver),
+		invert: (change, _invertChild, _genId) => data.invert(change.change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
 	});
 }
@@ -146,9 +140,6 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	};
 }
 
-/**
- * @alpha
- */
 export interface FieldEditor<TChangeset> {
 	/**
 	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
@@ -162,15 +153,6 @@ export interface FieldEditor<TChangeset> {
  * @alpha
  */
 export type ToDelta = (child: NodeChangeset) => Delta.Modify;
-
-/**
- * @alpha
- */
-export type NodeReviver = (
-	revision: RevisionTag,
-	index: number,
-	count: number,
-) => Delta.ProtoNode[];
 
 /**
  * @alpha

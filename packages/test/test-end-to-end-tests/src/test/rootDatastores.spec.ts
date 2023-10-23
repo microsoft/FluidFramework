@@ -222,9 +222,8 @@ describeFullCompat("Named root data stores", (getTestObjectProvider) => {
 					try {
 						await getAliasedDataStoreEntryPoint(dataObject1, alias);
 					} catch (err) {
-						const newDataStore = await runtimeOf(dataObject1).createDataStore(
-							packageName,
-						);
+						const newDataStore =
+							await runtimeOf(dataObject1).createDataStore(packageName);
 						datastores.push(newDataStore);
 						await newDataStore.trySetAlias(alias);
 						return getAliasedDataStoreEntryPoint(dataObject1, alias);

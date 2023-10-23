@@ -31,11 +31,8 @@ export const SlidingPreference = {
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
  * in a merge-tree
  */
-export type SlidingPreference = typeof SlidingPreference[keyof typeof SlidingPreference];
+export type SlidingPreference = (typeof SlidingPreference)[keyof typeof SlidingPreference];
 
-/**
- * @internal
- */
 function _validateReferenceType(refType: ReferenceType) {
 	let exclusiveCount = 0;
 	if (refTypeIncludesFlag(refType, ReferenceType.Transient)) {
@@ -194,7 +191,18 @@ export function* filterLocalReferencePositions(
 }
 
 /**
- * Represents a collection of {@link LocalReferencePosition}s associated with one segment in a merge-tree.
+ * Injectable hook for validating that the refCount property matches the
+ * expected value
+ */
+let validateRefCount: ((collection?: LocalReferenceCollection) => void) | undefined;
+
+export function setValidateRefCount(cb?: (collection?: LocalReferenceCollection) => void) {
+	validateRefCount = cb;
+}
+
+/**
+ * Represents a collection of {@link LocalReferencePosition}s associated with
+ * one segment in a merge-tree.
  */
 export class LocalReferenceCollection {
 	public static append(seg1: ISegment, seg2: ISegment) {
@@ -212,10 +220,15 @@ export class LocalReferenceCollection {
 			// segments that had no local references. Account for them now by padding the array.
 			seg1.localRefs.refsByOffset.length += seg2.cachedLength;
 		}
+		validateRefCount?.(seg1.localRefs);
+		validateRefCount?.(seg2.localRefs);
 	}
 
 	/**
-	 * @remarks This method should only be called by mergeTree.
+	 * The number of references whose reference type is one of the hierarchical
+	 * reference types, currently only {@link ReferenceType.Tile}.
+	 *
+	 * @remarks This field should only be accessed by mergeTree.
 	 * @internal
 	 */
 	public hierRefCount: number = 0;
@@ -281,32 +294,8 @@ export class LocalReferenceCollection {
 	 * @remarks This method should only be called by mergeTree.
 	 * @internal
 	 */
-	public clear() {
-		this.refCount = 0;
-		this.hierRefCount = 0;
-		const detachSegments = (refs: List<LocalReference> | undefined) => {
-			if (refs) {
-				for (const r of refs) {
-					this.removeLocalRef(r.data);
-				}
-			}
-		};
-		for (let i = 0; i < this.refsByOffset.length; i++) {
-			const refsAtOffset = this.refsByOffset[i];
-			if (refsAtOffset) {
-				detachSegments(refsAtOffset.before);
-				detachSegments(refsAtOffset.at);
-				detachSegments(refsAtOffset.after);
-				this.refsByOffset[i] = undefined;
-			}
-		}
-	}
-
-	/**
-	 * @remarks This method should only be called by mergeTree.
-	 * @internal
-	 */
 	public get empty() {
+		validateRefCount?.(this);
 		return this.refCount === 0;
 	}
 
@@ -326,6 +315,7 @@ export class LocalReferenceCollection {
 		if (!refTypeIncludesFlag(ref, ReferenceType.Transient)) {
 			this.addLocalRef(ref, offset);
 		}
+		validateRefCount?.(this);
 		return ref;
 	}
 
@@ -354,6 +344,7 @@ export class LocalReferenceCollection {
 			}
 			this.refCount++;
 		}
+		validateRefCount?.(this);
 	}
 
 	/**
@@ -367,11 +358,13 @@ export class LocalReferenceCollection {
 			const node = lref.getListNode();
 			node?.list?.remove(node);
 
-			lref.link(lref.getSegment(), lref.getOffset(), undefined);
+			lref.link(undefined, 0, undefined);
+
 			if (refHasTileLabels(lref)) {
 				this.hierRefCount--;
 			}
 			this.refCount--;
+			validateRefCount?.(this);
 			return lref;
 		}
 	}
@@ -406,6 +399,7 @@ export class LocalReferenceCollection {
 		}
 
 		this.refsByOffset.push(...other.refsByOffset);
+		other.refsByOffset.length = 0;
 	}
 	/**
 	 * Returns true of the local reference is in the collection, otherwise false.
@@ -433,7 +427,9 @@ export class LocalReferenceCollection {
 		const offset = lref.getOffset();
 		const refsAtOffset = this.refsByOffset[offset];
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			refsAtOffset?.before?.includes(listNode) ||
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			refsAtOffset?.at?.includes(listNode) ||
 			refsAtOffset?.after?.includes(listNode)
 		) {
@@ -476,6 +472,7 @@ export class LocalReferenceCollection {
 			// shrink the offset array when empty and splitting
 			this.refsByOffset.length = offset;
 		}
+		validateRefCount?.(this);
 	}
 
 	/**
@@ -513,6 +510,7 @@ export class LocalReferenceCollection {
 				}
 			}
 		}
+		validateRefCount?.(this);
 	}
 	/**
 	 * @remarks This method should only be called by mergeTree.
@@ -546,6 +544,7 @@ export class LocalReferenceCollection {
 				}
 			}
 		}
+		validateRefCount?.(this);
 	}
 
 	/**

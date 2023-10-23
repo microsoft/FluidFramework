@@ -61,6 +61,7 @@ async function createDataObject<
 	// request mixin in
 	runtimeClass = mixinRequestHandler(
 		async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+			// The provideEntryPoint callback below always returns TObj, so this cast is safe
 			const dataObject = (await runtimeArg.entryPoint.get()) as TObj;
 			assert(
 				dataObject.request !== undefined,
@@ -129,9 +130,10 @@ async function createDataObject<
  * @typeParam I - The input types for the DataObject
  */
 export class PureDataObjectFactory<
-	TObj extends PureDataObject<I>,
-	I extends DataObjectTypes = DataObjectTypes,
-> implements
+		TObj extends PureDataObject<I>,
+		I extends DataObjectTypes = DataObjectTypes,
+	>
+	implements
 		IFluidDataStoreFactory,
 		Partial<IProvideFluidDataStoreRegistry>,
 		IRootDataObjectFactory

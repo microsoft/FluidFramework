@@ -9,7 +9,8 @@
 	},
 	"lumberjack": {
 		"options": {
-			"enableGlobalTelemetryContext": true
+			"enableGlobalTelemetryContext": true,
+			"enableSanitization": false
 		}
 	},
 	"mongo": {
@@ -122,7 +123,11 @@
 		"jwtTokenCache": {
 			"enable": true
 		},
-		"getDeltasRequestMaxOpsRange": 2000
+		"getDeltasRequestMaxOpsRange": 2000,
+		"useNodeCluster": false
+	},
+	"riddler": {
+		"useNodeCluster": false
 	},
 	"client": {
 		"type": "browser",

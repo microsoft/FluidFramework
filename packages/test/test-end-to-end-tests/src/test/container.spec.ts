@@ -9,7 +9,6 @@ import { MockDocumentDeltaConnection } from "@fluid-internal/test-loader-utils";
 import { IErrorBase, IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import {
 	ContainerErrorTypes,
-	IPendingLocalState,
 	IFluidCodeDetails,
 	IContainer,
 	LoaderHeader,
@@ -26,7 +25,6 @@ import {
 	FiveDaysMs,
 	IAnyDriverError,
 	IDocumentServiceFactory,
-	IResolvedUrl,
 } from "@fluidframework/driver-definitions";
 import {
 	LocalCodeLoader,
@@ -148,7 +146,9 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			mockFactory.createDocumentService = async (resolvedUrl) => {
 				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
 				// Issue typescript-eslint/typescript-eslint #1256
-				service.connectToStorage = async () => Promise.reject(new Error("expectedFailure"));
+				service.connectToStorage = () => {
+					throw new Error("expectedFailure");
+				};
 				return service;
 			};
 
@@ -344,14 +344,13 @@ describeNoCompat("Container", (getTestObjectProvider) => {
 			runtimeFactory,
 		);
 
-		const container: IContainerExperimental = await localTestObjectProvider.makeTestContainer(
-			testContainerConfig,
-		);
+		const container: IContainerExperimental =
+			await localTestObjectProvider.makeTestContainer(testContainerConfig);
 		const pendingString = await container.closeAndGetPendingLocalState?.();
 		assert.ok(pendingString);
-		const pendingLocalState: IPendingLocalState = JSON.parse(pendingString);
+		const pendingLocalState: { url?: string } = JSON.parse(pendingString);
 		assert.strictEqual(container.closed, true);
-		assert.strictEqual(pendingLocalState.url, (container.resolvedUrl as IResolvedUrl).url);
+		assert.strictEqual(pendingLocalState.url, container.resolvedUrl?.url);
 	});
 
 	it("can call connect() and disconnect() on Container", async () => {

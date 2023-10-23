@@ -6,27 +6,27 @@
 import { assert } from "@fluidframework/core-utils";
 import { compareSets, fail } from "../../util";
 import {
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	ValueSchema,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	storedEmptyFieldSchema,
 } from "../../core";
-import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
+import { FullSchemaPolicy, Multiplicity, withEditor } from "./fieldKind";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
- * `undefined` TreeStoredSchema means the schema is not present (and thus treated as a NeverTree).
+ * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	original: TreeStoredSchema | undefined,
-	superset: TreeStoredSchema | undefined,
+	originalData: TreeStoredSchema,
+	original: TreeNodeStoredSchema | undefined,
+	superset: TreeNodeStoredSchema | undefined,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
 		return true;
@@ -52,13 +52,13 @@ export function allowsTreeSuperset(
 
 	if (
 		!compareSets({
-			a: original.structFields,
-			b: superset.structFields,
+			a: original.objectNodeFields,
+			b: superset.objectNodeFields,
 			aExtra: (originalField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.structFields.get(originalField) ?? fail("missing expected field"),
+					original.objectNodeFields.get(originalField) ?? fail("missing expected field"),
 					normalizeField(superset.mapFields),
 				),
 			bExtra: (supersetField) =>
@@ -66,14 +66,14 @@ export function allowsTreeSuperset(
 					policy,
 					originalData,
 					normalizeField(original.mapFields),
-					superset.structFields.get(supersetField) ?? fail("missing expected field"),
+					superset.objectNodeFields.get(supersetField) ?? fail("missing expected field"),
 				),
 			same: (sameField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.structFields.get(sameField) ?? fail("missing expected field"),
-					superset.structFields.get(sameField) ?? fail("missing expected field"),
+					original.objectNodeFields.get(sameField) ?? fail("missing expected field"),
+					superset.objectNodeFields.get(sameField) ?? fail("missing expected field"),
 				),
 		})
 	) {
@@ -102,12 +102,12 @@ export function allowsValueSuperset(
  */
 export function allowsFieldSuperset(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	original: FieldStoredSchema,
-	superset: FieldStoredSchema,
+	originalData: TreeStoredSchema,
+	original: TreeFieldStoredSchema,
+	superset: TreeFieldStoredSchema,
 ): boolean {
-	return (
-		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind")
+	return withEditor(
+		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind"),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 
@@ -145,8 +145,8 @@ export function allowsTreeSchemaIdentifierSuperset(
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
-	original: SchemaData,
-	superset: SchemaData,
+	original: TreeStoredSchema,
+	superset: TreeStoredSchema,
 ): boolean {
 	{
 		// TODO: I think its ok to use the field from superset here, but I should confirm it is, and document why.
@@ -175,21 +175,21 @@ export function allowsRepoSuperset(
  */
 export function isNeverField(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	field: FieldStoredSchema,
+	originalData: TreeStoredSchema,
+	field: TreeFieldStoredSchema,
 ): boolean {
 	return isNeverFieldRecursive(policy, originalData, field, new Set());
 }
 
 export function isNeverFieldRecursive(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	field: FieldStoredSchema,
-	parentTypeStack: Set<TreeStoredSchema>,
+	originalData: TreeStoredSchema,
+	field: TreeFieldStoredSchema,
+	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
 	if (
 		(policy.fieldKinds.get(field.kind.identifier) ?? fail("missing field kind"))
-			.multiplicity === Multiplicity.Value &&
+			.multiplicity === Multiplicity.Single &&
 		field.types !== undefined
 	) {
 		for (const type of field.types) {
@@ -219,8 +219,8 @@ export function isNeverFieldRecursive(
  */
 export function isNeverTree(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	tree: TreeStoredSchema | undefined,
+	originalData: TreeStoredSchema,
+	tree: TreeNodeStoredSchema | undefined,
 ): boolean {
 	return isNeverTreeRecursive(policy, originalData, tree, new Set());
 }
@@ -233,9 +233,9 @@ export function isNeverTree(
  */
 export function isNeverTreeRecursive(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	tree: TreeStoredSchema | undefined,
-	parentTypeStack: Set<TreeStoredSchema>,
+	originalData: TreeStoredSchema,
+	tree: TreeNodeStoredSchema | undefined,
+	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
 	if (tree === undefined) {
 		return true;
@@ -249,11 +249,11 @@ export function isNeverTreeRecursive(
 			(
 				policy.fieldKinds.get(normalizeField(tree.mapFields).kind.identifier) ??
 				fail("missing field kind")
-			).multiplicity === Multiplicity.Value
+			).multiplicity === Multiplicity.Single
 		) {
 			return true;
 		}
-		for (const field of tree.structFields.values()) {
+		for (const field of tree.objectNodeFields.values()) {
 			// TODO: this can recurse infinitely for schema that include themselves in a value field.
 			// This breaks even if there are other allowed types.
 			// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
@@ -269,6 +269,6 @@ export function isNeverTreeRecursive(
 	}
 }
 
-export function normalizeField(schema: FieldStoredSchema | undefined): FieldStoredSchema {
+export function normalizeField(schema: TreeFieldStoredSchema | undefined): TreeFieldStoredSchema {
 	return schema ?? storedEmptyFieldSchema;
 }

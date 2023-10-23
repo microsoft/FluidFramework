@@ -5,6 +5,9 @@
 
 import { getArrayStatistics } from "./ReporterUtilities";
 
+/**
+ * @public
+ */
 export interface Timer<T = unknown> {
 	now(): T;
 	toSeconds(before: T, after: T): number;

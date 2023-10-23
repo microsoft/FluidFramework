@@ -68,6 +68,29 @@ export interface ApiItemTransformationOptions {
     transformApiVariable?: TransformApiItemWithoutChildren<ApiVariable>;
 }
 
+declare namespace ApiItemUtilities {
+    export {
+        doesItemRequireOwnDocument,
+        getHeadingForApiItem,
+        getLinkForApiItem,
+        getDefaultValueBlock,
+        getDeprecatedBlock,
+        getExampleBlocks,
+        getModifiers,
+        getQualifiedApiItemName,
+        getReleaseTag,
+        getReturnsBlock,
+        getSeeBlocks,
+        getThrowsBlocks,
+        getUnscopedPackageName,
+        isDeprecated,
+        isOptional,
+        isReadonly,
+        isStatic
+    }
+}
+export { ApiItemUtilities }
+
 // @public
 export type ApiMemberKind = Omit<ApiItemKind, ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package>;
 
@@ -276,7 +299,7 @@ export interface DocumentNodeProps {
 export { DocumentWriter }
 
 // @public
-export function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
+function doesItemRequireOwnDocument(apiItem: ApiItem, documentBoundaries: DocumentBoundaries): boolean;
 
 // @public
 export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
@@ -297,40 +320,40 @@ export interface FileSystemConfiguration {
 export function getApiItemTransformationConfigurationWithDefaults(inputOptions: ApiItemTransformationConfiguration): Required<ApiItemTransformationConfiguration>;
 
 // @public
-export function getDefaultValueBlock(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>): DocSection | undefined;
+function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | undefined;
 
 // @public
-export function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
+function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-export function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getExampleBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
-export function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
+function getHeadingForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, headingLevel?: number): Heading;
 
 // @public
-export function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
+function getLinkForApiItem(apiItem: ApiItem, config: Required<ApiItemTransformationConfiguration>, textOverride?: string): Link;
 
 // @public
-export function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
+function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiModifier[];
 
 // @public
-export function getQualifiedApiItemName(apiItem: ApiItem): string;
+function getQualifiedApiItemName(apiItem: ApiItem): string;
 
 // @public
-export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
+function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
 
 // @public
-export function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
+function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
-export function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getSeeBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
-export function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
+function getThrowsBlocks(apiItem: ApiItem): DocSection[] | undefined;
 
 // @public
-export function getUnscopedPackageName(apiPackage: ApiPackage): string;
+function getUnscopedPackageName(apiPackage: ApiPackage): string;
 
 // @public
 export interface Heading {
@@ -393,16 +416,16 @@ export interface HtmlRenderers {
 }
 
 // @public
-export function isDeprecated(apiItem: ApiItem): boolean;
+function isDeprecated(apiItem: ApiItem): boolean;
 
 // @public
-export function isOptional(apiItem: ApiItem): boolean;
+function isOptional(apiItem: ApiItem): boolean;
 
 // @public
-export function isReadonly(apiItem: ApiItem): boolean;
+function isReadonly(apiItem: ApiItem): boolean;
 
 // @public
-export function isStatic(apiItem: ApiItem): boolean;
+function isStatic(apiItem: ApiItem): boolean;
 
 declare namespace LayoutUtilities {
     export {

@@ -11,11 +11,22 @@ const {
 	getReleaseTag,
 	LayoutUtilities,
 	SectionNode,
+	SpanNode,
 	transformTsdocNode,
 	HeadingNode,
 } = require("@fluid-tools/api-markdown-documenter");
 
 const { AlertNode } = require("./alert-node");
+
+const customExamplesSectionTitle = "Usage";
+const customThrowsSectionTitle = "Error Handling";
+
+const alphaWarning = SpanNode.createFromPlainText(
+	"WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.",
+);
+const betaWarning = SpanNode.createFromPlainText(
+	"WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.",
+);
 
 /**
  * Default content layout for all API items.
@@ -66,9 +77,9 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	// Render alpha/beta notice if applicable
 	const releaseTag = getReleaseTag(apiItem);
 	if (releaseTag === ReleaseTag.Alpha) {
-		sections.push(new SectionNode([alphaWarningSpan]));
+		sections.push(new SectionNode([alphaWarning]));
 	} else if (releaseTag === ReleaseTag.Beta) {
-		sections.push(new SectionNode([betaWarningSpan]));
+		sections.push(new SectionNode([betaWarning]));
 	}
 
 	// Render signature (if any)
@@ -84,7 +95,11 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	}
 
 	// Render examples (if any)
-	const renderedExamples = LayoutUtilities.createExamplesSection(apiItem, config);
+	const renderedExamples = LayoutUtilities.createExamplesSection(
+		apiItem,
+		config,
+		customExamplesSectionTitle,
+	);
 	if (renderedExamples !== undefined) {
 		sections.push(renderedExamples);
 	}
@@ -96,7 +111,11 @@ function layoutContent(apiItem, itemSpecificContent, config) {
 	}
 
 	// Render @throws content (if any)
-	const renderedThrows = LayoutUtilities.createThrowsSection(apiItem, config);
+	const renderedThrows = LayoutUtilities.createThrowsSection(
+		apiItem,
+		config,
+		customThrowsSectionTitle,
+	);
 	if (renderedThrows !== undefined) {
 		sections.push(renderedThrows);
 	}

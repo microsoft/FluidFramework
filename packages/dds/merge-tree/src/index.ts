@@ -11,7 +11,6 @@ export {
 	SequenceOffsets,
 } from "./attributionCollection";
 export { createInsertOnlyAttributionPolicy } from "./attributionPolicy";
-export { IIntegerRange } from "./base";
 export { Client } from "./client";
 export {
 	ConflictAction,
@@ -27,7 +26,6 @@ export {
 	RBNodeActions,
 	RedBlackTree,
 	SortedDictionary,
-	Stack,
 } from "./collections";
 export {
 	LocalClientId,
@@ -112,11 +110,7 @@ export {
 } from "./ops";
 export {
 	addProperties,
-	clone,
-	combine,
 	createMap,
-	extend,
-	extendIfUndefined,
 	IConsensusValue,
 	MapLike,
 	matchProperties,

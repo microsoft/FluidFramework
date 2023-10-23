@@ -104,6 +104,12 @@ parameters:
   type: string
   default: npm
 
+# Parameter for modifying the 'types' field in the package.json.
+# If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
+- name: packageTypesOverride
+  type: string
+  default: none
+
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
@@ -124,6 +130,10 @@ parameters:
   type: object
   default: []
 
+- name: telemetry
+  type: boolean
+  default: false
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -139,6 +149,8 @@ variables:
   - name: toolAbsolutePath
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
+  - name: pipelineTelemetryWorkdir
+    value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
   - group: ado-feeds
 
 stages:
@@ -184,6 +196,7 @@ stages:
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+                packageTypesOverride=${{ parameters.packageTypesOverride }}
 
               Tasks Parameters:
                 BuildDir=${{ parameters.buildDirectory }}
@@ -203,6 +216,7 @@ stages:
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
+                packageTypesOverride='${{ parameters.packageTypesOverride }}'
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -236,6 +250,11 @@ stages:
                   echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
                   exit -1;
                 fi
+
+                if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
+                  echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
+                  exit -1;
+                fi
               fi
 
               if [[ "$(release)" == "prerelease" ]]; then
@@ -248,6 +267,11 @@ stages:
               if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
                 if [[ "${{ variables.publish }}" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+                  exit -1;
+                fi
+
+                if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
+                  echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
                   exit -1;
                 fi
               fi
@@ -279,6 +303,7 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
+              packageTypesOverride: ${{ parameters.packageTypesOverride }}
 
         # Build
         - ${{ if ne(parameters.taskBuild, 'false') }}:
@@ -366,17 +391,6 @@ stages:
                 failIfCoverageEmpty: true
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
 
-          # Test - Upload results
-          - ${{ each testResultDir in parameters.testResultDirs }}:
-            - task: PublishTestResults@2
-              displayName: Publish Test Results in ${{ testResultDir }}
-              inputs:
-                testResultsFormat: 'JUnit'
-                testResultsFiles: '**/*junit-report.xml'
-                searchFolder: ${{ parameters.buildDirectory }}/${{ testResultDir }}
-                mergeTestResults: false
-              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-
           # Publish tinylicious log for troubleshooting
           - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
             - task: PublishPipelineArtifact@1
@@ -388,10 +402,11 @@ stages:
               condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
               continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
-          # Log Test Failures
-          - template: include-log-test-failures.yml
+          # Process test result, include publishing and logging
+          - template: include-process-test-results.yml
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
+              testResultDirs: ${{ parameters.testResultDirs }}
 
         # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
@@ -488,9 +503,19 @@ stages:
 
                   echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+
+                  # This is confusing, but we are using the .npmrc here to load dependencies from different feeds. These
+                  # scopes must be loaded from the "dev" feed because that is the only place they are published. Ideally
+                  # this logic will be centralized outside of CI in the future.
                   echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
+                  echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
+
+                  # This scope must be loaded from the "build" feed
                   echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+
+                  # This scope must be loaded from the internal Office feed
                   echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
+
                   echo "always-auth=true" >> ./.npmrc
                   cat .npmrc
 
@@ -620,3 +645,37 @@ stages:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
         publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
+
+  # Capture per-pipeline stage results
+  - stage: runAfterAll
+    displayName: Retrieve and upload client stage stats to Kusto
+    condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'), eq(${{parameters.telemetry}}, true))
+    dependsOn: 
+      - build
+
+    jobs:
+      - template: include-telemetry-setup.yml
+        parameters:
+            testWorkspace: ${{ variables.pipelineTelemetryWorkdir }}
+            poolBuild: Small
+            customSteps:
+
+            - task: Bash@3
+              displayName: Retrieve buildId results
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(toolAbsolutePath)
+                script: |
+                  echo "creating output folder"
+                  mkdir -p ${{ variables.pipelineTelemetryWorkdir }}/timingOutput
+                  echo "Executing curl command ..."
+                  echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+                  curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json
+                  pwd;
+                  ls -laR ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json;
+                  cat ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json;
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.pipelineTelemetryWorkdir }}/timingOutput/';
+              env:
+                BUILD_ID: $(Build.BuildId)
+                ADO_API_TOKEN: $(System.AccessToken)
+                PIPELINE: 'BuildClient'

@@ -520,9 +520,8 @@ describeFullCompat("Detached Container", (getTestObjectProvider) => {
 		// Get the root dataStore from the detached container.
 		const response = await container.request({ url: "/" });
 		const dataStore = response.value as ITestFluidObject;
-		const testChannel1 = await dataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-			crcId,
-		);
+		const testChannel1 =
+			await dataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 
 		dataStore.context.containerRuntime.on("op", (message, runtimeMessage) => {
 			if (runtimeMessage === false) {

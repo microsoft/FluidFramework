@@ -48,7 +48,11 @@ export class GenericNetworkError extends LoggingError implements IDriverErrorBas
 	 */
 	readonly errorType = DriverErrorTypes.genericNetworkError;
 
-	constructor(message: string, readonly canRetry: boolean, props: DriverErrorTelemetryProps) {
+	constructor(
+		message: string,
+		readonly canRetry: boolean,
+		props: DriverErrorTelemetryProps,
+	) {
 		super(message, props);
 	}
 }
@@ -130,13 +134,21 @@ export class NetworkErrorBasic<T extends string> extends LoggingError implements
 }
 
 export class NonRetryableError<T extends string> extends NetworkErrorBasic<T> {
-	constructor(message: string, readonly errorType: T, props: DriverErrorTelemetryProps) {
+	constructor(
+		message: string,
+		readonly errorType: T,
+		props: DriverErrorTelemetryProps,
+	) {
 		super(message, errorType, false, props);
 	}
 }
 
 export class RetryableError<T extends string> extends NetworkErrorBasic<T> {
-	constructor(message: string, readonly errorType: T, props: DriverErrorTelemetryProps) {
+	constructor(
+		message: string,
+		readonly errorType: T,
+		props: DriverErrorTelemetryProps,
+	) {
 		super(message, errorType, true, props);
 	}
 }

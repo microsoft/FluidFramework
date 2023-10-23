@@ -68,6 +68,9 @@ export function combine(
 	return _currentValue;
 }
 
+/**
+ * @internal
+ */
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
 	if (!a && !b) {
 		return true;
@@ -134,6 +137,9 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 	return cloneMap;
 }
 
+/**
+ * @internal
+ */
 export function addProperties(
 	oldProps: PropertySet | undefined,
 	newProps: PropertySet,
@@ -160,6 +166,9 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 	return base;
 }
 
+/**
+ * @internal
+ */
 // Create a MapLike with good performance.
 export function createMap<T>(): MapLike<T> {
 	return Object.create(null) as MapLike<T>;

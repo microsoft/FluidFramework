@@ -142,17 +142,13 @@ export class MockDeltaManager
 		return undefined as any as string;
 	}
 
-	public get maxMessageSize(): number {
-		return 0;
-	}
+	public readonly maxMessageSize: number = 0;
 
 	public get serviceConfiguration(): IClientConfiguration {
 		return undefined as any as IClientConfiguration;
 	}
 
-	public get active(): boolean {
-		return true;
-	}
+	public readonly active: boolean = true;
 
 	public close(): void {}
 

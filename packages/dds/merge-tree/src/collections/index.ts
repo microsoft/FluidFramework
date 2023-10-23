@@ -20,4 +20,3 @@ export {
 	RedBlackTree,
 	SortedDictionary,
 } from "./rbTree";
-export { Stack } from "./stack";

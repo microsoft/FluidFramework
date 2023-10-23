@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { FieldStoredSchema, ITreeCursor } from "../../core";
+import { TreeFieldStoredSchema, ITreeCursor } from "../../core";
 import { ContextuallyTypedNodeData, NewFieldContent } from "../contextuallyTyped";
-import { Optional, Sequence, ValueFieldKind } from "../default-field-kinds";
+import { Optional, Sequence, Required } from "../default-field-kinds";
 import {
 	UntypedField,
 	UntypedTree,
@@ -28,9 +28,9 @@ export interface UntypedSequenceField<
 	TNewFieldContent = NewFieldContent,
 > extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
 	/**
-	 * The `FieldStoredSchema` of this field.
+	 * The `TreeFieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldStoredSchema & {
+	readonly fieldSchema: TreeFieldStoredSchema & {
 		readonly kind: Sequence;
 	};
 
@@ -94,10 +94,10 @@ export interface UntypedValueField<
 	TNewContent = ContextuallyTypedNodeData,
 > extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
 	/**
-	 * The `FieldStoredSchema` of this field.
+	 * The `TreeFieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldStoredSchema & {
-		readonly kind: ValueFieldKind;
+	readonly fieldSchema: TreeFieldStoredSchema & {
+		readonly kind: Required;
 	};
 
 	/**
@@ -124,9 +124,9 @@ export interface UntypedOptionalField<
 	TUnwrappedChild = UnwrappedUntypedTree<TContext>,
 > extends UntypedField<TContext, TChild, UntypedTree<TContext>, TUnwrappedChild> {
 	/**
-	 * The `FieldStoredSchema` of this field.
+	 * The `TreeFieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldStoredSchema & {
+	readonly fieldSchema: TreeFieldStoredSchema & {
 		readonly kind: Optional;
 	};
 

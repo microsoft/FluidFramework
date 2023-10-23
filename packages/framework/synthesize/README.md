@@ -34,8 +34,8 @@ So if I wanted an object with an optional `IFoo` and a required `IBar` I would g
 
 ```typescript
 {
-    IFoo: Promise<IFoo | undefined>
-    IBar: Promise<IBar>
+	IFoo: Promise<IFoo | undefined>;
+	IBar: Promise<IBar>;
 }
 ```
 
@@ -166,8 +166,8 @@ If I wanted an object with an optional `IFoo` and a required `IBar` I would get 
 
 ```typescript
 {
-    IFoo: Promise<IFoo | undefined>
-    IBar: Promise<IBar>
+	IFoo: Promise<IFoo | undefined>;
+	IBar: Promise<IBar>;
 }
 ```
 

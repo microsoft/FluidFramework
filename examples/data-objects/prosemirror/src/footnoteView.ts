@@ -18,7 +18,12 @@ export class FootnoteView {
 	public dom;
 	public innerView;
 
-	constructor(node, view, getPos, private readonly loader: ILoader) {
+	constructor(
+		node,
+		view,
+		getPos,
+		private readonly loader: ILoader,
+	) {
 		// We'll need these later
 		this.node = node;
 		this.outerView = view;

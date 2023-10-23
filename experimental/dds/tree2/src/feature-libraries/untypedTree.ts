@@ -6,18 +6,18 @@
 import {
 	Value,
 	FieldKey,
-	FieldStoredSchema,
-	TreeSchemaIdentifier,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
 	ForestEvents,
-	SchemaData,
+	TreeStoredSchema,
 	UpPath,
 	PathVisitor,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 } from "../core";
 import { ISubscribable } from "../events";
 import { Named } from "../util";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
-import { TreeStatus } from "./editable-tree";
+import { TreeStatus } from "./editable-tree-2";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -83,7 +83,7 @@ export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeC
 	 * The name of the node type.
 	 */
 	// TODO: remove this favor of typeSymbol once its the view schema
-	readonly [typeNameSymbol]: TreeSchemaIdentifier;
+	readonly [typeNameSymbol]: TreeNodeSchemaIdentifier;
 
 	/**
 	 * Value stored on this node.
@@ -114,7 +114,7 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	 * If this node is well-formed, it must follow this schema.
 	 */
 	// TODO: update implementation to use view schema in typed views.
-	readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
+	readonly [typeSymbol]: TreeNodeStoredSchema & Named<TreeNodeSchemaIdentifier>;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.
@@ -188,9 +188,9 @@ export interface UntypedField<
 	TUnwrappedChild = UnwrappedUntypedTree<TContext>,
 > extends MarkedArrayLike<TUnwrappedChild> {
 	/**
-	 * The `FieldStoredSchema` of this field.
+	 * The `TreeFieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldStoredSchema;
+	readonly fieldSchema: TreeFieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.
@@ -243,7 +243,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 	 *
 	 * The root's schema is tracked under {@link rootFieldKey}.
 	 */
-	readonly schema: SchemaData;
+	readonly schema: TreeStoredSchema;
 
 	/**
 	 * Call before editing.

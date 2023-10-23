@@ -34,6 +34,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
+import { SharedMap } from "@fluidframework/map";
 import { getGCStateFromSummary, getGCTombstoneStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
@@ -113,15 +114,15 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	// datastore was unreferenced in.
 	const summarizationWithUnreferencedDataStoreAfterTime = async (
 		approximateUnreferenceTimestampMs: number,
+		includeDds: boolean = false,
 	) => {
 		const container = await makeContainer();
 		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
 		await waitForContainerConnection(container);
 
 		const handleKey = "handle";
-		const dataStore = await defaultDataObject._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore =
+			await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
 		const testDataObject = (await dataStore.entryPoint?.get()) as ITestDataObject | undefined;
 		assert(
 			testDataObject !== undefined,
@@ -129,21 +130,31 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		);
 		const unreferencedId = testDataObject._context.id;
 
+		if (includeDds) {
+			// Create/reference a DDS under the datastore, it will become Tombstoned with it
+			const map = SharedMap.create(testDataObject._runtime);
+			testDataObject._root.set("dds1", map.handle);
+		}
+
 		// Reference a datastore - important for making it live
 		defaultDataObject._root.set(handleKey, testDataObject.handle);
 		// Unreference a datastore
 		defaultDataObject._root.delete(handleKey);
 
 		// Summarize
-		const { container: summarizingContainer1, summarizer: summarizer1 } = await loadSummarizer(
-			container,
-		);
+		const { container: summarizingContainer1, summarizer: summarizer1 } =
+			await loadSummarizer(container);
 		const summaryVersion = (await summarize(summarizer1)).summaryVersion;
 
-		// TODO: trailing op test - note because of the way gc is currently structured, the error isn't logged,
-		// but it is detected - it's stored in the pending queue and the container closes before the error is sent.
-		testDataObject._root.set("send while unreferenced", "op");
-		await provider.ensureSynchronized();
+		// If we added a DDS above, this trailing op will trigger a codepath that over-eagerly detects that
+		// DDS reference as if it's new, and wipes out the unreference tracking for the datastore.
+		// So we must skip the trailing op to avoid that case.
+		if (!includeDds) {
+			// TODO: trailing op test - note because of the way gc is currently structured, the error isn't logged,
+			// but it is detected - it's stored in the pending queue and the container closes before the error is sent.
+			testDataObject._root.set("send while unreferenced", "op");
+			await provider.ensureSynchronized();
+		}
 
 		// Close the containers as these containers would be closed by session expiry before sweep ready ever occurs
 		container.close();
@@ -399,7 +410,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		}
 
 		itExpects(
-			"Requesting tombstoned datastores fails in interactive client loaded after sweep timeout",
+			"Requesting tombstoned datastores fails in interactive client loaded after sweep timeout (but DDS load is allowed)",
 			[
 				// Interactive client's request
 				{
@@ -422,7 +433,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			],
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
-					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
+					await summarizationWithUnreferencedDataStoreAfterTime(
+						sweepTimeoutMs,
+						/* includeDds */ true,
+					);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 
 				// The datastore should be tombstoned now
@@ -463,6 +477,15 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
 					true,
 					"DID NOT Expect tombstone header to be set on the response",
+				);
+
+				// handle.get on a DDS in a tombstoned object should succeed (despite not being able to pass the header)
+				const dataObject = tombstoneSuccessResponse.value as ITestDataObject;
+				const ddsHandle = dataObject._root.get<IFluidHandle<SharedMap>>("dds1");
+				assert(ddsHandle !== undefined, "Expected to find a handle to the DDS");
+				await assert.doesNotReject(
+					async () => ddsHandle.get(),
+					"Should be able to get a tombstoned DDS via its handle",
 				);
 
 				// This request succeeds because the summarizer never fails for tombstones

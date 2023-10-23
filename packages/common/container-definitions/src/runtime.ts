@@ -26,12 +26,13 @@ import {
 import { IAudience } from "./audience";
 import { IDeltaManager } from "./deltas";
 import { ICriticalContainerError } from "./error";
-import { ILoader, ILoaderOptions, ISnapshotTreeWithBlobContents } from "./loader";
+import { ILoader, ILoaderOptions } from "./loader";
 import { IFluidCodeDetails } from "./fluidPackage";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
  * service.  The transition from detached to attached state is a one-way transition.
+ * @public
  */
 export enum AttachState {
 	/**
@@ -55,11 +56,12 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
+ * @public
  */
 export interface IRuntime extends IDisposable {
 	/**
 	 * Executes a request against the runtime
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
@@ -103,13 +105,6 @@ export interface IRuntime extends IDisposable {
 	getPendingLocalState(props?: { notifyImminentClosure?: boolean }): unknown;
 
 	/**
-	 * Notify runtime that container is moving to "Attaching" state
-	 * @param snapshot - snapshot created at attach time
-	 * @deprecated - not necessary after op replay moved to Container
-	 */
-	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
-
-	/**
 	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
 	 * stashed ops) after having processed it.
 	 */
@@ -126,6 +121,7 @@ export interface IRuntime extends IDisposable {
 
 /**
  * Payload type for IContainerContext.submitBatchFn()
+ * @public
  */
 export interface IBatchMessage {
 	contents?: string;
@@ -138,6 +134,7 @@ export interface IBatchMessage {
  * IContainerContext is fundamentally just the set of things that an IRuntimeFactory (and IRuntime) will consume from the
  * loader layer.  It gets passed into the IRuntimeFactory.instantiateRuntime call.  Only include members on this interface
  * if you intend them to be consumed/called from the runtime layer.
+ * @public
  */
 export interface IContainerContext {
 	readonly options: ILoaderOptions;
@@ -211,13 +208,20 @@ export interface IContainerContext {
 	 * @deprecated 2.0.0-internal.5.2.0 - The docId is already logged by the {@link IContainerContext.taggedLogger} for
 	 * telemetry purposes, so this is generally unnecessary for telemetry.
 	 * If the id is needed for other purposes it should be passed to the consumer explicitly.
-	 * This member will be removed in the 2.0.0-internal.7.0.0 release.
+	 *
+	 * @privateremarks Tracking in AB#5714
 	 */
 	readonly id: string;
 }
 
+/**
+ * @public
+ */
 export const IRuntimeFactory: keyof IProvideRuntimeFactory = "IRuntimeFactory";
 
+/**
+ * @public
+ */
 export interface IProvideRuntimeFactory {
 	readonly IRuntimeFactory: IRuntimeFactory;
 }
@@ -227,6 +231,7 @@ export interface IProvideRuntimeFactory {
  *
  * Provides the entry point for the ContainerContext to load the proper IRuntime
  * to start up the running instance of the Container.
+ * @public
  */
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	/**

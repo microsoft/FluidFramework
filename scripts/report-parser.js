@@ -5,18 +5,19 @@
 
 /**
  * Parsing script which finds all test reports ending with "junit-report.json"
- * in a given directory and prints failed tests into the console
+ * in a given directory and prints ADO pipeline errors into the console
  */
 
 var fs = require("fs");
-var util = require("util");
 var path = require("path");
 
 var directory = process.argv.slice(2)[0];
 
-let files = [];
-
 const getJunitTestReports = (directory) => {
+	if (!fs.existsSync(directory)) {
+		throw new Error(`Directory '${directory}' does not exist`);
+	}
+	const files = [];
 	const filesInDirectory = fs.readdirSync(directory);
 	for (const file of filesInDirectory) {
 		const absolute = path.join(directory, file);
@@ -26,17 +27,21 @@ const getJunitTestReports = (directory) => {
 			files.push(absolute);
 		}
 	}
+	return files;
 };
 
-getJunitTestReports(directory);
+const files = getJunitTestReports(directory);
 
-let output = [];
 for (const filename of files) {
-	const jsonData = fs.readFileSync(filename, "utf8");
+	const content = fs.readFileSync(filename, "utf8");
+	const json = JSON.parse(content);
+	const failedTests = json.failures;
 
-	const failedTests = JSON.parse(jsonData).failures;
-
-	if (failedTests.length > 0) output.push(failedTests);
+	if (failedTests.length > 0) {
+		console.log(
+			failedTests
+				.map((e) => `##vso[task.logissue type=error;sourcepath=${e.file}]${e.fullTitle}`)
+				.join("\n"),
+		);
+	}
 }
-
-console.log(util.inspect(output, false, null, true));

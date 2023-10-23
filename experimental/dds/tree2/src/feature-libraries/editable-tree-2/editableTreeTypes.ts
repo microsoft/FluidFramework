@@ -4,22 +4,21 @@
  */
 
 import * as SchemaAware from "../schema-aware";
-import { FieldKey, TreeSchemaIdentifier, TreeValue } from "../../core";
+import { FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
-import { LocalNodeKey } from "../node-key";
+import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
-	FieldSchema,
+	TreeFieldSchema,
 	InternalTypedSchemaTypes,
-	TreeSchema,
+	TreeNodeSchema,
 	AllowedTypes,
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
-import { TreeStatus } from "../editable-tree";
 import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
@@ -74,6 +73,27 @@ export interface Tree<TSchema = unknown> {
 }
 
 /**
+ * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
+ * @alpha
+ */
+export enum TreeStatus {
+	/**
+	 * Is parented under the root field.
+	 */
+	InDocument = 0,
+
+	/**
+	 * Is not parented under the root field, but can be added back to the original document tree.
+	 */
+	Removed = 1,
+
+	/**
+	 * Is removed and cannot be added back to the original document tree.
+	 */
+	Deleted = 2,
+}
+
+/**
  * Generic tree node API.
  *
  * Nodes are (shallowly) immutable and have a logical identity, a type and either a value or fields under string keys.
@@ -91,7 +111,7 @@ export interface Tree<TSchema = unknown> {
  *
  * @alpha
  */
-export interface TreeNode extends Tree<TreeSchema> {
+export interface TreeNode extends Tree<TreeNodeSchema> {
 	/**
 	 * Value stored on this node.
 	 */
@@ -118,14 +138,14 @@ export interface TreeNode extends Tree<TreeSchema> {
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TSchema extends TreeSchema>(schema: TSchema): this is TypedNode<TSchema>;
+	is<TSchema extends TreeNodeSchema>(schema: TSchema): this is TypedNode<TSchema>;
 
 	/**
 	 * Same as `this.schema.name`.
 	 * This is provided as an enumerable own property to aid with JavaScript object traversals of this data-structure.
 	 * See [ReadMe](./README.md) for details.
 	 */
-	readonly type: TreeSchemaIdentifier;
+	readonly type: TreeNodeSchemaIdentifier;
 
 	[boxedIterator](): IterableIterator<TreeField>;
 }
@@ -150,7 +170,7 @@ export interface TreeNode extends Tree<TreeSchema> {
  *
  * @alpha
  */
-export interface TreeField extends Tree<FieldSchema> {
+export interface TreeField extends Tree<TreeFieldSchema> {
 	/**
 	 * The `FieldKey` this field is under.
 	 * Defines what part of its parent this field makes up.
@@ -166,7 +186,7 @@ export interface TreeField extends Tree<FieldSchema> {
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema>;
+	is<TSchema extends TreeFieldSchema>(schema: TSchema): this is TypedField<TSchema>;
 
 	[boxedIterator](): IterableIterator<TreeNode>;
 
@@ -186,12 +206,7 @@ export interface TreeField extends Tree<FieldSchema> {
 // #region Node Kinds
 
 /**
- * A node that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
- * @alpha
- */
-
-/**
- * A {@link TreeNode} that behaves like a `Map<FieldKey, Field>` for a specific `Field` type.
+ * A {@link TreeNode} that behaves like a `Map<string, Field>` for a specific `Field` type.
  *
  * @remarks
  * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if it has never been set.
@@ -218,20 +233,14 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `has` will only return true if there are one or more nodes present in the given field.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	has(key: FieldKey): boolean;
+	has(key: string): boolean;
 
 	/**
 	 * Get the value associated with `key`.
 	 * @param key - which map entry to look up.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	get(key: FieldKey): UnboxField<TSchema["mapFields"]>;
+	get(key: string): UnboxField<TSchema["mapFields"]>;
 
 	/**
 	 * Get the field for `key`.
@@ -240,11 +249,8 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @remarks
 	 * All fields under a map implicitly exist, so `get` can be called with any key and will always return a field.
 	 * Even if the field is empty, it will still be returned, and can be edited to insert content into the map.
-	 *
-	 * @privateRemarks
-	 * TODO: Consider changing the key type to `string` for easier use.
 	 */
-	getBoxed(key: FieldKey): TypedField<TSchema["mapFields"]>;
+	getBoxed(key: string): TypedField<TSchema["mapFields"]>;
 
 	/**
 	 * Returns an iterable of keys in the map.
@@ -260,15 +266,17 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * @remarks
 	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
 	 */
-	values(): IterableIterator<UnboxField<TSchema["mapFields"]>>;
+	values(): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
 
 	/**
 	 * Returns an iterable of key, value pairs for every entry in the map.
 	 *
 	 * @remarks
 	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
+	 *
+	 * This iteration provided by `entries()` is equivalent to that provided by direct iteration of the {@link MapNode} (a.k.a. `[Symbol.Iterator]()`).
 	 */
-	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"]>]>;
+	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]>;
 
 	/**
 	 * Executes a provided function once per each key/value pair in the map.
@@ -280,7 +288,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 */
 	forEach(
 		callbackFn: (
-			value: UnboxField<TSchema["mapFields"]>,
+			value: UnboxField<TSchema["mapFields"], "notEmpty">,
 			key: FieldKey,
 			map: MapNode<TSchema>,
 		) => void,
@@ -288,7 +296,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	): void;
 
 	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
-	// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+	// set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	/**
 	 * Iterate through all fields in the map.
@@ -299,7 +307,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 */
 	[boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>>;
 
-	[Symbol.iterator](): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
+	[Symbol.iterator](): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]>;
 
 	/**
 	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
@@ -309,7 +317,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
 	 * This object is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
 	 */
 	readonly asObject: {
-		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"]>;
+		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"], "notEmpty">;
 	};
 }
 
@@ -325,10 +333,10 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * Here are a few:
  * - When it's necessary to differentiate between an empty sequence, and no sequence.
  * One case where this is needed is encoding Json.
- * - When polymorphism over {@link FieldSchema} (and not just a union of {@link AllowedTypes}) is required.
+ * - When polymorphism over {@link TreeFieldSchema} (and not just a union of {@link AllowedTypes}) is required.
  * For example when encoding a schema for a type like
  * `Foo[] | Bar[]`, `Foo | Foo[]` or `Optional<Foo> | Optional<Bar>` (Where `Optional` is the Optional field kind, not TypeScript's `Optional`).
- * Since this schema system only allows `|` of {@link TreeSchema} (and only when declaring a {@link FieldSchema}), see {@link SchemaBuilder.field},
+ * Since this schema system only allows `|` of {@link TreeNodeSchema} (and only when declaring a {@link TreeFieldSchema}), see {@link SchemaBuilderBase.field},
  * these aggregate types are most simply expressed by creating fieldNodes for the terms like `Foo[]`, and `Optional<Foo>`.
  * Note that these are distinct from types like `(Foo | Bar)[]` and `Optional<Foo | Bar>` which can be expressed as single fields without extra nodes.
  * - When a distinct merge identity is desired for a field.
@@ -345,6 +353,11 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * Instead {@link FieldNode}s can be use to achieve something similar, more like:
  * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
  *
+ * @privateRemarks
+ * TODO: The rule walking over the tree via enumerable own properties is lossless (see [ReadMe](./README.md) for details)
+ * fails to be true for recursive field nodes with field kind optional, since the length of the chain of field nodes is lost.
+ * THis could be fixed by tweaking the unboxing rules, or simply ban view schema that would have this problem (check for recursive optional field nodes).
+ * Replacing the field node pattern with one where the FieldNode node exposes APIs from its field instead of unboxing could have the same issue, and same solutions.
  * @alpha
  */
 export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
@@ -354,7 +367,7 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
 	 * This is a version of {@link FieldNode.boxedContent} but does unboxing.
 	 * Since field node are usually used to wrap fields which don't do unboxing (like {@link Sequence})
 	 */
-	readonly content: UnboxField<TSchema["structFieldsObject"][""]>;
+	readonly content: UnboxField<TSchema["objectNodeFieldsObject"][""]>;
 	/**
 	 * The field this field node wraps.
 	 *
@@ -363,17 +376,17 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
 	 * this is usually the same as {@link FieldNode.content}.
 	 * This is also the same as `[...this][0]`.
 	 */
-	readonly boxedContent: TypedField<TSchema["structFieldsObject"][""]>;
+	readonly boxedContent: TypedField<TSchema["objectNodeFieldsObject"][""]>;
 }
 
 /**
  * A {@link TreeNode} that behaves like struct, providing properties to access its fields.
  *
- * Struct nodes consist of a finite collection of fields, each with their own (distinct) key and {@link FieldSchema}.
+ * Struct nodes consist of a finite collection of fields, each with their own (distinct) key and {@link TreeFieldSchema}.
  *
  * @remarks
  * Struct nodes require complex typing, and have been split into two parts for implementation purposes.
- * See {@link StructTyped} for the schema aware extensions to this that provide access to the fields.
+ * See {@link ObjectNodeTyped} for the schema aware extensions to this that provide access to the fields.
  *
  * These "Structs" resemble (and are named after) "Structs" from a wide variety of programming languages
  * (Including Algol 68, C, Go, Rust, C# etc.).
@@ -387,7 +400,7 @@ export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
  *
  * @alpha
  */
-export interface Struct extends TreeNode {
+export interface ObjectNode extends TreeNode {
 	/**
 	 * {@link LocalNodeKey} that identifies this node.
 	 */
@@ -412,39 +425,58 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 /**
  * A {@link TreeNode} that behaves like struct, providing properties to access its fields.
  *
+ * @privateRemarks
+ *
+ * The corresponding implementation logic for this lives in `LazyTree.ts` under `buildStructClass`.
+ * If you change the signature here, you will need to update that logic to match.
+ *
  * @alpha
  */
-export type StructTyped<TSchema extends StructSchema> = Struct &
-	StructFields<TSchema["structFieldsObject"]>;
+export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNode &
+	ObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
 
 /**
- * Properties to access a struct nodes fields. See {@link StructTyped}.
+ * Properties to access a struct nodes fields. See {@link ObjectNodeTyped}.
  *
- * @privateRemarks
- * TODO: support custom field keys
+ * @privateRemarks TODOs:
+ *
+ * 1. Support custom field keys.
+ *
+ * 2. Do we keep assignment operator + "setFoo" methods, or just use methods?
+ * Inconsistency in the API experience could confusing for consumers.
  *
  * @alpha
  */
-export type StructFields<TFields extends RestrictiveReadonlyRecord<string, FieldSchema>> =
-	// Getters
-	{
-		readonly [key in keyof TFields]: UnboxField<TFields[key]>;
-	} & {
-		readonly // boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		[key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
-	};
-// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
-// set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
-// {
-// 	readonly [key in keyof TFields as `set${Capitalize<key & string>}`]: (
-// 		content: FlexibleFieldContent<TFields[key]>,
-// 	) => void;
-// };
-// This could be enabled to allow assignment via `=` in some cases.
-// & {
-// 	// Setter properties (when the type system permits)
-// 	[key in keyof TFields]: UnwrappedField<TFields[key]> & StructSetContent<TFields[key]>;
-// }
+export type ObjectNodeFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> = {
+	// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+	readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
+} & {
+	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
+	// If we could map to getters and setters separately, we would preferably do that, but we can't.
+	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? never
+		: key]: UnboxField<TFields[key]>;
+} & {
+	// Add setter (make property writable) when the field is of a kind that has a logical set operation.
+	// If we could map to getters and setters separately, we would preferably do that, but we can't.
+	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? key
+		: never]: UnboxField<TFields[key]>;
+} & {
+	// Setter method (when the field is of a kind that has a logical set operation).
+	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? `set${Capitalize<key & string>}`
+		: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+};
+
+/**
+ * Field kinds that allow value assignment.
+ *
+ * @alpha
+ */
+export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKinds.required;
 
 // #endregion
 
@@ -454,7 +486,7 @@ export type StructFields<TFields extends RestrictiveReadonlyRecord<string, Field
  * Strongly typed tree literals for inserting as the content of a field.
  * @alpha
  */
-export type FlexibleFieldContent<TSchema extends FieldSchema> = SchemaAware.TypedField<
+export type FlexibleFieldContent<TSchema extends TreeFieldSchema> = SchemaAware.TypedField<
 	TSchema,
 	SchemaAware.ApiMode.Flexible
 >;
@@ -481,7 +513,7 @@ export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? n
 /**
  * {@link TreeField} that stores a sequence of children.
  *
- * Sequence fields can contain an ordered sequence any number of {@link TreeNode}s which must be of the {@link AllowedTypes} from the {@link FieldSchema}).
+ * Sequence fields can contain an ordered sequence any number of {@link TreeNode}s which must be of the {@link AllowedTypes} from the {@link TreeFieldSchema}).
  *
  * @remarks
  * Allows for concurrent editing based on index, adjusting the locations of indexes as needed so they apply to the same logical place in the sequence when rebased and merged.
@@ -528,21 +560,21 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAt(index: number, value: FlexibleNodeContent<TTypes>[]): void;
+	insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtStart(value: FlexibleNodeContent<TTypes>[]): void;
+	insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtEnd(value: FlexibleNodeContent<TTypes>[]): void;
+	insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -662,9 +694,10 @@ export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
  * @alpha
  */
 export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
-	readonly content: UnboxNodeUnion<TTypes>;
+	get content(): UnboxNodeUnion<TTypes>;
+	set content(content: FlexibleNodeContent<TTypes>);
+
 	readonly boxedContent: TypedNodeUnion<TTypes>;
-	setContent(content: FlexibleNodeContent<TTypes>): void;
 }
 
 /**
@@ -682,9 +715,19 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
  * @alpha
  */
 export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
-	readonly content?: UnboxNodeUnion<TTypes>;
+	get content(): UnboxNodeUnion<TTypes> | undefined;
+	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
+
 	readonly boxedContent?: TypedNodeUnion<TTypes>;
-	setContent(content: undefined | FlexibleNodeContent<TTypes>): void;
+}
+
+/**
+ * Field that contains an immutable {@link StableNodeKey} identifying this node.
+ * @alpha
+ */
+export interface NodeKeyField extends TreeField {
+	readonly localNodeKey: LocalNodeKey;
+	readonly stableNodeKey: StableNodeKey;
 }
 
 // #endregion
@@ -695,7 +738,7 @@ export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
  * Schema aware specialization of {@link TreeField}.
  * @alpha
  */
-export type TypedField<TSchema extends FieldSchema> = TypedFieldInner<
+export type TypedField<TSchema extends TreeFieldSchema> = TypedFieldInner<
 	TSchema["kind"],
 	TSchema["allowedTypes"]
 >;
@@ -709,10 +752,12 @@ export type TypedFieldInner<
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<Types>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? RequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
 	? OptionalField<Types>
+	: Kind extends typeof FieldKinds.nodeKey
+	? NodeKeyField
 	: TreeField;
 
 /**
@@ -720,42 +765,50 @@ export type TypedFieldInner<
  * @alpha
  */
 export type TypedNodeUnion<TTypes extends AllowedTypes> =
-	TTypes extends InternalTypedSchemaTypes.FlexList<TreeSchema>
+	TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 		? InternalTypedSchemaTypes.ArrayToUnion<
 				TypeArrayToTypedTreeArray<
 					Assume<
 						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>,
-						readonly TreeSchema[]
+						readonly TreeNodeSchema[]
 					>
 				>
 		  >
 		: TreeNode;
 
 /**
- * Takes in `TreeSchema[]` and returns a TypedNode union.
+ * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
  * @alpha
  */
-export type TypeArrayToTypedTreeArray<T extends readonly TreeSchema[]> = [
+export type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<Assume<Head, TreeSchema>>,
-				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeSchema[]>>,
+				TypedNode<Assume<Head, TreeNodeSchema>>,
+				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeNodeSchema[]>>,
 		  ]
 		: [],
 ][_InlineTrick];
 
 /**
- * Schema aware specialization of {@link TreeNode} for a given {@link TreeSchema}.
+ * Schema aware specialization of {@link Tree}.
  * @alpha
  */
-export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
+export type Typed<TSchema extends TreeFieldSchema | TreeNodeSchema> = TSchema extends TreeNodeSchema
+	? TypedNode<TSchema>
+	: TypedField<Assume<TSchema, TreeFieldSchema>>;
+
+/**
+ * Schema aware specialization of {@link TreeNode} for a given {@link TreeNodeSchema}.
+ * @alpha
+ */
+export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema
 	? Leaf<TSchema>
 	: TSchema extends MapSchema
 	? MapNode<TSchema>
 	: TSchema extends FieldNodeSchema
 	? FieldNode<TSchema>
-	: TSchema extends StructSchema
-	? StructTyped<TSchema>
+	: TSchema extends ObjectNodeSchema
+	? ObjectNodeTyped<TSchema>
 	: TreeNode;
 
 // #endregion
@@ -770,7 +823,7 @@ export type TypedNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
  * @alpha
  */
 export type UnboxField<
-	TSchema extends FieldSchema,
+	TSchema extends TreeFieldSchema,
 	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
 	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
 > = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
@@ -785,11 +838,14 @@ export type UnboxFieldInner<
 	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
 	? Sequence<TTypes>
-	: Kind extends typeof FieldKinds.value
+	: Kind extends typeof FieldKinds.required
 	? UnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
 	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
-	: // TODO: forbidden and nodeKey
+	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
+	Kind extends typeof FieldKinds.nodeKey
+	? NodeKeyField
+	: // TODO: forbidden
 	  unknown;
 
 /**
@@ -802,7 +858,7 @@ export type UnboxFieldInner<
 export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
 	InternalTypedSchemaTypes.LazyItem<infer InnerType>,
 ]
-	? InnerType extends TreeSchema
+	? InnerType extends TreeNodeSchema
 		? UnboxNode<InnerType>
 		: TypedNodeUnion<TTypes>
 	: TypedNodeUnion<TTypes>;
@@ -814,14 +870,14 @@ export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonl
  * Recursively unboxes that content as well if it does unboxing.
  * @alpha
  */
-export type UnboxNode<TSchema extends TreeSchema> = TSchema extends LeafSchema
+export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema
 	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>
 	: TSchema extends MapSchema
 	? MapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? UnboxField<TSchema["structFieldsObject"][""]>
-	: TSchema extends StructSchema
-	? StructTyped<TSchema>
+	? UnboxField<TSchema["objectNodeFieldsObject"][""]>
+	: TSchema extends ObjectNodeSchema
+	? ObjectNodeTyped<TSchema>
 	: unknown;
 
 // #endregion

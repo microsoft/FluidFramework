@@ -54,9 +54,8 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 				mountableViewRequestHandler(MountableView, [makeViewRequestHandler(viewCallback)]),
 			],
 			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
-				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(
-					dataStoreId,
-				);
+				const entryPoint =
+					await containerRuntime.getAliasedDataStoreEntryPoint(dataStoreId);
 				if (entryPoint === undefined) {
 					throw new Error("default dataStore must exist");
 				}

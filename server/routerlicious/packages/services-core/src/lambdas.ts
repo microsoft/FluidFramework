@@ -52,6 +52,13 @@ export interface IContextErrorData {
 
 	tenantId?: string;
 	documentId?: string;
+
+	/**
+	 * For KafkaRunner logging purposes.
+	 * Since KafkaRunner metric logs all the errors, this will indicate how the error was handled
+	 * eg: doc corruption error / rdkafkaConsumer error, so that we can filter accordingly
+	 */
+	errorLabel?: string;
 }
 
 export interface IContext {

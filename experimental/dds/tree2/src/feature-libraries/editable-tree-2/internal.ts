@@ -9,8 +9,11 @@ export {
 	TypedFieldInner,
 	UnboxFieldInner,
 	TypeArrayToTypedTreeArray,
-	StructFields,
+	ObjectNodeFields,
 	UnboxField,
 	UnboxNode,
 	UnboxNodeUnion,
+	NodeKeyField,
 } from "./editableTreeTypes";
+
+export { NodeKeys } from "./nodeKeys";

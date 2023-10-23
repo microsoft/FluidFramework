@@ -10,10 +10,7 @@ parameters:
 - name: feedKind
   type: string
 
-- name: feedName
-  type: string
-
-- name: devFeedName
+- name: feedUrl
   type: string
 
 - name: environment
@@ -60,8 +57,7 @@ jobs:
             parameters:
               namespace: ${{ parameters.namespace }}
               artifactPath: scoped
-              devFeedName: ${{ parameters.devFeedName }}
-              feedName: ${{ parameters.feedName }}
+              feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
@@ -70,8 +66,7 @@ jobs:
               parameters:
                 namespace: false
                 artifactPath: non-scoped
-                devFeedName: ${{ parameters.devFeedName }}
-                feedName: ${{ parameters.feedName }}
+                feedUrl: ${{ parameters.feedUrl }}
                 feedKind: ${{ parameters.feedKind }}
                 customEndPoint: ${{ parameters.customEndPoint }}
                 publishFlags: ${{ parameters.publishFlags }}

@@ -762,9 +762,8 @@ export class PerformanceEvent {
 				}
 			}
 		} else if (this.recordHeapSize) {
-			this.startMemoryCollection = (
-				performance as PerformanceWithMemory
-			)?.memory?.usedJSHeapSize;
+			this.startMemoryCollection = (performance as PerformanceWithMemory)?.memory
+				?.usedJSHeapSize;
 		}
 
 		this.logger.sendPerformanceEvent(event, error);
@@ -781,7 +780,7 @@ export class PerformanceEvent {
 
 /**
  * Null logger that no-ops for all telemetry events passed to it.
- * @deprecated - This will be removed in a future release.
+ * @deprecated This will be removed in a future release.
  * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
  * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * where the send() method does nothing and using that.

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	ITreeCursorSynchronous,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	forEachField,
 } from "../../../core";
 import { brand, fail } from "../../../util";
@@ -27,7 +27,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	private readonly explicitKeys: Set<FieldKey>;
 
 	public constructor(
-		public readonly type: undefined | TreeSchemaIdentifier,
+		public readonly type: undefined | TreeNodeSchemaIdentifier,
 		public readonly value: EncodedValueShape,
 		public readonly fields: readonly KeyedFieldEncoder[],
 		public readonly extraLocal: undefined | FieldEncoder,

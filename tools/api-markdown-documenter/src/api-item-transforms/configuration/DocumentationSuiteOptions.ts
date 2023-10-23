@@ -18,7 +18,7 @@ import {
 	getReleaseTag,
 	getUnscopedPackageName,
 	releaseTagToString,
-} from "../ApiItemUtilities";
+} from "../../utilities";
 
 /**
  * List of item kinds for which separate documents should be generated.

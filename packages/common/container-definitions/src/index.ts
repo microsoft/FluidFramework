@@ -37,7 +37,6 @@ export {
 	ILoader,
 	ILoaderHeader,
 	ILoaderOptions,
-	IPendingLocalState,
 	IProvideLoader,
 	IResolvedFluidCodeDetails,
 	ISnapshotTreeWithBlobContents,

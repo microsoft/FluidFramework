@@ -29,6 +29,7 @@ import {
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
+	// eslint-disable-next-line import/no-deprecated
 	matchProperties,
 	MergeTreeDeltaType,
 	PropertySet,
@@ -95,6 +96,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
+ * @public
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
@@ -111,6 +113,9 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	);
 }
 
+/**
+ * @public
+ */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
@@ -147,6 +152,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					if (
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
+						// eslint-disable-next-line import/no-deprecated
 						matchProperties(lastAnnotate.props, props)
 					) {
 						lastAnnotate.pos2 += r.segment.cachedLength;
@@ -265,7 +271,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
 	 */
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
@@ -392,7 +398,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @deprecated - This method will no longer be public in an upcoming release as it is not safe to use outside of this class
+	 * @deprecated This method will no longer be public in an upcoming release as it is not safe to use outside of this class
 	 */
 	public submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
@@ -424,12 +430,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	/**
 	 * Walk the underlying segments of the sequence.
-	 * The walked segments may extend beyond the range
-	 * if the segments cross the ranges start or end boundaries.
-	 * Set split range to true to ensure only segments within the
-	 * range are walked.
+	 * The walked segments may extend beyond the range if the segments cross the
+	 * ranges start or end boundaries.
 	 *
-	 * @param handler - The function to handle each segment
+	 * Set split range to true to ensure only segments within the range are walked.
+	 *
+	 * @param handler - The function to handle each segment. Traversal ends if
+	 * this function returns true.
 	 * @param start - Optional. The start of range walk.
 	 * @param end - Optional. The end of range walk
 	 * @param accum - Optional. An object that will be passed to the handler for accumulation
@@ -611,7 +618,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 							m.minimumSequenceNumber < collabWindow.minSeq ||
 							m.referenceSequenceNumber < collabWindow.minSeq ||
 							m.sequenceNumber <= collabWindow.minSeq ||
-							m.sequenceNumber <= collabWindow.currentSeq
+							// sequenceNumber could be the same if messages are part of a grouped batch
+							m.sequenceNumber < collabWindow.currentSeq
 						) {
 							throw new Error(
 								`Invalid catchup operations in snapshot: ${JSON.stringify({

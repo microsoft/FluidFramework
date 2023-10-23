@@ -17,36 +17,14 @@
 // - bundle helper libraries as module (namespace) exports?
 
 export {
-	type ApiFunctionLike,
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
-	type ApiMemberKind,
-	type ApiModifier,
-	type ApiModuleLike,
-	type ApiSignatureLike,
 	type DefaultDocumentationSuiteOptions,
 	type DocumentationSuiteOptions,
 	type DocumentBoundaries,
-	doesItemRequireOwnDocument,
 	// TODO: remove this once utility APIs can be called with partial configs.
 	getApiItemTransformationConfigurationWithDefaults,
-	getDefaultValueBlock,
-	getDeprecatedBlock,
-	getExampleBlocks,
-	getHeadingForApiItem,
-	getLinkForApiItem,
-	getModifiers,
-	getQualifiedApiItemName,
-	getReleaseTag,
-	getReturnsBlock,
-	getSeeBlocks,
-	getThrowsBlocks,
-	getUnscopedPackageName,
 	type HierarchyBoundaries,
-	isDeprecated,
-	isOptional,
-	isReadonly,
-	isStatic,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 	transformApiModel,
@@ -78,20 +56,40 @@ export {
 	type Logger,
 	verboseConsoleLogger,
 } from "./Logging";
+export {
+	type ApiFunctionLike,
+	type ApiMemberKind,
+	type ApiModifier,
+	type ApiModuleLike,
+	type ApiSignatureLike,
+} from "./utilities";
 
 // #region Scoped exports
 
 // This pattern is required to scope the utilities in a way that API-Extractor supports.
 /* eslint-disable unicorn/prefer-export-from */
 
+// Export `ApiItem`-related utilities
+import * as ApiItemUtilities from "./ApiItemUtilitiesModule";
+
 // Export layout-related utilities (for use in writing custom transformations)
-import * as LayoutUtilities from "./LayoutUtilities";
+import * as LayoutUtilities from "./LayoutUtilitiesModule";
 
 // Export renderers
 import * as HtmlRenderer from "./HtmlRendererModule";
 import * as MarkdownRenderer from "./MarkdownRendererModule";
 
 export {
+	/**
+	 * Utilities for use with `ApiItem`s.
+	 *
+	 * @remarks
+	 *
+	 * These are intended to be useful when injecting custom `ApiItem` transformation behaviors via {@link ApiItemTransformationConfiguration}.
+	 *
+	 * @public
+	 */
+	ApiItemUtilities,
 	/**
 	 * Utilities related to generating {@link DocumentationNode} content for {@link @microsoft/api-extractor-model#ApiItem}s.
 	 *

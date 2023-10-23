@@ -82,10 +82,9 @@ describe("MergeTree", () => {
 					pos2: end,
 					type: MergeTreeDeltaType.REMOVE,
 				},
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 				sequencedMessage: {
 					sequenceNumber: ++currentSequenceNumber,
-				} as ISequencedDocumentMessage,
+				} as any as ISequencedDocumentMessage,
 			});
 
 			// Move currentSeq/minSeq past the seq# at which the removal was ACKed.
