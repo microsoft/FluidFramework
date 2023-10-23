@@ -127,15 +127,17 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 		return shouldSendEvent;
 	}
 
-	// private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
-	// 	for (const filter of this.config.filtering.filters ?? []) {
-	// 		if (filter.category === event.category) {
-	// 			return true;
-	// 		}
-	// 	}
-	// 	return false;
-	// }
-
+	/**
+	 * Checks if a given {@link ITelemetryBaseEvent} conforms to any of the provided {@link TelemetryFilter} rules.
+	 *
+	 * - If a {@link TelemetryFilter} specifies both a `category` and a `namespace`, the event must match both.
+	 * - If only a `category` or `namespace` is provided, the event should match either one of them.
+	 * - If a `namespace` pattern exception is specified in the {@link TelemetryFilter}, the event should not match the exception pattern.
+	 *
+	 * @param event - The telemetry event to check against the filters.
+	 *
+	 * @returns boolean `true` if the event matches any filter, otherwise `false`.
+	 */
 	private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
 		for (const filter of this.config.filtering.filters ?? []) {
 			let matches = true;
