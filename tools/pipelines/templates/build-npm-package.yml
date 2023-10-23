@@ -629,10 +629,10 @@ stages:
             targetType: 'inline'
             workingDirectory: $(toolAbsolutePath)
             script: |
-              echo "creating output folder"
+              echo "Creating output folder ..."
               mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
-              echo "Executing curl command ..."
-              echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+              echo "Retrieving pipeline run timeline data ..."
+              echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
               curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > $(pipelineTelemetryWorkdir)/timingOutput/output.json
               pwd;
               ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;

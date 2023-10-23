@@ -1,18 +1,24 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-parameters:
-- name: loggerPackage
-  type: string
-  default: '@ff-internal/aria-logger'
+# This template defines steps to setup the telemetry-generator tool so custom telemetry can be sent to Kusto.
+# Other yaml files can include it and then immediately run the telemetry-generator.
+# It's designed to be included by other yaml files inside a job section.
 
+# Path to the folder that contains the source code for the telemetry-generator package.
+# The default should work in most/all scenarios. Won't work if the repo is checked out as a "secondary repo" in some
+# pipeline (which we don't do today) because $(Build.SourcesDirectory) would then point to the root of the primary repo.
 - name: pathToTelemetryGenerator
   type: string
   default: '$(Build.SourcesDirectory)/tools/telemetry-generator'
 
+# URL for the "Dev feed" in our ADO project. All Fluid packages will be resolved from here when installing the
+# dependencies for telemetry generator and aria-logger.
 - name: devFeedUrl
   type: string
 
+# URL for the "Office feed" in our ADO project. Packages in the @microsoft scope will be resolved from here when
+# installing the dependencies for telemetry generator and aria-logger.
 - name: officeFeedUrl
   type: string
 
@@ -30,7 +36,6 @@ steps:
     script: |
       echo "
       Parameters:
-        loggerPackage=${{ parameters.loggerPackage }}
         pathToTelemetryGenerator=${{ parameters.pathToTelemetryGenerator }}
         devFeedUrl={{ parameters.devFeedUrl }}
         officeFeedUrl={{ parameters.officeFeedUrl }}
@@ -60,19 +65,19 @@ steps:
       echo "always-auth=true" >> ./.npmrc
       cat .npmrc
 
-# Auth to internal feed
+# Auth to internal ADO feeds
 - task: npmAuthenticate@0
-  displayName: 'npm authenticate (internal feed)'
+  displayName: 'npm authenticate (internal ADO feeds)'
   inputs:
     workingFile: ${{ parameters.pathToTelemetryGenerator }}/.npmrc
 
-# Install test and logger package
+# Install logger package
 - task: Npm@1
   displayName: 'npm install aria logger'
   inputs:
     workingDir: ${{ parameters.pathToTelemetryGenerator }}
     command: 'custom'
-    customCommand: 'install ${{ parameters.loggerPackage }}'
+    customCommand: 'install @ff-internal/aria-logger'
     customRegistry: 'useNpmrc'
 
 - task: Bash@3
