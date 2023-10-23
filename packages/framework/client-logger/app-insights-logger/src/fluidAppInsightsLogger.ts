@@ -20,18 +20,17 @@ export interface FluidAppInsightsLoggerConfig {
 	 * This Configuration defines how filtering will be applied to Fluid telemetry events flowing throguh the logger.
 	 * This determines which events will be sent to Azure App insights.
 	 */
-	filterConfig: {
+	filtering: {
 		/**
 		 * Determines whether all telemetry events are sent or not sent by default and whether filters will exclude matching telemetry events or include them.
 		 *
-		 * "inclusive" mode means all logs are NOT SENT by default and only the events that match specified filters will be sent (included).
+		 * "inclusive" mode means all logs are NOT SENT by default and only the events that match at least one or more specified filters WILL be sent (included).
 		 *
-		 * "exclusive" mode means all logs ARE SENT by default and only the events that match specified filters will be  not be sent (excluded).
+		 * "exclusive" mode means all logs ARE SENT by default and only the events that match at least one or more specified filters WILL NOT be sent (excluded).
 		 */
 		mode: "inclusive" | "exclusive";
 		/**
 		 * Controls the default filtering of log events by their category.
-		 * This can be overriden with namespace level filters.
 		 */
 		filters?: TelemetryFilter[];
 	};
@@ -67,20 +66,15 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 */
 	private readonly baseLoggingClient: ApplicationInsights;
 	private readonly config: FluidAppInsightsLoggerConfig;
-	private readonly filters: TelemetryFilter[] = [];
 
 	public constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig) {
 		this.baseLoggingClient = client;
 		this.config = config ?? {
-			filterConfig: {
+			filtering: {
 				mode: "exclusive",
 				filters: [],
 			},
 		};
-
-		if (config?.filterConfig.filters) {
-			this.filters = config.filterConfig.filters;
-		}
 	}
 
 	/**
@@ -89,16 +83,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 * determine whether an event should be sent or not.
 	 */
 	public send(event: ITelemetryBaseEvent): void {
-		// By default, "inclusive" filter mode means all events should not be sent by default
-		// and the opposite is true for "exclusive".
-		let shouldSendEvent = this.config.filterConfig.mode === "inclusive" ? false : true;
-		if (this.filters.length > 0 && this.doesEventMatchFilter(event)) {
-			// If the event does match a filter, in "inclusive" filter mode that means it should
-			// be sent (included). In "exclusive" mode the opposite is true.
-			shouldSendEvent = this.config.filterConfig.mode === "inclusive" ? true : false;
-		}
-
-		if (shouldSendEvent) {
+		if (this.shouldSendEvent(event)) {
 			this.baseLoggingClient.trackEvent({
 				name: event.eventName,
 				properties: event,
@@ -106,8 +91,20 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 		}
 	}
 
+	private shouldSendEvent(event: ITelemetryBaseEvent): boolean {
+		// No events should be sent by default in "inclusive" mode, and all events should be
+		// sent by default in "exclusive" mode.
+		let shouldSendEvent = this.config.filtering.mode === "inclusive" ? false : true;
+		if (this.doesEventMatchFilter(event)) {
+			// If the event does match a filter, in "inclusive" filter mode that means it should
+			// be sent (included). In "exclusive" mode the opposite is true.
+			shouldSendEvent = this.config.filtering.mode === "inclusive" ? true : false;
+		}
+		return shouldSendEvent;
+	}
+
 	private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
-		for (const filter of this.filters) {
+		for (const filter of this.config.filtering.filters ?? []) {
 			if (filter.category === event.category) {
 				return true;
 			}

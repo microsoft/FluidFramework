@@ -17,7 +17,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 
 // @public
 export interface FluidAppInsightsLoggerConfig {
-    filterConfig: {
+    filtering: {
         mode: "inclusive" | "exclusive";
         filters?: TelemetryFilter[];
     };

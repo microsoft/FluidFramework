@@ -55,7 +55,7 @@ describe("Telemetry Filter - filter mode", () => {
 
 	it("exclusive filter mode sends all events when no filters are defined", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, {
-			filterConfig: {
+			filtering: {
 				mode: "exclusive",
 			},
 		});
@@ -65,17 +65,15 @@ describe("Telemetry Filter - filter mode", () => {
 			eventName: "perfCategoryEventName",
 		};
 
-		const eventCount = 10;
-		for (let i = 0; i < eventCount; i++) {
-			logger.send(perfCategoryEvent);
-		}
+		logger.send(perfCategoryEvent);
+
 		// Expect all events to be sent in exclusive mode
-		sinonAssert.callCount(trackEventSpy, eventCount);
+		sinonAssert.callCount(trackEventSpy, 1);
 	});
 
 	it("inclusive filter mode sends no events when no filters are defined", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, {
-			filterConfig: {
+			filtering: {
 				mode: "inclusive",
 			},
 		});
@@ -84,9 +82,8 @@ describe("Telemetry Filter - filter mode", () => {
 			category: "performance",
 			eventName: "perfCategoryEventName",
 		};
-		for (let i = 0; i < 10; i++) {
-			logger.send(perfCategoryEvent);
-		}
+
+		logger.send(perfCategoryEvent);
 
 		// Expect no events to be sent
 		sinonAssert.callCount(trackEventSpy, 0);
@@ -110,7 +107,7 @@ describe("Telemetry Filter - Category filtering", () => {
 
 	it("exclusive filter mode sends ALL events except those that match category filters", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, {
-			filterConfig: {
+			filtering: {
 				mode: "exclusive",
 				filters: [
 					{
@@ -136,13 +133,11 @@ describe("Telemetry Filter - Category filtering", () => {
 			eventName: "genericCategoryEventName",
 		};
 
-		for (let i = 0; i < 10; i++) {
-			logger.send(perfCategoryEvent);
-			logger.send(errorCategoryEvent);
-			logger.send(genericCategoryEvent);
-		}
+		logger.send(perfCategoryEvent);
+		logger.send(errorCategoryEvent);
+		logger.send(genericCategoryEvent);
 
-		const expectedSentEventCount = 10;
+		const expectedSentEventCount = 1;
 		const expectedAppInsightsSentEvent: IEventTelemetry = {
 			name: errorCategoryEvent.eventName,
 			properties: {
@@ -157,7 +152,7 @@ describe("Telemetry Filter - Category filtering", () => {
 
 	it("inclusive filter mode sends NO events except those that match category filters", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, {
-			filterConfig: {
+			filtering: {
 				mode: "inclusive",
 				filters: [
 					{
@@ -183,13 +178,11 @@ describe("Telemetry Filter - Category filtering", () => {
 			eventName: "genericCategoryEventName",
 		};
 
-		for (let i = 0; i < 10; i++) {
-			logger.send(perfCategoryEvent);
-			logger.send(errorCategoryEvent);
-			logger.send(genericCategoryEvent);
-		}
+		logger.send(perfCategoryEvent);
+		logger.send(errorCategoryEvent);
+		logger.send(genericCategoryEvent);
 
-		const expectedSentEventCount = 20;
+		const expectedSentEventCount = 2;
 		sinonAssert.callCount(trackEventSpy, expectedSentEventCount);
 
 		const actualSentPerfEvents = trackEventSpy.getCalls().filter((call) =>
@@ -209,7 +202,7 @@ describe("Telemetry Filter - Category filtering", () => {
 			}),
 		);
 
-		assert.strictEqual(actualSentPerfEvents.length, 10);
-		assert.strictEqual(actualSentGenericEvents.length, 10);
+		assert.strictEqual(actualSentPerfEvents.length, 1);
+		assert.strictEqual(actualSentGenericEvents.length, 1);
 	});
 });
