@@ -41,16 +41,10 @@ interface ILocalRegister<T> {
 
 	// The sequence number when last consensus was reached
 	sequenceNumber: number;
-	clientSequenceNumber: number;
 }
 
-const newLocalRegister = <T>(
-	sequenceNumber: number,
-	clientSequenceNumber: number,
-	value: T,
-): ILocalRegister<T> => ({
+const newLocalRegister = <T>(sequenceNumber: number, value: T): ILocalRegister<T> => ({
 	sequenceNumber,
-	clientSequenceNumber,
 	value: {
 		type: "Plain",
 		value,
@@ -153,14 +147,7 @@ export class ConsensusRegisterCollection<T>
 
 		if (!this.isAttached()) {
 			// JSON-roundtrip value for local writes to match the behavior of going through the wire
-			this.processInboundWrite(
-				key,
-				this.parse(serializedValue, this.serializer),
-				0,
-				0,
-				0,
-				true,
-			);
+			this.processInboundWrite(key, this.parse(serializedValue, this.serializer), 0, 0, true);
 			return true;
 		}
 
@@ -267,7 +254,6 @@ export class ConsensusRegisterCollection<T>
 						value,
 						refSeqWhenCreated,
 						message.sequenceNumber,
-						message.clientSequenceNumber,
 						local,
 					);
 					if (local) {
@@ -294,7 +280,6 @@ export class ConsensusRegisterCollection<T>
 	 * @param value - Incoming value
 	 * @param refSeq - RefSeq at the time of write on the remote client
 	 * @param sequenceNumber - Sequence Number of this write op
-	 * @param clientSequenceNumber - Client Sequence Number of this write op
 	 * @param local - Did this write originate on this client
 	 */
 	private processInboundWrite(
@@ -302,7 +287,6 @@ export class ConsensusRegisterCollection<T>
 		value: T,
 		refSeq: number,
 		sequenceNumber: number,
-		clientSequenceNumber: number,
 		local: boolean,
 	): boolean {
 		let data = this.data.get(key);
@@ -310,7 +294,7 @@ export class ConsensusRegisterCollection<T>
 		// meaning our state was known to the remote client at the time of write
 		const winner = data === undefined || refSeq >= data.atomic.sequenceNumber;
 		if (winner) {
-			const atomicUpdate = newLocalRegister<T>(sequenceNumber, clientSequenceNumber, value);
+			const atomicUpdate = newLocalRegister<T>(sequenceNumber, value);
 			if (data === undefined) {
 				data = {
 					atomic: atomicUpdate,
@@ -329,21 +313,18 @@ export class ConsensusRegisterCollection<T>
 			data.versions.shift();
 		}
 
-		const versionUpdate = newLocalRegister<T>(sequenceNumber, clientSequenceNumber, value);
+		const versionUpdate = newLocalRegister<T>(sequenceNumber, value);
 
 		// Asserts for data integrity
 		if (!this.isAttached()) {
 			assert(
-				refSeq === 0 && sequenceNumber === 0 && clientSequenceNumber === 0,
+				refSeq === 0 && sequenceNumber === 0,
 				0x070 /* "sequence numbers are expected to be 0 when unattached" */,
 			);
 		} else if (data.versions.length > 0) {
-			const otherSeqNum = data.versions[data.versions.length - 1].sequenceNumber;
-			const otherClientSeqNum = data.versions[data.versions.length - 1].clientSequenceNumber;
 			assert(
-				sequenceNumber > otherSeqNum ||
-					// sequenceNumber can be the same if part of a grouped batch
-					(sequenceNumber === otherSeqNum && clientSequenceNumber > otherClientSeqNum),
+				// seqNum should always be increasing, except for the case of grouped batches (seqNum will be the same)
+				sequenceNumber >= data.versions[data.versions.length - 1].sequenceNumber,
 				0x071 /* "Versions should naturally be ordered by sequenceNumber" */,
 			);
 		}
