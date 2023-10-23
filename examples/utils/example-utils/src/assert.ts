@@ -16,6 +16,13 @@
  *
  * See also {@link fail}.
  *
+ * @privateRemarks
+ * This is provided instead of just using the `assert` in core-utils since core-utils's `assert` is designed to work with our assert tagging which we don't do for examples.
+ *
+ * Additionally, core-utils is not supported for use outside this repo, and people are likely to copy example code out of this repo without reading the package level docs for it.
+ * Using this in examples instead of core-utils reduces the chance of someone accidentally having their app depend on core-utils when it shouldn't.
+ * It also allows this API to diverge, for example making the message optional.
+ *
  * @public
  */
 export function assert(condition: boolean, message = "error"): asserts condition {
@@ -39,6 +46,8 @@ export function assert(condition: boolean, message = "error"): asserts condition
  * ```typescript
  * x ?? fail(`x should exist for ${y}`)
  * ```
+ *
+ * Once [throw expressions are added to TypeScript](https://github.com/microsoft/TypeScript/issues/18535), they can be used as a replacement for this API.
  *
  * See also {@link assert}.
  *
