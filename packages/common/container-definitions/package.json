@@ -61,12 +61,10 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"EnumDeclaration_ContainerErrorType": {
+			"RemovedEnumDeclaration_ContainerErrorType": {
 				"forwardCompat": false,
 				"backCompat": false
 			},
-			"RemovedEnumDeclaration_ContainerErrorType": {
-				"forwardCompat": false,
 			"RemovedInterfaceDeclaration_IPendingLocalState": {
 				"forwardCompat": false,
 				"backCompat": false

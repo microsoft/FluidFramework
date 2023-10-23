@@ -220,7 +220,9 @@ export const OdspErrorTypes: {
     readonly fetchFailure: "fetchFailure";
     readonly fetchTokenError: "fetchTokenError";
     readonly incorrectServerResponse: "incorrectServerResponse";
-    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage";
+    readonly fileOverwrittenInStorage: "fileOverwrittenInStorage"; /**
+    * It is array of error codes included in error response from server.
+    */
     readonly deltaStreamConnectionForbidden: "deltaStreamConnectionForbidden";
     readonly locationRedirection: "locationRedirection";
     readonly fluidInvalidSchema: "fluidInvalidSchema";
