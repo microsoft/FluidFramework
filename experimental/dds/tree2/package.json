@@ -14,15 +14,15 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/tree2-untrimmed.d.ts",
+				"types": "./lib/tree2-public.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/tree2-untrimmed.d.ts",
+				"types": "./dist/tree2-public.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
-    "./alpha": {
+		"./alpha": {
 			"import": {
 				"types": "./lib/tree2-alpha.d.ts",
 				"default": "./lib/index.js"
@@ -32,7 +32,7 @@
 				"default": "./dist/index.js"
 			}
 		},
-    "./beta": {
+		"./beta": {
 			"import": {
 				"types": "./lib/tree2-beta.d.ts",
 				"default": "./lib/index.js"
@@ -45,7 +45,7 @@
 	},
 	"main": "dist/index.js",
 	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
+	"types": "dist/tree2-public.d.ts",
 	"scripts": {
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"bench:profile": "mocha --v8-prof --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
@@ -159,10 +159,17 @@
 		"disabled": true,
 		"broken": {}
 	},
-  "build:docs": {
-    "dependsOn": ["build:docs:commonjs", "build:docs:esnext"],
-    "script": false
-  },
-  "build:docs:commonjs": ["tsc"],
-  "build:docs:esnext": ["build:esnext"]
+	"build:docs": {
+		"dependsOn": [
+			"build:docs:commonjs",
+			"build:docs:esnext"
+		],
+		"script": false
+	},
+	"build:docs:commonjs": [
+		"tsc"
+	],
+	"build:docs:esnext": [
+		"build:esnext"
+	]
 }
