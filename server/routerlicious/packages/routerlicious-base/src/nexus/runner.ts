@@ -28,7 +28,6 @@ import {
 	ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
-import * as app from "./app";
 
 export class NexusRunner implements IRunner {
 	private server: IWebServer;
@@ -62,11 +61,7 @@ export class NexusRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create the HTTP server and attach nexus to it
-		const nexus = app.create(this.config, this.collaborationSessionEventEmitter);
-		nexus.set("port", this.port);
-
-		this.server = this.serverFactory.create(nexus);
+		this.server = this.serverFactory.create();
 
 		const httpServer = this.server.httpServer;
 
