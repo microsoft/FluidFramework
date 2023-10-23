@@ -9,30 +9,26 @@
 import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { leaf } from "../../../domains";
-import { SchemaBuilder } from "../../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../../domains";
 import {
 	boxedIterator,
-	createRawStruct,
+	createRawObjectNode,
 	nodeContent,
-	rawStructErrorMessage,
+	rawObjectErrorMessage,
 } from "../../../feature-libraries/editable-tree-2";
 import { brand } from "../../../util";
 import { contextWithContentReadonly } from "./utils";
 
 describe("raw structs", () => {
 	function getRawStruct() {
-		const builder = new SchemaBuilder({
-			scope: "raw struct test",
-			libraries: [leaf.library],
-		});
-		const structSchema = builder.struct("struct", {
+		const builder = new SchemaBuilder({ scope: "raw struct test" });
+		const structSchema = builder.object("object", {
 			foo: leaf.number,
 			bar: builder.optional(leaf.string),
 			baz: builder.sequence(leaf.boolean),
 		});
 		const rootFieldSchema = SchemaBuilder.required(structSchema);
-		const schema = builder.toDocumentSchema(rootFieldSchema);
+		const schema = builder.intoSchema(rootFieldSchema);
 		const context = contextWithContentReadonly({
 			schema,
 			initialTree: { foo: 42, baz: [] },
@@ -40,7 +36,7 @@ describe("raw structs", () => {
 
 		assert(context.root.is(rootFieldSchema));
 		let struct = context.root.content;
-		const rawStruct = createRawStruct(structSchema, { foo: 42, bar: undefined, baz: [] });
+		const rawStruct = createRawObjectNode(structSchema, { foo: 42, bar: undefined, baz: [] });
 		// This assignment checks that the raw struct is assignable to the same type as the real struct
 		struct = rawStruct;
 		return { rawStruct, structSchema };
@@ -89,6 +85,6 @@ describe("raw structs", () => {
 	});
 
 	function assertThrowsRawNodeError(f: () => void): void {
-		assert.throws(f, (e: Error) => validateAssertionError(e, rawStructErrorMessage));
+		assert.throws(f, (e: Error) => validateAssertionError(e, rawObjectErrorMessage));
 	}
 });

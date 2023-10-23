@@ -1,11 +1,18 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-common-report.json",
+	"extends": "@fluidframework/build-common/api-extractor-base.json",
 	"apiReport": {
 		"enabled": true,
 		// Note: `tree.api.md` is the file used for the upcoming tree DDS's API report.
-		"reportFileName": "experimental-<unscopedPackageName>.api.md",
-		"reportFolder": "<projectFolder>/../../../api-report/",
-		"reportTempFolder": "<projectFolder>/_api-extractor-temp/"
+		"reportFileName": "experimental-<unscopedPackageName>.api.md"
+	},
+
+	// This package is effectively deprecated. No need to fix these.
+	"messages": {
+		"extractorMessageReporting": {
+			"ae-missing-release-tag": {
+				"logLevel": "none"
+			}
+		}
 	}
 }

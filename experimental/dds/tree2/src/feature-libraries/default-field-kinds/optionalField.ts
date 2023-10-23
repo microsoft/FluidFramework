@@ -13,6 +13,8 @@ import {
 	ChangeAtomId,
 	RevisionTag,
 	JsonableTree,
+	areEqualChangeAtomIds,
+	makeDetachedNodeId,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -486,31 +488,43 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * Creates a change which replaces the field with `newContent`
 	 * @param newContent - the new content for the field
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param id - the ID associated with the change.
+	 * @param changeId - the ID associated with the replacement of the current content.
+	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
 	set(
-		newContent: ITreeCursor | undefined,
+		newContent: ITreeCursor,
 		wasEmpty: boolean,
-		id: ChangesetLocalId,
+		changeId: ChangesetLocalId,
+		buildId: ChangesetLocalId,
 	): OptionalChangeset;
+
+	/**
+	 * Creates a change which clears the field's contents (if any).
+	 * @param wasEmpty - whether the field is empty when creating this change
+	 * @param changeId - the ID associated with the change.
+	 */
+	clear(wasEmpty: boolean, changeId: ChangesetLocalId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
-		newContent: ITreeCursor | undefined,
+		newContent: ITreeCursor,
 		wasEmpty: boolean,
 		id: ChangesetLocalId,
+		buildId: ChangesetLocalId,
 	): OptionalChangeset => ({
 		fieldChange: {
 			id,
-			newContent:
-				newContent === undefined
-					? undefined
-					: {
-							set: jsonableTreeFromCursor(newContent),
-					  },
+			newContent: {
+				set: jsonableTreeFromCursor(newContent),
+				buildId: { localId: buildId },
+			},
 			wasEmpty,
 		},
+	}),
+
+	clear: (wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset => ({
+		fieldChange: { id, wasEmpty },
 	}),
 
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
@@ -522,109 +536,59 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	{ change, revision }: TaggedChange<OptionalChangeset>,
 	deltaFromChild: ToDelta,
-): Delta.Mark[] {
+): Delta.FieldChanges {
+	const delta: Mutable<Delta.FieldChanges> = {};
 	const [_, childChange] = change.childChanges?.find(([changeId]) => changeId === "self") ?? [];
+	if (childChange === undefined && change.fieldChange === undefined) {
+		return delta;
+	}
+
+	const mark: Mutable<Delta.Mark> = { count: 1 };
+	delta.local = [mark];
+
+	if (childChange !== undefined) {
+		mark.fields = deltaFromChild(childChange);
+	}
 
 	if (change.fieldChange === undefined) {
-		return childChange !== undefined ? [deltaFromChild(childChange)] : [];
+		return delta;
 	}
 
-	const update = change.fieldChange?.newContent;
-	const id = {
-		major: change.fieldChange.revision ?? revision,
-		minor: change.fieldChange.id,
-	};
-	const hasOldFieldChanges: Mutable<Delta.HasModifications> = {};
-	// If there are changes to the old content, convert them into the delta format and save any resulting field changes
-	// TODO: maybe rethink how we use optionals so this pattern isn't so confusing
-	let detachedInserts: Delta.Insert[] = [];
-	if ((change.fieldChange.transientContent?.length ?? 0) > 0) {
-		const transientInserts: Delta.Insert[] | undefined =
-			change.fieldChange.transientContent?.map((c, index) => {
-				return {
-					type: Delta.MarkType.Insert,
-					content: [singleTextCursor((c.update as { set: JsonableTree }).set)],
-					detachId: { ...id, minor: id.minor + index + 1 },
-				};
-			});
+	if (!change.fieldChange.wasEmpty) {
+		const detachId = {
+			major: change.fieldChange.revision ?? revision,
+			minor: change.fieldChange.id,
+		};
+		mark.detach = detachId;
+	}
 
-		if (transientInserts !== undefined) {
-			detachedInserts = transientInserts;
-		}
-	}
-	console.log(detachedInserts);
-	if (childChange !== undefined) {
-		const fields = deltaFromChild(childChange).fields;
-		if (fields !== undefined) {
-			hasOldFieldChanges.fields = fields;
-		}
-	}
+	const update = change.fieldChange.newContent;
 	if (update === undefined) {
 		// The field is being cleared
-		if (!change.fieldChange.wasEmpty) {
-			return [
-				// ...detachedInserts,
-				{ type: Delta.MarkType.Remove, count: 1, detachId: id, ...hasOldFieldChanges },
-			];
-		}
-
-		const oldContent: Mutable<Pick<Delta.Insert, "oldContent">> = {};
-		if ((change.fieldChange.transientContent?.length ?? 0) > 0) {
-			oldContent.oldContent = {
-				detachId: id,
-				...hasOldFieldChanges,
-			};
-		}
-
-		return [];
 	} else {
-		const hasNewFieldChanges: Mutable<Delta.HasModifications> = {};
-		if (update.changes !== undefined) {
-			const fields = deltaFromChild(update.changes).fields;
-			if (fields !== undefined) {
-				hasNewFieldChanges.fields = fields;
-			}
-		}
-		const hasOldContent: Mutable<Pick<Delta.Insert, "oldContent">> = {};
-		if (!change.fieldChange.wasEmpty) {
-			hasOldContent.oldContent = {
-				detachId: id,
-				...hasOldFieldChanges,
-			};
-		}
 		if (Object.prototype.hasOwnProperty.call(update, "set")) {
-			const content = [singleTextCursor((update as { set: JsonableTree }).set)];
-
-			return [
-				// ...detachedInserts,
-				{
-					type: Delta.MarkType.Insert,
-					...hasNewFieldChanges,
-					...hasOldContent,
-					content,
-				},
-			];
+			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
+			const content = [singleTextCursor(setUpdate.set)];
+			const buildId = makeDetachedNodeId(
+				setUpdate.buildId.revision,
+				setUpdate.buildId.localId,
+			);
+			mark.attach = buildId;
+			delta.build = [{ id: buildId, trees: content }];
 		} else {
 			const changeId = (update as { revert: ChangeAtomId }).revert;
 			const restoreId = {
 				major: changeId.revision,
 				minor: changeId.localId,
 			};
-
-			return [
-				// ...detachedInserts,
-				{
-					type: Delta.MarkType.Restore,
-					count: 1,
-					newContent: {
-						...hasNewFieldChanges,
-						restoreId,
-					},
-					...hasOldContent,
-				},
-			];
+			mark.attach = restoreId;
+		}
+		if (update.changes !== undefined) {
+			const fields = deltaFromChild(update.changes);
+			delta.global = [{ id: mark.attach, fields }];
 		}
 	}
+	return delta;
 }
 
 export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
@@ -642,5 +606,5 @@ function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
 		return a === b;
 	}
 
-	return a.revision === b.revision && a.localId === b.localId;
+	return areEqualChangeAtomIds(a, b);
 }

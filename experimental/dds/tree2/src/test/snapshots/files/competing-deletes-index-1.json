@@ -185,71 +185,72 @@
                   "version": "1.0.0",
                   "treeSchema": [
                     {
-                      "name": "Json.Array",
-                      "structFields": [
+                      "name": "com.fluidframework.json.array",
+                      "objectNodeFields": [
                         {
                           "kind": "Sequence",
                           "types": [
-                            "Json.Object",
-                            "Json.Array",
+                            "com.fluidframework.json.object",
+                            "com.fluidframework.json.array",
                             "com.fluidframework.leaf.number",
                             "com.fluidframework.leaf.boolean",
                             "com.fluidframework.leaf.string",
-                            "Json.Null"
+                            "com.fluidframework.leaf.null"
                           ],
                           "name": ""
                         }
                       ]
                     },
                     {
-                      "name": "Json.Null",
-                      "structFields": []
-                    },
-                    {
-                      "name": "Json.Object",
+                      "name": "com.fluidframework.json.object",
                       "mapFields": {
                         "kind": "Optional",
                         "types": [
-                          "Json.Object",
-                          "Json.Array",
+                          "com.fluidframework.json.object",
+                          "com.fluidframework.json.array",
                           "com.fluidframework.leaf.number",
                           "com.fluidframework.leaf.boolean",
                           "com.fluidframework.leaf.string",
-                          "Json.Null"
+                          "com.fluidframework.leaf.null"
                         ]
                       },
-                      "structFields": []
+                      "objectNodeFields": []
                     },
                     {
                       "name": "com.fluidframework.leaf.boolean",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 2
                     },
                     {
                       "name": "com.fluidframework.leaf.handle",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 3
                     },
                     {
+                      "name": "com.fluidframework.leaf.null",
+                      "objectNodeFields": [],
+                      "leafValue": 4
+                    },
+                    {
                       "name": "com.fluidframework.leaf.number",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 0
                     },
                     {
                       "name": "com.fluidframework.leaf.string",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 1
                     }
                   ],
                   "rootFieldSchema": {
                     "kind": "Sequence",
                     "types": [
-                      "Json.Object",
-                      "Json.Array",
+                      "com.fluidframework.json.object",
+                      "com.fluidframework.json.array",
                       "com.fluidframework.leaf.number",
                       "com.fluidframework.leaf.boolean",
                       "com.fluidframework.leaf.string",
-                      "Json.Null"
+                      "com.fluidframework.leaf.null"
                     ]
                   }
                 },
@@ -308,7 +309,13 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[[\"beefbeef-beef-4000-8000-000000000013\",0,{\"field\":\"repair-4\",\"root\":4}]]",
+                  "data": [
+                    [
+                      "beefbeef-beef-4000-8000-000000000013",
+                      0,
+                      4
+                    ]
+                  ],
                   "id": 4
                 },
                 "encoding": "utf-8"

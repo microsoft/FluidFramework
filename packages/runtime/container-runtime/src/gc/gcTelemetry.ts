@@ -96,7 +96,7 @@ export class GCTelemetryTracker {
 
 	/**
 	 * Returns whether an event should be logged for a node that isn't active anymore. Some scenarios where we won't log:
-	 * 1. When a DDS is changed or loaded. The corresponding data store's event will be logged instead.
+	 * 1. When a DDS is changed. The corresponding data store's event will be logged instead.
 	 * 2. An event is logged only once per container instance per event per node.
 	 */
 	private shouldLogNonActiveEvent(
@@ -110,12 +110,13 @@ export class GCTelemetryTracker {
 			return false;
 		}
 
-		// For sub data store (DDS) nodes, if they are changed or loaded, its data store will also be changed or loaded,
-		// so skip logging to make the telemetry less noisy.
-		if (nodeType === GCNodeType.SubDataStore && usageType !== "Revived") {
+		if (nodeType === GCNodeType.Other) {
 			return false;
 		}
-		if (nodeType === GCNodeType.Other) {
+
+		// For sub data store (DDS) nodes, if they are changed, its data store will also be changed,
+		// so skip logging to make the telemetry less noisy.
+		if (nodeType === GCNodeType.SubDataStore && usageType === "Changed") {
 			return false;
 		}
 

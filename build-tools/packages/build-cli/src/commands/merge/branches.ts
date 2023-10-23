@@ -22,9 +22,9 @@ interface CleanupBranch {
  * Later, it creates a pull request based on the batch size passed.
  */
 export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
-	static description = "Sync branches depending on the batch size passed";
+	static readonly description = "Sync branches depending on the batch size passed";
 
-	static flags = {
+	static readonly flags = {
 		pat: Flags.string({
 			description:
 				"GitHub Personal Access Token. This parameter should be passed using the GITHUB_PAT environment variable for security purposes.",
@@ -77,7 +77,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			allowNo: true,
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
 	/**
 	 * The branch that the command was run from. This is used to checkout the branch in the case of a failure, so the user
@@ -95,7 +95,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	private remote: string | undefined;
 
 	public async run(): Promise<void> {
-		const flags = this.flags;
+		const { flags } = this;
 
 		const prTitle: string = `Automation: ${flags.source}-${flags.target} integrate`;
 		const context = await this.getContext();
@@ -294,6 +294,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		// To determine who to assign the PR to, we look up the commit details on GitHub.
 		// TODO: Can't we get the author info from the local commit?
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const commitInfo = flags.createPr
 			? await getCommitInfo(flags.pat, owner, repo, prHeadCommit, this.logger)
 			: undefined;
@@ -302,7 +303,8 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 				`Couldn't determine who to assign the PR to, so it must be manually assigned.`,
 			);
 		}
-		const assignee = commitInfo?.data.author.login;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		const assignee: string = commitInfo?.data.author.login;
 
 		this.info(`Creating PR for commit id ${prHeadCommit} assigned to ${assignee}`);
 		const prObject = {
@@ -325,7 +327,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 			await this.gitRepo.gitClient
 				.push(this.remote, mergeBranch)
 				.branch(["--set-upstream-to", `${this.remote}/${mergeBranch}`]);
-			let prNumber = "";
+			let prNumber: number;
 			try {
 				prNumber = await createPullRequest(prObject, this.logger);
 			} catch (error: unknown) {
@@ -347,7 +349,9 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 	 * possible, this code cleans up the temporary branches that were created. It cleans up both local and remote
 	 * branches.
 	 */
-	protected override async catch(err: Error & { exitCode?: number | undefined }): Promise<any> {
+	protected override async catch(
+		err: Error & { exitCode?: number | undefined },
+	): Promise<unknown> {
 		if (this.gitRepo === undefined) {
 			throw err;
 		}
@@ -381,8 +385,7 @@ export default class MergeBranch extends BaseCommand<typeof MergeBranch> {
 
 		// Delete any remote branches we created
 		const promises: Promise<unknown>[] = [];
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		const deleteFunc = async (branch: string) => {
+		const deleteFunc = async (branch: string): Promise<void> => {
 			this.warning(`CLEANUP: Deleting remote branch ${this.remote}/${branch}`);
 			try {
 				await this.gitRepo?.gitClient.push(this.remote, branch, ["--delete"]);

@@ -145,7 +145,33 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [],
+                  "treeSchema": [
+                    {
+                      "name": "com.fluidframework.leaf.boolean",
+                      "objectNodeFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
+                      "objectNodeFields": [],
+                      "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.null",
+                      "objectNodeFields": [],
+                      "leafValue": 4
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "objectNodeFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "objectNodeFields": [],
+                      "leafValue": 1
+                    }
+                  ],
                   "rootFieldSchema": {
                     "kind": "Sequence"
                   }
@@ -217,7 +243,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[]",
+                  "data": [],
                   "id": 2
                 },
                 "encoding": "utf-8"

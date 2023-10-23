@@ -13,6 +13,9 @@ import {
 import { pkgVersion } from "./packageVersion";
 import { SharedJson1 } from "./json1";
 
+/**
+ * @public
+ */
 export class Json1Factory implements IChannelFactory {
 	public static Type = "https://graph.microsoft.com/types/sharedjson1";
 

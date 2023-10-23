@@ -87,7 +87,9 @@ function makeNodeUpdateCodec(
 		encode: (update: NodeUpdate) => {
 			assert(!("noOp" in update), "No-op updates should not be encoded");
 			const encoded: EncodedNodeUpdate<TAnySchema> =
-				"revert" in update ? { revert: update.revert } : { set: update.set };
+				"revert" in update
+					? { revert: update.revert }
+					: { set: update.set, buildId: update.buildId };
 
 			if (update.changes !== undefined) {
 				encoded.changes = childCodec.encode(update.changes);
@@ -97,7 +99,9 @@ function makeNodeUpdateCodec(
 		},
 		decode: (encoded: EncodedNodeUpdate<TAnySchema>) => {
 			const decoded: NodeUpdate =
-				"revert" in encoded ? { revert: encoded.revert } : { set: encoded.set };
+				"revert" in encoded
+					? { revert: encoded.revert }
+					: { set: encoded.set, buildId: encoded.buildId };
 
 			if (encoded.changes !== undefined) {
 				decoded.changes = childCodec.decode(encoded.changes);

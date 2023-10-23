@@ -41,7 +41,6 @@ import {
 	type RecentlyAddedContainerRuntimeMessageDetails,
 } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -129,17 +128,6 @@ const getPendingOps = async (
 	assert.ok(pendingState);
 	return pendingState;
 };
-
-async function waitForDataStoreRuntimeConnection(runtime: IFluidDataStoreRuntime): Promise<void> {
-	if (!runtime.connected) {
-		const executor: any = (resolve) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			runtime.once("connected", () => resolve());
-		};
-
-		return new Promise(executor);
-	}
-}
 
 async function loadOffline(
 	provider: ITestObjectProvider,
@@ -1407,62 +1395,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 			"blob contents 1",
 		);
 	});
-
-	itSkipsFailureOnSpecificDrivers(
-		"not expired stashed blobs",
-		// We've seen this fail a few times against local server with a timeout
-		// TODO: AB#5483
-		["local"],
-		async function () {
-			// This test was not designed for t9s. Hard skip for that driver.
-			if (provider.driver.type === "tinylicious" || provider.driver.type === "t9s") {
-				this.skip();
-			}
-
-			const container = await loadOffline(provider, { url });
-			const dataStore = await requestFluidObject<ITestFluidObject>(
-				container.container,
-				"default",
-			);
-			const map = await dataStore.getSharedObject<SharedMap>(mapId);
-
-			// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-			const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-
-			container.connect();
-			await waitForDataStoreRuntimeConnection(dataStore.runtime);
-
-			const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
-			const handle = await handleP;
-			map.set("blob handle 1", handle);
-			const stashedChanges = await stashedChangesP;
-			assert.ok(stashedChanges);
-			const parsedChanges = JSON.parse(stashedChanges);
-			const pendingBlobs = parsedChanges.pendingRuntimeState.pendingAttachmentBlobs;
-			// verify we have a blob in pending upload array
-			assert.strictEqual(Object.keys(pendingBlobs).length, 1, "no pending blob");
-
-			const container3 = await loadOffline(provider, { url }, stashedChanges);
-			const dataStore3 = await requestFluidObject<ITestFluidObject>(
-				container3.container,
-				"default",
-			);
-			const map3 = await dataStore3.getSharedObject<SharedMap>(mapId);
-			container3.connect();
-			await waitForContainerConnection(container3.container, true);
-			await provider.ensureSynchronized();
-
-			// Blob is uploaded and accessible by all clients
-			assert.strictEqual(
-				bufferToString(await map1.get("blob handle 1").get(), "utf8"),
-				"blob contents 1",
-			);
-			assert.strictEqual(
-				bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-				"blob contents 1",
-			);
-		},
-	);
 
 	it("offline attach", async function () {
 		const newMapId = "newMap";

@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "assert";
-import { unreachableCase } from "@fluidframework/core-utils";
 import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
@@ -41,19 +40,18 @@ import {
 	createSharedTreeView,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
+	ISharedTreeBranchView,
 	runSynchronous,
 } from "../shared-tree";
 import {
 	Any,
 	buildForest,
 	createMockNodeKeyManager,
-	DefaultChangeFamily,
-	DefaultChangeset,
-	DefaultEditBuilder,
-	FieldSchema,
+	TreeFieldSchema,
 	jsonableTreeFromCursor,
 	makeSchemaCodec,
-	mapFieldMarks,
+	mapFieldChanges,
+	mapFieldsChanges,
 	mapMarkList,
 	mapTreeFromCursor,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
@@ -62,7 +60,6 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
-	SchemaBuilder,
 	singleTextCursor,
 	TypedField,
 } from "../feature-libraries";
@@ -73,20 +70,19 @@ import {
 	moveToDetachedField,
 	mapCursorField,
 	JsonableTree,
-	SchemaData,
+	TreeStoredSchema,
 	rootFieldKey,
 	compareUpPaths,
 	UpPath,
 	clonePath,
-	UndoRedoManager,
 	ChangeFamilyEditor,
 	ChangeFamily,
 	TaggedChange,
 	TreeSchemaBuilder,
 	treeSchema,
 	FieldUpPath,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
@@ -99,11 +95,20 @@ import {
 	makeDetachedFieldIndex,
 	announceDelta,
 	FieldKey,
+	Revertible,
+	RevertibleKind,
 } from "../core";
 import { JsonCompatible, Named, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
-import { cursorToJsonObject, jsonRoot, jsonSchema, jsonString, singleJsonCursor } from "../domains";
+import {
+	cursorToJsonObject,
+	jsonRoot,
+	jsonSchema,
+	singleJsonCursor,
+	SchemaBuilder,
+	leaf,
+} from "../domains";
 import { HasListeners, IEmitter, ISubscribable } from "../events";
 
 // Testing utilities
@@ -434,42 +439,16 @@ export function spyOnMethod(
 /**
  * @returns `true` iff the given delta has a visible impact on the document tree.
  */
-export function isDeltaVisible(delta: Delta.MarkList): boolean {
-	for (const mark of delta) {
-		if (typeof mark === "object") {
-			const type = mark.type;
-			switch (type) {
-				case Delta.MarkType.Modify: {
-					if (Object.prototype.hasOwnProperty.call(mark, "setValue")) {
-						return true;
-					}
-					if (mark.fields !== undefined) {
-						for (const field of mark.fields.values()) {
-							if (isDeltaVisible(field)) {
-								return true;
-							}
-						}
-					}
-					break;
-				}
-				case Delta.MarkType.Restore: {
-					if (mark.newContent.detachId === undefined || mark.oldContent !== undefined) {
-						return true;
-					}
-					break;
-				}
-				case Delta.MarkType.Insert: {
-					if (mark.detachId === undefined) {
-						return true;
-					}
-					break;
-				}
-				case Delta.MarkType.MoveOut:
-				case Delta.MarkType.MoveIn:
-				case Delta.MarkType.Remove:
+export function isDeltaVisible(delta: Delta.FieldChanges): boolean {
+	for (const mark of delta.local ?? []) {
+		if (mark.attach !== undefined || mark.detach !== undefined) {
+			return true;
+		}
+		if (mark.fields !== undefined) {
+			for (const field of mark.fields.values()) {
+				if (isDeltaVisible(field)) {
 					return true;
-				default:
-					unreachableCase(type);
+				}
 			}
 		}
 	}
@@ -479,7 +458,16 @@ export function isDeltaVisible(delta: Delta.MarkList): boolean {
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void {
+export function assertFieldChangesEqual(a: Delta.FieldChanges, b: Delta.FieldChanges): void {
+	const aTree = mapFieldChanges(a, mapTreeFromCursor);
+	const bTree = mapFieldChanges(b, mapTreeFromCursor);
+	assert.deepStrictEqual(aTree, bTree);
+}
+
+/**
+ * Assert two MarkList are equal, handling cursors.
+ */
+export function assertMarkListEqual(a: readonly Delta.Mark[], b: readonly Delta.Mark[]): void {
 	const aTree = mapMarkList(a, mapTreeFromCursor);
 	const bTree = mapMarkList(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
@@ -488,9 +476,9 @@ export function assertMarkListEqual(a: Delta.MarkList, b: Delta.MarkList): void 
 /**
  * Assert two Delta are equal, handling cursors.
  */
-export function assertDeltaEqual(a: Delta.FieldMarks, b: Delta.FieldMarks): void {
-	const aTree = mapFieldMarks(a, mapTreeFromCursor);
-	const bTree = mapFieldMarks(b, mapTreeFromCursor);
+export function assertDeltaEqual(a: Delta.FieldMap, b: Delta.FieldMap): void {
+	const aTree = mapFieldsChanges(a, mapTreeFromCursor);
+	const bTree = mapFieldsChanges(b, mapTreeFromCursor);
 	assert.deepStrictEqual(aTree, bTree);
 }
 
@@ -540,7 +528,7 @@ const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
 export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
 	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
-	validateViewConsistency(treeA.view, treeB.view);
+	validateViewConsistency(treeA.view, treeB.view, `id: ${treeA.id} vs id: ${treeB.id}`);
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
@@ -556,11 +544,20 @@ export function validateTreeContent(tree: ISharedTreeView, content: TreeContent)
 	assert.deepEqual(schemaCodec.encode(tree.storedSchema), schemaCodec.encode(content.schema));
 }
 
-export function validateViewConsistency(treeA: ISharedTreeView, treeB: ISharedTreeView): void {
-	assert.deepEqual(toJsonableTree(treeA), toJsonableTree(treeB));
+export function validateViewConsistency(
+	treeA: ISharedTreeView,
+	treeB: ISharedTreeView,
+	idDifferentiator: string | undefined = undefined,
+): void {
+	assert.deepEqual(
+		toJsonableTree(treeA),
+		toJsonableTree(treeB),
+		`Inconsistent json representation: ${idDifferentiator}`,
+	);
 	assert.deepEqual(
 		schemaCodec.encode(treeA.storedSchema),
 		schemaCodec.encode(treeB.storedSchema),
+		`Inconsistent schema: ${idDifferentiator}`,
 	);
 }
 
@@ -592,7 +589,7 @@ export function forestWithContent(content: TreeContent): IEditableForest {
 	return forest;
 }
 
-export function treeWithContent<TRoot extends FieldSchema>(
+export function treeWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		nodeKeyManager?: NodeKeyManager;
@@ -618,7 +615,7 @@ const jsonSequenceRootField = SchemaBuilder.sequence(jsonRoot);
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).toDocumentSchema(jsonSequenceRootField);
+}).intoSchema(jsonSequenceRootField);
 
 export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
 	schema: jsonSequenceRootSchema,
@@ -672,7 +669,7 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  */
 export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	const nodes = values.map((value) => singleTextCursor({ type: jsonString.name, value }));
+	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 
@@ -699,7 +696,7 @@ export function expectJsonTree(
 export function initializeTestTree(
 	tree: ISharedTreeView,
 	state: JsonableTree | JsonableTree[] | undefined,
-	schema: SchemaData = wrongSchema,
+	schema: TreeStoredSchema = wrongSchema,
 ): void {
 	if (state === undefined) {
 		tree.storedSchema.update(schema);
@@ -738,10 +735,6 @@ export function expectEqualFieldPaths(path: FieldUpPath, expectedPath: FieldUpPa
 }
 
 export const mockIntoDelta = (delta: Delta.Root) => delta;
-
-export function createMockUndoRedoManager(): UndoRedoManager<DefaultChangeset, DefaultEditBuilder> {
-	return UndoRedoManager.create(new DefaultChangeFamily({ jsonValidator: typeboxValidator }));
-}
 
 export interface EncodingTestData<TDecoded, TEncoded> {
 	/**
@@ -869,11 +862,11 @@ export function defaultRevisionMetadataFromChanges(
 }
 
 /**
- * Helper for building {@link Named} {@link TreeStoredSchema} without using {@link SchemaBuilder}.
+ * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
  */
 export function namedTreeSchema(
 	data: TreeSchemaBuilder & Named<string>,
-): Named<TreeSchemaIdentifier> & TreeStoredSchema {
+): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
 	return {
 		name: brand(data.name),
 		...treeSchema({ ...data }),
@@ -894,7 +887,7 @@ export const wrongSchema = new SchemaBuilder({
 	lint: {
 		rejectEmpty: false,
 	},
-}).toDocumentSchema(SchemaBuilder.sequence(Any));
+}).intoSchema(SchemaBuilder.sequence(Any));
 
 /**
  * Schematize config Schema which is not correct.
@@ -927,4 +920,23 @@ export function announceTestDelta(
 	detachedFieldIndex?: DetachedFieldIndex,
 ): void {
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
+}
+
+export function createTestUndoRedoStacks(view: ISharedTreeBranchView | ISharedTreeView): {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+} {
+	const undoStack: Revertible[] = [];
+	const redoStack: Revertible[] = [];
+
+	const unsubscribe = view.events.on("revertible", (revertible) => {
+		if (revertible.kind === RevertibleKind.Undo) {
+			redoStack.push(revertible);
+		} else {
+			undoStack.push(revertible);
+		}
+	});
+
+	return { undoStack, redoStack, unsubscribe };
 }

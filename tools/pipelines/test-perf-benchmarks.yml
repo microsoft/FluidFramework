@@ -82,7 +82,7 @@ stages:
         value: ${{ variables.testWorkspace }}/benchmarkOutput
         readonly: true
     jobs:
-    - template: templates/include-test-perf-benchmarks.yml
+    - template: templates/include-telemetry-setup.yml
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
@@ -240,7 +240,7 @@ stages:
         value: ${{ variables.testWorkspace }}/memoryTestsOutput
         readonly: true
     jobs:
-    - template: templates/include-test-perf-benchmarks.yml
+    - template: templates/include-telemetry-setup.yml
       parameters:
         poolBuild: ${{ parameters.poolBuild }}
         testWorkspace: ${{ variables.testWorkspace }}
@@ -399,21 +399,21 @@ stages:
         - ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
           - group: ${{ endpointObject.lockVariableGroupName }}
 
-        # The following two paths are defined by the npm scripts invocations in @fluid-internal/test-end-to-end-tests
+        # The following two paths are defined by the npm scripts invocations in @fluid-private/test-end-to-end-tests
         - name: executionTimeTestOutputFolder
-          value: ${{ variables.testWorkspace }}/node_modules/@fluid-internal/test-end-to-end-tests/.timeTestsOutput
+          value: ${{ variables.testWorkspace }}/node_modules/@fluid-private/test-end-to-end-tests/.timeTestsOutput
           readonly: true
         - name: memoryUsageTestOutputFolder
-          value: ${{ variables.testWorkspace }}/node_modules/@fluid-internal/test-end-to-end-tests/.memoryTestsOutput
+          value: ${{ variables.testWorkspace }}/node_modules/@fluid-private/test-end-to-end-tests/.memoryTestsOutput
           readonly: true
         - name: testPackage
-          value: '@fluid-internal/test-end-to-end-tests'
+          value: '@fluid-private/test-end-to-end-tests'
           readonly: true
         - name: escapedTestPackage
           value: ${{ replace(replace(variables.testPackage, '@', '' ), '/', '-') }}
           readonly: true
       jobs:
-      - template: templates/include-test-perf-benchmarks.yml
+      - template: templates/include-telemetry-setup.yml
         parameters:
           poolBuild: ${{ parameters.poolBuild }}
           testWorkspace: ${{ variables.testWorkspace }}
@@ -625,7 +625,7 @@ stages:
       - perf_e2e_tests_frs
 
     jobs:
-      - template: templates/include-test-perf-benchmarks.yml
+      - template: templates/include-telemetry-setup.yml
         parameters:
           poolBuild: ${{ parameters.poolBuild }}
           testWorkspace: ${{ variables.testWorkspace }}

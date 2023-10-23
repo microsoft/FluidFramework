@@ -85,6 +85,31 @@
                   "version": "1.0.0",
                   "treeSchema": [
                     {
+                      "name": "com.fluidframework.leaf.boolean",
+                      "objectNodeFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
+                      "objectNodeFields": [],
+                      "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.null",
+                      "objectNodeFields": [],
+                      "leafValue": 4
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "objectNodeFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "objectNodeFields": [],
+                      "leafValue": 1
+                    },
+                    {
                       "name": "has-sequence-map.SeqMap",
                       "mapFields": {
                         "kind": "Sequence",
@@ -92,7 +117,7 @@
                           "has-sequence-map.SeqMap"
                         ]
                       },
-                      "structFields": []
+                      "objectNodeFields": []
                     }
                   ],
                   "rootFieldSchema": {
@@ -146,7 +171,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[]",
+                  "data": [],
                   "id": 1
                 },
                 "encoding": "utf-8"
