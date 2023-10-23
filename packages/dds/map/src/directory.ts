@@ -457,7 +457,7 @@ export class SharedDirectory
 	 * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
 	 */
 	private readonly root: SubDirectory = new SubDirectory(
-		{ seq: 0 },
+		{ seq: 0, clientSeq: 0 },
 		new Set(),
 		this,
 		this.runtime,
@@ -756,9 +756,6 @@ export class SharedDirectory
 							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
 							// sub directory. This could be done at serialization time too, but we need to maintain
 							// back compat too and also we will actually know the state when it was serialized.
-							// createInfo !== undefined && createInfo.csn > -1
-							// 	?  { seq: createInfo.csn, clientSeq: createInfo.ccsn ?? ++currentSubDir.localCreationSeq }
-							//	: { seq: 0, clientSeq: ++currentSubDir.localCreationSeq },
 							// createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
 							seqNumCollection,
 							createInfo !== undefined
@@ -1249,7 +1246,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private readonly pendingClearMessageIds: number[] = [];
 
-	public localCreationSeq: number = -1;
+	public localCreationSeq: number = 0;
 
 	public readonly localCreationSeqTracker: DirectoryCreationTracker;
 
