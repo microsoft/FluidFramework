@@ -1365,13 +1365,16 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
 // @alpha
-export const node: {
-    schema: (node: SharedTreeNode) => TreeNodeSchema;
-    is: <TSchema>(value: unknown, schema: TSchema) => value is ProxyNode<Assume<TSchema, TreeNodeSchema<string, FlattenKeys<(MapSchemaSpecification | LeafSchemaSpecification | ObjectSchemaSpecification) & Partial<ObjectSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>>>>;
+export const node: NodeApi;
+
+// @alpha
+export interface NodeApi {
+    is: <TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema) => value is ProxyNode<TSchema>;
+    on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => () => void;
     parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
-    on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => (() => void);
+    schema: (node: SharedTreeNode) => TreeNodeSchema;
     status: (node: SharedTreeNode) => TreeStatus;
-};
+}
 
 // @alpha
 export interface NodeData {

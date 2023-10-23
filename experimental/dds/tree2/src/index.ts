@@ -282,6 +282,7 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	node,
+	NodeApi,
 	SharedTreeNode,
 	Typed,
 	TreeEvent,
