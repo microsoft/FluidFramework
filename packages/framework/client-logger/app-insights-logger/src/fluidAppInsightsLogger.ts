@@ -30,7 +30,7 @@ export interface FluidAppInsightsLoggerConfig {
 		 */
 		mode: "inclusive" | "exclusive";
 		/**
-		 * Controls the default filtering of log events by their category.
+		 * Controls the filtering of log events.
 		 * Leaving this undefined will be treated as an empty array.
 		 */
 		filters?: TelemetryFilter[];
@@ -39,7 +39,8 @@ export interface FluidAppInsightsLoggerConfig {
 
 /**
  * Object used with an {@link FluidAppInsightsLoggerConfig}
- * to define logic for filtering of telemetry events
+ * to define a filter with logic for matching it to telemetry events.
+ * Filters can include either a category, namespace or both types of filter; A valid filter must have at least one defined.
  *
  * @public
  */
@@ -47,7 +48,20 @@ export interface TelemetryFilter {
 	/**
 	 * The category of telemetry event that this filter applies to
 	 */
-	category: TelemetryEventCategory;
+	category?: TelemetryEventCategory;
+	/**
+	 * The namespace pattern to filter telemetry events.
+	 * For example, "perf:latency:*" will match any namespace starting with "perf:latency:"
+	 * This is a regex pattern.
+	 */
+	namespacePattern?: string;
+	/**
+	 * A list of namespace patterns to explicitly exclude from the filter.
+	 * For example, if you have a namespacePattern of "perf:latency:*" but want to exclude
+	 * events from "perf:latency:ops", you would add "perf.latency.ops" to this list.
+	 * These are regex patterns.
+	 */
+	namespacePatternExceptions?: string[];
 }
 
 /**
@@ -70,6 +84,15 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 
 	public constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig) {
 		this.baseLoggingClient = client;
+
+		for (const filter of config?.filtering.filters ?? []) {
+			const isValidFilter =
+				filter.category !== undefined || filter.namespacePattern !== undefined;
+			if (!isValidFilter) {
+				throw new Error("Invalid filter config provided to Fluid App Insights Logger");
+			}
+		}
+
 		this.config = config ?? {
 			filtering: {
 				mode: "exclusive",
@@ -104,9 +127,45 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 		return shouldSendEvent;
 	}
 
+	// private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
+	// 	for (const filter of this.config.filtering.filters ?? []) {
+	// 		if (filter.category === event.category) {
+	// 			return true;
+	// 		}
+	// 	}
+	// 	return false;
+	// }
+
 	private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
 		for (const filter of this.config.filtering.filters ?? []) {
-			if (filter.category === event.category) {
+			let matches = true;
+
+			// If the filter has a category and it doesn't match the event's category, skip to next filter
+			if (filter.category && event.category !== filter.category) {
+				continue;
+			}
+
+			// If the filter has a namespacePattern, test the event's namespace against it
+			if (filter.namespacePattern !== undefined) {
+				const pattern = new RegExp(filter.namespacePattern);
+				if (!pattern.test(event.eventName)) {
+					continue;
+				}
+			}
+
+			// If the filter has any excludedNamespacePatterns, test the event's namespace against them
+			if (filter.namespacePatternExceptions !== undefined) {
+				for (const patternException of filter.namespacePatternExceptions) {
+					const pattern = new RegExp(patternException);
+					if (pattern.test(event.eventName)) {
+						matches = false;
+						break;
+					}
+				}
+			}
+
+			// If the current filter matches the event, return it
+			if (matches) {
 				return true;
 			}
 		}
