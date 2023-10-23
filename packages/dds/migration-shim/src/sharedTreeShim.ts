@@ -18,8 +18,8 @@ import {
 import { type ISharedTree, type SharedTreeFactory } from "@fluid-experimental/tree2";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices";
-import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler";
+import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
+import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler.js";
 
 /**
  * SharedTreeShim is loaded by clients that join after the migration completes, and holds the new SharedTree.

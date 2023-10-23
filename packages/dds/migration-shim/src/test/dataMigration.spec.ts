@@ -3,26 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
-	ITestObjectProvider,
+	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import {
-	MigrationShim,
-	MigrationShimFactory,
-	SharedTreeShim,
-	SharedTreeShimFactory,
-} from "@fluid-experimental/migration-shim";
-import {
-	BuildNode,
+	type BuildNode,
 	Change,
 	SharedTree as LegacySharedTree,
 	StablePlace,
-	TraitLabel,
+	type TraitLabel,
 } from "@fluid-experimental/tree";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
@@ -30,28 +24,34 @@ import {
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct";
-import { IChannel } from "@fluidframework/datastore-definitions";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime";
+import { type IChannel } from "@fluidframework/datastore-definitions";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import {
 	AllowedUpdateType,
-	ISharedTree,
+	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	Typed,
+	type Typed,
+	type ISharedTreeView,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
+import { MigrationShimFactory } from "../migrationShimFactory.js";
+import { type MigrationShim } from "../migrationShim.js";
+import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
+import { type SharedTreeShim } from "../sharedTreeShim.js";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
 	private channel?: IChannel;
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public get _root() {
 		return this.root;
 	}
 
 	// The object starts with a LegacySharedTree
-	public async initializingFirstTime(props?: any): Promise<void> {
+	public async initializingFirstTime(props?: unknown): Promise<void> {
 		const legacyTree = this.runtime.createChannel(
 			"tree",
 			LegacySharedTree.getFactory().type,
@@ -89,7 +89,7 @@ class TestDataObject extends DataObject {
 	}
 
 	// Allows us to get the SharedObject with whatever type we want
-	public getTree<T>() {
+	public getTree<T>(): T {
 		assert(this.channel !== undefined, "Channel should be defined");
 		return this.channel as T;
 	}
@@ -105,7 +105,7 @@ const inventorySchema = builder.object("abcInventory", {
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
-function getNewTreeView(tree: ISharedTree) {
+function getNewTreeView(tree: ISharedTree): ISharedTreeView {
 	return tree.schematizeView({
 		initialTree: {
 			quantity: 0,
@@ -155,6 +155,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const nodeId = rootNode.traits.get(legacyNodeId)![0];
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const quantity = legacyNode.payload.quantity as number;
 			newTree.schematizeView({
 				initialTree: {
