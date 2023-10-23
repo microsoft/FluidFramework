@@ -17,8 +17,8 @@ import { type TelemetryEventCategory } from "@fluidframework/telemetry-utils";
  */
 export interface FluidAppInsightsLoggerConfig {
 	/**
-	 * This Configuration defines how filtering will be applied to Fluid telemetry events flowing throguh the logger.
-	 * This determines which events will be sent to Azure App insights.
+	 * This Configuration defines how filtering will be applied to Fluid telemetry events flowing through the logger.
+	 * This determines which events will be sent to Azure App Insights.
 	 */
 	filtering: {
 		/**
