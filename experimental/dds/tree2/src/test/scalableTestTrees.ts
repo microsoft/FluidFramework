@@ -5,15 +5,14 @@
 import { strict as assert } from "assert";
 import {
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	isEditableField,
 	isEditableTree,
 	SchemaAware,
-	SchemaBuilder,
 	typeNameSymbol,
 	UnwrappedEditableField,
 } from "../feature-libraries";
-import { jsonNumber, jsonSchema } from "../domains";
+import { leaf, jsonSchema, SchemaBuilder } from "../domains";
 import { brand, requireAssignableTo } from "../util";
 import { ISharedTreeView, TreeContent } from "../shared-tree";
 import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
@@ -34,8 +33,8 @@ const deepBuilder = new SchemaBuilder({
 });
 
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.structRecursive("linkedList", {
-	foo: FieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, jsonNumber]),
+const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
+	foo: TreeFieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, leaf.number]),
 });
 
 const wideBuilder = new SchemaBuilder({
@@ -44,13 +43,13 @@ const wideBuilder = new SchemaBuilder({
 	libraries: [jsonSchema],
 });
 
-export const wideRootSchema = wideBuilder.struct("WideRoot", {
-	foo: FieldSchema.create(FieldKinds.sequence, [jsonNumber]),
+export const wideRootSchema = wideBuilder.object("WideRoot", {
+	foo: TreeFieldSchema.create(FieldKinds.sequence, [leaf.number]),
 });
 
-export const wideSchema = wideBuilder.toDocumentSchema(wideRootSchema);
+export const wideSchema = wideBuilder.intoSchema(wideRootSchema);
 
-export const deepSchema = deepBuilder.toDocumentSchema([linkedListSchema, jsonNumber]);
+export const deepSchema = deepBuilder.intoSchema([linkedListSchema, leaf.number]);
 
 /**
  * JS object like a deep tree.

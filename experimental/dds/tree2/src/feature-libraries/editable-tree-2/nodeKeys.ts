@@ -4,7 +4,7 @@
  */
 
 import { LocalNodeKey, NodeKeyIndex, NodeKeyManager, StableNodeKey } from "../node-key";
-import { Struct } from "./editableTreeTypes";
+import { ObjectNode } from "./editableTreeTypes";
 
 /**
  * A collection of utilities for managing {@link StableNodeKey}s.
@@ -31,7 +31,7 @@ export interface NodeKeys {
 	/**
 	 * A map of all {@link LocalNodeKey}s in the document to their corresponding nodes.
 	 */
-	readonly map: ReadonlyMap<LocalNodeKey, Struct>;
+	readonly map: ReadonlyMap<LocalNodeKey, ObjectNode>;
 }
 
 export class SimpleNodeKeys implements NodeKeys {

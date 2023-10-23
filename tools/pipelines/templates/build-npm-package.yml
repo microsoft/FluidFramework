@@ -104,6 +104,12 @@ parameters:
   type: string
   default: npm
 
+# Parameter for modifying the 'types' field in the package.json.
+# If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
+- name: packageTypesOverride
+  type: string
+  default: none
+
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
@@ -124,6 +130,10 @@ parameters:
   type: object
   default: []
 
+- name: telemetry
+  type: boolean
+  default: false
+
 variables:
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
@@ -139,6 +149,8 @@ variables:
   - name: toolAbsolutePath
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
+  - name: pipelineTelemetryWorkdir
+    value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
   - group: ado-feeds
 
 stages:
@@ -184,6 +196,7 @@ stages:
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
+                packageTypesOverride=${{ parameters.packageTypesOverride }}
 
               Tasks Parameters:
                 BuildDir=${{ parameters.buildDirectory }}
@@ -203,6 +216,7 @@ stages:
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
+                packageTypesOverride='${{ parameters.packageTypesOverride }}'
 
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
@@ -236,6 +250,11 @@ stages:
                   echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
                   exit -1;
                 fi
+
+                if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
+                  echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
+                  exit -1;
+                fi
               fi
 
               if [[ "$(release)" == "prerelease" ]]; then
@@ -250,22 +269,20 @@ stages:
                   echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
                 fi
+
+                if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
+                  echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
+                  exit -1;
+                fi
               fi
 
         - template: include-use-node-version.yml
 
-        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-          - template: include-install-pnpm.yml
-            parameters:
-              buildDirectory: ${{ parameters.buildDirectory }}
-
-        - task: Bash@3
-          displayName: Install dependencies
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
-            script: |
-              ${{ parameters.packageManagerInstallCommand }}
+        - template: include-install.yml 
+          parameters:
+            packageManager: ${{ parameters.packageManager }}
+            buildDirectory: ${{ parameters.buildDirectory }}
+            packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
 
         # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
         # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
@@ -279,24 +296,15 @@ stages:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
+              packageTypesOverride: ${{ parameters.packageTypesOverride }}
 
-        # Build
-        - ${{ if ne(parameters.taskBuild, 'false') }}:
-          - task: Npm@1
-            displayName: npm run ${{ parameters.taskBuild }}
-            inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run ${{ parameters.taskBuild }}'
-
-        # Lint
-        - ${{ if ne(parameters.taskLint, false) }}:
-          - task: Npm@1
-            displayName: npm run ${{ parameters.taskLintName }}
-            inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.buildDirectory }}
-              customCommand: 'run ${{ parameters.taskLintName }}'
+        # Build and Lint
+        - template: include-build-lint.yml 
+          parameters:
+            taskBuild: ${{ parameters.taskBuild }}
+            taskLint: ${{ parameters.taskLint }}
+            taskLintName: ${{ parameters.taskLintName }}
+            buildDirectory: ${{ parameters.buildDirectory }}
 
         # Test
         - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
@@ -306,35 +314,10 @@ stages:
             displayName: Start Test
 
           - ${{ each taskTestStep in parameters.taskTest }}:
-            # Test - With coverage
-            - ${{ if and(eq(variables['testCoverage'], true), startsWith(taskTestStep, 'ci:test')) }}:
-              - task: Npm@1
-                displayName: npm run ${{ taskTestStep }}:coverage
-                inputs:
-                  command: 'custom'
-                  workingDir: ${{ parameters.buildDirectory }}
-                  customCommand: 'run ${{ taskTestStep }}:coverage'
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                env:
-                  ${{ if contains(taskTestStep, 'tinylicious') }}:
-                    # Disable colorization for tinylicious logs (not useful when printing to a file)
-                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
-                    logger__morganFormat: tiny
-
-              # Test - No coverage
-            - ${{ else }}:
-              - task: Npm@1
-                displayName: npm run ${{ taskTestStep }}
-                inputs:
-                  command: 'custom'
-                  workingDir: ${{ parameters.buildDirectory }}
-                  customCommand: 'run ${{ taskTestStep }}'
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                env:
-                  ${{ if contains(taskTestStep, 'tinylicious') }}:
-                    # Disable colorization for tinylicious logs (not useful when printing to a file)
-                    logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
-                    logger__morganFormat: tiny
+            - template: include-test-task.yml
+              parameters:
+                taskTestStep: ${{ taskTestStep }}
+                buildDirectory: ${{ parameters.buildDirectory }}
 
           # Test - Upload coverage results
           # Some webpacked file using externals introduce file name with quotes in them
@@ -478,9 +461,19 @@ stages:
 
                   echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
                   echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
+
+                  # This is confusing, but we are using the .npmrc here to load dependencies from different feeds. These
+                  # scopes must be loaded from the "dev" feed because that is the only place they are published. Ideally
+                  # this logic will be centralized outside of CI in the future.
                   echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
+                  echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
+
+                  # This scope must be loaded from the "build" feed
                   echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
+
+                  # This scope must be loaded from the internal Office feed
                   echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
+
                   echo "always-auth=true" >> ./.npmrc
                   cat .npmrc
 
@@ -610,3 +603,37 @@ stages:
         namespace: ${{ parameters.namespace }}
         tagName: ${{ parameters.tagName }}
         publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
+
+  # Capture per-pipeline stage results
+  - stage: runAfterAll
+    displayName: Retrieve and upload client stage stats to Kusto
+    condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'), eq(${{parameters.telemetry}}, true))
+    dependsOn: 
+      - build
+
+    jobs:
+      - template: include-telemetry-setup.yml
+        parameters:
+            testWorkspace: ${{ variables.pipelineTelemetryWorkdir }}
+            poolBuild: Small
+            customSteps:
+
+            - task: Bash@3
+              displayName: Retrieve buildId results
+              inputs:
+                targetType: 'inline'
+                workingDirectory: $(toolAbsolutePath)
+                script: |
+                  echo "creating output folder"
+                  mkdir -p ${{ variables.pipelineTelemetryWorkdir }}/timingOutput
+                  echo "Executing curl command ..."
+                  echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+                  curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json
+                  pwd;
+                  ls -laR ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json;
+                  cat ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json;
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.pipelineTelemetryWorkdir }}/timingOutput/';
+              env:
+                BUILD_ID: $(Build.BuildId)
+                ADO_API_TOKEN: $(System.AccessToken)
+                PIPELINE: 'BuildClient'

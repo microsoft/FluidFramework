@@ -18,7 +18,7 @@ import {
 	tagChange,
 	TaggedChange,
 	tagRollbackInverse,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 // TODO: Throughout this file, we use TestChange as the child change type.
 // This is the same approach used in sequenceChangeRebaser.spec.ts, but it requires casting in this file
@@ -51,17 +51,22 @@ function makeRevisionTagMinter(prefix = "rev"): RevisionTagMinter {
 	return () => `${prefix}${currentRevision++}` as RevisionTag;
 }
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const mintRevisionTag = makeRevisionTagMinter();
 const tag1 = mintRevisionTag();
 
 const OptionalChange = {
-	set(value: string | undefined, wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
-		return optionalFieldEditor.set(
-			value !== undefined ? singleTextCursor({ type, value }) : undefined,
-			wasEmpty,
-			id,
-		);
+	set(
+		value: string,
+		wasEmpty: boolean,
+		id: ChangesetLocalId = brand(0),
+		buildId: ChangesetLocalId = brand(40),
+	) {
+		return optionalFieldEditor.set(singleTextCursor({ type, value }), wasEmpty, id, buildId);
+	},
+
+	clear(wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
+		return optionalFieldEditor.clear(wasEmpty, id);
 	},
 
 	buildChildChange(childChange: TestChange) {
@@ -74,7 +79,7 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should not modify CrossFieldManager"),
 };
 
-function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.MarkList {
+function toDelta(change: OptionalChangeset, revision?: RevisionTag): Delta.FieldChanges {
 	return optionalFieldIntoDelta(tagChange(change, revision), (childChange) =>
 		TestChange.toDelta(tagChange(childChange as TestChange, revision)),
 	);
@@ -207,7 +212,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: undefined,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.set(undefined, false),
+					OptionalChange.clear(false),
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,

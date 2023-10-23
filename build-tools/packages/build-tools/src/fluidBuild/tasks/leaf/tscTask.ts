@@ -6,16 +6,12 @@ import * as assert from "assert";
 import * as fs from "fs";
 import path from "path";
 import type * as tsTypes from "typescript";
+import isEqual from "lodash.isequal";
 
-import { defaultLogger } from "../../../common/logging";
 import { existsSync, readFileAsync } from "../../../common/utils";
 import { getInstalledPackageVersion } from "../../../common/taskUtils";
 import { getTscUtils, TscUtil } from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
-
-const isEqual = require("lodash.isequal");
-
-const { verbose } = defaultLogger;
 
 interface ITsBuildInfo {
 	program: {
@@ -44,6 +40,10 @@ export class TscTask extends LeafTask {
 		return this._tscUtils;
 	}
 
+	protected get isIncremental() {
+		const config = this.readTsConfig();
+		return config?.options.incremental;
+	}
 	protected async checkLeafIsUpToDate() {
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 		if (tsBuildInfoFileFullPath === undefined) {
@@ -209,7 +209,7 @@ export class TscTask extends LeafTask {
 			const tscUtils = this.getTscUtils();
 			const config = tscUtils.readConfigFile(configFileFullPath);
 			if (!config) {
-				verbose(`${this.node.pkg.nameColored}: ts fail to parse ${configFileFullPath}`);
+				this.traceError(`ts fail to parse ${configFileFullPath}`);
 				return undefined;
 			}
 
@@ -232,16 +232,10 @@ export class TscTask extends LeafTask {
 			);
 
 			if (options.errors.length) {
-				verbose(
-					`${this.node.pkg.nameColored}: ts fail to parse file content ${configFileFullPath}`,
-				);
+				this.traceError(`ts fail to parse file content ${configFileFullPath}`);
 				return undefined;
 			}
 			this._tsConfig = options;
-
-			if (!options.options.incremental) {
-				console.warn(`${this.node.pkg.nameColored}: warning: incremental not enabled`);
-			}
 		}
 
 		return this._tsConfig;
@@ -268,7 +262,7 @@ export class TscTask extends LeafTask {
 	private get parsedCommandLine() {
 		const parsedCommand = this.getTscUtils().parseCommandLine(this.command);
 		if (!parsedCommand) {
-			verbose(`${this.node.pkg.nameColored}: ts fail to parse command line ${this.command}`);
+			this.traceError(`ts fail to parse command line ${this.command}`);
 		}
 		return parsedCommand;
 	}
@@ -362,17 +356,13 @@ export class TscTask extends LeafTask {
 					) {
 						this._tsBuildInfo = tsBuildInfo;
 					} else {
-						verbose(
-							`${this.node.pkg.nameColored}: Invalid format ${tsBuildInfoFileFullPath}`,
-						);
+						this.traceError(`Invalid format ${tsBuildInfoFileFullPath}`);
 					}
 				} catch {
-					verbose(
-						`${this.node.pkg.nameColored}: Unable to load ${tsBuildInfoFileFullPath}`,
-					);
+					this.traceError(`Unable to load ${tsBuildInfoFileFullPath}`);
 				}
 			} else {
-				verbose(`${this.node.pkg.nameColored}: ${tsBuildInfoFileFullPath} file not found`);
+				this.traceError(`${tsBuildInfoFileFullPath} file not found`);
 			}
 		}
 		return this._tsBuildInfo;
@@ -465,7 +455,7 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				tsBuildInfoFiles,
 			});
 		} catch (e) {
-			this.traceExec(`error generating done file content ${e}`);
+			this.traceError(`error generating done file content ${e}`);
 			return undefined;
 		}
 	}

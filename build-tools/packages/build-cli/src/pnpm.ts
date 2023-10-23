@@ -30,6 +30,6 @@ export async function pnpmList(directory: string): Promise<PnpmListEntry[]> {
 		throw new Error(`No output from pnpm list.`);
 	}
 
-	const parsed: PnpmListEntry[] = JSON.parse(raw.stdout);
+	const parsed = JSON.parse(raw.stdout) as PnpmListEntry[];
 	return parsed;
 }

@@ -12,3 +12,6 @@
 
 export type { IMigrationEvent } from "./migrationShim";
 export { MigrationShim } from "./migrationShim";
+export { MigrationShimFactory } from "./migrationShimFactory";
+export { SharedTreeShim } from "./sharedTreeShim";
+export { SharedTreeShimFactory } from "./sharedTreeShimFactory";

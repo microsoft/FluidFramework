@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	MemoizedIdRangeAllocator,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
@@ -19,7 +18,11 @@ import {
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, defaultRevisionMetadataFromChanges } from "../../utils";
+import {
+	assertFieldChangesEqual,
+	deepFreeze,
+	defaultRevisionMetadataFromChanges,
+} from "../../utils";
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -160,16 +163,13 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
-	assertMarkListEqual(toDelta(actual), toDelta(expected));
+	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.MarkList {
+export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.FieldChanges {
 	deepFreeze(change);
-	const allocator = MemoizedIdRangeAllocator.fromNextId();
-	return SF.sequenceFieldToDelta(
-		tagChange(change, revision),
-		(childChange) => TestChange.toDelta(tagChange(childChange, revision)),
-		allocator,
+	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
+		TestChange.toDelta(tagChange(childChange, revision)),
 	);
 }
 
