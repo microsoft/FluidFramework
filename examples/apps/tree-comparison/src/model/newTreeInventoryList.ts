@@ -21,7 +21,7 @@ import { InventoryItem } from "./inventoryItem";
 
 const builder = new SchemaBuilder({ scope: "inventory app" });
 
-const inventoryItemSchema = builder.struct("Contoso:InventoryItem-1.0.0", {
+const inventoryItemSchema = builder.object("Contoso:InventoryItem-1.0.0", {
 	id: builder.string,
 	name: builder.string,
 	quantity: builder.number,
@@ -32,17 +32,17 @@ type InventoryItemNode = Typed<typeof inventoryItemSchema>;
 // Would be nice if instead we could define some single big Serializable or similar that laid the
 // schema out and then pass that in.
 // TODO: Convert this to use builder.list() rather than builder.sequence when ready.
-const inventorySchema = builder.struct("Contoso:Inventory-1.0.0", {
+const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItems: builder.sequence(inventoryItemSchema),
 });
 type InventoryNode = Typed<typeof inventorySchema>;
 
 // REV: The root inventoryFieldSchema feels extra to me.  Is there a way to omit it?  Something like
-// builder.toDocumentSchema(inventorySchema)
+// builder.intoSchema(inventorySchema)
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 type InventoryField = Typed<typeof inventoryFieldSchema>;
 
-const schema = builder.toDocumentSchema(inventoryFieldSchema);
+const schema = builder.intoSchema(inventoryFieldSchema);
 
 const newTreeFactory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,

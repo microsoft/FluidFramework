@@ -8,17 +8,22 @@ import { SchemaBuilder, leaf } from "../../domains";
 import {
 	Any,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	Sequence,
-	TreeSchema,
+	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
+	ProxyNode,
+	ObjectNodeSchema,
+	SharedTreeObject,
 } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
-import { areSafelyAssignable, requireTrue } from "../../util";
+import { TypedNode, UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
+import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
+// eslint-disable-next-line import/no-internal-modules
+import { getFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/objectFactory";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -30,9 +35,9 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listAny));
 				assert.equal(listAny.name, "scope.List<Any>");
 				assert(
-					listAny.structFields
+					listAny.objectNodeFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [Any])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])),
 				);
 				type ListAny = UnboxNode<typeof listAny>;
 				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence<readonly [Any]>>>;
@@ -47,9 +52,9 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listImplicit));
 				assert.equal(listImplicit.name, `scope2.List<["${builder.number.name}"]>`);
 				assert(
-					listImplicit.structFields
+					listImplicit.objectNodeFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [builder.number])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
 				type ListAny = UnboxNode<typeof listImplicit>;
 				type _check = requireTrue<
@@ -80,10 +85,10 @@ describe("domains - SchemaBuilder", () => {
 					`scope.List<["${builder.boolean.name}","${builder.number.name}"]>`,
 				);
 				assert(
-					listUnion.structFields
+					listUnion.objectNodeFields
 						.get("")
 						.equals(
-							FieldSchema.create(FieldKinds.sequence, [
+							TreeFieldSchema.create(FieldKinds.sequence, [
 								builder.number,
 								builder.boolean,
 							]),
@@ -118,9 +123,9 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(list));
 				assert.equal(list.name, `scope.Foo`);
 				assert(
-					list.structFields
+					list.objectNodeFields
 						.get("")
-						.equals(FieldSchema.create(FieldKinds.sequence, [builder.number])),
+						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
 				type ListAny = UnboxNode<typeof list>;
 				type _check = requireTrue<
@@ -128,7 +133,7 @@ describe("domains - SchemaBuilder", () => {
 				>;
 
 				// Not cached for structural use
-				assert((builder.list(builder.number) as TreeSchema) !== list);
+				assert((builder.list(builder.number) as TreeNodeSchema) !== list);
 				// Creating again errors instead or reuses
 				assert.throws(() => builder.list("Foo", builder.number));
 			});
@@ -144,7 +149,7 @@ describe("domains - SchemaBuilder", () => {
 				// Correct name
 				assert.equal(mapAny.name, "scope.Map<Any>");
 				// Infers optional kind
-				assert(mapAny.mapFields.equals(FieldSchema.create(FieldKinds.optional, [Any])));
+				assert(mapAny.mapFields.equals(TreeFieldSchema.create(FieldKinds.optional, [Any])));
 				// Cached and reused
 				assert.equal(builder.map(Any), mapAny);
 			});
@@ -158,7 +163,7 @@ describe("domains - SchemaBuilder", () => {
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							FieldSchema.create(FieldKinds.optional, [builder.number]),
+							TreeFieldSchema.create(FieldKinds.optional, [builder.number]),
 						),
 					);
 				});
@@ -168,13 +173,13 @@ describe("domains - SchemaBuilder", () => {
 
 					const map = builder.map(
 						"Foo",
-						FieldSchema.create(FieldKinds.sequence, [leaf.string]),
+						TreeFieldSchema.create(FieldKinds.sequence, [leaf.string]),
 					);
 					assert(schemaIsMap(map));
 					assert.equal(map.name, `scope.Foo`);
 					assert(
 						map.mapFields.equals(
-							FieldSchema.create(FieldKinds.sequence, [leaf.string]),
+							TreeFieldSchema.create(FieldKinds.sequence, [leaf.string]),
 						),
 					);
 				});
@@ -196,11 +201,115 @@ describe("domains - SchemaBuilder", () => {
 		);
 		// escaped names
 		const builder = new SchemaBuilder({ scope: "scope" });
-		const doubleName = builder.struct(`bar","scope.foo`, {});
+		const doubleName = builder.object(`bar","scope.foo`, {});
 		assert.equal(structuralName("X", doubleName), `X<["scope.bar\\",\\"scope.foo"]>`);
 		// This escaping ensures named don't collide:
-		const foo = builder.struct("foo", {});
-		const bar = builder.struct("bar", {});
+		const foo = builder.object("foo", {});
+		const bar = builder.object("bar", {});
 		assert(structuralName("X", [bar, foo]) !== structuralName("X", doubleName));
 	});
+
+	it("object", () => {
+		const builder = new SchemaBuilder({ scope: "Test Domain" });
+
+		const testObject = builder.object("object", {
+			number: builder.number,
+		});
+
+		type _0 = requireFalse<isAny<typeof testObject>>;
+		type _1 = requireTrue<
+			areSafelyAssignable<ProxyNode<typeof testObject>, { number: number }>
+		>;
+
+		function typeTests(x: ProxyNode<typeof testObject>) {
+			const y: number = x.number;
+		}
+	});
+
+	it("objectRecursive", () => {
+		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
+
+		const recursiveObject = builder.objectRecursive("object", {
+			recursive: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
+			number: SchemaBuilder.required(builder.number),
+		});
+
+		type _0 = requireFalse<isAny<typeof recursiveObject>>;
+		type Proxied = ProxyNode<typeof recursiveObject>;
+		type _1 = requireFalse<isAny<Proxied>>;
+
+		function typeTests(x: Proxied) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+
+		function typeTests2(x: TypedNode<typeof recursiveObject>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+
+		const inner = recursiveObject.create({ recursive: undefined, number: 5 });
+		const testOptional = recursiveObject.create({ number: 5 });
+
+		const outer1 = recursiveObject.create({ recursive: inner, number: 1 });
+		const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
+
+		checkCreated(inner, { number: 5 });
+		checkCreated(testOptional, { number: 5 });
+		checkCreated(outer1, { number: 1, recursive: { number: 5 } });
+		checkCreated(outer2, { number: 1, recursive: { number: 5 } });
+	});
+
+	it("fixRecursiveReference", () => {
+		const builder = new SchemaBuilder({ scope: "Test Recursive Domain" });
+
+		const recursiveReference = () => recursiveObject2;
+		builder.fixRecursiveReference(recursiveReference);
+
+		// Renaming this to recursiveObject causes IntelliSense to never work for this, instead of work after restarted until this code it touched.
+		const recursiveObject2 = builder.object("object2", {
+			recursive: builder.optional([recursiveReference]),
+			number: leaf.number,
+		});
+
+		type _0 = requireFalse<isAny<typeof recursiveObject2>>;
+		type _1 = requireTrue<
+			areSafelyAssignable<
+				typeof recursiveObject2,
+				ReturnType<
+					(typeof recursiveObject2.objectNodeFieldsObject.recursive.allowedTypes)[0]
+				>
+			>
+		>;
+
+		function typeTests(x: ProxyNode<typeof recursiveObject2>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+
+		function typeTests2(x: TypedNode<typeof recursiveObject2>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
+	});
 });
+
+/**
+ * These build objects are intentionally not holding the data their types make them appear to have as part of a workaround for https://github.com/microsoft/TypeScript/issues/43826.
+ * This makes testing that these factory function do the correct thing a bit non-obvious:
+ */
+export function checkCreated<TSchema extends ObjectNodeSchema>(
+	created: SharedTreeObject<TSchema>,
+	expected: ProxyNode<TSchema>,
+): void {
+	const data = getFactoryContent(created);
+	// Strip symbols and look up factory data
+	const stripped = JSON.parse(
+		JSON.stringify(created, (key, value) =>
+			typeof value !== "object"
+				? (value as unknown)
+				: (getFactoryContent(value) as unknown) ?? (value as unknown),
+		),
+	);
+	assert.deepEqual(stripped, expected);
+}

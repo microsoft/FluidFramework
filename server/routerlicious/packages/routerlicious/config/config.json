@@ -214,6 +214,7 @@
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
 		"enableTelemetry": true,
+		"shouldLogInitialSuccessVerbose": false,
 		"maxDbBatchSize": 1000,
 		"restartOnCheckpointFailure": true
 	},

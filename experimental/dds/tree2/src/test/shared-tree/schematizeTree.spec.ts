@@ -5,8 +5,8 @@
 import { strict as assert, fail } from "assert";
 import {
 	Any,
-	DocumentSchema,
-	FieldSchema,
+	TreeSchema,
+	TreeFieldSchema,
 	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
@@ -17,7 +17,7 @@ import {
 	AllowedUpdateType,
 	SimpleObservingDependent,
 	InMemoryStoredSchemaRepository,
-	SchemaData,
+	TreeStoredSchema,
 	cloneSchemaData,
 } from "../../core";
 import { jsonSequenceRootSchema } from "../utils";
@@ -28,18 +28,18 @@ import { SchemaBuilder, leaf } from "../../domains";
 
 const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
 const root = leaf.number;
-const schema = builder.toDocumentSchema(SchemaBuilder.optional(root));
+const schema = builder.intoSchema(SchemaBuilder.optional(root));
 
 const builderGeneralized = new SchemaBuilder({
 	scope: "test",
 	name: "Schematize Tree Tests Generalized",
 });
 
-const schemaGeneralized = builderGeneralized.toDocumentSchema(SchemaBuilder.optional(Any));
+const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
 
 const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
 
-const schemaValueRoot = builderValue.toDocumentSchema(SchemaBuilder.required(Any));
+const schemaValueRoot = builderValue.intoSchema(SchemaBuilder.required(Any));
 
 const emptySchema = new SchemaBuilder({
 	scope: "Empty",
@@ -47,9 +47,9 @@ const emptySchema = new SchemaBuilder({
 		rejectEmpty: false,
 		rejectForbidden: false,
 	},
-}).toDocumentSchema(FieldSchema.empty);
+}).intoSchema(TreeFieldSchema.empty);
 
-function expectSchema(actual: SchemaData, expected: SchemaData): void {
+function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 	// Check schema match
 	assert(allowsRepoSuperset(defaultSchemaPolicy, actual, expected));
 	assert(allowsRepoSuperset(defaultSchemaPolicy, expected, actual));
@@ -57,7 +57,7 @@ function expectSchema(actual: SchemaData, expected: SchemaData): void {
 
 describe("schematizeTree", () => {
 	describe("initializeContent", () => {
-		function testInitialize<TRoot extends FieldSchema>(
+		function testInitialize<TRoot extends TreeFieldSchema>(
 			name: string,
 			content: TreeContent<TRoot>,
 		): void {
@@ -78,7 +78,7 @@ describe("schematizeTree", () => {
 					// this test should be updated to use it to greatly increase its validation.
 
 					const storedSchema = new InMemoryStoredSchemaRepository();
-					let previousSchema: SchemaData = cloneSchemaData(storedSchema);
+					let previousSchema: TreeStoredSchema = cloneSchemaData(storedSchema);
 					expectSchema(storedSchema, previousSchema);
 
 					let currentData: NewFieldContent;
@@ -133,7 +133,7 @@ describe("schematizeTree", () => {
 
 	describe("schematize", () => {
 		describe("noop upgrade", () => {
-			const testCases: [string, DocumentSchema][] = [
+			const testCases: [string, TreeSchema][] = [
 				["empty", emptySchema],
 				["basic-optional", schema],
 				["basic-value", schemaValueRoot],

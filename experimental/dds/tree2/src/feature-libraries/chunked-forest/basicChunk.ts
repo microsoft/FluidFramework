@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKey,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	CursorLocationType,
 	FieldUpPath,
 	UpPath,
@@ -34,7 +34,7 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 	 * @param value - the value on this node, if any.
 	 */
 	public constructor(
-		public type: TreeSchemaIdentifier,
+		public type: TreeNodeSchemaIdentifier,
 		public fields: Map<FieldKey, TreeChunk[]>,
 		public value?: TreeValue,
 	) {

@@ -6,17 +6,17 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKey,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ITreeCursorSynchronous,
 	mapCursorFields,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	SimpleObservingDependent,
 	recordDependency,
 	Value,
 	TreeValue,
 	StoredSchemaRepository,
 	CursorLocationType,
-	SchemaData,
+	TreeStoredSchema,
 	StoredSchemaCollection,
 } from "../../core";
 import { FullSchemaPolicy, Multiplicity } from "../modular-schema";
@@ -91,7 +91,7 @@ export class Chunker implements IChunker {
 	 * Corresponds to the version of the schema in `schema`.
 	 * Cleared when `schema` changes.
 	 */
-	private readonly typeShapes: Map<TreeSchemaIdentifier, ShapeInfo> = new Map();
+	private readonly typeShapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
 
 	/**
 	 * Tracks the dependencies on `schema`.
@@ -106,10 +106,10 @@ export class Chunker implements IChunker {
 		public readonly uniformChunkNodeCount: number,
 		// eslint-disable-next-line @typescript-eslint/no-shadow
 		private readonly tryShapeFromSchema: (
-			schema: SchemaData,
+			schema: TreeStoredSchema,
 			policy: FullSchemaPolicy,
-			type: TreeSchemaIdentifier,
-			shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
+			type: TreeNodeSchemaIdentifier,
+			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
 	) {
 		this.dependent = new SimpleObservingDependent(() => this.schemaChanged());
@@ -128,7 +128,7 @@ export class Chunker implements IChunker {
 		);
 	}
 
-	public shapeFromSchema(schema: TreeSchemaIdentifier): ShapeInfo {
+	public shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo {
 		const cached = this.typeShapes.get(schema);
 		if (cached !== undefined) {
 			return cached;
@@ -197,8 +197,8 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
 export function shapesFromSchema(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-): Map<TreeSchemaIdentifier, ShapeInfo> {
-	const shapes: Map<TreeSchemaIdentifier, ShapeInfo> = new Map();
+): Map<TreeNodeSchemaIdentifier, ShapeInfo> {
+	const shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
 	for (const identifier of schema.treeSchema.keys()) {
 		tryShapeFromSchema(schema, policy, identifier, shapes);
 	}
@@ -213,8 +213,8 @@ export function shapesFromSchema(
 export function tryShapeFromSchema(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-	type: TreeSchemaIdentifier,
-	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
+	type: TreeNodeSchemaIdentifier,
+	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): ShapeInfo {
 	const cached = shapes.get(type);
 	if (cached) {
@@ -225,7 +225,7 @@ export function tryShapeFromSchema(
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];
-	for (const [key, field] of treeSchema.structFields) {
+	for (const [key, field] of treeSchema.objectNodeFields) {
 		const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
 		if (fieldShape === undefined) {
 			return polymorphic;
@@ -246,9 +246,9 @@ export function tryShapeFromSchema(
 export function tryShapeFromFieldSchema(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
-	type: FieldStoredSchema,
+	type: TreeFieldStoredSchema,
 	key: FieldKey,
-	shapes: Map<TreeSchemaIdentifier, ShapeInfo>,
+	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
 	const kind = policy.fieldKinds.get(type.kind.identifier) ?? fail("missing FieldKind");
 	if (kind.multiplicity !== Multiplicity.Single) {
@@ -313,7 +313,7 @@ export interface ChunkPolicy {
 	/**
 	 * Returns information about the shapes trees of type `schema` can take.
 	 */
-	shapeFromSchema(schema: TreeSchemaIdentifier): ShapeInfo;
+	shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo;
 }
 
 function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): BasicChunk {
