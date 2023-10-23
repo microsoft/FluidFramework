@@ -26,7 +26,7 @@ export interface FluidAppInsightsLoggerConfig {
 		 *
 		 * "inclusive" mode means all logs are NOT SENT by default and only the events that match specified filters will be sent (included).
 		 *
-		 * "exclusive" mode means all logs ARE SENT by default and only the events that match specified filters will be  not be sent (excluded).
+		 * "exclusive" mode means all logs ARE SENT by default and only the events that match specified filters will not be sent (excluded).
 		 */
 		mode: "inclusive" | "exclusive";
 		/**
