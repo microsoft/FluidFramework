@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { FlattenKeys, _InlineTrick, fail } from "../../../util";
+import { Assume, fail } from "../../../util";
 import { TreeNodeSchema } from "../../typed-schema";
-import {
-	LeafSchemaSpecification,
-	MapSchemaSpecification,
-	ObjectSchemaSpecification,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../typed-schema/typedTreeSchema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeNode, TreeStatus } from "../editableTreeTypes";
 import { getProxyForNode } from "./proxies";
@@ -36,28 +30,12 @@ export const nodeAPi = {
 	 * }
 	 * ```
 	 */
-	// TODO: Fix this type mess after we understand why API-extractor is non-determistic here. It should just be "TreeNodeSchema"
-	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-	is: <
-		TSchema extends TreeNodeSchema<
-			string,
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-			[
-				FlattenKeys<
-					(ObjectSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) &
-						Partial<
-							ObjectSchemaSpecification &
-								MapSchemaSpecification &
-								LeafSchemaSpecification
-						>
-				>,
-			][_InlineTrick]
-		>,
-	>(
+	// TODO: Fix this type mess after we understand why API-extractor is non-deterministic here. TSchema should extend "TreeNodeSchema".
+	is: <TSchema>(
 		value: unknown,
 		schema: TSchema,
-	): value is ProxyNode<TSchema> => {
-		return getTreeNode(value)?.is(schema) ?? false;
+	): value is ProxyNode<Assume<TSchema, TreeNodeSchema>> => {
+		return getTreeNode(value)?.is(schema as any) ?? false;
 	},
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
