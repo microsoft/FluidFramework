@@ -39,7 +39,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:2.0.0-internal.7.2.0",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"@microsoft/applicationinsights-web": "^2.8.11"
 	},
 	"devDependencies": {
