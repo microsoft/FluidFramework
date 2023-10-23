@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
-import { InternalTypedSchemaTypes, TreeNodeSchema } from "../../typed-schema";
+import { FlattenKeys, _InlineTrick, fail } from "../../../util";
+import { TreeNodeSchema } from "../../typed-schema";
+import {
+	LeafSchemaSpecification,
+	MapSchemaSpecification,
+	ObjectSchemaSpecification,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../typed-schema/typedTreeSchema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeNode, TreeStatus } from "../editableTreeTypes";
 import { getProxyForNode } from "./proxies";
@@ -31,7 +37,22 @@ export const nodeAPi = {
 	 * ```
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
-	is: <TSchema extends TreeNodeSchema<string, InternalTypedSchemaTypes.TreeSchemaSpecification>>(
+	is: <
+		TSchema extends TreeNodeSchema<
+			string,
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
+			[
+				FlattenKeys<
+					(ObjectSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) &
+						Partial<
+							ObjectSchemaSpecification &
+								MapSchemaSpecification &
+								LeafSchemaSpecification
+						>
+				>,
+			][_InlineTrick]
+		>,
+	>(
 		value: unknown,
 		schema: TSchema,
 	): value is ProxyNode<TSchema> => {
