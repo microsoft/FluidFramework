@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Assume, fail } from "../../../util";
+import { fail } from "../../../util";
 import { TreeNodeSchema } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeNode, TreeStatus } from "../editableTreeTypes";
@@ -30,12 +30,11 @@ export const nodeAPi = {
 	 * }
 	 * ```
 	 */
-	// TODO: Fix this type mess after we understand why API-extractor is non-deterministic here. TSchema should extend "TreeNodeSchema".
-	is: <TSchema>(
+	is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
-	): value is ProxyNode<Assume<TSchema, TreeNodeSchema>> => {
-		return getTreeNode(value)?.is(schema as any) ?? false;
+	): value is ProxyNode<TSchema> => {
+		return getTreeNode(value)?.is(schema) ?? false;
 	},
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
