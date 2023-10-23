@@ -297,7 +297,7 @@ export type ProxyRoot<
 > = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;
 
 /** Symbol used to store a private/internal reference to the underlying editable tree node. */
-export const treeNodeSym = Symbol("TreeNode");
+const treeNodeSym = Symbol("TreeNode");
 
 /** Helper to retrieve the stored tree node. */
 export function getTreeNode(target: unknown): TreeNode | undefined {

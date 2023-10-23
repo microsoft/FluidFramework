@@ -142,11 +142,11 @@ describe("node API", () => {
 		}
 
 		describe("object", () => {
-			check(($) => $.object.content++);
+			check((root) => root.object.content++);
 		});
 
 		describe("list", () => {
-			check(($) => $.list.insertAtEnd([$.list.length]));
+			check((root) => root.list.insertAtEnd([root.list.length]));
 		});
 
 		// TODO: map
