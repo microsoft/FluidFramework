@@ -8,7 +8,7 @@ import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 
-import { getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
+import { Context, getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
 import { BaseCommand } from "../../base";
 import { Repository } from "../../lib";
@@ -47,6 +47,11 @@ interface CheckPolicyCommandContext {
 	 * Path to the root of the git repo.
 	 */
 	gitRoot: string;
+
+	/**
+	 * The repo context.
+	 */
+	context: Context;
 }
 
 /**
@@ -202,6 +207,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			handlers: handlersToRun,
 			handlerExclusions,
 			gitRoot,
+			context,
 		};
 
 		await this.executePolicy(filePathsToCheck, commandContext);
@@ -227,29 +233,35 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	 * decision for all handlers.
 	 */
 	private routeToHandlers(file: string, commandContext: CheckPolicyCommandContext): void {
-		const { handlers, handlerExclusions, gitRoot } = commandContext;
+		const { context, handlers, handlerExclusions, gitRoot } = commandContext;
+
+		// Use the repo-relative path so that regexes that specify string start (^) will match repo paths.
+		const relPath = context.repo.relativeToRepo(file);
 
 		handlers
-			.filter((handler) => handler.match.test(file))
+			.filter((handler) => handler.match.test(relPath))
 			// eslint-disable-next-line unicorn/no-array-for-each
 			.forEach((handler) => {
 				// doing exclusion per handler
 				const exclusions = handlerExclusions[handler.name];
-				if (exclusions !== undefined && !exclusions.every((value) => !value.test(file))) {
-					this.verbose(`Excluded ${handler.name} handler: ${file}`);
+				if (
+					exclusions !== undefined &&
+					!exclusions.every((regex) => !regex.test(relPath))
+				) {
+					this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
 					return;
 				}
 
 				const result = runWithPerf(handler.name, "handle", () =>
-					handler.handler(file, gitRoot),
+					handler.handler(relPath, gitRoot),
 				);
 				if (result !== undefined && result !== "") {
-					let output = `${newline}file failed policy check: ${file}${newline}${result}`;
+					let output = `${newline}file failed policy check: ${relPath}${newline}${result}`;
 					const { resolver } = handler;
 					if (this.flags.fix && resolver) {
-						output += `${newline}attempting to resolve: ${file}`;
+						output += `${newline}attempting to resolve: ${relPath}`;
 						const resolveResult = runWithPerf(handler.name, "resolve", () =>
-							resolver(file, gitRoot),
+							resolver(relPath, gitRoot),
 						);
 
 						if (resolveResult?.message !== undefined) {
