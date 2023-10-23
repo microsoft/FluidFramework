@@ -181,7 +181,7 @@ export function schemaIsFieldNode(schema: TreeNodeSchema): schema is FieldNodeSc
 	return schema.objectNodeFields.size === 1 && schema.objectNodeFields.has(EmptyKey);
 }
 
-export function schemaIsStruct(schema: TreeNodeSchema): schema is ObjectNodeSchema {
+export function schemaIsObjectNode(schema: TreeNodeSchema): schema is ObjectNodeSchema {
 	return !schemaIsMap(schema) && !schemaIsLeaf(schema) && !schemaIsFieldNode(schema);
 }
 

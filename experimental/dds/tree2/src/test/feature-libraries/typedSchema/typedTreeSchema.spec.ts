@@ -17,52 +17,52 @@ import {
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/typedTreeSchema";
 import { FieldKinds } from "../../../feature-libraries";
 
 describe("typedTreeSchema", () => {
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
-	const emptyStruct = builder.object("empty", {});
-	const basicStruct = builder.object("basicStruct", { foo: builder.optional(Any) });
+	const emptyObjectSchema = builder.object("empty", {});
+	const basicObjectSchema = builder.object("basicObject", { foo: builder.optional(Any) });
 	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
-	// TODO: once schema kinds are separated, test struct with EmptyKey.
+	// TODO: once schema kinds are separated, test object with EmptyKey.
 
-	const recursiveStruct = builder.objectRecursive("recursiveStruct", {
-		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+	const recursiveObject = builder.objectRecursive("recursiveObject", {
+		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
 	});
 
 	it("schema is", () => {
 		assert(schemaIsLeaf(leaf.boolean));
 		assert(!schemaIsFieldNode(leaf.boolean));
-		assert(!schemaIsStruct(leaf.boolean));
+		assert(!schemaIsObjectNode(leaf.boolean));
 		assert(!schemaIsMap(leaf.boolean));
 
 		assert(!schemaIsLeaf(jsonArray));
 		assert(schemaIsFieldNode(jsonArray));
-		assert(!schemaIsStruct(jsonArray));
+		assert(!schemaIsObjectNode(jsonArray));
 		assert(!schemaIsMap(jsonArray));
 
 		assert(!schemaIsLeaf(jsonObject));
 		assert(!schemaIsFieldNode(jsonObject));
-		assert(!schemaIsStruct(jsonObject));
+		assert(!schemaIsObjectNode(jsonObject));
 		assert(schemaIsMap(jsonObject));
 
-		assert(!schemaIsLeaf(emptyStruct));
-		assert(!schemaIsFieldNode(emptyStruct));
-		assert(schemaIsStruct(emptyStruct));
-		assert(!schemaIsMap(emptyStruct));
+		assert(!schemaIsLeaf(emptyObjectSchema));
+		assert(!schemaIsFieldNode(emptyObjectSchema));
+		assert(schemaIsObjectNode(emptyObjectSchema));
+		assert(!schemaIsMap(emptyObjectSchema));
 
-		assert(!schemaIsLeaf(basicStruct));
-		assert(!schemaIsFieldNode(basicStruct));
-		assert(schemaIsStruct(basicStruct));
-		assert(!schemaIsMap(basicStruct));
+		assert(!schemaIsLeaf(basicObjectSchema));
+		assert(!schemaIsFieldNode(basicObjectSchema));
+		assert(schemaIsObjectNode(basicObjectSchema));
+		assert(!schemaIsMap(basicObjectSchema));
 
-		assert(!schemaIsLeaf(recursiveStruct));
-		assert(!schemaIsFieldNode(recursiveStruct));
-		assert(schemaIsStruct(recursiveStruct));
-		assert(!schemaIsMap(recursiveStruct));
+		assert(!schemaIsLeaf(recursiveObject));
+		assert(!schemaIsFieldNode(recursiveObject));
+		assert(schemaIsObjectNode(recursiveObject));
+		assert(!schemaIsMap(recursiveObject));
 	});
 
 	describe("TreeFieldSchema", () => {
@@ -94,8 +94,8 @@ describe("typedTreeSchema", () => {
 		type _2a = requireAssignableTo<typeof basicFieldNode, FieldNodeSchema>;
 		type _2 = requireAssignableTo<typeof jsonArray, FieldNodeSchema>;
 		type _3 = requireAssignableTo<typeof jsonObject, MapSchema>;
-		type _4 = requireAssignableTo<typeof emptyStruct, ObjectNodeSchema>;
-		type _5 = requireAssignableTo<typeof basicStruct, ObjectNodeSchema>;
+		type _4 = requireAssignableTo<typeof emptyObjectSchema, ObjectNodeSchema>;
+		type _5 = requireAssignableTo<typeof basicObjectSchema, ObjectNodeSchema>;
 	}
 
 	{
@@ -121,9 +121,9 @@ describe("typedTreeSchema", () => {
 	}
 
 	{
-		type _1 = requireFalse<isAssignableTo<typeof basicStruct, LeafSchema>>;
-		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof basicStruct, MapSchema>>;
-		type _4 = requireTrue<isAssignableTo<typeof basicStruct, ObjectNodeSchema>>;
+		type _1 = requireFalse<isAssignableTo<typeof basicObjectSchema, LeafSchema>>;
+		type _2 = requireFalse<isAssignableTo<typeof basicObjectSchema, FieldNodeSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof basicObjectSchema, MapSchema>>;
+		type _4 = requireTrue<isAssignableTo<typeof basicObjectSchema, ObjectNodeSchema>>;
 	}
 });

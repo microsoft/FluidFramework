@@ -12,9 +12,9 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { leaf, SchemaBuilder } from "../../../domains";
 import {
 	boxedIterator,
-	createRawStruct,
+	createRawObjectNode,
 	nodeContent,
-	rawStructErrorMessage,
+	rawObjectErrorMessage,
 } from "../../../feature-libraries/editable-tree-2";
 import { brand } from "../../../util";
 import { contextWithContentReadonly } from "./utils";
@@ -36,7 +36,7 @@ describe("raw structs", () => {
 
 		assert(context.root.is(rootFieldSchema));
 		let struct = context.root.content;
-		const rawStruct = createRawStruct(structSchema, { foo: 42, bar: undefined, baz: [] });
+		const rawStruct = createRawObjectNode(structSchema, { foo: 42, bar: undefined, baz: [] });
 		// This assignment checks that the raw struct is assignable to the same type as the real struct
 		struct = rawStruct;
 		return { rawStruct, structSchema };
@@ -85,6 +85,6 @@ describe("raw structs", () => {
 	});
 
 	function assertThrowsRawNodeError(f: () => void): void {
-		assert.throws(f, (e: Error) => validateAssertionError(e, rawStructErrorMessage));
+		assert.throws(f, (e: Error) => validateAssertionError(e, rawObjectErrorMessage));
 	}
 });

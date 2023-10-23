@@ -48,7 +48,6 @@
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/mocha": "^9.1.1",
 		"@types/sinon": "^7.0.13",
-		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
