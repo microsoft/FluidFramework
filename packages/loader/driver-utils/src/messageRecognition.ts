@@ -18,7 +18,8 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 	return message.type === MessageType.Operation;
 }
 
-/** ADO #1385: staging code changes across layers.
+/** 
+ * @privateRemarks ADO #1385: staging code changes across layers.
  * Eventually to be replaced by MessageType.accept
  * @public
  */
@@ -27,7 +28,7 @@ export enum MessageType2 {
 }
 
 /**
- * ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
+ * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
  * @public
  */
 export function canBeCoalescedByService(
