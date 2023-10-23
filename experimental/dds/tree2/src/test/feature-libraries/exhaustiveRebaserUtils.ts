@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag, TaggedChange } from "../../../core";
+import { RevisionTag, TaggedChange } from "../../core";
+import { RevisionMetadataSource } from "../../feature-libraries";
 
 /**
  * Given a state tree, constructs the sequence of intentions which led to that state.
@@ -22,6 +23,31 @@ export function getInputContext<TContent, TChangeset>(
 	}
 	inputContext.reverse();
 	return inputContext;
+}
+
+/**
+ * Simplification of a FieldChangeRebaser which assumes the test author has already chosen particular:
+ * - child field types (commonly TestChange)
+ * - id allocation strategy
+ * - revision metadata source
+ */
+export interface BoundFieldChangeRebaser<TChangeset> {
+	invert(change: TaggedChange<TChangeset>): TChangeset;
+	rebase(change: TChangeset, base: TaggedChange<TChangeset>): TChangeset;
+	/**
+	 * Rebase the provided change over the composition of a set of base changes.
+	 *
+	 * @remarks - A revision metadata source is provided to this function currently in order to retain
+	 * metadata from original edits in the case of repeated composition (i.e. what happens when sandwich
+	 * rebasing). This is a bit inconsistent with the spirit of the rest of this interface, and depending
+	 * on further refactoring would be nice to remove.
+	 */
+	rebaseComposed(
+		metadata: RevisionMetadataSource,
+		change: TChangeset,
+		...baseChanges: TaggedChange<TChangeset>[]
+	): TChangeset;
+	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
 }
 
 export interface NamedChangeset<TChangeset> {

@@ -40,7 +40,8 @@ import {
 	getInputContext,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
-} from "./exhaustiveRebaserUtils";
+} from "../exhaustiveRebaserUtils";
+import { runExhaustiveComposeRebaseSuite } from "../rebaserAxiomaticTests";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -141,26 +142,23 @@ function rebaseTagged(
 
 function rebaseComposed(
 	metadata: RevisionMetadataSource,
-	change: TaggedChange<OptionalChangeset>,
+	change: OptionalChangeset,
 	...baseChanges: TaggedChange<OptionalChangeset>[]
-): TaggedChange<OptionalChangeset> {
+): OptionalChangeset {
 	baseChanges.forEach((base) => deepFreeze(base));
 	deepFreeze(change);
 
 	const composed = compose(baseChanges);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(composed));
-	return tagChange(
-		optionalChangeRebaser.rebase(
-			change.change,
-			makeAnonChange(composed),
-			TestChange.rebase as any,
-			idAllocator,
-			moveEffects,
-			metadata,
-			undefined,
-		),
-		change.revision,
+	return optionalChangeRebaser.rebase(
+		change,
+		makeAnonChange(composed),
+		TestChange.rebase as any,
+		idAllocator,
+		moveEffects,
+		metadata,
+		undefined,
 	);
 }
 
@@ -371,139 +369,11 @@ describe("OptionalField - Rebaser Axioms", () => {
 		runSingleEditRebaseAxiomSuite({ content: "A" });
 	});
 
-	// To limit combinatorial explosion, we test 'rebasing over a compose is equivalent to rebasing over the individual edits'
-	// by:
-	// - Rebasing a single edit over N sequential edits
-	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
-	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
-	const numberOfEditsToRebaseOver = 2;
-	const numberOfEditsToRebase = numberOfEditsToRebaseOver;
-
-	describe.skip("Rebase over compose exhaustive", () => {
-		for (const initialState of [{ content: undefined }, { content: "A" }]) {
-			describe(`starting with contents ${initialState.content}`, () => {
-				for (const [
-					{ description: name, changeset: edit },
-				] of generatePossibleSequenceOfEdits(
-					initialState,
-					generateChildStates,
-					1,
-					"local-rev-",
-				)) {
-					for (const namedEditsToRebaseOver of generatePossibleSequenceOfEdits(
-						initialState,
-						generateChildStates,
-						numberOfEditsToRebaseOver,
-						"trunk-rev-",
-					)) {
-						const title = `Rebase ${name} over compose ${JSON.stringify(
-							namedEditsToRebaseOver.map(({ description }) => description),
-						)}`;
-
-						it(title, () => {
-							const editsToRebaseOver = namedEditsToRebaseOver.map(
-								({ changeset }) => changeset,
-							);
-							const rebaseWithoutCompose = rebaseTagged(edit, ...editsToRebaseOver);
-							const metadata = defaultRevisionMetadataFromChanges([
-								...editsToRebaseOver,
-								edit,
-							]);
-							const rebaseWithCompose = rebaseComposed(
-								metadata,
-								edit,
-								...editsToRebaseOver,
-							);
-							assert.deepEqual(rebaseWithCompose.change, rebaseWithoutCompose.change);
-						});
-					}
-				}
-			});
-		}
-	});
-
-	describe.skip("Sandwich rebase over compose exhaustive", () => {
-		for (const initialState of [{ content: undefined }, { content: "A" }]) {
-			describe(`starting with contents ${initialState.content}`, () => {
-				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
-					initialState,
-					generateChildStates,
-					numberOfEditsToRebase,
-					"local-rev-",
-				)) {
-					for (const [
-						{ description: name, changeset: namedEditToRebaseOver },
-					] of generatePossibleSequenceOfEdits(
-						initialState,
-						generateChildStates,
-						1,
-						"trunk-rev-",
-					)) {
-						const title = `Rebase ${JSON.stringify(
-							namedSourceEdits.map(({ description }) => description),
-						)} over ${name}`;
-
-						it(title, () => {
-							const editToRebaseOver = namedEditToRebaseOver;
-							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
-
-							const inverses = sourceEdits.map((change) =>
-								tagRollbackInverse(
-									invert(change),
-									`rollback-${change.revision}` as RevisionTag,
-									change.revision,
-								),
-							);
-							inverses.reverse();
-
-							const rebasedEditsWithoutCompose: TaggedChange<OptionalChangeset>[] =
-								[];
-							const rebasedEditsWithCompose: TaggedChange<OptionalChangeset>[] = [];
-
-							for (let i = 0; i < sourceEdits.length; i++) {
-								const edit = sourceEdits[i];
-								const editsToRebaseOver = [
-									...inverses.slice(sourceEdits.length - i),
-									editToRebaseOver,
-									...rebasedEditsWithoutCompose,
-								];
-								rebasedEditsWithoutCompose.push(
-									rebaseTagged(edit, ...editsToRebaseOver),
-								);
-							}
-
-							let currentComposedEdit = editToRebaseOver;
-							// This needs to be used to pass an updated RevisionMetadataSource to rebase.
-							const allTaggedEdits = [...inverses, editToRebaseOver];
-							for (let i = 0; i < sourceEdits.length; i++) {
-								const metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
-								const edit = sourceEdits[i];
-								const rebasedEdit = rebaseComposed(
-									metadata,
-									edit,
-									currentComposedEdit,
-								);
-								rebasedEditsWithCompose.push(rebasedEdit);
-								currentComposedEdit = makeAnonChange(
-									compose([
-										inverses[sourceEdits.length - i - 1],
-										currentComposedEdit,
-										rebasedEdit,
-									]),
-								);
-								allTaggedEdits.push(rebasedEdit);
-							}
-
-							for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
-								assert.deepEqual(
-									rebasedEditsWithoutCompose[i].change,
-									rebasedEditsWithCompose[i].change,
-								);
-							}
-						});
-					}
-				}
-			});
-		}
+	describe.skip("Exhaustive", () => {
+		runExhaustiveComposeRebaseSuite(
+			[{ content: undefined }, { content: "A" }],
+			generateChildStates,
+			{ rebase, rebaseComposed, compose, invert },
+		);
 	});
 });
