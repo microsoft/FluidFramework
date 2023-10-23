@@ -12,7 +12,7 @@ import {
 
 const builder = new SchemaBuilder({ scope: "com.contoso.app.inventory" });
 
-export type Part = ProxyNode<typeof Inventory>;
+export type Part = ProxyNode<typeof Part>;
 export const Part = builder.object("Part", {
 	name: builder.string,
 	quantity: builder.number,
