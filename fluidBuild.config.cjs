@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "build:genver"];
+const tscDependsOn = ["^tsc", "^api-extractor:commonjs", "^api-extractor:esnext", "build:genver"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -38,9 +38,11 @@ module.exports = {
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
-		"build:esnext": tscDependsOn,
+		"build:esnext": [...tscDependsOn],
 		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
+		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
+		"api-extractor:esnext": ["build:esnext"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
 		"depcruise": [],
 		"eslint": [...tscDependsOn, "commonjs"],

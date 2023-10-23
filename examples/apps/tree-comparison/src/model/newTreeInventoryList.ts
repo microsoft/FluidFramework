@@ -11,6 +11,7 @@ import {
 	Typed,
 	TypedTreeChannel,
 	TypedTreeFactory,
+	// eslint-disable-next-line import/no-unresolved
 } from "@fluid-experimental/tree2";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

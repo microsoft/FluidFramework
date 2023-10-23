@@ -14,11 +14,11 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/tree2-public.d.ts",
+				"types": "./lib/tree2-untrimmed.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/tree2-public.d.ts",
+				"types": "./dist/tree2-untrimmed.d.ts",
 				"default": "./dist/index.js"
 			}
 		},
@@ -45,16 +45,16 @@
 	},
 	"main": "dist/index.js",
 	"module": "lib/index.js",
-	"types": "dist/tree2-public.d.ts",
+	"types": "dist/tree2-untrimmed.d.ts",
 	"scripts": {
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"bench:profile": "mocha --v8-prof --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "npm run build:docs:commonjs && npm run build:docs:esnext",
-		"build:docs:commonjs": "api-extractor run --local",
-		"build:docs:esnext": "api-extractor run --local --config api-extractor.esnext.json",
+		"build:docs": "npm run api-extractor:commonjs && npm run api-extractor:esnext",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "api-extractor run --local --config api-extractor.esnext.json",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
@@ -161,15 +161,9 @@
 	},
 	"build:docs": {
 		"dependsOn": [
-			"build:docs:commonjs",
-			"build:docs:esnext"
+			"api-extractor:commonjs",
+			"api-extractor:esnext"
 		],
 		"script": false
-	},
-	"build:docs:commonjs": [
-		"tsc"
-	],
-	"build:docs:esnext": [
-		"build:esnext"
-	]
+	}
 }
