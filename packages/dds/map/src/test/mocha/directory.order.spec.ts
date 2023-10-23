@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
+	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
 import { DirectoryFactory, SharedDirectory } from "../../directory";
@@ -25,6 +26,13 @@ function createConnectedDirectory(
 	const directory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
 	directory.connect(services);
 	return directory;
+}
+
+async function populate(directory: SharedDirectory, content: unknown): Promise<void> {
+	const storage = new MockSharedObjectServices({
+		header: JSON.stringify(content),
+	});
+	return directory.load(storage);
 }
 
 function assertDirectoryIterationOrder(directory: ISharedDirectory, expectedDirNames: string[]) {
@@ -187,6 +195,89 @@ describe("Directory Iteration Order", () => {
 			containerRuntimeFactory.processAllMessages();
 			assertDirectoryIterationOrder(directory1, ["b", "a"]);
 			assertDirectoryIterationOrder(directory2, ["b", "a"]);
+		});
+	});
+
+	describe("Serialization/Load", () => {
+		let directory1: SharedDirectory;
+
+		it("can be compatible with the old summary", async () => {
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			dataStoreRuntime.local = true;
+			directory1 = new SharedDirectory(
+				"directory",
+				dataStoreRuntime,
+				DirectoryFactory.Attributes,
+			);
+
+			await populate(directory1, {
+				storage: {
+					key1: {
+						type: "Plain",
+						value: "val1",
+					},
+					key2: {
+						type: "Plain",
+						value: "val2",
+					},
+				},
+				subdirectories: {
+					b: {
+						storage: {
+							testKey: {
+								type: "Plain",
+								value: "testValue",
+							},
+							testKey2: {
+								type: "Plain",
+								value: "testValue2",
+							},
+						},
+					},
+					c: {
+						storage: {
+							testKey3: {
+								type: "Plain",
+								value: "testValue3",
+							},
+						},
+					},
+					a: {
+						storage: {},
+					},
+				},
+			});
+
+			assertDirectoryIterationOrder(directory1, ["b", "c", "a"]);
+		});
+
+		it("serialize the contents, load it into another directory and maintain the order", async () => {
+			directory1 = new SharedDirectory(
+				"dir1",
+				new MockFluidDataStoreRuntime(),
+				DirectoryFactory.Attributes,
+			);
+			directory1.createSubDirectory("c");
+			directory1.createSubDirectory("b");
+			directory1.createSubDirectory("a");
+
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const containerRuntime =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			const services = MockSharedObjectServices.createFromSummary(
+				directory1.getAttachSummary().summary,
+			);
+			services.deltaConnection = dataStoreRuntime.createDeltaConnection();
+
+			const directory2 = new SharedDirectory(
+				"map2",
+				dataStoreRuntime,
+				DirectoryFactory.Attributes,
+			);
+			await directory2.load(services);
+
+			assertDirectoryIterationOrder(directory2, ["c", "b", "a"]);
 		});
 	});
 });
