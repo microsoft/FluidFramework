@@ -9,4 +9,8 @@
  * @packageDocumentation
  */
 
+export type { FluidAppInsightsLoggerConfig, TelemetryFilter } from "./fluidAppInsightsLogger";
+
 export { FluidAppInsightsLogger } from "./fluidAppInsightsLogger";
+
+export type { TelemetryEventCategory } from "@fluidframework/telemetry-utils";

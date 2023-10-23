@@ -8044,9 +8044,11 @@ importers:
       '@fluidframework/build-tools': 0.26.0-203096
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.37.0
       '@microsoft/applicationinsights-web': ^2.8.11
       '@types/mocha': ^9.1.1
+      '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -8062,13 +8064,15 @@ importers:
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../../common/core-interfaces
+      '@fluidframework/telemetry-utils': link:../../../utils/telemetry-utils
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
     devDependencies:
       '@fluidframework/build-common': 2.0.2
       '@fluidframework/build-tools': 0.26.0-203096
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
-      '@microsoft/api-extractor': 7.38.0
+      '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
       '@types/mocha': 9.1.1
+      '@types/node': 16.18.58
       '@types/sinon': 7.5.2
       cross-env: 7.0.3
       eslint: 8.50.0
