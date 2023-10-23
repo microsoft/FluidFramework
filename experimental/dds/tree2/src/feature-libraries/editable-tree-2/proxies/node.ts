@@ -18,7 +18,7 @@ export const nodeAPi = {
 	/**
 	 * The schema information for this node.
 	 */
-	schema: (node: SharedTreeNode) => {
+	schema: (node: SharedTreeNode): TreeNodeSchema => {
 		return assertTreeNode(node).schema;
 	},
 	/**
