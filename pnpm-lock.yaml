@@ -6522,10 +6522,13 @@ importers:
       '@fluid-experimental/tree': workspace:~
       '@fluid-experimental/tree2': workspace:~
       '@fluid-internal/client-utils': workspace:~
+      '@fluid-internal/test-version-utils': workspace:~
       '@fluid-tools/build-cli': 0.26.0-203096
+      '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.2
       '@fluidframework/build-tools': 0.26.0-203096
       '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
@@ -6537,6 +6540,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
+      '@fluidframework/test-utils': workspace:~
       '@microsoft/api-extractor': ^7.37.0
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
@@ -6564,12 +6568,16 @@ importers:
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
     devDependencies:
+      '@fluid-internal/test-version-utils': link:../../test/test-version-utils
       '@fluid-tools/build-cli': 0.26.0-203096_bnjxas577mbdnhldblqqi36nsq
+      '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/build-common': 2.0.2
       '@fluidframework/build-tools': 0.26.0-203096_@types+node@16.18.58
+      '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid': 3.0.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
+      '@fluidframework/test-utils': link:../../test/test-utils
       '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58

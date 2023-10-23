@@ -384,7 +384,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * TODO - in the case of failure options should give a retry policy.
 	 * Or some continuation function that allows attachment to a secondary document.
 	 */
-	attach(request: IRequest): Promise<void>;
+	attach(
+		request: IRequest,
+		attachProps?: { deltaConnection?: "none" | "delayed" },
+	): Promise<void>;
 
 	/**
 	 * Extract a snapshot of the container as long as it is in detached state. Calling this on an attached container
@@ -542,13 +545,25 @@ export interface IHostLoader extends ILoader {
 	 * Creates a new container using the specified chaincode but in an unattached state. While unattached all
 	 * updates will only be local until the user explicitly attaches the container to a service provider.
 	 */
-	createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
+	createDetachedContainer(
+		codeDetails: IFluidCodeDetails,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer>;
 
 	/**
 	 * Creates a new container using the specified snapshot but in an unattached state. While unattached all
 	 * updates will only be local until the user explicitly attaches the container to a service provider.
 	 */
-	rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
+	rehydrateDetachedContainerFromSnapshot(
+		snapshot: string,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer>;
 }
 
 /**

@@ -26,12 +26,17 @@ import {
 } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const directoryId = "directoryKey";
 const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
+};
+const groupedBatchingContainerConfig: ITestContainerConfig = {
+	...testContainerConfig,
+	runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },
 };
 
 describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
@@ -1207,5 +1212,34 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.equal(changedEventData.length, 2);
 		assert.equal(changedEventData[1].key, "key2");
 		assert.equal(changedEventData[1].previousValue, undefined);
+	});
+});
+
+describeNoCompat("SharedDirectory", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+	});
+
+	it("Rebasing batch doesn't hit 0x331", async () => {
+		// Grouped batching is needed for rebasing to happen
+		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
+		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
+		const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+
+		const key = "testKey";
+		sharedDir.set(key, true);
+
+		containerRuntime.orderSequentially(() => {
+			// Need to do this inside orderSequentially
+			containerRuntime.ensureNoDataModelChanges(() => {
+				sharedDir.set(key, false);
+			});
+		});
+
+		await provider.ensureSynchronized();
+
+		assert.strictEqual(sharedDir.get(key), false);
 	});
 });
