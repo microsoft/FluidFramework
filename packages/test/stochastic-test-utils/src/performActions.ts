@@ -131,7 +131,7 @@ export async function performFuzzActionsAsync<
  * @param filepath - path to the file
  * @param operations - operations to save in the file
  */
-async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
+export async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
 	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
