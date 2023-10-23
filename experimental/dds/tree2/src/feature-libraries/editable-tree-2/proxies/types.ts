@@ -312,6 +312,7 @@ export function getTreeNode(target: unknown): TreeNode | undefined {
 export function setTreeNode(target: any, treeNode: TreeNode) {
 	Object.defineProperty(target, treeNodeSym, {
 		value: treeNode,
+		// TODO: Investigate if this can be removed by properly implementing key-related traps in the proxy
 		configurable: true,
 	});
 }
