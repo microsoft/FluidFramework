@@ -624,13 +624,6 @@ stages:
             officeFeedUrl: $(ado-feeds-office)
 
         - task: Bash@3
-          displayName: Create working directory
-          inputs:
-            targetType: 'inline'
-            script: |
-              mkdir $(pipelineTelemetryWorkdir)
-
-        - task: Bash@3
           displayName: Retrieve buildId results
           inputs:
             targetType: 'inline'
