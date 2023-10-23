@@ -108,9 +108,9 @@ export class NexusResources implements core.IResources {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("nexus:socketIo");
 		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
-			"alfred:nodeClusterConfig",
+			"nexus:nodeClusterConfig",
 		);
-		const useNodeCluster = config.get("alfred:useNodeCluster");
+		const useNodeCluster = config.get("nexus:useNodeCluster");
 		this.webServerFactory = useNodeCluster
 			? new services.SocketIoNodeClusterWebServerFactory(
 					redisConfig,
