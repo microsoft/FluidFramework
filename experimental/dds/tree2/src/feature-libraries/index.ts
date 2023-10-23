@@ -270,6 +270,7 @@ export {
 	SharedTreeObject,
 	ProxyRoot,
 	node,
+	NodeApi,
 	SharedTreeNode,
 	Typed,
 	SharedTreeObjectFactory,

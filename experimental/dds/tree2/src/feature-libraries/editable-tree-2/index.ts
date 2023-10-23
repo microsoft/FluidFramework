@@ -39,6 +39,7 @@ export {
 	SharedTreeObject,
 	ProxyRoot,
 	node,
+	NodeApi,
 	SharedTreeNode,
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
