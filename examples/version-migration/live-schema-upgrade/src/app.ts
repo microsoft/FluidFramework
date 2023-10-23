@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ModelLoader } from "@fluid-example/example-utils";
+import { ModelLoader, assert } from "@fluid-example/example-utils";
 import {
 	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
 } from "@fluidframework/tinylicious-driver";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
-import { assert } from "@fluidframework/core-utils";
 
 import { DemoCodeLoader as DemoCodeLoader1 } from "./demoCodeLoader1";
 import { DemoCodeLoader as DemoCodeLoader2 } from "./demoCodeLoader2";
@@ -62,10 +61,8 @@ async function start() {
 		// and upgrade the model if necessary.
 		id = location.hash.substring(1);
 		model = await modelLoader.loadExisting(id);
-		assert(
-			model.upgrade !== undefined && model.getCurrentVersion !== undefined,
-			"model should have upgrade and getCurrentVersion",
-		);
+		assert(model.upgrade !== undefined, "model should have upgrade");
+		assert(model.getCurrentVersion !== undefined, "model should have getCurrentVersion");
 		// If the model version is not the latest version, upgrade the container.
 		if (model.getCurrentVersion() !== modelVersion) {
 			await model.upgrade(modelVersion);

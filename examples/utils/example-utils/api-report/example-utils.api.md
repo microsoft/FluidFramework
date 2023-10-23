@@ -28,6 +28,9 @@ import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-defi
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @public
+export function assert(condition: boolean, message?: string): asserts condition;
+
+// @public
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
     constructor(dataStoreFactory: IFluidDataStoreFactory, viewCallback: ViewCallback<T>);
     protected containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void>;
@@ -35,6 +38,9 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 
 // @public
 export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
+
+// @public
+export function fail(message?: string): never;
 
 // @public
 export interface IDetachedModel<ModelType> {

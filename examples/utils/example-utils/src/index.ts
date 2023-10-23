@@ -41,3 +41,4 @@ export {
 	StaticCodeLoader,
 	TinyliciousModelLoader,
 } from "./modelLoader";
+export { assert, fail } from "./assert";
