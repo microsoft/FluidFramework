@@ -840,33 +840,24 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-	// eslint-disable-next-line import/no-deprecated
-	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
-		let metadata: SegmentGroup | SegmentGroup[] | undefined;
+	public applyStashedOp(op: IMergeTreeOp) {
 		const stashed = true;
 		switch (op.type) {
 			case MergeTreeDeltaType.INSERT:
 				this.applyInsertOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.REMOVE:
 				this.applyRemoveRangeOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.ANNOTATE:
 				this.applyAnnotateRangeOp({ op, stashed });
-				metadata = this.peekPendingSegmentGroups();
 				break;
 			case MergeTreeDeltaType.GROUP:
-				return op.ops.map((o) => this.applyStashedOp(o));
+				op.ops.map((o) => this.applyStashedOp(o));
+				break;
 			default:
 				unreachableCase(op, "unrecognized op type");
 		}
-		assert(!!metadata, 0x2db /* "Applying op must generate a pending segment" */);
-		return metadata;
 	}
 
 	public applyMsg(msg: ISequencedDocumentMessage, local: boolean = false) {

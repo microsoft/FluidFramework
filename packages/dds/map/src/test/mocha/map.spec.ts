@@ -13,15 +13,7 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISerializableValue, IValueChanged } from "../../interfaces";
-import {
-	IMapSetOperation,
-	IMapDeleteOperation,
-	IMapClearOperation,
-	IMapKeyEditLocalOpMetadata,
-	IMapClearLocalOpMetadata,
-	MapLocalOpMetadata,
-} from "../../internalInterfaces";
+import { IValueChanged } from "../../interfaces";
 import { MapFactory, SharedMap } from "../../map";
 import { IMapOperation } from "../../mapKernel";
 
@@ -43,8 +35,8 @@ function createLocalMap(id: string): SharedMap {
 }
 
 class TestSharedMap extends SharedMap {
-	public testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata {
-		return this.applyStashedOp(content) as MapLocalOpMetadata;
+	public testApplyStashedOp(content: IMapOperation) {
+		this.applyStashedOp(content);
 	}
 }
 
@@ -388,6 +380,7 @@ describe("Map", () => {
 				assert.equal(map2.get(key), newValue, "The second map did not get the new value");
 			});
 
+			/*
 			it("metadata op", async () => {
 				const serializable: ISerializableValue = { type: "Plain", value: "value" };
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
@@ -421,6 +414,7 @@ describe("Map", () => {
 				assert.equal(metadata.previousMap?.get("key")?.value, "value");
 				assert.equal(metadata.previousMap?.has("key2"), false);
 			});
+			*/
 		});
 	});
 

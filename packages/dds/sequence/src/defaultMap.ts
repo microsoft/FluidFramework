@@ -53,7 +53,7 @@ interface IMapMessageHandler {
 
 	resubmit(op: IMapOperation, localOpMetadata: IMapMessageLocalMetadata): void;
 
-	getStashedOpLocalMetadata(op: IMapOperation): unknown;
+	getStashedOpLocalMetadata(op: IMapOperation): void;
 }
 
 /**
@@ -302,7 +302,7 @@ export class DefaultMap<T> {
 		return false;
 	}
 
-	public tryGetStashedOpLocalMetadata(op: any): unknown {
+	public tryGetStashedOpLocalMetadata(op: any): void {
 		const type: string = op.type;
 		if (this.messageHandlers.has(type)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

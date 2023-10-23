@@ -45,7 +45,7 @@ interface IMapMessageHandler {
 	 */
 	submit(op: IMapOperation, localOpMetadata: MapLocalOpMetadata): void;
 
-	applyStashedOp(op: IMapOperation): MapLocalOpMetadata;
+	applyStashedOp(op: IMapOperation): void;
 }
 
 /**
@@ -496,12 +496,12 @@ export class AttributableMapKernel {
 		return true;
 	}
 
-	public tryApplyStashedOp(op: IMapOperation): unknown {
+	public tryApplyStashedOp(op: IMapOperation): void {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			throw new Error("no apply stashed op handler");
 		}
-		return handler.applyStashedOp(op);
+		handler.applyStashedOp(op);
 	}
 
 	/**

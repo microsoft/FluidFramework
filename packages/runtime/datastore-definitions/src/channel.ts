@@ -150,7 +150,7 @@ export interface IDeltaHandler {
 	 * @returns localMetadata of the op, to be passed to process() or resubmit()
 	 * when the op is ACKed or resubmitted, respectively
 	 */
-	applyStashedOp(message: any): unknown;
+	applyStashedOp(message: any): void;
 
 	/**
 	 * Revert a local op.

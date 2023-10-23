@@ -46,7 +46,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get absolutePath(): string;
     // (undocumented)
-    applyStashedOp(content: any): Promise<unknown>;
+    applyStashedOp(content: any): Promise<void>;
     attachGraph(): void;
     // (undocumented)
     get attachState(): AttachState;

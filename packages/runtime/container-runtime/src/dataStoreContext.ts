@@ -843,7 +843,7 @@ export abstract class FluidDataStoreContext
 		this.channel.rollback(innerContents.type, innerContents.content, localOpMetadata);
 	}
 
-	public async applyStashedOp(contents: any): Promise<unknown> {
+	public async applyStashedOp(contents: any): Promise<void> {
 		if (!this.channel) {
 			await this.realize();
 		}

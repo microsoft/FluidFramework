@@ -344,7 +344,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 */
 	reSubmit(type: string, content: any, localOpMetadata: unknown);
 
-	applyStashedOp(content: any): Promise<unknown>;
+	applyStashedOp(content: any): Promise<void>;
 
 	/**
 	 * Revert a local message.

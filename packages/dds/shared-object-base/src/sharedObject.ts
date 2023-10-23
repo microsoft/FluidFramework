@@ -449,8 +449,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 			reSubmit: (content: any, localOpMetadata: unknown) => {
 				this.reSubmit(content, localOpMetadata);
 			},
-			applyStashedOp: (content: any): unknown => {
-				return this.applyStashedOp(content);
+			applyStashedOp: (content: any): void => {
+				this.applyStashedOp(content);
 			},
 			rollback: (content: any, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
@@ -535,7 +535,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @returns localMetadata of the op, to be passed to process() or resubmit()
 	 * when the op is ACKed or resubmitted, respectively
 	 */
-	protected abstract applyStashedOp(content: any): unknown;
+	protected abstract applyStashedOp(content: any): void;
 
 	/**
 	 * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,

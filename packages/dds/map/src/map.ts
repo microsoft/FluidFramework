@@ -366,7 +366,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 * @internal
 	 */
-	protected applyStashedOp(content: unknown): unknown {
+	protected applyStashedOp(content: unknown): void {
 		return this.kernel.tryApplyStashedOp(content as IMapOperation);
 	}
 

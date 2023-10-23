@@ -219,7 +219,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     get absolutePath(): string;
     // @internal (undocumented)
-    protected applyStashedOp(op: unknown): unknown;
+    protected applyStashedOp(op: unknown): void;
     clear(): void;
     countSubDirectory(): number;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedDirectory;
@@ -269,7 +269,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // @internal (undocumented)
-    protected applyStashedOp(content: unknown): unknown;
+    protected applyStashedOp(content: unknown): void;
     clear(): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedMap;
     delete(key: string): boolean;

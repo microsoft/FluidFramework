@@ -409,7 +409,7 @@ export class DataStores implements IDisposable {
 		context.rollback(envelope.contents, localOpMetadata);
 	}
 
-	public async applyStashedOp(envelope: IEnvelope): Promise<unknown> {
+	public async applyStashedOp(envelope: IEnvelope): Promise<void> {
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
 		return context.applyStashedOp(envelope.contents);
@@ -419,6 +419,9 @@ export class DataStores implements IDisposable {
 		this.pendingAttach.set(message.id, message);
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.processAttachMessage({ contents: message } as ISequencedDocumentMessage, false);
+		if (this.runtime.attachState !== AttachState.Detached) {
+			this.submitAttachFn(message);
+		}
 	}
 
 	public processFluidDataStoreOp(

@@ -55,8 +55,8 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	}
 
 	// We are not capable of applying stashed v1 ops.
-	public applyStashedOp(message: unknown): unknown {
-		return this.handler.applyStashedOp(message);
+	public applyStashedOp(message: unknown): void {
+		this.handler.applyStashedOp(message);
 	}
 
 	// We cannot rollback v1 ops.

@@ -244,7 +244,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
 			const event = new SequenceDeltaEvent(opArgs, deltaArgs, this.client);
-			if (opArgs.stashed !== true && event.isLocal) {
+			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
 			this.emit("sequenceDelta", event, this);
@@ -713,8 +713,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(parseHandles(content, this.serializer));
+	protected applyStashedOp(content: any): void {
+		this.client.applyStashedOp(parseHandles(content, this.serializer));
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {

@@ -197,7 +197,7 @@ export interface IExperimentalIncrementalSummaryContext {
 // @public
 export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
-    applyStashedOp(content: any): Promise<unknown>;
+    applyStashedOp(content: any): Promise<void>;
     // @deprecated
     attachGraph(): void;
     readonly attachState: AttachState;

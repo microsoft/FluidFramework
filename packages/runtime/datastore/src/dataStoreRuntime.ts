@@ -837,7 +837,10 @@ export class FluidDataStoreRuntime
 						contextSummary.summary.type === SummaryType.Tree,
 						0x180 /* "getAttachSummary should always return a tree" */,
 					);
-					summaryTree = { stats: contextSummary.stats, summary: contextSummary.summary };
+					summaryTree = {
+						stats: contextSummary.stats,
+						summary: contextSummary.summary,
+					};
 				} else {
 					// If this channel is not yet loaded, then there should be no changes in the snapshot from which
 					// it was created as it is detached container. So just use the previous snapshot.
@@ -980,7 +983,7 @@ export class FluidDataStoreRuntime
 		}
 	}
 
-	public async applyStashedOp(content: any): Promise<unknown> {
+	public async applyStashedOp(content: any): Promise<void> {
 		const type = content?.type as DataStoreMessageType;
 		switch (type) {
 			case DataStoreMessageType.Attach: {
@@ -995,6 +998,7 @@ export class FluidDataStoreRuntime
 				);
 				this.pendingAttach.add(attachMessage.id);
 				this.contexts.set(attachMessage.id, context);
+				this.submit(DataStoreMessageType.Attach, attachMessage);
 				return;
 			}
 			case DataStoreMessageType.ChannelOp: {
@@ -1005,7 +1009,8 @@ export class FluidDataStoreRuntime
 					0x184 /* "There should be a channel context for the op" */,
 				);
 				await channelContext.getChannel();
-				return channelContext.applyStashedOp(envelope.contents);
+				channelContext.applyStashedOp(envelope.contents);
+				break;
 			}
 			default:
 				unreachableCase(type);

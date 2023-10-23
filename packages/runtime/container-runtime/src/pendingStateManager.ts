@@ -45,7 +45,7 @@ export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
-	applyStashedOp(content: string): Promise<unknown>;
+	applyStashedOp(content: string): Promise<void>;
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
 	isActiveConnection: () => boolean;
@@ -203,18 +203,13 @@ export class PendingStateManager implements IDisposable {
 					throw new Error("loaded from snapshot too recent to apply stashed ops");
 				}
 			}
-
+			this.initialMessages.shift();
 			try {
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-				nextMessage.localOpMetadata = localOpMetadata;
+				await this.stateHandler.applyStashedOp(nextMessage.content);
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 			}
-
-			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.pendingMessages.push(this.initialMessages.shift()!);
 		}
 	}
 

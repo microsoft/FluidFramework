@@ -48,7 +48,7 @@ export interface IChannelContext {
 
 	reSubmit(content: any, localOpMetadata: unknown): void;
 
-	applyStashedOp(content: any): unknown;
+	applyStashedOp(content: any): void;
 
 	rollback(message: any, localOpMetadata: unknown): void;
 

@@ -43,7 +43,7 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 export class SharedMatrix<T = any> extends SharedObject implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(content: any): unknown;
+    protected applyStashedOp(content: any): void;
     // (undocumented)
     closeMatrix(consumer: IMatrixConsumer<MatrixItem<T>>): void;
     // (undocumented)

@@ -2017,7 +2017,7 @@ export class ContainerRuntime
 		return message;
 	}
 
-	private async applyStashedOp(serializedOpContent: string): Promise<unknown> {
+	private async applyStashedOp(serializedOpContent: string): Promise<void> {
 		// Need to parse from string for back-compat
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {

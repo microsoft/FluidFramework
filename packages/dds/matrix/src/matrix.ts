@@ -753,30 +753,18 @@ export class SharedMatrix<T = any>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: any): unknown {
+	protected applyStashedOp(content: any): void {
 		const parsedContent = parseHandles(content, this.serializer);
-		if (
-			parsedContent.target === SnapshotPath.cols ||
-			parsedContent.target === SnapshotPath.rows
-		) {
+		const { target } = parsedContent;
+		if (target === SnapshotPath.cols || target === SnapshotPath.rows) {
 			const op = parsedContent as IMergeTreeOp;
 			const currentVector =
 				parsedContent.target === SnapshotPath.cols ? this.cols : this.rows;
 			const oppositeVector =
 				parsedContent.target === SnapshotPath.cols ? this.rows : this.cols;
-			const metadata = currentVector.applyStashedOp(op);
-			const localSeq = currentVector.getCollabWindow().localSeq;
-			const oppositeWindow = oppositeVector.getCollabWindow();
+			currentVector.applyStashedOp(op);
 
-			assert(
-				localSeq > oppositeWindow.localSeq,
-				0x2d9,
-				/* "The 'localSeq' of the vector applying stashed op must > the 'localSeq' of the other vector." */
-			);
-
-			oppositeWindow.localSeq = localSeq;
-
-			return metadata;
+			this.submitVectorMessage(currentVector, oppositeVector, target, content);
 		} else {
 			assert(
 				parsedContent.type === MatrixOp.set,
@@ -784,31 +772,8 @@ export class SharedMatrix<T = any>
 			);
 
 			const setOp = parsedContent as ISetOp<T>;
-			const rowHandle = this.rows.getAllocatedHandle(setOp.row);
-			const colHandle = this.cols.getAllocatedHandle(setOp.col);
-			const rowsRefSeq = this.rows.getCollabWindow().currentSeq;
-			const colsRefSeq = this.cols.getCollabWindow().currentSeq;
-			if (this.undo !== undefined) {
-				let oldValue = this.cells.getCell(rowHandle, colHandle);
-				if (oldValue === null) {
-					oldValue = undefined;
-				}
 
-				this.undo.cellSet(rowHandle, colHandle, oldValue);
-			}
-
-			this.cells.setCell(rowHandle, colHandle, setOp.value);
-			const localSeq = this.nextLocalSeq();
-			const metadata: ISetOpMetadata = {
-				rowHandle,
-				colHandle,
-				localSeq,
-				rowsRefSeq,
-				colsRefSeq,
-			};
-
-			this.pending.setCell(rowHandle, colHandle, localSeq);
-			return metadata;
+			this.setCellCore(setOp.row, setOp.col, setOp.value);
 		}
 	}
 }

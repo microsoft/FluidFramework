@@ -154,9 +154,9 @@ export class RemoteChannelContext implements IChannelContext {
 		this.services.deltaConnection.setConnectionState(connected);
 	}
 
-	public applyStashedOp(content: any): unknown {
+	public applyStashedOp(content: any): void {
 		assert(this.isLoaded, 0x194 /* "Remote channel must be loaded when rebasing op" */);
-		return this.services.deltaConnection.applyStashedOp(content);
+		this.services.deltaConnection.applyStashedOp(content);
 	}
 
 	public processOp(
