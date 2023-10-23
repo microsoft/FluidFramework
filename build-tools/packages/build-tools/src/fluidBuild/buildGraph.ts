@@ -374,6 +374,30 @@ export class BuildPackage {
 	}
 }
 
+/**
+ * BuildGraph is a representation of all the tasks and the dependent order
+ * specified by the task definitions.
+ *
+ * To create the graph:
+ * 1. Initialize BuildPackages
+ * 	  a. Create the BuildPackage nodes for packages that are matched (on the command line)
+ *       and then transitively create dependent packages as needed. Not all repo packages
+ *       will have a BuildPackage created.
+ *    b. Detect if there is a circular dependency by assign level to packages. The package
+ *       level has no other use currently.
+ * 2. Tasks and dependencies graph
+ *    a. Create the initial task specified on the command line.  Without --dep option, the
+ *       the initial task will only for created for matched BuildPackages. With --dep option
+ *       the initial task will be created for all instantiated BuildPackages (i.e. all the
+ *       package that is transitive dependencies of the matched BuildPackages).
+ *	  b. Transitively resolve and create dependent tasks starting from the initial tasks
+ *       based on the `dependsOn` specified in the TaskDefinitions
+ *    c. Resolve all `before` and `after` dependencies to tasks that is already instantiated.
+ * 	     `before` and `after` doesn't cause new task to be created, only match to existing tasks.
+ * 3. Initialize gather up all the leaf tasks dependencies.
+ * 4. Assign tasks weight to prioritize tasks based on how expansive the tasks depending on
+ *    this one will unblock.
+ */
 export class BuildGraph {
 	private matchedPackages = 0;
 	private readonly buildPackages = new Map<Package, BuildPackage>();

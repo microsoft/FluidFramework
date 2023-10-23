@@ -95,6 +95,8 @@ export abstract class LeafTask extends Task {
 		return sum;
 	}
 
+	// Gather all tasks that depending on this task, so we can use it compute the weight.
+	// Collecting  to make sure we don't double count the weight of the same task
 	private get parentLeafTasks(): Set<LeafTask> {
 		if (this._parentLeafTasks === null) {
 			// Circular dependency, start unrolling
