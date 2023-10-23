@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ModelLoader, assert } from "@fluid-example/example-utils";
+import invariant from "tiny-invariant";
+import { ModelLoader } from "@fluid-example/example-utils";
 import {
 	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
@@ -61,8 +62,8 @@ async function start() {
 		// and upgrade the model if necessary.
 		id = location.hash.substring(1);
 		model = await modelLoader.loadExisting(id);
-		assert(model.upgrade !== undefined, "model should have upgrade");
-		assert(model.getCurrentVersion !== undefined, "model should have getCurrentVersion");
+		invariant(model.upgrade !== undefined, "model should have upgrade");
+		invariant(model.getCurrentVersion !== undefined, "model should have getCurrentVersion");
 		// If the model version is not the latest version, upgrade the container.
 		if (model.getCurrentVersion() !== modelVersion) {
 			await model.upgrade(modelVersion);

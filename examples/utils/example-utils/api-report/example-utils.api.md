@@ -27,9 +27,6 @@ import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { NamedFluidDataStoreRegistryEntries } from '@fluidframework/runtime-definitions';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @internal
-export function assert(condition: boolean, message?: string): asserts condition;
-
 // @public
 export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory {
     constructor(dataStoreFactory: IFluidDataStoreFactory, viewCallback: ViewCallback<T>);
@@ -38,9 +35,6 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 
 // @public
 export type DataTransformationCallback = (exportedData: unknown, modelVersion: string) => Promise<unknown>;
-
-// @internal
-export function fail(message?: string): never;
 
 // @public
 export interface IDetachedModel<ModelType> {
