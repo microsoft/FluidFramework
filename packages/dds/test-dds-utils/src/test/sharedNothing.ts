@@ -115,5 +115,4 @@ export const baseModel: DDSFuzzModel<SharedNothingFactory, Operation | ChangeCon
 	generatorFactory: () => noopGenerator,
 	reducer: async (state, op) => {},
 	validateConsistency: () => {},
-	minimizationTransforms: [],
 };

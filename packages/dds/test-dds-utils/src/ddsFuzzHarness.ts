@@ -21,7 +21,6 @@ import {
 	performFuzzActionsAsync as performFuzzActions,
 	AsyncReducer as Reducer,
 	SaveInfo,
-	saveOpsToFile,
 } from "@fluid-internal/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
@@ -33,7 +32,6 @@ import {
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
 
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
@@ -197,15 +195,6 @@ export interface DDSFuzzModel<
 		channelA: ReturnType<TChannelFactory["create"]>,
 		channelB: ReturnType<TChannelFactory["create"]>,
 	) => void;
-
-	/**
-	 * An array of transforms used during fuzz test minimization to reduce test
-	 * cases. See {@link MinimizationTransform} for additional context.
-	 *
-	 * If no transforms are supplied, minimization will still occur, but the
-	 * contents of the operations will remain unchanged.
-	 */
-	minimizationTransforms?: MinimizationTransform<TOperation>[];
 }
 
 export interface DDSFuzzHarnessEvents {
@@ -446,10 +435,6 @@ export function mixinNewClient<
 		};
 	};
 
-	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | AddClient>[]
-		| undefined;
-
 	const reducer: Reducer<TOperation | AddClient, TState> = async (state, op) => {
 		if (isClientAddOp(op)) {
 			const newClient = await loadClient(
@@ -467,7 +452,6 @@ export function mixinNewClient<
 
 	return {
 		...model,
-		minimizationTransforms,
 		generatorFactory,
 		reducer,
 	};
@@ -503,10 +487,6 @@ export function mixinReconnect<
 		};
 	};
 
-	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | ChangeConnectionState>[]
-		| undefined;
-
 	const reducer: Reducer<TOperation | ChangeConnectionState, TState> = async (
 		state,
 		operation,
@@ -522,7 +502,6 @@ export function mixinReconnect<
 	};
 	return {
 		...model,
-		minimizationTransforms,
 		generatorFactory,
 		reducer,
 	};
@@ -559,10 +538,6 @@ export function mixinAttach<
 			return baseGenerator(state);
 		};
 	};
-
-	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | Attach>[]
-		| undefined;
 
 	const reducer: Reducer<TOperation | Attach, TState> = async (state, operation) => {
 		if (operation.type === "attach") {
@@ -606,7 +581,6 @@ export function mixinAttach<
 	};
 	return {
 		...model,
-		minimizationTransforms,
 		generatorFactory,
 		reducer,
 	};
@@ -643,10 +617,6 @@ export function mixinRebase<
 		};
 	};
 
-	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | TriggerRebase>[]
-		| undefined;
-
 	const reducer: Reducer<TOperation | TriggerRebase, TState> = async (state, operation) => {
 		if (operation.type === "rebase") {
 			assert(
@@ -661,7 +631,6 @@ export function mixinRebase<
 	};
 	return {
 		...model,
-		minimizationTransforms,
 		generatorFactory,
 		reducer,
 	};
@@ -682,7 +651,6 @@ export function mixinSynchronization<
 ): DDSFuzzModel<TChannelFactory, TOperation | Synchronize, TState> {
 	const { validationStrategy } = options;
 	let generatorFactory: () => Generator<TOperation | Synchronize, TState>;
-
 	switch (validationStrategy.type) {
 		case "random": {
 			// passing 1 here causes infinite loops. passing close to 1 is wasteful
@@ -753,10 +721,6 @@ export function mixinSynchronization<
 		}
 	}
 
-	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | Synchronize>[]
-		| undefined;
-
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		// TODO: Only synchronize listed clients if specified
@@ -787,7 +751,6 @@ export function mixinSynchronization<
 	};
 	return {
 		...model,
-		minimizationTransforms,
 		generatorFactory,
 		reducer,
 	};
@@ -1006,26 +969,7 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async () => {
-		// don't write to files or do minimization in CI
-		const inCi = !!process.env.TF_BUILD;
-		try {
-			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
-		} catch (error) {
-			if (!saveInfo || inCi) {
-				throw error;
-			}
-
-			const operations = JSON.parse(
-				readFileSync(saveInfo.filepath).toString(),
-			) as TOperation[];
-			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 50);
-
-			const minimized = await minimizer.minimize();
-
-			await saveOpsToFile(saveInfo.filepath, minimized);
-
-			throw error;
-		}
+		await runTestForSeed(model, options, seed, saveInfo);
 	});
 }
 
