@@ -73,6 +73,15 @@ export class OpGroupingManager {
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
 		if (!isGroupContents(op.contents)) {
+			// Align the worlds of what clientSequenceNumber represents when grouped batching is enabled
+			if (this.groupedBatchingEnabled) {
+				return [
+					{
+						...op,
+						clientSequenceNumber: 1,
+					},
+				];
+			}
 			return [op];
 		}
 

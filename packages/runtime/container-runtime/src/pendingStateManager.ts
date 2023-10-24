@@ -21,7 +21,6 @@ import { IBatchMetadata } from "./metadata";
  */
 export interface IPendingMessage {
 	type: "message";
-	clientSequenceNumber: number;
 	referenceSequenceNumber: number;
 	content: string;
 	localOpMetadata: unknown;
@@ -176,7 +175,6 @@ export class PendingStateManager implements IDisposable {
 	) {
 		const pendingMessage: IPendingMessage = {
 			type: "message",
-			clientSequenceNumber: -1, // dummy value (not to be used anywhere)
 			referenceSequenceNumber,
 			content,
 			localOpMetadata,
