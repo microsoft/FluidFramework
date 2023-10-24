@@ -468,7 +468,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		rebasedMark = rebaseMarkIgnoreChild(
 			rebasedMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
-			baseRevision,
+			baseMark.revision ?? baseRevision,
 			metadata,
 			moveEffects,
 			nodeExistenceState,
@@ -476,7 +476,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		rebasedMark = rebaseMarkIgnoreChild(
 			rebasedMark,
 			{ ...baseMark.detach, count: baseMark.count },
-			baseRevision,
+			baseMark.revision ?? baseRevision,
 			metadata,
 			moveEffects,
 			nodeExistenceState,
