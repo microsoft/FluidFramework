@@ -64,7 +64,7 @@ describe("SharedTreeObject", () => {
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],
 		// map: sb.map("map", sb.optional(leaf.string)), // TODO Test Maps
-		list: sb.fieldNode("list", sb.sequence(numberChild)),
+		list: sb.list(numberChild),
 	});
 
 	const schema = sb.intoSchema(parentSchema);
@@ -128,4 +128,43 @@ describe("SharedTreeObject", () => {
 			}
 		},
 	);
+});
+
+describe("SharedTreeList", () => {
+	const sb = new SchemaBuilder({
+		scope: "test",
+	});
+
+	const objectSchema = sb.object("parent", {
+		listA: sb.list(sb.string),
+		listB: sb.list(sb.string),
+	});
+
+	const schema = sb.intoSchema(objectSchema);
+
+	const initialTree = {
+		listA: ["a0", "a1"],
+		listB: ["b0", "b1"],
+	};
+
+	itWithRoot("can move an element between lists", schema, initialTree, (root) => {
+		root.listB.moveToIndex(1, 0, 1, root.listA);
+		assert.deepEqual(root.listB, ["b0, a0, a1, b1"]);
+	});
+});
+
+describe("SharedTreeList", () => {
+	const sb = new SchemaBuilder({
+		scope: "test",
+	});
+
+	const objectSchema = sb.object("object", {});
+	const listSchema = sb.list(objectSchema);
+	const schema = sb.intoSchema(listSchema);
+
+	itWithRoot("can move an element between lists", schema, [], (root) => {
+		root.insertAtStart([objectSchema.create({})]);
+		root.insertAtEnd([objectSchema.create({})]);
+		root.insertAtEnd([objectSchema.create({})]);
+	});
 });

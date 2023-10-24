@@ -28,9 +28,11 @@ import {
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
+import { ContextuallyTypedNodeData } from "../../contextuallyTyped";
 import {
 	ProxyField,
 	ProxyNode,
+	ProxyNodeUnion,
 	SharedTreeList,
 	SharedTreeObject,
 	getTreeNode,
@@ -330,6 +332,17 @@ function asIndex(key: string | symbol, length: number) {
 	}
 }
 
+function mapInput(
+	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
+): Iterable<ContextuallyTypedNodeData> {
+	return [...iterable].map(
+		(item) =>
+			(item !== null && typeof item === "object"
+				? getFactoryContent(item) ?? item
+				: item) as ContextuallyTypedNodeData,
+	);
+}
+
 export function createListProxy<TTypes extends AllowedTypes>(
 	treeNode: TreeNode,
 ): SharedTreeList<TTypes> {
@@ -346,6 +359,78 @@ export function createListProxy<TTypes extends AllowedTypes>(
 			set() {},
 			enumerable: false,
 			configurable: false,
+		},
+		insertAt: {
+			value(
+				this: object,
+				index: number,
+				value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>,
+			): void {
+				getField(this).insertAt(index, mapInput(value));
+			},
+		},
+		insertAtStart: {
+			value(this: object, value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>): void {
+				getField(this).insertAtStart(mapInput(value));
+			},
+		},
+		insertAtEnd: {
+			value(this: object, value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>): void {
+				getField(this).insertAtEnd(mapInput(value));
+			},
+		},
+		removeAt: {
+			value(this: object, index: number): void {
+				getField(this).removeAt(index);
+			},
+		},
+		removeRange: {
+			value(this: object, start?: number, end?: number): void {
+				getField(this).removeRange(start, end);
+			},
+		},
+		moveToStart: {
+			value(
+				this: object,
+				sourceStart: number,
+				sourceEnd: number,
+				source?: SharedTreeList<AllowedTypes>,
+			): void {
+				if (source !== undefined) {
+					getField(this).moveToStart(sourceStart, sourceEnd, getField(source));
+				} else {
+					getField(this).moveToStart(sourceStart, sourceEnd);
+				}
+			},
+		},
+		moveToEnd: {
+			value(
+				this: object,
+				sourceStart: number,
+				sourceEnd: number,
+				source?: SharedTreeList<AllowedTypes>,
+			): void {
+				if (source !== undefined) {
+					getField(this).moveToEnd(sourceStart, sourceEnd, getField(source));
+				} else {
+					getField(this).moveToEnd(sourceStart, sourceEnd);
+				}
+			},
+		},
+		moveToIndex: {
+			value(
+				this: object,
+				index: number,
+				sourceStart: number,
+				sourceEnd: number,
+				source?: SharedTreeList<AllowedTypes>,
+			): void {
+				if (source !== undefined) {
+					getField(this).moveToIndex(index, sourceStart, sourceEnd, getField(source));
+				} else {
+					getField(this).moveToIndex(index, sourceStart, sourceEnd);
+				}
+			},
 		},
 	});
 
