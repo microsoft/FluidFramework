@@ -1094,11 +1094,12 @@ describe("SharedTree", () => {
 	describe("Rebasing", () => {
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
-			const view1 = provider.trees[0].schematizeView({
+			const config = {
 				initialTree: ["a"],
 				schema: jsonSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.None,
-			});
+			};
+			const view1 = provider.trees[0].schematizeView(config);
 			await provider.ensureSynchronized();
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
@@ -1120,7 +1121,7 @@ describe("SharedTree", () => {
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
-			validateRootField(tree.view, ["d", "a", "b", "c"]);
+			validateRootField(tree.schematizeView(config), ["d", "a", "b", "c"]);
 			validateRootField(otherLoadedTree, ["d", "a", "b", "c"]);
 		});
 	});
