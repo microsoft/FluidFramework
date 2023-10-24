@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-//* NOPE
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-
 import { strict as assert } from "assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
@@ -81,7 +77,7 @@ describe("Data Store Context Tests", () => {
 		function createContainerRuntime(
 			logger: ITelemetryBaseLogger = createChildLogger(),
 			clientDetails = {},
-			submitDataStoreOp = (id: string, contents: any, localOpMetadata: unknown) => {},
+			submitDataStoreOp2 = (data) => {},
 		): ContainerRuntime {
 			const factory: IFluidDataStoreFactory = {
 				type: "store-type",
@@ -103,7 +99,7 @@ describe("Data Store Context Tests", () => {
 				on: (event, listener) => {},
 				logger,
 				clientDetails,
-				submitDataStoreOp,
+				submitDataStoreOp2,
 			} as ContainerRuntime;
 		}
 

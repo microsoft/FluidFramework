@@ -723,12 +723,12 @@ export abstract class FluidDataStoreContext
 		// Summarizer clients should not submit messages.
 		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
 
-		this._containerRuntime.submitDataStoreOp(
-			this.id,
-			fluidDataStoreContent,
+		this._containerRuntime.submitDataStoreOp2({
+			id: this.id,
+			contents: fluidDataStoreContent,
 			localOpMetadata,
 			rootMetadata,
-		);
+		});
 	}
 
 	/**

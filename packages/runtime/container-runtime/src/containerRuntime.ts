@@ -3429,10 +3429,9 @@ export class ContainerRuntime
 	public submitDataStoreOp(
 		id: string,
 		contents: any,
-		localOpMetadata: unknown,
-		rootMetadata: unknown,
+		localOpMetadata: unknown = undefined,
 	): void {
-		this.submitDataStoreOp2({ id, contents, localOpMetadata, rootMetadata });
+		this.submitDataStoreOp2({ id, contents, localOpMetadata, rootMetadata: undefined });
 	}
 
 	public submitDataStoreOp2(data: {

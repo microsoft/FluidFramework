@@ -210,7 +210,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // (undocumented)
     submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
     // @deprecated (undocumented)
-    submitDataStoreOp(id: string, contents: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
     // (undocumented)
     submitDataStoreOp2(data: {
         id: string;
