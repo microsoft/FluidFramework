@@ -16,7 +16,6 @@ import {
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import * as app from "./app";
 import { ITenantDocument } from "./tenantManager";
 
@@ -45,27 +44,32 @@ export class RiddlerRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create the HTTP server and attach alfred to it
-		const riddler = app.create(
-			this.tenantsCollection,
-			this.loggerFormat,
-			this.baseOrdererUrl,
-			this.defaultHistorianUrl,
-			this.defaultInternalHistorianUrl,
-			this.secretManager,
-			this.fetchTenantKeyMetricInterval,
-			this.riddlerStorageRequestMetricInterval,
-			this.cache,
-		);
-		riddler.set("port", this.port);
+		const usingClusterModule: boolean | undefined = this.config.get("riddler:useNodeCluster");
+		if (cluster.isPrimary && usingClusterModule) {
+			this.server = this.serverFactory.create(null);
+		} else {
+			// Create the HTTP server and attach alfred to it
+			const riddler = app.create(
+				this.tenantsCollection,
+				this.loggerFormat,
+				this.baseOrdererUrl,
+				this.defaultHistorianUrl,
+				this.defaultInternalHistorianUrl,
+				this.secretManager,
+				this.fetchTenantKeyMetricInterval,
+				this.riddlerStorageRequestMetricInterval,
+				this.cache,
+			);
+			riddler.set("port", this.port);
 
-		this.server = this.serverFactory.create(riddler);
+			this.server = this.serverFactory.create(riddler);
+		}
+
 		const httpServer = this.server.httpServer;
-
-		// Listen on primary thread port, or allow cluster module to assign random port for worker thread.
-		httpServer.listen(cluster.isPrimary ? this.port : 0);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
+		// Listen on primary thread port, or allow cluster module to assign random port for worker thread.
+		httpServer.listen(cluster.isPrimary ? this.port : 0);
 
 		this.stopped = false;
 
@@ -132,7 +136,6 @@ export class RiddlerRunner implements IRunner {
 	private onListening() {
 		const addr = this.server.httpServer.address();
 		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
-		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}
 }
