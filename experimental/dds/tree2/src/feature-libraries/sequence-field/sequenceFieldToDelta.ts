@@ -13,10 +13,12 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getEffectiveNodeChanges,
+	getEndpoint,
 	getOutputCellId,
 	isNewAttach,
 	isTransientEffect,
 } from "./utils";
+import { isMoveDestination, isMoveSource } from "./moveEffectTable";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
 
@@ -46,6 +48,11 @@ export function sequenceFieldToDelta<TNodeChange>(
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
 			if (isTransientEffect(mark)) {
+				if (isMoveDestination(mark.attach) && isMoveSource(mark.detach)) {
+					assert(mark.changes === undefined, "Transient moves should not have changes");
+					continue;
+				}
+
 				// TODO: Do we need to use the endpoint ID instead when mark.attach is a MoveIn?
 				const oldId = nodeIdFromChangeAtom(mark.cellId);
 				const outputId = getOutputCellId(mark, revision, undefined);
@@ -76,7 +83,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 			switch (type) {
 				case "MoveIn": {
 					local.push({
-						attach: makeDetachedNodeId(mark.revision ?? revision, mark.id),
+						attach: nodeIdFromChangeAtom(getEndpoint(mark, revision)),
 						count: mark.count,
 					});
 					break;

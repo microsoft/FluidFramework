@@ -392,19 +392,13 @@ describe("SequenceField - toDelta", () => {
 			];
 			const delta = toDelta(changeset);
 
-			const id1 = { minor: 0 };
-			const id2 = { minor: 2 };
-			const id3 = { minor: 4 };
+			const id = { minor: 0 };
 			const expected: Delta.FieldChanges = {
 				local: [
-					{ count: 2, detach: id1 },
+					{ count: 2, detach: id },
 					{ count: 1 },
 					{ count: 1 },
-					{ count: 2, attach: id3 },
-				],
-				rename: [
-					{ count: 2, oldId: id1, newId: id2 },
-					{ count: 2, oldId: id2, newId: id3 },
+					{ count: 2, attach: id },
 				],
 			};
 			assertFieldChangesEqual(delta, expected);

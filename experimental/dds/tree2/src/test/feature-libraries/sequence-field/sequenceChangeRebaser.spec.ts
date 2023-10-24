@@ -14,6 +14,7 @@ import {
 	tagChange,
 	tagRollbackInverse,
 	TreeNodeSchemaIdentifier,
+	Delta,
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { deepFreeze, isDeltaVisible } from "../../utils";
