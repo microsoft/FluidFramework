@@ -13,6 +13,7 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getEffectiveNodeChanges,
+	getEndpoint,
 	getOutputCellId,
 	isInsert,
 	isNewAttach,
@@ -83,8 +84,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			switch (type) {
 				case "MoveIn": {
+					const endpoint = getEndpoint(mark, mark.revision ?? revision);
 					local.push({
-						attach: makeDetachedNodeId(mark.revision ?? revision, mark.id),
+						attach: makeDetachedNodeId(endpoint.revision, endpoint.localId),
 						count: mark.count,
 					});
 					break;

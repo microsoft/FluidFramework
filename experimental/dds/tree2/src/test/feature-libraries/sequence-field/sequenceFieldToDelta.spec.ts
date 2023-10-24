@@ -323,13 +323,7 @@ describe("SequenceField - toDelta", () => {
 			const buildId = { minor: 0 };
 			const expected: Delta.FieldChanges = {
 				build: [{ id: buildId, trees: contentCursor2 }],
-				local: [
-					{
-						count: 2,
-						attach: buildId,
-						detach: { major: undefined, minor: 2 },
-					},
-				],
+				rename: [{ count: 2, oldId: buildId, newId: { minor: 2 } }],
 			};
 			assertFieldChangesEqual(delta, expected);
 		});
@@ -380,7 +374,8 @@ describe("SequenceField - toDelta", () => {
 			const expected: Delta.FieldChanges = {
 				local: [
 					{ count: 2, detach: { minor: 0 } },
-					{ count: 2 },
+					{ count: 1 },
+					{ count: 1 },
 					{ count: 2, attach: { minor: 0 } },
 				],
 			};
