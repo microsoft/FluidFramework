@@ -5,6 +5,7 @@
 # Other yaml files can include it and then immediately run the telemetry-generator.
 # It's designed to be included by other yaml files inside a job section.
 
+parameters:
 # Path to the folder that contains the source code for the telemetry-generator package.
 # The default should work in most/all scenarios. Won't work if the repo is checked out as a "secondary repo" in some
 # pipeline (which we don't do today) because $(Build.SourcesDirectory) would then point to the root of the primary repo.
