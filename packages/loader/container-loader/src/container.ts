@@ -1622,6 +1622,7 @@ export class Container
 		);
 
 		// If we saved ops, we will replay them and don't need DeltaManager to fetch them
+		// TODO; this lie creates problems, how to get rid of it???
 		const sequenceNumber =
 			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber;
 		const dmAttributes =

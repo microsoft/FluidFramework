@@ -908,7 +908,6 @@ export class ContainerRuntime
 			requestHandler,
 			undefined, // summaryConfiguration
 		);
-
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
@@ -1285,6 +1284,7 @@ export class ContainerRuntime
 		this.nextSummaryNumber = loadSummaryNumber + 1;
 
 		this.messageAtLastSummary = metadata?.message;
+		this.lastSeq = this.messageAtLastSummary?.sequenceNumber;
 
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
@@ -1528,7 +1528,7 @@ export class ContainerRuntime
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
 			getCurrentSequenceNumbers: () => ({
-				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+				referenceSequenceNumber: this.lastSeq ?? this.deltaManager.lastSequenceNumber,
 				clientSequenceNumber: this._processedClientSequenceNumber,
 			}),
 			reSubmit: this.reSubmit.bind(this),
@@ -2198,11 +2198,14 @@ export class ContainerRuntime
 
 	private _processedClientSequenceNumber: number | undefined;
 
+	private lastSeq: number | undefined;
+
 	/**
 	 * Direct the message to the correct subsystem for processing, and implement other side effects
 	 */
 	private processCore(messageWithContext: MessageWithContext) {
 		const { message, local } = messageWithContext;
+		this.lastSeq = message.sequenceNumber;
 		// Surround the actual processing of the operation with messages to the schedule manager indicating
 		// the beginning and end. This allows it to emit appropriate events and/or pause the processing of new
 		// messages once a batch has been fully processed.
@@ -3437,7 +3440,7 @@ export class ContainerRuntime
 				};
 				idAllocationBatchMessage = {
 					contents: JSON.stringify(idAllocationMessage),
-					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+					referenceSequenceNumber: this.lastSeq ?? this.deltaManager.lastSequenceNumber,
 					metadata: undefined,
 					localOpMetadata: this.idCompressor?.serialize(true),
 					type: ContainerMessageType.IdAllocation,
@@ -3481,7 +3484,7 @@ export class ContainerRuntime
 			type,
 			metadata,
 			localOpMetadata,
-			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
+			referenceSequenceNumber: this.lastSeq ?? this.deltaManager.lastSequenceNumber,
 		};
 
 		try {
