@@ -75,8 +75,18 @@ export class MockDeltaConnection implements IDeltaConnection {
 		handler.setConnectionState(this.connected);
 	}
 
+	//* NEXT STEP: Update all mocks directly, no need to stage it, I'm pretty sure.
+
 	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number {
 		return this.submitFn(messageContent, localOpMetadata, rootMetadata);
+	}
+
+	public submit2(data: {
+		messageContent: unknown;
+		localOpMetadata?: unknown;
+		rootMetadata: unknown;
+	}): void {
+		this.submit(data.messageContent, data.localOpMetadata, data.rootMetadata);
 	}
 
 	public dirty(): void {
@@ -198,11 +208,27 @@ export class MockContainerRuntime {
 		return deltaConnection;
 	}
 
+	//* TODO: Maybe revert rootMetadata
 	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number {
+		return this.submit2({ messageContent, localOpMetadata, rootMetadata });
+	}
+
+	public submit2(data: {
+		/** The channel-specific content of the message to be sent */
+		messageContent: unknown;
+		/**
+		 * The local metadata associated with the message. This is kept locally by the runtime
+		 * and not sent to the server. It will be provided back when this message is acknowledged by the server.
+		 * It will also be provided back when asked to resubmit the message.
+		 */
+		localOpMetadata?: unknown;
+		/** Metadata to be handled by the runtime and included in the final op payload */
+		rootMetadata: unknown;
+	}): number {
 		const clientSequenceNumber = this.clientSequenceNumber;
 		const message = {
-			content: messageContent,
-			localOpMetadata,
+			content: data.messageContent,
+			localOpMetadata: data.localOpMetadata,
 		};
 
 		switch (this.runtimeOptions.flushMode) {
