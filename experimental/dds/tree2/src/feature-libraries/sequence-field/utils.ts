@@ -62,9 +62,11 @@ export function isNewAttachEffect(
 	revision?: RevisionTag,
 ): boolean {
 	return (
-		isAttach(effect) &&
-		cellId !== undefined &&
-		(effect.revision ?? revision) === (cellId.revision ?? revision)
+		(isAttach(effect) &&
+			cellId !== undefined &&
+			(effect.revision ?? revision) === (cellId.revision ?? revision)) ||
+		(isTransientEffect(effect) &&
+			isNewAttachEffect(effect.attach, cellId, effect.revision ?? revision))
 	);
 }
 
@@ -142,10 +144,17 @@ export function getInputCellId(
 		return cellId;
 	}
 
-	assert(isAttach(mark), "Only attach marks should have undefined revision in cell ID");
+	let markRevision: RevisionTag | undefined;
+	if (isTransientEffect(mark)) {
+		markRevision = mark.attach.revision ?? mark.revision;
+	} else {
+		assert(isAttach(mark), "Only attach marks should have undefined revision in cell ID");
+		markRevision = mark.revision;
+	}
+
 	return {
 		...cellId,
-		revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
+		revision: getIntentionIfMetadataProvided(markRevision ?? revision, metadata),
 	};
 }
 
@@ -558,11 +567,11 @@ function tryMergeEffects(
 			if (lhsInsert.inverseOf === rhs.inverseOf) {
 				if (rhs.content === undefined) {
 					assert(lhsInsert.content === undefined, "Insert content type mismatch");
+					return lhsInsert;
 				} else {
 					assert(lhsInsert.content !== undefined, "Insert content type mismatch");
-					lhsInsert.content.push(...rhs.content);
+					return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
 				}
-				return lhsInsert;
 			}
 			break;
 		}

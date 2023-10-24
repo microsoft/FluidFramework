@@ -110,18 +110,6 @@ function invertMark<TNodeChange>(
 			}
 			return [inverse];
 		}
-		case "Insert": {
-			assert(mark.cellId !== undefined, 0x72c /* Insert marks must have a cellId */);
-			const inverse = withNodeChange(
-				{
-					type: "Delete",
-					count: mark.count,
-					id: mark.cellId.localId,
-				},
-				invertNodeChange(mark.changes, inputIndex, invertChild),
-			);
-			return [inverse];
-		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			const markRevision = mark.revision ?? revision;
@@ -143,6 +131,35 @@ function invertMark<TNodeChange>(
 			}
 			// TODO: preserve modifications to the removed nodes.
 			return [];
+		}
+		case "Insert": {
+			if (isMuted(mark)) {
+				return [
+					invertNodeChangeOrSkip(
+						mark.count,
+						mark.changes,
+						inputIndex,
+						invertChild,
+						mark.cellId,
+					),
+				];
+			}
+			assert(mark.cellId !== undefined, "Active inserts should target empty cells");
+			const deleteMark: CellMark<Delete, TNodeChange> = {
+				type: "Delete",
+				count: mark.count,
+				id: mark.cellId.localId,
+			};
+
+			if (isReattach(mark)) {
+				deleteMark.detachIdOverride = mark.cellId;
+			}
+
+			const inverse = withNodeChange(
+				deleteMark,
+				invertNodeChange(mark.changes, inputIndex, invertChild),
+			);
+			return [inverse];
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
