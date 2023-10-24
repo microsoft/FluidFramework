@@ -216,9 +216,10 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		inventoryItemNode: InventoryItemNode,
 	): NewTreeInventoryItem {
 		const removeItemFromTree = () => {
-			// REV: Is this the best way to do this?  Was hoping for maybe just an inventoryItemNode.delete().
-			// This means I need to either pass in this capability as a callback, or else pass the whole inventory in
-			// to provide access to the removeAt call.
+			// Although it's possible to remove a node from the tree without the parent reference, it gets a little messy:
+			// (inventoryItemNode.parentField.parent as any).removeAt(inventoryItemNode.parentField.index);
+			// So for now we'll pass in the delete capability as a callback to withold this.inventory access from the
+			// inventory items.  AB#6015
 			this.inventory.inventoryItems.removeAt(inventoryItemNode.parentField.index);
 		};
 		const inventoryItem = new NewTreeInventoryItem(inventoryItemNode, removeItemFromTree);
