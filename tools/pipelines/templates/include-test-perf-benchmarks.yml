@@ -1,13 +1,11 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# NOTE: This template is specifically intended to be used for common steps required across different stages
+# This template is specifically intended to be used for common steps required across different stages
 # of test-perf-benchmarks.yml pipeline, and assumes it has access to variables that have been defined/imported
-# in that pipeline (whether globaly or in the stage/job definitions).
+# in that pipeline (whether globally or in the stage/job definitions).
 # It also downloads the test files artifact to a location that the test-perf-benchmarks.yml pipeline expects.
-
-# Some assumptions:
-# - The 'ado-feeds' variable group is imported
+# The first step tries to validate that all variables that this template expects to exist have values.
 
 steps:
 - task: Bash@3
