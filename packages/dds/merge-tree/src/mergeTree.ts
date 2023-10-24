@@ -11,7 +11,6 @@ import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils
 import { IAttributionCollectionSerializer } from "./attributionCollection";
 import { Comparer, Heap, List, ListNode } from "./collections";
 import {
-	LocalClientId,
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
 	UnassignedSequenceNumber,
@@ -25,7 +24,6 @@ import {
 	SlidingPreference,
 } from "./localReference";
 import {
-	BaseSegment,
 	BlockAction,
 	CollaborationWindow,
 	IHierBlock,
@@ -194,15 +192,6 @@ function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
 	}
 }
 
-/**
- * Reference types which have special bookkeeping within the merge tree (in {@link HierMergeBlock}s)
- * and thus require updating path lengths when changed.
- *
- * TODO:AB#4069: This functionality is old and not well-tested. It's not clear how much of it is needed--
- * we should better test the parts that are necessary and remove the rest.
- */
-const hierRefTypes = ReferenceType.Tile;
-
 function addNodeReferences(
 	mergeTree: MergeTree,
 	node: IMergeNode,
@@ -211,31 +200,16 @@ function addNodeReferences(
 ) {
 	if (node.isLeaf()) {
 		const segment = node;
-		if ((mergeTree.localNetLength(segment) ?? 0) > 0) {
-			if (Marker.is(segment)) {
-				const markerId = segment.getId();
-				// Also in insertMarker but need for reload segs case
-				// can add option for this only from reload segs
-				if (markerId) {
-					mergeTree.mapIdToSegment(markerId, segment);
-				}
-				if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
-					addTile(segment, rightmostTiles);
-					addTileIfNotPresent(segment, leftmostTiles);
-				}
-			} else {
-				const baseSegment = node as BaseSegment;
-				if (
-					baseSegment.localRefs?.hierRefCount !== undefined &&
-					baseSegment.localRefs.hierRefCount > 0
-				) {
-					for (const lref of baseSegment.localRefs) {
-						if (refTypeIncludesFlag(lref, ReferenceType.Tile)) {
-							addTile(lref, rightmostTiles);
-							addTileIfNotPresent(lref, leftmostTiles);
-						}
-					}
-				}
+		if ((mergeTree.localNetLength(segment) ?? 0) > 0 && Marker.is(segment)) {
+			const markerId = segment.getId();
+			// Also in insertMarker but need for reload segs case
+			// can add option for this only from reload segs
+			if (markerId) {
+				mergeTree.mapIdToSegment(markerId, segment);
+			}
+			if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
+				addTile(segment, rightmostTiles);
+				addTileIfNotPresent(segment, leftmostTiles);
 			}
 		}
 	} else {
@@ -868,16 +842,6 @@ export class MergeTree {
 						}
 					}
 				}
-			}
-
-			// TODO:AB#4069: This update might be avoidable by checking if the old segment
-			// had hierarchical refs before sliding using `segment.localRefs?.hierRefCount`.
-			if (currentSlideDestination) {
-				this.blockUpdatePathLengths(
-					currentSlideDestination.parent,
-					TreeMaintenanceSequenceNumber,
-					LocalClientId,
-				);
 			}
 		};
 
@@ -2162,17 +2126,7 @@ export class MergeTree {
 		lref: LocalReferencePosition,
 	): LocalReferencePosition | undefined {
 		const segment: ISegmentLeaf | undefined = lref.getSegment();
-		if (segment) {
-			const removedRefs = segment?.localRefs?.removeLocalRef(lref);
-			if (removedRefs !== undefined && refTypeIncludesFlag(lref, hierRefTypes)) {
-				this.blockUpdatePathLengths(
-					segment.parent,
-					TreeMaintenanceSequenceNumber,
-					LocalClientId,
-				);
-			}
-			return removedRefs;
-		}
+		return segment?.localRefs?.removeLocalRef(lref);
 	}
 
 	startOfTree = new StartOfTreeSegment(this);
@@ -2219,13 +2173,6 @@ export class MergeTree {
 			canSlideToEndpoint,
 		);
 
-		if (refTypeIncludesFlag(refType, hierRefTypes)) {
-			this.blockUpdatePathLengths(
-				segment.parent,
-				TreeMaintenanceSequenceNumber,
-				LocalClientId,
-			);
-		}
 		return segRef;
 	}
 

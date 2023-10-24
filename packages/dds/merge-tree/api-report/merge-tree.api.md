@@ -635,8 +635,6 @@ export class LocalReferenceCollection {
     get empty(): boolean;
     // @internal
     has(lref: ReferencePosition): boolean;
-    // @internal
-    hierRefCount: number;
     // @internal (undocumented)
     isAfterTombstone(lref: LocalReferencePosition): boolean;
     // @internal (undocumented)
