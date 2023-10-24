@@ -19,6 +19,7 @@ import {
 	isNewAttach,
 	isTransientEffect,
 } from "./utils";
+import { isMoveDestination, isMoveSource } from "./moveEffectTable";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
 
@@ -48,19 +49,12 @@ export function sequenceFieldToDelta<TNodeChange>(
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
 			if (isTransientEffect(mark)) {
+				// TODO: Do we need to use the endpoint ID instead when mark.attach is a MoveIn?
 				const oldId = nodeIdFromChangeAtom(mark.cellId);
 				const outputId = getOutputCellId(mark, revision, undefined);
 				assert(outputId !== undefined, "Transient mark should have defined output cell ID");
 				if (!areEqualChangeAtomIds(mark.cellId, outputId)) {
-					// TODO: handle transient move-in/return-to
-					if (!isInsert(mark.attach)) {
-						assert(
-							mark.detach.type !== "Delete",
-							"TODO: Handle transient move and delete",
-						);
-						continue;
-					}
-					if (mark.attach.content !== undefined) {
+					if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
 						build.push({
 							id: oldId,
 							trees: mark.attach.content.map(singleTextCursor),
@@ -84,9 +78,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			switch (type) {
 				case "MoveIn": {
-					const endpoint = getEndpoint(mark, mark.revision ?? revision);
 					local.push({
-						attach: makeDetachedNodeId(endpoint.revision, endpoint.localId),
+						attach: makeDetachedNodeId(mark.revision ?? revision, mark.id),
 						count: mark.count,
 					});
 					break;

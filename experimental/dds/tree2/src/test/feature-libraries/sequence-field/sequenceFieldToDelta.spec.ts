@@ -328,36 +328,56 @@ describe("SequenceField - toDelta", () => {
 			assertFieldChangesEqual(delta, expected);
 		});
 
-		it.skip("insert & move", () => {
+		it("insert & move", () => {
 			const changeset = [
 				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
 				Mark.moveIn(2, brand(2)),
 			];
 			const delta = toDelta(changeset);
-			const expected: Delta.FieldChanges = {};
+			const buildId = { minor: 0 };
+			const id = { minor: 2 };
+			const expected: Delta.FieldChanges = {
+				build: [{ id: buildId, trees: contentCursor2 }],
+				rename: [{ oldId: buildId, newId: id, count: 2 }],
+				local: [{ count: 1 }, { count: 2, attach: id }],
+			};
 			assertFieldChangesEqual(delta, expected);
 		});
 
-		it.skip("move & delete", () => {
+		it("move & delete", () => {
 			const changeset = [
 				Mark.moveOut(2, brand(0)),
 				{ count: 1 },
 				Mark.transient(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
 			];
 			const delta = toDelta(changeset);
-			const expected: Delta.FieldChanges = {};
+
+			const id = { minor: 0 };
+			const expected: Delta.FieldChanges = {
+				local: [{ count: 2, detach: id }],
+				rename: [{ count: 2, oldId: id, newId: { minor: 2 } }],
+			};
 			assertFieldChangesEqual(delta, expected);
 		});
 
-		it.skip("insert & move & delete", () => {
+		it("insert & move & delete", () => {
 			const changeset = [
 				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
-				Mark.transient(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.transient(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
 			];
 			const delta = toDelta(changeset);
-			const expected: Delta.FieldChanges = {};
+			const buildId = { minor: 0 };
+			const id1 = { minor: 2 };
+			const id2 = { minor: 4 };
+			const expected: Delta.FieldChanges = {
+				build: [{ id: buildId, trees: contentCursor2 }],
+				rename: [
+					{ count: 2, oldId: buildId, newId: id1 },
+					{ count: 2, oldId: id1, newId: id2 },
+				],
+			};
 			assertFieldChangesEqual(delta, expected);
 		});
 
@@ -371,12 +391,20 @@ describe("SequenceField - toDelta", () => {
 				Mark.moveIn(2, brand(4), { finalEndpoint: { localId: brand(0) } }),
 			];
 			const delta = toDelta(changeset);
+
+			const id1 = { minor: 0 };
+			const id2 = { minor: 2 };
+			const id3 = { minor: 4 };
 			const expected: Delta.FieldChanges = {
 				local: [
-					{ count: 2, detach: { minor: 0 } },
+					{ count: 2, detach: id1 },
 					{ count: 1 },
 					{ count: 1 },
-					{ count: 2, attach: { minor: 0 } },
+					{ count: 2, attach: id3 },
+				],
+				rename: [
+					{ count: 2, oldId: id1, newId: id2 },
+					{ count: 2, oldId: id2, newId: id3 },
 				],
 			};
 			assertFieldChangesEqual(delta, expected);
