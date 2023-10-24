@@ -201,10 +201,10 @@ export class MockContainerRuntime {
 			localOpMetadata,
 		};
 
+		this.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
 				this.submitInternal(message);
-				this.clientSequenceNumber++;
 				break;
 			}
 
@@ -278,13 +278,6 @@ export class MockContainerRuntime {
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
 		this.dataStoreRuntime.process(message, local, localOpMetadata);
-
-		if (this.runtimeOptions.enableGroupedBatching) {
-			// If the grouped batching scenario is enabled, we need to advance the
-			// client sequence number when we process a remote op. Sending ops will
-			// not increment this value.
-			this.clientSequenceNumber++;
-		}
 	}
 
 	protected addPendingMessage(
@@ -306,10 +299,10 @@ export class MockContainerRuntime {
 		if (local) {
 			const pendingMessage = this.pendingMessages.shift();
 			assert(
-				pendingMessage?.clientSequenceNumber === message.clientSequenceNumber,
-				"Unexpected client sequence number from message",
+				JSON.stringify(pendingMessage?.content) === JSON.stringify(message.contents),
+				"Unexpected message",
 			);
-			localOpMetadata = pendingMessage.localOpMetadata;
+			localOpMetadata = pendingMessage?.localOpMetadata;
 		}
 		return [local, localOpMetadata];
 	}
