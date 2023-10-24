@@ -71,9 +71,12 @@ describe("GC Telemetry Tracker", () => {
 		};
 		const tracker = new GCTelemetryTracker(
 			mc,
-			{ inactiveTimeoutMs, sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined },
+			{
+				inactiveTimeoutMs,
+				sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
+				gcTombstoneEnforcementAllowed: false,
+			},
 			isSummarizerClient,
-			false /* gcTombstoneEnforcementAllowed */,
 			{ createContainerRuntimeVersion: pkgVersion },
 			getNodeType,
 			(nodeId: string) => unreferencedNodesState.get(nodeId),

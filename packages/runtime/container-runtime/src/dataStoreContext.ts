@@ -78,7 +78,7 @@ import {
 	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
+import { sendGCUnexpectedUsageEvent } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -326,10 +326,7 @@ export abstract class FluidDataStoreContext
 		);
 
 		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-		this.throwOnTombstoneUsage =
-			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-			this._containerRuntime.gcTombstoneEnforcementAllowed &&
-			this.clientDetails.type !== summarizerClientType;
+		this.throwOnTombstoneUsage = this._containerRuntime.gcThrowOnTombstoneUsage;
 
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
