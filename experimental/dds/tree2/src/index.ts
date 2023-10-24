@@ -289,6 +289,7 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	treeSchemaFromStoredSchema,
 } from "./feature-libraries";
 
 export {

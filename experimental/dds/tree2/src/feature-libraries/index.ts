@@ -278,6 +278,8 @@ export {
 	addFactory,
 } from "./editable-tree-2";
 
+export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
+
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";
 export { SchemaAware };

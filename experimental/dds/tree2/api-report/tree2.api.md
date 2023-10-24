@@ -2183,6 +2183,9 @@ export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema> ext
 }
 
 // @alpha
+export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema;
+
+// @alpha
 type TreeSchemaSpecification = [
 FlattenKeys<(ObjectSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<ObjectSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
 ][_InlineTrick];
