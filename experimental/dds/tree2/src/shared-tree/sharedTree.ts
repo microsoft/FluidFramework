@@ -13,7 +13,13 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
-import { InMemoryStoredSchemaRepository, makeDetachedFieldIndex } from "../core";
+import {
+	InMemoryStoredSchemaRepository,
+	JsonableTree,
+	TreeStoredSchema,
+	makeDetachedFieldIndex,
+	moveToDetachedField,
+} from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
@@ -31,6 +37,7 @@ import {
 	createNodeKeyManager,
 	nodeKeyFieldKey,
 	TypedField,
+	jsonableTreeFromFieldCursor,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
@@ -43,6 +50,25 @@ import {
 	createSharedTreeView,
 	schematizeView,
 } from "./sharedTreeView";
+
+/**
+ * Copy of data from an {@link ISharedTree} at some point in time.
+ * @alpha
+ */
+export interface TreeSnapshot {
+	/**
+	 * The schema stored in the document.
+	 *
+	 * @remarks
+	 * Edits to the schema (by this or other clients) can change this: this is only a snapshot of a point in time.
+	 * This is mainly useful for debugging cases where schematize reports an incompatible view schema.
+	 */
+	readonly schema: TreeStoredSchema;
+	/**
+	 * All {@link TreeStatus#InDocument} content.
+	 */
+	readonly tree: JsonableTree[];
+}
 
 /**
  * Collaboratively editable tree distributed data-structure,
@@ -59,6 +85,15 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	 */
 	// TODO: migrate all usages of this to alternatives or avoid using ISharedTree.
 	readonly view: ISharedTreeView;
+
+	/**
+	 * Provides a copy of the current content of the tree.
+	 * This can be useful for inspecting the tree when no suable view schema is available.
+	 * This is only intended for use in testing and exceptional code paths: it is not performant.
+	 *
+	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
+	 */
+	contentSnapshot(): TreeSnapshot;
 
 	/**
 	 * Takes in a tree and returns a view of it that conforms to the view schema.
@@ -145,6 +180,19 @@ export class SharedTree
 			events: this._events,
 			removedTrees,
 		});
+	}
+
+	public contentSnapshot(): TreeSnapshot {
+		const cursor = this.view.forest.allocateCursor();
+		try {
+			moveToDetachedField(this.view.forest, cursor);
+			return {
+				schema: new InMemoryStoredSchemaRepository(this.storedSchema),
+				tree: jsonableTreeFromFieldCursor(cursor),
+			};
+		} finally {
+			cursor.free();
+		}
 	}
 
 	public schematizeView<TRoot extends TreeFieldSchema>(

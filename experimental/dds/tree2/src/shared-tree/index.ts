@@ -9,6 +9,7 @@ export {
 	SharedTreeOptions,
 	SharedTree,
 	ForestType,
+	TreeSnapshot,
 } from "./sharedTree";
 
 export {

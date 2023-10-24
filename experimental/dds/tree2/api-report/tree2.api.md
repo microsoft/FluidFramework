@@ -1026,6 +1026,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 
 // @alpha
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
+    contentSnapshot(): TreeSnapshot;
     schematizeView<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     // @deprecated
     readonly view: ISharedTreeView;
@@ -2186,6 +2187,12 @@ export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema> ext
 type TreeSchemaSpecification = [
 FlattenKeys<(ObjectSchemaSpecification | MapSchemaSpecification | LeafSchemaSpecification) & Partial<ObjectSchemaSpecification & MapSchemaSpecification & LeafSchemaSpecification>>
 ][_InlineTrick];
+
+// @alpha
+export interface TreeSnapshot {
+    readonly schema: TreeStoredSchema;
+    readonly tree: JsonableTree[];
+}
 
 // @alpha
 export enum TreeStatus {
