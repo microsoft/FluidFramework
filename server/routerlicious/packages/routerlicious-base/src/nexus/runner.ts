@@ -209,8 +209,8 @@ export class NexusRunner implements IRunner {
 				bytesWritten: socket.bytesWritten,
 				error: error.toString(),
 			});
-			//We only care about the connections parameter which is already calculated.
-			//Leaving as success to avoid confusion if someone see the metric decreasing.
+			// We only care about the connections parameter which is already calculated.
+			// Leaving as success to avoid confusion if someone see the metric decreasing.
 			errorMetric.success("WebSockets: connection error", LogLevel.Error);
 		});
 	}
