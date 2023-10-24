@@ -10,6 +10,18 @@
 
 export const UniversalSequenceNumber = 0;
 export const UnassignedSequenceNumber = -1;
+
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export const TreeMaintenanceSequenceNumber = -2;
+
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export const LocalClientId = -1;
+
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export const NonCollabClient = -2;

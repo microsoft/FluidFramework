@@ -211,19 +211,19 @@ export class CollaborationWindow {
 // @public @deprecated (undocumented)
 export function combine(combiningInfo: ICombiningOp, currentValue: any, newValue: any, seq?: number): any;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const compareNumbers: (a: number, b: number) => number;
 
 // @public (undocumented)
 export function compareReferencePositions(a: ReferencePosition, b: ReferencePosition): number;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const compareStrings: (a: string, b: string) => number;
 
 // @internal (undocumented)
 export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TData, currentData: TData) => QProperty<TKey, TData>;
 
-// @public
+// @public @deprecated
 export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
 
 // @public
@@ -344,7 +344,7 @@ export interface ICombiningOp {
     name: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IConsensusInfo {
     // (undocumented)
     callback: (m: Marker) => void;
@@ -352,7 +352,7 @@ export interface IConsensusInfo {
     marker: Marker;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IConsensusValue {
     // (undocumented)
     seq: number;
@@ -392,7 +392,7 @@ export interface IMarkerDef {
     refType?: ReferenceType;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IMarkerModifiedAction {
     // (undocumented)
     (marker: Marker): void;
@@ -631,7 +631,7 @@ export interface KeyComparer<TKey> {
     (a: TKey, b: TKey): number;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const LocalClientId = -1;
 
 // @public
@@ -746,7 +746,7 @@ export class MergeNode implements IMergeNodeCommon {
     ordinal: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type MergeTreeDeltaCallback = (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs) => void;
 
 // @public (undocumented)
@@ -779,7 +779,7 @@ export const MergeTreeDeltaType: {
 // @public (undocumented)
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type MergeTreeMaintenanceCallback = (MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs, opArgs: IMergeTreeDeltaOpArgs | undefined) => void;
 
 // @public
@@ -806,7 +806,7 @@ export interface MergeTreeRevertibleDriver {
 // @public (undocumented)
 export function minReferencePosition<T extends ReferencePosition>(a: T, b: T): T;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const NonCollabClient = -2;
 
 // @public (undocumented)
@@ -1005,7 +1005,7 @@ export const reservedTileLabelsKey = "referenceTileLabels";
 // @alpha (undocumented)
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface SegmentAccumulator {
     // (undocumented)
     segments: ISegment[];
@@ -1201,7 +1201,7 @@ export class TrackingGroupCollection {
     unlink(trackingGroup: ITrackingGroup): boolean;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const TreeMaintenanceSequenceNumber = -2;
 
 // @public (undocumented)

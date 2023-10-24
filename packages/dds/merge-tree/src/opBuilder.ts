@@ -22,6 +22,8 @@ import { PropertySet } from "./properties";
  * @param props - The properties to annotate the marker with
  * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
  * @returns The annotate op
+ *
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
  */
 export function createAnnotateMarkerOp(
 	marker: Marker,

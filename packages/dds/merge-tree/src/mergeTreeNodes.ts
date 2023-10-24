@@ -4,8 +4,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
-/* eslint-disable @typescript-eslint/prefer-optional-chain */
+/* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
@@ -17,14 +16,11 @@ import { TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
-// eslint-disable-next-line import/no-deprecated
 import { clone, createMap, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
-	// eslint-disable-next-line import/no-deprecated
 	RangeStackMap,
 	ReferencePosition,
-	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
 } from "./referencePositions";
@@ -93,7 +89,6 @@ export interface IHierBlock extends IMergeBlock {
 	hierToString(indentCount: number): string;
 	rightmostTiles: MapLike<ReferencePosition>;
 	leftmostTiles: MapLike<ReferencePosition>;
-	// eslint-disable-next-line import/no-deprecated
 	rangeStacks: RangeStackMap;
 }
 
@@ -232,6 +227,9 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export interface IMarkerModifiedAction {
 	// eslint-disable-next-line @typescript-eslint/prefer-function-type
 	(marker: Marker): void;
@@ -439,7 +437,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
-		// eslint-disable-next-line import/no-deprecated
 		this.properties ??= createMap<any>();
 		return this.propertyManager.addProperties(
 			this.properties,
@@ -462,7 +459,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	protected cloneInto(b: ISegment) {
 		b.clientId = this.clientId;
 		// TODO: deep clone properties
-		// eslint-disable-next-line import/no-deprecated
 		b.properties = clone(this.properties);
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
@@ -724,8 +720,14 @@ export class CollaborationWindow {
 	}
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export const compareNumbers = (a: number, b: number) => a - b;
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 const indentStrings = ["", " ", "  "];
@@ -742,11 +744,17 @@ export function internedSpaces(n: number) {
 	return indentStrings[n];
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export interface IConsensusInfo {
 	marker: Marker;
 	callback: (m: Marker) => void;
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export interface SegmentAccumulator {
 	segments: ISegment[];
 }
@@ -791,7 +799,6 @@ export function debugMarkerToString(marker: Marker): string {
 			lbuf += tileLabel;
 		}
 	}
-	// eslint-disable-next-line import/no-deprecated
 	const rangeLabels = refGetRangeLabels(marker);
 	if (rangeLabels) {
 		let rangeKind = "begin";
