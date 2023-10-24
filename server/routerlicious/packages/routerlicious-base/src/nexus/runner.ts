@@ -182,7 +182,7 @@ export class NexusRunner implements IRunner {
 
 	/**
 	 * Handles the on "upgrade" event to setup connection count telemetry. This telemetry is updated
-	 * on all socket events: "upgrade", "close", "error"
+	 * on all socket events: "upgrade", "close", "error". 
 	 */
 	private setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer) {
 		const metric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
@@ -209,6 +209,8 @@ export class NexusRunner implements IRunner {
 				bytesWritten: socket.bytesWritten,
 				error: error.toString(),
 			});
+			//We only care about the connections parameter which is already calculated.
+			//Leaving as success to avoid confusion if someone see the metric decreasing.
 			errorMetric.success("WebSockets: connection error", LogLevel.Error);
 		});
 	}
