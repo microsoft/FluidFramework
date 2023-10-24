@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -585,6 +585,14 @@ export class ConnectionManager implements IConnectionManager {
 					this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
 					connection = undefined;
 				}
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectedToDeltaStream",
+						connected: connection !== undefined && connection.disposed === false,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 			} catch (origError: any) {
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
 					connection = new NoDeltaStream(origError.storageOnlyReason, {
@@ -674,8 +682,8 @@ export class ConnectionManager implements IConnectionManager {
 			);
 		}
 
-		// Check for abort signal after while loop as well
-		if (abortSignal.aborted === true) {
+		// Check for abort signal after while loop as well or we've been disposed
+		if (abortSignal.aborted === true || this._disposed) {
 			connection.dispose();
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
@@ -686,6 +694,14 @@ export class ConnectionManager implements IConnectionManager {
 			return;
 		}
 
+		this.logger.sendTelemetryEvent(
+			{
+				eventName: "SettingUpNewConnection",
+				connected: connection !== undefined && connection.disposed === false,
+			},
+			undefined,
+			LogLevel.verbose,
+		);
 		this.setupNewSuccessfulConnection(connection, requestedMode, reason);
 	}
 
