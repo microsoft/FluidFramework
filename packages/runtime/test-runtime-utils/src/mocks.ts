@@ -204,7 +204,7 @@ export class MockContainerRuntime {
 		this.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
-				this.submitInternal(message);
+				this.submitInternal(message, this.clientSequenceNumber);
 				break;
 			}
 
@@ -231,9 +231,19 @@ export class MockContainerRuntime {
 			return;
 		}
 
+		let fakeClientSequenceNumber = 1;
 		while (this.outbox.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.submitInternal(this.outbox.shift()!);
+			this.submitInternal(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.outbox.shift()!,
+				// When grouped batching is used, the ops within the same grouped batch will have
+				// fake sequence numbers when they're ungrouped. The submit function will still
+				// return the clientSequenceNumber but this will ensure that the readers will always
+				// read the fake client sequence numbers.
+				this.runtimeOptions.enableGroupedBatching
+					? fakeClientSequenceNumber++
+					: this.clientSequenceNumber,
+			);
 		}
 	}
 
@@ -261,10 +271,10 @@ export class MockContainerRuntime {
 		);
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage) {
+	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
 		this.factory.pushMessage({
 			clientId: this.clientId,
-			clientSequenceNumber: this.clientSequenceNumber,
+			clientSequenceNumber,
 			contents: message.content,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			type: MessageType.Operation,
