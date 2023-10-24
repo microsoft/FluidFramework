@@ -940,7 +940,7 @@ export class FluidDataStoreRuntime
 
 		// Back-compat: Until N-1 has submitMessage2
 		if (this.dataStoreContext.submitMessage2 === undefined) {
-			this.dataStoreContext.submitMessage(type, content, localOpMetadata, rootMetadata);
+			this.dataStoreContext.submitMessage(type, content, localOpMetadata);
 			return;
 		}
 

@@ -266,7 +266,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
     // (undocumented)
     readonly storage: IDocumentStorageService;
     // @deprecated
-    submitMessage(type: string, content: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitMessage2?(data: {
         type: string;
         messageContent: unknown;

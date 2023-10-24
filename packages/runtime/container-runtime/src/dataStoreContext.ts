@@ -687,12 +687,32 @@ export abstract class FluidDataStoreContext
 		return runtime.request(request);
 	}
 
-	public submitMessage(
-		type: string,
-		content: any,
-		localOpMetadata: unknown,
-		rootMetadata: unknown,
-	): void {
+	/** @deprecated Use submitMessage2 instead */
+	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
+		this.submitMessage2({
+			type,
+			messageContent: content,
+			localOpMetadata,
+			rootMetadata: undefined,
+		});
+	}
+
+	public submitMessage2(data: {
+		/** Type of the message. May indicate what to expect in the content */
+		type: string;
+		/** The datastore-specific content of the message to be sent */
+		messageContent: unknown;
+		/**
+		 * The local metadata associated with the message. This is kept locally by the runtime
+		 * and not sent to the server. It will be provided back when this message is acknowledged by the server.
+		 * It will also be provided back when asked to resubmit the message.
+		 */
+		localOpMetadata?: unknown;
+		/** Metadata to be handled by the runtime and included in the final op payload */
+		rootMetadata: unknown;
+	}): void {
+		const { type, messageContent: content, localOpMetadata, rootMetadata } = data;
+
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
 		const fluidDataStoreContent: FluidDataStoreMessage = {
