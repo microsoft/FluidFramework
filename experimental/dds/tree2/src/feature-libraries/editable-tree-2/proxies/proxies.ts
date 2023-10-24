@@ -496,23 +496,23 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	return new Proxy<SharedTreeMap<TSchema>>(new Map(), {
+	return new Proxy<SharedTreeMap<TSchema>>(new Map<string, ProxyNode<TSchema>>(), {
 		get: (target, key, receiver): unknown => {
 			console.log(`get "${String(key)}"`);
+
+			if (key === "get") {
+				return (mapKey: string) => {
+					const field = getMapNode(dispatch).getBoxed(mapKey);
+					if (field !== undefined) {
+						return getProxyForField(field);
+					}
+					return undefined;
+				};
+			}
+
 			return Reflect.get(dispatch, key);
 		},
 		getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
-			if (key === "size") {
-				// TODO: this appears to be inaccurate for map.size
-				// To satisfy 'deepEquals' level scrutiny, the property descriptor for 'size' must be a simple
-				// value property (as opposed to using getter) and be declared writable / non-configurable.
-				return {
-					value: getMapNode(dispatch).size,
-					writable: false, // TODO: verify this is okay
-					enumerable: false,
-					configurable: false,
-				};
-			}
 			return Reflect.getOwnPropertyDescriptor(dispatch, key);
 		},
 		has: (target, key) => {

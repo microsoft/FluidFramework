@@ -28,10 +28,14 @@ describe("SharedTree proxies", () => {
 	const initialTree = {
 		struct: { content: 42 },
 		list: [42, 42, 42],
-		map: new Map([
-			["foo", "Hello"],
-			["bar", "World"],
-		]),
+		// map: new Map([
+		// 	["foo", "Hello"],
+		// 	["bar", "World"],
+		// ]),
+		map: {
+			foo: "Hello",
+			bar: "World",
+		} as unknown as Map<string, string | undefined>,
 	};
 
 	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
@@ -84,10 +88,14 @@ describe("SharedTreeObject", () => {
 		polyValue: "42",
 		polyChild: { content: "42", [typeNameSymbol]: stringChild.name },
 		polyValueChild: { content: 42 },
-		map: new Map([
-			["foo", "Hello"],
-			["bar", "World"],
-		]),
+		// map: new Map([
+		// 	["foo", "Hello"],
+		// 	["bar", "World"],
+		// ]),
+		map: {
+			foo: "Hello",
+			bar: "World",
+		} as unknown as Map<string, string | undefined>,
 		list: [{ content: 42 }, { content: 42 }],
 	};
 
@@ -104,7 +112,7 @@ describe("SharedTreeObject", () => {
 	});
 
 	itWithRoot("can read maps", schema, initialTree, (root) => {
-		// assert.equal(root.map.size, 2);
+		assert.equal(root.map.size, 2);
 		assert.equal(root.map.get("foo"), "Hello");
 		assert.equal(root.map.get("bar"), "World");
 		assert.equal(root.map.get("baz"), undefined);
