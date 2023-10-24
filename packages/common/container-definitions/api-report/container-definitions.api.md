@@ -384,7 +384,7 @@ export { IGenericError }
 // @alpha
 export interface IGetPendingLocalStateProps {
     readonly notifyImminentClosure: boolean;
-    readonly stopWaitingAttachingSignal?: AbortSignal;
+    readonly stopBlobAttachingSignal?: AbortSignal;
 }
 
 // @public

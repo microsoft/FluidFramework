@@ -912,7 +912,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public async attachAndGetPendingBlobs(
-		stopWaitingAttachingSignal?: AbortSignal,
+		stopBlobAttachingSignal?: AbortSignal,
 	): Promise<IPendingBlobs | undefined> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -924,7 +924,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
 				const abortPromise = new Promise<void>((resolve, reject) => {
-					stopWaitingAttachingSignal?.addEventListener(
+					stopBlobAttachingSignal?.addEventListener(
 						"abort",
 						() => {
 							reject(new Error("Operation aborted"));
@@ -959,7 +959,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
-					if (stopWaitingAttachingSignal?.aborted && !entry.attached) {
+					if (stopBlobAttachingSignal?.aborted && !entry.attached) {
 						this.mc.logger.sendTelemetryEvent({
 							eventName: "UnableToStashBlob",
 							id,

@@ -1114,7 +1114,7 @@ export class Container
 	}
 
 	public async closeAndGetPendingLocalState(
-		stopWaitingAttachingSignal?: AbortSignal,
+		stopBlobAttachingSignal?: AbortSignal,
 	): Promise<string> {
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
@@ -1122,7 +1122,7 @@ export class Container
 		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
 		const pendingState = await this.getPendingLocalStateCore({
 			notifyImminentClosure: true,
-			stopWaitingAttachingSignal,
+			stopBlobAttachingSignal,
 		});
 		this.close();
 		return pendingState;
@@ -2542,5 +2542,5 @@ export interface IContainerExperimental extends IContainer {
 	 * @alpha
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState?(signal?: AbortSignal): Promise<string>;
+	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

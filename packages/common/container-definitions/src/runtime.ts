@@ -269,5 +269,5 @@ export interface IGetPendingLocalStateProps {
 	 * to a blob failed to be referenced. Such a blob will be lost but the rest of the state will
 	 * be preserved and collected.
 	 */
-	readonly stopWaitingAttachingSignal?: AbortSignal;
+	readonly stopBlobAttachingSignal?: AbortSignal;
 }
