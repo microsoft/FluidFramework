@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
-import { is, typeNameSymbol } from "../../../feature-libraries";
+import { node, typeNameSymbol } from "../../../feature-libraries";
 import { itWithRoot } from "./utils";
 
 describe("SharedTree proxies", () => {
@@ -13,11 +13,11 @@ describe("SharedTree proxies", () => {
 		scope: "test",
 	});
 
-	const childSchema = sb.struct("struct", {
+	const childSchema = sb.object("object", {
 		content: sb.number,
 	});
 
-	const parentSchema = sb.struct("parent", {
+	const parentSchema = sb.object("parent", {
 		struct: childSchema,
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
 	});
@@ -49,15 +49,15 @@ describe("SharedTreeObject", () => {
 		scope: "test",
 	});
 
-	const numberChild = sb.struct("numberChild", {
+	const numberChild = sb.object("numberChild", {
 		content: sb.number,
 	});
 
-	const stringChild = sb.struct("stringChild", {
+	const stringChild = sb.object("stringChild", {
 		content: sb.string,
 	});
 
-	const parentSchema = sb.struct("parent", {
+	const parentSchema = sb.object("parent", {
 		content: sb.number,
 		child: numberChild,
 		polyValue: [sb.number, sb.string],
@@ -103,7 +103,7 @@ describe("SharedTreeObject", () => {
 	});
 
 	itWithRoot("can narrow polymorphic struct fields", schema, initialTree, (root) => {
-		if (is(root.polyChild, numberChild)) {
+		if (node.is(root.polyChild, numberChild)) {
 			assert.equal(root.polyChild.content, 42);
 		} else {
 			assert.equal(root.polyChild.content, "42");
@@ -115,7 +115,7 @@ describe("SharedTreeObject", () => {
 		schema,
 		initialTree,
 		(root) => {
-			if (is(root.polyValueChild, numberChild)) {
+			if (node.is(root.polyValueChild, numberChild)) {
 				assert.equal(root.polyValueChild.content, 42);
 			} else {
 				assert.equal(root.polyValueChild, 42);

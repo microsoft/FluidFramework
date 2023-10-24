@@ -386,7 +386,7 @@ describe("editable-tree: read-only", () => {
 
 	it("primitives under node are unwrapped, but may be accessed without unwrapping", () => {
 		const builder = new SchemaBuilder({ scope: "test", libraries: [personSchemaLibrary] });
-		const parentSchema = builder.struct("parent", {
+		const parentSchema = builder.object("parent", {
 			child: stringSchema,
 		});
 		const rootSchema = TreeFieldSchema.create(FieldKinds.required, [parentSchema]);
@@ -591,8 +591,8 @@ describe("editable-tree: read-only", () => {
 		assert.equal([...simplePhonesNode].length, 1);
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];
 		assert.equal(simplePhonesSchema.mapFields, undefined);
-		assert.equal(simplePhonesSchema.structFields.size, 1);
-		const simplePhonesPrimaryKey = [...simplePhonesSchema.structFields.keys()][0];
+		assert.equal(simplePhonesSchema.objectNodeFields.size, 1);
+		const simplePhonesPrimaryKey = [...simplePhonesSchema.objectNodeFields.keys()][0];
 		// primary key must be the same across the schema
 		assert.equal(simplePhonesPrimaryKey, phonesPrimary.key);
 		// get the primary field

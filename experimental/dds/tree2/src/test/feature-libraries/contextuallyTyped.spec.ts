@@ -105,7 +105,7 @@ describe("ContextuallyTyped", () => {
 			libraries: [leaf.library],
 		});
 		const numberSequence = SchemaBuilder.sequence(leaf.number);
-		const numbersObject = builder.struct("numbers", { numbers: numberSequence });
+		const numbersObject = builder.object("numbers", { numbers: numberSequence });
 		const schema = builder.intoSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject.name]), {
 			numbers: [],
@@ -120,7 +120,7 @@ describe("ContextuallyTyped", () => {
 			libraries: [leaf.library],
 		});
 		const numberSequence = SchemaBuilder.sequence(leaf.number);
-		const primaryObject = builder.struct("numbers", { [EmptyKey]: numberSequence });
+		const primaryObject = builder.object("numbers", { [EmptyKey]: numberSequence });
 		const schema = builder.intoSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject.name]), []);
 		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
@@ -133,7 +133,7 @@ describe("ContextuallyTyped", () => {
 				scope: "cursorFromContextualData",
 				libraries: [leaf.library],
 			});
-			const nodeSchema = builder.struct("node", {
+			const nodeSchema = builder.object("node", {
 				foo: leaf.string,
 			});
 
@@ -167,7 +167,7 @@ describe("ContextuallyTyped", () => {
 				libraries: [leaf.library],
 			});
 
-			const nodeSchema = builder.structRecursive("node", {
+			const nodeSchema = builder.objectRecursive("node", {
 				foo: builder.required(leaf.string),
 				child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 			});

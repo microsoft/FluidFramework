@@ -5,7 +5,7 @@
 
 import { Assume } from "../../../util";
 import { typeNameSymbol } from "../../contextuallyTyped";
-import { StructSchema, TreeNodeSchema } from "../../typed-schema";
+import { ObjectNodeSchema, TreeNodeSchema } from "../../typed-schema";
 import { ProxyNode, SharedTreeObject } from "./types";
 
 const factoryContent = Symbol("Node content");
@@ -16,7 +16,7 @@ interface HasFactoryContent<T> {
 /**
  * Returns the content stored on an object created by a {@link SharedTreeObjectFactory}.
  */
-export function getFactoryContent<TSchema extends StructSchema>(
+export function getFactoryContent<TSchema extends ObjectNodeSchema>(
 	x: SharedTreeObject<TSchema>,
 ): ProxyNode<TSchema> | undefined {
 	return (x as Partial<HasFactoryContent<ProxyNode<TSchema>>>)[factoryContent];
@@ -25,7 +25,7 @@ export function getFactoryContent<TSchema extends StructSchema>(
 /**
  * Adds a factory function (`create`) to the given schema so that it satisfies the {@link SharedTreeObjectFactory} interface.
  */
-export function addFactory<TSchema extends StructSchema>(
+export function addFactory<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 ): FactoryTreeSchema<TSchema> {
 	const create = (content: ProxyNode<TSchema, "javaScript">): SharedTreeObject<TSchema> => {
@@ -34,7 +34,7 @@ export function addFactory<TSchema extends StructSchema>(
 		// The copy is necessary so that the input `content` object can be re-used as the contents of a different typed/named node in another `create` call.
 		const namedContent = { ...content, [typeNameSymbol]: schema.name };
 		Object.defineProperty(node, factoryContent, { value: namedContent });
-		for (const [key] of schema.structFields) {
+		for (const [key] of schema.objectNodeFields) {
 			Object.defineProperty(node, key, {
 				// TODO: `node` could be made fully readable by recursively constructing/returning objects, maps and lists and values here.
 				get: () => factoryObjectError(),
@@ -65,8 +65,8 @@ export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, 
 	 * It may not be read, mutated or queried in any way.
 	 */
 	create(
-		content: ProxyNode<Assume<TSchema, StructSchema>, "javaScript">,
-	): SharedTreeObject<Assume<TSchema, StructSchema>>;
+		content: ProxyNode<Assume<TSchema, ObjectNodeSchema>, "javaScript">,
+	): SharedTreeObject<Assume<TSchema, ObjectNodeSchema>>;
 }
 
 /**

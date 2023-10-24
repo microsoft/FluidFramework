@@ -230,6 +230,7 @@ module.exports = {
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
 				["depcruise", "dependency-cruiser"],
+				["copyfiles", "copyfiles"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
@@ -255,6 +256,18 @@ module.exports = {
 				ignoreTasks: ["tsc:watch"],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
+		},
+	},
+
+	assertTagging: {
+		enabledPaths: [
+			/^common\/lib\/common-utils/i,
+			/^experimental/i,
+			/^packages/i,
+			/^server\/routerlicious\/packages\/protocol-base/i,
+		],
+		assertionFunctions: {
+			assert: 1,
 		},
 	},
 

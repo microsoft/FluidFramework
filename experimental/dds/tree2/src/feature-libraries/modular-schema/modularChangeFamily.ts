@@ -20,6 +20,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 	ChangesetLocalId,
+	isEmptyFieldChanges,
 } from "../../core";
 import {
 	brand,
@@ -718,16 +719,18 @@ export class ModularChangeFamily
 		revision: RevisionTag | undefined,
 		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.Root {
-		const delta: Map<FieldKey, Delta.MarkList> = new Map();
+		const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
 		for (const [field, fieldChange] of change) {
 			const fieldRevision = fieldChange.revision ?? revision;
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				tagChange(fieldChange.change, fieldRevision),
-				(childChange): Delta.Modify =>
+				(childChange): Delta.FieldMap =>
 					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
 				idAllocator,
 			);
-			delta.set(field, deltaField);
+			if (!isEmptyFieldChanges(deltaField)) {
+				delta.set(field, deltaField);
+			}
 		}
 		return delta;
 	}
@@ -735,16 +738,12 @@ export class ModularChangeFamily
 	private deltaFromNodeChange(
 		{ change, revision }: TaggedChange<NodeChangeset>,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.Modify {
-		const modify: Mutable<Delta.Modify> = {
-			type: Delta.MarkType.Modify,
-		};
-
+	): Delta.FieldMap {
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+			return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 		}
-
-		return modify;
+		// TODO: update the API to allow undefined to be returned here
+		return new Map();
 	}
 
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {

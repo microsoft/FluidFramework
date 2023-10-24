@@ -776,96 +776,6 @@ describe("SharedTree", () => {
 	});
 
 	describe("Undo and redo", () => {
-		it("does nothing if there are no commits in the undo stack", () => {
-			const value = "42";
-			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
-			provider.processMessages();
-			const tree2 = provider.trees[1].schematizeView(emptyJsonSequenceConfig);
-			provider.processMessages();
-
-			// Insert node
-			insertFirstNode(tree1, value);
-			provider.processMessages();
-
-			// Validate insertion
-			assert.equal(getTestValue(tree2), value);
-
-			// Undo node insertion
-			undoStack.pop()?.revert();
-			provider.processMessages();
-
-			assert.equal(getTestValue(tree1), undefined);
-			assert.equal(getTestValue(tree2), undefined);
-
-			// Undo again
-			undoStack.pop()?.revert();
-			provider.processMessages();
-
-			// Redo
-			redoStack.pop()?.revert();
-			provider.processMessages();
-
-			assert.equal(getTestValue(tree1), value);
-			assert.equal(getTestValue(tree2), value);
-
-			// Redo again
-			redoStack.pop()?.revert();
-			provider.processMessages();
-
-			assert.equal(getTestValue(tree1), value);
-			assert.equal(getTestValue(tree2), value);
-			unsubscribe();
-		});
-
-		it("does not undo edits made remotely", () => {
-			const provider = new TestTreeProviderLite(2);
-			const content: InitializeAndSchematizeConfiguration = {
-				schema: jsonSequenceRootSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: ["tree2"],
-			};
-			// Do initialization on tree2
-			const tree2 = provider.trees[1].schematizeView(content);
-			provider.processMessages();
-			const tree1 = provider.trees[0].schematizeView(content);
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
-			provider.processMessages();
-
-			validateRootField(tree1, ["tree2"]);
-
-			// Insert node
-			insert(tree1, 0, "tree1");
-			provider.processMessages();
-
-			validateRootField(tree1, ["tree1", "tree2"]);
-
-			// Make a remote edit
-			remove(tree2, 1, 1);
-			provider.processMessages();
-
-			// Validate deletion
-			validateRootField(tree1, ["tree1"]);
-
-			// Undo
-			undoStack.pop()?.revert(); // undoes insert of "tree1"
-			assert(undoStack.pop() === undefined, "there should be no more revertibles");
-			provider.processMessages();
-
-			// Validate undo
-			validateRootField(tree1, []);
-			validateRootField(tree2, []);
-
-			// Call redo
-			redoStack.pop()?.revert();
-			provider.processMessages();
-
-			// Validate redo
-			validateRootField(tree1, ["tree1"]);
-			unsubscribe();
-		});
-
 		it("the insert of a node in a sequence field", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
@@ -966,7 +876,7 @@ describe("SharedTree", () => {
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const treeSchema = builder.struct("root", {
+		const treeSchema = builder.object("root", {
 			x: builder.number,
 		});
 		const schema = builder.intoSchema(builder.optional(Any));
@@ -1184,11 +1094,12 @@ describe("SharedTree", () => {
 	describe("Rebasing", () => {
 		it("rebases stashed ops with prior state present", async () => {
 			const provider = await TestTreeProvider.create(2);
-			const view1 = provider.trees[0].schematizeView({
+			const config = {
 				initialTree: ["a"],
 				schema: jsonSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.None,
-			});
+			};
+			const view1 = provider.trees[0].schematizeView(config);
 			await provider.ensureSynchronized();
 
 			const pausedContainer: IContainerExperimental = provider.containers[0];
@@ -1210,7 +1121,7 @@ describe("SharedTree", () => {
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
-			validateRootField(tree.view, ["d", "a", "b", "c"]);
+			validateRootField(tree.schematizeView(config), ["d", "a", "b", "c"]);
 			validateRootField(otherLoadedTree, ["d", "a", "b", "c"]);
 		});
 	});
@@ -1790,7 +1701,7 @@ describe("SharedTree", () => {
 
 			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
-			const rootNodeSchema = testSchemaBuilder.structRecursive("Node", {
+			const rootNodeSchema = testSchemaBuilder.objectRecursive("Node", {
 				foo: SchemaBuilder.sequence(leaf.number),
 				foo2: SchemaBuilder.sequence(leaf.number),
 			});

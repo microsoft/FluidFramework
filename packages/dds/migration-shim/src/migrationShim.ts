@@ -28,8 +28,8 @@ import {
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
 import { assert } from "@fluidframework/core-utils";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices";
-import { MigrationShimDeltaHandler } from "./migrationDeltaHandler";
+import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
+import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -106,8 +106,6 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		) {
 			return false;
 		}
-
-		// TODO: some attribute checking here
 		this.newTree = this.newTreeFactory.create(this.runtime, this.id);
 		this.populateNewSharedObjectFn(this.legacyTree, this.newTree);
 		this.reconnect();

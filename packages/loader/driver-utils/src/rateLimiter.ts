@@ -5,6 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils";
 
+/**
+ * @public
+ */
 export class RateLimiter {
 	private readonly tasks: (() => void)[] = [];
 	constructor(private maxRequests: number) {
