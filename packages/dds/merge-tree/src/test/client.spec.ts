@@ -30,12 +30,12 @@ describe("TestClient", () => {
 		client.startOrUpdateCollaboration(localUserLongId);
 	});
 
-	describe(".searchForMarker", () => {
-		it("Should be able to find non preceding marker based on label", () => {
-			const markerLabel = "EOP";
+	describe(".findTile", () => {
+		it("Should be able to find non preceding tile based on label", () => {
+			const tileLabel = "EOP";
 
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
@@ -45,112 +45,96 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			const marker = client.searchForMarker(0, markerLabel, false);
+			const tile = client.findTile(0, tileLabel, false);
 
-			assert(marker, "Returned marker undefined.");
+			assert(tile, "Returned tile undefined.");
 
-			assert.equal(
-				client.localReferencePositionToPosition(marker),
-				3,
-				"Tile with label not at expected position",
-			);
+			assert.equal(tile.pos, 3, "Tile with label not at expected position");
 		});
 
 		it("Should be able to find non preceding tile position based on label from client with single tile", () => {
-			const markerLabel = "EOP";
+			const tileLabel = "EOP";
 			client.insertTextLocal(0, "abc d");
 
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 			console.log(client.getText());
 
 			assert.equal(client.getLength(), 6, "length not expected");
 
-			const tile = client.searchForMarker(0, markerLabel, false);
+			const tile = client.findTile(0, tileLabel, false);
 
-			assert(tile, "Returned marker undefined.");
+			assert(tile, "Returned tile undefined.");
 
-			assert.equal(
-				client.localReferencePositionToPosition(tile),
-				0,
-				"Marker with label not at expected position",
-			);
+			assert.equal(tile.pos, 0, "Tile with label not at expected position");
 		});
 
 		it("Should be able to find preceding tile position based on label from client with multiple tile", () => {
-			const markerLabel = "EOP";
+			const tileLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(0, "abc d");
 
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(7, "ef");
 			client.insertMarkerLocal(8, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 			console.log(client.getText());
 
 			assert.equal(client.getLength(), 10, "length not expected");
 
-			const tile = client.searchForMarker(5, markerLabel);
+			const tile = client.findTile(5, tileLabel);
 
-			assert(tile, "Returned marker undefined.");
+			assert(tile, "Returned tile undefined.");
 
-			assert.equal(
-				client.localReferencePositionToPosition(tile),
-				0,
-				"Tile with label not at expected position",
-			);
+			assert.equal(tile.pos, 0, "Tile with label not at expected position");
 		});
 
 		it("Should be able to find non preceding tile position from client with multiple tile", () => {
-			const markerLabel = "EOP";
+			const tileLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(0, "abc d");
 
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
 			client.insertTextLocal(7, "ef");
 			client.insertMarkerLocal(8, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 			console.log(client.getText());
 
 			assert.equal(client.getLength(), 10, "length not expected");
 
-			const marker = client.searchForMarker(5, markerLabel, false);
+			const tile = client.findTile(5, tileLabel, false);
 
-			assert(marker, "Returned marker undefined.");
+			assert(tile, "Returned tile undefined.");
 
-			assert.equal(
-				client.localReferencePositionToPosition(marker),
-				6,
-				"Tile with label not at expected position",
-			);
+			assert.equal(tile.pos, 6, "Tile with label not at expected position");
 		});
 
-		it("Should be able to find marker from client with text length 1", () => {
-			const markerLabel = "EOP";
+		it("Should be able to find tile from client with text length 1", () => {
+			const tileLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
@@ -158,31 +142,23 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 1, "length not expected");
 
-			const marker = client.searchForMarker(client.getLength(), markerLabel);
+			const tile = client.findTile(client.getLength(), tileLabel);
 
-			assert(marker, "Returned marker undefined.");
+			assert(tile, "Returned tile undefined.");
 
-			assert.equal(
-				client.localReferencePositionToPosition(marker),
-				0,
-				"Tile with label not at expected position",
-			);
+			assert.equal(tile.pos, 0, "Tile with label not at expected position");
 
-			const marker1 = client.searchForMarker(0, markerLabel, false);
+			const tile1 = client.findTile(0, tileLabel, false);
 
-			assert(marker1, "Returned marker undefined.");
+			assert(tile1, "Returned tile undefined.");
 
-			assert.equal(
-				client.localReferencePositionToPosition(marker1),
-				0,
-				"Tile with label not at expected position",
-			);
+			assert.equal(tile1.pos, 0, "Tile with label not at expected position");
 		});
 
-		it("Should be able to find only preceding but not non preceding marker with index out of bound", () => {
-			const markerLabel = "EOP";
+		it("Should be able to find only preceding but not non preceding tile with index out of bound", () => {
+			const tileLabel = "EOP";
 			client.insertMarkerLocal(0, ReferenceType.Tile, {
-				[reservedTileLabelsKey]: [markerLabel],
+				[reservedTileLabelsKey]: [tileLabel],
 				[reservedMarkerIdKey]: "some-id",
 			});
 
@@ -191,47 +167,43 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			const marker = client.searchForMarker(5, markerLabel);
+			const tile = client.findTile(5, tileLabel);
 
-			assert(marker, "Returned marker undefined.");
+			assert(tile, "Returned tile undefined.");
 
-			assert.equal(
-				client.localReferencePositionToPosition(marker),
-				3,
-				"Tile with label not at expected position",
-			);
+			assert.equal(tile.pos, 3, "Tile with label not at expected position");
 
-			const marker1 = client.searchForMarker(5, markerLabel, false);
+			const tile1 = client.findTile(5, tileLabel, false);
 
-			assert.equal(typeof marker1, "undefined", "Returned marker should be undefined.");
+			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 		});
 
-		it("Should return undefined when trying to find marker from text without the specified marker", () => {
-			const markerLabel = "EOP";
+		it("Should return undefined when trying to find tile from text without the specified tile", () => {
+			const tileLabel = "EOP";
 			client.insertTextLocal(0, "abc");
 			console.log(client.getText());
 
 			assert.equal(client.getLength(), 3, "length not expected");
 
-			const marker = client.searchForMarker(1, markerLabel);
+			const tile = client.findTile(1, tileLabel);
 
-			assert.equal(marker, undefined, "Returned marker should be undefined.");
+			assert.equal(typeof tile, "undefined", "Returned tile should be undefined.");
 
-			const marker1 = client.searchForMarker(1, markerLabel, false);
+			const tile1 = client.findTile(1, tileLabel, false);
 
-			assert.equal(marker1, undefined, "Returned marker should be undefined.");
+			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 		});
 
-		it("Should return undefined when trying to find marker from null text", () => {
-			const markerLabel = "EOP";
+		it("Should return undefined when trying to find tile from null text", () => {
+			const tileLabel = "EOP";
 
-			const marker = client.searchForMarker(1, markerLabel);
+			const tile = client.findTile(1, tileLabel);
 
-			assert.equal(marker, undefined, "Returned marker should be undefined.");
+			assert.equal(typeof tile, "undefined", "Returned tile should be undefined.");
 
-			const marker1 = client.searchForMarker(1, markerLabel, false);
+			const tile1 = client.findTile(1, tileLabel, false);
 
-			assert.equal(marker1, undefined, "Returned marker should be undefined.");
+			assert.equal(typeof tile1, "undefined", "Returned tile should be undefined.");
 		});
 	});
 

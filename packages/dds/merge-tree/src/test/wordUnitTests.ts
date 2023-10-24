@@ -164,8 +164,8 @@ function measureFetch(startFile: string, withBookmarks = false) {
 			//     caBegin = 0;
 			// }
 			// curPG.pos is ca end
-			const curPG = client.searchForMarker(pos, "pg", false)!;
-			const properties = curPG.properties!;
+			const curPG = client.findTile(pos, "pg", false)!;
+			const properties = curPG.tile.properties!;
 			const curSegOff = client.getContainingSegment(pos)!;
 			const curSeg = curSegOff.segment!;
 			// Combine paragraph and direct properties
