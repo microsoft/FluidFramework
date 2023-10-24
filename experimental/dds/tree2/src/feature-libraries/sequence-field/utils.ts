@@ -93,15 +93,7 @@ export function isActiveReattach<T>(
 	return (
 		isAttach(mark) &&
 		isReattachEffect(mark, mark.cellId) &&
-		!isConflictedReattach(mark, mark.cellId)
-	);
-}
-
-// XXX: Duplicate with below
-// TODO: Name is misleading
-export function isConflictedReattach(effect: MarkEffect, cellId: CellId | undefined): boolean {
-	return (
-		isAttach(effect) && isReattachEffect(effect, cellId) && isReattachConflicted(effect, cellId)
+		!isReattachConflicted(mark, mark.cellId)
 	);
 }
 

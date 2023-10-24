@@ -13,13 +13,10 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getEffectiveNodeChanges,
-	getEndpoint,
 	getOutputCellId,
-	isInsert,
 	isNewAttach,
 	isTransientEffect,
 } from "./utils";
-import { isMoveDestination, isMoveSource } from "./moveEffectTable";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
 
