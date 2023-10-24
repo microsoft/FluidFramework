@@ -27,6 +27,7 @@ import {
 	TestTreeProviderLite,
 	createTestUndoRedoStacks,
 	emptyJsonSequenceConfig,
+	expectSchemaEqual,
 	initializeTestTree,
 	jsonSequenceRootSchema,
 	toJsonableTree,
@@ -114,6 +115,29 @@ describe("SharedTree", () => {
 		root.content = 2;
 		assert(leafNode.treeStatus() !== TreeStatus.InDocument);
 		assert.equal(root.content, 2);
+	});
+
+	it("contentSnapshot", () => {
+		const factory = new SharedTreeFactory();
+		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+		{
+			const snapshot = sharedTree.contentSnapshot();
+			assert.deepEqual(snapshot.tree, []);
+			expectSchemaEqual(snapshot.schema, {
+				rootFieldSchema: storedEmptyFieldSchema,
+				treeSchema: new Map(),
+			});
+		}
+		sharedTree.schematize({
+			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+			initialTree: [1],
+			schema: jsonSequenceRootSchema,
+		});
+		{
+			const snapshot = sharedTree.contentSnapshot();
+			assert.deepEqual(snapshot.tree, [{ type: leaf.number.name, value: 1 }]);
+			expectSchemaEqual(snapshot.schema, jsonSequenceRootSchema);
+		}
 	});
 
 	it("can be connected to another tree", async () => {

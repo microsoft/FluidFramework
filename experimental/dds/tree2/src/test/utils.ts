@@ -42,7 +42,7 @@ import {
 	InitializeAndSchematizeConfiguration,
 	ISharedTreeBranchView,
 	runSynchronous,
-	TreeSnapshot,
+	SharedTreeContentSnapshot,
 } from "../shared-tree";
 import {
 	Any,
@@ -578,8 +578,8 @@ export function validateViewConsistency(
 }
 
 export function validateSnapshotConsistency(
-	treeA: TreeSnapshot,
-	treeB: TreeSnapshot,
+	treeA: SharedTreeContentSnapshot,
+	treeB: SharedTreeContentSnapshot,
 	idDifferentiator: string | undefined = undefined,
 ): void {
 	assert.deepEqual(

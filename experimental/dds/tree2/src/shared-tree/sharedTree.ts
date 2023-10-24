@@ -53,9 +53,11 @@ import {
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
+ * @remarks
+ * This is unrelated to Fluids concept of "snapshots".
  * @alpha
  */
-export interface TreeSnapshot {
+export interface SharedTreeContentSnapshot {
 	/**
 	 * The schema stored in the document.
 	 *
@@ -93,7 +95,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	 *
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
-	contentSnapshot(): TreeSnapshot;
+	contentSnapshot(): SharedTreeContentSnapshot;
 
 	/**
 	 * Takes in a tree and returns a view of it that conforms to the view schema.
@@ -182,7 +184,7 @@ export class SharedTree
 		});
 	}
 
-	public contentSnapshot(): TreeSnapshot {
+	public contentSnapshot(): SharedTreeContentSnapshot {
 		const cursor = this.view.forest.allocateCursor();
 		try {
 			moveToDetachedField(this.view.forest, cursor);
