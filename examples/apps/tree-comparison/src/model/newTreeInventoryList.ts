@@ -44,11 +44,10 @@ const schema = builder.toDocumentSchema(inventorySchema);
 
 const newTreeFactory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,
-	// REV: I copied this from another example but I have no idea what it means - documentation is
-	// self-referencing.
+	// For now, ignore the forest argument - I think it's probably going away once the optimized one is ready anyway?  AB#6013
 	forest: ForestType.Reference,
-	// REV: What's the scenario where I'd want to leverage the subtype?  Documentation makes it sound
-	// like it should be optional at least.
+	// For now, ignore the subtype.  However, be aware that it is written into the document and so must remain consistent
+	// in order to load existing documents.  AB#6014
 	subtype: "InventoryList",
 });
 
