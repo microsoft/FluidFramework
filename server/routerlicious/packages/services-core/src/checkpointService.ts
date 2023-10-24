@@ -102,6 +102,10 @@ export class CheckpointService implements ICheckpointService {
 		localCheckpointEnabled: boolean,
 		writeToLocalOnFailure: boolean = false,
 	) {
+		const globalCheckpointErrorMetric = Lumberjack.newLumberMetric(
+			LumberEventName.GlobalCheckpointError,
+		);
+
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
 		let deleteLocalCheckpoint = true;
 
@@ -132,11 +136,18 @@ export class CheckpointService implements ICheckpointService {
 						`Error writing checkpoint to global database. Writing to local database.`,
 						lumberProperties,
 					);
+					globalCheckpointErrorMetric.setProperties({
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: documentId,
+						service,
+					});
 					await this.writeLocalCheckpoint(documentId, tenantId, checkpoint);
+					globalCheckpointErrorMetric.success(
+						`Local checkpoint successful after global checkpoint failure.`,
+					);
 				} catch (err) {
-					console.log(
-						`Error writing checkpoint to local database after global database failure.`,
-						lumberProperties,
+					globalCheckpointErrorMetric.error(
+						`Local checkpoint failed after global checkpoint failure.`,
 						err,
 					);
 					throw err;
