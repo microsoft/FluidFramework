@@ -175,7 +175,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		setInterval(() => {
 			for (const [workerId, lastHeartbeat] of this.lastHeartbeatMap.entries()) {
 				const msSinceLastHeartbeat = Date.now() - lastHeartbeat;
-				if (msSinceLastHeartbeat >= heartbeatTimeoutMs) {
+				if (msSinceLastHeartbeat > heartbeatTimeoutMs) {
 					const worker = cluster.workers?.[workerId];
 					if (!worker) {
 						Lumberjack.error("Could not find worker after heartbeat timeout.", {

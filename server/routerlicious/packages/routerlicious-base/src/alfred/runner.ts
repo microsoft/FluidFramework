@@ -143,7 +143,8 @@ export class AlfredRunner implements IRunner {
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
 			);
-			// Listen on primary thread port, on all network interfaces.
+			// Listen on primary thread port, on all network interfaces,
+			// or allow cluster module to assign random port for worker thread.
 			httpServer.listen(cluster.isPrimary ? this.port : 0);
 
 			if (this.tokenRevocationManager) {

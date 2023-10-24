@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import cluster from "cluster";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IRunner,
@@ -61,7 +62,8 @@ export class RiddlerRunner implements IRunner {
 		this.server = this.serverFactory.create(riddler);
 		const httpServer = this.server.httpServer;
 
-		httpServer.listen(this.port);
+		// Listen on primary thread port, or allow cluster module to assign random port for worker thread.
+		httpServer.listen(cluster.isPrimary ? this.port : 0);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
