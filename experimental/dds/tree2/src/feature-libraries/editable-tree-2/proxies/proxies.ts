@@ -502,11 +502,8 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 
 			if (key === "get") {
 				return (mapKey: string) => {
-					const field = getMapNode(dispatch).getBoxed(mapKey);
-					if (field !== undefined) {
-						return getProxyForField(field);
-					}
-					return undefined;
+					const mapNode = getMapNode(dispatch);
+					return getProxyForField(mapNode.getBoxed(mapKey));
 				};
 			}
 
