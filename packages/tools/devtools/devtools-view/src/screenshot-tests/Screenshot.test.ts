@@ -18,6 +18,7 @@ import { simpleGit, pathspec } from "simple-git";
 import { ThemeOption } from "../ThemeHelper.js";
 
 const { default: chalk } = chalkLib;
+
 /**
  * Viewport configuration for running a screenshot test.
  */

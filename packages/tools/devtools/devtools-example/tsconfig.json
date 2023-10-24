@@ -4,6 +4,7 @@
 		"rootDir": "src",
 		"outDir": "dist",
 		"module": "ESNext",
+		"moduleResolution": "node16",
 		"composite": true,
 		"jsx": "react",
 		"types": ["jest", "node", "puppeteer", "jest-environment-puppeteer"],

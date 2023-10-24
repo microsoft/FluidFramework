@@ -22,26 +22,6 @@
 				"default": "./dist/index.js"
 			}
 		},
-		"./beta": {
-			"import": {
-				"types": "./lib/devtools-core-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/devtools-core-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/devtools-core-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/devtools-core-alpha.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
 		"./internal": {
 			"import": {
 				"types": "./lib/devtools-core-untrimmed.d.ts",
