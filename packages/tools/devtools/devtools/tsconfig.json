@@ -5,6 +5,7 @@
 		"outDir": "dist",
 		"composite": true,
 		"types": ["chai", "mocha"],
+		"moduleResolution": "node16",
 	},
 	"include": ["src/**/*"],
 }
