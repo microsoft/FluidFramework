@@ -60,6 +60,9 @@ variables:
   - name: testWorkspace
     value: $(Pipeline.Workspace)/test
     readonly: true
+  - name: testFilesPath
+    value: $(Pipeline.Workspace)/test-files
+    readonly: true
   - name: artifactPipeline
     value: $(resources.pipeline.client.pipelineName)
     readonly: true
@@ -70,6 +73,7 @@ variables:
     value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: prague-key-vault
+  - group: ado-feeds
 
 lockBehavior: sequential
 stages:
@@ -85,11 +89,16 @@ stages:
     - job: perf_unit_tests_runtime
       displayName: Perf unit tests - runtime
       pool: ${{ parameters.poolBuild }}
-      variables:
-      - group: ado-feeds
-
       steps:
       - template: templates/include-test-perf-benchmarks.yml
+        parameters:
+          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+          artifactBuildId: $(artifactBuildId)
+          artifactPipeline: $(artifactPipeline)
+          devFeedUrl: $(ado-feeds-dev)
+          officeFeedUrl: $(ado-feeds-office)
+          testFilesPath: $(testFilesPath)
+          testWorkspace: $(testWorkspace)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
@@ -151,9 +160,9 @@ stages:
               TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+              tar -xvf $(testFilesPath)/$TAR_FILE.test-files.tar -C $(testFilesPath)
+              mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+              mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
 
         # Run tests
         - task: Bash@3
@@ -242,11 +251,16 @@ stages:
     - job: perf_unit_tests_memory
       displayName: Perf unit tests - memory
       pool: ${{ parameters.poolBuild }}
-      variables:
-      - group: ado-feeds
-
       steps:
       - template: templates/include-test-perf-benchmarks.yml
+        parameters:
+          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+          artifactBuildId: $(artifactBuildId)
+          artifactPipeline: $(artifactPipeline)
+          devFeedUrl: $(ado-feeds-dev)
+          officeFeedUrl: $(ado-feeds-office)
+          testFilesPath: $(testFilesPath)
+          testWorkspace: $(testWorkspace)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
@@ -308,9 +322,9 @@ stages:
               TAR_FILE=${{ replace(replace(replace(replace(testPackage, '@fluidframework/', '' ), '@fluid-internal/', '' ),'@fluid-', '' ), '/', '-') }}
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
               mkdir -p ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
-              tar -xvf $(Pipeline.Workspace)/test-files/$TAR_FILE.test-files.tar -C $(Pipeline.Workspace)/test-files
-              mv $(Pipeline.Workspace)/test-files/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
-              mv $(Pipeline.Workspace)/test-files/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
+              tar -xvf $(testFilesPath)/$TAR_FILE.test-files.tar -C $(testFilesPath)
+              mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
+              mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
 
         # Run tests
         - task: Bash@3
@@ -400,11 +414,16 @@ stages:
         displayName: Perf unit tests - memory
         pool: ${{ parameters.poolBuild }}
         timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 60) }}
-        variables:
-        - group: ado-feeds
-
         steps:
         - template: templates/include-test-perf-benchmarks.yml
+          parameters:
+            # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
+            devFeedUrl: $(ado-feeds-dev)
+            officeFeedUrl: $(ado-feeds-office)
+            testFilesPath: $(testFilesPath)
+            testWorkspace: $(testWorkspace)
 
         # Download package with performance tests
         - task: DownloadPipelineArtifact@2
@@ -615,12 +634,10 @@ stages:
     - job: upload_run_telemetry
       displayName: Upload pipeline run telemetry to Kusto
       pool: Small
-      variables:
-      - group: ado-feeds
-
       steps:
       - template: templates/include-telemetry-setup.yml
         parameters:
+          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           devFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
 
