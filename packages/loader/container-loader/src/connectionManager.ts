@@ -694,14 +694,6 @@ export class ConnectionManager implements IConnectionManager {
 			return;
 		}
 
-		this.logger.sendTelemetryEvent(
-			{
-				eventName: "SettingUpNewConnection",
-				connected: connection !== undefined && connection.disposed === false,
-			},
-			undefined,
-			LogLevel.verbose,
-		);
 		this.setupNewSuccessfulConnection(connection, requestedMode, reason);
 	}
 
