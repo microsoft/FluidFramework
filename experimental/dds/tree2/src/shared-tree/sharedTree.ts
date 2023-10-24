@@ -60,7 +60,7 @@ export interface TreeSnapshot {
 	 * The schema stored in the document.
 	 *
 	 * @remarks
-	 * Edits to the schema (by this or other clients) can change this: this is only a snapshot of a point in time.
+	 * Edits to the schema can mutate the schema stored of the tree which took this snapshot (but this snapshot will remain the same)
 	 * This is mainly useful for debugging cases where schematize reports an incompatible view schema.
 	 */
 	readonly schema: TreeStoredSchema;
