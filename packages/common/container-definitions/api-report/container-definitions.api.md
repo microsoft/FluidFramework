@@ -381,11 +381,9 @@ export interface IFluidPackageEnvironment {
 
 export { IGenericError }
 
-// @beta
+// @alpha
 export interface IGetPendingLocalStateProps {
-    // (undocumented)
     readonly notifyImminentClosure: boolean;
-    // (undocumented)
     readonly stopWaitingAttachingSignal?: AbortSignal;
 }
 
@@ -464,7 +462,7 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint(): Promise<FluidObject | undefined>;
-    // @beta
+    // @alpha
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;

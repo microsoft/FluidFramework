@@ -964,6 +964,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							eventName: "UnableToStashBlob",
 							id,
 						});
+						// used to avoid sending the blob attach op if it gets uploaded before closing
 						entry.unableToStash = true;
 						continue;
 					}
