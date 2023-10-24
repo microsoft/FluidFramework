@@ -124,16 +124,10 @@
 			"enable": true
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
-		"useNodeCluster": true,
-		"nodeClusterConfig": {
-			"numMaxWorkers": 2
-		}
+		"useNodeCluster": false
 	},
 	"riddler": {
-		"useNodeCluster": true,
-		"nodeClusterConfig": {
-			"numMaxWorkers": 2
-		}
+		"useNodeCluster": false
 	},
 	"client": {
 		"type": "browser",
