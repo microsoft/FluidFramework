@@ -217,7 +217,7 @@ export class SchemaBuilderBase<
 	 * TODO: Make this work with ImplicitFieldSchema.
 	 */
 	public objectRecursive<
-		Name extends TName,
+		const Name extends TName,
 		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
 	>(name: Name, t: T): TreeNodeSchema<`${TScope}.${Name}`, { objectNodeFields: T }> {
 		return this.object(

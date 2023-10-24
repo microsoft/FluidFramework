@@ -15,8 +15,8 @@ import {
 	type SharedTree as LegacySharedTree,
 } from "@fluid-experimental/tree";
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
-import { MigrationShim } from "./migrationShim";
-import { attributesMatch } from "./utils";
+import { MigrationShim } from "./migrationShim.js";
+import { attributesMatch } from "./utils.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link MigrationShim}.

@@ -36,3 +36,9 @@ export {
 	Forbidden,
 	SequenceFieldKind,
 } from "./feature-libraries";
+
+export {
+	FactoryObjectNodeSchema,
+	FactoryObjectNodeSchemaRecursive,
+	testRecursiveDomain,
+} from "./domains";

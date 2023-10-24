@@ -12,8 +12,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 
 import { type SharedTreeFactory } from "@fluid-experimental/tree2";
-import { SharedTreeShim } from "./sharedTreeShim";
-import { attributesMatch } from "./utils";
+import { SharedTreeShim } from "./sharedTreeShim.js";
+import { attributesMatch } from "./utils.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedTreeShim}.

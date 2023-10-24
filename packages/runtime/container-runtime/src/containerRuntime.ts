@@ -222,6 +222,9 @@ function prepareLocalContainerRuntimeIdAllocationMessageForTransit(
 	}
 }
 
+/**
+ * @public
+ */
 export interface ISummaryBaseConfiguration {
 	/**
 	 * Delay before first attempt to spawn summarizing container.
@@ -241,6 +244,9 @@ export interface ISummaryBaseConfiguration {
 	maxOpsSinceLastSummary: number;
 }
 
+/**
+ * @public
+ */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
 	/**
@@ -301,19 +307,31 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 	nonRuntimeHeuristicThreshold?: number;
 }
 
+/**
+ * @public
+ */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
+/**
+ * @public
+ */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
+/**
+ * @public
+ */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer
 	| ISummaryConfigurationDisableHeuristics
 	| ISummaryConfigurationHeuristics;
 
+/**
+ * @public
+ */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
 
@@ -340,6 +358,9 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	nonRuntimeHeuristicThreshold: 20,
 };
 
+/**
+ * @public
+ */
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
 	summaryConfigOverrides?: ISummaryConfiguration;
@@ -355,6 +376,7 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
+ * @public
  */
 export interface ICompressionRuntimeOptions {
 	/**
@@ -372,6 +394,7 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
+ * @public
  */
 export interface IContainerRuntimeOptions {
 	readonly summaryOptions?: ISummaryRuntimeOptions;
@@ -453,6 +476,7 @@ export interface IContainerRuntimeOptions {
 
 /**
  * Accepted header keys for requests coming to the runtime.
+ * @public
  */
 export enum RuntimeHeaders {
 	/** True to wait for a data store to be created and loaded before returning it. */
@@ -461,14 +485,25 @@ export enum RuntimeHeaders {
 	viaHandle = "viaHandle",
 }
 
-/** True if a tombstoned object should be returned without erroring */
+/** True if a tombstoned object should be returned without erroring
+ * @public
+ */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
-/** [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring */
+/**
+ * [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring
+ * @public
+ */
 export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
-/** Tombstone error responses will have this header set to true */
+/**
+ * Tombstone error responses will have this header set to true
+ * @public
+ */
 export const TombstoneResponseHeaderKey = "isTombstoned";
-/** Inactive error responses will have this header set to true */
+/**
+ * Inactive error responses will have this header set to true
+ * @public
+ */
 export const InactiveResponseHeaderKey = "isInactive";
 
 /**
@@ -489,6 +524,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 
 /**
  * Available compression algorithms for op compression.
+ * @public
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
@@ -553,6 +589,7 @@ const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * @deprecated use ContainerRuntimeMessageType instead
+ * @public
  */
 export enum RuntimeMessage {
 	FluidDataStoreOp = "component",
@@ -566,6 +603,7 @@ export enum RuntimeMessage {
 
 /**
  * @deprecated please use version in driver-utils
+ * @public
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
@@ -575,6 +613,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
  * Legacy ID for the built-in AgentScheduler.  To minimize disruption while removing it, retaining this as a
  * special-case for document dirty state.  Ultimately we should have no special-cases from the
  * ContainerRuntime's perspective.
+ * @public
  */
 export const agentSchedulerId = "_scheduler";
 
@@ -674,6 +713,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 
 /**
  * This function is not supported publicly and exists for e2e testing
+ * @internal
  */
 export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
 	return createSummarizer(loader, url);
@@ -682,6 +722,7 @@ export async function TEST_requestSummarizer(loader: ILoader, url: string): Prom
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
+ * @public
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
@@ -3746,7 +3787,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			const fetchResult = await this.fetchSnapshotFromStorage(
+			const fetchResult = await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3754,7 +3795,6 @@ export class ContainerRuntime
 					targetSequenceNumber: summaryRefSeq,
 				},
 				readAndParseBlob,
-				null,
 			);
 
 			/**
@@ -3803,13 +3843,12 @@ export class ContainerRuntime
 
 		// This is a performance optimization as the same parent is likely to be elected again, and would use its
 		// cache to fetch the snapshot instead of the network.
-		await this.fetchSnapshotFromStorage(
+		await this.fetchLatestSnapshotFromStorage(
 			summaryLogger,
 			{
 				eventName: "RefreshLatestSummaryFromServerFetch",
 			},
 			readAndParseBlob,
-			null,
 		);
 
 		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
@@ -3830,15 +3869,14 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Downloads snapshot from storage with the given versionId or latest if versionId is null.
+	 * Downloads the latest snapshot from storage.
 	 * By default, it also closes the container after downloading the snapshot. However, this may be
 	 * overridden via options.
 	 */
-	private async fetchSnapshotFromStorage(
+	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
-		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
@@ -3860,10 +3898,10 @@ export class ContainerRuntime
 				const trace = Trace.start();
 
 				const versions = await this.storage.getVersions(
-					versionId,
+					null,
 					1,
 					"prefetchLatestSummaryBeforeClose",
-					versionId === null ? FetchSource.noCache : undefined,
+					FetchSource.noCache,
 				);
 				assert(
 					!!versions && !!versions[0],

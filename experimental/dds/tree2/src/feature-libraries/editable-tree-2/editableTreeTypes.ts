@@ -419,7 +419,7 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
 	/**
 	 * Value stored on this node.
 	 */
-	readonly value: SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>;
+	readonly value: TreeValue<TSchema["leafValue"]>;
 }
 
 /**
@@ -871,7 +871,7 @@ export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonl
  * @alpha
  */
 export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema
-	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>
+	? TreeValue<TSchema["leafValue"]>
 	: TSchema extends MapSchema
 	? MapNode<TSchema>
 	: TSchema extends FieldNodeSchema

@@ -77,6 +77,8 @@ export class SharedTreeShim implements IChannel {
     // (undocumented)
     create(): void;
     // (undocumented)
+    get currentTree(): ISharedTree;
+    // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
