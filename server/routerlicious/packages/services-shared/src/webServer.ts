@@ -174,13 +174,19 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 	private readonly lastHeartbeatMap: Map<number, number> = new Map();
 	private readonly newForkTimeouts: Map<number, NodeJS.Timeout> = new Map();
 	private readonly disconnectTimeouts: Map<number, NodeJS.Timeout> = new Map();
-	private readonly heartbeatIntervalMs: number;
+	private readonly clusterConfig: INodeClusterConfig;
 
 	constructor(
 		private readonly httpServerConfig?: IHttpServerConfig,
-		private readonly clusterConfig?: Partial<INodeClusterConfig>,
+		clusterConfig?: Partial<INodeClusterConfig>,
 	) {
-		this.heartbeatIntervalMs = this.clusterConfig?.workerHeartbeatIntervalMs ?? 5000;
+		// Setup cluster config with defaults.
+		this.clusterConfig = {
+			workerTimeoutNumMissedHeartbeats: clusterConfig?.workerTimeoutNumMissedHeartbeats ?? 3,
+			workerHeartbeatIntervalMs: clusterConfig?.workerHeartbeatIntervalMs ?? 5000,
+			workerForkTimeoutMs: clusterConfig?.workerForkTimeoutMs ?? 10000,
+			numMaxWorkers: clusterConfig?.numMaxWorkers ?? availableParallelism(),
+		};
 	}
 
 	public create(requestListener: RequestListener): core.IWebServer {
@@ -199,7 +205,8 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 
 		// Regularly kill stuck workers
 		const heartbeatTimeoutMs =
-			(this.clusterConfig?.workerTimeoutNumMissedHeartbeats ?? 3) * this.heartbeatIntervalMs;
+			(this.clusterConfig.workerTimeoutNumMissedHeartbeats ?? 3) *
+			this.clusterConfig.workerHeartbeatIntervalMs;
 		setInterval(() => {
 			for (const [workerId, lastHeartbeat] of this.lastHeartbeatMap.entries()) {
 				const msSinceLastHeartbeat = Date.now() - lastHeartbeat;
@@ -226,25 +233,22 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 
 		// Kill workers when they take too long to spawn.
 		cluster.on("fork", (worker) => {
-			const timeout = setTimeout(
-				() => {
-					Lumberjack.error("Timed out waiting for worker to spawn.", {
-						id: worker.id,
-						pid: worker.process.pid,
-					});
+			const timeout = setTimeout(() => {
+				Lumberjack.error("Timed out waiting for worker to spawn.", {
+					id: worker.id,
+					pid: worker.process.pid,
+				});
 
-					// Make sure worker dies.
-					this.killWorker(worker);
+				// Make sure worker dies.
+				this.killWorker(worker);
 
-					// Remove timeout from map.
-					this.newForkTimeouts.delete(worker.id);
+				// Remove timeout from map.
+				this.newForkTimeouts.delete(worker.id);
 
-					// Spawn a new worker to replace timed out worker.
-					Lumberjack.info(`Spawning new worker to replace timed out worker.`);
-					this.spawnWorker();
-				},
-				this.clusterConfig?.workerForkTimeoutMs,
-			);
+				// Spawn a new worker to replace timed out worker.
+				Lumberjack.info(`Spawning new worker to replace timed out worker.`);
+				this.spawnWorker();
+			}, this.clusterConfig.workerForkTimeoutMs);
 			this.newForkTimeouts.set(worker.id, timeout);
 		});
 		cluster.on("listening", (worker, address) => {
@@ -275,7 +279,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		});
 
 		// Spawn initial number of workers according to configs or available CPUs
-		const numWorkers = this.clusterConfig?.numMaxWorkers ?? availableParallelism();
+		const numWorkers = this.clusterConfig.numMaxWorkers;
 		Lumberjack.info(`Spawning ${numWorkers} cluster workers.`);
 		for (let i = 0; i < numWorkers; i++) {
 			this.spawnWorker();
@@ -290,7 +294,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		setInterval(() => {
 			const heartbeatMsg: IWorkerHeartbeatMessage = { type: "heartbeat" };
 			process.send?.(heartbeatMsg);
-		}, this.heartbeatIntervalMs);
+		}, this.clusterConfig.workerHeartbeatIntervalMs);
 
 		// Create the base HTTP server and register the provided request listener
 		const server = createAndConfigureHttpServer(requestListener, this.httpServerConfig);
