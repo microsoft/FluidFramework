@@ -38,7 +38,7 @@ export class SharedTreeShim implements IChannel {
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly sharedTreeFactory: SharedTreeFactory,
 	) {
-		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler();
+		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler(sharedTreeFactory.attributes);
 	}
 
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;

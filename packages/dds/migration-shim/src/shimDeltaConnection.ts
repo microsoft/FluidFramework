@@ -5,7 +5,7 @@
 
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IDeltaConnection, type IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { type IShimDeltaHandler } from "./types.js";
+import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
 
 /**
  * Represents a connection to a Shim data store that can receive and submit deltas.
@@ -33,8 +33,8 @@ export class ShimDeltaConnection implements IDeltaConnection {
 	}
 
 	// Should we be adding some metadata here?
-	public submit(messageContent: unknown, localOpMetadata: unknown): void {
-		// TODO: stamp messageContent with V2 metadata - this is not the final implementation
+	public submit(messageContent: IStampedContents, localOpMetadata: unknown): void {
+		this.shimDeltaHandler.preSubmit(messageContent, localOpMetadata);
 		this.deltaConnection.submit(messageContent, localOpMetadata);
 	}
 

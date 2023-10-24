@@ -351,4 +351,62 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			"Failed to write from SharedTreeShim to MigrationShim",
 		);
 	});
+
+	it("Can drop v1 ops and migrate ops", async () => {
+		// Setup containers and get Migration Shims instead of LegacySharedTrees
+		const container1 = await provider.loadContainer(runtimeFactory2);
+		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
+		const shim1 = testObj1.getTree<MigrationShim>();
+		const legacyTree1 = shim1.currentTree as LegacySharedTree;
+
+		const container2 = await provider.loadContainer(runtimeFactory2);
+		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
+		const shim2 = testObj2.getTree<MigrationShim>();
+		const legacyTree2 = shim2.currentTree as LegacySharedTree;
+
+		await provider.opProcessingController.pauseProcessing();
+		shim1.submitMigrateOp();
+
+		const nodeId = "someNode" as TraitLabel;
+		const newNode = (val: number): BuildNode => {
+			return {
+				definition: nodeId,
+				traits: {
+					someValue: {
+						definition: "someValue",
+						payload: val,
+					},
+				},
+			};
+		};
+		legacyTree1.applyEdit(
+			Change.insertTree(
+				newNode(1),
+				StablePlace.atStartOf({
+					parent: legacyTree1.currentView.root,
+					label: nodeId,
+				}),
+			),
+		);
+
+		legacyTree2.applyEdit(
+			Change.insertTree(
+				newNode(2),
+				StablePlace.atStartOf({
+					parent: legacyTree2.currentView.root,
+					label: nodeId,
+				}),
+			),
+		);
+
+		shim2.submitMigrateOp();
+
+		// Wait for "migrated" event on both shims.
+		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
+		const promise2 = new Promise<void>((resolve) => shim2.on("migrated", () => resolve()));
+		provider.opProcessingController.resumeProcessing();
+		await promise1;
+		await promise2;
+		await provider.ensureSynchronized();
+	});
 });

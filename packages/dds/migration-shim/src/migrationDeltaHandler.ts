@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { type IShimDeltaHandler } from "./types.js";
+import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
+import { isStampedMessage } from "./utils.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
@@ -26,7 +27,19 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 			local: boolean,
 			localOpMetadata: unknown,
 		) => boolean,
+		private readonly attributes: IChannelAttributes,
 	) {}
+
+	public preSubmit(content: IStampedContents, _: unknown): void {
+		assert(!this.isPreAttachState(), "Can't submit ops before attaching tree handler");
+		if (this.isUsingOldV1()) {
+			return;
+		}
+		assert(this.isUsingNewV2(), "Should be using new handler after swap");
+		content.fluidMigrationStamp = {
+			...this.attributes,
+		};
+	}
 	// Note: we may only need to stamp v2 ops as v1 ops can be considered non-stamped ops.
 
 	// Introduction of invariant, we always expect an old handler.
@@ -71,8 +84,22 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		// TODO: maybe call this preprocess shim op
-		if (this.processMigrateOp(message, local, localOpMetadata)) {
+		assert(!this.isPreAttachState(), "Can't process ops before attaching tree handler");
+		if (
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+			message.type !== MessageType.Operation
+		) {
 			return;
+		}
+		if (this.isUsingOldV1()) {
+			if (this.processMigrateOp(message, local, localOpMetadata)) {
+				return;
+			}
+		} else {
+			// Drop v1 ops
+			if (!isStampedMessage(message, this.attributes)) {
+				return;
+			}
 		}
 		// Another thought, flatten the IShimDeltaHandler and the MigrationShim into one class
 		// TODO: drop extra migration ops and drop v1 ops after migration

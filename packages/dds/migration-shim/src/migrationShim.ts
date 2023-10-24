@@ -30,6 +30,7 @@ import { assert } from "@fluidframework/core-utils";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
 import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
+import { type IStampedContents } from "./types.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -91,7 +92,10 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	) {
 		super();
 		// TODO: consider flattening this class
-		this.migrationDeltaHandler = new MigrationShimDeltaHandler(this.processMigrateOp);
+		this.migrationDeltaHandler = new MigrationShimDeltaHandler(
+			this.processMigrateOp,
+			this.newTreeFactory.attributes,
+		);
 	}
 
 	// TODO: process migrate op implementation, it'll look something like this
@@ -135,7 +139,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		// This is a copy of submit local message from SharedObject
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(migrateOp, undefined);
+			this.services!.deltaConnection.submit(migrateOp as IStampedContents, undefined);
 		}
 	}
 
