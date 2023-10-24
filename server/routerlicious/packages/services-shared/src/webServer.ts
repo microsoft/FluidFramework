@@ -138,6 +138,38 @@ export interface INodeClusterConfig {
 }
 type WorkerMessage = IWorkerHeartbeatMessage | IWorkerShutdownMessage;
 
+class NullHttpServer implements core.IHttpServer {
+	constructor() {}
+
+	public async close(): Promise<void> {
+		// Do nothing
+	}
+
+	public listen(port: any) {
+		// Do nothing
+	}
+
+	public on(event: string, listener: (...args: any[]) => void) {
+		// Do nothing
+	}
+
+	public address(): AddressInfo {
+		// Do nothing
+		return { address: "", family: "", port: 0 };
+	}
+}
+class NullWebServer implements core.IWebServer {
+	public readonly httpServer: NullHttpServer = new NullHttpServer();
+	public webSocketServer: core.IWebSocketServer = null as unknown as core.IWebSocketServer;
+
+	/**
+	 * Closes the web server
+	 */
+	public async close(): Promise<void> {
+		// Do nothing
+	}
+}
+
 export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 	private readonly lastHeartbeatMap: Map<number, number> = new Map();
 	private readonly newForkTimeouts: Map<number, NodeJS.Timeout> = new Map();
@@ -152,22 +184,18 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 	}
 
 	public create(requestListener: RequestListener): core.IWebServer {
-		const httpServer = cluster.isPrimary
-			? this.initializePrimaryThread()
-			: this.initializeWorkerThread(requestListener);
+		if (cluster.isPrimary) {
+			this.initializePrimaryThread();
+			return new NullWebServer();
+		}
+		const httpServer = this.initializeWorkerThread(requestListener);
 
 		return new WebServer(new HttpServer(httpServer), null as unknown as core.IWebSocketServer);
 	}
 
-	protected initializePrimaryThread(
-		additionalServerSetup?: (server: http.Server) => void,
-	): http.Server {
+	protected initializePrimaryThread(): void {
 		// Init Primary cluster thread
 		Lumberjack.info(`Primary cluster process is running.`, { pid: process.pid });
-
-		// Create a blank HTTP Server that will distribute incoming requests to worker nodes.
-		const server = createAndConfigureHttpServer(undefined, undefined);
-		additionalServerSetup?.(server);
 
 		// Regularly kill stuck workers
 		const heartbeatTimeoutMs =
@@ -183,11 +211,15 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 						});
 						return;
 					}
-					Lumberjack.error(`Worker heartbeat timeout.`, {
+					Lumberjack.error(`Worker heartbeat timeout. Killing.`, {
 						pid: worker?.process.pid,
 						msSinceLastHeartbeat,
 					});
 					this.killWorker(worker);
+
+					// Spawn a new worker to replace timed out worker.
+					Lumberjack.info(`Spawning new worker to replace killed worker.`);
+					this.spawnWorker();
 				}
 			}
 		}, heartbeatTimeoutMs);
@@ -206,6 +238,10 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 
 					// Remove timeout from map.
 					this.newForkTimeouts.delete(worker.id);
+
+					// Spawn a new worker to replace timed out worker.
+					Lumberjack.info(`Spawning new worker to replace timed out worker.`);
+					this.spawnWorker();
 				},
 				this.clusterConfig?.workerForkTimeoutMs,
 			);
@@ -236,12 +272,6 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 			this.newForkTimeouts.delete(worker.id);
 			clearTimeout(this.disconnectTimeouts.get(worker.id));
 			this.disconnectTimeouts.delete(worker.id);
-
-			// Spawn a new worker to replace dead worker if died due to error.
-			if (logLevel === "error") {
-				Lumberjack.info(`Spawning new worker to replace dead worker.`);
-				this.spawnWorker();
-			}
 		});
 
 		// Spawn initial number of workers according to configs or available CPUs
@@ -250,8 +280,6 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 		for (let i = 0; i < numWorkers; i++) {
 			this.spawnWorker();
 		}
-
-		return server;
 	}
 
 	protected initializeWorkerThread(requestListener: RequestListener): http.Server {
@@ -323,28 +351,25 @@ export class SocketIoNodeClusterWebServerFactory extends NodeClusterWebServerFac
 	}
 
 	public create(requestListener: RequestListener): core.IWebServer {
-		const httpServer = cluster.isPrimary
-			? this.initializePrimaryThread((server) => {
-					// Configure Socket.io Sticky load balancing
-					setupMaster(server, {
-						loadBalancingMethod: "least-connection", // either "random", "round-robin" or "least-connection"
-					});
-			  })
-			: this.initializeWorkerThread(requestListener);
 		if (cluster.isPrimary) {
-			return new WebServer(
-				new HttpServer(httpServer),
-				null as unknown as core.IWebSocketServer,
-			);
-		} else {
-			const socketIoServer = socketIo.create(
-				this.redisConfig,
-				httpServer,
-				this.socketIoAdapterConfig,
-				this.socketIoConfig,
-				setupWorker,
-			);
-			return new WebServer(new HttpServer(httpServer), socketIoServer);
+			this.initializePrimaryThread();
+			// Create a blank HTTP Server that will distribute incoming requests to worker nodes.
+			const server = createAndConfigureHttpServer(undefined, undefined);
+			// Configure Socket.io Sticky load balancing
+			setupMaster(server, {
+				loadBalancingMethod: "least-connection", // either "random", "round-robin" or "least-connection"
+			});
+			return new WebServer(new HttpServer(server), null as unknown as core.IWebSocketServer);
 		}
+		// Create a worker thread HTTP server and attach socket.io server to it.
+		const httpServer = this.initializeWorkerThread(requestListener);
+		const socketIoServer = socketIo.create(
+			this.redisConfig,
+			httpServer,
+			this.socketIoAdapterConfig,
+			this.socketIoConfig,
+			setupWorker,
+		);
+		return new WebServer(new HttpServer(httpServer), socketIoServer);
 	}
 }

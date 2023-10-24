@@ -45,9 +45,10 @@ export class RiddlerRunner implements IRunner {
 		this.runningDeferred = new Deferred<void>();
 
 		const usingClusterModule: boolean | undefined = this.config.get("riddler:useNodeCluster");
-		if (cluster.isPrimary && usingClusterModule) {
-			this.server = this.serverFactory.create(null);
-		} else {
+		// Don't include application logic in primary thread when Node.js cluster module is enabled.
+		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
+
+		if (includeAppLogic) {
 			// Create the HTTP server and attach alfred to it
 			const riddler = app.create(
 				this.tenantsCollection,
@@ -63,13 +64,15 @@ export class RiddlerRunner implements IRunner {
 			riddler.set("port", this.port);
 
 			this.server = this.serverFactory.create(riddler);
+		} else {
+			this.server = this.serverFactory.create(null);
 		}
 
 		const httpServer = this.server.httpServer;
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 		// Listen on primary thread port, or allow cluster module to assign random port for worker thread.
-		httpServer.listen(cluster.isPrimary ? this.port : 0);
+		httpServer.listen(this.port);
 
 		this.stopped = false;
 
