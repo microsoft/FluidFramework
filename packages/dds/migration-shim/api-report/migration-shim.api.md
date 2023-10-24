@@ -31,7 +31,7 @@ export interface IMigrationEvent extends IEvent {
 export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
     constructor(id: string, runtime: IFluidDataStoreRuntime, legacyTreeFactory: SharedTreeFactory, newTreeFactory: SharedTreeFactory_2, populateNewSharedObjectFn: (legacyTree: SharedTree, newTree: ISharedTree) => void);
     // (undocumented)
-    attributes: IChannelAttributes;
+    get attributes(): IChannelAttributes;
     // (undocumented)
     connect(services: IChannelServices): void;
     // (undocumented)
@@ -76,6 +76,8 @@ export class SharedTreeShim implements IChannel {
     connect(services: IChannelServices): void;
     // (undocumented)
     create(): void;
+    // (undocumented)
+    get currentTree(): ISharedTree;
     // (undocumented)
     getAttachSummary(fullTree?: boolean | undefined, trackState?: boolean | undefined, telemetryContext?: ITelemetryContext | undefined): ISummaryTreeWithStats;
     // (undocumented)

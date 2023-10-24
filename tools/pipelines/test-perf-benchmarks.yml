@@ -180,6 +180,21 @@ stages:
               script: |
                 echo "Run execution-time tests for ${{ testPackage }}"
                 cp ${{ variables.testWorkspace }}/.npmrc . ;
+
+                # Hacky workaround to prevent issues because nodegit fails to install in Node 18.
+                # good-fences is the one that transitively brings in the dependency on nodegit, so we remove it from
+                # the package whose tests we're going to run if it's there (we don't need it to run the tests).
+                # TODO: remove this once the packages for which we run perf tests don't depend on good-fences anymore
+                # or we have a better solution.
+                GOOD_FENCES_FOUND=$(cat package.json | grep "good-fences" | wc -l)
+                if [[ $GOOD_FENCES_FOUND == 1 ]]; then
+                  echo "good-fences found in package.json for '${{ testPackage }}'. Removing it to avoid nodegit install issues."
+                  npm uninstall good-fences;
+                  echo "Deleting fence.spec.js files that use good-fences."
+                  # 'rm **/fence.spec.js' works in zsh but not bash
+                  find . -type f -name 'fence.spec.js' -delete;
+                fi
+
                 npm i;
                 npm run test:benchmark:report;
 

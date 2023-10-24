@@ -91,6 +91,7 @@ export class BlobHandle implements IFluidHandle<ArrayBufferLike> {
 
 /**
  * Information from a snapshot needed to load BlobManager
+ * @public
  */
 export interface IBlobManagerLoadInfo {
 	ids?: string[];
