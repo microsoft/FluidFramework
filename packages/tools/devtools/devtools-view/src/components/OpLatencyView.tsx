@@ -5,7 +5,7 @@
 
 import React from "react";
 import { Body1, Body1Strong, Subtitle1, makeStyles } from "@fluentui/react-components";
-import { DynamicComposedChart } from "./graphs";
+import { DynamicComposedChart } from "./graphs/index.js";
 
 const useStyles = makeStyles({
 	flexColumn: {

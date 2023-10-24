@@ -11,12 +11,12 @@ import {
 	type HasContainerKey,
 	type IDevtoolsMessage,
 	type InboundHandlers,
-} from "@fluid-experimental/devtools-core";
+} from "@fluid-experimental/devtools-core/internal";
 import { type IClient } from "@fluidframework/protocol-definitions";
-import { useMessageRelay } from "../MessageRelayContext";
-import { AudienceStateTable } from "./AudienceStateTable";
-import { AudienceHistoryTable } from "./AudienceHistoryTable";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { AudienceStateTable } from "./AudienceStateTable.js";
+import { AudienceHistoryTable } from "./AudienceHistoryTable.js";
+import { Waiting } from "./Waiting.js";
 
 // TODOs:
 // - Special annotation for the member elected as the summarizer

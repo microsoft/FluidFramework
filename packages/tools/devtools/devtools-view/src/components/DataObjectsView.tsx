@@ -13,11 +13,11 @@ import {
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	type RootHandleNode,
-} from "@fluid-experimental/devtools-core";
+} from "@fluid-experimental/devtools-core/internal";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { TreeDataView } from "./data-visualization";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { TreeDataView } from "./data-visualization/index.js";
+import { Waiting } from "./Waiting.js";
 
 const loggingContext = "INLINE(VIEW)";
 

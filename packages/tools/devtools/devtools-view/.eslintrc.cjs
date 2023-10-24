@@ -34,6 +34,10 @@ module.exports = {
 				allow: [
 					// Allow use of unstable API
 					"@fluentui/react-components/unstable",
+
+					// Allow use of internal API
+					"@fluid-experimental/devtools-core/internal",
+					"*/index.js",
 				],
 			},
 		],
@@ -70,8 +74,42 @@ module.exports = {
 		},
 	],
 	settings: {
-		react: {
+		"react": {
 			version: "detect",
+		},
+		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+		"import/parsers": {
+			"@typescript-eslint/parser": [".ts", ".tsx", ".d.ts"],
+		},
+		"import/resolver": {
+			node: {
+				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+			},
+			typescript: {
+				alwaysTryTypes: true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
+
+				// Choose from one of the "project" configs below or omit to use <root>/tsconfig.json by default
+
+				// use <root>/path/to/folder/tsconfig.json
+				// "project": "path/to/folder",
+
+				// Multiple tsconfigs (Useful for monorepos)
+
+				// use a glob pattern
+				// "project": "packages/*/tsconfig.json",
+
+				// use an array
+				// "project": [
+				//   "packages/module-a/tsconfig.json",
+				//   "packages/module-b/tsconfig.json"
+				// ],
+
+				// use an array of glob patterns
+				// "project": [
+				//   "packages/*/tsconfig.json",
+				//   "other-packages/*/tsconfig.json"
+				// ]
+			},
 		},
 	},
 };

@@ -4,8 +4,8 @@
  */
 
 // PreviewJS doesn't handle roll-up modules correctly. Must import directly from component module.
-import { Waiting } from "../../components/Waiting";
-import { testContextDecorator } from "../ScreenshotTestUtilities";
+import { Waiting } from "../../components/Waiting.js";
+import { testContextDecorator } from "../ScreenshotTestUtilities.js";
 
 export default {
 	title: "Waiting",

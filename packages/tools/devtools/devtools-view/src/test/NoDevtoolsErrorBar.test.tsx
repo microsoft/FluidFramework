@@ -10,7 +10,8 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { coreErrorMessage, docsLinkUrl, NoDevtoolsErrorBar } from "../components";
+// eslint-disable-next-line import/no-internal-modules
+import { coreErrorMessage, docsLinkUrl, NoDevtoolsErrorBar } from "../components/index.js";
 
 describe("NoDevtoolsErrorBar component tests", () => {
 	it("Displays expected text and contains expected link", async (): Promise<void> => {
@@ -28,7 +29,8 @@ describe("NoDevtoolsErrorBar component tests", () => {
 		render(<NoDevtoolsErrorBar dismiss={dismiss} retrySearch={(): void => {}} />);
 
 		const dismissButton = await screen.findByRole("button"); // Dismiss button is first button rendered
-		await userEvent.click(dismissButton);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+		await (userEvent as any).click(dismissButton);
 		expect(dismiss).toHaveBeenCalled();
 	});
 
@@ -37,7 +39,8 @@ describe("NoDevtoolsErrorBar component tests", () => {
 		render(<NoDevtoolsErrorBar dismiss={(): void => {}} retrySearch={retrySearch} />);
 
 		const retrySearchButton = await screen.findByTestId("retry-search-button");
-		await userEvent.click(retrySearchButton);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+		await (userEvent as any).click(retrySearchButton);
 		expect(retrySearch).toHaveBeenCalled();
 	});
 });

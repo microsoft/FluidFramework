@@ -22,10 +22,10 @@ import {
 	ArrowExitRegular,
 } from "@fluentui/react-icons";
 
-import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { clientIdTooltipText } from "./TooltipTexts";
-import { type TransformedAudienceHistoryData } from "./AudienceView";
-import { LabelCellLayout } from "./utility-components";
+import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+import { clientIdTooltipText } from "./TooltipTexts.js";
+import { type TransformedAudienceHistoryData } from "./AudienceView.js";
+import { LabelCellLayout } from "./utility-components/index.js";
 
 const audienceStyles = makeStyles({
 	joined: {

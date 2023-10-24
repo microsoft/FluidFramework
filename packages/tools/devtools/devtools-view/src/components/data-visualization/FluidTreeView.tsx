@@ -4,12 +4,15 @@
  */
 import React from "react";
 
-import { type HasContainerKey, type FluidObjectTreeNode } from "@fluid-experimental/devtools-core";
+import {
+	type HasContainerKey,
+	type FluidObjectTreeNode,
+} from "@fluid-experimental/devtools-core/internal";
 
-import { type DataVisualizationTreeProps } from "./CommonInterfaces";
-import { TreeDataView } from "./TreeDataView";
-import { TreeHeader } from "./TreeHeader";
-import { TreeItem } from "./TreeItem";
+import { type DataVisualizationTreeProps } from "./CommonInterfaces.js";
+import { TreeDataView } from "./TreeDataView.js";
+import { TreeHeader } from "./TreeHeader.js";
+import { TreeItem } from "./TreeItem.js";
 
 /**
  * {@link TreeView} input props.

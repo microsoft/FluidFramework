@@ -8076,7 +8076,7 @@ importers:
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
     devDependencies:
       '@fluidframework/build-common': 2.0.2
-      '@fluidframework/build-tools': 0.26.0-203096
+      '@fluidframework/build-tools': 0.26.0-203096_@types+node@16.18.58
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
       '@types/mocha': 9.1.1
@@ -10745,6 +10745,8 @@ importers:
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
+      eslint-import-resolver-typescript: ^3.6.1
+      eslint-plugin-import: ~2.28.1
       eslint-plugin-jest: ~27.4.2
       eslint-plugin-react: ~7.33.2
       eslint-plugin-react-hooks: ~4.6.0
@@ -10790,7 +10792,7 @@ importers:
     devDependencies:
       '@fluidframework/build-common': 2.0.2
       '@fluidframework/build-tools': 0.26.0-203096_@types+node@16.18.58
-      '@fluidframework/eslint-config-fluid': 3.0.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/eslint-config-fluid': 3.0.0_pxfla23bjixg2qfx5ekihsuzhy
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@fluidframework/shared-object-base': link:../../../dds/shared-object-base
       '@fluidframework/test-runtime-utils': link:../../../runtime/test-runtime-utils
@@ -10817,6 +10819,8 @@ importers:
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
+      eslint-import-resolver-typescript: 3.6.1_mc36sq7crv2v5vtlozlclqwu5e
+      eslint-plugin-import: 2.28.1_rdoeqvzpa2jmvnyuviohvk2bau
       eslint-plugin-jest: 27.4.2_6qqm6drbyi4cpw3yzxwfwf3ppm
       eslint-plugin-react: 7.33.2_eslint@8.50.0
       eslint-plugin-react-hooks: 4.6.0_eslint@8.50.0

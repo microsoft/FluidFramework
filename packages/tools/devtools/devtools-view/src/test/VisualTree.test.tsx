@@ -18,10 +18,11 @@ import {
 	type FluidUnknownObjectNode,
 	type UnknownObjectNode,
 	VisualNodeKind,
-} from "@fluid-experimental/devtools-core";
-import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../components";
-import { MessageRelayContext } from "../MessageRelayContext";
-import { MockMessageRelay } from "./MockMessageRelay";
+} from "@fluid-experimental/devtools-core/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { UnknownDataView, FluidTreeView, UnknownFluidObjectView } from "../components/index.js";
+import { MessageRelayContext } from "../MessageRelayContext.js";
+import { MockMessageRelay } from "./MockMessageRelay.js";
 
 const testContainerKey = "test-container-key";
 const testFluidObjectId = "test-fluid-object-id";
@@ -120,7 +121,8 @@ describe("VisualTreeView component tests", () => {
 
 		// TODO: Loop the expand button for n-amount of times.
 		const expandButton = await screen.findByTestId("tree-button");
-		await userEvent.click(expandButton);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+		await (userEvent as any).click(expandButton);
 
 		await screen.findByText(/test-node-key/);
 

@@ -22,12 +22,12 @@ import {
 	EditType,
 	type FluidObjectValueNode,
 	type HasContainerKey,
-} from "@fluid-experimental/devtools-core";
+} from "@fluid-experimental/devtools-core/internal";
 
 import { type Serializable } from "@fluidframework/datastore-definitions";
-import { useMessageRelay } from "../../MessageRelayContext";
-import { TreeHeader } from "./TreeHeader";
-import { type HasLabel } from "./CommonInterfaces";
+import { useMessageRelay } from "../../MessageRelayContext.js";
+import { TreeHeader } from "./TreeHeader.js";
+import { type HasLabel } from "./CommonInterfaces.js";
 
 /**
  * Input to {@link EditableView}

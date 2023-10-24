@@ -7,7 +7,7 @@ import {
 	type IMessageRelay,
 	type IMessageRelayEvents,
 	type IDevtoolsMessage,
-} from "@fluid-experimental/devtools-core";
+} from "@fluid-experimental/devtools-core/internal";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 
 /**

@@ -34,12 +34,12 @@ import {
 	type ITimestampedTelemetryEvent,
 	TelemetryHistory,
 	TelemetryEvent,
-} from "@fluid-experimental/devtools-core";
+} from "@fluid-experimental/devtools-core/internal";
 
-import { useMessageRelay } from "../MessageRelayContext";
-import { useLogger } from "../TelemetryUtils";
-import { ThemeOption, useThemeContext } from "../ThemeHelper";
-import { Waiting } from "./Waiting";
+import { useMessageRelay } from "../MessageRelayContext.js";
+import { useLogger } from "../TelemetryUtils.js";
+import { ThemeOption, useThemeContext } from "../ThemeHelper.js";
+import { Waiting } from "./Waiting.js";
 
 /**
  * Set the default displayed size to 100.

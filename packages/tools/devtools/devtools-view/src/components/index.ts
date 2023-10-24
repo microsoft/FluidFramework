@@ -6,20 +6,21 @@
 // All of the components in this directory are intended to be used within this package,
 // so we will export * here
 /* eslint-disable no-restricted-syntax */
+/* eslint-disable import/no-internal-modules */
 
-export * from "./data-visualization";
+export * from "./data-visualization/index.js";
 
-export * from "./AudienceHistoryTable";
-export * from "./AudienceView";
-export * from "./ContainerDevtoolsView";
-export * from "./ContainerHistoryView";
-export * from "./ContainerSummaryView";
-export * from "./LandingView";
-export * from "./Menu";
-export * from "./NoDevtoolsErrorBar";
-export * from "./TelemetryView";
-export * from "./SettingsView";
-export * from "./OpLatencyView";
-export * from "./Waiting";
+export * from "./AudienceHistoryTable.js";
+export * from "./AudienceView.js";
+export * from "./ContainerDevtoolsView.js";
+export * from "./ContainerHistoryView.js";
+export * from "./ContainerSummaryView.js";
+export * from "./LandingView.js";
+export * from "./Menu.js";
+export * from "./NoDevtoolsErrorBar.js";
+export * from "./TelemetryView.js";
+export * from "./SettingsView.js";
+export * from "./OpLatencyView.js";
+export * from "./Waiting.js";
 
 /* eslint-enable no-restricted-syntax */

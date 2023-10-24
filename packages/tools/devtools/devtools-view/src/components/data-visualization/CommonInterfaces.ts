@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type VisualNode, type VisualNodeBase } from "@fluid-experimental/devtools-core";
+import { type VisualNode, type VisualNodeBase } from "@fluid-experimental/devtools-core/internal";
 import { type Serializable } from "@fluidframework/datastore-definitions";
 
 /**

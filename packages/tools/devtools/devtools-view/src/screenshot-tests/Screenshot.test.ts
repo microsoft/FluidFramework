@@ -9,14 +9,15 @@ import { decodeComponentId, type RPCs } from "@previewjs/api";
 import { createChromelessWorkspace } from "@previewjs/chromeless";
 import reactPlugin from "@previewjs/plugin-react";
 import { expect } from "chai";
-import chalk from "chalk";
+import { default as chalkLib } from "chalk";
 import { run } from "mocha";
 import { globby } from "globby";
 import { chromium } from "playwright";
 import { simpleGit, pathspec } from "simple-git";
 
-import { ThemeOption } from "../ThemeHelper";
+import { ThemeOption } from "../ThemeHelper.js";
 
+const { default: chalk } = chalkLib;
 /**
  * Viewport configuration for running a screenshot test.
  */

@@ -4,8 +4,8 @@
  */
 
 // PreviewJS doesn't handle roll-up modules correctly. Must import directly from component module.
-import { TreeHeader } from "../../components/data-visualization/TreeHeader";
-import { testContextDecorator } from "../ScreenshotTestUtilities";
+import { TreeHeader } from "../../components/data-visualization/TreeHeader.js";
+import { testContextDecorator } from "../ScreenshotTestUtilities.js";
 
 export default {
 	title: "TreeHeader",

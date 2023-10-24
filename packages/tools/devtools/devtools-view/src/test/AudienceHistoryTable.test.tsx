@@ -9,7 +9,8 @@ import React from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 
-import { AudienceHistoryTable, type TransformedAudienceHistoryData } from "../components";
+// eslint-disable-next-line import/no-internal-modules
+import { AudienceHistoryTable, type TransformedAudienceHistoryData } from "../components/index.js";
 
 describe("AudienceHistoryTable component tests", () => {
 	async function getTableBodyRows(): Promise<HTMLCollection> {

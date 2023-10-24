@@ -28,7 +28,7 @@ import {
 	type HasContainerKey,
 	type InboundHandlers,
 	type ISourcedDevtoolsMessage,
-} from "@fluid-experimental/devtools-core";
+} from "@fluid-experimental/devtools-core/internal";
 
 import {
 	ContainerDevtoolsView,
@@ -40,15 +40,16 @@ import {
 	SettingsView,
 	TelemetryView,
 	Waiting,
-} from "./components";
-import { useMessageRelay } from "./MessageRelayContext";
+	// eslint-disable-next-line import/no-internal-modules
+} from "./components/index.js";
+import { useMessageRelay } from "./MessageRelayContext.js";
 import {
 	ConsoleVerboseLogger,
 	LoggerContext,
 	TelemetryOptInLogger,
 	useLogger,
-} from "./TelemetryUtils";
-import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper";
+} from "./TelemetryUtils.js";
+import { getFluentUIThemeToUse, ThemeContext } from "./ThemeHelper.js";
 
 const loggingContext = "INLINE(DevtoolsView)";
 

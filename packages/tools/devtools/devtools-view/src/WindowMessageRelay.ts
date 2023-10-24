@@ -11,7 +11,7 @@ import {
 	type IMessageRelayEvents,
 	isDevtoolsMessage,
 	devtoolsMessageSource,
-} from "@fluid-experimental/devtools-core";
+} from "@fluid-experimental/devtools-core/internal";
 
 /**
  * Message relay used by a devtools view rendered in the same page as the application to communicate with the

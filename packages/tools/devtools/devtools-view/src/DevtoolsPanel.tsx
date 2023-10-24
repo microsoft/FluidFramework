@@ -4,10 +4,10 @@
  */
 import React from "react";
 
-import { type IMessageRelay } from "@fluid-experimental/devtools-core";
+import { type IMessageRelay } from "@fluid-experimental/devtools-core/internal";
 import { type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { DevtoolsView } from "./DevtoolsView";
-import { MessageRelayContext } from "./MessageRelayContext";
+import { DevtoolsView } from "./DevtoolsView.js";
+import { MessageRelayContext } from "./MessageRelayContext.js";
 
 /**
  * {@link DevtoolsPanel} input props.
