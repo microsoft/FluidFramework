@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { EditableTreeEvents, SchemaAware } from "../..";
+import { EditableTreeEvents } from "../..";
+import { TreeValue } from "../../../core";
 import { RestrictiveReadonlyRecord } from "../../../util";
 import { FieldKinds } from "../../default-field-kinds";
 import { FieldKind } from "../../modular-schema";
@@ -180,25 +181,43 @@ export type SharedTreeObject<
 
 /**
  * Helper for generating the properties of a {@link SharedTreeObject}.
+ * @privateRemarks
+ * This type is composed of four subtypes for each mutually exclusive combination of "readonly" and "optional".
+ * If it were possible to map to getters and setters separately, the "readonly" cases would collapse, but this is not currently a feature in TS.
+ * See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
  * @alpha
  */
 export type ObjectFields<
 	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = {
-	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
-	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+	// Filter for properties that are both assignable and optional; mark them `-readonly` and `?`.
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? TFields[key]["kind"] extends typeof FieldKinds.optional
+			? key
+			: never
+		: never]?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are assignable but are optional; mark them `-readonly` and `-?`.
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? TFields[key]["kind"] extends typeof FieldKinds.optional
+			? never
+			: key
+		: never]-?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are not assignable but are optional; mark them `readonly` and `?`.
 	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 		? never
-		: key]: ProxyField<TFields[key], API>;
-} & {
-	// Add setter (make property writable) when the field is of a kind that has a logical set operation.
-	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		: TFields[key]["kind"] extends typeof FieldKinds.optional
 		? key
-		: never]: ProxyField<TFields[key], API>;
+		: never]?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are not assignable and are not optional; mark them `readonly` and `-?`.
+	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? never
+		: TFields[key]["kind"] extends typeof FieldKinds.optional
+		? never
+		: key]-?: ProxyField<TFields[key], API>;
 };
 
 /**
@@ -266,7 +285,7 @@ export type ProxyNode<
 	TSchema extends TreeNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends LeafSchema
-	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>
+	? TreeValue<TSchema["leafValue"]>
 	: TSchema extends MapSchema
 	? API extends "sharedTree"
 		? SharedTreeMap<TSchema>

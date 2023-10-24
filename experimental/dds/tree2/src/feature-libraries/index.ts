@@ -153,10 +153,10 @@ export {
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	Unenforced,
 	AllowedTypeSet,
 	markEager,
@@ -177,7 +177,7 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
+export { mapFieldChanges, mapFieldsChanges, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -217,6 +217,7 @@ export {
 } from "./default-field-kinds";
 
 export {
+	TreeEvent,
 	UntypedField,
 	UntypedTree,
 	UntypedTreeContext,

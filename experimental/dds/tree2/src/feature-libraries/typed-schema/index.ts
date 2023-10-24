@@ -17,7 +17,7 @@ export {
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 	TreeSchema,
 	Unenforced,
 	AllowedTypeSet,
@@ -30,7 +30,7 @@ export { ViewSchema } from "./view";
 export {
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	SchemaLibraryData,
 	SchemaLintConfiguration,
 	aggregateSchemaLibraries,

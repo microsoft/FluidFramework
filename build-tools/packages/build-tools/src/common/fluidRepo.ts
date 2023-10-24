@@ -43,6 +43,11 @@ export interface IFluidBuildConfig {
 	policy?: PolicyConfig;
 
 	/**
+	 * Configuration for assert tagging.
+	 */
+	assertTagging?: AssertTaggingConfig;
+
+	/**
 	 * A mapping of branch names to previous version baseline styles. The type test generator takes this information
 	 * into account when calculating the baseline version to use when it's run on a particular branch. If this is not
 	 * defined for a branch or package, then that package will be skipped during type test generation.
@@ -154,6 +159,16 @@ export interface PolicyConfig {
 	handlerExclusions?: { [rule: string]: string[] };
 
 	packageNames?: PackageNamePolicyConfig;
+}
+
+export interface AssertTaggingConfig {
+	assertionFunctions: { [functionName: string]: number };
+
+	/**
+	 * An array of paths under which assert tagging applies to. If this setting is provided, only packages whose paths
+	 * match the regular expressions in this setting will be assert-tagged.
+	 */
+	enabledPaths?: RegExp[];
 }
 
 /**
