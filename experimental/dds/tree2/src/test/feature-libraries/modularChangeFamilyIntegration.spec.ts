@@ -238,17 +238,26 @@ describe("ModularChangeFamily integration", () => {
 				{ parent: undefined, field: fieldC },
 				0,
 			);
-			editor.move(
-				{ parent: undefined, field: fieldA },
-				0,
-				1,
-				{ parent: undefined, field: fieldC },
-				0,
-			);
-			const [move1, move2, expected] = getChanges();
+
+			const [move1, move2] = getChanges();
 			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 			const actualDelta = normalizeDelta(family.intoDelta(makeAnonChange(composed)));
-			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
+
+			const expectedDelta: Delta.Root = new Map([
+				[
+					fieldA,
+					{
+						local: [
+							{
+								count: 1,
+								detach: { minor: 0 },
+							},
+						],
+					},
+				],
+				[fieldB, { rename: [{ count: 1, oldId: { minor: 0 }, newId: { minor: 1 } }] }],
+				[fieldC, { local: [{ count: 1, attach: { minor: 1 } }] }],
+			]);
 			assert.deepEqual(actualDelta, expectedDelta);
 		});
 	});
