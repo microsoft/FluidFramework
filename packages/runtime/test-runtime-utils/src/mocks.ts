@@ -279,7 +279,7 @@ export class MockContainerRuntime {
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			type: MessageType.Operation,
 		});
-		this.addPendingMessage(message.content, message.localOpMetadata, this.clientSequenceNumber);
+		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
 	}
 
 	public process(message: ISequencedDocumentMessage) {
@@ -309,10 +309,10 @@ export class MockContainerRuntime {
 		if (local) {
 			const pendingMessage = this.pendingMessages.shift();
 			assert(
-				JSON.stringify(pendingMessage?.content) === JSON.stringify(message.contents),
+				pendingMessage?.clientSequenceNumber === message.clientSequenceNumber,
 				"Unexpected message",
 			);
-			localOpMetadata = pendingMessage?.localOpMetadata;
+			localOpMetadata = pendingMessage.localOpMetadata;
 		}
 		return [local, localOpMetadata];
 	}
