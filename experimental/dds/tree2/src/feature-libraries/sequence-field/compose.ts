@@ -44,7 +44,6 @@ import {
 	areOutputCellsEmpty,
 	areInputCellsEmpty,
 	compareLineages,
-	isNewAttach,
 	isDetach,
 	markHasCellEffect,
 	withNodeChange,
@@ -52,6 +51,8 @@ import {
 	markEmptiesCells,
 	isTransientEffect,
 	areOverlappingIdRanges,
+	isNewAttach,
+	isReattach,
 	getInputCellId,
 	isAttach,
 	getOutputCellId,
@@ -263,7 +264,7 @@ function composeMarks<TNodeChange>(
 			);
 			return baseMark;
 		}
-		if (newMark.type === "ReturnTo") {
+		if (newMark.type === "MoveIn" && isReattach(newMark)) {
 			// It's possible for ReturnTo to occur after a transient, but only if muted ReturnTo.
 			// Why possible: if the transient is a revive, then it's possible that the newMark comes from a client that
 			// knew about the node, and tried to move it out and return it.
@@ -450,7 +451,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 		cloned.revision = revision;
 	}
 
-	if (cloned.type !== "MoveIn" && cloned.type !== "ReturnTo" && cloned.changes !== undefined) {
+	if (cloned.type !== "MoveIn" && cloned.changes !== undefined) {
 		cloned.changes = composeChild([tagChange(cloned.changes, revision)]);
 		return cloned;
 	}

@@ -10,41 +10,35 @@ import {
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	SchemaBuilder,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
-import { FieldKey, FieldStoredSchema, EmptyKey } from "../../../core";
+import { FieldKey, TreeFieldStoredSchema, EmptyKey } from "../../../core";
 import {
 	isPrimitive,
 	getOwnArrayKeys,
 	keyIsValidIndex,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
-import {
-	arraySchema,
-	buildTestSchema,
-	int32Schema,
-	mapStringSchema,
-	optionalChildSchema,
-	stringSchema,
-} from "./mockData";
+import { leaf } from "../../../domains";
+import { arraySchema, buildTestSchema, mapStringSchema, optionalChildSchema } from "./mockData";
 
 describe("editable-tree utilities", () => {
 	it("isPrimitive", () => {
-		assert(isPrimitive(int32Schema));
-		assert(isPrimitive(stringSchema));
+		assert(isPrimitive(leaf.number));
+		assert(isPrimitive(leaf.string));
 		assert(!isPrimitive(mapStringSchema));
 		assert(!isPrimitive(optionalChildSchema));
 	});
 
 	it("field utils", () => {
 		const schema =
-			arraySchema.structFields.get(EmptyKey) ?? fail("Expected primary array field");
-		const expectedPrimary: { key: FieldKey; schema: FieldStoredSchema } = {
+			arraySchema.objectNodeFields.get(EmptyKey) ?? fail("Expected primary array field");
+		const expectedPrimary: { key: FieldKey; schema: TreeFieldStoredSchema } = {
 			key: EmptyKey,
 			schema,
 		};
 
-		const rootSchema = SchemaBuilder.field(FieldKinds.required, arraySchema);
+		const rootSchema = TreeFieldSchema.create(FieldKinds.required, [arraySchema]);
 		const fullSchemaData = buildTestSchema(rootSchema);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);

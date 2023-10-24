@@ -4,7 +4,6 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import * as SchemaAware from "../schema-aware";
 import {
 	Value,
 	Anchor,
@@ -18,24 +17,27 @@ import {
 	inCursorField,
 	rootFieldKey,
 	EmptyKey,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	forEachField,
+	TreeValue,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
+import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 import {
-	FieldSchema,
-	TreeSchema,
+	TreeFieldSchema,
+	TreeNodeSchema,
 	MapSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode as schemaIsObjectNode,
 	FieldNodeSchema,
 	LeafSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	Any,
+	AllowedTypes,
 } from "../typed-schema";
-import { EditableTreeEvents } from "../untypedTree";
+import { EditableTreeEvents, TreeEvent } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { LocalNodeKey } from "../node-key";
 import { Context } from "./context";
@@ -43,8 +45,8 @@ import {
 	FieldNode,
 	Leaf,
 	MapNode,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TypedField,
 	TypedNode,
 	UnboxField,
@@ -52,6 +54,8 @@ import {
 	TreeNode,
 	boxedIterator,
 	TreeStatus,
+	RequiredField,
+	OptionalField,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -65,9 +69,9 @@ import {
 import { unboxedField } from "./unboxed";
 import { treeStatusFromAnchorCache } from "./utilities";
 
-const lazyTreeSlot = anchorSlot<LazyTree>();
+const lazyTreeSlot = anchorSlot<LazyTreeNode>();
 
-export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTree {
+export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
 		context.forest.anchors.locate(anchor) ??
@@ -92,11 +96,11 @@ function cleanupTree(anchor: AnchorNode): void {
 
 function buildSubclass(
 	context: Context,
-	schema: TreeSchema,
+	schema: TreeNodeSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-): LazyTree {
+): LazyTreeNode {
 	if (schemaIsMap(schema)) {
 		return new LazyMap(context, schema, cursor, anchorNode, anchor);
 	}
@@ -106,24 +110,23 @@ function buildSubclass(
 	if (schemaIsFieldNode(schema)) {
 		return new LazyFieldNode(context, schema, cursor, anchorNode, anchor);
 	}
-	if (schemaIsStruct(schema)) {
-		return buildLazyStruct(context, schema, cursor, anchorNode, anchor);
+	if (schemaIsObjectNode(schema)) {
+		return buildLazyObjectNode(context, schema, cursor, anchorNode, anchor);
 	}
 	fail("unrecognized node kind");
 }
 
 /**
- * A Proxy target, which together with a `nodeProxyHandler` implements a basic access to
- * the fields of {@link EditableTree} by means of the cursors.
+ * Lazy implementation of {@link TreeNode}.
  */
-export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
+export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSchema>
 	extends LazyEntity<TSchema, Anchor>
 	implements TreeNode
 {
 	/**
 	 * Enumerable own property providing a more JS object friendly alternative to "schema".
 	 */
-	public readonly type: TreeSchemaIdentifier;
+	public readonly type: TreeNodeSchemaIdentifier;
 
 	// Using JS private here prevents it from showing up as a enumerable own property, or conflicting with struct fields.
 	readonly #removeDeleteCallback: () => void;
@@ -146,7 +149,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 
 		assert(
 			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
-			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
+			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 
 		// Setup JS Object API:
@@ -155,14 +158,14 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 		this.type = schema.name;
 	}
 
-	public is<TSchemaInner extends TreeSchema>(
+	public is<TSchemaInner extends TreeNodeSchema>(
 		schema: TSchemaInner,
 	): this is TypedNode<TSchemaInner> {
 		assert(
 			this.context.schema.treeSchema.get(schema.name) === schema,
 			0x785 /* Narrowing must be done to a schema that exists in this context */,
 		);
-		return (this.schema as TreeSchema) === schema;
+		return (this.schema as TreeNodeSchema) === schema;
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
@@ -209,7 +212,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x787 /* mismatched keys */);
-		let fieldSchema: FieldSchema;
+		let fieldSchema: TreeFieldSchema;
 
 		// Check if the current node is in a detached sequence.
 		if (this.#anchorNode.parent === undefined) {
@@ -231,7 +234,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 				// Additionally this approach makes it possible for a user to take an EditableTree node, get its parent, check its schema, down cast based on that, then edit that detached field (ex: removing the node in it).
 				// This MIGHT work properly with existing merge resolution logic (it must keep client in sync and be unable to violate schema), but this either needs robust testing or to be explicitly banned (error before s3ending the op).
 				// Issues like replacing a node in the a removed sequenced then undoing the remove could easily violate schema if not everything works exactly right!
-				fieldSchema = new FieldSchema(FieldKinds.sequence, [Any]);
+				fieldSchema = TreeFieldSchema.create(FieldKinds.sequence, [Any]);
 			}
 		} else {
 			cursor.exitField();
@@ -265,16 +268,52 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 			case "changing": {
 				const unsubscribeFromChildrenChange = this.#anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) =>
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
+						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.#anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) =>
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
+						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromSubtreeChange;
+			}
+			case "beforeChange": {
+				const unsubscribeFromChildrenBeforeChange = this.#anchorNode.on(
+					"beforeChange",
+					(anchorNode: AnchorNode) => {
+						const treeNode = anchorNode.slots.get(lazyTreeSlot);
+						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
+						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
+					},
+				);
+				return unsubscribeFromChildrenBeforeChange;
+			}
+			case "afterChange": {
+				const unsubscribeFromChildrenAfterChange = this.#anchorNode.on(
+					"afterChange",
+					(anchorNode: AnchorNode) => {
+						const treeNode = anchorNode.slots.get(lazyTreeSlot);
+						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
+						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
+					},
+				);
+				return unsubscribeFromChildrenAfterChange;
 			}
 			default:
 				unreachableCase(eventName);
@@ -283,7 +322,7 @@ export abstract class LazyTree<TSchema extends TreeSchema = TreeSchema>
 }
 
 export class LazyMap<TSchema extends MapSchema>
-	extends LazyTree<TSchema>
+	extends LazyTreeNode<TSchema>
 	implements MapNode<TSchema>
 {
 	public constructor(
@@ -366,11 +405,11 @@ export class LazyMap<TSchema extends MapSchema>
 	// TODO: when appropriate add setter that delegates to field kind specific setter.
 	// public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
 	// 	const field = this.get(key);
-	// 	if (field.is(SchemaBuilder.fieldOptional(...this.schema.mapFields.allowedTypes))) {
+	// 	if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
 	// 		field.setContent(content);
 	// 	} else {
 	// 		assert(
-	// 			field.is(SchemaBuilder.fieldSequence(...this.schema.mapFields.allowedTypes)),
+	// 			field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
 	// 			"unexpected map field kind",
 	// 		);
 	// 		// TODO: fix merge semantics.
@@ -406,7 +445,7 @@ export class LazyMap<TSchema extends MapSchema>
 }
 
 export class LazyLeaf<TSchema extends LeafSchema>
-	extends LazyTree<TSchema>
+	extends LazyTreeNode<TSchema>
 	implements Leaf<TSchema>
 {
 	public constructor(
@@ -419,59 +458,59 @@ export class LazyLeaf<TSchema extends LeafSchema>
 		super(context, schema, cursor, anchorNode, anchor);
 
 		// Setup JS Object API:
-		makePropertyEnumerableOwn(this, "value", LazyTree.prototype);
+		makePropertyEnumerableOwn(this, "value", LazyTreeNode.prototype);
 	}
 
-	public override get value(): SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]> {
-		return super.value as SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>;
+	public override get value(): TreeValue<TSchema["leafValue"]> {
+		return super.value as TreeValue<TSchema["leafValue"]>;
 	}
 }
 
 export class LazyFieldNode<TSchema extends FieldNodeSchema>
-	extends LazyTree<TSchema>
+	extends LazyTreeNode<TSchema>
 	implements FieldNode<TSchema>
 {
-	public get content(): UnboxField<TSchema["structFieldsObject"][""]> {
+	public get content(): UnboxField<TSchema["objectNodeFieldsObject"][""]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			unboxedField(
 				this.context,
-				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
+				this.schema.objectNodeFields.get(EmptyKey) ?? fail("missing field schema"),
 				cursor,
 			),
-		) as UnboxField<TSchema["structFieldsObject"][""]>;
+		) as UnboxField<TSchema["objectNodeFieldsObject"][""]>;
 	}
 
-	public get boxedContent(): TypedField<TSchema["structFieldsObject"][""]> {
+	public get boxedContent(): TypedField<TSchema["objectNodeFieldsObject"][""]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
 			makeField(
 				this.context,
-				this.schema.structFields.get(EmptyKey) ?? fail("missing field schema"),
+				this.schema.objectNodeFields.get(EmptyKey) ?? fail("missing field schema"),
 				cursor,
 			),
-		) as TypedField<TSchema["structFieldsObject"][""]>;
+		) as TypedField<TSchema["objectNodeFieldsObject"][""]>;
 	}
 }
 
-export abstract class LazyStruct<TSchema extends StructSchema>
-	extends LazyTree<TSchema>
-	implements Struct
+export abstract class LazyObjectNode<TSchema extends ObjectNodeSchema>
+	extends LazyTreeNode<TSchema>
+	implements ObjectNode
 {
 	public get localNodeKey(): LocalNodeKey | undefined {
 		// TODO: Optimize this to be in the derived class so it can cache schema lookup.
 		// TODO: Optimize this to avoid allocating the field object.
 
 		const key = this.context.nodeKeyFieldKey;
-		const fieldSchema = this.schema.structFields.get(key);
+		const fieldSchema = this.schema.objectNodeFields.get(key);
 
 		if (fieldSchema === undefined) {
 			return undefined;
 		}
 
 		const field = this.tryGetField(key);
-		assert(field instanceof LazyNodeKeyField, "unexpected node key field");
+		assert(field instanceof LazyNodeKeyField, 0x7b4 /* unexpected node key field */);
 		// TODO: ideally we would do something like this, but that adds dependencies we can't have here:
 		// assert(
-		// 	field.is(new FieldSchema(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
+		// 	field.is(TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema])),
 		// 	"invalid node key field",
 		// );
 
@@ -483,71 +522,118 @@ export abstract class LazyStruct<TSchema extends StructSchema>
 	}
 }
 
-export function buildLazyStruct<TSchema extends StructSchema>(
+export function buildLazyObjectNode<TSchema extends ObjectNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-): LazyStruct<TSchema> & StructTyped<TSchema> {
-	const structClass = getOrCreate(cachedStructClasses, schema, () => buildStructClass(schema));
-	return new structClass(context, cursor, anchorNode, anchor) as LazyStruct<TSchema> &
-		StructTyped<TSchema>;
+): LazyObjectNode<TSchema> & ObjectNodeTyped<TSchema> {
+	const objectNodeClass = getOrCreate(cachedStructClasses, schema, () =>
+		buildStructClass(schema),
+	);
+	return new objectNodeClass(context, cursor, anchorNode, anchor) as LazyObjectNode<TSchema> &
+		ObjectNodeTyped<TSchema>;
 }
 
 const cachedStructClasses = new WeakMap<
-	StructSchema,
+	ObjectNodeSchema,
 	new (
 		context: Context,
 		cursor: ITreeSubscriptionCursor,
 		anchorNode: AnchorNode,
 		anchor: Anchor,
-	) => LazyStruct<StructSchema>
+	) => LazyObjectNode<ObjectNodeSchema>
 >();
 
-function buildStructClass<TSchema extends StructSchema>(
+export function getBoxedField(
+	objectNode: LazyTreeNode,
+	key: FieldKey,
+	fieldSchema: TreeFieldSchema,
+): TreeField {
+	return inCursorField(objectNode[cursorSymbol], key, (cursor) => {
+		return makeField(objectNode.context, fieldSchema, cursor);
+	});
+}
+
+function buildStructClass<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 ): new (
 	context: Context,
 	cursor: ITreeSubscriptionCursor,
 	anchorNode: AnchorNode,
 	anchor: Anchor,
-) => LazyStruct<TSchema> {
+) => LazyObjectNode<TSchema> {
 	const propertyDescriptorMap: PropertyDescriptorMap = {};
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
-	for (const [key, field] of schema.structFields) {
+	for (const [key, fieldSchema] of schema.objectNodeFields) {
+		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;
+		switch (fieldSchema.kind) {
+			case FieldKinds.optional: {
+				setter = function (
+					this: CustomStruct,
+					newContent: ContextuallyTypedNodeData,
+				): void {
+					const field = getBoxedField(
+						this,
+						key,
+						fieldSchema,
+					) as RequiredField<AllowedTypes>;
+					field.content = newContent;
+				};
+				break;
+			}
+			case FieldKinds.required: {
+				setter = function (
+					this: CustomStruct,
+					newContent: ContextuallyTypedNodeData,
+				): void {
+					const field = getBoxedField(
+						this,
+						key,
+						fieldSchema,
+					) as OptionalField<AllowedTypes>;
+					field.content = newContent;
+				};
+				break;
+			}
+			default:
+				setter = undefined;
+				break;
+		}
+
+		// Create getter and setter (when appropriate) for property
 		ownPropertyMap[key] = {
 			enumerable: true,
 			get(this: CustomStruct): unknown {
 				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					unboxedField(this.context, field, cursor),
+					unboxedField(this.context, fieldSchema, cursor),
 				);
 			},
+			set: setter,
 		};
+
+		// Create set method for property (when appropriate)
+		if (setter !== undefined) {
+			propertyDescriptorMap[`set${capitalize(key)}`] = {
+				enumerable: false,
+				get(this: CustomStruct) {
+					return setter;
+				},
+			};
+		}
 
 		propertyDescriptorMap[`boxed${capitalize(key)}`] = {
 			enumerable: false,
 			get(this: CustomStruct) {
-				return inCursorField(this[cursorSymbol], key, (cursor) =>
-					makeField(this.context, field, cursor),
-				);
+				return getBoxedField(this, key, fieldSchema);
 			},
 		};
-
-		// TODO: add setters (methods and assignment) when compatible with FieldKind and TypeScript.
-		// propertyDescriptorMap[`set${capitalize(key)}`] = {
-		// 	enumerable: false,
-		// 	get(this: CustomStruct) {
-		// 		return (content: NewFieldContent) => {
-		// 			this.getField(key).setContent(content);
-		// 		};
-		// 	},
-		// };
 	}
 
 	// This must implement `StructTyped<TSchema>`, but TypeScript can't constrain it to do so.
-	class CustomStruct extends LazyStruct<TSchema> {
+	class CustomStruct extends LazyObjectNode<TSchema> {
 		public constructor(
 			context: Context,
 			cursor: ITreeSubscriptionCursor,
@@ -564,6 +650,6 @@ function buildStructClass<TSchema extends StructSchema>(
 	return CustomStruct;
 }
 
-export function getFieldSchema(field: FieldKey, schema: TreeSchema): FieldSchema {
-	return schema.structFields.get(field) ?? schema.mapFields ?? FieldSchema.empty;
+export function getFieldSchema(field: FieldKey, schema: TreeNodeSchema): TreeFieldSchema {
+	return schema.objectNodeFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
 }

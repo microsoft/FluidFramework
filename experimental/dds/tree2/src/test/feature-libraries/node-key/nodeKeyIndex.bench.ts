@@ -33,23 +33,21 @@ import { brand } from "../../../util";
 import { ApiMode } from "../../../feature-libraries/schema-aware";
 
 const builder = new SchemaBuilder("node key index benchmarks", {}, nodeKeySchema);
-const nodeSchema = builder.struct("node", {
-	// child: SchemaBuilder.fieldRecursive(
+const nodeSchema = builder.object("node", {
+	// child: TreeFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
-	// 	() => nodeSchema,
-	// 	() => nodeWithKeySchema,
+	// 	[() => nodeSchema,	() => nodeWithKeySchema],
 	// ),
 });
-const nodeWithKeySchema = builder.struct("nodeWithKey", {
+const nodeWithKeySchema = builder.object("nodeWithKey", {
 	...nodeKeyField,
-	// child: SchemaBuilder.fieldRecursive(
+	// child: TreeFieldSchema.createUnsafe(
 	// 	FieldKinds.optional,
-	// 	() => nodeWithKeySchema,
-	// 	() => nodeSchema,
+	// 	[() => nodeWithKeySchema, () => nodeSchema],
 	// ),
 });
 const schemaData = builder.intoDocumentSchema(
-	SchemaBuilder.fieldSequence(nodeSchema, nodeWithKeySchema),
+	SchemaBuilder.sequence(nodeSchema, nodeWithKeySchema),
 );
 
 describe("Node Key Index Benchmarks", () => {

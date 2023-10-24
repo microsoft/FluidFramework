@@ -54,14 +54,14 @@ export {
 	ForestLocation,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	TreeSchemaIdentifier,
-	FieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeFieldStoredSchema,
 	ValueSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	FieldAnchor,
 	SchemaEvents,
 	ChangesetLocalId,
@@ -79,8 +79,12 @@ export {
 	Adapters,
 	TreeAdapter,
 	MapTree,
-	LocalCommitSource,
+	Revertible,
+	RevertibleKind,
+	RevertResult,
+	DiscardResult,
 	forbiddenFieldKindIdentifier,
+	StoredSchemaCollection,
 } from "./core";
 
 export {
@@ -102,6 +106,7 @@ export {
 	BrandedMapSubset,
 	RangeQueryResult,
 	Named,
+	oneFromSet,
 } from "./util";
 
 export {
@@ -118,16 +123,12 @@ export {
 	cursorToJsonObject,
 	singleJsonCursor,
 	jsonArray,
-	jsonBoolean,
-	jsonNull,
-	jsonNumber,
 	jsonObject,
-	jsonString,
 	jsonSchema,
 	nodeKeyField,
 	nodeKeySchema,
 	leaf,
-	testRecursiveDomain,
+	SchemaBuilder,
 } from "./domains";
 
 export {
@@ -188,23 +189,17 @@ export {
 	UnwrappedUntypedField,
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
-	SchemaBuilder,
 	AllowedTypes,
+	TreeNodeSchema,
 	TreeSchema,
-	Required,
-	Optional,
-	Sequence,
-	NodeKeyFieldKind,
-	Forbidden,
-	TypedSchemaCollection,
 	SchemaLibrary,
 	SchemaLibraryData,
-	FieldSchema,
+	TreeFieldSchema,
 	Any,
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	FieldGenerator,
 	TreeDataContext,
 	createDataBinderBuffering,
@@ -255,9 +250,10 @@ export {
 	MapNode,
 	OptionalField,
 	RequiredField,
-	Sequence2,
-	Struct,
-	StructTyped,
+	Sequence,
+	ObjectNode,
+	ObjectNodeTyped,
+	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -268,9 +264,31 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
+	ImplicitFieldSchema,
+	ImplicitAllowedTypes,
+	Unenforced,
+	schemaIsFieldNode,
+	AllowedTypeSet,
+	SchemaBuilderOptions,
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	is,
+	node,
+	SharedTreeNode,
+	Typed,
+	TreeEvent,
+	SharedTreeObjectFactory,
+	SchemaCollection,
+	FactoryTreeSchema,
 } from "./feature-libraries";
 
 export {
@@ -287,13 +305,14 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	ForestType,
+	TypedTreeFactory,
+	TypedTreeOptions,
+	TypedTreeChannel,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
-
-export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typed-tree";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

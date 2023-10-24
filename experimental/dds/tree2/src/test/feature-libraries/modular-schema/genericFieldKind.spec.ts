@@ -12,13 +12,16 @@ import {
 	RevisionMetadataSource,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
-import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
-import { fakeIdAllocator, brand } from "../../../util";
 import {
-	EncodingTestData,
-	fakeTaggedRepair as fakeRepair,
-	makeEncodingTestSuite,
-} from "../../utils";
+	makeAnonChange,
+	tagChange,
+	TaggedChange,
+	Delta,
+	FieldKey,
+	deltaForSet,
+} from "../../../core";
+import { fakeIdAllocator, brand } from "../../../util";
+import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
@@ -84,7 +87,6 @@ const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const inverse = valueHandler.rebaser.invert(
 		makeAnonChange(valueChange),
 		unexpectedDelegate,
-		fakeRepair,
 		fakeIdAllocator,
 		crossFieldManager,
 	);
@@ -117,24 +119,17 @@ const childRebaser = (
 };
 
 const detachId = { minor: 42 };
+const buildId = { minor: 42 };
 
-const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
+const childToDelta = (nodeChange: NodeChangeset): Delta.FieldMap => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
-	const nodeDelta: Delta.Modify = {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				valueFieldKey,
-				[
-					{ type: Delta.MarkType.Remove, count: 1, detachId },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(valueChange.new)] },
-				],
-			],
-		]),
-	};
-	return nodeDelta;
+	return deltaForValueChange(valueChange.new);
 };
+
+function deltaForValueChange(newValue: number): Delta.FieldMap {
+	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
+}
 
 const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
@@ -355,7 +350,6 @@ describe("Generic FieldKind", () => {
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
 			makeAnonChange(forward),
 			childInverter,
-			fakeRepair,
 			fakeIdAllocator,
 			crossFieldManager,
 		);
@@ -374,33 +368,13 @@ describe("Generic FieldKind", () => {
 			},
 		];
 
-		const valueDelta1: Delta.Mark = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					valueFieldKey,
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(1)] },
-					],
-				],
-			]),
+		const expected: Delta.FieldChanges = {
+			local: [
+				{ count: 1, fields: deltaForValueChange(1) },
+				{ count: 1 },
+				{ count: 1, fields: deltaForValueChange(2) },
+			],
 		};
-
-		const valueDelta2: Delta.Mark = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					valueFieldKey,
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(2)] },
-					],
-				],
-			]),
-		};
-
-		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
 		const actual = genericFieldKind.changeHandler.intoDelta(
 			makeAnonChange(input),

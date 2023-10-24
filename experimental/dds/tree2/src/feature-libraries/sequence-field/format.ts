@@ -119,7 +119,11 @@ export interface CellId extends ChangeAtomId, HasLineage {
 }
 
 export const CellId = Type.Composite(
-	[EncodedChangeAtomId, HasLineage, Type.Object({ adjacentCells: Type.Optional(IdRange) })],
+	[
+		EncodedChangeAtomId,
+		HasLineage,
+		Type.Object({ adjacentCells: Type.Optional(Type.Array(IdRange)) }),
+	],
 	noAdditionalProps,
 );
 
@@ -178,13 +182,17 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-export interface Insert extends HasRevisionTag {
+export interface Insert extends HasRevisionTag, HasReattachFields {
 	type: "Insert";
-	content: ProtoNode[];
+	/**
+	 * The content to insert. Only populated for new attaches.
+	 */
+	content?: ProtoNode[];
 }
 export const Insert = Type.Composite(
 	[
 		HasRevisionTag,
+		HasReattachFields,
 		Type.Object({
 			type: Type.Literal("Insert"),
 			content: Type.Array(ProtoNode),
@@ -205,7 +213,7 @@ export const HasMoveFields = Type.Composite([
 	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
 ]);
 
-export interface MoveIn extends HasMoveFields {
+export interface MoveIn extends HasMoveFields, HasReattachFields {
 	type: "MoveIn";
 	/**
 	 * When true, the corresponding MoveOut has a conflict.
@@ -217,6 +225,7 @@ export interface MoveIn extends HasMoveFields {
 export const MoveIn = Type.Composite(
 	[
 		HasMoveFields,
+		HasReattachFields,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
 			isSrcConflicted: OptionalTrue,
@@ -263,41 +272,6 @@ export const MoveOut = Type.Composite(
 	noAdditionalProps,
 );
 
-export interface Revive extends HasReattachFields, HasRevisionTag {
-	type: "Revive";
-}
-export const Revive = Type.Composite(
-	[
-		HasReattachFields,
-		HasRevisionTag,
-		Type.Object({
-			type: Type.Literal("Revive"),
-		}),
-	],
-	noAdditionalProps,
-);
-
-export interface ReturnTo extends HasReattachFields, HasMoveFields {
-	type: "ReturnTo";
-
-	/**
-	 * When true, the corresponding ReturnFrom has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isSrcConflicted?: true;
-}
-export const ReturnTo = Type.Composite(
-	[
-		HasReattachFields,
-		HasMoveFields,
-		Type.Object({
-			type: Type.Literal("ReturnTo"),
-			isSrcConflicted: OptionalTrue,
-		}),
-	],
-	noAdditionalProps,
-);
-
 export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
 	type: "ReturnFrom";
 
@@ -322,20 +296,11 @@ export const ReturnFrom = Type.Composite(
 export type MoveSource = MoveOut | ReturnFrom;
 export const MoveSource = Type.Union([MoveOut, ReturnFrom]);
 
-export type MoveDestination = MoveIn | ReturnTo;
+export type MoveDestination = MoveIn;
 export type MoveMarkEffect = MoveSource | MoveDestination;
 
-/**
- * An attach mark that allocates new cells.
- */
-export type NewAttach = Insert | MoveIn;
-export const NewAttach = Type.Union([Insert, MoveIn]);
-
-export type Reattach = Revive | ReturnTo;
-export const Reattach = Type.Union([Revive, ReturnTo]);
-
-export type Attach = NewAttach | Reattach;
-export const Attach = Type.Union([NewAttach, Reattach]);
+export type Attach = Insert | MoveIn;
+export const Attach = Type.Union([Insert, MoveIn]);
 
 export type Detach = Delete | MoveSource;
 export const Detach = Type.Union([Delete, MoveSource]);

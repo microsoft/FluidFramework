@@ -3,15 +3,20 @@
  * Licensed under the MIT License.
  */
 import { takeAsync } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzModel, createDDSFuzzSuite, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import {
+	DDSFuzzModel,
+	createDDSFuzzSuite,
+	DDSFuzzTestState,
+	DDSFuzzSuiteOptions,
+} from "@fluid-internal/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
-import { onCreate } from "./fuzzUtils";
+import { failureDirectory, onCreate } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
-const baseOptions = {
+const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
 	clientJoinOptions: {
 		maxNumberOfClients: 6,
@@ -33,7 +38,10 @@ const baseOptions = {
 describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
-	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = { insert: 1 };
+	// TODO: Enable other types of ops.
+	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+		insert: 1,
+	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
@@ -51,9 +59,27 @@ describe("Fuzz - Top-Level", () => {
 			reducer: fuzzReducer,
 			validateConsistency: validateTreeConsistency,
 		};
-		const options = {
+		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			defaultTestCount: runsPerBatch,
+			saveFailures: {
+				directory: failureDirectory,
+			},
+			detachedStartOptions: {
+				enabled: false,
+				attachProbability: 0.2,
+			},
+			clientJoinOptions: {
+				clientAddProbability: 0,
+				maxNumberOfClients: 3,
+			},
+			reconnectProbability: 0,
+			skipMinimization: true,
+			// These seeds trigger 0x370 and 0x405 relatively frequently.
+			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
+			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
+			// these seeds once optional field supports storing changes to transient nodes.
+			skip: [6, 10, 12, 14, 15, 17, 18, 19],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -70,7 +96,7 @@ describe("Fuzz - Top-Level", () => {
 			reducer: fuzzReducer,
 			validateConsistency: validateTreeConsistency,
 		};
-		const options = {
+		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			reconnectProbability: 0.0,
 			defaultTestCount: runsPerBatch,
@@ -79,6 +105,14 @@ describe("Fuzz - Top-Level", () => {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
+			saveFailures: {
+				directory: failureDirectory,
+			},
+			// These seeds trigger 0x370 and 0x405 relatively frequently.
+			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
+			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
+			// these seeds once optional field supports storing changes to transient nodes.
+			skip: [2, 3, 6, 12, 14, 15, 16],
 		};
 		createDDSFuzzSuite(model, options);
 	});

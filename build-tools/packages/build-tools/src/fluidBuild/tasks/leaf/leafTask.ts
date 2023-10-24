@@ -26,9 +26,12 @@ import { Task, TaskExec } from "../task";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
+const traceTaskCheck = registerDebug("fluid-build:task:check");
 const traceTaskInitDep = registerDebug("fluid-build:task:init:dep");
 const traceTaskInitWeight = registerDebug("fluid-build:task:init:weight");
 const traceTaskQueue = registerDebug("fluid-build:task:exec:queue");
+const traceError = registerDebug("fluid-build:task:error");
+
 interface TaskExecResult extends ExecAsyncResult {
 	worker?: boolean;
 }
@@ -41,6 +44,7 @@ export abstract class LeafTask extends Task {
 	private directParentLeafTasks: LeafTask[] = [];
 	private _parentLeafTasks: Set<LeafTask> | undefined | null;
 	private parentWeight = -1;
+
 	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
 		super(node, command, taskName);
 		if (!this.isDisabled) {
@@ -91,6 +95,8 @@ export abstract class LeafTask extends Task {
 		return sum;
 	}
 
+	// Gather all tasks that depending on this task, so we can use it compute the weight.
+	// Collecting  to make sure we don't double count the weight of the same task
 	private get parentLeafTasks(): Set<LeafTask> {
 		if (this._parentLeafTasks === null) {
 			// Circular dependency, start unrolling
@@ -113,7 +119,9 @@ export abstract class LeafTask extends Task {
 				if (e[0] === this) {
 					// detected a cycle, convert into a message
 					throw new Error(
-						`Circular dependency: ${e.map((v) => v.nameColored).join("->")}`,
+						`Circular dependency in parent leaf tasks: ${e
+							.map((v) => v.nameColored)
+							.join("->")}`,
 					);
 				}
 			}
@@ -148,12 +156,12 @@ export abstract class LeafTask extends Task {
 		}
 		if (options.showExec) {
 			this.node.buildContext.taskStats.leafBuiltCount++;
-			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
-				.toString()
-				.padStart(3, " ");
 			const totalTask =
 				this.node.buildContext.taskStats.leafTotalCount -
 				this.node.buildContext.taskStats.leafUpToDateCount;
+			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+				.toString()
+				.padStart(totalTask.toString().length, " ");
 			log(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
 		}
 		const startTime = Date.now();
@@ -269,17 +277,18 @@ export abstract class LeafTask extends Task {
 			}
 
 			this.node.buildContext.taskStats.leafBuiltCount++;
-			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
-				.toString()
-				.padStart(3, " ");
 			const totalTask =
 				this.node.buildContext.taskStats.leafTotalCount -
 				this.node.buildContext.taskStats.leafUpToDateCount;
+			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+				.toString()
+				.padStart(totalTask.toString().length, " ");
 			const elapsedTime = (Date.now() - startTime) / 1000;
 			const workerMsg = worker ? "[worker] " : "";
+			const suffix = this.isIncremental ? "" : " (non-incremental)";
 			const statusString = `[${taskNum}/${totalTask}] ${statusCharacter} ${
 				this.node.pkg.nameColored
-			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s`;
+			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${suffix}`;
 			log(statusString);
 			if (status === BuildResult.Failed) {
 				this.node.buildContext.failedTaskLines.push(statusString);
@@ -291,12 +300,15 @@ export abstract class LeafTask extends Task {
 
 	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		this.traceExec("Begin Leaf Task");
+
+		// Build all the dependent tasks first
 		const result = await this.buildDependentTask(q);
 		if (result === BuildResult.Failed) {
 			return BuildResult.Failed;
 		}
 
-		return new Promise((resolve, reject) => {
+		// Queue this task
+		return new Promise((resolve) => {
 			traceTaskQueue(`${this.nameColored}: queued with weight ${this.weight}`);
 			q.push({ task: this, resolve, queueTime: Date.now() }, -this.weight);
 		});
@@ -310,8 +322,13 @@ export abstract class LeafTask extends Task {
 			return false;
 		}
 
-		const leafIsUpToDate =
-			(await this.checkDependentLeafTasksIsUpToDate()) && (await this.checkLeafIsUpToDate());
+		if (!(await this.checkDependentLeafTasksIsUpToDate())) {
+			return false;
+		}
+
+		const start = Date.now();
+		const leafIsUpToDate = await this.checkLeafIsUpToDate();
+		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
 			this.node.buildContext.taskStats.leafUpToDateCount++;
 			this.traceExec(`Skipping Leaf Task`);
@@ -373,6 +390,9 @@ export abstract class LeafTask extends Task {
 	 * Subclass should override these to configure the leaf task
 	 */
 
+	// After the task is done, indicate whether the command can be incremental next time.
+	protected abstract get isIncremental();
+
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
@@ -397,9 +417,18 @@ export abstract class LeafTask extends Task {
 		const msg = `${this.nameColored}: [${reason}]`;
 		traceTaskTrigger(msg);
 	}
+
+	protected traceError(msg: string) {
+		traceError(`${this.nameColored}: ${msg}`);
+	}
 }
 
 export abstract class LeafWithDoneFileTask extends LeafTask {
+	private _isIncremental: boolean = true;
+
+	protected get isIncremental() {
+		return this._isIncremental;
+	}
 	protected get doneFileFullPath() {
 		return this.getPackageFileFullPath(this.doneFile);
 	}
@@ -431,11 +460,13 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			if (content !== undefined) {
 				await writeFileAsync(doneFileFullPath, content);
 			} else {
+				this._isIncremental = false;
 				console.warn(
 					`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`,
 				);
 			}
 		} catch (error) {
+			this._isIncremental = false;
 			console.warn(
 				`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}\n error: ${error}`,
 			);
@@ -443,10 +474,10 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	}
 
 	protected async checkLeafIsUpToDate() {
-		const doneFileFullPath = this.doneFileFullPath!;
+		const doneFileFullPath = this.doneFileFullPath;
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
-			if (doneFileExpectedContent) {
+			if (doneFileExpectedContent !== undefined) {
 				const doneFileContent = await readFileAsync(doneFileFullPath, "utf8");
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
@@ -467,7 +498,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * Subclass could override this to provide an alternative done file name
 	 */
 	protected get doneFile(): string {
-		const name = path.parse(this.executable).name;
+		const name = path.parse(this.executable).name.replace(/\s/g, "_");
 		// use 8 char of the sha256 hash of the command to distinguish different tasks
 		const hash = crypto.createHash("sha256").update(this.command).digest("hex").substring(0, 8);
 		return `${name}-${hash}.done.build.log`;
@@ -482,6 +513,14 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 }
 
 export class UnknownLeafTask extends LeafTask {
+	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
+		super(node, command, taskName);
+	}
+
+	protected get isIncremental() {
+		return this.command === "";
+	}
+
 	protected async checkLeafIsUpToDate() {
 		if (this.command === "") {
 			// Empty command is always up to date.
@@ -513,7 +552,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			});
 			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
-			this.traceExec(`error comparing file times ${e.message}`);
+			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
 			return undefined;
 		}

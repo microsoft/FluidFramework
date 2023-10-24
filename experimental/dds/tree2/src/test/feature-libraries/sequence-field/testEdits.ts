@@ -5,19 +5,18 @@
 
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
 	JsonableTree,
 	mintRevisionTag,
 	RevisionTag,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();
 
 export type TestChangeset = SF.Changeset<TestChange>;
@@ -94,10 +93,9 @@ function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
 	const mark = markList[markList.length - 1];
 	if (lastDetach !== undefined) {
 		mark.cellId = lastDetach;
@@ -109,16 +107,9 @@ function createRedundantReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	isIntention?: boolean,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(
-		startIndex,
-		count,
-		detachEvent,
-		reviver,
-		isIntention,
-	);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, isIntention);
 	const mark = markList[markList.length - 1];
 	delete mark.cellId;
 	return markList;
@@ -129,9 +120,8 @@ function createBlockedReviveChangeset(
 	count: number,
 	detachEvent: SF.CellId,
 	lastDetach: SF.CellId,
-	reviver = fakeRepair,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
 	const mark = markList[markList.length - 1];
 	mark.cellId = lastDetach;
 	return markList;
@@ -141,10 +131,9 @@ function createIntentionalReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	reviver = fakeRepair,
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, reviver, true);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, true);
 	const mark = markList[markList.length - 1];
 
 	if (lastDetach !== undefined) {
@@ -231,10 +220,10 @@ function createInsertMark<TChange = never>(
 function createReviveMark<TChange = never>(
 	count: number,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.CellMark<SF.Revive, TChange>>,
-): SF.CellMark<SF.Revive, TChange> {
-	const mark: SF.CellMark<SF.Revive, TChange> = {
-		type: "Revive",
+	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
+): SF.CellMark<SF.Insert, TChange> {
+	const mark: SF.CellMark<SF.Insert, TChange> = {
+		type: "Insert",
 		count,
 	};
 	if (cellId !== undefined) {
@@ -347,11 +336,11 @@ function createReturnToMark(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.CellMark<SF.ReturnTo, never>>,
-): SF.CellMark<SF.ReturnTo, never> {
+	overrides?: Partial<SF.CellMark<SF.MoveIn, never>>,
+): SF.CellMark<SF.MoveIn, never> {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.CellMark<SF.ReturnTo, never> = {
-		type: "ReturnTo",
+	const mark: SF.CellMark<SF.MoveIn, never> = {
+		type: "MoveIn",
 		id: atomId.localId,
 		count,
 	};

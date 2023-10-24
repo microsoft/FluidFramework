@@ -10,7 +10,7 @@ import * as readline from "readline";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
 
-import { updatePackageJsonFile } from "../../common/npmPackage";
+import { PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
 import { Handler, readFile, writeFile } from "../common";
 import { PackageNamePolicyConfig } from "../../common/fluidRepo";
@@ -263,7 +263,6 @@ export function isFeed(str: string | undefined): str is Feed {
 	if (str === undefined) {
 		return false;
 	}
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	return feeds.includes(str as any);
 }
 
@@ -829,7 +828,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
@@ -879,7 +878,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-test-scripts-split",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
@@ -927,7 +926,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-mocha-config",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
 			let json;
 			try {
@@ -965,7 +964,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-script-jest-config",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
 			let json;
 
@@ -996,6 +995,7 @@ export const handlers: Handler[] = [
 			}
 
 			const jestConfigFile = path.join(packageDir, jestFileName);
+			// eslint-disable-next-line @typescript-eslint/no-var-requires
 			const config = require(path.resolve(jestConfigFile));
 			if (config.reporters === undefined) {
 				return `Missing reporters in '${jestConfigFile}'`;
@@ -1024,7 +1024,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-esm",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces that we have a module field in the package iff we have a ESM build
 			// So that tools like webpack will pack up the right version.
 			let json;
@@ -1061,7 +1061,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-clean-script",
 		match,
-		handler: (file, root) => {
+		handler: (file) => {
 			// This rule enforces the "clean" script will delete all the build and test output
 			let json;
 
@@ -1079,7 +1079,7 @@ export const handlers: Handler[] = [
 			const cleanScript = scripts.clean;
 			if (cleanScript) {
 				// Ignore clean scripts that are root of the release group
-				if (cleanScript.startsWith("pnpm")) {
+				if (cleanScript.startsWith("pnpm") || cleanScript.startsWith("fluid-build")) {
 					return undefined;
 				}
 
@@ -1108,7 +1108,7 @@ export const handlers: Handler[] = [
 				}
 			}
 		},
-		resolver: (file, root) => {
+		resolver: (file) => {
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
@@ -1122,6 +1122,132 @@ export const handlers: Handler[] = [
 					return;
 				}
 				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
+			});
+
+			return result;
+		},
+	},
+	{
+		name: "npm-package-types-field",
+		match,
+		handler: (file) => {
+			// This rule enforces each package has a types field in its package.json
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			if (
+				// Ignore private packages...
+				json.private === true ||
+				// and those without main/module defined
+				(json.main === undefined && json.module === undefined) ||
+				// and packages without a tsconfig
+				!fs.existsSync(path.join(path.dirname(file), "tsconfig.json"))
+			) {
+				return;
+			}
+
+			if (json.types === undefined) {
+				return "Missing 'types' field in package.json.";
+			}
+		},
+	},
+	{
+		// This rule enforces each package has an exports field in its package.json. It also verifies that the values in the
+		// exports["."] field match the ones in the main/module/types fields.
+		name: "npm-package-exports-field",
+		match,
+		handler: (file) => {
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			if (!shouldCheckExportsField(json)) {
+				return;
+			}
+
+			const exportsField = json.exports;
+			if (exportsField === undefined) {
+				return "Missing 'exports' field in package.json.";
+			}
+
+			const exportsRoot = exportsField?.["."];
+			if (exportsRoot === undefined) {
+				return "Missing '.' entry in 'exports' field in package.json.";
+			}
+
+			if (json.main === undefined) {
+				return "Missing 'main' entry in package.json.";
+			}
+
+			const isCJSOnly = json.module === undefined || json.type === "commonjs";
+			const isESMOnly = json.type === "module";
+
+			// CJS- and ESM-only packages should use default, not import or require.
+			const defaultField =
+				exportsRoot?.default?.default === undefined
+					? undefined
+					: normalizePathField(exportsRoot?.default?.default);
+
+			// CJS-only packages should use default, not import or require.
+			if (isCJSOnly) {
+				const mainField = normalizePathField(json.main);
+				if (defaultField !== mainField) {
+					return `${json.name} is a CJS-only package. Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
+				}
+			}
+
+			// ESM-only packages should use default, not import or require.
+			if (isESMOnly) {
+				const mainField = normalizePathField(json.main);
+				if (defaultField !== mainField) {
+					return `${json.name} is an ESM-only package. Incorrect 'default' entry in 'exports' field in package.json. Expected '${mainField}', got '${defaultField}'`;
+				}
+			}
+
+			if (!isESMOnly && !isCJSOnly) {
+				// ESM exports in import field
+				const importField =
+					exportsRoot?.import?.default === undefined
+						? undefined
+						: normalizePathField(exportsRoot?.import?.default);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const moduleField = normalizePathField(json.module!);
+				if (importField !== moduleField) {
+					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'import' entry in 'exports' field in package.json. Expected '${moduleField}', got '${importField}'`;
+				}
+
+				// CJS exports in require field
+				const requireField =
+					exportsRoot?.require?.default === undefined
+						? undefined
+						: normalizePathField(exportsRoot?.require?.default);
+				const mainField = normalizePathField(json.main);
+				if (requireField !== mainField) {
+					return `${json.name} has both CJS and ESM entrypoints. Incorrect 'require' entry in 'exports' field in package.json. Expected '${mainField}', got '${requireField}'`;
+				}
+			}
+		},
+		resolver: (file) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				if (shouldCheckExportsField(json)) {
+					try {
+						const exportsField = generateExportsField(json);
+						json.exports = exportsField;
+					} catch (error: unknown) {
+						result.resolved = false;
+						result.message = (error as Error).message;
+					}
+				}
 			});
 
 			return result;
@@ -1157,4 +1283,111 @@ function missingCleanDirectories(scripts: any) {
 		expectedClean.push("nyc");
 	}
 	return expectedClean.filter((name) => !scripts.clean?.includes(name));
+}
+
+/**
+ * Generates an 'exports' field for a package based on the value of other fields in package.json.
+ */
+function generateExportsField(json: PackageJson) {
+	if (json.types === undefined && json.typings === undefined) {
+		throw new Error(
+			"The 'types' and 'typings' field are both undefined. At least one must be defined (types is preferred).",
+		);
+	}
+
+	if (json.main === undefined) {
+		throw new Error("The 'main' field is undefined. It must have a value.");
+	}
+
+	// One of the values is guaranteed to be defined because of earlier checks
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const cjsTypes = normalizePathField((json.types ?? json.typings)!);
+
+	const isCJSOnly = json.module === undefined || json.type === "commonjs";
+	const isESMOnly = json.type === "module";
+
+	if (isESMOnly) {
+		const exports = {
+			".": {
+				default: {
+					// Assume the types field is the ESM types since this is an ESM-only package.
+					types: cjsTypes,
+					default: normalizePathField(json.main),
+				},
+			},
+		};
+		return exports;
+	}
+
+	if (isCJSOnly) {
+		// This logic is the same as the ESM-only case, but it's separate intentionally to make it easier to refactor
+		// as we learn more about what our exports field should look like for different package types.
+		const exports = {
+			".": {
+				default: {
+					types: cjsTypes,
+					default: normalizePathField(json.main),
+				},
+			},
+		};
+		return exports;
+	}
+
+	// Package has both CJS and ESM
+
+	// Assume esm types are the same name as cjs, but in a different path.
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- an earlier check guarantees module is defined
+	const esmDir = path.dirname(json.module!);
+	const typesFile = path.basename(cjsTypes.toString());
+	const esmTypes = normalizePathField(path.join(esmDir, typesFile));
+
+	const exports = {
+		".": {
+			import: {
+				types: esmTypes,
+				default: normalizePathField(json.module ?? json.main),
+			},
+			require: {
+				types: cjsTypes,
+				default: normalizePathField(json.main),
+			},
+		},
+	};
+	return exports;
+}
+
+/**
+ * Returns true if the package should be checked for an exports field.
+ */
+function shouldCheckExportsField(json: PackageJson): boolean {
+	if (
+		// skip private packages
+		json.private === true ||
+		// and those with no main entrypoint
+		json.main === undefined ||
+		// packages with browser entrypoints require special attention, so ignoring here.
+		json.browser !== undefined ||
+		// skip if both the types/typings fields are missing
+		(json.types === undefined && json.typings === undefined)
+	) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * Normalizes a relative path value so it has a leading './'
+ *
+ * @remarks
+ *
+ * Does not work with absolute paths.
+ */
+function normalizePathField(pathIn: string) {
+	if (pathIn === "" || pathIn === undefined) {
+		throw new Error(`Invalid path!`);
+	}
+	if (pathIn.startsWith("./")) {
+		return pathIn;
+	}
+	return `./${pathIn}`;
 }

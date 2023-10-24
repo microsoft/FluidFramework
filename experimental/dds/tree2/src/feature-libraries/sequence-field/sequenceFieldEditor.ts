@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
 import { ChangesetLocalId, ITreeCursor } from "../../core";
-import { FieldEditor, NodeReviver } from "../modular-schema";
+import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
 import {
 	CellId,
@@ -16,22 +16,15 @@ import {
 	Mark,
 	MoveId,
 	NodeChangeType,
-	Reattach,
 	ReturnFrom,
-	ReturnTo,
+	MoveIn,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
 	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
-	revive(
-		index: number,
-		count: number,
-		detachEvent: CellId,
-		reviver: NodeReviver,
-		isIntention?: true,
-	): Changeset<never>;
+	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
 
 	/**
 	 *
@@ -79,12 +72,11 @@ export const sequenceFieldEditor = {
 		index: number,
 		count: number,
 		detachEvent: CellId,
-		reviver: NodeReviver,
 		isIntention: boolean = false,
 	): Changeset<never> => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
-		const mark: CellMark<Reattach, never> = {
-			type: "Revive",
+		const mark: CellMark<Insert, never> = {
+			type: "Insert",
 			count,
 			cellId: detachEvent,
 		};
@@ -133,8 +125,8 @@ export const sequenceFieldEditor = {
 			count,
 		};
 
-		const returnTo: CellMark<ReturnTo, never> = {
-			type: "ReturnTo",
+		const returnTo: CellMark<MoveIn, never> = {
+			type: "MoveIn",
 			id,
 			count,
 			cellId: detachEvent,

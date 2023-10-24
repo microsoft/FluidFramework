@@ -8,11 +8,12 @@ import { SequenceField as SF } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
+	emptyFieldChanges,
 	mintRevisionTag,
 	RevisionTag,
 	tagChange,
 	tagRollbackInverse,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
 import { deepFreeze, isDeltaVisible } from "../../utils";
@@ -27,7 +28,7 @@ import {
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -251,7 +252,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 				const changes = [inv, taggedChange];
 				const actual = compose(changes);
 				const delta = toDelta(actual);
-				assert.deepEqual(delta, []);
+				assert.deepEqual(delta, emptyFieldChanges);
 			});
 		}
 	});
@@ -333,7 +334,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([delABC2, revABC4]);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
+		assert.deepEqual(delta, emptyFieldChanges);
 	});
 
 	it("[Move ABC, Return ABC] ↷ Delete B", () => {
@@ -348,7 +349,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([movABC2, retABC4]);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
+		assert.deepEqual(delta, emptyFieldChanges);
 	});
 
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
@@ -363,7 +364,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		// The rebased versions of the local edits should still cancel-out
 		const actual = compose([delAC2, revAC4]);
 		const delta = toDelta(actual);
-		assert.deepEqual(delta, []);
+		assert.deepEqual(delta, emptyFieldChanges);
 	});
 
 	// See bug 4104

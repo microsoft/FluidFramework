@@ -22,16 +22,18 @@ describe("useTree()", () => {
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
+
+			subtype: "InventoryList",
+		});
+		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
+		return tree.schematize({
 			initialTree: {
 				nuts: 0,
 				bolts: 0,
 			},
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
-			subtype: "InventoryList",
 		});
-		const tree = factory.create(new MockFluidDataStoreRuntime(), id);
-		return tree.root;
 	}
 
 	// Mock 'React.setState()'

@@ -29,7 +29,6 @@ export {
 	NodeChangeComposer,
 	NodeChangeInverter,
 	NodeChangeRebaser,
-	NodeReviver,
 	referenceFreeFieldChangeRebaser,
 	RevisionMetadataSource,
 	RevisionIndexer,

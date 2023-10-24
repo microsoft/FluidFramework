@@ -32,7 +32,7 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	FieldKinds,
-	SchemaBuilder,
+	TreeFieldSchema,
 	singleTextCursor,
 	typeNameSymbol,
 } from "../../feature-libraries";
@@ -40,7 +40,7 @@ import { brand } from "../../util";
 import { ISubscribable } from "../../events";
 import { SharedTreeTestFactory } from "../utils";
 import { InitializeAndSchematizeConfiguration } from "../../shared-tree";
-import { leaf } from "../../domains";
+import { leaf, SchemaBuilder } from "../../domains";
 import { TestSharedTreeCore } from "./utils";
 
 describe("SharedTreeCore", () => {
@@ -329,11 +329,11 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		const b = new SchemaBuilder({ scope: "0x4a6 repro", libraries: [leaf.library] });
-		const node = b.structRecursive("test node", {
-			child: SchemaBuilder.fieldRecursive(FieldKinds.optional, () => node, leaf.number),
+		const b = new SchemaBuilder({ scope: "0x4a6 repro" });
+		const node = b.objectRecursive("test node", {
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 		});
-		const schema = b.toDocumentSchema(SchemaBuilder.fieldOptional(node));
+		const schema = b.intoSchema(b.optional(node));
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,
@@ -351,8 +351,8 @@ describe("SharedTreeCore", () => {
 			allowedSchemaModifications: AllowedUpdateType.None,
 		};
 
-		const view1 = tree1.schematize(config);
-		const view2 = tree2.schematize(config);
+		const view1 = tree1.schematizeView(config);
+		const view2 = tree2.schematizeView(config);
 		const editable1 = view1.editableTree2(schema);
 		const editable2 = view2.editableTree2(schema);
 

@@ -21,6 +21,7 @@ export {
 	getOrAddInMap,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
+	forEachInNestedMap,
 	NestedMap,
 	SizedNestedMap,
 	populateNestedMap,
@@ -73,6 +74,7 @@ export {
 	assertNonNegativeSafeInteger,
 	generateStableId,
 	useDeterministicStableId,
+	useAsyncDeterministicStableId,
 	objectToMap,
 	oneFromSet,
 	Named,
@@ -80,6 +82,7 @@ export {
 	IDisposable,
 	capitalize,
 	assertValidRangeIndices,
+	transformObjectMap,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 

@@ -12,11 +12,9 @@ import {
 	CrossFieldTarget,
 	NodeExistenceState,
 	RevisionMetadataSource,
-	getIntention,
 } from "../modular-schema";
 import {
 	isDetach,
-	isNewAttach,
 	cloneMark,
 	areInputCellsEmpty,
 	markEmptiesCells,
@@ -27,11 +25,13 @@ import {
 	areOverlappingIdRanges,
 	cloneCellId,
 	areOutputCellsEmpty,
+	isNewAttach,
 	getDetachCellId,
 	getInputCellId,
 	isTransientEffect,
 	getOutputCellId,
 	getEndpoint,
+	isReattach,
 } from "./utils";
 import {
 	Changeset,
@@ -427,7 +427,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 					rebasedMark.count,
 					PairedMarkUpdate.Deactivated,
 				);
-			} else if (rebasedMark.type === "ReturnTo") {
+			} else if (isReattach(rebasedMark)) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
@@ -452,7 +452,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 					rebasedMark.count,
 					PairedMarkUpdate.Reactivated,
 				);
-			} else if (rebasedMark.type === "ReturnTo") {
+			} else if (isReattach(rebasedMark)) {
 				setPairedMarkStatus(
 					moveEffects,
 					CrossFieldTarget.Source,
@@ -490,13 +490,12 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 	switch (type) {
 		case "Delete":
 		case "MoveOut":
-		case "Revive":
 			return true;
+		case "Insert":
+			return isReattach(mark);
 		case NoopMarkType:
 		case "ReturnFrom":
-		case "Insert":
 		case "MoveIn":
-		case "ReturnTo":
 		case "Placeholder":
 			return false;
 		case "Transient":

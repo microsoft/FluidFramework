@@ -20,12 +20,10 @@ function makeV0Codec<TNodeChange>(
 		switch (type) {
 			case NoopMarkType:
 			case "MoveIn":
-			case "ReturnTo":
 			case "Insert":
 			case "Delete":
 			case "MoveOut":
 			case "ReturnFrom":
-			case "Revive":
 				return { ...(effect as JsonCompatibleReadOnly & object) };
 			case "Transient":
 				return {
@@ -45,12 +43,10 @@ function makeV0Codec<TNodeChange>(
 		switch (type) {
 			case NoopMarkType:
 			case "MoveIn":
-			case "ReturnTo":
 			case "Insert":
 			case "Delete":
 			case "MoveOut":
 			case "ReturnFrom":
-			case "Revive":
 				return { ...effect };
 			case "Transient":
 				return {

@@ -8,7 +8,7 @@ import {
 	RevisionTag,
 	makeAnonChange,
 	tagChange,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	mintRevisionTag,
 	tagRollbackInverse,
 	ChangesetLocalId,
@@ -20,7 +20,7 @@ import { TestChange } from "../../testChange";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 import { compose, composeAnonChanges, composeNoVerify, shallowCompose } from "./utils";
 
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
@@ -484,7 +484,7 @@ describe("SequenceField - Compose", () => {
 				cellId: detachEvent,
 				count: 1,
 				changes,
-				attach: { type: "Revive", revision: tag2 },
+				attach: { type: "Insert", revision: tag2 },
 				detach: { type: "Delete", id: brand(0), revision: tag3 },
 			},
 			Mark.delete(1, brand(1), { revision: tag3 }),

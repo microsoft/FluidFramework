@@ -129,7 +129,6 @@ export function isMoveSource(effect: MarkEffect): effect is MoveSource {
 export function isMoveDestination(effect: MarkEffect): effect is MoveDestination {
 	switch (effect.type) {
 		case "MoveIn":
-		case "ReturnTo":
 			return true;
 		default:
 			return false;
@@ -479,8 +478,7 @@ export function applyMoveEffectsToMark<T>(
 					),
 				];
 			}
-			case "MoveIn":
-			case "ReturnTo": {
+			case "MoveIn": {
 				const effect = getMoveEffect(
 					effects,
 					CrossFieldTarget.Destination,

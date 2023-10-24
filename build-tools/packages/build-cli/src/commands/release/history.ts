@@ -30,13 +30,13 @@ const DEFAULT_MIN_VERSION = "0.0.0";
 export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 	typeof ReleaseHistoryCommand
 > {
-	static description = `Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
+	static readonly description = `Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
 
     Use 'npm view' to list published packages based on the public npm registry.
 
     The number of results can be limited using the --limit argument.`;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "List all the releases of the azure release group.",
 			command: "<%= config.bin %> <%= command.id %> -g azure",
@@ -47,7 +47,7 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 		},
 	];
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
 			required: false,
 			exclusive: ["package"],
@@ -63,19 +63,19 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 		...ReleaseReportBaseCommand.flags,
 	};
 
-	static enableJsonFlag = true;
+	static readonly enableJsonFlag = true;
 
-	defaultMode: ReleaseSelectionMode = "date";
+	readonly defaultMode: ReleaseSelectionMode = "date";
 	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<{ reports: ReleaseReport[] }> {
 		const context = await this.getContext();
-		const flags = this.flags;
+		const { defaultMode, flags, releaseData, releaseGroupName } = this;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const releaseGroup = flags.releaseGroup ?? flags.package!;
 		this.releaseGroupName = findPackageOrReleaseGroup(releaseGroup, context)?.name;
-		if (this.releaseGroupName === undefined) {
+		if (releaseGroupName === undefined) {
 			this.error(`Can't find release group or package with name: ${releaseGroup}`, {
 				exit: 1,
 			});
@@ -83,17 +83,17 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 
 		this.releaseData = await this.collectReleaseData(
 			context,
-			this.defaultMode,
-			this.releaseGroupName,
+			defaultMode,
+			releaseGroupName,
 			false,
 		);
-		if (this.releaseData === undefined) {
-			this.error(`No releases found for ${this.releaseGroupName}`);
+		if (releaseData === undefined) {
+			this.error(`No releases found for ${releaseGroupName}`);
 		}
 
 		const reports: ReleaseReport[] = [];
 
-		for (const [pkgOrReleaseGroup, data] of Object.entries(this.releaseData)) {
+		for (const [pkgOrReleaseGroup, data] of Object.entries(releaseData)) {
 			const versions = sortVersions([...data.versions], "version");
 			const releaseTable = this.generateAllReleasesTable(pkgOrReleaseGroup, versions);
 
@@ -145,7 +145,7 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 			index++;
 		}
 
-		const limit = this.flags.limit;
+		const { limit } = this.flags;
 		if (limit !== undefined && tableData.length > limit) {
 			this.info(
 				`Reached the release limit (${limit}), ignoring the remaining ${

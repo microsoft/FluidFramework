@@ -4,8 +4,8 @@
  */
 
 import { strict as assert, fail } from "assert";
-import { FieldStoredSchema, TreeSchemaIdentifier } from "../../../../core";
-import { SchemaBuilder, defaultSchemaPolicy } from "../../../../feature-libraries";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier } from "../../../../core";
+import { defaultSchemaPolicy } from "../../../../feature-libraries";
 
 import {
 	buildCache,
@@ -44,7 +44,7 @@ import {
 	testTrees,
 } from "../../../testTrees";
 import { typeboxValidator } from "../../../../external-utilities";
-import { leaf } from "../../../../domains";
+import { leaf, SchemaBuilder } from "../../../../domains";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode";
 
 const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
@@ -67,12 +67,12 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldRequired(minimal),
+				SchemaBuilder.required(minimal),
 				cache,
 			);
 			// This is expected since this case should be optimized to just encode the inner shape.
@@ -93,12 +93,12 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldRequired(minimal, leaf.number),
+				SchemaBuilder.required([minimal, leaf.number]),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -115,12 +115,12 @@ describe("schemaBasedEncoding", () => {
 			const log: string[] = [];
 			const shape = fieldShaper(
 				{
-					shapeFromTree(schemaName: TreeSchemaIdentifier): NodeEncoder {
+					shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 						log.push(schemaName);
 						return onlyTypeShape;
 					},
 				},
-				SchemaBuilder.fieldSequence(minimal),
+				SchemaBuilder.sequence(minimal),
 				cache,
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
@@ -157,12 +157,12 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 			);
-			const log: FieldStoredSchema[] = [];
+			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
 				library,
 				defaultSchemaPolicy,
 				{
-					shapeFromField(field: FieldStoredSchema): FieldEncoder {
+					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},
@@ -192,12 +192,12 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				() => fail(),
 			);
-			const log: FieldStoredSchema[] = [];
+			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
 				library,
 				defaultSchemaPolicy,
 				{
-					shapeFromField(field: FieldStoredSchema): FieldEncoder {
+					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 						log.push(field);
 						return cache.nestedArray(numericShape);
 					},

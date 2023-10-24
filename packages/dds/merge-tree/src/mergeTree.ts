@@ -1318,7 +1318,7 @@ export class MergeTree {
 	}
 
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
 		const searchInfo: IMarkerSearchRangeInfo = {
@@ -1341,7 +1341,7 @@ export class MergeTree {
 	// TODO: filter function
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * @deprecated - Use searchForMarker instead.
+	 * @deprecated Use searchForMarker instead.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from

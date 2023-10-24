@@ -8,7 +8,9 @@ import { FieldKey } from "../schema-stored";
 import { DetachedField, keyAsDetachedField } from "./types";
 
 /**
- * Identical to {@link UpPathDefault}, but a duplicate declaration is needed to make the default type parameter compile.
+ * Identical to {@link UpPath}, but a duplicate declaration is needed to make
+ * the default type parameter compile.
+ *
  * @alpha
  */
 export type UpPathDefault = UpPath;

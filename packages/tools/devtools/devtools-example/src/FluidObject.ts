@@ -222,21 +222,21 @@ export class AppData extends DataObject {
 
 		// TODO: Maybe include example handle
 
-		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldRequired(leaf.boolean, leaf.handle, leaf.string),
+		const leafSchema = builder.object("leaf-item", {
+			leafField: [leaf.boolean, leaf.handle, leaf.string],
 		});
 
-		const childSchema = builder.struct("child-item", {
-			childField: SchemaBuilder.fieldRequired(leaf.string, leaf.boolean),
-			childData: SchemaBuilder.fieldOptional(leafSchema),
+		const childSchema = builder.object("child-item", {
+			childField: [leaf.string, leaf.boolean],
+			childData: builder.optional(leafSchema),
 		});
 
-		const rootNodeSchema = builder.struct("root-item", {
-			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldRequired(leaf.number),
+		const rootNodeSchema = builder.object("root-item", {
+			childrenOne: builder.sequence(childSchema),
+			childrenTwo: leaf.number,
 		});
 
-		const schema = builder.toDocumentSchema(SchemaBuilder.fieldRequired(rootNodeSchema));
+		const schema = builder.intoSchema(rootNodeSchema);
 
 		sharedTree.schematize({
 			schema,

@@ -355,16 +355,17 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
- * @experimental - Not ready for use
  */
 export interface ICompressionRuntimeOptions {
 	/**
-	 * The minimum size the batch's payload must exceed before the batch's contents will be compressed.
+	 * The value the batch's content size must exceed for the batch to be compressed.
+	 * By default the value is 600 * 1024 = 614400 bytes. If the value is set to `Infinity`, compression will be disabled.
 	 */
 	readonly minimumBatchSizeInBytes: number;
 
 	/**
 	 * The compression algorithm that will be used to compress the op.
+	 * By default the value is `lz4` which is the only compression algorithm currently supported.
 	 */
 	readonly compressionAlgorithm: CompressionAlgorithms;
 }
@@ -392,8 +393,7 @@ export interface IContainerRuntimeOptions {
 	 */
 	readonly flushMode?: FlushMode;
 	/**
-	 * Enables the runtime to compress ops. Compression is disabled when undefined.
-	 * @experimental Not ready for use.
+	 * Enables the runtime to compress ops. See {@link ICompressionRuntimeOptions}.
 	 */
 	readonly compressionOptions?: ICompressionRuntimeOptions;
 	/**
@@ -410,12 +410,15 @@ export interface IContainerRuntimeOptions {
 	/**
 	 * If the op payload needs to be chunked in order to work around the maximum size of the batch, this value represents
 	 * how large the individual chunks will be. This is only supported when compression is enabled. If after compression, the
-	 * batch size exceeds this value, it will be chunked into smaller ops of this size.
+	 * batch content size exceeds this value, it will be chunked into smaller ops of this exact size.
 	 *
-	 * If unspecified, if a batch exceeds `maxBatchSizeInBytes` after compression, the container will close with an instance
-	 * of `GenericError` with the `BatchTooLarge` message.
+	 * This value is a trade-off between having many small chunks vs fewer larger chunks and by default, the runtime is configured to use
+	 * 200 * 1024 = 204800 bytes. This default value ensures that no compressed payload's content is able to exceed {@link IContainerRuntimeOptions.maxBatchSizeInBytes}
+	 * regardless of the overhead of an individual op.
 	 *
-	 * @experimental Not ready for use.
+	 * Any value of `chunkSizeInBytes` exceeding {@link IContainerRuntimeOptions.maxBatchSizeInBytes} will disable this feature, therefore if a compressed batch's content
+	 * size exceeds {@link IContainerRuntimeOptions.maxBatchSizeInBytes} after compression, the container will close with an instance of `GenericError` with
+	 * the `BatchTooLarge` message.
 	 */
 	readonly chunkSizeInBytes?: number;
 
@@ -549,7 +552,7 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
- * @deprecated - use ContainerRuntimeMessageType instead
+ * @deprecated use ContainerRuntimeMessageType instead
  */
 export enum RuntimeMessage {
 	FluidDataStoreOp = "component",
@@ -562,7 +565,7 @@ export enum RuntimeMessage {
 }
 
 /**
- * @deprecated - please use version in driver-utils
+ * @deprecated please use version in driver-utils
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
@@ -690,14 +693,14 @@ export class ContainerRuntime
 		IProvideFluidHandleContext
 {
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;
 	}
 
 	/**
-	 * @deprecated - use loadRuntime instead.
+	 * @deprecated use loadRuntime instead.
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param context - Context of the container.
 	 * @param registryEntries - Mapping to the stores.
@@ -1723,7 +1726,7 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
@@ -1775,7 +1778,10 @@ export class ContainerRuntime
 					  }
 					: create404Response(request);
 			} else if (requestParser.pathParts.length > 0) {
-				const dataStore = await this.getDataStoreFromRequest(id, request);
+				// Differentiate between requesting the dataStore directly, or one of its children
+				const requestForChild = !requestParser.isLeaf(1);
+				const dataStore = await this.getDataStoreFromRequest(id, request, requestForChild);
+
 				const subRequest = requestParser.createSubRequest(1);
 				// We always expect createSubRequest to include a leading slash, but asserting here to protect against
 				// unintentionally modifying the url if that changes.
@@ -1808,6 +1814,7 @@ export class ContainerRuntime
 	private async getDataStoreFromRequest(
 		id: string,
 		request: IRequest,
+		requestForChild: boolean,
 	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
@@ -1818,6 +1825,11 @@ export class ContainerRuntime
 		}
 		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
+		}
+
+		// We allow Tombstone requests for sub-DataStore objects
+		if (requestForChild) {
+			headerData.allowTombstone = true;
 		}
 
 		await this.dataStores.waitIfPendingAlias(id);
@@ -2379,7 +2391,7 @@ export class ContainerRuntime
 	 * Returns the runtime of the data store.
 	 * @param id - Id supplied during creating the data store.
 	 * @param wait - True if you want to wait for it.
-	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
+	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
@@ -2814,7 +2826,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * @deprecated - Replaced by deleteSweepReadyNodes.
+	 * @deprecated Replaced by deleteSweepReadyNodes.
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
 		throw new Error("deleteUnusedRoutes should not be called");
@@ -3734,7 +3746,7 @@ export class ContainerRuntime
 		 * and then close as the current main client is likely to be re-elected as the parent summarizer again.
 		 */
 		if (!result.isSummaryTracked && result.isSummaryNewer) {
-			const fetchResult = await this.fetchSnapshotFromStorage(
+			const fetchResult = await this.fetchLatestSnapshotFromStorage(
 				summaryLogger,
 				{
 					eventName: "RefreshLatestSummaryAckFetch",
@@ -3742,7 +3754,6 @@ export class ContainerRuntime
 					targetSequenceNumber: summaryRefSeq,
 				},
 				readAndParseBlob,
-				null,
 			);
 
 			/**
@@ -3791,13 +3802,12 @@ export class ContainerRuntime
 
 		// This is a performance optimization as the same parent is likely to be elected again, and would use its
 		// cache to fetch the snapshot instead of the network.
-		await this.fetchSnapshotFromStorage(
+		await this.fetchLatestSnapshotFromStorage(
 			summaryLogger,
 			{
 				eventName: "RefreshLatestSummaryFromServerFetch",
 			},
 			readAndParseBlob,
-			null,
 		);
 
 		await this.closeStaleSummarizer("RefreshLatestSummaryFromServerFetch");
@@ -3811,16 +3821,6 @@ export class ContainerRuntime
 	}
 
 	private async closeStaleSummarizer(codePath: string): Promise<void> {
-		this.mc.logger.sendTelemetryEvent(
-			{
-				eventName: "ClosingSummarizerOnSummaryStale",
-				codePath,
-				message: "Stopping fetch from storage",
-				closeSummarizerDelayMs: this.closeSummarizerDelayMs,
-			},
-			new GenericError("Restarting summarizer instead of refreshing"),
-		);
-
 		// Delay before restarting summarizer to prevent the summarizer from restarting too frequently.
 		await delay(this.closeSummarizerDelayMs);
 		this._summarizer?.stop("latestSummaryStateStale");
@@ -3828,15 +3828,14 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Downloads snapshot from storage with the given versionId or latest if versionId is null.
+	 * Downloads the latest snapshot from storage.
 	 * By default, it also closes the container after downloading the snapshot. However, this may be
 	 * overridden via options.
 	 */
-	private async fetchSnapshotFromStorage(
+	private async fetchLatestSnapshotFromStorage(
 		logger: ITelemetryLoggerExt,
 		event: ITelemetryGenericEvent,
 		readAndParseBlob: ReadAndParseBlob,
-		versionId: string | null,
 	): Promise<{ snapshotTree: ISnapshotTree; versionId: string; latestSnapshotRefSeq: number }> {
 		return PerformanceEvent.timedExecAsync(
 			logger,
@@ -3858,10 +3857,10 @@ export class ContainerRuntime
 				const trace = Trace.start();
 
 				const versions = await this.storage.getVersions(
-					versionId,
+					null,
 					1,
 					"prefetchLatestSummaryBeforeClose",
-					versionId === null ? FetchSource.noCache : undefined,
+					FetchSource.noCache,
 				);
 				assert(
 					!!versions && !!versions[0],
