@@ -39,13 +39,8 @@ const inventorySchema = builder.struct("Contoso:Inventory-1.0.0", {
 });
 type InventoryNode = Typed<typeof inventorySchema>;
 
-// REV: The root inventoryFieldSchema feels extra to me.  Is there a way to omit it?  Something like
-// builder.toDocumentSchema(inventorySchema)
-const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
-type InventoryField = Typed<typeof inventoryFieldSchema>;
-
 // This call finalizes the schema into an object we can pass to schematize.
-const schema = builder.toDocumentSchema(inventoryFieldSchema);
+const schema = builder.toDocumentSchema(inventorySchema);
 
 const newTreeFactory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,
@@ -106,12 +101,12 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		}
 		return this._sharedTree;
 	}
-	private _inventory: InventoryField | undefined;
+	private _inventory: InventoryNode | undefined;
 	private get inventory(): InventoryNode {
 		if (this._inventory === undefined) {
 			throw new Error("Not initialized properly");
 		}
-		return this._inventory.content;
+		return this._inventory;
 	}
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
@@ -156,6 +151,10 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	protected async hasInitialized(): Promise<void> {
 		// Note that although we always pass initialTree, it's only actually used on the first load and
 		// is ignored on subsequent loads.  AB#5974
+		// Note that because we passed a "struct" to the toDocumentSchema() call (rather than a RequiredField),
+		// that call will automatically generate and wrap our struct in a RequiredField.  That automatically
+		// generated RequiredField is what we get back from the .schematize() call.  So to get back to our
+		// struct type we need to get the .content off of the return value of .schematize().
 		this._inventory = this.sharedTree.schematize({
 			initialTree: {
 				inventoryItems: [
@@ -173,13 +172,13 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			},
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
-		});
-		// REV: This event feels overly-broad for what I'm looking for - is there a more localized event that
-		// could work?
+		}).content;
+		// afterChange will fire for any change of any type anywhere in the subtree.  In this application we expect
+		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
+		// Since "afterChange" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
+		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
+		// "changing" listeners on each individual item node.
 		this.inventory.context.on("afterChange", () => {
-			// Since "afterChange" doesn't provide event args, we need to scan the tree and compare
-			// it to our InventoryItems to find what changed.  This event handler fires for any
-			// change to the tree, so it needs to handle all possibilities (change, add, remove).
 			for (const inventoryItemNode of this.inventory.inventoryItems) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.
