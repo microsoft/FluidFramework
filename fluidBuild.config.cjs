@@ -160,6 +160,18 @@ module.exports = {
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"tools/getkeys",
 			],
+			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
+			"npm-package-exports-field": [
+				// We deliberately improperly import from deep in the package tree while we migrate everything into other
+				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
+				"^build-tools/packages/build-tools/package.json",
+				"^common/",
+				"^examples/",
+				"^experimental/",
+				"^packages/",
+				"^server/",
+				"^tools/",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -218,6 +230,7 @@ module.exports = {
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
 				["depcruise", "dependency-cruiser"],
+				["copyfiles", "copyfiles"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
@@ -243,6 +256,18 @@ module.exports = {
 				ignoreTasks: ["tsc:watch"],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
+		},
+	},
+
+	assertTagging: {
+		enabledPaths: [
+			/^common\/lib\/common-utils/i,
+			/^experimental/i,
+			/^packages/i,
+			/^server\/routerlicious\/packages\/protocol-base/i,
+		],
+		assertionFunctions: {
+			assert: 1,
 		},
 	},
 

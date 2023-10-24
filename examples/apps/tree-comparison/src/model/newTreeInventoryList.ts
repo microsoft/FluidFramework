@@ -23,7 +23,7 @@ import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../mo
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
 const builder = new SchemaBuilder({ scope: "inventory app" });
 
-const inventoryItemSchema = builder.struct("Contoso:InventoryItem-1.0.0", {
+const inventoryItemSchema = builder.object("Contoso:InventoryItem-1.0.0", {
 	// Some unique identifier appropriate for the inventory scenario (e.g. a UPC or model number)
 	id: builder.string,
 	// A user-friendly name
@@ -34,13 +34,13 @@ const inventoryItemSchema = builder.struct("Contoso:InventoryItem-1.0.0", {
 type InventoryItemNode = Typed<typeof inventoryItemSchema>;
 
 // TODO: Convert this to use builder.list() rather than builder.sequence when ready.
-const inventorySchema = builder.struct("Contoso:Inventory-1.0.0", {
+const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItems: builder.sequence(inventoryItemSchema),
 });
 type InventoryNode = Typed<typeof inventorySchema>;
 
 // This call finalizes the schema into an object we can pass to schematize.
-const schema = builder.toDocumentSchema(inventorySchema);
+const schema = builder.intoSchema(inventorySchema);
 
 const newTreeFactory = new TypedTreeFactory({
 	jsonValidator: typeboxValidator,
@@ -150,10 +150,10 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	protected async hasInitialized(): Promise<void> {
 		// Note that although we always pass initialTree, it's only actually used on the first load and
 		// is ignored on subsequent loads.  AB#5974
-		// Note that because we passed a "struct" to the toDocumentSchema() call (rather than a RequiredField),
-		// that call will automatically generate and wrap our struct in a RequiredField.  That automatically
+		// Note that because we passed an "object" to the toDocumentSchema() call (rather than a RequiredField),
+		// that call will automatically generate and wrap our object in a RequiredField.  That automatically
 		// generated RequiredField is what we get back from the .schematize() call.  So to get back to our
-		// struct type we need to get the .content off of the return value of .schematize().
+		// object type we need to get the .content off of the return value of .schematize().
 		this._inventory = this.sharedTree.schematize({
 			initialTree: {
 				inventoryItems: [

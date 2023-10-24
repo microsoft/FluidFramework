@@ -1054,7 +1054,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
@@ -1180,7 +1180,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * @deprecated - Use searchForMarker instead.
+	 * @deprecated Use searchForMarker instead.
 	 */
 	findTile(startPos: number, tileLabel: string, preceding = true) {
 		const clientId = this.getClientId();

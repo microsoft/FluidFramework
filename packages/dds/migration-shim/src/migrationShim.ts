@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IEvent,
 	type IFluidHandle,
@@ -26,6 +27,9 @@ import {
 } from "@fluid-experimental/tree";
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
 import { assert } from "@fluidframework/core-utils";
+import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
+import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -46,7 +50,7 @@ export interface IMigrationOp {
 	/**
 	 * Type of the migration operation.
 	 */
-	type: "hotSwap";
+	type: "barrier";
 	/**
 	 * Old channel attributes so we can do verification and understand what changed. This will allow future clients to
 	 * accurately reason about what state of the document was before the migration op initiated at.
@@ -67,7 +71,10 @@ export interface IMigrationOp {
  * This MigrationShim is responsible for submitting a migration op, processing the migrate op, swapping from the old
  * tree to the new tree, loading an old tree snapshot and creating an old tree.
  *
- * The MigrationShim expects to always load from a legacy SharedTree snapshot, though by the time it catches up in processing all ops, it may find that the migration has already occurred.  After migration occurs, it modifies its attributes to point at the SharedTreeShimFactory.  This will cause future clients to load with a SharedTreeShim and the new SharedTree snapshot instead after the next summarization.
+ * The MigrationShim expects to always load from a legacy SharedTree snapshot, though by the time it catches up in
+ * processing all ops, it may find that the migration has already occurred.  After migration occurs, it modifies its
+ * attributes to point at the SharedTreeShimFactory.  This will cause future clients to load with a SharedTreeShim and
+ * the new SharedTree snapshot instead after the next summarization.
  *
  * @public
  */
@@ -83,33 +90,69 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		) => void,
 	) {
 		super();
+		// TODO: consider flattening this class
+		this.migrationDeltaHandler = new MigrationShimDeltaHandler(this.processMigrateOp);
 	}
+
+	// TODO: process migrate op implementation, it'll look something like this
+	// Maybe we just flatten the migrationDeltaHandler into this class?
+	// Or we pass in this and have some "process and submit logic here"
+	// The cost is that this class gets big.
+	private readonly processMigrateOp = (message: ISequencedDocumentMessage): boolean => {
+		if (
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+			message.type !== MessageType.Operation ||
+			(message.contents as Partial<IMigrationOp>).type !== "barrier"
+		) {
+			return false;
+		}
+		this.newTree = this.newTreeFactory.create(this.runtime, this.id);
+		this.populateNewSharedObjectFn(this.legacyTree, this.newTree);
+		this.reconnect();
+		this.emit("migrated");
+		return true;
+	};
+
+	private readonly migrationDeltaHandler: MigrationShimDeltaHandler;
+	private services?: ShimChannelServices;
 
 	private _legacyTree: LegacySharedTree | undefined;
 	private get legacyTree(): LegacySharedTree {
 		assert(this._legacyTree !== undefined, "Old tree not initialized");
-		return /* this.newTree ?? */ this._legacyTree;
+		return this._legacyTree;
 	}
 
-	// This is the magic button that tells this Spanner and all other Spanners to swap to the new Shared Object.
+	private newTree: ISharedTree | undefined;
+
+	// Migration occurs once this op is read.
 	public submitMigrateOp(): void {
-		// These console logs are for compilation purposes
-		console.log(this.runtime);
-		console.log(this.legacyTreeFactory);
-		console.log(this.newTreeFactory);
-		console.log(this.populateNewSharedObjectFn);
-		throw new Error("Method not implemented.");
+		const migrateOp: IMigrationOp = {
+			type: "barrier",
+			oldAttributes: this.legacyTreeFactory.attributes,
+			newAttributes: this.newTreeFactory.attributes,
+		};
+
+		// This is a copy of submit local message from SharedObject
+		if (this.isAttached()) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.services!.deltaConnection.submit(migrateOp, undefined);
+		}
 	}
 
 	public get currentTree(): LegacySharedTree | ISharedTree {
-		return /* this.newTree ?? */ this.legacyTree;
+		// TODO: sync the returning of new tree with the "migrated" event
+		return this.newTree ?? this.legacyTree;
 	}
 
 	public async load(services: IChannelServices): Promise<void> {
+		const shimServices =
+			this.runtime.attachState === AttachState.Detached
+				? new NoDeltasChannelServices(services)
+				: this.generateShimServicesOnce(services);
 		this._legacyTree = (await this.legacyTreeFactory.load(
 			this.runtime,
 			this.id,
-			services,
+			shimServices,
 			this.legacyTreeFactory.attributes,
 		)) as LegacySharedTree;
 	}
@@ -118,13 +161,15 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		this._legacyTree = this.legacyTreeFactory.create(this.runtime, this.id);
 	}
 
-	public attributes!: IChannelAttributes;
+	public get attributes(): IChannelAttributes {
+		return this.currentTree.attributes;
+	}
 	public getAttachSummary(
 		fullTree?: boolean | undefined,
 		trackState?: boolean | undefined,
 		telemetryContext?: ITelemetryContext | undefined,
 	): ISummaryTreeWithStats {
-		throw new Error("Method not implemented.");
+		return this.currentTree.getAttachSummary(fullTree, trackState, telemetryContext);
 	}
 	public async summarize(
 		fullTree?: boolean | undefined,
@@ -132,16 +177,39 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		telemetryContext?: ITelemetryContext | undefined,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): Promise<ISummaryTreeWithStats> {
-		throw new Error("Method not implemented.");
+		return this.currentTree.summarize(
+			fullTree,
+			trackState,
+			telemetryContext,
+			incrementalSummaryContext,
+		);
 	}
 	public isAttached(): boolean {
-		throw new Error("Method not implemented.");
+		return this.currentTree.isAttached();
 	}
+
+	// Only connect to the legacy shared tree
 	public connect(services: IChannelServices): void {
-		throw new Error("Method not implemented.");
+		const shimServices = this.generateShimServicesOnce(services);
+		this.legacyTree.connect(shimServices);
 	}
+
+	// Only reconnect to the new shared tree this limits us to only migrating
+	private reconnect(): void {
+		assert(this.services !== undefined, "Not connected");
+		assert(this.newTree !== undefined, "New tree not initialized");
+		// This method attaches the newTree's delta handler to the MigrationShimDeltaHandler
+		this.newTree.connect(this.services);
+	}
+
+	private generateShimServicesOnce(services: IChannelServices): ShimChannelServices {
+		assert(this.services === undefined, "Already connected");
+		this.services = new ShimChannelServices(services, this.migrationDeltaHandler);
+		return this.services;
+	}
+
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
-		throw new Error("Method not implemented.");
+		return this.currentTree.getGCData(fullGC);
 	}
 	public handle!: IFluidHandle;
 	public IFluidLoadable!: IFluidLoadable;

@@ -4,18 +4,18 @@
  */
 
 export {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
-	TreeSchemaIdentifierSchema,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeSchemaIdentifierSchema as TreeSchemaIdentifierSchema,
 	FieldKey,
 	FieldKeySchema,
 	TreeTypeSet,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
-	SchemaData,
+	TreeStoredSchema,
 	PrimitiveValueSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,

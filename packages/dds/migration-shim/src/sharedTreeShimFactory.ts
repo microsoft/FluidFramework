@@ -12,8 +12,8 @@ import {
 } from "@fluidframework/datastore-definitions";
 
 import { type SharedTreeFactory } from "@fluid-experimental/tree2";
-import { SharedTreeShim } from "./sharedTreeShim";
-import { attributesMatch } from "./utils";
+import { SharedTreeShim } from "./sharedTreeShim.js";
+import { attributesMatch } from "./utils.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedTreeShim}.
@@ -64,8 +64,8 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	): Promise<SharedTreeShim> {
 		// TODO: remove attributes check and move it to an automated test that constructing a SharedTreeShimFactory and checking its attributes/type matches the oldFactory.
 		assert(attributesMatch(attributes, this.factory.attributes), "Attributes do not match");
-		const sharedTree = await this.factory.load(runtime, id, services, attributes);
-		const sharedTreeShim = new SharedTreeShim(id, sharedTree);
+		const sharedTreeShim = new SharedTreeShim(id, runtime, this.factory);
+		await sharedTreeShim.load(services);
 		// TODO: sharedTreeShim.load so we know to process v1 ops? Or we can add it to the constructor if possible.
 		return sharedTreeShim;
 	}
@@ -79,8 +79,8 @@ export class SharedTreeShimFactory implements IChannelFactory {
 	 * TODO: get feedback on this API.
 	 */
 	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeShim {
-		const sharedTree = this.factory.create(runtime, id);
-		const sharedTreeShim = new SharedTreeShim(id, sharedTree);
+		const sharedTreeShim = new SharedTreeShim(id, runtime, this.factory);
+		sharedTreeShim.create();
 		return sharedTreeShim;
 	}
 }

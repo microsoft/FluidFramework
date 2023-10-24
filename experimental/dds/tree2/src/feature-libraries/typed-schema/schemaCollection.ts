@@ -4,11 +4,16 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { Adapters, TreeAdapter, TreeSchemaIdentifier } from "../../core";
+import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
 import { Multiplicity } from "../modular-schema";
 import { capitalize, fail, requireAssignableTo } from "../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
-import { FieldSchema, TreeSchema, allowedTypesIsAny, SchemaCollection } from "./typedTreeSchema";
+import {
+	TreeFieldSchema,
+	TreeNodeSchema,
+	allowedTypesIsAny,
+	SchemaCollection,
+} from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 import { Sourced } from "./view";
 
@@ -69,9 +74,9 @@ export function aggregateSchemaLibraries(
 	name: string,
 	lintConfiguration: SchemaLintConfiguration,
 	libraries: Iterable<SchemaLibraryData>,
-	rootFieldSchema?: FieldSchema,
+	rootFieldSchema?: TreeFieldSchema,
 ): SchemaLibraryData {
-	const treeSchema: Map<TreeSchemaIdentifier, TreeSchema> = new Map();
+	const treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
 
 	const errors: string[] = [];
@@ -136,7 +141,7 @@ export function aggregateSchemaLibraries(
 export function validateSchemaCollection(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	rootFieldSchema?: FieldSchema,
+	rootFieldSchema?: TreeFieldSchema,
 ): string[] {
 	const errors: string[] = [];
 
@@ -150,11 +155,11 @@ export function validateSchemaCollection(
 		validateRootField(lintConfiguration, collection, rootFieldSchema, errors);
 	}
 	for (const [identifier, tree] of collection.treeSchema) {
-		for (const [key, field] of tree.structFields) {
+		for (const [key, field] of tree.objectNodeFields) {
 			const description = () =>
-				`Struct field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
+				`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
 			validateField(lintConfiguration, collection, field, description, errors);
-			validateStructFieldName(key, description, errors);
+			validateObjectNodeFieldName(key, description, errors);
 		}
 		if (tree.mapFields !== undefined) {
 			validateField(
@@ -179,7 +184,7 @@ export function validateSchemaCollection(
 export function validateRootField(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	field: FieldSchema,
+	field: TreeFieldSchema,
 	errors: string[],
 ): void {
 	const describeField = () => `Root field schema`;
@@ -189,7 +194,7 @@ export function validateRootField(
 export function validateField(
 	lintConfiguration: SchemaLintConfiguration,
 	collection: SchemaCollection,
-	field: FieldSchema,
+	field: TreeFieldSchema,
 	describeField: () => string,
 	errors: string[],
 ): void {
@@ -258,7 +263,7 @@ export const bannedFieldNames = new Set([
  */
 export const fieldApiPrefixes = new Set(["set", "boxed"]);
 
-export function validateStructFieldName(
+export function validateObjectNodeFieldName(
 	name: string,
 	describeField: () => string,
 	errors: string[],

@@ -24,6 +24,7 @@ import {
 	mapCursorFields,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
+import { idAllocatorFromMaxId } from "../util";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
@@ -99,12 +100,16 @@ export class ForestSummarizer implements Summarizable {
 			// forest summary format.
 			const fields = parse(treeBufferString) as [FieldKey, JsonableTree[]][];
 
-			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
-				const insert: Delta.Insert = {
-					type: Delta.MarkType.Insert,
-					content: content.map(singleTextCursor),
-				};
-				return [fieldKey, [insert]];
+			const allocator = idAllocatorFromMaxId();
+			const delta: [FieldKey, Delta.FieldChanges][] = fields.map(([fieldKey, content]) => {
+				const buildId = { minor: allocator.allocate(content.length) };
+				return [
+					fieldKey,
+					{
+						build: [{ id: buildId, trees: content.map(singleTextCursor) }],
+						local: [{ count: content.length, attach: buildId }],
+					},
+				];
 			});
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

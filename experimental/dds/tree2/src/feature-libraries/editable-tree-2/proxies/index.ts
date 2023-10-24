@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { getProxyForField, is } from "./proxies";
+export { getProxyForField } from "./proxies";
 export {
 	SharedTreeList,
 	ObjectFields,
@@ -14,4 +14,7 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	ProxyRoot,
+	SharedTreeNode,
 } from "./types";
+export { SharedTreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
+export { nodeAPi as node, NodeApi } from "./node";

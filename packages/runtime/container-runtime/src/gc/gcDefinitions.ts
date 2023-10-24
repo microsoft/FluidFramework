@@ -20,6 +20,9 @@ import {
 	IRefreshSummaryResult,
 } from "../summary";
 
+/**
+ * @public
+ */
 export type GCVersion = number;
 
 /** The stable/default version of GC Data */
@@ -80,7 +83,10 @@ export const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
-/** @see IGCMetadata.gcFeatureMatrix */
+/**
+ * @see IGCMetadata.gcFeatureMatrix
+ * @public
+ */
 export interface GCFeatureMatrix {
 	/**
 	 * The Tombstone Generation value in effect when this file was created.
@@ -96,6 +102,9 @@ export interface GCFeatureMatrix {
 	sweepGeneration?: number;
 }
 
+/**
+ * @public
+ */
 export interface IGCMetadata {
 	/**
 	 * The version of the GC code that was run to generate the GC data that is written in the summary.
@@ -119,11 +128,11 @@ export interface IGCMetadata {
 	 */
 	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
-	 * @deprecated - @see GCFeatureMatrix.sweepGeneration
-	 *
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
 	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
+	 *
+	 * @deprecated use GCFeatureMatrix.sweepGeneration instead. @see GCFeatureMatrix.sweepGeneration
 	 */
 	readonly sweepEnabled?: boolean;
 	/** If this is present, the session for this container will expire after this time and the container will close */
@@ -132,7 +141,10 @@ export interface IGCMetadata {
 	readonly sweepTimeoutMs?: number;
 }
 
-/** The statistics of the system state after a garbage collection run. */
+/**
+ * The statistics of the system state after a garbage collection run.
+ * @public
+ */
 export interface IGCStats {
 	/** The number of nodes in the container. */
 	nodeCount: number;
@@ -154,7 +166,10 @@ export interface IGCStats {
 	updatedAttachmentBlobCount: number;
 }
 
-/** The types of GC nodes in the GC reference graph. */
+/**
+ * The types of GC nodes in the GC reference graph.
+ * @public
+ */
 export const GCNodeType = {
 	// Nodes that are for data stores.
 	DataStore: "DataStore",
@@ -165,6 +180,10 @@ export const GCNodeType = {
 	// Nodes that are neither of the above. For example, root node.
 	Other: "Other",
 };
+
+/**
+ * @public
+ */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 /**
@@ -260,6 +279,9 @@ export interface IGarbageCollectorCreateParams {
 	readonly activeConnection: () => boolean;
 }
 
+/**
+ * @public
+ */
 export interface IGCRuntimeOptions {
 	/**
 	 * Flag that if true, will enable running garbage collection (GC) for a new container.
