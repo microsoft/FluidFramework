@@ -205,7 +205,7 @@ export class NodeClusterWebServerFactory implements core.IWebServerFactory {
 
 		// Regularly kill stuck workers
 		const heartbeatTimeoutMs =
-			(this.clusterConfig.workerTimeoutNumMissedHeartbeats ?? 3) *
+			this.clusterConfig.workerTimeoutNumMissedHeartbeats *
 			this.clusterConfig.workerHeartbeatIntervalMs;
 		setInterval(() => {
 			for (const [workerId, lastHeartbeat] of this.lastHeartbeatMap.entries()) {
