@@ -92,7 +92,7 @@ export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, Ar
 // @public
 export function calculateMaxWaitTime(error: unknown): number;
 
-// @public
+// @public (undocumented)
 export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @public
@@ -244,7 +244,7 @@ export class LocationRedirectionError extends LoggingError implements ILocationR
 // @public (undocumented)
 export function logNetworkFailure(logger: ITelemetryLoggerExt, event: ITelemetryErrorEvent, error?: any): void;
 
-// @public
+// @public (undocumented)
 export enum MessageType2 {
     // (undocumented)
     Accept = "accept"

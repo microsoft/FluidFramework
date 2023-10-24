@@ -18,7 +18,7 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 	return message.type === MessageType.Operation;
 }
 
-/** 
+/**
  * @privateRemarks ADO #1385: staging code changes across layers.
  * Eventually to be replaced by MessageType.accept
  * @public
