@@ -122,6 +122,7 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
+        # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.  
         flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists 
 
 - task: Bash@3

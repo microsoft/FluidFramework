@@ -76,15 +76,6 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			return;
 		}
 
-		/**
-		 * When preparing the configuration object, folder and file paths referenced in the configuration are checked for existence,
-		 * and an error is reported if they are not found.
-		 */
-		const options = {
-			...configOptions,
-			ignoreMissingEntryPoint: this.flags.checkFileExists,
-		};
-
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (json.types !== undefined && json.typings !== undefined) {
 				throw new Error(
@@ -100,7 +91,14 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				);
 			}
 
-			const extractorConfig = ExtractorConfig.prepare(options);
+			/**
+			 * When preparing the configuration object, folder and file paths referenced in the configuration are checked for existence,
+			 * and an error is reported if they are not found.
+			 */
+			const extractorConfig = ExtractorConfig.prepare({
+				...configOptions,
+				ignoreMissingEntryPoint: this.flags.checkFileExists,
+			});
 			assert(this.flags.types !== undefined, "--types flag must be provided.");
 
 			const packageUpdated = updatePackageJsonTypes(
