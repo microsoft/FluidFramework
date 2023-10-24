@@ -10,7 +10,7 @@ import {
 	FieldKinds,
 	nodeKeyTreeIdentifier,
 	SchemaBuilderInternal,
-	FieldSchema,
+	TreeFieldSchema,
 } from "../../feature-libraries";
 
 const builder = new SchemaBuilderInternal({ scope: "com.fluidframework.nodeKey" });
@@ -28,14 +28,14 @@ assert(nodeKeyTreeSchema.name === nodeKeyTreeIdentifier, 0x7ae /* mismatched ide
 
 /**
  * Key and Field schema for working with {@link LocalNodeKey}s in a shared tree.
- * Node keys are added to struct nodes via a field.
+ * Node keys are added to object nodes via a field.
  * This object can be expanded into a schema to add the field.
  *
  * Requires including {@link nodeKeySchema}.
  * @alpha
  */
 export const nodeKeyField = {
-	[nodeKeyFieldKey]: FieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
+	[nodeKeyFieldKey]: TreeFieldSchema.create(FieldKinds.nodeKey, [nodeKeyTreeSchema]),
 };
 
 /**
@@ -43,4 +43,4 @@ export const nodeKeyField = {
  * Required to use {@link nodeKeyField}.
  * @alpha
  */
-export const nodeKeySchema = builder.finalize();
+export const nodeKeySchema = builder.intoLibrary();

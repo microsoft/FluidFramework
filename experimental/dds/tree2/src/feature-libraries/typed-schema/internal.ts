@@ -9,11 +9,11 @@ export { ObjectToMap, WithDefault, Unbrand, UnbrandList, ArrayToUnion } from "./
 
 export {
 	TreeSchemaSpecification,
-	NormalizeStructFieldsInner,
-	NormalizeStructFields,
+	NormalizeObjectNodeFieldsInner,
+	NormalizeObjectNodeFields,
 	NormalizeField,
 	Fields,
-	StructSchemaSpecification,
+	ObjectSchemaSpecification,
 	MapSchemaSpecification,
 	LeafSchemaSpecification,
 	MapFieldSchema,

@@ -13,7 +13,7 @@ import { ValueSchema } from "../../core";
 import {
 	AllowedTypes,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	SchemaBuilderInternal,
 } from "../../feature-libraries";
 import { requireAssignableTo } from "../../util";
@@ -42,7 +42,7 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  */
 export const jsonObject = builder.mapRecursive(
 	"object",
-	FieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
+	TreeFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
 /**
@@ -50,10 +50,10 @@ export const jsonObject = builder.mapRecursive(
  */
 export const jsonArray = builder.fieldNodeRecursive(
 	"array",
-	FieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
+	TreeFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
 /**
  * @alpha
  */
-export const jsonSchema = builder.finalize();
+export const jsonSchema = builder.intoLibrary();

@@ -19,6 +19,7 @@ import {
 
 /**
  * Interface for summary op messages with typed contents.
+ * @public
  */
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 	type: MessageType.Summarize;
@@ -27,6 +28,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary ack messages with typed contents.
+ * @public
  */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryAck;
@@ -35,6 +37,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 
 /**
  * Interface for summary nack messages with typed contents.
+ * @public
  */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryNack;
@@ -44,6 +47,7 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 /**
  * A single summary which can be tracked as it goes through its life cycle.
  * The life cycle is: Local to Broadcast to Acked/Nacked.
+ * @public
  */
 export interface ISummary {
 	readonly clientId: string;
@@ -54,6 +58,7 @@ export interface ISummary {
 
 /**
  * A single summary which has already been acked by the server.
+ * @public
  */
 export interface IAckedSummary {
 	readonly summaryOp: ISummaryOpMessage;
@@ -140,6 +145,7 @@ class Summary implements ISummary {
 
 /**
  * Watches summaries created by a specific client.
+ * @public
  */
 export interface IClientSummaryWatcher extends IDisposable {
 	watchSummary(clientSequenceNumber: number): ISummary;
@@ -207,13 +213,23 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 		this._disposed = true;
 	}
 }
-
+/**
+ * @public
+ */
 export type OpActionEventName =
 	| MessageType.Summarize
 	| MessageType.SummaryAck
 	| MessageType.SummaryNack
 	| "default";
+
+/**
+ * @public
+ */
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
+
+/**
+ * @public
+ */
 export interface ISummaryCollectionOpEvents extends IEvent {
 	(event: OpActionEventName, listener: OpActionEventListener);
 }
@@ -222,6 +238,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * Data structure that looks at the op stream to track summaries as they
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
+ * @public
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
 	// key: clientId

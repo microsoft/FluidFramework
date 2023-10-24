@@ -34,7 +34,7 @@ import {
 	fieldCursorFromJsonableTrees,
 	jsonableTreesFromFieldCursor,
 } from "../fieldCursorTestUtilities";
-import { FieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core";
+import { TreeFieldStoredSchema, TreeNodeSchemaIdentifier, Value } from "../../../../core";
 import {
 	EncodedChunkShape,
 	EncodedValueShape,
@@ -70,7 +70,7 @@ describe("compressedEncode", () => {
 				const cache = new EncoderCache(
 					(fieldShaper: FieldShaper, schemaName: TreeNodeSchemaIdentifier): NodeEncoder =>
 						anyNodeShape,
-					(treeShaper: TreeShaper, field: FieldStoredSchema): FieldEncoder =>
+					(treeShaper: TreeShaper, field: TreeFieldStoredSchema): FieldEncoder =>
 						anyFieldEncoder,
 				);
 				const codec = makeCompressedCodec({ jsonValidator: typeboxValidator }, cache);

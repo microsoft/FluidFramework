@@ -122,7 +122,7 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
     readonly runtime: IFluidDataStoreRuntime;
 }
 
-// @public (undocumented)
+// @public
 export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
     // (undocumented)
     createRootInstance(rootDataStoreId: string, runtime: IContainerRuntime): Promise<IFluidRouter>;

@@ -26,3 +26,5 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 } from "./schematizedTree";
+
+export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typedTree";

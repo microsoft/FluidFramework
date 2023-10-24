@@ -3,17 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
+import { assert } from "@fluidframework/core-utils";
+import { brand, fail } from "../../../util";
 import {
 	AllowedTypes,
 	FieldNodeSchema,
-	FieldSchema,
-	StructSchema,
+	TreeFieldSchema,
+	ObjectNodeSchema,
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
@@ -26,35 +27,23 @@ import {
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
-import { getBoxedField } from "../lazyTree";
-import { LazyEntity } from "../lazyEntity";
-import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
-import { createNodeApi, nodeSym } from "./node";
-
-/** Symbol used to store a private/internal reference to the underlying editable tree node. */
-const treeNodeSym = Symbol("TreeNode");
-
-/** Helper to retrieve the stored tree node. */
-export function getTreeNode(target: object): TreeNode {
-	return (target as any)[treeNodeSym] as TreeNode;
-}
-
-/** Helper to set the stored tree node. */
-export function setTreeNode(target: any, treeNode: TreeNode) {
-	Object.defineProperty(target, treeNodeSym, {
-		value: treeNode,
-		writable: false,
-		enumerable: false,
-		configurable: false,
-	});
-}
+import { LazyObjectNode, getBoxedField } from "../lazyTree";
+import {
+	ProxyField,
+	ProxyNode,
+	SharedTreeList,
+	SharedTreeObject,
+	getTreeNode,
+	setTreeNode,
+} from "./types";
+import { getFactoryContent } from "./objectFactory";
 
 const proxyCacheSym = Symbol("ProxyCache");
 
 /** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
 function cacheProxy(
 	target: TreeNode,
-	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
+	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<ObjectNodeSchema>,
 ): void {
 	Object.defineProperty(target, proxyCacheSym, {
 		value: proxy,
@@ -69,25 +58,13 @@ function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefin
 	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeNodeSchema> })[proxyCacheSym];
 }
 
-/**
- * Checks if the given object is a {@link SharedTreeObject}
- * @alpha
- */
-export function is<TSchema extends StructSchema>(
-	x: unknown,
-	schema: TSchema,
-): x is SharedTreeObject<TSchema> {
-	// TODO: Do this a better way. Perhaps, should `treeNodeSym` be attached to object proxies via `setTreeNode`?
-	return (x as any)[treeNodeSym].schema === schema;
-}
-
 /** Retrieve the associated proxy for the given field. */
-export function getProxyForField<TSchema extends FieldSchema>(
+export function getProxyForField<TSchema extends TreeFieldSchema>(
 	field: TypedField<TSchema>,
 ): ProxyField<TSchema> {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.required>>;
+			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.required>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -95,7 +72,7 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			return getProxyForNode(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.optional>>;
+			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.optional>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -132,7 +109,7 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 		return treeNode.value as ProxyNode<TSchema>;
 	}
 	const isFieldNode = schemaIsFieldNode(schema);
-	if (isFieldNode || schemaIsStruct(schema)) {
+	if (isFieldNode || schemaIsObjectNode(schema)) {
 		const cachedProxy = getCachedProxy(treeNode);
 		if (cachedProxy !== undefined) {
 			return cachedProxy as ProxyNode<TSchema>;
@@ -146,12 +123,10 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 	fail("unrecognized node kind");
 }
 
-export function createObjectProxy<TSchema extends StructSchema, TTypes extends AllowedTypes>(
+export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes extends AllowedTypes>(
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
-	const nodeApi = createNodeApi(content);
-
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
 	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
 	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
@@ -159,7 +134,7 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	return new Proxy(
+	const proxy = new Proxy(
 		{},
 		{
 			get(target, key): unknown {
@@ -167,32 +142,30 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				if (field !== undefined) {
 					return getProxyForField(field);
 				}
-				switch (key) {
-					case treeNodeSym:
-						return content;
-					case nodeSym:
-						return nodeApi;
-					default:
-						return Reflect.get(target, key);
-				}
+
+				return Reflect.get(target, key);
 			},
 			set(target, key, value) {
-				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+				const fieldSchema = content.schema.objectNodeFields.get(key as FieldKey);
 
 				if (fieldSchema === undefined) {
 					return false;
 				}
 
-				// TODO: Is it safe to assume 'content' is a LazyEntity?
-				const field = getBoxedField(content as LazyEntity, key as FieldKey, fieldSchema);
+				// TODO: Is it safe to assume 'content' is a LazyObjectNode?
+				assert(content instanceof LazyObjectNode, "invalid content");
+				assert(typeof key === "string", "invalid key");
+				const field = getBoxedField(content, brand(key), fieldSchema);
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {
-						(field as RequiredField<AllowedTypes>).content = value;
+						(field as RequiredField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					case FieldKinds.optional: {
-						(field as OptionalField<AllowedTypes>).content = value;
+						(field as OptionalField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					default:
@@ -202,10 +175,10 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				return true;
 			},
 			has: (target, key) => {
-				return schema.structFields.has(key as FieldKey);
+				return schema.objectNodeFields.has(key as FieldKey);
 			},
 			ownKeys: (target) => {
-				return [...schema.structFields.keys()];
+				return [...schema.objectNodeFields.keys()];
 			},
 			getOwnPropertyDescriptor: (target, key) => {
 				const field = content.tryGetField(key as FieldKey);
@@ -225,6 +198,8 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 			},
 		},
 	) as SharedTreeObject<TSchema>;
+	setTreeNode(proxy, content);
+	return proxy;
 }
 
 const getField = <TTypes extends AllowedTypes>(target: object) => {
@@ -369,12 +344,6 @@ export function createListProxy<TTypes extends AllowedTypes>(
 				return getField(this).length;
 			},
 			set() {},
-			enumerable: false,
-			configurable: false,
-		},
-		[nodeSym]: {
-			value: createNodeApi(treeNode),
-			writable: false,
 			enumerable: false,
 			configurable: false,
 		},

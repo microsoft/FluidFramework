@@ -6,7 +6,7 @@
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { type IShimDeltaHandler } from "./types";
+import { type IShimDeltaHandler } from "./types.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
