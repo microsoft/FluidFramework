@@ -6531,6 +6531,7 @@ importers:
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
+      '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.0.0
@@ -6561,6 +6562,7 @@ importers:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
       '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/datastore': link:../../runtime/datastore
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 3.0.0
@@ -8076,7 +8078,7 @@ importers:
       '@microsoft/applicationinsights-web': 2.8.16_tslib@1.14.1
     devDependencies:
       '@fluidframework/build-common': 2.0.2
-      '@fluidframework/build-tools': 0.26.0-203096
+      '@fluidframework/build-tools': 0.26.0-203096_@types+node@16.18.58
       '@fluidframework/mocha-test-setup': link:../../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
       '@types/mocha': 9.1.1

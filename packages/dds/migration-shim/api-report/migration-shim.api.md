@@ -47,7 +47,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    IFluidLoadable: IFluidLoadable;
+    get IFluidLoadable(): IFluidLoadable;
     // (undocumented)
     isAttached(): boolean;
     // (undocumented)

@@ -15,6 +15,7 @@ import {
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
+import { FluidObjectHandle } from "@fluidframework/datastore";
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
@@ -92,6 +93,9 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		super();
 		// TODO: consider flattening this class
 		this.migrationDeltaHandler = new MigrationShimDeltaHandler(this.processMigrateOp);
+		// TODO: if we need to support the creation of legacy shared trees via the migration shim, we'll need to make
+		// sure that attaching the handle will make it live.
+		this.handle = new FluidObjectHandle(this, id, runtime.IFluidHandleContext);
 	}
 
 	// TODO: process migrate op implementation, it'll look something like this
@@ -211,6 +215,8 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
 		return this.currentTree.getGCData(fullGC);
 	}
-	public handle!: IFluidHandle;
-	public IFluidLoadable!: IFluidLoadable;
+	public handle: IFluidHandle;
+	public get IFluidLoadable(): IFluidLoadable {
+		return this;
+	}
 }
