@@ -1026,6 +1026,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 
 // @alpha
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
+    contentSnapshot(): SharedTreeContentSnapshot;
     schematizeView<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     // @deprecated
     readonly view: ISharedTreeView;
@@ -1935,6 +1936,12 @@ export interface SequenceFieldEditBuilder {
     delete(index: number, count: number): void;
     insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
     move(sourceIndex: number, count: number, destIndex: number): void;
+}
+
+// @alpha
+export interface SharedTreeContentSnapshot {
+    readonly schema: TreeStoredSchema;
+    readonly tree: JsonableTree[];
 }
 
 // @alpha
