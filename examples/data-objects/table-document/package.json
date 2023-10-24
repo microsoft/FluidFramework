@@ -61,7 +61,7 @@
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"debug": "^4.1.1"
+		"debug": "^4.3.4"
 	},
 	"devDependencies": {
 		"@fluid-internal/test-version-utils": "workspace:~",

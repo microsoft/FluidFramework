@@ -64,7 +64,7 @@
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"axios": "^1.5.0",
 		"crc-32": "1.2.0",
-		"debug": "^4.1.1",
+		"debug": "^4.3.4",
 		"json-stringify-safe": "^5.0.1",
 		"jsrsasign": "^10.5.25",
 		"jwt-decode": "^3.0.0",

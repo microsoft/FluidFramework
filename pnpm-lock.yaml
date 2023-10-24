@@ -2869,7 +2869,7 @@ importers:
       '@types/node': ^16.18.38
       c8: ^7.7.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       eslint-import-resolver-typescript: ^3.6.1
       eslint-plugin-import: ~2.28.1
@@ -3102,7 +3102,7 @@ importers:
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
       css-loader: ^1.0.0
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       eslint-import-resolver-typescript: ^3.6.1
       eslint-plugin-import: ~2.28.1
@@ -8681,7 +8681,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       double-ended-queue: ^2.1.0-0
       eslint: ~8.50.0
       events: ^3.1.0
@@ -10127,7 +10127,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       diff: ^3.5.0
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -11273,7 +11273,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       events: ^3.1.0
       mocha: ^10.2.0
@@ -11340,7 +11340,7 @@ importers:
       c8: ^7.7.1
       copyfiles: ^2.4.1
       cross-env: ^7.0.3
-      debug: ^4.1.1
+      debug: ^4.3.4
       eslint: ~8.50.0
       jwt-decode: ^2.2.0
       mocha: ^10.2.0
@@ -41514,7 +41514,7 @@ packages:
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 29.7.0_@types+node@16.18.58
+      jest: 29.7.0_k74lbtdrsxt2l63j3rkinbnvba
       jest-util: 29.7.0
       json5: 2.2.3
       lodash.memoize: 4.1.2
