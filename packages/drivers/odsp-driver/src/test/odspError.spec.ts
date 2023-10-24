@@ -41,6 +41,9 @@ describe("Odsp Error", () => {
 		);
 	}
 
+	/**
+	 * Checks is the networkError complies with the {@link IThrottlingWarning}.
+	 * */
 	function isIThrottlingWarning(input: any): input is IThrottlingWarning {
 		return (
 			typeof input.errorType === typeof FluidErrorTypes.throttlingError &&
