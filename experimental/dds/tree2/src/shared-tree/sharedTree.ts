@@ -88,7 +88,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 
 	/**
 	 * Provides a copy of the current content of the tree.
-	 * This can be useful for inspecting the tree when no suable view schema is available.
+	 * This can be useful for inspecting the tree when no suitable view schema is available.
 	 * This is only intended for use in testing and exceptional code paths: it is not performant.
 	 *
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
