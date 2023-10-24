@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF } from "../../../feature-libraries";
+import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
 	makeAnonChange,
@@ -22,6 +22,7 @@ import {
 	compose,
 	composeAnonChanges,
 	invert,
+	rebaseOverComposition,
 	rebaseTagged,
 	toDelta,
 	withoutLineage,
@@ -258,9 +259,14 @@ describe("SequenceField - Rebaser Axioms", () => {
 	});
 
 	describe("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
-		for (const [name1, makeChange1] of testChanges) {
-			for (const [name2, makeChange2] of testChanges) {
-				for (const [name3, makeChange3] of testChanges) {
+		// TODO: Support testing changesets with node changes.
+		// Currently node changes in B and C will incorrectly have the same input context, which is not correct.
+		const shallowTestChanges = testChanges.filter(
+			(change) => !["NestedChange", "MInsert"].includes(change[0]),
+		);
+		for (const [name1, makeChange1] of shallowTestChanges) {
+			for (const [name2, makeChange2] of shallowTestChanges) {
+				for (const [name3, makeChange3] of shallowTestChanges) {
 					const title = `${name1} ↷ [${name2}, ${name3}]`;
 					it(title, () => {
 						const a = tagChange(makeChange1(1, 1), tag1);
@@ -269,7 +275,18 @@ describe("SequenceField - Rebaser Axioms", () => {
 						const a2 = rebaseTagged(a, b);
 						const a3 = rebaseTagged(a2, c);
 						const bc = compose([b, c]);
-						const a4 = rebaseTagged(a, makeAnonChange(bc));
+						const a4 = tagChange(
+							rebaseOverComposition(
+								a.change,
+								bc,
+								revisionMetadataSourceFromInfo([
+									{ revision: tag1 },
+									{ revision: tag2 },
+									{ revision: tag3 },
+								]),
+							),
+							tag1,
+						);
 						assert.deepEqual(a3, a4);
 					});
 				}

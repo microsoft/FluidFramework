@@ -64,6 +64,7 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RevisionMetadataSource = {
+	getIntentions: () => assert.fail("Unexpected revision index query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
 	getInfo: () => assert.fail("Unexpected revision info query"),
 };

@@ -766,7 +766,12 @@ export function revisionMetadataSourceFromInfo(
 		assert(index !== undefined, "Unknown revisions");
 		return revInfos[index];
 	};
-	return { getIndex, getInfo };
+
+	const getIntentions = (): RevisionTag[] => {
+		return revInfos.map((info) => info.rollbackOf ?? info.revision);
+	};
+
+	return { getIndex, getInfo, getIntentions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {

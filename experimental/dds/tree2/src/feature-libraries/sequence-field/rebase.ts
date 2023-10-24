@@ -726,6 +726,11 @@ function handleLineage<T>(
 	metadata: RevisionMetadataSource,
 ) {
 	const lineageHolder = getLineageHolder(rebasedMark);
+
+	for (const revision of metadata.getIntentions()) {
+		tryRemoveLineageEvents(lineageHolder, revision);
+	}
+
 	const cellRevision = getInputCellId(rebasedMark, undefined, undefined)?.revision;
 	const index = cellRevision !== undefined ? metadata.getIndex(cellRevision) : undefined;
 
@@ -792,6 +797,19 @@ function addLineageEntry(
 	}
 
 	lineageHolder.lineage.push({ revision, id, count, offset });
+}
+
+function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: RevisionTag) {
+	if (lineageHolder.lineage === undefined) {
+		return;
+	}
+
+	lineageHolder.lineage = lineageHolder.lineage.filter(
+		(event) => event.revision !== revisionToRemove,
+	);
+	if (lineageHolder.lineage.length === 0) {
+		delete lineageHolder.lineage;
+	}
 }
 
 function getKnownRevisionIndex(revision: RevisionTag, metadata: RevisionMetadataSource): number {

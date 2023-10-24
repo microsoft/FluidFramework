@@ -136,6 +136,14 @@ export function rebaseTagged(
 	return currChange;
 }
 
+export function rebaseOverComposition(
+	change: TestChangeset,
+	base: TestChangeset,
+	metadata: RevisionMetadataSource,
+): TestChangeset {
+	return rebase(change, makeAnonChange(base), metadata);
+}
+
 function resetCrossFieldTable(table: SF.CrossFieldTable) {
 	table.isInvalidated = false;
 	table.srcQueries.clear();

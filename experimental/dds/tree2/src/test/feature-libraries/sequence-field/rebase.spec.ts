@@ -4,18 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	RevisionMetadataSource,
-	SequenceField as SF,
-	revisionMetadataSourceFromInfo,
-} from "../../../feature-libraries";
-import {
-	ChangeAtomId,
-	makeAnonChange,
-	mintRevisionTag,
-	RevisionTag,
-	tagChange,
-} from "../../../core";
+import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
+import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
 import {
@@ -24,6 +14,7 @@ import {
 	rebaseTagged,
 	rebase as rebaseI,
 	shallowCompose,
+	rebaseOverComposition,
 } from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -33,14 +24,6 @@ const tag3: RevisionTag = mintRevisionTag();
 
 function rebase(change: TestChangeset, base: TestChangeset, baseRev?: RevisionTag): TestChangeset {
 	return rebaseI(change, tagChange(base, baseRev ?? tag1));
-}
-
-function rebaseOverComposition(
-	change: TestChangeset,
-	base: TestChangeset,
-	metadata: RevisionMetadataSource,
-): TestChangeset {
-	return rebaseI(change, makeAnonChange(base), metadata);
 }
 
 describe("SequenceField - Rebase", () => {
