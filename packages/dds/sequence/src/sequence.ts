@@ -621,7 +621,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 							m.minimumSequenceNumber < collabWindow.minSeq ||
 							m.referenceSequenceNumber < collabWindow.minSeq ||
 							m.sequenceNumber <= collabWindow.minSeq ||
-							m.sequenceNumber <= collabWindow.currentSeq
+							// sequenceNumber could be the same if messages are part of a grouped batch
+							m.sequenceNumber < collabWindow.currentSeq
 						) {
 							throw new Error(
 								`Invalid catchup operations in snapshot: ${JSON.stringify({
