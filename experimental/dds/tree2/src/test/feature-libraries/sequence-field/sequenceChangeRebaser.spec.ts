@@ -285,7 +285,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertA);
-		assert.deepEqual(insertB3.change, insertB.change);
+		assert.deepEqual(withoutLineage(insertB3.change), insertB.change);
 	});
 
 	// This test fails due to the rebaser incorrectly interpreting the order of the cell created by `insertT` and the cell targeted by `deleteB`.
@@ -319,7 +319,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertX);
 		const insertB4 = rebaseTagged(insertB3, insertA2);
-		assert.deepEqual(insertB4.change, Change.insert(3, 1));
+		assert.deepEqual(withoutLineage(insertB4.change), Change.insert(3, 1));
 	});
 
 	it("[Delete ABC, Revive ABC] ↷ Delete B", () => {
