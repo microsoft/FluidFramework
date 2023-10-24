@@ -50,7 +50,6 @@
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^16.18.38",
-		"copyfiles": "^2.4.1",
 		"eslint": "~8.50.0",
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",

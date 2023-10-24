@@ -22,6 +22,7 @@ build-tools/packages/version-tools/README.md
 **/src/**/test/types/*
 **/src/packageVersion.ts
 **/build-tools/CHANGELOG.md
+**/*.done.build.log
 
 # Dependencies
 **/node_modules/*

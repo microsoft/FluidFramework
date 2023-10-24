@@ -69,7 +69,6 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/node": "^16.18.38",
-		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"prettier": "~3.0.3",

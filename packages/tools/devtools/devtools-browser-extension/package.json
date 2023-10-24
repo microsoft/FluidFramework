@@ -113,7 +113,6 @@
 		"chai": "^4.2.0",
 		"concurrently": "^8.2.1",
 		"copy-webpack-plugin": "^11.0.0",
-		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"dotenv-webpack": "^7.0.3",
 		"eslint": "~8.50.0",
