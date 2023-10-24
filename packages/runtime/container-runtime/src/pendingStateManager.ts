@@ -45,7 +45,7 @@ export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
 	close(error?: ICriticalContainerError): void;
-	applyStashedOp(content: string): Promise<void>;
+	applyStashedOp(message: IPendingMessage): Promise<void>;
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
 	isActiveConnection: () => boolean;
@@ -206,7 +206,7 @@ export class PendingStateManager implements IDisposable {
 			this.initialMessages.shift();
 			try {
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-				await this.stateHandler.applyStashedOp(nextMessage.content);
+				await this.stateHandler.applyStashedOp(nextMessage);
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 			}

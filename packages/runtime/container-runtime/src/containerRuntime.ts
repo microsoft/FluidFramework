@@ -113,6 +113,7 @@ import { ReportOpPerfTelemetry, IPerfSignalReport } from "./connectionTelemetry"
 import {
 	IPendingBatchMessage,
 	IPendingLocalState,
+	IPendingMessage,
 	PendingStateManager,
 } from "./pendingStateManager";
 import { pkgVersion } from "./packageVersion";
@@ -2058,7 +2059,8 @@ export class ContainerRuntime
 		return message;
 	}
 
-	private async applyStashedOp(serializedOpContent: string): Promise<void> {
+	private async applyStashedOp(message: IPendingMessage): Promise<void> {
+		const serializedOpContent = message.content;
 		// Need to parse from string for back-compat
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
@@ -2074,6 +2076,7 @@ export class ContainerRuntime
 				return this.applyStashedIdAllocationOp(opContents.contents);
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
+				this.submit(opContents, undefined, message.opMetadata);
 				return;
 			case ContainerMessageType.ChunkedOp:
 				throw new Error("chunkedOp not expected here");
