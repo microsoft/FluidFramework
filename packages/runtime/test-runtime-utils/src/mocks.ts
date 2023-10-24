@@ -204,7 +204,7 @@ export class MockContainerRuntime {
 		this.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
-				this.submitInternal(message, this.clientSequenceNumber);
+				this.submitInternal(message, clientSequenceNumber);
 				break;
 			}
 
