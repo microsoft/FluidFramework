@@ -1726,7 +1726,10 @@ export class ContainerRuntime
 					  }
 					: create404Response(request);
 			} else if (requestParser.pathParts.length > 0) {
-				const dataStore = await this.getDataStoreFromRequest(id, request);
+				// Differentiate between requesting the dataStore directly, or one of its children
+				const requestForChild = !requestParser.isLeaf(1);
+				const dataStore = await this.getDataStoreFromRequest(id, request, requestForChild);
+
 				const subRequest = requestParser.createSubRequest(1);
 				// We always expect createSubRequest to include a leading slash, but asserting here to protect against
 				// unintentionally modifying the url if that changes.
@@ -1758,6 +1761,7 @@ export class ContainerRuntime
 	private async getDataStoreFromRequest(
 		id: string,
 		request: IRequest,
+		requestForChild: boolean,
 	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
@@ -1768,6 +1772,11 @@ export class ContainerRuntime
 		}
 		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
+		}
+
+		// We allow Tombstone requests for sub-DataStore objects
+		if (requestForChild) {
+			headerData.allowTombstone = true;
 		}
 
 		await this.dataStores.waitIfPendingAlias(id);
