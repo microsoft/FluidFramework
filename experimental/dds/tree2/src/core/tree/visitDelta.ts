@@ -152,9 +152,7 @@ function transferRoots(
 	while (nextBatch.length > 0) {
 		const delayed: AtomizedNodeRename[] = [];
 		const priorSize = nextBatch.length;
-		while (nextBatch.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const { oldId, newId } = nextBatch.pop()!;
+		for (const { oldId, newId } of nextBatch) {
 			const oldRootId = detachedFieldIndex.tryGetEntry(oldId);
 			if (oldRootId === undefined) {
 				// The source field is not populated.
