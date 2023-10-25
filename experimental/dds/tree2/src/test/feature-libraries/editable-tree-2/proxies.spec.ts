@@ -28,14 +28,10 @@ describe("SharedTree proxies", () => {
 	const initialTree = {
 		struct: { content: 42 },
 		list: [42, 42, 42],
-		// map: new Map([
-		// 	["foo", "Hello"],
-		// 	["bar", "World"],
-		// ]),
-		map: {
-			foo: "Hello",
-			bar: "World",
-		} as unknown as Map<string, string | undefined>,
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
 	};
 
 	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
@@ -88,14 +84,10 @@ describe("SharedTreeObject", () => {
 		polyValue: "42",
 		polyChild: { content: "42", [typeNameSymbol]: stringChild.name },
 		polyValueChild: { content: 42 },
-		// map: new Map([
-		// 	["foo", "Hello"],
-		// 	["bar", "World"],
-		// ]),
-		map: {
-			foo: "Hello",
-			bar: "World",
-		} as unknown as Map<string, string | undefined>,
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
 		list: [{ content: 42 }, { content: 42 }],
 	};
 
