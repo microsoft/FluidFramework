@@ -30,7 +30,7 @@ export type AllowedTypeSet = Any | ReadonlySet<TreeNodeSchema>;
 
 // @alpha
 type AllowedTypesToTypedTrees<Mode extends ApiMode, T extends AllowedTypes> = [
-T extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray_2<Mode, Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeNodeSchema[]>>> : UntypedApi<Mode>
+T extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Mode, Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<T>, readonly TreeNodeSchema[]>>> : UntypedApi<Mode>
 ][_InlineTrick];
 
 // @alpha
@@ -425,6 +425,7 @@ declare namespace Delta {
         FieldMap,
         DetachedNodeChanges,
         DetachedNodeBuild,
+        DetachedNodeDestruction,
         DetachedNodeRename,
         FieldChanges
     }
@@ -472,6 +473,14 @@ interface DetachedNodeBuild<TTree = ProtoNode> {
 interface DetachedNodeChanges<TTree = ProtoNode> {
     // (undocumented)
     readonly fields: FieldMap<TTree>;
+    // (undocumented)
+    readonly id: DetachedNodeId;
+}
+
+// @alpha
+interface DetachedNodeDestruction {
+    // (undocumented)
+    readonly count: number;
     // (undocumented)
     readonly id: DetachedNodeId;
 }
@@ -627,6 +636,7 @@ export interface FieldAnchor {
 // @alpha
 interface FieldChanges<TTree = ProtoNode> {
     readonly build?: readonly DetachedNodeBuild<TTree>[];
+    readonly destroy?: readonly DetachedNodeDestruction[];
     readonly global?: readonly DetachedNodeChanges<TTree>[];
     readonly local?: readonly Mark<TTree>[];
     readonly rename?: readonly DetachedNodeRename[];
@@ -885,7 +895,7 @@ declare namespace InternalEditableTreeTypes {
     export {
         TypedFieldInner,
         UnboxFieldInner,
-        TypeArrayToTypedTreeArray,
+        TypeArrayToTypedTreeArray_2 as TypeArrayToTypedTreeArray,
         ObjectNodeFields,
         UnboxField,
         UnboxNode,
@@ -970,7 +980,7 @@ declare namespace InternalTypes_2 {
         EditableOptionalField,
         TypedField_2 as TypedField,
         UnbrandedName,
-        TypeArrayToTypedTreeArray_2 as TypeArrayToTypedTreeArray,
+        TypeArrayToTypedTreeArray,
         UntypedApi,
         EmptyObject,
         ValuesOf,
@@ -1026,6 +1036,7 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 
 // @alpha
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
+    contentSnapshot(): SharedTreeContentSnapshot;
     requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): ISharedTreeView | undefined;
     schematizeView<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     // @deprecated
@@ -1939,6 +1950,12 @@ export interface SequenceFieldEditBuilder {
 }
 
 // @alpha
+export interface SharedTreeContentSnapshot {
+    readonly schema: TreeStoredSchema;
+    readonly tree: JsonableTree[];
+}
+
+// @alpha
 export class SharedTreeFactory implements IChannelFactory {
     constructor(options?: SharedTreeOptions);
     // (undocumented)
@@ -1953,14 +1970,15 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha
 export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
-    insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
-    insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
-    insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+    insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
+    insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+    insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
     moveToEnd(sourceStart: number, sourceEnd: number): void;
-    moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
     moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    moveToIndex<TTypesSource extends AllowedTypes>(index: number, sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
     moveToStart(sourceStart: number, sourceEnd: number): void;
-    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
 }
@@ -2221,18 +2239,18 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 ][_InlineTrick];
 
 // @alpha
-type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
+type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeNodeSchema[]> = [
 T extends readonly [infer Head, ...infer Tail] ? [
-TypedNode<Assume<Head, TreeNodeSchema>>,
-...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeNodeSchema[]>>
+TypedNode_2<Assume<Head, TreeNodeSchema>, Mode>,
+...TypeArrayToTypedTreeArray<Mode, Assume<Tail, readonly TreeNodeSchema[]>>
 ] : []
 ][_InlineTrick];
 
 // @alpha
-type TypeArrayToTypedTreeArray_2<Mode extends ApiMode, T extends readonly TreeNodeSchema[]> = [
+type TypeArrayToTypedTreeArray_2<T extends readonly TreeNodeSchema[]> = [
 T extends readonly [infer Head, ...infer Tail] ? [
-TypedNode_2<Assume<Head, TreeNodeSchema>, Mode>,
-...TypeArrayToTypedTreeArray_2<Mode, Assume<Tail, readonly TreeNodeSchema[]>>
+TypedNode<Assume<Head, TreeNodeSchema>>,
+...TypeArrayToTypedTreeArray_2<Assume<Tail, readonly TreeNodeSchema[]>>
 ] : []
 ][_InlineTrick];
 
@@ -2271,7 +2289,7 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSche
 type TypedNode_2<TSchema extends TreeNodeSchema, Mode extends ApiMode = ApiMode.Editable> = FlattenKeys<CollectOptions<Mode, TypedFields<Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode, TSchema["objectNodeFieldsObject"]>, TSchema["leafValue"], TSchema["name"]>>;
 
 // @alpha
-export type TypedNodeUnion<TTypes extends AllowedTypes> = TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>, readonly TreeNodeSchema[]>>> : TreeNode;
+export type TypedNodeUnion<TTypes extends AllowedTypes> = TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema> ? InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray_2<Assume<InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>, readonly TreeNodeSchema[]>>> : TreeNode;
 
 // @alpha
 export interface TypedTreeChannel extends IChannel {
