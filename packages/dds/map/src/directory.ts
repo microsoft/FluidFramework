@@ -1465,15 +1465,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public subdirectories(): IterableIterator<[string, IDirectory]> {
 		this.throwIfDisposed();
-		// TODO: It is a dumb method to avoid the `undefined` occuring in the tracker
-		// Some problems still exist in deleting process
-		/*
-		const ackedSubdirsInOrder = this.ackedCreationSeqTracker.keys((key) =>
-			this._subdirectories.has(key),
-		);
-		const localSubdirsInOrder = this.localCreationSeqTracker.keys(
-			(key) => this._subdirectories.has(key) && !this.ackedCreationSeqTracker.has(key),
-		); */
 		const ackedSubdirsInOrder = this.ackedCreationSeqTracker.keys();
 		const localSubdirsInOrder = this.localCreationSeqTracker.keys(
 			(key) => !this.ackedCreationSeqTracker.has(key),
@@ -1481,16 +1472,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		const subdirNames = [...ackedSubdirsInOrder, ...localSubdirsInOrder];
 
-		// for debug
-		/*
-		if (subdirNames.length !== this._subdirectories.size) {
-			subdirNames = Array.from(this._subdirectories.keys());
-		} */
-		/*
 		assert(
 			subdirNames.length === this._subdirectories.size,
 			"The count of keys for iteration should be consistent with the size of actual data",
-		); */
+		);
 
 		const entriesIterator = {
 			index: 0,
@@ -1509,8 +1494,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		};
 
 		return entriesIterator;
-
-		// return this._subdirectories.entries();
 	}
 
 	/**
@@ -2244,10 +2227,19 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		} else if (op.type === "deleteSubDirectory" && localOpMetadata.type === "deleteSubDir") {
 			if (localOpMetadata.subDirectory !== undefined) {
 				// =================================================
-				// Reset the tracker here
 				this.undeleteSubDirectoryTree(localOpMetadata.subDirectory);
 				// don't need to register events because deleting never unregistered
 				this._subdirectories.set(op.subdirName as string, localOpMetadata.subDirectory);
+				// Reset the tracker here
+				if (localOpMetadata.subDirectory.seqNumCollection.seq > 0) {
+					this.ackedCreationSeqTracker.set(op.subdirName, {
+						...localOpMetadata.subDirectory.seqNumCollection,
+					});
+				} else {
+					this.localCreationSeqTracker.set(op.subdirName, {
+						...localOpMetadata.subDirectory.seqNumCollection,
+					});
+				}
 				this.emit("subDirectoryCreated", op.subdirName, true, this);
 			}
 
@@ -2662,16 +2654,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	private undeleteSubDirectoryTree(directory: SubDirectory): void {
 		// Restore deleted subdirectory tree. This will unmark "deleted" from the subdirectories from bottom to top.
+		directory.undispose();
+		for (const [_, subDirectory] of directory.subdirectories()) {
+			this.undeleteSubDirectoryTree(subDirectory as SubDirectory);
+		}
+		/*
 		for (const [_, subDirectory] of this._subdirectories.entries()) {
 			this.undeleteSubDirectoryTree(subDirectory);
-			// Reset the creation seq for this subdir
-			/*
-			if (subDirectory.seqNumCollection.seq !== -1) {
-				this.ackedCreationSeqTracker.set(name, subDirectory.seqNumCollection);
-			} else {
-				this.localCreationSeqTracker.set(name, subDirectory.seqNumCollection);
-			} */
-		}
-		directory.undispose();
+		} */
+		// directory.undispose();
 	}
 }
