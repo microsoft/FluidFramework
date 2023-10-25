@@ -1969,9 +1969,9 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha
 export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
-    insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
-    insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
-    insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+    insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): Iterable<ProxyNodeUnion<TTypes>>;
+    insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): Iterable<ProxyNodeUnion<TTypes>>;
+    insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): Iterable<ProxyNodeUnion<TTypes>>;
     moveToEnd(sourceStart: number, sourceEnd: number): void;
     moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
     moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;

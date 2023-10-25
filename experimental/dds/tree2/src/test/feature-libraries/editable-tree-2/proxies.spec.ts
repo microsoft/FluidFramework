@@ -138,23 +138,26 @@ describe("SharedTreeList", () => {
 
 		itWithRoot("insertAtStart()", schema, [{ id: "B" }], (list) => {
 			assert.deepEqual(list, [{ id: "B" }]);
-			const newItem = obj.create({ id: "A" });
-			list.insertAtStart([newItem]);
+			const newContent = { id: "A" };
+			const result = [...list.insertAtStart([obj.create(newContent)])];
 			assert.deepEqual(list, [{ id: "A" }, { id: "B" }]);
+			assert.deepEqual(result, [newContent]);
 		});
 
 		itWithRoot("insertAtEnd()", schema, [{ id: "A" }], (list) => {
 			assert.deepEqual(list, [{ id: "A" }]);
-			const newItem = obj.create({ id: "B" });
-			list.insertAtEnd([newItem]);
+			const newContent = { id: "B" };
+			const result = [...list.insertAtEnd([obj.create(newContent)])];
 			assert.deepEqual(list, [{ id: "A" }, { id: "B" }]);
+			assert.deepEqual(result, [newContent]);
 		});
 
 		itWithRoot("insertAt()", schema, [{ id: "A" }, { id: "C" }], (list) => {
 			assert.deepEqual(list, [{ id: "A" }, { id: "C" }]);
-			const newItem = obj.create({ id: "B" });
-			list.insertAt(1, [newItem]);
+			const newContent = { id: "B" };
+			const result = [...list.insertAt(1, [obj.create(newContent)])];
 			assert.deepEqual(list, [{ id: "A" }, { id: "B" }, { id: "C" }]);
+			assert.deepEqual(result, [newContent]);
 		});
 	});
 

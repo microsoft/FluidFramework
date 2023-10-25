@@ -225,11 +225,22 @@ const asContextuallyTypedData = (value: ProxyNodeUnion<AllowedTypes, "javaScript
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function itemsAsContextuallyTyped(
 	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
-): Iterable<ContextuallyTypedNodeData> {
-	// If the iterable is not already an array, copy it into an array to use '.map()' below.
-	const asArray = Array.isArray(iterable) ? iterable : Array.from(iterable);
+): [items: Iterable<ContextuallyTypedNodeData>, count: number] {
+	const asArray = Array.isArray(iterable)
+		? iterable.map(asContextuallyTypedData)
+		: Array.from(iterable, asContextuallyTypedData);
 
-	return asArray.map(asContextuallyTypedData);
+	return [asArray, asArray.length];
+}
+
+function* iterateRange<TTypes extends AllowedTypes>(
+	list: SharedTreeList<TTypes>,
+	start: number,
+	count: number,
+): IterableIterator<ProxyNodeUnion<TTypes>> {
+	for (let i = 0; i < count; i++) {
+		yield list[start + i];
+	}
 }
 
 // TODO: Experiment with alternative dispatch methods to see if we can improve performance.
@@ -244,46 +255,48 @@ const prototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAt: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: SharedTreeList<AllowedTypes>,
 			index: number,
-			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
-		): void {
-			getSequenceField(this).insertAt(index, itemsAsContextuallyTyped(value));
+			value: Iterable<ProxyNodeUnion<AllowedTypes>>,
+		): Iterable<ProxyNodeUnion<AllowedTypes>> {
+			const [items, count] = itemsAsContextuallyTyped(value);
+			getSequenceField(this).insertAt(index, items);
+			return iterateRange(this, index, count);
 		},
 	},
 	insertAtStart: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
-			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
-		): void {
-			getSequenceField(this).insertAtStart(itemsAsContextuallyTyped(value));
+			this: SharedTreeList<AllowedTypes>,
+			value: Iterable<ProxyNodeUnion<AllowedTypes>>,
+		): Iterable<ProxyNodeUnion<AllowedTypes>> {
+			const [items, count] = itemsAsContextuallyTyped(value);
+			getSequenceField(this).insertAtStart(items);
+			return iterateRange(this, 0, count);
 		},
 	},
 	insertAtEnd: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
-			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
-		): void {
-			getSequenceField(this).insertAtEnd(itemsAsContextuallyTyped(value));
+			this: SharedTreeList<AllowedTypes>,
+			value: Iterable<ProxyNodeUnion<AllowedTypes>>,
+		): Iterable<ProxyNodeUnion<AllowedTypes>> {
+			const [items, count] = itemsAsContextuallyTyped(value);
+			getSequenceField(this).insertAtEnd(items);
+			return iterateRange(this, this.length - count, count);
 		},
 	},
 	removeAt: {
-		value(this: SharedTreeList<AllowedTypes, "javaScript">, index: number): void {
+		value(this: SharedTreeList<AllowedTypes>, index: number): void {
 			getSequenceField(this).removeAt(index);
 		},
 	},
 	removeRange: {
-		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
-			start?: number,
-			end?: number,
-		): void {
+		value(this: SharedTreeList<AllowedTypes>, start?: number, end?: number): void {
 			getSequenceField(this).removeRange(start, end);
 		},
 	},
 	moveToStart: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: SharedTreeList<AllowedTypes>,
 			sourceStart: number,
 			sourceEnd: number,
 			source?: SharedTreeList<AllowedTypes>,
@@ -301,7 +314,7 @@ const prototypeProperties: PropertyDescriptorMap = {
 	},
 	moveToEnd: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: SharedTreeList<AllowedTypes>,
 			sourceStart: number,
 			sourceEnd: number,
 			source?: SharedTreeList<AllowedTypes>,
@@ -315,7 +328,7 @@ const prototypeProperties: PropertyDescriptorMap = {
 	},
 	moveToIndex: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: SharedTreeList<AllowedTypes>,
 			index: number,
 			sourceStart: number,
 			sourceEnd: number,

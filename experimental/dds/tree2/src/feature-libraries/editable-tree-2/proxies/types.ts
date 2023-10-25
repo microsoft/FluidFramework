@@ -42,23 +42,32 @@ export interface SharedTreeList<
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
+	 * @returns The newly-inserted elements in the list.
+	 * This iterable should not be evaluated after further edits to the tree.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAt(
+		index: number,
+		value: Iterable<ProxyNodeUnion<TTypes>>,
+	): Iterable<ProxyNodeUnion<TTypes>>;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
+	 * @returns The newly-inserted elements in the list.
+	 * This iterable should not be evaluated after further edits to the tree.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): Iterable<ProxyNodeUnion<TTypes>>;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
+	 * @returns The newly-inserted elements in the list.
+	 * This iterable should not be evaluated after further edits to the tree.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): Iterable<ProxyNodeUnion<TTypes>>;
 
 	/**
 	 * Removes the item at the specified location.
