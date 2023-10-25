@@ -131,7 +131,6 @@ describe("Odsp Error", () => {
 		) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
-			console.log(networkError);
 			assert(
 				networkError.message.includes("error"),
 				"error message should include handler name",
