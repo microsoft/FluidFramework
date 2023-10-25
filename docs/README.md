@@ -64,7 +64,7 @@ npm run build:repo-docs
 
 ### Drafts
 
-Work-in-progress documents that are not ready for public consumption can be safely added by annotatting them with the `draft` flag in their frontmatter.
+Work-in-progress documents that are not ready for public consumption can be safely added by annotating them with the `draft` flag in their frontmatter.
 
 Example:
 
@@ -300,7 +300,7 @@ This has a few of benefits:
 The shortcode accepts a single argument: the name of the API item being referenced.
 
 > Note that this will only work correctly for `package`, `class`, `interface`, and `namespace`/`module` items, as they are the only items for which individual `.md` files are generated for.
-> Contents like `paramters`, `methods`, etc. are rendered as sub-headings in their parent item's documents.
+> Contents like `parameters`, `methods`, etc. are rendered as sub-headings in their parent item's documents.
 
 This shortcode can be found in `layouts/shortcodes/apiref.html`.
 
