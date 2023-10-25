@@ -75,8 +75,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 		handler.setConnectionState(this.connected);
 	}
 
-	//* NEXT STEP: Update all mocks directly, no need to stage it, I'm pretty sure.
-
+	/** @deprecated Use submit2 */
 	public submit(messageContent: any, localOpMetadata: unknown): number {
 		return this.submitFn(messageContent, localOpMetadata, /* rootMetadata */ undefined);
 	}
@@ -208,27 +207,11 @@ export class MockContainerRuntime {
 		return deltaConnection;
 	}
 
-	//* TODO: Maybe revert rootMetadata
-	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number {
-		return this.submit2({ messageContent, localOpMetadata, rootMetadata });
-	}
-
-	public submit2(data: {
-		/** The channel-specific content of the message to be sent */
-		messageContent: unknown;
-		/**
-		 * The local metadata associated with the message. This is kept locally by the runtime
-		 * and not sent to the server. It will be provided back when this message is acknowledged by the server.
-		 * It will also be provided back when asked to resubmit the message.
-		 */
-		localOpMetadata?: unknown;
-		/** Metadata to be handled by the runtime and included in the final op payload */
-		rootMetadata: unknown;
-	}): number {
+	public submit(messageContent: any, localOpMetadata: unknown): number {
 		const clientSequenceNumber = this.clientSequenceNumber;
 		const message = {
-			content: data.messageContent,
-			localOpMetadata: data.localOpMetadata,
+			content: messageContent,
+			localOpMetadata,
 		};
 
 		switch (this.runtimeOptions.flushMode) {
@@ -654,7 +637,7 @@ export class MockFluidDataStoreRuntime
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
-			(messageContent: any, localOpMetadata: unknown, rootMetadata) =>
+			(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown) =>
 				this.submitMessageInternal(messageContent, localOpMetadata, rootMetadata),
 			() => this.setChannelDirty(),
 		);
@@ -762,7 +745,11 @@ export class MockFluidDataStoreRuntime
 			this.containerRuntime !== undefined,
 			"The container runtime has not been initialized",
 		);
-		return this.containerRuntime.submit(messageContent, localOpMetadata, rootMetadata);
+
+		//* TODO: It seems the mocks do not properly wrap ops coming from DDSes,
+		//* but simply sends the DDS's payload as if it were the DataStore's payload.
+		//* So we have no way to incorporate rootMetadata here.
+		return this.containerRuntime.submit(messageContent, localOpMetadata);
 	}
 
 	private setChannelDirty(): void {

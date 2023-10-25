@@ -711,7 +711,7 @@ export function runSharedTreeOperationsTests(
 				const ops = spyOnSubmittedOps(containerRuntimeFactory);
 				const initialEditCount = sharedTree1.edits.length;
 				sharedTree1.applyEdit(Change.setPayload(sharedTree1.currentView.root, 42));
-				remoteRuntime.submit(ops[0], /* localOpMetadata */ undefined, /* rootMetadata */ undefined);
+				remoteRuntime.submit(ops[0], /* localOpMetadata */ undefined);
 				containerRuntimeFactory.processAllMessages();
 				expect(sharedTree1.edits.length).to.equal(initialEditCount + 1);
 			});

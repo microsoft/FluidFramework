@@ -126,7 +126,7 @@ export class MockContainerRuntime {
     protected get referenceSequenceNumber(): number;
     protected runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
-    submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number;
+    submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
 // @public
@@ -176,7 +176,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     // (undocumented)
-    submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number;
+    submit(messageContent: any, localOpMetadata: unknown): number;
 }
 
 // @public
@@ -196,8 +196,14 @@ export class MockDeltaConnection implements IDeltaConnection {
     reSubmit(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setConnectionState(connected: boolean): void;
+    // @deprecated (undocumented)
+    submit(messageContent: any, localOpMetadata: unknown): number;
     // (undocumented)
-    submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number;
+    submit2(data: {
+        messageContent: unknown;
+        localOpMetadata?: unknown;
+        rootMetadata: unknown;
+    }): void;
 }
 
 // @public
@@ -366,7 +372,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     storage: IDocumentStorageService;
     // (undocumented)
-    submitMessage(type: string, content: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitSignal(type: string, content: any): void;
     // (undocumented)

@@ -223,6 +223,7 @@ declare function get_old_ClassDeclaration_MockDeltaConnection():
 declare function use_current_ClassDeclaration_MockDeltaConnection(
     use: TypeOnly<current.MockDeltaConnection>);
 use_current_ClassDeclaration_MockDeltaConnection(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_MockDeltaConnection());
 
 /*
