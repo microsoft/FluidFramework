@@ -221,9 +221,12 @@ export function generateTestTrees() {
 					"test",
 				);
 
-				baseTree.view.storedSchema.update(jsonSequenceRootSchema);
+				const tree1 = baseTree.schematizeView({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema: jsonSequenceRootSchema,
+					initialTree: [],
+				});
 
-				const tree1 = baseTree.view;
 				const tree2 = tree1.fork();
 				insert(tree1, 0, "y");
 				tree2.rebaseOnto(tree1);

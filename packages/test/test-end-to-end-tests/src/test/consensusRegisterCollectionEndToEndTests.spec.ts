@@ -20,7 +20,7 @@ import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
 
 interface ISharedObjectConstructor<T> {
 	create(runtime: IFluidDataStoreRuntime, id?: string): T;
@@ -34,6 +34,10 @@ const registry: ChannelFactoryRegistry = [
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
+};
+const groupedBatchingContainerConfig: ITestContainerConfig = {
+	...testContainerConfig,
+	runtimeOptions: { enableGroupedBatching: true },
 };
 
 function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegisterCollection>) {
@@ -288,3 +292,24 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 }
 
 generate("ConsensusRegisterCollection", ConsensusRegisterCollection);
+
+describeNoCompat("ConsensusRegisterCollection grouped batching", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+	});
+
+	it("grouped batching doesn't hit 0x071", async () => {
+		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
+		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+
+		const collection = ConsensusRegisterCollection.create(dataObject.runtime);
+
+		sharedMap.set("collection", collection.handle);
+		const write1P = collection.write("key1", "value1");
+		const write2P = collection.write("key1", "value2");
+		await Promise.all([write1P, write2P]);
+		await provider.ensureSynchronized();
+	});
+});

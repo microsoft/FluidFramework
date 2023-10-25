@@ -340,16 +340,21 @@ export class LazySequence<TTypes extends AllowedTypes>
 		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode = sourceField.at(sourceStart);
+				const sourceNode = sourceField.boxedAt(sourceStart);
 				if (!this.schema.types.has(sourceNode.schema.name)) {
 					throw new Error("Type in source sequence is not allowed in destination.");
 				}
 			}
 		}
-		const count = sourceEnd - sourceStart;
+		const movedCount = sourceEnd - sourceStart;
 		let destinationIndex = index;
 		if (sourceField === this) {
-			destinationIndex -= count;
+			if (destinationIndex > sourceStart) {
+				destinationIndex =
+					destinationIndex < sourceEnd
+						? sourceStart // destination overlaps with source range -> slide to left
+						: (destinationIndex -= movedCount); // destination after source range -> subtract moved count
+			}
 		}
 		assertValidIndex(destinationIndex, this, true);
 		const sourceFieldPath = sourceField.getFieldPath();
@@ -357,7 +362,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		this.context.editor.move(
 			sourceFieldPath,
 			sourceStart,
-			count,
+			movedCount,
 			destinationFieldPath,
 			destinationIndex,
 		);
