@@ -130,9 +130,11 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
-	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
-	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
-	// prototype chains.
+	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
+	// as a way to quickly reject objects with different prototype chains.
+	//
+	// (Note that the prototype of an object literal appears as '[Object: null prototype] {}', not because
+	// the prototype is null, but because the prototype object itself has a null prototype.)
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
@@ -205,7 +207,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 }
 
 /**
- * Given the a list proxy, returns it's underlying LazySequence field.
+ * Given the a list proxy, returns its underlying LazySequence field.
  */
 const getSequenceField = <TTypes extends AllowedTypes>(
 	list: SharedTreeList<AllowedTypes, "javaScript">,
@@ -227,15 +229,17 @@ function itemsAsContextuallyTyped(
 	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 ): Iterable<ContextuallyTypedNodeData> {
 	// If the iterable is not already an array, copy it into an array to use '.map()' below.
-	const asArray = Array.isArray(iterable) ? iterable : Array.from(iterable);
-
-	return asArray.map(asContextuallyTypedData);
+	return Array.isArray(iterable)
+		? iterable.map(asContextuallyTypedData)
+		: Array.from(iterable, asContextuallyTypedData);
 }
 
 // TODO: Experiment with alternative dispatch methods to see if we can improve performance.
 
-/** PropertyDescriptorMap used to build the prototype for our dispatch object. */
-const prototypeProperties: PropertyDescriptorMap = {
+/**
+ * PropertyDescriptorMap used to build the prototype for our SharedListNode dispatch object.
+ */
+const listPrototypeProperties: PropertyDescriptorMap = {
 	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
 	// above because 'Array.prototype[Symbol.iterator].name' returns "values" (i.e., Symbol.iterator
 	// is an alias for the '.values()' function.)
@@ -383,12 +387,12 @@ const prototypeProperties: PropertyDescriptorMap = {
 	// Array.prototype.unshift,
 	Array.prototype.values,
 ].forEach((fn) => {
-	prototypeProperties[fn.name] = { value: fn };
+	listPrototypeProperties[fn.name] = { value: fn };
 });
 
 /* eslint-enable @typescript-eslint/unbound-method */
 
-const prototype = Object.create(Object.prototype, prototypeProperties);
+const prototype = Object.create(Object.prototype, listPrototypeProperties);
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
