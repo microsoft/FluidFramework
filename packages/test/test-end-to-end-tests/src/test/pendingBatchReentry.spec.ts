@@ -84,18 +84,18 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 	const key = "testKey";
 	interface PartialBatchTest {
 		name: string;
-		initialCallback: () => void;
-		reentrantCallback: () => void;
+		initial: () => void;
+		reentrant: () => void;
 		assertion: () => void;
 	}
 
 	const tests: PartialBatchTest[] = [];
 	tests.push({
 		name: "SharedDirectory",
-		initialCallback: () => {
+		initial: () => {
 			sharedDirectory1.set(key, true);
 		},
-		reentrantCallback: () => {
+		reentrant: () => {
 			sharedDirectory1.set(key, false);
 		},
 		assertion: () => {
@@ -107,18 +107,16 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 	tests.forEach((test) => {
 		it(`Pending batches with reentry - ${test.name}`, async function () {
 			await setupContainers();
-
 			const containerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
 
-			test.initialCallback();
+			test.initial();
 			containerRuntime.orderSequentially(() => {
 				containerRuntime.ensureNoDataModelChanges(() => {
-					test.reentrantCallback();
+					test.reentrant();
 				});
 			});
 
 			await provider.ensureSynchronized();
-
 			test.assertion();
 		});
 	});
