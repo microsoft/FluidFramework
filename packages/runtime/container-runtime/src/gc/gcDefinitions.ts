@@ -193,8 +193,6 @@ export interface IGarbageCollectionRuntime {
 	getNodeType(nodePath: string): GCNodeType;
 	/** Called when the runtime should close because of an error. */
 	closeFn: (error?: ICriticalContainerError) => void;
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
-	gcTombstoneEnforcementAllowed: boolean;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -205,6 +203,12 @@ export interface IGarbageCollector {
 	readonly summaryStateNeedsReset: boolean;
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
+	/** Tells whether tombstone feature is enabled and enforced. */
+	readonly tombstoneEnforcementAllowed: boolean;
+	/** Tells whether loading a tombstone object should fail or merely log. */
+	readonly throwOnTombstoneLoad: boolean;
+	/** Tells whether using a tombstone object should fail or merely log. */
+	readonly throwOnTombstoneUsage: boolean;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
@@ -332,8 +336,6 @@ export interface IGarbageCollectorConfigs {
 	readonly sweepTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
-	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
-	readonly throwOnInactiveLoad: boolean | undefined;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
 	/**
@@ -349,6 +351,14 @@ export interface IGarbageCollectorConfigs {
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 	/** The current version of GC data in the running code */
 	readonly gcVersionInEffect: GCVersion;
+	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
+	readonly throwOnInactiveLoad: boolean | undefined;
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	readonly tombstoneEnforcementAllowed: boolean;
+	/** If true, throw an error when a tombstone data store is retrieved */
+	readonly throwOnTombstoneLoad: boolean;
+	/** If true, throw an error when a tombstone data store is used. */
+	readonly throwOnTombstoneUsage: boolean;
 }
 
 /** The state of node that is unreferenced. */
