@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': 0.26.0-203096
-      '@fluidframework/build-common': ^2.0.2
+      '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.26.0-203096
       '@fluidframework/common-definitions': ^1.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
@@ -23,7 +23,7 @@ importers:
       '@fluidframework/common-definitions': 1.0.0
     devDependencies:
       '@fluid-tools/build-cli': 0.26.0-203096_kufnqfq7tb5rpdawkdb6g5smma
-      '@fluidframework/build-common': 2.0.2
+      '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.0-203096
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/protocol-definitions-previous': /@fluidframework/protocol-definitions/2.0.0
@@ -271,8 +271,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/build-common/2.0.2:
-    resolution: {integrity: sha512-lqAsi/EuncrcJVSP4mOlh+Aci9LAjHlvc2tkymidXXqMaJcATCyqUuaSXaZutgNkJ4wZZNZvWCQRJyqL4dtfWA==}
+  /@fluidframework/build-common/2.0.3:
+    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
     dev: true
 
