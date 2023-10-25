@@ -27,7 +27,7 @@ export { TelemetryEventCategory }
 
 // @public
 export interface TelemetryFilter {
-    category?: TelemetryEventCategory;
+    categories?: TelemetryEventCategory[];
     namespacePattern?: string;
     namespacePatternExceptions?: string[];
 }

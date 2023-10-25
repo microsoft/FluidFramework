@@ -40,26 +40,29 @@ export interface FluidAppInsightsLoggerConfig {
 /**
  * Object used with an {@link FluidAppInsightsLoggerConfig}
  * to define a filter with logic for matching it to telemetry events.
- * Filters can include either a category, namespace or both types of filter; A valid filter must have at least one defined.
+ * Filters can include either a category, namespace or both types of filters; A valid filter must have at least one defined.
  *
  * @public
  */
 export interface TelemetryFilter {
 	/**
-	 * The category of telemetry event that this filter applies to
+	 * The categories of telemetry events that this filter applies to
 	 */
-	category?: TelemetryEventCategory;
+	categories?: TelemetryEventCategory[];
 	/**
 	 * The namespace pattern to filter telemetry events.
-	 * For example, "perf:latency:*" will match any namespace starting with "perf:latency:"
-	 * This is a regex pattern.
+	 *
+	 * @remarks This will match namespaces that start with the given string. It is not a Regex pattern.
+	 * @example
+	 * "perf:latency" will match any namespace starting with "perf:latency"
 	 */
 	namespacePattern?: string;
 	/**
 	 * A list of namespace patterns to explicitly exclude from the filter.
-	 * For example, if you have a namespacePattern of "perf:latency:*" but want to exclude
-	 * events from "perf:latency:ops", you would add "perf.latency.ops" to this list.
-	 * These are regex patterns.
+	 *
+	 * @example
+	 * if you have a namespacePattern of "perf:latency" but want to exclude
+	 * events from "perf:latency:ops", you would add "perf:latency:ops" to this list.
 	 */
 	namespacePatternExceptions?: string[];
 }
@@ -87,7 +90,8 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 
 		for (const filter of config?.filtering.filters ?? []) {
 			const isValidFilter =
-				filter.category !== undefined || filter.namespacePattern !== undefined;
+				(filter.categories !== undefined && filter.categories.length > 0) ||
+				filter.namespacePattern !== undefined;
 			if (!isValidFilter) {
 				throw new Error("Invalid filter config provided to Fluid App Insights Logger");
 			}
@@ -128,7 +132,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	}
 
 	/**
-	 * Checks if a given {@link ITelemetryBaseEvent} conforms to any of the provided {@link TelemetryFilter} rules.
+	 * Checks if a given telemetry event conforms to any of the provided {@link TelemetryFilter} rules.
 	 *
 	 * - If a {@link TelemetryFilter} specifies both a `category` and a `namespace`, the event must match both.
 	 * - If only a `category` or `namespace` is provided, the event should match either one of them.
@@ -142,24 +146,26 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 		for (const filter of this.config.filtering.filters ?? []) {
 			let matches = true;
 
-			// If the filter has a category and it doesn't match the event's category, skip to next filter
-			if (filter.category && event.category !== filter.category) {
-				continue;
+			// If the filter has atleast one category and none of them match the event's category, skip to next filter
+			if (filter.categories && filter.categories.length > 0) {
+				const hasMatch = filter.categories.find((category) => category === event.category);
+				if (!hasMatch) {
+					continue;
+				}
 			}
 
 			// If the filter has a namespacePattern, test the event's namespace against it
-			if (filter.namespacePattern !== undefined) {
-				const pattern = new RegExp(filter.namespacePattern);
-				if (!pattern.test(event.eventName)) {
-					continue;
-				}
+			if (
+				filter.namespacePattern !== undefined &&
+				!event.eventName.startsWith(filter.namespacePattern)
+			) {
+				continue;
 			}
 
 			// If the filter has any excludedNamespacePatterns, test the event's namespace against them
 			if (filter.namespacePatternExceptions !== undefined) {
 				for (const patternException of filter.namespacePatternExceptions) {
-					const pattern = new RegExp(patternException);
-					if (pattern.test(event.eventName)) {
+					if (event.eventName.startsWith(patternException)) {
 						matches = false;
 						break;
 					}

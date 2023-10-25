@@ -55,11 +55,11 @@ describe("FluidAppInsightsLogger", () => {
 						mode: "exclusive",
 						filters: [
 							{
-								namespacePattern: "perf.latency.*",
+								namespacePattern: "perf.latency",
 							},
 							{
-								category: "error",
-								namespacePattern: "perf.latency.*",
+								categories: ["error"],
+								namespacePattern: "perf.latency",
 							},
 							{
 								// Empty config
@@ -128,10 +128,10 @@ describe("Telemetry Filter - Category Filtering", () => {
 	let trackEventSpy: Sinon.SinonSpy;
 	const configFilters: TelemetryFilter[] = [
 		{
-			category: "performance",
+			categories: ["performance"],
 		},
 		{
-			category: "generic",
+			categories: ["generic"],
 		},
 	];
 	const exclusiveLoggerFilterConfig: FluidAppInsightsLoggerConfig = {
@@ -156,6 +156,33 @@ describe("Telemetry Filter - Category Filtering", () => {
 			},
 		});
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
+	});
+
+	it("exclusive filtering mode DOES SEND events that DO MATCH with atleast one category within a single filter containing multiple categories", () => {
+		const logger = new FluidAppInsightsLogger(appInsightsClient, {
+			filtering: {
+				mode: "exclusive",
+				filters: [
+					{
+						categories: ["performance", "generic"],
+					},
+				],
+			},
+		});
+
+		// should be excluded - matches category filter
+		const event = {
+			category: "performance",
+			eventName: "perf:runtime:container",
+		};
+		// should be excluded - matches category filter
+		const event2 = {
+			category: "generic",
+			eventName: "perf:runtime:container",
+		};
+		logger.send(event);
+		logger.send(event2);
+		sinonAssert.callCount(trackEventSpy, 0);
 	});
 
 	it("exclusive filter mode DOES NOT SEND events that DO MATCH with one of multiple category filters", () => {
@@ -199,6 +226,33 @@ describe("Telemetry Filter - Category Filtering", () => {
 
 	// ------------------------------------------------------------------------------------
 
+	it("inclusive filtering mode DOES SEND events that DO MATCH with atleast one category within a single filter containing multiple categories", () => {
+		const logger = new FluidAppInsightsLogger(appInsightsClient, {
+			filtering: {
+				mode: "inclusive",
+				filters: [
+					{
+						categories: ["performance", "generic"],
+					},
+				],
+			},
+		});
+
+		// should be included - matches category filter
+		const event = {
+			category: "performance",
+			eventName: "perf:runtime:container",
+		};
+		// should be included - matches category filter
+		const event2 = {
+			category: "generic",
+			eventName: "perf:runtime:container",
+		};
+		logger.send(event);
+		logger.send(event2);
+		sinonAssert.callCount(trackEventSpy, 2);
+	});
+
 	it("inclusive filter mode DOES SEND events that DO MATCH with one of multiple category filters", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, inclusiveLoggerFilterConfig);
 		// should be included - match with category filter
@@ -234,12 +288,12 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 	let trackEventSpy: Sinon.SinonSpy;
 	const configFilters: TelemetryFilter[] = [
 		{
-			namespacePattern: "perf:latency*",
-			namespacePatternExceptions: ["perf:latency:ops*"],
+			namespacePattern: "perf:latency",
+			namespacePatternExceptions: ["perf:latency:ops"],
 		},
 		{
-			namespacePattern: "perf:memory*",
-			namespacePatternExceptions: ["perf:memory:container*"],
+			namespacePattern: "perf:memory",
+			namespacePatternExceptions: ["perf:memory:container"],
 		},
 	];
 	const exclusiveLoggerFilterConfig: FluidAppInsightsLoggerConfig = {
@@ -444,9 +498,9 @@ describe("Telemetry Filter - Category & Namespace Combination Filtering", () => 
 	let trackEventSpy: Sinon.SinonSpy;
 	const configFilters: TelemetryFilter[] = [
 		{
-			category: "performance",
-			namespacePattern: "perf:latency*",
-			namespacePatternExceptions: ["perf:latency:ops*"],
+			categories: ["performance"],
+			namespacePattern: "perf:latency",
+			namespacePatternExceptions: ["perf:latency:ops"],
 		},
 	];
 	const exclusiveLoggerFilterConfig: FluidAppInsightsLoggerConfig = {
