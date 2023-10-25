@@ -31,6 +31,7 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
  * the container with an empty URL.
  *
  * This factory should be exposed as fluidExport off the entry point to your module.
+ * @public
  */
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
 	public static readonly defaultDataStoreId = defaultDataStoreId;

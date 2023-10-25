@@ -46,7 +46,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.26.0-203096",
-		"@fluidframework/build-common": "^2.0.2",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@types/compression": "0.0.36",

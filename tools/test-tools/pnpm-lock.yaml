@@ -4,7 +4,7 @@ importers:
 
   .:
     specifiers:
-      '@fluidframework/build-common': ^2.0.2
+      '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.26.0-203096
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@types/mocha': ^10.0.0
@@ -19,7 +19,7 @@ importers:
       rimraf: ^2.6.2
       typescript: ~4.5.5
     devDependencies:
-      '@fluidframework/build-common': 2.0.2
+      '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.0-203096_@types+node@14.18.0
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@types/mocha': 10.0.1
@@ -142,8 +142,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/build-common/2.0.2:
-    resolution: {integrity: sha512-lqAsi/EuncrcJVSP4mOlh+Aci9LAjHlvc2tkymidXXqMaJcATCyqUuaSXaZutgNkJ4wZZNZvWCQRJyqL4dtfWA==}
+  /@fluidframework/build-common/2.0.3:
+    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
     dev: true
 

@@ -1843,11 +1843,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const pendingMessageIds = this.pendingKeys.get(op.key);
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
-		if (
-			pendingMessageIds !== undefined &&
-			pendingMessageIds[0] === localOpMetadata.pendingMessageId
-		) {
-			pendingMessageIds.shift();
+		if (pendingMessageIds !== undefined) {
+			const index = pendingMessageIds.findIndex(
+				(id) => id === localOpMetadata.pendingMessageId,
+			);
+			if (index === -1) {
+				return;
+			}
+			pendingMessageIds.splice(index, 1);
 			if (pendingMessageIds.length === 0) {
 				this.pendingKeys.delete(op.key);
 			}
@@ -2158,8 +2161,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return false;
 		}
 
-		const pendingKeyMessageId = this.pendingKeys.get(op.key);
-		if (pendingKeyMessageId !== undefined) {
+		const pendingKeyMessageIds = this.pendingKeys.get(op.key);
+		if (pendingKeyMessageIds !== undefined) {
 			// Found an NACK op, clear it from the directory if the latest sequence number in the directory
 			// match the message's and don't process the op.
 			if (local) {
@@ -2167,14 +2170,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					localOpMetadata !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
 					0x011 /* pendingMessageId is missing from the local client's operation */,
 				);
-				const pendingMessageIds = this.pendingKeys.get(op.key);
 				assert(
-					pendingMessageIds !== undefined &&
-						pendingMessageIds[0] === localOpMetadata.pendingMessageId,
+					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
 					0x331 /* Unexpected pending message received */,
 				);
-				pendingMessageIds.shift();
-				if (pendingMessageIds.length === 0) {
+				pendingKeyMessageIds.shift();
+				if (pendingKeyMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
 				}
 			}

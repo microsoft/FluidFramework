@@ -17,6 +17,9 @@ import {
 	IVersion,
 } from "@fluidframework/protocol-definitions";
 
+/**
+ * @public
+ */
 export class DocumentStorageServiceProxy implements IDocumentStorageService {
 	private _policies: IDocumentStorageServicePolicies | undefined;
 
