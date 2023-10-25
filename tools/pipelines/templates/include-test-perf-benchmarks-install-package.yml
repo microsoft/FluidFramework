@@ -39,7 +39,7 @@ steps:
 
 # Download package that has performance tests
 - task: DownloadPipelineArtifact@2
-  displayName: Download package with perf tests
+  displayName: Download package with perf tests - ${{ parameters.testPackageName }}
   inputs:
     # It seems there's a bug and preferTriggeringPipeline is not respected.
     # We force the behavior by explicitly specifying:
@@ -59,7 +59,7 @@ steps:
 
 # Install package that has performance tests
 - task: Bash@3
-  displayName: Install package with perf tests
+  displayName: Install package with perf tests - ${{ parameters.testPackageName }}
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.installPath }}

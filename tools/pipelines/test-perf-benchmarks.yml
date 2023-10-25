@@ -114,7 +114,7 @@ stages:
         # The "npm pack"-ed package that we install doesn't have the test files.
         # Unpack them "on top" of the package, where it was installed, so we can run its tests.
         - task: Bash@3
-          displayName: Unpack test files
+          displayName: Unpack test files - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             script: |
@@ -129,7 +129,7 @@ stages:
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
         # and run tests.
         - task: Bash@3
-          displayName: Run execution-time tests
+          displayName: Run execution-time tests - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -156,7 +156,7 @@ stages:
 
         # Consolidate output files
         - task: CopyFiles@2
-          displayName: Consolidate output files
+          displayName: Consolidate output files - ${{ testPackage }}
           inputs:
             sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/node_modules/@fluid-tools/benchmark/dist/.output/
             contents: '**'
@@ -164,7 +164,7 @@ stages:
 
         # Cleanup package
         - task: Bash@3
-          displayName: Cleanup package
+          displayName: Cleanup package - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
@@ -239,7 +239,7 @@ stages:
         # The "npm pack"-ed package that we install doesn't have the test files.
         # Unpack them "on top" of the package, where it was installed, so we can run its tests.
         - task: Bash@3
-          displayName: Unpack test files
+          displayName: Unpack test files - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             script: |
@@ -254,7 +254,7 @@ stages:
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
         # and run tests.
         - task: Bash@3
-          displayName: Run memory performance tests
+          displayName: Run memory performance tests - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -266,7 +266,7 @@ stages:
 
         # Consolidate output files
         - task: CopyFiles@2
-          displayName: Consolidate output files
+          displayName: Consolidate output files - ${{ testPackage }}
           inputs:
             sourceFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/.memoryTestsOutput
             contents: '**'
@@ -274,7 +274,7 @@ stages:
 
         # Cleanup package
         - task: Bash@3
-          displayName: 'Cleanup package'
+          displayName: Cleanup package - ${{ testPackage }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/
@@ -357,7 +357,7 @@ stages:
             installPath: $(testWorkspace)
 
         - task: Bash@3
-          displayName: Prepare test package to run tests
+          displayName: Prepare test package to run tests ${{ endpointObject.endpointName }}
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
