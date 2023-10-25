@@ -6535,10 +6535,12 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.0.0
+      '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
@@ -6577,7 +6579,9 @@ importers:
       '@fluidframework/build-tools': 0.26.0-203096_@types+node@16.18.58
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid': 3.0.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/map': link:../map
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluidframework/shared-object-base': link:../shared-object-base
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../test/test-utils
       '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
