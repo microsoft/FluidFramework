@@ -380,6 +380,74 @@ describe("visit", () => {
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
+	it("changes under destroy", () => {
+		const index = makeDetachedFieldIndex("");
+		const node1 = { minor: 42 };
+		index.createEntry(node1);
+		const moveId = { minor: 1 };
+		const moveOut: Delta.Mark = {
+			count: 1,
+			detach: moveId,
+		};
+		const moveIn: Delta.Mark = {
+			count: 1,
+			attach: moveId,
+		};
+		const nested: Delta.DetachedNodeChanges = {
+			id: node1,
+			fields: new Map([[fooKey, { local: [moveOut, moveIn] }]]),
+		};
+		const delta: Delta.FieldChanges = {
+			global: [nested],
+			destroy: [{ id: node1, count: 1 }],
+		};
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", field0],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["detach", { start: 0, end: 1 }, field1],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", field0],
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["enterField", field0],
+			["enterNode", 0],
+			["enterField", fooKey],
+			["attach", field1, 1, 0],
+			["exitField", fooKey],
+			["exitNode", 0],
+			["exitField", field0],
+			["destroy", field0, 1],
+		];
+		testTreeVisit(delta, expected, index);
+		assert.equal(index.entries().next().done, true);
+	});
+	it("build-rename-destroy", () => {
+		const index = makeDetachedFieldIndex("");
+		const buildId = { minor: 42 };
+		const detachId = { minor: 43 };
+		const delta: Delta.FieldChanges = {
+			build: [{ id: buildId, trees: [content] }],
+			rename: [{ oldId: buildId, newId: detachId, count: 1 }],
+			destroy: [{ id: detachId, count: 1 }],
+		};
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["create", [content], field0],
+			["exitField", rootKey],
+			["enterField", field0],
+			["detach", { start: 0, end: 1 }, field1],
+			["exitField", field0],
+			["enterField", rootKey],
+			["exitField", rootKey],
+			["destroy", field1, 1],
+		];
+		testTreeVisit(delta, expected, index);
+		assert.equal(index.entries().next().done, true);
+	});
 	it("changes under move-out", () => {
 		const index = makeDetachedFieldIndex("");
 		const moveId1 = { minor: 1 };

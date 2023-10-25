@@ -308,6 +308,7 @@ export {
 	TypedTreeFactory,
 	TypedTreeOptions,
 	TypedTreeChannel,
+	SharedTreeContentSnapshot,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
