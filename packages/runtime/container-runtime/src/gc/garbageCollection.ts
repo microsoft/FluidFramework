@@ -113,6 +113,19 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly summaryStateTracker: GCSummaryStateTracker;
 	private readonly telemetryTracker: GCTelemetryTracker;
 
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	public get tombstoneEnforcementAllowed(): boolean {
+		return this.configs.tombstoneEnforcementAllowed;
+	}
+	/** If true, throw an error when a tombstone data store is retrieved */
+	public get throwOnTombstoneLoad(): boolean {
+		return this.configs.throwOnTombstoneLoad;
+	}
+	/** If true, throw an error when a tombstone data store is used */
+	public get throwOnTombstoneUsage(): boolean {
+		return this.configs.throwOnTombstoneUsage;
+	}
+
 	/** For a given node path, returns the node's package path. */
 	private readonly getNodePackagePath: (
 		nodePath: string,
@@ -176,7 +189,6 @@ export class GarbageCollector implements IGarbageCollector {
 			this.mc,
 			this.configs,
 			this.isSummarizerClient,
-			this.runtime.gcTombstoneEnforcementAllowed,
 			createParams.createContainerMetadata,
 			(nodeId: string) => this.runtime.getNodeType(nodeId),
 			(nodeId: string) => this.unreferencedNodesState.get(nodeId),

@@ -166,7 +166,6 @@ import {
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
-	shouldAllowGcTombstoneEnforcement,
 	trimLeadingAndTrailingSlashes,
 } from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
@@ -1140,10 +1139,20 @@ export class ContainerRuntime
 	 */
 	private nextSummaryNumber: number;
 
-	/**
-	 * If false, loading or using a Tombstoned object should merely log, not fail
-	 */
-	public readonly gcTombstoneEnforcementAllowed: boolean;
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	public get gcTombstoneEnforcementAllowed(): boolean {
+		return this.garbageCollector.tombstoneEnforcementAllowed;
+	}
+
+	/** If true, throw an error when a tombstone data store is retrieved */
+	public get gcThrowOnTombstoneLoad(): boolean {
+		return this.garbageCollector.throwOnTombstoneLoad;
+	}
+
+	/** If true, throw an error when a tombstone data store is used. */
+	public get gcThrowOnTombstoneUsage(): boolean {
+		return this.garbageCollector.throwOnTombstoneUsage;
+	}
 
 	/**
 	 * GUID to identify a document in telemetry
@@ -1289,11 +1298,6 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this._connected = connected;
-
-		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
-			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
-			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName] /* current */,
-		);
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",

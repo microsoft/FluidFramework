@@ -92,6 +92,7 @@ export class MockRuntime
 	}
 
 	public gcTombstoneEnforcementAllowed: boolean = true;
+	public gcThrowOnTombstoneLoad: boolean = false;
 
 	public get storage() {
 		return (this.attachState === AttachState.Detached
