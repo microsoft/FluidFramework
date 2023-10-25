@@ -53,10 +53,13 @@ export function sequenceFieldToDelta<TNodeChange>(
 					continue;
 				}
 
-				// TODO: Do we need to use the endpoint ID instead when mark.attach is a MoveIn?
-				const oldId = nodeIdFromChangeAtom(mark.cellId);
 				const outputId = getOutputCellId(mark, revision, undefined);
 				assert(outputId !== undefined, "Transient mark should have defined output cell ID");
+				const oldId = nodeIdFromChangeAtom(
+					isMoveDestination(mark.attach)
+						? getEndpoint(mark.attach, mark.revision ?? revision)
+						: mark.cellId,
+				);
 				if (!areEqualChangeAtomIds(mark.cellId, outputId)) {
 					if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
 						build.push({
