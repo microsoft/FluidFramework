@@ -20,36 +20,41 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedCell } from "@fluidframework/cell";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
+import { SharedCounter } from "@fluidframework/counter";
+import { SharedMatrix } from "@fluidframework/matrix";
+import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 
 describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjectProvider) => {
 	const mapId = "mapKey";
 	const sharedStringId = "sharedStringKey";
 	const sharedDirectoryId = "sharedDirectoryKey";
 	const sharedCellId = "sharedCellKey";
+	const sharedCounterId = "sharedCounterKey";
+	const sharedMatrixId = "sharedMatrixKey";
+	const consensusRegisterCollectionId = "consensusRegisterCollectionKey";
 
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
 		[sharedStringId, SharedString.getFactory()],
 		[sharedDirectoryId, SharedDirectory.getFactory()],
 		[sharedCellId, SharedCell.getFactory()],
+		[sharedCounterId, SharedCounter.getFactory()],
+		[sharedMatrixId, SharedMatrix.getFactory()],
+		[consensusRegisterCollectionId, ConsensusRegisterCollection.getFactory()],
 	];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 	};
 	let provider: ITestObjectProvider;
-	let container1: IContainer;
-	let container2: IContainer;
-	let dataObject1: ITestFluidObject;
-	let dataObject2: ITestFluidObject;
-	let sharedMap1: SharedMap;
-	let sharedMap2: SharedMap;
-	let sharedString1: SharedString;
-	let sharedString2: SharedString;
-	let sharedDirectory1: SharedDirectory;
-	let sharedDirectory2: SharedDirectory;
-	let sharedCell1: SharedCell;
-	let sharedCell2: SharedCell;
+	let container: IContainer;
+	let dataObject: ITestFluidObject;
+	let sharedMap: SharedMap;
+	let sharedString: SharedString;
+	let sharedDirectory: SharedDirectory;
+	let sharedCell: SharedCell;
+	let sharedCounter: SharedCounter;
+	let sharedMatrix: SharedMatrix;
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
@@ -60,23 +65,14 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 			...testContainerConfig,
 			runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },
 		};
-		container1 = await provider.makeTestContainer(configWithFeatureGates);
-		container2 = await provider.loadTestContainer(configWithFeatureGates);
-
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
-
-		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
-		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
-
-		sharedString1 = await dataObject1.getSharedObject<SharedString>(sharedStringId);
-		sharedString2 = await dataObject2.getSharedObject<SharedString>(sharedStringId);
-
-		sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(sharedDirectoryId);
-		sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(sharedDirectoryId);
-
-		sharedCell1 = await dataObject1.getSharedObject<SharedCell>(sharedCellId);
-		sharedCell2 = await dataObject2.getSharedObject<SharedCell>(sharedCellId);
+		container = await provider.makeTestContainer(configWithFeatureGates);
+		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
+		sharedString = await dataObject.getSharedObject<SharedString>(sharedStringId);
+		sharedDirectory = await dataObject.getSharedObject<SharedDirectory>(sharedDirectoryId);
+		sharedCell = await dataObject.getSharedObject<SharedCell>(sharedCellId);
+		sharedCounter = await dataObject.getSharedObject<SharedCounter>(sharedCounterId);
+		sharedMatrix = await dataObject.getSharedObject<SharedMatrix>(sharedMatrixId);
 
 		await provider.ensureSynchronized();
 	};
@@ -89,25 +85,88 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 		assertion: () => void;
 	}
 
-	const tests: PartialBatchTest[] = [];
-	tests.push({
-		name: "SharedDirectory",
-		initial: () => {
-			sharedDirectory1.set(key, true);
+	const tests: PartialBatchTest[] = [
+		{
+			name: "SharedDirectory",
+			initial: () => {
+				sharedDirectory.set(key, true);
+			},
+			reentrant: () => {
+				sharedDirectory.set(key, false);
+			},
+			assertion: () => {
+				assert.strictEqual(sharedDirectory.get(key), false);
+			},
 		},
-		reentrant: () => {
-			sharedDirectory1.set(key, false);
+		{
+			name: "SharedMap",
+			initial: () => {
+				sharedMap.set(key, true);
+			},
+			reentrant: () => {
+				// ADO:6050. The call below would cause assert 0x2fa
+				// sharedMap.set(key, false);
+			},
+			assertion: () => {
+				assert.strictEqual(sharedMap.get(key), true);
+			},
 		},
-		assertion: () => {
-			assert.strictEqual(sharedDirectory1.get(key), false);
-			assert.strictEqual(sharedDirectory2.get(key), false);
+		{
+			name: "SharedString",
+			initial: () => {
+				sharedString.insertText(0, "b");
+			},
+			reentrant: () => {
+				sharedString.insertText(0, "a");
+			},
+			assertion: () => {
+				assert.strictEqual(sharedString.getText(), "ab");
+			},
 		},
-	});
+		{
+			name: "SharedCell",
+			initial: () => {
+				sharedCell.set("a");
+			},
+			reentrant: () => {
+				sharedCell.set("b");
+			},
+			assertion: () => {
+				assert.strictEqual(sharedCell.get(), "b");
+			},
+		},
+		{
+			name: "SharedCounter",
+			initial: () => {
+				sharedCounter.increment(1);
+			},
+			reentrant: () => {
+				sharedCounter.increment(1);
+			},
+			assertion: () => {
+				assert.strictEqual(sharedCounter.value, 2);
+			},
+		},
+		{
+			name: "SharedMatrix",
+			initial: () => {
+				sharedMatrix.insertRows(0, 1);
+				sharedMatrix.insertCols(0, 1);
+				sharedMatrix.setCell(0, 0, 1);
+			},
+			reentrant: () => {
+				sharedMatrix.setCell(0, 0, 2);
+			},
+			assertion: () => {
+				assert.strictEqual(sharedMatrix.getCell(0, 0), 2);
+			},
+		},
+	];
 
 	tests.forEach((test) => {
 		it(`Pending batches with reentry - ${test.name}`, async function () {
 			await setupContainers();
-			const containerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
+			const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 
 			test.initial();
 			containerRuntime.orderSequentially(() => {
