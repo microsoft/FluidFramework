@@ -404,10 +404,11 @@ describe("SharedDirectory fuzz", () => {
 		{ ...model, workloadName: "default directory 2 with rebasing" },
 		{
 			validationStrategy: {
-				type: "fixedInterval",
-				interval: defaultOptions.validateInterval,
+				type: "random",
+				probability: 0.4,
 			},
-			rebaseProbability: 0.15,
+			rebaseProbability: 0.2,
+			reconnectProbability: 0.5,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
@@ -419,7 +420,7 @@ describe("SharedDirectory fuzz", () => {
 				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 				clientAddProbability: 0.08,
 			},
-			defaultTestCount: 25,
+			defaultTestCount: 200,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 			saveFailures: {
