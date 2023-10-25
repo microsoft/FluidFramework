@@ -233,7 +233,7 @@ describe("ErrorUtils", () => {
 			assertExpectedMessage(error.message);
 			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
 			assert.strictEqual(error.canRetry, true);
-			assert.strictEqual((error as any).retryAfterSeconds, 5);
+			assert.strictEqual(error.retryAfterSeconds, 5);
 			assert.strictEqual((error as any).statusCode, 429);
 		});
 		it("creates retriable error on 429 without retry-after", () => {
