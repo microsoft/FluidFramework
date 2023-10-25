@@ -447,7 +447,7 @@ stages:
                   echo "Build Directory is ${{ parameters.buildDirectory }}";
                   BUNDLE_SIZE_TESTS_DIR="${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests";
                   echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
-                  ls -la '$BUNDLE_SIZE_TESTS_DIR';
+                  ls -la $BUNDLE_SIZE_TESTS_DIR;
 
             - template: include-telemetry-setup.yml
               parameters:
