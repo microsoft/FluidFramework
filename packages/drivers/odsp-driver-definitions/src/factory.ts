@@ -7,6 +7,7 @@ export interface ISnapshotOptions {
 	blobs?: number;
 	deltas?: number;
 	channels?: number;
+
 	/**
 	 * Maximum Data size (in bytes)
 	 *
