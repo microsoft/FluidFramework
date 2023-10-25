@@ -34,7 +34,7 @@ const factory = new SharedTreeFactory({
 
 const builder = new SchemaBuilder({ scope: "test trees" });
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.sequence(Any));
-const testSchema = builder.toDocumentSchema(SchemaBuilder.sequence(Any));
+const testSchema = builder.intoSchema(SchemaBuilder.sequence(Any));
 
 function generateCompleteTree(
 	fields: FieldKey[],
@@ -272,9 +272,7 @@ export function generateTestTrees() {
 					scope: "has-handle",
 					libraries: [leaf.library],
 				});
-				const docSchema = innerBuilder.toDocumentSchema(
-					SchemaBuilder.optional(leaf.handle),
-				);
+				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(leaf.handle));
 
 				const config = {
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -305,9 +303,7 @@ export function generateTestTrees() {
 					"SeqMap",
 					FieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
 				);
-				const docSchema = innerBuilder.toDocumentSchema(
-					SchemaBuilder.sequence(seqMapSchema),
-				);
+				const docSchema = innerBuilder.intoSchema(SchemaBuilder.sequence(seqMapSchema));
 
 				const config = {
 					allowedSchemaModifications: AllowedUpdateType.None,

@@ -552,7 +552,7 @@ export const defaultPendingOpsRetryDelayMs = 1000;
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
- * @deprecated - use ContainerRuntimeMessageType instead
+ * @deprecated use ContainerRuntimeMessageType instead
  */
 export enum RuntimeMessage {
 	FluidDataStoreOp = "component",
@@ -565,7 +565,7 @@ export enum RuntimeMessage {
 }
 
 /**
- * @deprecated - please use version in driver-utils
+ * @deprecated please use version in driver-utils
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
@@ -693,14 +693,14 @@ export class ContainerRuntime
 		IProvideFluidHandleContext
 {
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;
 	}
 
 	/**
-	 * @deprecated - use loadRuntime instead.
+	 * @deprecated use loadRuntime instead.
 	 * Load the stores from a snapshot and returns the runtime.
 	 * @param context - Context of the container.
 	 * @param registryEntries - Mapping to the stores.
@@ -1726,7 +1726,7 @@ export class ContainerRuntime
 	/**
 	 * Notifies this object about the request made to the container.
 	 * @param request - Request made to the handler.
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
@@ -1778,7 +1778,10 @@ export class ContainerRuntime
 					  }
 					: create404Response(request);
 			} else if (requestParser.pathParts.length > 0) {
-				const dataStore = await this.getDataStoreFromRequest(id, request);
+				// Differentiate between requesting the dataStore directly, or one of its children
+				const requestForChild = !requestParser.isLeaf(1);
+				const dataStore = await this.getDataStoreFromRequest(id, request, requestForChild);
+
 				const subRequest = requestParser.createSubRequest(1);
 				// We always expect createSubRequest to include a leading slash, but asserting here to protect against
 				// unintentionally modifying the url if that changes.
@@ -1811,6 +1814,7 @@ export class ContainerRuntime
 	private async getDataStoreFromRequest(
 		id: string,
 		request: IRequest,
+		requestForChild: boolean,
 	): Promise<IFluidDataStoreChannel> {
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
@@ -1821,6 +1825,11 @@ export class ContainerRuntime
 		}
 		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
+		}
+
+		// We allow Tombstone requests for sub-DataStore objects
+		if (requestForChild) {
+			headerData.allowTombstone = true;
 		}
 
 		await this.dataStores.waitIfPendingAlias(id);
@@ -2382,7 +2391,7 @@ export class ContainerRuntime
 	 * Returns the runtime of the data store.
 	 * @param id - Id supplied during creating the data store.
 	 * @param wait - True if you want to wait for it.
-	 * @deprecated - Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
+	 * @deprecated Use getAliasedDataStoreEntryPoint instead to get an aliased data store's entry point.
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	public async getRootDataStore(id: string, wait = true): Promise<IFluidRouter> {
@@ -2817,7 +2826,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * @deprecated - Replaced by deleteSweepReadyNodes.
+	 * @deprecated Replaced by deleteSweepReadyNodes.
 	 */
 	public deleteUnusedNodes(unusedRoutes: string[]): string[] {
 		throw new Error("deleteUnusedRoutes should not be called");

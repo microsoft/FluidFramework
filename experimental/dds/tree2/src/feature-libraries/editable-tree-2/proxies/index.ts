@@ -14,4 +14,6 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	ProxyRoot,
+	SharedTreeNode,
 } from "./types";
+export { node } from "./node";

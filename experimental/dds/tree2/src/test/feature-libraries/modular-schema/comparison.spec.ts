@@ -17,13 +17,13 @@ import {
 } from "../../../feature-libraries/modular-schema/comparison";
 import {
 	FieldStoredSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	ValueSchema,
 	TreeTypeSet,
 	emptyMap,
 	fieldSchema,
 	InMemoryStoredSchemaRepository,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	treeSchema,
 	storedEmptyFieldSchema,
 } from "../../../core";
@@ -39,15 +39,15 @@ describe("Schema Comparison", () => {
 	const anyField = fieldSchema(FieldKinds.sequence);
 
 	/**
-	 * TreeStoredSchema that permits anything without a value.
+	 * TreeNodeStoredSchema that permits anything without a value.
 	 * Note that children under the fields still have to be in schema.
 	 */
-	const anyTreeWithoutValue: TreeStoredSchema = {
+	const anyTreeWithoutValue: TreeNodeStoredSchema = {
 		structFields: emptyMap,
 		mapFields: anyField,
 	};
 
-	const numberLeaf: TreeStoredSchema = {
+	const numberLeaf: TreeNodeStoredSchema = {
 		structFields: emptyMap,
 		leafValue: ValueSchema.Number,
 	};
@@ -58,14 +58,14 @@ describe("Schema Comparison", () => {
 	const neverField = fieldSchema(FieldKinds.required, []);
 
 	/**
-	 * TreeStoredSchema which is impossible for any data to be in schema with.
+	 * TreeNodeStoredSchema which is impossible for any data to be in schema with.
 	 */
-	const neverTree: TreeStoredSchema = {
+	const neverTree: TreeNodeStoredSchema = {
 		structFields: emptyMap,
 		mapFields: neverField,
 	};
 
-	const neverTree2: TreeStoredSchema = {
+	const neverTree2: TreeNodeStoredSchema = {
 		structFields: new Map([[brand("x"), neverField]]),
 	};
 
@@ -96,8 +96,8 @@ describe("Schema Comparison", () => {
 
 	function updateTreeSchema(
 		repo: InMemoryStoredSchemaRepository,
-		identifier: TreeSchemaIdentifier,
-		schema: TreeStoredSchema,
+		identifier: TreeNodeSchemaIdentifier,
+		schema: TreeNodeStoredSchema,
 	) {
 		repo.update({
 			rootFieldSchema: repo.rootFieldSchema,
@@ -279,8 +279,8 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const compare = (
-			a: TreeStoredSchema | undefined,
-			b: TreeStoredSchema | undefined,
+			a: TreeNodeStoredSchema | undefined,
+			b: TreeNodeStoredSchema | undefined,
 		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [neverTree, emptyTree, optionalLocalFieldTree, anyTreeWithoutValue]);
 		testPartialOrder(
@@ -306,8 +306,8 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
 		const compare = (
-			a: TreeStoredSchema | undefined,
-			b: TreeStoredSchema | undefined,
+			a: TreeNodeStoredSchema | undefined,
+			b: TreeNodeStoredSchema | undefined,
 		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [neverTree, numberLeaf]);
 		testPartialOrder(

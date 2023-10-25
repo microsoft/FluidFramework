@@ -15,7 +15,7 @@ import {
 	ITreeCursor,
 	ITreeCursorSynchronous,
 	JsonableTree,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import {
 	jsonableTreeFromCursor,
@@ -88,7 +88,7 @@ describe("basic chunk", () => {
 		true,
 	);
 
-	const schema: TreeSchemaIdentifier = mapSchema.name;
+	const schema: TreeNodeSchemaIdentifier = mapSchema.name;
 
 	const hybridData: TestField<BasicChunk>[] = [];
 	for (const data of testData) {

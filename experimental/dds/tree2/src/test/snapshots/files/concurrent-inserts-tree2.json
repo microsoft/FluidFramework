@@ -302,8 +302,8 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[]",
-                  "id": 9
+                  "data": [],
+                  "id": 4
                 },
                 "encoding": "utf-8"
               }

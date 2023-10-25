@@ -6,9 +6,9 @@
 export {
 	FieldStoredSchema,
 	ValueSchema,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
-	TreeSchemaIdentifierSchema,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeSchemaIdentifierSchema as TreeSchemaIdentifierSchema,
 	FieldKey,
 	FieldKeySchema,
 	TreeTypeSet,

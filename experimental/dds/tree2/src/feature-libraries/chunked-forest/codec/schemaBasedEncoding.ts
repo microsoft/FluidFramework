@@ -8,7 +8,7 @@ import {
 	FieldStoredSchema,
 	ITreeCursorSynchronous,
 	StoredSchemaCollection,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
 import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
@@ -43,7 +43,7 @@ export function schemaCompressedEncode(
 
 export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
-		(fieldHandler: FieldShaper, schemaName: TreeSchemaIdentifier) =>
+		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
 		(treeHandler: TreeShaper, field: FieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache),
@@ -84,7 +84,7 @@ export function treeShaper(
 	fullSchema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldHandler: FieldShaper,
-	schemaName: TreeSchemaIdentifier,
+	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
 	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
 
