@@ -193,7 +193,7 @@ function rebaseMarkList<TNodeChange>(
 		if (!areOutputCellsEmpty(baseMark)) {
 			lineageRecipients.length = 0;
 
-			// XXX: Only clear detach blocks for revisions where this cell is known to be full
+			// TODO: Only clear detach blocks for revisions where this cell is known to be full
 			detachBlocks.clear();
 		}
 	}
