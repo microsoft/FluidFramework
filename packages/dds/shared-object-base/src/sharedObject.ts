@@ -348,28 +348,19 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 	/**
 	 * Submits a message by the local client to the runtime.
-	 * @param content - Content of the message
+	 * @deprecated Use submitLocalMessage2 instead, passing rootMetadata as well
+	 *
+	 * @param messageContent - Content of the message
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 */
 	protected submitLocalMessage(
-		content: any,
+		messageContent: any,
 		localOpMetadata: unknown,
 		rootMetadata: unknown,
 	): void {
-		this.verifyNotClosed();
-		if (this.isAttached()) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const deltaConnection = this.services!.deltaConnection;
-
-			//* TODO: Is this Back-Compat measure needed? I think not, I think DDS and DataStore layers are always in sync
-			if (deltaConnection.submit2 === undefined) {
-				deltaConnection.submit(content, localOpMetadata);
-				return;
-			}
-			deltaConnection.submit2({ messageContent: content, localOpMetadata, rootMetadata });
-		}
+		this.submitLocalMessage2({ messageContent, localOpMetadata, rootMetadata });
 	}
 
 	/**
@@ -388,7 +379,19 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		/** Metadata to be handled by the runtime and included in the final op payload */
 		rootMetadata: unknown;
 	}): void {
-		this.submitLocalMessage(data.messageContent, data.localOpMetadata, data.rootMetadata);
+		const { messageContent, localOpMetadata, rootMetadata } = data;
+		this.verifyNotClosed();
+		if (this.isAttached()) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const deltaConnection = this.services!.deltaConnection;
+
+			//* TODO: Is this Back-Compat measure needed? I think not, I think DDS and DataStore layers are always in sync
+			if (deltaConnection.submit2 === undefined) {
+				deltaConnection.submit(messageContent, localOpMetadata);
+				return;
+			}
+			deltaConnection.submit2({ messageContent, localOpMetadata, rootMetadata });
+		}
 	}
 
 	/**
@@ -419,9 +422,11 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
 	protected reSubmitCore(content: any, localOpMetadata: unknown) {
-		//* TODO: If it's possible to generically "roundtrip" content through makeHandlesSerializable, do that
-		//* Otherwise we'll have to plumb rootMetadata down to provide whatever is needed here, or make this abstract.
-		//* this.submitLocalMessage(content, localOpMetadata, ???);
+		//* TODO: We can't generically "roundtrip" content through makeHandlesSerializable,
+		//* so we'll have to plumb rootMetadata down to provide whatever is needed here.
+		//* Or make this abstract, but it may be difficult to recompute the rootMetadata, and better to just pass it.
+		// this.submitLocalMessage(content, localOpMetadata, ???);
+
 		throw new Error(
 			"reSubmitCore must be overridden in order to correctly compute rootMetadata",
 		);

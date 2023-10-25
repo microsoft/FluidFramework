@@ -257,7 +257,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     get size(): number;
     subdirectories(): IterableIterator<[string, IDirectory]>;
     // @internal @deprecated
-    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata?: unknown): void;
+    submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void;
     // @internal
     submitDirectoryMessage2(data: {
         op: IDirectoryOperation;
