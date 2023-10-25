@@ -186,7 +186,7 @@
 				"deps": ["Protocol-Utils", "Server-Shared-Utils"]
 			},
 			"Server-Tools": {
-				"packages": ["@fluidframework/tinylicious"],
+				"packages": ["tinylicious"],
 				"deps": ["Server-Libs"]
 			},
 			"GitRest": {
