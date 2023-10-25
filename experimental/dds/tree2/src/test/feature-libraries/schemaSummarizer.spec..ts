@@ -19,14 +19,101 @@ describe("schemaSummarizer", () => {
 				rootFieldSchema: storedEmptyFieldSchema,
 				treeSchema: new Map(),
 			});
-			const snapshot = {};
+			const snapshot = {
+				rootFieldSchema: {
+					kind: "Forbidden",
+				},
+				treeSchema: [],
+				version: "1.0.0",
+			};
 			assert.deepEqual(encoded, snapshot);
 		});
-	});
 
-	it("simple", () => {
-		const encoded = encodeTreeSchema(jsonSequenceRootSchema);
-		const snapshot = {};
-		assert.deepEqual(encoded, snapshot);
+		it("simple", () => {
+			const encoded = encodeTreeSchema(jsonSequenceRootSchema);
+			const snapshot = {
+				rootFieldSchema: {
+					kind: "Sequence",
+					types: [
+						"com.fluidframework.json.object",
+						"com.fluidframework.json.array",
+						"com.fluidframework.leaf.number",
+						"com.fluidframework.leaf.boolean",
+						"com.fluidframework.leaf.string",
+						"com.fluidframework.leaf.null",
+					],
+				},
+				treeSchema: [
+					{
+						leafValue: undefined,
+						mapFields: undefined,
+						name: "com.fluidframework.json.array",
+						objectNodeFields: [
+							{
+								kind: "Sequence",
+								name: "",
+								types: [
+									"com.fluidframework.json.object",
+									"com.fluidframework.json.array",
+									"com.fluidframework.leaf.number",
+									"com.fluidframework.leaf.boolean",
+									"com.fluidframework.leaf.string",
+									"com.fluidframework.leaf.null",
+								],
+							},
+						],
+					},
+					{
+						leafValue: undefined,
+						mapFields: {
+							kind: "Optional",
+							types: [
+								"com.fluidframework.json.object",
+								"com.fluidframework.json.array",
+								"com.fluidframework.leaf.number",
+								"com.fluidframework.leaf.boolean",
+								"com.fluidframework.leaf.string",
+								"com.fluidframework.leaf.null",
+							],
+						},
+						name: "com.fluidframework.json.object",
+						objectNodeFields: [],
+					},
+					{
+						leafValue: 2,
+						mapFields: undefined,
+						name: "com.fluidframework.leaf.boolean",
+						objectNodeFields: [],
+					},
+					{
+						leafValue: 3,
+						mapFields: undefined,
+						name: "com.fluidframework.leaf.handle",
+						objectNodeFields: [],
+					},
+					{
+						leafValue: 4,
+						mapFields: undefined,
+						name: "com.fluidframework.leaf.null",
+						objectNodeFields: [],
+					},
+					{
+						leafValue: 0,
+						mapFields: undefined,
+						name: "com.fluidframework.leaf.number",
+						objectNodeFields: [],
+					},
+					{
+						leafValue: 1,
+						mapFields: undefined,
+						name: "com.fluidframework.leaf.string",
+						objectNodeFields: [],
+					},
+				],
+				version: "1.0.0",
+			};
+
+			assert.deepEqual(encoded, snapshot);
+		});
 	});
 });
