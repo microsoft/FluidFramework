@@ -4,12 +4,12 @@
  */
 
 import { leaf, SchemaBuilder } from "../../../domains";
-import { FieldKinds, FieldSchema } from "../../../feature-libraries";
+import { FieldKinds, TreeFieldSchema } from "../../../feature-libraries";
 
 const builder = new SchemaBuilder({ scope: "example" });
 
-// Declare struct
-const ballSchema = builder.struct("Ball", {
+// Declare object
+const ballSchema = builder.object("Ball", {
 	x: leaf.number,
 	y: leaf.number,
 });
@@ -17,18 +17,18 @@ const ballSchema = builder.struct("Ball", {
 // We can inspect the schema.
 // Note that the inferred type here actually includes the FieldKind's editor,
 // So it would be possible to derive a type safe editing API from this type.
-const xField = ballSchema.structFields.get("x");
+const xField = ballSchema.objectNodeFields.get("x");
 
 // @ts-expect-error This is an error since this field does not exist:
-const invalidChildSchema = ballSchema.structFields.get("z");
+const invalidChildSchema = ballSchema.objectNodeFields.get("z");
 
-// Declare an recursive aggregate type via struct fields.
+// Declare an recursive aggregate type via object fields.
 // Note that the type name can be used instead of the schema to allow recursion.
-const diagramSchema = builder.structRecursive("Diagram", {
-	children: FieldSchema.createUnsafe(FieldKinds.sequence, [() => diagramSchema, ballSchema]),
+const diagramSchema = builder.objectRecursive("Diagram", {
+	children: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [() => diagramSchema, ballSchema]),
 });
 
 const rootField = builder.optional(diagramSchema);
 
 // Collect the schema together.
-const schemaData = builder.toDocumentSchema(rootField);
+const schemaData = builder.intoSchema(rootField);

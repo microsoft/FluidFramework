@@ -18,6 +18,11 @@ data:
             "level": "verbose",
             "timestamp": false
         },
+        "lumberjack": {
+            "options": {
+                "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
+            }
+        },
         "requestSizeLimit": "1gb",
         "riddler": "{{ .Values.historian.riddler }}",
         "ignoreEphemeralFlag": {{ .Values.historian.ignoreEphemeralFlag }},

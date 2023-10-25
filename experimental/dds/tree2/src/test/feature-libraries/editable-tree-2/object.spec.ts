@@ -4,44 +4,145 @@
  */
 
 import { strict as assert } from "assert";
-import { TypedSchemaCollection } from "../../../feature-libraries";
+import { LeafSchema, TreeSchema } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
-
-import { createTreeView, pretty } from "./utils";
+import { TreeValue } from "../../../core";
+import { createTreeView, itWithRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase {
 	initialTree: object;
-	schema: TypedSchemaCollection;
+	schema: TreeSchema;
+}
+
+export function testObjectPrototype(proxy: object, prototype: object) {
+	describe("inherits from Object.prototype", () => {
+		it(`${pretty(proxy)} instanceof Object`, () => {
+			assert(prototype instanceof Object, "object must be instanceof Object");
+		});
+
+		for (const [key, descriptor] of Object.entries(
+			Object.getOwnPropertyDescriptors(Object.prototype),
+		)) {
+			it(`${key} -> ${pretty(descriptor)}}`, () => {
+				assert.deepEqual(
+					Object.getOwnPropertyDescriptor(prototype, key),
+					descriptor,
+					`Proxy must expose Object.prototype.${key}`,
+				);
+			});
+		}
+	});
 }
 
 function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
-		describe("Satisfies 'deepEquals'", () => {
-			for (const testCase of testCases) {
-				const view = createTreeView(testCase.schema, testCase.initialTree);
-				const real = testCase.initialTree;
-				const proxy = view.root2(testCase.schema);
+		describe("satisfies 'deepEquals'", () => {
+			for (const { schema, initialTree } of testCases) {
+				const view = createTreeView(schema, initialTree);
+				const real = initialTree;
+				const proxy = view.root2(schema);
 
+				// We do not use 'itWithRoot()' so we can pretty-print the 'proxy' in the test title.
 				it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
-					assert.deepEqual(proxy, real);
+					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
+				});
+			}
+		});
+
+		describe("inherits from Object.prototype", () => {
+			function findObjectPrototype(o: unknown) {
+				return Object.getPrototypeOf(
+					// If 'root' is an array, the immediate prototype is Array.prototype.  We need to go
+					// one additional level to get Object.prototype.
+					Array.isArray(o) ? Object.getPrototypeOf(o) : o,
+				) as object;
+			}
+
+			for (const { schema, initialTree } of testCases) {
+				describe("instanceof Object", () => {
+					itWithRoot(`${pretty(initialTree)} -> true`, schema, initialTree, (root) => {
+						assert(root instanceof Object, "object must be instanceof Object");
+					});
+				});
+
+				describe("properties inherited from Object.prototype", () => {
+					for (const [key, descriptor] of Object.entries(
+						Object.getOwnPropertyDescriptors(Object.prototype),
+					)) {
+						itWithRoot(
+							`Object.getOwnPropertyDescriptor(${pretty(
+								initialTree,
+							)}, ${key}) -> ${pretty(descriptor)}}`,
+							schema,
+							initialTree,
+							(root) => {
+								assert.deepEqual(
+									Object.getOwnPropertyDescriptor(findObjectPrototype(root), key),
+									descriptor,
+									`Proxy must expose Object.prototype.${key}`,
+								);
+							},
+						);
+					}
+				});
+
+				describe("methods inherited from Object.prototype", () => {
+					itWithRoot(
+						`${pretty(initialTree)}.isPrototypeOf(Object.create(root)) -> true`,
+						schema,
+						initialTree,
+
+						(root) => {
+							const asObject = root as object;
+							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							assert.equal(asObject.isPrototypeOf(Object.create(asObject)), true);
+						},
+					);
+
+					itWithRoot(
+						`${pretty(initialTree)}.isPrototypeOf(root) -> false`,
+						schema,
+						initialTree,
+
+						(root) => {
+							const asObject = root as object;
+							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							assert.equal(asObject.isPrototypeOf(asObject), false);
+						},
+					);
+				});
+
+				describe(`${pretty(initialTree)}.propertyIsEnumerable`, () => {
+					for (const key of Object.getOwnPropertyNames(initialTree)) {
+						const expected = Object.prototype.propertyIsEnumerable.call(
+							initialTree,
+							key,
+						);
+
+						itWithRoot(`${key} -> ${expected}`, schema, initialTree, (root) => {
+							const asObject = root as object;
+							// eslint-disable-next-line no-prototype-builtins -- compatibility test
+							assert.equal(asObject.propertyIsEnumerable(key), expected);
+						});
+					}
 				});
 			}
 		});
 
 		function test1(fn: (subject: object) => unknown) {
-			for (const testCase of testCases) {
-				const view = createTreeView(testCase.schema, testCase.initialTree);
-				const real = structuredClone(testCase.initialTree);
-				const proxy = view.root2(testCase.schema);
-
-				assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
-
+			for (const { schema, initialTree } of testCases) {
+				const real = structuredClone(initialTree);
 				const expected = fn(real);
 
-				it(`${pretty(real)} -> ${pretty(expected)}`, () => {
-					const actual = fn(proxy);
-					assert.deepEqual(actual, expected);
-				});
+				itWithRoot(
+					`${pretty(real)} -> ${pretty(expected)}`,
+					schema,
+					initialTree,
+					(proxy) => {
+						const actual = fn(proxy as object);
+						assert.deepEqual(actual, expected);
+					},
+				);
 			}
 		}
 
@@ -62,6 +163,10 @@ function testObjectLike(testCases: TestCase[]) {
 		// the class of an object.
 		describe("Object.prototype.toString", () => {
 			test1((subject) => Object.prototype.toString.call(subject));
+		});
+
+		describe("Object.prototype.toLocaleString", () => {
+			test1((subject) => Object.prototype.toLocaleString.call(subject));
 		});
 
 		// 'deepEquals' requires that objects have the same prototype to be considered equal.
@@ -89,7 +194,18 @@ function testObjectLike(testCases: TestCase[]) {
 			});
 		});
 
-		// Enumerates keys configured as 'enumerable: true' (both own and inherited.)
+		// Validate that root.toString() === initialTree.toString()
+		describe(".toString()", () => {
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
+			test1((subject) => subject.toString());
+		});
+
+		// Validate that root.toLocaleString() === initialTree.toLocaleString()
+		describe(".toLocaleString()", () => {
+			test1((subject) => subject.toLocaleString());
+		});
+
+		// Validate that JSON.stringify(root) === JSON.stringify(initialTree)
 		describe("JSON.stringify()", () => {
 			test1((subject) => JSON.stringify(subject));
 		});
@@ -100,20 +216,20 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const $ = _.struct("empty", {});
-			return _.toDocumentSchema($);
+			const $ = _.object("empty", {});
+			return _.intoSchema($);
 		})(),
 		initialTree: {},
 	},
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const $ = _.struct("primitives", {
+			const $ = _.object("primitives", {
 				boolean: leaf.boolean,
 				number: leaf.number,
 				string: leaf.string,
 			});
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: {
 			boolean: false,
@@ -124,26 +240,42 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const $ = _.struct("optional", {
+			const $ = _.object("optional", {
 				boolean: _.optional(leaf.boolean),
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
 			});
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: {},
 	},
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
+			const $ = _.object("optional (defined)", {
+				boolean: _.optional(leaf.boolean),
+				number: _.optional(leaf.number),
+				string: _.optional(leaf.string),
+			});
+			return _.intoSchema($);
+		})(),
+		initialTree: {
+			boolean: true,
+			number: -0,
+			string: "",
+		},
+	},
+	{
+		schema: (() => {
+			const _ = new SchemaBuilder({ scope: "test" });
 
-			const inner = _.struct("inner", {});
+			const inner = _.object("inner", {});
 
-			const $ = _.struct("outer", {
+			const $ = _.object("outer", {
 				nested: inner,
 			});
 
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: { nested: {} },
 	},
@@ -151,7 +283,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(0)", _.sequence(leaf.string));
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: [],
 	},
@@ -159,7 +291,7 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(1)", _.sequence(leaf.string));
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: ["A"],
 	},
@@ -167,10 +299,174 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const $ = _.fieldNode("List<string> len(2)", _.sequence(leaf.string));
-			return _.toDocumentSchema($);
+			return _.intoSchema($);
 		})(),
 		initialTree: ["A", "B"],
 	},
 ];
 
 testObjectLike(tcs);
+
+describe("Object-like", () => {
+	describe("setting an invalid field", () => {
+		itWithRoot(
+			"throws TypeError in strict mode",
+			makeSchema((_) => _.object("no fields", {})),
+			{},
+			(root) => {
+				assert.throws(() => {
+					// The actual error "'TypeError: 'set' on proxy: trap returned falsish for property 'foo'"
+					(root as unknown as any).foo = 3;
+				}, "attempting to set an invalid field must throw.");
+			},
+		);
+	});
+
+	describe("supports setting", () => {
+		describe("primitives", () => {
+			function check<const TSchema extends LeafSchema>(
+				schema: LeafSchema,
+				before: TreeValue<TSchema["leafValue"]>,
+				after: TreeValue<TSchema["leafValue"]>,
+			) {
+				describe(`required ${typeof before} `, () => {
+					itWithRoot(
+						`(${pretty(before)} -> ${pretty(after)})`,
+						makeSchema((_) => _.object("", { _value: schema })),
+						{ _value: before },
+						(root) => {
+							assert.equal(root._value, before);
+							root._value = after;
+							assert.equal(root._value, after);
+						},
+					);
+				});
+
+				describe(`optional ${typeof before}`, () => {
+					itWithRoot(
+						`(undefined -> ${pretty(before)} -> ${pretty(after)})`,
+						makeSchema((_) => _.object("", { _value: _.optional(schema) })),
+						{ _value: undefined },
+						(root) => {
+							assert.equal(root._value, undefined);
+							root._value = before;
+							assert.equal(root._value, before);
+							root._value = after;
+							assert.equal(root._value, after);
+						},
+					);
+				});
+			}
+
+			check(leaf.boolean, false, true);
+			check(leaf.number, 0, 1);
+			check(leaf.string, "", "!");
+		});
+
+		describe("required object", () => {
+			const _ = new SchemaBuilder({ scope: "test" });
+			const child = _.object("child", {
+				objId: _.number,
+			});
+			const parent = _.object("parent", {
+				child,
+			});
+			const schema = _.intoSchema(parent);
+
+			const before = { objId: 0 };
+			const after = { objId: 1 };
+
+			itWithRoot(
+				`(${pretty(before)} -> ${pretty(after)})`,
+				schema,
+				{ child: before },
+				(root) => {
+					assert.equal(root.child.objId, 0);
+					root.child = after;
+					assert.equal(root.child.objId, 1);
+				},
+			);
+		});
+
+		describe("optional object", () => {
+			const _ = new SchemaBuilder({ scope: "test" });
+			const child = _.object("child", {
+				objId: _.number,
+			});
+			const parent = _.object("parent", {
+				child: _.optional(child),
+			});
+			const schema = _.intoSchema(parent);
+
+			const before = { objId: 0 };
+			const after = { objId: 1 };
+
+			itWithRoot(
+				`(undefined -> ${pretty(before)} -> ${pretty(after)})`,
+				schema,
+				// TODO: Remove explicit undefined once implicit undefined is supported.
+				{ child: undefined },
+				(root) => {
+					assert.equal(root.child, undefined);
+					root.child = before;
+					assert.equal(root.child.objId, 0);
+					root.child = after;
+					assert.equal(root.child.objId, 1);
+				},
+			);
+		});
+
+		describe.skip("required list", () => {
+			// const _ = new SchemaBuilder({ scope: "test" });
+			// const list = _.fieldNode("List<string>", _.sequence(leaf.string));
+			// const parent = _.struct("parent", {
+			// 	list,
+			// });
+			// const schema = _.intoSchema(parent);
+			// const before: string[] = [];
+			// const after = ["A"];
+			// itWithRoot(
+			// 	`(${pretty(before)} -> ${pretty(after)})`,
+			// 	schema,
+			// 	{ list: before },
+			// 	(root) => {
+			// 		assert.deepEqual(root.list, before);
+			// 		root.list = after;
+			// 		assert.deepEqual(root.list, after);
+			// 	},
+			// );
+		});
+
+		describe.skip("optional list", () => {
+			// const _ = new SchemaBuilder({ scope: "test" });
+			// const list = _.fieldNode("List<string>", _.sequence(leaf.string));
+			// const parent = _.struct("parent", {
+			// 	list: _.optional(list),
+			// });
+			// const schema = _.intoSchema(parent);
+			// const before: string[] = [];
+			// const after = ["A"];
+			// itWithRoot(
+			// 	`(undefined -> ${pretty(before)} -> ${pretty(after)})`,
+			// 	schema,
+			// 	// TODO: Remove explicit undefined once implicit undefined is supported.
+			// 	{ list: undefined },
+			// 	(root) => {
+			// 		assert.equal(root.list, undefined);
+			// 		root.list = before;
+			// 		assert.deepEqual(root.list, before);
+			// 		root.list = after;
+			// 		assert.deepEqual(root.list, after);
+			// 	},
+			// );
+		});
+
+		describe("required map", () => {
+			// TODO
+		});
+
+		describe("optional map", () => {
+			// TODO
+		});
+	});
+});

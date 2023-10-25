@@ -4,34 +4,25 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	FieldSchema,
-	ProxyField,
-	TypedSchemaCollection,
-	is,
-	typeNameSymbol,
-} from "../../../feature-libraries";
-import { leaf, SchemaBuilder } from "../../../domains";
-
-import { ISharedTreeView } from "../../../shared-tree";
-import { createTreeView } from "./utils";
+import { SchemaBuilder } from "../../../domains";
+import { node, typeNameSymbol } from "../../../feature-libraries";
+import { itWithRoot } from "./utils";
 
 describe("SharedTree proxies", () => {
 	const sb = new SchemaBuilder({
 		scope: "test",
-		libraries: [leaf.library],
 	});
 
-	const childSchema = sb.struct("struct", {
-		content: leaf.number,
+	const childSchema = sb.object("object", {
+		content: sb.number,
 	});
 
-	const parentSchema = sb.struct("parent", {
+	const parentSchema = sb.object("parent", {
 		struct: childSchema,
-		list: sb.fieldNode("list", sb.sequence(leaf.number)),
+		list: sb.fieldNode("list", sb.sequence(sb.number)),
 	});
 
-	const schema = sb.toDocumentSchema(parentSchema);
+	const schema = sb.intoSchema(parentSchema);
 
 	const initialTree = {
 		struct: { content: 42 },
@@ -56,28 +47,27 @@ describe("SharedTree proxies", () => {
 describe("SharedTreeObject", () => {
 	const sb = new SchemaBuilder({
 		scope: "test",
-		libraries: [leaf.library],
 	});
 
-	const numberChild = sb.struct("numberChild", {
-		content: leaf.number,
+	const numberChild = sb.object("numberChild", {
+		content: sb.number,
 	});
 
-	const stringChild = sb.struct("stringChild", {
-		content: leaf.string,
+	const stringChild = sb.object("stringChild", {
+		content: sb.string,
 	});
 
-	const parentSchema = sb.struct("parent", {
-		content: leaf.number,
+	const parentSchema = sb.object("parent", {
+		content: sb.number,
 		child: numberChild,
-		polyValue: [leaf.number, leaf.string],
+		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
-		polyValueChild: [leaf.number, numberChild],
+		polyValueChild: [sb.number, numberChild],
 		// map: sb.map("map", sb.optional(leaf.string)), // TODO Test Maps
 		list: sb.fieldNode("list", sb.sequence(numberChild)),
 	});
 
-	const schema = sb.toDocumentSchema(parentSchema);
+	const schema = sb.intoSchema(parentSchema);
 
 	const initialTree = {
 		content: 42,
@@ -113,7 +103,7 @@ describe("SharedTreeObject", () => {
 	});
 
 	itWithRoot("can narrow polymorphic struct fields", schema, initialTree, (root) => {
-		if (is(root.polyChild, numberChild)) {
+		if (node.is(root.polyChild, numberChild)) {
 			assert.equal(root.polyChild.content, 42);
 		} else {
 			assert.equal(root.polyChild.content, "42");
@@ -125,7 +115,7 @@ describe("SharedTreeObject", () => {
 		schema,
 		initialTree,
 		(root) => {
-			if (is(root.polyValueChild, numberChild)) {
+			if (node.is(root.polyValueChild, numberChild)) {
 				assert.equal(root.polyValueChild.content, 42);
 			} else {
 				assert.equal(root.polyValueChild, 42);
@@ -139,23 +129,3 @@ describe("SharedTreeObject", () => {
 		},
 	);
 });
-
-function itWithRoot<TRoot extends FieldSchema>(
-	title: string,
-	schema: TypedSchemaCollection<TRoot>,
-	initialTree: any,
-	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
-): void {
-	it(title, () => {
-		const view = createTypedTreeView(schema, initialTree);
-		const root = view.root2(schema);
-		fn(root);
-	});
-}
-
-function createTypedTreeView<TRoot extends FieldSchema>(
-	schema: TypedSchemaCollection<TRoot>,
-	initialTree: any,
-): ISharedTreeView & { root2: (viewSchema: TypedSchemaCollection<TRoot>) => ProxyField<TRoot> } {
-	return createTreeView(schema, initialTree);
-}

@@ -60,6 +60,8 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCell}
+ *
+ * @public
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

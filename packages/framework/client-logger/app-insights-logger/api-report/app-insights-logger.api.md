@@ -7,11 +7,27 @@
 import { ApplicationInsights } from '@microsoft/applicationinsights-web';
 import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { TelemetryEventCategory } from '@fluidframework/telemetry-utils';
 
 // @public @sealed
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
-    constructor(client: ApplicationInsights);
+    constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig);
     send(event: ITelemetryBaseEvent): void;
+}
+
+// @public
+export interface FluidAppInsightsLoggerConfig {
+    filtering: {
+        mode: "inclusive" | "exclusive";
+        filters?: TelemetryFilter[];
+    };
+}
+
+export { TelemetryEventCategory }
+
+// @public
+export interface TelemetryFilter {
+    category: TelemetryEventCategory;
 }
 
 ```

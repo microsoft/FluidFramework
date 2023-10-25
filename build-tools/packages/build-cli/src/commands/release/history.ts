@@ -30,13 +30,13 @@ const DEFAULT_MIN_VERSION = "0.0.0";
 export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 	typeof ReleaseHistoryCommand
 > {
-	static description = `Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
+	static readonly description = `Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
 
     Use 'npm view' to list published packages based on the public npm registry.
 
     The number of results can be limited using the --limit argument.`;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "List all the releases of the azure release group.",
 			command: "<%= config.bin %> <%= command.id %> -g azure",
@@ -47,7 +47,7 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 		},
 	];
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
 			required: false,
 			exclusive: ["package"],
@@ -63,9 +63,9 @@ export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 		...ReleaseReportBaseCommand.flags,
 	};
 
-	static enableJsonFlag = true;
+	static readonly enableJsonFlag = true;
 
-	defaultMode: ReleaseSelectionMode = "date";
+	readonly defaultMode: ReleaseSelectionMode = "date";
 	releaseGroupName: ReleaseGroup | ReleasePackage | undefined;
 
 	public async run(): Promise<{ reports: ReleaseReport[] }> {
