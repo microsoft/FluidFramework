@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
 import { JsonCompatibleReadOnly, Mutable } from "../../util";
@@ -85,7 +84,6 @@ function makeNodeUpdateCodec(
 ): IJsonCodec<NodeUpdate, EncodedNodeUpdate<TAnySchema>> {
 	return {
 		encode: (update: NodeUpdate) => {
-			assert(!("noOp" in update), "No-op updates should not be encoded");
 			const encoded: EncodedNodeUpdate<TAnySchema> =
 				"revert" in update
 					? { revert: update.revert }
