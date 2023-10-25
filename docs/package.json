@@ -42,7 +42,7 @@
 		"@fluid-tools/api-markdown-documenter": "^0.9.0",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.0",
-		"@microsoft/api-extractor-model": "^7.28.0",
+		"@microsoft/api-extractor-model": "^7.27.6",
 		"@rushstack/node-core-library": "^3.59.4",
 		"@tylerbu/dl-cli": "1.1.2-tylerbu-0",
 		"@vscode/codicons": "0.0.33",
