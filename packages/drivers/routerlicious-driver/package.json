@@ -108,10 +108,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"EnumDeclaration_RouterliciousErrorType": {
-				"forwardCompat": false,
-				"backCompat": false
-			},
 			"RemovedEnumDeclaration_RouterliciousErrorType": {
 				"forwardCompat": false,
 				"backCompat": false

@@ -36,7 +36,7 @@ describe("Odsp Error", () => {
 	 */
 	function isIGenericNetworkError(input: any): input is IGenericNetworkError {
 		return (
-			typeof input.errorType === typeof DriverErrorTypes.genericNetworkError &&
+			input.errorType === DriverErrorTypes.genericNetworkError &&
 			input.statusCode !== undefined
 		);
 	}
@@ -46,7 +46,7 @@ describe("Odsp Error", () => {
 	 * */
 	function isIThrottlingWarning(input: any): input is IThrottlingWarning {
 		return (
-			typeof input.errorType === typeof FluidErrorTypes.throttlingError &&
+			input.errorType === FluidErrorTypes.throttlingError &&
 			input.retryAfterSeconds !== undefined
 		);
 	}
