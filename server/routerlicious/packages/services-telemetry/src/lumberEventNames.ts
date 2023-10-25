@@ -51,6 +51,7 @@ export enum LumberEventName {
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
+	GlobalCheckpointError = "GlobalCheckpointError",
 	ReprocessOps = "ReprocessOps",
 	MongoMonitoring = "MongoMonitoring",
 }

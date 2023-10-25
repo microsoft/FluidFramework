@@ -5,9 +5,14 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { leaf, nodeKeyField, nodeKeySchema, nodeKeyTreeSchema } from "../../../domains";
 import {
 	SchemaBuilder,
+	leaf,
+	nodeKeyField,
+	nodeKeySchema,
+	nodeKeyTreeSchema,
+} from "../../../domains";
+import {
 	FieldKinds,
 	NodeKeyIndex,
 	LocalNodeKey,
@@ -17,7 +22,7 @@ import {
 	TypedField,
 	Any,
 	createMockNodeKeyManager,
-	FieldSchema,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { NodeKeys } from "../../../feature-libraries/editable-tree-2/nodeKeys";
@@ -25,11 +30,11 @@ import { SummarizeType, TestTreeProvider, treeWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
 const builder = new SchemaBuilder({ scope: "node key index tests", libraries: [nodeKeySchema] });
-const nodeSchema = builder.structRecursive("node", {
+const nodeSchema = builder.objectRecursive("node", {
 	...nodeKeyField,
-	child: FieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
+	child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 });
-const nodeSchemaData = builder.toDocumentSchema(SchemaBuilder.optional(nodeSchema));
+const nodeSchemaData = builder.intoSchema(SchemaBuilder.optional(nodeSchema));
 
 // TODO: this can probably be removed once daesun's stuff goes in
 function contextualizeKey(view: NodeKeys, key: LocalNodeKey): { [nodeKeyFieldKey]: StableNodeKey } {
@@ -140,7 +145,7 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		const view = tree.schematize({
+		tree.schematizeView({
 			initialTree: {
 				[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
 				child: undefined,
@@ -154,9 +159,8 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		const manager2 = createMockNodeKeyManager();
 		const view2 = tree2
-			.schematize({
+			.schematizeView({
 				initialTree: {
 					[nodeKeyFieldKey]: "not used",
 					child: undefined,
@@ -164,9 +168,10 @@ describe("Node Key Index", () => {
 				schema: nodeSchemaData,
 				allowedSchemaModifications: AllowedUpdateType.None,
 			})
-			.editableTree2(nodeSchemaData, manager2);
+			// Since the key was produced with a MockNodeKeyManager, we must use one to process it.
+			.editableTree2(nodeSchemaData, createMockNodeKeyManager());
 		assertIds(view2.context.nodeKeys, [
-			manager2.localizeNodeKey(manager1.stabilizeNodeKey(key)),
+			view2.context.nodeKeys.localize(manager1.stabilizeNodeKey(key)),
 		]);
 	});
 
@@ -209,9 +214,7 @@ describe("Node Key Index", () => {
 		});
 		const nodeSchemaNoKey = builder2.map("node", SchemaBuilder.optional(Any));
 
-		const nodeSchemaDataNoKey = builder2.toDocumentSchema(
-			SchemaBuilder.optional(nodeSchemaNoKey),
-		);
+		const nodeSchemaDataNoKey = builder2.intoSchema(SchemaBuilder.optional(nodeSchemaNoKey));
 		assert(!nodeSchemaDataNoKey.treeSchema.has(nodeKeyTreeSchema.name));
 
 		const nodeKeyManager = createMockNodeKeyManager();
@@ -261,10 +264,10 @@ describe("Node Key Index", () => {
 			scope: "node key index test",
 			libraries: [nodeKeySchema],
 		});
-		const nodeSchemaNoKey = builder2.structRecursive("node", {
-			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
+		const nodeSchemaNoKey = builder2.objectRecursive("node", {
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchemaNoKey]),
 		});
-		const nodeSchemaDataNoKey = builder2.toDocumentSchema(
+		const nodeSchemaDataNoKey = builder2.intoSchema(
 			SchemaBuilder.optional(nodeSchemaNoKey),
 		);
 

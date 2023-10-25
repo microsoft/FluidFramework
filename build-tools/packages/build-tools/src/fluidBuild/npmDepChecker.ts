@@ -2,11 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { defaultLogger } from "../common/logging";
 import { Package } from "../common/npmPackage";
 import { readFileAsync } from "../common/utils";
 
-const { verbose } = defaultLogger;
+import registerDebug from "debug";
+const traceDepCheck = registerDebug("fluid-build:depCheck");
 
 interface DepCheckRecord {
 	name: string;
@@ -88,7 +88,7 @@ export class NpmDepChecker {
 					continue;
 				}
 				if (!record.import.test(content) && !record.declare.test(content)) {
-					verbose(`${this.pkg.nameColored}: ${record.name} found in ${tsFile}`);
+					traceDepCheck(`${this.pkg.nameColored}: ${record.name} found in ${tsFile}`);
 					continue;
 				}
 				record.found = true;

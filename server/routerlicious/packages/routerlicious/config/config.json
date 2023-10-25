@@ -9,7 +9,8 @@
 	},
 	"lumberjack": {
 		"options": {
-			"enableGlobalTelemetryContext": true
+			"enableGlobalTelemetryContext": true,
+			"enableSanitization": false
 		}
 	},
 	"mongo": {
@@ -258,6 +259,7 @@
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000,
 		"enableTelemetry": true,
+		"shouldLogInitialSuccessVerbose": false,
 		"maxDbBatchSize": 1000,
 		"restartOnCheckpointFailure": true
 	},
@@ -267,9 +269,6 @@
 		"groupId": "copier",
 		"checkpointBatchSize": 1,
 		"checkpointTimeIntervalMsec": 1000
-	},
-	"rabbitmq": {
-		"connectionString": "amqp://rabbitmq"
 	},
 	"redis": {
 		"host": "redis",

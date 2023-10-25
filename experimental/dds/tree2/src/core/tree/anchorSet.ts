@@ -98,6 +98,22 @@ export interface AnchorEvents {
 	childrenChanging(anchor: AnchorNode): void;
 
 	/**
+	 * Before a change in this subtree happens.
+	 *
+	 * @remarks
+	 * Includes edits of child subtrees.
+	 */
+	beforeChange(anchor: AnchorNode): void;
+
+	/**
+	 * After a change in this subtree happened.
+	 *
+	 * @remarks
+	 * Includes edits of child subtrees.
+	 */
+	afterChange(anchor: AnchorNode): void;
+
+	/**
 	 * Something in this tree is changing.
 	 * The event can optionally return a {@link PathVisitor} to traverse the subtree.
 	 * Called on every parent (transitively) when a change is occurring.
@@ -569,7 +585,15 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 	}
 
 	/**
-	 * Updates the anchors according to the changes described in the given delta
+	 * Provides a visitor that can be used to mutate this {@link AnchorSet}.
+	 *
+	 * @returns A visitor that can be used to mutate this {@link AnchorSet}.
+	 *
+	 * @remarks
+	 * Mutating the {@link AnchorSet} does NOT update the forest.
+	 * The visitor must be released after use by calling {@link DeltaVisitor.free} on it.
+	 * It is invalid to acquire a visitor without releasing the previous one,
+	 * and this method will throw an error if this is attempted.
 	 */
 	public acquireVisitor(): AnnouncedVisitor & DeltaVisitor {
 		assert(
@@ -595,6 +619,23 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					}
 				}
 			},
+			// Run `withNode` on every node from the current `this.parent` to the root.
+			// Should only be called when in a field.
+			withParentNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
+				assert(
+					this.parentField !== undefined,
+					"Must be in a field to call withNodeUpToRoot",
+				);
+				// This function gets called when we attach a node to the root field, in which case there is no parent.
+				// It's expected this will do nothing in that case.
+				let currentParent: UpPath | undefined = this.parent;
+				while (currentParent !== undefined) {
+					if (currentParent instanceof PathNode) {
+						withNode(currentParent);
+					}
+					currentParent = currentParent.parent;
+				}
+			},
 			// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
 			// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
 			// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
@@ -615,7 +656,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				);
 			},
 			beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a0 /* Must be in a field in order to attach */,
+				);
 				const destinationPath: PlaceUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -626,6 +670,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					start: 0,
 					end: count,
 				});
+				this.withParentNodeUpToRoot((p) => {
+					p.events.emit("beforeChange", p);
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeAttach(sourcePath, destinationPath);
@@ -633,7 +680,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				}
 			},
 			afterAttach(source: FieldKey, destination: Range): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a1 /* Must be in a field in order to attach */,
+				);
 				const sourcePath: DetachedPlaceUpPath = brand({
 					field: source,
 					index: 0,
@@ -643,6 +693,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: this.parentField,
 					...destination,
 				};
+				this.withParentNodeUpToRoot((p) => {
+					p.events.emit("afterChange", p);
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.afterAttach(sourcePath, destinationPath);
@@ -654,7 +707,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.attachEdit(source, count, destination);
 			},
 			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a2 /* Must be in a field in order to attach */,
+				);
 				const sourcePath = {
 					parent: this.anchorSet.root,
 					parentField: source,
@@ -668,7 +724,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 			},
 			beforeDetach(source: Range, destination: FieldKey): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a3 /* Must be in a field in order to attach */,
+				);
 				const sourcePath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -678,6 +737,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					index: 0,
 				});
+				this.withParentNodeUpToRoot((p) => {
+					p.events.emit("beforeChange", p);
+				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						pathVisitor.beforeDetach(sourcePath, destinationPath);
@@ -685,7 +747,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				}
 			},
 			afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to attach");
+				assert(
+					this.parentField !== undefined,
+					0x7a4 /* Must be in a field in order to attach */,
+				);
 				const sourcePath: PlaceUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -695,6 +760,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: destination,
 					start: 0,
 					end: count,
+				});
+				this.withParentNodeUpToRoot((p) => {
+					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -707,7 +775,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.detachEdit(source, destination);
 			},
 			detachEdit(source: Range, destination: FieldKey): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to detach");
+				assert(
+					this.parentField !== undefined,
+					0x7a5 /* Must be in a field in order to detach */,
+				);
 				const sourcePath = {
 					parent: this.parent,
 					parentField: this.parentField,
@@ -721,7 +792,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 			},
 			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+				assert(
+					this.parentField !== undefined,
+					0x7a6 /* Must be in a field in order to replace */,
+				);
 				const oldContentPath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -735,6 +809,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				const oldNodesDestinationPath: DetachedPlaceUpPath = brand({
 					field: destination,
 					index: 0,
+				});
+				this.withParentNodeUpToRoot((p) => {
+					p.events.emit("beforeChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -751,7 +828,10 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 				newContent: Range,
 				oldContent: FieldKey,
 			): void {
-				assert(this.parentField !== undefined, "Must be in a field in order to replace");
+				assert(
+					this.parentField !== undefined,
+					0x7a7 /* Must be in a field in order to replace */,
+				);
 				const newContentPath: RangeUpPath = {
 					parent: this.parent,
 					field: this.parentField,
@@ -765,6 +845,9 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					field: oldContent,
 					start: 0,
 					end: newContent.end - newContent.start,
+				});
+				this.withParentNodeUpToRoot((p) => {
+					p.events.emit("afterChange", p);
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -858,7 +941,6 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 					this.pathVisitors.delete(p);
 				});
 				const parent = this.parent;
-				assert(parent !== undefined, 0x769 /* Unable to exit root node */);
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
 			},

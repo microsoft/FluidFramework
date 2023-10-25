@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { jsonArray, jsonNull, jsonObject, jsonRoot, jsonSchema, leaf } from "../../../domains";
+import { jsonArray, jsonObject, jsonRoot, jsonSchema, leaf, SchemaBuilder } from "../../../domains";
 
 import {
 	Sequence,
@@ -35,10 +35,9 @@ import {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	SchemaBuilder,
-	StructSchema,
-	TreeSchema,
-	FieldSchema,
+	ObjectNodeSchema,
+	TreeNodeSchema,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
 
 describe("editableTreeTypes", () => {
@@ -60,8 +59,8 @@ describe("editableTreeTypes", () => {
 				jsonExample(a);
 			} else if (tree.is(jsonObject)) {
 				const x = tree.get(EmptyKey);
-			} else if (tree.is(jsonNull)) {
-				const x = tree.schema;
+			} else if (tree.is(leaf.null)) {
+				const x: null = tree.value;
 			} else {
 				// Proves at compile time exhaustive match checking works, and tree is typed `never`.
 				unreachableCase(tree);
@@ -70,12 +69,12 @@ describe("editableTreeTypes", () => {
 	}
 
 	const builder = new SchemaBuilder({ scope: "test", libraries: [jsonSchema] });
-	const emptyStruct = builder.struct("empty", {});
-	const basicStruct = builder.struct("basicStruct", { foo: builder.optional(Any) });
+	const emptyStruct = builder.object("empty", {});
+	const basicStruct = builder.object("basicObject", { foo: builder.optional(Any) });
 	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
 	// TODO: once schema kinds are separated, test struct with EmptyKey.
 
-	const mixedStruct = builder.struct("mixedStruct", {
+	const mixedStruct = builder.object("mixedStruct", {
 		/**
 		 * Test doc comment.
 		 */
@@ -87,11 +86,11 @@ describe("editableTreeTypes", () => {
 	});
 	type Mixed = TypedNode<typeof mixedStruct>;
 
-	const recursiveStruct = builder.structRecursive("recursiveStruct", {
+	const recursiveStruct = builder.objectRecursive("recursiveStruct", {
 		/**
 		 * Test Recursive Field.
 		 */
-		foo: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 		/**
 		 * Data field.
 		 */
@@ -146,7 +145,7 @@ describe("editableTreeTypes", () => {
 		];
 
 		const optionalNumberField = SchemaBuilder.optional(leaf.number);
-		const mapSchema = undefined as unknown as TreeSchema<
+		const mapSchema = undefined as unknown as TreeNodeSchema<
 			"MapIteration",
 			{ mapFields: typeof optionalNumberField }
 		>;
@@ -162,15 +161,15 @@ describe("editableTreeTypes", () => {
 		type _2a = requireAssignableTo<typeof basicFieldNode, FieldNodeSchema>;
 		type _2 = requireAssignableTo<typeof jsonArray, FieldNodeSchema>;
 		type _3 = requireAssignableTo<typeof jsonObject, MapSchema>;
-		type _4 = requireAssignableTo<typeof emptyStruct, StructSchema>;
-		type _5 = requireAssignableTo<typeof basicStruct, StructSchema>;
+		type _4 = requireAssignableTo<typeof emptyStruct, ObjectNodeSchema>;
+		type _5 = requireAssignableTo<typeof basicStruct, ObjectNodeSchema>;
 	}
 
 	{
 		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof leaf.boolean, FieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, MapSchema>>;
-		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, StructSchema>>;
+		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, ObjectNodeSchema>>;
 	}
 
 	{
@@ -178,27 +177,27 @@ describe("editableTreeTypes", () => {
 		type _2 = requireTrue<isAssignableTo<typeof jsonArray, FieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof jsonArray, MapSchema>>;
 		// TODO: Fix
-		// type _4 = requireFalse<isAssignableTo<typeof jsonArray, StructSchema>>
+		// type _4 = requireFalse<isAssignableTo<typeof jsonArray, ObjectNodeSchema>>
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof jsonObject, LeafSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof jsonObject, FieldNodeSchema>>;
 		type _3 = requireTrue<isAssignableTo<typeof jsonObject, MapSchema>>;
-		type _4 = requireFalse<isAssignableTo<typeof jsonObject, StructSchema>>;
+		type _4 = requireFalse<isAssignableTo<typeof jsonObject, ObjectNodeSchema>>;
 	}
 
 	{
 		type _1 = requireFalse<isAssignableTo<typeof basicStruct, LeafSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FieldNodeSchema>>;
 		type _3 = requireFalse<isAssignableTo<typeof basicStruct, MapSchema>>;
-		type _4 = requireTrue<isAssignableTo<typeof basicStruct, StructSchema>>;
+		type _4 = requireTrue<isAssignableTo<typeof basicStruct, ObjectNodeSchema>>;
 	}
 
 	function nominalTyping(): void {
 		const builder2 = new SchemaBuilder({ scope: "test" });
-		const emptyStruct1 = builder2.struct("empty1", {});
-		const emptyStruct2 = builder2.struct("empty2", {});
+		const emptyStruct1 = builder2.object("empty1", {});
+		const emptyStruct2 = builder2.object("empty2", {});
 
 		// Schema for types which only different in name are distinguished
 		{

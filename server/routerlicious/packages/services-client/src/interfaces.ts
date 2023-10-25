@@ -25,6 +25,10 @@ export interface ISession {
 	 */
 	historianUrl: string;
 	/**
+	 * Message broker ID of the session
+	 */
+	messageBrokerId?: string;
+	/**
 	 * Whether session is "alive".
 	 * Session is considered alive if it has been "discovered" via the HTTP endpoint
 	 * for session discovery, or via document creation. A session being "alive"

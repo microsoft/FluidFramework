@@ -35,11 +35,11 @@
 	 * Configures how the .d.ts rollup file will be generated.
 	 */
 	"dtsRollup": {
-		"enabled": true,
+		"enabled": false,
 		"alphaTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-alpha.d.ts",
 		"betaTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-beta.d.ts",
 		"publicTrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-public.d.ts",
-		"untrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>.d.ts"
+		"untrimmedFilePath": "<projectFolder>/dist/<unscopedPackageName>-untrimmed.d.ts"
 	},
 
 	/**

@@ -151,6 +151,7 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -1628,6 +1629,30 @@ declare function use_old_TypeAliasDeclaration_SummaryStage(
     use: TypeOnly<old.SummaryStage>);
 use_old_TypeAliasDeclaration_SummaryStage(
     get_current_TypeAliasDeclaration_SummaryStage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_TEST_requestSummarizer": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_TEST_requestSummarizer():
+    TypeOnly<typeof old.TEST_requestSummarizer>;
+declare function use_current_FunctionDeclaration_TEST_requestSummarizer(
+    use: TypeOnly<typeof current.TEST_requestSummarizer>);
+use_current_FunctionDeclaration_TEST_requestSummarizer(
+    get_old_FunctionDeclaration_TEST_requestSummarizer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_TEST_requestSummarizer": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_TEST_requestSummarizer():
+    TypeOnly<typeof current.TEST_requestSummarizer>;
+declare function use_old_FunctionDeclaration_TEST_requestSummarizer(
+    use: TypeOnly<typeof old.TEST_requestSummarizer>);
+use_old_FunctionDeclaration_TEST_requestSummarizer(
+    get_current_FunctionDeclaration_TEST_requestSummarizer());
 
 /*
 * Validate forward compat by using old type in place of current type

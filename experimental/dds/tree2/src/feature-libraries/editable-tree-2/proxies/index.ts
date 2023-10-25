@@ -4,4 +4,17 @@
  */
 
 export { getProxyForField } from "./proxies";
-export { List } from "./types";
+export {
+	SharedTreeList,
+	ObjectFields,
+	ProxyField,
+	ProxyFieldInner,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeMap,
+	SharedTreeObject,
+	ProxyRoot,
+	SharedTreeNode,
+} from "./types";
+export { SharedTreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
+export { nodeAPi as node, NodeApi } from "./node";

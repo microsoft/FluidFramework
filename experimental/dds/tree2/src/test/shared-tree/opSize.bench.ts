@@ -7,7 +7,7 @@ import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaBuilder, singleTextCursor } from "../../feature-libraries";
+import { singleTextCursor } from "../../feature-libraries";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
 import {
@@ -18,9 +18,9 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	Value,
-	ValueSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
+import { SchemaBuilder, leaf } from "../../domains";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
@@ -34,15 +34,14 @@ import { typeboxValidator } from "../../external-utilities";
 
 const builder = new SchemaBuilder({ scope: "opSize" });
 
-const stringSchema = builder.leaf("String", ValueSchema.String);
-const childSchema = builder.struct("Test:Opsize-Bench-Child", {
-	data: stringSchema,
+const childSchema = builder.object("Test:Opsize-Bench-Child", {
+	data: leaf.string,
 });
-const parentSchema = builder.struct("Test:Opsize-Bench-Root", {
+const parentSchema = builder.object("Test:Opsize-Bench-Root", {
 	children: builder.sequence(childSchema),
 });
 
-const fullSchemaData = builder.toDocumentSchema(parentSchema);
+const fullSchemaData = builder.intoSchema(parentSchema);
 
 const initialTestJsonTree = {
 	type: parentSchema.name,
@@ -53,9 +52,12 @@ const childrenFieldKey: FieldKey = brand("children");
 /*
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
-function initializeTestTree(tree: ISharedTree, state: JsonableTree = initialTestJsonTree) {
+function initializeTestTree(
+	tree: ISharedTree,
+	state: JsonableTree = initialTestJsonTree,
+): ISharedTreeView {
 	const writeCursor = singleTextCursor(state);
-	tree.schematize({
+	return tree.schematizeView({
 		allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 		initialTree: [writeCursor],
 		schema: fullSchemaData,
@@ -73,7 +75,7 @@ function createTreeWithSize(desiredByteSize: number): JsonableTree {
 	const node = {
 		type: childSchema.name,
 		fields: {
-			data: [{ value: "", type: stringSchema.name }],
+			data: [{ value: "", type: leaf.string.name }],
 		},
 	};
 
@@ -224,7 +226,7 @@ function editNodesWithIndividualTransactions(
 				type: childSchema.name,
 				value: editPayload,
 				fields: {
-					data: [{ value: "", type: stringSchema.name }],
+					data: [{ value: "", type: leaf.string.name }],
 				},
 			}),
 		);
@@ -252,7 +254,7 @@ function editNodesWithSingleTransaction(
 				type: childSchema.name,
 				value: editPayload,
 				fields: {
-					data: [{ value: "", type: stringSchema.name }],
+					data: [{ value: "", type: leaf.string.name }],
 				},
 			}),
 		);
@@ -435,7 +437,7 @@ describe("Op Size", () => {
 		function benchmarkOps(transactionStyle: TransactionStyle, percentile: number): void {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 			initializeOpDataCollection(tree);
-			initializeTestTree(tree);
+			const view = initializeTestTree(tree);
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			const jsonNode = createTreeWithSize(
 				getSuccessfulOpByteSize(Operation.Insert, transactionStyle, percentile),
@@ -444,8 +446,9 @@ describe("Op Size", () => {
 				transactionStyle === TransactionStyle.Individual
 					? insertNodesWithIndividualTransactions
 					: insertNodesWithSingleTransaction;
-			apply(tree.view, jsonNode, BENCHMARK_NODE_COUNT);
-			assertChildNodeCount(tree.view, BENCHMARK_NODE_COUNT);
+
+			apply(view, jsonNode, BENCHMARK_NODE_COUNT);
+			assertChildNodeCount(view, BENCHMARK_NODE_COUNT);
 		}
 
 		for (const { description, style, extraDescription } of styles) {
@@ -468,14 +471,14 @@ describe("Op Size", () => {
 				transactionStyle,
 				percentile,
 			);
-			initializeTestTree(tree, createInitialTree(100, childByteSize));
+			const view = initializeTestTree(tree, createInitialTree(100, childByteSize));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			if (transactionStyle === TransactionStyle.Individual) {
-				deleteNodesWithIndividualTransactions(tree.view, 100, 1);
+				deleteNodesWithIndividualTransactions(view, 100, 1);
 			} else {
-				deleteNodesWithSingleTransaction(tree.view, 100);
+				deleteNodesWithSingleTransaction(view, 100);
 			}
-			assertChildNodeCount(tree.view, 0);
+			assertChildNodeCount(view, 0);
 		}
 
 		for (const { description, style, extraDescription } of styles) {
@@ -498,17 +501,17 @@ describe("Op Size", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
 			initializeOpDataCollection(tree);
 			// Note that the child node byte size for the initial tree here should be arbitrary.
-			initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
+			const view = initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			const editPayload = createStringFromLength(
 				getSuccessfulOpByteSize(Operation.Edit, transactionStyle, percentile),
 			);
 			if (transactionStyle === TransactionStyle.Individual) {
-				editNodesWithIndividualTransactions(tree.view, BENCHMARK_NODE_COUNT, editPayload);
+				editNodesWithIndividualTransactions(view, BENCHMARK_NODE_COUNT, editPayload);
 			} else {
-				editNodesWithSingleTransaction(tree.view, BENCHMARK_NODE_COUNT, editPayload);
+				editNodesWithSingleTransaction(view, BENCHMARK_NODE_COUNT, editPayload);
 			}
-			expectChildrenValues(tree.view, editPayload, BENCHMARK_NODE_COUNT);
+			expectChildrenValues(view, editPayload, BENCHMARK_NODE_COUNT);
 		}
 
 		for (const { description, style, extraDescription } of styles) {
@@ -578,10 +581,13 @@ describe("Op Size", () => {
 					TransactionStyle.Individual,
 					percentile,
 				);
-				initializeTestTree(tree, createInitialTree(deleteNodeCount, childByteSize));
+				const view = initializeTestTree(
+					tree,
+					createInitialTree(deleteNodeCount, childByteSize),
+				);
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-				deleteNodesWithIndividualTransactions(tree.view, deleteNodeCount, 1);
-				assertChildNodeCount(tree.view, 0);
+				deleteNodesWithIndividualTransactions(view, deleteNodeCount, 1);
+				assertChildNodeCount(view, 0);
 
 				// insert
 				const insertChildNode = createTreeWithSize(
@@ -591,8 +597,8 @@ describe("Op Size", () => {
 						percentile,
 					),
 				);
-				insertNodesWithIndividualTransactions(tree.view, insertChildNode, insertNodeCount);
-				assertChildNodeCount(tree.view, insertNodeCount);
+				insertNodesWithIndividualTransactions(view, insertChildNode, insertNodeCount);
+				assertChildNodeCount(view, insertNodeCount);
 
 				// edit
 				// The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
@@ -600,7 +606,7 @@ describe("Op Size", () => {
 					const remainder = editNodeCount - insertNodeCount;
 					saveAndResetCurrentOps();
 					insertNodesWithIndividualTransactions(
-						tree.view,
+						view,
 						createTreeWithSize(childByteSize),
 						remainder,
 					);
@@ -613,8 +619,8 @@ describe("Op Size", () => {
 						percentile,
 					),
 				);
-				editNodesWithIndividualTransactions(tree.view, editNodeCount, editPayload);
-				expectChildrenValues(tree.view, editPayload, editNodeCount);
+				editNodesWithIndividualTransactions(view, editNodeCount, editPayload);
+				expectChildrenValues(view, editPayload, editNodeCount);
 			};
 
 			for (const distribution of distributions) {
@@ -658,17 +664,20 @@ describe("Op Size", () => {
 					TransactionStyle.Single,
 					percentile,
 				);
-				initializeTestTree(tree, createInitialTree(deleteNodeCount, childByteSize));
+				const view = initializeTestTree(
+					tree,
+					createInitialTree(deleteNodeCount, childByteSize),
+				);
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-				deleteNodesWithSingleTransaction(tree.view, deleteNodeCount);
-				assertChildNodeCount(tree.view, 0);
+				deleteNodesWithSingleTransaction(view, deleteNodeCount);
+				assertChildNodeCount(view, 0);
 
 				// insert
 				const insertChildNode = createTreeWithSize(
 					getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Single, percentile),
 				);
-				insertNodesWithSingleTransaction(tree.view, insertChildNode, insertNodeCount);
-				assertChildNodeCount(tree.view, insertNodeCount);
+				insertNodesWithSingleTransaction(view, insertChildNode, insertNodeCount);
+				assertChildNodeCount(view, insertNodeCount);
 
 				// edit
 				// The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
@@ -677,7 +686,7 @@ describe("Op Size", () => {
 					const remainder = editNodeCount - insertNodeCount;
 					saveAndResetCurrentOps();
 					insertNodesWithIndividualTransactions(
-						tree.view,
+						view,
 						createTreeWithSize(childByteSize),
 						remainder,
 					);
@@ -686,8 +695,8 @@ describe("Op Size", () => {
 				const editPayload = createStringFromLength(
 					getSuccessfulOpByteSize(Operation.Edit, TransactionStyle.Single, percentile),
 				);
-				editNodesWithSingleTransaction(tree.view, editNodeCount, editPayload);
-				expectChildrenValues(tree.view, editPayload, editNodeCount);
+				editNodesWithSingleTransaction(view, editNodeCount, editPayload);
+				expectChildrenValues(view, editPayload, editNodeCount);
 			};
 
 			for (const distribution of distributions) {
