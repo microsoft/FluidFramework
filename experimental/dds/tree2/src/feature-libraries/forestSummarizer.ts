@@ -22,10 +22,13 @@ import {
 	makeDetachedFieldIndex,
 	mapCursorField,
 	mapCursorFields,
-	SchemaData,
+	StoredSchemaCollection,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { singleTextCursor } from "./treeTextCursor";
+import { TreeCompressionStrategy } from "../shared-tree";
+import { idAllocatorFromMaxId } from "../util";
+import { EncodedChunk, decode, schemaCompressedEncode, uncompressedEncode } from "./chunked-forest";
+import { FullSchemaPolicy } from "./modular-schema";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -40,13 +43,13 @@ export class ForestSummarizer implements Summarizable {
 
 	private readonly cursor: ITreeSubscriptionCursor;
 
-	private readonly schema: SchemaData;
+	private readonly schema: StoredSchemaCollection;
 	private readonly policy: FullSchemaPolicy;
 	private readonly encodeType: TreeCompressionStrategy;
 
 	public constructor(
 		private readonly forest: IEditableForest,
-		schema: SchemaData,
+		schema: StoredSchemaCollection,
 		policy: FullSchemaPolicy,
 		encodeType: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 	) {
@@ -116,17 +119,25 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk[]][];
+			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
 
 			const allocator = idAllocatorFromMaxId();
 			const delta: [FieldKey, Delta.FieldChanges][] = fields.map(([fieldKey, content]) => {
-				const buildId = { minor: allocator.allocate(content.length) };
-				const cursors = mapCursorField(decode(content).cursor(), (cursor) => cursor.fork());
+				const nodeCursors = mapCursorField(decode(content).cursor(), (cursor) =>
+					cursor.fork(),
+				);
+				const buildId = { minor: allocator.allocate(nodeCursors.length) };
+
 				return [
 					fieldKey,
 					{
-						build: [{ id: buildId, trees: content.map(singleTextCursor) }],
-						local: [{ count: content.length, attach: buildId }],
+						build: [
+							{
+								id: buildId,
+								trees: nodeCursors,
+							},
+						],
+						local: [{ count: nodeCursors.length, attach: buildId }],
 					},
 				];
 			});
@@ -139,7 +150,7 @@ export class ForestSummarizer implements Summarizable {
 
 function encodeSummary(
 	cursor: ITreeCursorSynchronous,
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	encodeType: TreeCompressionStrategy,
 ): EncodedChunk {
