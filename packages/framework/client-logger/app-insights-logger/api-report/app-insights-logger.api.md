@@ -9,6 +9,11 @@ import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { TelemetryEventCategory } from '@fluidframework/telemetry-utils';
 
+// @public
+export interface CategoryFilter {
+    categories: TelemetryEventCategory[];
+}
+
 // @public @sealed
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
     constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig);
@@ -23,13 +28,15 @@ export interface FluidAppInsightsLoggerConfig {
     };
 }
 
+// @public
+export interface NamespaceFilter {
+    namespacePattern: string;
+    namespacePatternExceptions?: string[];
+}
+
 export { TelemetryEventCategory }
 
 // @public
-export interface TelemetryFilter {
-    categories?: TelemetryEventCategory[];
-    namespacePattern?: string;
-    namespacePatternExceptions?: string[];
-}
+export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
 
 ```

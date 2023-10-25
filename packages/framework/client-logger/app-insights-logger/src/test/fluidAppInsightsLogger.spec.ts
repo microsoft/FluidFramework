@@ -45,30 +45,6 @@ describe("FluidAppInsightsLogger", () => {
 
 		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsEvent);
 	});
-
-	it("constructor() throws error when invalid filter config is provided", () => {
-		// Invalid filter with no namepsace or category defined
-		assert.throws(
-			() =>
-				new FluidAppInsightsLogger(appInsightsClient, {
-					filtering: {
-						mode: "exclusive",
-						filters: [
-							{
-								namespacePattern: "perf.latency",
-							},
-							{
-								categories: ["error"],
-								namespacePattern: "perf.latency",
-							},
-							{
-								// Empty config
-							},
-						],
-					},
-				}),
-		);
-	});
 });
 
 describe("Telemetry Filter - filter mode", () => {
