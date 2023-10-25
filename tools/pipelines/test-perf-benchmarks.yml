@@ -103,54 +103,16 @@ stages:
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
 
-        # Download package with performance tests
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test package
-          inputs:
-            # It seems there's a bug and preferTriggeringPipeline is not respected.
-            # We force the behavior by explicitly specifying:
-            # - buildVersionToDownload: specific
-            # - buildId: <the id of the triggering build>
-            # preferTriggeringPipeline: true
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            buildVersionToDownload: specific
-            buildId: ${{ variables.artifactBuildId }}
-            artifact: pack
-            patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
-            path: $(Pipeline.Workspace)/client/pack
-            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+        # Download and install package with performance tests
+        - template: include-test-perf-benchmarks-install-package.yml
+          parameters:
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
+            testPackageName: ${{ testPackage }}
+            installPath: $(testWorkspace)
 
-        # Install package with performance tests
-        - task: Bash@3
-          displayName: Install test package
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}
-            script: |
-              echo "Install ${{ testPackage }}"
-              TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz
-              TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
-
-              echo $TEST_PACKAGE_FILE_PATTERN
-              echo $TEST_PACKAGE_PATH_PATTERN
-
-              echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
-              echo `ls $TEST_PACKAGE_PATH_PATTERN`
-
-              if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-              else
-                ls -1 $TEST_PACKAGE_PATH_PATTERN
-                echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
-                exit -1
-              fi
-
-              npm install $TEST_PACKAGE_TGZ
-
-        # Unpack test files
+        # The "npm pack"-ed package that we install doesn't have the test files.
+        # Unpack them "on top" of the package, where it was installed, so we can run its tests.
         - task: Bash@3
           displayName: Unpack test files
           inputs:
@@ -164,7 +126,8 @@ stages:
               mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
               mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
 
-        # Run tests
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
+        # and run tests.
         - task: Bash@3
           displayName: Run execution-time tests
           inputs:
@@ -265,54 +228,16 @@ stages:
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
 
-        # Download package with performance tests
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test package
-          inputs:
-            # It seems there's a bug and preferTriggeringPipeline is not respected.
-            # We force the behavior by explicitly specifying:
-            # - buildVersionToDownload: specific
-            # - buildId: <the id of the triggering build>
-            # preferTriggeringPipeline: true
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            buildVersionToDownload: specific
-            buildId: ${{ variables.artifactBuildId }}
-            artifact: pack
-            patterns: "**/${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
-            path: $(Pipeline.Workspace)/client/pack
-            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+        # Download and install package with performance tests
+        - template: include-test-perf-benchmarks-install-package.yml
+          parameters:
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
+            testPackageName: ${{ testPackage }}
+            installPath: $(testWorkspace)
 
-        # Install package with performance tests
-        - task: Bash@3
-          displayName: Install test package
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}
-            script: |
-              echo "Install ${{ testPackage }}"
-              TEST_PACKAGE_FILE_PATTERN=${{ replace(replace(testPackage, '@', '' ), '/', '-') }}-?.?.?-*.tgz
-              TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
-
-              echo $TEST_PACKAGE_FILE_PATTERN
-              echo $TEST_PACKAGE_PATH_PATTERN
-
-              echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
-              echo `ls $TEST_PACKAGE_PATH_PATTERN`
-
-              if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-              else
-                ls -1 $TEST_PACKAGE_PATH_PATTERN
-                echo "##vso[task.logissue type=error]Test package '${{ testPackage }}' not found, or there are more then one found"
-                exit -1
-              fi
-
-              npm install $TEST_PACKAGE_TGZ
-
-        # Unpack test files
+        # The "npm pack"-ed package that we install doesn't have the test files.
+        # Unpack them "on top" of the package, where it was installed, so we can run its tests.
         - task: Bash@3
           displayName: Unpack test files
           inputs:
@@ -326,7 +251,8 @@ stages:
               mv $(testFilesPath)/src/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/src/test
               mv $(testFilesPath)/dist/test/* ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}/dist/test
 
-        # Run tests
+        # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
+        # and run tests.
         - task: Bash@3
           displayName: Run memory performance tests
           inputs:
@@ -425,52 +351,13 @@ stages:
             testFilesPath: $(testFilesPath)
             testWorkspace: $(testWorkspace)
 
-        # Download package with performance tests
-        - task: DownloadPipelineArtifact@2
-          displayName: Download test package
-          inputs:
-            # It seems there's a bug and preferTriggeringPipeline is not respected.
-            # We force the behavior by explicitly specifying:
-            # - buildVersionToDownload: specific
-            # - buildId: <the id of the triggering build>
-            # preferTriggeringPipeline: true
-            source: specific
-            project: internal
-            pipeline: ${{ variables.artifactPipeline }}
-            buildVersionToDownload: specific
-            buildId: ${{ variables.artifactBuildId }}
-            artifact: pack
-            patterns: "**/${{ variables.escapedTestPackage }}-?.?.?-*.tgz"
-            path: $(Pipeline.Workspace)/client/pack
-            # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-            # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
-
-        # Install package with performance tests
-        - task: Bash@3
-          displayName: Install Test Package
-          inputs:
-            targetType: 'inline'
-            workingDirectory: ${{ variables.testWorkspace }}
-            script: |
-              echo "Install ${{ variables.testPackage }}"
-              TEST_PACKAGE_FILE_PATTERN=${{ variables.escapedTestPackage }}-?.?.?-*.tgz
-              TEST_PACKAGE_PATH_PATTERN=$(Pipeline.Workspace)/client/pack/scoped/$TEST_PACKAGE_FILE_PATTERN
-
-              echo $TEST_PACKAGE_FILE_PATTERN
-              echo $TEST_PACKAGE_PATH_PATTERN
-
-              echo `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l`
-              echo `ls $TEST_PACKAGE_PATH_PATTERN`
-
-              if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
-                TEST_PACKAGE_TGZ=`ls $TEST_PACKAGE_PATH_PATTERN`
-              else
-                ls -1 $TEST_PACKAGE_PATH_PATTERN
-                echo "##vso[task.logissue type=error]Test package '${{ variables.testPackage }}' not found, or there are more then one found"
-                exit -1
-              fi
-
-              npm install $TEST_PACKAGE_TGZ
+        # Download and install package with performance tests
+        - template: include-test-perf-benchmarks-install-package.yml
+          parameters:
+            artifactBuildId: $(artifactBuildId)
+            artifactPipeline: $(artifactPipeline)
+            testPackageName: $(testPackage)
+            installPath: $(testWorkspace)
 
         - task: Bash@3
           displayName: Prepare test package to run tests
