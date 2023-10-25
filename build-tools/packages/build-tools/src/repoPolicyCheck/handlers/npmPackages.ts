@@ -1154,7 +1154,7 @@ export const handlers: Handler[] = [
 
 			if (cleanScript) {
 				if (cleanScript !== getPreferredCommandLine(cleanScript)) {
-					return "'clean' script double quote the globs and only the globs";
+					return "'clean' script should double quote the globs and only the globs";
 				}
 			}
 		},
