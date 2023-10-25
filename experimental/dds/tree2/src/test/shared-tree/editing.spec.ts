@@ -1781,12 +1781,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		// This test failed with 0x370 at the time of writing for two reasons:
-		// 1. Optional field doesn't cancel the deletion + reinsertion of "2" when rebasing tree2's edit over tree1
-		// 2. Asymmetry exists between a change and its rollback: we never roll back the creation of new trees.
-		//    That's a problem when a changeset gets reapplied as the result of a rebase sandwich as is the case
-		//    with the second rebaseOnto call. The resulting forest logic thus duplicates creation of "2".
-		it.skip("can rebase over successive sets", () => {
+		it("can rebase over successive sets", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
 
