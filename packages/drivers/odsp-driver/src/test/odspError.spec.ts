@@ -32,7 +32,7 @@ describe("Odsp Error", () => {
 	} as Response;
 
 	/**
-	 * Checks is the networkError complies with the {@link IGenericNetworkError}.
+	 * Checks if the input is an {@link IGenericNetworkError}.
 	 */
 	function isIGenericNetworkError(input: any): input is IGenericNetworkError {
 		return (
@@ -42,7 +42,7 @@ describe("Odsp Error", () => {
 	}
 
 	/**
-	 * Checks is the networkError complies with the {@link IThrottlingWarning}.
+	 * Checks if the input is an {@link IThrottlingWarning}.
 	 * */
 	function isIThrottlingWarning(input: any): input is IThrottlingWarning {
 		return (
