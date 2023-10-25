@@ -515,27 +515,6 @@ export function createListProxy<TTypes extends AllowedTypes>(
 	});
 }
 
-/**
- * Adds a PropertyDescriptor for the given function to a property descriptor map.  The 'thisContext' function
- * receives the original 'this' argument (which is the proxy) and returns the desired 'this' context
- * for the function call.  (We use 'thisContext' to redirect calls to the underlying node.)
- */
-function addDescriptor(
-	descriptorMap: PropertyDescriptorMap,
-	// eslint-disable-next-line @typescript-eslint/ban-types
-	fn: Function,
-	thisContext: (self: object) => object,
-) {
-	descriptorMap[fn.name] = {
-		get: () =>
-			function (this: any, ...args: any[]) {
-				return fn.apply(thisContext(this), args) as unknown;
-			},
-		enumerable: false,
-		configurable: false,
-	};
-}
-
 // #region Create dispatch map for maps
 
 const mapStaticDispatchMap: PropertyDescriptorMap = {};
@@ -553,7 +532,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {};
 	Map.prototype.values,
 	/* eslint-enable @typescript-eslint/unbound-method */
 ].forEach((fn) => {
-	addDescriptor(mapStaticDispatchMap, fn, (proxy) => proxy);
+	listPrototypeProperties[fn.name] = { value: fn };
 });
 
 mapStaticDispatchMap[Symbol.iterator] = {
