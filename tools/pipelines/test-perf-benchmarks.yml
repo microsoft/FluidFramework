@@ -333,8 +333,8 @@ stages:
           value: '@fluid-private/test-end-to-end-tests'
           readonly: true
       jobs:
-      - job: perf_unit_tests_memory
-        displayName: Perf unit tests - memory
+      - job: perf_e2e_tests
+        displayName: Perf e2e tests
         pool: ${{ parameters.poolBuild }}
         timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 60) }}
         steps:
@@ -351,9 +351,11 @@ stages:
         # Download and install package with performance tests
         - template: templates/include-test-perf-benchmarks-install-package.yml
           parameters:
+            # Not sure why macro syntax $() for 'testPackage' doesn't work here, maybe because the template is parsed
+            # at "compile time"? The others are defined at the pipeline level so maybe that's why they work...?
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
-            testPackageName: $(testPackage)
+            testPackageName: ${{ variables.testPackage }}
             installPath: $(testWorkspace)
 
         - task: Bash@3
