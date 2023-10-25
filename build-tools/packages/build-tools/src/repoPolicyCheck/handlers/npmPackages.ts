@@ -367,6 +367,61 @@ function ensurePrivatePackagesComputed(): void {
 	});
 }
 
+/**
+ * Parses command line string into arguments following OS quote rules
+ *
+ * @param commandLine - complete command line as a simple string
+ * @param onlyDoubleQuotes - only consider double quotes for grouping
+ * @returns array of ordered pairs of resolved `arg` strings (quotes and escapes resolved)
+ *  and `original` corresponding strings.
+ */
+function parseArgs(commandLine: string, { onlyDoubleQuotes }: { onlyDoubleQuotes: boolean }) {
+	const regexArg = onlyDoubleQuotes
+		? /(?<!\S)(?:[^\s"\\]|\\\S)*(?:(").*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"\\]|\\\S)*|$))*(?!\S)/g
+		: /(?<!\S)(?:[^\s'"\\]|\\\S)*(?:(['"]).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s'"\\]|\\\S)*|$))*(?!\S)/g;
+	const regexQuotedSegment = onlyDoubleQuotes
+		? /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(")(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g
+		: /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(['"])(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g;
+	const regexEscapedCharacters = onlyDoubleQuotes ? /\\([\\"])/g : /\\([\\'"])/g;
+	return [...commandLine.matchAll(regexArg)].map((matches) => ({
+		arg: matches[0].replace(regexQuotedSegment, "$2").replace(regexEscapedCharacters, "$1"),
+		original: matches[0],
+	}));
+}
+
+/**
+ * Applies universally understood grouping and escaping to form a single argument
+ * text to be used as part of a command line string.
+ *
+ * @param resolvedArg - string as it should appear to new process
+ * @returns preferred string to use within a command line string
+ */
+function quoteAndEscapeArgsForUniversalCommandLine(resolvedArg: string) {
+	// Unix shells provide feature where arguments that can be resolved as globs
+	// are expanded before passed to new process. Detect those and group them
+	// to ensure consistent arg passing. (Grouping disables glob expansion.)
+	const regexGlob = /[*?[()]/;
+	const notAGlob = resolvedArg.startsWith("-") || !regexGlob.test(resolvedArg);
+	// Double quotes are used for grouping arguments with whitespace and must be
+	// escaped with \ and \ itself must therefore be escaped.
+	// Unix shells also use single quotes for grouping. Rather than escape those,
+	// which Windows command shell would not unescape, those args must be grouped.
+	const escapedArg = resolvedArg.replace(/([\\"])/g, "\\$1");
+	return notAGlob && !/[\s']/.test(resolvedArg) ? escapedArg : `"${escapedArg}"`;
+}
+
+/**
+ * Parse command line as if unix shell, then form preferred command line
+ *
+ * @param commandLine - unparsed command line
+ * @returns preferred command line
+ */
+function getPreferredCommandLine(commandLine: string) {
+	return parseArgs(commandLine, { onlyDoubleQuotes: false })
+		.map((a) => quoteAndEscapeArgsForUniversalCommandLine(a.arg))
+		.join(" ");
+}
+
 let privatePackages: Set<string>;
 
 const match = /(^|\/)package\.json/i;
@@ -1098,12 +1153,8 @@ export const handlers: Handler[] = [
 			}
 
 			if (cleanScript) {
-				if (cleanScript.includes("'")) {
-					return "'clean' script using single quotes instead of double quotes";
-				}
-
-				if (!cleanScript.includes('"')) {
-					return "'clean' script rimraf glob arguments should have double quotes";
+				if (cleanScript !== getPreferredCommandLine(cleanScript)) {
+					return "'clean' script double quote the globs and only the globs";
 				}
 			}
 		},
@@ -1119,9 +1170,10 @@ export const handlers: Handler[] = [
 					return;
 				}
 				if (missing.length !== 0) {
-					clean += ` ${missing.map((name) => `"${name}"`).join(" ")}`;
+					clean += ` ${missing.join(" ")}`;
 				}
-				json.scripts["clean"] = clean.replace(/'/g, '"');
+				// clean up for grouping
+				json.scripts["clean"] = getPreferredCommandLine(clean);
 			});
 
 			return result;
