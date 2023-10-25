@@ -296,8 +296,7 @@ export class FluidDataStoreRuntime
 						this.dataStoreContext,
 						this.dataStoreContext.storage,
 						this.logger,
-						(content, localOpMetadata, rootMetadata) =>
-							this.submitChannelOp(path, content, localOpMetadata, rootMetadata),
+						this.getSubmitFnForChannel(path),
 						(address: string) => this.setChannelDirty(address),
 						(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 							this.addedGCOutboundReference(srcHandle, outboundHandle),
@@ -317,8 +316,7 @@ export class FluidDataStoreRuntime
 						this,
 						dataStoreContext,
 						dataStoreContext.storage,
-						(content, localOpMetadata, rootMetadata) =>
-							this.submitChannelOp(path, content, localOpMetadata, rootMetadata),
+						this.getSubmitFnForChannel(path),
 						(address: string) => this.setChannelDirty(address),
 						(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 							this.addedGCOutboundReference(srcHandle, outboundHandle),
@@ -449,8 +447,7 @@ export class FluidDataStoreRuntime
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
 			this.logger,
-			(content, localOpMetadata, rootMetadata) =>
-				this.submitChannelOp(id, content, localOpMetadata, rootMetadata),
+			this.getSubmitFnForChannel(id),
 			(address: string) => this.setChannelDirty(address),
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
@@ -577,8 +574,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			(content, localContentMetadata, rootMetadata) =>
-				this.submitChannelOp(attachMessage.id, content, localContentMetadata, rootMetadata),
+			this.getSubmitFnForChannel(attachMessage.id),
 			(address: string) => this.setChannelDirty(address),
 			(srcHandle: IFluidHandle, outboundHandle: IFluidHandle) =>
 				this.addedGCOutboundReference(srcHandle, outboundHandle),
@@ -861,7 +857,7 @@ export class FluidDataStoreRuntime
 	 * @deprecated Directly submitting an arbitrary message is not supported
 	 */
 	public submitMessage(type: DataStoreMessageType, content: any, localOpMetadata: unknown) {
-		this.submit(type, content, localOpMetadata, /* rootMetadata */ undefined); //* UNDO
+		this.submit(type, content, localOpMetadata);
 	}
 
 	public submitSignal(type: string, content: any) {
@@ -908,33 +904,24 @@ export class FluidDataStoreRuntime
 			type: channel.attributes.type,
 		};
 		this.pendingAttach.add(channel.id);
-		//* UNDO: no rootMetadata needed for DataStore Attach message for now
-		this.submit(
-			DataStoreMessageType.Attach,
-			message,
-			/* localOpMetadata: */ undefined,
-			/* rootMetadata: */ undefined,
-		);
+		this.submit(DataStoreMessageType.Attach, message);
 
 		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
 		context.makeVisible();
 	}
 
-	private submitChannelOp(
-		address: string,
-		contents: any,
-		localOpMetadata: unknown,
-		rootMetadata: unknown,
-	) {
-		const envelope: IEnvelope = { address, contents };
-		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata, rootMetadata);
-	}
+	/** Returns a function for submitting an op to the channel at the given address */
+	private getSubmitFnForChannel =
+		(address: string) => (contents: any, localOpMetadata: unknown, rootMetadata: unknown) => {
+			const envelope: IEnvelope = { address, contents };
+			this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata, rootMetadata);
+		};
 
 	private submit(
 		type: DataStoreMessageType,
 		content: any,
-		localOpMetadata: unknown,
-		rootMetadata: unknown,
+		localOpMetadata: unknown = undefined,
+		rootMetadata: unknown = undefined,
 	): void {
 		this.verifyNotClosed();
 
@@ -976,7 +963,7 @@ export class FluidDataStoreRuntime
 			}
 			case DataStoreMessageType.Attach:
 				// For Attach messages, just submit them again.
-				this.submit(type, content, localOpMetadata, /* rootMetadata: */ undefined); //* UNDO: no rootMetadata needed for DataStore Attach message for now
+				this.submit(type, content, localOpMetadata);
 				break;
 			default:
 				unreachableCase(type);

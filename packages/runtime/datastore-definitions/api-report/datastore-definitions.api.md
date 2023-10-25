@@ -80,10 +80,10 @@ export interface IDeltaConnection {
     connected: boolean;
     dirty(): void;
     // @deprecated
-    submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    submit(messageContent: any, localOpMetadata: unknown): void;
     submit2?(data: {
         messageContent: unknown;
-        localOpMetadata?: unknown;
+        localOpMetadata: unknown;
         rootMetadata: unknown;
     }): void;
 }

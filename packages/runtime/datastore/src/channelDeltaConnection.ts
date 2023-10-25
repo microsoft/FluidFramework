@@ -22,7 +22,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	constructor(
 		private _connected: boolean,
-		public readonly submit: (
+		private readonly submitFn: (
 			content: any,
 			localOpMetadata: unknown,
 			rootMetadata: unknown,
@@ -33,6 +33,19 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 			outboundHandle: IFluidHandle,
 		) => void,
 	) {}
+
+	/** @deprecated Use submit2 instead */
+	public submit(messageContent: any, localOpMetadata: unknown): void {
+		this.submitFn(messageContent, localOpMetadata, /* rootMetadata */ undefined);
+	}
+
+	public submit2(data: {
+		messageContent: unknown;
+		localOpMetadata: unknown;
+		rootMetadata: unknown;
+	}): void {
+		this.submitFn(data.messageContent, data.localOpMetadata, data.rootMetadata);
+	}
 
 	public attach(handler: IDeltaHandler) {
 		assert(this._handler === undefined, 0x178 /* "Missing delta handler on attach" */);

@@ -77,8 +77,8 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 	//* NEXT STEP: Update all mocks directly, no need to stage it, I'm pretty sure.
 
-	public submit(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown): number {
-		return this.submitFn(messageContent, localOpMetadata, rootMetadata);
+	public submit(messageContent: any, localOpMetadata: unknown): number {
+		return this.submitFn(messageContent, localOpMetadata, /* rootMetadata */ undefined);
 	}
 
 	public submit2(data: {
@@ -86,7 +86,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 		localOpMetadata?: unknown;
 		rootMetadata: unknown;
 	}): void {
-		this.submit(data.messageContent, data.localOpMetadata, data.rootMetadata);
+		this.submitFn(data.messageContent, data.localOpMetadata, data.rootMetadata);
 	}
 
 	public dirty(): void {

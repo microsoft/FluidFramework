@@ -365,7 +365,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 
 			//* TODO: Is this Back-Compat measure needed? I think not, I think DDS and DataStore layers are always in sync
 			if (deltaConnection.submit2 === undefined) {
-				deltaConnection.submit(content, localOpMetadata, rootMetadata);
+				deltaConnection.submit(content, localOpMetadata);
 				return;
 			}
 			deltaConnection.submit2({ messageContent: content, localOpMetadata, rootMetadata });
