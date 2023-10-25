@@ -332,9 +332,6 @@ stages:
         - name: testPackage
           value: '@fluid-private/test-end-to-end-tests'
           readonly: true
-        - name: escapedTestPackage
-          value: ${{ replace(replace(variables.testPackage, '@', '' ), '/', '-') }}
-          readonly: true
       jobs:
       - job: perf_unit_tests_memory
         displayName: Perf unit tests - memory
