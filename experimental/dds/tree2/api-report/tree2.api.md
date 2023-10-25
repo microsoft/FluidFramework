@@ -592,6 +592,9 @@ export const EmptyKey: FieldKey;
 type EmptyObject = {};
 
 // @alpha
+export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible;
+
+// @alpha
 export type Events<E> = {
     [P in (string | symbol) & keyof E as IsEvent<E[P]> extends true ? P : never]: E[P];
 };
