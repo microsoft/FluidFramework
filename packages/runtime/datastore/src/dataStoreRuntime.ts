@@ -911,7 +911,7 @@ export class FluidDataStoreRuntime
 	}
 
 	/** Returns a function for submitting an op to the channel at the given address */
-	private getSubmitFnForChannel =
+	private readonly getSubmitFnForChannel =
 		(address: string) => (contents: any, localOpMetadata: unknown, rootMetadata: unknown) => {
 			const envelope: IEnvelope = { address, contents };
 			this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata, rootMetadata);
