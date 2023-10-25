@@ -375,7 +375,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 	}
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
-			const root = config.detachedFieldIndex.getOrCreateEntry(id);
+			const root = config.detachedFieldIndex.getEntry(id);
 			config.detachPassRoots.set(root, fields);
 			config.attachPassRoots.set(root, fields);
 		}
@@ -395,7 +395,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			}
 			if (isDetachMark(mark)) {
 				for (let i = 0; i < mark.count; i += 1) {
-					const root = config.detachedFieldIndex.getOrCreateEntry(
+					const root = config.detachedFieldIndex.createEntry(
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						offsetDetachId(mark.detach!, i),
 					);
@@ -429,7 +429,7 @@ function attachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 					const sourceRoot = config.detachedFieldIndex.getEntry(offsetAttachId);
 					const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 					if (isReplaceMark(mark)) {
-						const rootDestination = config.detachedFieldIndex.getOrCreateEntry(
+						const rootDestination = config.detachedFieldIndex.createEntry(
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 							offsetDetachId(mark.detach!, i),
 						);
