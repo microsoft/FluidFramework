@@ -247,6 +247,8 @@ function itemsAsContextuallyTyped(
 		: Array.from(iterable, asContextuallyTypedData);
 }
 
+// #region Create dispatch map for lists
+
 // TODO: Experiment with alternative dispatch methods to see if we can improve performance.
 
 /**
@@ -406,6 +408,8 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 /* eslint-enable @typescript-eslint/unbound-method */
 
 const listPrototype = Object.create(Object.prototype, listPrototypeProperties);
+
+// #endregion
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
