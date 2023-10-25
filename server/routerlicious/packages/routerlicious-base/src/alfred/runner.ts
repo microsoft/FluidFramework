@@ -76,47 +76,44 @@ export class AlfredRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create the HTTP server and attach alfred to it
-		const alfred = app.create(
-			this.config,
-			this.tenantManager,
-			this.restTenantThrottlers,
-			this.restClusterThrottlers,
-			this.singleUseTokenCache,
-			this.storage,
-			this.appTenants,
-			this.deltaService,
-			this.producer,
-			this.documentRepository,
-			this.documentDeleteService,
-			this.tokenRevocationManager,
-			this.revokedTokenChecker,
-			this.collaborationSessionEventEmitter,
-		);
-		alfred.set("port", this.port);
+		const usingClusterModule: boolean | undefined = this.config.get("alfred:useNodeCluster");
+		// Don't include application logic in primary thread when Node.js cluster module is enabled.
+		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
-		this.server = this.serverFactory.create(alfred);
+		if (includeAppLogic) {
+			// Create the HTTP server and attach alfred to it
+			const alfred = app.create(
+				this.config,
+				this.tenantManager,
+				this.restTenantThrottlers,
+				this.restClusterThrottlers,
+				this.singleUseTokenCache,
+				this.storage,
+				this.appTenants,
+				this.deltaService,
+				this.producer,
+				this.documentRepository,
+				this.documentDeleteService,
+				this.tokenRevocationManager,
+				this.revokedTokenChecker,
+				this.collaborationSessionEventEmitter,
+			);
+			alfred.set("port", this.port);
+			this.server = this.serverFactory.create(alfred);
 
-		const httpServer = this.server.httpServer;
+			const maxNumberOfClientsPerDocument = this.config.get(
+				"alfred:maxNumberOfClientsPerDocument",
+			);
+			const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
+			const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
+			const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
+			const isClientConnectivityCountingEnabled = this.config.get(
+				"usage:clientConnectivityCountingEnabled",
+			);
+			const isSignalUsageCountingEnabled = this.config.get(
+				"usage:signalUsageCountingEnabled",
+			);
 
-		const maxNumberOfClientsPerDocument = this.config.get(
-			"alfred:maxNumberOfClientsPerDocument",
-		);
-		const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
-		const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
-		const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
-		const isClientConnectivityCountingEnabled = this.config.get(
-			"usage:clientConnectivityCountingEnabled",
-		);
-		const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
-
-		httpServer.on("error", (error) => this.onError(error));
-		httpServer.on("listening", () => this.onListening());
-
-		if (cluster.isPrimary && this.server.webSocketServer === null) {
-			// Listen on provided port, on all network interfaces.
-			httpServer.listen(this.port);
-		} else {
 			// Register all the socket.io stuff
 			configureWebSocketServices(
 				this.server.webSocketServer,
@@ -143,8 +140,6 @@ export class AlfredRunner implements IRunner {
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
 			);
-			// Listen on primary thread port, on all network interfaces.
-			httpServer.listen(cluster.isPrimary ? this.port : 0);
 
 			if (this.tokenRevocationManager) {
 				this.tokenRevocationManager.start().catch((error) => {
@@ -152,7 +147,17 @@ export class AlfredRunner implements IRunner {
 					Lumberjack.error("Failed to start token revocation manager.", undefined, error);
 				});
 			}
+		} else {
+			// Create an HTTP server with a blank request listener
+			this.server = this.serverFactory.create(null);
 		}
+
+		const httpServer = this.server.httpServer;
+		httpServer.on("error", (error) => this.onError(error));
+		httpServer.on("listening", () => this.onListening());
+		// Listen on primary thread port, on all network interfaces,
+		// or allow cluster module to assign random port for worker thread.
+		httpServer.listen(cluster.isPrimary ? this.port : 0);
 
 		this.stopped = false;
 
