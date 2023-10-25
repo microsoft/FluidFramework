@@ -5,7 +5,7 @@
 
 import * as SchemaAware from "../schema-aware";
 import { FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
-import { Assume, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
+import { Assume, FlattenKeys, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
 import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
 	TreeFieldSchema,
@@ -16,6 +16,8 @@ import {
 	LeafSchema,
 	MapSchema,
 	ObjectNodeSchema,
+	Any,
+	ArrayHasFixedLength,
 } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
@@ -43,7 +45,7 @@ export const boxedIterator = Symbol();
  *
  * @alpha
  */
-export interface Tree<TSchema = unknown> {
+export interface Tree<out TSchema = unknown> {
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -218,7 +220,7 @@ export interface TreeField extends Tree<TreeFieldSchema> {
  *
  * @alpha
  */
-export interface MapNode<TSchema extends MapSchema> extends TreeNode {
+export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
 	/**
 	 * The number of elements in the map.
 	 *
@@ -360,7 +362,7 @@ export interface MapNode<TSchema extends MapSchema> extends TreeNode {
  * Replacing the field node pattern with one where the FieldNode node exposes APIs from its field instead of unboxing could have the same issue, and same solutions.
  * @alpha
  */
-export interface FieldNode<TSchema extends FieldNodeSchema> extends TreeNode {
+export interface FieldNode<in out TSchema extends FieldNodeSchema> extends TreeNode {
 	/**
 	 * The content this field node wraps.
 	 * @remarks
@@ -415,7 +417,7 @@ export interface ObjectNode extends TreeNode {
  * Leaf unboxes its content, so in schema aware APIs which do unboxing, the Leaf itself will be skipped over and its value will be returned directly.
  * @alpha
  */
-export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
+export interface Leaf<in out TSchema extends LeafSchema> extends TreeNode {
 	/**
 	 * Value stored on this node.
 	 */
@@ -432,8 +434,9 @@ export interface Leaf<TSchema extends LeafSchema> extends TreeNode {
  *
  * @alpha
  */
-export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNode &
-	ObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
+export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNodeSchema extends TSchema
+	? ObjectNode
+	: ObjectNode & ObjectNodeFields<TSchema["objectNodeFieldsObject"]>;
 
 /**
  * Properties to access an object node's fields. See {@link ObjectNodeTyped}.
@@ -447,29 +450,34 @@ export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNode &
  *
  * @alpha
  */
-export type ObjectNodeFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> = {
-	// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-	readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<TFields[key]>;
-} & {
-	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
-	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? never
-		: key]: UnboxField<TFields[key]>;
-} & {
-	// Add setter (make property writable) when the field is of a kind that has a logical set operation.
-	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? key
-		: never]: UnboxField<TFields[key]>;
-} & {
-	// Setter method (when the field is of a kind that has a logical set operation).
-	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
-		? `set${Capitalize<key & string>}`
-		: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
-};
+export type ObjectNodeFields<TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>> =
+	FlattenKeys<
+		{
+			// boxed fields (TODO: maybe remove these when same as non-boxed version?)
+			readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
+				TFields[key]
+			>;
+		} & {
+			// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
+			// If we could map to getters and setters separately, we would preferably do that, but we can't.
+			// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+			readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+				? never
+				: key]: UnboxField<TFields[key]>;
+		} & {
+			// Add setter (make property writable) when the field is of a kind that has a logical set operation.
+			// If we could map to getters and setters separately, we would preferably do that, but we can't.
+			// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+			-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+				? key
+				: never]: UnboxField<TFields[key]>;
+		} & {
+			// Setter method (when the field is of a kind that has a logical set operation).
+			readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+				? `set${Capitalize<key & string>}`
+				: never]: (content: FlexibleFieldContent<TFields[key]>) => void;
+		}
+	>;
 
 /**
  * Field kinds that allow value assignment.
@@ -527,7 +535,7 @@ export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? n
  * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
  * @alpha
  */
-export interface Sequence<TTypes extends AllowedTypes> extends TreeField {
+export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField {
 	/**
 	 * Gets a node of this field by its index with unboxing.
 	 * Note that a node must exist at the given index.
@@ -766,25 +774,46 @@ export type TypedFieldInner<
  */
 export type TypedNodeUnion<TTypes extends AllowedTypes> =
 	TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
-		? InternalTypedSchemaTypes.ArrayToUnion<
-				TypeArrayToTypedTreeArray<
-					Assume<
-						InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>,
-						readonly TreeNodeSchema[]
-					>
-				>
-		  >
+		? TypedNodeUnionHelper<TTypes>
 		: TreeNode;
 
+/**
+ * Helper for implementing TypedNodeUnionHelper.
+ * @privateRemarks
+ * Inlining this into TypedNodeUnion causes it to not compile.
+ * The reason for this us unknown, but splitting it out fixed it.
+ * @alpha
+ */
+export type TypedNodeUnionHelper<TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>> =
+	InternalTypedSchemaTypes.ArrayToUnion<
+		TypeArrayToTypedTreeArray<
+			Assume<
+				InternalTypedSchemaTypes.FlexListToNonLazyArray<TTypes>,
+				readonly TreeNodeSchema[]
+			>
+		>
+	>;
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
  * @alpha
  */
 export type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
+	ArrayHasFixedLength<T> extends false
+		? T extends readonly (infer InnerT)[]
+			? [TypedNode<Assume<InnerT, TreeNodeSchema>>]
+			: never
+		: FixedSizeTypeArrayToTypedTree<T>,
+][_InlineTrick];
+
+/**
+ * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
+ * @alpha
+ */
+export type FixedSizeTypeArrayToTypedTree<T extends readonly TreeNodeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
 				TypedNode<Assume<Head, TreeNodeSchema>>,
-				...TypeArrayToTypedTreeArray<Assume<Tail, readonly TreeNodeSchema[]>>,
+				...FixedSizeTypeArrayToTypedTree<Assume<Tail, readonly TreeNodeSchema[]>>,
 		  ]
 		: [],
 ][_InlineTrick];
@@ -860,8 +889,25 @@ export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonl
 ]
 	? InnerType extends TreeNodeSchema
 		? UnboxNode<InnerType>
-		: TypedNodeUnion<TTypes>
-	: TypedNodeUnion<TTypes>;
+		: InnerType extends Any
+		? TreeNode
+		: // This case should not occur. If the result ever ends up unknown, look at places like this to debug.
+		  unknown
+	: boolean extends IsArrayOfOne<TTypes>
+	? UnknownUnboxed // Unknown if this will unbox. This should mainly happen when TTypes is AllowedTypes.
+	: TypedNodeUnion<TTypes>; // Known to not be a single type, so known not to unbox.
+
+/**
+ * `true` if T is known to be an array of one item.
+ * `false` if T is known not to be an array of one item.
+ * `boolean` if it is unknown if T is an array of one item or not.
+ * @alpha
+ */
+export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
+	? true
+	: 1 extends T["length"]
+	? boolean
+	: false;
 
 /**
  * Schema aware unboxed tree type.
@@ -878,6 +924,12 @@ export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSche
 	? UnboxField<TSchema["objectNodeFieldsObject"][""]>
 	: TSchema extends ObjectNodeSchema
 	? ObjectNodeTyped<TSchema>
-	: unknown;
+	: UnknownUnboxed;
+
+/**
+ * Unboxed tree type for unknown schema cases.
+ * @alpha
+ */
+export type UnknownUnboxed = TreeValue | TreeNode | TreeField;
 
 // #endregion
