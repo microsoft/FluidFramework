@@ -1169,7 +1169,7 @@ export const handlers: Handler[] = [
 						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
 					return;
 				}
-				if (missing.length !== 0) {
+				if (missing.length > 0) {
 					clean += ` ${missing.join(" ")}`;
 				}
 				// clean up for grouping
