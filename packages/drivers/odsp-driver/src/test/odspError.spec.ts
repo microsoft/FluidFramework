@@ -100,10 +100,7 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "disconnect");
-		if (
-			networkError.errorType !== OdspErrorTypes.genericNetworkError ||
-			!isIGenericNetworkError(networkError)
-		) {
+		if (!isIGenericNetworkError(networkError)) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
