@@ -1141,17 +1141,17 @@ export class ContainerRuntime
 
 	/** If false, loading or using a Tombstoned object should merely log, not fail */
 	public get gcTombstoneEnforcementAllowed(): boolean {
-		return this.garbageCollector.gcTombstoneEnforcementAllowed;
+		return this.garbageCollector.tombstoneEnforcementAllowed;
 	}
 
 	/** If true, throw an error when a tombstone data store is retrieved */
 	public get gcThrowOnTombstoneLoad(): boolean {
-		return this.garbageCollector.gcThrowOnTombstoneLoad;
+		return this.garbageCollector.throwOnTombstoneLoad;
 	}
 
 	/** If true, throw an error when a tombstone data store is used. */
 	public get gcThrowOnTombstoneUsage(): boolean {
-		return this.garbageCollector.gcThrowOnTombstoneUsage;
+		return this.garbageCollector.throwOnTombstoneUsage;
 	}
 
 	/**

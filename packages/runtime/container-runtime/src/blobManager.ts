@@ -40,12 +40,7 @@ import {
 
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
 import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
-import {
-	sendGCUnexpectedUsageEvent,
-	disableAttachmentBlobSweepKey,
-	throwOnTombstoneLoadKey,
-} from "./gc";
-import { summarizerClientType } from "./summary";
+import { sendGCUnexpectedUsageEvent, disableAttachmentBlobSweepKey } from "./gc";
 import { IBlobMetadata } from "./metadata";
 
 /**
@@ -103,7 +98,7 @@ export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
 	"attachState" | "connected" | "logger" | "clientDetails"
 > &
-	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed"> &
+	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed" | "gcThrowOnTombstoneLoad"> &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
 type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
@@ -164,8 +159,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	private readonly opsInFlight: Map<string, string[]> = new Map();
 
-	/** If true, throw an error when a tombstone attachment blob is retrieved. */
-	private readonly throwOnTombstoneLoad: boolean;
 	/**
 	 * This stores IDs of tombstoned blobs.
 	 * Tombstone is a temporary feature that imitates a blob getting swept by garbage collection.
@@ -204,11 +197,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			logger: this.runtime.logger,
 			namespace: "BlobManager",
 		});
-		// Read the feature flag that tells whether to throw when a tombstone blob is requested.
-		this.throwOnTombstoneLoad =
-			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
-			this.runtime.gcTombstoneEnforcementAllowed &&
-			this.runtime.clientDetails.type !== summarizerClientType;
 
 		this.redirectTable = this.load(snapshot);
 
@@ -861,7 +849,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 		// If the blob is deleted or throw on tombstone load is enabled, throw an error which will fail any attempt
 		// to load the blob.
-		const shouldFail = state === "deleted" || this.throwOnTombstoneLoad;
+		const shouldFail = state === "deleted" || this.runtime.gcThrowOnTombstoneLoad;
 		const request = { url: blobId };
 		const error = responseToException(
 			createResponseError(

@@ -204,11 +204,11 @@ export interface IGarbageCollector {
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
 	/** Tells whether tombstone feature is enabled and enforced. */
-	readonly gcTombstoneEnforcementAllowed: boolean;
+	readonly tombstoneEnforcementAllowed: boolean;
 	/** Tells whether loading a tombstone object should fail or merely log. */
-	readonly gcThrowOnTombstoneLoad: boolean;
+	readonly throwOnTombstoneLoad: boolean;
 	/** Tells whether using a tombstone object should fail or merely log. */
-	readonly gcThrowOnTombstoneUsage: boolean;
+	readonly throwOnTombstoneUsage: boolean;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
@@ -352,13 +352,13 @@ export interface IGarbageCollectorConfigs {
 	/** The current version of GC data in the running code */
 	readonly gcVersionInEffect: GCVersion;
 	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
-	readonly gcThrowOnInactiveLoad: boolean | undefined;
+	readonly throwOnInactiveLoad: boolean | undefined;
 	/** If false, loading or using a Tombstoned object should merely log, not fail */
-	readonly gcTombstoneEnforcementAllowed: boolean;
+	readonly tombstoneEnforcementAllowed: boolean;
 	/** If true, throw an error when a tombstone data store is retrieved */
-	readonly gcThrowOnTombstoneLoad: boolean;
+	readonly throwOnTombstoneLoad: boolean;
 	/** If true, throw an error when a tombstone data store is used. */
-	readonly gcThrowOnTombstoneUsage: boolean;
+	readonly throwOnTombstoneUsage: boolean;
 }
 
 /** The state of node that is unreferenced. */

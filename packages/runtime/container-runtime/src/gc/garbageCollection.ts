@@ -114,16 +114,16 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly telemetryTracker: GCTelemetryTracker;
 
 	/** If false, loading or using a Tombstoned object should merely log, not fail */
-	public get gcTombstoneEnforcementAllowed(): boolean {
-		return this.configs.gcTombstoneEnforcementAllowed;
+	public get tombstoneEnforcementAllowed(): boolean {
+		return this.configs.tombstoneEnforcementAllowed;
 	}
 	/** If true, throw an error when a tombstone data store is retrieved */
-	public get gcThrowOnTombstoneLoad(): boolean {
-		return this.configs.gcThrowOnTombstoneLoad;
+	public get throwOnTombstoneLoad(): boolean {
+		return this.configs.throwOnTombstoneLoad;
 	}
-	/** If true, throw an error when a tombstone data store is used. */
-	public get gcThrowOnTombstoneUsage(): boolean {
-		return this.configs.gcThrowOnTombstoneUsage;
+	/** If true, throw an error when a tombstone data store is used */
+	public get throwOnTombstoneUsage(): boolean {
+		return this.configs.throwOnTombstoneUsage;
 	}
 
 	/** For a given node path, returns the node's package path. */
@@ -904,7 +904,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// We may throw when loading an Inactive object, depending on these preconditions
 		const shouldThrowOnInactiveLoad =
 			!this.isSummarizerClient &&
-			this.configs.gcThrowOnInactiveLoad === true &&
+			this.configs.throwOnInactiveLoad === true &&
 			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true;
 		const state = this.unreferencedNodesState.get(nodePath)?.state;
 

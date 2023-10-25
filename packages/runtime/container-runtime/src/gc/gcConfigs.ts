@@ -163,18 +163,18 @@ export function generateGCConfigs(
 	const tombstoneMode = !shouldRunSweep && mc.config.getBoolean(disableTombstoneKey) !== true;
 	const runFullGC = createParams.gcOptions.runFullGC;
 
-	const gcThrowOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
-	const gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
+	const throwOnInactiveLoad: boolean | undefined = createParams.gcOptions.throwOnInactiveLoad;
+	const tombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
 		createParams.metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
 		createParams.gcOptions[gcTombstoneGenerationOptionName] /* current */,
 	);
-	const gcThrowOnTombstoneLoad =
+	const throwOnTombstoneLoad =
 		mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
-		gcTombstoneEnforcementAllowed &&
+		tombstoneEnforcementAllowed &&
 		!createParams.isSummarizerClient;
-	const gcThrowOnTombstoneUsage =
+	const throwOnTombstoneUsage =
 		mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-		gcTombstoneEnforcementAllowed &&
+		tombstoneEnforcementAllowed &&
 		!createParams.isSummarizerClient;
 
 	return {
@@ -191,10 +191,10 @@ export function generateGCConfigs(
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
 		gcVersionInEffect,
-		gcThrowOnInactiveLoad,
-		gcTombstoneEnforcementAllowed,
-		gcThrowOnTombstoneLoad,
-		gcThrowOnTombstoneUsage,
+		throwOnInactiveLoad,
+		tombstoneEnforcementAllowed,
+		throwOnTombstoneLoad,
+		throwOnTombstoneUsage,
 	};
 }
 

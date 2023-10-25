@@ -80,7 +80,7 @@ export class GCTelemetryTracker {
 		private readonly mc: MonitoringContext,
 		private readonly configs: Pick<
 			IGarbageCollectorConfigs,
-			"inactiveTimeoutMs" | "sweepTimeoutMs" | "gcTombstoneEnforcementAllowed"
+			"inactiveTimeoutMs" | "sweepTimeoutMs" | "tombstoneEnforcementAllowed"
 		>,
 		private readonly isSummarizerClient: boolean,
 		private readonly createContainerMetadata: ICreateContainerMetadata,
@@ -183,7 +183,7 @@ export class GCTelemetryTracker {
 					eventName: `GC_Tombstone_${nodeType}_Revived`,
 					category: "generic",
 					...tagCodeArtifacts({ url: id }),
-					gcTombstoneEnforcementAllowed: this.configs.gcTombstoneEnforcementAllowed,
+					gcTombstoneEnforcementAllowed: this.configs.tombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,
 			);

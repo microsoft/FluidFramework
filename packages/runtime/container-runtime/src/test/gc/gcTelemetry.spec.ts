@@ -74,7 +74,7 @@ describe("GC Telemetry Tracker", () => {
 			{
 				inactiveTimeoutMs,
 				sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
-				gcTombstoneEnforcementAllowed: false,
+				tombstoneEnforcementAllowed: false,
 			},
 			isSummarizerClient,
 			{ createContainerRuntimeVersion: pkgVersion },
