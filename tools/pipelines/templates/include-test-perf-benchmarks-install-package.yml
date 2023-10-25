@@ -27,7 +27,10 @@ parameters:
 steps:
 - task: Bash@3
   displayName: Set local template variables
-  name: localVariables
+  # Need to give this step a unique name because this template is used several times in the same pipeline.
+  # If at some point this becomes hard to do, we can switch to using standard variables (vs output variables from
+  # a step) so the step doesn't need a name
+  name: localVariables_${{ replace(replace(parameters.testPackageName, '@', '' ), '/', '-') }}
   inputs:
     targetType: 'inline'
     script: |
