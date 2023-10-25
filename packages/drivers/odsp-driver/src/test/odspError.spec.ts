@@ -42,7 +42,7 @@ describe("Odsp Error", () => {
 	}
 
 	/**
-	 * Checks is the networkError complies with the {@link IThrottlingWarning}.
+	 * Checks if the input is an {@link IThrottlingWarning}.
 	 * */
 	function isIThrottlingWarning(input: any): input is IThrottlingWarning {
 		return (
