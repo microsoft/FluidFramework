@@ -120,10 +120,8 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		await super.run();
 
 		if (this.packageList.packagesUpdated.length === 0) {
-			this.errorLog(
-				`##vso[task.logissue type=error]No updates in package.json for ${this.flags.types} release tag`,
-			);
-			this.exit(-1);
+			this.errorLog(`No updates in package.json for ${this.flags.types} release tag`);
+			this.exit(1);
 		}
 
 		return this.packageList;
