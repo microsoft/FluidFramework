@@ -274,7 +274,7 @@ export type DocumentBoundaries = ApiMemberKind[];
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     constructor(properties: DocumentNodeProps);
-    readonly apiItem: ApiItem;
+    readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
     readonly documentPath: string;
     readonly frontMatter?: string;
@@ -283,7 +283,7 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
 
 // @public
 export interface DocumentNodeProps {
-    readonly apiItem: ApiItem;
+    readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
     readonly documentPath: string;
     readonly frontMatter?: string;
