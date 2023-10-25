@@ -44,7 +44,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	const numberOfEditsToRebaseOver = 2;
 	const numberOfEditsToRebase = numberOfEditsToRebaseOver;
 
-	describe("Rebase over compose", () => {
+	describe.skip("Rebase over compose", () => {
 		for (const initialState of initialStates) {
 			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				for (const [

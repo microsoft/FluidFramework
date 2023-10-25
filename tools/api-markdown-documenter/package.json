@@ -60,14 +60,14 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@microsoft/api-documenter": "7.22.33",
-		"@microsoft/api-extractor-model": "^7.27.6",
+		"@microsoft/api-documenter": "7.23.9",
+		"@microsoft/api-extractor-model": "~7.28.2",
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/node-core-library": "^3.55.2",
 		"chalk": "^4.1.2"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.2",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/mocha-test-setup": "~2.0.0-internal.6.2.0",
