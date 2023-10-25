@@ -22,7 +22,7 @@ export interface NodeApi {
 	/**
 	 * The schema information for this node.
 	 */
-	schema: (node: SharedTreeNode) => TreeNodeSchema;
+	readonly schema: (node: SharedTreeNode) => TreeNodeSchema;
 	/**
 	 * Narrow the type of the given value if it satisfies the given schema.
 	 * @example
@@ -32,20 +32,28 @@ export interface NodeApi {
 	 * }
 	 * ```
 	 */
-	is: <TSchema extends TreeNodeSchema>(
+	readonly is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
 	) => value is ProxyNode<TSchema>;
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
-	parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
+	readonly parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
+	/**
+	 * The key of the given node under its parent.
+	 * @remarks
+	 * * If `node` is under an object, this returns the key of the field that is under (a string).
+	 * * If `node` is under a list, this returns the index of `node` in the list (a number).
+	 * * If `node` is the root of the tree, returns a special key (a string).
+	 */
+	readonly key: (node: SharedTreeNode) => string | number;
 	/**
 	 * Register an event listener on the given node.
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 */
-	on: <K extends keyof EditableTreeEvents>(
+	readonly on: <K extends keyof EditableTreeEvents>(
 		node: SharedTreeNode,
 		eventName: K,
 		listener: EditableTreeEvents[K],
@@ -53,7 +61,7 @@ export interface NodeApi {
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
-	status: (node: SharedTreeNode) => TreeStatus;
+	readonly status: (node: SharedTreeNode) => TreeStatus;
 }
 
 /**
@@ -70,13 +78,16 @@ export const nodeAPi: NodeApi = {
 	): value is ProxyNode<TSchema> => {
 		return getTreeNode(value)?.is(schema) ?? false;
 	},
-	parent: (node) => {
+	parent: (node: SharedTreeNode) => {
 		const treeNode = assertTreeNode(node).parentField.parent.parent;
 		if (treeNode !== undefined) {
-			return getProxyForNode(treeNode as any); // TODO: why does this get weirdly narrowed without the `any`?
+			return getProxyForNode(treeNode);
 		}
 
 		return undefined;
+	},
+	key: (node: SharedTreeNode) => {
+		const x = 
 	},
 	on: <K extends keyof EditableTreeEvents>(
 		node: SharedTreeNode,
