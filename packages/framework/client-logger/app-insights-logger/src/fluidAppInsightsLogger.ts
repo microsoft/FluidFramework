@@ -40,7 +40,7 @@ export interface FluidAppInsightsLoggerConfig {
 /**
  * Object used with an {@link FluidAppInsightsLoggerConfig}
  * to define a filter with logic for matching it to telemetry events.
- * Filters can include either a category, namespace or both types of filters; A valid filter must have at least one defined.
+ * Filters can include either a category, namespace or both types of filters; a valid filter must have at least one defined.
  *
  * @public
  */
