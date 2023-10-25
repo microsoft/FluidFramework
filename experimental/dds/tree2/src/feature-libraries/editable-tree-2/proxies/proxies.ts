@@ -228,10 +228,9 @@ const asContextuallyTypedData = (value: ProxyNodeUnion<AllowedTypes, "javaScript
 function itemsAsContextuallyTyped(
 	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 ): [items: Iterable<ContextuallyTypedNodeData>, count: number] {
-	// If the iterable is not already an array, copy it into an array to use '.map()' below.
 	const asArray = Array.isArray(iterable)
-		? iterable.map(asContextuallyTypedData)
-		: Array.from(iterable, asContextuallyTypedData);
+		? iterable.map(asContextuallyTypedData) // Already an array.  Use .map().
+		: Array.from(iterable, asContextuallyTypedData); // Not an array.  Copy and map in one step.
 
 	return [asArray, asArray.length];
 }
