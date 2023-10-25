@@ -27,16 +27,15 @@ parameters:
 steps:
 - task: Bash@3
   displayName: Set local template variables
-  # Need to give this step a unique name because this template is used several times in the same pipeline.
-  # If at some point this becomes hard to do, we can switch to using standard variables (vs output variables from
-  # a step) so the step doesn't need a name. Need to be careful with the characters allowed in a step name.
-  name: localVariables_${{ replace(replace(replace(parameters.testPackageName, '@', '' ), '/', '_'), '-', '_') }}
   inputs:
     targetType: 'inline'
+    # Using a prefix on these variables to try to make them unique to minimize risk of conflicts with variables that
+    # use the same name in the pipeline that includes this template.
+    # Using isOutput=true variables was too complicated/dirty.
     script: |
       echo "Setting local variables for yml template"
-      echo "##vso[task.setvariable variable=sanitizedPackageName;isOutput=true]${{ replace(replace(parameters.testPackageName, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
-      echo "##vso[task.setvariable variable=downloadPath;isOutput=true]$(Pipeline.Workspace)/downloadedPackages"
+      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${{ replace(replace(parameters.testPackageName, '@', '' ), '/', '-') }}-?.?.?-*.tgz"
+      echo "##vso[task.setvariable variable=itpbip_downloadPath]$(Pipeline.Workspace)/downloadedPackages"
 
 # Download package that has performance tests
 - task: DownloadPipelineArtifact@2
@@ -53,8 +52,8 @@ steps:
     buildVersionToDownload: specific
     buildId: ${{ parameters.artifactBuildId }}
     artifact: pack
-    patterns: "**/$(localVariables.sanitizedPackageName)"
-    path: $(localVariables.downloadPath)
+    patterns: "**/$(itpbip_sanitizedPackageName)"
+    path: $(itpbip_downloadPath)
     # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
     # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
 
@@ -67,7 +66,7 @@ steps:
     script: |
       echo "Installing ${{ parameters.testPackageName }}"
 
-      TEST_PACKAGE_PATH_PATTERN=$(localVariables.downloadPath)/scoped/$(localVariables.sanitizedPackageName)
+      TEST_PACKAGE_PATH_PATTERN=$(itpbip_downloadPath)/scoped/$(itpbip_sanitizedPackageName)
       echo "Looking for tarball with pattern $TEST_PACKAGE_PATH_PATTERN :"
       ls -1 $TEST_PACKAGE_PATH_PATTERN
 
