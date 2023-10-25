@@ -186,7 +186,7 @@
                   "treeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
-                      "structFields": [
+                      "objectNodeFields": [
                         {
                           "kind": "Sequence",
                           "types": [
@@ -195,15 +195,11 @@
                             "com.fluidframework.leaf.number",
                             "com.fluidframework.leaf.boolean",
                             "com.fluidframework.leaf.string",
-                            "com.fluidframework.json.null"
+                            "com.fluidframework.leaf.null"
                           ],
                           "name": ""
                         }
                       ]
-                    },
-                    {
-                      "name": "com.fluidframework.json.null",
-                      "structFields": []
                     },
                     {
                       "name": "com.fluidframework.json.object",
@@ -215,29 +211,34 @@
                           "com.fluidframework.leaf.number",
                           "com.fluidframework.leaf.boolean",
                           "com.fluidframework.leaf.string",
-                          "com.fluidframework.json.null"
+                          "com.fluidframework.leaf.null"
                         ]
                       },
-                      "structFields": []
+                      "objectNodeFields": []
                     },
                     {
                       "name": "com.fluidframework.leaf.boolean",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 2
                     },
                     {
                       "name": "com.fluidframework.leaf.handle",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 3
                     },
                     {
+                      "name": "com.fluidframework.leaf.null",
+                      "objectNodeFields": [],
+                      "leafValue": 4
+                    },
+                    {
                       "name": "com.fluidframework.leaf.number",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 0
                     },
                     {
                       "name": "com.fluidframework.leaf.string",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 1
                     }
                   ],
@@ -249,7 +250,7 @@
                       "com.fluidframework.leaf.number",
                       "com.fluidframework.leaf.boolean",
                       "com.fluidframework.leaf.string",
-                      "com.fluidframework.json.null"
+                      "com.fluidframework.leaf.null"
                     ]
                   }
                 },
@@ -308,7 +309,13 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[[\"beefbeef-beef-4000-8000-00000000002b\",0,{\"field\":\"repair-4\",\"root\":4}]]",
+                  "data": [
+                    [
+                      "beefbeef-beef-4000-8000-00000000002b",
+                      0,
+                      4
+                    ]
+                  ],
                   "id": 4
                 },
                 "encoding": "utf-8"

@@ -18,92 +18,89 @@ import {
 	buildForest,
 	cursorsFromContextualData,
 	getEditableTreeContext,
-	FieldSchema,
+	TreeFieldSchema,
 	Any,
-	TypedSchemaCollection,
+	TreeSchema,
 	NormalizeField,
 	ImplicitFieldSchema,
 	SchemaAware,
 } from "../../../feature-libraries";
 import {
-	ValueSchema,
 	FieldKey,
 	EmptyKey,
 	JsonableTree,
 	IEditableForest,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
-	SchemaData,
+	TreeStoredSchema,
 } from "../../../core";
 import { brand, Brand } from "../../../util";
-import { SchemaBuilder } from "../../../domains";
+import { SchemaBuilder, leaf } from "../../../domains";
 
 const builder = new SchemaBuilder({ scope: "mock data" });
 
-export const stringSchema = builder.leaf("String", ValueSchema.String);
+export const stringSchema = leaf.string;
 
-export const int32Schema = builder.leaf("Int32", ValueSchema.Number);
+export const float64Schema = leaf.number;
 
-export const float64Schema = builder.leaf("Float64", ValueSchema.Number);
+export const boolSchema = leaf.boolean;
 
-export const boolSchema = builder.leaf("Bool", ValueSchema.Boolean);
-
-export const simplePhonesSchema = builder.struct("Test:SimplePhones-1.0.0", {
-	[EmptyKey]: FieldSchema.create(FieldKinds.sequence, [stringSchema]),
+export const simplePhonesSchema = builder.object("Test:SimplePhones-1.0.0", {
+	[EmptyKey]: TreeFieldSchema.create(FieldKinds.sequence, [stringSchema]),
 });
 
-export const complexPhoneSchema = builder.struct("Test:Phone-1.0.0", {
+export const complexPhoneSchema = builder.object("Test:Phone-1.0.0", {
 	number: stringSchema,
 	prefix: stringSchema,
-	extraPhones: FieldSchema.create(FieldKinds.optional, [simplePhonesSchema]),
+	extraPhones: TreeFieldSchema.create(FieldKinds.optional, [simplePhonesSchema]),
 });
 
 export const phonesSchema = builder.fieldNode(
 	"Test:Phones-1.0.0",
 	builder.sequence([
 		stringSchema,
-		int32Schema,
+		leaf.number,
 		complexPhoneSchema,
 		// array of arrays
 		simplePhonesSchema,
 	]),
 );
 
-export const addressSchema = builder.struct("Test:Address-1.0.0", {
-	zip: [stringSchema, int32Schema],
-	street: FieldSchema.create(FieldKinds.optional, [stringSchema]),
-	city: FieldSchema.create(FieldKinds.optional, [stringSchema]),
-	country: FieldSchema.create(FieldKinds.optional, [stringSchema]),
-	phones: FieldSchema.create(FieldKinds.optional, [phonesSchema]),
-	sequencePhones: FieldSchema.create(FieldKinds.sequence, [stringSchema]),
+export const addressSchema = builder.object("Test:Address-1.0.0", {
+	zip: [stringSchema, leaf.number],
+	street: TreeFieldSchema.create(FieldKinds.optional, [stringSchema]),
+	city: TreeFieldSchema.create(FieldKinds.optional, [stringSchema]),
+	country: TreeFieldSchema.create(FieldKinds.optional, [stringSchema]),
+	phones: TreeFieldSchema.create(FieldKinds.optional, [phonesSchema]),
+	sequencePhones: TreeFieldSchema.create(FieldKinds.sequence, [stringSchema]),
 });
 
 export const mapStringSchema = builder.map(
 	"Map<String>",
-	FieldSchema.create(FieldKinds.optional, [stringSchema]),
+	TreeFieldSchema.create(FieldKinds.optional, [stringSchema]),
 );
 
-export const personSchema = builder.struct("Test:Person-1.0.0", {
+export const personSchema = builder.object("Test:Person-1.0.0", {
 	name: stringSchema,
-	age: FieldSchema.create(FieldKinds.optional, [int32Schema]),
-	adult: FieldSchema.create(FieldKinds.optional, [boolSchema]),
-	salary: FieldSchema.create(FieldKinds.optional, [float64Schema, int32Schema, stringSchema]),
-	friends: FieldSchema.create(FieldKinds.optional, [mapStringSchema]),
-	address: FieldSchema.create(FieldKinds.optional, [addressSchema]),
+	age: TreeFieldSchema.create(FieldKinds.optional, [leaf.number]),
+	adult: TreeFieldSchema.create(FieldKinds.optional, [boolSchema]),
+	salary: TreeFieldSchema.create(FieldKinds.optional, [float64Schema, leaf.number, stringSchema]),
+	friends: TreeFieldSchema.create(FieldKinds.optional, [mapStringSchema]),
+	address: TreeFieldSchema.create(FieldKinds.optional, [addressSchema]),
 });
 
-export const optionalChildSchema = builder.struct("Test:OptionalChild-1.0.0", {
+export const optionalChildSchema = builder.object("Test:OptionalChild-1.0.0", {
 	child: SchemaBuilder.optional(Any),
 });
 
 export const arraySchema = builder.fieldNode(
 	"Test:Array-1.0.0",
-	FieldSchema.create(FieldKinds.sequence, [stringSchema, int32Schema]),
+	TreeFieldSchema.create(FieldKinds.sequence, [stringSchema, leaf.number]),
 );
 
-export const rootPersonSchema = FieldSchema.create(FieldKinds.optional, [personSchema]);
+export const rootPersonSchema = TreeFieldSchema.create(FieldKinds.optional, [personSchema]);
 
-export const personSchemaLibrary = builder.finalize();
+export const personSchemaLibrary = builder.intoLibrary();
 
 export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
@@ -111,6 +108,7 @@ export const fullSchemaData = buildTestSchema(rootPersonSchema);
 
 // TODO: provide relaxed types like these based on ContextuallyTyped setters
 
+// TODO: these types don't make sense. Values can't be both primitives and EditableTree, and this isn't how Brand or TreeSchemaIdentifiers are used.
 export type Float64 = Brand<number, "editable-tree.Float64"> & EditableTree;
 export type Int32 = Brand<number, "editable-tree.Int32"> & EditableTree;
 export type Bool = Brand<boolean, "editable-tree.Bool"> & EditableTree;
@@ -247,24 +245,24 @@ export function getPerson(): Person {
  */
 export function buildTestSchema<TSchema extends ImplicitFieldSchema>(
 	rootField: TSchema,
-): TypedSchemaCollection<NormalizeField<TSchema, typeof FieldKinds.required>> {
+): TreeSchema<NormalizeField<TSchema, typeof FieldKinds.required>> {
 	return new SchemaBuilder({
 		scope: "buildTestSchema",
 		libraries: [personSchemaLibrary],
-	}).toDocumentSchema(rootField);
+	}).intoSchema(rootField);
 }
 
 export function getReadonlyEditableTreeContext(
 	forest: IEditableForest,
-	schema: SchemaData,
+	schema: TreeStoredSchema,
 ): EditableTreeContext {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
 	return getEditableTreeContext(forest, schema, dummyEditor);
 }
 
-export function setupForest<T extends FieldSchema>(
-	schema: TypedSchemaCollection<T>,
+export function setupForest<T extends TreeFieldSchema>(
+	schema: TreeSchema<T>,
 	data: ContextuallyTypedNodeData | undefined,
 ): IEditableForest {
 	const schemaRepo = new InMemoryStoredSchemaRepository(schema);
@@ -282,7 +280,7 @@ export function setupForest<T extends FieldSchema>(
 
 export function buildTestTree(
 	data: ContextuallyTypedNodeData | undefined,
-	rootField: FieldSchema = rootPersonSchema,
+	rootField: TreeFieldSchema = rootPersonSchema,
 ): EditableTreeContext {
 	const schema = buildTestSchema(rootField);
 	const forest = setupForest(schema, data);
@@ -290,7 +288,7 @@ export function buildTestTree(
 	return context;
 }
 
-export function buildTestPerson(): readonly [SchemaData, Person] {
+export function buildTestPerson(): readonly [TreeStoredSchema, Person] {
 	const context = buildTestTree(personData);
 	return [context.schema, context.unwrappedRoot as Person];
 }

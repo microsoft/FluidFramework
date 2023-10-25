@@ -5,10 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKindIdentifier,
 	fieldSchema,
-	SchemaData,
+	TreeStoredSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 } from "../../core";
@@ -88,7 +88,7 @@ export class FieldKindWithEditor<
 		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
 		private readonly allowsTreeSupersetOf: (
 			originalTypes: TreeTypeSet,
-			superset: FieldStoredSchema,
+			superset: TreeFieldStoredSchema,
 		) => boolean,
 		public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 	) {
@@ -101,9 +101,9 @@ export class FieldKindWithEditor<
 	 */
 	public allowsFieldSuperset(
 		policy: FullSchemaPolicy,
-		originalData: SchemaData,
+		originalData: TreeStoredSchema,
 		originalTypes: TreeTypeSet,
-		superset: FieldStoredSchema,
+		superset: TreeFieldStoredSchema,
 	): boolean {
 		if (isNeverField(policy, originalData, fieldSchema(this, originalTypes))) {
 			return true;
@@ -124,7 +124,7 @@ export function withEditor<
 >(
 	kind: FieldKind<TName, TMultiplicity>,
 ): FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName> {
-	assert(kind instanceof FieldKindWithEditor, "kind must be FieldKindWithEditor");
+	assert(kind instanceof FieldKindWithEditor, 0x7b5 /* kind must be FieldKindWithEditor */);
 	return kind as FieldKindWithEditor<FieldEditor<any>, TMultiplicity, TName>;
 }
 /**

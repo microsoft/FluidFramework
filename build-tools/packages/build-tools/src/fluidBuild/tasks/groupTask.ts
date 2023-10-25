@@ -70,12 +70,14 @@ export class GroupTask extends Task {
 	}
 
 	protected async runTask(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
-		this.traceExec(`Begin Child Tasks`);
+		this.traceExec(`Begin Group Task`);
 		const taskP = new Array<Promise<BuildResult>>();
 		for (const task of this.subTasks) {
 			taskP.push(task.run(q));
 		}
 		const results = await Promise.all(taskP);
+		this.traceExec(`End Group Task`);
+
 		let retResult = BuildResult.UpToDate;
 		for (const result of results) {
 			if (result === BuildResult.Failed) {
@@ -86,7 +88,6 @@ export class GroupTask extends Task {
 				retResult = BuildResult.Success;
 			}
 		}
-		this.traceExec(`End Child Tasks`);
 		return retResult;
 	}
 }

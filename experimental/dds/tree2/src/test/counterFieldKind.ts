@@ -14,8 +14,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../feature-libraries/modular-schema";
 import { brand, fail } from "../util";
-import { Delta, TaggedChange } from "../core";
-import { jsonNumber } from "../domains";
+import { Delta, FieldKey, TaggedChange, makeDetachedNodeId } from "../core";
+import { leaf } from "../domains";
 
 export const counterCodecFamily: ICodecFamily<number> = makeCodecFamily([
 	[0, makeValueCodec(Type.Number())],
@@ -48,36 +48,47 @@ export const counterHandle: FieldChangeHandler<number> = {
 	}),
 	codecsFactory: () => counterCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: ({ change, revision }: TaggedChange<number>): Delta.MarkList => [
-		{
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					brand("value"),
-					[
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									// KLUDGE: Domains should not be depended on by anything.
-									// This is to get around the removal of setValue.
-									type: jsonNumber.name,
-									value: change,
-								}),
-							],
-							oldContent: {
-								detachId: {
-									major: revision,
-									// This is an arbitrary number for testing.
-									minor: 424242,
-								},
+	intoDelta: ({ change, revision }: TaggedChange<number>): Delta.FieldChanges => {
+		const buildId = makeDetachedNodeId(revision, 424243);
+		return {
+			local: [
+				{
+					count: 1,
+					fields: new Map<FieldKey, Delta.FieldChanges>([
+						[
+							brand("value"),
+							{
+								local: [
+									{
+										count: 1,
+										detach: {
+											major: revision,
+											// This is an arbitrary number for testing.
+											minor: 424242,
+										},
+										attach: buildId,
+									},
+								],
+								build: [
+									{
+										id: buildId,
+										trees: [
+											singleTextCursor({
+												// KLUDGE: Domains should not be depended on by anything.
+												// This is to get around the removal of setValue.
+												type: leaf.number.name,
+												value: change,
+											}),
+										],
+									},
+								],
 							},
-						},
-					],
-				],
-			]),
-		},
-	],
+						],
+					]),
+				},
+			],
+		};
+	},
 	isEmpty: (change: number) => change === 0,
 };
 

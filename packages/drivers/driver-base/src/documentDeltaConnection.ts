@@ -22,7 +22,7 @@ import {
 	ITokenClaims,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	extractLogSafeErrorProperties,
@@ -37,7 +37,9 @@ import type { Socket } from "socket.io-client";
 import { pkgVersion as driverVersion } from "./packageVersion";
 
 /**
- * Represents a connection to a stream of delta updates
+ * Represents a connection to a stream of delta updates.
+ *
+ * @public
  */
 export class DocumentDeltaConnection
 	extends EventEmitterWithErrorHandling<IDocumentDeltaConnectionEvents>
@@ -568,6 +570,15 @@ export class DocumentDeltaConnection
 						return;
 					}
 				}
+
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectDocumentSuccess",
+						pendingClientId: response.clientId,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 
 				this.checkpointSequenceNumber = response.checkpointSequenceNumber;
 

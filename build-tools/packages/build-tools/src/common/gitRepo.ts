@@ -3,15 +3,12 @@
  * Licensed under the MIT License.
  */
 import { parseISO } from "date-fns";
-
-import { Logger } from "./logging";
 import { exec, execNoError } from "./utils";
 
+import registerDebug from "debug";
+const traceGitRepo = registerDebug("fluid-build:gitRepo");
 export class GitRepo {
-	constructor(
-		public readonly resolvedRoot: string,
-		protected readonly log?: Logger,
-	) {}
+	constructor(public readonly resolvedRoot: string) {}
 
 	private async getRemotes() {
 		const result = await this.exec(`remote -v`, `getting remotes`);
@@ -190,9 +187,9 @@ export class GitRepo {
 	 */
 	public async getAllTags(pattern?: string): Promise<string[]> {
 		if (pattern === undefined || pattern.length === 0) {
-			this.log?.verbose(`Reading git tags from repo.`);
+			traceGitRepo(`Reading git tags from repo.`);
 		} else {
-			this.log?.verbose(`Reading git tags from repo using pattern: '${pattern}'`);
+			traceGitRepo(`Reading git tags from repo using pattern: '${pattern}'`);
 		}
 		const results =
 			pattern === undefined || pattern.length === 0
@@ -203,7 +200,7 @@ export class GitRepo {
 				  );
 		const tags = results.split("\n").filter((t) => t !== undefined && t !== "" && t !== null);
 
-		this.log?.verbose(`Found ${tags.length} tags.`);
+		traceGitRepo(`Found ${tags.length} tags.`);
 		return tags;
 	}
 
@@ -211,8 +208,11 @@ export class GitRepo {
 	 * Returns an array containing all the modified files in the repo.
 	 */
 	public async getModifiedFiles(): Promise<string[]> {
-		const results = await this.exec(`ls-files -m --deduplicate`, `get modified files`);
-		return results.split("\n").filter((t) => t !== undefined && t !== "" && t !== null);
+		const results = await this.exec(`status --porcelain`, `get modified files`);
+		return results
+			.split("\n")
+			.filter((t) => t !== "" && !t.startsWith(" D "))
+			.map((t) => t.substring(3));
 	}
 
 	/**

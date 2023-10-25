@@ -16,6 +16,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules -- the policy-related stuff will eventually be moved into this package
 } from "@fluidframework/build-tools/dist/repoPolicyCheck/handlers/npmPackages";
 import { Package, PackageNamePolicyConfig } from "@fluidframework/build-tools";
+import { writeFileSync } from "node:fs";
 
 interface ListItem extends PnpmListEntry {
 	tarball?: string;
@@ -29,10 +30,10 @@ interface ListItem extends PnpmListEntry {
  * seeing errors if they happen to be installing packages while we are publishing a new release.
  */
 export default class ListCommand extends BaseCommand<typeof ListCommand> {
-	static description = `List packages in a release group in topological order.`;
-	static enableJsonFlag = true;
+	static readonly description = `List packages in a release group in topological order.`;
+	static readonly enableJsonFlag = true;
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag({ required: true }),
 		feed: Flags.custom<Feed | undefined>({
 			description:
@@ -59,6 +60,12 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 			description:
 				"Return packed tarball names (without extension) instead of package names. @-signs will be removed from the name, and slashes are replaced with dashes.",
 			default: false,
+		}),
+		outFile: Flags.file({
+			description:
+				"Output file to write the list of packages to. If not specified, the list will be written to stdout.",
+			required: false,
+			exists: false,
 		}),
 	};
 
@@ -101,8 +108,12 @@ export default class ListCommand extends BaseCommand<typeof ListCommand> {
 				return item;
 			});
 
-		for (const details of filtered) {
-			this.log(details.name);
+		const output = filtered.map((details) => details.name).join("\n");
+
+		if (this.flags.outFile === undefined) {
+			this.log(output);
+		} else {
+			writeFileSync(this.flags.outFile, output);
 		}
 
 		return filtered;

@@ -22,7 +22,7 @@ import {
 	isWorkspaceRange,
 } from "@fluid-tools/version-tools";
 import { PackageName } from "@rushstack/node-core-library";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { compareDesc, differenceInBusinessDays } from "date-fns";
 import execa from "execa";
 import { readJson, readJsonSync, writeFile } from "fs-extra";
@@ -30,7 +30,7 @@ import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
 import type { Index } from "npm-check-updates/build/src/types/IndexType";
 import { VersionSpec } from "npm-check-updates/build/src/types/VersionSpec";
-import path from "path";
+import path from "node:path";
 import { format as prettier, resolveConfig as resolvePrettierConfig } from "prettier";
 import * as semver from "semver";
 

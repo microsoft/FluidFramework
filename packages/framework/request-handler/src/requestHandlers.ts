@@ -23,6 +23,8 @@ import { RequestParser } from "@fluidframework/runtime-utils";
  * A handler should only return error if the request is for a route the handler owns, and there is a problem with
  * the route, or fulling the specific request.
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ *
+ * @public
  */
 export type RuntimeRequestHandler = (
 	request: RequestParser,
@@ -35,6 +37,8 @@ export type RuntimeRequestHandler = (
  * @param runtime - the container runtime
  * @returns the result of the request
  * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ *
+ * @public
  */
 export const rootDataStoreRequestHandler = async (
 	request: IRequest,
@@ -58,7 +62,11 @@ export const rootDataStoreRequestHandler = async (
 	}
 };
 
-/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+/**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ *
+ * @public
+ */
 export const createFluidObjectResponse = (
 	fluidObject: FluidObject,
 ): { status: 200; mimeType: "fluid/object"; value: FluidObject } => {
@@ -97,7 +105,11 @@ class LegacyUriHandle<T = FluidObject & IFluidLoadable> implements IFluidHandle<
 	}
 }
 
-/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+/**
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+ *
+ * @public
+ */
 export function handleFromLegacyUri<T = FluidObject & IFluidLoadable>(
 	uri: string,
 	runtime: IContainerRuntimeBase,
