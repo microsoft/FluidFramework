@@ -161,7 +161,7 @@ export class ConsensusRegisterCollection<T>
 		return this.newAckBasedPromise<boolean>((resolve) => {
 			// Send the resolve function as the localOpMetadata. This will be provided back to us when the
 			// op is ack'd.
-			this.submitLocalMessage(message, resolve, /* rootMetadata */ undefined); //* FIX
+			this.submitLocalMessage(message, resolve);
 			// If we fail due to runtime being disposed, it's better to return false then unhandled exception.
 		}).catch((error) => false);
 	}

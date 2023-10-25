@@ -350,17 +350,13 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * Submits a message by the local client to the runtime.
 	 * @deprecated Use submitLocalMessage2 instead, passing rootMetadata as well
 	 *
-	 * @param messageContent - Content of the message
+	 * @param content - Content of the message
 	 * @param localOpMetadata - The local metadata associated with the message. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 */
-	protected submitLocalMessage(
-		messageContent: any,
-		localOpMetadata: unknown,
-		rootMetadata: unknown,
-	): void {
-		this.submitLocalMessage2({ messageContent, localOpMetadata, rootMetadata });
+	protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+		this.submitLocalMessage2({ content, localOpMetadata, rootMetadata: undefined });
 	}
 
 	/**
@@ -369,7 +365,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	protected submitLocalMessage2(data: {
 		/** The DDS-specific content of the message to be sent */
-		messageContent: unknown;
+		content: unknown;
 		/**
 		 * The local metadata associated with the message. This is kept locally by the runtime
 		 * and not sent to the server. It will be provided back when this message is acknowledged by the server.
@@ -379,7 +375,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		/** Metadata to be handled by the runtime and included in the final op payload */
 		rootMetadata: unknown;
 	}): void {
-		const { messageContent, localOpMetadata, rootMetadata } = data;
+		const { content: messageContent, localOpMetadata, rootMetadata } = data;
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

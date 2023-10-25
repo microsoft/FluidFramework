@@ -59,7 +59,7 @@ class SharedNothing extends SharedObject {
 	public noop(): void {
 		this.noopCalls++;
 		this.methodCalls.push("noop");
-		this.submitLocalMessage({ type: "noop" }, undefined, undefined); //* FIX
+		this.submitLocalMessage({ type: "noop" });
 	}
 }
 

@@ -136,7 +136,7 @@ export class SharedCounter extends SharedObject<ISharedCounterEvents> implements
 		};
 
 		this.incrementCore(incrementAmount);
-		this.submitLocalMessage(op, undefined, undefined); //* FIX
+		this.submitLocalMessage(op);
 	}
 
 	private incrementCore(incrementAmount: number): void {

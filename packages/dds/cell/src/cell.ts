@@ -389,6 +389,6 @@ export class SharedCell<T = any>
 	 */
 	private submitCellMessage(op: ICellOperation, previousValue?: Serializable<T>): void {
 		const localMetadata = this.createLocalOpMetadata(op, previousValue);
-		this.submitLocalMessage(op, localMetadata, /* rootMetadata */ undefined); //* FIX
+		this.submitLocalMessage(op, localMetadata);
 	}
 }

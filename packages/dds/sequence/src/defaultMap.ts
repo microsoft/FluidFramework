@@ -133,7 +133,6 @@ export class DefaultMap<T> {
 		private readonly submitMessage: (
 			op: any,
 			localOpMetadata: IMapMessageLocalMetadata,
-			rootMetadata: unknown,
 		) => void,
 		private readonly type: IValueType<T>,
 		private readonly options?: Partial<SequenceOptions>,
@@ -399,7 +398,7 @@ export class DefaultMap<T> {
 				this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
 			},
 			submit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
-				this.submitMessage(op, localOpMetadata, /* rootMetadata */ undefined); //* FIX
+				this.submitMessage(op, localOpMetadata);
 			},
 			resubmit: (op: IMapValueTypeOperation, localOpMetadata: IMapMessageLocalMetadata) => {
 				const localValue = this.data.get(op.key);
@@ -412,11 +411,7 @@ export class DefaultMap<T> {
 					op.value,
 					localOpMetadata,
 				);
-				this.submitMessage(
-					{ ...op, value: rebasedOp },
-					rebasedLocalOpMetadata,
-					/* rootMetadata */ undefined,
-				);
+				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
 			},
 			getStashedOpLocalMetadata: (op: IMapValueTypeOperation) => {
 				assert(
@@ -453,7 +448,7 @@ export class DefaultMap<T> {
 				},
 			};
 
-			this.submitMessage(op, localOpMetadata, /* rootMetadata */ undefined);
+			this.submitMessage(op, localOpMetadata);
 
 			const event: IValueChanged = { key, previousValue };
 			this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);

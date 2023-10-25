@@ -191,11 +191,7 @@ export class AttributableMapKernel {
 	public constructor(
 		private readonly serializer: IFluidSerializer,
 		private readonly handle: IFluidHandle,
-		private readonly submitMessage: (
-			op: unknown,
-			localOpMetadata: unknown,
-			rootMetadata: unknown,
-		) => void,
+		private readonly submitMessage: (op: unknown, localOpMetadata: unknown) => void,
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {
@@ -840,7 +836,7 @@ export class AttributableMapKernel {
 		previousMap?: Map<string, ILocalValue>,
 	): void {
 		const metadata = createClearLocalOpMetadata(op, this.getMapClearMessageId(), previousMap);
-		this.submitMessage(op, metadata, /* rootMetadata */ undefined); //* FIX
+		this.submitMessage(op, metadata);
 	}
 
 	private getMapKeyMessageId(op: IMapKeyOperation): number {
@@ -865,7 +861,7 @@ export class AttributableMapKernel {
 			this.getMapKeyMessageId(op),
 			previousValue,
 		);
-		this.submitMessage(op, localMetadata, /* rootMetadata */ undefined);
+		this.submitMessage(op, localMetadata);
 	}
 
 	/**
@@ -897,6 +893,6 @@ export class AttributableMapKernel {
 			localOpMetadata.type === "edit"
 				? { type: "edit", pendingMessageId, previousValue: localOpMetadata.previousValue }
 				: { type: "add", pendingMessageId };
-		this.submitMessage(op, localMetadata, /* rootMetadata */ undefined);
+		this.submitMessage(op, localMetadata);
 	}
 }

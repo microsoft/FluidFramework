@@ -257,8 +257,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.intervalCollections = new DefaultMap(
 			this.serializer,
 			this.handle,
-			(op, localOpMetadata, rootMetadata) =>
-				this.submitLocalMessage(op, localOpMetadata, rootMetadata),
+			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new SequenceIntervalCollectionValueType(),
 			dataStoreRuntime.options,
 		);
@@ -417,7 +416,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		if (!this.loadedDeferred.isCompleted) {
 			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
 		} else {
-			this.submitLocalMessage(translated, metadata, /* rootMetadata */ undefined); //* FIX
+			this.submitLocalMessage(translated, metadata);
 		}
 	}
 

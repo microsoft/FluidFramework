@@ -834,11 +834,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		const { version: loadedSummaryVersion } = summary;
 
 		if (isUpdateRequired(loadedSummaryVersion, this.writeFormat)) {
-			this.submitOp(
-				{ type: SharedTreeOpType.Update, version: this.writeFormat },
-				undefined,
-				/* rootMetadata */ undefined
-			);
+			this.submitOp({ type: SharedTreeOpType.Update, version: this.writeFormat });
 			this.logger.sendTelemetryEvent({
 				eventName: 'RequestVersionUpdate',
 				versionFrom: loadedSummaryVersion,
@@ -1398,11 +1394,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 		if (this.isAttached()) {
 			switch (this.writeFormat) {
 				case WriteFormat.v0_0_2:
-					this.submitOp(
-						this.encoder_0_0_2.encodeEditOp(edit, this.serializeEdit.bind(this), this),
-						undefined,
-						/* rootMetadata */ undefined
-					);
+					this.submitOp(this.encoder_0_0_2.encodeEditOp(edit, this.serializeEdit.bind(this), this));
 					break;
 				case WriteFormat.v0_1_1:
 					this.submitOp(
@@ -1412,9 +1404,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 							this.idCompressor.takeNextCreationRange(),
 							this.idNormalizer,
 							this.interner
-						),
-						undefined,
-						/* rootMetadata */ undefined //* FIX
+						)
 					);
 					break;
 				default:
@@ -1428,16 +1418,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	/** A type-safe `submitLocalMessage` wrapper to enforce op format */
-	private submitOp(
-		content: SharedTreeOp | SharedTreeOp_0_0_2,
-		localOpMetadata: unknown,
-		rootMetadata: unknown
-	): void {
+	private submitOp(content: SharedTreeOp | SharedTreeOp_0_0_2, localOpMetadata: unknown = undefined): void {
 		assert(
 			compareSummaryFormatVersions(content.version, this.writeFormat) === 0,
 			0x631 /* Attempted to submit op of wrong version */
 		);
-		this.submitLocalMessage(content, localOpMetadata, /* rootMetadata */ undefined); //* FIX
+		this.submitLocalMessage(content, localOpMetadata);
 	}
 
 	public getRuntime(): IFluidDataStoreRuntime {

@@ -624,7 +624,7 @@ export class SharedDirectory
 	 * @internal
 	 */
 	public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
-		this.submitLocalMessage(op, localOpMetadata, /* rootMetadata */ undefined); //* UNDO
+		this.submitLocalMessage(op, localOpMetadata);
 	}
 
 	/**
@@ -643,8 +643,8 @@ export class SharedDirectory
 		/** Metadata to be handled by the runtime and included in the final op payload */
 		rootMetadata: unknown;
 	}): void {
-		const { op: messageContent, localOpMetadata, rootMetadata } = data;
-		this.submitLocalMessage2({ messageContent, localOpMetadata, rootMetadata });
+		const { op: content, localOpMetadata, rootMetadata } = data;
+		this.submitLocalMessage2({ content, localOpMetadata, rootMetadata });
 	}
 
 	/**

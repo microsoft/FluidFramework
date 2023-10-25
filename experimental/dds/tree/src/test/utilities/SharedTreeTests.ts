@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-//* NOPE
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
-
 import { strict as assert } from 'assert';
 import { expect } from 'chai';
 import { ITelemetryBaseEvent, ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -715,7 +711,7 @@ export function runSharedTreeOperationsTests(
 				const ops = spyOnSubmittedOps(containerRuntimeFactory);
 				const initialEditCount = sharedTree1.edits.length;
 				sharedTree1.applyEdit(Change.setPayload(sharedTree1.currentView.root, 42));
-				remoteRuntime.submit(ops[0], /* localOpMetadata */ undefined);
+				remoteRuntime.submit(ops[0], /* localOpMetadata */ undefined, /* rootMetadata */ undefined);
 				containerRuntimeFactory.processAllMessages();
 				expect(sharedTree1.edits.length).to.equal(initialEditCount + 1);
 			});

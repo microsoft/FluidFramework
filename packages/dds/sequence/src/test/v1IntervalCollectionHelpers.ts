@@ -126,8 +126,7 @@ export class SharedStringWithV1IntervalCollection extends SharedString {
 		(this as unknown as SharedStringInternals).intervalCollections = new DefaultMap(
 			this.serializer,
 			this.handle,
-			(op, localOpMetadata, rootMetadata) =>
-				this.submitLocalMessage(op, localOpMetadata, rootMetadata),
+			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			new V1SequenceIntervalCollectionValueType(),
 			{},
 		);

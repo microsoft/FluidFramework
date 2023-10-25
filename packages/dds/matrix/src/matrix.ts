@@ -473,7 +473,6 @@ export class SharedMatrix<T = any>
 		super.submitLocalMessage(
 			makeHandlesSerializable(message, this.serializer, this.handle),
 			localOpMetadata,
-			/* rootMetadata */ undefined, //* FIX
 		);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').

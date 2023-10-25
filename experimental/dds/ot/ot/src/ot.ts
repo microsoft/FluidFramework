@@ -73,7 +73,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		}
 
 		this.pendingOps.push(op);
-		this.submitLocalMessage(op, undefined, /* rootMetadata */ undefined); //* FIX
+		this.submitLocalMessage(op);
 	}
 
 	/**

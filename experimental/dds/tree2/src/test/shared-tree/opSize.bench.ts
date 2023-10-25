@@ -363,11 +363,7 @@ describe("Op Size", () => {
 	function registerOpListener(tree: ISharedTree, resultArray: ISequencedDocumentMessage[]): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
 		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
-		function submitLocalMessage(
-			content: any,
-			localOpMetadata: unknown,
-			rootMetadata: unknown,
-		): void {
+		function submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
 			resultArray.push(content);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}

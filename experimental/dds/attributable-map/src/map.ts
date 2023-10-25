@@ -151,8 +151,7 @@ export class AttributableMap extends SharedObject<ISharedMapEvents> implements I
 		this.kernel = new AttributableMapKernel(
 			this.serializer,
 			this.handle,
-			(op, localOpMetadata) =>
-				this.submitLocalMessage(op, localOpMetadata, /* rootMetadata */ undefined), //* FIX
+			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
 			() => this.isAttached(),
 			this,
 		);

@@ -269,7 +269,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 			type: "volunteer",
 			messageId: ++this.messageId,
 		};
-		this.submitLocalMessage(op, pendingOp.messageId, /* rootMetadata */ undefined); //* FIX
+		this.submitLocalMessage(op, pendingOp.messageId);
 		this.latestPendingOps.set(taskId, pendingOp);
 	}
 
@@ -282,7 +282,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 			type: "abandon",
 			messageId: ++this.messageId,
 		};
-		this.submitLocalMessage(op, pendingOp.messageId, /* rootMetadata */ undefined);
+		this.submitLocalMessage(op, pendingOp.messageId);
 		this.latestPendingOps.set(taskId, pendingOp);
 	}
 
@@ -302,7 +302,7 @@ export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITa
 			this.pendingCompletedTasks.set(taskId, [pendingOp.messageId]);
 		}
 
-		this.submitLocalMessage(op, pendingOp.messageId, /* rootMetadata */ undefined);
+		this.submitLocalMessage(op, pendingOp.messageId);
 		this.latestPendingOps.set(taskId, pendingOp);
 	}
 

@@ -138,9 +138,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected rollback(content: any, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
-    protected submitLocalMessage(content: any, localOpMetadata: unknown, rootMetadata: unknown): void;
+    // @deprecated
+    protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
     protected submitLocalMessage2(data: {
-        messageContent: unknown;
+        content: unknown;
         localOpMetadata?: unknown;
         rootMetadata: unknown;
     }): void;
