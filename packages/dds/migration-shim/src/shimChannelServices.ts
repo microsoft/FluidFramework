@@ -8,8 +8,8 @@ import {
 	type IChannelServices,
 	type IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
-import { ShimDeltaConnection } from "./shimDeltaConnection";
-import { type IShimDeltaHandler } from "./types";
+import { ShimDeltaConnection } from "./shimDeltaConnection.js";
+import { type IShimDeltaHandler } from "./types.js";
 
 /**
  * ShimChannelServices wraps an existing IChannelServices object and provides a new ShimDeltaConnection
