@@ -32,7 +32,7 @@ describe("Odsp Error", () => {
 	} as Response;
 
 	/**
-	 * Checks is the networkError complies with the {@link IGenericNetworkError}.
+	 * Checks if the input is an {@link IGenericNetworkError}.
 	 */
 	function isIGenericNetworkError(input: any): input is IGenericNetworkError {
 		return (
