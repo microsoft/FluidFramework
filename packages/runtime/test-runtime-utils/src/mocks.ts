@@ -305,11 +305,15 @@ export class MockContainerRuntime {
 		const local = this.clientId === message.clientId;
 		if (local) {
 			const pendingMessage = this.pendingMessages.shift();
-			assert(
-				pendingMessage?.clientSequenceNumber === message.clientSequenceNumber,
-				"Unexpected client sequence number from message",
-			);
-			localOpMetadata = pendingMessage.localOpMetadata;
+			const pending = JSON.stringify(pendingMessage?.content);
+			const incoming = JSON.stringify(message.contents);
+			if (pending !== incoming) {
+				throw new Error(
+					`Unexpected incoming message. Expecting ${pending}, got ${incoming}`,
+				);
+			}
+
+			localOpMetadata = pendingMessage?.localOpMetadata;
 		}
 		return [local, localOpMetadata];
 	}
