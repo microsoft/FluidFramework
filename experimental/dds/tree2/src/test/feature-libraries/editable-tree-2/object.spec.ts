@@ -6,9 +6,7 @@
 import { strict as assert } from "assert";
 import { LeafSchema, TreeSchema } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
-
-// eslint-disable-next-line import/no-internal-modules
-import { TypedValue } from "../../../feature-libraries/schema-aware/internal";
+import { TreeValue } from "../../../core";
 import { createTreeView, itWithRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase {
@@ -218,7 +216,7 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const $ = _.struct("empty", {});
+			const $ = _.object("empty", {});
 			return _.intoSchema($);
 		})(),
 		initialTree: {},
@@ -226,7 +224,7 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const $ = _.struct("primitives", {
+			const $ = _.object("primitives", {
 				boolean: leaf.boolean,
 				number: leaf.number,
 				string: leaf.string,
@@ -242,7 +240,7 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const $ = _.struct("optional", {
+			const $ = _.object("optional", {
 				boolean: _.optional(leaf.boolean),
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
@@ -254,7 +252,7 @@ const tcs: TestCase[] = [
 	{
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const $ = _.struct("optional (defined)", {
+			const $ = _.object("optional (defined)", {
 				boolean: _.optional(leaf.boolean),
 				number: _.optional(leaf.number),
 				string: _.optional(leaf.string),
@@ -271,9 +269,9 @@ const tcs: TestCase[] = [
 		schema: (() => {
 			const _ = new SchemaBuilder({ scope: "test" });
 
-			const inner = _.struct("inner", {});
+			const inner = _.object("inner", {});
 
-			const $ = _.struct("outer", {
+			const $ = _.object("outer", {
 				nested: inner,
 			});
 
@@ -313,7 +311,7 @@ describe("Object-like", () => {
 	describe("setting an invalid field", () => {
 		itWithRoot(
 			"throws TypeError in strict mode",
-			makeSchema((_) => _.struct("no fields", {})),
+			makeSchema((_) => _.object("no fields", {})),
 			{},
 			(root) => {
 				assert.throws(() => {
@@ -328,13 +326,13 @@ describe("Object-like", () => {
 		describe("primitives", () => {
 			function check<const TSchema extends LeafSchema>(
 				schema: LeafSchema,
-				before: TypedValue<TSchema["leafValue"]>,
-				after: TypedValue<TSchema["leafValue"]>,
+				before: TreeValue<TSchema["leafValue"]>,
+				after: TreeValue<TSchema["leafValue"]>,
 			) {
 				describe(`required ${typeof before} `, () => {
 					itWithRoot(
 						`(${pretty(before)} -> ${pretty(after)})`,
-						makeSchema((_) => _.struct("", { _value: schema })),
+						makeSchema((_) => _.object("", { _value: schema })),
 						{ _value: before },
 						(root) => {
 							assert.equal(root._value, before);
@@ -347,7 +345,7 @@ describe("Object-like", () => {
 				describe(`optional ${typeof before}`, () => {
 					itWithRoot(
 						`(undefined -> ${pretty(before)} -> ${pretty(after)})`,
-						makeSchema((_) => _.struct("", { _value: _.optional(schema) })),
+						makeSchema((_) => _.object("", { _value: _.optional(schema) })),
 						{ _value: undefined },
 						(root) => {
 							assert.equal(root._value, undefined);
@@ -367,10 +365,10 @@ describe("Object-like", () => {
 
 		describe("required object", () => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const child = _.struct("child", {
+			const child = _.object("child", {
 				objId: _.number,
 			});
-			const parent = _.struct("parent", {
+			const parent = _.object("parent", {
 				child,
 			});
 			const schema = _.intoSchema(parent);
@@ -392,10 +390,10 @@ describe("Object-like", () => {
 
 		describe("optional object", () => {
 			const _ = new SchemaBuilder({ scope: "test" });
-			const child = _.struct("child", {
+			const child = _.object("child", {
 				objId: _.number,
 			});
-			const parent = _.struct("parent", {
+			const parent = _.object("parent", {
 				child: _.optional(child),
 			});
 			const schema = _.intoSchema(parent);

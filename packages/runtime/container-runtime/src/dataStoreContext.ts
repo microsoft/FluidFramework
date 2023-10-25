@@ -78,7 +78,7 @@ import {
 	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
+import { sendGCUnexpectedUsageEvent } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -325,11 +325,7 @@ export abstract class FluidDataStoreContext
 			this.mc.logger,
 		);
 
-		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-		this.throwOnTombstoneUsage =
-			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-			this._containerRuntime.gcTombstoneEnforcementAllowed &&
-			this.clientDetails.type !== summarizerClientType;
+		this.throwOnTombstoneUsage = this._containerRuntime.gcThrowOnTombstoneUsage;
 
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
@@ -458,6 +454,11 @@ export abstract class FluidDataStoreContext
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
 		this.bindRuntime(channel);
+		// This data store may have been disposed before the channel is created during realization. If so,
+		// dispose the channel now.
+		if (this.disposed) {
+			channel.dispose();
+		}
 	}
 
 	/**

@@ -95,6 +95,8 @@ export abstract class LeafTask extends Task {
 		return sum;
 	}
 
+	// Gather all tasks that depending on this task, so we can use it compute the weight.
+	// Collecting  to make sure we don't double count the weight of the same task
 	private get parentLeafTasks(): Set<LeafTask> {
 		if (this._parentLeafTasks === null) {
 			// Circular dependency, start unrolling
@@ -117,7 +119,9 @@ export abstract class LeafTask extends Task {
 				if (e[0] === this) {
 					// detected a cycle, convert into a message
 					throw new Error(
-						`Circular dependency: ${e.map((v) => v.nameColored).join("->")}`,
+						`Circular dependency in parent leaf tasks: ${e
+							.map((v) => v.nameColored)
+							.join("->")}`,
 					);
 				}
 			}
@@ -152,12 +156,12 @@ export abstract class LeafTask extends Task {
 		}
 		if (options.showExec) {
 			this.node.buildContext.taskStats.leafBuiltCount++;
-			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
-				.toString()
-				.padStart(3, " ");
 			const totalTask =
 				this.node.buildContext.taskStats.leafTotalCount -
 				this.node.buildContext.taskStats.leafUpToDateCount;
+			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+				.toString()
+				.padStart(totalTask.toString().length, " ");
 			log(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
 		}
 		const startTime = Date.now();
@@ -273,12 +277,12 @@ export abstract class LeafTask extends Task {
 			}
 
 			this.node.buildContext.taskStats.leafBuiltCount++;
-			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
-				.toString()
-				.padStart(3, " ");
 			const totalTask =
 				this.node.buildContext.taskStats.leafTotalCount -
 				this.node.buildContext.taskStats.leafUpToDateCount;
+			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+				.toString()
+				.padStart(totalTask.toString().length, " ");
 			const elapsedTime = (Date.now() - startTime) / 1000;
 			const workerMsg = worker ? "[worker] " : "";
 			const suffix = this.isIncremental ? "" : " (non-incremental)";
@@ -420,7 +424,7 @@ export abstract class LeafTask extends Task {
 }
 
 export abstract class LeafWithDoneFileTask extends LeafTask {
-	private _isIncremental: boolean = false;
+	private _isIncremental: boolean = true;
 
 	protected get isIncremental() {
 		return this._isIncremental;
@@ -455,13 +459,14 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			const content = await this.getDoneFileContent();
 			if (content !== undefined) {
 				await writeFileAsync(doneFileFullPath, content);
-				this._isIncremental = true;
 			} else {
+				this._isIncremental = false;
 				console.warn(
 					`${this.node.pkg.nameColored}: warning: unable to generate content for ${doneFileFullPath}`,
 				);
 			}
 		} catch (error) {
+			this._isIncremental = false;
 			console.warn(
 				`${this.node.pkg.nameColored}: warning: unable to write ${doneFileFullPath}\n error: ${error}`,
 			);
@@ -547,7 +552,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			});
 			return JSON.stringify({ srcFiles, dstFiles, srcInfo, dstInfo });
 		} catch (e: any) {
-			this.traceError(`error comparing file times ${e.message}`);
+			this.traceError(`error comparing file times: ${e.message}`);
 			this.traceTrigger("failed to get file stats");
 			return undefined;
 		}

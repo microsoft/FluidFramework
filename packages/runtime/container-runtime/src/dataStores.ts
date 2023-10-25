@@ -65,12 +65,7 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import {
-	GCNodeType,
-	disableDatastoreSweepKey,
-	throwOnTombstoneLoadKey,
-	sendGCUnexpectedUsageEvent,
-} from "./gc";
+import { GCNodeType, disableDatastoreSweepKey, sendGCUnexpectedUsageEvent } from "./gc";
 import {
 	summarizerClientType,
 	IContainerRuntimeMetadata,
@@ -104,8 +99,6 @@ export class DataStores implements IDisposable {
 	// Stores the ids of new data stores between two GC runs. This is used to notify the garbage collector of new
 	// root data stores that are added.
 	private dataStoresSinceLastGC: string[] = [];
-	/** If true, throw an error when a tombstone data store is retrieved. */
-	private readonly throwOnTombstoneLoad: boolean;
 	// The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
 	// the container runtime to other nodes.
 	private readonly containerRuntimeHandle: IFluidHandle;
@@ -139,12 +132,6 @@ export class DataStores implements IDisposable {
 			"/",
 			this.runtime.IFluidHandleContext,
 		);
-
-		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-		this.throwOnTombstoneLoad =
-			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
-			this.runtime.gcTombstoneEnforcementAllowed &&
-			this.runtime.clientDetails.type !== summarizerClientType;
 
 		// Extract stores stored inside the snapshot
 		const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -542,7 +529,8 @@ export class DataStores implements IDisposable {
 		if (!context.tombstoned) {
 			return false;
 		}
-		const logErrorEvent = this.throwOnTombstoneLoad && !requestHeaderData.allowTombstone;
+		const logErrorEvent =
+			this.runtime.gcThrowOnTombstoneLoad && !requestHeaderData.allowTombstone;
 		sendGCUnexpectedUsageEvent(
 			this.mc,
 			{
@@ -578,7 +566,7 @@ export class DataStores implements IDisposable {
 				request,
 			);
 			// Throw an error if configured via options and via request headers.
-			if (this.throwOnTombstoneLoad && !requestHeaderData.allowTombstone) {
+			if (this.runtime.gcThrowOnTombstoneLoad && !requestHeaderData.allowTombstone) {
 				throw error;
 			}
 		}

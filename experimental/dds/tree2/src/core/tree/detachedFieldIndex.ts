@@ -134,7 +134,15 @@ export class DetachedFieldIndex {
 		const root = this.rootIdAllocator.allocate(count);
 		if (nodeId !== undefined) {
 			for (let i = 0; i < count; i++) {
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root);
+				assert(
+					tryGetFromNestedMap(
+						this.detachedNodeToField,
+						nodeId.major,
+						nodeId.minor + i,
+					) === undefined,
+					"Detached node ID already exists in index",
+				);
+				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
 			}
 		}
 		return root;

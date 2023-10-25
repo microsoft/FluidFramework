@@ -6,7 +6,12 @@
 /* eslint-disable no-inner-declarations */
 
 import { SchemaBuilder } from "../../../domains";
-import { FieldKinds, FieldSchema, SchemaAware, TreeNodeSchema } from "../../../feature-libraries";
+import {
+	FieldKinds,
+	TreeFieldSchema,
+	SchemaAware,
+	TreeNodeSchema,
+} from "../../../feature-libraries";
 import { requireAssignableTo } from "../../../util";
 
 const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
@@ -14,8 +19,11 @@ const builder = new SchemaBuilder({ scope: "Complex Schema Example" });
 // Schema
 export const stringTaskSchema = builder.fieldNode("StringTask", builder.string);
 // Polymorphic recursive schema:
-export const listTaskSchema = builder.structRecursive("ListTask", {
-	items: FieldSchema.createUnsafe(FieldKinds.sequence, [stringTaskSchema, () => listTaskSchema]),
+export const listTaskSchema = builder.objectRecursive("ListTask", {
+	items: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
+		stringTaskSchema,
+		() => listTaskSchema,
+	]),
 });
 
 {

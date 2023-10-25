@@ -49,6 +49,7 @@ export function isCombinedAppAndProtocolSummary(
 /**
  * Extract the attributes from the protocol summary.
  * @param protocolSummary - protocol summary from which the values are to be extracted.
+ * @public
  */
 export function getDocAttributesFromProtocolSummary(
 	protocolSummary: ISummaryTree,
@@ -60,6 +61,7 @@ export function getDocAttributesFromProtocolSummary(
 /**
  * Extract quorum values from the protocol summary.
  * @param protocolSummary - protocol summary from which the values are to be extracted.
+ * @public
  */
 export function getQuorumValuesFromProtocolSummary(
 	protocolSummary: ISummaryTree,

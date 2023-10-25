@@ -35,7 +35,7 @@ export function isPrimitive(schema: TreeNodeStoredSchema): boolean {
 	// Since the above is not done yet, use use a heuristic:
 	return (
 		schema.leafValue !== undefined &&
-		schema.structFields.size === 0 &&
+		schema.objectNodeFields.size === 0 &&
 		schema.mapFields === undefined
 	);
 }

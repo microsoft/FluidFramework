@@ -95,7 +95,12 @@ export {
 	prefixFieldPath,
 	CursorWithNode,
 } from "./treeCursorUtils";
-export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
+export {
+	singleTextCursor,
+	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
+	jsonableTreeFromForest,
+} from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";
@@ -138,7 +143,7 @@ export {
 export {
 	TreeNodeSchema,
 	AllowedTypes,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeSchema,
 	Any,
 	SchemaLibraryData,
@@ -149,14 +154,14 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	Unenforced,
 	AllowedTypeSet,
 	markEager,
@@ -177,7 +182,7 @@ export {
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 
-export { mapFieldMarks, mapMark, mapMarkList, populateChildModifications } from "./deltaUtils";
+export { mapFieldChanges, mapFieldsChanges, mapMark, mapMarkList } from "./deltaUtils";
 
 export {
 	TreeChunk,
@@ -221,6 +226,7 @@ export {
 } from "./default-field-kinds";
 
 export {
+	TreeEvent,
 	UntypedField,
 	UntypedTree,
 	UntypedTreeContext,
@@ -249,8 +255,8 @@ export {
 	RequiredField,
 	Sequence,
 	Skip,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	TreeContext,
 	TypedField,
 	TypedNode,
@@ -271,11 +277,14 @@ export {
 	SharedTreeList,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	ProxyRoot,
 	node,
+	NodeApi,
 	SharedTreeNode,
 	Typed,
+	SharedTreeObjectFactory,
+	FactoryTreeSchema,
+	addFactory,
 } from "./editable-tree-2";
 
 // Split into separate import and export for compatibility with API-Extractor.

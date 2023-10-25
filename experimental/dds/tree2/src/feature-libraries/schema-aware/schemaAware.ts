@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { PrimitiveValueSchema, TreeNodeSchemaIdentifier, ValueSchema } from "../../core";
+import { PrimitiveValueSchema, TreeNodeSchemaIdentifier, TreeValue, ValueSchema } from "../../core";
 import {
 	ContextuallyTypedNodeData,
 	FluidSerializableReadOnly,
@@ -17,7 +17,7 @@ import {
 import { Multiplicity } from "../modular-schema";
 import {
 	InternalTypedSchemaTypes,
-	FieldSchema,
+	TreeFieldSchema,
 	TreeNodeSchema,
 	AllowedTypes,
 } from "../typed-schema";
@@ -30,7 +30,7 @@ import {
 } from "../untypedTree";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util";
 import { UntypedOptionalField, UntypedSequenceField, UntypedValueField } from "./partlyTyped";
-import { TypedValue, TypedValueOrUndefined } from "./schemaAwareUtil";
+import { TypedValueOrUndefined } from "./schemaAwareUtil";
 
 /**
  * Empty Object for use in type computations that should contribute no fields when `&`ed with another type.
@@ -45,7 +45,7 @@ export type EmptyObject = {};
  * @alpha
  */
 export type ValuePropertyFromSchema<TSchema extends ValueSchema | undefined> =
-	TSchema extends ValueSchema ? { [valueSymbol]: TypedValue<TSchema> } : EmptyObject;
+	TSchema extends ValueSchema ? { [valueSymbol]: TreeValue<TSchema> } : EmptyObject;
 
 /**
  * Different schema aware APIs that can be generated.
@@ -149,9 +149,9 @@ export type UnbrandedName<TName> = [
  */
 export type TypedFields<
 	Mode extends ApiMode,
-	TFields extends undefined | { [key: string]: FieldSchema },
+	TFields extends undefined | { [key: string]: TreeFieldSchema },
 > = [
-	TFields extends { [key: string]: FieldSchema }
+	TFields extends { [key: string]: TreeFieldSchema }
 		? {
 				-readonly [key in keyof TFields]: TypedField<
 					TFields[key],
@@ -162,10 +162,10 @@ export type TypedFields<
 ][_InlineTrick];
 
 /**
- * `FieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
+ * `TreeFieldSchema` to `TypedField`. May unwrap to child depending on Mode and FieldKind.
  * @alpha
  */
-export type TypedField<TField extends FieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
+export type TypedField<TField extends TreeFieldSchema, Mode extends ApiMode = ApiMode.Editable> = [
 	ApplyMultiplicity<
 		TField["kind"]["multiplicity"],
 		AllowedTypesToTypedTrees<Mode, TField["allowedTypes"]>,
@@ -275,7 +275,7 @@ export type TypedNode<
 		Mode,
 		TypedFields<
 			Mode extends ApiMode.Editable ? ApiMode.EditableUnwrapped : Mode,
-			TSchema["structFieldsObject"]
+			TSchema["objectNodeFieldsObject"]
 		>,
 		TSchema["leafValue"],
 		TSchema["name"]

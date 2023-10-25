@@ -25,9 +25,7 @@ import {
 	SchemaData,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { TreeCompressionStrategy } from "../shared-tree";
-import { FullSchemaPolicy } from "./modular-schema";
-import { decode, schemaCompressedEncode, uncompressedEncode, EncodedChunk } from "./chunked-forest";
+import { singleTextCursor } from "./treeTextCursor";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -118,14 +116,19 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
-			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
+			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk[]][];
+
+			const allocator = idAllocatorFromMaxId();
+			const delta: [FieldKey, Delta.FieldChanges][] = fields.map(([fieldKey, content]) => {
+				const buildId = { minor: allocator.allocate(content.length) };
 				const cursors = mapCursorField(decode(content).cursor(), (cursor) => cursor.fork());
-				const insert: Delta.Insert = {
-					type: Delta.MarkType.Insert,
-					content: cursors,
-				};
-				return [fieldKey, [insert]];
+				return [
+					fieldKey,
+					{
+						build: [{ id: buildId, trees: content.map(singleTextCursor) }],
+						local: [{ count: content.length, attach: buildId }],
+					},
+				];
 			});
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

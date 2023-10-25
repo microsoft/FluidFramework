@@ -13,7 +13,7 @@ import {
 	TreeCompressionStrategy,
 	runSynchronous,
 } from "../../shared-tree";
-import { Any, FieldKinds, FieldSchema, singleTextCursor } from "../../feature-libraries";
+import { Any, FieldKinds, TreeFieldSchema, singleTextCursor } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
 	TestTreeProviderLite,
@@ -45,7 +45,7 @@ function generateCompleteTree(
 		new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 		"test",
 	);
-	const view = tree.schematize({
+	const view = tree.schematizeView({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema: testSchema,
 		initialTree: [],
@@ -173,9 +173,9 @@ export function generateTestTrees() {
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2);
-				const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+				const tree1 = provider.trees[0].schematizeView(emptyJsonSequenceConfig);
 				provider.processMessages();
-				const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig);
+				const tree2 = provider.trees[1].schematizeView(emptyJsonSequenceConfig);
 				provider.processMessages();
 
 				// Insert node
@@ -203,11 +203,11 @@ export function generateTestTrees() {
 						initialTree: [0, 1, 2, 3],
 						allowedSchemaModifications: AllowedUpdateType.None,
 					};
-					const tree1 = provider.trees[0].schematize(config);
+					const tree1 = provider.trees[0].schematizeView(config);
 					provider.processMessages();
-					const tree2 = provider.trees[1].schematize(config);
-					const tree3 = provider.trees[2].schematize(config);
-					const tree4 = provider.trees[3].schematize(config);
+					const tree2 = provider.trees[1].schematizeView(config);
+					const tree3 = provider.trees[2].schematizeView(config);
+					const tree4 = provider.trees[3].schematizeView(config);
 					provider.processMessages();
 					remove(tree1, index, 1);
 					remove(tree2, index, 1);
@@ -225,9 +225,12 @@ export function generateTestTrees() {
 					"test",
 				);
 
-				baseTree.view.storedSchema.update(jsonSequenceRootSchema);
+				const tree1 = baseTree.schematizeView({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema: jsonSequenceRootSchema,
+					initialTree: [],
+				});
 
-				const tree1 = baseTree.view;
 				const tree2 = tree1.fork();
 				insert(tree1, 0, "y");
 				tree2.rebaseOnto(tree1);
@@ -283,7 +286,7 @@ export function generateTestTrees() {
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
 				);
-				const view = tree.schematize(config);
+				const view = tree.schematizeView(config);
 
 				const field = view.editor.optionalField({
 					parent: undefined,
@@ -301,7 +304,7 @@ export function generateTestTrees() {
 				});
 				const seqMapSchema = innerBuilder.mapRecursive(
 					"SeqMap",
-					FieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
+					TreeFieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
 				);
 				const docSchema = innerBuilder.intoSchema(SchemaBuilder.sequence(seqMapSchema));
 
@@ -315,7 +318,7 @@ export function generateTestTrees() {
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
 				);
-				const view = tree.schematize(config);
+				const view = tree.schematizeView(config);
 				view.transaction.start();
 				// We must make this shallow change to the sequence field as part of the same transaction as the
 				// nested change. Otherwise, the nested change will be represented using the generic field kind.

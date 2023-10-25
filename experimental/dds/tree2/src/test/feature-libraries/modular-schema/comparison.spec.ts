@@ -16,7 +16,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/comparison";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeStoredSchema,
 	ValueSchema,
 	TreeTypeSet,
@@ -33,7 +33,7 @@ import { namedTreeSchema } from "../../utils";
 
 describe("Schema Comparison", () => {
 	/**
-	 * FieldStoredSchema permits anything.
+	 * TreeFieldStoredSchema permits anything.
 	 * Note that children inside the field still have to be in schema.
 	 */
 	const anyField = fieldSchema(FieldKinds.sequence);
@@ -43,17 +43,17 @@ describe("Schema Comparison", () => {
 	 * Note that children under the fields still have to be in schema.
 	 */
 	const anyTreeWithoutValue: TreeNodeStoredSchema = {
-		structFields: emptyMap,
+		objectNodeFields: emptyMap,
 		mapFields: anyField,
 	};
 
 	const numberLeaf: TreeNodeStoredSchema = {
-		structFields: emptyMap,
+		objectNodeFields: emptyMap,
 		leafValue: ValueSchema.Number,
 	};
 
 	/**
-	 * FieldStoredSchema which is impossible for any data to be in schema with.
+	 * TreeFieldStoredSchema which is impossible for any data to be in schema with.
 	 */
 	const neverField = fieldSchema(FieldKinds.required, []);
 
@@ -61,32 +61,32 @@ describe("Schema Comparison", () => {
 	 * TreeNodeStoredSchema which is impossible for any data to be in schema with.
 	 */
 	const neverTree: TreeNodeStoredSchema = {
-		structFields: emptyMap,
+		objectNodeFields: emptyMap,
 		mapFields: neverField,
 	};
 
 	const neverTree2: TreeNodeStoredSchema = {
-		structFields: new Map([[brand("x"), neverField]]),
+		objectNodeFields: new Map([[brand("x"), neverField]]),
 	};
 
 	const emptyTree = namedTreeSchema({
 		name: "empty",
-		structFields: {},
+		objectNodeFields: {},
 	});
 
 	const emptyLocalFieldTree = namedTreeSchema({
 		name: "emptyLocalFieldTree",
-		structFields: { x: storedEmptyFieldSchema },
+		objectNodeFields: { x: storedEmptyFieldSchema },
 	});
 
 	const optionalLocalFieldTree = namedTreeSchema({
 		name: "optionalLocalFieldTree",
-		structFields: { x: fieldSchema(FieldKinds.optional, [emptyTree.name]) },
+		objectNodeFields: { x: fieldSchema(FieldKinds.optional, [emptyTree.name]) },
 	});
 
 	const valueLocalFieldTree = namedTreeSchema({
 		name: "valueLocalFieldTree",
-		structFields: { x: fieldSchema(FieldKinds.required, [emptyTree.name]) },
+		objectNodeFields: { x: fieldSchema(FieldKinds.required, [emptyTree.name]) },
 	});
 
 	const valueAnyField = fieldSchema(FieldKinds.required);
@@ -109,7 +109,9 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField));
 		updateTreeSchema(repo, brand("never"), neverTree);
-		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.required, [brand("never")]);
+		const neverField2: TreeFieldStoredSchema = fieldSchema(FieldKinds.required, [
+			brand("never"),
+		]);
 		assert(isNeverField(defaultSchemaPolicy, repo, neverField2));
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, storedEmptyFieldSchema), false);
 		assert.equal(isNeverField(defaultSchemaPolicy, repo, anyField), false);
@@ -134,7 +136,7 @@ describe("Schema Comparison", () => {
 		assert(isNeverTree(defaultSchemaPolicy, repo, neverTree));
 		assert(
 			isNeverTree(defaultSchemaPolicy, repo, {
-				structFields: emptyMap,
+				objectNodeFields: emptyMap,
 				mapFields: neverField,
 			}),
 		);
@@ -142,7 +144,7 @@ describe("Schema Comparison", () => {
 		assert(isNeverTree(defaultSchemaPolicy, repo, undefined));
 		assert.equal(
 			isNeverTree(defaultSchemaPolicy, repo, {
-				structFields: emptyMap,
+				objectNodeFields: emptyMap,
 			}),
 			false,
 		);
@@ -244,8 +246,10 @@ describe("Schema Comparison", () => {
 		const repo = new InMemoryStoredSchemaRepository();
 		updateTreeSchema(repo, brand("never"), neverTree);
 		updateTreeSchema(repo, emptyTree.name, emptyTree);
-		const neverField2: FieldStoredSchema = fieldSchema(FieldKinds.required, [brand("never")]);
-		const compare = (a: FieldStoredSchema, b: FieldStoredSchema): boolean =>
+		const neverField2: TreeFieldStoredSchema = fieldSchema(FieldKinds.required, [
+			brand("never"),
+		]);
+		const compare = (a: TreeFieldStoredSchema, b: TreeFieldStoredSchema): boolean =>
 			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [
 			neverField,
