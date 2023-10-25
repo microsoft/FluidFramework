@@ -4,7 +4,7 @@
  */
 
 import { fail } from "../../../util";
-import { TreeNodeSchema } from "../../typed-schema";
+import { TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeNode, TreeStatus } from "../editableTreeTypes";
 import { getProxyForNode } from "./proxies";
@@ -43,9 +43,8 @@ export interface NodeApi {
 	/**
 	 * The key of the given node under its parent.
 	 * @remarks
-	 * * If `node` is under an object, this returns the key of the field that is under (a string).
-	 * * If `node` is under a list, this returns the index of `node` in the list (a number).
-	 * * If `node` is the root of the tree, returns a special key (a string).
+	 * If `node` is an element in a {@link SharedTreeList}, this returns the index of `node` in the list (a `number`).
+	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	readonly key: (node: SharedTreeNode) => string | number;
 	/**
@@ -68,8 +67,8 @@ export interface NodeApi {
  * The `node` object holds various functions for analyzing {@link SharedTreeNode}s.
  * @alpha
  */
-export const nodeAPi: NodeApi = {
-	schema: (node: SharedTreeNode): TreeNodeSchema => {
+export const nodeApi: NodeApi = {
+	schema: (node: SharedTreeNode) => {
 		return assertTreeNode(node).schema;
 	},
 	is: <TSchema extends TreeNodeSchema>(
@@ -87,7 +86,18 @@ export const nodeAPi: NodeApi = {
 		return undefined;
 	},
 	key: (node: SharedTreeNode) => {
-		const x = 
+		const treeNode = assertTreeNode(node);
+		const parent = nodeApi.parent(node);
+		if (parent !== undefined) {
+			const parentSchema = nodeApi.schema(parent);
+			if (schemaIsFieldNode(parentSchema)) {
+				// The parent of `node` is a list
+				return treeNode.parentField.index;
+			}
+		}
+
+		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
+		return treeNode.parentField.parent.key;
 	},
 	on: <K extends keyof EditableTreeEvents>(
 		node: SharedTreeNode,
