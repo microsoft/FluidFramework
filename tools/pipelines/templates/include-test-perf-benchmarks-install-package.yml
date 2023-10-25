@@ -30,7 +30,7 @@ steps:
   # Need to give this step a unique name because this template is used several times in the same pipeline.
   # If at some point this becomes hard to do, we can switch to using standard variables (vs output variables from
   # a step) so the step doesn't need a name. Need to be careful with the characters allowed in a step name.
-  name: localVariables_${{ replace(replace(parameters.testPackageName, '@', '' ), '/', '_') }}
+  name: localVariables_${{ replace(replace(replace(parameters.testPackageName, '@', '' ), '/', '_'), '-', '_') }}
   inputs:
     targetType: 'inline'
     script: |
