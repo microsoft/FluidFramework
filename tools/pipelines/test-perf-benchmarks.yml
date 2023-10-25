@@ -351,11 +351,9 @@ stages:
         # Download and install package with performance tests
         - template: templates/include-test-perf-benchmarks-install-package.yml
           parameters:
-            # Not sure why macro syntax $() for 'testPackage' doesn't work here, maybe because the template is parsed
-            # at "compile time"? The others are defined at the pipeline level so maybe that's why they work...?
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
-            testPackageName: ${{ variables.testPackage }}
+            testPackageName: $(testPackage)
             installPath: $(testWorkspace)
 
         - task: Bash@3
