@@ -1280,10 +1280,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		const map2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 		await provider.ensureSynchronized();
 		assert.strictEqual(
-			bufferToString(await map1.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
-		assert.strictEqual(
 			bufferToString(await map2.get("blob handle").get(), "utf8"),
 			"blob contents",
 		);

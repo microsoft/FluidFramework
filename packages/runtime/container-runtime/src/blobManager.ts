@@ -121,7 +121,6 @@ interface PendingBlob {
 	acked?: boolean;
 	abortSignal?: AbortSignal;
 	pendingStashed?: boolean;
-	unableToStash?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -174,6 +173,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+	private stopAttaching: boolean = false;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -530,7 +530,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if ((entry.abortSignal?.aborted === true && !entry.opsent) || entry.unableToStash) {
+		if ((entry.abortSignal?.aborted === true && !entry.opsent) || this.stopAttaching) {
 			this.deletePendingBlob(localId);
 			return;
 		}
@@ -923,15 +923,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				}
 				const blobs = {};
 				const localBlobs = new Set<PendingBlob>();
-				const abortPromise = new Promise<void>((resolve, reject) => {
-					stopBlobAttachingSignal?.addEventListener(
-						"abort",
-						() => {
-							reject(new Error("Operation aborted"));
-						},
-						{ once: true },
-					);
-				});
 				while (localBlobs.size < this.pendingBlobs.size) {
 					const attachBlobsP: Promise<void>[] = [];
 					for (const [id, entry] of this.pendingBlobs) {
@@ -939,7 +930,15 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							localBlobs.add(entry);
 							entry.handleP.resolve(this.getBlobHandle(id));
 							attachBlobsP.push(
-								new Promise<void>((resolve) => {
+								new Promise<void>((resolve, reject) => {
+									stopBlobAttachingSignal?.addEventListener(
+										"abort",
+										() => {
+											this.stopAttaching = true;
+											reject(new Error("Operation aborted"));
+										},
+										{ once: true },
+									);
 									const onBlobAttached = (attachedEntry) => {
 										if (attachedEntry === entry) {
 											this.off("blobAttached", onBlobAttached);
@@ -955,7 +954,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							);
 						}
 					}
-					await Promise.race([Promise.all(attachBlobsP), abortPromise]).catch(() => {});
+					await Promise.allSettled(attachBlobsP).catch(() => {});
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
@@ -964,8 +963,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							eventName: "UnableToStashBlob",
 							id,
 						});
-						// used to avoid sending the blob attach op if it gets uploaded before closing
-						entry.unableToStash = true;
 						continue;
 					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
