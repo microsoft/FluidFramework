@@ -5,7 +5,7 @@ importers:
   .:
     specifiers:
       '@fluid-tools/build-cli': 0.26.0-203096
-      '@fluidframework/build-common': ^2.0.2
+      '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.26.0-203096
       '@fluidframework/common-definitions': ^1.0.0
       '@fluidframework/common-utils-previous': npm:@fluidframework/common-utils@1.0.0
@@ -56,8 +56,8 @@ importers:
       lodash: 4.17.21
       sha.js: 2.4.11
     devDependencies:
-      '@fluid-tools/build-cli': 0.26.0-203096_gb5pywfgk644pc5fgh4hlmscda
-      '@fluidframework/build-common': 2.0.2
+      '@fluid-tools/build-cli': 0.26.0-203096_k7sla5vheyw5nos66xltzmmhke
+      '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.0-203096_@types+node@16.18.38
       '@fluidframework/common-utils-previous': /@fluidframework/common-utils/1.0.0
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
@@ -528,7 +528,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@fluid-tools/build-cli/0.26.0-203096_gb5pywfgk644pc5fgh4hlmscda:
+  /@fluid-tools/build-cli/0.26.0-203096_k7sla5vheyw5nos66xltzmmhke:
     resolution: {integrity: sha512-CY2090id26hcxhB2xYQXMn4OzV2k6XvAS2pCMLh4Rq4imbKgb5RPTi2l0kQMJlhfFbnC5kvOJtSnq9mrn6TKkQ==}
     engines: {node: '>=14.17.0'}
     hasBin: true
@@ -562,7 +562,7 @@ packages:
       minimatch: 7.4.6
       node-fetch: 2.6.9
       npm-check-updates: 16.10.16
-      oclif: 4.0.3_gb5pywfgk644pc5fgh4hlmscda
+      oclif: 4.0.3_k7sla5vheyw5nos66xltzmmhke
       prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
@@ -584,7 +584,6 @@ packages:
       - esbuild
       - eslint
       - mem-fs
-      - mem-fs-editor
       - supports-color
       - svelte
       - svelte-eslint-parser
@@ -638,8 +637,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluidframework/build-common/2.0.2:
-    resolution: {integrity: sha512-lqAsi/EuncrcJVSP4mOlh+Aci9LAjHlvc2tkymidXXqMaJcATCyqUuaSXaZutgNkJ4wZZNZvWCQRJyqL4dtfWA==}
+  /@fluidframework/build-common/2.0.3:
+    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
     dev: true
 
@@ -8647,6 +8646,27 @@ packages:
       object-visit: 1.0.1
     dev: true
 
+  /mem-fs-editor/9.7.0:
+    resolution: {integrity: sha512-ReB3YD24GNykmu4WeUL/FDIQtkoyGB6zfJv60yfCo3QjKeimNcTqv2FT83bP0ccs6uu+sm5zyoBlspAzigmsdg==}
+    engines: {node: '>=12.10.0'}
+    peerDependencies:
+      mem-fs: ^2.1.0
+    peerDependenciesMeta:
+      mem-fs:
+        optional: true
+    dependencies:
+      binaryextensions: 4.18.0
+      commondir: 1.0.1
+      deep-extend: 0.6.0
+      ejs: 3.1.9
+      globby: 11.1.0
+      isbinaryfile: 5.0.0
+      minimatch: 7.4.6
+      multimatch: 5.0.0
+      normalize-path: 3.0.0
+      textextensions: 5.15.0
+    dev: true
+
   /mem-fs-editor/9.7.0_mem-fs@2.3.0:
     resolution: {integrity: sha512-ReB3YD24GNykmu4WeUL/FDIQtkoyGB6zfJv60yfCo3QjKeimNcTqv2FT83bP0ccs6uu+sm5zyoBlspAzigmsdg==}
     engines: {node: '>=12.10.0'}
@@ -9690,7 +9710,7 @@ packages:
       es-abstract: 1.21.2
     dev: true
 
-  /oclif/4.0.3_gb5pywfgk644pc5fgh4hlmscda:
+  /oclif/4.0.3_k7sla5vheyw5nos66xltzmmhke:
     resolution: {integrity: sha512-Bq7t1bJvAKYwW3DKQIzok3jkXv7yUIMneoSec1qUr9wfSqzRTZQB0UUDovwlT/L+3TBMVoRyw1WeX+YDvfRJNA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
@@ -9711,8 +9731,8 @@ packages:
       lodash.template: 4.5.0
       normalize-package-data: 3.0.3
       semver: 7.5.4
-      yeoman-environment: 3.15.1_enn2ryrggwgxfpw6jx37uqpl5m
-      yeoman-generator: 5.8.0_4xngqmrv74x6vfpbzq4xrjm5pa
+      yeoman-environment: 3.15.1
+      yeoman-generator: 5.8.0_yeoman-environment@3.15.1
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -9722,7 +9742,6 @@ packages:
       - encoding
       - eslint
       - mem-fs
-      - mem-fs-editor
       - supports-color
       - svelte
       - svelte-eslint-parser
@@ -13085,13 +13104,10 @@ packages:
       fd-slicer: 1.1.0
     dev: true
 
-  /yeoman-environment/3.15.1_enn2ryrggwgxfpw6jx37uqpl5m:
+  /yeoman-environment/3.15.1:
     resolution: {integrity: sha512-P4DTQxqCxNTBD7gph+P+dIckBdx0xyHmvOYgO3vsc9/Sl67KJ6QInz5Qv6tlXET3CFFJ/YxPIdl9rKb0XwTRLg==}
     engines: {node: '>=12.10.0'}
     hasBin: true
-    peerDependencies:
-      mem-fs: ^1.2.0 || ^2.0.0
-      mem-fs-editor: ^8.1.2 || ^9.0.0
     dependencies:
       '@npmcli/arborist': 4.3.1
       are-we-there-yet: 2.0.0
@@ -13134,7 +13150,7 @@ packages:
       - supports-color
     dev: true
 
-  /yeoman-generator/5.8.0_4xngqmrv74x6vfpbzq4xrjm5pa:
+  /yeoman-generator/5.8.0_yeoman-environment@3.15.1:
     resolution: {integrity: sha512-dsrwFn9/c2/MOe80sa2nKfbZd/GaPTgmmehdgkFifs1VN/I7qPsW2xcBfvSkHNGK+PZly7uHyH8kaVYSFNUDhQ==}
     engines: {node: '>=12.10.0'}
     peerDependencies:
@@ -13149,7 +13165,7 @@ packages:
       execa: 5.1.1
       github-username: 6.0.0
       lodash: 4.17.21
-      mem-fs-editor: 9.7.0_mem-fs@2.3.0
+      mem-fs-editor: 9.7.0
       minimist: 1.2.8
       read-pkg-up: 7.0.1
       run-async: 2.4.1
@@ -13157,7 +13173,7 @@ packages:
       shelljs: 0.8.5
       sort-keys: 4.2.0
       text-table: 0.2.0
-      yeoman-environment: 3.15.1_enn2ryrggwgxfpw6jx37uqpl5m
+      yeoman-environment: 3.15.1
     transitivePeerDependencies:
       - encoding
       - mem-fs
