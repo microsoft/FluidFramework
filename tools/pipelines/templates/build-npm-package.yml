@@ -149,8 +149,6 @@ variables:
   - name: toolAbsolutePath
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
-  - name: pipelineTelemetryWorkdir
-    value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
   - group: ado-feeds
 
 stages:
@@ -250,11 +248,6 @@ stages:
                   echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
                   exit -1;
                 fi
-
-                if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
-                  echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
-                  exit -1;
-                fi
               fi
 
               if [[ "$(release)" == "prerelease" ]]; then
@@ -264,21 +257,23 @@ stages:
                 fi
               fi
 
-              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
-                if [[ "${{ variables.publish }}" != "True" ]]; then
-                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
-                  exit -1;
-                fi
-
+              if [[ "$(release)" != "prerelease" ]]; then
                 if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
                   echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
                   exit -1;
                 fi
               fi
 
+              if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
+                if [[ "${{ variables.publish }}" != "True" ]]; then
+                  echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
+                  exit -1;
+                fi
+              fi
+
         - template: include-use-node-version.yml
 
-        - template: include-install.yml 
+        - template: include-install.yml
           parameters:
             packageManager: ${{ parameters.packageManager }}
             buildDirectory: ${{ parameters.buildDirectory }}
@@ -299,7 +294,7 @@ stages:
               packageTypesOverride: ${{ parameters.packageTypesOverride }}
 
         # Build and Lint
-        - template: include-build-lint.yml 
+        - template: include-build-lint.yml
           parameters:
             taskBuild: ${{ parameters.taskBuild }}
             taskLint: ${{ parameters.taskLint }}
@@ -605,35 +600,42 @@ stages:
         publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
 
   # Capture per-pipeline stage results
-  - stage: runAfterAll
-    displayName: Retrieve and upload client stage stats to Kusto
+  - stage: upload_run_telemetry
+    displayName: Upload pipeline run telemetry to Kusto
     condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'), eq(${{parameters.telemetry}}, true))
-    dependsOn: 
+    dependsOn:
       - build
 
     jobs:
-      - template: include-telemetry-setup.yml
-        parameters:
-            testWorkspace: ${{ variables.pipelineTelemetryWorkdir }}
-            poolBuild: Small
-            customSteps:
+      - job: upload_run_telemetry
+        displayName: Upload pipeline run telemetry to Kusto
+        pool: Small
+        variables:
+        - name: pipelineTelemetryWorkdir
+          value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
 
-            - task: Bash@3
-              displayName: Retrieve buildId results
-              inputs:
-                targetType: 'inline'
-                workingDirectory: $(toolAbsolutePath)
-                script: |
-                  echo "creating output folder"
-                  mkdir -p ${{ variables.pipelineTelemetryWorkdir }}/timingOutput
-                  echo "Executing curl command ..."
-                  echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-                  curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json
-                  pwd;
-                  ls -laR ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json;
-                  cat ${{ variables.pipelineTelemetryWorkdir }}/timingOutput/output.json;
-                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.pipelineTelemetryWorkdir }}/timingOutput/';
-              env:
-                BUILD_ID: $(Build.BuildId)
-                ADO_API_TOKEN: $(System.AccessToken)
-                PIPELINE: 'BuildClient'
+        steps:
+        - template: include-telemetry-setup.yml
+          parameters:
+            devFeedUrl: $(ado-feeds-dev)
+            officeFeedUrl: $(ado-feeds-office)
+
+        - task: Bash@3
+          displayName: Retrieve buildId results
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(toolAbsolutePath)
+            script: |
+              echo "Creating output folder ..."
+              mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
+              echo "Retrieving pipeline run timeline data ..."
+              echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+              curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > $(pipelineTelemetryWorkdir)/timingOutput/output.json
+              pwd;
+              ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;
+              cat $(pipelineTelemetryWorkdir)/timingOutput/output.json;
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
+          env:
+            BUILD_ID: $(Build.BuildId)
+            ADO_API_TOKEN: $(System.AccessToken)
+            PIPELINE: 'BuildClient'

@@ -13,7 +13,12 @@ import { areDetachedNodeIdsEqual, isAttachMark, isDetachMark, isReplaceMark } fr
 /**
  * Implementation notes:
  *
- * The visit is organized into three phases: a detach pass, root transfers, and an attach pass.
+ * The visit is organized into four phases:
+ * 1. a detach pass
+ * 2. root transfers
+ * 3. an attach pass
+ * 4. root destructions
+ *
  * The core idea is that before content can be attached, it must first exist and be in a detached field.
  * The detach pass is therefore responsible for making sure that all roots that needs to be attached during the
  * attach pass are detached.
@@ -31,6 +36,11 @@ import { areDetachedNodeIdsEqual, isAttachMark, isDetachMark, isReplaceMark } fr
  *
  * While the detach pass ensures that nodes to be attached are in a detached state, it does not guarantee that they
  * reside in the correct detach field. That is the responsibility of the root transfers phase.
+ *
+ * The attach phase carries out attaches and replaces.
+ *
+ * After the attach phase, roots destruction is carried out.
+ * This needs to happen last to allow modifications to detached roots to be applied before they are destroyed.
  */
 
 /**
@@ -51,12 +61,14 @@ export function visitDelta(
 	const detachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const rootTransfers: RootTransfers = new Map();
+	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
 	const detachConfig: PassConfig = {
 		func: detachPass,
 		detachedFieldIndex,
 		detachPassRoots,
 		attachPassRoots,
 		rootTransfers,
+		rootDestructions,
 	};
 	visitFieldMarks(delta, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
@@ -67,9 +79,19 @@ export function visitDelta(
 		detachPassRoots,
 		attachPassRoots,
 		rootTransfers,
+		rootDestructions,
 	};
 	visitFieldMarks(delta, visitor, attachConfig);
 	fixedPointVisitOfRoots(visitor, attachPassRoots, attachConfig);
+	for (const { id, count } of rootDestructions) {
+		for (let i = 0; i < count; i += 1) {
+			const offsetId = offsetDetachId(id, i);
+			const root = detachedFieldIndex.getEntry(offsetId);
+			const field = detachedFieldIndex.toFieldKey(root);
+			visitor.destroy(field, 1);
+			detachedFieldIndex.deleteEntry(offsetId);
+		}
+	}
 }
 
 type RootTransfers = Map<
@@ -266,6 +288,12 @@ interface PassConfig {
 	 * Represents transfers of roots from one detached field to another.
 	 */
 	readonly rootTransfers: RootTransfers;
+	/**
+	 * Represents roots that need to be destroyed.
+	 * Collected as part of the detach pass.
+	 * Carried out at the end of the attach pass.
+	 */
+	readonly rootDestructions: Delta.DetachedNodeDestruction[];
 }
 
 type Pass = (delta: Delta.FieldChanges, visitor: DeltaVisitor, config: PassConfig) => void;
@@ -315,6 +343,7 @@ function offsetDetachId(
  * - Collects all roots that may need a detach pass
  * - Collects all roots that may need an attach pass
  * - Collects all relocates
+ * - Collects all destructions
  * - Executes detaches (bottom-up) provided they are not part of a replace
  * (because we want to wait until we are sure content to attach is available as a root)
  */
@@ -327,6 +356,9 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 				visitor.create([trees[i]], field);
 			}
 		}
+	}
+	if (delta.destroy !== undefined) {
+		config.rootDestructions.push(...delta.destroy);
 	}
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
