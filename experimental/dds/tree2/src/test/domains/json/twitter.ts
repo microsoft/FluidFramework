@@ -8,8 +8,6 @@ import {
 	makeRandom,
 	SpaceEfficientWordMarkovChain,
 } from "@fluid-internal/stochastic-test-utils";
-import { FieldKey } from "../../../core";
-import { brand } from "../../../util";
 import {
 	createAlphabetFromUnicodeRange,
 	getRandomEnglishString,
@@ -17,16 +15,8 @@ import {
 	getSizeInBytes,
 } from "./jsonGeneratorUtils";
 
-/**
- * This file contains logic to generate a JSON file that is statistically similar to the well-known
- * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
- */
-// Shared tree keys that map to the type used by the Twitter type/dataset
-export const TwitterKey = {
-	statuses: brand<FieldKey>("statuses"),
-	retweetCount: brand<FieldKey>("retweet_count"),
-	favoriteCount: brand<FieldKey>("favorite_count"),
-};
+// This file contains logic to generate a JSON file that is statistically similar to the well-known
+// json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
 
 /* eslint-disable @rushstack/no-new-null */
 export interface TwitterUser {

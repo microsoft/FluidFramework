@@ -13,6 +13,7 @@ import {
 	cursorToJsonObject,
 	jsonSchema,
 	JsonCompatible,
+	brand,
 } from "../../..";
 import {
 	buildForest,
@@ -23,6 +24,7 @@ import {
 	buildChunkedForest,
 } from "../../../feature-libraries";
 import {
+	FieldKey,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
 	JsonableTree,
@@ -37,9 +39,16 @@ import {
 import { jsonRoot, SchemaBuilder } from "../../../domains";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, TwitterKey } from "./twitter";
+import { generateTwitterJsonByByteSize } from "./twitter";
 import { CitmCatalog, generateCitmJson } from "./citm";
 import { clone } from "./jsObjectUtil";
+
+// Shared tree keys that map to the type used by the Twitter type/dataset
+export const TwitterKey = {
+	statuses: brand<FieldKey>("statuses"),
+	retweetCount: brand<FieldKey>("retweet_count"),
+	favoriteCount: brand<FieldKey>("favorite_count"),
+};
 
 /**
  * Performance test suite that measures a variety of access patterns using ITreeCursor.
