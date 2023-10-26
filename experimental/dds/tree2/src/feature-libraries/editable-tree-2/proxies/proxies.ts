@@ -555,8 +555,6 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
 	// Own properties on the dispatch object are surfaced as own properties of the proxy.
 	// (e.g., 'size', which is defined below).
-	//
-	// Properties normally inherited from 'Map.prototype' are surfaced via the prototype chain.
 	const dispatch = Object.create(mapPrototype, {
 		size: {
 			get(this: object) {
@@ -566,11 +564,6 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 	});
 
 	setTreeNode(dispatch, treeNode);
-
-	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
-	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
-	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
-	// prototype chains.
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
