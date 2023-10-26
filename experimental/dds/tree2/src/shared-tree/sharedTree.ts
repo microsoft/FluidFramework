@@ -209,7 +209,6 @@ export class SharedTree
 		// This will improve support for readonly documents, cross version collaboration and attribution.
 
 		// Check for empty.
-		// TODO: Better detection of empty case
 		if (this.view.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
 			this.view.transaction.start();
 			initializeContent(this.storedSchema, config.schema, () =>
