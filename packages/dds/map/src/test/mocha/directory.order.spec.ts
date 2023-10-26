@@ -6,6 +6,8 @@
 import { strict as assert } from "assert";
 import {
 	MockContainerRuntimeFactory,
+	MockContainerRuntimeFactoryForReconnection,
+	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
@@ -201,7 +203,7 @@ describe("Directory Iteration Order", () => {
 	describe("Serialization/Load", () => {
 		let directory1: SharedDirectory;
 
-		it("can be compatible with the old summary", async () => {
+		it("can be compatible with the old format summary", async () => {
 			const dataStoreRuntime = new MockFluidDataStoreRuntime();
 			dataStoreRuntime.local = true;
 			directory1 = new SharedDirectory(
@@ -370,6 +372,85 @@ describe("Directory Iteration Order", () => {
 			await directory2.load(services);
 
 			assertDirectoryIterationOrder(directory2, ["c", "b", "a"]);
+		});
+	});
+
+	describe("Reconnection", () => {
+		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
+		let containerRuntime1: MockContainerRuntimeForReconnection;
+		let containerRuntime2: MockContainerRuntimeForReconnection;
+		let directory1: SharedDirectory;
+		let directory2: SharedDirectory;
+
+		beforeEach(async () => {
+			containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+
+			// Create the first SharedDirectory
+			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
+			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			const services1 = {
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+			directory1 = new SharedDirectory(
+				"dir1",
+				dataStoreRuntime1,
+				DirectoryFactory.Attributes,
+			);
+			directory1.connect(services1);
+
+			// Create the second SharedDirectory
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+			directory2 = new SharedDirectory(
+				"dir1",
+				dataStoreRuntime2,
+				DirectoryFactory.Attributes,
+			);
+			directory2.connect(services2);
+		});
+
+		it("Can resend unacked ops on reconnection and impact the order", async () => {
+			directory1.createSubDirectory("a");
+			directory1.createSubDirectory("b");
+			directory2.createSubDirectory("c");
+			directory2.createSubDirectory("b");
+
+			// Disconnect and reconnect the first client
+			containerRuntime1.connected = false;
+			containerRuntime1.connected = true;
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertDirectoryIterationOrder(directory1, ["c", "b", "a"]);
+			assertDirectoryIterationOrder(directory2, ["c", "b", "a"]);
+		});
+
+		it("can maintain order when a client disconnects in the meanwhile", async () => {
+			directory1.createSubDirectory("c");
+			containerRuntimeFactory.processAllMessages();
+
+			// Disconnect the first client
+			containerRuntime1.connected = false;
+
+			directory1.createSubDirectory("a");
+			directory2.createSubDirectory("d");
+			directory2.createSubDirectory("b");
+
+			// Reconnect the first client.
+			containerRuntime1.connected = true;
+
+			assertDirectoryIterationOrder(directory1, ["c", "a"]);
+			assertDirectoryIterationOrder(directory2, ["c", "d", "b"]);
+
+			containerRuntimeFactory.processAllMessages();
+
+			assertDirectoryIterationOrder(directory1, ["c", "d", "b", "a"]);
+			assertDirectoryIterationOrder(directory2, ["c", "d", "b", "a"]);
 		});
 	});
 });
