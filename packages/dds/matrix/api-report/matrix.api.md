@@ -9,6 +9,7 @@ import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IChannelStorageService } from '@fluidframework/datastore-definitions';
+import { IEventThisPlaceHolder } from '@fluidframework/core-interfaces';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidSerializer } from '@fluidframework/shared-object-base';
 import { IJSONSegment } from '@fluidframework/merge-tree';
@@ -17,6 +18,7 @@ import { IMatrixProducer } from '@tiny-calc/nano';
 import { IMatrixReader } from '@tiny-calc/nano';
 import { IMatrixWriter } from '@tiny-calc/nano';
 import { ISequencedDocumentMessage } from '@fluidframework/protocol-definitions';
+import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
@@ -40,7 +42,7 @@ export interface IUndoConsumer {
 export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
 // @public
-export class SharedMatrix<T = any> extends SharedObject implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
+export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
