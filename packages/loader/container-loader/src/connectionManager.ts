@@ -597,6 +597,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent(
 					{
 						eventName: "ConnectToDeltaStreamException",
+						connected: connection !== undefined && connection.disposed === false,
 					},
 					undefined,
 					LogLevel.verbose,
