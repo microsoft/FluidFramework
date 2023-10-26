@@ -351,9 +351,6 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 // TODO: This assumes 'Function.name' matches the property name on 'Array.prototype', which may be
 // dubious across JS engines.
 [
-	// TODO: Remove cast to any once targeting a more recent ES version.
-	(Array.prototype as any).at,
-
 	Array.prototype.concat,
 	// Array.prototype.copyWithin,
 	Array.prototype.entries,
