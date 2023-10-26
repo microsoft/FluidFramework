@@ -125,6 +125,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
 		const addChildChange = (id: ChangeId, ...changeList: TaggedChange<NodeChangeset>[]) => {
@@ -168,14 +171,18 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				}
 
 				let hasMatchingPriorInverse = false;
-				const maybePriorInverse = changes.findIndex(
-					(c) =>
-						(c.rollbackOf !== undefined && c.rollbackOf === revision) ||
-						(c.change.fieldChange?.newContent !== undefined &&
-							"revert" in c.change.fieldChange.newContent &&
-							c.change.fieldChange.newContent.revert.revision === revision) ||
-						(c.revision !== undefined && c.revision === rollbackOf),
-				);
+				const maybePriorInverse = changes.findIndex((c) => {
+					// Change c may be a composite, in which case we need to look the revision of the fieldChange
+					const revisionOfC = c.revision ?? c.change.fieldChange?.revision;
+					const cIsRollbackOf =
+						revisionOfC === undefined
+							? undefined
+							: revisionMetadata.getInfo(revisionOfC)?.rollbackOf;
+					return (
+						(cIsRollbackOf !== undefined && cIsRollbackOf === revision) ||
+						(revisionOfC !== undefined && revisionOfC === rollbackOf)
+					);
+				});
 				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
 
 				if (change.fieldChange.newContent !== undefined) {
