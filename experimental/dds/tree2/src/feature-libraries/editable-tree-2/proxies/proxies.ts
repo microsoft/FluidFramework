@@ -519,22 +519,6 @@ export function createListProxy<TTypes extends AllowedTypes>(
 
 const mapStaticDispatchMap: PropertyDescriptorMap = {};
 
-[
-	/* eslint-disable @typescript-eslint/unbound-method */
-	Map.prototype.clear,
-	Map.prototype.delete,
-	Map.prototype.entries,
-	Map.prototype.forEach,
-	Map.prototype.get,
-	Map.prototype.has,
-	Map.prototype.keys,
-	Map.prototype.set,
-	Map.prototype.values,
-	/* eslint-enable @typescript-eslint/unbound-method */
-].forEach((fn) => {
-	listPrototypeProperties[fn.name] = { value: fn };
-});
-
 mapStaticDispatchMap[Symbol.iterator] = {
 	value: Map.prototype[Symbol.iterator],
 	writable: false,
