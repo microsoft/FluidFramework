@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
 import { getW3CData, validateMessages } from "@fluidframework/driver-base";
 import {
 	IDeltaStorageService,
@@ -22,7 +22,14 @@ import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry
 import { DocumentStorageService } from "./documentStorageService";
 import { RestWrapper } from "./restWrapperBase";
 
-const MaxBatchDeltas = 5000; // Maximum number of ops we can fetch at a time
+/**
+ * Maximum number of ops we can fetch at a time. This should be kept at 2k, as
+ * server determines whether to try to fallback to long-term storage if the ops range requested is larger than
+ * what they have locally available in short-term storage. So if we request 2k ops, they know it is not a
+ * specific request and they don't fall to long term storage which takes time.
+ * Please coordinate to AFR team if this value need to be changed.
+ */
+const MaxBatchDeltas = 2000;
 
 /**
  * Storage service limited to only being able to fetch documents for a specific document

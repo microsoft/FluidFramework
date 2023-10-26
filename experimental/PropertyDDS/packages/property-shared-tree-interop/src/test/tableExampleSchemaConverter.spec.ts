@@ -6,31 +6,41 @@
 import { strict as assert } from "assert";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import {
-	ValueSchema,
 	brand,
 	EmptyKey,
-	lookupTreeSchema,
 	FieldKinds,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
+	schemaIsFieldNode,
+	TreeFieldSchema,
+	leaf,
 } from "@fluid-experimental/tree2";
 import { convertPropertyToSharedTreeSchema as convertSchema } from "../schemaConverter";
 
-const tableTypeName: TreeSchemaIdentifier = brand("Test:Table-1.0.0");
+const tableTypeName: TreeNodeSchemaIdentifier = brand("Test:Table-1.0.0");
 
 function registerPropertySchemas() {
+	// TODO: add support for custom field keys (that differ from the API name), then enable this case to test them.
+	// PropertyFactory.register({
+	// 	typeid: "Test:BannedNames",
+	// 	properties: [
+	// 		{ id: "value", typeid: "Uint64" },
+	// 		{ id: "setValue", typeid: "Uint64" },
+	// 	],
+	// });
+
 	PropertyFactory.register({
 		typeid: "Test:Cell-1.0.0",
-		properties: [{ id: "value", typeid: "Uint64" }],
+		properties: [{ id: "data", typeid: "Uint64" }],
 	});
 
 	PropertyFactory.register({
 		typeid: "Test:RowProperty-1.0.0",
-		properties: [{ id: "value", typeid: "String" }],
+		properties: [{ id: "data", typeid: "String" }],
 	});
 
 	PropertyFactory.register({
 		typeid: "Test:RowInfo-1.0.0",
-		properties: [{ id: "value", typeid: "Uint64" }],
+		properties: [{ id: "data", typeid: "Uint64" }],
 	});
 
 	PropertyFactory.register({
@@ -94,21 +104,21 @@ describe("LlsSchemaConverter", () => {
 
 	it("Enum", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const table = lookupTreeSchema(fullSchemaData, tableTypeName);
+		const table = fullSchemaData.treeSchema.get(brand(`converted.${tableTypeName}`));
 		assert(table !== undefined);
-		const encoding = table.localFields.get(brand("encoding"));
+		const encoding = table.objectNodeFields.get(brand("encoding"));
 		assert(encoding !== undefined);
 		assert(encoding.types !== undefined);
-		assert(encoding.types.has(brand("Enum")));
+		assert(encoding.types.has(brand("converted.Enum")));
 	});
 
 	it("Missing Refs", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
 		const typeNames = new Set(fullSchemaData.treeSchema.keys());
 		for (const typeName of typeNames) {
-			const treeSchema = lookupTreeSchema(fullSchemaData, typeName);
+			const treeSchema = fullSchemaData.treeSchema.get(typeName);
 			assert(treeSchema !== undefined);
-			treeSchema.localFields.forEach((field, fieldKey) => {
+			treeSchema.objectNodeFields.forEach((field, fieldKey) => {
 				if (field.types) {
 					field.types.forEach((type) => {
 						assert(
@@ -118,8 +128,8 @@ describe("LlsSchemaConverter", () => {
 					});
 				}
 			});
-			if (treeSchema.extraLocalFields.types) {
-				treeSchema.extraLocalFields.types.forEach((type) => {
+			if (treeSchema.mapFields?.types) {
+				treeSchema.mapFields.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
 						`Missing type "${type}" in tree schema "${typeName}" for extra local fields`,
@@ -131,46 +141,51 @@ describe("LlsSchemaConverter", () => {
 
 	it("Check Structure", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const table = lookupTreeSchema(fullSchemaData, tableTypeName);
+		const table = fullSchemaData.treeSchema.get(brand(`converted.${tableTypeName}`));
 		assert(table !== undefined);
-		assert(table.localFields !== undefined);
+		assert(table.objectNodeFields !== undefined);
 
-		const extendedRows = table.localFields.get(brand("extendedRows"));
+		const extendedRows = table.objectNodeFields.get(brand("extendedRows"));
 		assert(extendedRows !== undefined);
 		assert(extendedRows.types !== undefined);
-		assert(extendedRows.types.has(brand("array<Test:ExtendedRow-1.0.0>")));
+		assert(extendedRows.types.has(brand("converted.array<Test:ExtendedRow-1.0.0>")));
 
-		const extendedRowsSchema = lookupTreeSchema(
-			fullSchemaData,
-			brand("Test:ExtendedRow-1.0.0"),
+		const extendedRowsSchema = fullSchemaData.treeSchema.get(
+			brand("converted.Test:ExtendedRow-1.0.0"),
 		);
 		assert(extendedRowsSchema !== undefined);
-		const info = extendedRowsSchema.localFields.get(brand("info"));
+		const info = extendedRowsSchema.objectNodeFields.get(brand("info"));
 		assert(info !== undefined);
 		assert(info.types !== undefined);
-		assert(info.types.has(brand("map<Test:RowInfo-1.0.0>")));
-		const infoType = lookupTreeSchema(fullSchemaData, brand("Test:RowInfo-1.0.0"));
+		assert(info.types.has(brand("converted.map<Test:RowInfo-1.0.0>")));
+		const infoType = fullSchemaData.treeSchema.get(brand("converted.Test:RowInfo-1.0.0"));
 		assert(infoType !== undefined);
 
-		const uint64 = infoType.localFields.get(brand("value"));
+		const uint64 = infoType.objectNodeFields.get(brand("data"));
 		assert(uint64 !== undefined);
 		assert(uint64.types !== undefined);
-		expect(uint64.types.has(brand("Uint64"))).toBeTruthy();
-		assert(uint64.types.has(brand("Uint64")));
-		const uint64Type = lookupTreeSchema(fullSchemaData, brand("Uint64"));
-		assert(uint64Type.value === ValueSchema.Number);
+		expect(uint64.types.has(brand("converted.Uint64"))).toBeTruthy();
+		assert(uint64.types.has(brand("converted.Uint64")));
+		const uint64Type =
+			fullSchemaData.treeSchema.get(brand("converted.Uint64")) ?? fail("missing schema");
+		assert(schemaIsFieldNode(uint64Type));
+		assert(
+			uint64Type.objectNodeFields
+				.get(EmptyKey)
+				?.equals(TreeFieldSchema.create(FieldKinds.required, [leaf.number])),
+		);
 	});
 
 	it("Inheritance Translation", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const row = lookupTreeSchema(fullSchemaData, brand("array<Test:Row-1.0.0>"));
+		const row = fullSchemaData.treeSchema.get(brand("converted.array<Test:Row-1.0.0>"));
 		assert(row !== undefined);
-		assert(row.localFields !== undefined);
-		const field = row.localFields.get(EmptyKey);
+		assert(row.objectNodeFields !== undefined);
+		const field = row.objectNodeFields.get(EmptyKey);
 		assert(field !== undefined);
 		assert(field.types !== undefined);
-		assert(field.types.has(brand("Test:Row-1.0.0")));
-		assert(field.types.has(brand("Test:ExtendedRow-1.0.0")));
-		assert(field.types.has(brand("Test:OtherExtendedRow-1.0.0")));
+		assert(field.types.has(brand("converted.Test:Row-1.0.0")));
+		assert(field.types.has(brand("converted.Test:ExtendedRow-1.0.0")));
+		assert(field.types.has(brand("converted.Test:OtherExtendedRow-1.0.0")));
 	});
 });

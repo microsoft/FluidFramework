@@ -14,7 +14,10 @@ export class RedisTenantCache {
 	private readonly expireAfterSeconds: number = 60 * 60 * 24;
 	private readonly prefix: string = "tenant";
 
-	constructor(private readonly client: Redis.default, parameters?: IRedisParameters) {
+	constructor(
+		private readonly client: Redis.default,
+		parameters?: IRedisParameters,
+	) {
 		if (parameters?.expireAfterSeconds) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}
@@ -41,7 +44,7 @@ export class RedisTenantCache {
 	): Promise<void> {
 		const result = await this.client.set(this.getKey(key), value, "EX", expireAfterSeconds);
 		if (result !== "OK") {
-			return Promise.reject(result);
+			throw new Error(result);
 		}
 	}
 

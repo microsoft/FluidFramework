@@ -142,7 +142,7 @@ describe("TestClient", () => {
 
 			assert.equal(client.getLength(), 1, "length not expected");
 
-			const tile = client.findTile(0, tileLabel);
+			const tile = client.findTile(client.getLength(), tileLabel);
 
 			assert(tile, "Returned tile undefined.");
 

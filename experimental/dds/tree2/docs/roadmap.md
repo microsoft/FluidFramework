@@ -99,7 +99,8 @@ The operations available in the editing API (e.g., insert, delete) are rolled ou
 Supporting larger-than-memory data sets in the tree requires efficiently handling trees that contain large numbers of strong identifiers (UUIDs).
 To meet this requirement, Shared Tree leverages a novel distributed compression scheme that reduces the average storage cost of the identifiers to that of a small integer.
 This enables better scaling in scenarios where large numbers of these compressed IDs are needed (e.g., graph-like references).
-The documentation for this scheme can be found [here](../src/id-compressor/idCompressor.ts#L272).
+The ID compressor now lives in the Fluid container runtime.
+Its documentation can be found [here](../../../../packages/runtime/container-runtime/src/id-compressor/idCompressor.ts#L206).
 
 ## Data model specification
 
@@ -126,11 +127,11 @@ The move operation is also not yet available.
 
 In most scenarios, the Shared Tree will construct an in-memory JavaScript representation of the tree.
 This milestone makes it possible to read and write data to the Shared Tree without creating (reifying) that in-memory JavaScript representation.
-This is particularly useful in scenarios where the client has memory constraints or wants to maintains a copy of the data on the other side of an interop boundary (e.g., WASM, C++).
+This is particularly useful in scenarios where the client has memory constraints or wants to maintain a copy of the data on the other side of an interop boundary (e.g., WASM, C++).
 It also allows clients/microservices to check permissions without loading the document and inspect changes without caring about the entire tree.
 
 To accomplish this, the underlying Shared Tree layer is built on a [cursor API](../src/core/tree/cursor.ts) that allows navigation of the tree by moving from node to node via explicit directional calls.
-Layers built on cursors are also able to remain agnostic to the structure of the tree it is navigating, allowing for flexible/multiple implementations.
+Layers built on cursors are also able to remain agnostic to the structure of the tree they are navigating, allowing for flexible/multiple implementations.
 This cursor API is intended to be an expert API as working with it is more cumbersome compared with the more ergonomic APIs exposed in future milestones.
 
 While this is an important architectural milestone to build in early, the benefits around reification will not be fully realized until the [Storage performance: incrementality and virtualization](#storage-performance-incrementality-and-virtualization) milestone, as downloading the entire tree on load is currently required.

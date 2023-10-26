@@ -13,6 +13,7 @@ import {
 	ILumberjackEngine,
 	ILumberjackSchemaValidator,
 	handleError,
+	ILumberFormatter,
 } from "./resources";
 
 // Lumber represents the telemetry data being captured, and it uses a list of
@@ -68,6 +69,7 @@ export class Lumber<T extends string = LumberEventName> {
 		private readonly _engineList: ILumberjackEngine[],
 		private readonly _schemaValidators?: ILumberjackSchemaValidator[],
 		properties?: Map<string, any> | Record<string, any>,
+		private readonly _formatters?: ILumberFormatter[],
 	) {
 		if (properties) {
 			this.setProperties(properties);
@@ -82,7 +84,7 @@ export class Lumber<T extends string = LumberEventName> {
 	public setProperties(properties: Map<string, any> | Record<string, any>): this {
 		if (properties instanceof Map) {
 			if (this._properties.size === 0) {
-				this._properties = properties;
+				this._properties = new Map(properties);
 			} else {
 				properties.forEach((value: any, key: string) => {
 					this.setProperty(key, value);
@@ -154,6 +156,10 @@ export class Lumber<T extends string = LumberEventName> {
 		this._durationInMs = isNaN(durationOverwrite)
 			? performance.now() - this._startTime
 			: durationOverwrite;
+
+		if (this._formatters) {
+			this._formatters.forEach((formatter) => formatter.transform(this));
+		}
 
 		this._engineList.forEach((engine) => engine.emit(this));
 		this._completed = true;

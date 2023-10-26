@@ -17,14 +17,8 @@
  */
 export { IMapMessageLocalMetadata, IValueOpEmitter, SequenceOptions } from "./defaultMapInterfaces";
 export {
-	DeserializeCallback,
-	IIntervalCollectionEvent,
-	IIntervalHelpers,
+	IInterval,
 	Interval,
-	IntervalIndex,
-	IIntervalCollection,
-	IntervalLocator,
-	intervalLocatorFromEndpoint,
 	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
@@ -32,18 +26,33 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
+	IIntervalHelpers,
 	sequenceIntervalHelpers,
-	IEndpointInRangeIndex,
-	IStartpointInRangeIndex,
-	createEndpointInRangeIndex,
-	createStartpointInRangeIndex,
-} from "./intervalCollection";
-export { IInterval, IntervalConflictResolver } from "./intervalTree";
+} from "./intervals";
 export {
+	DeserializeCallback,
+	IIntervalCollectionEvent,
+	IIntervalCollection,
+	IntervalLocator,
+	intervalLocatorFromEndpoint,
+	Side,
+	InteriorSequencePlace,
+	SequencePlace,
+} from "./intervalCollection";
+export {
+	IntervalIndex,
 	SequenceIntervalIndexes,
 	IOverlappingIntervalsIndex,
 	createOverlappingIntervalsIndex,
 	createOverlappingSequenceIntervalsIndex,
+	IEndpointInRangeIndex,
+	IStartpointInRangeIndex,
+	createEndpointInRangeIndex,
+	createStartpointInRangeIndex,
+	IIdIntervalIndex,
+	createIdIntervalIndex,
+	IEndpointIndex,
+	createEndpointIndex,
 } from "./intervalIndex";
 export {
 	appendAddIntervalToRevertibles,

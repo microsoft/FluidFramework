@@ -269,8 +269,6 @@ export class SummaryReader implements ISummaryReader {
 		return {
 			sequenceNumber: 0,
 			minimumSequenceNumber: 0,
-			// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
-			term: 1,
 		};
 	}
 

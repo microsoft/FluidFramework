@@ -43,7 +43,7 @@ async function convert_package_dir(packageDir: string) {
 				const moduleSpecifierSourceFile =
 					exportDeclaration.getModuleSpecifierSourceFileOrThrow();
 				const namedExports = new Array<string>();
-				for (const [name, _] of moduleSpecifierSourceFile.getExportedDeclarations()) {
+				for (const [name] of moduleSpecifierSourceFile.getExportedDeclarations()) {
 					namedExports.push(name);
 				}
 				namedExports.sort(case_insensitive_comp).forEach((name) => {

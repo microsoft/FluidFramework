@@ -1,6 +1,7 @@
 {
 	"require": ["src/test/helpers/init.js"],
 	"recursive": true,
-	"reporter": "spec",
+	"reporter": "mocha-multi-reporters",
+	"reporter-options": "configFile=mocha-multi-reporter-config.json",
 	"timeout": 60000
 }

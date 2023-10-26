@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { ISnapshotContents } from "./odspPublicUtils";
@@ -27,6 +27,7 @@ export const currentReadVersion = "1.0";
 /**
  * The parsing is significantly faster if the position of props is well known instead of dynamic. So these variables
  * represents how many times slower parsing path is executed. This will be then logged into telemetry.
+ * @public
  */
 export interface ISnapshotContentsWithProps extends ISnapshotContents {
 	telemetryProps: Record<string, number>;
@@ -84,8 +85,11 @@ function readOpsSection(node: NodeTypes) {
 	for (let i = 0; i < records.deltas.length; ++i) {
 		ops.push(JSON.parse(records.deltas.getString(i)));
 	}
+	// Due to a bug at service side, in an edge case service was serializing deltas even
+	// when there are no ops. So just make the code resilient to that bug. Service has also
+	// fixed that bug.
 	assert(
-		records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
+		ops.length === 0 || records.firstSequenceNumber.valueOf() === ops[0].sequenceNumber,
 		0x280 /* "Validate first op seq number" */,
 	);
 	return ops;
@@ -212,7 +216,8 @@ function readSnapshotSection(node: NodeTypes) {
 /**
  * Converts snapshot from binary compact representation to tree/blobs/ops.
  * @param buffer - Compact snapshot to be parsed into tree/blobs/ops.
- * @returns - tree, blobs and ops from the snapshot.
+ * @returns Tree, blobs and ops from the snapshot.
+ * @public
  */
 export function parseCompactSnapshotResponse(
 	buffer: Uint8Array,

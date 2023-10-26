@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import path from "path";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import path from "node:path";
+
 import { Operation, SharedNothingFactory, baseModel } from "../sharedNothing";
 import { DDSFuzzModel, createDDSFuzzSuite } from "../../ddsFuzzHarness";
 
@@ -23,15 +24,17 @@ const model: DDSFuzzModel<SharedNothingFactory, Operation> = {
 	generatorFactory: () => generatorUnreachable,
 	reducer: async (state, op) => {
 		assert.deepEqual(op, expectedOps[currentIndex]);
-		assert.equal(state.channel.id, expectedOps[currentIndex].clientId);
+		assert.equal(state.client.channel.id, expectedOps[currentIndex].clientId);
 		// Note: the above checks failing if currentIndex goes out of bounds is part of the
 		// current spec for `replay`: it avoids running other fuzz test seeds/configurations.
 		currentIndex++;
 	},
+	minimizationTransforms: [],
 };
 
 createDDSFuzzSuite(model, {
 	defaultTestCount: 5,
+	detachedStartOptions: { enabled: false, attachProbability: 0 },
 	replay: 2,
 	// Note: this should point the replay to the source-controlled 2.json file in this directory.
 	saveFailures: { directory: path.join(__dirname, "../../../src/test/ddsSuiteCases") },

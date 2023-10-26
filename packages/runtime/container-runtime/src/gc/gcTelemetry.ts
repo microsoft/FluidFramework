@@ -5,11 +5,11 @@
 
 import { ITelemetryGenericEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions";
-import { packagePathToTelemetryProperty } from "@fluidframework/runtime-utils";
 import {
 	generateStack,
 	ITelemetryLoggerExt,
 	MonitoringContext,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils";
 import { ICreateContainerMetadata } from "../summary";
 import {
@@ -23,7 +23,6 @@ import {
 	runSweepKey,
 } from "./gcDefinitions";
 import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker";
-import { tagAsCodeArtifact } from "./gcHelpers";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived";
 
@@ -81,10 +80,9 @@ export class GCTelemetryTracker {
 		private readonly mc: MonitoringContext,
 		private readonly configs: Pick<
 			IGarbageCollectorConfigs,
-			"inactiveTimeoutMs" | "sweepTimeoutMs"
+			"inactiveTimeoutMs" | "sweepTimeoutMs" | "tombstoneEnforcementAllowed"
 		>,
 		private readonly isSummarizerClient: boolean,
-		private readonly gcTombstoneEnforcementAllowed: boolean,
 		private readonly createContainerMetadata: ICreateContainerMetadata,
 		private readonly getNodeType: (nodeId: string) => GCNodeType,
 		private readonly getNodeStateTracker: (
@@ -97,7 +95,7 @@ export class GCTelemetryTracker {
 
 	/**
 	 * Returns whether an event should be logged for a node that isn't active anymore. Some scenarios where we won't log:
-	 * 1. When a DDS is changed or loaded. The corresponding data store's event will be logged instead.
+	 * 1. When a DDS is changed. The corresponding data store's event will be logged instead.
 	 * 2. An event is logged only once per container instance per event per node.
 	 */
 	private shouldLogNonActiveEvent(
@@ -111,12 +109,13 @@ export class GCTelemetryTracker {
 			return false;
 		}
 
-		// For sub data store (DDS) nodes, if they are changed or loaded, its data store will also be changed or loaded,
-		// so skip logging to make the telemetry less noisy.
-		if (nodeType === GCNodeType.SubDataStore && usageType !== "Revived") {
+		if (nodeType === GCNodeType.Other) {
 			return false;
 		}
-		if (nodeType === GCNodeType.Other) {
+
+		// For sub data store (DDS) nodes, if they are changed, its data store will also be changed,
+		// so skip logging to make the telemetry less noisy.
+		if (nodeType === GCNodeType.SubDataStore && usageType === "Changed") {
 			return false;
 		}
 
@@ -161,7 +160,6 @@ export class GCTelemetryTracker {
 		const { usageType, currentReferenceTimestampMs, packagePath, id, fromId, ...propsToLog } =
 			nodeUsageProps;
 		const eventProps: Omit<IUnreferencedEventProps, "state" | "usageType"> = {
-			id: tagAsCodeArtifact(id),
 			type: nodeType,
 			unrefTime: nodeStateTracker.unreferencedTimestampMs,
 			age:
@@ -171,7 +169,7 @@ export class GCTelemetryTracker {
 				state === UnreferencedState.Inactive
 					? this.configs.inactiveTimeoutMs
 					: this.configs.sweepTimeoutMs,
-			fromId: fromId ? tagAsCodeArtifact(fromId) : undefined,
+			...tagCodeArtifacts({ id, fromId }),
 			...propsToLog,
 			...this.createContainerMetadata,
 		};
@@ -184,8 +182,8 @@ export class GCTelemetryTracker {
 				{
 					eventName: `GC_Tombstone_${nodeType}_Revived`,
 					category: "generic",
-					url: tagAsCodeArtifact(id),
-					gcTombstoneEnforcementAllowed: this.gcTombstoneEnforcementAllowed,
+					...tagCodeArtifacts({ url: id }),
+					gcTombstoneEnforcementAllowed: this.configs.tombstoneEnforcementAllowed,
 				},
 				undefined /* packagePath */,
 			);
@@ -211,7 +209,7 @@ export class GCTelemetryTracker {
 				const { id: taggedId, fromId: taggedFromId, ...otherProps } = eventProps;
 				const event = {
 					eventName: `${state}Object_${nodeUsageProps.usageType}`,
-					pkg: packagePathToTelemetryProperty(nodeUsageProps.packagePath),
+					pkg: tagCodeArtifacts({ pkg: nodeUsageProps.packagePath?.join("/") }).pkg,
 					stack: generateStack(),
 					id: taggedId,
 					fromId: taggedFromId,
@@ -277,8 +275,10 @@ export class GCTelemetryTracker {
 			if (missingExplicitRoutes.length > 0) {
 				logger.sendErrorEvent({
 					eventName: "gcUnknownOutboundReferences",
-					id: tagAsCodeArtifact(nodeId),
-					routes: tagAsCodeArtifact(JSON.stringify(missingExplicitRoutes)),
+					...tagCodeArtifacts({
+						id: nodeId,
+						routes: JSON.stringify(missingExplicitRoutes),
+					}),
 				});
 			}
 		}
@@ -318,8 +318,10 @@ export class GCTelemetryTracker {
 					}),
 					id,
 					fromId,
-					pkg: pkg ? tagAsCodeArtifact(pkg.join("/")) : undefined,
-					fromPkg: fromPkg ? tagAsCodeArtifact(fromPkg.join("/")) : undefined,
+					...tagCodeArtifacts({
+						pkg: pkg?.join("/"),
+						fromPkg: fromPkg?.join("/"),
+					}),
 				};
 
 				if (state === UnreferencedState.Inactive) {
@@ -379,7 +381,7 @@ export class GCTelemetryTracker {
 					lastSummaryTime,
 					...this.createContainerMetadata,
 				}),
-				id: tagAsCodeArtifact(JSON.stringify(deletedNodeIds)),
+				...tagCodeArtifacts({ id: JSON.stringify(deletedNodeIds) }),
 			});
 		}
 	}
@@ -398,7 +400,7 @@ export function sendGCUnexpectedUsageEvent(
 	packagePath: readonly string[] | undefined,
 	error?: unknown,
 ) {
-	event.pkg = packagePathToTelemetryProperty(packagePath);
+	event.pkg = tagCodeArtifacts({ pkg: packagePath?.join("/") })?.pkg;
 	event.tombstoneFlags = JSON.stringify({
 		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
 		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),

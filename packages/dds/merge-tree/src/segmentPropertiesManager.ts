@@ -5,9 +5,10 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { ICombiningOp, IMergeTreeAnnotateMsg } from "./ops";
+// eslint-disable-next-line import/no-deprecated
 import { combine, createMap, MapLike, PropertySet } from "./properties";
 
 export enum PropertiesRollback {
@@ -30,7 +31,7 @@ export class PropertiesManager {
 	}
 
 	public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
-		const rewrite = !!annotateOp.combiningOp && annotateOp.combiningOp.name === "rewrite";
+		const rewrite = annotateOp.combiningOp?.name === "rewrite";
 		this.decrementPendingCounts(rewrite, annotateOp.props);
 	}
 
@@ -65,9 +66,8 @@ export class PropertiesManager {
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	): PropertySet | undefined {
-		if (!this.pendingKeyUpdateCount) {
-			this.pendingKeyUpdateCount = createMap<number>();
-		}
+		// eslint-disable-next-line import/no-deprecated
+		this.pendingKeyUpdateCount ??= createMap<number>();
 
 		// There are outstanding local rewrites, so block all non-local changes
 		if (
@@ -143,7 +143,8 @@ export class PropertiesManager {
 			// The delta should be null if undefined, as that's how we encode delete
 			deltas[key] = previousValue === undefined ? null : previousValue;
 			const newValue = combiningOp
-				? combine(combiningOp, previousValue, undefined, seq)
+				? // eslint-disable-next-line import/no-deprecated
+				  combine(combiningOp, previousValue, undefined, seq)
 				: newProps[key];
 			if (newValue === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -162,10 +163,8 @@ export class PropertiesManager {
 		newManager: PropertiesManager,
 	): PropertySet | undefined {
 		if (oldProps) {
-			if (!newProps) {
-				// eslint-disable-next-line no-param-reassign
-				newProps = createMap<any>();
-			}
+			// eslint-disable-next-line no-param-reassign, import/no-deprecated
+			newProps ??= createMap<any>();
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}
@@ -173,6 +172,7 @@ export class PropertiesManager {
 				newProps[key] = oldProps[key];
 			}
 			newManager.pendingRewriteCount = this.pendingRewriteCount;
+			// eslint-disable-next-line import/no-deprecated
 			newManager.pendingKeyUpdateCount = createMap<number>();
 			for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
 				newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];

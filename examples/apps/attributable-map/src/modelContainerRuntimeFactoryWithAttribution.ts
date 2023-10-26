@@ -18,6 +18,7 @@ import {
 	IProvideRuntimeAttributor,
 } from "@fluid-experimental/attributor";
 import { FluidObject } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { makeModelRequestHandler } from "@fluid-example/example-utils";
 
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
@@ -46,20 +47,20 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const fromExisting = existing ?? context.existing ?? false;
 		const attributor = createRuntimeAttributor();
 		const scope: FluidObject<IProvideRuntimeAttributor> = { IRuntimeAttributor: attributor };
 
 		const runtime = await containerRuntimeWithAttribution.load(
 			context,
 			this.registryEntries,
+			// eslint-disable-next-line import/no-deprecated
 			makeModelRequestHandler(this.createModel.bind(this)),
 			this.runtimeOptions,
 			scope, // scope
 			existing,
 		);
 
-		if (!fromExisting) {
+		if (!existing) {
 			await this.containerInitializingFirstTime(runtime);
 		}
 		await this.containerHasInitialized(runtime);

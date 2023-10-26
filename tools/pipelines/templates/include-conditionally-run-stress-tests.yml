@@ -80,4 +80,3 @@ stages:
             testCommand: ${{ package.testCommand }}
             env:
               FUZZ_STRESS_RUN: true
-              FLUID_TEST_REPORT: 1

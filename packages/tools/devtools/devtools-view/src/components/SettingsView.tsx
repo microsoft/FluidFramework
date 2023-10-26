@@ -6,23 +6,17 @@
 import React from "react";
 import {
 	Dropdown,
+	Link,
 	Option,
+	Switch,
 	makeStyles,
 	teamsHighContrastTheme,
 	webDarkTheme,
 	webLightTheme,
 } from "@fluentui/react-components";
 
-import { ThemeContext } from "../ThemeHelper";
-
-/**
- * An enum with options for the DevTools themes.
- */
-export const enum ThemeOption {
-	Light = "Light",
-	Dark = "Dark",
-	HighContrast = "High Contrast",
-}
+import { ThemeOption, useThemeContext } from "../ThemeHelper";
+import { useTelemetryOptIn } from "../TelemetryUtils";
 
 const useStyles = makeStyles({
 	root: {
@@ -63,11 +57,14 @@ const useStyles = makeStyles({
 });
 /**
  * Settings page for the devtools.
+ *
+ * @remarks {@link ThemeContext} must be set in order to use this component.
  */
 export function SettingsView(): React.ReactElement {
-	const { themeInfo, setTheme } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo, setTheme } = useThemeContext();
 
 	const styles = useStyles();
+	const [optedIn, setOptedIn] = useTelemetryOptIn();
 
 	function handleThemeChange(
 		_event,
@@ -78,30 +75,34 @@ export function SettingsView(): React.ReactElement {
 		},
 	): void {
 		switch (option.optionValue) {
-			case ThemeOption.Light:
+			case ThemeOption.Light: {
 				setTheme({
 					name: ThemeOption.Light,
 					theme: webLightTheme,
 				});
 				break;
-			case ThemeOption.Dark:
+			}
+			case ThemeOption.Dark: {
 				setTheme({
 					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
-			case ThemeOption.HighContrast:
+			}
+			case ThemeOption.HighContrast: {
 				setTheme({
 					name: ThemeOption.HighContrast,
 					theme: teamsHighContrastTheme,
 				});
 				break;
-			default:
+			}
+			default: {
 				setTheme({
 					name: ThemeOption.Dark,
 					theme: webDarkTheme,
 				});
 				break;
+			}
 		}
 	}
 
@@ -118,6 +119,22 @@ export function SettingsView(): React.ReactElement {
 					<Option value={ThemeOption.Dark}>Dark</Option>
 					<Option value={ThemeOption.HighContrast}>High Contrast</Option>
 				</Dropdown>
+			</div>
+			<div className={styles.section}>
+				<h4 className={styles.sectionHeader}>Usage telemetry</h4>
+				<Link
+					href="https://go.microsoft.com/fwlink/?LinkId=521839"
+					target="_blank"
+					rel="noreferrer"
+					inline
+				>
+					Microsoft Privacy Statement
+				</Link>
+				<Switch
+					label="Send usage telemetry to Microsoft"
+					checked={optedIn}
+					onChange={(ev, data): void => setOptedIn(data.checked)}
+				/>
 			</div>
 		</div>
 	);

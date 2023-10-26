@@ -31,7 +31,7 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["prettier", "eslint", "good-fences"],
+			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
 			script: false,
 		},
 		"build:copy": [],
@@ -42,6 +42,7 @@ module.exports = {
 		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"depcruise": [],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
@@ -77,9 +78,18 @@ module.exports = {
 			directory: "build-tools",
 			defaultInterdependencyRange: "workspace:*",
 		},
-		"server": "server/routerlicious",
-		"gitrest": "server/gitrest",
-		"historian": "server/historian",
+		"server": {
+			directory: "server/routerlicious",
+			defaultInterdependencyRange: "workspace:~",
+		},
+		"gitrest": {
+			directory: "server/gitrest",
+			defaultInterdependencyRange: "^",
+		},
+		"historian": {
+			directory: "server/historian",
+			defaultInterdependencyRange: "^",
+		},
 
 		// Independent packages
 		"build": "common/build",
@@ -117,12 +127,90 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
+			"html-copyright-file-header": [
+				// Tests generate HTML "snapshot" artifacts
+				"tools/api-markdown-documenter/src/test/snapshots/.*",
+			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
 				"common/build/eslint-config-fluid/package.json",
 				// markdown-magic's build step update the README.md file that are checked in. No need to clean.
 				"tools/markdown-magic/package.json",
 			],
+			"npm-package-json-script-mocha-config": [
+				// these doesn't use mocha config for reporters yet.
+				"server/",
+				"build-tools/",
+				"common/lib/common-utils/package.json",
+			],
+			"npm-package-json-test-scripts": [
+				"common/build/eslint-config-fluid/package.json",
+				"packages/test/mocha-test-setup/package.json",
+				"examples/apps/attributable-map/package.json",
+			],
+			"npm-package-json-test-scripts-split": [
+				"server/",
+				"tools/",
+				"package.json",
+				"packages/test/test-service-load/package.json",
+			],
+			"npm-package-json-clean-script": [
+				// this package has a irregular build pattern, so our clean script rule doesn't apply.
+				"tools/markdown-magic",
+				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
+				"tools/getkeys",
+			],
+			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
+			"npm-package-exports-field": [
+				// We deliberately improperly import from deep in the package tree while we migrate everything into other
+				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
+				"^build-tools/packages/build-tools/package.json",
+				"^common/",
+				"^examples/",
+				"^experimental/",
+				"^packages/",
+				"^server/",
+				"^tools/",
+			],
+		},
+		packageNames: {
+			// The allowed package scopes for the repo.
+			allowedScopes: [
+				"@fluidframework",
+				"@fluid-example",
+				"@fluid-experimental",
+				"@fluid-internal",
+				"@fluid-private",
+				"@fluid-tools",
+			],
+			// These packages are known unscoped packages.
+			unscopedPackages: ["fluid-framework", "fluidframework-docs", "tinylicious"],
+
+			mustPublish: {
+				// These packages will always be published to npm. This is called the "public" feed.
+				npm: [
+					"@fluidframework",
+					"fluid-framework",
+					"tinylicious",
+					"@fluid-internal/client-utils",
+				],
+				// A list of packages published to our internal-build feed. Note that packages published
+				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
+				// internal partners or internal CI requirements.
+				internalFeed: [
+					// TODO: We may not need to publish test packages to the internal feed, remove these exceptions if possible.
+					"@fluid-internal/test-app-insights-logger",
+					"@fluid-internal/test-service-load",
+					// Most examples should be private, but table-document needs to publish internally for legacy compat
+					"@fluid-example/table-document",
+				],
+			},
+			mayPublish: {
+				// These packages may be published to npm in some cases. Policy doesn't enforce this.
+				npm: ["@fluid-experimental", "@fluid-tools"],
+				// These packages may be published to the internal-build feed in some cases. Policy doesn't enforce this.
+				internalFeed: ["@fluid-internal", "@fluid-private"],
+			},
 		},
 		dependencies: {
 			// use by npm-package-json-script-dep policy
@@ -136,17 +224,20 @@ module.exports = {
 				["prettier", "prettier"],
 				["webpack", "webpack"],
 				["nyc", "nyc"],
+				["c8", "c8"],
 				["gf", "good-fences"],
 				["cross-env", "cross-env"],
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
+				["depcruise", "dependency-cruiser"],
+				["copyfiles", "copyfiles"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
 		// around nested pnpm workspace behavior. These packages are not checked for the preinstall script that standard
 		// pnpm workspaces should have.
 		pnpmSinglePackageWorkspace: [
-			"@fluid-internal/changelog-generator-wrapper",
+			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",
@@ -165,6 +256,18 @@ module.exports = {
 				ignoreTasks: ["tsc:watch"],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
+		},
+	},
+
+	assertTagging: {
+		enabledPaths: [
+			/^common\/lib\/common-utils/i,
+			/^experimental/i,
+			/^packages/i,
+			/^server\/routerlicious\/packages\/protocol-base/i,
+		],
+		assertionFunctions: {
+			assert: 1,
 		},
 	},
 

@@ -1,0 +1,5 @@
+{
+	"tags": ["default-field-kinds"],
+	"exports": ["index"],
+	"imports": ["util", "events", "core", "modular-schema", "codec", "feature-libraries"]
+}

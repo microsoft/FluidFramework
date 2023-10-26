@@ -14,7 +14,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { filterByKind } from "../ApiItemUtilities";
+import { filterByKind } from "../../utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
@@ -172,5 +172,5 @@ export function transformApiInterface(
 		}
 	}
 
-	return config.createChildContentSections(apiInterface, childSections, config);
+	return config.createDefaultLayout(apiInterface, childSections, config);
 }

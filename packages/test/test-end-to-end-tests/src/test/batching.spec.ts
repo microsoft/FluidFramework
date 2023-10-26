@@ -73,8 +73,11 @@ function verifyBatchMetadata(batchMessages: ISequencedDocumentMessage[]) {
 	const batchCount = batchMessages.length;
 	assert(batchCount !== 0, "No messages in the batch");
 
-	const batchBeginMetadata = batchMessages[0].metadata?.batch;
-	const batchEndMetadata = batchMessages[batchCount - 1].metadata?.batch;
+	const batchBeginMetadata = (batchMessages[0].metadata as { batch?: unknown } | undefined)
+		?.batch;
+	const batchEndMetadata = (
+		batchMessages[batchCount - 1].metadata as { batch?: unknown } | undefined
+	)?.batch;
 	if (batchCount === 1) {
 		assert.equal(
 			batchBeginMetadata,
@@ -613,24 +616,6 @@ describeNoCompat("Flushing ops", (getTestObjectProvider) => {
 		afterEach(async () => {
 			dataObject1BatchMessages = [];
 			dataObject2BatchMessages = [];
-		});
-	});
-
-	describe("Batch validation when using getPendingLocalState()", () => {
-		beforeEach(async () => {
-			await setupContainers();
-		});
-		it("cannot capture the pending local state during ordersequentially", async () => {
-			dataObject1.context.containerRuntime.orderSequentially(() => {
-				dataObject1map1.set("key1", "value1");
-				dataObject1map2.set("key2", "value2");
-				assert.throws(
-					() => container1.closeAndGetPendingLocalState(),
-					/can't get state during orderSequentially/,
-				);
-				dataObject1map1.set("key3", "value3");
-				dataObject1map2.set("key4", "value4");
-			});
 		});
 	});
 

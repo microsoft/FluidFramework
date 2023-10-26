@@ -4,11 +4,9 @@
  */
 
 import { strict as assert } from "assert";
-import { TUnsafe, Type } from "@sinclair/typebox";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	FieldKind,
 	Multiplicity,
 	FieldEditor,
 	NodeChangeset,
@@ -16,27 +14,27 @@ import {
 	FieldChange,
 	ModularChangeset,
 	RevisionInfo,
+	FieldKindWithEditor,
 } from "../../../feature-libraries";
-// TODO: this is not the file being tests, importing it should not be required here.
-// eslint-disable-next-line import/no-internal-modules
-import * as FieldKinds from "../../../feature-libraries/defaultFieldKinds";
 import {
 	makeAnonChange,
 	RevisionTag,
 	tagChange,
 	TaggedChange,
 	FieldKindIdentifier,
-	AnchorSet,
 	Delta,
 	FieldKey,
 	UpPath,
 	mintRevisionTag,
 	tagRollbackInverse,
+	assertIsRevisionTag,
+	deltaForSet,
 } from "../../../core";
 import { brand, fail } from "../../../util";
-import { makeCodecFamily, makeValueCodec, noopValidator } from "../../../codec";
+import { makeCodecFamily, noopValidator } from "../../../codec";
 import { typeboxValidator } from "../../../external-utilities";
 import {
+	EncodingTestData,
 	assertDeltaEqual,
 	deepFreeze,
 	makeEncodingTestSuite,
@@ -45,33 +43,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { ModularChangeFamily } from "../../../feature-libraries/modular-schema/modularChangeFamily";
 import { singleJsonCursor } from "../../../domains";
-
-type ValueChangeset = FieldKinds.ReplaceOp<number>;
-
-const valueHandler: FieldChangeHandler<ValueChangeset> = {
-	rebaser: FieldKinds.replaceRebaser(),
-	codecsFactory: () =>
-		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-
-	intoDelta: (change, deltaFromChild) =>
-		change === 0
-			? []
-			: [
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
-			  ],
-
-	isEmpty: (change) => change === 0,
-};
-
-const valueField = new FieldKind(
-	brand("Value"),
-	Multiplicity.Value,
-	valueHandler,
-	(a, b) => false,
-	new Set(),
-);
+// Allows typechecking test data used in modulaChangeFamily's codecs.
+// eslint-disable-next-line import/no-internal-modules
+import { EncodedModularChangeset } from "../../../feature-libraries/modular-schema/modularChangeFormat";
+import { ValueChangeset, valueField } from "./basicRebasers";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
@@ -93,19 +68,21 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild) => [deltaFromChild(change)],
+	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
+		local: [{ count: 1, fields: deltaFromChild(change) }],
+	}),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
-const singleNodeField = new FieldKind(
-	brand("SingleNode"),
-	Multiplicity.Value,
+const singleNodeField = new FieldKindWithEditor(
+	"SingleNode",
+	Multiplicity.Single,
 	singleNodeHandler,
 	(a, b) => false,
 	new Set(),
 );
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
@@ -116,6 +93,9 @@ const tag2: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
+
+const detachId = { minor: 424242 };
+const buildId = { minor: 424243 };
 
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
@@ -169,6 +149,21 @@ const nodeChange3: NodeChangeset = {
 	fieldChanges: new Map([
 		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
 	]),
+};
+
+const nodeChange4: NodeChangeset = {
+	fieldChanges: new Map([
+		[fieldA, { fieldKind: valueField.identifier, change: brand(valueChange1a) }],
+	]),
+	nodeExistsConstraint: {
+		violated: false,
+	},
+};
+
+const nodeChangeWithoutFieldChanges: NodeChangeset = {
+	nodeExistsConstraint: {
+		violated: false,
+	},
 };
 
 const rootChange1a: ModularChangeset = {
@@ -270,6 +265,36 @@ const rootChange3: ModularChangeset = {
 			{
 				fieldKind: singleNodeField.identifier,
 				change: brand(nodeChange3),
+			},
+		],
+	]),
+};
+
+const dummyMaxId = 10;
+const dummyRevisionTag = assertIsRevisionTag("00000000-0000-4000-8000-000000000000");
+const rootChange4: ModularChangeset = {
+	maxId: brand(dummyMaxId),
+	revisions: [{ revision: dummyRevisionTag }],
+	fieldChanges: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChange4),
+			},
+		],
+	]),
+};
+
+const rootChangeWithoutNodeFieldChanges: ModularChangeset = {
+	maxId: brand(dummyMaxId),
+	revisions: [{ revision: dummyRevisionTag }],
+	fieldChanges: new Map([
+		[
+			fieldA,
+			{
+				fieldKind: singleNodeField.identifier,
+				change: brand(nodeChangeWithoutFieldChanges),
 			},
 		],
 	]),
@@ -565,56 +590,43 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const valueDelta1: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
-					type: Delta.MarkType.Insert,
-					content: [singleJsonCursor(1)],
-				},
-			];
-
-			const valueDelta2: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
-					type: Delta.MarkType.Insert,
-					content: [singleJsonCursor(2)],
-				},
-			];
-
-			const nodeDelta: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					fields: new Map([[fieldA, valueDelta1]]),
-				},
-			];
+			const nodeDelta: Delta.FieldChanges = {
+				local: [
+					{
+						count: 1,
+						fields: new Map([
+							[fieldA, deltaForSet(singleJsonCursor(1), buildId, detachId)],
+						]),
+					},
+				],
+			};
 
 			const expectedDelta: Delta.Root = new Map([
 				[fieldA, nodeDelta],
-				[fieldB, valueDelta2],
+				[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
 			]);
 
-			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
+			const actual = family.intoDelta(makeAnonChange(rootChange1a));
+			assertDeltaEqual(actual, expectedDelta);
 		});
 	});
 
 	describe("Encoding", () => {
-		const encodingTestData: [string, ModularChangeset][] = [
-			["without constrain", rootChange1a],
-			["with constrain", rootChange3],
-		];
+		const encodingTestData: EncodingTestData<ModularChangeset, EncodedModularChangeset> = {
+			successes: [
+				["without constrain", rootChange1a],
+				["with constrain", rootChange3],
+				["with node existence constraint", rootChange4],
+				["without node field changes", rootChangeWithoutNodeFieldChanges],
+			],
+		};
 
 		makeEncodingTestSuite(family.codecs, encodingTestData);
 	});
 
 	it("build child change", () => {
 		const [changeReceiver, getChanges] = testChangeReceiver(family);
-		const editor = family.buildEditor(changeReceiver, new AnchorSet());
+		const editor = family.buildEditor(changeReceiver);
 		const path: UpPath = {
 			parent: undefined,
 			parentField: fieldA,
@@ -708,9 +720,9 @@ describe("ModularChangeFamily", () => {
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
 			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
 		} as unknown as FieldChangeHandler<RevisionTag[]>;
-		const field = new FieldKind(
-			brand("ChecksRevIndexing"),
-			Multiplicity.Value,
+		const field = new FieldKindWithEditor(
+			"ChecksRevIndexing",
+			Multiplicity.Single,
 			handler,
 			(a, b) => false,
 			new Set(),

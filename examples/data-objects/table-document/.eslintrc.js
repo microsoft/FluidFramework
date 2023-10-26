@@ -9,18 +9,17 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
+		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 		"@typescript-eslint/strict-boolean-expressions": "off",
+		"import/no-deprecated": "off", // This package as a whole is deprecated so it uses deprecated APIs
 	},
-	overrides: [
-		{
-			// Rules only for test files
-			files: ["*.spec.ts", "src/test/**"],
-			rules: {
-				// ESLint's resolver doesn't resolve relative imports of ESNext modules correctly, since
-				// it resolves the path relative to the .ts file (and assumes a file with a .js extension
-				// should exist there)
-				"import/no-unresolved": ["error", { ignore: ["^\\.(.*)\\.js$"] }],
+	settings: {
+		"import/resolver": {
+			// Use eslint-import-resolver-typescript.
+			// This ensures ESNext with `.js` extensions resolve correctly to their corresponding `.ts` files.
+			typescript: {
+				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
 			},
 		},
-	],
+	},
 };

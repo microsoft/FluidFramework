@@ -138,6 +138,10 @@ export function mixinDataStoreWithAnyChannel(
 				dataStoreContext,
 				new ObjectRegistryWithUnknownChannels(sharedObjectRegistry),
 				existing,
+				() => {
+					// TODO: AB#4779
+					throw new Error("TODO");
+				},
 			);
 		}
 	} as typeof FluidDataStoreRuntime;

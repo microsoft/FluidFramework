@@ -21,13 +21,13 @@ describe("VersionDetails sorting", async () => {
 	];
 
 	it("sortedByVersion", async () => {
-		const sortedByVersion = await sortVersions(versions, "version");
+		const sortedByVersion = sortVersions(versions, "version");
 		assert.equal(sortedByVersion[0].version, "1.0.2");
 		assert.equal(sortedByVersion[3].version, "0.59.3001");
 	});
 
 	it("sortedByDate", async () => {
-		const sortedByDate = await sortVersions(versions, "date");
+		const sortedByDate = sortVersions(versions, "date");
 		assert.equal(sortedByDate[0].version, "0.59.3001");
 		assert.equal(sortedByDate[1].version, "1.0.2");
 		assert.equal(sortedByDate[4].version, "0.59.3000");

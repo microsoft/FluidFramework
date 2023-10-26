@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { default as AbortController } from "abort-controller";
 import { v4 as uuid } from "uuid";
 import {
 	ITelemetryLoggerExt,
@@ -11,7 +10,8 @@ import {
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils";
-import { assert, fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import { DriverErrorType } from "@fluidframework/driver-definitions";
 import {
@@ -26,6 +26,7 @@ import {
 	isRuntimeMessage,
 	NonRetryableError,
 } from "@fluidframework/driver-utils";
+import { fetchIncorrectResponse, throwOdspNetworkError } from "@fluidframework/odsp-doclib-utils";
 import {
 	IOdspSnapshot,
 	ISnapshotCachedEntry,
@@ -55,6 +56,7 @@ import { pkgVersion } from "./packageVersion";
 
 /**
  * Enum to support different types of snapshot formats.
+ * @public
  */
 export enum SnapshotFormatSupportType {
 	Json = 0,
@@ -310,7 +312,17 @@ async function fetchLatestSnapshotCore(
 					case "application/json": {
 						let text: string;
 						[text, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.text(),
+							odspResponse.content.text().catch((err) =>
+								// Parsing can fail and message could contain full request URI, including
+								// tokens, etc. So do not log error object itself.
+								throwOdspNetworkError(
+									"Error while parsing fetch response",
+									fetchIncorrectResponse,
+									odspResponse.content, // response
+									undefined, // response text
+									propsToLog,
+								),
+							),
 						);
 						propsToLog.bodySize = text.length;
 						let content: IOdspSnapshot;
@@ -330,7 +342,17 @@ async function fetchLatestSnapshotCore(
 					case "application/ms-fluid": {
 						let content: ArrayBuffer;
 						[content, receiveContentTime] = await measureP(async () =>
-							odspResponse.content.arrayBuffer(),
+							odspResponse.content.arrayBuffer().catch((err) =>
+								// Parsing can fail and message could contain full request URI, including
+								// tokens, etc. So do not log error object itself.
+								throwOdspNetworkError(
+									"Error while parsing fetch response",
+									fetchIncorrectResponse,
+									odspResponse.content, // response
+									undefined, // response text
+									propsToLog,
+								),
+							),
 						);
 						propsToLog.bodySize = content.byteLength;
 						let snapshotContents: ISnapshotContentsWithProps;
@@ -487,7 +509,6 @@ export interface ISnapshotRequestAndResponseOptions {
 function getFormBodyAndHeaders(
 	odspResolvedUrl: IOdspResolvedUrl,
 	storageToken: string,
-	snapshotOptions: ISnapshotOptions | undefined,
 	headers?: { [index: string]: string },
 ) {
 	const formBoundary = uuid();
@@ -495,13 +516,7 @@ function getFormBodyAndHeaders(
 	formParams.push(`--${formBoundary}`);
 	formParams.push(`Authorization: Bearer ${storageToken}`);
 	formParams.push(`X-HTTP-Method-Override: GET`);
-	if (snapshotOptions !== undefined) {
-		Object.entries(snapshotOptions).forEach(([key, value]) => {
-			if (value !== undefined) {
-				formParams.push(`${key}: ${value}`);
-			}
-		});
-	}
+
 	if (headers !== undefined) {
 		Object.entries(headers).forEach(([key, value]) => {
 			if (value !== undefined) {
@@ -579,18 +594,25 @@ export async function downloadSnapshot(
 	}
 
 	const snapshotUrl = odspResolvedUrl.endpoints.snapshotStorageUrl;
-	const url = `${snapshotUrl}/trees/latest?ump=1`;
+
+	const queryParams = { ump: 1 };
+	if (snapshotOptions !== undefined) {
+		Object.entries(snapshotOptions).forEach(([key, value]) => {
+			// Exclude "timeout" from query string
+			if (value !== undefined && key !== "timeout") {
+				queryParams[key] = value;
+			}
+		});
+	}
+
+	const queryString = getQueryString(queryParams);
+	const url = `${snapshotUrl}/trees/latest${queryString}`;
 	// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 	// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 	// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 	// for futher reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 	const header = { prefer: "manualredirect" };
-	const { body, headers } = getFormBodyAndHeaders(
-		odspResolvedUrl,
-		storageToken,
-		snapshotOptions,
-		header,
-	);
+	const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, storageToken, header);
 	const fetchOptions = {
 		body,
 		headers,

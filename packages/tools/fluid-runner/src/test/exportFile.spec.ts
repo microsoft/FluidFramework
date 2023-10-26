@@ -59,7 +59,7 @@ describe("exportFile", () => {
 				const result = await createContainerAndExecute(
 					getSnapshotFileContent(path.join(snapshotFolder, snapshotFileName)),
 					fluidExport,
-					new MockLogger(),
+					new MockLogger().toTelemetryLogger(),
 				);
 				assert.deepStrictEqual(result, executeResult, "result objects do not match");
 			});

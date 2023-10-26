@@ -714,7 +714,9 @@ export class DataBinding {
 				typeidHolder,
 				in_indirectionsAtRoot,
 				in_previousSourceReferencePropertyInfo,
-				in_tokenizedFullPath.slice()!,
+				// WARNING: 'in_tokenizedFullPath' is '(string | number)[]'.  The cast to 'string[]'
+				//          preserves the JavaScript coercion behavior, which was permitted prior to TS5.
+				in_tokenizedFullPath.slice()! as string[],
 				tokenizedRegistrySubPath.slice()!,
 				in_referenceKey,
 			);
@@ -1106,7 +1108,13 @@ export class DataBinding {
 							}
 							break;
 						case ArrayChangeSetIterator.types.REMOVE:
-							for (i = 0; i < arrayIterator.opDescription.operation![1]; ++i) {
+							for (
+								i = 0;
+								// WARNING: 'operation[1]' is 'string | number | genericArray'.  The cast to 'number'
+								//          preserves the JavaScript coercion behavior, which was permitted prior to TS5.
+								i < (arrayIterator.opDescription.operation![1] as number);
+								++i
+							) {
 								// We don't have a changeset for this. Since we assume that the previous elements have already
 								// been removed, we don't add the range index i in this call
 								// Provide context (even w/o a valid changeset) to make writing callbacks easier

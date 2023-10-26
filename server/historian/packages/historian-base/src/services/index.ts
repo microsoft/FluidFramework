@@ -7,6 +7,7 @@ export {
 	ICache,
 	IConnectionString,
 	ICredentials,
+	IDenyList,
 	IExternalStorage,
 	IOauthAccessInfo,
 	IStorage,
@@ -14,6 +15,7 @@ export {
 	ITenantCustomDataExternal,
 	ITenantService,
 } from "./definitions";
+export { DenyList } from "./denyList";
 export { RedisCache } from "./redisCache";
 export { RedisTenantCache } from "./redisTenantCache";
 export { IDocument, RestGitService } from "./restGitService";

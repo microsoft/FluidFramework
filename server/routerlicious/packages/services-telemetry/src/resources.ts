@@ -90,6 +90,7 @@ export enum CommonProperties {
 	serviceName = "serviceName",
 	telemetryGroupName = "telemetryGroupName",
 	totalBatchSize = "totalBatchSize",
+	isEphemeralContainer = "isEphemeralContainer",
 	restartReason = "restartReason",
 }
 
@@ -169,3 +170,7 @@ export const getLumberBaseProperties = (documentId: string, tenantId: string) =>
 	[BaseTelemetryProperties.tenantId]: tenantId,
 	[BaseTelemetryProperties.documentId]: documentId,
 });
+
+export interface ILumberFormatter {
+	transform(lumber: Lumber<string>): void;
+}

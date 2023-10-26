@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import { Stack } from "./collections";
 import { SlidingPreference } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
@@ -26,6 +27,9 @@ export const refGetTileLabels = (refPos: ReferencePosition): string[] | undefine
 		? (refPos.properties[reservedTileLabelsKey] as string[])
 		: undefined;
 
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefined =>
 	// eslint-disable-next-line no-bitwise
 	refTypeIncludesFlag(refPos, ReferenceType.NestBegin | ReferenceType.NestEnd) &&
@@ -35,30 +39,24 @@ export const refGetRangeLabels = (refPos: ReferencePosition): string[] | undefin
 
 export function refHasTileLabel(refPos: ReferencePosition, label: string): boolean {
 	const tileLabels = refGetTileLabels(refPos);
-	if (tileLabels) {
-		for (const refLabel of tileLabels) {
-			if (label === refLabel) {
-				return true;
-			}
-		}
-	}
-	return false;
+	return tileLabels?.includes(label) ?? false;
 }
 
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export function refHasRangeLabel(refPos: ReferencePosition, label: string): boolean {
 	const rangeLabels = refGetRangeLabels(refPos);
-	if (rangeLabels) {
-		for (const refLabel of rangeLabels) {
-			if (label === refLabel) {
-				return true;
-			}
-		}
-	}
-	return false;
+	return rangeLabels?.includes(label) ?? false;
 }
+
 export function refHasTileLabels(refPos: ReferencePosition): boolean {
 	return refGetTileLabels(refPos) !== undefined;
 }
+
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
 export function refHasRangeLabels(refPos: ReferencePosition): boolean {
 	return refGetRangeLabels(refPos) !== undefined;
 }
@@ -70,7 +68,7 @@ export function refHasRangeLabels(refPos: ReferencePosition): boolean {
  */
 export interface ReferencePosition {
 	/**
-	 * @returns - Properties associated with this reference
+	 * @returns Properties associated with this reference
 	 */
 	properties?: PropertySet;
 
@@ -89,7 +87,9 @@ export interface ReferencePosition {
 
 	/**
 	 * Gets the offset for this reference position within its associated segment.
+	 *
 	 * @example
+	 *
 	 * If a merge-tree has 3 leaf segments ["hello", " ", "world"] and a ReferencePosition refers to the "l"
 	 * in "world", that reference's offset would be 3 as "l" is the character at index 3 within "world".
 	 */
@@ -98,13 +98,17 @@ export interface ReferencePosition {
 	/**
 	 * @param newProps - Properties to add to this reference.
 	 * @param op - Combining semantics for changed properties. By default, property changes are last-write-wins.
-	 * @remarks - Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
+	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
 	 * to ensure broadcast happens if that is desired.
 	 */
 	addProperties(newProps: PropertySet, op?: ICombiningOp): void;
 	isLeaf(): this is ISegment;
 }
 
+/**
+ * @deprecated This functionality is deprecated and will be removed in a future release.
+ */
+// eslint-disable-next-line import/no-deprecated
 export type RangeStackMap = MapLike<Stack<ReferencePosition>>;
 
 export const DetachedReferencePosition = -1;

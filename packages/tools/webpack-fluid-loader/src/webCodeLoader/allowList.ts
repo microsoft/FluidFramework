@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ICodeAllowList, IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
+import { IResolvedFluidCodeDetails } from "@fluidframework/container-definitions";
 
 /**
  * Class used by hosts to allow specific containers and endpoint.
  */
-export class AllowList implements ICodeAllowList {
+export class AllowList {
 	constructor(
 		private readonly testHandler?: (source: IResolvedFluidCodeDetails) => Promise<boolean>,
 	) {}

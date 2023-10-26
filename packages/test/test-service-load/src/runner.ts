@@ -10,18 +10,27 @@ import {
 	TestDriverTypes,
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
-import { Loader, ConnectionState } from "@fluidframework/container-loader";
+import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/common-utils";
+import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
-import { createCodeLoader, createLogger, createTestDriver, getProfile, safeExit } from "./utils";
+import {
+	configProvider,
+	createCodeLoader,
+	createLogger,
+	createTestDriver,
+	getProfile,
+	globalConfigurations,
+	safeExit,
+} from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import {
 	generateConfigurations,
@@ -92,12 +101,16 @@ async function main() {
 	// this makes runners repeatable, but ensures each runner
 	// will get its own set of randoms
 	const random = makeRandom(seed, runId);
-	const logger = await createLogger({
-		runId,
-		driverType: driver,
-		driverEndpointName: endpoint,
-		profile: profileName,
-	});
+	const logger = await createLogger(
+		{
+			runId,
+			driverType: driver,
+			driverEndpointName: endpoint,
+			profile: profileName,
+		},
+		// Turn on verbose events for ALL stress test runs.
+		random.pick([LogLevel.verbose]),
+	);
 
 	// this will enabling capturing the full stack for errors
 	// since this is test capturing the full stack is worth it
@@ -216,6 +229,16 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			const testConfiguration = configurations[runConfig.runId % configurations.length];
+			runConfig.logger.sendTelemetryEvent({
+				eventName: "RunConfigOptions",
+				details: JSON.stringify({
+					loaderOptions: runConfig.loaderConfig,
+					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
+					logLevel: runConfig.logger.minLogLevel,
+					configurations: { ...globalConfigurations, ...testConfiguration },
+				}),
+			});
 			const loader = new Loader({
 				urlResolver: testDriver.createUrlResolver(),
 				documentServiceFactory,
@@ -224,31 +247,16 @@ async function runnerProcess(
 				),
 				logger: runConfig.logger,
 				options: runConfig.loaderConfig,
-				configProvider: {
-					getRawConfig(name) {
-						return configurations[runConfig.runId % configurations.length][name];
-					},
-				},
+				configProvider: configProvider(testConfiguration),
 			});
 
-			let stashedOps = stashedOpP ? await stashedOpP : undefined;
+			const stashedOps = stashedOpP ? await stashedOpP : undefined;
 			stashedOpP = undefined; // delete to avoid reuse
-
-			// temp fix for #15538: remove clientId from empty stash blobs
-			if (stashedOps !== undefined) {
-				const parsed = JSON.parse(stashedOps);
-				if (
-					parsed.pendingRuntimeState.pending === undefined &&
-					Object.keys(parsed.pendingRuntimeState.pendingAttachmentBlobs).length === 0
-				) {
-					parsed.clientId = undefined;
-					stashedOps = JSON.stringify(parsed);
-				}
-			}
 
 			container = await loader.resolve({ url, headers }, stashedOps);
 
 			container.connect();
+			// eslint-disable-next-line import/no-deprecated
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
 			// Retain old behavior of runtime being disposed on container close
@@ -301,6 +309,8 @@ async function runnerProcess(
 			reset = false;
 			printStatus(runConfig, done ? `finished` : "closed");
 		} catch (error) {
+			// clear stashed op in case of error
+			stashedOpP = undefined;
 			runConfig.logger.sendErrorEvent(
 				{
 					eventName: "RunnerFailed",
@@ -344,9 +354,8 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(
-					container.resolvedUrl,
-				)?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(container.resolvedUrl)
+					?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);
@@ -446,7 +455,7 @@ function scheduleContainerClose(
 
 async function scheduleOffline(
 	dsf: FaultInjectionDocumentServiceFactory,
-	container: IContainer,
+	container: IContainerExperimental,
 	runConfig: IRunConfig,
 	offlineDelayMinMs: number,
 	offlineDelayMaxMs: number,
@@ -488,7 +497,8 @@ async function scheduleOffline(
 				}
 				if (
 					runConfig.loaderConfig?.enableOfflineLoad === true &&
-					random.real() < stashPercent
+					random.real() < stashPercent &&
+					container.closeAndGetPendingLocalState
 				) {
 					printStatus(runConfig, "closing offline container!");
 					return container.closeAndGetPendingLocalState();

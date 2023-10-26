@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidResolvedUrl } from "@fluidframework/driver-definitions";
+import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 /**
  * Describes what kind of content is stored in cache entry.
@@ -28,7 +28,7 @@ export interface IFileEntry {
 	 * a file if user requests so.
 	 * This is IOdspResolvedUrl in case of ODSP driver.
 	 */
-	resolvedUrl: IFluidResolvedUrl;
+	resolvedUrl: IResolvedUrl;
 }
 
 /**
@@ -96,7 +96,7 @@ export interface IPersistedCache {
 /**
  * Api to generate a cache key from cache entry.
  * @param entry - cache entry from which a cache key is generated
- * @returns - key for cache.
+ * @returns The key for cache.
  */
 export function getKeyForCacheEntry(entry: ICacheEntry): string {
 	return `${entry.file.docId}_${entry.type}_${entry.key}`;

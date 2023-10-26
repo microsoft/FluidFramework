@@ -34,9 +34,14 @@ function applyMessagesWithReconnect(
 	const stashedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[], number][] = [];
 	for (const messageData of messageDatas) {
 		if (messageData[0].clientId !== clients[1].longClientId) {
-			const index = clients.map((c) => c.longClientId).indexOf(messageData[0].clientId);
-			const localMetadata = stashClients[index].applyStashedOp(messageData[0].contents);
-			stashedOps.push([messageData[0].contents, localMetadata, index]);
+			const index = clients
+				.map((c) => c.longClientId)
+				// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+				.indexOf(messageData[0].clientId as string);
+			const localMetadata = stashClients[index].applyStashedOp(
+				messageData[0].contents as IMergeTreeOp,
+			);
+			stashedOps.push([messageData[0].contents as IMergeTreeOp, localMetadata, index]);
 		}
 	}
 	// this should put all stash clients (except #1) in the same state as the
@@ -88,8 +93,8 @@ function applyMessagesWithReconnect(
 	// apply regenerated ops as stashed ops for client #1
 	const stashedRegeneratedOps: [IMergeTreeOp, SegmentGroup | SegmentGroup[]][] =
 		reconnectMsgs.map((message) => {
-			const localMetadata = stashClients[1].applyStashedOp(message.contents);
-			return [message.contents, localMetadata];
+			const localMetadata = stashClients[1].applyStashedOp(message.contents as IMergeTreeOp);
+			return [message.contents as IMergeTreeOp, localMetadata];
 		});
 	// now both clients at index 1 should be the same
 	TestClientLogger.validate([clients[1], stashClients[1]]);

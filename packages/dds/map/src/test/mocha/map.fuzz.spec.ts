@@ -14,6 +14,7 @@ import {
 	Generator,
 	takeAsync,
 } from "@fluid-internal/stochastic-test-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import { MapFactory } from "../../map";
 import { ISharedMap } from "../../interfaces";
 
@@ -46,13 +47,13 @@ function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap) {
 	}
 }
 
-const reducer = combineReducers<Operation, DDSFuzzTestState<MapFactory>>({
-	clear: ({ channel }) => channel.clear(),
-	setKey: ({ channel }, { key, value }) => {
-		channel.set(key, value);
+const reducer = combineReducers<Operation, State>({
+	clear: ({ client }) => client.channel.clear(),
+	setKey: ({ client }, { key, value }) => {
+		client.channel.set(key, value);
 	},
-	deleteKey: ({ channel }, { key }) => {
-		channel.delete(key);
+	deleteKey: ({ client }, { key }) => {
+		client.channel.delete(key);
 	},
 });
 
@@ -101,15 +102,7 @@ describe("Map fuzz tests", () => {
 	const model: DDSFuzzModel<MapFactory, Operation> = {
 		workloadName: "default",
 		factory: new MapFactory(),
-		generatorFactory: () =>
-			takeAsync(
-				100,
-				makeGenerator({
-					// This suite currently fails when `.clear()` operations are enabled.
-					// AB#4612 tracks resolving that and making this nonzero.
-					clearWeight: 0,
-				}),
-			),
+		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: assertMapsAreEquivalent,
 	};
@@ -141,6 +134,28 @@ describe("Map fuzz tests", () => {
 			// replay: 0,
 			saveFailures: {
 				directory: path.join(__dirname, "../../../src/test/mocha/results/map-reconnect"),
+			},
+		},
+	);
+
+	createDDSFuzzSuite(
+		{ ...model, workloadName: "with batches and rebasing" },
+		{
+			defaultTestCount: 100,
+			numberOfClients: 3,
+			clientJoinOptions: {
+				maxNumberOfClients: 6,
+				clientAddProbability: 0.1,
+			},
+			rebaseProbability: 0.2,
+			containerRuntimeOptions: {
+				flushMode: FlushMode.TurnBased,
+				enableGroupedBatching: true,
+			},
+			// Uncomment to replay a particular seed.
+			// replay: 0,
+			saveFailures: {
+				directory: path.join(__dirname, "../../../src/test/mocha/results/map-rebase"),
 			},
 		},
 	);

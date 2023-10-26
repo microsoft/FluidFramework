@@ -51,7 +51,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
 }
 
 /**
- * NOTE: Renamed from `buildHierarchy` to `buildGitTreeHeirarchy`. There is usage of this function in loader and driver layer.
+ * NOTE: Renamed from `buildHierarchy` to `buildGitTreeHierarchy`. There is usage of this function in loader and driver layer.
  * Build a tree hierarchy base on a flat tree
  *
  * @param flatTree - a flat tree
@@ -59,7 +59,7 @@ export function getGitType(value: SummaryObject): "blob" | "tree" {
  * @param removeAppTreePrefix - Remove `.app/` from beginning of paths when present
  * @returns the hierarchical tree
  */
-export function buildGitTreeHeirarchy(
+export function buildGitTreeHierarchy(
 	flatTree: git.ITree,
 	blobsShaToPathCache: Map<string, string> = new Map<string, string>(),
 	removeAppTreePrefix = false,

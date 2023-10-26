@@ -3,14 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import {
+	ITelemetryLoggerExt,
+	MonitoringContext,
+	PerformanceEvent,
+	createChildMonitoringContext,
+} from "@fluidframework/telemetry-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	ISummaryContext,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	ICreateBlobResponse,
 	ISnapshotTreeEx,
@@ -34,15 +39,14 @@ const isNode = typeof window === "undefined";
  * Downloads summaries piece-by-piece on-demand, or up-front when prefetch is enabled.
  */
 export class ShreddedSummaryDocumentStorageService implements IDocumentStorageService {
+	private readonly mc: MonitoringContext;
 	// The values of this cache is useless. We only need the keys. So we are always putting
 	// empty strings as values.
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly blobCache: ICache<ArrayBufferLike> | undefined;
 	private readonly snapshotTreeCache: ICache<ISnapshotTreeVersion> | undefined;
 
-	public get repositoryUrl(): string {
-		return "";
-	}
+	public readonly repositoryUrl = "";
 
 	private async getSummaryUploadManager(): Promise<ISummaryUploadManager> {
 		const manager = await this.getStorageManager();
@@ -69,6 +73,10 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 			this.blobCache = blobCache ?? new InMemoryCache();
 			this.snapshotTreeCache = snapshotTreeCache ?? new InMemoryCache();
 		}
+
+		this.mc = createChildMonitoringContext({
+			logger,
+		});
 	}
 
 	public async getVersions(versionId: string | null, count: number): Promise<IVersion[]> {
@@ -125,7 +133,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 				return response;
 			},
 		);
-		const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
+		const tree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		await this.snapshotTreeCache?.put(this.getCacheKey(tree.id), {
 			id: requestVersion.id,
 			snapshotTree: tree,
@@ -153,6 +161,9 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 				});
 				return response;
 			},
+			undefined, // workers
+			undefined, // recordHeapSize
+			this.mc.config.getNumber("Fluid.Driver.ReadBlobTelemetrySampling"),
 		);
 		this.blobsShaCache.set(value.sha, "");
 		const bufferContent = stringToBuffer(value.content, value.encoding);

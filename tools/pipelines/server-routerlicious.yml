@@ -30,6 +30,17 @@ parameters:
     - default
     - skip
     - force
+- name: interdependencyRange
+  displayName: Range to use for interdependencies (only affects releases) (default = ~)
+  type: string
+  default: "~"
+  # The " " value (a space) is a hacky workaround. ADO doesn't support empty string, but we ultimately use this value as
+  # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
+  # empty string.
+  values:
+    - "^"
+    - "~"
+    - " "
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
@@ -57,6 +68,7 @@ trigger:
     - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
+    - tools/pipelines/templates/include-use-node-version.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -76,6 +88,7 @@ pr:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
+    - tools/pipelines/templates/include-use-node-version.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -87,6 +100,7 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    interdependencyRange: ${{ parameters.interdependencyRange }}
     buildDirectory: server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
@@ -102,5 +116,7 @@ extends:
     docs: true
     containerBaseDir: /usr/src/server
     checks:
+    - generate:packageList
     - prettier
     - check:versions
+    additionalBuildArguments: --build-context root=.

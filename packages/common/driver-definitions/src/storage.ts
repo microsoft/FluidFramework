@@ -3,8 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IEventProvider, IErrorEvent } from "@fluidframework/common-definitions";
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEventProvider,
+	IErrorEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	ConnectionMode,
 	IClient,
@@ -111,12 +115,6 @@ export interface IDocumentStorageServicePolicies {
 	readonly caching?: LoaderCachingPolicy;
 
 	/**
-	 * If this policy is provided, it tells runtime on ideal size for blobs.
-	 * Blobs that are smaller than that size should be aggregated into bigger blobs.
-	 */
-	readonly minBlobSize?: number;
-
-	/**
 	 * IMPORTANT: This policy MUST be set to 5 days and PROPERLY ENFORCED for drivers that are used
 	 * in applications where Garbage Collection is enabled. Otherwise data loss may occur.
 	 *
@@ -197,7 +195,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
 	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
 	(event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
-	(event: "signal", listener: (message: ISignalMessage) => void);
+	(event: "signal", listener: (message: ISignalMessage | ISignalMessage[]) => void);
 	(event: "pong", listener: (latency: number) => void);
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

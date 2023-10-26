@@ -3,24 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
-	ChangesetLocalId,
-	IdAllocator,
-	idAllocatorFromMaxId,
 	RevisionInfo,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import {
+	ChangesetLocalId,
+	Delta,
+	RevisionTag,
+	TaggedChange,
+	makeAnonChange,
+	tagChange,
+} from "../../../core";
 import { TestChange } from "../../testChange";
 import {
-	assertMarkListEqual,
+	assertFieldChangesEqual,
 	deepFreeze,
 	defaultRevisionMetadataFromChanges,
-	fakeTaggedRepair as fakeRepair,
 } from "../../utils";
-import { brand, fail } from "../../../util";
+import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -34,8 +37,11 @@ export function composeNoVerify(
 	return composeI(changes, (childChanges) => TestChange.compose(childChanges, false), revInfos);
 }
 
-export function compose(changes: TaggedChange<TestChangeset>[]): TestChangeset {
-	return composeI(changes, TestChange.compose);
+export function compose(
+	changes: TaggedChange<TestChangeset>[],
+	revInfos?: RevisionInfo[],
+): TestChangeset {
+	return composeI(changes, TestChange.compose, revInfos);
 }
 
 export function composeAnonChangesShallow<T>(changes: SF.Changeset<T>[]): SF.Changeset<T> {
@@ -134,8 +140,8 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
-		fakeRepair,
-		() => fail("Sequence fields should not generate IDs during invert"),
+		// Sequence fields should not generate IDs during invert
+		fakeIdAllocator,
 		table,
 	);
 
@@ -146,8 +152,8 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.amendInvert(
 			inverted,
 			change.revision,
-			fakeRepair,
-			() => fail("Sequence fields should not generate IDs during invert"),
+			// Sequence fields should not generate IDs during invert
+			fakeIdAllocator,
 			table,
 		);
 		assert(!table.isInvalidated, "Invert should not need more than one amend pass");
@@ -157,11 +163,14 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
-	assertMarkListEqual(toDelta(actual), toDelta(expected));
+	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset): Delta.MarkList {
-	return SF.sequenceFieldToDelta(change, TestChange.toDelta);
+export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.FieldChanges {
+	deepFreeze(change);
+	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
+		TestChange.toDelta(tagChange(childChange, revision)),
+	);
 }
 
 export function getMaxId(...changes: SF.Changeset<unknown>[]): ChangesetLocalId | undefined {
@@ -187,19 +196,18 @@ export function continuingAllocator(changes: TaggedChange<SF.Changeset<unknown>>
 	return idAllocatorFromMaxId(getMaxIdTagged(changes));
 }
 
-export function normalizeMoveIds(change: SF.Changeset<unknown>): void {
-	let nextId = 0;
-	const mappings = new Map<SF.MoveId, SF.MoveId>();
-	for (const mark of change) {
-		if (SF.isMoveMark(mark)) {
-			let newId = mappings.get(mark.id);
-			if (newId === undefined) {
-				newId = brand(nextId++);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				mappings.set(mark.id, newId!);
-			}
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			mark.id = newId!;
+export function withoutLineage<T>(changeset: SF.Changeset<T>): SF.Changeset<T> {
+	const factory = new SF.MarkListFactory<T>();
+	for (const mark of changeset) {
+		if (mark.cellId?.lineage === undefined) {
+			factory.push(mark);
+		} else {
+			const cloned = SF.cloneMark(mark);
+			assert(cloned.cellId !== undefined, "Should have cell ID");
+			delete cloned.cellId.lineage;
+			factory.push(cloned);
 		}
 	}
+
+	return factory.list;
 }

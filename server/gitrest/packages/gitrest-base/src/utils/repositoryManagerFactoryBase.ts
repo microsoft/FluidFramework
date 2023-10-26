@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from "async-mutex";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { executeApiWithMetric } from "@fluidframework/server-services-utils";
+import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from "async-mutex";
 import { IExternalStorageManager } from "../externalStorageManager";
-import * as helpers from "./helpers";
 import {
-	IRepositoryManagerFactory,
-	IRepositoryManager,
-	IFileSystemManager,
-	IFileSystemManagerFactory,
-	IRepoManagerParams,
-	IStorageDirectoryConfig,
 	Constants,
+	IFileSystemManager,
+	IFileSystemManagerFactories,
+	IRepoManagerParams,
+	IRepositoryManager,
+	IRepositoryManagerFactory,
+	IStorageDirectoryConfig,
 } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 	GitRestRepositoryApiCategory,
 } from "./gitrestTelemetryDefinitions";
+import * as helpers from "./helpers";
 
 type RepoOperationType = "create" | "open";
 
@@ -54,11 +54,12 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 		lumberjackBaseProperties: Record<string, any>,
 		enableRepositoryManagerMetrics: boolean,
 		apiMetricsSamplingPeriod?: number,
+		isEphemeralContainer?: boolean,
 	): IRepositoryManager;
 
 	constructor(
 		private readonly storageDirectoryConfig: IStorageDirectoryConfig,
-		private readonly fileSystemManagerFactory: IFileSystemManagerFactory,
+		private readonly fileSystemManagerFactories: IFileSystemManagerFactories,
 		private readonly externalStorageManager: IExternalStorageManager,
 		repoPerDocEnabled: boolean,
 		private readonly enableRepositoryManagerMetrics: boolean = false,
@@ -202,9 +203,15 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	): Promise<IRepositoryManager> {
 		const lumberjackBaseProperties =
 			helpers.getLumberjackBasePropertiesFromRepoManagerParams(params);
-		const fileSystemManager = this.fileSystemManagerFactory.create(
-			params.fileSystemManagerParams,
-		);
+
+		const fileSystemManagerFactory =
+			!params.isEphemeralContainer ||
+			!this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory
+				? this.fileSystemManagerFactories.defaultFileSystemManagerFactory
+				: this.fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
+
+		const fileSystemManager = fileSystemManagerFactory.create(params.fileSystemManagerParams);
+
 		// We define the function below to be able to call it either on its own or within the mutex.
 		const action = async () => {
 			if (params.optimizeForInitialSummary && repoOperationType === "create") {
@@ -258,6 +265,7 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 				lumberjackBaseProperties,
 				this.enableRepositoryManagerMetrics,
 				this.apiMetricsSamplingPeriod,
+				params.isEphemeralContainer,
 			);
 		};
 

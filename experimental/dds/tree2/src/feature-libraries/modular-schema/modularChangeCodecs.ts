@@ -4,16 +4,8 @@
  */
 
 import { TAnySchema } from "@sinclair/typebox";
-import { assert } from "@fluidframework/common-utils";
-import {
-	FieldKey,
-	FieldKindIdentifier,
-	GlobalFieldKey,
-	isGlobalFieldKey,
-	keyFromSymbol,
-	LocalFieldKey,
-	symbolFromKey,
-} from "../../core";
+import { assert } from "@fluidframework/core-utils";
+import { FieldKey, FieldKindIdentifier } from "../../core";
 import { brand, fail, JsonCompatibleReadOnly, Mutable } from "../../util";
 import {
 	ICodecFamily,
@@ -30,7 +22,7 @@ import {
 	NodeChangeset,
 	RevisionInfo,
 } from "./modularChangeTypes";
-import { FieldKind } from "./fieldKind";
+import { FieldKindWithEditor } from "./fieldKind";
 import { genericFieldKind } from "./genericFieldKind";
 import {
 	EncodedFieldChange,
@@ -40,7 +32,7 @@ import {
 } from "./modularChangeFormat";
 
 function makeV0Codec(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<ModularChangeset> {
 	const nodeChangesetCodec: IJsonCodec<NodeChangeset, EncodedNodeChangeset> = {
@@ -49,7 +41,7 @@ function makeV0Codec(
 		encodedSchema: EncodedNodeChangeset,
 	};
 
-	const getMapEntry = (field: FieldKind) => {
+	const getMapEntry = (field: FieldKindWithEditor) => {
 		const codec = field.changeHandler.codecsFactory(nodeChangesetCodec).resolve(0);
 		return {
 			codec,
@@ -91,11 +83,9 @@ function makeV0Codec(
 				fail("Encoded change didn't pass schema validation.");
 			}
 
-			const global = isGlobalFieldKey(field);
-			const fieldKey: LocalFieldKey | GlobalFieldKey = global ? keyFromSymbol(field) : field;
+			const fieldKey: FieldKey = field;
 			const encodedField: EncodedFieldChange = {
 				fieldKey,
-				keyIsGlobal: global,
 				fieldKind: fieldChange.fieldKind,
 				change: encodedChange,
 			};
@@ -130,9 +120,7 @@ function makeV0Codec(
 			}
 			const fieldChangeset = codec.json.decode(field.change);
 
-			const fieldKey: FieldKey = field.keyIsGlobal
-				? symbolFromKey(brand<GlobalFieldKey>(field.fieldKey))
-				: brand<LocalFieldKey>(field.fieldKey);
+			const fieldKey: FieldKey = brand<FieldKey>(field.fieldKey);
 
 			decodedFields.set(fieldKey, {
 				fieldKind: field.fieldKind,
@@ -184,7 +172,7 @@ function makeV0Codec(
 }
 
 export function makeModularChangeCodecFamily(
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	options: ICodecOptions,
 ): ICodecFamily<ModularChangeset> {
 	return makeCodecFamily([[0, makeV0Codec(fieldKinds, options)]]);

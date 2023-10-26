@@ -6,6 +6,7 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { IContainer } from "@fluidframework/container-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { Signaler } from "@fluid-experimental/data-objects";
 import { FocusTracker } from "./FocusTracker";
@@ -42,6 +43,7 @@ export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory
 	}
 
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		// eslint-disable-next-line import/no-deprecated
 		const signaler = await requestFluidObject<Signaler>(
 			await runtime.getRootDataStore(signalerId),
 			"",

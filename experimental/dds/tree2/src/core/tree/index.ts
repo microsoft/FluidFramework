@@ -20,7 +20,9 @@ export {
 	mapCursorField,
 	mapCursorFields,
 	forEachNode,
+	forEachNodeInSubtree,
 	forEachField,
+	iterateCursorField,
 	ITreeCursorSynchronous,
 	PathRootPrefix,
 	inCursorField,
@@ -29,12 +31,6 @@ export {
 	isCursor,
 } from "./cursor";
 export { ProtoNodes } from "./delta";
-export {
-	GlobalFieldKeySymbol,
-	keyFromSymbol,
-	symbolFromKey,
-	symbolIsFieldKey,
-} from "./globalFieldKeySymbol";
 export { getMapTreeField, MapTree } from "./mapTree";
 export {
 	clonePath,
@@ -42,33 +38,31 @@ export {
 	getDepth,
 	UpPath,
 	FieldUpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
+	getDetachedFieldContainingPath,
 	UpPathDefault,
 } from "./pathTree";
 export {
 	FieldMapObject,
-	FieldScope,
 	GenericFieldsNode,
 	genericTreeDeleteIfEmpty,
 	genericTreeKeys,
 	GenericTreeNode,
 	getGenericTreeField,
-	isGlobalFieldKey,
 	JsonableTree,
-	scopeFromKey,
 	setGenericTreeField,
 } from "./treeTextFormat";
-export {
-	EncodedFieldMapObject,
-	EncodedGenericFieldsNode,
-	EncodedGenericTreeNode,
-	EncodedJsonableTree,
-	EncodedNodeData,
-} from "./persistedTreeTextFormat";
+export { EncodedJsonableTree } from "./persistedTreeTextFormat";
 export {
 	EmptyKey,
-	FieldKey,
 	TreeType,
 	ChildLocation,
 	DetachedField,
@@ -80,11 +74,16 @@ export {
 	keyAsDetachedField,
 	rootFieldKey,
 	NodeData,
-	rootFieldKeySymbol,
 	rootField,
-	isLocalKey,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
+export {
+	AnnouncedVisitor,
+	announceDelta,
+	applyDelta,
+	combineVisitors,
+	makeDetachedFieldIndex,
+} from "./visitorUtils";
 export { PathVisitor } from "./visitPath";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
@@ -93,4 +92,13 @@ export { Delta };
 
 export { SparseNode, getDescendant } from "./sparseTree";
 
-export { isSkipMark, emptyDelta } from "./deltaUtil";
+export {
+	deltaForRootInitialization,
+	deltaForSet,
+	emptyFieldChanges,
+	isEmptyFieldChanges,
+	makeDetachedNodeId,
+	emptyDelta,
+} from "./deltaUtil";
+
+export { DetachedFieldIndex, ForestRootId } from "./detachedFieldIndex";

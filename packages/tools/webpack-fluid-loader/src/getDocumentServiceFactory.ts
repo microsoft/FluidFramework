@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	LocalDocumentServiceFactory,
@@ -13,7 +13,6 @@ import { OdspDocumentServiceFactory } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import { getRandomName } from "@fluidframework/server-services-client";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils";
 
 import { v4 as uuid } from "uuid";
@@ -29,9 +28,13 @@ export function getDocumentServiceFactory(
 	odspPersistantCache?: IPersistedCache,
 	odspHostStoragePolicy?: HostStoragePolicy,
 ): IDocumentServiceFactory {
+	const userId = uuid();
+	const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
+	const userName = match !== null ? match[0] : userId; // Just use the first two segments of the (fake) userId as a fake name.
+
 	const getUser = (): IDevServerUser => ({
-		id: uuid(),
-		name: getRandomName(),
+		id: userId,
+		name: userName,
 	});
 
 	let routerliciousTokenProvider: InsecureTokenProvider;
@@ -60,6 +63,10 @@ export function getDocumentServiceFactory(
 						? options.enableWholeSummaryUpload
 						: undefined,
 				enableDiscovery: options.mode === "r11s" && options.discoveryEndpoint !== undefined,
+				isEphemeralContainer:
+					options.mode === "r11s" || options.mode === "docker"
+						? options.isEphemeralContainer
+						: false,
 			});
 
 		case "spo":

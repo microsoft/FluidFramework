@@ -19,21 +19,22 @@ import { defaultLogger } from "./logging";
 import { MonoRepo, PackageManager } from "./monoRepo";
 import {
 	ExecAsyncResult,
-	copyFileAsync,
 	execWithErrorAsync,
 	existsSync,
 	isSameFileOrDir,
 	lookUpDirSync,
 	rimrafWithErrorAsync,
-	unlinkAsync,
 } from "./utils";
 
-const { log, verbose, errorLog: error } = defaultLogger;
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
+
+const { log, errorLog: error } = defaultLogger;
 
 /**
  * A type representing fluid-build-specific config that may be in package.json.
  */
-type FluidPackageJson = {
+export type FluidPackageJson = {
 	/**
 	 * nyc config
 	 */
@@ -54,12 +55,11 @@ type FluidPackageJson = {
 /**
  * A type representing all known fields in package.json, including fluid-build-specific config.
  *
- * By default all fields are optional, but we require that the name, dependencies, devDependencies, scripts, and version
- * all be defined.
+ * By default all fields are optional, but we require that the name, scripts, and version all be defined.
  */
 export type PackageJson = SetRequired<
 	StandardPackageJson & FluidPackageJson,
-	"name" | "dependencies" | "devDependencies" | "scripts" | "version"
+	"name" | "scripts" | "version"
 >;
 
 export class Package {
@@ -105,7 +105,6 @@ export class Package {
 		public readonly packageJsonFileName: string,
 		public readonly group: string,
 		public readonly monoRepo?: MonoRepo,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		additionalProperties: any = {},
 	) {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
@@ -116,7 +115,7 @@ export class Package {
 			: existsSync(yarnLockPath)
 			? "yarn"
 			: "npm";
-		verbose(`Package loaded: ${this.nameColored}`);
+		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}
 
@@ -162,6 +161,13 @@ export class Package {
 
 	public get isTestPackage(): boolean {
 		return this.name.split("/")[1]?.startsWith("test-") === true;
+	}
+
+	/**
+	 * Returns true if the package is a release group root package based on its directory path.
+	 */
+	public get isReleaseGroupRoot(): boolean {
+		return this.monoRepo !== undefined && this.directory === this.monoRepo.repoPath;
 	}
 
 	public get matched() {
@@ -243,22 +249,6 @@ export class Package {
 
 	public reload() {
 		this._packageJson = readJsonSync(this.packageJsonFileName);
-	}
-
-	public async noHoistInstall(repoRoot: string) {
-		// Fluid specific
-		const rootNpmRC = path.join(repoRoot, ".npmrc");
-		const npmRC = path.join(this.directory, ".npmrc");
-
-		await copyFileAsync(rootNpmRC, npmRC);
-		const result = await execWithErrorAsync(
-			`${this.installCommand} --no-package-lock --no-shrinkwrap`,
-			{ cwd: this.directory },
-			this.nameColored,
-		);
-		await unlinkAsync(npmRC);
-
-		return result;
 	}
 
 	public async checkInstall(print: boolean = true) {
@@ -423,20 +413,6 @@ export class Packages {
 
 	public async cleanNodeModules() {
 		return this.queueExecOnAllPackage((pkg) => pkg.cleanNodeModules(), "rimraf node_modules");
-	}
-
-	public async noHoistInstall(repoRoot: string) {
-		return this.queueExecOnAllPackage(
-			(pkg) => pkg.noHoistInstall(repoRoot),
-			"install dependencies",
-		);
-	}
-
-	public async filterPackages(releaseGroup: string | undefined) {
-		if (releaseGroup === undefined) {
-			return this.packages;
-		}
-		return this.packages.filter((p) => p.monoRepo?.kind === releaseGroup);
 	}
 
 	public async forEachAsync<TResult>(

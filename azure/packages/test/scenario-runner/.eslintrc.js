@@ -10,6 +10,6 @@ module.exports = {
 		"import/no-nodejs-modules": "off",
 	},
 	parserOptions: {
-		project: ["./src/test/tsconfig.json"],
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 };

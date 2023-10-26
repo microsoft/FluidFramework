@@ -4,6 +4,7 @@
  */
 import { Flags } from "@oclif/core";
 import chalk from "chalk";
+import prompts from "prompts";
 import stripAnsi from "strip-ansi";
 
 import { FluidRepo, MonoRepo, MonoRepoKind } from "@fluidframework/build-tools";
@@ -16,6 +17,7 @@ import {
 	packageSelectorFlag,
 	releaseGroupFlag,
 	skipCheckFlag,
+	testModeFlag,
 } from "../../flags";
 import {
 	generateBumpDepsBranchName,
@@ -24,7 +26,9 @@ import {
 	isDependencyUpdateType,
 	npmCheckUpdates,
 } from "../../lib";
-import { ReleaseGroup, isReleaseGroup } from "../../releaseGroups";
+import { ReleaseGroup } from "../../releaseGroups";
+// eslint-disable-next-line import/no-internal-modules
+import { npmCheckUpdatesHomegrown } from "../../lib/package";
 
 /**
  * Update the dependency version of a specified package or release group. That is, if one or more packages in the repo
@@ -36,18 +40,18 @@ import { ReleaseGroup, isReleaseGroup } from "../../releaseGroups";
  * This command is roughly equivalent to `fluid-bump-version --dep`.
  */
 export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
-	static description =
+	static readonly description =
 		"Update the dependency version of a specified package or release group. That is, if one or more packages in the repo depend on package A, then this command will update the dependency range on package A. The dependencies and the packages updated can be filtered using various flags.\n\nTo learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md";
 
-	static args = {
+	static readonly args = {
 		package_or_release_group: packageOrReleaseGroupArg,
-	};
+	} as const;
 
-	static flags = {
+	static readonly flags = {
 		updateType: dependencyUpdateTypeFlag({
 			char: "t",
-			description: "Bump the current version of the dependency according to this bump type.",
 			default: "minor",
+			description: "Bump the current version of the dependency according to this bump type.",
 		}),
 		prerelease: Flags.boolean({
 			dependsOn: ["updateType"],
@@ -68,10 +72,17 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		commit: checkFlags.commit,
 		install: checkFlags.install,
 		skipChecks: skipCheckFlag,
+		updateChecker: Flags.string({
+			description:
+				"Specify the implementation to use to update dependencies. The default, 'ncu', uses npm-check-updates under the covers. The 'homegrown' value is a new experimental updater written specifically for the Fluid Framework repo. This flag is experimental and may change or be removed at any time.",
+			helpGroup: "EXPERIMENTAL",
+			options: ["ncu", "homegrown"],
+		}),
+		testMode: testModeFlag,
 		...BaseCommand.flags,
-	};
+	} as const;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description:
 				"Bump dependencies on @fluidframework/build-common to the latest release version across all release groups.",
@@ -105,40 +116,48 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 	 * Runs the `bump deps` command.
 	 */
 	public async run(): Promise<void> {
-		const args = this.args;
-		const flags = this.flags;
+		const { args, flags } = this;
 
 		const context = await this.getContext();
 		const shouldInstall = flags.install && !flags.skipChecks;
 		const shouldCommit = flags.commit && !flags.skipChecks;
 
-		const rgOrPackageName = args.package_or_release_group;
-		if (rgOrPackageName === undefined) {
+		if (args.package_or_release_group === undefined) {
 			this.error("No dependency provided.");
 		}
 
-		const rgOrPackage = findPackageOrReleaseGroup(rgOrPackageName, context);
+		if (flags.testMode) {
+			this.log(chalk.yellowBright(`Running in test mode. No changes will be made.`));
+		}
+
+		const rgOrPackage = findPackageOrReleaseGroup(args.package_or_release_group, context);
 		if (rgOrPackage === undefined) {
-			this.error(`Package not found: ${rgOrPackageName}`);
+			this.error(`Package not found: ${args.package_or_release_group}`);
 		}
 
 		const branchName = await context.gitRepo.getCurrentBranchName();
 
-		// can be removed once server team owns their releases
-		if (args.package_or_release_group === MonoRepoKind.Server && flags.updateType === "minor") {
-			this.error(`Server release are always a ${chalk.bold("MAJOR")} release`);
-		}
+		if (args.package_or_release_group === MonoRepoKind.Server && branchName !== "next") {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const { confirmed } = await prompts({
+				type: "confirm",
+				name: "confirmed",
+				message: `Server releases should be consumed in the ${chalk.bold(
+					"next",
+				)} branch only. The current branch is ${branchName}. Are you sure you want to continue?`,
+				initial: false,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				onState: (state: any) => {
+					// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unsafe-member-access
+					if (state.aborted) {
+						process.nextTick(() => this.exit(0));
+					}
+				},
+			});
 
-		if (args.package_or_release_group === MonoRepoKind.Server && flags.prerelease === true) {
-			this.info(
-				`${chalk.red.bold(
-					"Client packages on main branch should NOT be consuming prereleases from server. Server prereleases should be consumed in next branch only",
-				)}`,
-			);
-			if (branchName !== "next") {
-				this.error(
-					`Server prereleases should be consumed in ${chalk.bold("next")} branch only`,
-				);
+			if (confirmed !== true) {
+				this.info("Cancelled");
+				this.exit(0);
 			}
 		}
 
@@ -148,12 +167,21 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		const depsToUpdate: string[] = [];
 
 		if (rgOrPackage instanceof MonoRepo) {
-			depsToUpdate.push(...rgOrPackage.packages.map((pkg) => pkg.name));
+			depsToUpdate.push(
+				...rgOrPackage.packages
+					.filter((pkg) => pkg.packageJson.private !== true)
+					.map((pkg) => pkg.name),
+			);
 		} else {
-			depsToUpdate.push(rgOrPackageName);
-			const pkg = context.fullPackageMap.get(rgOrPackageName);
+			if (rgOrPackage.packageJson.private === true) {
+				this.error(`${rgOrPackage.name} is a private package; ignoring.`, { exit: 1 });
+			}
+			depsToUpdate.push(rgOrPackage.name);
+
+			// Check that the package can be found in the context.
+			const pkg = context.fullPackageMap.get(rgOrPackage.name);
 			if (pkg === undefined) {
-				this.error(`Package not found: ${rgOrPackageName}`);
+				this.error(`Package not found: ${rgOrPackage.name}`);
 			}
 
 			if (pkg.monoRepo !== undefined) {
@@ -169,7 +197,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 		}
 
 		this.logHr();
-		this.log(`Dependencies: ${chalk.blue(rgOrPackageName)}`);
+		this.log(`Dependencies: ${chalk.blue(rgOrPackage.name)}`);
 		this.log(
 			`Packages: ${chalk.blueBright(flags.releaseGroup ?? flags.package ?? "all packages")}`,
 		);
@@ -182,20 +210,31 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			this.error(`Unknown dependency update type: ${flags.updateType}`);
 		}
 
-		const { updatedPackages, updatedDependencies } = await npmCheckUpdates(
-			context,
-			flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
-			depsToUpdate,
-			isReleaseGroup(rgOrPackageName) ? rgOrPackageName : undefined,
-			flags.updateType,
-			/* prerelease */ flags.prerelease,
-			/* writeChanges */ true,
-			this.logger,
-		);
+		const { updatedPackages, updatedDependencies } =
+			flags.updateChecker === "homegrown"
+				? await npmCheckUpdatesHomegrown(
+						context,
+						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
+						depsToUpdate,
+						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
+						/* prerelease */ flags.prerelease,
+						/* writeChanges */ !flags.testMode,
+						this.logger,
+				  )
+				: await npmCheckUpdates(
+						context,
+						flags.releaseGroup ?? flags.package, // if undefined the whole repo will be checked
+						depsToUpdate,
+						rgOrPackage instanceof MonoRepo ? rgOrPackage.releaseGroup : undefined,
+						flags.updateType,
+						/* prerelease */ flags.prerelease,
+						/* writeChanges */ !flags.testMode,
+						this.logger,
+				  );
 
 		if (updatedPackages.length > 0) {
 			if (shouldInstall) {
-				if (!(await FluidRepo.ensureInstalled(updatedPackages, false))) {
+				if (!(await FluidRepo.ensureInstalled(updatedPackages))) {
 					this.error("Install failed.");
 				}
 			} else {
@@ -206,8 +245,8 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				...new Set(
 					updatedPackages
 						.filter((p) => p.monoRepo !== undefined)
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						.map((p) => p.monoRepo!.kind),
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-unsafe-return
+						.map((p) => p.monoRepo!.releaseGroup),
 				),
 			];
 
@@ -225,7 +264,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 
 			changedVersionsString.push(
 				"",
-				`Dependencies on ${chalk.blue(rgOrPackageName)} updated:`,
+				`Dependencies on ${chalk.blue(rgOrPackage.name)} updated:`,
 				"",
 			);
 
@@ -237,14 +276,14 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 			if (shouldCommit) {
 				const commitMessage = stripAnsi(
 					`${generateBumpDepsCommitMessage(
-						rgOrPackageName,
+						rgOrPackage.name,
 						flags.updateType,
 						flags.releaseGroup,
 					)}\n\n${changedVersionMessage}`,
 				);
 
 				const bumpBranch = generateBumpDepsBranchName(
-					rgOrPackageName,
+					rgOrPackage.name,
 					flags.updateType,
 					flags.releaseGroup,
 				);
@@ -263,7 +302,7 @@ export default class DepsCommand extends BaseCommand<typeof DepsCommand> {
 				`${changedVersionMessage}`,
 			);
 		} else {
-			this.log(chalk.red("No dependencies need to be updated."));
+			this.log(chalk.green("No dependencies need to be updated."));
 		}
 
 		if (this.finalMessages.length > 0) {

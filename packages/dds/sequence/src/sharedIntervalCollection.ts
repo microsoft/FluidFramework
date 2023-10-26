@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -18,12 +18,11 @@ import {
 	IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base";
+import { Interval, ISerializableInterval } from "./intervals";
 import {
-	Interval,
 	IntervalCollection,
 	IIntervalCollection,
 	IntervalCollectionValueType,
-	ISerializableInterval,
 } from "./intervalCollection";
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { pkgVersion } from "./packageVersion";
@@ -34,6 +33,7 @@ const snapshotFileName = "header";
 /**
  * The factory that defines the SharedIntervalCollection.
  * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
+ * @public
  */
 export class SharedIntervalCollectionFactory implements IChannelFactory {
 	public static readonly Type = "https://graph.microsoft.com/types/sharedIntervalCollection";
@@ -75,12 +75,16 @@ export class SharedIntervalCollectionFactory implements IChannelFactory {
 	}
 }
 
+/**
+ * @public
+ */
 export interface ISharedIntervalCollection<TInterval extends ISerializableInterval> {
 	getIntervalCollection(label: string): IIntervalCollection<TInterval>;
 }
 
 /**
  * @deprecated `SharedIntervalCollection` is not maintained and is planned to be removed.
+ * @public
  */
 export class SharedIntervalCollection
 	extends SharedObject

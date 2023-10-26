@@ -4,7 +4,7 @@
  */
 
 import fs from "fs";
-import { ChildLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import {
 	getUnexpectedLogErrorException,
@@ -13,9 +13,16 @@ import {
 } from "@fluidframework/test-utils";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList } from "./compatConfig.js";
-import { getVersionedTestObjectProvider } from "./compatUtils.js";
-import { baseVersion } from "./baseVersion.js";
+import { testBaseVersion } from "./baseVersion.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
+import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
+import {
+	getDataRuntimeApi,
+	getLoaderApi,
+	getContainerRuntimeApi,
+	getDriverApi,
+	CompatApis,
+} from "./testApi.js";
 
 /*
  * Types of documents to be used during the performance runs.
@@ -26,7 +33,9 @@ export type DocumentType =
 	/** Document with Multiple DataStores */
 	| "DocumentMultipleDataStores"
 	/** Document with a SharedMatrix */
-	| "DocumentMatrix";
+	| "DocumentMatrix"
+	/** Document with a SharedMatrix and plain objects */
+	| "DocumentMatrixPlain";
 
 export interface DocumentMapInfo {
 	numberOfItems: number;
@@ -44,10 +53,24 @@ export interface DocumentMatrixInfo {
 	stringSize: number;
 }
 
+export interface DocumentMatrixPlainInfo {
+	// Actual matrix size.
+	rowSize: number;
+	columnSize: number;
+	// Definition of the matrix area to be populated.
+	beginRow: number;
+	endRow: number;
+	beginColumn: number;
+	endColumn: number;
+	// String size in each cell.
+	stringSize: number;
+}
+
 export type DocumentTypeInfo =
 	| DocumentMapInfo
 	| DocumentMultipleDataStoresInfo
-	| DocumentMatrixInfo;
+	| DocumentMatrixInfo
+	| DocumentMatrixPlainInfo;
 
 export interface IE2EDocsConfig {
 	documents: DescribeE2EDocInfo[];
@@ -104,7 +127,7 @@ const E2EDefaultDocumentTypes: DescribeE2EDocInfo[] = [
 	},
 	{
 		testTitle: "Matrix 100x100 with SharedStrings",
-		documentType: "DocumentMatrix",
+		documentType: "DocumentMatrixPlain",
 		documentTypeInfo: {
 			rowSize: 100,
 			columnSize: 100,
@@ -141,6 +164,9 @@ export function isDocumentMultipleDataStoresInfo(
 export function isDocumentMatrixInfo(info: DocumentTypeInfo): info is DocumentMatrixInfo {
 	return (info as DocumentMatrixInfo).rowSize !== undefined;
 }
+export function isDocumentMatrixPlainInfo(info: DocumentTypeInfo): info is DocumentMatrixPlainInfo {
+	return (info as DocumentMatrixPlainInfo).rowSize !== undefined;
+}
 
 export function assertDocumentTypeInfo(
 	info: DocumentTypeInfo,
@@ -162,6 +188,11 @@ export function assertDocumentTypeInfo(
 		case "DocumentMatrix":
 			if (!isDocumentMatrixInfo(info)) {
 				throw new Error(`Expected DocumentMatrixInfo but got ${JSON.stringify(info)}`);
+			}
+			break;
+		case "DocumentMatrixPlain":
+			if (!isDocumentMatrixPlainInfo(info)) {
+				throw new Error(`Expected DocumentMatrixPlainInfo but got ${JSON.stringify(info)}`);
 			}
 			break;
 		default:
@@ -232,7 +263,7 @@ function createE2EDocsDescribeWithType(testType: BenchmarkTypeDescription): Desc
 			createE2EDocCompatSuite(
 				title,
 				tests,
-				docTypes === undefined ? config?.documents ?? E2EDefaultDocumentTypes : docTypes,
+				docTypes ?? config?.documents ?? E2EDefaultDocumentTypes,
 			),
 		);
 	};
@@ -259,24 +290,35 @@ function createE2EDocCompatSuite(
 				describe(name, function () {
 					let provider: TestObjectProvider;
 					let resetAfterEach: boolean;
+					const dataRuntimeApi = getDataRuntimeApi(
+						testBaseVersion(config.dataRuntime),
+						config.dataRuntime,
+					);
+					const apis: CompatApis = {
+						containerRuntime: getContainerRuntimeApi(
+							testBaseVersion(config.containerRuntime),
+							config.containerRuntime,
+						),
+						dataRuntime: dataRuntimeApi,
+						dds: dataRuntimeApi.dds,
+						driver: getDriverApi(testBaseVersion(config.driver), config.driver),
+						loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
+					};
+
 					before(async function () {
 						try {
-							provider = await getVersionedTestObjectProvider(
-								baseVersion,
-								config.loader,
-								{
-									type: driver,
-									version: config.driver,
-									config: {
-										r11s: { r11sEndpointName },
-										odsp: { tenantIndex },
-									},
+							provider = await getVersionedTestObjectProviderFromApis(apis, {
+								type: driver,
+								config: {
+									r11s: { r11sEndpointName },
+									odsp: { tenantIndex },
 								},
-								config.containerRuntime,
-								config.dataRuntime,
-							);
+							});
 						} catch (error) {
-							const logger = ChildLogger.create(getTestLogger?.(), "DescribeE2EDocs");
+							const logger = createChildLogger({
+								logger: getTestLogger?.(),
+								namespace: "DescribeE2EDocs",
+							});
 							logger.sendErrorEvent(
 								{
 									eventName: "TestObjectProviderLoadFailed",

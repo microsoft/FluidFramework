@@ -4,6 +4,7 @@
  */
 
 const path = require("path");
+const Dotenv = require("dotenv-webpack");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const webpack = require("webpack");
 
@@ -16,7 +17,7 @@ module.exports = (env) => {
 			app: "./e2e-tests/app/app.tsx",
 		},
 		resolve: {
-			extensions: [".ts", ".tsx", ".js"],
+			extensions: [".js", ".jsx", ".ts", ".tsx"],
 		},
 		module: {
 			rules: [
@@ -45,6 +46,10 @@ module.exports = (env) => {
 		plugins: [
 			new webpack.ProvidePlugin({
 				process: "process/browser",
+			}),
+			new Dotenv({
+				path: "./.env",
+				systemvars: true,
 			}),
 			new HtmlWebpackPlugin({
 				template: "./e2e-tests/app/index.html",

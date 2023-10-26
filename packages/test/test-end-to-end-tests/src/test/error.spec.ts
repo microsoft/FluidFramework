@@ -99,6 +99,45 @@ describeNoCompat("Errors Types", (getTestObjectProvider) => {
 		},
 	);
 
+	it("Clear odsp driver cache on critical load error", async function () {
+		if (provider.driver.type !== "odsp") {
+			this.skip();
+		}
+		const documentServiceFactory = provider.documentServiceFactory;
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		const cache = documentServiceFactory["persistedCache"];
+		const cacheFileEntry = {
+			type: "snapshot",
+			key: "",
+			file: {
+				resolvedUrl: containerUrl,
+				docId: containerUrl.id,
+			},
+		};
+		assert(
+			(await cache?.get?.(cacheFileEntry)) !== undefined,
+			"create container should have cached the snapshot",
+		);
+		try {
+			const mockFactory = Object.create(documentServiceFactory) as IDocumentServiceFactory;
+			mockFactory.createDocumentService = async (resolvedUrl) => {
+				const service = await documentServiceFactory.createDocumentService(resolvedUrl);
+				service.connectToStorage = async () => {
+					throw new Error("Injected error");
+				};
+				return service;
+			};
+			await loadContainer({ documentServiceFactory: mockFactory });
+		} catch (e: any) {
+			assert(e.errorType === ContainerErrorType.genericError);
+			assert(e.message === "Injected error");
+		}
+		assert(
+			(await cache?.get?.(cacheFileEntry)) === undefined,
+			"odsp cache should have been cleared on critical error/container dispose",
+		);
+	});
+
 	function assertCustomPropertySupport(err: any) {
 		err.asdf = "asdf";
 		assert(isILoggingError(err), "Error should support getTelemetryProperties()");

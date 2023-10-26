@@ -3,27 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import {
-	IDisposable,
-	IFluidHandle,
-	IFluidLoadable,
-	IProvideFluidHandle,
-} from "@fluidframework/core-interfaces";
-import { ISharedObject } from "@fluidframework/shared-object-base";
+// Indexed-object style is used to ease documentation.
+/* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
-import { FluidObjectId } from "../CommonInterfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	type IDisposable,
+	type IEvent,
+	type IFluidHandle,
+	type IFluidLoadable,
+	type IProvideFluidHandle,
+} from "@fluidframework/core-interfaces";
+import { type ISharedObject } from "@fluidframework/shared-object-base";
+
+import { type FluidObjectId } from "../CommonInterfaces";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers";
 import {
 	createHandleNode,
-	FluidObjectNode,
+	type FluidObjectNode,
 	VisualNodeKind,
-	VisualChildNode,
-	Primitive,
-	RootHandleNode,
+	type VisualChildNode,
+	type Primitive,
+	type RootHandleNode,
 	unknownObjectNode,
 } from "./VisualTree";
+import { type Edit, type EditSharedObject, type SharedObjectEdit } from "./DataEditing";
 
 // Ideas:
 // - Hold onto previous summary and only transmit diff?
@@ -52,7 +56,7 @@ export type SharedObjectType = string;
  *
  * @returns A visual tree representation of the provided `sharedObject`.
  *
- * @public
+ * @internal
  */
 export type VisualizeSharedObject = (
 	sharedObject: ISharedObject,
@@ -73,7 +77,7 @@ export type VisualizeSharedObject = (
  *
  * @returns A visual tree representation of the input `data`.
  *
- * @public
+ * @internal
  */
 export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 
@@ -92,6 +96,23 @@ export interface SharedObjectVisualizers {
 	 * Individual Fluid object visualizers, keyed by {@link SharedObjectType}.
 	 */
 	[k: SharedObjectType]: VisualizeSharedObject;
+}
+
+/**
+ * Specifies editors for different {@link @fluidframework/shared-object-base#ISharedObject} types.
+ *
+ * @remarks
+ *
+ * - `key`: The type of Shared object ({@link @fluidframework/datastore-definitions#IChannelFactory.Type}).
+ *
+ * - `value`: A editor that takes a {@link @fluidframework/shared-object-base#ISharedObject} of the
+ * specified type and preforms the corresponding edit for it.
+ */
+export interface SharedObjectEditors {
+	/**
+	 * Individual Fluid object editors, keyed by {@link SharedObjectType}.
+	 */
+	[k: SharedObjectType]: EditSharedObject;
 }
 
 /**
@@ -155,6 +176,11 @@ export class DataVisualizerGraph
 		 * Policy object for visualizing different kinds of shared objects.
 		 */
 		private readonly visualizers: SharedObjectVisualizers,
+
+		/**
+		 * Policy object for editing different kinds of shared objects.
+		 */
+		private readonly editors: SharedObjectEditors,
 	) {
 		super();
 
@@ -189,11 +215,18 @@ export class DataVisualizerGraph
 		const result: Record<string, RootHandleNode> = {};
 		await Promise.all(
 			rootDataEntries.map(async ([key, value]) => {
-				const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
-				result[key] =
-					fluidObjectId === undefined
-						? unknownObjectNode
-						: createHandleNode(fluidObjectId);
+				if (value.handle === undefined) {
+					console.error(
+						`Container data includes a non-Fluid object under key ${key}. Cannot visualize!`,
+					);
+					result[key] = unknownObjectNode;
+				} else {
+					const fluidObjectId = await this.registerVisualizerForHandle(value.handle);
+					result[key] =
+						fluidObjectId === undefined
+							? unknownObjectNode
+							: createHandleNode(fluidObjectId);
+				}
 			}),
 		);
 		return result;
@@ -211,6 +244,15 @@ export class DataVisualizerGraph
 	}
 
 	/**
+	 * Applies an edit to a Fluid object.
+	 * @param edit - is a Edit object that describes an edit to a Fluid object.
+	 * @returns A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
+	 */
+	public async applyEdit(edit: SharedObjectEdit): Promise<void> {
+		return this.visualizerNodes.get(edit.fluidObjectId)?.applyEdit(edit);
+	}
+
+	/**
 	 * Adds a visualizer node to the collection for the specified
 	 * {@link @fluidframework/shared-object-base#ISharedObject} if one does not already exist.
 	 */
@@ -218,12 +260,15 @@ export class DataVisualizerGraph
 		if (!this.visualizerNodes.has(sharedObject.id)) {
 			// Create visualizer node for the shared object
 			const visualizationFunction =
-				this.visualizers[sharedObject.attributes.type] !== undefined
-					? this.visualizers[sharedObject.attributes.type]
-					: visualizeUnknownSharedObject;
+				this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject;
+
+			// Create visualizer node for the shared object
+			const editorFunction = this.editors[sharedObject.attributes.type];
+
 			const visualizerNode = new VisualizerNode(
 				sharedObject,
 				visualizationFunction,
+				editorFunction,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
 
@@ -331,6 +376,12 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 		private readonly visualizeSharedObject: VisualizeSharedObject,
 
 		/**
+		 * Callback for editing {@link VisualizerNode.sharedObject}.
+		 * Encapsulates the policies for editing different kinds of DDSs.
+		 */
+		private readonly editSharedObject: EditSharedObject,
+
+		/**
 		 * Registers some child handle to a Fluid object for future rendering.
 		 *
 		 * @remarks
@@ -389,6 +440,15 @@ export class VisualizerNode extends TypedEventEmitter<DataVisualizerEvents> impl
 	}
 
 	/**
+	 * Edits a {@link @fluidframework/shared-object-base#ISharedObject}
+	 * @param edit - Describes an edit to a Fluid object.
+	 * @returns A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
+	 */
+	public async applyEdit(edit: Edit): Promise<void> {
+		return this.editSharedObject(this.sharedObject, edit);
+	}
+
+	/**
 	 * {@inheritDoc VisualizeChildData}
 	 */
 	private async renderChildData(data: unknown): Promise<VisualChildNode> {
@@ -441,7 +501,6 @@ export async function visualizeChildData(
 		// If we encounter a Fluid handle, register it for future rendering, and return a node with its ID.
 		const handle = data as IFluidHandle;
 		const fluidObjectId = await resolveHandle(handle);
-
 		// If no ID was found, then the data is not a SharedObject.
 		// In this case, return an "Unknown Data" node so consumers can note this (as desired) to the user.
 		return fluidObjectId === undefined ? unknownObjectNode : createHandleNode(fluidObjectId);

@@ -21,6 +21,8 @@ export enum LumberEventName {
 	ClientSummary = "ClientSummary",
 	DeliHandler = "DeliHandler",
 	KafkaRunner = "KafkaRunner",
+	NexusRunner = "NexusRunner",
+	RiddlerRunner = "RiddlerRunner",
 	ScribeHandler = "ScribeHandler",
 	ServiceSummary = "ServiceSummary",
 	SummaryReader = "SummaryReader",
@@ -49,5 +51,7 @@ export enum LumberEventName {
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
+	GlobalCheckpointError = "GlobalCheckpointError",
 	ReprocessOps = "ReprocessOps",
+	MongoMonitoring = "MongoMonitoring",
 }

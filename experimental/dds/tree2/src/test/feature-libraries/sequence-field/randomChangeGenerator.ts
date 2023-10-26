@@ -4,9 +4,9 @@
  */
 
 import { makeRandom } from "@fluid-internal/stochastic-test-utils";
-import { unreachableCase } from "@fluidframework/common-utils";
+import { unreachableCase } from "@fluidframework/core-utils";
 import { singleTextCursor, SequenceField as SF, NodeChangeset } from "../../../feature-libraries";
-import { jsonNumber } from "../../../domains";
+import { leaf } from "../../../domains";
 import { brand } from "../../../util";
 
 enum Operation {
@@ -39,14 +39,14 @@ export function generateRandomChange(
 				random.integer(0, maxIndex),
 				[
 					singleTextCursor({
-						type: jsonNumber.name,
+						type: leaf.number.name,
 						value: random.integer(0, Number.MAX_SAFE_INTEGER),
 					}),
 				],
 				brand(0),
 			);
 		case Operation.Delete:
-			return builder.delete(random.integer(0, maxIndex), random.integer(1, 10));
+			return builder.delete(random.integer(0, maxIndex), random.integer(1, 10), brand(0));
 		default:
 			unreachableCase(operation);
 	}

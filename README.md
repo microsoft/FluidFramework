@@ -29,9 +29,10 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form 2.0.0-internal.x.y.z, called the Fluid internal version
-scheme, you must use a `>= <` dependency range. Standard `^` and `~` ranges will not work as expected. See the
-[@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
+you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
+Standard `^` and `~` ranges will not work as expected.
+See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
 package for more information including tools to convert between version schemes.
 
 <!-- prettier-ignore-end -->
@@ -84,6 +85,7 @@ Dependencies between packages in various layers of the system are enforced via a
 Install the required tools:
 
 -   [Git](https://git-scm.com/downloads).
+    -   \+ [Git LFS](https://git-lfs.com/)
 -   [Node.js](https://nodejs.org/): install the version noted in in the [.nvmrc file](./.nvmrc).
     See [NodeJs Installation](#NodeJs-Installation) for details.
 
@@ -104,10 +106,17 @@ Run the following to build the client packages:
 
 ```shell
 pnpm install
-npm run build:fast
+npm run build
 ```
 
+You can use the experimental worker mode to get faster build time as well: `npm run build:fast`
+
 See also: [Contributing](#Contributing)
+
+## Build in VSCode
+
+To build Fluid Framework within VSCode, open the Fluid Framework repo folder as a work space and use Ctrl-Shift-B
+to activate the build task. It is the same as running `npm run build` on the command line.
 
 ## NodeJs Installation
 
@@ -155,7 +164,8 @@ Note: Some of the tests depend on test collateral that lives in a submodule here
 <https://github.com/microsoft/FluidFrameworkTestData>. You may choose to fetch that collateral into your local
 repository, which is required to run all the tests - otherwise some will be skipped.
 
-First install Git LFS from <https://git-lfs.github.com/>. Then, from the repo root:
+First, ensure you have installed [Git LFS](https://git-lfs.com/).
+Then, from the repo root:
 
 ```shell
 git lfs install

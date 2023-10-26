@@ -21,14 +21,9 @@ import {
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import { SharedString } from "../sharedString";
 import { SharedStringFactory } from "../sequenceFactory";
-import {
-	IIntervalCollection,
-	IntervalStickiness,
-	IntervalType,
-	SequenceInterval,
-	IntervalIndex,
-	ISerializableInterval,
-} from "../intervalCollection";
+import { IIntervalCollection, Side } from "../intervalCollection";
+import { IntervalIndex } from "../intervalIndex";
+import { IntervalStickiness, SequenceInterval, ISerializableInterval } from "../intervals";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
@@ -113,13 +108,23 @@ describe("SharedString interval collections", () => {
 
 	beforeEach(() => {
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
-		dataStoreRuntime1.options = { intervalStickinessEnabled: true };
 		sharedString = new SharedString(
 			dataStoreRuntime1,
 			"shared-string-1",
 			SharedStringFactory.Attributes,
 		);
 	});
+
+	function checkIntervalChange() {
+		const collection = sharedString.getIntervalCollection("test");
+		const interval = collection.add({ start: 0, end: 0 });
+		const intervalId = interval.getIntervalId();
+		assert(intervalId);
+		// @ts-expect-error - require passing both interval endpoints
+		collection.change(intervalId, { start: 1, end: undefined });
+		// @ts-expect-error - require passing both interval endpoints
+		collection.change(intervalId, { start: undefined, end: 1 });
+	}
 
 	describe("in a connected state with a remote SharedString", () => {
 		let sharedString2: SharedString;
@@ -130,10 +135,13 @@ describe("SharedString interval collections", () => {
 
 			// Connect the first SharedString.
 			dataStoreRuntime1.local = false;
+			dataStoreRuntime1.options = {
+				intervalStickinessEnabled: true,
+			};
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -143,9 +151,11 @@ describe("SharedString interval collections", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
-			dataStoreRuntime2.options = { intervalStickinessEnabled: true };
+			dataStoreRuntime2.options = {
+				intervalStickinessEnabled: true,
+			};
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
@@ -167,7 +177,7 @@ describe("SharedString interval collections", () => {
 			assert.strictEqual(sharedString.getText(), sharedString2.getText(), "not equal text");
 
 			sharedString.insertText(0, "abc");
-			const interval = collection1.add(1, 1, IntervalType.SlideOnRemove);
+			const interval = collection1.add({ start: 1, end: 1 });
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
 			sharedString2.insertText(0, "wha");
@@ -215,13 +225,13 @@ describe("SharedString interval collections", () => {
 			sharedString.removeRange(0, 1);
 			// [D]ABC
 			const collection = sharedString.getIntervalCollection("test");
-			collection.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "x" });
+			collection.add({ start: 0, end: 0, props: { intervalId: "x" } });
 			//    x
 			// [D]ABC
 			sharedString.removeRange(0, 1);
 			//     x
 			// [D][A]BC
-			collection.add(0, 0, IntervalType.SlideOnRemove, { intervalId: "y" });
+			collection.add({ start: 0, end: 0, props: { intervalId: "y" } });
 			//     x y
 			// [D][A]BC
 			sharedString.removeRange(0, 1);
@@ -233,228 +243,9 @@ describe("SharedString interval collections", () => {
 			// x, y are detached
 			//                  [   ]
 			// string is PLMNOEFGHIJK
-			collection.add(7, 11, IntervalType.SlideOnRemove, { intervalId: "z" });
+			collection.add({ start: 7, end: 11, props: { intervalId: "z" } });
 			sharedString.removeRange(11, 12);
 			containerRuntimeFactory.processAllMessages();
-		});
-
-		describe("interval stickiness", () => {
-			it("has start stickiness", () => {
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "Xabc");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					0,
-					3,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.START,
-				);
-				assert.equal(interval1.stickiness, IntervalStickiness.START);
-				assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
-				assert.equal(interval1.end.slidingPreference, SlidingPreference.BACKWARD);
-
-				const intervalId = interval1.getIntervalId();
-				assert(intervalId);
-				sharedString.insertText(1, "def");
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "Xdefabc", "different text");
-
-				assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
-			});
-
-			it("has start stickiness during delete inside interval", () => {
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "Xabc");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					0,
-					3,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.START,
-				);
-				assert.equal(interval1.stickiness, IntervalStickiness.START);
-				const intervalId = interval1.getIntervalId();
-				assert(intervalId);
-				sharedString.insertText(1, "def");
-				containerRuntimeFactory.processAllMessages();
-				sharedString.removeRange(1, 3);
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "Xfabc", "different text");
-
-				assertIntervals(sharedString, collection, [{ start: 0, end: 4 }]);
-			});
-
-			it("has start stickiness during delete of start of interval", () => {
-				// abc(Xdef]
-				// abc(Xghidef]
-				// (aghidef]
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "abcXdef");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					3,
-					6,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.START,
-				);
-				assert.equal(interval1.stickiness, IntervalStickiness.START);
-				const intervalId = interval1.getIntervalId();
-				assert(intervalId);
-				sharedString.insertText(4, "ghi");
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "abcXghidef", "different text");
-				assertIntervals(sharedString, collection, [{ start: 3, end: 9 }]);
-
-				sharedString.removeRange(1, 4);
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "aghidef", "different text");
-				assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
-			});
-
-			// skipped: endpoint behavior of sticky intervals is not currently implemented
-			it.skip("has start stickiness when spanning whole string and insertion at index 0", () => {
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "abc");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					0,
-					2,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.START,
-				);
-				const intervalId = interval1.getIntervalId();
-				assert(intervalId);
-				sharedString.insertText(0, "X");
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "Xabc", "different text");
-
-				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
-			});
-
-			it("has end stickiness", () => {
-				// [abc)
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "abc");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					0,
-					2,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.END,
-				);
-				assert.equal(interval1.stickiness, IntervalStickiness.END);
-				assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
-				assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
-
-				const intervalId = interval1.getIntervalId();
-				assert(intervalId);
-				sharedString.insertText(2, "def");
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "abdefc", "different text");
-
-				assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
-			});
-
-			it("has end stickiness during delete of end of interval", () => {
-				// [abcX)
-				// [abcf)
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "abcXdef");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					0,
-					3,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.END,
-				);
-				assert.equal(interval1.stickiness, IntervalStickiness.END);
-				const intervalId = interval1.getIntervalId();
-				assert(intervalId);
-
-				containerRuntimeFactory.processAllMessages();
-
-				sharedString.removeRange(3, 6);
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "abcf", "different text");
-				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
-			});
-
-			it("has end stickiness by default", () => {
-				// [abcX)
-				// [abcf)
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "abcXdef");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(0, 3, IntervalType.SlideOnRemove, undefined);
-				assert.equal(interval1.stickiness, IntervalStickiness.END);
-				assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
-				assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
-
-				const intervalId = interval1.getIntervalId();
-				assert(intervalId);
-
-				containerRuntimeFactory.processAllMessages();
-
-				sharedString.removeRange(3, 6);
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "abcf", "different text");
-				assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
-			});
-
-			it("has none stickiness during insert", () => {
-				// [ab]c
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "abc");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					0,
-					1,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.NONE,
-				);
-				assert.equal(interval1.stickiness, IntervalStickiness.NONE);
-				assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
-				assert.equal(interval1.end.slidingPreference, SlidingPreference.BACKWARD);
-				const intervalId = interval1.getIntervalId();
-				assert(intervalId);
-				sharedString.insertText(2, "def");
-				containerRuntimeFactory.processAllMessages();
-
-				assert.strictEqual(sharedString.getText(), "abdefc", "different text");
-
-				assertIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
-			});
-
-			it("has correct sliding preference for full stickiness", () => {
-				const collection = sharedString.getIntervalCollection("test");
-				sharedString.insertText(0, "abc");
-				containerRuntimeFactory.processAllMessages();
-				const interval1 = collection.add(
-					0,
-					1,
-					IntervalType.SlideOnRemove,
-					undefined,
-					IntervalStickiness.FULL,
-				);
-				assert.equal(interval1.stickiness, IntervalStickiness.FULL);
-				assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
-				assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
-			});
 		});
 
 		describe("remain consistent on double-delete", () => {
@@ -469,7 +260,7 @@ describe("SharedString interval collections", () => {
 
 			it("causing references to slide forward", () => {
 				sharedString2.removeRange(2, 3);
-				collection.add(2, 2, IntervalType.SlideOnRemove);
+				collection.add({ start: 2, end: 2 });
 				sharedString.removeRange(2, 4);
 				containerRuntimeFactory.processAllMessages();
 				assertIntervals(sharedString, collection, [{ start: 2, end: 2 }]);
@@ -478,7 +269,7 @@ describe("SharedString interval collections", () => {
 
 			it("causing references to slide backward", () => {
 				sharedString2.removeRange(2, 3);
-				collection.add(2, 2, IntervalType.SlideOnRemove);
+				collection.add({ start: 2, end: 2 });
 				sharedString.removeRange(2, 5);
 				containerRuntimeFactory.processAllMessages();
 				assertIntervals(sharedString, collection, [{ start: 1, end: 1 }]);
@@ -491,17 +282,17 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			assert.throws(
-				() => collection1.add(0, 0, IntervalType.SlideOnRemove),
+				() => collection1.add({ start: 0, end: 0 }),
 				"Should throw creating interval on empty string",
 			);
 			assert.throws(
-				() => collection1.add(1, 3, IntervalType.SlideOnRemove),
+				() => collection1.add({ start: 1, end: 3 }),
 				"Should throw creating interval on empty string",
 			);
 			sharedString.insertText(0, "ABCD");
 			containerRuntimeFactory.processAllMessages();
 			assert.throws(
-				() => collection1.add(2, 5, IntervalType.SlideOnRemove),
+				() => collection1.add({ start: 2, end: 5 }),
 				"Should throw creating interval past end of string",
 			);
 			// There is no check for creating an interval at a negative offset
@@ -516,7 +307,7 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			collection1.add(3, 4, IntervalType.SlideOnRemove);
+			collection1.add({ start: 3, end: 4 });
 			containerRuntimeFactory.processAllMessages();
 
 			assertIntervals(sharedString, collection1, [{ start: 3, end: 4 }]);
@@ -536,7 +327,7 @@ describe("SharedString interval collections", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
 
 			// Conflicting remove/add interval at end of string
-			collection1.add(1, 3, IntervalType.SlideOnRemove);
+			collection1.add({ start: 1, end: 3 });
 			sharedString2.removeRange(3, 4);
 			containerRuntimeFactory.processAllMessages();
 			assertIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
@@ -603,7 +394,7 @@ describe("SharedString interval collections", () => {
 			sharedString.insertText(0, "ABCDE");
 			const collection1 = sharedString.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
-			const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
+			const interval = collection1.add({ start: 1, end: 3 });
 			sharedString2.insertText(2, "XY");
 			sharedString2.removeRange(1, 3);
 			sharedString.removeRange(1, 4);
@@ -625,7 +416,7 @@ describe("SharedString interval collections", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
 
 			sharedString2.removeRange(3, 4);
-			collection1.add(1, 3, IntervalType.SlideOnRemove);
+			collection1.add({ start: 1, end: 3 });
 			sharedString.removeRange(1, 3);
 			containerRuntimeFactory.processAllMessages();
 			assertIntervals(sharedString, collection1, [{ start: 0, end: 0 }]);
@@ -635,7 +426,7 @@ describe("SharedString interval collections", () => {
 		it("consistent after remove all/insert text conflict", () => {
 			const collection1 = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "ABCD");
-			collection1.add(1, 3, IntervalType.SlideOnRemove);
+			collection1.add({ start: 1, end: 3 });
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
@@ -657,36 +448,13 @@ describe("SharedString interval collections", () => {
 			assertIntervals(sharedString2, collection2, [{ start: -1, end: -1 }], false);
 		});
 
-		it("remains consistent after changing only one end of a detached interval", () => {
-			const collection1 = sharedString.getIntervalCollection("test");
-			const collection2 = sharedString2.getIntervalCollection("test");
-			const assertAllIntervals = (expected: readonly { start: number; end: number }[]) => {
-				assertIntervals(sharedString, collection1, expected, false);
-				assertIntervals(sharedString2, collection2, expected, false);
-			};
-
-			sharedString.insertText(0, "ABCD");
-			const interval = collection1.add(1, 3, IntervalType.SlideOnRemove);
-			sharedString.removeRange(0, 4);
-			sharedString.insertText(0, "012");
-			containerRuntimeFactory.processAllMessages();
-
-			assertAllIntervals([{ start: -1, end: -1 }]);
-
-			const id = interval.getIntervalId() ?? assert.fail("expected interval to have id");
-			collection2.change(id, undefined, 2);
-			containerRuntimeFactory.processAllMessages();
-
-			assertAllIntervals([{ start: -1, end: 2 }]);
-		});
-
 		it("can slide intervals on remove ack", () => {
 			const collection1 = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "ABCD");
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			collection1.add(1, 3, IntervalType.SlideOnRemove);
+			collection1.add({ start: 1, end: 3 });
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString.insertText(2, "X");
@@ -713,7 +481,7 @@ describe("SharedString interval collections", () => {
 
 			sharedString.insertText(2, "X");
 			assert.strictEqual(sharedString.getText(), "ABXCD");
-			collection1.add(1, 3, IntervalType.SlideOnRemove);
+			collection1.add({ start: 1, end: 3 });
 
 			sharedString2.removeRange(1, 2);
 			assert.strictEqual(sharedString2.getText(), "ACD");
@@ -756,7 +524,7 @@ describe("SharedString interval collections", () => {
 			sharedString2.insertText(2, "X");
 			assert.strictEqual(sharedString2.getText(), "ABXCD");
 
-			collection3.add(1, 3, IntervalType.SlideOnRemove);
+			collection3.add({ start: 1, end: 3 });
 
 			containerRuntimeFactory.processAllMessages();
 			assert.strictEqual(sharedString.getText(), "AXCD");
@@ -788,7 +556,7 @@ describe("SharedString interval collections", () => {
 
 			const collection1 = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "ABCD");
-			const interval = collection1.add(0, 0, IntervalType.SlideOnRemove);
+			const interval = collection1.add({ start: 0, end: 0 });
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 			const collection3 = sharedString3.getIntervalCollection("test");
@@ -827,7 +595,7 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			collection2.add(2, 3, IntervalType.SlideOnRemove);
+			collection2.add({ start: 2, end: 3 });
 
 			sharedString.removeRange(1, 3);
 
@@ -846,7 +614,7 @@ describe("SharedString interval collections", () => {
 			sharedString.removeRange(1, 3);
 			assert.strictEqual(sharedString.getText(), "ADE");
 
-			collection2.add(1, 3, IntervalType.SlideOnRemove);
+			collection2.add({ start: 1, end: 3 });
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -874,7 +642,7 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
 
-			collection1.add(1, 3, IntervalType.SlideOnRemove);
+			collection1.add({ start: 1, end: 3 });
 			sharedString.insertText(2, "XY");
 			assert.strictEqual(sharedString.getText(), "ABXYCD");
 
@@ -895,7 +663,7 @@ describe("SharedString interval collections", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
 			sharedString2.removeRange(0, sharedString2.getLength());
-			collection1.add(1, 1, IntervalType.SlideOnRemove);
+			collection1.add({ start: 1, end: 1 });
 			sharedString2.insertText(0, "X");
 			containerRuntimeFactory.processAllMessages();
 			assertIntervals(sharedString, collection1, [{ start: -1, end: -1 }], false);
@@ -921,7 +689,7 @@ describe("SharedString interval collections", () => {
 			assert.strictEqual(sharedString.getText(), "abcdef", "incorrect text 1");
 			assert.strictEqual(sharedString2.getText(), "abcdef", "incorrect text 2");
 
-			collection1.add(2, 2, IntervalType.SlideOnRemove);
+			collection1.add({ start: 2, end: 2 });
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -940,8 +708,8 @@ describe("SharedString interval collections", () => {
 			assert.strictEqual(sharedString.getText(), "abcdefabcdef", "incorrect text 2");
 			assert.strictEqual(sharedString2.getText(), "abcdefabcdef", "incorrect text 3");
 
-			collection1.add(5, 5, IntervalType.SlideOnRemove);
-			collection1.add(2, 2, IntervalType.SlideOnRemove);
+			collection1.add({ start: 5, end: 5 });
+			collection1.add({ start: 2, end: 2 });
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -1000,7 +768,7 @@ describe("SharedString interval collections", () => {
 				}
 			});
 
-			const id = collection1.add(0, 0, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection1.add({ start: 0, end: 0 }).getIntervalId();
 			assert(id);
 			containerRuntimeFactory.processAllMessages();
 			const collection2 = sharedString2.getIntervalCollection("test");
@@ -1034,7 +802,7 @@ describe("SharedString interval collections", () => {
 			const containerRuntime1 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -1049,7 +817,7 @@ describe("SharedString interval collections", () => {
 				SharedStringFactory.Attributes,
 			);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: runtime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString2.initializeLocal();
@@ -1060,7 +828,7 @@ describe("SharedString interval collections", () => {
 			const collection2 = sharedString2.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
 
-			const interval = collection1.add(6, 8, IntervalType.SlideOnRemove); // the "fr" in "friend"
+			const interval = collection1.add({ start: 6, end: 8 }); // the "fr" in "friend"
 
 			containerRuntimeFactory.processAllMessages();
 			const intervalId = interval.getIntervalId();
@@ -1074,7 +842,7 @@ describe("SharedString interval collections", () => {
 			sharedString.insertText(0, "ABCDEF");
 			const collection1 = sharedString.getIntervalCollection("test");
 
-			const id = collection1.add(2, 2, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection1.add({ start: 2, end: 2 }).getIntervalId();
 			assert(id);
 			containerRuntimeFactory.processAllMessages();
 
@@ -1124,9 +892,9 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency when falling back to end comparison", () => {
-				collection.add(1, 6, IntervalType.SlideOnRemove);
-				collection.add(2, 5, IntervalType.SlideOnRemove);
-				const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
+				collection.add({ start: 1, end: 6 });
+				collection.add({ start: 2, end: 5 });
+				const initiallyLargest = collection.add({ start: 3, end: 4 });
 				sharedString.removeRange(1, 4);
 				// Interval slide doesn't happen until creation is acked, so interval sort order
 				// is still by start position, which do not compare equal despite all appearing to be 1
@@ -1151,9 +919,9 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("retains intervalTree coherency after slide when falling back to end comparison", () => {
-				collection.add(1, 6, IntervalType.SlideOnRemove);
-				collection.add(2, 5, IntervalType.SlideOnRemove);
-				const initiallyLargest = collection.add(3, 4, IntervalType.SlideOnRemove);
+				collection.add({ start: 1, end: 6 });
+				collection.add({ start: 2, end: 5 });
+				const initiallyLargest = collection.add({ start: 3, end: 4 });
 				sharedString.removeRange(1, 4);
 				assertIntervals(sharedString, collection, [
 					{ start: 1, end: 3 },
@@ -1182,9 +950,9 @@ describe("SharedString interval collections", () => {
 
 			it("retains intervalTree coherency when falling back to id comparison", () => {
 				const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
-				collection.add(0, 1, IntervalType.SlideOnRemove, { intervalId: idLargest });
-				collection.add(0, 2, IntervalType.SlideOnRemove, { intervalId: idMiddle });
-				collection.add(0, 3, IntervalType.SlideOnRemove, { intervalId: idLowest });
+				collection.add({ start: 0, end: 1, props: { intervalId: idLargest } });
+				collection.add({ start: 0, end: 2, props: { intervalId: idMiddle } });
+				collection.add({ start: 0, end: 3, props: { intervalId: idLowest } });
 				sharedString.removeRange(1, 4);
 				assertIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
@@ -1205,9 +973,9 @@ describe("SharedString interval collections", () => {
 
 			it("retains intervalTree coherency after slide when falling back to id comparison", () => {
 				const [idLowest, idMiddle, idLargest] = ["a", "b", "c"];
-				collection.add(0, 1, IntervalType.SlideOnRemove, { intervalId: idLargest });
-				collection.add(0, 2, IntervalType.SlideOnRemove, { intervalId: idMiddle });
-				collection.add(0, 3, IntervalType.SlideOnRemove, { intervalId: idLowest });
+				collection.add({ start: 0, end: 1, props: { intervalId: idLargest } });
+				collection.add({ start: 0, end: 2, props: { intervalId: idMiddle } });
+				collection.add({ start: 0, end: 3, props: { intervalId: idLowest } });
 				sharedString.removeRange(1, 4);
 				assertIntervals(sharedString, collection, [
 					{ start: 0, end: 1 },
@@ -1237,12 +1005,12 @@ describe("SharedString interval collections", () => {
 				// The test verifies that is done correctly and that the listener is added
 				// to fix the interval position on subsequent slide.
 				containerRuntimeFactory.processAllMessages();
-				collection.add(4, 4, IntervalType.SlideOnRemove);
-				collection.add(4, 5, IntervalType.SlideOnRemove);
+				collection.add({ start: 4, end: 4 });
+				collection.add({ start: 4, end: 5 });
 
 				sharedString2.removeRange(1, 2);
 
-				const initiallySmallest = collection.add(1, 6, IntervalType.SlideOnRemove);
+				const initiallySmallest = collection.add({ start: 1, end: 6 });
 
 				sharedString2.removeRange(1, 3);
 
@@ -1295,21 +1063,21 @@ describe("SharedString interval collections", () => {
 
 			const collection1: IIntervalCollection<SequenceInterval> =
 				sharedString.getIntervalCollection("test1");
-			const interval1 = collection1.add(0, 1, IntervalType.SlideOnRemove);
+			const interval1 = collection1.add({ start: 0, end: 1 });
 			const intervalId1 = interval1.getIntervalId();
 			assert(intervalId1);
 			collection1.change(intervalId1, 1, 4);
 
 			const collection2: IIntervalCollection<SequenceInterval> =
 				sharedString2.getIntervalCollection("test2");
-			const interval2 = collection2.add(0, 2, IntervalType.SlideOnRemove);
+			const interval2 = collection2.add({ start: 0, end: 2 });
 			const intervalId2 = interval2.getIntervalId();
 			assert(intervalId2);
 			collection2.removeIntervalById(intervalId2);
 
 			const collection3: IIntervalCollection<SequenceInterval> =
 				sharedString2.getIntervalCollection("test3");
-			collection3.add(0, 3, IntervalType.SlideOnRemove);
+			collection3.add({ start: 0, end: 3 });
 
 			containerRuntimeFactory.processAllMessages();
 
@@ -1357,30 +1125,13 @@ describe("SharedString interval collections", () => {
 			assert.equal(Array.from(collection2).length, 0);
 		});
 
-		it("Can correctly interpret ack of single-endpoint changes", () => {
-			sharedString.insertText(0, "ABCDEF");
-			const collection1 = sharedString.getIntervalCollection("test");
-			const collection2 = sharedString2.getIntervalCollection("test");
-			containerRuntimeFactory.processAllMessages();
-			const interval = collection1.add(2, 5, IntervalType.SlideOnRemove);
-			sharedString2.removeRange(4, 6);
-			const intervalId = interval.getIntervalId();
-			assert(intervalId);
-			collection1.change(intervalId, 1 /* only change start */);
-			sharedString2.insertText(2, "123");
-			containerRuntimeFactory.processAllMessages();
-			assert.equal(sharedString.getText(), "AB123CD");
-			assertIntervals(sharedString, collection1, [{ start: 1, end: 6 }]);
-			assertIntervals(sharedString2, collection2, [{ start: 1, end: 6 }]);
-		});
-
 		it("doesn't slide references on ack if there are pending remote changes", () => {
 			sharedString.insertText(0, "ABCDEF");
 			const collection1 = sharedString.getIntervalCollection("test");
 			const collection2 = sharedString2.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
 			sharedString.removeRange(3, 6);
-			const interval = collection2.add(3, 4, IntervalType.SlideOnRemove);
+			const interval = collection2.add({ start: 3, end: 4 });
 			const intervalId = interval.getIntervalId();
 			assert(intervalId);
 			collection2.change(intervalId, 1, 5);
@@ -1410,7 +1161,7 @@ describe("SharedString interval collections", () => {
 				sharedString.insertText(0, "ABC");
 				const collection1 = sharedString.getIntervalCollection("test");
 				const collection2 = sharedString2.getIntervalCollection("test");
-				const interval = collection1.add(0, 0, IntervalType.SlideOnRemove);
+				const interval = collection1.add({ start: 0, end: 0 });
 				containerRuntimeFactory.processAllMessages();
 				const id = interval.getIntervalId();
 				assert(id);
@@ -1440,7 +1191,7 @@ describe("SharedString interval collections", () => {
 			// Connect the first SharedString.
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1: IChannelServices = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString.initializeLocal();
@@ -1455,7 +1206,7 @@ describe("SharedString interval collections", () => {
 				SharedStringFactory.Attributes,
 			);
 			const services2: IChannelServices = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: runtime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			sharedString2.initializeLocal();
@@ -1469,7 +1220,7 @@ describe("SharedString interval collections", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// Note: at the start of each test, this interval is only visible to client 1.
-			interval = collection1.add(6, 8, IntervalType.SlideOnRemove); // the "fr" in "friend"
+			interval = collection1.add({ start: 6, end: 8 }); // the "fr" in "friend"
 		});
 
 		it("addInterval resubmitted with concurrent insert", async () => {
@@ -1509,75 +1260,52 @@ describe("SharedString interval collections", () => {
 			// when both an add and a change op are rebased. Pending change tracking should only apply
 			// to "change" ops, but was also erroneously updated for "add" ops. Change tracking should also
 			// properly handle rebasing ops that only affect one endpoint.
-			const testCases = [
-				{
-					name: "that changes both endpoints",
-					start: 6,
-					end: 7,
-				},
-				{
-					name: "that changes only the start",
-					start: 6,
-					end: undefined,
-				},
-				{
-					name: "that changes only the end",
-					start: undefined,
-					end: 7,
-				},
-			];
 
-			describe("an add followed by a change", () => {
-				for (const { name, start, end } of testCases) {
-					it(name, () => {
-						const intervalId = interval.getIntervalId();
-						assert(intervalId);
-						collection1.removeIntervalById(intervalId);
-						containerRuntimeFactory.processAllMessages();
-						containerRuntime1.connected = false;
-						const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
-						sharedString.insertText(2, "llo he");
-						const newIntervalId = newInterval.getIntervalId();
-						assert(newIntervalId);
-						collection1.change(newIntervalId, start, end);
-						// Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes"
-						// assert to fire (since the pending change wasn't actually the addition of the interval;
-						// it was the change)
-						containerRuntime1.connected = true;
-						containerRuntimeFactory.processAllMessages();
-						const expectedIntervals = [{ start: start ?? 0, end: end ?? 1 }];
-						assertIntervals(sharedString, collection1, expectedIntervals);
-						assertIntervals(sharedString2, collection2, expectedIntervals);
-					});
-				}
+			it("an add followed by a change", () => {
+				const intervalId = interval.getIntervalId();
+				assert(intervalId);
+				collection1.removeIntervalById(intervalId);
+				containerRuntimeFactory.processAllMessages();
+				containerRuntime1.connected = false;
+				const newInterval = collection1.add({ start: 0, end: 1 });
+				sharedString.insertText(2, "llo he");
+				const newIntervalId = newInterval.getIntervalId();
+				assert(newIntervalId);
+				collection1.change(newIntervalId, 6, 7);
+				// Previously would fail: rebase of the "add" op would cause "Mismatch in pending changes"
+				// assert to fire (since the pending change wasn't actually the addition of the interval;
+				// it was the change)
+				containerRuntime1.connected = true;
+				containerRuntimeFactory.processAllMessages();
+				const expectedIntervals = [{ start: 6, end: 7 }];
+				assertIntervals(sharedString, collection1, expectedIntervals);
+				assertIntervals(sharedString2, collection2, expectedIntervals);
 			});
 
-			describe("a change", () => {
+			it("a change", () => {
 				// Like above, but the string-modifying operation is performed remotely. This means the pendingChange
 				// recorded prior to rebasing will have a different index from the pendingChange that would be generated
 				// upon rebasing (so failing to update would cause mismatch)
-				for (const { name, start, end } of testCases) {
-					it(name, () => {
-						const intervalId = interval.getIntervalId();
-						assert(intervalId);
-						collection1.removeIntervalById(intervalId);
-						containerRuntimeFactory.processAllMessages();
-						containerRuntime1.connected = false;
-						const newInterval = collection1.add(0, 1, IntervalType.SlideOnRemove);
-						sharedString2.insertText(2, "llo he");
-						const newIntervalId = newInterval.getIntervalId();
-						assert(newIntervalId);
-						collection1.change(newIntervalId, start, end);
-						containerRuntimeFactory.processAllMessages();
-						containerRuntime1.connected = true;
-						containerRuntimeFactory.processAllMessages();
-						const expectedStart = start === undefined ? 0 : start + "llo he".length;
-						const expectedEnd = end === undefined ? 1 : end + "llo he".length;
-						const expectedIntervals = [{ start: expectedStart ?? 0, end: expectedEnd }];
-						assertIntervals(sharedString, collection1, expectedIntervals);
-						assertIntervals(sharedString2, collection2, expectedIntervals);
-					});
-				}
+				const intervalId = interval.getIntervalId();
+				const start = 6;
+				const end = 7;
+				assert(intervalId);
+				collection1.removeIntervalById(intervalId);
+				containerRuntimeFactory.processAllMessages();
+				containerRuntime1.connected = false;
+				const newInterval = collection1.add({ start: 0, end: 1 });
+				sharedString2.insertText(2, "llo he");
+				const newIntervalId = newInterval.getIntervalId();
+				assert(newIntervalId);
+				collection1.change(newIntervalId, start, end);
+				containerRuntimeFactory.processAllMessages();
+				containerRuntime1.connected = true;
+				containerRuntimeFactory.processAllMessages();
+				const expectedStart = start + "llo he".length;
+				const expectedEnd = end + "llo he".length;
+				const expectedIntervals = [{ start: expectedStart ?? 0, end: expectedEnd }];
+				assertIntervals(sharedString, collection1, expectedIntervals);
+				assertIntervals(sharedString2, collection2, expectedIntervals);
 			});
 		});
 
@@ -1698,8 +1426,8 @@ describe("SharedString interval collections", () => {
 				sharedString.initializeLocal();
 				collection = sharedString.getIntervalCollection("test");
 				sharedString.insertText(0, "xyzabc");
-				id1 = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
-				id2 = collection.add(1, 3, IntervalType.SlideOnRemove).getIntervalId();
+				id1 = collection.add({ start: 1, end: 1 }).getIntervalId();
+				id2 = collection.add({ start: 1, end: 3 }).getIntervalId();
 
 				mockIntervalIndex = new MockIntervalIndex();
 				collection.attachIndex(mockIntervalIndex);
@@ -1711,7 +1439,7 @@ describe("SharedString interval collections", () => {
 			});
 
 			it("the intervals in attached index should be synced with those in collection after updating", () => {
-				const id3 = collection.add(2, 5, IntervalType.SlideOnRemove).getIntervalId();
+				const id3 = collection.add({ start: 2, end: 5 }).getIntervalId();
 				assert.strictEqual(collection.getIntervalById(id3), mockIntervalIndex.get(2));
 				collection.removeIntervalById(id2);
 				assert.strictEqual(collection.getIntervalById(id1), mockIntervalIndex.get(0));
@@ -1750,8 +1478,12 @@ describe("SharedString interval collections", () => {
 		it("can not insert the interval which does not belong to this collection", () => {
 			assert.throws(
 				() => {
-					collection.add(1, 1, IntervalType.SlideOnRemove, {
-						[reservedRangeLabelsKey]: ["test2"],
+					collection.add({
+						start: 1,
+						end: 1,
+						props: {
+							[reservedRangeLabelsKey]: ["test2"],
+						},
 					});
 				},
 				LoggingError,
@@ -1760,7 +1492,7 @@ describe("SharedString interval collections", () => {
 		});
 
 		it("can not modify the interval's label after it has been inserted to the collection", () => {
-			const id = collection.add(1, 1, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection.add({ start: 1, end: 1 }).getIntervalId();
 			assert.throws(
 				() => {
 					collection.changeProperties(id, { [reservedRangeLabelsKey]: ["test2"] });
@@ -1768,6 +1500,459 @@ describe("SharedString interval collections", () => {
 				LoggingError,
 				"The label property of an interval should not be modified once inserted to the collection",
 			);
+		});
+	});
+
+	describe("interval stickiness", () => {
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
+
+		beforeEach(() => {
+			dataStoreRuntime1 = new MockFluidDataStoreRuntime({ clientId: "1" });
+			dataStoreRuntime1.options = {
+				intervalStickinessEnabled: true,
+				mergeTreeReferencesCanSlideToEndpoint: true,
+			};
+			sharedString = new SharedString(
+				dataStoreRuntime1,
+				"shared-string-1",
+				SharedStringFactory.Attributes,
+			);
+
+			containerRuntimeFactory = new MockContainerRuntimeFactory();
+			dataStoreRuntime1.local = false;
+			const containerRuntime1 =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
+			const services1 = {
+				deltaConnection: containerRuntime1.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+			sharedString.initializeLocal();
+			sharedString.connect(services1);
+		});
+
+		it("has start stickiness", () => {
+			// (-Xabc)-
+			// (-Xdefabc)-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "Xabc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: "start",
+				end: { pos: 3, side: Side.After },
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.START);
+			assert.equal(interval1.startSide, Side.Before);
+			assert.equal(interval1.endSide, Side.After);
+			assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
+			assert.equal(interval1.end.slidingPreference, SlidingPreference.BACKWARD);
+
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(1, "def");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "Xdefabc", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
+		});
+
+		it("has start stickiness during delete inside interval", () => {
+			// (-Xabc)-
+			// (-Xdefabc)-
+			// (-Xfabc)-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "Xabc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({ start: "start", end: { pos: 3, side: Side.After } });
+			assert.equal(interval1.stickiness, IntervalStickiness.START);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(1, "def");
+			containerRuntimeFactory.processAllMessages();
+			sharedString.removeRange(1, 3);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "Xfabc", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 4 }]);
+		});
+
+		it("has start stickiness during delete of start of interval", () => {
+			// -abc(Xdef]-
+			// -abc(Xghidef]-
+			// -(aghidef]-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abcXdef");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 3, side: Side.After },
+				end: { pos: 6, side: Side.After },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.START);
+			assert.equal(interval1.startSide, Side.After);
+			assert.equal(interval1.endSide, Side.After);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(4, "ghi");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "abcXghidef", "different text");
+			assertIntervals(sharedString, collection, [{ start: 3, end: 9 }]);
+
+			sharedString.removeRange(1, 4);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "TextSegment");
+			assert.strictEqual(interval1.start.getSegment()?.isLeaf(), true);
+			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
+
+			assert.strictEqual(sharedString.getText(), "aghidef", "different text");
+			assertIntervals(sharedString, collection, [{ start: 0, end: 6 }]);
+		});
+
+		it("has start stickiness when spanning whole string and insertion at index 0", () => {
+			// (-abc]-
+			// (-Xabc]-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({ start: "start", end: { pos: 2, side: Side.After } });
+			assert.equal(interval1.stickiness, IntervalStickiness.START);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(0, "X");
+			containerRuntimeFactory.processAllMessages();
+			assert.strictEqual(
+				interval1.start.getSegment()?.constructor.name,
+				"StartOfTreeSegment",
+			);
+			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
+
+			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+		});
+
+		it("has full stickiness when spanning whole string and insertion at index 0", () => {
+			// (-abc)-
+			// (-Xabc)-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: "start",
+				end: { pos: 2, side: Side.Before },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.FULL);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(0, "X");
+			containerRuntimeFactory.processAllMessages();
+			assert.strictEqual(
+				interval1.start.getSegment()?.constructor.name,
+				"StartOfTreeSegment",
+			);
+			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "TextSegment");
+
+			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+		});
+
+		it("has end stickiness when spanning whole string and insertion at index 0", () => {
+			// -[abc-)
+			// -X[abc-)
+			// -X[abcX-)
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({ start: 0, end: "end" });
+			assert.equal(interval1.stickiness, IntervalStickiness.END);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(0, "X");
+			containerRuntimeFactory.processAllMessages();
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "TextSegment");
+			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "EndOfTreeSegment");
+
+			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 1, end: 4 }], false);
+
+			sharedString.insertText(4, "X");
+			containerRuntimeFactory.processAllMessages();
+			assert.strictEqual(interval1.start.getSegment()?.constructor.name, "TextSegment");
+			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "EndOfTreeSegment");
+
+			assert.strictEqual(sharedString.getText(), "XabcX", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 1, end: 5 }], false);
+		});
+
+		it("full stickiness doesn't slide off string when entire string is deleted", () => {
+			// -(abc)def-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abcdef");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 0, side: Side.After },
+				end: { pos: 2, side: Side.Before },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.FULL);
+			assert.equal(interval1.startSide, Side.After);
+			assert.equal(interval1.endSide, Side.Before);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.removeRange(0, 6);
+			containerRuntimeFactory.processAllMessages();
+			sharedString.insertText(0, "XXX");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "XXX", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+		});
+
+		it("none stickiness slides off string when entire string is deleted", () => {
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 1, side: Side.Before },
+				end: { pos: 2, side: Side.After },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.NONE);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.removeRange(0, 3);
+			containerRuntimeFactory.processAllMessages();
+			sharedString.insertText(0, "XXX");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "XXX", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: -1, end: -1 }], false);
+		});
+
+		it("none stickiness slides off string when entire string is deleted incrementally", () => {
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 1, side: Side.Before },
+				end: { pos: 2, side: Side.After },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.NONE);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.removeRange(0, 1);
+			sharedString.removeRange(0, 1);
+			sharedString.removeRange(0, 1);
+			containerRuntimeFactory.processAllMessages();
+			sharedString.insertText(0, "XXX");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "XXX", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: -1, end: -1 }], false);
+		});
+
+		it("full stickiness doesn't slide off string when entire string is deleted incrementally", () => {
+			// -(abc)-
+			// (--)
+			// (-XXX-)
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 0, side: Side.After },
+				end: { pos: 2, side: Side.Before },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.FULL);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.removeRange(0, 1);
+			sharedString.removeRange(0, 1);
+			sharedString.removeRange(0, 1);
+			containerRuntimeFactory.processAllMessages();
+			sharedString.insertText(0, "XXX");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "XXX", "different text");
+
+			assert.strictEqual(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
+			assert.strictEqual(interval1.end.slidingPreference, SlidingPreference.FORWARD);
+			assert.strictEqual(
+				interval1.start.getSegment()?.constructor.name,
+				"StartOfTreeSegment",
+			);
+			assert.strictEqual(interval1.end.getSegment()?.constructor.name, "EndOfTreeSegment");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+		});
+
+		it("doesn't have start stickiness when spanning whole string and insertion at index 0", () => {
+			// -[abc-)
+			// -X[abc-)
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 0, side: Side.Before },
+				end: "end",
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.END);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(0, "X");
+			containerRuntimeFactory.processAllMessages();
+			assert.notStrictEqual(
+				interval1.start.getSegment()?.constructor.name,
+				"StartOfTreeSegment",
+			);
+
+			assert.strictEqual(sharedString.getText(), "Xabc", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 1, end: 4 }], false);
+		});
+
+		it("slides to endpoint after deleting all text to left of start-sticky+exclusive reference", () => {
+			// -a(bcde]f-
+			// (-Xde]f
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abcdef");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 1, side: Side.After },
+				end: { pos: 5, side: Side.After },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.START);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.removeRange(0, 3);
+			sharedString.insertText(0, "X");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "Xdef", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
+		});
+
+		it("has end stickiness", () => {
+			// -[abc)-
+			// -[abdefc)-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 0, side: Side.Before },
+				end: { pos: 2, side: Side.Before },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.END);
+			assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
+			assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
+
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(2, "def");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "abdefc", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
+		});
+
+		it("has end stickiness during delete of end of interval", () => {
+			// -[abcX)-
+			// -[abcf)-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abcXdef");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 0, side: Side.Before },
+				end: { pos: 4, side: Side.Before },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.END);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.removeRange(3, 6);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "abcf", "different text");
+			assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
+		});
+
+		it("has end stickiness by default", () => {
+			// [abcX)
+			// [abcf)
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abcXdef");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({ start: 0, end: 3 });
+			assert.equal(interval1.stickiness, IntervalStickiness.END);
+			assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
+			assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
+
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString.removeRange(3, 6);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "abcf", "different text");
+			assertIntervals(sharedString, collection, [{ start: 0, end: 3 }]);
+		});
+
+		it("has none stickiness during insert", () => {
+			// -[ab]c-
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: { pos: 0, side: Side.Before },
+				end: { pos: 1, side: Side.After },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.NONE);
+			assert.equal(interval1.start.slidingPreference, SlidingPreference.FORWARD);
+			assert.equal(interval1.end.slidingPreference, SlidingPreference.BACKWARD);
+			const intervalId = interval1.getIntervalId();
+			assert(intervalId);
+			sharedString.insertText(2, "def");
+			containerRuntimeFactory.processAllMessages();
+
+			assert.strictEqual(sharedString.getText(), "abdefc", "different text");
+
+			assertIntervals(sharedString, collection, [{ start: 0, end: 1 }]);
+		});
+
+		it("has correct sliding preference for full stickiness", () => {
+			const collection = sharedString.getIntervalCollection("test");
+			sharedString.insertText(0, "abc");
+			containerRuntimeFactory.processAllMessages();
+			const interval1 = collection.add({
+				start: "start",
+				end: { pos: 2, side: Side.Before },
+				props: undefined,
+			});
+			assert.equal(interval1.stickiness, IntervalStickiness.FULL);
+			assert.equal(interval1.start.slidingPreference, SlidingPreference.BACKWARD);
+			assert.equal(interval1.end.slidingPreference, SlidingPreference.FORWARD);
 		});
 	});
 });

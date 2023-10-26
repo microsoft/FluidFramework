@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { ILoggingError } from "@fluidframework/core-interfaces";
 import {
 	ISequencedDocumentMessage,
 	ISnapshotTree,
@@ -18,9 +19,9 @@ import {
 	ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions";
 import { mergeStats } from "@fluidframework/runtime-utils";
-import { TelemetryDataTag, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils";
 
-import { createRootSummarizerNode, IFetchSnapshotResult, IRootSummarizerNode } from "../summary";
+import { createRootSummarizerNode, IRootSummarizerNode } from "../summary";
 // eslint-disable-next-line import/no-internal-modules
 import { SummarizerNode } from "../summary/summarizerNode/summarizerNode";
 // eslint-disable-next-line import/no-internal-modules
@@ -35,7 +36,7 @@ describe("Runtime", () => {
 			let midNode: ISummarizerNode | undefined;
 			let leafNode: ISummarizerNode | undefined;
 
-			const logger = new TelemetryNullLogger();
+			const logger = createChildLogger();
 			let summarizeCalls = [0, 0, 0];
 			function assertSummarizeCalls(...expected: [root: number, mid: number, leaf: number]) {
 				for (let i = 0; i < expected.length; i++) {
@@ -108,9 +109,9 @@ describe("Runtime", () => {
 				try {
 					fn();
 					throw Error(`${failMsg}: Expected to fail`);
-				} catch (error: any) {
+				} catch (error: unknown) {
 					assert(
-						expectedErrors.some((e) => e === error.message),
+						expectedErrors.some((e) => e === (error as ILoggingError).message),
 						errMsg,
 					);
 				}
@@ -125,22 +126,18 @@ describe("Runtime", () => {
 				try {
 					await fn();
 					throw Error(`${failMsg}: Expected to reject`);
-				} catch (error: any) {
+				} catch (error: unknown) {
 					assert(
-						expectedErrors.some((e) => e === error.message),
+						expectedErrors.some((e) => e === (error as ILoggingError).message),
 						errMsg,
 					);
 				}
 			}
 
 			const summaryRefSeq = 123;
-			const blobs = {
-				protocolAttributes: { sequenceNumber: summaryRefSeq },
-			} as const;
-			const readAndParseBlob = async <T>(id: string) => blobs[id] as T;
 			const fakeOp = (sequenceNumber: number): ISequencedDocumentMessage =>
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-				({ sequenceNumber } as ISequencedDocumentMessage);
+				({ sequenceNumber }) as ISequencedDocumentMessage;
 
 			const emptySnapshot: ISnapshotTree = { blobs: {}, trees: {} };
 			const protocolTree: ISnapshotTree = {
@@ -173,18 +170,8 @@ describe("Runtime", () => {
 				},
 			};
 
-			// The reference sequence number of the fetched snapshot.
-			let snapshotRefSeq = summaryRefSeq;
-			const fetchLatestSnapshot: () => Promise<IFetchSnapshotResult> = async () => {
-				return {
-					snapshotTree: simpleSnapshot,
-					snapshotRefSeq,
-				};
-			};
-
 			beforeEach(() => {
 				summarizeCalls = [0, 0, 0];
-				snapshotRefSeq = summaryRefSeq;
 			});
 
 			describe("Create Child", () => {
@@ -293,7 +280,7 @@ describe("Runtime", () => {
 					// Validate summary fails by calling completeSummary.
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === "";
 							return correctErrorMessage && correctErrorId;
@@ -330,7 +317,7 @@ describe("Runtime", () => {
 
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === midNodeId;
 							return correctErrorMessage && correctErrorId;
@@ -368,7 +355,7 @@ describe("Runtime", () => {
 					// Validate summary fails by calling completeSummary.
 					assert.throws(
 						() => rootNode.completeSummary("test-handle", true /* validateSummary */),
-						(error) => {
+						(error: any) => {
 							const correctErrorMessage = error.message === "NodeDidNotSummarize";
 							const correctErrorId = error.id.value === leafNodeId;
 							return correctErrorMessage && correctErrorId;
@@ -429,71 +416,13 @@ describe("Runtime", () => {
 			});
 
 			describe("Refresh Latest Summary", () => {
-				it("Should refresh from tree when no proposal handle provided", async () => {
-					createRoot();
-					const result = await rootNode.refreshLatestSummary(
-						undefined,
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === summaryRefSeq,
-						"summary ref seq should be the same as the one passed in",
-					);
-				});
-
-				it("Should use the ref seq number of the fetched snapshot", async () => {
-					createRoot();
-					snapshotRefSeq = summaryRefSeq + 1;
-					const result = await rootNode.refreshLatestSummary(
-						undefined,
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === snapshotRefSeq,
-						"summary ref seq should be the snapshot ref seq",
-					);
-				});
-
-				it("Should refresh from tree when proposal handle not pending", async () => {
-					createRoot();
-					const result = await rootNode.refreshLatestSummary(
-						"test-handle",
-						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
-					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === false, "should not be tracked");
-					assert(result.snapshotTree !== undefined, "should have tree result");
-					assert(
-						result.summaryRefSeq === summaryRefSeq,
-						"summary ref seq should be the same as the one passed in",
-					);
-				});
-
 				it("Should not refresh latest if already passed ref seq number", async () => {
 					createRoot({ refSeq: summaryRefSeq });
 					const result = await rootNode.refreshLatestSummary(
-						undefined,
+						"test-handle",
 						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
 					);
-					assert(result.latestSummaryUpdated === false, "we already got this summary");
+					assert(!result.isSummaryTracked, "we already got this summary");
 				});
 
 				it("Should refresh from pending", async () => {
@@ -507,12 +436,9 @@ describe("Runtime", () => {
 					const result = await rootNode.refreshLatestSummary(
 						proposalHandle,
 						summaryRefSeq,
-						fetchLatestSnapshot,
-						readAndParseBlob,
-						logger,
 					);
-					assert(result.latestSummaryUpdated === true, "should update");
-					assert(result.wasSummaryTracked === true, "should be tracked");
+					assert(result.isSummaryTracked, "should be tracked");
+					assert(result.isSummaryNewer === true, "should be newer");
 				});
 
 				it("should fail refresh when summary is in progress", async () => {
@@ -523,15 +449,10 @@ describe("Runtime", () => {
 					rootNode.startSummary(referenceSeqNum, logger);
 					await rootNode.summarize(false);
 					await assert.rejects(
-						async () =>
-							rootNode.refreshLatestSummary(
-								proposalHandle,
-								summaryRefSeq,
-								fetchLatestSnapshot,
-								readAndParseBlob,
-								logger,
-							),
-						(error) => {
+						async () => rootNode.refreshLatestSummary(proposalHandle, summaryRefSeq),
+						(
+							error: ILoggingError & { inProgressSummaryRefSeq: number | undefined },
+						) => {
 							const correctErrorMessage =
 								error.message === "UnexpectedRefreshDuringSummarize";
 							const correctInProgressRefSeq =

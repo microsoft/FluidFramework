@@ -11,9 +11,10 @@ When taking a dependency on a Fluid Framework library, we recommend using a `^` 
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.
 
-Note that when depending on a library version of the form 2.0.0-internal.x.y.z, called the Fluid internal version
-scheme, you must use a `>= <` dependency range. Standard `^` and `~` ranges will not work as expected. See the
-[@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
+you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
+Standard `^` and `~` ranges will not work as expected.
+See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
 package for more information including tools to convert between version schemes.
 
 <!-- prettier-ignore-end -->
@@ -23,6 +24,7 @@ package for more information including tools to convert between version schemes.
 **Topics covered below:**
 
 -   [@fluidframework/container-loader](#fluidframeworkcontainer-loader)
+    -   [Using Fluid Framework libraries](#using-fluid-framework-libraries)
     -   [Fluid Loader](#fluid-loader)
     -   [Expectations from host implementers](#expectations-from-host-implementers)
     -   [Expectations from container runtime and data store implementers](#expectations-from-container-runtime-and-data-store-implementers)
@@ -36,12 +38,14 @@ package for more information including tools to convert between version schemes.
     -   [ClientID and client identification](#clientid-and-client-identification)
     -   [Error handling](#error-handling)
     -   [Connectivity events](#connectivity-events)
+    -   [Connection State Transitions Flow Chart](#connection-state-transitions-flow-chart)
     -   [Readonly states](#readonly-states)
         -   [`readonly`](#readonly)
         -   [`permissions`](#permissions)
         -   [`forced`](#forced)
         -   [`storageOnly`](#storageonly)
     -   [Dirty events](#dirty-events)
+    -   [Trademark](#trademark)
 
 **Related topics covered elsewhere:**
 
@@ -82,7 +86,7 @@ Please see specific sections for more details on these states and events - this 
 
 Container is returned as result of Loader.resolve() call. Loader can cache containers, so if same URI is requested from same loader instance, earlier created container might be returned. This is important, as some of the headers (like `pause`) might be ignored because of Container reuse.
 
-`ILoaderHeader` in [loader.ts](../../../common/lib/container-definitions/src/loader.ts) describes properties controlling container loading.
+`ILoaderHeader` in [loader.ts](../../common/container-definitions/src/loader.ts) describes properties controlling container loading.
 
 ### Connectivity
 
@@ -160,7 +164,7 @@ There are two ways errors are exposed:
 
 Critical errors can show up in #1 & #2 workflows. For example, data store URI may point to a deleted file, which will result in errors on container open. But file can also be deleted while container is opened, resulting in same error type being raised through "error" handler.
 
-Errors are of [ICriticalContainerError](../../../common/lib/container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../../../common/lib/container-definitions/src/error.ts) type. Both have `errorType` property, describing type of an error (and appropriate interface of error object):
+Errors are of [ICriticalContainerError](../../common/container-definitions/src/error.ts) type, and warnings are of [ContainerWarning](../../common/container-definitions/src/error.ts) type. Both have `errorType` property, describing type of an error (and appropriate interface of error object):
 
 ```ts
      readonly errorType: string;
@@ -168,7 +172,7 @@ Errors are of [ICriticalContainerError](../../../common/lib/container-definition
 
 There are 4 sources of errors:
 
-1. [ContainerErrorType](../../../common/lib/container-definitions/src/error.ts) - errors & warnings raised at loader level
+1. [ContainerErrorType](../../common/container-definitions/src/error.ts) - errors & warnings raised at loader level
 2. [DriverErrorType](../../common/driver-definitions/src/driverError.ts) - errors that are likely to be raised from the driver level
 3. [OdspErrorType](../../drivers/odsp-driver/src/odspError.ts) and [RouterliciousErrorType](../../drivers/routerlicious-driver/src/documentDeltaConnection.ts) - errors raised by ODSP and R11S drivers.
 4. Runtime errors, like `"summarizingError"`, `"dataCorruptionError"`. This class of errors is not pre-determined and depends on type of container loaded.

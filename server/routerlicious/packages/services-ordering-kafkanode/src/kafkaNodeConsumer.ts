@@ -5,6 +5,7 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
 	IConsumer,
 	IPartition,
@@ -38,8 +39,9 @@ export class KafkaNodeConsumer implements IConsumer {
 		private readonly reconnectDelay: number = defaultReconnectDelay,
 	) {
 		clientOptions.clientId = clientId;
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		this.connect();
+		this.connect().catch((err) => {
+			Lumberjack.error("Error connecting to kafka", undefined, err);
+		});
 		if (zookeeperEndpoint) {
 			this.zookeeper = new ZookeeperClient(zookeeperEndpoint);
 		}
@@ -130,8 +132,9 @@ export class KafkaNodeConsumer implements IConsumer {
 			this.events.emit("error", error);
 
 			setTimeout(() => {
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this.connect();
+				this.connect().catch((err) => {
+					Lumberjack.error("Error retrying connecting to kafka", undefined, err);
+				});
 			}, this.reconnectDelay);
 
 			return;

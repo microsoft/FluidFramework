@@ -4,6 +4,7 @@
  */
 
 import { IAudienceOwner } from "@fluidframework/container-definitions";
+import { canBeCoalescedByService } from "@fluidframework/driver-utils";
 import {
 	IProtocolHandler as IBaseProtocolHandler,
 	IQuorumSnapshot,
@@ -11,12 +12,12 @@ import {
 } from "@fluidframework/protocol-base";
 import {
 	IDocumentAttributes,
+	IProcessMessageResult,
+	ISequencedDocumentMessage,
 	ISignalClient,
 	ISignalMessage,
+	MessageType,
 } from "@fluidframework/protocol-definitions";
-
-// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
-export const OnlyValidTermValue = 1 as const;
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {
@@ -44,12 +45,12 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		attributes: IDocumentAttributes,
 		quorumSnapshot: IQuorumSnapshot,
 		sendProposal: (key: string, value: any) => number,
-		readonly audience: IAudienceOwner,
+		public readonly audience: IAudienceOwner,
+		private readonly shouldClientHaveLeft: (clientId: string) => boolean,
 	) {
 		super(
 			attributes.minimumSequenceNumber,
 			attributes.sequenceNumber,
-			OnlyValidTermValue,
 			quorumSnapshot.members,
 			quorumSnapshot.proposals,
 			quorumSnapshot.values,
@@ -64,6 +65,32 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 		for (const [clientId, details] of this.quorum.getMembers()) {
 			this.audience.addMember(clientId, details.client);
 		}
+	}
+
+	public processMessage(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+	): IProcessMessageResult {
+		// Check and report if we're getting messages from a clientId that we previously
+		// flagged as shouldHaveLeft, or from a client that's not in the quorum but should be
+		if (message.clientId != null) {
+			const client = this.quorum.getMember(message.clientId);
+
+			if (client === undefined && message.type !== MessageType.ClientJoin) {
+				// pre-0.58 error message: messageClientIdMissingFromQuorum
+				throw new Error("Remote message's clientId is missing from the quorum");
+			}
+
+			// Here checking canBeCoalescedByService is used as an approximation of "is benign to process despite being unexpected".
+			// It's still not good to see these messages from unexpected clientIds, but since they don't harm the integrity of the
+			// document we don't need to blow up aggressively.
+			if (this.shouldClientHaveLeft(message.clientId) && !canBeCoalescedByService(message)) {
+				// pre-0.58 error message: messageClientIdShouldHaveLeft
+				throw new Error("Remote message's clientId already should have left");
+			}
+		}
+
+		return super.processMessage(message, local);
 	}
 
 	public processSignal(message: ISignalMessage) {

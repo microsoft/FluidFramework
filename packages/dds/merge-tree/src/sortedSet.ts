@@ -19,9 +19,7 @@ export abstract class SortedSet<T, U extends string | number> {
 	public addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void) {
 		const position = this.findItemPosition(newItem);
 		if (position.exists) {
-			if (update) {
-				update(this.keySortedItems[position.index], newItem);
-			}
+			update?.(this.keySortedItems[position.index], newItem);
 		} else {
 			this.keySortedItems.splice(position.index, 0, newItem);
 		}

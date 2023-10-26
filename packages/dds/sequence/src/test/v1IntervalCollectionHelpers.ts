@@ -18,17 +18,18 @@ import {
 	IValueOperation,
 } from "../defaultMapInterfaces";
 import {
-	ISerializableInterval,
-	ISerializedInterval,
 	IntervalCollection,
-	SequenceInterval,
 	ISerializedIntervalCollectionV2,
-	IIntervalHelpers,
 	makeOpsMap,
-	createSequenceInterval,
-	compareSequenceIntervalEnds,
 	LocalIntervalCollection,
 } from "../intervalCollection";
+import {
+	ISerializableInterval,
+	ISerializedInterval,
+	SequenceInterval,
+	IIntervalHelpers,
+	createSequenceInterval,
+} from "../intervals";
 import { pkgVersion } from "../packageVersion";
 import { SharedString } from "../sharedString";
 
@@ -53,7 +54,6 @@ class V1SequenceIntervalCollectionFactory
 		raw: ISerializedInterval[] | ISerializedIntervalCollectionV2 = [],
 	): V1IntervalCollection<SequenceInterval> {
 		const helpers: IIntervalHelpers<SequenceInterval> = {
-			compareEnds: compareSequenceIntervalEnds,
 			create: createSequenceInterval,
 		};
 		return new V1IntervalCollection(helpers, true, emitter, raw, {});
@@ -61,8 +61,9 @@ class V1SequenceIntervalCollectionFactory
 	public store(
 		value: V1IntervalCollection<SequenceInterval>,
 	): ISerializedInterval[] | ISerializedIntervalCollectionV2 {
-		return Array.from(value, (interval) =>
-			interval?.serialize(),
+		return Array.from(
+			value,
+			(interval) => interval?.serialize(),
 		) as unknown as ISerializedIntervalCollectionV2;
 	}
 }
@@ -134,7 +135,7 @@ export class SharedStringWithV1IntervalCollection extends SharedString {
 
 export class V1IntervalCollectionSharedStringFactory implements IChannelFactory {
 	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
-	// load code
+	// load code (UPDATE: paparazzi is gone... anything to do here?)
 	public static Type = "https://graph.microsoft.com/types/mergeTree";
 
 	public static readonly Attributes: IChannelAttributes = {

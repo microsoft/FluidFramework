@@ -27,7 +27,7 @@ describe("Reconnection", () => {
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			map1 = new AttributableMap("shared-map-1", dataStoreRuntime1, MapFactory.Attributes);
@@ -37,7 +37,7 @@ describe("Reconnection", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			map2 = new AttributableMap("shared-map-2", dataStoreRuntime2, MapFactory.Attributes);

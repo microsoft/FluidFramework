@@ -16,5 +16,8 @@ module.exports = {
 	rules: {
 		// TODO: Remove once this config extends `recommended` or `strict` above.
 		"@typescript-eslint/explicit-function-return-type": "error",
+
+		// This package is being deprecated, so it's okay to use deprecated APIs.
+		"import/no-deprecated": "off",
 	},
 };

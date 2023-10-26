@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -17,7 +17,7 @@ import {
 	ISummaryTree,
 	IVersion,
 } from "@fluidframework/protocol-definitions";
-import { buildHierarchy } from "@fluidframework/protocol-base";
+import { buildGitTreeHierarchy } from "@fluidframework/protocol-base";
 import {
 	GitManager,
 	ISummaryUploadManager,
@@ -33,6 +33,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
 
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get repositoryUrl(): string {
 		return "";
 	}
@@ -73,7 +74,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		}
 
 		const rawTree = await this.manager.getTree(requestVersion.treeId);
-		const tree = buildHierarchy(rawTree, this.blobsShaCache, true);
+		const tree = buildGitTreeHierarchy(rawTree, this.blobsShaCache, true);
 		return tree;
 	}
 

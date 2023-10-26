@@ -13,6 +13,7 @@ import {
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import { Deferred } from "@fluidframework/common-utils";
 
 import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
@@ -149,16 +150,33 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 		 */
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		producer.on("connection.failure", async (error) => {
-			await this.close(true);
-
-			this.error(error);
-
-			this.connect();
+			try {
+				await this.close(true);
+				this.error(error, {
+					restart: false,
+					errorLabel: "rdkafkaProducer:connection.failure",
+				});
+				this.connect();
+			} catch (err) {
+				Lumberjack.error(
+					"Error encountered when handling producer connection.failure",
+					undefined,
+					err,
+				);
+			}
 		});
 
 		producer.on("event.error", (error) => {
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.handleError(producer, error);
+			this.handleError(producer, error, {
+				restart: false,
+				errorLabel: "rdkafkaProducer:event.error",
+			}).catch((handleErrorError) => {
+				Lumberjack.error(
+					"Error encountered when handling producer event.error",
+					undefined,
+					handleErrorError,
+				);
+			});
 		});
 
 		producer.on("event.throttle", (event) => {
@@ -301,6 +319,9 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 	 * Produce the boxcars to Kafka
 	 */
 	private sendBoxcar(boxcar: IPendingBoxcar): void {
+		const lumberjackProperties = {
+			...getLumberBaseProperties(boxcar.documentId, boxcar.tenantId),
+		};
 		const boxcarMessage: IBoxcarMessage = {
 			contents: boxcar.messages,
 			documentId: boxcar.documentId,
@@ -353,11 +374,17 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 
 						boxcar.deferred.reject(err);
 
-						// eslint-disable-next-line @typescript-eslint/no-floating-promises
 						this.handleError(producer, err, {
 							restart: true,
 							tenantId: boxcar.tenantId,
 							documentId: boxcar.documentId,
+							errorLabel: "rdkafkaProducer:producer.produce",
+						}).catch((error) => {
+							Lumberjack.error(
+								"Error encountered when handling producer error in sendBoxcar()",
+								{ ...lumberjackProperties },
+								error,
+							);
 						});
 					} else {
 						boxcar.deferred.resolve();
@@ -382,11 +409,17 @@ export class RdkafkaProducer extends RdkafkaBase implements IProducer {
 			// produce can throw if the outgoing message queue is full
 			boxcar.deferred.reject(err);
 
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.handleError(producer, err, {
 				restart: true,
 				tenantId: boxcar.tenantId,
 				documentId: boxcar.documentId,
+				errorLabel: "rdkafkaProducer:sendBoxcar",
+			}).catch((error) => {
+				Lumberjack.error(
+					"Error encountered when handling producer error in sendBoxcar() catch block",
+					{ ...lumberjackProperties },
+					error,
+				);
 			});
 		}
 	}

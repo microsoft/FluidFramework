@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Marker, TextSegment } from "@fluidframework/merge-tree";
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../document/index.js";
 import { emptyObject, TagName } from "../util/index.js";

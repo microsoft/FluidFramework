@@ -11,4 +11,4 @@
  */
 
 export { SharedCounter } from "./counter";
-export { ISharedCounter, ISharedCounterEvents } from "./interfaces";
+export type { ISharedCounter, ISharedCounterEvents } from "./interfaces";

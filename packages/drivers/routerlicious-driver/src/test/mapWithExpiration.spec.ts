@@ -217,8 +217,7 @@ describe("MapWithExpiration", () => {
 							m: Map<number, string>,
 						) {
 							assert.equal(this, thisArg, "Incorrect value for 'this'");
-						},
-						thisArg);
+						}, thisArg);
 					}
 				}
 			},
@@ -300,6 +299,7 @@ describe("MapWithExpiration", () => {
 
 	it("toString", () => {
 		const map = new MapWithExpiration<number, string>(0);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.equal(map.toString(), "[object Map]");
 	});
 });

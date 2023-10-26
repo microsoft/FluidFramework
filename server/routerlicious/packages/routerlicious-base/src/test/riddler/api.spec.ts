@@ -14,10 +14,13 @@ import {
 	ISecretManager,
 } from "@fluidframework/server-services-core";
 import * as riddlerApp from "../../riddler/app";
+import Sinon from "sinon";
+import { ITenantDocument } from "../../riddler";
 
 const documentsCollectionName = "testDocuments";
 const deltasCollectionName = "testDeltas";
 const rawDeltasCollectionName = "testRawDeltas";
+const testTenantsCollectionName = "test-tenantAdmins";
 
 class TestSecretManager implements ISecretManager {
 	constructor(private readonly encryptionKey: string) {}
@@ -37,7 +40,7 @@ class TestSecretManager implements ISecretManager {
 
 describe("Routerlicious", () => {
 	describe("Riddler", () => {
-		describe("API", () => {
+		describe("API", async () => {
 			const document = {
 				_id: "doc-id",
 				content: "Hello, World!",
@@ -46,8 +49,12 @@ describe("Routerlicious", () => {
 				[documentsCollectionName]: [document],
 				[deltasCollectionName]: [],
 				[rawDeltasCollectionName]: [],
+				[testTenantsCollectionName]: [],
 			});
 			const defaultMongoManager = new MongoManager(defaultDbFactory);
+			const defaultDb = await defaultMongoManager.getDatabase();
+			const defaultTenantsCollection =
+				defaultDb.collection<ITenantDocument>(testTenantsCollectionName);
 			const testTenantId = "test-tenant-id";
 
 			let app: express.Application;
@@ -72,7 +79,6 @@ describe("Routerlicious", () => {
 				};
 
 				beforeEach(() => {
-					const testCollectionName = "test-tenantAdmins";
 					const testLoggerFormat = "test-logger-format";
 					const testBaseOrdererUrl = "test-base-orderer-url";
 					const testExtHistorianUrl = "test-ext-historian-url";
@@ -80,17 +86,25 @@ describe("Routerlicious", () => {
 					const testSecretManager = new TestSecretManager(
 						crypto.randomBytes(32).toString("base64"),
 					);
+					Sinon.useFakeTimers();
+					const testFetchTenantKeyMetricIntervalMs = 60000;
+					const testRiddlerStorageRequestMetricIntervalMs = 60000;
 
 					app = riddlerApp.create(
-						testCollectionName,
-						defaultMongoManager,
+						defaultTenantsCollection,
 						testLoggerFormat,
 						testBaseOrdererUrl,
 						testExtHistorianUrl,
 						testIntHistorianUrl,
 						testSecretManager,
+						testFetchTenantKeyMetricIntervalMs,
+						testRiddlerStorageRequestMetricIntervalMs,
 					);
 					supertest = request(app);
+				});
+
+				afterEach(() => {
+					Sinon.restore();
 				});
 
 				it("POST /tenants/:id/validate", async () => {

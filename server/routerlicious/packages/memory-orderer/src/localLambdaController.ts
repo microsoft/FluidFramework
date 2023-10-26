@@ -10,6 +10,7 @@ import {
 	IPartitionLambda,
 	LambdaCloseType,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
 import { LocalKafka } from "./localKafka";
 
@@ -62,8 +63,9 @@ export class LocalLambdaController<T = ILocalOrdererSetup>
 			this.context.error(ex, { restart: true });
 
 			this.startTimer = setTimeout(() => {
-				// eslint-disable-next-line @typescript-eslint/no-floating-promises
-				this.start();
+				this.start().catch((err) => {
+					Lumberjack.error("Error starting local lambda controller", undefined, err);
+				});
 			}, 5000);
 		}
 	}

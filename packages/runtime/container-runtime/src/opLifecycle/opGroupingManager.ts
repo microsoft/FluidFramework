@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType } from "..";
+import { ContainerMessageType } from "../messageTypes";
 import { IBatch } from "./definitions";
+
+/**
+ * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
+ */
+interface IGroupedBatchMessageContents {
+	type: typeof OpGroupingManager.groupedBatchOp;
+	contents: IGroupedMessage[];
+}
 
 interface IGroupedMessage {
 	contents?: unknown;
@@ -14,8 +22,12 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
+function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
+	return opContents?.type === OpGroupingManager.groupedBatchOp;
+}
+
 export class OpGroupingManager {
-	static groupedBatchOp = "groupedBatch";
+	static readonly groupedBatchOp = "groupedBatch";
 
 	constructor(private readonly groupedBatchingEnabled: boolean) {}
 
@@ -25,10 +37,6 @@ export class OpGroupingManager {
 		}
 
 		for (const message of batch.content) {
-			// Blob attaches cannot be grouped (grouped batching would hide metadata)
-			if (message.type === ContainerMessageType.BlobAttach) {
-				return batch;
-			}
 			if (message.metadata) {
 				const keys = Object.keys(message.metadata);
 				assert(keys.length < 2, 0x5dd /* cannot group ops with metadata */);
@@ -64,11 +72,11 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (op.contents?.type !== OpGroupingManager.groupedBatchOp) {
+		if (!isGroupContents(op.contents)) {
 			return [op];
 		}
 
-		const messages = op.contents.contents as IGroupedMessage[];
+		const messages = op.contents.contents;
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,

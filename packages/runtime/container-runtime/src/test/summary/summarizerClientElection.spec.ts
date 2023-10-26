@@ -4,7 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ISequencedClient, MessageType } from "@fluidframework/protocol-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
@@ -165,10 +166,10 @@ describe("Summarizer Client Election", () => {
 			addClient(id, seq, int);
 		}
 		election = new SummarizerClientElection(
-			mockLogger,
+			mockLogger.toTelemetryLogger(),
 			summaryCollectionEmitter,
 			new OrderedClientElection(
-				mockLogger,
+				mockLogger.toTelemetryLogger(),
 				new OrderedClientCollection(mockLogger, testDeltaManager, testQuorum),
 				initialState ?? currentSequenceNumber,
 				SummarizerClientElection.isClientEligible,

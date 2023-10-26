@@ -6,6 +6,7 @@
 		"outDir": "./dist",
 		"types": ["node"],
 		"composite": true,
+		"noImplicitOverride": true,
 	},
 	"include": ["src/**/*"],
 }

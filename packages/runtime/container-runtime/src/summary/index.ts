@@ -11,7 +11,7 @@ export {
 	OrderedClientCollection,
 	OrderedClientElection,
 } from "./orderedClientElection";
-export { RunningSummarizer } from "./runningSummarizer";
+export { defaultMaxAttemptsForSubmitFailures, RunningSummarizer } from "./runningSummarizer";
 export {
 	ICancellableSummarizerController,
 	neverCancelledSummaryToken,
@@ -28,10 +28,9 @@ export { SummarizeHeuristicData, SummarizeHeuristicRunner } from "./summarizerHe
 export {
 	createRootSummarizerNode,
 	createRootSummarizerNodeWithGC,
-	IFetchSnapshotResult,
+	IRefreshSummaryResult,
 	IRootSummarizerNode,
 	IRootSummarizerNodeWithGC,
-	RefreshSummaryResult,
 } from "./summarizerNode";
 export {
 	IConnectableRuntime,
@@ -64,6 +63,8 @@ export {
 	SummarizeResultPart,
 	SubmitSummaryFailureData,
 	SummaryStage,
+	IRetriableFailureResult,
+	ISummarizeEventProps,
 } from "./summarizerTypes";
 export {
 	IAckedSummary,

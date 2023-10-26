@@ -6,12 +6,12 @@
 import * as git from "@fluidframework/gitresources";
 import * as api from "@fluidframework/protocol-definitions";
 import {
-	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWholeSummaryPayloadType,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import { IR11sResponse } from "./restWrapper";
+import { IWholeFlatSnapshot } from "./contracts";
 
 /**
  * Interface to a generic Git provider
@@ -26,7 +26,7 @@ export interface IHistorian {
 		summary: IWholeSummaryPayload,
 		initial?: boolean,
 	): Promise<IR11sResponse<IWriteSummaryResponse>>;
-	getSummary(sha: string): Promise<IR11sResponse<IWholeFlatSummary>>;
+	getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>>;
 }
 
 export interface IGitManager {
@@ -39,7 +39,7 @@ export interface IGitManager {
 		summary: IWholeSummaryPayload,
 		initial?: boolean,
 	): Promise<IR11sResponse<IWriteSummaryResponse>>;
-	getSummary(sha: string): Promise<IR11sResponse<IWholeFlatSummary>>;
+	getSnapshot(sha: string): Promise<IR11sResponse<IWholeFlatSnapshot>>;
 }
 
 /**

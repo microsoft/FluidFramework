@@ -11,10 +11,9 @@ import {
 	ChunkShape,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
-import { testSpecializedFieldCursor } from "../../cursorTestSuite";
+import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite";
 import { cursorToJsonObject, singleJsonCursor } from "../../../domains";
-import { brand } from "../../../util";
-import { EmptyKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
+import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks";
 import {
@@ -65,7 +64,7 @@ describe("uniformChunk", () => {
 		cursorName: "uniformChunk",
 		builders: {
 			withKeys: (keys) => {
-				const schema: TreeSchemaIdentifier = brand("fakeSchema");
+				const schema: TreeNodeSchemaIdentifier = mapSchema.name;
 				const withKeysShape = new TreeShape(
 					schema,
 					false,

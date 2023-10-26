@@ -56,13 +56,9 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 	it("Summarization should still succeed when a datastore and its DDSes are realized between submit and ack", async () => {
 		const container1 = await createContainer();
 		const defaultDataStore1 = await requestFluidObject<ITestDataObject>(container1, "default");
-		const { summarizer: summarizer1 } = await createSummarizer(
-			provider,
-			container1,
-			undefined,
-			undefined,
-			mockConfigProvider(settings),
-		);
+		const { summarizer: summarizer1 } = await createSummarizer(provider, container1, {
+			loaderProps: { configProvider: mockConfigProvider(settings) },
+		});
 
 		// create a datastore with a dds as the default one is always realized
 		const containerRuntime1 = defaultDataStore1._context.containerRuntime;
@@ -87,9 +83,8 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 			await createSummarizer(
 				provider,
 				container1,
+				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
 				summaryVersion1,
-				undefined,
-				mockConfigProvider(settings),
 			);
 
 		// Override the submit summary function to realize a datastore before receiving an ack

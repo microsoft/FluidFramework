@@ -17,15 +17,18 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import {
 	IContainerRuntimeMetadata,
 	ICreateContainerMetadata,
-	RefreshSummaryResult,
+	IRefreshSummaryResult,
 } from "../summary";
 
+/**
+ * @public
+ */
 export type GCVersion = number;
 
-/** The stable version of garbage collection in production. */
-export const stableGCVersion: GCVersion = 2;
-/** The current version of garbage collection. */
-export const currentGCVersion: GCVersion = 3;
+/** The stable/default version of GC Data */
+export const stableGCVersion: GCVersion = 3;
+/** The next version of GC Data, to bump to in case we need to regenerate all GC Data across all files. */
+export const nextGCVersion: GCVersion = 4;
 
 /**
  * This undocumented GC Option (on ContainerRuntime Options) allows an app to disable enforcing GC on old documents by incrementing this value
@@ -43,29 +46,28 @@ export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
  */
 export const gcSweepGenerationOptionName = "gcSweepGeneration";
 
-// Feature gate key to turn GC on / off.
+/** Config key to turn GC on / off. */
 export const runGCKey = "Fluid.GarbageCollection.RunGC";
-// Feature gate key to turn GC sweep on / off.
+/** Config key to turn GC sweep on / off. */
 export const runSweepKey = "Fluid.GarbageCollection.RunSweep";
-// Feature gate key to turn GC test mode on / off.
+/** Config key to turn GC test mode on / off. */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-// Feature gate key to expire a session after a set period of time.
+/** Config key to expire a session after a set period of time. Defaults to true. */
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-// Feature gate key to turn GC sweep log off.
+/** Config key to turn GC sweep log off. */
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
-// Feature gate key to disable the tombstone feature, i.e., tombstone information is not read / written into summary.
+/** Config key to disable the tombstone feature, i.e., tombstone information is not read / written into summary. */
 export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
-// Feature gate to enable throwing an error when tombstone object is loaded (requested).
+/** Config key to enable throwing an error when tombstone object is loaded (requested). */
 export const throwOnTombstoneLoadKey = "Fluid.GarbageCollection.ThrowOnTombstoneLoad";
-// Feature gate to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops).
+/** Config key to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops). */
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
-// Feature gate to enable GC version upgrade.
-export const gcVersionUpgradeToV3Key = "Fluid.GarbageCollection.GCVersionUpgradeToV3";
-// Feature gate to enable GC sweep for datastores.
-// TODO: Remove Test from the flag when we are confident to turn on sweep
-export const sweepDatastoresKey = "Fluid.GarbageCollection.Test.SweepDataStores";
-// Feature gate to enable GC sweep for attachment blobs.
-export const sweepAttachmentBlobsKey = "Fluid.GarbageCollection.Test.SweepAttachmentBlobs";
+/** Config key to enable GC version upgrade. */
+export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
+/** Config key to disable GC sweep for datastores. */
+export const disableDatastoreSweepKey = "Fluid.GarbageCollection.DisableDataStoreSweep";
+/** Config key to disable GC sweep for attachment blobs. */
+export const disableAttachmentBlobSweepKey = "Fluid.GarbageCollection.DisableAttachmentBlobSweep";
 
 // One day in milliseconds.
 export const oneDayMs = 1 * 24 * 60 * 60 * 1000;
@@ -81,7 +83,10 @@ export const maxSnapshotCacheExpiryMs = 5 * oneDayMs;
 export const defaultInactiveTimeoutMs = 7 * oneDayMs; // 7 days
 export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
-/** @see IGCMetadata.gcFeatureMatrix */
+/**
+ * @see IGCMetadata.gcFeatureMatrix
+ * @public
+ */
 export interface GCFeatureMatrix {
 	/**
 	 * The Tombstone Generation value in effect when this file was created.
@@ -97,6 +102,9 @@ export interface GCFeatureMatrix {
 	sweepGeneration?: number;
 }
 
+/**
+ * @public
+ */
 export interface IGCMetadata {
 	/**
 	 * The version of the GC code that was run to generate the GC data that is written in the summary.
@@ -120,11 +128,11 @@ export interface IGCMetadata {
 	 */
 	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
-	 * @deprecated - @see GCFeatureMatrix.sweepGeneration
-	 *
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
 	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
+	 *
+	 * @deprecated use GCFeatureMatrix.sweepGeneration instead. @see GCFeatureMatrix.sweepGeneration
 	 */
 	readonly sweepEnabled?: boolean;
 	/** If this is present, the session for this container will expire after this time and the container will close */
@@ -133,7 +141,10 @@ export interface IGCMetadata {
 	readonly sweepTimeoutMs?: number;
 }
 
-/** The statistics of the system state after a garbage collection run. */
+/**
+ * The statistics of the system state after a garbage collection run.
+ * @public
+ */
 export interface IGCStats {
 	/** The number of nodes in the container. */
 	nodeCount: number;
@@ -155,7 +166,10 @@ export interface IGCStats {
 	updatedAttachmentBlobCount: number;
 }
 
-/** The types of GC nodes in the GC reference graph. */
+/**
+ * The types of GC nodes in the GC reference graph.
+ * @public
+ */
 export const GCNodeType = {
 	// Nodes that are for data stores.
 	DataStore: "DataStore",
@@ -166,7 +180,11 @@ export const GCNodeType = {
 	// Nodes that are neither of the above. For example, root node.
 	Other: "Other",
 };
-export type GCNodeType = typeof GCNodeType[keyof typeof GCNodeType];
+
+/**
+ * @public
+ */
+export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
@@ -194,8 +212,6 @@ export interface IGarbageCollectionRuntime {
 	getNodeType(nodePath: string): GCNodeType;
 	/** Called when the runtime should close because of an error. */
 	closeFn: (error?: ICriticalContainerError) => void;
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
-	gcTombstoneEnforcementAllowed: boolean;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -206,6 +222,12 @@ export interface IGarbageCollector {
 	readonly summaryStateNeedsReset: boolean;
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
+	/** Tells whether tombstone feature is enabled and enforced. */
+	readonly tombstoneEnforcementAllowed: boolean;
+	/** Tells whether loading a tombstone object should fail or merely log. */
+	readonly throwOnTombstoneLoad: boolean;
+	/** Tells whether using a tombstone object should fail or merely log. */
+	readonly throwOnTombstoneUsage: boolean;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
@@ -228,11 +250,7 @@ export interface IGarbageCollector {
 	/** Returns the GC details generated from the base snapshot. */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
-	refreshLatestSummary(
-		proposalHandle: string | undefined,
-		result: RefreshSummaryResult,
-		readAndParseBlob: ReadAndParseBlob,
-	): Promise<void>;
+	refreshLatestSummary(result: IRefreshSummaryResult): Promise<void>;
 	/** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
 	nodeUpdated(
 		nodePath: string,
@@ -265,6 +283,9 @@ export interface IGarbageCollectorCreateParams {
 	readonly activeConnection: () => boolean;
 }
 
+/**
+ * @public
+ */
 export interface IGCRuntimeOptions {
 	/**
 	 * Flag that if true, will enable running garbage collection (GC) for a new container.
@@ -272,23 +293,11 @@ export interface IGCRuntimeOptions {
 	 * GC has mark phase and sweep phase. In mark phase, unreferenced objects are identified
 	 * and marked as such in the summary. This option enables the mark phase.
 	 * In sweep phase, unreferenced objects are eventually deleted from the container if they meet certain conditions.
-	 * Sweep phase can be enabled via the "sweepAllowed" option.
+	 * Sweep phase can be enabled using the "gcSweepGeneration" option.
 	 *
 	 * Note: This setting is persisted in the container's summary and cannot be changed.
 	 */
 	gcAllowed?: boolean;
-
-	/**
-	 * @deprecated -  @see gcSweepGenerationOptionName and @see GCFeatureMatrix.sweepGeneration
-	 *
-	 * Flag that if true, enables GC's sweep phase for a new container.
-	 *
-	 * This will allow GC to eventually delete unreferenced objects from the container.
-	 * This flag should only be set to true if "gcAllowed" is true.
-	 *
-	 * Note: This setting is persisted in the container's summary and cannot be changed.
-	 */
-	sweepAllowed?: boolean;
 
 	/**
 	 * Flag that if true, will disable garbage collection for the session.
@@ -364,6 +373,14 @@ export interface IGarbageCollectorConfigs {
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 	/** The current version of GC data in the running code */
 	readonly gcVersionInEffect: GCVersion;
+	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
+	readonly throwOnInactiveLoad: boolean | undefined;
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	readonly tombstoneEnforcementAllowed: boolean;
+	/** If true, throw an error when a tombstone data store is retrieved */
+	readonly throwOnTombstoneLoad: boolean;
+	/** If true, throw an error when a tombstone data store is used. */
+	readonly throwOnTombstoneUsage: boolean;
 }
 
 /** The state of node that is unreferenced. */
@@ -375,7 +392,7 @@ export const UnreferencedState = {
 	/** The node is ready to be deleted by the sweep phase. */
 	SweepReady: "SweepReady",
 } as const;
-export type UnreferencedState = typeof UnreferencedState[keyof typeof UnreferencedState];
+export type UnreferencedState = (typeof UnreferencedState)[keyof typeof UnreferencedState];
 
 /**
  * Represents the result of a GC run.

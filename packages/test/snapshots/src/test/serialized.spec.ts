@@ -24,28 +24,28 @@ import { ConsensusRegisterCollection } from "@fluidframework/register-collection
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
+import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
 
 describe(`Container Serialization Backwards Compatibility`, () => {
 	const loaderContainerTracker = new LoaderContainerTracker();
-	let filename: string;
-	const contentFolder = "content/serializedContainerTestContent";
+	const contentFolder = getTestContent("serializedContainerTestContent");
 
 	// Ideally we would have each test call this.skip() but in this case they're created dynamically
 	// based on the contents of the folder which might or might not exist, so this is the alternative
 	// I came up with.
-	if (!fs.existsSync(contentFolder)) {
-		it(`Skipping dynamic tests in this suite - test collateral folder (${contentFolder}) doesn't exist`, function () {
-			this.skip();
+	if (!contentFolder.exists) {
+		it(`dynamic tests in this suite - test collateral folder (${contentFolder.path}) doesn't exist`, function () {
+			skipOrFailIfTestContentMissing(this, contentFolder);
 		});
 		return;
 	}
 
-	for (filename of recurseFiles(contentFolder)) {
-		tests();
+	for (const filename of recurseFiles(contentFolder.path)) {
+		tests(filename);
 	}
 
-	function tests(): void {
-		const filenameShort = filename.slice(contentFolder.length + 1);
+	function tests(filename: string): void {
+		const filenameShort = filename.slice(contentFolder.path.length + 1);
 		it(`Rehydrate container from ${filenameShort} and check contents before attach`, async () => {
 			const snapshotTree = fs.readFileSync(filename, "utf8");
 
@@ -60,27 +60,21 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(
-				sharedDirectoryId,
-			);
-			const sharedString = await defaultDataStore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedDir =
+				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			const sharedString =
+				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
 			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
-			const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(
-				sharedCounterId,
-			);
-			const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-				crcId,
-			);
+			const sharedCounter =
+				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+			const crc =
+				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
-			const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(
-				sharedMatrixId,
-			);
-			const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(
-				sparseMatrixId,
-			);
+			const sharedMatrix =
+				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+			const sparseMatrix =
+				await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 			assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
 			assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 			assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");
@@ -110,27 +104,21 @@ describe(`Container Serialization Backwards Compatibility`, () => {
 
 			// Check for dds
 			const sharedMap = await defaultDataStore.getSharedObject<SharedMap>(sharedMapId);
-			const sharedDir = await defaultDataStore.getSharedObject<SharedDirectory>(
-				sharedDirectoryId,
-			);
-			const sharedString = await defaultDataStore.getSharedObject<SharedString>(
-				sharedStringId,
-			);
+			const sharedDir =
+				await defaultDataStore.getSharedObject<SharedDirectory>(sharedDirectoryId);
+			const sharedString =
+				await defaultDataStore.getSharedObject<SharedString>(sharedStringId);
 			const sharedCell = await defaultDataStore.getSharedObject<SharedCell>(sharedCellId);
-			const sharedCounter = await defaultDataStore.getSharedObject<SharedCounter>(
-				sharedCounterId,
-			);
-			const crc = await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(
-				crcId,
-			);
+			const sharedCounter =
+				await defaultDataStore.getSharedObject<SharedCounter>(sharedCounterId);
+			const crc =
+				await defaultDataStore.getSharedObject<ConsensusRegisterCollection<string>>(crcId);
 			const coc = await defaultDataStore.getSharedObject<ConsensusOrderedCollection>(cocId);
 			const ink = await defaultDataStore.getSharedObject<Ink>(sharedInkId);
-			const sharedMatrix = await defaultDataStore.getSharedObject<SharedMatrix>(
-				sharedMatrixId,
-			);
-			const sparseMatrix = await defaultDataStore.getSharedObject<SparseMatrix>(
-				sparseMatrixId,
-			);
+			const sharedMatrix =
+				await defaultDataStore.getSharedObject<SharedMatrix>(sharedMatrixId);
+			const sparseMatrix =
+				await defaultDataStore.getSharedObject<SparseMatrix>(sparseMatrixId);
 			assert.strictEqual(sharedMap.id, sharedMapId, "Shared map should exist!!");
 			assert.strictEqual(sharedDir.id, sharedDirectoryId, "Shared directory should exist!!");
 			assert.strictEqual(sharedString.id, sharedStringId, "Shared string should exist!!");

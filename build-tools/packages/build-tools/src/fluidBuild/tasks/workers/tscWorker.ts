@@ -2,28 +2,26 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import * as tsLib from "typescript";
-
-import { getTscUtil } from "../../../common/tscUtils";
+import type * as tsTypes from "typescript";
+import path from "path";
+import { getTscUtils } from "../../../common/tscUtils";
 import type { WorkerExecResult, WorkerMessage } from "./worker";
 
 export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
 	const { command, cwd } = msg;
 	// Load the typescript version that is in the cwd scope
-	const tsPath = require.resolve("typescript", { paths: [cwd] });
-	const ts: typeof tsLib = require(tsPath);
+	const tscUtils = getTscUtils(cwd);
 
-	const TscUtils = getTscUtil(ts);
-
-	let commandLine = TscUtils.parseCommandLine(command);
-	const diagnostics: tsLib.Diagnostic[] = [];
+	const ts = tscUtils.tsLib;
+	let commandLine = tscUtils.parseCommandLine(command);
+	const diagnostics: tsTypes.Diagnostic[] = [];
 	if (commandLine) {
-		const configFileName = TscUtils.findConfigFile(cwd, commandLine);
+		const configFileName = tscUtils.findConfigFile(cwd, commandLine);
 		if (configFileName) {
 			commandLine = ts.getParsedCommandLineOfConfigFile(configFileName, commandLine.options, {
 				...ts.sys,
 				getCurrentDirectory: () => cwd,
-				onUnRecoverableConfigFileDiagnostic: (diagnostic: tsLib.Diagnostic) => {
+				onUnRecoverableConfigFileDiagnostic: (diagnostic: tsTypes.Diagnostic) => {
 					diagnostics.push(diagnostic);
 				},
 			});
@@ -37,7 +35,7 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
 		const incremental = !!(commandLine.options.incremental || commandLine.options.composite);
 		const param = {
 			rootNames: commandLine.fileNames,
-			options: TscUtils.convertToOptionsWithAbsolutePath(commandLine.options, cwd),
+			options: tscUtils.convertOptionPaths(commandLine.options, cwd, path.resolve),
 			projectReferences: commandLine.projectReferences,
 		};
 		const program = incremental ? ts.createIncrementalProgram(param) : ts.createProgram(param);
@@ -64,9 +62,9 @@ export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {
 	if (diagnostics.length > 0) {
 		const sortedDiagnostics = ts.sortAndDeduplicateDiagnostics(diagnostics);
 
-		const formatDiagnosticsHost: tsLib.FormatDiagnosticsHost = {
+		const formatDiagnosticsHost: tsTypes.FormatDiagnosticsHost = {
 			getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
-			getCanonicalFileName: TscUtils.getCanonicalFileName,
+			getCanonicalFileName: tscUtils.getCanonicalFileName,
 			getNewLine: () => ts.sys.newLine,
 		};
 

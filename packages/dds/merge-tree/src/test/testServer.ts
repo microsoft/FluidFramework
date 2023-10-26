@@ -57,7 +57,8 @@ export class TestServer extends TestClient {
 	applyMsg(msg: ISequencedDocumentMessage) {
 		super.applyMsg(msg);
 		if (TestClient.useCheckQ) {
-			const clid = this.getShortClientId(msg.clientId);
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+			const clid = this.getShortClientId(msg.clientId as string);
 			return checkTextMatchRelative(msg.referenceSequenceNumber, clid, this, msg);
 		} else {
 			return false;
@@ -200,7 +201,9 @@ export function checkTextMatchRelative(
 		console.log(msg);
 		//        console.log(serverText);
 		//        console.log(cliText);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		console.log(server.mergeTree.toString());
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		console.log(client.mergeTree.toString());
 		return true;
 	}

@@ -128,7 +128,7 @@ describe("generateReleaseBranchName", () => {
 		assert.equal(actual, expected);
 	});
 
-  it("Independent package with standard semver", () => {
+	it("Independent package with standard semver", () => {
 		const actual = generateReleaseBranchName("@fluidframework/build-common", "1.2.1");
 		const expected = "release/build-common/1.2";
 		assert.equal(actual, expected);

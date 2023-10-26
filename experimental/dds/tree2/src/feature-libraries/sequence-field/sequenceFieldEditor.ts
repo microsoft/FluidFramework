@@ -3,24 +3,27 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ITreeCursor, RevisionTag } from "../../core";
-import { ChangesetLocalId, FieldEditor, NodeReviver } from "../modular-schema";
+import { ChangesetLocalId, ITreeCursor } from "../../core";
+import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
-import { Changeset, Mark, MoveId, NodeChangeType, Reattach, ReturnFrom, ReturnTo } from "./format";
+import {
+	CellId,
+	Changeset,
+	Insert,
+	Mark,
+	MoveId,
+	NodeChangeType,
+	ReturnFrom,
+	MoveIn,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
-	delete(index: number, count: number): Changeset<never>;
-	revive(
-		index: number,
-		count: number,
-		detachedBy: RevisionTag,
-		reviver: NodeReviver,
-		detachIndex: number,
-		isIntention?: true,
-	): Changeset<never>;
+	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
+	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
 
 	/**
 	 *
@@ -39,8 +42,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachedBy: RevisionTag,
-		detachIndex: number,
+		detachEvent: CellId,
 	): Changeset<never>;
 }
 
@@ -48,39 +50,37 @@ export const sequenceFieldEditor = {
 	buildChildChange: <TNodeChange = NodeChangeType>(
 		index: number,
 		change: TNodeChange,
-	): Changeset<TNodeChange> => markAtIndex(index, { type: "Modify", changes: change }),
+	): Changeset<TNodeChange> => markAtIndex(index, { count: 1, changes: change }),
 	insert: (
 		index: number,
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
-	): Changeset<never> =>
-		markAtIndex(index, {
+	): Changeset<never> => {
+		const mark: Insert<never> = {
 			type: "Insert",
+			count: cursors.length,
 			content: cursors.map(jsonableTreeFromCursor),
-			id,
-		}),
-	delete: (index: number, count: number): Changeset<never> =>
-		count === 0 ? [] : markAtIndex(index, { type: "Delete", count }),
+			cellId: { localId: id },
+		};
+		return markAtIndex(index, mark);
+	},
+	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
+		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
+
 	revive: (
 		index: number,
 		count: number,
-		detachedBy: RevisionTag,
-		reviver: NodeReviver,
-		detachIndex?: number,
+		detachEvent: CellId,
 		isIntention: boolean = false,
 	): Changeset<never> => {
-		// Revives are typically created to undo a delete from the prior revision.
-		// When that's the case, we know the content used to be at the index at which it is being revived.
-		const computedDetachIndex = detachIndex ?? index;
-		const detachEvent = { revision: detachedBy, index: computedDetachIndex };
-		const mark: Reattach<never> = {
-			type: "Revive",
-			content: reviver(detachedBy, computedDetachIndex, count),
+		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
+		const mark: Insert<never> = {
+			type: "Insert",
 			count,
-			detachEvent,
+			cellId: detachEvent,
 		};
 		if (!isIntention) {
-			mark.inverseOf = detachedBy;
+			mark.inverseOf = detachEvent.revision;
 		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
@@ -101,6 +101,7 @@ export const sequenceFieldEditor = {
 			type: "MoveIn",
 			id,
 			count,
+			cellId: { localId: id },
 		};
 
 		return [markAtIndex(sourceIndex, moveOut), markAtIndex(destIndex, moveIn)];
@@ -110,17 +111,12 @@ export const sequenceFieldEditor = {
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
-		detachedBy: RevisionTag,
-		detachIndex?: number,
+		detachEvent: CellId,
 	): Changeset<never> {
 		if (count === 0) {
 			return [];
 		}
 
-		// Returns are typically created to undo a move from the prior revision.
-		// When that's the case, we know the content used to be at the index to which it is being returned.
-		const computedDetachIndex = detachIndex ?? destIndex;
-		const detachEvent = { revision: detachedBy, index: computedDetachIndex };
 		const id = brand<MoveId>(0);
 		const returnFrom: ReturnFrom<never> = {
 			type: "ReturnFrom",
@@ -128,11 +124,11 @@ export const sequenceFieldEditor = {
 			count,
 		};
 
-		const returnTo: ReturnTo = {
-			type: "ReturnTo",
+		const returnTo: MoveIn = {
+			type: "MoveIn",
 			id,
 			count,
-			detachEvent,
+			cellId: detachEvent,
 		};
 
 		const factory = new MarkListFactory<never>();

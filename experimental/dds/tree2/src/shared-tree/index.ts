@@ -3,14 +3,29 @@
  * Licensed under the MIT License.
  */
 
-export { ISharedTree, SharedTreeFactory, SharedTreeOptions } from "./sharedTree";
+export {
+	ISharedTree,
+	SharedTreeFactory,
+	SharedTreeOptions,
+	SharedTree,
+	ForestType,
+	SharedTreeContentSnapshot,
+} from "./sharedTree";
 
 export {
 	createSharedTreeView,
 	ISharedTreeView,
 	runSynchronous,
-	SharedTreeView,
 	ViewEvents,
+	ITransaction,
+	ISharedTreeBranchView,
 } from "./sharedTreeView";
 
-export { SchematizeConfiguration } from "./schematizedTree";
+export {
+	SchematizeConfiguration,
+	TreeContent,
+	InitializeAndSchematizeConfiguration,
+	SchemaConfiguration,
+} from "./schematizedTree";
+
+export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typedTree";

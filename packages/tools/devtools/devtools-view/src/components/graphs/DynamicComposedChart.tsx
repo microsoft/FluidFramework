@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { Theme } from "@fluentui/react-components";
+import { type Theme } from "@fluentui/react-components";
 import React from "react";
 import {
 	Area,
@@ -23,7 +23,7 @@ import {
 	XAxis,
 	YAxis,
 } from "recharts";
-import { ThemeContext } from "../../ThemeHelper";
+import { ThemeOption, useThemeContext } from "../../ThemeHelper";
 
 /**
  * Data To be rendered with Op Latency Graph
@@ -36,7 +36,7 @@ export interface GraphDataSet {
 		xAxisDataKey: string;
 		yAxisDataKey: string;
 	};
-	data: { [key: string]: number | string }[];
+	data: Record<string, number | string>[];
 }
 
 /**
@@ -90,6 +90,17 @@ export interface DynamicComposedChartProps {
 	 * The unit that will be displayed on the y axis
 	 */
 	yAxisUnitDisplayName?: string;
+
+	/**
+	 * The amount of margin around the chart SVG.
+	 */
+	margin?: {
+		top: number;
+		right: number;
+		left: number;
+		bottom: number;
+	};
+	legendStyle?: React.CSSProperties;
 }
 
 /**
@@ -103,7 +114,7 @@ export interface DynamicComposedChartProps {
  * https://react.fluentui.dev/?path=/docs/theme-colors--page
  */
 const createGraphColorPalette = (
-	themeMode: string,
+	themeMode: ThemeOption,
 	theme: Theme,
 ): {
 	axisTick: string;
@@ -112,9 +123,9 @@ const createGraphColorPalette = (
 	graphColors: string[];
 } => {
 	switch (themeMode) {
-		case "light":
-		case "dark":
-		default:
+		case ThemeOption.Light:
+		case ThemeOption.Dark:
+		default: {
 			return {
 				axisTick: theme.colorNeutralForeground2,
 				toolTipBackround: theme.colorNeutralBackground1,
@@ -126,7 +137,8 @@ const createGraphColorPalette = (
 					theme.colorPaletteLavenderForeground2,
 				],
 			};
-		case "highContrast":
+		}
+		case ThemeOption.HighContrast: {
 			return {
 				axisTick: theme.colorNeutralForeground2,
 				toolTipBackround: theme.colorNeutralBackground1,
@@ -138,16 +150,19 @@ const createGraphColorPalette = (
 					"#ffffff", // pure white
 				],
 			};
+		}
 	}
 };
 
 /**
  * This component is a wrapper over Recharts ComposedChart component that provides
  * an easy way to create composed charts from disparate sets of data.
+ *
+ * @remarks {@link ThemeContext} must be set in order to use this component.
  */
 export function DynamicComposedChart(props: DynamicComposedChartProps): React.ReactElement {
 	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
-	const { themeInfo } = React.useContext(ThemeContext) ?? {};
+	const { themeInfo } = useThemeContext();
 
 	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
 
@@ -236,14 +251,15 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	 */
 	const CustomizedYAxisTick = (yAxisProps: any): React.ReactElement => {
 		const { x, y, payload } = yAxisProps;
+		/* eslint-disable react/prop-types */
 		return (
 			<g>
 				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={16}>
-					{/* eslint-disable-next-line react/prop-types */}
 					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
 		);
+		/* eslint-enable react/prop-types */
 	};
 
 	/**
@@ -299,7 +315,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 
 		switch (graphType) {
 			case "line":
-			default:
+			default: {
 				return (
 					<Line
 						name={name}
@@ -314,7 +330,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 						}
 					/>
 				);
-			case "area":
+			}
+			case "area": {
 				return (
 					<Area
 						name={name}
@@ -328,7 +345,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 						fillOpacity={fillOpacity}
 					/>
 				);
-			case "bar":
+			}
+			case "bar": {
 				return (
 					<Bar
 						name={name}
@@ -339,6 +357,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 						fillOpacity={activeIndex === undefined || activeIndex === dataKey ? 1 : 0.2}
 					/>
 				);
+			}
 		}
 	};
 
@@ -373,12 +392,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 		<ResponsiveContainer width="100%" height="100%">
 			<ComposedChart
 				data={mergeDataSets(props.dataSets)}
-				margin={{
-					top: 15,
-					right: 30,
-					left: 50,
-					bottom: 40,
-				}}
+				margin={props.margin}
+				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
 				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />} />
@@ -390,7 +405,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 					}}
 				/>
 				<Legend
-					wrapperStyle={{ bottom: "-10px", fontSize: "16px" }}
+					wrapperStyle={{ bottom: "-10px", fontSize: "14px", ...props.legendStyle }}
 					onClick={handleLegendClick}
 					content={renderLegend}
 				/>

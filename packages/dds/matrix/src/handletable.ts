@@ -4,10 +4,18 @@
  */
 
 export const enum Handle {
+	/**
+	 * Sentinel representing the absence of a valid handle.
+	 */
+	none = 0,
+
 	/** Minimum valid handle. */
 	valid = 1,
 
-	/** Sentinel representing an unallocated Handle. */
+	/**
+	 * Sentinel representing an unallocated Handle.  Used by PermutationVector
+	 * to delay allocate handles when previously empty row/cols become populated.
+	 */
 	unallocated = -0x80000000,
 }
 
@@ -33,9 +41,21 @@ export class HandleTable<T> {
 	 * Allocates and returns the next available handle.  Note that freed handles are recycled.
 	 */
 	public allocate(): Handle {
+		// Get the handle to the next free slot.
 		const free = this.next;
+
+		// Update 'next' to point to the new head of the free list.  We use the contents of
+		// recycled slots to store the free list.  The contents of the handles[free] will point
+		// to the next available slot.  If there are no free slots (i.e., 'handles' is full),
+		// the slot will point to 'handles.length'.  In this case, the handles array will grow
+		// and we update 'next' to point to the new end of the array.
 		this.next = (this.handles[free] as Handle) ?? free + 1;
-		this.handles[free] = 0;
+
+		// Out of paranoia, overwrite the contents of the newly allocated free slot with an
+		// invalid handle value.  This may help catch/diagnose bugs in the event the free list
+		// becomes corrupted.
+		this.handles[free] = Handle.none;
+
 		return free;
 	}
 

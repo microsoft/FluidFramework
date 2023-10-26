@@ -36,7 +36,7 @@ stages:
       - template: templates/include-test-real-service.yml
         parameters:
           poolBuild: Small
-          testPackage: "@fluidframework/azure-scenario-runner"
+          testPackage: "@fluid-experimental/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
           artifactBuildId: $(resources.pipeline.client.runID)
@@ -55,7 +55,7 @@ stages:
       - template: templates/include-test-real-service.yml
         parameters:
           poolBuild: Small
-          testPackage: "@fluidframework/azure-scenario-runner"
+          testPackage: "@fluid-experimental/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
           artifactBuildId: $(resources.pipeline.client.runID)
@@ -74,7 +74,7 @@ stages:
       - template: templates/include-test-real-service.yml
         parameters:
           poolBuild: Small
-          testPackage: "@fluidframework/azure-scenario-runner"
+          testPackage: "@fluid-experimental/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
           artifactBuildId: $(resources.pipeline.client.runID)
@@ -93,7 +93,7 @@ stages:
       - template: templates/include-test-real-service.yml
         parameters:
           poolBuild: Small
-          testPackage: "@fluidframework/azure-scenario-runner"
+          testPackage: "@fluid-experimental/azure-scenario-runner"
           testWorkspace: ${{ variables.testWorkspace }}
           testCommand: start
           artifactBuildId: $(resources.pipeline.client.runID)

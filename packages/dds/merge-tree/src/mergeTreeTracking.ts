@@ -24,16 +24,6 @@ export class TrackingGroup implements ITrackingGroup {
 		this.trackedSet = new SortedSegmentSet<Trackable>();
 	}
 
-	/**
-	 * @deprecated - use tracked instead.
-	 * For references positions this will return the underlying segment,
-	 * which may not match the intention
-	 */
-	public get segments(): readonly ISegment[] {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.trackedSet.items.map((v) => (v.isLeaf() ? v : v.getSegment()!));
-	}
-
 	public get tracked(): readonly Trackable[] {
 		return this.trackedSet.items;
 	}

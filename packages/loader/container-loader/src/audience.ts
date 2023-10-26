@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { EventEmitter } from "events";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IAudienceOwner } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 
@@ -12,6 +12,12 @@ import { IClient } from "@fluidframework/protocol-definitions";
  */
 export class Audience extends EventEmitter implements IAudienceOwner {
 	private readonly members = new Map<string, IClient>();
+
+	constructor() {
+		super();
+		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
+		super.setMaxListeners(0);
+	}
 
 	public on(
 		event: "addMember" | "removeMember",

@@ -49,10 +49,10 @@ export function getAadTenant(server: string) {
 		tenantName = tenantName.substr(0, tenantName.length - 6);
 	}
 
-	if (restOfTenantHostname.indexOf(".sharepoint.") === 0) {
+	if (restOfTenantHostname.startsWith(".sharepoint.")) {
 		restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.substr(12)}`;
 	}
-	if (restOfTenantHostname.indexOf(".sharepoint-df.") === 0) {
+	if (restOfTenantHostname.startsWith(".sharepoint-df.")) {
 		restOfTenantHostname = `.onmicrosoft.${restOfTenantHostname.substr(15)}`;
 	}
 

@@ -4,10 +4,10 @@
  */
 
 import { IDBPDatabase } from "idb";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IPersistedCache, ICacheEntry, IFileEntry } from "@fluidframework/odsp-driver-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ITelemetryLoggerExt, ChildLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { scheduleIdleTask } from "./scheduleIdleTask";
 import {
 	getFluidCacheIndexedDbInstance,
@@ -28,6 +28,9 @@ interface StorageQuotaUsageDetails {
 	indexedDB: number | undefined;
 }
 
+/**
+ * @public
+ */
 export interface FluidCacheConfig {
 	/**
 	 * A string to specify what partition of the cache you wish to use (e.g. a user id).
@@ -58,7 +61,9 @@ export interface FluidCacheConfig {
 }
 
 /**
- * A cache that can be used by the Fluid ODSP driver to cache data for faster performance
+ * A cache that can be used by the Fluid ODSP driver to cache data for faster performance.
+ *
+ * @public
  */
 export class FluidCache implements IPersistedCache {
 	private readonly logger: ITelemetryLoggerExt;
@@ -73,7 +78,7 @@ export class FluidCache implements IPersistedCache {
 	private dbReuseCount: number = -1;
 
 	constructor(config: FluidCacheConfig) {
-		this.logger = ChildLogger.create(config.logger);
+		this.logger = createChildLogger({ logger: config.logger });
 		this.partitionKey = config.partitionKey;
 		this.maxCacheItemAge = config.maxCacheItemAge;
 		this.closeDbAfterMs = config.closeDbAfterMs ?? 0;

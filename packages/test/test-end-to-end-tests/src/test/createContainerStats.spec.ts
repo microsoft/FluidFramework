@@ -16,8 +16,11 @@ import {
 import { IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
-import { ITestObjectProvider } from "@fluidframework/test-utils";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
+import {
+	ITestObjectProvider,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
 describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
@@ -58,12 +61,14 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
-		runtimeOptions,
+	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		ContainerRuntimeFactoryWithDefaultDataStore,
+		{
+			defaultFactory: dataObjectFactory,
+			registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+			requestHandlers: [innerRequestHandler],
+			runtimeOptions,
+		},
 	);
 
 	let mainContainer: IContainer;
@@ -106,7 +111,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 		mockLogger.assertMatch(
 			[
 				{
-					eventName: "fluid:telemetry:ContainerLoadStats",
+					eventName: "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
 					summaryNumber,
 					containerLoadDataStoreCount,
 					referencedDataStoreCount,
@@ -131,13 +136,10 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 		mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
 		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
 		// Create and setup a summary collection that will be used to track and wait for summaries.
-		summaryCollection = new SummaryCollection(
-			mainContainer.deltaManager,
-			new TelemetryNullLogger(),
-		);
+		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 
 		const loadStatEvents = mockLogger.events.filter(
-			(event) => event.eventName === "fluid:telemetry:ContainerLoadStats",
+			(event) => event.eventName === "fluid:telemetry:ContainerRuntime:ContainerLoadStats",
 		);
 		assert(
 			loadStatEvents.length === 1,
@@ -221,10 +223,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 		mainContainer = await loadContainer(summaryVersion);
 		mainDataStore = await requestFluidObject<TestDataObject>(mainContainer, "default");
 		// Create and setup a summary collection that will be used to track and wait for summaries.
-		summaryCollection = new SummaryCollection(
-			mainContainer.deltaManager,
-			new TelemetryNullLogger(),
-		);
+		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 		validateLoadStats(2, 1, 1, "Second container should load with correct data store stats");
 
 		// Wait for summary and validate that the new summarizer loads from summary number 2 as well.

@@ -35,7 +35,7 @@ describe("ToDo", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
 	test("TodoItems can be added", async () => {
@@ -85,7 +85,7 @@ describe("ToDo", () => {
 
 		const itemUrl = await getItemUrl(0);
 		await page.goto(itemUrl, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 		const result = await page.evaluate(() => {
 			let itemLists = document.body.querySelectorAll(".todo-item");
 			let items = itemLists[0].childNodes;

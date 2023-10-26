@@ -2,10 +2,10 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { AttributionInfo } from "@fluidframework/runtime-definitions";
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { IAudience, IDeltaManager } from "@fluidframework/container-definitions";
 
 /**
@@ -88,7 +88,9 @@ export class OpStreamAttributor extends Attributor implements IAttributor {
 	) {
 		super(initialEntries);
 		deltaManager.on("op", (message: ISequencedDocumentMessage) => {
-			const client = audience.getMember(message.clientId);
+			// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
+			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+			const client = audience.getMember(message.clientId as string);
 			if (message.type === "op") {
 				// TODO: This case may be legitimate, and if so we need to figure out how to handle it.
 				assert(

@@ -152,10 +152,6 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 						`containers[${i}] should not be closed yet`,
 					);
 				});
-
-				containers[i].once("contextChanged", () => {
-					throw Error(`context should not change for containers[${i}]`);
-				});
 			}
 
 			const res = await Promise.all([
@@ -172,11 +168,6 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 	);
 
 	it("Code Proposal With Compatible Existing", async () => {
-		for (let i = 0; i < containers.length; i++) {
-			containers[i].once("contextChanged", () => {
-				throw Error(`context should not change for containers[${i}]`);
-			});
-		}
 		const proposal: IFluidCodeDetails = { package: packageV1dot5 };
 		const res = await Promise.all([
 			containers[0].proposeCodeDetails(proposal),

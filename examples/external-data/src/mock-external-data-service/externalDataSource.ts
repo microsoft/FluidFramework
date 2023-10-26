@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IEvent } from "@fluidframework/common-definitions";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { IEvent } from "@fluidframework/core-interfaces";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { Response } from "node-fetch";
 import { ITaskListData, ITaskData } from "../model-interface";
 

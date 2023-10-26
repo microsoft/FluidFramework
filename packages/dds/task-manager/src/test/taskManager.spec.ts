@@ -19,9 +19,9 @@ import { ITaskManager } from "../interfaces";
 function createConnectedTaskManager(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	// Create and connect a TaskManager.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -36,14 +36,14 @@ function createDetachedTaskManager(
 ): { taskManager: TaskManager; attach: () => Promise<void> } {
 	// Create a detached TaskManager.
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
-	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	dataStoreRuntime.local = true;
 	const clientId = dataStoreRuntime.clientId;
 
 	const taskManager = new TaskManager(id, dataStoreRuntime, TaskManagerFactory.Attributes);
 	const attach = async () => {
 		const services = {
-			deltaConnection: containerRuntime.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 
@@ -477,7 +477,7 @@ describe("TaskManager", () => {
 		});
 	});
 
-	// Note: Since read/write modes are not yet implemented in mocks, tests are limited to simulate these secnarios.
+	// Note: Since read/write modes are not yet implemented in mocks, tests are limited to simulate these scenarios.
 	describe("Read/Write Mode", () => {
 		let taskManager1: ITaskManager;
 		let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
@@ -485,7 +485,7 @@ describe("TaskManager", () => {
 
 		const setReadOnlyInfo = (readOnlyInfo: ReadOnlyInfo) => {
 			(taskManager1 as any).runtime.deltaManager.readOnlyInfo = readOnlyInfo;
-			// Force connection to simulate read mode (TaskManager consideres the client disconnected in read mode)
+			// Force connection to simulate read mode (TaskManager considered the client disconnected in read mode)
 			containerRuntime1.connected = readOnlyInfo.readonly === false;
 		};
 
@@ -494,7 +494,7 @@ describe("TaskManager", () => {
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			taskManager1 = new TaskManager(
@@ -888,7 +888,7 @@ describe("TaskManager", () => {
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 			containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 			const services1 = {
-				deltaConnection: containerRuntime1.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			taskManager1 = new TaskManager(
@@ -902,7 +902,7 @@ describe("TaskManager", () => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
 			containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 			taskManager2 = new TaskManager(

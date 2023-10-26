@@ -3,20 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import {
-	ITaggedTelemetryPropertyType,
-	FluidObject,
-	IFluidRouter,
-	IRequest,
-	IResponse,
-} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
+// eslint-disable-next-line import/no-deprecated
+import { FluidObject, IFluidRouter, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions";
-import { generateErrorWithStack, TelemetryDataTag } from "@fluidframework/telemetry-utils";
+import { generateErrorWithStack } from "@fluidframework/telemetry-utils";
 
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
@@ -72,17 +67,10 @@ export function responseToException(response: IResponse, request: IRequest): Err
 }
 
 /**
- * Takes a set of packages and joins them pkg1/pkg2... etc. Tags the field as a code artifact
+ * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
  */
-export function packagePathToTelemetryProperty(
-	packagePath: readonly string[] | undefined,
-): ITaggedTelemetryPropertyType | undefined {
-	return packagePath
-		? { value: packagePath.join("/"), tag: TelemetryDataTag.CodeArtifact }
-		: undefined;
-}
-
 export async function requestFluidObject<T = FluidObject>(
+	// eslint-disable-next-line import/no-deprecated
 	router: IFluidRouter,
 	url: string | IRequest,
 ): Promise<T> {

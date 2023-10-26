@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// This file replicates data which contains nulls, and thus the nulls introduced here are not new.
+/* eslint-disable @rushstack/no-new-null */
+
 import { IRandom, makeRandom } from "@fluid-internal/stochastic-test-utils";
 import { FieldKey } from "../../../core";
 import { brand } from "../../../util";
@@ -22,8 +25,8 @@ export interface CitmCatalog {
 	// Note, the original JSON has only 1 key value pair.
 	audienceSubCategoryNames: Record<string, string>;
 	blockNames: Record<string, never>; // Always shows up as a empty object
-	events: Record<string, CitmCatalog.Event>;
-	performances: CitmCatalog.Performance[];
+	events: Record<string, Event>;
+	performances: Performance[];
 	// A map of constants where the keys (id's) are referenced in the CitmCatalog.Perfomance object
 	// (See CitmCatalog.Performance.prices.seatCategoryId and CitmCatalog.Performance.seatCategories.seatCategoryId)
 	seatCategoryNames: Record<string, string>;
@@ -38,46 +41,46 @@ export interface CitmCatalog {
 	};
 }
 
-export namespace CitmCatalog {
+export const CitmCatalog = {
 	// Shared tree keys that map to the type used by the CitmCatalog type/dataset
-	export namespace SharedTreeFieldKey {
-		export const performances: FieldKey = brand("performances");
-		export const seatCategories: FieldKey = brand("seatCategories");
-		export const start: FieldKey = brand("start");
-	}
+	SharedTreeFieldKey: {
+		performances: brand<FieldKey>("performances"),
+		seatCategories: brand<FieldKey>("seatCategories"),
+		start: brand<FieldKey>("start"),
+	},
+};
 
-	export interface Performance {
-		eventId: number; // always references an existing event id within the set of events in a CitmJson object
-		id: number; // unique number id across keypsace used within the entire CitmJson object.
-		logo: string | null; // always matches the value with the associated event object logo property value.
-		name: null; // Always null in original
-		prices: {
-			amount: number; // integer dollar amount 10000 to 180500
-			audienceSubCategoryId: number;
-			seatCategoryId: number;
+interface Performance {
+	eventId: number; // always references an existing event id within the set of events in a CitmJson object
+	id: number; // unique number id across keypsace used within the entire CitmJson object.
+	logo: string | null; // always matches the value with the associated event object logo property value.
+	name: null; // Always null in original
+	prices: {
+		amount: number; // integer dollar amount 10000 to 180500
+		audienceSubCategoryId: number;
+		seatCategoryId: number;
+	}[];
+	seatCategories: {
+		areas: {
+			areaId: number; // Is always a number within the area Names property of the main CitmCatalog interface
+			blockIds: never[]; // **figure out if there are any non empty blockIds
 		}[];
-		seatCategories: {
-			areas: {
-				areaId: number; // Is always a number within the area Names property of the main CitmCatalog interface
-				blockIds: never[]; // **figure out if there are any non empty blockIds
-			}[];
-			seatCategoryId: number;
-		}[];
-		seatMapImage: null; // Always null in original
-		start: number; // epoch time number
-		venueCode: "PLEYEL_PLEYEL";
-	}
+		seatCategoryId: number;
+	}[];
+	seatMapImage: null; // Always null in original
+	start: number; // epoch time number
+	venueCode: "PLEYEL_PLEYEL";
+}
 
-	export interface Event {
-		description: null; // Always null in original
-		id: number; // unique number id across keypsace used within the entire CitmJson object.
-		logo: string | null; // Formatted as '/images/UE0AAAAACEK<2-random-characters-or-numbers>QAAAAVDSVRN'
-		name: string; // This value can repeat across events, but the event Id cannot.
-		subTopicIds: number[];
-		subjectCode: null; // Always null in original
-		subtitle: null; // Always null in original
-		topicIds: number[]; // Get stats on the amount of numbers here
-	}
+interface Event {
+	description: null; // Always null in original
+	id: number; // unique number id across keypsace used within the entire CitmJson object.
+	logo: string | null; // Formatted as '/images/UE0AAAAACEK<2-random-characters-or-numbers>QAAAAVDSVRN'
+	name: string; // This value can repeat across events, but the event Id cannot.
+	subTopicIds: number[];
+	subjectCode: null; // Always null in original
+	subtitle: null; // Always null in original
+	topicIds: number[]; // Get stats on the amount of numbers here
 }
 
 function increaseKeyspace(keySpace: string[], multiplier: number, keyLen: number, random: IRandom) {
@@ -237,11 +240,11 @@ export function generateCitmJson(keyspaceMultiplier: number = 1, maxSizeInBytes:
 	const venueNames = { PLEYEL_PLEYEL: "Salle Pleyel" };
 
 	// 10. Create each event object
-	const events: Record<string, CitmCatalog.Event> = {};
+	const events: Record<string, Event> = {};
 	idNumberCounter += 1; // incremented once to avoid using the last key value.
 
 	// 11. Create performance objects
-	const performances: CitmCatalog.Performance[] = [];
+	const performances: Performance[] = [];
 
 	// 12. Create (atleast 1) event and performance(s)
 	const eventAndPerformance = generateEventAndPerformance(
@@ -368,7 +371,7 @@ function generateEventAndPerformance(
 		? `/images/UE0AAAAACEK${getRandomEnglishString(random, true, 2, 2)}QAAAAVDSVRN`
 		: null;
 
-	const event: CitmCatalog.Event = {
+	const event: Event = {
 		description: null,
 		id: idNumberCounter,
 		logo,
@@ -423,7 +426,7 @@ function generateEventAndPerformance(
 			seatCategoryId: priceObject.seatCategoryId,
 		});
 	});
-	const performance: CitmCatalog.Performance = {
+	const performance: Performance = {
 		eventId: event.id,
 		id: idNumberCounter,
 		logo: event.logo,

@@ -3,12 +3,21 @@
  * Licensed under the MIT License.
  */
 
-export { FluidHandleView, FluidHandleViewProps } from "./FluidHandleView";
-export { FluidTreeView, FluidTreeViewProps } from "./FluidTreeView";
-export { FluidValueView, FluidValueViewProps } from "./FluidValueView";
-export { TreeDataView, TreeDataViewProps } from "./TreeDataView";
-export { TreeHeader, TreeHeaderProps } from "./TreeHeader";
-export { TreeView, TreeViewProps } from "./TreeView";
-export { UnknownDataView, UnknownDataViewProps } from "./UnknownDataView";
-export { UnknownFluidObjectView, UnknownFluidObjectViewProps } from "./UnknownFluidObjectView";
-export { ValueView, ValueViewProps } from "./ValueView";
+export type { FluidHandleViewProps } from "./FluidHandleView";
+export { FluidHandleView } from "./FluidHandleView";
+export type { FluidTreeViewProps } from "./FluidTreeView";
+export { FluidTreeView } from "./FluidTreeView";
+export type { FluidValueViewProps } from "./FluidValueView";
+export { FluidValueView } from "./FluidValueView";
+export type { TreeDataViewProps } from "./TreeDataView";
+export { TreeDataView } from "./TreeDataView";
+export type { TreeHeaderProps } from "./TreeHeader";
+export { TreeHeader } from "./TreeHeader";
+export type { TreeViewProps } from "./TreeView";
+export { TreeView } from "./TreeView";
+export type { UnknownDataViewProps } from "./UnknownDataView";
+export { UnknownDataView } from "./UnknownDataView";
+export type { UnknownFluidObjectViewProps } from "./UnknownFluidObjectView";
+export { UnknownFluidObjectView } from "./UnknownFluidObjectView";
+export type { ValueViewProps } from "./ValueView";
+export { ValueView } from "./ValueView";

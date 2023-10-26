@@ -24,6 +24,6 @@ export class TestTenantService implements ITenantService {
 	}
 
 	async deleteFromCache(tenantId: string, token: string): Promise<boolean> {
-		return Promise.reject(new Error("Method not implemented."));
+		throw new Error("Method not implemented.");
 	}
 }

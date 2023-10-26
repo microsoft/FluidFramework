@@ -10,11 +10,11 @@ import { ILoaderOptions, Loader } from "@fluidframework/container-loader";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { IFileSnapshot } from "@fluidframework/replay-driver";
-import { ConfigTypes, IConfigProviderBase, TelemetryLogger } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { getNormalizedSnapshot, ISnapshotNormalizerConfig } from "@fluidframework/tool-utils";
 import stringify from "json-stable-stringify";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/common-utils";
+import { FluidObject, ITelemetryLogger } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils";
 import {
 	excludeChannelContentDdsFactories,
 	ReplayDataStoreFactory,
@@ -63,6 +63,7 @@ export function compareWithReferenceSnapshot(
 	 * package versions with X before we compare them.
 	 *
 	 * @example
+	 *
 	 * This is how it will look:
 	 * Before replace:
 	 *
@@ -104,7 +105,7 @@ export async function loadContainer(
 	documentServiceFactory: IDocumentServiceFactory,
 	documentName: string,
 	strictChannels: boolean,
-	logger?: TelemetryLogger,
+	logger?: ITelemetryLogger,
 	loaderOptions?: ILoaderOptions,
 ): Promise<IContainer> {
 	const resolved: IResolvedUrl = {
@@ -167,9 +168,8 @@ export async function loadContainer(
 	const configProvider: IConfigProviderBase = {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	};
-	// Enable GCVersionUpgradeToV3 feature. This is for the snapshot tests which are already using GC version 3
-	// but the default version was changed to 2. Once the default is 3, this will be removed.
-	settings["Fluid.GarbageCollection.GCVersionUpgradeToV3"] = true;
+	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
+	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
 
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({

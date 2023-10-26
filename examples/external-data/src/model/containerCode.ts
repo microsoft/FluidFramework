@@ -6,6 +6,7 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import type { IAppModel, IBaseDocument } from "../model-interface";
@@ -61,16 +62,19 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		runtime: IContainerRuntime,
 		container: IContainer,
 	): Promise<AppModel> {
+		// eslint-disable-next-line import/no-deprecated
 		const taskListCollection = await requestFluidObject<IBaseDocument>(
 			await runtime.getRootDataStore(taskListCollectionId),
 			"",
 		);
 		// Register listener only once the model is fully loaded and ready
 		runtime.on("signal", (message) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			if (message?.content?.type === SignalType.ExternalDataChanged) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const taskListId = message?.content?.taskListId as string;
+			if (
+				(message?.content as { type?: unknown } | undefined)?.type ===
+				SignalType.ExternalDataChanged
+			) {
+				const taskListId = (message?.content as { taskListId?: unknown } | undefined)
+					?.taskListId as string;
 				const taskList = taskListCollection.getTaskList(taskListId);
 				if (taskList === undefined) {
 					throw new Error(

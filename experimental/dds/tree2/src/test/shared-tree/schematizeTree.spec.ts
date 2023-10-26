@@ -2,87 +2,221 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { SchemaBuilder, Any } from "../../feature-libraries";
-import { SharedTreeFactory } from "../../shared-tree";
-import { rootFieldKey, ValueSchema, AllowedUpdateType } from "../../core";
-import { typeboxValidator } from "../../external-utilities";
+import { strict as assert, fail } from "assert";
+import {
+	Any,
+	TreeSchema,
+	TreeFieldSchema,
+	FieldKinds,
+	allowsRepoSuperset,
+	defaultSchemaPolicy,
+	NewFieldContent,
+} from "../../feature-libraries";
+import { ViewEvents } from "../../shared-tree";
+import {
+	AllowedUpdateType,
+	SimpleObservingDependent,
+	InMemoryStoredSchemaRepository,
+	TreeStoredSchema,
+	cloneSchemaData,
+} from "../../core";
+import { jsonSequenceRootSchema } from "../utils";
+// eslint-disable-next-line import/no-internal-modules
+import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
+import { createEmitter } from "../../events";
+import { SchemaBuilder, leaf } from "../../domains";
 
-const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
-const builder = new SchemaBuilder("Schematize Tree Tests");
+const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
+const root = leaf.number;
+const schema = builder.intoSchema(SchemaBuilder.optional(root));
 
-const root = builder.primitive("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const builderGeneralized = new SchemaBuilder({
+	scope: "test",
+	name: "Schematize Tree Tests Generalized",
+});
 
-const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
-const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Serializable);
-const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
 
-describe("schematizeView", () => {
-	it("initialize tree schema", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
+const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
 
-		assert(!tree.storedSchema.globalFieldSchema.has(rootFieldKey));
+const schemaValueRoot = builderValue.intoSchema(SchemaBuilder.required(Any));
 
-		const schematized = tree.schematize({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: 10,
-			schema,
-		});
+const emptySchema = new SchemaBuilder({
+	scope: "Empty",
+	lint: {
+		rejectEmpty: false,
+		rejectForbidden: false,
+	},
+}).intoSchema(TreeFieldSchema.empty);
 
-		assert(schematized.storedSchema.globalFieldSchema.has(rootFieldKey));
-		assert(schematized.storedSchema.treeSchema.has(root.name));
-		assert.equal(schematized.root, 10);
+function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
+	// Check schema match
+	assert(allowsRepoSuperset(defaultSchemaPolicy, actual, expected));
+	assert(allowsRepoSuperset(defaultSchemaPolicy, expected, actual));
+}
+
+describe("schematizeTree", () => {
+	describe("initializeContent", () => {
+		function testInitialize<TRoot extends TreeFieldSchema>(
+			name: string,
+			content: TreeContent<TRoot>,
+		): void {
+			describe(`Initialize ${name}`, () => {
+				it("correct output", () => {
+					const storedSchema = new InMemoryStoredSchemaRepository();
+					let count = 0;
+					initializeContent(storedSchema, content.schema, () => {
+						count++;
+					});
+					assert.equal(count, 1);
+					expectSchema(storedSchema, content.schema);
+				});
+
+				it("is compatible", () => {
+					// TODO:
+					// Currently we do not have a function which tests that data is compatible with a given schema. When such a function is available
+					// this test should be updated to use it to greatly increase its validation.
+
+					const storedSchema = new InMemoryStoredSchemaRepository();
+					let previousSchema: TreeStoredSchema = cloneSchemaData(storedSchema);
+					expectSchema(storedSchema, previousSchema);
+
+					let currentData: NewFieldContent;
+
+					storedSchema.registerDependent(
+						new SimpleObservingDependent(() => {
+							// This should run after the schema change.
+
+							// TODO: check currentData compatible with previousSchema.
+							// TODO: check currentData compatible with storedSchema.
+
+							previousSchema = cloneSchemaData(storedSchema);
+						}),
+					);
+
+					initializeContent(storedSchema, content.schema, () => {
+						// TODO: check currentData is compatible with current schema.
+						// TODO: check data in cursors is compatible with current schema.
+						currentData = content.initialTree;
+					});
+
+					// Ensure final schema change was actually tested.
+					// This would fail if event is triggered before schema update so last update is missed (and first update checks noop).
+					expectSchema(storedSchema, previousSchema);
+				});
+
+				it("has expected steps", () => {
+					const storedSchema = new InMemoryStoredSchemaRepository();
+					const log: string[] = [];
+
+					storedSchema.registerDependent(
+						new SimpleObservingDependent(() => log.push("schema")),
+					);
+					initializeContent(storedSchema, content.schema, () => log.push("content"));
+
+					assert.deepEqual(
+						log,
+						content.schema.rootFieldSchema.kind === FieldKinds.required
+							? ["schema", "content", "schema"]
+							: ["schema", "content"],
+					);
+				});
+			});
+		}
+
+		testInitialize("optional-empty", { schema, initialTree: undefined });
+		testInitialize("optional-full", { schema, initialTree: 5 });
+		testInitialize("value", { schema: schemaValueRoot, initialTree: 6 });
+
+		// TODO: Test schema validation of initial tree (once we have a utility for it)
 	});
 
-	it("noop upgrade", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-		tree.storedSchema.update(schema);
+	describe("schematize", () => {
+		describe("noop upgrade", () => {
+			const testCases: [string, TreeSchema][] = [
+				["empty", emptySchema],
+				["basic-optional", schema],
+				["basic-value", schemaValueRoot],
+				["complex", jsonSequenceRootSchema],
+			];
+			for (const [name, data] of testCases) {
+				it(name, () => {
+					const events = createEmitter<ViewEvents>();
+					const storedSchema = new InMemoryStoredSchemaRepository(data);
 
-		// No op upgrade with AllowedUpdateType.None does not error
-		const schematized = tree.schematize({
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: 10,
-			schema,
+					// Error if modified
+					storedSchema.registerDependent(new SimpleObservingDependent(() => fail()));
+
+					// No op upgrade with AllowedUpdateType.None does not error
+					schematize(events, storedSchema, {
+						allowedSchemaModifications: AllowedUpdateType.None,
+						schema: data,
+					});
+				});
+			}
 		});
-		// And does not add initial tree:
-		assert.equal(schematized.root, undefined);
-	});
 
-	it("upgrade schema errors when in AllowedUpdateType.None", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-		tree.storedSchema.update(schema);
-		assert.throws(() => {
-			tree.schematize({
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: "x",
+		it("upgrade works", () => {
+			const events = createEmitter<ViewEvents>();
+			const storedSchema = new InMemoryStoredSchemaRepository(schema);
+
+			schematize(events, storedSchema, {
+				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				schema: schemaGeneralized,
 			});
+			expectSchema(storedSchema, schemaGeneralized);
 		});
-	});
 
-	it("incompatible upgrade errors", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-		tree.storedSchema.update(schemaGeneralized);
-		assert.throws(() => {
-			tree.schematize({
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: "x",
-				schema,
+		it("upgrade schema errors when in AllowedUpdateType.None", () => {
+			const events = createEmitter<ViewEvents>();
+			const storedSchema = new InMemoryStoredSchemaRepository(schema);
+			assert.throws(() => {
+				schematize(events, storedSchema, {
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema: schemaGeneralized,
+				});
 			});
 		});
-	});
 
-	it("upgrade schema", () => {
-		const tree = factory.create(new MockFluidDataStoreRuntime(), "test");
-		tree.storedSchema.update(schema);
-		const schematized = tree.schematize({
-			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-			initialTree: "x",
-			schema: schemaGeneralized,
+		it("incompatible upgrade errors and does not modify schema", () => {
+			const events = createEmitter<ViewEvents>();
+			const storedSchema = new InMemoryStoredSchemaRepository(schemaGeneralized);
+
+			let modified = false;
+			storedSchema.registerDependent(
+				new SimpleObservingDependent(() => {
+					modified = true;
+				}),
+			);
+
+			assert.throws(() => {
+				schematize(events, storedSchema, {
+					allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+					schema,
+				});
+			});
+
+			// Schema should be unchanged
+			assert(!modified);
+			expectSchema(storedSchema, schemaGeneralized);
 		});
-		// Initial tree should not be applied
-		assert.equal(schematized.root, undefined);
+
+		it("errors at correct time when schema changes to not be compatible with view schema", () => {
+			const events = createEmitter<ViewEvents>();
+			const storedSchema = new InMemoryStoredSchemaRepository(schema);
+
+			schematize(events, storedSchema, {
+				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+				schema: schemaGeneralized,
+			});
+
+			// transient should be ignored.
+			storedSchema.update(schema);
+			storedSchema.update(schemaGeneralized);
+			events.emit("afterBatch");
+
+			storedSchema.update(schema);
+			assert.throws(() => events.emit("afterBatch"));
+		});
 	});
 });

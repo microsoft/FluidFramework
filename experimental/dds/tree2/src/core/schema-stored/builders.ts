@@ -6,10 +6,9 @@
 import { brand } from "../../util";
 import {
 	FieldKindIdentifier,
-	FieldStoredSchema,
-	GlobalFieldKey,
-	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	TreeFieldStoredSchema,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "./schema";
 
@@ -31,51 +30,44 @@ export const emptySet: ReadonlySet<never> = new Set();
 export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
 
 /**
- * Helper for building {@link FieldStoredSchema}.
+ * Helper for building {@link TreeFieldStoredSchema}.
  * @alpha
  */
 export function fieldSchema(
 	kind: { identifier: FieldKindIdentifier },
-	types?: Iterable<TreeSchemaIdentifier>,
-): FieldStoredSchema {
+	types?: Iterable<TreeNodeSchemaIdentifier>,
+): TreeFieldStoredSchema {
 	return {
 		kind,
 		types: types === undefined ? undefined : new Set(types),
 	};
 }
 
-const defaultExtraGlobalFields = false;
-
 /**
- * See {@link TreeStoredSchema} for details.
- * @alpha
+ * See {@link TreeNodeStoredSchema} for details.
  */
 export interface TreeSchemaBuilder {
-	readonly localFields?: { [key: string]: FieldStoredSchema };
-	readonly globalFields?: Iterable<GlobalFieldKey>;
-	readonly extraLocalFields: FieldStoredSchema;
-	readonly extraGlobalFields?: boolean;
-	readonly value?: ValueSchema;
+	readonly objectNodeFields?: { [key: string]: TreeFieldStoredSchema };
+	readonly mapFields?: TreeFieldStoredSchema;
+	readonly leafValue?: ValueSchema;
 }
 
 /**
- * Helper for building {@link TreeStoredSchema}.
+ * Helper for building {@link TreeNodeStoredSchema}.
  */
-export function treeSchema(data: TreeSchemaBuilder): TreeStoredSchema {
-	const localFields = new Map();
-	const local = data.localFields ?? {};
+export function treeSchema(data: TreeSchemaBuilder): TreeNodeStoredSchema {
+	const objectNodeFields = new Map();
+	const fields = data.objectNodeFields ?? {};
 	// eslint-disable-next-line no-restricted-syntax
-	for (const key in local) {
-		if (Object.prototype.hasOwnProperty.call(local, key)) {
-			localFields.set(brand(key), local[key]);
+	for (const key in fields) {
+		if (Object.prototype.hasOwnProperty.call(fields, key)) {
+			objectNodeFields.set(brand(key), fields[key]);
 		}
 	}
 
 	return {
-		localFields,
-		globalFields: new Set(data.globalFields ?? []),
-		extraLocalFields: data.extraLocalFields,
-		extraGlobalFields: data.extraGlobalFields ?? defaultExtraGlobalFields,
-		value: data.value ?? ValueSchema.Nothing,
+		objectNodeFields,
+		mapFields: data.mapFields,
+		leafValue: data.leafValue,
 	};
 }

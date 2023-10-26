@@ -3,25 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/common-utils";
-import { UsageError } from "@fluidframework/container-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 import { List } from "./collections";
 import { EndOfTreeSegment } from "./endOfTreeSegment";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
-import { ISegment, toRemovalInfo } from "./mergeTreeNodes";
+import { IMergeLeaf, ISegment, toRemovalInfo } from "./mergeTreeNodes";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops";
+// eslint-disable-next-line import/no-deprecated
 import { matchProperties, PropertySet } from "./properties";
 import { DetachedReferencePosition } from "./referencePositions";
 import { MergeTree, findRootMergeBlock } from "./mergeTree";
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- *
  * @alpha
  */
 export type MergeTreeDeltaRevertible =
@@ -64,10 +61,6 @@ interface RemoveSegmentRefProperties {
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
- *
  * @alpha
  */
 export interface MergeTreeRevertibleDriver {
@@ -180,6 +173,7 @@ function appendLocalAnnotateToRevertibles(
 		if (propertyDeltas) {
 			if (
 				last?.operation === MergeTreeDeltaType.ANNOTATE &&
+				// eslint-disable-next-line import/no-deprecated
 				matchProperties(last?.propertyDeltas, propertyDeltas)
 			) {
 				last.trackingGroup.link(ds.segment);
@@ -198,9 +192,6 @@ function appendLocalAnnotateToRevertibles(
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
  * @alpha
  */
 export function appendToMergeTreeDeltaRevertibles(
@@ -224,14 +215,13 @@ export function appendToMergeTreeDeltaRevertibles(
 			break;
 
 		default:
-			throw new UsageError(`Unsupported event delta type: ${deltaArgs.operation}`);
+			throw new UsageError("Unsupported event delta type", {
+				operation: deltaArgs.operation,
+			});
 	}
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
  * @alpha
  */
 export function discardMergeTreeDeltaRevertible(revertibles: MergeTreeDeltaRevertible[]) {
@@ -297,7 +287,7 @@ function revertLocalRemove(
 
 		const props = tracked.properties as RemoveSegmentRefProperties;
 		driver.insertFromSpec(realPos, props.segSpec);
-		const insertSegment = mergeTreeWithRevert.getContainingSegment(
+		const insertSegment: IMergeLeaf | undefined = mergeTreeWithRevert.getContainingSegment(
 			realPos,
 			mergeTreeWithRevert.collabWindow.currentSeq,
 			mergeTreeWithRevert.collabWindow.clientId,
@@ -394,9 +384,6 @@ function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegment
 }
 
 /**
- * Revertibles are new and require the option
- * mergeTreeUseNewLengthCalculations to be set as true on the underlying merge tree
- * in order to function correctly.
  * @alpha
  */
 export function revertMergeTreeDeltaRevertibles(

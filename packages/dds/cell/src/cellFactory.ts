@@ -4,13 +4,13 @@
  */
 
 import {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelServices,
-	IChannelFactory,
+	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IChannelServices,
+	type IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { SharedCell } from "./cell";
-import { ISharedCell } from "./interfaces";
+import { type ISharedCell } from "./interfaces";
 import { pkgVersion } from "./packageVersion";
 
 /**

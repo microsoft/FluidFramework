@@ -19,6 +19,10 @@ export class TestNotImplementedDocumentRepository implements IDocumentRepository
 		throw new Error(defaultErrorMsg);
 	}
 
+	async deleteOne(filter: any): Promise<any> {
+		throw new Error(defaultErrorMsg);
+	}
+
 	async findOneOrCreate(
 		filter: any,
 		value: any,

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IErrorEvent } from '@fluidframework/common-definitions';
-import { TypedEventEmitter } from '@fluidframework/common-utils';
+import { IErrorEvent } from '@fluidframework/core-interfaces';
+import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import { ChangeInternal, Edit, EditStatus } from './persisted-types';
 import { newEditId } from './EditUtilities';
 import { TreeView } from './TreeView';

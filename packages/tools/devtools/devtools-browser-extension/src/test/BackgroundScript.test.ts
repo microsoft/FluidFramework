@@ -7,15 +7,15 @@ import { expect } from "chai";
 import Proxyquire from "proxyquire";
 import { createSandbox } from "sinon";
 
-import { delay } from "@fluidframework/common-utils";
+import { delay } from "@fluidframework/core-utils";
 import {
 	CloseContainer,
 	TelemetryEvent,
 	devtoolsMessageSource,
 } from "@fluid-experimental/devtools-core";
 
-import { Globals } from "../Globals";
-import { DevToolsInitMessage, extensionMessageSource } from "../messaging";
+import { type Globals } from "../Globals";
+import { type DevToolsInitMessage, extensionMessageSource } from "../messaging";
 import { awaitListener, stubGlobals, stubPort } from "./Utilities";
 
 type Port = chrome.runtime.Port;
@@ -82,7 +82,7 @@ describe("Background Script unit tests", () => {
 		): Port => {
 			connectCalled = true;
 			expect(_tabId).to.equal(tabId);
-			expect(connectionInfo).to.deep.equal({ name: "Content Script" });
+			expect(connectionInfo).to.deep.equal({ name: "Background-Content-Port" });
 			return tabPort;
 		};
 

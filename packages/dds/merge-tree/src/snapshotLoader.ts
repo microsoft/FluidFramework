@@ -5,16 +5,20 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert, bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidSerializer } from "@fluidframework/shared-object-base";
-import { ChildLogger, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+import {
+	createChildLogger,
+	ITelemetryLoggerExt,
+	UsageError,
+} from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import { UsageError } from "@fluidframework/container-utils";
 import { Client } from "./client";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
@@ -34,7 +38,7 @@ export class SnapshotLoader {
 		logger: ITelemetryLoggerExt,
 		private readonly serializer: IFluidSerializer,
 	) {
-		this.logger = ChildLogger.create(logger, "SnapshotLoader");
+		this.logger = createChildLogger({ logger, namespace: "SnapshotLoader" });
 	}
 
 	public async initialize(
@@ -97,7 +101,7 @@ export class SnapshotLoader {
 					? this.client.getOrAddShortClientId(spec.client)
 					: NonCollabClient;
 
-			seg.seq = spec.seq !== undefined ? spec.seq : UniversalSequenceNumber;
+			seg.seq = spec.seq ?? UniversalSequenceNumber;
 
 			if (spec.removedSeq !== undefined) {
 				seg.removedSeq = spec.removedSeq;
@@ -106,8 +110,11 @@ export class SnapshotLoader {
 			// this is for back compat, so we change the singular id to an array
 			// this will only cause problems if there is an overlapping delete
 			// spanning the snapshot, which should be rare
-			if (spec.removedClient !== undefined) {
-				seg.removedClientIds = [this.client.getOrAddShortClientId(spec.removedClient)];
+			const specAsBuggyFormat: IJSONSegmentWithMergeInfo & { removedClient?: string } = spec;
+			if (specAsBuggyFormat.removedClient !== undefined) {
+				seg.removedClientIds = [
+					this.client.getOrAddShortClientId(specAsBuggyFormat.removedClient),
+				];
 			}
 			if (spec.removedClientIds !== undefined) {
 				seg.removedClientIds = spec.removedClientIds?.map((sid) =>
@@ -155,9 +162,8 @@ export class SnapshotLoader {
 
 				// TODO: Make 'minSeq' non-optional once the new snapshot format becomes the default?
 				//       (See https://github.com/microsoft/FluidFramework/issues/84)
-				/* minSeq: */ chunk.headerMetadata.minSequenceNumber !== undefined
-					? chunk.headerMetadata.minSequenceNumber
-					: chunk.headerMetadata.sequenceNumber,
+				/* minSeq: */ chunk.headerMetadata.minSequenceNumber ??
+					chunk.headerMetadata.sequenceNumber,
 				/* currentSeq: */ chunk.headerMetadata.sequenceNumber,
 			);
 		}
@@ -221,7 +227,7 @@ export class SnapshotLoader {
 		const mergeTree = this.mergeTree;
 		const append = (segments: ISegment[], cli: number, seq: number) => {
 			mergeTree.insertSegments(
-				mergeTree.root.cachedLength,
+				mergeTree.root.cachedLength ?? 0,
 				segments,
 				/* refSeq: */ UniversalSequenceNumber,
 				cli,

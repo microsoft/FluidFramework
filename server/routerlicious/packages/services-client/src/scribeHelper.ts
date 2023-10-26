@@ -12,9 +12,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 
-// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
-export const OnlyValidTermValue = 1 as const;
-
 export function getQuorumTreeEntries(
 	minimumSequenceNumber: number,
 	sequenceNumber: number,
@@ -23,7 +20,6 @@ export function getQuorumTreeEntries(
 	const documentAttributes: IDocumentAttributes = {
 		minimumSequenceNumber,
 		sequenceNumber,
-		term: OnlyValidTermValue,
 	};
 
 	const entries: ITreeEntry[] = [

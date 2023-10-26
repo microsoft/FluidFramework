@@ -3,98 +3,77 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { compareSets, fail } from "../../util";
 import {
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	ValueSchema,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
+	storedEmptyFieldSchema,
 } from "../../core";
-import { FullSchemaPolicy, Multiplicity } from "./fieldKind";
+import { FullSchemaPolicy, Multiplicity, withEditor } from "./fieldKind";
 
 /**
  * @returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
+ *
+ * `undefined` TreeNodeStoredSchema means the schema is not present (and thus treated as a NeverTree).
  */
 export function allowsTreeSuperset(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	original: TreeStoredSchema,
-	superset: TreeStoredSchema,
+	originalData: TreeStoredSchema,
+	original: TreeNodeStoredSchema | undefined,
+	superset: TreeNodeStoredSchema | undefined,
 ): boolean {
 	if (isNeverTree(policy, originalData, original)) {
 		return true;
 	}
-	if (!allowsValueSuperset(original.value, superset.value)) {
+	if (isNeverTree(policy, originalData, superset)) {
+		return false;
+	}
+	assert(original !== undefined, 0x716 /* only never trees have undefined schema */);
+	assert(superset !== undefined, 0x717 /* only never trees have undefined schema */);
+	if (!allowsValueSuperset(original.leafValue, superset.leafValue)) {
 		return false;
 	}
 	if (
 		!allowsFieldSuperset(
 			policy,
 			originalData,
-			original.extraLocalFields,
-			superset.extraLocalFields,
+			normalizeField(original.mapFields),
+			normalizeField(superset.mapFields),
 		)
-	) {
-		return false;
-	}
-	if (original.extraGlobalFields && !superset.extraGlobalFields) {
-		return false;
-	}
-	if (
-		!compareSets({
-			a: original.globalFields,
-			b: superset.globalFields,
-			// true iff the original field must always be empty, or superset supports extra global fields.
-			aExtra: (originalField) =>
-				superset.extraGlobalFields ||
-				allowsFieldSuperset(
-					policy,
-					originalData,
-					originalData.globalFieldSchema.get(originalField) ??
-						policy.defaultGlobalFieldSchema,
-					policy.defaultGlobalFieldSchema,
-				),
-			// true iff the new field can be empty, since it may be empty in original
-			bExtra: (supersetField) =>
-				allowsFieldSuperset(
-					policy,
-					originalData,
-					policy.defaultGlobalFieldSchema,
-					originalData.globalFieldSchema.get(supersetField) ??
-						policy.defaultGlobalFieldSchema,
-				),
-		})
 	) {
 		return false;
 	}
 
 	if (
 		!compareSets({
-			a: original.localFields,
-			b: superset.localFields,
+			a: original.objectNodeFields,
+			b: superset.objectNodeFields,
 			aExtra: (originalField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.localFields.get(originalField) ?? fail("missing expected field"),
-					superset.extraLocalFields,
+					original.objectNodeFields.get(originalField) ?? fail("missing expected field"),
+					normalizeField(superset.mapFields),
 				),
 			bExtra: (supersetField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.extraLocalFields,
-					superset.localFields.get(supersetField) ?? fail("missing expected field"),
+					normalizeField(original.mapFields),
+					superset.objectNodeFields.get(supersetField) ?? fail("missing expected field"),
 				),
 			same: (sameField) =>
 				allowsFieldSuperset(
 					policy,
 					originalData,
-					original.localFields.get(sameField) ?? fail("missing expected field"),
-					superset.localFields.get(sameField) ?? fail("missing expected field"),
+					original.objectNodeFields.get(sameField) ?? fail("missing expected field"),
+					superset.objectNodeFields.get(sameField) ?? fail("missing expected field"),
 				),
 		})
 	) {
@@ -109,8 +88,11 @@ export function allowsTreeSuperset(
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
-export function allowsValueSuperset(original: ValueSchema, superset: ValueSchema): boolean {
-	return original === superset || superset === ValueSchema.Serializable;
+export function allowsValueSuperset(
+	original: ValueSchema | undefined,
+	superset: ValueSchema | undefined,
+): boolean {
+	return original === superset;
 }
 
 /**
@@ -120,12 +102,12 @@ export function allowsValueSuperset(original: ValueSchema, superset: ValueSchema
  */
 export function allowsFieldSuperset(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	original: FieldStoredSchema,
-	superset: FieldStoredSchema,
+	originalData: TreeStoredSchema,
+	original: TreeFieldStoredSchema,
+	superset: TreeFieldStoredSchema,
 ): boolean {
-	return (
-		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind")
+	return withEditor(
+		policy.fieldKinds.get(original.kind.identifier) ?? fail("missing kind"),
 	).allowsFieldSuperset(policy, originalData, original.types, superset);
 }
 
@@ -163,21 +145,17 @@ export function allowsTreeSchemaIdentifierSuperset(
  */
 export function allowsRepoSuperset(
 	policy: FullSchemaPolicy,
-	original: SchemaData,
-	superset: SchemaData,
+	original: TreeStoredSchema,
+	superset: TreeStoredSchema,
 ): boolean {
-	const fields = new Set([
-		...original.globalFieldSchema.keys(),
-		...superset.globalFieldSchema.keys(),
-	]);
-	for (const key of fields) {
+	{
 		// TODO: I think its ok to use the field from superset here, but I should confirm it is, and document why.
 		if (
 			!allowsFieldSuperset(
 				policy,
 				original,
-				original.globalFieldSchema.get(key) ?? policy.defaultGlobalFieldSchema,
-				superset.globalFieldSchema.get(key) ?? policy.defaultGlobalFieldSchema,
+				original.rootFieldSchema,
+				superset.rootFieldSchema,
 			)
 		) {
 			return false;
@@ -185,14 +163,7 @@ export function allowsRepoSuperset(
 	}
 	for (const [key, schema] of original.treeSchema) {
 		// TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
-		if (
-			!allowsTreeSuperset(
-				policy,
-				original,
-				schema,
-				superset.treeSchema.get(key) ?? policy.defaultTreeSchema,
-			)
-		) {
+		if (!allowsTreeSuperset(policy, original, schema, superset.treeSchema.get(key))) {
 			return false;
 		}
 	}
@@ -204,21 +175,21 @@ export function allowsRepoSuperset(
  */
 export function isNeverField(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	field: FieldStoredSchema,
+	originalData: TreeStoredSchema,
+	field: TreeFieldStoredSchema,
 ): boolean {
 	return isNeverFieldRecursive(policy, originalData, field, new Set());
 }
 
 export function isNeverFieldRecursive(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	field: FieldStoredSchema,
-	parentTypeStack: Set<TreeStoredSchema>,
+	originalData: TreeStoredSchema,
+	field: TreeFieldStoredSchema,
+	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
 	if (
 		(policy.fieldKinds.get(field.kind.identifier) ?? fail("missing field kind"))
-			.multiplicity === Multiplicity.Value &&
+			.multiplicity === Multiplicity.Single &&
 		field.types !== undefined
 	) {
 		for (const type of field.types) {
@@ -226,7 +197,7 @@ export function isNeverFieldRecursive(
 				!isNeverTreeRecursive(
 					policy,
 					originalData,
-					originalData.treeSchema.get(type) ?? policy.defaultTreeSchema,
+					originalData.treeSchema.get(type),
 					parentTypeStack,
 				)
 			) {
@@ -242,26 +213,33 @@ export function isNeverFieldRecursive(
 
 /**
  * Returns true iff there are no possible trees that could meet this schema.
- * Trees which are infinate (like endless linked lists) are considered impossible.
+ * Trees which are infinite (like endless linked lists) are considered impossible.
+ *
+ * `undefined` means the schema is not present and thus a NeverTree.
  */
 export function isNeverTree(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	tree: TreeStoredSchema,
+	originalData: TreeStoredSchema,
+	tree: TreeNodeStoredSchema | undefined,
 ): boolean {
 	return isNeverTreeRecursive(policy, originalData, tree, new Set());
 }
 
 /**
  * Returns true iff there are no possible trees that could meet this schema.
- * Trees which are infinate (like endless linked lists) are considered impossible.
+ * Trees which are infinite (like endless linked lists) are considered impossible.
+ *
+ * `undefined` means the schema is not present and thus a NeverTree.
  */
 export function isNeverTreeRecursive(
 	policy: FullSchemaPolicy,
-	originalData: SchemaData,
-	tree: TreeStoredSchema,
-	parentTypeStack: Set<TreeStoredSchema>,
+	originalData: TreeStoredSchema,
+	tree: TreeNodeStoredSchema | undefined,
+	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
+	if (tree === undefined) {
+		return true;
+	}
 	if (parentTypeStack.has(tree)) {
 		return true;
 	}
@@ -269,13 +247,13 @@ export function isNeverTreeRecursive(
 		parentTypeStack.add(tree);
 		if (
 			(
-				policy.fieldKinds.get(tree.extraLocalFields.kind.identifier) ??
+				policy.fieldKinds.get(normalizeField(tree.mapFields).kind.identifier) ??
 				fail("missing field kind")
-			).multiplicity === Multiplicity.Value
+			).multiplicity === Multiplicity.Single
 		) {
 			return true;
 		}
-		for (const field of tree.localFields.values()) {
+		for (const field of tree.objectNodeFields.values()) {
 			// TODO: this can recurse infinitely for schema that include themselves in a value field.
 			// This breaks even if there are other allowed types.
 			// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
@@ -284,16 +262,13 @@ export function isNeverTreeRecursive(
 				return true;
 			}
 		}
-		for (const field of tree.globalFields) {
-			const schema =
-				originalData.globalFieldSchema.get(field) ?? policy.defaultGlobalFieldSchema;
-			if (isNeverField(policy, originalData, schema)) {
-				return true;
-			}
-		}
 
 		return false;
 	} finally {
 		parentTypeStack.delete(tree);
 	}
+}
+
+export function normalizeField(schema: TreeFieldStoredSchema | undefined): TreeFieldStoredSchema {
+	return schema ?? storedEmptyFieldSchema;
 }

@@ -6,25 +6,12 @@
 import { Dependee, SimpleDependee } from "../dependency-tracking";
 import { createEmitter, ISubscribable } from "../../events";
 import {
-	GlobalFieldKey,
-	FieldStoredSchema,
-	TreeSchemaIdentifier,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	TreeStoredSchema,
-	SchemaData,
-	SchemaPolicy,
+	storedEmptyFieldSchema,
 } from "./schema";
-
-/**
- * A {@link SchemaData} with a {@link SchemaPolicy}.
- * @alpha
- */
-export interface SchemaDataAndPolicy<TPolicy extends SchemaPolicy = SchemaPolicy>
-	extends SchemaData {
-	/**
-	 * Configuration information, including the defaults for schema which have no been added yet.
-	 */
-	readonly policy: TPolicy;
-}
 
 /**
  * Events for {@link StoredSchemaRepository}.
@@ -36,12 +23,12 @@ export interface SchemaEvents {
 	/**
 	 * Schema change is about to be applied.
 	 */
-	beforeSchemaChange(newSchema: SchemaData): void;
+	beforeSchemaChange(newSchema: TreeStoredSchema): void;
 
 	/**
 	 * Schema change was just applied.
 	 */
-	afterSchemaChange(newSchema: SchemaData): void;
+	afterSchemaChange(newSchema: TreeStoredSchema): void;
 }
 
 /**
@@ -50,23 +37,24 @@ export interface SchemaEvents {
  * TODO: could implement more fine grained dependency tracking.
  * @alpha
  */
-export interface StoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
+export interface StoredSchemaRepository
 	extends Dependee,
 		ISubscribable<SchemaEvents>,
-		SchemaDataAndPolicy<TPolicy> {
+		TreeStoredSchema {
 	/**
-	 * Add the provided schema, possibly over-writing preexisting schema.
+	 * Replaces all schema with the provided schema.
+	 * Can over-write preexisting schema, and removes unmentioned schema.
 	 */
-	update(newSchema: SchemaData): void;
+	update(newSchema: TreeStoredSchema): void;
 }
 
 /**
  * StoredSchemaRepository for in memory use:
  * not hooked up to Fluid (does not create Fluid ops when editing).
  */
-export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = SchemaPolicy>
+export class InMemoryStoredSchemaRepository
 	extends SimpleDependee
-	implements StoredSchemaRepository<TPolicy>
+	implements StoredSchemaRepository
 {
 	protected readonly data: MutableSchemaData;
 	private readonly events = createEmitter<SchemaEvents>();
@@ -76,42 +64,36 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 	 * There are a couple reasons we might not want this simple solution long term:
 	 * 1. We might want an easy/fast copy.
 	 * 2. We might want a way to reserve a large namespace of schema with the same schema.
-	 * The way extraFields has been structured mitigates the need for this, but it still might be useful.
+	 * The way mapFields has been structured mitigates the need for this, but it still might be useful.
 	 *
 	 * (ex: someone using data as field identifiers might want to
 	 * reserve all fields identifiers starting with "foo." to have a specific schema).
 	 * Combined with support for such namespaces in the allowed sets in the schema objects,
-	 * that might provide a decent alternative to extraFields (which is a bit odd).
+	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
-	public constructor(public readonly policy: TPolicy, data?: SchemaData) {
+	public constructor(data?: TreeStoredSchema) {
 		super("StoredSchemaRepository");
-		this.data = {
-			treeSchema: new Map(data?.treeSchema ?? []),
-			globalFieldSchema: new Map(data?.globalFieldSchema ?? []),
-		};
+		this.data = cloneSchemaData(data ?? defaultSchemaData);
 	}
 
 	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
 		return this.events.on(eventName, listener);
 	}
 
-	public clone(): InMemoryStoredSchemaRepository {
-		return new InMemoryStoredSchemaRepository(this.policy, this.data);
+	public get rootFieldSchema(): TreeFieldStoredSchema {
+		return this.data.rootFieldSchema;
 	}
 
-	public get globalFieldSchema(): ReadonlyMap<GlobalFieldKey, FieldStoredSchema> {
-		return this.data.globalFieldSchema;
-	}
-
-	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
+	public get treeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 		return this.data.treeSchema;
 	}
 
-	public update(newSchema: SchemaData): void {
+	public update(newSchema: TreeStoredSchema): void {
 		this.events.emit("beforeSchemaChange", newSchema);
-		for (const [name, schema] of newSchema.globalFieldSchema) {
-			this.data.globalFieldSchema.set(name, schema);
-		}
+
+		this.data.rootFieldSchema = newSchema.rootFieldSchema;
+
+		this.data.treeSchema.clear();
 		for (const [name, schema] of newSchema.treeSchema) {
 			this.data.treeSchema.set(name, schema);
 		}
@@ -120,35 +102,23 @@ export class InMemoryStoredSchemaRepository<TPolicy extends SchemaPolicy = Schem
 	}
 }
 
-interface MutableSchemaData extends SchemaData {
-	globalFieldSchema: Map<GlobalFieldKey, FieldStoredSchema>;
-	treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema>;
+export interface MutableSchemaData extends TreeStoredSchema {
+	rootFieldSchema: TreeFieldStoredSchema;
+	treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
 
-/**
- * Helper for getting a global {@link FieldSchema} from a stored schema.
- * Defaults to the FieldSchema defined with a stored schema policy.
- * @alpha
- */
-export function lookupGlobalFieldSchema(
-	data: SchemaDataAndPolicy,
-	identifier: GlobalFieldKey,
-): FieldStoredSchema {
-	return data.globalFieldSchema.get(identifier) ?? data.policy.defaultGlobalFieldSchema;
+export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
+	return data.treeSchema.size === 0;
 }
 
-/**
- * Helper for getting a {@link TreeSchema} from a stored schema.
- * Defaults to the TreeSchema defined with a stored schema policy.
- * @alpha
- */
-export function lookupTreeSchema(
-	data: SchemaDataAndPolicy,
-	identifier: TreeSchemaIdentifier,
-): TreeStoredSchema {
-	return data.treeSchema.get(identifier) ?? data.policy.defaultTreeSchema;
-}
+export const defaultSchemaData: TreeStoredSchema = {
+	treeSchema: new Map(),
+	rootFieldSchema: storedEmptyFieldSchema,
+};
 
-export function schemaDataIsEmpty(data: SchemaData): boolean {
-	return data.treeSchema.size === 0 && data.globalFieldSchema.size === 0;
+export function cloneSchemaData(data: TreeStoredSchema): MutableSchemaData {
+	return {
+		treeSchema: new Map(data?.treeSchema ?? []),
+		rootFieldSchema: data?.rootFieldSchema ?? storedEmptyFieldSchema,
+	};
 }

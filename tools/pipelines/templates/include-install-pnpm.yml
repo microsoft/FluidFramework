@@ -44,7 +44,8 @@ steps:
     condition: or(succeeded(), canceled())
     # workspace-concurrency 0 means use use the CPU core count. This is better than the default (4) for larger agents.
     script: |
-      corepack enable
-      pnpm -v
+      echo "Using node $(node --version)"
+      sudo corepack enable
+      echo "Using pnpm $(pnpm -v)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       pnpm config set -g workspace-concurrency 0

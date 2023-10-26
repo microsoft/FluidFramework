@@ -3,33 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/common-utils";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { DataProcessingError } from "@fluidframework/container-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import Deque from "double-ended-queue";
-import { ContainerMessageType } from "./containerRuntime";
-import { pkgVersion } from "./packageVersion";
 
-/**
- * ! TODO: Remove this interface in "2.0.0-internal.7.0.0" once we only read IPendingMessageNew
- */
-export interface IPendingMessageOld {
-	type: "message";
-	messageType: ContainerMessageType;
-	clientSequenceNumber: number;
-	referenceSequenceNumber: number;
-	content: any;
-	localOpMetadata: unknown;
-	opMetadata: Record<string, unknown> | undefined;
-}
+import { IDisposable } from "@fluidframework/core-interfaces";
+import { assert, Lazy } from "@fluidframework/core-utils";
+import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { DataProcessingError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
+
+import { ContainerMessageType, InboundSequencedContainerRuntimeMessage } from "./messageTypes";
+import { pkgVersion } from "./packageVersion";
+import { IBatchMetadata } from "./metadata";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
  * ContainerRuntime. This message has either not been ack'd by the server or has not been submitted to the server yet.
  */
-export interface IPendingMessageNew {
+export interface IPendingMessage {
 	type: "message";
 	clientSequenceNumber: number;
 	referenceSequenceNumber: number;
@@ -38,16 +28,11 @@ export interface IPendingMessageNew {
 	opMetadata: Record<string, unknown> | undefined;
 }
 
-/**
- * ! TODO: Remove this type in "2.0.0-internal.7.0.0"
- */
-export type IPendingState = IPendingMessageOld | IPendingMessageNew;
-
 export interface IPendingLocalState {
 	/**
 	 * list of pending states, including ops and batch information
 	 */
-	pendingStates: IPendingState[];
+	pendingStates: IPendingMessage[];
 }
 
 export interface IPendingBatchMessage {
@@ -63,6 +48,27 @@ export interface IRuntimeStateHandler {
 	applyStashedOp(content: string): Promise<unknown>;
 	reSubmit(message: IPendingBatchMessage): void;
 	reSubmitBatch(batch: IPendingBatchMessage[]): void;
+	isActiveConnection: () => boolean;
+}
+
+/** Union of keys of T */
+type KeysOfUnion<T extends object> = T extends T ? keyof T : never;
+/** *Partial* type all possible combinations of properties and values of union T.
+ * This loosens typing allowing access to all possible properties without
+ * narrowing.
+ */
+type AnyComboFromUnion<T extends object> = { [P in KeysOfUnion<T>]?: T[P] };
+
+function buildPendingMessageContent(
+	// AnyComboFromUnion is needed need to gain access to compatDetails that
+	// is only defined for some cases.
+	message: AnyComboFromUnion<InboundSequencedContainerRuntimeMessage>,
+): string {
+	// IMPORTANT: Order matters here, this must match the order of the properties used
+	// when submitting the message.
+	const { type, contents, compatDetails } = message;
+	// Any properties that are not defined, won't be emitted by stringify.
+	return JSON.stringify({ type, contents, compatDetails });
 }
 
 /**
@@ -75,16 +81,18 @@ export interface IRuntimeStateHandler {
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
 export class PendingStateManager implements IDisposable {
-	private readonly pendingMessages = new Deque<IPendingMessageNew>();
-	private readonly initialMessages = new Deque<IPendingMessageNew>();
+	private readonly pendingMessages = new Deque<IPendingMessage>();
+	private readonly initialMessages = new Deque<IPendingMessage>();
+
+	/**
+	 * Sequenced local ops that are saved when stashing since pending ops may depend on them
+	 */
+	private savedOps: IPendingMessage[] = [];
+
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
 		this.pendingMessages.clear();
 	});
-
-	public get pendingMessagesCount(): number {
-		return this.pendingMessages.length;
-	}
 
 	// Indicates whether we are processing a batch.
 	private isProcessingBatch: boolean = false;
@@ -96,11 +104,19 @@ export class PendingStateManager implements IDisposable {
 	private clientId: string | undefined;
 
 	/**
+	 * The pending messages count. Includes `pendingMessages` and `initialMessages` to keep in sync with
+	 * 'hasPendingMessages'.
+	 */
+	public get pendingMessagesCount(): number {
+		return this.pendingMessages.length + this.initialMessages.length;
+	}
+
+	/**
 	 * Called to check if there are any pending messages in the pending message queue.
 	 * @returns A boolean indicating whether there are messages or not.
 	 */
 	public hasPendingMessages(): boolean {
-		return !this.pendingMessages.isEmpty() || !this.initialMessages.isEmpty();
+		return this.pendingMessagesCount !== 0;
 	}
 
 	public getLocalState(): IPendingLocalState | undefined {
@@ -110,23 +126,22 @@ export class PendingStateManager implements IDisposable {
 		);
 		if (!this.pendingMessages.isEmpty()) {
 			return {
-				pendingStates: this.pendingMessages.toArray().map((message) => {
-					// ! TODO: Remove conversion to IPendingMessageOld in "2.0.0-internal.6.0.0" AB#3826
-					const content = JSON.parse(message.content);
-					// IdAllocations need their localOpMetadata stashed in the contents
-					// of the op to correctly resume the session when processing stashed ops
-					if (content.type === ContainerMessageType.IdAllocation) {
-						content.contents.stashedState = message.localOpMetadata;
-					}
-					return {
-						...message,
-						messageType: content.type,
-						content: content.contents,
+				pendingStates: [...this.savedOps, ...this.pendingMessages.toArray()].map(
+					(message) => {
+						let content = message.content;
+						const parsedContent = JSON.parse(content);
+						// IdAllocations need their localOpMetadata stashed in the contents
+						// of the op to correctly resume the session when processing stashed ops
+						if (parsedContent.type === ContainerMessageType.IdAllocation) {
+							parsedContent.contents.stashedState = message.localOpMetadata;
+							content = JSON.stringify(parsedContent);
+						}
+
 						// delete localOpMetadata since it may not be serializable
 						// and will be regenerated by applyStashedOp()
-						localOpMetadata: undefined,
-					};
-				}),
+						return { ...message, content, localOpMetadata: undefined };
+					},
+				),
 			};
 		}
 	}
@@ -134,30 +149,10 @@ export class PendingStateManager implements IDisposable {
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		initialLocalState: IPendingLocalState | undefined,
+		private readonly logger: ITelemetryLoggerExt | undefined,
 	) {
-		/**
-		 * Convert old local state format to the new format (IPendingMessageOld to IPendingMessageNew)
-		 * ! TODO: Remove this conversion in "2.0.0-internal.7.0.0"
-		 */
 		if (initialLocalState?.pendingStates) {
-			for (const initialState of initialLocalState.pendingStates) {
-				let messageContent = initialState.content;
-				if (
-					(initialState as IPendingMessageOld).messageType !== undefined &&
-					typeof initialState.content !== "string"
-				) {
-					// Convert IPendingMessageOld to IPendingMessageNew
-					messageContent = JSON.stringify({
-						type: (initialState as IPendingMessageOld).messageType,
-						contents: initialState.content,
-					});
-				}
-				// Note: this object may contain "messageType" prop, but it should not be easily accesible due to interface being used
-				this.initialMessages.push({
-					...initialState,
-					content: messageContent,
-				});
-			}
+			this.initialMessages.push(...initialLocalState.pendingStates);
 		}
 	}
 
@@ -179,7 +174,7 @@ export class PendingStateManager implements IDisposable {
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
 	) {
-		const pendingMessage: IPendingMessageNew = {
+		const pendingMessage: IPendingMessage = {
 			type: "message",
 			clientSequenceNumber: -1, // dummy value (not to be used anywhere)
 			referenceSequenceNumber,
@@ -209,9 +204,13 @@ export class PendingStateManager implements IDisposable {
 				}
 			}
 
-			// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-			const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-			nextMessage.localOpMetadata = localOpMetadata;
+			try {
+				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
+				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
+				nextMessage.localOpMetadata = localOpMetadata;
+			} catch (error) {
+				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
+			}
 
 			// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -224,7 +223,7 @@ export class PendingStateManager implements IDisposable {
 	 * the batch information was preserved for batch messages.
 	 * @param message - The message that got ack'd and needs to be processed.
 	 */
-	public processPendingLocalMessage(message: ISequencedDocumentMessage): unknown {
+	public processPendingLocalMessage(message: InboundSequencedContainerRuntimeMessage): unknown {
 		// Pre-processing part - This may be the start of a batch.
 		this.maybeProcessBatchBegin(message);
 
@@ -234,10 +233,13 @@ export class PendingStateManager implements IDisposable {
 			pendingMessage !== undefined,
 			0x169 /* "No pending message found for this remote message" */,
 		);
+		this.savedOps.push(pendingMessage);
+
 		this.pendingMessages.shift();
 
-		const messageContent = JSON.stringify({ type: message.type, contents: message.contents });
-		// Stringified content does not match
+		const messageContent = buildPendingMessageContent(message);
+
+		// Stringified content should match
 		if (pendingMessage.content !== messageContent) {
 			this.stateHandler.close(
 				DataProcessingError.create(
@@ -264,7 +266,7 @@ export class PendingStateManager implements IDisposable {
 	 */
 	private maybeProcessBatchBegin(message: ISequencedDocumentMessage) {
 		// This message is the first in a batch if the "batch" property on the metadata is set to true
-		if (message.metadata?.batch) {
+		if ((message.metadata as IBatchMetadata | undefined)?.batch) {
 			// We should not already be processing a batch and there should be no pending batch begin message.
 			assert(
 				!this.isProcessingBatch && this.pendingBatchBeginMessage === undefined,
@@ -292,10 +294,12 @@ export class PendingStateManager implements IDisposable {
 			0x16d /* "There is no pending batch begin message" */,
 		);
 
-		const batchEndMetadata = message.metadata?.batch;
+		const batchEndMetadata = (message.metadata as IBatchMetadata | undefined)?.batch;
 		if (this.pendingMessages.isEmpty() || batchEndMetadata === false) {
 			// Get the batch begin metadata from the first message in the batch.
-			const batchBeginMetadata = this.pendingBatchBeginMessage.metadata?.batch;
+			const batchBeginMetadata = (
+				this.pendingBatchBeginMessage.metadata as IBatchMetadata | undefined
+			)?.batch;
 
 			// There could be just a single message in the batch. If so, it should not have any batch metadata. If there
 			// are multiple messages in the batch, verify that we got the correct batch begin and end metadata.
@@ -313,7 +317,11 @@ export class PendingStateManager implements IDisposable {
 							message,
 							{
 								runtimeVersion: pkgVersion,
-								batchClientId: this.pendingBatchBeginMessage.clientId,
+								batchClientId:
+									// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+									this.pendingBatchBeginMessage.clientId === null
+										? "null"
+										: this.pendingBatchBeginMessage.clientId,
 								clientId: this.stateHandler.clientId(),
 								hasBatchStart: batchBeginMetadata === true,
 								hasBatchEnd: batchEndMetadata === false,
@@ -353,18 +361,16 @@ export class PendingStateManager implements IDisposable {
 			0x174 /* "initial states should be empty before replaying pending" */,
 		);
 
-		let pendingMessagesCount = this.pendingMessages.length;
-		if (pendingMessagesCount === 0) {
-			return;
-		}
+		const initialPendingMessagesCount = this.pendingMessages.length;
+		let remainingPendingMessagesCount = this.pendingMessages.length;
 
 		// Process exactly `pendingMessagesCount` items in the queue as it represents the number of messages that were
 		// pending when we connected. This is important because the `reSubmitFn` might add more items in the queue
 		// which must not be replayed.
-		while (pendingMessagesCount > 0) {
+		while (remainingPendingMessagesCount > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			let pendingMessage = this.pendingMessages.shift()!;
-			pendingMessagesCount--;
+			remainingPendingMessagesCount--;
 			assert(
 				pendingMessage.opMetadata?.batch !== false,
 				0x41b /* We cannot process batches in chunks */,
@@ -377,14 +383,14 @@ export class PendingStateManager implements IDisposable {
 			 */
 			if (pendingMessage.opMetadata?.batch) {
 				assert(
-					pendingMessagesCount > 0,
+					remainingPendingMessagesCount > 0,
 					0x554 /* Last pending message cannot be a batch begin */,
 				);
 
 				const batch: IPendingBatchMessage[] = [];
 
 				// check is >= because batch end may be last pending message
-				while (pendingMessagesCount >= 0) {
+				while (remainingPendingMessagesCount >= 0) {
 					batch.push({
 						content: pendingMessage.content,
 						localOpMetadata: pendingMessage.localOpMetadata,
@@ -394,11 +400,11 @@ export class PendingStateManager implements IDisposable {
 					if (pendingMessage.opMetadata?.batch === false) {
 						break;
 					}
-					assert(pendingMessagesCount > 0, 0x555 /* No batch end found */);
+					assert(remainingPendingMessagesCount > 0, 0x555 /* No batch end found */);
 
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					pendingMessage = this.pendingMessages.shift()!;
-					pendingMessagesCount--;
+					remainingPendingMessagesCount--;
 					assert(
 						pendingMessage.opMetadata?.batch !== true,
 						0x556 /* Batch start needs a corresponding batch end */,
@@ -413,6 +419,20 @@ export class PendingStateManager implements IDisposable {
 					opMetadata: pendingMessage.opMetadata,
 				});
 			}
+		}
+
+		// pending ops should no longer depend on previous sequenced local ops after resubmit
+		this.savedOps = [];
+
+		// We replayPendingStates on read connections too - we expect these to get nack'd though, and to then reconnect
+		// on a write connection and replay again. This filters out the replay that happens on the read connection so
+		// we only see the replays on write connections (that have a chance to go through).
+		if (this.stateHandler.isActiveConnection()) {
+			this.logger?.sendTelemetryEvent({
+				eventName: "PendingStatesReplayed",
+				count: initialPendingMessagesCount,
+				clientId: this.stateHandler.clientId(),
+			});
 		}
 	}
 }

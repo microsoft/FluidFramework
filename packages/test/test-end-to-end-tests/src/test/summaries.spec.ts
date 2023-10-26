@@ -5,22 +5,22 @@
 
 import { strict as assert } from "assert";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
-	Summarizer,
 	ISummarizer,
 	ISummarizeResults,
 	ISummaryRuntimeOptions,
 	DefaultSummaryConfiguration,
 	SummaryCollection,
+	TEST_requestSummarizer,
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	waitForContainerConnection,
 	ITestContainerConfig,
@@ -85,7 +85,7 @@ async function createMainContainerAndSummarizer(
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
 	}
-	const summarizer = await Summarizer.create(loader, absoluteUrl);
+	const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 	await waitForSummarizerConnection(summarizer);
 	return {
 		mainContainer: container,
@@ -103,7 +103,7 @@ async function createSummarizerFromContainer(
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
 	}
-	const summarizer = await Summarizer.create(loader, absoluteUrl);
+	const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 	await waitForSummarizerConnection(summarizer);
 	return summarizer;
 }
@@ -253,7 +253,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			runGC: false,
 			fullTree: false,
 			trackState: false,
-			summaryLogger: new TelemetryNullLogger(),
+			summaryLogger: createChildLogger(),
 		});
 
 		// Validate stats
@@ -350,12 +350,10 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
 				[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 			]);
-			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-				dataStoreFactory1,
-				registryStoreEntries,
-				undefined,
-				[],
-			);
+			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+				defaultFactory: dataStoreFactory1,
+				registryEntries: registryStoreEntries,
+			});
 
 			// Create a container for the first client.
 			const container1 = await provider.createContainer(runtimeFactory);
@@ -381,7 +379,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 			// In summarizer, load the data store should fail.
 			await assert.rejects(
 				requestFluidObject<TestDataObject1>(createSummarizerResult.container, "/"),
-				(e) =>
+				(e: Error) =>
 					e.message ===
 					"Non interactive/summarizer client's data object should not be initialized",
 				"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",
@@ -407,7 +405,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 		const summaryCollection = new SummaryCollection(
 			container.deltaManager,
-			new TelemetryNullLogger(),
+			createChildLogger(),
 		);
 
 		const defaultDataStore = await requestFluidObject<ITestDataObject>(
@@ -474,12 +472,13 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 					runGC: false,
 					fullTree: false,
 					trackState: false,
-					summaryLogger: new TelemetryNullLogger(),
+					summaryLogger: createChildLogger(),
 				})
 				.catch(() => {});
 
 			const summarizeTelemetryEvents = mockLogger.events.filter(
-				(event) => event.eventName === "fluid:telemetry:SummarizeTelemetry",
+				(event) =>
+					event.eventName === "fluid:telemetry:ContainerRuntime:SummarizeTelemetry",
 			);
 			assert.strictEqual(
 				summarizeTelemetryEvents.length,
@@ -515,7 +514,10 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 		};
 	});
 
-	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async () => {
+	it("Non single commit summary/Match last summary ackHandle  with current summary parent", async function () {
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		const { summarizer } = await createMainContainerAndSummarizer(provider);
 
 		// Summarize
@@ -555,7 +557,10 @@ describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 		);
 	});
 
-	it("Non single commit summary/Last summary should be discarded due to missing SummaryOp", async () => {
+	it("Non single commit summary/Last summary should be discarded due to missing SummaryOp", async function () {
+		if (provider.driver.type === "odsp") {
+			this.skip();
+		}
 		const { mainContainer, summarizer } = await createMainContainerAndSummarizer(provider);
 
 		// Summarize

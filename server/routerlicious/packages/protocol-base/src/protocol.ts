@@ -18,9 +18,6 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { IQuorumSnapshot, Quorum } from "./quorum";
 
-// "term" was an experimental feature that is being removed.  The only safe value to use is 1.
-export const OnlyValidTermValue = 1 as const;
-
 export interface IScribeProtocolState {
 	sequenceNumber: number;
 	minimumSequenceNumber: number;
@@ -65,7 +62,6 @@ export class ProtocolOpHandler implements IProtocolHandler {
 		return {
 			minimumSequenceNumber: this.minimumSequenceNumber,
 			sequenceNumber: this.sequenceNumber,
-			term: OnlyValidTermValue,
 		};
 	}
 

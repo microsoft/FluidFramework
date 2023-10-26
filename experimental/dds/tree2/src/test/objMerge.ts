@@ -16,7 +16,10 @@ export class Conflicted extends Merged {
 }
 
 export class Conflict extends Merged {
-	public constructor(public readonly lhs: unknown, public readonly rhs: unknown) {
+	public constructor(
+		public readonly lhs: unknown,
+		public readonly rhs: unknown,
+	) {
 		super();
 	}
 }
@@ -47,7 +50,6 @@ export function merge<T>(lhs: T, rhs: T): Conflicted | Conflict | T {
 
 	// null is of type object, and needs to be treated as distinct from the empty object.
 	// Handling it early also avoids type errors trying to access its keys.
-	// Rationale: 'undefined' payloads are reserved for future use (see 'SetValue' interface).
 	if (lhs === null || rhs === null) {
 		return new Conflict(lhs, rhs);
 	}

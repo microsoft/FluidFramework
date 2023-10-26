@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import {
 	FiveDaysMs,
@@ -21,8 +21,11 @@ import {
 	isCombinedAppAndProtocolSummary,
 	RateLimiter,
 } from "@fluidframework/driver-utils";
-import { ChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
-import { ISession } from "@fluidframework/server-services-client";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils";
+import {
+	ISession,
+	convertSummaryTreeToWholeSummaryTree,
+} from "@fluidframework/server-services-client";
 import { DocumentService } from "./documentService";
 import { IRouterliciousDriverPolicies } from "./policies";
 import { ITokenProvider } from "./tokens";
@@ -32,12 +35,11 @@ import {
 	toInstrumentedR11sOrdererTokenFetcher,
 	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper";
-import { convertSummaryToCreateNewSummary } from "./createNewUtils";
 import { parseFluidUrl, replaceDocumentIdInPath, getDiscoveredFluidResolvedUrl } from "./urlUtils";
 import { ICache, InMemoryCache, NullCache } from "./cache";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { ISnapshotTreeVersion } from "./definitions";
-import { INormalizedWholeSummary } from "./contracts";
+import { INormalizedWholeSnapshot } from "./contracts";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -45,12 +47,12 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enablePrefetch: true,
 	maxConcurrentStorageRequests: 100,
 	maxConcurrentOrdererRequests: 100,
-	aggregateBlobsSmallerThanBytes: undefined,
 	enableDiscovery: false,
 	enableWholeSummaryUpload: false,
 	enableRestLess: true,
 	enableInternalSummaryCaching: true,
 	enableLongPollingDowngrade: true,
+	isEphemeralContainer: false,
 };
 
 /**
@@ -60,7 +62,7 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 export class RouterliciousDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly driverPolicies: IRouterliciousDriverPolicies;
 	private readonly blobCache: ICache<ArrayBufferLike>;
-	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSummary> = new NullCache();
+	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> = new NullCache();
 	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> = new NullCache();
 
 	constructor(
@@ -77,7 +79,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		this.blobCache = new InMemoryCache<ArrayBufferLike>();
 		if (this.driverPolicies.enableInternalSummaryCaching) {
 			if (this.driverPolicies.enableWholeSummaryUpload) {
-				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSummary>(
+				this.wholeSnapshotTreeCache = new InMemoryCache<INormalizedWholeSnapshot>(
 					snapshotCacheExpiryMs,
 				);
 			} else {
@@ -119,7 +121,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		const documentAttributes = getDocAttributesFromProtocolSummary(protocolSummary);
 		const quorumValues = getQuorumValuesFromProtocolSummary(protocolSummary);
 
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver");
+		const logger2 = createChildLogger({ logger, namespace: "RouterliciousDriver" });
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
 			tenantId,
 			undefined /* documentId */,
@@ -142,6 +144,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				details: JSON.stringify({
 					enableDiscovery: this.driverPolicies.enableDiscovery,
 					sequenceNumber: documentAttributes.sequenceNumber,
+					isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
 				}),
 			},
 			async (event) => {
@@ -150,11 +153,13 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 					await ordererRestWrapper.post<
 						{ id: string; token?: string; session?: ISession } | string
 					>(`/documents/${tenantId}`, {
-						summary: convertSummaryToCreateNewSummary(appSummary),
+						summary: convertSummaryTreeToWholeSummaryTree(undefined, appSummary),
 						sequenceNumber: documentAttributes.sequenceNumber,
 						values: quorumValues,
 						enableDiscovery: this.driverPolicies.enableDiscovery,
 						generateToken: this.tokenProvider.documentPostCreateCallback !== undefined,
+						isEphemeralContainer: this.driverPolicies.isEphemeralContainer,
+						enableAnyBinaryBlobOnFirstSummary: true,
 					})
 				).content;
 
@@ -247,8 +252,12 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				`Couldn't parse documentId and/or tenantId. [documentId:${documentId}][tenantId:${tenantId}]`,
 			);
 		}
-		const logger2 = ChildLogger.create(logger, "RouterliciousDriver", {
-			all: { driverVersion },
+		const logger2 = createChildLogger({
+			logger,
+			namespace: "RouterliciousDriver",
+			properties: {
+				all: { driverVersion },
+			},
 		});
 
 		const ordererTokenFetcher = toInstrumentedR11sOrdererTokenFetcher(
@@ -330,7 +339,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			caching: this.driverPolicies.enablePrefetch
 				? LoaderCachingPolicy.Prefetch
 				: LoaderCachingPolicy.NoCaching,
-			minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
 			maximumCacheDurationMs: maximumSnapshotCacheDurationMs,
 		};
 

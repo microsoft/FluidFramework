@@ -8,10 +8,11 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import { Router } from "express";
 import * as nconf from "nconf";
-import { ICache, ITenantService } from "../services";
+import { ICache, IDenyList, ITenantService } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -46,9 +47,11 @@ export function create(
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
 	restClusterThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): IRoutes {
 	return {
 		git: {
@@ -57,45 +60,55 @@ export function create(
 				tenantService,
 				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			commits: commits.create(
 				config,
 				tenantService,
 				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			refs: refs.create(
 				config,
 				tenantService,
 				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			tags: tags.create(
 				config,
 				tenantService,
 				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			trees: trees.create(
 				config,
 				tenantService,
 				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 		},
 		repository: {
@@ -104,27 +117,33 @@ export function create(
 				tenantService,
 				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			contents: contents.create(
 				config,
 				tenantService,
 				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 			headers: headers.create(
 				config,
 				tenantService,
 				storageNameRetriever,
 				restTenantThrottlers,
+				documentManager,
 				cache,
 				asyncLocalStorage,
 				revokedTokenChecker,
+				denyList,
 			),
 		},
 		summaries: summaries.create(
@@ -133,9 +152,11 @@ export function create(
 			storageNameRetriever,
 			restTenantThrottlers,
 			restClusterThrottlers,
+			documentManager,
 			cache,
 			asyncLocalStorage,
 			revokedTokenChecker,
+			denyList,
 		),
 	};
 }

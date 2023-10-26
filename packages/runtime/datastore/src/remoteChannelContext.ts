@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { LazyPromise, assert } from "@fluidframework/common-utils";
+import { assert, LazyPromise } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IChannel, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -19,7 +19,7 @@ import {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions";
 import {
-	ChildLogger,
+	createChildLogger,
 	ITelemetryLoggerExt,
 	ThresholdCounter,
 } from "@fluidframework/telemetry-utils";
@@ -60,7 +60,10 @@ export class RemoteChannelContext implements IChannelContext {
 	) {
 		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
-		this.subLogger = ChildLogger.create(runtime.logger, "RemoteChannelContext");
+		this.subLogger = createChildLogger({
+			logger: runtime.logger,
+			namespace: "RemoteChannelContext",
+		});
 
 		this.services = createChannelServiceEndpoints(
 			dataStoreContext.connected,

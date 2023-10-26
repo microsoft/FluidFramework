@@ -18,7 +18,7 @@ import { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
 	private readonly q: QueueObject<IQueuedMessage>;
-	private readonly lambdaP: Promise<IPartitionLambda>;
+	private readonly lambdaP: Promise<IPartitionLambda> | Promise<void>;
 	private lambda: IPartitionLambda | undefined;
 	private corrupt = false;
 	private closed = false;
@@ -43,12 +43,13 @@ export class DocumentPartition {
 			try {
 				if (!this.corrupt) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const optionalPromise = this.lambda!.handler(message);
-					if (optionalPromise) {
-						optionalPromise.then(callback as any).catch((error) => {
+					const optionalPromise = this.lambda!.handler(message)
+						?.then(callback as any)
+						.catch((error) => {
 							this.markAsCorrupt(error, message);
 							callback();
 						});
+					if (optionalPromise) {
 						return;
 					}
 				} else {
@@ -77,13 +78,13 @@ export class DocumentPartition {
 		});
 
 		// Create the lambda to handle the document messages
-		this.lambdaP = factory.create(documentConfig, context, this.updateActivityTime.bind(this));
-		this.lambdaP.then(
-			(lambda) => {
+		this.lambdaP = factory
+			.create(documentConfig, context, this.updateActivityTime.bind(this))
+			.then((lambda) => {
 				this.lambda = lambda;
 				this.q.resume();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				// There is no need to pass the message to be checkpointed to markAsCorrupt().
 				// The message, in this case, would be the head in the DocumentContext. But the DocumentLambda
 				// that creates this DocumentPartition will also put the same message in the queue.
@@ -91,8 +92,7 @@ export class DocumentPartition {
 				// since the document was marked as corrupted.
 				this.markAsCorrupt(error);
 				this.q.resume();
-			},
-		);
+			});
 	}
 
 	public process(message: IQueuedMessage) {
@@ -100,7 +100,16 @@ export class DocumentPartition {
 			return;
 		}
 
-		void this.q.push(message);
+		this.q.push(message).catch((error) => {
+			const lumberjackProperties = {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+			};
+			Lumberjack.error(
+				"Error pushing raw message to queue in document partition",
+				lumberjackProperties,
+				error,
+			);
+		});
 		this.updateActivityTime();
 	}
 
@@ -117,14 +126,13 @@ export class DocumentPartition {
 		if (this.lambda) {
 			this.lambda.close(closeType);
 		} else {
-			this.lambdaP.then(
-				(lambda) => {
+			this.lambdaP
+				.then((lambda) => {
 					lambda.close(closeType);
-				},
-				(error) => {
+				})
+				.catch((error) => {
 					// Lambda was never created - ignoring
-				},
-			);
+				});
 		}
 	}
 
@@ -158,6 +166,7 @@ export class DocumentPartition {
 			restart: false,
 			tenantId: this.tenantId,
 			documentId: this.documentId,
+			errorLabel: "documentPartition:markAsCorrupt",
 		});
 		if (message) {
 			this.context.checkpoint(message);
@@ -165,6 +174,7 @@ export class DocumentPartition {
 	}
 
 	private updateActivityTime() {
-		this.activityTimeoutTime = Date.now() + this.activityTimeout;
+		this.activityTimeoutTime =
+			Date.now() + (this.lambda?.activityTimeout ?? this.activityTimeout);
 	}
 }

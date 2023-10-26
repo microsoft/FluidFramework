@@ -52,6 +52,13 @@ export interface IContextErrorData {
 
 	tenantId?: string;
 	documentId?: string;
+
+	/**
+	 * For KafkaRunner logging purposes.
+	 * Since KafkaRunner metric logs all the errors, this will indicate how the error was handled
+	 * eg: doc corruption error / rdkafkaConsumer error, so that we can filter accordingly
+	 */
+	errorLabel?: string;
 }
 
 export interface IContext {
@@ -74,6 +81,12 @@ export interface IContext {
 }
 
 export interface IPartitionLambda {
+	/**
+	 * Expire document partition after this long of no activity.
+	 * When undefined, the default global IDocumentLambdaServerConfiguration.partitionActivityTimeout is used.
+	 */
+	readonly activityTimeout?: number;
+
 	/**
 	 * Processes an incoming message
 	 */

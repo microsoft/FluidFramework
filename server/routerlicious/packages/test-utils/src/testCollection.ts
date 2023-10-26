@@ -29,23 +29,19 @@ export class TestCollection implements ICollection<any> {
 	public async update(filter: any, set: any, addToSet: any): Promise<void> {
 		const value = this.findOneInternal(filter);
 		if (!value) {
-			return Promise.reject(new Error("Not found"));
+			throw new Error("Not found");
 		}
 		_.extend(value, set);
 	}
 
 	public async updateMany(filter: any, set: any, addToSet: any): Promise<void> {
 		const values = this.findInternal(filter);
-		try {
-			values.forEach((value) => {
-				if (!value) {
-					throw new Error("Not found");
-				}
-				_.extend(value, set);
-			});
-		} catch (e) {
-			return Promise.reject(e);
-		}
+		values.forEach((value) => {
+			if (!value) {
+				throw new Error("Not found");
+			}
+			_.extend(value, set);
+		});
 	}
 
 	public async upsert(filter: any, set: any, addToSet: any): Promise<void> {

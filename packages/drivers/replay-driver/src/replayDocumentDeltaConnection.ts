@@ -22,7 +22,8 @@ import {
 	IVersion,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { delay, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
 import { ReplayController } from "./replayController";
 
 const ReplayDocumentId = "documentId";
@@ -67,7 +68,7 @@ export class ReplayControllerStatic extends ReplayController {
 	}
 
 	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-		return Promise.reject(new Error("Invalid operation"));
+		throw new Error("Invalid operation");
 	}
 
 	public async getStartingOpSequence(): Promise<number> {

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fromBase64ToUtf8 } from "@fluidframework/common-utils";
+import { fromBase64ToUtf8 } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerPackageInfo,
@@ -76,9 +77,7 @@ async function initializeFluidOfficeOrOneNote(urlSource: URL): Promise<IOdspUrlP
 	const storageType = decodedSite.split(":")[0];
 	const expectedStorageType = "spo"; // Only support spo for now
 	if (storageType !== expectedStorageType) {
-		return Promise.reject(
-			new Error(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`),
-		);
+		throw new Error(`Unexpected storage type ${storageType}, expected: ${expectedStorageType}`);
 	}
 
 	// Since we have the drive and item, only take the host ignore the rest

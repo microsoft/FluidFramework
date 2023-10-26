@@ -2,7 +2,13 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-export { SharedTreeBranch, SharedTreeBranchChange, SharedTreeBranchEvents } from "./branch";
+export {
+	onForkTransitive,
+	SharedTreeBranch,
+	SharedTreeBranchChange,
+	SharedTreeBranchEvents,
+	getChangeReplaceType,
+} from "./branch";
 
 export {
 	ChangeEvents,

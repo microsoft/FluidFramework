@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { assertNotUndefined, ReplaceRecursive } from '../Common';
 // These are re-exported from a persisted-types file.
 import type {
@@ -81,12 +81,12 @@ export type CompressedPlaceholderTree<TId extends OpSpaceNodeId, TPlaceholder ex
 	| [InternedStringId | Definition, TId]
 	| [
 			InternedStringId | Definition,
-			[Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>
+			[Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>,
 	  ]
 	| [
 			InternedStringId | Definition,
 			TId,
-			[Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>
+			[Payload, ...CompressedTraits<TId, TPlaceholder>] | CompressedTraits<TId, TPlaceholder>,
 	  ];
 
 /**
@@ -413,8 +413,12 @@ export const StablePlaceInternal = {
 export const StableRangeInternal = {
 	/**
 	 * Factory for producing a `StableRange` from a start `StablePlace` to an end `StablePlace`.
+	 *
 	 * @example
+	 *
+	 * ```typescript
 	 * StableRange.from(StablePlace.before(startNode)).to(StablePlace.after(endNode))
+	 * ```
 	 */
 	from: (start: StablePlaceInternal): { to: (end: StablePlaceInternal) => StableRangeInternal } => ({
 		to: (end: StablePlaceInternal): StableRangeInternal => {

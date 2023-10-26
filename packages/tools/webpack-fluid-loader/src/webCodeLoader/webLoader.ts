@@ -4,7 +4,6 @@
  */
 
 import {
-	ICodeAllowList,
 	IFluidModule,
 	IFluidCodeResolver,
 	IResolvedFluidCodeDetails,
@@ -13,6 +12,7 @@ import {
 	ICodeDetailsLoader,
 	IFluidModuleWithDetails,
 } from "@fluidframework/container-definitions";
+import { AllowList } from "./allowList";
 import { ScriptManager } from "./scriptManager";
 
 export class WebCodeLoader implements ICodeDetailsLoader {
@@ -24,7 +24,7 @@ export class WebCodeLoader implements ICodeDetailsLoader {
 
 	constructor(
 		private readonly codeResolver: IFluidCodeResolver,
-		private readonly allowList?: ICodeAllowList,
+		private readonly allowList?: AllowList,
 	) {}
 
 	public async seedModule(

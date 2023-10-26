@@ -33,10 +33,12 @@ export {
 	DocumentMapInfo,
 	DocumentMultipleDataStoresInfo,
 	DocumentMatrixInfo,
+	DocumentMatrixPlainInfo,
 	assertDocumentTypeInfo,
 	isDocumentMapInfo,
 	isDocumentMultipleDataStoresInfo,
 	isDocumentMatrixInfo,
+	isDocumentMatrixPlainInfo,
 } from "./describeE2eDocs.js";
 export { ExpectedEvents, ExpectsTest, itExpects } from "./itExpects.js";
 export {
@@ -47,3 +49,7 @@ export {
 	getDriverApi,
 	getLoaderApi,
 } from "./testApi.js";
+export {
+	itExpectsSkipsFailureOnSpecificDrivers,
+	itSkipsFailureOnSpecificDrivers,
+} from "./itSkipsOnFailure.js";

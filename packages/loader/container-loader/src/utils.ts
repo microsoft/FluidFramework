@@ -5,19 +5,16 @@
 
 import { parse } from "url";
 import { v4 as uuid } from "uuid";
-import {
-	assert,
-	stringToBuffer,
-	Uint8ArrayToArrayBuffer,
-	unreachableCase,
-} from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToArrayBuffer } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ISummaryTree, ISnapshotTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { LoggingError } from "@fluidframework/telemetry-utils";
 import {
+	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 
 // This is used when we rehydrate a container from the snapshot. Here we put the blob contents
 // in separate property: blobContents.
@@ -26,9 +23,23 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 	trees: { [path: string]: ISnapshotTreeWithBlobContents };
 }
 
+/**
+ * Interface to represent the parsed parts of IResolvedUrl.url to help
+ * in getting info about different parts of the url.
+ * May not be compatible or relevant for any Url Resolver
+ */
 export interface IParsedUrl {
+	/**
+	 * It is combination of tenantid/docId part of the url.
+	 */
 	id: string;
+	/**
+	 * It is the deep link path in the url.
+	 */
 	path: string;
+	/**
+	 * Query string part of the url.
+	 */
 	query: string;
 	/**
 	 * Null means do not use snapshots, undefined means load latest snapshot
@@ -38,7 +49,15 @@ export interface IParsedUrl {
 	version: string | null | undefined;
 }
 
-export function parseUrl(url: string): IParsedUrl | undefined {
+/**
+ * Utility api to parse the IResolvedUrl.url into specific parts like querystring, path to get
+ * deep link info etc.
+ * Warning - This function may not be compatible with any Url Resolver's resolved url. It works
+ * with urls of type: protocol://<string>/.../..?<querystring>
+ * @param url - This is the IResolvedUrl.url part of the resolved url.
+ * @returns The IParsedUrl representing the input URL, or undefined if the format was not supported
+ */
+export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
 	const parsed = parse(url, true);
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
@@ -49,6 +68,34 @@ export function parseUrl(url: string): IParsedUrl | undefined {
 	return match?.length === 3
 		? { id: match[1], path: match[2], query, version: parsed.query.version as string }
 		: undefined;
+}
+
+/**
+ * Combine the app summary and protocol summary in 1 tree.
+ * @param appSummary - Summary of the app.
+ * @param protocolSummary - Summary of the protocol.
+ * @internal
+ */
+export function combineAppAndProtocolSummary(
+	appSummary: ISummaryTree,
+	protocolSummary: ISummaryTree,
+): CombinedAppAndProtocolSummary {
+	assert(
+		!isCombinedAppAndProtocolSummary(appSummary),
+		0x5a8 /* app summary is already a combined tree! */,
+	);
+	assert(
+		!isCombinedAppAndProtocolSummary(protocolSummary),
+		0x5a9 /* protocol summary is already a combined tree! */,
+	);
+	const createNewSummary: CombinedAppAndProtocolSummary = {
+		type: SummaryType.Tree,
+		tree: {
+			".protocol": protocolSummary,
+			".app": appSummary,
+		},
+	};
+	return createNewSummary;
 }
 
 /**
@@ -156,6 +203,6 @@ export function isDeltaStreamConnectionForbiddenError(
 	return (
 		typeof error === "object" &&
 		error !== null &&
-		error?.errorType === DriverErrorType.deltaStreamConnectionForbidden
+		error?.errorType === DriverErrorTypes.deltaStreamConnectionForbidden
 	);
 }

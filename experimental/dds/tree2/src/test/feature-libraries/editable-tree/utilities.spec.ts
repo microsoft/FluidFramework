@@ -4,74 +4,47 @@
  */
 
 import { fail, strict as assert } from "assert";
-import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import {
-	defaultSchemaPolicy,
 	FieldKinds,
 	Multiplicity,
 	getPrimaryField,
 	getFieldKind,
 	getFieldSchema,
-	SchemaBuilder,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
-import {
-	LocalFieldKey,
-	FieldStoredSchema,
-	InMemoryStoredSchemaRepository,
-	EmptyKey,
-	rootFieldKey,
-	symbolFromKey,
-} from "../../../core";
-import { brand } from "../../../util";
+import { FieldKey, TreeFieldStoredSchema, EmptyKey } from "../../../core";
 import {
 	isPrimitive,
 	getOwnArrayKeys,
 	keyIsValidIndex,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/editable-tree/utilities";
-import {
-	arraySchema,
-	buildTestSchema,
-	int32Schema,
-	mapStringSchema,
-	optionalChildSchema,
-	stringSchema,
-} from "./mockData";
+import { leaf } from "../../../domains";
+import { arraySchema, buildTestSchema, mapStringSchema, optionalChildSchema } from "./mockData";
 
 describe("editable-tree utilities", () => {
 	it("isPrimitive", () => {
-		assert(isPrimitive(int32Schema));
-		assert(isPrimitive(stringSchema));
+		assert(isPrimitive(leaf.number));
+		assert(isPrimitive(leaf.string));
 		assert(!isPrimitive(mapStringSchema));
 		assert(!isPrimitive(optionalChildSchema));
 	});
 
 	it("field utils", () => {
 		const schema =
-			arraySchema.localFields.get(EmptyKey) ?? fail("Expected primary array field");
-		const expectedPrimary: { key: LocalFieldKey; schema: FieldStoredSchema } = {
+			arraySchema.objectNodeFields.get(EmptyKey) ?? fail("Expected primary array field");
+		const expectedPrimary: { key: FieldKey; schema: TreeFieldStoredSchema } = {
 			key: EmptyKey,
 			schema,
 		};
 
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, arraySchema);
+		const rootSchema = TreeFieldSchema.create(FieldKinds.required, [arraySchema]);
 		const fullSchemaData = buildTestSchema(rootSchema);
-		const fullSchema = new InMemoryStoredSchemaRepository(defaultSchemaPolicy, fullSchemaData);
-		assert.equal(getFieldSchema(symbolFromKey(rootFieldKey), fullSchema), fullSchemaData.root);
-		assert.throws(
-			() => getFieldSchema(brand(rootFieldKey), fullSchema),
-			(e) =>
-				validateAssertionError(
-					e,
-					"The field is a local field, a parent schema is required.",
-				),
-			"Expected exception was not thrown",
-		);
 		const primary = getPrimaryField(arraySchema);
 		assert(primary !== undefined);
-		assert.deepEqual(getFieldSchema(primary.key, fullSchema, arraySchema), schema);
+		assert.deepEqual(getFieldSchema(primary.key, arraySchema), schema);
 		assert.equal(
-			getFieldKind(getFieldSchema(primary.key, fullSchema, arraySchema)).multiplicity,
+			getFieldKind(getFieldSchema(primary.key, arraySchema)).multiplicity,
 			Multiplicity.Sequence,
 		);
 		assert.deepEqual(primary, expectedPrimary);

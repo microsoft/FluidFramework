@@ -141,6 +141,17 @@ export const versionSchemeFlag = Flags.custom<VersionScheme | undefined>({
 });
 
 /**
+ * A re-usable CLI flag used to enable test-only behavior in commands. The flag is hidden because it is intended to only
+ * be used for internal testing.
+ */
+export const testModeFlag = Flags.boolean({
+	default: false,
+	description: "Enables test mode. This flag enables other flags used for testing.",
+	hidden: true,
+	helpGroup: "TESTING",
+});
+
+/**
  * Reusable flags for cases where a command typically checks something before taking action. They default to true, but
  * can be negated with `--no-<flag>`. Intended to be used with {@link skipCheckFlag}.
  *
@@ -149,6 +160,7 @@ export const versionSchemeFlag = Flags.custom<VersionScheme | undefined>({
  * You must use these flags in your command logic in order for them to have any effect.
  *
  * @example
+ *
  * All of the check flags can be used like this:
  *
  * ```
@@ -158,6 +170,7 @@ export const versionSchemeFlag = Flags.custom<VersionScheme | undefined>({
  * ```
  *
  * @example
+ *
  * You can also use them individually like so:
  *
  * ```
@@ -254,6 +267,21 @@ export const selectionFlags = {
 };
 
 /**
+ * This interface is used for type enforcement of selection flags. The default oclif typing is complex and difficult to
+ * simplify, so this type just mirrors the object above with simpler typing. This should ONLY be used when processing
+ * raw flags.
+ *
+ * @internal
+ */
+export interface selectionFlags {
+	readonly all: boolean;
+	readonly dir: string | undefined;
+	readonly packages: boolean;
+	readonly releaseGroup: string[] | undefined;
+	readonly releaseGroupRoot: string[] | undefined;
+}
+
+/**
  * A set of flags that can be used to filter selected packages in the repo.
  */
 export const filterFlags = {
@@ -279,3 +307,16 @@ export const filterFlags = {
 		helpGroup: "PACKAGE FILTER",
 	}),
 };
+
+/**
+ * This interface is used for type enforcement of filter flags. The default oclif typing is complex and difficult to
+ * simplify, so this type just mirrors the object above with simpler typing. This should ONLY be used when processing
+ * raw flags.
+ *
+ * @internal
+ */
+export interface filterFlags {
+	readonly private: boolean;
+	readonly scope: string[] | undefined;
+	readonly skipScope: string[] | undefined;
+}

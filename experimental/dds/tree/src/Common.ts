@@ -81,7 +81,7 @@ export function compareStrings<T extends string>(a: T, b: T): number {
  *
  * @remarks
  * To avoid collisions with assertShortCode tagging in Fluid Framework, this cannot be named "assert".
- * When a non constant message is not needed, use `assert` from `@fluidframework/common-utils`;
+ * When a non constant message is not needed, use `assert` from `@fluidframework/core-utils`;
  */
 export function assertWithMessage(condition: unknown, message?: string, notLogSafe = false): asserts condition {
 	// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -144,21 +144,11 @@ export function assertArrayOfOne<T>(array: readonly T[], message = 'array value 
 }
 
 /**
- * Assign a property and value to a given object.
- * @param object - The object to add the property to
- * @param property - The property key
- * @param value - The value of the property
- * @returns `object` after assigning `value` to the property `property`.
- */
-export function assign<T, K extends keyof never, V>(object: T, property: K, value: V): With<T, K, V> {
-	return Object.assign(object, { [property]: value }) as With<T, K, V>;
-}
-
-/**
  * Redefine a property to have the given value. This is simply a type-safe wrapper around
  * `Object.defineProperty`, but it is useful for caching public getters on first read.
  *
  * @example
+ *
  * ```typescript
  * // `randomOnce()` will return a random number, but always the same random number.
  * {
@@ -167,6 +157,7 @@ export function assign<T, K extends keyof never, V>(object: T, property: K, valu
  *   }
  * }
  * ```
+ *
  * @param object - The object containing the property
  * @param propName - The name of the property on the object
  * @param value - The value of the property
@@ -364,6 +355,7 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
 
 /**
  * @example
+ *
  * ```typescript
  * function (thing: ObjectWithMaybeFoo) {
  * 	   const x: MyActualType = {
@@ -375,7 +367,6 @@ export function setPropertyIfDefined<TDst, P extends keyof TDst>(
  * }
  * ```
  */
-
 function breakOnDifference(): { break: boolean } {
 	return { break: true };
 }

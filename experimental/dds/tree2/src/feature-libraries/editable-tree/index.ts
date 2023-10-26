@@ -4,21 +4,15 @@
  */
 
 export {
-	typeSymbol,
 	EditableTree,
 	EditableField,
 	EditableTreeOrPrimitive,
 	proxyTargetSymbol,
 	UnwrappedEditableTree,
 	UnwrappedEditableField,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
-	NewFieldContent,
 	areCursors,
 	localNodeKeySymbol,
+	setField,
 } from "./editableTreeTypes";
 
 export { isEditableField } from "./editableField";
@@ -35,8 +29,10 @@ export {
 	FlushableBinderOptions,
 	FlushableDataBinder,
 	MatchPolicy,
+	SubtreePolicy,
 	BindSyntaxTree,
 	indexSymbol,
+	BindPolicy,
 	BindTree,
 	BindTreeDefault,
 	DownPath,
@@ -48,7 +44,6 @@ export {
 	BindingContext,
 	DeleteBindingContext,
 	InsertBindingContext,
-	SetValueBindingContext,
 	BatchBindingContext,
 	InvalidationBindingContext,
 	OperationBinderEvents,
@@ -63,4 +58,4 @@ export {
 
 export { EditableTreeContext, getEditableTreeContext } from "./editableTreeContext";
 
-export { isPrimitive } from "./utilities";
+export { isPrimitive, treeStatusFromPath } from "./utilities";

@@ -266,6 +266,7 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 		model.sendCustomDebugSignal();
 	};
 
+	/* eslint-disable @typescript-eslint/no-misused-promises */
 	return (
 		// TODO: Gray button if not "authenticated" via debug controls
 		// TODO: Conflict UI
@@ -284,4 +285,5 @@ export const ExternalServerTaskListView: React.FC<ExternalServerTaskListViewProp
 			<button onClick={writeToExternalServer}>Save Changes</button>
 		</div>
 	);
+	/* eslint-enable @typescript-eslint/no-misused-promises */
 };

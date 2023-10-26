@@ -20,6 +20,10 @@ export class MongoDocumentRepository implements IDocumentRepository {
 			: this.collection.update(filter, update, addToSet, options));
 	}
 
+	async deleteOne(filter: any): Promise<any> {
+		return this.collection.deleteOne(filter);
+	}
+
 	async findOneOrCreate(
 		filter: any,
 		value: any,

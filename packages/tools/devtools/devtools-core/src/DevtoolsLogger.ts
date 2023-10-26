@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { TelemetryLogger } from "@fluidframework/telemetry-utils";
+import {
+	type ITelemetryBaseEvent,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 
 import {
 	GetTelemetryHistory,
 	handleIncomingWindowMessage,
-	IDevtoolsMessage,
-	InboundHandlers,
-	MessageLoggingOptions,
+	type IDevtoolsMessage,
+	type InboundHandlers,
+	type MessageLoggingOptions,
 	postMessagesToWindow,
 	TelemetryHistory,
 	TelemetryEvent,
 } from "./messaging";
-import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
+import { type ITimestampedTelemetryEvent } from "./TelemetryMetadata";
 
 /**
  * Logger implementation that posts all telemetry events to the window (globalThis object).
@@ -43,7 +45,7 @@ import { ITimestampedTelemetryEvent } from "./TelemetryMetadata";
  * @sealed
  * @public
  */
-export class DevtoolsLogger extends TelemetryLogger {
+export class DevtoolsLogger implements ITelemetryBaseLogger {
 	/**
 	 * Base telemetry logger provided by the consumer.
 	 * All messages sent to the Devtools logger will be forwarded to this.
@@ -97,8 +99,6 @@ export class DevtoolsLogger extends TelemetryLogger {
 	// #endregion
 
 	public constructor(baseLogger?: ITelemetryBaseLogger) {
-		super();
-
 		this.baseLogger = baseLogger;
 
 		this._telemetryLog = [];
@@ -118,7 +118,7 @@ export class DevtoolsLogger extends TelemetryLogger {
 
 		try {
 			const newEvent: ITimestampedTelemetryEvent = {
-				logContent: this.prepareEvent(event),
+				logContent: event,
 				timestamp: Date.now(),
 			};
 

@@ -38,6 +38,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private current = new Map<string, ISequencedOperationMessage[]>();
 	private readonly clientFacadeRetryEnabled: boolean;
 	private readonly telemetryEnabled: boolean;
+	private readonly shouldLogInitialSuccessVerbose: boolean;
 	private pendingMetric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined;
 	private readonly maxDbBatchSize: number;
 	private readonly restartOnCheckpointFailure: boolean;
@@ -49,6 +50,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 		this.telemetryEnabled = this.providerConfig?.enableTelemetry;
+		this.shouldLogInitialSuccessVerbose =
+			this.providerConfig?.shouldLogInitialSuccessVerbose ?? false;
 		this.maxDbBatchSize = this.providerConfig?.maxDbBatchSize ?? 1000;
 		this.restartOnCheckpointFailure = this.providerConfig?.restartOnCheckpointFailure;
 	}
@@ -165,8 +168,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			}
 		}
 
-		Promise.all(allProcessed).then(
-			() => {
+		Promise.all(allProcessed)
+			.then(() => {
 				this.current.clear();
 				status = ScriptoriumStatus.ProcessingComplete;
 				metric?.setProperty("timestampProcessingComplete", new Date().toISOString());
@@ -196,8 +199,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 				// continue with next batch
 				this.sendPending();
-			},
-			(error) => {
+			})
+			.catch((error) => {
 				// catches error if any of the promises failed in Promise.all, i.e. any of the ops failed to write to db
 				status = ScriptoriumStatus.ProcessingFailed;
 				metric?.setProperty("timestampProcessingFailed", new Date().toISOString());
@@ -206,8 +209,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 
 				// Restart scriptorium
 				this.context.error(error, { restart: true });
-			},
-		);
+			});
 	}
 
 	private logErrorTelemetry(
@@ -262,6 +264,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 			undefined /* calculateIntervalMs */,
 			undefined /* onErrorFn */,
 			this.telemetryEnabled,
+			this.shouldLogInitialSuccessVerbose,
 		);
 	}
 }

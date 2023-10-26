@@ -2,11 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import fs from "fs";
-import path from "path";
+import { strict as assert } from "node:assert";
+import fs from "node:fs";
+import path from "node:path";
+
 import execa from "execa";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -30,6 +31,9 @@ import {
 	runTestForSeed,
 	Synchronize,
 	DDSFuzzHarnessEvents,
+	mixinRebase,
+	TriggerRebase,
+	mixinAttach,
 } from "../ddsFuzzHarness";
 import { Operation, SharedNothingFactory, baseModel } from "./sharedNothing";
 
@@ -37,9 +41,11 @@ type Model = DDSFuzzModel<SharedNothingFactory, Operation | ChangeConnectionStat
 
 /**
  * Mixes in spying functionality to a DDS fuzz model.
- * @returns - A derived DDS fuzz model alongside spied lists of:
+ * @returns A derived DDS fuzz model alongside spied lists of:
+ *
  * - operations returned by any generator produced by the model's generator factory.
  * If multiple generators are created by the model, all operations end up in this flat list.
+ *
  * - operations processed by the reducer of the model
  *
  * These spy lists are used to validate the behavior of the harness in subsequent tests.
@@ -80,6 +86,25 @@ function mixinSpying<
 	};
 }
 
+function verifyClientsSendOpsToEachOther(state: DDSFuzzTestState<SharedNothingFactory>): void {
+	const { clients, containerRuntimeFactory } = state;
+	containerRuntimeFactory.processAllMessages();
+	for (const client of clients) {
+		// Send an op from each client, synchronize, and verify that each other client processed one more message.
+		const processCoreCallsByClient = clients.map(({ channel }) => channel.processCoreCalls);
+		client.channel.noop();
+		containerRuntimeFactory.processAllMessages();
+		for (const [i, { channel }] of clients.entries()) {
+			assert.equal(channel.processCoreCalls, processCoreCallsByClient[i] + 1);
+		}
+	}
+}
+
+const defaultOptions: DDSFuzzSuiteOptions = {
+	...defaultDDSFuzzSuiteOptions,
+	detachedStartOptions: { enabled: false, attachProbability: 0 },
+};
+
 describe("DDS Fuzz Harness", () => {
 	// This harness relies on some specific behavior of the shared mocks: putting acceptance tests here
 	// for that behavior makes them brittle.
@@ -105,7 +130,7 @@ describe("DDS Fuzz Harness", () => {
 				...baseModel,
 				generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
 			};
-			const finalState = await runTestForSeed(model, defaultDDSFuzzSuiteOptions, 0);
+			const finalState = await runTestForSeed(model, defaultOptions, 0);
 			assert.equal(finalState.summarizerClient.containerRuntime.clientId, "summarizer");
 			for (const client of finalState.clients) {
 				assert.equal(client.containerRuntime.clientId, client.channel.id);
@@ -121,7 +146,7 @@ describe("DDS Fuzz Harness", () => {
 				...baseModel,
 				generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
 			};
-			const finalState = await runTestForSeed(model, defaultDDSFuzzSuiteOptions, 0);
+			const finalState = await runTestForSeed(model, defaultOptions, 0);
 			assert(finalState.summarizerClient.channel.methodCalls.includes("summarizeCore"));
 			for (const client of finalState.clients) {
 				assert.deepEqual(client.channel.methodCalls, ["loadCore"]);
@@ -133,9 +158,13 @@ describe("DDS Fuzz Harness", () => {
 		const synchronize: Synchronize = { type: "synchronize" };
 		describe("with fixed interval validation", () => {
 			const options: DDSFuzzSuiteOptions = {
-				...defaultDDSFuzzSuiteOptions,
+				...defaultOptions,
 				validationStrategy: { type: "fixedInterval", interval: 2 },
 				reconnectProbability: 0,
+				detachedStartOptions: {
+					enabled: false,
+					attachProbability: 1,
+				},
 			};
 
 			it("generates synchronize ops", async () => {
@@ -234,7 +263,6 @@ describe("DDS Fuzz Harness", () => {
 											// `mixinClientSelection`. To keep this test simple, we do that manually
 											// here instead.
 											state.client = state.clients[0];
-											state.channel = state.client.channel;
 											return {
 												type: "changeConnectionState",
 												connected: false,
@@ -268,6 +296,10 @@ describe("DDS Fuzz Harness", () => {
 			const options: DDSFuzzSuiteOptions = {
 				...defaultDDSFuzzSuiteOptions,
 				validationStrategy: { type: "random", probability: 0.25 },
+				detachedStartOptions: {
+					enabled: false,
+					attachProbability: 1,
+				},
 			};
 			it("generates synchronize ops", async () => {
 				const { model, generatedOperations } = mixinSpying(
@@ -288,7 +320,7 @@ describe("DDS Fuzz Harness", () => {
 	});
 
 	describe("mixinReconnect", () => {
-		const options = { ...defaultDDSFuzzSuiteOptions, reconnectProbability: 0.25 };
+		const options = { ...defaultOptions, reconnectProbability: 0.25 };
 		it("generates reconnection ops", async () => {
 			const { model, generatedOperations } = mixinSpying(
 				mixinClientSelection(
@@ -325,7 +357,6 @@ describe("DDS Fuzz Harness", () => {
 								state: DDSFuzzTestState<SharedNothingFactory>,
 							): Promise<ChangeConnectionState> => {
 								state.client = state.clients[0];
-								state.channel = state.client.channel;
 								return {
 									type: "changeConnectionState",
 									connected: false,
@@ -344,8 +375,32 @@ describe("DDS Fuzz Harness", () => {
 		});
 	});
 
+	describe("mixinRebase", () => {
+		const options = { ...defaultDDSFuzzSuiteOptions, rebaseProbability: 0.5 };
+		it("generates rebasing ops", async () => {
+			const count = 20;
+			const { model, generatedOperations } = mixinSpying(
+				mixinClientSelection(
+					mixinRebase(
+						{
+							...baseModel,
+							generatorFactory: () => takeAsync(count, baseModel.generatorFactory()),
+						},
+						options,
+					),
+					options,
+				),
+			);
+			await runTestForSeed(model, options, 0);
+			const rebaseOps: TriggerRebase[] = generatedOperations.filter<TriggerRebase>(
+				(op): op is TriggerRebase => op !== done && op.type === "rebase",
+			);
+			assert(rebaseOps.length > 0 && rebaseOps.length <= count / 2);
+		});
+	});
+
 	describe("mixinClientSelection", () => {
-		const options = defaultDDSFuzzSuiteOptions;
+		const options = defaultOptions;
 		it("selects a client for each operation", async () => {
 			const generatorSelectionCounts = new Counter<string>();
 			const reducerSelectionCounts = new Counter<string>();
@@ -354,12 +409,13 @@ describe("DDS Fuzz Harness", () => {
 					...baseModel,
 					generatorFactory: () =>
 						takeAsync(30, async (state: DDSFuzzTestState<SharedNothingFactory>) => {
-							generatorSelectionCounts.increment(state.channel.id);
+							generatorSelectionCounts.increment(state.client.channel.id);
 							return { type: "noop" };
 						}),
-					reducer: async ({ channel }) => {
-						reducerSelectionCounts.increment(channel.id);
+					reducer: async ({ client }) => {
+						reducerSelectionCounts.increment(client.channel.id);
 					},
+					minimizationTransforms: [],
 				},
 				options,
 			);
@@ -394,7 +450,7 @@ describe("DDS Fuzz Harness", () => {
 	describe("mixinNewClient", () => {
 		it("can add new clients to the fuzz test", async () => {
 			const options = {
-				...defaultDDSFuzzSuiteOptions,
+				...defaultOptions,
 				numberOfClients: 3,
 				clientJoinOptions: {
 					maxNumberOfClients: 4,
@@ -414,6 +470,105 @@ describe("DDS Fuzz Harness", () => {
 		});
 	});
 
+	describe("mixinAttach", () => {
+		describe("with detached start enabled", () => {
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+			const makeOptions = (): DDSFuzzSuiteOptions => ({
+				...defaultDDSFuzzSuiteOptions,
+				numberOfClients: 3,
+				detachedStartOptions: {
+					enabled: true,
+					attachProbability: 1,
+				},
+				emitter: new TypedEventEmitter(),
+			});
+
+			it("starts from a state with one client", async () => {
+				const options = makeOptions();
+
+				let testStartAssertsRan = false;
+				options.emitter.on(
+					"testStart",
+					(initialState: DDSFuzzTestState<SharedNothingFactory>) => {
+						assert.equal(initialState.clients.length, 1);
+						assert.equal(initialState.clients[0].channel.isAttached(), false);
+						assert.equal(initialState.clients[0], initialState.summarizerClient);
+						testStartAssertsRan = true;
+					},
+				);
+				const model = mixinAttach(
+					{
+						...baseModel,
+						generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
+					},
+					options,
+				);
+				await runTestForSeed(model, options, 0);
+				assert.equal(testStartAssertsRan, true);
+			});
+
+			it("causes other clients to join after attach", async () => {
+				const options = makeOptions();
+
+				const { model, generatedOperations } = mixinSpying(
+					mixinAttach(
+						{
+							...baseModel,
+							generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
+						},
+						options,
+					),
+				);
+				const finalState = await runTestForSeed(model, options, 0);
+				assert.deepEqual(
+					finalState.clients.map((client) => client.channel.id),
+					["A", "B", "C"],
+				);
+				assert.equal(finalState.summarizerClient.channel.id, "summarizer");
+				assert.deepEqual(generatedOperations[0], { type: "attach" });
+				verifyClientsSendOpsToEachOther(finalState);
+			});
+		});
+
+		describe("with detached start disabled", () => {
+			// eslint-disable-next-line unicorn/consistent-function-scoping
+			const makeOptions = (): DDSFuzzSuiteOptions => ({
+				...defaultDDSFuzzSuiteOptions,
+				numberOfClients: 3,
+				detachedStartOptions: {
+					enabled: false,
+					attachProbability: 0,
+				},
+				emitter: new TypedEventEmitter(),
+			});
+
+			it("starts from an attached state with more than one client", async () => {
+				const options = makeOptions();
+
+				let testStartAssertsRan = false;
+				options.emitter.on(
+					"testStart",
+					(initialState: DDSFuzzTestState<SharedNothingFactory>) => {
+						assert.equal(initialState.clients.length, 3);
+						assert.equal(initialState.clients[0].channel.isAttached(), true);
+						assert.notEqual(initialState.clients[0], initialState.summarizerClient);
+						verifyClientsSendOpsToEachOther(initialState);
+						testStartAssertsRan = true;
+					},
+				);
+				const model = mixinAttach(
+					{
+						...baseModel,
+						generatorFactory: () => takeAsync(1, baseModel.generatorFactory()),
+					},
+					options,
+				);
+				await runTestForSeed(model, options, 0);
+				assert.equal(testStartAssertsRan, true);
+			});
+		});
+	});
+
 	describe("events", () => {
 		describe("clientCreate", () => {
 			it("is raised for initial clients before generating any operations", async () => {
@@ -423,7 +578,7 @@ describe("DDS Fuzz Harness", () => {
 					log.push(client.containerRuntime.clientId);
 				});
 				const options = {
-					...defaultDDSFuzzSuiteOptions,
+					...defaultOptions,
 					numberOfClients: 3,
 					emitter,
 				};
@@ -438,7 +593,7 @@ describe("DDS Fuzz Harness", () => {
 				};
 				const finalState = await runTestForSeed(model, options, 0);
 				assert.equal(finalState.clients.length, 3);
-				assert.deepEqual(log, ["A", "B", "C", "generated an operation"]);
+				assert.deepEqual(log, ["summarizer", "A", "B", "C", "generated an operation"]);
 			});
 
 			it("is raised for clients added to the test mid-run", async () => {
@@ -448,7 +603,7 @@ describe("DDS Fuzz Harness", () => {
 					log.push(client.containerRuntime.clientId);
 				});
 				const options = {
-					...defaultDDSFuzzSuiteOptions,
+					...defaultOptions,
 					numberOfClients: 3,
 					clientJoinOptions: {
 						maxNumberOfClients: 4,
@@ -464,7 +619,7 @@ describe("DDS Fuzz Harness", () => {
 					options,
 				);
 				await runTestForSeed(model, options, 0);
-				assert.deepEqual(log, ["A", "B", "C", "D"]);
+				assert.deepEqual(log, ["summarizer", "A", "B", "C", "D"]);
 			});
 		});
 		describe("testStart", () => {
@@ -478,7 +633,7 @@ describe("DDS Fuzz Harness", () => {
 					log.push("testStart");
 				});
 				const options = {
-					...defaultDDSFuzzSuiteOptions,
+					...defaultOptions,
 					numberOfClients: 3,
 					emitter,
 				};
@@ -493,7 +648,14 @@ describe("DDS Fuzz Harness", () => {
 				};
 				const finalState = await runTestForSeed(model, options, 0);
 				assert.equal(finalState.clients.length, 3);
-				assert.deepEqual(log, ["A", "B", "C", "testStart", "generated an operation"]);
+				assert.deepEqual(log, [
+					"summarizer",
+					"A",
+					"B",
+					"C",
+					"testStart",
+					"generated an operation",
+				]);
 			});
 		});
 		describe("testEnd", () => {
@@ -507,7 +669,7 @@ describe("DDS Fuzz Harness", () => {
 					log.push("testEnd");
 				});
 				const options = {
-					...defaultDDSFuzzSuiteOptions,
+					...defaultOptions,
 					numberOfClients: 3,
 					emitter,
 				};
@@ -522,7 +684,14 @@ describe("DDS Fuzz Harness", () => {
 				};
 				const finalState = await runTestForSeed(model, options, 0);
 				assert.equal(finalState.clients.length, 3);
-				assert.deepEqual(log, ["A", "B", "C", "generated an operation", "testEnd"]);
+				assert.deepEqual(log, [
+					"summarizer",
+					"A",
+					"B",
+					"C",
+					"generated an operation",
+					"testEnd",
+				]);
 			});
 		});
 	});
@@ -571,7 +740,7 @@ describe("DDS Fuzz Harness", () => {
 					env: {
 						FLUID_TEST_VERBOSE: undefined,
 					},
-					encoding: "utf-8",
+					encoding: "utf8",
 					reject: false,
 				},
 			);
@@ -693,15 +862,34 @@ describe("DDS Fuzz Harness", () => {
 				);
 			});
 
-			it("causes failure files to be written to disk", () => {
-				assert(fs.existsSync(path.join(jsonDir, "0.json")));
-				assert(fs.existsSync(path.join(jsonDir, "1.json")));
-				const contents: unknown = JSON.parse(
-					// eslint-disable-next-line unicorn/prefer-json-parse-buffer
-					fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf-8" }),
-				);
-				assert.deepEqual(contents, [{ type: "noop", clientId: "B" }]);
-			});
+			const inCi = !!process.env.TF_BUILD;
+			if (inCi) {
+				it("doesn't cause failure files to be written to disk", () => {
+					const file0Exists = fs.existsSync(path.join(jsonDir, "0.json"));
+					const file1Exists = fs.existsSync(path.join(jsonDir, "1.json"));
+
+					// we don't write files in CI to avoid superfluous computation
+					assert(!file0Exists, "expected file0 to not be written in CI");
+					assert(!file1Exists, "expected file0 to not be written in CI");
+				});
+			} else {
+				it("causes failure files to be written to disk", () => {
+					const file0Exists = fs.existsSync(path.join(jsonDir, "0.json"));
+					const file1Exists = fs.existsSync(path.join(jsonDir, "1.json"));
+
+					assert(file0Exists);
+					assert(file1Exists);
+
+					const contents: unknown = JSON.parse(
+						// eslint-disable-next-line unicorn/prefer-json-parse-buffer
+						fs.readFileSync(path.join(jsonDir, "0.json"), { encoding: "utf8" }),
+					);
+					assert.deepEqual(contents, [
+						{ type: "attach" },
+						{ clientId: "B", type: "noop" },
+					]);
+				});
+			}
 		});
 
 		describe("replay", () => {

@@ -5,7 +5,9 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidSerializer, ValueType } from "@fluidframework/shared-object-base";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+// eslint-disable-next-line import/no-deprecated
 import { ISerializableValue, ISerializedValue, ISharedMapEvents } from "./interfaces";
 import {
 	IMapSetOperation,
@@ -59,6 +61,7 @@ export type IMapOperation = IMapKeyOperation | IMapClearOperation;
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  */
 export interface IMapDataObjectSerializable {
+	// eslint-disable-next-line import/no-deprecated
 	[key: string]: ISerializableValue;
 }
 
@@ -342,6 +345,9 @@ export class MapKernel {
 		// Clear the data locally first.
 		this.clearCore(true);
 
+		// Clear the pendingKeys immediately, the local unack'd operations are aborted
+		this.pendingKeys.clear();
+
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
 			return;
@@ -547,8 +553,11 @@ export class MapKernel {
 		// we will get the value for the pendingKeys and clear the map
 		const temp = new Map<string, ILocalValue>();
 		for (const key of this.pendingKeys.keys()) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			temp.set(key, this.data.get(key)!);
+			// Verify if the most recent pending operation is a delete op, no need to retain it if so.
+			// This ensures the map size remains consistent.
+			if (this.data.has(key)) {
+				temp.set(key, this.data.get(key) as ILocalValue);
+			}
 		}
 		this.clearCore(false);
 		for (const [key, value] of temp.entries()) {
@@ -566,6 +575,7 @@ export class MapKernel {
 	 * @param serializable - The remote information that we can convert into a real object
 	 * @returns The local value that was produced
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
 		if (
 			serializable.type === ValueType[ValueType.Plain] ||
@@ -771,13 +781,16 @@ export class MapKernel {
 			0x2fe /* Invalid localOpMetadata in submit */,
 		);
 
-		// clear the old pending message id
+		// no need to submit messages for op's that have been aborted
 		const pendingMessageIds = this.pendingKeys.get(op.key);
-		assert(
-			pendingMessageIds !== undefined &&
-				pendingMessageIds[0] === localOpMetadata.pendingMessageId,
-			0x2ff /* Unexpected pending message received */,
-		);
+		if (
+			pendingMessageIds === undefined ||
+			pendingMessageIds[0] !== localOpMetadata.pendingMessageId
+		) {
+			return;
+		}
+
+		// clear the old pending message id
 		pendingMessageIds.shift();
 		if (pendingMessageIds.length === 0) {
 			this.pendingKeys.delete(op.key);

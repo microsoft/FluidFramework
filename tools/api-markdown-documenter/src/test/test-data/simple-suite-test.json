@@ -438,7 +438,7 @@
 						{
 							"kind": "Constructor",
 							"canonicalReference": "simple-suite-test!TestClass:constructor(1)",
-							"docComment": "/**\n * Test class constructor\n *\n * @remarks\n *\n * Here are some remarks about the constructor\n *\n * @param privateProperty - See {@link TestAbstractClass}'s constructor.\n *\n * @param protectedProperty - See {@link TestAbstractClass.protectedProperty}.\n *\n * @param testClassProperty - See {@link TestClass.testClassProperty}.\n *\n * @param testClassEventProperty - See {@link TestClass.testClassEventProperty}.\n */\n",
+							"docComment": "/**\n * Test class constructor\n *\n * @remarks\n *\n * Here are some remarks about the constructor\n *\n * @param privateProperty - See {@link TestAbstractClass}'s constructor.\n *\n * @param protectedProperty - Some notes about the parameter.\n *\n * See {@link TestAbstractClass.protectedProperty}.\n *\n * @param testClassProperty - See {@link TestClass.testClassProperty}.\n *\n * @param testClassEventProperty - See {@link TestClass.testClassEventProperty}.\n */\n",
 							"excerptTokens": [
 								{
 									"kind": "Content",
@@ -826,7 +826,7 @@
 				{
 					"kind": "Variable",
 					"canonicalReference": "simple-suite-test!testConst:var",
-					"docComment": "/**\n * Test Constant\n *\n * @remarks\n *\n * Here are some remarks about the variable\n *\n * @public\n */\n",
+					"docComment": "/**\n * Test Constant\n *\n * @remarks\n *\n * Here are some remarks about the variable\n *\n * @beta\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",
@@ -842,7 +842,7 @@
 						"endIndex": 2
 					},
 					"isReadonly": true,
-					"releaseTag": "Public",
+					"releaseTag": "Beta",
 					"name": "testConst",
 					"variableTypeTokenRange": {
 						"startIndex": 0,
@@ -973,7 +973,7 @@
 				{
 					"kind": "Function",
 					"canonicalReference": "simple-suite-test!testFunction:function(1)",
-					"docComment": "/**\n * Test function\n *\n * @remarks\n *\n * This is a test {@link TestInterface | link} to another API member\n *\n * @param testParameter - A test parameter\n *\n * @param testParameter - An optional parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * An Error when something bad happens.\n *\n * @public\n */\n",
+					"docComment": "/**\n * Test function\n *\n * @remarks\n *\n * This is a test {@link TestInterface | link} to another API member\n *\n * @param testParameter - A test parameter\n *\n * @param testParameter - An optional parameter\n *\n * @typeParam TTypeParameter - A test type parameter\n *\n * @returns The provided parameter\n *\n * @throws\n *\n * An Error when something bad happens.\n *\n * @alpha\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",
@@ -1008,7 +1008,7 @@
 						"startIndex": 5,
 						"endIndex": 6
 					},
-					"releaseTag": "Public",
+					"releaseTag": "Alpha",
 					"overloadIndex": 1,
 					"parameters": [
 						{
@@ -1717,7 +1717,7 @@
 				{
 					"kind": "Namespace",
 					"canonicalReference": "simple-suite-test!TestNamespace:namespace",
-					"docComment": "/**\n * Test Namespace\n *\n * @remarks\n *\n * Here are some remarks about the namespace\n *\n * @example\n *\n * Example 1\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @example\n *\n * Example 2\n * ```javascript\n * const bar = foo\n * ```\n *\n * @public\n */\n",
+					"docComment": "/**\n * Test Namespace\n *\n * @remarks\n *\n * Here are some remarks about the namespace\n *\n * @example TypeScript Example\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @example JavaScript Example\n *\n * ```javascript\n * const bar = foo\n * ```\n *\n * @public\n */\n",
 					"excerptTokens": [
 						{
 							"kind": "Content",

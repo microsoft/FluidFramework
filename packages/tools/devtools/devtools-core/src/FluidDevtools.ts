@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/container-utils";
+import { UsageError } from "@fluidframework/telemetry-utils";
 
-import { ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
-import { IContainerDevtools } from "./IContainerDevtools";
+import { type ContainerDevtoolsProps, ContainerDevtools } from "./ContainerDevtools";
+import { type IContainerDevtools } from "./IContainerDevtools";
 import {
 	ContainerList,
 	DevtoolsDisposed,
@@ -14,16 +14,16 @@ import {
 	GetContainerList,
 	GetDevtoolsFeatures,
 	handleIncomingWindowMessage,
-	InboundHandlers,
-	ISourcedDevtoolsMessage,
-	MessageLoggingOptions,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
+	type MessageLoggingOptions,
 	postMessagesToWindow,
 } from "./messaging";
-import { IFluidDevtools } from "./IFluidDevtools";
-import { DevtoolsFeature, DevtoolsFeatureFlags } from "./Features";
-import { DevtoolsLogger } from "./DevtoolsLogger";
-import { VisualizeSharedObject } from "./data-visualization";
-import { ContainerKey } from "./CommonInterfaces";
+import { type IFluidDevtools } from "./IFluidDevtools";
+import { type DevtoolsFeatureFlags } from "./Features";
+import { type DevtoolsLogger } from "./DevtoolsLogger";
+import { type ContainerKey } from "./CommonInterfaces";
+import { pkgVersion as devtoolsVersion } from "./packageVersion";
 
 /**
  * Message logging options used by the root devtools.
@@ -85,19 +85,7 @@ export interface FluidDevtoolsProps {
 	 */
 	initialContainers?: ContainerDevtoolsProps[];
 
-	/**
-	 * (optional) Configurations for generating visual representations of
-	 * {@link @fluidframework/shared-object-base#ISharedObject}s associated with individual Containers.
-	 *
-	 * @remarks
-	 *
-	 * If not specified, then only `SharedObject` types natively known by the system will be visualized, and using
-	 * default visualization implementations.
-	 *
-	 * Any visualizer configurations specified here will take precedence over system defaults.
-	 * They can also be overridden on a per-Container basis when registering individual Containers.
-	 */
-	dataVisualizers?: Record<string, VisualizeSharedObject>;
+	// TODO: Add ability for customers to specify custom data visualizer overrides
 }
 
 /**
@@ -138,13 +126,6 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerDevtools} instance.
 	 */
 	private readonly containers: Map<ContainerKey, ContainerDevtools>;
-
-	/**
-	 * Global data visualizers to apply to all {@link IContainerDevtools} instances registered with this object.
-	 *
-	 * @remarks If the user specifies data visualizers alongside a specific Container, those will take precedence over these.
-	 */
-	private readonly dataVisualizers?: Record<string, VisualizeSharedObject>;
 
 	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
@@ -198,6 +179,7 @@ export class FluidDevtools implements IFluidDevtools {
 			devtoolsMessageLoggingOptions,
 			DevtoolsFeatures.createMessage({
 				features: supportedFeatures,
+				devtoolsVersion,
 			}),
 		);
 	};
@@ -238,7 +220,6 @@ export class FluidDevtools implements IFluidDevtools {
 		}
 
 		this.logger = props?.logger;
-		this.dataVisualizers = props?.dataVisualizers;
 
 		// Register listener for inbound messages from the Window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
@@ -261,14 +242,14 @@ export class FluidDevtools implements IFluidDevtools {
 	 * be returned.
 	 */
 	public static initialize(props?: FluidDevtoolsProps): FluidDevtools {
-		if (FluidDevtools.I !== undefined) {
+		if (FluidDevtools.I === undefined) {
+			FluidDevtools.I = new FluidDevtools(props);
+		} else {
 			console.warn(
 				"Devtools have already been initialized. " +
 					"Existing Devtools instance must be disposed before new ones may be initialized. " +
 					"Returning existing Devtools instance.",
 			);
-		} else {
-			FluidDevtools.I = new FluidDevtools(props);
 		}
 
 		return FluidDevtools.I;
@@ -299,17 +280,14 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		const { containerKey, dataVisualizers: containerVisualizers } = props;
+		const { containerKey } = props;
 
 		if (this.containers.has(containerKey)) {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
 		}
 
-		const dataVisualizers = mergeDataVisualizers(this.dataVisualizers, containerVisualizers);
-
 		const containerDevtools = new ContainerDevtools({
 			...props,
-			dataVisualizers,
 		});
 		this.containers.set(containerKey, containerDevtools);
 
@@ -361,14 +339,14 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.disposed}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/common-definitions#IDisposable.dispose}
+	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.dispose}
 	 */
 	public dispose(): void {
 		if (this.disposed) {
@@ -402,29 +380,11 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
 		return {
-			[DevtoolsFeature.Telemetry]: this.logger !== undefined,
+			telemetry: this.logger !== undefined,
+			// Completed but disabled until we finish the story for unsampled telemetry that powers this feature
+			opLatencyTelemetry: false,
 		};
 	}
-}
-
-/**
- * Merges an optional set of global visualizers with an optional set of Container-local visualizers, such that
- * Container-level visualizers take precedence when present.
- */
-function mergeDataVisualizers(
-	globalVisualizers?: Record<string, VisualizeSharedObject>,
-	containerVisualizers?: Record<string, VisualizeSharedObject>,
-): Record<string, VisualizeSharedObject> | undefined {
-	if (globalVisualizers === undefined) {
-		return containerVisualizers;
-	}
-	if (containerVisualizers === undefined) {
-		return globalVisualizers;
-	}
-	return {
-		...globalVisualizers,
-		...containerVisualizers,
-	};
 }
 
 /**

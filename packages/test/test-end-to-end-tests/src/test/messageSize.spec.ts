@@ -17,8 +17,8 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
-import { IContainer, IErrorBase } from "@fluidframework/container-definitions";
-import { GenericError } from "@fluidframework/container-utils";
+import { IContainer } from "@fluidframework/container-definitions";
+import { FluidErrorTypes, IErrorBase } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { CompressionAlgorithms, ContainerMessageType } from "@fluidframework/container-runtime";
 import {
@@ -26,7 +26,7 @@ import {
 	ISequencedDocumentMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { ConfigTypes, GenericError, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
 describeNoCompat("Message size", (getTestObjectProvider) => {
 	const mapId = "mapId";
@@ -133,11 +133,11 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 			} catch {}
 
 			const error = await errorEvent;
-			assert.ok(error instanceof GenericError);
-			assert.ok(error.getTelemetryProperties().opSize ?? 0 > maxMessageSizeInBytes);
+			assert.equal(error?.errorType, FluidErrorTypes.genericError);
+			assert.ok(error.getTelemetryProperties?.().opSize ?? 0 > maxMessageSizeInBytes);
 
 			// Limit has to be around 1Mb, but we should not assume here precise number.
-			const limit = error.getTelemetryProperties().limit as number;
+			const limit = error.getTelemetryProperties?.().limit as number;
 			assert(limit > maxMessageSizeInBytes / 2);
 			assert(limit < maxMessageSizeInBytes * 2);
 		},
@@ -393,10 +393,6 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 						eventName: "fluid:telemetry:Container:ContainerClose",
 						error: "BatchTooLarge",
 					},
-					{
-						eventName: "fluid:telemetry:Container:ContainerDispose",
-						error: "BatchTooLarge",
-					},
 				],
 				async function () {
 					const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
@@ -580,7 +576,9 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
-					(op) => op.contents?.type === ContainerMessageType.ChunkedOp,
+					(op) =>
+						(op.contents as { type?: unknown } | undefined)?.type ===
+						ContainerMessageType.ChunkedOp,
 					2,
 				);
 
@@ -643,7 +641,8 @@ describeNoCompat("Message size", (getTestObjectProvider) => {
 					localContainer,
 					(batch) =>
 						batch.length === 1 &&
-						JSON.parse(batch[0].contents)?.type === ContainerMessageType.ChunkedOp,
+						JSON.parse(batch[0].contents as string)?.type ===
+							ContainerMessageType.ChunkedOp,
 					2,
 				);
 

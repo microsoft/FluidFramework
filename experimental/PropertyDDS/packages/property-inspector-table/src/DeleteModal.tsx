@@ -79,6 +79,7 @@ class DeleteModal extends React.Component<
 
 	public render() {
 		const textParameters = this.props.modalTextParameters;
+		/* eslint-disable @typescript-eslint/no-misused-promises */
 		return (
 			<InspectorModal title={textParameters.modalHeader}>
 				<div className={this.props.classes!.contentContainer}>
@@ -114,6 +115,7 @@ class DeleteModal extends React.Component<
 				</div>
 			</InspectorModal>
 		);
+		/* eslint-enable @typescript-eslint/no-misused-promises */
 	}
 
 	private readonly deleteHandler = async () => {

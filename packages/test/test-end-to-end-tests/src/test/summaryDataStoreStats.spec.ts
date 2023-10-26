@@ -19,7 +19,7 @@ import {
 import { ITelemetryBaseEvent, IRequest } from "@fluidframework/core-interfaces";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { MockLogger, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import { ITestObjectProvider, timeoutAwait } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 
@@ -61,13 +61,12 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataObjectFactory,
+		registryEntries: [[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
+		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-	);
+	});
 
 	let mainContainer: IContainer;
 	let mainDataStore: TestDataObject;
@@ -98,7 +97,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 			if (
 				event.eventName === "fluid:telemetry:Summarizer:Running:Summarize_generate" &&
 				event.referenceSequenceNumber
-					? event.referenceSequenceNumber >= sequenceNumber
+					? (event.referenceSequenceNumber as number) >= sequenceNumber
 					: false
 			) {
 				return event;
@@ -123,10 +122,7 @@ describeNoCompat("Generate Summary Stats", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		// Create and setup a summary collection that will be used to track and wait for summaries.
-		summaryCollection = new SummaryCollection(
-			mainContainer.deltaManager,
-			new TelemetryNullLogger(),
-		);
+		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 	});
 
 	it("should generate correct summary stats with summarizing once", async function () {

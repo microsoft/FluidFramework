@@ -4,7 +4,7 @@
  */
 
 import child_process from "child_process";
-import { DriverErrorType } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions";
 import {
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
@@ -59,7 +59,7 @@ export async function resolveWrapper<T>(
 		}
 		return result;
 	} catch (e: any) {
-		if (e.errorType === DriverErrorType.authorizationError && !forceTokenReauth) {
+		if (e.errorType === DriverErrorTypes.authorizationError && !forceTokenReauth) {
 			// Re-auth
 			return resolveWrapper<T>(callback, server, clientConfig, true, forToken);
 		}

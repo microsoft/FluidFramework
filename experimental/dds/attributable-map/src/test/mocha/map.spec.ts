@@ -29,7 +29,7 @@ function createConnectedMap(id: string, runtimeFactory: MockContainerRuntimeFact
 
 	const containerRuntime = runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services = {
-		deltaConnection: containerRuntime.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	};
 
@@ -376,7 +376,7 @@ describe("Map", () => {
 				const services2 = MockSharedObjectServices.createFromSummary(
 					map1.getAttachSummary().summary,
 				);
-				services2.deltaConnection = containerRuntime2.createDeltaConnection();
+				services2.deltaConnection = dataStoreRuntime2.createDeltaConnection();
 
 				const map2 = new TestMap("testMap2", dataStoreRuntime2, MapFactory.Attributes);
 				await map2.load(services2);
@@ -386,7 +386,7 @@ describe("Map", () => {
 				const containerRuntime1 =
 					containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				const services1 = {
-					deltaConnection: containerRuntime1.createDeltaConnection(),
+					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),
 				};
 				map1.connect(services1);

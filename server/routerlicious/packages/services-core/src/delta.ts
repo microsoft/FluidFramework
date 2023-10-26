@@ -12,6 +12,7 @@ export interface IDeltaService {
 		documentId: string,
 		from?: number,
 		to?: number,
+		caller?: string,
 	): Promise<ISequencedDocumentMessage[]>;
 
 	getDeltasFromStorage(

@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { ReadonlyRepairDataStore, IRepairDataStoreProvider } from "../repair";
-import { fail } from "../../util";
+import { assert } from "@fluidframework/core-utils";
 import { ChangeRebaser, TaggedChange, tagRollbackInverse } from "./changeRebaser";
 import { GraphCommit, mintRevisionTag, mintCommit } from "./types";
 
@@ -58,9 +56,6 @@ export interface RebasedCommits<TChange> {
  *
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
- * @param sourceRepairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is must be passed in
- * in order to update the repair data of the rebased commits. A branch may not have an {@link IRepairDataStoreProvider} if it
- * does not need to maintain repair data.
  * @param sourceHead - the head of the source branch, which will be rebased onto `targetHead`
  * @param targetHead - the commit to rebase the source branch onto
  * @returns the head of a rebased source branch, the cumulative change to the source branch (undefined if no change occurred),
@@ -83,7 +78,6 @@ export interface RebasedCommits<TChange> {
  */
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
 	sourceHead: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
 ): [
@@ -99,9 +93,6 @@ export function rebaseBranch<TChange>(
  *
  * The source and target branch must share an ancestor.
  * @param changeRebaser - the change rebaser responsible for rebasing the changes in the commits of each branch
- * @param sourceRepairDataStoreProvider - the {@link IRepairDataStoreProvider} of the source branch. This is must be passed in
- * in order to update the repair data of the rebased commits. A branch may not have an {@link IRepairDataStoreProvider} if it
- * does not need to maintain repair data.
  * @param sourceHead - the head of the source branch, which will be rebased onto `newBase`
  * @param targetCommit - the commit on the target branch to rebase the source branch onto.
  * @param targetHead - the head of the branch that `newBase` belongs to. Must be `newBase` or a descendent of `newBase`.
@@ -132,7 +123,6 @@ export function rebaseBranch<TChange>(
  */
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead: GraphCommit<TChange>,
@@ -143,7 +133,6 @@ export function rebaseBranch<TChange>(
 ];
 export function rebaseBranch<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
-	sourceRepairDataStoreProvider: IRepairDataStoreProvider<TChange> | undefined,
 	sourceHead: GraphCommit<TChange>,
 	targetCommit: GraphCommit<TChange>,
 	targetHead = targetCommit,
@@ -230,57 +219,27 @@ export function rebaseBranch<TChange>(
 		];
 	}
 
+	// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
+	// rebase forwards over the rest of the commits up to the new base before advancing the new base.
 	let newHead = newBase;
 	const inverses: TaggedChange<TChange>[] = [];
-	if (sourcePath.length !== 0) {
-		// Clone the original repair data store provider so that it can be modified without affecting the original.
-		const repairDataStoreProviderClone = sourceRepairDataStoreProvider?.clone();
-		const nonTaggedInverses: TChange[] = [];
-		// Revert changes from the source path to get to the new base
-		for (let i = sourcePath.length - 1; i >= 0; i--) {
-			const c = sourcePath[i];
-			const inverse = changeRebaser.invert(c, true, c.repairData);
-			nonTaggedInverses.push(inverse);
-			repairDataStoreProviderClone?.applyChange(inverse);
+	for (const c of sourcePath) {
+		if (sourceSet.has(c.revision)) {
+			const change = rebaseChangeOverChanges(changeRebaser, c.change, [
+				...inverses,
+				...targetRebasePath,
+			]);
+			newHead = {
+				revision: c.revision,
+				change,
+				parent: newHead,
+			};
+			sourceCommits.push(newHead);
+			targetRebasePath.push({ ...c, change });
 		}
-
-		if (repairDataStoreProviderClone !== undefined) {
-			// Apply the changes in the target rebase path
-			for (const c of targetRebasePath) {
-				repairDataStoreProviderClone.applyChange(c.change);
-			}
-		}
-
-		// For each source commit, rebase backwards over the inverses of any commits already rebased, and then
-		// rebase forwards over the rest of the commits up to the new base before advancing the new base.
-		for (const c of sourcePath) {
-			if (sourceSet.has(c.revision)) {
-				const change = rebaseChangeOverChanges(changeRebaser, c.change, [
-					...inverses,
-					...targetRebasePath,
-				]);
-				const repairData = repairDataStoreProviderClone?.createRepairData();
-				repairData?.capture(change, c.revision);
-				newHead = {
-					revision: c.revision,
-					change,
-					parent: newHead,
-					repairData,
-				};
-				sourceCommits.push(newHead);
-				targetRebasePath.push({ ...c, change });
-				repairDataStoreProviderClone?.applyChange(change);
-			}
-
-			inverses.unshift(
-				tagRollbackInverse(
-					nonTaggedInverses.pop() ??
-						fail("The commits in source path should not be modified."),
-					mintRevisionTag(),
-					c.revision,
-				),
-			);
-		}
+		inverses.unshift(
+			tagRollbackInverse(changeRebaser.invert(c, true), mintRevisionTag(), c.revision),
+		);
 	}
 
 	return [
@@ -301,6 +260,8 @@ export function rebaseBranch<TChange>(
  * @param sourceHead - the head of the branch that `change` is based on
  * @param targetHead - the branch to rebase `change` onto
  * @returns the rebased change
+ *
+ * @remarks inverses will be cached.
  */
 export function rebaseChange<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
@@ -317,10 +278,7 @@ export function rebaseChange<TChange>(
 
 	const changeRebasedToRef = sourcePath.reduceRight(
 		(newChange, branchCommit) =>
-			changeRebaser.rebase(
-				newChange,
-				inverseFromCommit(changeRebaser, branchCommit, branchCommit.repairData),
-			),
+			changeRebaser.rebase(newChange, inverseFromCommit(changeRebaser, branchCommit, true)),
 		change,
 	);
 
@@ -338,13 +296,14 @@ function rebaseChangeOverChanges<TChange>(
 function inverseFromCommit<TChange>(
 	changeRebaser: ChangeRebaser<TChange>,
 	commit: GraphCommit<TChange>,
-	repairData?: ReadonlyRepairDataStore,
+	cache?: boolean,
 ): TaggedChange<TChange> {
-	return tagRollbackInverse(
-		changeRebaser.invert(commit, true, repairData),
-		mintRevisionTag(),
-		commit.revision,
-	);
+	const inverse = commit.inverse ?? changeRebaser.invert(commit, true);
+	if (cache === true && commit.inverse === undefined) {
+		commit.inverse = inverse;
+	}
+
+	return tagRollbackInverse(inverse, mintRevisionTag(), commit.revision);
 }
 
 /**
@@ -375,8 +334,10 @@ export function findAncestor<T extends { parent?: T }>(
  * but otherwise including `descendant`).
  * @param predicate - a function which will be evaluated on every ancestor of `descendant` until it returns true.
  * @returns the closest ancestor of `descendant` that satisfies `predicate`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   id: string;
  *   parent?: Parented;
@@ -407,9 +368,10 @@ export function findAncestor<T extends { parent?: T }>(
 	}
 	for (let cur = d; cur !== undefined; cur = cur.parent) {
 		if (predicate(cur)) {
+			path?.reverse();
 			return cur;
 		}
-		path?.unshift(cur);
+		path?.push(cur);
 	}
 
 	if (path !== undefined) {
@@ -425,8 +387,10 @@ export function findAncestor<T extends { parent?: T }>(
  * @param descendantB - another descendant. If an empty `path` array is included, it will be populated
  * with the chain of commits from the ancestor to `descendantB` (not including the ancestor).
  * @returns the common ancestor of `descendantA` and `descendantB`, or `undefined` if no such ancestor exists.
+ *
  * @example
- * ```ts
+ *
+ * ```typescript
  * interface Parented {
  *   parent?: Parented;
  * }
@@ -465,31 +429,36 @@ export function findCommonAncestor<T extends { parent?: T }>(
 		return a;
 	}
 
+	const reversePaths = () => {
+		pathA?.reverse();
+		pathB?.reverse();
+	};
+
 	const visited = new Set();
 	while (a !== undefined || b !== undefined) {
 		if (a !== undefined) {
 			if (visited.has(a)) {
 				if (pathB !== undefined) {
-					const indexInPathB = pathB.findIndex((r) => Object.is(r, a));
-					pathB.splice(0, indexInPathB + 1);
+					pathB.length = pathB.findIndex((r) => Object.is(r, a));
 				}
+				reversePaths();
 				return a;
 			}
 			visited.add(a);
-			pathA?.unshift(a);
+			pathA?.push(a);
 			a = a.parent;
 		}
 
 		if (b !== undefined) {
 			if (visited.has(b)) {
 				if (pathA !== undefined) {
-					const indexInPathA = pathA.findIndex((r) => Object.is(r, b));
-					pathA.splice(0, indexInPathA + 1);
+					pathA.length = pathA.findIndex((r) => Object.is(r, b));
 				}
+				reversePaths();
 				return b;
 			}
 			visited.add(b);
-			pathB?.unshift(b);
+			pathB?.push(b);
 			b = b.parent;
 		}
 	}

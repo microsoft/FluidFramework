@@ -5,8 +5,13 @@
 
 import { strict as assert } from "assert";
 import { CursorLocationType, EmptyKey, mapCursorField, Value } from "../../../core";
-import { jsonNull, jsonObject } from "../../../domains";
-import { jsonableTreeFromCursor, singleTextCursor, TreeChunk } from "../../../feature-libraries";
+import { jsonObject, leaf, SchemaBuilder } from "../../../domains";
+import {
+	defaultSchemaPolicy,
+	jsonableTreeFromCursor,
+	singleTextCursor,
+	TreeChunk,
+} from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk";
 // eslint-disable-next-line import/no-internal-modules
@@ -18,6 +23,9 @@ import {
 	defaultChunkPolicy,
 	insertValues,
 	polymorphic,
+	ShapeInfo,
+	tryShapeFromFieldSchema,
+	tryShapeFromSchema,
 	uniformChunkFromCursor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
@@ -33,6 +41,23 @@ import {
 	numberSequenceField,
 } from "./fieldCursorTestUtilities";
 import { polygonTree, testData } from "./uniformChunkTestData";
+
+const builder = new SchemaBuilder({ scope: "chunkTree" });
+const empty = builder.object("empty", {});
+const valueField = SchemaBuilder.required(leaf.number);
+const structValue = builder.object("structValue", { x: valueField });
+const optionalField = builder.optional(leaf.number);
+const structOptional = builder.object("structOptional", { x: optionalField });
+const schema = builder.intoLibrary();
+
+function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
+	assert.deepEqual(a, b);
+	if (a instanceof TreeShape) {
+		assert(b instanceof TreeShape);
+		assert(a.equals(b));
+		assert(b.equals(a));
+	}
+}
 
 describe("chunkTree", () => {
 	// Ensure handling of various shapes works properly
@@ -81,12 +106,12 @@ describe("chunkTree", () => {
 
 		it("stops if type changes", () => {
 			const cursor = fieldCursorFromJsonableTrees([
-				{ type: jsonNull.name },
-				{ type: jsonNull.name },
+				{ type: leaf.null.name },
+				{ type: leaf.null.name },
 				{ type: jsonObject.name },
 			]);
 			cursor.firstNode();
-			const nullShape = new TreeShape(jsonNull.name, false, []);
+			const nullShape = new TreeShape(leaf.null.name, false, []);
 			{
 				const chunk = uniformChunkFromCursor(cursor, nullShape, 3, false);
 				assert.equal(chunk.topLevelLength, 2);
@@ -105,7 +130,7 @@ describe("chunkTree", () => {
 
 	describe("chunkRange", () => {
 		it("single basic chunk", () => {
-			const cursor = singleTextCursor({ type: jsonNull.name });
+			const cursor = singleTextCursor({ type: leaf.null.name });
 			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 1, true);
 			assert.equal(chunks.length, 1);
 			assert.equal(chunks[0].topLevelLength, 1);
@@ -113,13 +138,13 @@ describe("chunkTree", () => {
 			assert(chunks[0] instanceof BasicChunk);
 			assert.deepEqual(jsonableTreesFromFieldCursor(chunks[0].cursor()), [
 				{
-					type: jsonNull.name,
+					type: leaf.null.name,
 				},
 			]);
 		});
 
 		it("full field basic chunk without skipLastNavigation", () => {
-			const cursor = fieldCursorFromJsonableTrees([{ type: jsonNull.name }]);
+			const cursor = fieldCursorFromJsonableTrees([{ type: leaf.null.name }]);
 			cursor.firstNode();
 			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 1, false);
 			assert.equal(chunks.length, 1);
@@ -130,17 +155,17 @@ describe("chunkTree", () => {
 
 		it("basic chunks for part of field", () => {
 			const cursor = fieldCursorFromJsonableTrees([
-				{ type: jsonNull.name },
-				{ type: jsonNull.name },
-				{ type: jsonNull.name },
+				{ type: leaf.null.name },
+				{ type: leaf.null.name },
+				{ type: leaf.null.name },
 			]);
 			cursor.firstNode();
 			const chunks = chunkRange(cursor, basicOnlyChunkPolicy, 2, false);
 			assert.equal(chunks.length, 2);
 			assert.equal(cursor.fieldIndex, 2);
 			assert.deepEqual(jsonableTreesFromFieldCursor(new SequenceChunk(chunks).cursor()), [
-				{ type: jsonNull.name },
-				{ type: jsonNull.name },
+				{ type: leaf.null.name },
+				{ type: leaf.null.name },
 			]);
 		});
 
@@ -149,7 +174,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
-				schemaToShape: () => polymorphic,
+				shapeFromSchema: () => polymorphic,
 			};
 
 			const cursor = fieldCursorFromJsonableTrees(numberSequenceField(4));
@@ -198,7 +223,7 @@ describe("chunkTree", () => {
 						sequenceChunkSplitThreshold: threshold,
 						sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 						uniformChunkNodeCount: 0,
-						schemaToShape: () => polymorphic,
+						shapeFromSchema: () => polymorphic,
 					};
 					const field = numberSequenceField(fieldLength);
 					const cursor = fieldCursorFromJsonableTrees(field);
@@ -240,6 +265,68 @@ describe("chunkTree", () => {
 			const chunks = chunkRange(cursor, defaultChunkPolicy, 1, false);
 			assert(chunk.isShared());
 			assert.equal(chunks[0], chunk);
+		});
+	});
+
+	describe("tryShapeFromSchema", () => {
+		it("leaf", () => {
+			const info = tryShapeFromSchema(
+				schema,
+				defaultSchemaPolicy,
+				leaf.number.name,
+				new Map(),
+			);
+			expectEqual(info, new TreeShape(leaf.number.name, true, []));
+		});
+		it("empty", () => {
+			const info = tryShapeFromSchema(schema, defaultSchemaPolicy, empty.name, new Map());
+			expectEqual(info, new TreeShape(empty.name, false, []));
+		});
+		it("structValue", () => {
+			const info = tryShapeFromSchema(
+				schema,
+				defaultSchemaPolicy,
+				structValue.name,
+				new Map(),
+			);
+			expectEqual(
+				info,
+				new TreeShape(structValue.name, false, [
+					[brand("x"), new TreeShape(leaf.number.name, true, []), 1],
+				]),
+			);
+		});
+		it("structOptional", () => {
+			const info = tryShapeFromSchema(
+				schema,
+				defaultSchemaPolicy,
+				structOptional.name,
+				new Map(),
+			);
+			expectEqual(info, polymorphic);
+		});
+	});
+
+	describe("tryShapeFromFieldSchema", () => {
+		it("valueField", () => {
+			const info = tryShapeFromFieldSchema(
+				schema,
+				defaultSchemaPolicy,
+				valueField,
+				brand("key"),
+				new Map(),
+			);
+			assert.deepEqual(info, ["key", new TreeShape(leaf.number.name, true, []), 1]);
+		});
+		it("optionalField", () => {
+			const info = tryShapeFromFieldSchema(
+				schema,
+				defaultSchemaPolicy,
+				optionalField,
+				brand("key"),
+				new Map(),
+			);
+			assert.equal(info, undefined);
 		});
 	});
 });

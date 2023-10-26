@@ -64,16 +64,15 @@ describe("Ops on Reconnect", () => {
 		const dataObject2Factory = createDataStoreFactory("dataObject2", factory);
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
-			[
+			registryEntries: [
 				[defaultFactory.type, Promise.resolve(defaultFactory)],
 				[dataObject2Factory.type, Promise.resolve(dataObject2Factory)],
 			],
-			undefined,
-			[innerRequestHandler],
+			requestHandlers: [innerRequestHandler],
 			runtimeOptions,
-		);
+		});
 
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
@@ -107,9 +106,8 @@ describe("Ops on Reconnect", () => {
 
 		container1Object1Map1 = await container1Object1.getSharedObject<SharedMap>(map1Id);
 		container1Object1Map2 = await container1Object1.getSharedObject<SharedMap>(map2Id);
-		container1Object1Directory = await container1Object1.getSharedObject<SharedDirectory>(
-			directoryId,
-		);
+		container1Object1Directory =
+			await container1Object1.getSharedObject<SharedDirectory>(directoryId);
 		container1Object1String = await container1Object1.getSharedObject<SharedString>(stringId);
 	}
 
@@ -131,7 +129,7 @@ describe("Ops on Reconnect", () => {
 					const envelope = message.contents as IEnvelope;
 					const address = envelope.contents.content.address;
 					const content = envelope.contents.content.contents;
-					const batch = message.metadata?.batch;
+					const batch = (message.metadata as { batch?: unknown } | undefined)?.batch;
 					let value1: string | number;
 					let value2: string;
 					// Add special handling for SharedString. SharedMap and SharedDirectory content structure is same.
@@ -310,12 +308,10 @@ describe("Ops on Reconnect", () => {
 			);
 
 			// Get the maps in dataStore2.
-			const container1Object2Map1 = await container1Object2.getSharedObject<SharedMap>(
-				map1Id,
-			);
-			const container1Object2Map2 = await container1Object2.getSharedObject<SharedMap>(
-				map2Id,
-			);
+			const container1Object2Map1 =
+				await container1Object2.getSharedObject<SharedMap>(map1Id);
+			const container1Object2Map2 =
+				await container1Object2.getSharedObject<SharedMap>(map2Id);
 
 			// Set the new dataStore's handle in a map so that a new container has access to it.
 			container1Object1.context.containerRuntime.orderSequentially(() => {
@@ -329,9 +325,8 @@ describe("Ops on Reconnect", () => {
 			const container2Object1 = await setupSecondContainersDataObject();
 
 			// Get dataObject2 in the second container.
-			const container2Object1Map1 = await container2Object1.getSharedObject<SharedMap>(
-				map1Id,
-			);
+			const container2Object1Map1 =
+				await container2Object1.getSharedObject<SharedMap>(map1Id);
 			assert(container2Object1Map1);
 			const container2Object2Handle =
 				container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>(
@@ -444,12 +439,10 @@ describe("Ops on Reconnect", () => {
 			);
 
 			// Get the maps in dataStore2.
-			const container1Object2Map1 = await container1Object2.getSharedObject<SharedMap>(
-				map1Id,
-			);
-			const container1Object2Map2 = await container1Object2.getSharedObject<SharedMap>(
-				map2Id,
-			);
+			const container1Object2Map1 =
+				await container1Object2.getSharedObject<SharedMap>(map1Id);
+			const container1Object2Map2 =
+				await container1Object2.getSharedObject<SharedMap>(map2Id);
 
 			// Set the new dataStore's handle in a map so that a new container has access to it.
 			container1Object1.context.containerRuntime.orderSequentially(() => {
@@ -463,9 +456,8 @@ describe("Ops on Reconnect", () => {
 			const container2Object1 = await setupSecondContainersDataObject();
 
 			// Get dataObject2 in the second container.
-			const container2Object1Map1 = await container2Object1.getSharedObject<SharedMap>(
-				map1Id,
-			);
+			const container2Object1Map1 =
+				await container2Object1.getSharedObject<SharedMap>(map1Id);
 			const container2Object2Handle =
 				container2Object1Map1.get<IFluidHandle<ITestFluidObject & IFluidLoadable>>(
 					"dataStore2Key",

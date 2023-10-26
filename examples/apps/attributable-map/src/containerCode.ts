@@ -5,6 +5,7 @@
 
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IRuntimeAttributor, IProvideRuntimeAttributor } from "@fluid-experimental/attributor";
@@ -44,6 +45,7 @@ export class HitCounterContainerRuntimeFactory extends ModelContainerRuntimeFact
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		// eslint-disable-next-line import/no-deprecated
 		const hitCounter = await requestFluidObject<HitCounter>(
 			await runtime.getRootDataStore(hitCounterId),
 			"",

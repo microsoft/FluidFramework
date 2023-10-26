@@ -46,14 +46,17 @@ function matchPropertiesHandleEmpty(a: PropertySet | undefined, b: PropertySet |
 	return matchProperties(a, b) || (arePropsEmpty(a) && arePropsEmpty(b));
 }
 
-type ClientMap = Partial<Record<"A" | "B" | "C" | "D" | "E", TestClient>>;
+type ClientMap<TClientName extends string> = Partial<Record<TClientName, TestClient>>;
 
-export function createClientsAtInitialState<TClients extends ClientMap>(
+export function createClientsAtInitialState<
+	TClients extends ClientMap<TClientName>,
+	TClientName extends string = string & keyof TClients,
+>(
 	opts: {
 		initialState: string;
 		options?: PropertySet;
 	},
-	...clientIds: (string & keyof TClients)[]
+	...clientIds: TClientName[]
 ): Record<keyof TClients, TestClient> & { all: TestClient[] } {
 	const setup = (c: TestClient) => {
 		c.insertTextLocal(0, opts.initialState);
@@ -114,7 +117,10 @@ export class TestClientLogger {
 		this.disposeCallbacks.length = 0;
 	}
 
-	constructor(private readonly clients: readonly TestClient[], private readonly title?: string) {
+	constructor(
+		private readonly clients: readonly TestClient[],
+		private readonly title?: string,
+	) {
 		const logHeaders: string[] = [];
 		clients.forEach((c, i) => {
 			logHeaders.push("op");

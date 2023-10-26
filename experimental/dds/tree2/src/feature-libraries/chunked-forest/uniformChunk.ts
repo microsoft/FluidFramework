@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
-import { compareArrays } from "@fluidframework/core-utils";
+import { assert, compareArrays } from "@fluidframework/core-utils";
 import {
 	FieldKey,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	CursorLocationType,
 	FieldUpPath,
 	UpPath,
@@ -42,7 +41,10 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	 * @param shape - describes the semantics and layout of `values`.
 	 * @param values - provides exclusive ownership of this array to this object (which might mutate it in the future).
 	 */
-	public constructor(public shape: ChunkShape, public values: TreeValue[]) {
+	public constructor(
+		public shape: ChunkShape,
+		public values: TreeValue[],
+	) {
 		super();
 		assert(
 			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
@@ -90,7 +92,7 @@ export class TreeShape {
 	public readonly positions: readonly NodePositionInfo[];
 
 	public constructor(
-		public readonly type: TreeSchemaIdentifier,
+		public readonly type: TreeNodeSchemaIdentifier,
 		public readonly hasValue: boolean,
 		public readonly fieldsArray: readonly FieldShape[],
 	) {
@@ -196,12 +198,12 @@ export class ChunkShape {
 }
 
 /**
- * Shape of a field (like `FieldShape`) but with information about how it would be offset withing a chunk because of its parents.
+ * Shape of a field (like `FieldShape`) but with information about how it would be offset within a chunk because of its parents.
  */
 class OffsetShape {
 	/**
 	 * @param shape - the shape of each child in this field
-	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field withing a chunk, or top level chunk)
+	 * @param topLevelLength - number of top level nodes in this sequence chunk (either field within a chunk, or top level chunk)
 	 * @param offset - number of nodes before this in the parent's subtree
 	 * @param key - field key
 	 * @param indexOfParentField - index of node with this shape
@@ -297,7 +299,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	/**
-	 * Change the current node withing the chunk.
+	 * Change the current node within the chunk.
 	 * See `nodeInfo` for getting data about the current node.
 	 *
 	 * @param positionIndex - index of the position of the newly selected node in `positions`.
@@ -448,9 +450,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
 	}
 
-	public get chunkStart(): number {
-		return 0;
-	}
+	public readonly chunkStart: number = 0;
 
 	public get chunkLength(): number {
 		return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;
@@ -513,7 +513,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.mode = CursorLocationType.Fields;
 	}
 
-	public get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		return this.nodeInfo(CursorLocationType.Nodes).shape.type;
 	}
 

@@ -11,7 +11,7 @@ export type RequestListener = (
 ) => void;
 
 export interface IWebServerFactory {
-	create(requestListener: RequestListener): IWebServer;
+	create(requestListener?: RequestListener): IWebServer;
 }
 
 export interface IWebSocket {

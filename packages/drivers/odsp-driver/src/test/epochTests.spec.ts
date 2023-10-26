@@ -9,7 +9,7 @@ import {
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions";
 import { IOdspResolvedUrl, ICacheEntry, IEntry } from "@fluidframework/odsp-driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { defaultCacheExpiryTimeoutMs, EpochTracker } from "../epochTracker";
 import { LocalPersistentCache } from "../odspCache";
 import { getHashedDocumentId } from "../odspPublicUtils";
@@ -45,7 +45,7 @@ describe("Tests for Epoch Tracker", () => {
 				docId: hashedDocumentId,
 				resolvedUrl,
 			},
-			new TelemetryNullLogger(),
+			createChildLogger(),
 		);
 	});
 

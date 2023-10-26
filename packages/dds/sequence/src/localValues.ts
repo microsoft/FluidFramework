@@ -58,7 +58,10 @@ export class ValueTypeLocalValue<T> implements ILocalValue<T> {
 	 * @param value - The instance of the value type stored within
 	 * @param valueType - The type object of the value type stored within
 	 */
-	constructor(public readonly value: T, private readonly valueType: IValueType<T>) {}
+	constructor(
+		public readonly value: T,
+		private readonly valueType: IValueType<T>,
+	) {}
 
 	/**
 	 * {@inheritDoc ILocalValue."type"}

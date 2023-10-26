@@ -6,6 +6,7 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		"project": ["./tsconfig.json", "./src/test/tsconfig.json"],
+		"promise/catch-or-return": ["error", { allowFinally: true }],
 	},
 };

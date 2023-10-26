@@ -41,7 +41,7 @@ describe('TreeView', () => {
 			const viewB = RevisionView.fromTree(testTree.buildLeaf(testTree.generateNodeId()));
 			assert.throws(
 				() => viewA.delta(viewB),
-				(e) => validateAssertionError(e, 'Delta can only be calculated between views that share a root')
+				(e: Error) => validateAssertionError(e, 'Delta can only be calculated between views that share a root')
 			);
 		});
 

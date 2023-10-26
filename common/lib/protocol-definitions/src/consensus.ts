@@ -9,9 +9,12 @@ import { ISequencedClient } from "./clients";
 /**
  * Proposal to set the given key/value pair.
  *
+ * @remarks
  * Consensus on the proposal is achieved if the MSN is \>= the sequence number
  * at which the proposal is made and no client within the collaboration window rejects
  * the proposal.
+ *
+ * @public
  */
 export interface IProposal {
 	/**
@@ -26,22 +29,30 @@ export interface IProposal {
 }
 
 /**
- * Similar to IProposal except includes the sequence number when it was made in addition to the fields on IProposal
+ * Similar to {@link IProposal} except it also includes the sequence number when it was made.
+ *
+ * @public
  */
 export type ISequencedProposal = { sequenceNumber: number } & IProposal;
 
 /**
- * Adds the sequence number at which the message was approved to an ISequencedProposal
+ * Adds the sequence number at which the message was approved to an {@link ISequencedProposal}.
+ *
+ * @public
  */
 export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
 
 /**
- * Adds the sequence number at which the message was committed to an IApprovedProposal
+ * Adds the sequence number at which the message was committed to an {@link IApprovedProposal}.
+ *
+ * @public
  */
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
 /**
  * Events fired by a Quorum in response to client tracking.
+ *
+ * @public
  */
 export interface IQuorumClientsEvents extends IErrorEvent {
 	(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
@@ -50,6 +61,8 @@ export interface IQuorumClientsEvents extends IErrorEvent {
 
 /**
  * Events fired by a Quorum in response to proposal tracking.
+ *
+ * @public
  */
 export interface IQuorumProposalsEvents extends IErrorEvent {
 	(event: "addProposal", listener: (proposal: ISequencedProposal) => void);
@@ -65,12 +78,16 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
 }
 
 /**
- * All events fired by an IQuorum, both client tracking and proposal tracking.
+ * All events fired by {@link IQuorum}, both client tracking and proposal tracking.
+ *
+ * @public
  */
 export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
 
 /**
  * Interface for tracking clients in the Quorum.
+ *
+ * @public
  */
 export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
 	getMembers(): Map<string, ISequencedClient>;
@@ -80,6 +97,8 @@ export interface IQuorumClients extends IEventProvider<IQuorumClientsEvents> {
 
 /**
  * Interface for tracking proposals in the Quorum.
+ *
+ * @public
  */
 export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents> {
 	propose(key: string, value: unknown): Promise<void>;
@@ -91,12 +110,17 @@ export interface IQuorumProposals extends IEventProvider<IQuorumProposalsEvents>
 
 /**
  * Interface combining tracking of clients as well as proposals in the Quorum.
+ *
+ * @public
  */
 export interface IQuorum
 	extends Omit<IQuorumClients, "on" | "once" | "off">,
 		Omit<IQuorumProposals, "on" | "once" | "off">,
 		IEventProvider<IQuorumEvents> {}
 
+/**
+ * @public
+ */
 export interface IProtocolState {
 	sequenceNumber: number;
 	minimumSequenceNumber: number;
@@ -105,6 +129,9 @@ export interface IProtocolState {
 	values: [string, ICommittedProposal][];
 }
 
+/**
+ * @public
+ */
 export interface IProcessMessageResult {
 	immediateNoOp?: boolean;
 }

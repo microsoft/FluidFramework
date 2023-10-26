@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
+import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+// eslint-disable-next-line import/no-deprecated
 import { DriverErrorType } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, TelemetryLogger, LoggingError } from "@fluidframework/telemetry-utils";
+import { IFluidErrorBase, LoggingError, numberFromString } from "@fluidframework/telemetry-utils";
 import {
 	AuthorizationError,
 	createGenericNetworkError,
@@ -17,6 +18,7 @@ import {
 	FluidInvalidSchemaError,
 } from "@fluidframework/driver-utils";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	OdspErrorType,
 	OdspError,
 	IOdspErrorAugmentations,
@@ -52,8 +54,8 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 		{ headerName: "content-type", logName: "contentType" },
 	];
 	const additionalProps: ITelemetryProperties = {
-		sprequestduration: TelemetryLogger.numberFromString(headers.get("sprequestduration")),
-		contentsize: TelemetryLogger.numberFromString(headers.get("content-length")),
+		sprequestduration: numberFromString(headers.get("sprequestduration")),
+		contentsize: numberFromString(headers.get("content-length")),
 	};
 	headersToLog.forEach((header) => {
 		const headerValue = headers.get(header.headerName);
@@ -108,6 +110,7 @@ export interface OdspErrorResponse {
 
 /** Error encapsulating the error response from ODSP containing the redirect location when a resource has moved  */
 export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
+	// eslint-disable-next-line import/no-deprecated
 	readonly errorType = DriverErrorType.fileNotFoundOrAccessDeniedError;
 	readonly canRetry = false;
 
@@ -191,6 +194,7 @@ export function createOdspNetworkError(
 			}
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.genericNetworkError,
 				driverProps,
 			);
@@ -202,7 +206,18 @@ export function createOdspNetworkError(
 			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
 				error = new RetryableError(
 					errorMessage,
+					// eslint-disable-next-line import/no-deprecated
 					OdspErrorType.serviceReadOnly,
+					driverProps,
+				);
+			} else if (
+				innerMostErrorCode === "blockedIPAddress" ||
+				innerMostErrorCode === "conditionalAccessPolicyEnforced"
+			) {
+				error = new NonRetryableError(
+					"IP Address is blocked",
+					// eslint-disable-next-line import/no-deprecated
+					OdspErrorType.blockedIPAddress,
 					driverProps,
 				);
 			} else {
@@ -229,6 +244,7 @@ export function createOdspNetworkError(
 			}
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.fileNotFoundOrAccessDeniedError,
 				driverProps,
 			);
@@ -236,11 +252,13 @@ export function createOdspNetworkError(
 		case 406:
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.unsupportedClientProtocolVersion,
 				driverProps,
 			);
 			break;
 		case 410:
+			// eslint-disable-next-line import/no-deprecated
 			error = new NonRetryableError(errorMessage, OdspErrorType.cannotCatchUp, driverProps);
 			break;
 		case 409:
@@ -250,6 +268,7 @@ export function createOdspNetworkError(
 			// This indicates that the file/container has been modified externally.
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.fileOverwrittenInStorage,
 				driverProps,
 			);
@@ -259,16 +278,19 @@ export function createOdspNetworkError(
 			// Resubmitting same payload is not going to help, so this is non-recoverable failure!
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.genericNetworkError,
 				driverProps,
 			);
 			break;
 		case 413:
+			// eslint-disable-next-line import/no-deprecated
 			error = new NonRetryableError(errorMessage, OdspErrorType.snapshotTooBig, driverProps);
 			break;
 		case 414:
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				OdspErrorType.invalidFileNameError,
 				driverProps,
 			);
@@ -280,6 +302,7 @@ export function createOdspNetworkError(
 			) {
 				error = new NonRetryableError(
 					errorMessage,
+					// eslint-disable-next-line import/no-deprecated
 					DriverErrorType.fileIsLocked,
 					driverProps,
 				);
@@ -288,17 +311,20 @@ export function createOdspNetworkError(
 		case 500:
 			error = new RetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.genericNetworkError,
 				driverProps,
 			);
 			break;
 		case 501:
+			// eslint-disable-next-line import/no-deprecated
 			error = new NonRetryableError(errorMessage, OdspErrorType.fluidNotEnabled, driverProps);
 			break;
 		case 507:
 			error = new NonRetryableError(
 				errorMessage,
-				OdspErrorType.outOfStorageError,
+				// eslint-disable-next-line import/no-deprecated
+				DriverErrorType.outOfStorageError,
 				driverProps,
 			);
 			break;
@@ -306,6 +332,7 @@ export function createOdspNetworkError(
 			// Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
 			error = new NonRetryableError(
 				errorMessage,
+				// eslint-disable-next-line import/no-deprecated
 				DriverErrorType.incorrectServerResponse,
 				driverProps,
 			);
@@ -321,6 +348,8 @@ export function createOdspNetworkError(
 			break;
 	}
 
+	// Set this to true as createOdspNetworkError is called to handle error response from service.
+	error.addTelemetryProperties({ endpointReached: true });
 	enrichOdspError(error, response, facetCodes, undefined);
 	return error;
 }

@@ -5,6 +5,12 @@
 
 /**
  * A rate limiter to make sure that a client can only request help for one task within a time window.
+ *
+ * @deprecated This class has no replacement.
+ *
+ * @privateremarks
+ * This class is not used anywhere in the repo. driver-utils already has a similar class that is used by the odsp and
+ * routerlicious drivers.
  */
 export class RateLimiter {
 	private readonly requestMap = new Map<string, number>();

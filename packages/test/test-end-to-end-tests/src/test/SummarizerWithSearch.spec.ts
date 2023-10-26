@@ -10,7 +10,7 @@ import {
 	DataObjectFactory,
 	PureDataObject,
 } from "@fluidframework/aqueduct";
-import { ITelemetryLoggerExt, TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { ITelemetryLoggerExt, createChildLogger } from "@fluidframework/telemetry-utils";
 import { IContainer, IRuntimeFactory, LoaderHeader } from "@fluidframework/container-definitions";
 import { ILoaderProps } from "@fluidframework/container-loader";
 import {
@@ -52,9 +52,8 @@ interface SearchContent extends ProvideSearchContent {
 
 function createDataStoreRuntime(factory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime) {
 	return mixinSummaryHandler(async (runtime: FluidDataStoreRuntime) => {
-		const obj: PureDataObject & FluidObject<SearchContent> = await DataObject.getDataObject(
-			runtime,
-		);
+		const obj: PureDataObject & FluidObject<SearchContent> =
+			await DataObject.getDataObject(runtime);
 		const searchObj = obj.SearchContent;
 		if (searchObj === undefined) {
 			return undefined;
@@ -93,6 +92,9 @@ async function loadSummarizer(
 		},
 		[DriverHeader.summarizingClient]: true,
 		[LoaderHeader.reconnect]: false,
+		[LoaderHeader.loadMode]: {
+			opsBeforeReturn: "sequenceNumber",
+		},
 		[LoaderHeader.sequenceNumber]: sequenceNumber,
 		[LoaderHeader.version]: summaryVersion,
 	};
@@ -106,7 +108,7 @@ async function loadSummarizer(
 	// Fail fast if we receive a nack as something must have gone wrong.
 	const summaryCollection = new SummaryCollection(
 		summarizerContainer.deltaManager,
-		new TelemetryNullLogger(),
+		createChildLogger(),
 	);
 	summaryCollection.on("summaryNack", (op: ISummaryNackMessage) => {
 		throw new Error(
@@ -148,9 +150,8 @@ async function submitAndAckSummary(
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
-	const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(
-		summarySequenceNumber,
-	);
+	const ackedSummary =
+		await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
 	// Update the container runtime with the given ack. We have to do this manually because there is no summarizer
 	// client in these tests that takes care of this.
 	await summarizerClient.containerRuntime.refreshLatestSummaryAck({
@@ -256,14 +257,13 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 		[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
 		[dataStoreFactory2.type, Promise.resolve(dataStoreFactory2)],
 	]);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataStoreFactory1,
-		registryStoreEntries,
-		undefined,
-		[innerRequestHandler],
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory: dataStoreFactory1,
+		registryEntries: registryStoreEntries,
+		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-	);
-	const logger = new TelemetryNullLogger();
+	});
+	const logger = createChildLogger();
 
 	// Stores the latest summary uploaded to the server.
 	let latestUploadedSummary: ISummaryTree | undefined;
@@ -382,9 +382,8 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 				"",
 			);
 			// Wait for the above summary to be ack'd.
-			const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(
-				summarySequenceNumber,
-			);
+			const ackedSummary =
+				await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
 			// The assert 0x1a6 should not be hit anymore.
 			await summarizerClient.containerRuntime.refreshLatestSummaryAck({
 				proposalHandle: ackedSummary.summaryOp.contents.handle,
@@ -428,9 +427,8 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			);
 
 			// Wait for the above summary to be ack'd.
-			const ackedSummary = await summarizerClient2.summaryCollection.waitSummaryAck(
-				summarySequenceNumber,
-			);
+			const ackedSummary =
+				await summarizerClient2.summaryCollection.waitSummaryAck(summarySequenceNumber);
 
 			// The assert 0x1a6 should be hit now.
 			await summarizerClient2.containerRuntime.refreshLatestSummaryAck({
@@ -496,9 +494,8 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			await ds2MainDataStoreHandle.get();
 
 			// Wait for the above summary to be ack'd.
-			const ackedSummary = await summarizer2.summaryCollection.waitSummaryAck(
-				summarySequenceNumber,
-			);
+			const ackedSummary =
+				await summarizer2.summaryCollection.waitSummaryAck(summarySequenceNumber);
 			// Refresh the summary. This should not result in any errors.
 			await summarizer2.containerRuntime.refreshLatestSummaryAck({
 				proposalHandle: ackedSummary.summaryOp.contents.handle,

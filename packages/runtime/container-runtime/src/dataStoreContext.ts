@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryProperties } from "@fluidframework/common-definitions";
 import {
 	IDisposable,
 	FluidObject,
 	IRequest,
 	IResponse,
 	IFluidHandle,
+	ITelemetryProperties,
 } from "@fluidframework/core-interfaces";
 import {
 	IAudience,
@@ -17,7 +17,8 @@ import {
 	AttachState,
 	ILoaderOptions,
 } from "@fluidframework/container-definitions";
-import { assert, Deferred, LazyPromise, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, Deferred, LazyPromise } from "@fluidframework/core-utils";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { BlobTreeEntry, readAndParse } from "@fluidframework/driver-utils";
 import {
@@ -53,27 +54,19 @@ import {
 	IIdCompressorCore,
 	VisibilityState,
 } from "@fluidframework/runtime-definitions";
+import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
-	addBlobToSummary,
-	convertSummaryTreeToITree,
-	packagePathToTelemetryProperty,
-} from "@fluidframework/runtime-utils";
-import {
-	ChildLogger,
-	generateStack,
-	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
-	LoggingError,
-	MonitoringContext,
-	TelemetryDataTag,
-	ThresholdCounter,
-} from "@fluidframework/telemetry-utils";
-import {
+	createChildMonitoringContext,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
-} from "@fluidframework/container-utils";
-
+	generateStack,
+	ITelemetryLoggerExt,
+	LoggingError,
+	MonitoringContext,
+	tagCodeArtifacts,
+	ThresholdCounter,
+} from "@fluidframework/telemetry-utils";
 import {
 	dataStoreAttributesBlobName,
 	hasIsolatedChannels,
@@ -85,7 +78,7 @@ import {
 	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
+import { sendGCUnexpectedUsageEvent } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -315,19 +308,24 @@ export abstract class FluidDataStoreContext
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
-		this.mc = loggerToMonitoringContext(
-			ChildLogger.create(this.logger, "FluidDataStoreContext"),
-		);
+		this.mc = createChildMonitoringContext({
+			logger: this.logger,
+			namespace: "FluidDataStoreContext",
+			properties: {
+				all: tagCodeArtifacts({
+					fluidDataStoreId: this.id,
+					// The package name is a getter because `this.pkg` may not be initialized during construction.
+					// For data stores loaded from summary, it is initialized during data store realization.
+					fullPackageName: () => this.pkg?.join("/"),
+				}),
+			},
+		});
 		this.thresholdOpsCounter = new ThresholdCounter(
 			FluidDataStoreContext.pendingOpsCountThreshold,
 			this.mc.logger,
 		);
 
-		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-		this.throwOnTombstoneUsage =
-			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-			this._containerRuntime.gcTombstoneEnforcementAllowed &&
-			this.clientDetails.type !== summarizerClientType;
+		this.throwOnTombstoneUsage = this._containerRuntime.gcThrowOnTombstoneUsage;
 
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
@@ -373,10 +371,13 @@ export abstract class FluidDataStoreContext
 		failedPkgPath?: string,
 		fullPackageName?: readonly string[],
 	): never {
-		throw new LoggingError(reason, {
-			failedPkgPath: { value: failedPkgPath, tag: TelemetryDataTag.CodeArtifact },
-			fullPackageName: packagePathToTelemetryProperty(fullPackageName),
-		});
+		throw new LoggingError(
+			reason,
+			tagCodeArtifacts({
+				failedPkgPath,
+				packagePath: fullPackageName?.join("/"),
+			}),
+		);
 	}
 
 	public async realize(): Promise<IFluidDataStoreChannel> {
@@ -388,15 +389,14 @@ export abstract class FluidDataStoreContext
 					error,
 					"realizeFluidDataStoreContext",
 				);
-				errorWrapped.addTelemetryProperties({
-					fluidDataStoreId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
-					packageName: packagePathToTelemetryProperty(this.pkg),
-				});
+				errorWrapped.addTelemetryProperties(
+					tagCodeArtifacts({
+						fullPackageName: this.pkg?.join("/"),
+						fluidDataStoreId: this.id,
+					}),
+				);
 				this.channelDeferred?.reject(errorWrapped);
-				this.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 			});
 		}
 		return this.channelDeferred.promise;
@@ -454,6 +454,11 @@ export abstract class FluidDataStoreContext
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
 		this.bindRuntime(channel);
+		// This data store may have been disposed before the channel is created during realization. If so,
+		// dispose the channel now.
+		if (this.disposed) {
+			channel.dispose();
+		}
 	}
 
 	/**
@@ -736,11 +741,6 @@ export abstract class FluidDataStoreContext
 		this.makeLocallyVisibleFn();
 	}
 
-	/** @deprecated - To be replaced by calling makeLocallyVisible directly  */
-	public bindToContext() {
-		this.makeLocallyVisibleFn();
-	}
-
 	protected bindRuntime(channel: IFluidDataStoreChannel) {
 		if (this.channel) {
 			throw new Error("Runtime already bound");
@@ -786,13 +786,9 @@ export abstract class FluidDataStoreContext
 			this.channelDeferred.resolve(this.channel);
 		} catch (error) {
 			this.channelDeferred?.reject(error);
-			this.logger.sendErrorEvent(
+			this.mc.logger.sendErrorEvent(
 				{
 					eventName: "BindRuntimeError",
-					fluidDataStoreId: {
-						value: this.id,
-						tag: TelemetryDataTag.CodeArtifact,
-					},
 				},
 				error,
 			);
@@ -820,7 +816,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * @deprecated - The functionality to get base GC details has been moved to summarizer node.
+	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
 	public async getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase> {
 		return {};
@@ -848,8 +844,7 @@ export abstract class FluidDataStoreContext
 			await this.realize();
 		}
 		assert(!!this.channel, 0x14c /* "Channel must exist when rebasing ops" */);
-		const innerContents = contents as FluidDataStoreMessage;
-		return this.channel.applyStashedOp(innerContents.content);
+		return this.channel.applyStashedOp(contents);
 	}
 
 	private verifyNotClosed(
@@ -916,11 +911,6 @@ export abstract class FluidDataStoreContext
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
 			type,
-			fluidDataStoreId: {
-				value: this.id,
-				tag: TelemetryDataTag.CodeArtifact,
-			},
-			packageName: packagePathToTelemetryProperty(this.pkg),
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(),
 		});
@@ -942,8 +932,11 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
-	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
-		return this.containerRuntime.uploadBlob(blob);
+	public async uploadBlob(
+		blob: ArrayBufferLike,
+		signal?: AbortSignal,
+	): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.containerRuntime.uploadBlob(blob, signal);
 	}
 }
 
@@ -1209,7 +1202,7 @@ export class LocalDetachedFluidDataStoreContext
 		// of data store factories tends to construct the data object (at least kick off an async method that returns
 		// it); that code moved to the entryPoint initialization function, so we want to ensure it still executes
 		// before the data store is attached.
-		await dataStoreChannel.entryPoint?.get();
+		await dataStoreChannel.entryPoint.get();
 
 		if (await this.isRoot()) {
 			dataStoreChannel.makeVisibleAndAttachGraph();

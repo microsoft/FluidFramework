@@ -289,7 +289,7 @@ function convertFullSummaryToWholeSummaryEntries(
 		});
 	});
 
-	// Inspired by `buildSummaryTreeHeirarchy` from services-client
+	// Inspired by `buildSummaryTreeHierarchy` from services-client
 	const lookup: { [path: string]: IWholeSummaryTreeValueEntry & { value: IWholeSummaryTree } } =
 		{};
 	const rootPath = ""; // This would normally be parentHandle, but only important when there are handles
@@ -392,6 +392,7 @@ export class GitWholeSummaryManager {
 				version.treeId,
 				this.repoManager,
 			);
+			readSummaryMetric.setProperty("treeId", version.treeId);
 			readSummaryMetric.success("GitWholeSummaryManager succeeded in reading summary");
 			return {
 				id: version.id,
@@ -604,7 +605,9 @@ export class GitWholeSummaryManager {
 				baseDir: "/usr/gitrest",
 				useRepoOwner: true,
 			},
-			inMemoryFsManagerFactory,
+			{
+				defaultFileSystemManagerFactory: inMemoryFsManagerFactory,
+			},
 			new NullExternalStorageManager(),
 			true /* repoPerDocEnabled */,
 			false /* enableRepositoryManagerMetrics */,

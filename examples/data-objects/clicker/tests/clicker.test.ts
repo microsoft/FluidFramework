@@ -31,7 +31,7 @@ describe("clicker", () => {
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
 	it("There's a button to be clicked", async () => {
@@ -64,7 +64,7 @@ describe("clicker", () => {
 
 	it("Clicking the button after refresh updates both users", async () => {
 		await page.reload({ waitUntil: ["load"] });
-		await page.waitFor(() => window["fluidStarted"]);
+		await page.waitForFunction(() => window["fluidStarted"]);
 
 		// Validate both users have 0 as their value
 		const preValue = await getValue(0, "0");

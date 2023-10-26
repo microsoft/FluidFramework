@@ -50,7 +50,9 @@ export class PrettierTask extends LeafWithDoneFileTask {
 
 	protected async getDoneFileContent() {
 		if (!this.parsed) {
-			this.traceExec(`error generating done file content, unable to understand command line`);
+			this.traceError(
+				`error generating done file content, unable to understand command line`,
+			);
 			return undefined;
 		}
 
@@ -63,11 +65,13 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				ignoreEntries = ignoreFileContent.split(/\r?\n/);
 				ignoreEntries = ignoreEntries.filter((value) => value && !value.startsWith("#"));
 			} else if (this.ignorePath) {
-				this.traceExec(`error generating done file content, unable to find ${ignoreFile}`);
+				this.traceError(`error generating done file content, unable to find ${ignoreFile}`);
 				return undefined;
 			}
 		} catch (e) {
-			this.traceExec(`error generating done file content, unable to read ${ignoreFile} file`);
+			this.traceError(
+				`error generating done file content, unable to read ${ignoreFile} file`,
+			);
 			return undefined;
 		}
 
@@ -110,7 +114,7 @@ export class PrettierTask extends LeafWithDoneFileTask {
 				hashes,
 			});
 		} catch (e) {
-			this.traceExec(`error generating done file content. ${e}`);
+			this.traceError(`error generating done file content. ${e}`);
 			return undefined;
 		}
 	}

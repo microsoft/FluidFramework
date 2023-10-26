@@ -6,6 +6,7 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import { IDiceRoller } from "./interface";
@@ -64,10 +65,12 @@ export class TaskSelectionContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
+		// eslint-disable-next-line import/no-deprecated
 		const taskManagerDiceRoller = await requestFluidObject<IDiceRoller>(
 			await runtime.getRootDataStore(taskManagerDiceId),
 			"",
 		);
+		// eslint-disable-next-line import/no-deprecated
 		const oldestClientDiceRoller = await requestFluidObject<IDiceRoller>(
 			await runtime.getRootDataStore(oldestClientDiceId),
 			"",

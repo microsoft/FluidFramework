@@ -91,6 +91,7 @@ async function start(): Promise<void> {
 	updateTabForId(id);
 }
 
+// eslint-disable-next-line unicorn/prefer-top-level-await
 start().catch((error) => {
 	console.error(error);
 });

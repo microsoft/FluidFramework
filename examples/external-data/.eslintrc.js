@@ -12,7 +12,7 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		"import/no-nodejs-modules": ["error", { allow: ["http"] }],
+		"import/no-nodejs-modules": ["error", { allow: ["node:http"] }],
 	},
 	overrides: [
 		{

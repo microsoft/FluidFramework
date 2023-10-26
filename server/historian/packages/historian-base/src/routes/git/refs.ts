@@ -13,16 +13,18 @@ import {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
+	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import {
 	IThrottleMiddlewareOptions,
 	throttle,
 	getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -31,9 +33,11 @@ export function create(
 	tenantService: ITenantService,
 	storageNameRetriever: IStorageNameRetriever,
 	restTenantThrottlers: Map<string, IThrottler>,
+	documentManager: IDocumentManager,
 	cache?: ICache,
 	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 
@@ -52,8 +56,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getRefs();
 	}
@@ -65,8 +71,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.getRef(ref);
 	}
@@ -82,8 +90,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.createRef(params);
 	}
@@ -100,8 +110,10 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.updateRef(ref, params);
 	}
@@ -113,16 +125,19 @@ export function create(
 			authorization,
 			tenantService,
 			storageNameRetriever,
+			documentManager,
 			cache,
 			asyncLocalStorage,
+			denyList,
 		});
 		return service.deleteRef(ref);
 	}
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/refs",
+		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
 			utils.handleResponse(refsP, response, false);
@@ -131,8 +146,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/refs/*",
+		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const refP = getRef(
 				request.params.tenantId,
@@ -145,8 +161,9 @@ export function create(
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/refs",
+		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const refP = createRef(
 				request.params.tenantId,
@@ -159,9 +176,9 @@ export function create(
 
 	router.patch(
 		"/repos/:ignored?/:tenantId/git/refs/*",
-		utils.validateRequestParams("tenantId", 0),
+		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const refP = updateRef(
 				request.params.tenantId,
@@ -175,9 +192,9 @@ export function create(
 
 	router.delete(
 		"/repos/:ignored?/:tenantId/git/refs/*",
-		utils.validateRequestParams("tenantId", 0),
+		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const refP = deleteRef(
 				request.params.tenantId,

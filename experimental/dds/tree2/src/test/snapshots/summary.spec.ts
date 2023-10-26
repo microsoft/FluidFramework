@@ -4,94 +4,57 @@
  */
 
 import path from "path";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { TestTreeProviderLite, initializeTestTree } from "../utils";
-import { brand, useDeterministicStableId } from "../../util";
-import { FieldKey, UpPath } from "../../core";
-import { ISharedTree, ISharedTreeView } from "../../shared-tree";
-import { singleTextCursor } from "../../feature-libraries";
-import { createSnapshot, verifyEqualPastSnapshot } from "./utils";
+import { ISummaryTree } from "@fluidframework/protocol-definitions";
+import { useAsyncDeterministicStableId } from "../../util";
+import { createSnapshot, regenTestDirectory, verifyEqualPastSnapshot } from "./utils";
+import { generateTestTrees } from "./testTrees";
 
-const regenerateSnapshots = false;
+const regenerateSnapshots = process.argv.includes("--snapshot");
 
 const dirPathTail = "src/test/snapshots/files";
-const fieldKeyA: FieldKey = brand("FieldA");
-const fieldKeyB: FieldKey = brand("FieldB");
-const fieldKeyC: FieldKey = brand("FieldC");
+const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
 
-function generateTree(fields: FieldKey[], height: number, nodesPerField: number): ISharedTree {
-	const provider = new TestTreeProviderLite();
-	const tree = provider.trees[0];
-	initializeTestTree(tree);
-	generateTreeRecursively(tree, undefined, fields, height, nodesPerField, { value: 1 });
-	provider.processMessages();
-	return tree;
+function getFilepath(name: string): string {
+	return path.join(dirPath, `${name}.json`);
 }
 
-function generateTreeRecursively(
-	tree: ISharedTreeView,
-	parent: UpPath | undefined,
-	fieldKeys: FieldKey[],
-	height: number,
-	nodesPerField: number,
-	currentValue: { value: number },
-): void {
-	if (height === 0) {
-		return;
-	}
+const trees: {
+	name: string;
+	summary: ISummaryTree;
+}[] = [];
 
-	for (const fieldKey of fieldKeys) {
-		const fieldUpPath = {
-			parent,
-			field: fieldKey,
-		};
-		const field = tree.editor.sequenceField(fieldUpPath);
+const testNames = new Set<string>();
 
-		for (let i = 0; i < nodesPerField; i++) {
-			const writeCursor = singleTextCursor({
-				type: brand("TestValue"),
-				value: currentValue.toString,
-			});
-			field.insert(i, writeCursor);
-
-			currentValue.value++;
-
-			generateTreeRecursively(
-				tree,
-				{ parent, parentField: fieldKey, parentIndex: i },
-				fieldKeys,
-				height - 1,
-				nodesPerField,
-				currentValue,
-			);
-		}
-	}
-}
-
-async function generateSummary(): Promise<ISummaryTreeWithStats> {
-	const tree = useDeterministicStableId(() =>
-		generateTree([fieldKeyA, fieldKeyB, fieldKeyC], 2, 3),
-	);
-	return tree.summarize(true);
-}
-
-describe("Summary snapshot", () => {
-	let filePath: string;
-	before(() => {
-		const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
-		filePath = `${dirPath}/summary_snapshot.json`;
-	});
-
-	// Only run this test when you want to regenerate the snapshot.
+describe("snapshot tests", () => {
 	if (regenerateSnapshots) {
-		it("regenerate", async () => {
-			const summary = await generateSummary();
-			await createSnapshot(filePath, summary);
-		});
-	} else {
-		it("is equal to previous one", async () => {
-			const summary = await generateSummary();
-			await verifyEqualPastSnapshot(filePath, summary);
+		regenTestDirectory(dirPath);
+	}
+
+	const testTrees = generateTestTrees();
+
+	for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
+		const itFn = only ? it.only : skip ? it.skip : it;
+
+		itFn(`${regenerateSnapshots ? "regenerate " : ""}for ${testName}`, async () => {
+			await useAsyncDeterministicStableId(async () => {
+				return runScenario(async (tree, innerName) => {
+					const fullName = `${testName}-${innerName}`;
+
+					if (testNames.has(fullName)) {
+						throw new Error(`Duplicate snapshot name: ${fullName}`);
+					}
+
+					testNames.add(fullName);
+
+					const { summary } = await tree.summarize(true);
+					// eslint-disable-next-line unicorn/prefer-ternary
+					if (regenerateSnapshots) {
+						await createSnapshot(getFilepath(fullName), summary);
+					} else {
+						await verifyEqualPastSnapshot(getFilepath(fullName), summary, fullName);
+					}
+				});
+			});
 		});
 	}
 });

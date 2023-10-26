@@ -7,13 +7,10 @@ parameters:
 - name: namespace
   type: boolean
 
-- name: feedName
+- name: feedUrl
   type: string
 
-- name: devFeedName
-  type: string
-
-- name: official
+- name: feedKind
   type: string
 
 - name: artifactPath
@@ -34,35 +31,32 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
     ${{ if eq(parameters.namespace, true) }}:
-      ${{ if eq(parameters.official, false) }}:
+      ${{ if ne(parameters.feedKind, 'public') }}:
         script: |
-          echo Generating .npmrc for ${{ parameters.feedName }}
-          echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-example:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-msinternal:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-internal:registry=${{ parameters.devFeedName }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo Generating .npmrc for ${{ parameters.feedUrl }}
+          echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-example:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-private:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-experimental:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-tools:registry=${{ parameters.feedUrl }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-      ${{ if eq(parameters.official, true) }}:
+      ${{ if eq(parameters.feedKind, 'public') }}:
+        # The official feed excludes @fluid-example and @fluid-private. While earlier steps should also exclude these
+        # packages, excluding those scopes here is an additional defense.
         script: |
-          echo Generating .npmrc for ${{ parameters.feedName }}
-          echo "@fluidframework:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-experimental:registry=${{ parameters.feedName }}" >> ./.npmrc
-          echo "@fluid-tools:registry=${{ parameters.feedName }}" >> ./.npmrc
+          echo Generating .npmrc for ${{ parameters.feedUrl }}
+          echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-experimental:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-tools:registry=${{ parameters.feedUrl }}" >> ./.npmrc
+          echo "@fluid-internal:registry=${{ parameters.feedUrl }}" >> ./.npmrc
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
-          echo Deleting @fluid-internal packages
-          rm -f fluid-internal-*
-          echo Deleting @fluid-msinternal packages
-          rm -f fluid-msinternal-*
-          echo Deleting @fluid-example packages
-          rm -f fluid-example-*
     ${{ if eq(parameters.namespace, false) }}:
       script: |
-        echo Generating .npmrc for ${{ parameters.feedName }}
-        echo "registry=${{ parameters.feedName }}" >> ./.npmrc
+        echo Generating .npmrc for ${{ parameters.feedUrl }}
+        echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
         echo "always-auth=true" >> ./.npmrc
         cat .npmrc
 - task: npmAuthenticate@0
@@ -87,8 +81,8 @@ steps:
       echo Tag: $tag
       cp .npmrc ~/.npmrc
       maximumRetryIfNetworkError=3
-      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder.txt ]]; then
-        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder.txt)
+      if [[ -f $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt ]]; then
+        packages=$(cat $(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt)
         sorted=true
       else
         packages=*.tgz
@@ -141,6 +135,51 @@ steps:
                   exit 1
                 fi
             else
+              feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+
+              if [[ $release == "release" && $feedId == "build" ]]; then
+                packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+
+                if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
+                  scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
+                  for scope in "${scopes[@]}"; do
+                      if [[ "$packageName" == "$scope"* ]]; then
+                          packageName="@${packageName/$scope-/$scope/}"
+                      fi
+                  done
+                fi
+
+                baseURL="${${{ parameters.feedUrl }}%/registry/}"
+                feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
+
+                response=$(curl -f -s -X PATCH \
+                  -H "Content-Type: application/json" \
+                  -H "Accept: application/json" \
+                  -u ":$(System.AccessToken)" \
+                  -d '{
+                        "views": {
+                          "op": "add",
+                          "path": "/views/-",
+                          "value": "Release"
+                        }
+                      }' \
+                      "$feedPromotionUrl"
+                  )
+
+                curlExitStatus=$?
+
+                if echo "$response" | grep -q '"success":"false"'; then
+                  reason="${response#*\"reason\":\"}"
+                  reason="${reason%%\"*}"
+                  echo "Failed to promote package to Release view"
+                  echo "Error reason: $reason"
+                  exit 1
+                elif [ $curlExitStatus -ne 0 ]; then
+                  echo "Failed to promote package due to curl error"
+                  exit 1
+                fi
+              fi
+
               rm publish_log
               break
             fi

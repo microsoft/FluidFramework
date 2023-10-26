@@ -1,8 +1,0 @@
-{
-	"all": true,
-	"include": ["dist/**", "src/**"],
-	"exclude": ["**/{test,tests}/**", "**/**.{test,tests}.{js,jsx,ts,tsx}", "**/*test_index.js"],
-	"cache-dir": "nyc/.cache",
-	"temp-directory": "nyc/.nyc_output",
-	"report-dir": "nyc/report"
-}

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import * as api from "@fluidframework/protocol-definitions";
-import { bufferToString } from "@fluidframework/common-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import {
 	IFileEntry,
 	IOdspResolvedUrl,
@@ -14,7 +14,7 @@ import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions";
-import { TelemetryNullLogger } from "@fluidframework/telemetry-utils";
+import { createChildLogger } from "@fluidframework/telemetry-utils";
 import { convertCreateNewSummaryTreeToTreeAndBlobs } from "../createNewUtils";
 import { createNewFluidFile } from "../createFile";
 import { createNewContainerOnExistingFile } from "../createNewContainerOnExistingFile";
@@ -30,7 +30,6 @@ describe("Create New Utils Tests", () => {
 	const documentAttributes: api.IDocumentAttributes = {
 		minimumSequenceNumber: 0,
 		sequenceNumber: 0,
-		term: 1,
 	};
 	const blobContent = "testing";
 	const createSummary = () => {
@@ -93,7 +92,7 @@ describe("Create New Utils Tests", () => {
 				docId: hashedDocumentId,
 				resolvedUrl,
 			},
-			new TelemetryNullLogger(),
+			createChildLogger(),
 		);
 		newFileParams = {
 			type: "New",
@@ -152,7 +151,7 @@ describe("Create New Utils Tests", () => {
 				createNewFluidFile(
 					async (_options) => "token",
 					newFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -179,7 +178,7 @@ describe("Create New Utils Tests", () => {
 				createNewContainerOnExistingFile(
 					async (_options) => "token",
 					existingFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -206,7 +205,7 @@ describe("Create New Utils Tests", () => {
 				createNewFluidFile(
 					async (_options) => "token",
 					newFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -246,7 +245,7 @@ describe("Create New Utils Tests", () => {
 				createNewFluidFile(
 					async (_options) => "token",
 					newFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -302,7 +301,7 @@ describe("Create New Utils Tests", () => {
 				createNewFluidFile(
 					async (_options) => "token",
 					newFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -349,7 +348,7 @@ describe("Create New Utils Tests", () => {
 				createNewFluidFile(
 					async (_options) => "token",
 					newFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -382,7 +381,7 @@ describe("Create New Utils Tests", () => {
 				createNewFluidFile(
 					async (_options) => "token",
 					newFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -400,7 +399,7 @@ describe("Create New Utils Tests", () => {
 				createNewFluidFile(
 					async (_options) => "token",
 					newFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -427,7 +426,7 @@ describe("Create New Utils Tests", () => {
 				createNewContainerOnExistingFile(
 					async (_options) => "token",
 					existingFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,
@@ -445,7 +444,7 @@ describe("Create New Utils Tests", () => {
 				createNewFluidFile(
 					async (_options) => "token",
 					newFileParams,
-					new TelemetryNullLogger(),
+					createChildLogger(),
 					createSummary(),
 					epochTracker,
 					fileEntry,

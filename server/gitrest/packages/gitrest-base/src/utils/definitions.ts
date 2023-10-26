@@ -9,6 +9,7 @@ import * as git from "@fluidframework/gitresources";
 export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
 	StorageNameHeader = "Storage-Name",
+	IsEphemeralContainer = "Is-Ephemeral-Container",
 }
 
 export interface IStorageDirectoryConfig {
@@ -84,6 +85,11 @@ export interface IFileSystemManagerFactory {
 	create(fileSystemManagerParams?: IFileSystemManagerParams): IFileSystemManager;
 }
 
+export interface IFileSystemManagerFactories {
+	defaultFileSystemManagerFactory: IFileSystemManagerFactory;
+	ephemeralFileSystemManagerFactory?: IFileSystemManagerFactory;
+}
+
 export interface IStorageRoutingId {
 	tenantId: string;
 	documentId: string;
@@ -95,6 +101,7 @@ export interface IRepoManagerParams {
 	storageRoutingId?: IStorageRoutingId;
 	fileSystemManagerParams?: IFileSystemManagerParams;
 	optimizeForInitialSummary?: boolean;
+	isEphemeralContainer?: boolean;
 }
 
 export interface IRepositoryManagerFactory {
@@ -108,6 +115,11 @@ export interface IRepositoryManagerFactory {
 	 * If the repository does not exist, throws an error.
 	 */
 	open(params: IRepoManagerParams): Promise<IRepositoryManager>;
+}
+
+export interface IRepositoryManagerFactories {
+	defaultRepositoryManagerFactories: Promise<IRepositoryManager>;
+	ephemeralRepositoryManagerFactories: Promise<IRepositoryManager>;
 }
 
 // 100644 for file (blob)

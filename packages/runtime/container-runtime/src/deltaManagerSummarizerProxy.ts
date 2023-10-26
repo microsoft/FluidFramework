@@ -4,8 +4,9 @@
  */
 
 import { IDeltaManager, ReadOnlyInfo } from "@fluidframework/container-definitions";
-import { DeltaManagerProxyBase } from "@fluidframework/container-utils";
 import { IDocumentMessage, ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+
+import { DeltaManagerProxyBase } from "./deltaManagerProxyBase";
 import { summarizerClientType } from "./summary";
 
 /**
@@ -41,6 +42,8 @@ export class DeltaManagerSummarizerProxy
 
 	constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>) {
 		super(deltaManager);
+		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
+		super.setMaxListeners(0);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
 	}
 }

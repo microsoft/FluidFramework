@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
-	IDevtoolsMessage,
-	ISourcedDevtoolsMessage,
-	IMessageRelay,
-	IMessageRelayEvents,
+	type IDevtoolsMessage,
+	type ISourcedDevtoolsMessage,
+	type IMessageRelay,
+	type IMessageRelayEvents,
 	isDevtoolsMessage,
 	devtoolsMessageSource,
 } from "@fluid-experimental/devtools-core";
@@ -16,11 +16,11 @@ import {
 import { browser } from "../Globals";
 import {
 	devToolsInitAcknowledgementType,
-	DevToolsInitMessage,
+	type DevToolsInitMessage,
 	devToolsInitMessageType,
 	extensionMessageSource,
 	postMessageToPort,
-	TypedPortConnection,
+	type TypedPortConnection,
 } from "../messaging";
 import {
 	devtoolsScriptMessageLoggingOptions,
@@ -162,7 +162,7 @@ export class BackgroundConnection
 
 		// Create a connection to the background page
 		this.backgroundServiceConnection = browser.runtime.connect({
-			name: "Background Script",
+			name: "Devtools-Background-Port",
 		});
 
 		// Relay the tab ID to the background service worker.

@@ -86,6 +86,11 @@ parameters:
   type: object
   default: []
 
+# Any additional build arguments to pass to the docker build command.
+- name: additionalBuildArguments
+  type: string
+  default: ""
+
 trigger: none
 
 variables:
@@ -142,6 +147,7 @@ stages:
 
 - stage: build
   displayName: Build Stage
+  dependsOn: [] # this stage doesn't depend on preceding stage
   jobs:
   - job: build
     displayName: Build Container - ${{ parameters.containerName }}
@@ -227,10 +233,7 @@ stages:
           fi
 
     # for npm ci in component detection and set version
-    - task: UseNode@1
-      displayName: Use Node 16.x
-      inputs:
-        version: 16.x
+    - template: include-use-node-version.yml
 
     # Component detection
     - ${{ if eq(variables.componentDetection, true) }}:
@@ -280,7 +283,7 @@ stages:
           command: build
           dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
           buildContext: ${{ parameters.buildDirectory }}
-          arguments: --target base
+          arguments: --target base ${{ parameters.additionalBuildArguments }}
           tags: |
             $(containerTagSuffix)
 
@@ -290,7 +293,7 @@ stages:
           displayName: Pack
           inputs:
             action: 'Run a Docker command'
-            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) npx lerna@5.6.2 exec --no-private -- mv `npm pack` /usr/src/pack'
+            customCommand: 'run -v $(System.DefaultWorkingDirectory)/pack/scoped:/usr/src/pack -t $(baseContainerTag) pnpm lerna exec --no-private -- mv `npm pack` /usr/src/pack'
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - pack
@@ -368,6 +371,7 @@ stages:
         command: build
         dockerFile: ${{ parameters.buildDirectory }}/Dockerfile
         buildContext: ${{ parameters.buildDirectory }}
+        arguments: ${{ parameters.additionalBuildArguments }}
         tags: |
           $(containerTagSuffix)
           ${{ variables.latestContainerTagSuffix }}

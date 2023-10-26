@@ -7,17 +7,21 @@ module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
 	rules: {
 		"@typescript-eslint/no-use-before-define": "off",
+		"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-internal-modules": "off",
 		"max-len": "off",
 		"no-bitwise": "off",
 		"no-case-declarations": "off",
-		// ESLint's resolver doesn't resolve relative imports of ESNext modules correctly, since
-		// it resolves the path relative to the .ts file (and assumes a file with a .js extension
-		// should exist there)
-		// AB#4614 tracks moving to eslint-import-resolver-typescript (which handles such imports
-		// out of the box) and removing this exception.
-		"import/no-unresolved": ["error", { ignore: ["^\\.(.*)\\.js$"] }],
+	},
+	settings: {
+		"import/resolver": {
+			// Use eslint-import-resolver-typescript.
+			// This ensures ESNext with `.js` extensions resolve correctly to their corresponding `.ts` files.
+			typescript: {
+				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
+			},
+		},
 	},
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],

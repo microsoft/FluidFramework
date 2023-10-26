@@ -20,7 +20,7 @@ export async function deleteSummarizedOps(
 			`Operation deletion is not enabled`,
 			FluidServiceErrorCode.FeatureDisabled,
 		);
-		return Promise.reject(error);
+		throw error;
 	}
 
 	// Following code would nv

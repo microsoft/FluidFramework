@@ -4,7 +4,7 @@
  */
 
 import registerDebug from "debug";
-import { performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 
 import React, { useEffect, useRef } from "react";
 
@@ -30,6 +30,7 @@ class SharedTextView {
 			return;
 		}
 
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.initializeUI(element).catch(debug);
 		this.uiInitialized = true;
 	}

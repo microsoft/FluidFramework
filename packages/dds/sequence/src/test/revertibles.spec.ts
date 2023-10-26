@@ -19,8 +19,9 @@ import {
 	SharedStringRevertible,
 } from "../revertibles";
 import { SharedString } from "../sharedString";
-import { IIntervalCollection, IntervalType, SequenceInterval } from "../intervalCollection";
+import { IIntervalCollection } from "../intervalCollection";
 import { SharedStringFactory } from "../sequenceFactory";
+import { SequenceInterval } from "../intervals";
 import { assertIntervals } from "./intervalUtils";
 
 describe("Sequence.Revertibles with Local Edits", () => {
@@ -40,7 +41,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
-			deltaConnection: containerRuntime1.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		sharedString.initializeLocal();
@@ -56,7 +57,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		collection.add(0, 5, IntervalType.SlideOnRemove);
+		collection.add({ start: 0, end: 5 });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, []);
@@ -67,7 +68,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		collection.removeIntervalById(id);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -84,7 +85,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		collection.change(id, 1, 6);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -96,7 +97,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
+		const id = collection.add({ start: 0, end: 5, props: { foo: "one" } }).getIntervalId();
 		collection.changeProperties(id, { foo: "two" });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -110,8 +111,8 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		collection.add(0, 5, IntervalType.SlideOnRemove);
-		collection.add(5, 7, IntervalType.SlideOnRemove);
+		collection.add({ start: 0, end: 5 });
+		collection.add({ start: 5, end: 7 });
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, []);
@@ -122,8 +123,8 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
-		const id2 = collection.add(5, 7, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
+		const id2 = collection.add({ start: 5, end: 7 }).getIntervalId();
 		collection.removeIntervalById(id);
 		collection.removeIntervalById(id2);
 
@@ -152,7 +153,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		collection.change(id, 3, 8);
 		collection.removeIntervalById(id);
 
@@ -165,7 +166,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		});
 
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		collection.change(id, 3, 8);
 
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
@@ -173,7 +174,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 	});
 	it("checks that revert functions properly when an id is recreated on revert of a delete", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
@@ -195,7 +196,7 @@ describe("Sequence.Revertibles with Local Edits", () => {
 	});
 	it("checks that revertibles still finds correct interval across multiple remove and reverts", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
@@ -222,6 +223,65 @@ describe("Sequence.Revertibles with Local Edits", () => {
 		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 		assertIntervals(sharedString, collection, [{ start: 0, end: 5 }]);
 	});
+	it("local only text remove, no ack, move interval out of range", () => {
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		sharedString.insertText(0, "hello world");
+		const id = collection.add({ start: 2, end: 4 }).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		sharedString.removeRange(0, 5);
+		collection.change(id, 1, 2);
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+	});
+	it("change interval out of removed range - local refs are out of range so revert should not happen", () => {
+		sharedString.insertText(0, "hello world");
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		const id = collection.add({ start: 5, end: 8 }).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		collection.change(id, 1, 3);
+		sharedString.removeRange(5, sharedString.getLength());
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 4, end: 4 }]);
+	});
+	it("change interval into removed range - revert should move interval out of detached case into remaining string", () => {
+		sharedString.insertText(0, "hello world");
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		const id = collection.add({ start: 1, end: 3 }).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
+
+		collection.change(id, 4, 8);
+		sharedString.removeRange(4, sharedString.getLength());
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
+	});
 });
 describe("Sequence.Revertibles with Remote Edits", () => {
 	let sharedString: SharedString;
@@ -247,7 +307,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		dataStoreRuntime1.local = false;
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
-			deltaConnection: containerRuntime1.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		sharedString.initializeLocal();
@@ -257,7 +317,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
 		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 		const services2 = {
-			deltaConnection: containerRuntime2.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 
@@ -273,13 +333,34 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 		collection = sharedString.getIntervalCollection("test");
 		collection2 = sharedString2.getIntervalCollection("test");
 	});
+	it("interval change, range remove, ack, revert change interval", () => {
+		collection.on("changeInterval", (interval, previousInterval, local, op) => {
+			appendChangeIntervalToRevertibles(
+				sharedString,
+				interval,
+				previousInterval,
+				revertibles,
+			);
+		});
+		sharedString.insertText(0, "hello world");
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
+		containerRuntimeFactory.processAllMessages();
 
+		collection.change(id, 6, 8);
+		sharedString2.removeRange(0, 5);
+		containerRuntimeFactory.processAllMessages();
+
+		revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+		assertIntervals(sharedString, collection, [{ start: 0, end: 0 }]);
+		containerRuntimeFactory.processAllMessages();
+		assertIntervals(sharedString2, collection2, [{ start: 0, end: 0 }]);
+	});
 	it("remote string remove interacting with reverting an interval remove", () => {
 		collection.on("deleteInterval", (interval, local, op) => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
 		});
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		collection.removeIntervalById(id);
 		containerRuntimeFactory.processAllMessages();
 
@@ -298,7 +379,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
 		});
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		collection.removeIntervalById(id);
 		containerRuntimeFactory.processAllMessages();
 
@@ -317,7 +398,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 			appendDeleteIntervalToRevertibles(sharedString, interval, revertibles);
 		});
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 7, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 7 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.removeIntervalById(id);
@@ -333,7 +414,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval change interacting with reverting an interval remove", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.change(id, 3, 8);
@@ -351,7 +432,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval change interacting with reverting an interval remove with ack before revert", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.change(id, 3, 8);
@@ -370,7 +451,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("acked remote interval change interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection2.change(id, 3, 8);
@@ -394,7 +475,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval remove interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
@@ -418,7 +499,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval remove interacting with reverting an interval property change", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
+		const id = collection.add({ start: 0, end: 5, props: { foo: "one" } }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
@@ -437,7 +518,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval remove interacting with reverting an interval remove", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove).getIntervalId();
+		const id = collection.add({ start: 0, end: 5 }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("deleteInterval", (interval, local, op) => {
@@ -456,7 +537,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval property change interacting with reverting an interval remove", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
+		const id = collection.add({ start: 0, end: 5, props: { foo: "one" } }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("deleteInterval", (interval, local, op) => {
@@ -477,13 +558,13 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval property change interacting with reverting an interval add", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
+		const id = collection.add({ start: 0, end: 5, props: { foo: "one" } }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("addInterval", (interval, local, op) => {
 			appendAddIntervalToRevertibles(interval, revertibles);
 		});
-		collection.add(2, 7, IntervalType.SlideOnRemove);
+		collection.add({ start: 2, end: 7 });
 
 		collection2.changeProperties(id, { foo: "two" });
 		containerRuntimeFactory.processAllMessages();
@@ -498,7 +579,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval property change interacting with reverting an interval change", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
+		const id = collection.add({ start: 0, end: 5, props: { foo: "one" } }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("changeInterval", (interval, previousInterval, local, op) => {
@@ -524,7 +605,7 @@ describe("Sequence.Revertibles with Remote Edits", () => {
 	});
 	it("remote interval property change interacting with reverting an interval property change", () => {
 		sharedString.insertText(0, "hello world");
-		const id = collection.add(0, 5, IntervalType.SlideOnRemove, { foo: "one" }).getIntervalId();
+		const id = collection.add({ start: 0, end: 5, props: { foo: "one" } }).getIntervalId();
 		containerRuntimeFactory.processAllMessages();
 
 		collection.on("propertyChanged", (interval, propertyDeltas, local, op) => {
@@ -569,7 +650,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		dataStoreRuntime1.local = false;
 		const containerRuntime1 = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 		const services1 = {
-			deltaConnection: containerRuntime1.createDeltaConnection(),
+			deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
 		sharedString.initializeLocal();
@@ -587,7 +668,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			const containerRuntime2 =
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
 			const services2 = {
-				deltaConnection: containerRuntime2.createDeltaConnection(),
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			};
 
@@ -610,7 +691,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 				}
 			});
 
-			collection.add(2, 4, IntervalType.SlideOnRemove);
+			const int = collection.add({ start: 2, end: 4 });
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString2.removeRange(0, 6);
@@ -636,7 +717,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 				}
 			});
 
-			const interval = collection.add(2, 4, IntervalType.SlideOnRemove);
+			const interval = collection.add({ start: 2, end: 4 });
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString.removeRange(0, 6);
@@ -661,7 +742,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 				}
 			});
 
-			const interval = collection.add(2, 4, IntervalType.SlideOnRemove);
+			const interval = collection.add({ start: 2, end: 4 });
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString.removeRange(0, 6);
@@ -687,7 +768,31 @@ describe("Undo/redo for string remove containing intervals", () => {
 				}
 			});
 
-			const interval = collection.add(6, 8, IntervalType.SlideOnRemove);
+			const interval = collection.add({ start: 6, end: 8 });
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 1, 9);
+			sharedString.removeRange(5, 7);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(revertibles.length, 1, "revertibles.length is not 1");
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 6, end: 9 }]);
+			containerRuntimeFactory.processAllMessages();
+			assertIntervals(sharedString2, collection2, [{ start: 6, end: 9 }]);
+		});
+		it("does not restore start that would be after end", () => {
+			sharedString.insertText(0, "hello world");
+
+			sharedString.on("sequenceDelta", (op) => {
+				if (op.isLocal) {
+					appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+				}
+			});
+
+			const interval = collection.add({ start: 6, end: 8 });
 			containerRuntimeFactory.processAllMessages();
 
 			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 1, 3);
@@ -698,11 +803,33 @@ describe("Undo/redo for string remove containing intervals", () => {
 			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
 
 			assert.equal(sharedString.getText(), "hello world");
-			// Intervals don't currently enforce that start >= end,
-			// so this happens since only start was within the restored range
-			assertIntervals(sharedString, collection, [{ start: 6, end: 3 }]);
+			assertIntervals(sharedString, collection, [{ start: 1, end: 3 }]);
 			containerRuntimeFactory.processAllMessages();
-			assertIntervals(sharedString2, collection2, [{ start: 6, end: 3 }]);
+			assertIntervals(sharedString2, collection2, [{ start: 1, end: 3 }]);
+		});
+		it("does not restore end that would be before start", () => {
+			sharedString.insertText(0, "hello world");
+
+			sharedString.on("sequenceDelta", (op) => {
+				if (op.isLocal) {
+					appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
+				}
+			});
+
+			const interval = collection.add({ start: 4, end: 6 });
+			containerRuntimeFactory.processAllMessages();
+
+			sharedString2.getIntervalCollection("test").change(interval.getIntervalId(), 8, 9);
+			sharedString.removeRange(5, 7);
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(revertibles.length, 1, "revertibles.length is not 1");
+			revertSharedStringRevertibles(sharedString, revertibles.splice(0));
+
+			assert.equal(sharedString.getText(), "hello world");
+			assertIntervals(sharedString, collection, [{ start: 8, end: 9 }]);
+			containerRuntimeFactory.processAllMessages();
+			assertIntervals(sharedString2, collection2, [{ start: 8, end: 9 }]);
 		});
 	});
 
@@ -713,7 +840,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
 		});
 
-		const interval = collection.add(2, 4, IntervalType.SlideOnRemove);
+		const interval = collection.add({ start: 2, end: 4 });
 
 		sharedString.removeRange(0, 6);
 
@@ -745,7 +872,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
 		});
 
-		collection.add(0, 6, IntervalType.SlideOnRemove);
+		collection.add({ start: 0, end: 6 });
 
 		sharedString.removeRange(0, 6);
 
@@ -761,7 +888,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
 		});
 
-		collection.add(5, 9, IntervalType.SlideOnRemove);
+		collection.add({ start: 5, end: 9 });
 
 		sharedString.removeRange(2, 7);
 
@@ -777,7 +904,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
 		});
 
-		collection.add(3, 6, IntervalType.SlideOnRemove);
+		collection.add({ start: 3, end: 6 });
 
 		// only one revertible object generated for both removes
 		sharedString.removeRange(1, 4);
@@ -797,7 +924,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			}
 		});
 
-		collection.add(5, 9, IntervalType.SlideOnRemove);
+		collection.add({ start: 5, end: 9 });
 
 		sharedString.removeRange(2, 7);
 		containerRuntimeFactory.processAllMessages();
@@ -814,9 +941,9 @@ describe("Undo/redo for string remove containing intervals", () => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
 		});
 
-		collection.add(5, 9, IntervalType.SlideOnRemove);
-		collection.add(0, 3, IntervalType.SlideOnRemove);
-		collection.add(3, 4, IntervalType.SlideOnRemove);
+		collection.add({ start: 5, end: 9 });
+		collection.add({ start: 0, end: 3 });
+		collection.add({ start: 3, end: 4 });
 
 		sharedString.removeRange(2, 7);
 
@@ -837,7 +964,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
 		});
 
-		collection.add(3, 7, IntervalType.SlideOnRemove);
+		collection.add({ start: 3, end: 7 });
 
 		sharedString.removeRange(2, 8);
 
@@ -854,8 +981,8 @@ describe("Undo/redo for string remove containing intervals", () => {
 			appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
 		});
 
-		collection.add(3, 7, IntervalType.SlideOnRemove);
-		collection.add(0, 6, IntervalType.SlideOnRemove);
+		collection.add({ start: 3, end: 7 });
+		collection.add({ start: 0, end: 6 });
 
 		sharedString.removeRange(2, 8);
 
@@ -871,7 +998,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 	describe("mixed with direct interval edit revertibles", () => {
 		it("reverts interval delete + remove range", () => {
 			sharedString.insertText(0, "hello world");
-			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection.add({ start: 1, end: 5 }).getIntervalId();
 
 			sharedString.on("sequenceDelta", (op) => {
 				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
@@ -889,7 +1016,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		});
 		it("reverts remove range + interval delete", () => {
 			sharedString.insertText(0, "hello world");
-			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection.add({ start: 1, end: 5 }).getIntervalId();
 
 			sharedString.on("sequenceDelta", (op) => {
 				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
@@ -907,7 +1034,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		});
 		it("reverts interval change + remove range", () => {
 			sharedString.insertText(0, "hello world");
-			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection.add({ start: 1, end: 5 }).getIntervalId();
 
 			sharedString.on("sequenceDelta", (op) => {
 				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
@@ -930,7 +1057,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		});
 		it("reverts interval change + remove range with interval start", () => {
 			sharedString.insertText(0, "hello world");
-			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection.add({ start: 1, end: 5 }).getIntervalId();
 
 			sharedString.on("sequenceDelta", (op) => {
 				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
@@ -953,7 +1080,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		});
 		it("reverts interval change + remove range containing only revertible refs", () => {
 			sharedString.insertText(0, "hello world");
-			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection.add({ start: 1, end: 5 }).getIntervalId();
 
 			sharedString.on("sequenceDelta", (op) => {
 				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);
@@ -976,7 +1103,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 		});
 		it("reverts remove range + interval change", () => {
 			sharedString.insertText(0, "hello world");
-			const id = collection.add(1, 5, IntervalType.SlideOnRemove).getIntervalId();
+			const id = collection.add({ start: 1, end: 5 }).getIntervalId();
 
 			sharedString.on("sequenceDelta", (op) => {
 				appendSharedStringDeltaToRevertibles(sharedString, op, revertibles);

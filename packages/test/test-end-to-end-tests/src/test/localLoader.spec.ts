@@ -114,16 +114,15 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 
 	async function createContainer(
 		documentId: string,
-		factory: IFluidDataStoreFactory,
+		defaultFactory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
 		const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			factory,
-			[[factory.type, Promise.resolve(factory)]],
-			undefined,
-			[innerRequestHandler],
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			requestHandlers: [innerRequestHandler],
+		});
 		const loader = createLoader(
 			[[codeDetails, runtimeFactory]],
 			provider.documentServiceFactory,
@@ -142,16 +141,15 @@ describeNoCompat("LocalLoader", (getTestObjectProvider) => {
 	async function loadContainer(
 		documentId: string,
 		containerUrl: IResolvedUrl | undefined,
-		factory: IFluidDataStoreFactory,
+		defaultFactory: IFluidDataStoreFactory,
 	): Promise<IContainer> {
 		const inner = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 			runtime.IFluidHandleContext.resolveHandle(request);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			factory,
-			[[factory.type, Promise.resolve(factory)]],
-			undefined,
-			[inner],
-		);
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			requestHandlers: [inner],
+		});
 		const loader = createLoader(
 			[[codeDetails, runtimeFactory]],
 			provider.documentServiceFactory,

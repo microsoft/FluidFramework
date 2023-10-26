@@ -70,9 +70,7 @@ export interface IClient {
 
 // @public
 export interface IClientConfiguration {
-    // (undocumented)
     blockSize: number;
-    // (undocumented)
     maxMessageSize: number;
     noopCountFrequency?: number;
     noopTimeFrequency?: number;
@@ -248,6 +246,11 @@ export interface IQuorumProposalsEvents extends IErrorEvent {
 }
 
 // @public
+export interface ISentSignalMessage extends ISignalMessageBase {
+    targetClientId?: string;
+}
+
+// @public
 export interface ISequencedClient {
     client: IClient;
     sequenceNumber: number;
@@ -263,11 +266,11 @@ export interface ISequencedDocumentAugmentedMessage extends ISequencedDocumentMe
 export interface ISequencedDocumentMessage {
     clientId: string | null;
     clientSequenceNumber: number;
+    // @deprecated
     compression?: string;
     contents: unknown;
-    // (undocumented)
     data?: string;
-    // @alpha
+    // @deprecated
     expHash1?: string;
     metadata?: unknown;
     minimumSequenceNumber: number;
@@ -279,6 +282,12 @@ export interface ISequencedDocumentMessage {
     traces?: ITrace[];
     type: string;
 }
+
+// @alpha
+export type ISequencedDocumentMessageExperimental = Omit<ISequencedDocumentMessage, "expHash1" | "compression"> & {
+    expHash1?: string;
+    compression?: string;
+};
 
 // @public (undocumented)
 export interface ISequencedDocumentSystemMessage extends ISequencedDocumentMessage {
@@ -304,13 +313,17 @@ export interface ISignalClient {
     referenceSequenceNumber?: number;
 }
 
-// @public (undocumented)
-export interface ISignalMessage {
-    clientConnectionNumber?: number;
+// @public
+export interface ISignalMessage extends ISignalMessageBase {
     clientId: string | null;
-    // (undocumented)
+}
+
+// @public
+export interface ISignalMessageBase {
+    clientConnectionNumber?: number;
     content: unknown;
     referenceSequenceNumber?: number;
+    type?: string;
 }
 
 // @public (undocumented)
@@ -365,15 +378,10 @@ export interface ISummaryBlob {
 
 // @public (undocumented)
 export interface ISummaryContent {
-    // (undocumented)
     details?: IUploadedSummaryDetails;
-    // (undocumented)
     handle: string;
-    // (undocumented)
     head: string;
-    // (undocumented)
     message: string;
-    // (undocumented)
     parents: string[];
 }
 
@@ -474,7 +482,6 @@ export type ITreeEntry = {
 
 // @public (undocumented)
 export interface IUploadedSummaryDetails {
-    // (undocumented)
     includesProtocolTree?: boolean;
 }
 
@@ -509,13 +516,9 @@ export enum MessageType {
 
 // @public
 export enum NackErrorType {
-    // (undocumented)
     BadRequestError = "BadRequestError",
-    // (undocumented)
     InvalidScopeError = "InvalidScopeError",
-    // (undocumented)
     LimitExceededError = "LimitExceededError",
-    // (undocumented)
     ThrottlingError = "ThrottlingError"
 }
 

@@ -8,6 +8,8 @@ import { IsoBuffer } from "./indexNode";
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/Base64 | base64}-encoded string
  * to {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export const fromBase64ToUtf8 = (input: string): string =>
 	IsoBuffer.from(input, "base64").toString("utf-8");
@@ -15,6 +17,8 @@ export const fromBase64ToUtf8 = (input: string): string =>
 /**
  * Converts the provided {@link https://en.wikipedia.org/wiki/UTF-8 | utf-8}-encoded string
  * to {@link https://en.wikipedia.org/wiki/Base64 | base64}.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export const fromUtf8ToBase64 = (input: string): string =>
 	IsoBuffer.from(input, "utf8").toString("base64");
@@ -24,6 +28,8 @@ export const fromUtf8ToBase64 = (input: string): string =>
  * buffer copies/encode ops when no conversion is needed.
  * @param input - The source string to convert.
  * @param encoding - The source string's encoding.
+ *
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
  */
 export const toUtf8 = (input: string, encoding: string): string => {
 	switch (encoding) {
