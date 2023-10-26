@@ -11,15 +11,14 @@ import {
 	DDSFuzzHarnessEvents,
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value, AllowedUpdateType, JsonableTree } from "../../../core";
-import { ISharedTreeView, SharedTree } from "../../../shared-tree";
-import { SchemaAware, typeNameSymbol } from "../../../feature-libraries";
+import { UpPath, Anchor, Value, AllowedUpdateType } from "../../../core";
+import { InitializeAndSchematizeConfiguration, SharedTree } from "../../../shared-tree";
 import {
-	SharedTreeTestFactory,
-	createTestUndoRedoStacks,
-	toJsonableTree,
-	validateTree,
-} from "../../utils";
+	cursorsFromContextualData,
+	jsonableTreeFromCursor,
+	typeNameSymbol,
+} from "../../../feature-libraries";
+import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import {
@@ -27,7 +26,6 @@ import {
 	validateAnchors,
 	fuzzNode,
 	fuzzSchema,
-	FuzzNodeSchema,
 	failureDirectory,
 	RevertibleSharedTreeView,
 	fuzzViewFromTree,
@@ -38,39 +36,36 @@ interface AbortFuzzTestState extends FuzzTestState {
 	anchors?: Map<Anchor, [UpPath, Value]>[];
 }
 
-// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
-// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
-const initialTree: SchemaAware.AllowedTypesToTypedTrees<
-	SchemaAware.ApiMode.Flexible,
-	[FuzzNodeSchema]
-> = {
-	[typeNameSymbol]: fuzzNode.name,
-	sequenceChildren: [1, 2, 3],
-	requiredChild: {
+const config = {
+	schema: fuzzSchema,
+	// Setting the tree to have an initial value is more interesting for this targeted test than if it's empty:
+	// returning to an empty state is arguably "easier" than returning to a non-empty state after some undos.
+	initialTree: {
 		[typeNameSymbol]: fuzzNode.name,
-		requiredChild: 0,
+		sequenceChildren: [1, 2, 3],
+		requiredChild: {
+			[typeNameSymbol]: fuzzNode.name,
+			requiredChild: 0,
+			optionalChild: undefined,
+			sequenceChildren: [4, 5, 6],
+		},
 		optionalChild: undefined,
-		sequenceChildren: [4, 5, 6],
 	},
-	optionalChild: undefined,
-};
+	allowedSchemaModifications: AllowedUpdateType.None,
+} satisfies InitializeAndSchematizeConfiguration;
 
-let initialTreeJson: JsonableTree[];
-function setInitialJsonTree(view: ISharedTreeView): void {
-	const jsonTree = toJsonableTree(view);
-	if (initialTreeJson !== undefined) {
-		assert.deepEqual(jsonTree, initialTreeJson);
-	}
-	initialTreeJson = jsonTree;
-}
+const initialTreeJson = cursorsFromContextualData(
+	config,
+	config.schema.rootFieldSchema,
+	config.initialTree,
+).map(jsonableTreeFromCursor);
 
 const onCreate = (tree: SharedTree) => {
-	const view = tree.schematizeView({
-		schema: fuzzSchema,
-		initialTree,
-		allowedSchemaModifications: AllowedUpdateType.None,
-	});
-	setInitialJsonTree(view);
+	// TODO: these tests should do one of:
+	// 1. Not involve actual shared trees at all and just involve an AnchorSet (to test) and a forest (for comparison), applying randomly generated deltas to both.
+	// 2. Not involve actual shared trees, instead create a view via viewWithContent.
+	// 3. Use a shared tree, but migrate off its deprecated `.view` API, and instead use the view returned here.
+	const view = tree.schematizeView(config);
 };
 
 /**
