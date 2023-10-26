@@ -110,25 +110,6 @@ describe("SharedTreeObject", () => {
 		assert.equal(root.map.get("baz"), undefined);
 	});
 
-	itWithRoot("can query for map entries", schema, initialTree, (root) => {
-		assert.deepEqual(Array.from(root.map.entries()), [
-			["foo", "Hello"],
-			["bar", "World"],
-		]);
-	});
-
-	itWithRoot("can iterate map entries", schema, initialTree, (root) => {
-		const result = [];
-		for (const entry of root.map) {
-			result.push(entry);
-		}
-
-		assert.deepEqual(result, [
-			["foo", "Hello"],
-			["bar", "World"],
-		]);
-	});
-
 	itWithRoot("can read fields common to all polymorphic types", schema, initialTree, (root) => {
 		assert.equal(root.polyChild.content, "42");
 	});
@@ -316,5 +297,43 @@ describe("SharedTreeList", () => {
 				assert.deepEqual(listB, ["b0", "a0", "b1"]);
 			});
 		});
+	});
+});
+
+describe("SharedTreeMap", () => {
+	const sb = new SchemaBuilder({
+		scope: "test",
+	});
+
+	const rootSchema = sb.object("parent", {
+		map: sb.map("map", sb.optional(sb.string)),
+	});
+
+	const schema = sb.intoSchema(rootSchema);
+
+	const initialTree = {
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
+	};
+
+	itWithRoot("entries", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.entries()), [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
+	itWithRoot("iteration", schema, initialTree, (root) => {
+		const result = [];
+		for (const entry of root.map) {
+			result.push(entry);
+		}
+
+		assert.deepEqual(result, [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
 	});
 });
