@@ -545,9 +545,6 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 			get(this: object) {
 				return getMapNode(this).size;
 			},
-			set() {},
-			enumerable: false,
-			configurable: false,
 		},
 		get: {
 			value(key: string): unknown {
@@ -556,6 +553,7 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 				return getProxyForField(field);
 			},
 		},
+		// TODO: implement the rest of the Map interface here
 	});
 
 	setTreeNode(dispatch, treeNode);
