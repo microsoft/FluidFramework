@@ -546,7 +546,7 @@ export function optionalFieldIntoDelta(
 			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
 			const content = [singleTextCursor(setUpdate.set)];
 			const buildId = makeDetachedNodeId(
-				setUpdate.buildId.revision,
+				setUpdate.buildId.revision ?? change.fieldChange.revision ?? revision,
 				setUpdate.buildId.localId,
 			);
 			mark.attach = buildId;
