@@ -237,7 +237,9 @@ export const makeEditGenerator = (
 					type: "sequence",
 					edit: {
 						type: "delete",
-						firstNode: downPathFromNode(field.at(start)),
+						// We computed 'start' in a way that guarantees it's in-bounds, so at() won't return undefined.
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						firstNode: downPathFromNode(field.at(start)!),
 						count,
 					},
 				};

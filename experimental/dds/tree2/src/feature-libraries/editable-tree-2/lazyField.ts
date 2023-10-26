@@ -157,7 +157,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		return this[cursorSymbol].getFieldLength();
 	}
 
-	public at(index: number): UnboxNodeUnion<TTypes> {
+	public atIndex(index: number): UnboxNodeUnion<TTypes> {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
@@ -245,6 +245,15 @@ export class LazySequence<TTypes extends AllowedTypes>
 		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
 	}
 
+	public at(index: number): UnboxNodeUnion<TTypes> | undefined {
+		if (index < -this.length || index >= this.length) {
+			return undefined;
+		}
+		const finalIndex = index < 0 ? index + this.length : index;
+		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
+			unboxedUnion(this.context, this.schema, cursor),
+		);
+	}
 	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
 		return this.map((x) => x);
 	}
@@ -391,7 +400,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	public get content(): UnboxNodeUnion<TTypes> {
-		return this.at(0);
+		return this.atIndex(0);
 	}
 
 	public set content(newContent: FlexibleNodeContent<TTypes>) {
@@ -428,7 +437,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 
 	public get content(): UnboxNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.at(0);
+		return this.length === 0 ? undefined : this.atIndex(0);
 	}
 
 	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
