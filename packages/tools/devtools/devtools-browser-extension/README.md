@@ -109,7 +109,7 @@ To use a local build of this extension in your browser:
 #### Publishing
 
 Publishing the extension to the browser stores is (at least for now) a somewhat involved process.
-A detailed article covering the required steps can be found [here](https://github.com/microsoft/FluidFramework/blob/main/packages/tools/devtools/devtools-browser-extension/docs/Publish-Instructions.md).
+A detailed article covering the required steps can be found [here](TODO) (Microsoft only).
 
 #### Telemetry Tokens
 
