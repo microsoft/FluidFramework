@@ -1036,7 +1036,6 @@ export class MergeTree {
 		return DetachedReferencePosition;
 	}
 
-	// TODO: filter function
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `forwards`.
 	 * Uses depthFirstNodeWalk in addition to block-accelerated functionality. The search position will be included in

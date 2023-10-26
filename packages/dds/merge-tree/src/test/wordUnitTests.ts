@@ -156,10 +156,10 @@ function measureFetch(startFile: string, withBookmarks = false) {
 	let count = 0;
 	for (let i = 0; i < reps; i++) {
 		for (let pos = 0; pos < client.getLength(); ) {
-			// let prevPG = client.findTile(pos, "pg");
+			// let prevPG = client.searchForMarker(pos, "pg", false);
 			// let caBegin: number;
 			// if (prevPG) {
-			//     caBegin = prevPG.pos;
+			// 	caBegin = client.localReferencePositionToPosition(prevPG);
 			// } else {
 			//     caBegin = 0;
 			// }
