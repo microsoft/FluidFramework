@@ -555,7 +555,7 @@ stages:
   # Capture per-pipeline stage results
   - stage: upload_run_telemetry
     displayName: Upload pipeline run telemetry to Kusto
-    condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'), eq(${{parameters.telemetry}}, true))
+    condition: and(succeededOrFailed(), eq(${{parameters.telemetry}}, true))
     dependsOn:
       - build
 
