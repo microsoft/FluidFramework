@@ -4,7 +4,12 @@ Notes:
 
 -   This document is a work in progress, and will be filled in over time.
 -   In the future, we plan to automate much of this process, but for now it is entirely manual.
--   The extension and its corresponding [library package](TODO) are in "preview" / "alpha" mode, meaning that we are not yet making long term compatability guarantees.
+    -   Additionally, publishing may only be performed by a Microsoft employee
+-   The extension and its corresponding library packages are in "preview" / "alpha" mode, meaning that we are not yet making long term compatability guarantees.
+    Those library packages include:
+    -   [devtools-core](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-core)
+    -   [devtools](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools)
+    -   [devtools-view](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools-view)
 
 Currently, we are publishing this extension to the `Chrome` and `Edge` extension stores.
 In the future, we may add `Firefox` and possibly other browsers, but for now we only target those two.
@@ -20,7 +25,7 @@ It contains a `version` field, which is what determines the version respected an
 In order to publish a new version of the extension to any of the stores, this version needs to be incremented relative to the previous release.
 
 We are generally attempting to mimic [Semantic Versioning (SemVer)](TODO) for the extension.
-In particular, we are using SemVer to reflect breaking changes between the extension and its corresponding [library package](TODO), with which the extension interacts via message-passing, rather than via its TypeScript / JavaScript API.
+In particular, we are using SemVer to reflect breaking changes between the extension and its corresponding library packages, with which the extension interacts via message-passing, rather than via its TypeScript / JavaScript API.
 
 While we are in "preview" state, we are strictly limiting manifest version updates to `patch`-level updates (i.e., we will stick to `0.0.x`).
 While we will generally try to avoid introducing true breakages between the library package and the extension, if we have to do make such a change, we can.
@@ -47,7 +52,6 @@ This `zip` file is what we will upload to each of the stores.
 Our published extension for the `Edge` browser can be found [here](https://aka.ms/fluid/devtool/edge).
 
 The portal used for managing the extension in the `Edge` store can be found [here](https://partner.microsoft.com/en-us/dashboard/microsoftedge/b21bb070-408b-4b8f-b943-3e3f1a4d3c76/packages/dashboard).
-In order to access it, join the `TODO` alias via the [identity portal](TODO).
 
 To publish an update, you will need to do the following:
 
@@ -60,7 +64,7 @@ Our published extension for the `Chrome` browser can be found [here](https://aka
 The portal used for managing the extension in the `Chrome` store can be found [here](TODO).
 In order to gain access, you will need to do the following:
 
-1. Join the `TODO` alias via the [identity portal]().
+1. Join the `MSFT LiveApps Google Dev Account Users` alias via the [identity portal](TODO).
 
 To publish an update, you will need to do the following:
 
