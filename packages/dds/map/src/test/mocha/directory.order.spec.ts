@@ -251,6 +251,98 @@ describe("Directory Iteration Order", () => {
 			assertDirectoryIterationOrder(directory1, ["b", "c", "a"]);
 		});
 
+		it("can be compatible with the new format summary", async () => {
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			dataStoreRuntime.local = true;
+			directory1 = new SharedDirectory(
+				"directory",
+				dataStoreRuntime,
+				DirectoryFactory.Attributes,
+			);
+
+			await populate(directory1, {
+				storage: {
+					key1: {
+						type: "Plain",
+						value: "val1",
+					},
+					key2: {
+						type: "Plain",
+						value: "val2",
+					},
+				},
+				subdirectories: {
+					b: {
+						storage: {
+							testKey: {
+								type: "Plain",
+								value: "testValue",
+							},
+							testKey2: {
+								type: "Plain",
+								value: "testValue2",
+							},
+						},
+						ci: {
+							csn: 4,
+							ccIds: ["client1"],
+							ccsn: 1,
+						},
+					},
+					c: {
+						storage: {
+							testKey3: {
+								type: "Plain",
+								value: "testValue3",
+							},
+						},
+						subdirectories: {
+							c_b: {
+								storage: {},
+								ci: {
+									csn: 5,
+									ccIds: ["client1"],
+									ccsn: 1,
+								},
+							},
+							c_a: {
+								storage: {},
+								ci: {
+									csn: 6,
+									ccIds: ["client1"],
+									ccsn: 1,
+								},
+							},
+						},
+						ci: {
+							csn: 2,
+							ccIds: ["client2"],
+							ccsn: 1,
+						},
+					},
+					a: {
+						storage: {},
+						ci: {
+							csn: 4,
+							ccIds: ["client2"],
+							ccsn: 2,
+						},
+					},
+				},
+				ci: {
+					csn: 1,
+					ccIds: ["client1", "client2"],
+				},
+			});
+
+			assertDirectoryIterationOrder(directory1, ["c", "b", "a"]);
+			assert(directory1.getWorkingDirectory("/c"));
+			assertDirectoryIterationOrder(
+				directory1.getWorkingDirectory("/c") as ISharedDirectory,
+				["c_b", "c_a"],
+			);
+		});
+
 		it("serialize the contents, load it into another directory and maintain the order", async () => {
 			directory1 = new SharedDirectory(
 				"dir1",
