@@ -67,8 +67,8 @@
 		"generate:packageList:public": "flub list --no-private -g client --feed public --outFile feeds/public.txt",
 		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "flub check layers --info layerInfo.json",
-		"lint": "npm run syncpack:deps && npm run syncpack:versions && npm run prettier:root && npm run build:eslint",
-		"lint:fix": "npm run syncpack:deps:fix && npm run syncpack:versions:fix && npm run prettier:root:fix && pnpm run -r --no-sort --stream lint:fix",
+		"lint": "fluid-build --task lint",
+		"lint:fix": "fluid-build --task lint:fix",
 		"policy-check": "flub check policy",
 		"policy-check-help": "echo Detect (and error on) policy-check violations, like package.json sorting, copyright headers etc. Excludes assert-short-code. Run the check or \"pnpm flub check policy --listHandlers\" for a full list.",
 		"policy-check:asserts": "flub check policy --handler assert-short-codes --fix && pretty-quick",
@@ -192,40 +192,17 @@
 				],
 				"script": false
 			},
-			"checks": {
-				"dependsOn": [
-					"^checks",
-					"generate:packageList",
-					"policy-check",
-					"layer-check",
-					"syncpack:deps",
-					"syncpack:versions",
-					"check:versions",
-					"prettier"
-				],
-				"script": false
-			},
-			"checks:fix": {
-				"dependsOn": [
-					"^checks:fix",
-					"generate:packageList",
-					"policy-check:fix",
-					"syncpack:deps:fix",
-					"syncpack:versions:fix",
-					"check:versions:fix",
-					"prettier:fix"
-				],
-				"script": false
-			},
 			"build:api": {
 				"dependsOn": [
-					"^build:docs"
+					"^build:docs",
+					"build:gendocs:client"
 				],
 				"script": false
 			},
 			"build:docs": {
 				"dependsOn": [
-					"^build:docs"
+					"^build:docs",
+					"build:gendocs:client"
 				],
 				"script": false
 			},
@@ -262,17 +239,42 @@
 					"^ci:build:docs"
 				]
 			},
+			"checks": {
+				"dependsOn": [
+					"^checks",
+					"generate:packageList",
+					"policy-check",
+					"layer-check",
+					"syncpack:deps",
+					"syncpack:versions",
+					"check:versions",
+					"prettier"
+				],
+				"script": false
+			},
+			"checks:fix": {
+				"dependsOn": [
+					"^checks:fix",
+					"generate:packageList",
+					"policy-check:fix",
+					"syncpack:deps:fix",
+					"syncpack:versions:fix",
+					"check:versions:fix",
+					"prettier:fix"
+				],
+				"script": false
+			},
 			"ci:build": {
 				"dependsOn": [
 					"^ci:build",
-					"ci:build:docs",
-					"build:gendocs:client"
+					"ci:build:docs"
 				],
 				"script": false
 			},
 			"ci:build:docs": {
 				"dependsOn": [
-					"^ci:build:docs"
+					"^ci:build:docs",
+					"build:gendocs:client"
 				],
 				"script": false
 			},
@@ -301,6 +303,18 @@
 					"generate:packageList:internal-dev",
 					"generate:packageList:internal-test",
 					"generate:packageList:public"
+				],
+				"script": false
+			},
+			"lint": {
+				"dependsOn": [
+					"checks"
+				],
+				"script": false
+			},
+			"lint:fix": {
+				"dependsOn": [
+					"checks:fix"
 				],
 				"script": false
 			},
