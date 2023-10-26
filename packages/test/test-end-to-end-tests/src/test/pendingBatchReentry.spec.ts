@@ -22,25 +22,15 @@ import { SharedCell } from "@fluidframework/cell";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 
 describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjectProvider) => {
-	const mapId = "mapKey";
-	const sharedStringId = "sharedStringKey";
-	const sharedDirectoryId = "sharedDirectoryKey";
-	const sharedCellId = "sharedCellKey";
-	const sharedCounterId = "sharedCounterKey";
-	const sharedMatrixId = "sharedMatrixKey";
-	const consensusRegisterCollectionId = "consensusRegisterCollectionKey";
-
 	const registry: ChannelFactoryRegistry = [
-		[mapId, SharedMap.getFactory()],
-		[sharedStringId, SharedString.getFactory()],
-		[sharedDirectoryId, SharedDirectory.getFactory()],
-		[sharedCellId, SharedCell.getFactory()],
-		[sharedCounterId, SharedCounter.getFactory()],
-		[sharedMatrixId, SharedMatrix.getFactory()],
-		[consensusRegisterCollectionId, ConsensusRegisterCollection.getFactory()],
+		["map", SharedMap.getFactory()],
+		["sharedString", SharedString.getFactory()],
+		["sharedDirectory", SharedDirectory.getFactory()],
+		["sharedCell", SharedCell.getFactory()],
+		["sharedCounter", SharedCounter.getFactory()],
+		["sharedMatrix", SharedMatrix.getFactory()],
 	];
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
@@ -67,12 +57,12 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
-		sharedString = await dataObject.getSharedObject<SharedString>(sharedStringId);
-		sharedDirectory = await dataObject.getSharedObject<SharedDirectory>(sharedDirectoryId);
-		sharedCell = await dataObject.getSharedObject<SharedCell>(sharedCellId);
-		sharedCounter = await dataObject.getSharedObject<SharedCounter>(sharedCounterId);
-		sharedMatrix = await dataObject.getSharedObject<SharedMatrix>(sharedMatrixId);
+		sharedMap = await dataObject.getSharedObject<SharedMap>("map");
+		sharedString = await dataObject.getSharedObject<SharedString>("sharedString");
+		sharedDirectory = await dataObject.getSharedObject<SharedDirectory>("sharedDirectory");
+		sharedCell = await dataObject.getSharedObject<SharedCell>("sharedCell");
+		sharedCounter = await dataObject.getSharedObject<SharedCounter>("sharedCounter");
+		sharedMatrix = await dataObject.getSharedObject<SharedMatrix>("sharedMatrix");
 
 		await provider.ensureSynchronized();
 	};
