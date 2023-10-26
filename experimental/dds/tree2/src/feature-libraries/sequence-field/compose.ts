@@ -305,7 +305,7 @@ function composeMarks<TNodeChange>(
 		}
 
 		assert(isDeleteMark(newMark), 0x71c /* Unexpected mark type */);
-		assert(isInsert(baseMark), "Expected insert mark");
+		assert(isInsert(baseMark), 0x7d7 /* Expected insert mark */);
 		const newMarkRevision = newMark.revision ?? newRev;
 		assert(newMarkRevision !== undefined, 0x71e /* Unable to compose anonymous marks */);
 		return withNodeChange(

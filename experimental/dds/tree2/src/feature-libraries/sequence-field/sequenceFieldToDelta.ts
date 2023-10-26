@@ -49,7 +49,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				const oldId = nodeIdFromChangeAtom(mark.cellId);
 				if (!areEqualChangeAtomIds(mark.cellId, mark.transientDetach)) {
 					// TODO: handle transient move-in/return-to
-					assert(isInsert(mark), "Unexpected non-insert transient mark");
+					assert(isInsert(mark), 0x7d9 /* Unexpected non-insert transient mark */);
 					if (mark.content !== undefined) {
 						build.push({
 							id: oldId,
@@ -103,8 +103,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Insert": {
-					assert(mark.transientDetach === undefined, "Unexpected transient insert");
-					assert(mark.cellId !== undefined, "Active insert mark must have CellId");
+					assert(mark.transientDetach === undefined, 0x7da /* Unexpected transient insert */);
+					assert(mark.cellId !== undefined, 0x7db /* Active insert mark must have CellId */);
 					const buildId = nodeIdFromChangeAtom(mark.cellId);
 					deltaMark.attach = buildId;
 					if (deltaMark.fields) {
@@ -113,7 +113,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						delete deltaMark.fields;
 					}
 					if (isNewAttach(mark)) {
-						assert(mark.content !== undefined, "New insert must have content");
+						assert(mark.content !== undefined, 0x7dc /* New insert must have content */);
 						build.push({
 							id: buildId,
 							trees: mark.content.map(singleTextCursor),
