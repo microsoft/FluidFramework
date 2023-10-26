@@ -153,7 +153,7 @@ function rebaseComposed(
 	baseChanges.forEach((base) => deepFreeze(base));
 	deepFreeze(change);
 
-	const composed = compose(baseChanges);
+	const composed = compose(baseChanges, metadata);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(composed));
 	return optionalChangeRebaser.rebase(
@@ -167,7 +167,10 @@ function rebaseComposed(
 	);
 }
 
-function compose(changes: TaggedChange<OptionalChangeset>[]): OptionalChangeset {
+function compose(
+	changes: TaggedChange<OptionalChangeset>[],
+	metadata?: RevisionMetadataSource,
+): OptionalChangeset {
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(...changes.map((c) => c.change)));
 	return optionalChangeRebaser.compose(
@@ -175,7 +178,7 @@ function compose(changes: TaggedChange<OptionalChangeset>[]): OptionalChangeset 
 		TestChange.compose as any,
 		idAllocator,
 		moveEffects,
-		defaultRevisionMetadataFromChanges(changes),
+		metadata ?? defaultRevisionMetadataFromChanges(changes),
 	);
 }
 
@@ -326,17 +329,6 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 
 	describe("A ○ A⁻¹ === ε", () => {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
-			if (
-				initialState.content !== undefined &&
-				["SetA,0", "SetB,0", "Delete"].includes(name)
-			) {
-				// TODO:AB#4622: OptionalChangeset should obey group axioms, but the current compose implementation does not
-				// cancel changes from inverses, and in some cases the representation isn't sufficient for doing so.
-				// Set operations fail to satisfy this test because they generate explicit deltas which set the trait to be
-				// the previous value, rather than noops.
-				continue;
-			}
-
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const inv = invert(change);
 				const actual = compose([change, tagRollbackInverse(inv, tag1, change.revision)]);
@@ -348,13 +340,6 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 
 	describe("A⁻¹ ○ A === ε", () => {
 		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
-			if (["SetA,0", "SetB,0"].includes(name)) {
-				// TODO:AB#4622: OptionalChangeset should obey group axioms, but the current compose implementation does not
-				// cancel changes from inverses, and in some cases the representation isn't sufficient for doing so.
-				// Set operations fail to satisfy this test because they generate explicit deltas which set the trait to be
-				// the previous value, rather than noops.
-				continue;
-			}
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
 				const inv = tagRollbackInverse(invert(change), tag1, change.revision);
 				const actual = compose([inv, change]);
@@ -374,7 +359,7 @@ describe("OptionalField - Rebaser Axioms", () => {
 		runSingleEditRebaseAxiomSuite({ content: "A" });
 	});
 
-	describe.skip("Exhaustive", () => {
+	describe("Exhaustive", () => {
 		runExhaustiveComposeRebaseSuite(
 			[{ content: undefined }, { content: "A" }],
 			generateChildStates,

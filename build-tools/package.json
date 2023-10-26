@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.26.0",
+	"version": "0.26.1",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -71,7 +71,7 @@
 		"@commitlint/config-conventional": "^17.6.6",
 		"@commitlint/cz-commitlint": "^17.5.0",
 		"@fluid-tools/build-cli": "0.26.0-203096",
-		"@fluidframework/build-common": "^2.0.2",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.26.0-203096",
 		"@microsoft/api-documenter": "^7.22.24",
 		"@microsoft/api-extractor": "^7.36.1",

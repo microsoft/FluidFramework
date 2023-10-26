@@ -1,7 +1,11 @@
 ---
-"@fluid-experimental/property-shared-tree-interop": minor
-"@fluid-experimental/tree-react-api": minor
 "@fluid-experimental/tree2": minor
 ---
 
-Rename SchemaData to TreeStoredSchema, FieldSchema to TreeFieldSchema and FieldStoredSchema to TreeFieldStoredSchema
+tree2: Rename SchemaData, FieldSchema, and FieldStoredSchema
+
+The following APIs have been renamed:
+
+- `SchemaData` is now `TreeStoredSchema`
+- `FieldSchema` is now `TreeFieldSchema`
+- `FieldStoredSchema` is now `TreeFieldStoredSchema`

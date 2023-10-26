@@ -79,7 +79,7 @@ const Versioned = Type.Object({
 });
 type Versioned = Static<typeof Versioned>;
 
-function encodeRepo(repo: TreeStoredSchema): Format {
+export function encodeRepo(repo: TreeStoredSchema): Format {
 	const treeSchema: TreeSchemaFormat[] = [];
 	const rootFieldSchema = encodeField(repo.rootFieldSchema);
 	for (const [name, schema] of repo.treeSchema) {
