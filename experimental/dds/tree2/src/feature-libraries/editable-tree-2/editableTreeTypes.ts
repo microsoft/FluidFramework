@@ -778,7 +778,7 @@ export type TypedNodeUnion<TTypes extends AllowedTypes> =
 		: TreeNode;
 
 /**
- * Helper for implementing TypedNodeUnionHelper.
+ * Helper for implementing TypedNodeUnion.
  * @privateRemarks
  * Inlining this into TypedNodeUnion causes it to not compile.
  * The reason for this us unknown, but splitting it out fixed it.
