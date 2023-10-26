@@ -76,7 +76,7 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	public readonly frontMatter?: string;
 
 	public constructor(properties: DocumentNodeProperties) {
-		this.apiItem = properties?.apiItem;
+		this.apiItem = properties.apiItem;
 		this.children = properties.children;
 		this.documentPath = properties.documentPath;
 		this.frontMatter = properties.frontMatter;
