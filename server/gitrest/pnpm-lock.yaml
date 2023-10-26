@@ -9,9 +9,9 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/build-cli': ^0.26.0
+      '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.26.0
+      '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@types/async': ^3.2.9
       '@types/cors': ^2.8.4
@@ -37,9 +37,9 @@ importers:
       supertest: ^3.4.2
       typescript: ~4.5.5
     devDependencies:
-      '@fluid-tools/build-cli': 0.26.0_bkxvyo6swyyjbzntcteneey2uq
+      '@fluid-tools/build-cli': 0.26.1_bkxvyo6swyyjbzntcteneey2uq
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.26.0_@types+node@18.17.7
+      '@fluidframework/build-tools': 0.26.1_@types+node@18.17.7
       '@fluidframework/eslint-config-fluid': 2.0.0_4rqwsplhh2ekz63wktwk7d7ht4
       '@types/async': 3.2.16
       '@types/cors': 2.8.13
@@ -317,7 +317,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
     dependencies:
       eslint: 8.27.0
-      eslint-visitor-keys: 3.3.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@eslint-community/regexpp/4.5.1:
@@ -342,14 +342,14 @@ packages:
       - supports-color
     dev: true
 
-  /@fluid-tools/build-cli/0.26.0_bkxvyo6swyyjbzntcteneey2uq:
-    resolution: {integrity: sha512-U4YUaU78K+KwuH3Qjp+Qq4pgWyG1z4wKqEUF6ck7yIrn2JpYW5FIJLNhhbBOo830MOfw86tOrOV6q1o5hTRYuQ==}
+  /@fluid-tools/build-cli/0.26.1_bkxvyo6swyyjbzntcteneey2uq:
+    resolution: {integrity: sha512-eqvUMIcJVgXdWN1tQrdVhx0FnLhstfcx4VywmmlT+nNt197sq2Lar5M+7C7enN3zlysctt3mJ9WIgcvZfc1Dew==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.26.0_ymnhzceeoeqwo36456pbfebzye
-      '@fluidframework/build-tools': 0.26.0_@types+node@18.17.7
-      '@fluidframework/bundle-size-tools': 0.26.0
+      '@fluid-tools/version-tools': 0.26.1_ymnhzceeoeqwo36456pbfebzye
+      '@fluidframework/build-tools': 0.26.1_@types+node@18.17.7
+      '@fluidframework/bundle-size-tools': 0.26.1
       '@microsoft/api-extractor': 7.38.0_@types+node@18.17.7
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_ymnhzceeoeqwo36456pbfebzye
@@ -408,8 +408,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.26.0_kkxksr3d2nijjwpjhklum2mdfm:
-    resolution: {integrity: sha512-z56WBxJvvGz85CaEvdKDuuPcPqHzlvpcoK10tmFNNAhDgKe8ag1P06wLE1SqBRTGtYJZgbE6zmsoksHPBf1VrA==}
+  /@fluid-tools/version-tools/0.26.1_kkxksr3d2nijjwpjhklum2mdfm:
+    resolution: {integrity: sha512-pktW83q4E4PteL+pnCg3CdcXVQqzMO8Vrmp5zWLX5rKbPwKN1puvue5413R7MvkCRnqtmzQuwXepHHmitpMD/Q==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -430,8 +430,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluid-tools/version-tools/0.26.0_ymnhzceeoeqwo36456pbfebzye:
-    resolution: {integrity: sha512-z56WBxJvvGz85CaEvdKDuuPcPqHzlvpcoK10tmFNNAhDgKe8ag1P06wLE1SqBRTGtYJZgbE6zmsoksHPBf1VrA==}
+  /@fluid-tools/version-tools/0.26.1_ymnhzceeoeqwo36456pbfebzye:
+    resolution: {integrity: sha512-pktW83q4E4PteL+pnCg3CdcXVQqzMO8Vrmp5zWLX5rKbPwKN1puvue5413R7MvkCRnqtmzQuwXepHHmitpMD/Q==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -457,13 +457,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.26.0_@types+node@18.17.7:
-    resolution: {integrity: sha512-CUaTGCtEW1vteOSWzKqkI+RK9qwPXLDw/YHKrF0xElcymp0qlEv4925hsDFFYD7A1hMDG/YM2955V2BUXSxdUQ==}
+  /@fluidframework/build-tools/0.26.1_@types+node@18.17.7:
+    resolution: {integrity: sha512-+wbQv/TPj8ek0/6/yyUIrteDw8OiJi09ueHoYVkGrypMwL2TsMkHvUxcD1Pk5BVsMnflu3osT/9Jd8cP8DzlzA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.26.0_kkxksr3d2nijjwpjhklum2mdfm
-      '@fluidframework/bundle-size-tools': 0.26.0
+      '@fluid-tools/version-tools': 0.26.1_kkxksr3d2nijjwpjhklum2mdfm
+      '@fluidframework/bundle-size-tools': 0.26.1
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.61.0_@types+node@18.17.7
@@ -501,8 +501,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.26.0:
-    resolution: {integrity: sha512-dEvrFdLnjG1cdQPJMXk0YNf2TMfPWwOrk3qlVOLv6yB4Lb26IvL+1MGhSOOICD4jBfa6l0tMDHmRbAU90KsnEQ==}
+  /@fluidframework/bundle-size-tools/0.26.1:
+    resolution: {integrity: sha512-eAlRGrVg70+Yj7oytEA1Mv+7HIw2RwF2iW5kf7xTZObGuGEfUygSB8w8FDMZTbv8UWRGXfP4Q6IZJqq6MxO0AQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -2962,10 +2962,6 @@ packages:
     resolution: {integrity: sha512-z/QT1XN4K4KYuslS23k62yDIDLwLFkzxOuMplDtObz0+y7VqJCaO2o+SPwHCvLFZh7xazvvoor2tA/hPz9ee7g==}
     dev: true
 
-  /@types/json-schema/7.0.11:
-    resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
-    dev: true
-
   /@types/json-schema/7.0.14:
     resolution: {integrity: sha512-U3PUjAudAdJBeC2pgN8uTIKgxrb4nlDF3SF0++EldXQvQBGkpFZMSnwQiIoDU77tv45VgNkl/L4ouD+rEomujw==}
     dev: true
@@ -3159,7 +3155,7 @@ packages:
     peerDependencies:
       eslint: '*'
     dependencies:
-      '@types/json-schema': 7.0.11
+      '@types/json-schema': 7.0.14
       '@typescript-eslint/scope-manager': 5.6.0
       '@typescript-eslint/types': 5.6.0
       '@typescript-eslint/typescript-estree': 5.6.0_typescript@4.5.5
@@ -3177,7 +3173,7 @@ packages:
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
-      '@types/json-schema': 7.0.11
+      '@types/json-schema': 7.0.14
       '@typescript-eslint/scope-manager': 5.9.1
       '@typescript-eslint/types': 5.9.1
       '@typescript-eslint/typescript-estree': 5.9.1_typescript@4.5.5
@@ -3391,7 +3387,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0_eslint@8.27.0
-      '@types/json-schema': 7.0.11
+      '@types/json-schema': 7.0.14
       '@types/semver': 7.5.0
       '@typescript-eslint/scope-manager': 5.55.0
       '@typescript-eslint/types': 5.55.0
@@ -3428,7 +3424,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       '@typescript-eslint/types': 5.55.0
-      eslint-visitor-keys: 3.3.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@typescript-eslint/visitor-keys/5.6.0:
@@ -3436,7 +3432,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       '@typescript-eslint/types': 5.6.0
-      eslint-visitor-keys: 3.3.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@typescript-eslint/visitor-keys/5.9.1:
@@ -3444,7 +3440,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       '@typescript-eslint/types': 5.9.1
-      eslint-visitor-keys: 3.3.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@typescript-eslint/visitor-keys/6.8.0:
@@ -5975,7 +5971,7 @@ packages:
     dependencies:
       acorn: 8.10.0
       acorn-jsx: 5.3.2_acorn@8.10.0
-      eslint-visitor-keys: 3.3.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /esprima/4.0.1:
