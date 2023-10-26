@@ -50,7 +50,14 @@ describe("SharedTreeObject factories", () => {
 		child: { [typeNameSymbol]: "test.childA", content: 42 },
 		poly: { [typeNameSymbol]: "test.childB", content: 42 },
 		list: [42, 42, 42],
-		grand: { child: { list: [{ content: 42 }, { content: 42 }] } },
+		grand: {
+			child: {
+				list: [
+					{ [typeNameSymbol]: "test.childA", content: 42 },
+					{ [typeNameSymbol]: "test.childB", content: 42 },
+				],
+			},
+		},
 	};
 
 	itWithRoot("correctly construct objects with content", schema, initialTree, (root) => {
