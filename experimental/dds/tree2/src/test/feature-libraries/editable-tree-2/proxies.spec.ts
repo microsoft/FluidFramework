@@ -110,6 +110,21 @@ describe("SharedTreeObject", () => {
 		assert.equal(root.map.get("baz"), undefined);
 	});
 
+	itWithRoot("can iterate map entries", schema, initialTree, (root) => {
+		const expected = [
+			["foo", "Hello"],
+			["bar", "World"],
+		];
+
+		let i = 0;
+		for (const entry of root.map) {
+			assert.deepEqual(entry, expected[i]);
+			i++;
+		}
+
+		assert.equal(i, 2); // We should have iterated over 2 key/value pairs.
+	});
+
 	itWithRoot("can read fields common to all polymorphic types", schema, initialTree, (root) => {
 		assert.equal(root.polyChild.content, "42");
 	});

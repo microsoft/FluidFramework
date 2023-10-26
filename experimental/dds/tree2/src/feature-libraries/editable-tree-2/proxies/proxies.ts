@@ -517,13 +517,16 @@ export function createListProxy<TTypes extends AllowedTypes>(
 
 // #region Create dispatch map for maps
 
-const mapStaticDispatchMap: PropertyDescriptorMap = {};
-
-mapStaticDispatchMap[Symbol.iterator] = {
-	value: Map.prototype[Symbol.iterator],
-	writable: false,
-	enumerable: false,
-	configurable: false,
+const mapStaticDispatchMap: PropertyDescriptorMap = {
+	[Symbol.iterator]: {
+		value(this: SharedTreeMap<MapSchema>) {
+			const node = getMapNode(this);
+			return node[Symbol.iterator]();
+		},
+		writable: false,
+		enumerable: false,
+		configurable: false,
+	},
 };
 
 const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
