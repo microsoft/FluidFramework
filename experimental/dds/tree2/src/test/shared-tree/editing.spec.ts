@@ -1742,7 +1742,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], [{ foo: "43" }]);
 		});
 
-		it.skip("can rebase a node edit over an unrelated edit", () => {
+		it("can rebase a node edit over an unrelated edit", () => {
 			const tree1 = makeTreeFromJson([{ foo: "40", bar: "123" }]);
 			const tree2 = tree1.fork();
 
@@ -1807,6 +1807,28 @@ describe("Editing", () => {
 
 			expectJsonTree(tree1, ["42"]);
 			unsubscribe();
+		});
+
+		it("can rebase populating a new node over an unrelated change", () => {
+			const tree1 = makeTreeFromJson({});
+			const tree2 = tree1.fork();
+
+			tree1.editor
+				.optionalField({ parent: rootNode, field: brand("foo") })
+				.set(singleJsonCursor("A"), true);
+
+			tree2.editor
+				.optionalField({ parent: rootNode, field: brand("bar") })
+				.set(singleJsonCursor("B"), true);
+
+			expectJsonTree(tree1, [{ foo: "A" }]);
+			expectJsonTree(tree2, [{ bar: "B" }]);
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree(tree1, [{ foo: "A", bar: "B" }]);
+			expectJsonTree(tree2, [{ foo: "A", bar: "B" }]);
 		});
 
 		it.skip("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {

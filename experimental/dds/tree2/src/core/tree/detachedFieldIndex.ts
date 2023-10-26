@@ -90,7 +90,7 @@ export class DetachedFieldIndex {
 
 	/**
 	 * Returns a field key for the given ID.
-	 * This does not save the field key on the index. To do so, call {@link getOrCreateEntry}.
+	 * This does not save the field key on the index. To do so, call {@link createEntry}.
 	 */
 	public toFieldKey(id: ForestRootId): FieldKey {
 		return brand(`${this.name}-${id}`);
@@ -112,14 +112,6 @@ export class DetachedFieldIndex {
 		const key = this.tryGetEntry(id);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
 		return key;
-	}
-
-	/**
-	 * Retrieves the associated ForestRootId if any.
-	 * Otherwise, allocates a new one and associates it with the given DetachedNodeId.
-	 */
-	public getOrCreateEntry(nodeId: Delta.DetachedNodeId, count: number = 1): ForestRootId {
-		return this.tryGetEntry(nodeId) ?? this.createEntry(nodeId);
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
