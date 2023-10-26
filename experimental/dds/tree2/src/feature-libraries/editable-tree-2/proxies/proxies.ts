@@ -524,17 +524,17 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node[Symbol.iterator]();
 		},
 	},
+	entries: {
+		value(): IterableIterator<[string, unknown]> {
+			const mapNode = getMapNode(this);
+			return mapNode.entries();
+		},
+	},
 	get: {
 		value(key: string): unknown {
 			const mapNode = getMapNode(this);
 			const field = mapNode.getBoxed(key);
 			return getProxyForField(field);
-		},
-	},
-	entries: {
-		value(): IterableIterator<[string, unknown]> {
-			const mapNode = getMapNode(this);
-			return mapNode.entries();
 		},
 	},
 	size: {
