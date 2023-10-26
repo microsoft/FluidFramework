@@ -15,7 +15,7 @@ import { SectionNode } from "./SectionNode";
  */
 export interface DocumentNodeProperties {
 	/**
-	 * Optional APIItem for the document. If a document is generated from an APIItem, this should be set.
+	 * The ApiItem the document node was created for, if it was created for an ApiItem.
 	 */
 	readonly apiItem?: ApiItem;
 
