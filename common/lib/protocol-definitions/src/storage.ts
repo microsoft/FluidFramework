@@ -5,6 +5,9 @@
 
 import { IsoDate } from "./date";
 
+/**
+ * @public
+ */
 export interface IDocumentAttributes {
 	/**
 	 * Sequence number at which the snapshot was taken
@@ -17,6 +20,9 @@ export interface IDocumentAttributes {
 	minimumSequenceNumber: number;
 }
 
+/**
+ * @public
+ */
 export enum FileMode {
 	File = "100644",
 	Executable = "100755",
@@ -25,7 +31,9 @@ export enum FileMode {
 }
 
 /**
- * Raw blob stored within the tree
+ * Raw blob stored within the tree.
+ *
+ * @public
  */
 export interface IBlob {
 	/**
@@ -39,16 +47,24 @@ export interface IBlob {
 	encoding: "utf-8" | "base64";
 }
 
+/**
+ * @public
+ */
 export interface IAttachment {
 	id: string;
 }
 
+/**
+ * @public
+ */
 export interface ICreateBlobResponse {
 	id: string;
 }
 
 /**
- * A tree entry wraps a path with a type of node
+ * A tree entry wraps a path with a type of node.
+ *
+ * @public
  */
 export type ITreeEntry = {
 	/**
@@ -77,7 +93,9 @@ export type ITreeEntry = {
 );
 
 /**
- * Type of entries that can be stored in a tree
+ * Type of entries that can be stored in a tree.
+ *
+ * @public
  */
 export enum TreeEntry {
 	Blob = "Blob",
@@ -85,6 +103,9 @@ export enum TreeEntry {
 	Attachment = "Attachment",
 }
 
+/**
+ * @public
+ */
 export interface ITree {
 	entries: ITreeEntry[];
 
@@ -100,6 +121,9 @@ export interface ITree {
 	unreferenced?: true;
 }
 
+/**
+ * @public
+ */
 export interface ISnapshotTree {
 	id?: string;
 	blobs: { [path: string]: string };
@@ -111,13 +135,18 @@ export interface ISnapshotTree {
 	unreferenced?: true;
 }
 
+/**
+ * @public
+ */
 export interface ISnapshotTreeEx extends ISnapshotTree {
 	id: string;
 	trees: { [path: string]: ISnapshotTreeEx };
 }
 
 /**
- * Represents a version of the snapshot of a data store
+ * Represents a version of the snapshot of a data store.
+ *
+ * @public
  */
 export interface IVersion {
 	/**

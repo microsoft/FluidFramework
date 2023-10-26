@@ -125,7 +125,9 @@ export interface IConnectionDetails {
 
 // @public
 export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRouter {
-    attach(request: IRequest): Promise<void>;
+    attach(request: IRequest, attachProps?: {
+        deltaConnection?: "none" | "delayed";
+    }): Promise<void>;
     readonly attachState: AttachState;
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
@@ -381,10 +383,22 @@ export interface IFluidPackageEnvironment {
 
 export { IGenericError }
 
+// @alpha
+export interface IGetPendingLocalStateProps {
+    readonly notifyImminentClosure: boolean;
+    readonly stopBlobAttachingSignal?: AbortSignal;
+}
+
 // @public
 export interface IHostLoader extends ILoader {
-    createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
-    rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
+    createDetachedContainer(codeDetails: IFluidCodeDetails, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): Promise<IContainer>;
+    rehydrateDetachedContainerFromSnapshot(snapshot: string, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): Promise<IContainer>;
 }
 
 // @public
@@ -456,9 +470,8 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint(): Promise<FluidObject | undefined>;
-    getPendingLocalState(props?: {
-        notifyImminentClosure?: boolean;
-    }): unknown;
+    // @alpha
+    getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
@@ -481,7 +494,7 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 // @public
 export const isFluidBrowserPackage: (maybePkg: unknown) => maybePkg is Readonly<IFluidBrowserPackage>;
 
-// @public (undocumented)
+// @public
 export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFluidCodeDetails>;
 
 // @public

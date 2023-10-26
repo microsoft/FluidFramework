@@ -22,6 +22,12 @@ describeE2EDocRun("Load Document", (getTestObjectProvider, getDocumentInfo) => {
 	before(async () => {
 		provider = getTestObjectProvider();
 		const docData = getDocumentInfo(); // returns the type of document to be processed.
+		if (
+			docData.supportedEndpoints &&
+			!docData.supportedEndpoints?.includes(provider.driver.type)
+		) {
+			return;
+		}
 		documentWrapper = createDocument({
 			testName: `Load Document - ${docData.testTitle}`,
 			provider,
