@@ -325,6 +325,14 @@ describe.only("SharedTreeMap", () => {
 		]);
 	});
 
+	itWithRoot("keys", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.keys()), ["foo", "bar"]);
+	});
+
+	itWithRoot("values", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.values()), ["Hello", "World"]);
+	});
+
 	itWithRoot("iteration", schema, initialTree, (root) => {
 		const result = [];
 		for (const entry of root.map) {

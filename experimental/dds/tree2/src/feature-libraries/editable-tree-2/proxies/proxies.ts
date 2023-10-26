@@ -544,7 +544,10 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	keys: {
-		// TODO
+		value(): IterableIterator<string> {
+			const node = getMapNode(this);
+			return node.keys();
+		},
 	},
 	size: {
 		get(this: object) {
@@ -552,7 +555,10 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	values: {
-		// TODO
+		value(): IterableIterator<unknown> {
+			const node = getMapNode(this);
+			return node.values();
+		},
 	},
 	// TODO: clear, delete, set. Will require mutation APIs to be added to MapNode.
 };
