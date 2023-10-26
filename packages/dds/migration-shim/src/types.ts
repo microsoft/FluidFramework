@@ -30,6 +30,8 @@ export interface IShimDeltaHandler extends IDeltaHandler {
 
 /**
  * An interface for a shim channel that intercepts a LegacySharedTree or new SharedTree DDS.
+ *
+ * @internal
  */
 export interface IShim extends IChannel {
 	create(): void;

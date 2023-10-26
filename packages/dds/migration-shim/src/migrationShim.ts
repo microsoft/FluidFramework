@@ -35,7 +35,7 @@ import { type IShim } from "./types.js";
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
  *
- * @public
+ * @internal
  */
 export interface IMigrationEvent extends IEvent {
 	/**
@@ -77,7 +77,7 @@ export interface IMigrationOp {
  * attributes to point at the SharedTreeShimFactory.  This will cause future clients to load with a SharedTreeShim and
  * the new SharedTree snapshot instead after the next summarization.
  *
- * @public
+ * @internal
  */
 export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IShim {
 	public constructor(
