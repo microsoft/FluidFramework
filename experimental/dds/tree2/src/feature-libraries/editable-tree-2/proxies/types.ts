@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { EditableTreeEvents } from "../..";
 import { TreeValue } from "../../../core";
 import { RestrictiveReadonlyRecord } from "../../../util";
 import { FieldKinds } from "../../default-field-kinds";
@@ -20,27 +19,16 @@ import {
 	TreeNodeSchema,
 	TreeSchema,
 } from "../../typed-schema";
-import {
-	CheckTypesOverlap,
-	FlexibleNodeContent,
-	Sequence,
-	AssignableFieldKinds,
-} from "../editableTreeTypes";
-import { nodeSym } from "./node";
+import { CheckTypesOverlap, AssignableFieldKinds, TreeNode } from "../editableTreeTypes";
 
 /**
- * An object-like SharedTree node.  Includes objects, lists, and maps.
+ * An object-like SharedTree node. Includes objects, lists, and maps.
  * @alpha
  */
-export interface SharedTreeNode {
-	// TODO: Make [nodeSym] non-optional when we have factory functions.
-	[nodeSym]?: {
-		on<K extends keyof EditableTreeEvents>(
-			eventName: K,
-			listener: EditableTreeEvents[K],
-		): () => void;
-	};
-}
+export type SharedTreeNode =
+	| SharedTreeList<AllowedTypes>
+	| SharedTreeObject<ObjectNodeSchema>
+	| SharedTreeMap<MapSchema>;
 
 /**
  * Implements 'readonly T[]' and the list mutation APIs.
@@ -49,29 +37,28 @@ export interface SharedTreeNode {
 export interface SharedTreeList<
 	TTypes extends AllowedTypes,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>>,
-		SharedTreeNode {
+> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
 	/**
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
 	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -111,7 +98,7 @@ export interface SharedTreeList<
 	moveToStart<TTypesSource extends AllowedTypes>(
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void;
 
 	/**
@@ -136,7 +123,7 @@ export interface SharedTreeList<
 	moveToEnd<TTypesSource extends AllowedTypes>(
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void;
 
 	/**
@@ -150,24 +137,22 @@ export interface SharedTreeList<
 	 */
 	moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
-	// TODO: Should accept a proxy rather than sequence field as source.
-
-	// /**
-	//  * Moves the specified items to the desired location within the sequence.
-	//  * @param index - The index to move the items to.
-	//  * @param sourceStart - The starting index of the range to move (inclusive).
-	//  * @param sourceEnd - The ending index of the range to move (exclusive)
-	//  * @param source - The source sequence to move items out of.
-	//  * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
-	//  * @remarks
-	//  * All indices are relative to the sequence excluding the nodes being moved.
-	//  */
-	// moveToIndex<TTypesSource extends AllowedTypes>(
-	// 	index: number,
-	// 	sourceStart: number,
-	// 	sourceEnd: number,
-	// 	source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
-	// ): void;
+	/**
+	 * Moves the specified items to the desired location within the sequence.
+	 * @param index - The index to move the items to.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source sequence to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex<TTypesSource extends AllowedTypes>(
+		index: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>,
+	): void;
 }
 
 /**
@@ -177,7 +162,7 @@ export interface SharedTreeList<
 export type SharedTreeObject<
 	TSchema extends ObjectNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = ObjectFields<TSchema["objectNodeFieldsObject"], API> & SharedTreeNode;
+> = ObjectFields<TSchema["objectNodeFieldsObject"], API>;
 
 /**
  * Helper for generating the properties of a {@link SharedTreeObject}.
@@ -224,8 +209,7 @@ export type ObjectFields<
  * A map of string keys to tree objects.
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>> &
-	SharedTreeNode;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.
@@ -303,3 +287,24 @@ export type ProxyRoot<
 	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;
+
+/** Symbol used to store a private/internal reference to the underlying editable tree node. */
+const treeNodeSym = Symbol("TreeNode");
+
+/** Helper to retrieve the stored tree node. */
+export function getTreeNode(target: unknown): TreeNode | undefined {
+	if (typeof target === "object" && target !== null) {
+		return (target as { [treeNodeSym]?: TreeNode })[treeNodeSym];
+	}
+
+	return undefined;
+}
+
+/** Helper to set the stored tree node. */
+export function setTreeNode(target: any, treeNode: TreeNode) {
+	Object.defineProperty(target, treeNodeSym, {
+		value: treeNode,
+		// TODO: Investigate if this can be removed by properly implementing key-related traps in the proxy
+		configurable: true,
+	});
+}

@@ -5,7 +5,7 @@
 
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IDeltaConnection, type IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { type IShimDeltaHandler } from "./types";
+import { type IShimDeltaHandler } from "./types.js";
 
 /**
  * Represents a connection to a Shim data store that can receive and submit deltas.

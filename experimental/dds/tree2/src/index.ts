@@ -281,14 +281,15 @@ export {
 	ProxyNodeUnion,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	node,
+	NodeApi,
 	SharedTreeNode,
 	Typed,
 	TreeEvent,
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	encodeTreeSchema,
 } from "./feature-libraries";
 
 export {
@@ -308,6 +309,7 @@ export {
 	TypedTreeFactory,
 	TypedTreeOptions,
 	TypedTreeChannel,
+	SharedTreeContentSnapshot,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

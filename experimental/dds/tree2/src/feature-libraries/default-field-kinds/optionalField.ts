@@ -138,7 +138,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
-		for (const { change, revision } of changes) {
+		let index = 0;
+		for (const { change, revision, rollbackOf } of changes) {
 			const { childChanges } = change;
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
@@ -166,10 +167,29 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					fieldChange.revision = change.fieldChange.revision ?? revision;
 				}
 
+				let hasMatchingPriorInverse = false;
+				const maybePriorInverse = changes.findIndex(
+					(c) =>
+						(c.rollbackOf !== undefined && c.rollbackOf === revision) ||
+						(c.change.fieldChange?.newContent !== undefined &&
+							"revert" in c.change.fieldChange.newContent &&
+							c.change.fieldChange.newContent.revert.revision === revision) ||
+						(c.revision !== undefined && c.revision === rollbackOf),
+				);
+				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
+
 				if (change.fieldChange.newContent !== undefined) {
-					fieldChange.newContent = { ...change.fieldChange.newContent };
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						fieldChange.newContent = { ...change.fieldChange.newContent };
+					}
 				} else {
-					delete fieldChange.newContent;
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						delete fieldChange.newContent;
+					}
 				}
 
 				// Node was changed by this revision: flush the current changes
@@ -187,6 +207,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					);
 				}
 			}
+			index++;
 		}
 
 		if (currentChildNodeChanges.length > 0) {
@@ -525,7 +546,7 @@ export function optionalFieldIntoDelta(
 			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
 			const content = [singleTextCursor(setUpdate.set)];
 			const buildId = makeDetachedNodeId(
-				setUpdate.buildId.revision,
+				setUpdate.buildId.revision ?? change.fieldChange.revision ?? revision,
 				setUpdate.buildId.localId,
 			);
 			mark.attach = buildId;

@@ -25,6 +25,7 @@ import {
 	ILoaderOptions,
 	ILoader,
 	LoaderHeader,
+	IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -166,7 +167,6 @@ import {
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
-	shouldAllowGcTombstoneEnforcement,
 	trimLeadingAndTrailingSlashes,
 } from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
@@ -222,6 +222,9 @@ function prepareLocalContainerRuntimeIdAllocationMessageForTransit(
 	}
 }
 
+/**
+ * @public
+ */
 export interface ISummaryBaseConfiguration {
 	/**
 	 * Delay before first attempt to spawn summarizing container.
@@ -241,6 +244,9 @@ export interface ISummaryBaseConfiguration {
 	maxOpsSinceLastSummary: number;
 }
 
+/**
+ * @public
+ */
 export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
 	state: "enabled";
 	/**
@@ -301,19 +307,31 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
 	nonRuntimeHeuristicThreshold?: number;
 }
 
+/**
+ * @public
+ */
 export interface ISummaryConfigurationDisableSummarizer {
 	state: "disabled";
 }
 
+/**
+ * @public
+ */
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
 	state: "disableHeuristics";
 }
 
+/**
+ * @public
+ */
 export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer
 	| ISummaryConfigurationDisableHeuristics
 	| ISummaryConfigurationHeuristics;
 
+/**
+ * @public
+ */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
 
@@ -340,6 +358,9 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	nonRuntimeHeuristicThreshold: 20,
 };
 
+/**
+ * @public
+ */
 export interface ISummaryRuntimeOptions {
 	/** Override summary configurations set by the server. */
 	summaryConfigOverrides?: ISummaryConfiguration;
@@ -355,6 +376,7 @@ export interface ISummaryRuntimeOptions {
 
 /**
  * Options for op compression.
+ * @public
  */
 export interface ICompressionRuntimeOptions {
 	/**
@@ -372,6 +394,7 @@ export interface ICompressionRuntimeOptions {
 
 /**
  * Options for container runtime.
+ * @public
  */
 export interface IContainerRuntimeOptions {
 	readonly summaryOptions?: ISummaryRuntimeOptions;
@@ -453,6 +476,7 @@ export interface IContainerRuntimeOptions {
 
 /**
  * Accepted header keys for requests coming to the runtime.
+ * @public
  */
 export enum RuntimeHeaders {
 	/** True to wait for a data store to be created and loaded before returning it. */
@@ -461,14 +485,25 @@ export enum RuntimeHeaders {
 	viaHandle = "viaHandle",
 }
 
-/** True if a tombstoned object should be returned without erroring */
+/** True if a tombstoned object should be returned without erroring
+ * @public
+ */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
-/** [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring */
+/**
+ * [IRRELEVANT IF throwOnInactiveLoad OPTION NOT SET] True if an inactive object should be returned without erroring
+ * @public
+ */
 export const AllowInactiveRequestHeaderKey = "allowInactive"; // Belongs in the enum above, but avoiding the breaking change
 
-/** Tombstone error responses will have this header set to true */
+/**
+ * Tombstone error responses will have this header set to true
+ * @public
+ */
 export const TombstoneResponseHeaderKey = "isTombstoned";
-/** Inactive error responses will have this header set to true */
+/**
+ * Inactive error responses will have this header set to true
+ * @public
+ */
 export const InactiveResponseHeaderKey = "isInactive";
 
 /**
@@ -489,6 +524,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 
 /**
  * Available compression algorithms for op compression.
+ * @public
  */
 export enum CompressionAlgorithms {
 	lz4 = "lz4",
@@ -553,6 +589,7 @@ const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
  * @deprecated use ContainerRuntimeMessageType instead
+ * @public
  */
 export enum RuntimeMessage {
 	FluidDataStoreOp = "component",
@@ -566,6 +603,7 @@ export enum RuntimeMessage {
 
 /**
  * @deprecated please use version in driver-utils
+ * @public
  */
 export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
 	return (Object.values(RuntimeMessage) as string[]).includes(message.type);
@@ -575,6 +613,7 @@ export function isRuntimeMessage(message: ISequencedDocumentMessage): boolean {
  * Legacy ID for the built-in AgentScheduler.  To minimize disruption while removing it, retaining this as a
  * special-case for document dirty state.  Ultimately we should have no special-cases from the
  * ContainerRuntime's perspective.
+ * @public
  */
 export const agentSchedulerId = "_scheduler";
 
@@ -674,6 +713,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 
 /**
  * This function is not supported publicly and exists for e2e testing
+ * @internal
  */
 export async function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
 	return createSummarizer(loader, url);
@@ -682,6 +722,7 @@ export async function TEST_requestSummarizer(loader: ILoader, url: string): Prom
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
+ * @public
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents & ISummarizerEvents>
@@ -1140,10 +1181,20 @@ export class ContainerRuntime
 	 */
 	private nextSummaryNumber: number;
 
-	/**
-	 * If false, loading or using a Tombstoned object should merely log, not fail
-	 */
-	public readonly gcTombstoneEnforcementAllowed: boolean;
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	public get gcTombstoneEnforcementAllowed(): boolean {
+		return this.garbageCollector.tombstoneEnforcementAllowed;
+	}
+
+	/** If true, throw an error when a tombstone data store is retrieved */
+	public get gcThrowOnTombstoneLoad(): boolean {
+		return this.garbageCollector.throwOnTombstoneLoad;
+	}
+
+	/** If true, throw an error when a tombstone data store is used. */
+	public get gcThrowOnTombstoneUsage(): boolean {
+		return this.garbageCollector.throwOnTombstoneUsage;
+	}
 
 	/**
 	 * GUID to identify a document in telemetry
@@ -1289,11 +1340,6 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this._connected = connected;
-
-		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
-			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
-			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName] /* current */,
-		);
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -3887,9 +3933,7 @@ export class ContainerRuntime
 
 	public notifyAttaching() {} // do nothing (deprecated method)
 
-	public async getPendingLocalState(props?: {
-		notifyImminentClosure: boolean;
-	}): Promise<unknown> {
+	public async getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -3899,6 +3943,7 @@ export class ContainerRuntime
 			async (event) => {
 				this.verifyNotClosed();
 				const waitBlobsToAttach = props?.notifyImminentClosure;
+				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
@@ -3907,7 +3952,7 @@ export class ContainerRuntime
 				// to close current batch.
 				this.flush();
 				const pendingAttachmentBlobs = waitBlobsToAttach
-					? await this.blobManager.attachAndGetPendingBlobs()
+					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
 					: undefined;
 				const pending = this.pendingStateManager.getLocalState();
 				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
