@@ -1,5 +1,18 @@
 # @fluid-experimental/property-shared-tree-interop
 
+## 2.0.0-internal.7.2.0
+
+### Minor Changes
+
+-   Rename DocumentSchema to TreeSchema ([#17854](https://github.com/microsoft/FluidFramework/issues/17854)) [0b5944050d](https://github.com/microsoft/FluidFramework/commits/0b5944050d3bc4470a87de4a4332235d37cb719c)
+
+    Rename DocumentSchema to TreeSchema.
+    Rename toDocumentSchema to intoSchema.
+
+-   Rename SchemaData to TreeStoredSchema, FieldSchema to TreeFieldSchema and FieldStoredSchema to TreeFieldStoredSchema ([#17888](https://github.com/microsoft/FluidFramework/issues/17888)) [27f5a5e24d](https://github.com/microsoft/FluidFramework/commits/27f5a5e24dda81eafe5678742d68cd7d8afdc060)
+-   Rename TreeSchema to TreeNodeSchema ([#17845](https://github.com/microsoft/FluidFramework/issues/17845)) [908ee8921e](https://github.com/microsoft/FluidFramework/commits/908ee8921eb8d7fc21f64eee88a12c678e9756dd)
+-   Rename Struct to ObjectNode ([#17899](https://github.com/microsoft/FluidFramework/issues/17899)) [d90af254fe](https://github.com/microsoft/FluidFramework/commits/d90af254fe4224dd6391908e88055f3c98cc1d18)
+
 ## 2.0.0-internal.7.1.0
 
 ### Minor Changes

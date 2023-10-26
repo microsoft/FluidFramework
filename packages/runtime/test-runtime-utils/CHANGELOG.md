@@ -1,5 +1,11 @@
 # @fluidframework/test-runtime-utils
 
+## 2.0.0-internal.7.2.0
+
+### Minor Changes
+
+-   Rename TreeSchema to TreeNodeSchema ([#17845](https://github.com/microsoft/FluidFramework/issues/17845)) [908ee8921e](https://github.com/microsoft/FluidFramework/commits/908ee8921eb8d7fc21f64eee88a12c678e9756dd)
+
 ## 2.0.0-internal.7.1.0
 
 Dependency updates only.

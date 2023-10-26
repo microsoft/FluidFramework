@@ -1,5 +1,13 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.7.2.0
+
+### Minor Changes
+
+-   Deprecation of SharedString.findTile ([#17832](https://github.com/microsoft/FluidFramework/issues/17832)) [428234a2fb](https://github.com/microsoft/FluidFramework/commits/428234a2fb8c7a7c0bcdc9370a6632cd007c8a07)
+
+    findTile was previously deprecated on client and mergeTree, but was not on sharedString. Usage is mostly the same, with the exception that the parameter 'startPos' must be a number and cannot be undefined.
+
 ## 2.0.0-internal.7.1.0
 
 ### Minor Changes

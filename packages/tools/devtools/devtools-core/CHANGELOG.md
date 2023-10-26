@@ -1,5 +1,11 @@
 # @fluid-experimental/devtools-core
 
+## 2.0.0-internal.7.2.0
+
+### Minor Changes
+
+-   Rename Struct to ObjectNode ([#17899](https://github.com/microsoft/FluidFramework/issues/17899)) [d90af254fe](https://github.com/microsoft/FluidFramework/commits/d90af254fe4224dd6391908e88055f3c98cc1d18)
+
 ## 2.0.0-internal.7.1.0
 
 ### Minor Changes
