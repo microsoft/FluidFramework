@@ -153,7 +153,7 @@ function rebaseComposed(
 	baseChanges.forEach((base) => deepFreeze(base));
 	deepFreeze(change);
 
-	const composed = compose(baseChanges);
+	const composed = compose(baseChanges, metadata);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(composed));
 	return optionalChangeRebaser.rebase(
@@ -167,7 +167,10 @@ function rebaseComposed(
 	);
 }
 
-function compose(changes: TaggedChange<OptionalChangeset>[]): OptionalChangeset {
+function compose(
+	changes: TaggedChange<OptionalChangeset>[],
+	metadata?: RevisionMetadataSource,
+): OptionalChangeset {
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(...changes.map((c) => c.change)));
 	return optionalChangeRebaser.compose(
@@ -175,7 +178,7 @@ function compose(changes: TaggedChange<OptionalChangeset>[]): OptionalChangeset 
 		TestChange.compose as any,
 		idAllocator,
 		moveEffects,
-		defaultRevisionMetadataFromChanges(changes),
+		metadata ?? defaultRevisionMetadataFromChanges(changes),
 	);
 }
 

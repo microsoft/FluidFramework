@@ -668,11 +668,13 @@ describe("ModularChangeFamily", () => {
 			composeChild,
 			genId,
 			crossFieldManager,
-			{ getIndex, getInfo },
+			{ getIndex, tryGetInfo },
 		): RevisionTag[] => {
 			const relevantRevisions = [rev1, rev2, rev3, rev4];
 			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
-			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
 			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
@@ -692,11 +694,13 @@ describe("ModularChangeFamily", () => {
 			rebaseChild,
 			genId,
 			crossFieldManager,
-			{ getIndex, getInfo },
+			{ getIndex, tryGetInfo },
 		): RevisionTag[] => {
 			const relevantRevisions = [rev1, rev2, rev4];
 			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
-			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
 			assert.deepEqual(revsIndices, [0, 1, 2]);
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
