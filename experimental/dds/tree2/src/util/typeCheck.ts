@@ -150,7 +150,7 @@ export type requireFalse<_X extends false> = true;
  *
  * @privateRemarks
  * Use of [] in the extends clause prevents unions from being distributed over this conditional and returning `boolean` in some cases.
- * @see [distributive-conditional-types](https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types) for details.
+ * @see {@link https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types | distributive-conditional-types} for details.
  * @alpha
  */
 export type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
