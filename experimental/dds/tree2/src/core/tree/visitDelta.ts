@@ -180,7 +180,7 @@ function transferRoots(
 			visitor.exitField(oldField);
 			detachedFieldIndex.deleteEntry(oldId);
 		}
-		assert(delayed.length < priorSize, "transferRoots should make progress");
+		assert(delayed.length < priorSize, 0x7cf /* transferRoots should make progress */);
 		nextBatch = delayed;
 	}
 }
@@ -387,7 +387,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			if (mark.fields !== undefined) {
 				assert(
 					mark.attach === undefined || mark.detach !== undefined,
-					"Invalid nested changes on an additive mark",
+					0x7d0 /* Invalid nested changes on an additive mark */,
 				);
 				visitNode(index, mark.fields, visitor, config);
 			}

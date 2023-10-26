@@ -36,7 +36,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 
 	private get treeDeltaHandler(): IDeltaHandler {
 		const handler = this.newTreeHandler ?? this.legacyTreeHandler;
-		assert(handler !== undefined, "No handler to process op");
+		assert(handler !== undefined, 0x7e2 /* No handler to process op */);
 		return handler;
 	}
 
@@ -54,14 +54,17 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 
 	// Allow for the handler to be swapped out for the new SharedTree's handler
 	public attachTreeDeltaHandler(treeDeltaHandler: IDeltaHandler): void {
-		assert(!this.isUsingNewV2(), "Can't swap tree handlers more than once!");
+		assert(!this.isUsingNewV2(), 0x7e3 /* Can't swap tree handlers more than once! */);
 		if (this.isPreAttachState()) {
 			this.legacyTreeHandler = treeDeltaHandler;
 			return;
 		}
-		assert(this.isUsingOldV1(), "Can only swap handlers after the old handler is loaded");
+		assert(
+			this.isUsingOldV1(),
+			0x7e4 /* Can only swap handlers after the old handler is loaded */,
+		);
 		this.newTreeHandler = treeDeltaHandler;
-		assert(this.isUsingNewV2(), "Should be using new handler after swap");
+		assert(this.isUsingNewV2(), 0x7e5 /* Should be using new handler after swap */);
 	}
 
 	public process(

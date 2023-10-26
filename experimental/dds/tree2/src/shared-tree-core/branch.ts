@@ -366,10 +366,10 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		revision: RevisionTag,
 		revertibleKind: RevertibleKind,
 	): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
-		assert(!this.isTransacting(), "Undo is not yet supported during transactions");
+		assert(!this.isTransacting(), 0x7cb /* Undo is not yet supported during transactions */);
 
 		const commit = this.revertibleCommits.get(revision);
-		assert(commit !== undefined, "expected to find a revertible commit");
+		assert(commit !== undefined, 0x7cc /* expected to find a revertible commit */);
 
 		let change = this.changeFamily.rebaser.invert(tagChange(commit.change, revision), false);
 

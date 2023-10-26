@@ -14,7 +14,6 @@ import {
 	IEditableForest,
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
-	schemaDataIsEmpty,
 	combineVisitors,
 	visitDelta,
 	DetachedFieldIndex,
@@ -46,11 +45,6 @@ import {
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
-import {
-	InitializeAndSchematizeConfiguration,
-	initializeContent,
-	schematize,
-} from "./schematizedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -186,13 +180,6 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-
-	/**
-	 * @deprecated {@link ISharedTree.schematizeView} which will replace this. View schema should be applied before creating an ISharedTreeView.
-	 */
-	schematize<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView;
 
 	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
@@ -381,13 +368,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		return this.branch.editor;
 	}
 
-	public schematize<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView {
-		schematizeView(this, config, this.storedSchema);
-		return this;
-	}
-
 	public editableTree2<TRoot extends TreeFieldSchema>(
 		viewSchema: TreeSchema<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
@@ -480,32 +460,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	public dispose(): void {
 		this.branch.dispose();
 	}
-}
-
-/**
- * @param view - view to edit.
- * @param config - config to apply.
- * @param storedSchema - provided separate from view since editing schema of view doesn't send ops properly.
- */
-// TODO: once schematize is removed from ISharedTreeView, this should be moved/integrated into SharedTree.
-export function schematizeView<TRoot extends TreeFieldSchema>(
-	view: ISharedTreeView,
-	config: InitializeAndSchematizeConfiguration<TRoot>,
-	storedSchema: StoredSchemaRepository,
-): void {
-	// TODO:
-	// When this becomes a more proper out of schema adapter, editing should be made lazy.
-	// This will improve support for readonly documents, cross version collaboration and attribution.
-
-	// Check for empty.
-	// TODO: Better detection of empty case
-	if (view.forest.isEmpty && schemaDataIsEmpty(storedSchema)) {
-		view.transaction.start();
-		initializeContent(storedSchema, config.schema, () => view.setContent(config.initialTree));
-		view.transaction.commit();
-	}
-
-	schematize(view.events, storedSchema, config);
 }
 
 /**
