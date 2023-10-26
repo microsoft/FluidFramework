@@ -549,6 +549,13 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 			enumerable: false,
 			configurable: false,
 		},
+		get: {
+			value(key: string): unknown {
+				const mapNode = getMapNode(dispatch);
+				const field = mapNode.getBoxed(key);
+				return getProxyForField(field);
+			},
+		},
 	});
 
 	setTreeNode(dispatch, treeNode);
@@ -562,15 +569,6 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 	// a dispatch object to see if it improves performance.
 	return new Proxy<SharedTreeMap<TSchema>>(new Map<string, ProxyNode<TSchema>>(), {
 		get: (target, key, receiver): unknown => {
-			console.log(`get "${String(key)}"`);
-
-			if (key === "get") {
-				return (mapKey: string) => {
-					const mapNode = getMapNode(dispatch);
-					return getProxyForField(mapNode.getBoxed(mapKey));
-				};
-			}
-
 			return Reflect.get(dispatch, key);
 		},
 		getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
