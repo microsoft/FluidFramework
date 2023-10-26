@@ -123,7 +123,6 @@ describe("Garbage Collection Tests", () => {
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),
 			closeFn,
-			gcTombstoneEnforcementAllowed: true,
 		};
 
 		let metadata = createParams.metadata;

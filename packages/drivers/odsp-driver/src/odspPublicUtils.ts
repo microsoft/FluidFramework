@@ -6,11 +6,17 @@
 import { hashFile, IsoBuffer } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage, ISnapshotTree } from "@fluidframework/protocol-definitions";
 
+/**
+ * @public
+ */
 export async function getHashedDocumentId(driveId: string, itemId: string): Promise<string> {
 	const buffer = IsoBuffer.from(`${driveId}_${itemId}`);
 	return encodeURIComponent(await hashFile(buffer, "SHA-256", "base64"));
 }
 
+/**
+ * @public
+ */
 export interface ISnapshotContents {
 	snapshotTree: ISnapshotTree;
 	blobs: Map<string, ArrayBuffer>;

@@ -186,7 +186,7 @@ export class MockContainerRuntime {
 	}
 
 	/**
-	 * @deprecated - use the associated datastore to create the delta connection
+	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = this.dataStoreRuntime.createDeltaConnection();
@@ -201,10 +201,10 @@ export class MockContainerRuntime {
 			localOpMetadata,
 		};
 
+		this.clientSequenceNumber++;
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
-				this.submitInternal(message);
-				this.clientSequenceNumber++;
+				this.submitInternal(message, clientSequenceNumber);
 				break;
 			}
 
@@ -231,9 +231,19 @@ export class MockContainerRuntime {
 			return;
 		}
 
+		let fakeClientSequenceNumber = 1;
 		while (this.outbox.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.submitInternal(this.outbox.shift()!);
+			this.submitInternal(
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				this.outbox.shift()!,
+				// When grouped batching is used, the ops within the same grouped batch will have
+				// fake sequence numbers when they're ungrouped. The submit function will still
+				// return the clientSequenceNumber but this will ensure that the readers will always
+				// read the fake client sequence numbers.
+				this.runtimeOptions.enableGroupedBatching
+					? fakeClientSequenceNumber++
+					: this.clientSequenceNumber,
+			);
 		}
 	}
 
@@ -261,15 +271,15 @@ export class MockContainerRuntime {
 		);
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage) {
+	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
 		this.factory.pushMessage({
 			clientId: this.clientId,
-			clientSequenceNumber: this.clientSequenceNumber,
+			clientSequenceNumber,
 			contents: message.content,
 			referenceSequenceNumber: this.referenceSequenceNumber,
 			type: MessageType.Operation,
 		});
-		this.addPendingMessage(message.content, message.localOpMetadata, this.clientSequenceNumber);
+		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
 	}
 
 	public process(message: ISequencedDocumentMessage) {
@@ -278,13 +288,6 @@ export class MockContainerRuntime {
 		this.deltaManager.minimumSequenceNumber = message.minimumSequenceNumber;
 		const [local, localOpMetadata] = this.processInternal(message);
 		this.dataStoreRuntime.process(message, local, localOpMetadata);
-
-		if (this.runtimeOptions.enableGroupedBatching) {
-			// If the grouped batching scenario is enabled, we need to advance the
-			// client sequence number when we process a remote op. Sending ops will
-			// not increment this value.
-			this.clientSequenceNumber++;
-		}
 	}
 
 	protected addPendingMessage(
@@ -307,7 +310,7 @@ export class MockContainerRuntime {
 			const pendingMessage = this.pendingMessages.shift();
 			assert(
 				pendingMessage?.clientSequenceNumber === message.clientSequenceNumber,
-				"Unexpected client sequence number from message",
+				"Unexpected message",
 			);
 			localOpMetadata = pendingMessage.localOpMetadata;
 		}
@@ -603,7 +606,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;
@@ -770,7 +773,7 @@ export class MockFluidDataStoreRuntime
 	}
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public async request(request: IRequest): Promise<IResponse> {
 		return null as any as IResponse;

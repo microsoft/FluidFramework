@@ -108,7 +108,8 @@ async function main() {
 			driverEndpointName: endpoint,
 			profile: profileName,
 		},
-		random.pick([LogLevel.verbose, LogLevel.default]),
+		// Turn on verbose events for ALL stress test runs.
+		random.pick([LogLevel.verbose]),
 	);
 
 	// this will enabling capturing the full stack for errors
