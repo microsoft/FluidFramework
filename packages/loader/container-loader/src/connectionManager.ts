@@ -594,6 +594,16 @@ export class ConnectionManager implements IConnectionManager {
 					LogLevel.verbose,
 				);
 			} catch (origError: any) {
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectToDeltaStreamException",
+					},
+					undefined,
+					LogLevel.verbose,
+				);
+				if (connection !== undefined) {
+					connection.dispose();
+				}
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
 					connection = new NoDeltaStream(origError.storageOnlyReason, {
 						text: origError.message,
