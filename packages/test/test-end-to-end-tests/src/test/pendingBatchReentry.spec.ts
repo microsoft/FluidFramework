@@ -77,38 +77,30 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 		await provider.ensureSynchronized();
 	};
 
-	const key = "testKey";
-	interface PartialBatchTest {
-		name: string;
-		initial: () => void;
-		reentrant: () => void;
-		assertion: () => void;
-	}
-
-	const tests: PartialBatchTest[] = [
+	[
 		{
 			name: "SharedDirectory",
 			initial: () => {
-				sharedDirectory.set(key, true);
+				sharedDirectory.set("key", true);
 			},
 			reentrant: () => {
-				sharedDirectory.set(key, false);
+				sharedDirectory.set("key", false);
 			},
 			assertion: () => {
-				assert.strictEqual(sharedDirectory.get(key), false);
+				assert.strictEqual(sharedDirectory.get("key"), false);
 			},
 		},
 		{
 			name: "SharedMap",
 			initial: () => {
-				sharedMap.set(key, true);
+				sharedMap.set("key", true);
 			},
 			reentrant: () => {
 				// ADO:6050. The call below would cause assert 0x2fa
-				// sharedMap.set(key, false);
+				// sharedMap.set("key", false);
 			},
 			assertion: () => {
-				assert.strictEqual(sharedMap.get(key), true);
+				assert.strictEqual(sharedMap.get("key"), true);
 			},
 		},
 		{
@@ -161,9 +153,15 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 				assert.strictEqual(sharedMatrix.getCell(0, 0), 2);
 			},
 		},
-	];
-
-	tests.forEach((test) => {
+	].forEach((test) => {
+		/**
+		 * The test exercises a less frequent but possibly problematic scenario with grouped batching and rebasing:
+		 * - the DDS receives some changes in a batch
+		 * - the changes are 'pending' (they have been submitted not acknowledged)
+		 * - while these changes are pending, the runtime creates a new batch of changes for the DDS
+		 * - due to reentrancy, the latest batch gets rebased and resubmitted to the DDS
+		 * - as there is already a pending batch in the DDSs buffer, this rebased batch may be deemed unexpected by the DDS resubmit flow
+		 */
 		it(`Pending batches with reentry - ${test.name}`, async function () {
 			await setupContainers();
 			const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
