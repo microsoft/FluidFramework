@@ -59,7 +59,10 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 			this.legacyTreeHandler = treeDeltaHandler;
 			return;
 		}
-		assert(this.isUsingOldV1(), 0x7e4 /* Can only swap handlers after the old handler is loaded */);
+		assert(
+			this.isUsingOldV1(),
+			0x7e4 /* Can only swap handlers after the old handler is loaded */,
+		);
 		this.newTreeHandler = treeDeltaHandler;
 		assert(this.isUsingNewV2(), 0x7e5 /* Should be using new handler after swap */);
 	}

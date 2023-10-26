@@ -71,7 +71,10 @@ export class MigrationShimFactory implements IChannelFactory {
 		attributes: IChannelAttributes,
 	): Promise<MigrationShim> {
 		// TODO: remove attributes check and move it to an automated test that constructing a MigrationShimFactory and checking its attributes/type matches the oldFactory.
-		assert(attributesMatch(attributes, this.oldFactory.attributes), 0x7ea /* Attributes do not match */);
+		assert(
+			attributesMatch(attributes, this.oldFactory.attributes),
+			0x7ea /* Attributes do not match */,
+		);
 		const migrationShim = new MigrationShim(
 			id,
 			runtime,

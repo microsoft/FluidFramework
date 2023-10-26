@@ -130,7 +130,10 @@ function invertMark<TNodeChange>(
 		}
 		case "Insert": {
 			if (!isMuted(mark)) {
-				assert(mark.cellId !== undefined, 0x7d8 /* Active inserts should target empty cells */);
+				assert(
+					mark.cellId !== undefined,
+					0x7d8 /* Active inserts should target empty cells */,
+				);
 				if (mark.transientDetach !== undefined) {
 					assert(
 						revision !== undefined,

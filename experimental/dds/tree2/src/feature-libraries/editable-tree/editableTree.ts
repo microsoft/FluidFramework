@@ -280,7 +280,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 					"beforeChange",
 					(anchorNode: AnchorNode) => {
 						const treeNode = anchorNode.slots.get(editableTreeSlot);
-						assert(treeNode !== undefined, 0x7d1 /* tree node not found in anchor node slots */);
+						assert(
+							treeNode !== undefined,
+							0x7d1 /* tree node not found in anchor node slots */,
+						);
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for beforeChange and afterChange.
@@ -294,7 +297,10 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 					"afterChange",
 					(anchorNode: AnchorNode) => {
 						const treeNode = anchorNode.slots.get(editableTreeSlot);
-						assert(treeNode !== undefined, 0x7d2 /* tree node not found in anchor node slots */);
+						assert(
+							treeNode !== undefined,
+							0x7d2 /* tree node not found in anchor node slots */,
+						);
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for beforeChange and afterChange.

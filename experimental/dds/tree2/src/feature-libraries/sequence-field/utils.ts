@@ -447,9 +447,15 @@ export function tryExtendMark<T>(lhs: Mark<T>, rhs: Readonly<Mark<T>>): boolean 
 				areMergeableChangeAtoms(lhsInsert.transientDetach, lhs.count, rhs.transientDetach)
 			) {
 				if (rhs.content === undefined) {
-					assert(lhsInsert.content === undefined, 0x7de /* Insert content type mismatch */);
+					assert(
+						lhsInsert.content === undefined,
+						0x7de /* Insert content type mismatch */,
+					);
 				} else {
-					assert(lhsInsert.content !== undefined, 0x7df /* Insert content type mismatch */);
+					assert(
+						lhsInsert.content !== undefined,
+						0x7df /* Insert content type mismatch */,
+					);
 					lhsInsert.content.push(...rhs.content);
 				}
 				lhsInsert.count += rhs.count;
