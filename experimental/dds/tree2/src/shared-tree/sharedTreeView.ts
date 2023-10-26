@@ -407,8 +407,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		// TODO:
 		// this allocates and leaks a new editable tree context (when used it will add content to the AnchorSet which refers back to the context).
 		// Additionally its assumed there will be exactly one context per view and any TreeNodes cached on the AnchorSets will belong to that context.
-		// Calling this more than once  would violate that assumption, but currently does not error.
-		// Therefor root2, like editableTree2 should really only be called one.
+		// Calling this more than once would violate that assumption, but currently does not error.
+		// Therefore root2, like editableTree2 should really only be called once.
 		// However, since getProxyForField returns an object that no longer reflects the root after the root is edited (unlike the root field in editableTree2)
 		// users will need to call root2 again whenever that might have happened to get the new root.
 		// This makes it impractical to use this efficiently and correctly at the same time.
