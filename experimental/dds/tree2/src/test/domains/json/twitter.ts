@@ -79,6 +79,42 @@ export interface TwitterUser {
 	notifications: boolean;
 }
 
+export interface TwitterMediaEntity {
+	id: number;
+	id_str: string;
+	indices: number[];
+	media_url: string;
+	media_url_https: string;
+	url: string;
+	display_url: string;
+	expanded_url: string;
+	type: string;
+	sizes: {
+		large: {
+			w: number;
+			h: number;
+			resize: "fit" | "crop";
+		};
+		medium: {
+			w: number;
+			h: number;
+			resize: "fit" | "crop";
+		};
+		thumb: {
+			w: number;
+			h: number;
+			resize: "fit" | "crop";
+		};
+		small: {
+			w: number;
+			h: number;
+			resize: "fit" | "crop";
+		};
+	};
+	source_status_id?: number;
+	source_status_id_str?: string;
+}
+
 export interface TwitterStatus {
 	metadata: {
 		result_type: string;
@@ -119,41 +155,7 @@ export interface TwitterStatus {
 			id_str: string;
 			indices: number[];
 		}[];
-		media?: {
-			id: number;
-			id_str: string;
-			indices: number[];
-			media_url: string;
-			media_url_https: string;
-			url: string;
-			display_url: string;
-			expanded_url: string;
-			type: string;
-			sizes: {
-				large: {
-					w: number;
-					h: number;
-					resize: "fit" | "crop";
-				};
-				medium: {
-					w: number;
-					h: number;
-					resize: "fit" | "crop";
-				};
-				thumb: {
-					w: number;
-					h: number;
-					resize: "fit" | "crop";
-				};
-				small: {
-					w: number;
-					h: number;
-					resize: "fit" | "crop";
-				};
-			};
-			source_status_id?: number;
-			source_status_id_str?: string;
-		}[];
+		media?: TwitterMediaEntity[];
 	};
 	favorited: boolean;
 	retweeted: boolean;
@@ -408,7 +410,7 @@ function generateTwitterStatus(
 	if (shouldAddMediaEntity) {
 		const mediaStatusIdString = getRandomNumberString(random, 18, 18);
 		const shouldAddSourceIdData = random.bool();
-		const mediaEntity: any = {
+		const mediaEntity: TwitterMediaEntity = {
 			id: Number(mediaStatusIdString),
 			id_str: "statusIdString",
 			indices: [Math.floor(random.integer(0, 199)), Math.floor(random.integer(0, 199))],
