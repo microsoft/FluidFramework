@@ -3,23 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Assume } from "../../../util";
+import { Assume, fail } from "../../../util";
 import { typeNameSymbol } from "../../contextuallyTyped";
 import { ObjectNodeSchema, TreeNodeSchema } from "../../typed-schema";
 import { ProxyNode, SharedTreeObject } from "./types";
 
-const factoryContent = Symbol("Node content");
+const factoryContentSymbol = Symbol("Node content");
 interface HasFactoryContent<T> {
-	[factoryContent]: T;
-}
-
-/**
- * Returns the content stored on an object created by a {@link SharedTreeObjectFactory}.
- */
-export function getFactoryContent<TSchema extends ObjectNodeSchema>(
-	x: SharedTreeObject<TSchema>,
-): ProxyNode<TSchema> | undefined {
-	return (x as Partial<HasFactoryContent<ProxyNode<TSchema>>>)[factoryContent];
+	[factoryContentSymbol]: T;
 }
 
 /**
@@ -32,8 +23,9 @@ export function addFactory<TSchema extends ObjectNodeSchema>(
 		const node = Object.create(null);
 		// Shallow copy the content and then add the type name symbol to it.
 		// The copy is necessary so that the input `content` object can be re-used as the contents of a different typed/named node in another `create` call.
-		const namedContent = { ...content, [typeNameSymbol]: schema.name };
-		Object.defineProperty(node, factoryContent, { value: namedContent });
+		const contentCopy = { ...content };
+		Object.defineProperty(contentCopy, typeNameSymbol, { value: schema.name });
+		Object.defineProperty(node, factoryContentSymbol, { value: contentCopy });
 		for (const [key] of schema.objectNodeFields) {
 			Object.defineProperty(node, key, {
 				// TODO: `node` could be made fully readable by recursively constructing/returning objects, maps and lists and values here.
@@ -50,6 +42,63 @@ export function addFactory<TSchema extends ObjectNodeSchema>(
 		configurable: true,
 		enumerable: true,
 	}) as FactoryTreeSchema<TSchema>;
+}
+
+/**
+ * Given a content tree that is to be inserted into the shared tree, replace all subtrees that were created by factories
+ * (via {@link SharedTreeObjectFactory.create}) with the content that was passed to those factories.
+ * @remarks
+ * This functions works recursively.
+ * Factory-created objects that are nested inside of the content passed to other factory-created objects, and so on, will be in-lined.
+ * This function also adds the hidden {@link typeNameSymbol} of each object schema to the output.
+ * @example
+ * ```ts
+ * const x = foo.create({
+ *   a: 3, b: bar.create({
+ *     c: [baz.create({ d: 5 })]
+ *   })
+ * });
+ * const y = extractFactoryContent(y);
+ * y === {
+ *   [typeNameSymbol]: "foo", a: 3, b: {
+ *     [typeNameSymbol]: "bar", c: [{ [typeNameSymbol]: "baz", d: 5 }]
+ *  }
+ * }
+ * ```
+ */
+export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaScript">>(
+	content: T,
+): T {
+	const copy: Record<string, unknown> = {};
+	if (Array.isArray(content)) {
+		// `content` is an array
+		return content.map(extractFactoryContent) as T;
+	} else if (content !== null && typeof content === "object") {
+		const factoryContent = (content as Partial<HasFactoryContent<object>>)[
+			factoryContentSymbol
+		];
+		if (factoryContent !== undefined) {
+			// `content` is a factory-created object
+			const typeName =
+				(factoryContent as { [typeNameSymbol]?: string })[typeNameSymbol] ??
+				fail("Expected schema type name to be set on factory object content");
+
+			Object.defineProperty(copy, typeNameSymbol, { value: typeName });
+			for (const [p, v] of Object.entries(factoryContent)) {
+				copy[p] = extractFactoryContent(v);
+			}
+		} else {
+			// `content` is a POJO object (but may have factory-created objects within it)
+			for (const [p, v] of Object.entries(content)) {
+				copy[p] = extractFactoryContent(v);
+			}
+		}
+	} else {
+		// `content` is a primitive
+		return content;
+	}
+	// TODO: Handle maps
+	return copy as T;
 }
 
 /**

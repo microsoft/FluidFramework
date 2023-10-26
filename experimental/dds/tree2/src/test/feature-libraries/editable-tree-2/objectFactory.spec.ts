@@ -6,6 +6,8 @@
 import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
 import { typeNameSymbol } from "../../../feature-libraries";
+// eslint-disable-next-line import/no-internal-modules
+import { extractFactoryContent } from "../../../feature-libraries/editable-tree-2/proxies/objectFactory";
 import { itWithRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
@@ -25,11 +27,20 @@ describe("SharedTreeObject factories", () => {
 		content: sb.optional(sb.number),
 	});
 
+	const childD = sb.object("childD", {
+		list: sb.list([childA, childB]),
+	});
+
+	const childC = sb.object("childC", {
+		child: childD,
+	});
+
 	const parent = sb.object("parent", {
-		child: [childA],
+		child: childA,
 		poly: [childA, childB],
-		list: sb.fieldNode("list", sb.sequence(sb.number)),
+		list: sb.list(sb.number),
 		optional: sb.optional(childOptional),
+		grand: childC,
 	});
 
 	const schema = sb.intoSchema(parent);
@@ -39,6 +50,7 @@ describe("SharedTreeObject factories", () => {
 		child: { [typeNameSymbol]: "test.childA", content: 42 },
 		poly: { [typeNameSymbol]: "test.childB", content: 42 },
 		list: [42, 42, 42],
+		grand: { child: { list: [{ content: 42 }, { content: 42 }] } },
 	};
 
 	itWithRoot("correctly construct objects with content", schema, initialTree, (root) => {
@@ -68,5 +80,60 @@ describe("SharedTreeObject factories", () => {
 		root.optional = {};
 		assert.deepEqual(root.optional, {});
 		assert.equal(root.optional.content, undefined);
+	});
+
+	itWithRoot("support nesting", schema, initialTree, (root) => {
+		root.grand = childC.create({
+			child: childD.create({
+				list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
+			}),
+		});
+		assert.deepEqual(root.grand.child.list, [{ content: 43 }, { content: 43 }]);
+	});
+
+	itWithRoot("support nesting inside of a POJO", schema, initialTree, (root) => {
+		root.grand = {
+			child: childD.create({
+				list: [childA.create({ content: 43 }), childB.create({ content: 43 })],
+			}),
+		};
+		assert.deepEqual(root.grand.child.list, [{ content: 43 }, { content: 43 }]);
+	});
+
+	describe("factory content extraction", () => {
+		it("extracts a primitive", () => {
+			assert.equal(extractFactoryContent(42), 42);
+		});
+		it("extracts an object", () => {
+			assert.deepEqual(extractFactoryContent(childA.create({ content: 42 })), {
+				content: 42,
+			});
+		});
+		it("extracts an array of primitives", () => {
+			assert.deepEqual(extractFactoryContent([42, 42]), [42, 42]);
+		});
+		it("extracts an array of objects", () => {
+			assert.deepEqual(
+				extractFactoryContent([
+					childA.create({ content: 42 }),
+					childA.create({ content: 42 }),
+				]),
+				[{ content: 42 }, { content: 42 }],
+			);
+		});
+		it("extracts an object tree", () => {
+			assert.deepEqual(
+				extractFactoryContent(
+					childC.create({
+						child: childD.create({ list: [childA.create({ content: 42 })] }),
+					}),
+				),
+				{
+					child: { list: [{ content: 42 }] },
+				},
+			);
+		});
+
+		// TODO: nest Maps as well
 	});
 });
