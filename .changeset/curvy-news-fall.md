@@ -1,9 +1,10 @@
 ---
-"@fluid-experimental/property-shared-tree-interop": minor
 "@fluid-experimental/tree2": minor
 ---
 
-Rename DocumentSchema to TreeSchema
+tree2: Rename DocumentSchema and toDocumentSchema
 
-Rename DocumentSchema to TreeSchema.
-Rename toDocumentSchema to intoSchema.
+The following APIs have been renamed:
+
+- `DocumentSchema` is now `TreeSchema`
+- `toDocumentSchema` is now `intoSchema`

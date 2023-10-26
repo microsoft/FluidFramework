@@ -27,7 +27,7 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
 import {
 	configureWebSocketServices,
 	ICollaborationSessionEvents,
@@ -155,6 +155,9 @@ export class AlfredRunner implements IRunner {
 		const httpServer = this.server.httpServer;
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
+		httpServer.on("upgrade", (req, socket, initialMsgBuffer) =>
+			this.setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer),
+		);
 		// Listen on primary thread port, on all network interfaces,
 		// or allow cluster module to assign random port for worker thread.
 		httpServer.listen(cluster.isPrimary ? this.port : 0);
@@ -215,6 +218,41 @@ export class AlfredRunner implements IRunner {
 			default:
 				throw error;
 		}
+	}
+
+	/**
+	 * Handles the on "upgrade" event to setup connection count telemetry. This telemetry is updated
+	 * on all socket events: "upgrade", "close", "error".
+	 */
+	private setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer) {
+		const metric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+			origin: "upgrade",
+			connections: socket.server._connections,
+		});
+		metric.success("WebSockets: connection upgraded");
+		socket.on("close", (hadError: boolean) => {
+			const closeMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+				origin: "close",
+				connections: socket.server._connections,
+				hadError: hadError.toString(),
+			});
+			closeMetric.success(
+				"WebSockets: connection closed",
+				hadError ? LogLevel.Error : LogLevel.Info,
+			);
+		});
+		socket.on("error", (error) => {
+			const errorMetric = Lumberjack.newLumberMetric("WebsocketConnectionCount", {
+				origin: "error",
+				connections: socket.server._connections,
+				bytesRead: socket.bytesRead,
+				bytesWritten: socket.bytesWritten,
+				error: error.toString(),
+			});
+			// We only care about the connections parameter which is already calculated.
+			// Leaving as success to avoid confusion if someone see the metric decreasing.
+			errorMetric.success("WebSockets: connection error", LogLevel.Error);
+		});
 	}
 
 	/**

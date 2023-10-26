@@ -624,7 +624,7 @@ export class AnchorSet implements ISubscribable<AnchorSetRootEvents>, AnchorLoca
 			withParentNodeUpToRoot(withNode: (anchorNode: PathNode) => void) {
 				assert(
 					this.parentField !== undefined,
-					"Must be in a field to call withNodeUpToRoot",
+					0x7cd /* Must be in a field to call withNodeUpToRoot */,
 				);
 				// This function gets called when we attach a node to the root field, in which case there is no parent.
 				// It's expected this will do nothing in that case.

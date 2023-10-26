@@ -146,7 +146,9 @@ variables:
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
       nonScopedPackages: ${{ parameters.nonScopedPackages }}
-  - name: toolAbsolutePath
+  # Absolute path to the folder that contains the source code for the telemetry-generator package, which is used in a few
+  # places in the pipeline to push custom telemetry to Kusto.
+  - name: absolutePathToTelemetryGenerator
     value:  $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: ado-feeds
@@ -208,7 +210,7 @@ stages:
                 TestCoverage=$(testCoverage)
 
               Variables:
-                toolAbsolutePath=$(toolAbsolutePath)
+                absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
                 BuildReason=$(variables['Build.Reason'])
 
               Publish Parameters:
@@ -438,81 +440,32 @@ stages:
               customCommand: 'run bundle-analysis:run'
 
           - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
-            # Auth to internal feed
             - task: Bash@3
-              name: Initialize
-              displayName: Initialize .npmrc for telemetry logger
-              inputs:
-                targetType: 'inline'
-                workingDirectory: ${{ variables.toolAbsolutePath }}
-                # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
-                script: |
-                  echo Initialize package
-                  npm init --yes
-
-                  echo Generating .npmrc
-                  echo "registry=https://registry.npmjs.org" >> ./.npmrc
-                  echo "always-auth=false" >> ./.npmrc
-
-                  echo "@fluidframework:registry=${{ variables.feed }}" >> ./.npmrc
-                  echo "@fluid-experimental:registry=${{ variables.feed }}" >> ./.npmrc
-
-                  # This is confusing, but we are using the .npmrc here to load dependencies from different feeds. These
-                  # scopes must be loaded from the "dev" feed because that is the only place they are published. Ideally
-                  # this logic will be centralized outside of CI in the future.
-                  echo "@fluid-internal:registry=${{ variables.devFeed }}" >> ./.npmrc
-                  echo "@fluid-private:registry=${{ variables.devFeed }}" >> ./.npmrc
-
-                  # This scope must be loaded from the "build" feed
-                  echo "@ff-internal:registry=$(ado-feeds-build)" >> ./.npmrc
-
-                  # This scope must be loaded from the internal Office feed
-                  echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
-
-                  echo "always-auth=true" >> ./.npmrc
-                  cat .npmrc
-
-            - task: npmAuthenticate@0
-              displayName: 'npm authenticate (internal feed)'
-              inputs:
-                workingFile: ${{ variables.toolAbsolutePath }}/.npmrc
-
-            - task: Bash@3
-              displayName: 'List report.json and .npmrc'
+              displayName: 'List report.json'
               inputs:
                 targetType: 'inline'
                 workingDirectory:  ${{ parameters.buildDirectory }}
                 script: |
-                  echo "Build Directory is ${{ parameters.buildDirectory }}"
-                  ls -la '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
-                  cat '${{ variables.toolAbsolutePath }}/.npmrc';
+                  echo "Build Directory is ${{ parameters.buildDirectory }}";
+                  BUNDLE_SIZE_TESTS_DIR="${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests";
+                  echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
+                  ls -la $BUNDLE_SIZE_TESTS_DIR;
 
-            - task: Bash@3
-              displayName: 'Prepare telemetry-generator for bundle size'
-              inputs:
-                targetType: 'inline'
-                workingDirectory:  ${{ variables.toolAbsolutePath }}
-                script: |
-                  ls -la '${{ variables.toolAbsolutePath }}';
-                  ls -la '${{ parameters.buildDirectory }}';
-                  npm install @ff-internal/aria-logger;
-                  npm i;
-                  npm run build:compile;
+            - template: include-telemetry-setup.yml
+              parameters:
+                devFeedUrl: $(ado-feeds-dev)
+                officeFeedUrl: $(ado-feeds-office)
 
             - task: Bash@3
               displayName: Write bundle sizes measurements to Aria/Kusto
               inputs:
                 targetType: 'inline'
-                workingDirectory: ${{ variables.toolAbsolutePath }}
+                workingDirectory: $(absolutePathToTelemetryGenerator)
                 script: |
                   echo "Writing the following performance tests results to Aria/Kusto"
                   echo "Report Size:"
                   ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                  echo "Tools Path:"
-                  ls -la '../../tools/telemetry-generator/dist/handlers';
-                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
-                  echo "Removing .npmrc"
-                  rm ../../tools/telemetry-generator/.npmrc;
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -619,12 +572,13 @@ stages:
           parameters:
             devFeedUrl: $(ado-feeds-dev)
             officeFeedUrl: $(ado-feeds-office)
+            isCheckoutNeeded: true
 
         - task: Bash@3
           displayName: Retrieve buildId results
           inputs:
             targetType: 'inline'
-            workingDirectory: $(toolAbsolutePath)
+            workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
               echo "Creating output folder ..."
               mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
@@ -634,7 +588,7 @@ stages:
               pwd;
               ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;
               cat $(pipelineTelemetryWorkdir)/timingOutput/output.json;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
           env:
             BUILD_ID: $(Build.BuildId)
             ADO_API_TOKEN: $(System.AccessToken)

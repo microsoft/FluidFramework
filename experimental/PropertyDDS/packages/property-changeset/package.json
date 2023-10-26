@@ -24,7 +24,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" nyc",
 		"coverage": "npx nyc --silent --cwd --nycrc-path `pwd`/.nycrc npm run test",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -71,7 +71,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.26.0-203096",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^9.1.1",

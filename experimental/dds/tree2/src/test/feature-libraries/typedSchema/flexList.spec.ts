@@ -18,7 +18,7 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/typed-schema/flexList";
-import { requireAssignableTo, requireFalse, requireTrue } from "../../../util";
+import { areSafelyAssignable, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 
 // Test ArrayHasFixedLength
 {
@@ -76,6 +76,18 @@ import { requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 
 	type e = FlexListToLazyArray<readonly [2]>;
 	type checkE = requireAssignableTo<e, [() => 2]>;
+}
+
+// Test FlexListToNonLazyArray
+{
+	type a = FlexListToNonLazyArray<number[]>;
+	type checkA = requireTrue<areSafelyAssignable<a, readonly number[]>>;
+
+	type b = FlexListToNonLazyArray<[]>;
+	type checkB = requireTrue<areSafelyAssignable<b, []>>;
+
+	type c = FlexListToNonLazyArray<[() => 5, 6, () => 7]>;
+	type checkC = requireTrue<areSafelyAssignable<c, [5, 6, 7]>>;
 }
 
 describe("FlexList", () => {

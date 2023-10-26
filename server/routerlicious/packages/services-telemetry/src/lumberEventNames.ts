@@ -21,6 +21,7 @@ export enum LumberEventName {
 	ClientSummary = "ClientSummary",
 	DeliHandler = "DeliHandler",
 	KafkaRunner = "KafkaRunner",
+	NexusRunner = "NexusRunner",
 	RiddlerRunner = "RiddlerRunner",
 	ScribeHandler = "ScribeHandler",
 	ServiceSummary = "ServiceSummary",

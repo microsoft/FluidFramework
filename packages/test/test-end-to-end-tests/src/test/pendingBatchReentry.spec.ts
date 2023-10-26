@@ -144,12 +144,15 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 		},
 	].forEach((test) => {
 		/**
-		 * The test exercises a less frequent but possibly problematic scenario with grouped batching and rebasing:
-		 * - the DDS receives some changes in a batch
-		 * - the changes are 'pending' (they have been submitted not acknowledged)
-		 * - while these changes are pending, the runtime creates a new batch of changes for the DDS
-		 * - due to reentrancy, the latest batch gets rebased and resubmitted to the DDS
-		 * - as there is already a pending batch in the DDSs buffer, this rebased batch may be deemed unexpected by the DDS resubmit flow
+		 * The test exercises a less frequent but possibly problematic scenario with grouped batching and rebasing,
+		 * in which:
+		 * - the container is in read mode
+		 * - a batch with ops changing a DDS is created
+		 * - another batch is created and because it has reentrant ops, it gets rebased
+		 * - the container connects to write mode due to its pending changes
+		 * - the batches inside the PendingStateManager are resubmitted
+		 * - the DDS must be able to receive the ops, reconcile its internal state  and reconstruct the
+		 * original changes from both batches in the expected order
 		 */
 		it(`Pending batches with reentry - ${test.name}`, async function () {
 			await setupContainers();

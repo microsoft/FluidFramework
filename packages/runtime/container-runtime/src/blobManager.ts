@@ -167,6 +167,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private readonly tombstonedBlobs: Set<string> = new Set();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+	private stopAttaching: boolean = false;
 
 	constructor(
 		private readonly routeContext: IFluidHandleContext,
@@ -518,7 +519,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
 		const entry = this.pendingBlobs.get(localId);
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if (entry.abortSignal?.aborted === true && !entry.opsent) {
+		if ((entry.abortSignal?.aborted === true && !entry.opsent) || this.stopAttaching) {
 			this.deletePendingBlob(localId);
 			return;
 		}
@@ -899,7 +900,9 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	public async attachAndGetPendingBlobs(): Promise<IPendingBlobs | undefined> {
+	public async attachAndGetPendingBlobs(
+		stopBlobAttachingSignal?: AbortSignal,
+	): Promise<IPendingBlobs | undefined> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "GetPendingBlobs" },
@@ -914,12 +917,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					for (const [id, entry] of this.pendingBlobs) {
 						if (!localBlobs.has(entry)) {
 							localBlobs.add(entry);
-							if (!entry.opsent) {
-								this.sendBlobAttachOp(id, entry.storageId);
-							}
 							entry.handleP.resolve(this.getBlobHandle(id));
 							attachBlobsP.push(
-								new Promise<void>((resolve) => {
+								new Promise<void>((resolve, reject) => {
+									stopBlobAttachingSignal?.addEventListener(
+										"abort",
+										() => {
+											this.stopAttaching = true;
+											reject(new Error("Operation aborted"));
+										},
+										{ once: true },
+									);
 									const onBlobAttached = (attachedEntry) => {
 										if (attachedEntry === entry) {
 											this.off("blobAttached", onBlobAttached);
@@ -935,11 +943,21 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 							);
 						}
 					}
-					await Promise.all(attachBlobsP);
+					await Promise.allSettled(attachBlobsP).catch(() => {});
 				}
 
 				for (const [id, entry] of this.pendingBlobs) {
+					if (stopBlobAttachingSignal?.aborted && !entry.attached) {
+						this.mc.logger.sendTelemetryEvent({
+							eventName: "UnableToStashBlob",
+							id,
+						});
+						continue;
+					}
 					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
+					if (!entry.opsent) {
+						this.sendBlobAttachOp(id, entry.storageId);
+					}
 					blobs[id] = {
 						blob: bufferToString(entry.blob, "base64"),
 						storageId: entry.storageId,

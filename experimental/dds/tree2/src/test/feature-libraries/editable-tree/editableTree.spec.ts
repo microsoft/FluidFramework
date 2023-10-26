@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { EmptyKey, Value, FieldKey, rootFieldKey, JsonableTree } from "../../../core";
-import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
+import { brand, clone, fail, requireAssignableTo } from "../../../util";
 import {
 	EditableTree,
 	EditableField,
@@ -24,7 +24,6 @@ import {
 	getPrimaryField,
 	ContextuallyTypedNodeData,
 	ContextuallyTypedNodeDataObject,
-	MarkedArrayLike,
 	parentField,
 	contextSymbol,
 	TreeFieldSchema,
@@ -609,21 +608,13 @@ describe("editable-tree: read-only", () => {
 
 // This is only to cover the type checking, consider as a helper to properly define the contextually typed API
 {
-	type _checkTree = requireTrue<isAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>>;
-	type _checkUnwrappedTree = requireTrue<
-		isAssignableTo<UnwrappedEditableTree, ContextuallyTypedNodeData>
+	type _checkTree = requireAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>;
+	type _checkUnwrappedTree = requireAssignableTo<
+		UnwrappedEditableTree,
+		ContextuallyTypedNodeData
 	>;
-	type _checkField = requireTrue<
-		isAssignableTo<ContextuallyTypedNodeData | undefined, UnwrappedEditableField>
+	type _checkUnwrappedField = requireAssignableTo<
+		UnwrappedEditableField,
+		ContextuallyTypedNodeData | undefined
 	>;
-	const x: ContextuallyTypedNodeDataObject = 0 as any as EditableTree;
-	const xx: MarkedArrayLike<ContextuallyTypedNodeData> = 0 as any as EditableField;
-
-	// TODO: there seems to be a bug in TypeCheck library, since
-	// this should fail, but it does not (undefined should break it).
-	type _checkFail = requireTrue<
-		isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData>
-	>;
-	// This does fail, but it should check the same as the above
-	// const _dummyValue: ContextuallyTypedNodeData = 0 as any as UnwrappedEditableField;
 }
