@@ -524,6 +524,7 @@ stages:
           # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           devFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
+          isCheckoutNeeded: true
 
       - task: Bash@3
         displayName: Retrieve and Upload pipeline run stats to Kusto

@@ -57,6 +57,7 @@ steps:
   parameters:
     devFeedUrl: ${{ parameters.devFeedUrl }}
     officeFeedUrl: ${{ parameters.officeFeedUrl }}
+    isCheckoutNeeded: true
 
 # Download artifact with test files
 - task: DownloadPipelineArtifact@2
