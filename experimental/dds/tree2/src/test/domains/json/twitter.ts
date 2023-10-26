@@ -311,7 +311,7 @@ function generateTwitterStatus(
 	const statusIdString = getRandomNumberString(random, 18, 18);
 	const retweetCount = Math.floor(random.integer(0, 99999));
 	const favoriteCount = Math.floor(random.integer(0, 99999));
-	const twitterUser = generateTwitterUser(random, userDescFieldMarkovChain, alphabet);
+	const user = generateTwitterUser(random, userDescFieldMarkovChain, alphabet);
 	// The following boolean values mirror the statistical probability of the original json
 	const shouldAddHashtagEntity = type === "standard" ? random.bool(0.07) : random.bool(0.027397);
 	const shouldAddUrlEntity = type === "standard" ? random.bool(0.12) : random.bool(0.068493);
@@ -344,10 +344,10 @@ function generateTwitterStatus(
 		id_str: `${statusIdString}`,
 		text: textFieldMarkovChain.generateData(144), // average length the original json text field is 123
 		// source can have unicode nested in it
-		source: `<a href=\"https://twitter.com/${twitterUser.screen_name}\" rel=\"nofollow\">
+		source: `<a href=\"https://twitter.com/${user.screen_name}\" rel=\"nofollow\">
          ${random.string(random.integer(2, 30), alphabet)}</a>`,
 		truncated: true, // no examples found where truncated was false
-		user: twitterUser,
+		user,
 		// could not find an example of non null value for these 4 values (geo, coordinaes, place, contributors)
 		geo: null,
 		coordinates: null,
