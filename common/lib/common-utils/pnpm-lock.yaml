@@ -4,9 +4,9 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/build-cli': 0.26.0-203096
+      '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': 0.26.0-203096
+      '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/common-definitions': ^1.0.0
       '@fluidframework/common-utils-previous': npm:@fluidframework/common-utils@1.0.0
       '@fluidframework/eslint-config-fluid': ^2.1.0
@@ -56,9 +56,9 @@ importers:
       lodash: 4.17.21
       sha.js: 2.4.11
     devDependencies:
-      '@fluid-tools/build-cli': 0.26.0-203096_k7sla5vheyw5nos66xltzmmhke
+      '@fluid-tools/build-cli': 0.26.1_k7sla5vheyw5nos66xltzmmhke
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.26.0-203096_@types+node@16.18.38
+      '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
       '@fluidframework/common-utils-previous': /@fluidframework/common-utils/1.0.0
       '@fluidframework/eslint-config-fluid': 2.1.0_kufnqfq7tb5rpdawkdb6g5smma
       '@microsoft/api-extractor': 7.36.0_@types+node@16.18.38
@@ -471,7 +471,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
     dependencies:
       eslint: 8.39.0
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@eslint-community/eslint-utils/4.4.0_eslint@8.6.0:
@@ -481,7 +481,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || >=8.0.0
     dependencies:
       eslint: 8.6.0
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@eslint-community/regexpp/4.5.0:
@@ -528,14 +528,14 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: true
 
-  /@fluid-tools/build-cli/0.26.0-203096_k7sla5vheyw5nos66xltzmmhke:
-    resolution: {integrity: sha512-CY2090id26hcxhB2xYQXMn4OzV2k6XvAS2pCMLh4Rq4imbKgb5RPTi2l0kQMJlhfFbnC5kvOJtSnq9mrn6TKkQ==}
+  /@fluid-tools/build-cli/0.26.1_k7sla5vheyw5nos66xltzmmhke:
+    resolution: {integrity: sha512-eqvUMIcJVgXdWN1tQrdVhx0FnLhstfcx4VywmmlT+nNt197sq2Lar5M+7C7enN3zlysctt3mJ9WIgcvZfc1Dew==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.26.0-203096_vy4ah4eawmaxtqslmps6irc47e
-      '@fluidframework/build-tools': 0.26.0-203096_@types+node@16.18.38
-      '@fluidframework/bundle-size-tools': 0.26.0-203096
+      '@fluid-tools/version-tools': 0.26.1_vy4ah4eawmaxtqslmps6irc47e
+      '@fluidframework/build-tools': 0.26.1_@types+node@16.18.38
+      '@fluidframework/bundle-size-tools': 0.26.1
       '@microsoft/api-extractor': 7.38.0_@types+node@16.18.38
       '@oclif/core': 3.5.0
       '@oclif/plugin-autocomplete': 2.3.10_vy4ah4eawmaxtqslmps6irc47e
@@ -545,7 +545,7 @@ packages:
       '@oclif/plugin-plugins': 3.9.3_vy4ah4eawmaxtqslmps6irc47e
       '@oclif/test': 2.3.30_vy4ah4eawmaxtqslmps6irc47e
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5_@types+node@16.18.38
+      '@rushstack/node-core-library': 3.61.0_@types+node@16.18.38
       async: 3.2.4
       chalk: 2.4.2
       danger: 10.9.0_@octokit+core@4.2.4
@@ -573,6 +573,7 @@ packages:
       sort-package-json: 1.57.0
       strip-ansi: 6.0.1
       table: 6.8.1
+      ts-morph: 17.0.1
       type-fest: 2.19.0
     transitivePeerDependencies:
       - '@swc/core'
@@ -593,8 +594,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.26.0-203096_undwa5qxrriq4xnbtioa2ez7wy:
-    resolution: {integrity: sha512-Ur63CFUM8VbZPDFHzwgySJlKx9TG4PgEKJOkubJzlLLqWg3tB/cE43CrLMQMRhCCwHo6N+IW/pS769EkXB/XQQ==}
+  /@fluid-tools/version-tools/0.26.1_undwa5qxrriq4xnbtioa2ez7wy:
+    resolution: {integrity: sha512-pktW83q4E4PteL+pnCg3CdcXVQqzMO8Vrmp5zWLX5rKbPwKN1puvue5413R7MvkCRnqtmzQuwXepHHmitpMD/Q==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -615,8 +616,8 @@ packages:
       - typescript
     dev: true
 
-  /@fluid-tools/version-tools/0.26.0-203096_vy4ah4eawmaxtqslmps6irc47e:
-    resolution: {integrity: sha512-Ur63CFUM8VbZPDFHzwgySJlKx9TG4PgEKJOkubJzlLLqWg3tB/cE43CrLMQMRhCCwHo6N+IW/pS769EkXB/XQQ==}
+  /@fluid-tools/version-tools/0.26.1_vy4ah4eawmaxtqslmps6irc47e:
+    resolution: {integrity: sha512-pktW83q4E4PteL+pnCg3CdcXVQqzMO8Vrmp5zWLX5rKbPwKN1puvue5413R7MvkCRnqtmzQuwXepHHmitpMD/Q==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -642,16 +643,16 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.26.0-203096_@types+node@16.18.38:
-    resolution: {integrity: sha512-dM8nJ3ZRe6lrXFIWBDOE629aNCMcHGZAO1xx1z8RT5Zgzu8EBasMzpThwdAzKXTrqFQjQHEVwfONDNGscyYT6g==}
+  /@fluidframework/build-tools/0.26.1_@types+node@16.18.38:
+    resolution: {integrity: sha512-+wbQv/TPj8ek0/6/yyUIrteDw8OiJi09ueHoYVkGrypMwL2TsMkHvUxcD1Pk5BVsMnflu3osT/9Jd8cP8DzlzA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.26.0-203096_undwa5qxrriq4xnbtioa2ez7wy
-      '@fluidframework/bundle-size-tools': 0.26.0-203096
+      '@fluid-tools/version-tools': 0.26.1_undwa5qxrriq4xnbtioa2ez7wy
+      '@fluidframework/bundle-size-tools': 0.26.1
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.59.5_@types+node@16.18.38
+      '@rushstack/node-core-library': 3.61.0_@types+node@16.18.38
       async: 3.2.4
       chalk: 2.4.2
       cosmiconfig: 8.2.0
@@ -686,8 +687,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.26.0-203096:
-    resolution: {integrity: sha512-OrZ/LAiaPhHsmRBKICD+UTaNSzRNzrBz3vKXlBxjHeoMDxssTetpwaVZKfCHa00BtWmlARKtSu/rBHNnxmWX1g==}
+  /@fluidframework/bundle-size-tools/0.26.1:
+    resolution: {integrity: sha512-eAlRGrVg70+Yj7oytEA1Mv+7HIw2RwF2iW5kf7xTZObGuGEfUygSB8w8FDMZTbv8UWRGXfP4Q6IZJqq6MxO0AQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -2025,24 +2026,6 @@ packages:
       z-schema: 5.0.5
     dev: true
 
-  /@rushstack/node-core-library/3.59.5_@types+node@16.18.38:
-    resolution: {integrity: sha512-1IpV7LufrI1EoVO8hYsb3t6L8L+yp40Sa0OaOV2CIu1zx4e6ZeVNaVIEXFgMXBKdGXkAh21MnCaIzlDNpG6ZQw==}
-    peerDependencies:
-      '@types/node': '*'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-    dependencies:
-      '@types/node': 16.18.38
-      colors: 1.2.5
-      fs-extra: 7.0.1
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.2
-      semver: 7.3.8
-      z-schema: 5.0.5
-    dev: true
-
   /@rushstack/node-core-library/3.61.0_@types+node@16.18.38:
     resolution: {integrity: sha512-tdOjdErme+/YOu4gPed3sFS72GhtWCgNV9oDsHDnoLY5oDfwjKUc9Z+JOZZ37uAxcm/OCahDHfuu2ugqrfWAVQ==}
     peerDependencies:
@@ -2352,10 +2335,6 @@ packages:
     resolution: {integrity: sha512-e74sM9W/4qqWB6D4TWV9FQk0WoHtX1X4FJpbjxucMSVJHtFjbQOH3H6yp+xno4br0AKG0wz/kPtaN599GUOvAg==}
     dev: true
 
-  /@types/json-schema/7.0.11:
-    resolution: {integrity: sha512-wOuvG1SN4Us4rez+tylwwwCV1psiNVOkJeM3AUWUNWg/jDQY2+HE/444y5gc+jBmRqASOm2Oeh5c1axHobwRKQ==}
-    dev: true
-
   /@types/json-schema/7.0.14:
     resolution: {integrity: sha512-U3PUjAudAdJBeC2pgN8uTIKgxrb4nlDF3SF0++EldXQvQBGkpFZMSnwQiIoDU77tv45VgNkl/L4ouD+rEomujw==}
     dev: true
@@ -2488,7 +2467,7 @@ packages:
     peerDependencies:
       eslint: '*'
     dependencies:
-      '@types/json-schema': 7.0.11
+      '@types/json-schema': 7.0.14
       '@typescript-eslint/scope-manager': 5.6.0
       '@typescript-eslint/types': 5.6.0
       '@typescript-eslint/typescript-estree': 5.6.0_typescript@4.5.5
@@ -2649,7 +2628,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0_eslint@8.6.0
-      '@types/json-schema': 7.0.11
+      '@types/json-schema': 7.0.14
       '@types/semver': 7.5.0
       '@typescript-eslint/scope-manager': 5.55.0
       '@typescript-eslint/types': 5.55.0
@@ -2686,7 +2665,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       '@typescript-eslint/types': 5.55.0
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@typescript-eslint/visitor-keys/5.6.0:
@@ -2694,7 +2673,7 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dependencies:
       '@typescript-eslint/types': 5.6.0
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /@typescript-eslint/visitor-keys/6.8.0:
@@ -5328,7 +5307,7 @@ packages:
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.0
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
       espree: 9.5.1
       esquery: 1.5.0
       esutils: 2.0.3

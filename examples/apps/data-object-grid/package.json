@@ -19,7 +19,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:copy": "copyfiles -u 1 \"src/**/*.css\" lib/",
 		"build:esnext": "tsc",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" nyc",
 		"dev": "npm run webpack:dev",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -65,9 +65,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.26.0-203096",
+		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.26.0-203096",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/expect-puppeteer": "2.2.1",
