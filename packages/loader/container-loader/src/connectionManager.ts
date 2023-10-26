@@ -602,9 +602,6 @@ export class ConnectionManager implements IConnectionManager {
 					undefined,
 					LogLevel.verbose,
 				);
-				if (connection !== undefined) {
-					connection.dispose();
-				}
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
 					connection = new NoDeltaStream(origError.storageOnlyReason, {
 						text: origError.message,
