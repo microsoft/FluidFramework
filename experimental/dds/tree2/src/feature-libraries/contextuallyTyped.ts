@@ -553,7 +553,6 @@ export function applyTypesFromContext(
 			fields: new Map(children.length > 0 ? [[primary.key, children]] : []),
 		};
 	} else if (data instanceof Map) {
-		// Map
 		const entries = data.entries();
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const [key, value] of entries) {
