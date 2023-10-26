@@ -122,8 +122,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			},
 			destroy(detachedField: FieldKey, count: number): void {
 				this.forest.invalidateDependents();
-				const parent = this.getParent();
-				parent.mutableChunk.fields.delete(detachedField);
+				this.forest.roots.fields.delete(detachedField);
 			},
 			create(content: Delta.ProtoNodes, destination: FieldKey): void {
 				this.forest.invalidateDependents();

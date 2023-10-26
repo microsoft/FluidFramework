@@ -2,6 +2,6 @@
 "@fluid-experimental/tree2": minor
 ---
 
-Add `null` to allowed leaf types
+tree2: Add `null` to allowed leaf types
 
-Replace jsonNull schema with new null leaf schema, and add support for leaf values which are null.
+Replaced the jsonNull schema with a new null leaf schema, and added support for leaf values which are null.

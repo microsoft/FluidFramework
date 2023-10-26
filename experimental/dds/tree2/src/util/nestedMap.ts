@@ -186,6 +186,17 @@ export function decodeNestedMap<Key1, Key2, Value>(encoded: string): NestedMap<K
 	return map;
 }
 
+export function forEachInNestedMap<Key1, Key2, Value>(
+	map: NestedMap<Key1, Key2, Value>,
+	delegate: (value: Value, key1: Key1, key2: Key2) => void,
+): void {
+	map.forEach((innerMap, keyFirst) => {
+		innerMap.forEach((val, keySecond) => {
+			delegate(val, keyFirst, keySecond);
+		});
+	});
+}
+
 /**
  * Map with two keys; same semantics as NestedMap, but maintains a size count for the entire collection.
  * Note: undefined is not supported as a value, and will cause incorrect behavior.
@@ -258,11 +269,7 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	 * Runs the supplied delegate for every (value, key1, key2).
 	 */
 	public forEach(delegate: (value: Value, key1: Key1, key2: Key2) => void): void {
-		this.nestedMap.forEach((innerMap, keyFirst) => {
-			innerMap.forEach((val, keySecond) => {
-				delegate(val, keyFirst, keySecond);
-			});
-		});
+		forEachInNestedMap(this.nestedMap, delegate);
 	}
 
 	/**

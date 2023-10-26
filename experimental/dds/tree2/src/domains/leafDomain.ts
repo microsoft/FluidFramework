@@ -20,7 +20,7 @@ const nullSchema = builder.leaf("null", ValueSchema.Null);
 const primitives = [number, boolean, string] as const;
 const all = [handle, nullSchema, ...primitives] as const;
 
-const library = builder.finalize();
+const library = builder.intoLibrary();
 
 /**
  * Schema for the built-in {@link Leaf} node types.
@@ -28,7 +28,7 @@ const library = builder.finalize();
  */
 export const leaf = {
 	/**
-	 * {@link TreeSchema} for a {@link Leaf} holding a JavaScript `number`.
+	 * {@link TreeNodeSchema} for a {@link Leaf} holding a JavaScript `number`.
 	 *
 	 * @remarks
 	 * The number is a [double-precision 64-bit binary format IEEE 754](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) value, however there are some exceptions:
@@ -44,12 +44,12 @@ export const leaf = {
 	number,
 
 	/**
-	 * {@link TreeSchema} for a {@link Leaf} holding a boolean.
+	 * {@link TreeNodeSchema} for a {@link Leaf} holding a boolean.
 	 */
 	boolean,
 
 	/**
-	 * {@link TreeSchema} for a {@link Leaf} holding a JavaScript `string`.
+	 * {@link TreeNodeSchema} for a {@link Leaf} holding a JavaScript `string`.
 	 *
 	 * @remarks
 	 * Strings containing unpaired UTF-16 surrogate pair code units may not be handled correctly.
@@ -64,7 +64,7 @@ export const leaf = {
 	string,
 
 	/**
-	 * {@link TreeSchema} for a {@link Leaf} holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
+	 * {@link TreeNodeSchema} for a {@link Leaf} holding an {@link @fluidframework/core-interfaces#IFluidHandle}.
 	 */
 	handle,
 
@@ -74,7 +74,7 @@ export const leaf = {
 	 * @remarks
 	 * There are good [reasons to avoid using null](https://www.npmjs.com/package/%40rushstack/eslint-plugin#rushstackno-new-null) in JavaScript, however sometimes it is desired.
 	 * This {@link Leaf} node provide the option to include nulls in trees when desired.
-	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty struct node.
+	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
 	 */
 	null: nullSchema,
 

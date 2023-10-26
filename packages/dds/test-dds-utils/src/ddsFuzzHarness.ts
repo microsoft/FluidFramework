@@ -392,6 +392,19 @@ export interface DDSFuzzSuiteOptions {
 	 * - not use grouped batching.
 	 */
 	containerRuntimeOptions?: IMockContainerRuntimeOptions;
+
+	/**
+	 * Whether or not to skip minimization of fuzz test cases. This is useful
+	 * when one only cares about the counts or types of errors, and not the
+	 * exact contents of the test cases.
+	 *
+	 * Minimization only works when the failure occurs as part of a reducer, and is mostly
+	 * useful if the model being tested defines {@link DDSFuzzModel.minimizationTransforms}.
+	 *
+	 * It can also add a couple seconds of overhead per failing
+	 * test case. See {@link MinimizationTransform} for additional context.
+	 */
+	skipMinimization?: boolean;
 }
 
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
@@ -737,7 +750,7 @@ export function mixinSynchronization<
 								.filter(() =>
 									state.random.bool(validationStrategy.clientProbability),
 								)
-								.map((client) => client.containerRuntime.clientId),
+								.map((client) => client.channel.id),
 						);
 
 						return { type: "synchronize", clients: [...selectedClients] };
@@ -829,16 +842,14 @@ export function mixinClientSelection<
 				? done
 				: {
 						...baseOp,
-						clientId: client.containerRuntime.clientId,
+						clientId: client.channel.id,
 				  };
 		};
 	};
 
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		assert(isClientSpec(operation), "operation should have been given a client");
-		const client = state.clients.find(
-			(c) => c.containerRuntime.clientId === operation.clientId,
-		);
+		const client = state.clients.find((c) => c.channel.id === operation.clientId);
 		assert(client !== undefined);
 		return model.reducer({ ...state, client }, operation as TOperation);
 	};
@@ -1005,20 +1016,36 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 	saveInfo: SaveInfo | undefined,
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
-	itFn(`seed ${seed}`, async () => {
-		// don't write to files or do minimization in CI
+	itFn(`seed ${seed}`, async function () {
 		const inCi = !!process.env.TF_BUILD;
+		const shouldMinimize = !options.skipMinimization && saveInfo && !inCi;
+
+		// 10 seconds per test should be quite a bit more than is necessary, but
+		// a timeout during minimization can cause bad UX because it obfuscates
+		// the actual error
+		//
+		// it should be noted that if a timeout occurs during minimization, the
+		// intermediate results are not lost and will still be written to the file
+		this.timeout(shouldMinimize ? 10_000 : 2000);
+
 		try {
+			// don't write to files in CI
 			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 		} catch (error) {
-			if (!saveInfo || inCi) {
+			if (!shouldMinimize) {
 				throw error;
 			}
-
-			const operations = JSON.parse(
-				readFileSync(saveInfo.filepath).toString(),
-			) as TOperation[];
-			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 50);
+			let file: Buffer;
+			try {
+				file = readFileSync(saveInfo.filepath);
+			} catch {
+				// File could not be read and likely does not exist.
+				// Test may have failed outside of the fuzz test portion (on setup or teardown).
+				// Throw original error that made test fail.
+				throw error;
+			}
+			const operations = JSON.parse(file.toString()) as TOperation[];
+			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
 
 			const minimized = await minimizer.minimize();
 

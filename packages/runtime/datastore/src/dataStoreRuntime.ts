@@ -109,7 +109,7 @@ export class FluidDataStoreRuntime
 	implements IFluidDataStoreChannel, IFluidDataStoreRuntime, IFluidHandleContext
 {
 	/**
-	 * @deprecated - Instantiate the class using its constructor instead.
+	 * @deprecated Instantiate the class using its constructor instead.
 	 *
 	 * Loads the data store runtime
 	 * @param context - The data store context
@@ -135,7 +135,7 @@ export class FluidDataStoreRuntime
 	public readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	public get IFluidRouter() {
 		return this;

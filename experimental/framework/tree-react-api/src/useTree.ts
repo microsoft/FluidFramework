@@ -6,7 +6,7 @@
 import {
 	TreeContext,
 	TreeNode,
-	FieldSchema,
+	TreeFieldSchema,
 	ISharedTreeView,
 	InitializeAndSchematizeConfiguration,
 	SchemaAware,
@@ -24,7 +24,7 @@ import React from "react";
  *
  * @deprecated Prefer using the new TypedTree entry point and tree types, and the hooks for them, {@link useTreeContext} and {@link useSubtree}.
  */
-export function useTree<TRoot extends FieldSchema>(
+export function useTree<TRoot extends TreeFieldSchema>(
 	tree: ISharedTreeView,
 	config: InitializeAndSchematizeConfiguration<TRoot>,
 ): SchemaAware.TypedField<TRoot> {

@@ -740,6 +740,25 @@ describe("Map", () => {
 						"could not retrieve set key 2 after delete",
 					);
 				});
+
+				/**
+				 * It is an unusual scenario, the client of map1 executes an invalid delete (since "foo" does not exist in its keys),
+				 * but it can remotely delete the "foo" which is locally inserted in map2 but not ack'd yet.
+				 *
+				 * This merge outcome might be undesirable: this test case is mostly here to document Map's behavior.
+				 * Please communicate any concerns about the merge outcome to the DDS team.
+				 */
+				it("Can remotely delete a key which should be unknown to the local client", () => {
+					map1.set("foo", 1);
+					containerRuntimeFactory.processAllMessages();
+					map1.delete("foo");
+					map2.set("foo", 2);
+					map1.delete("foo");
+					containerRuntimeFactory.processAllMessages();
+
+					assert.equal(map1.get("foo"), undefined);
+					assert.equal(map2.get("foo"), undefined);
+				});
 			});
 
 			describe(".forEach()", () => {
