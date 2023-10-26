@@ -336,4 +336,10 @@ describe("SharedTreeMap", () => {
 			["bar", "World"],
 		]);
 	});
+
+	itWithRoot("has", schema, initialTree, (root) => {
+		assert.equal(root.map.has("foo"), true);
+		assert.equal(root.map.has("bar"), true);
+		assert.equal(root.map.has("baz"), false);
+	});
 });
