@@ -19,6 +19,7 @@ import {
 	TreeStoredSchema,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
+	schemaDataIsEmpty,
 } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
@@ -42,13 +43,16 @@ import {
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
 import { type TypedTreeChannel } from "./typedTree";
-import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
+import {
+	InitializeAndSchematizeConfiguration,
+	initializeContent,
+	schematize,
+} from "./schematizedTree";
 import {
 	ISharedTreeView,
 	SharedTreeView,
 	ViewEvents,
 	createSharedTreeView,
-	schematizeView,
 } from "./sharedTreeView";
 
 /**
@@ -201,10 +205,21 @@ export class SharedTree
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): SharedTreeView {
 		// TODO:
-		// This should work, but schema editing on views doesn't send ops.
-		// this.view.schematize(config);
-		// For now, use this as a workaround:
-		schematizeView(this.view, config, this.storedSchema);
+		// When this becomes a more proper out of schema adapter, editing should be made lazy.
+		// This will improve support for readonly documents, cross version collaboration and attribution.
+
+		// Check for empty.
+		// TODO: Better detection of empty case
+		if (this.view.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
+			this.view.transaction.start();
+			initializeContent(this.storedSchema, config.schema, () =>
+				this.view.setContent(config.initialTree),
+			);
+			this.view.transaction.commit();
+		}
+
+		schematize(this.view.events, this.storedSchema, config);
+
 		return this.view;
 	}
 
@@ -292,9 +307,9 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
  * @alpha
  */
 export class SharedTreeFactory implements IChannelFactory {
-	public type: string = "https://graph.microsoft.com/types/tree";
+	public readonly type: string = "https://graph.microsoft.com/types/tree";
 
-	public attributes: IChannelAttributes = {
+	public readonly attributes: IChannelAttributes = {
 		type: this.type,
 		snapshotFormatVersion: "0.0.0",
 		packageVersion: "0.0.0",

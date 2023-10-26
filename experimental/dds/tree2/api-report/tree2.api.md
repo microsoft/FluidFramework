@@ -1065,8 +1065,6 @@ export interface ISharedTreeView extends AnchorLocator {
     // (undocumented)
     root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    // @deprecated (undocumented)
-    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: ITransaction;
@@ -1962,13 +1960,13 @@ export interface SharedTreeContentSnapshot {
 export class SharedTreeFactory implements IChannelFactory {
     constructor(options?: SharedTreeOptions);
     // (undocumented)
-    attributes: IChannelAttributes;
+    readonly attributes: IChannelAttributes;
     // (undocumented)
     create(runtime: IFluidDataStoreRuntime, id: string): ISharedTree;
     // (undocumented)
     load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ISharedTree>;
     // (undocumented)
-    type: string;
+    readonly type: string;
 }
 
 // @alpha
