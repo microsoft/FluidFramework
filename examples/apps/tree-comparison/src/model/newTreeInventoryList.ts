@@ -196,7 +196,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			}
 
 			// Search for deleted inventory items to update our collection
-			const currentInventoryIds = [...this.inventoryItemList].map((inventoryItemNode) => {
+			const currentInventoryIds = this.inventoryItemList.map((inventoryItemNode) => {
 				return inventoryItemNode.id;
 			});
 			for (const trackedItemId of this._inventoryItems.keys()) {
