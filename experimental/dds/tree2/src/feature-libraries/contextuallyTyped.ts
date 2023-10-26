@@ -553,9 +553,8 @@ export function applyTypesFromContext(
 			fields: new Map(children.length > 0 ? [[primary.key, children]] : []),
 		};
 	} else if (data instanceof Map) {
-		const entries = data.entries();
 		const fields: Map<FieldKey, MapTree[]> = new Map();
-		for (const [key, value] of entries) {
+		for (const [key, value] of data) {
 			assert(!fields.has(key), "Keys should not be duplicated");
 			const childSchema = getFieldSchema(key, schema);
 			const children = applyFieldTypesFromContext(context, childSchema, value);
