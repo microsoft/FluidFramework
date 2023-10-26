@@ -75,6 +75,7 @@ describeNoCompat("SharedTree", (getTestObjectProvider) => {
 				state: "disabled",
 			},
 		},
+		enableRuntimeIdCompressor: true,
 	};
 
 	// Registry
@@ -117,10 +118,12 @@ describeNoCompat("SharedTree", (getTestObjectProvider) => {
 		// Get the views and root object to modify
 		const view1 = getNewTreeView(tree1);
 		const view2 = getNewTreeView(tree2);
+
+		// BUGBUG: Must synchronize before accessing root node
+		await provider.ensureSynchronized();
+
 		const treeNode1 = view1.root2(schema);
 		const treeNode2 = view2.root2(schema);
-
-		await provider.ensureSynchronized();
 
 		// Modify the tree
 		treeNode1.quantity = testValue;
@@ -152,16 +155,16 @@ describeNoCompat("SharedTree", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 
 		// These should be the same, which they aren't
-		assert(treeNode3.quantity !== treeNode1.quantity, `This assert should fail`);
+		assert(treeNode3.quantity === treeNode1.quantity, `This assert should fail`);
 		// Turns out treeNode3.quantity is 0, not 5
-		assert(treeNode3.quantity !== testValue, "Failed to update the tree at all");
+		assert(treeNode3.quantity === testValue, "Failed to update the tree at all");
 
 		// Try to modify the tree to see if the trees sync
 		treeNode3.quantity = 4;
 		await provider.ensureSynchronized();
 		// These should be the same, which they aren't
-		assert(treeNode3.quantity !== treeNode1.quantity, `Fix this assert`);
+		assert(treeNode3.quantity === treeNode1.quantity, `Fix this assert`);
 		// Turns out treeNode1.quantity is still 5, not 4
-		assert(treeNode1.quantity !== 4, "Failed to update the tree at all");
+		assert(treeNode1.quantity === 4, "Failed to update the tree at all");
 	});
 });
