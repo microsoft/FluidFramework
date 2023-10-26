@@ -105,6 +105,7 @@ import {
 	TelemetryContext,
 	ReadAndParseBlob,
 	responseToException,
+	createResponseError,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -512,6 +513,7 @@ export interface RuntimeHeaderData {
 	wait?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
+	allowInactive?: boolean;
 }
 
 /** Default values for Runtime Headers */
@@ -519,6 +521,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
 	viaHandle: false,
 	allowTombstone: false,
+	allowInactive: false,
 };
 
 /**
@@ -1871,6 +1874,9 @@ export class ContainerRuntime
 		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
 		}
+		if (typeof request.headers?.[AllowInactiveRequestHeaderKey] === "boolean") {
+			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
+		}
 
 		// We allow Tombstone requests for sub-DataStore objects
 		if (requestForChild) {
@@ -1880,7 +1886,9 @@ export class ContainerRuntime
 		await this.dataStores.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
 		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
-		const dataStoreChannel = await dataStoreContext.realize();
+		// Initialize snapshot details so that the packagePath is available which will be logged by GC in
+		// case of unexpected load of this data store.
+		await dataStoreContext.getInitialSnapshotDetails();
 
 		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
 		// the same as GC nodes id.
@@ -1890,10 +1898,24 @@ export class ContainerRuntime
 			"Loaded",
 			undefined /* timestampMs */,
 			dataStoreContext.packagePath,
-			request?.headers,
+			headerData,
 		);
 
-		return dataStoreChannel;
+		// If the data store is tombstoned and tombstone enforcement is configured, throw an error.
+		if (
+			dataStoreContext.tombstoned &&
+			this.gcThrowOnTombstoneLoad &&
+			!headerData.allowTombstone
+		) {
+			// The requested data store is removed by gc. Create a 404 gc response exception.
+			throw responseToException(
+				createResponseError(404, "DataStore was tombstoned", request, {
+					[TombstoneResponseHeaderKey]: true,
+				}),
+				request,
+			);
+		}
+		return dataStoreContext.realize();
 	}
 
 	/** Adds the container's metadata to the given summary tree. */
@@ -2537,6 +2559,12 @@ export class ContainerRuntime
 				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
 			);
 		}
+		this.garbageCollector.nodeUpdated(
+			`/${internalId}`,
+			"Loaded",
+			undefined /* timestampMs */,
+			context.packagePath,
+		);
 		return channel.entryPoint;
 	}
 

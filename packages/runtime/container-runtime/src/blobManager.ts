@@ -339,14 +339,18 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
-		// Verify that the blob is valid, i.e., it has not been garbage collected. If it is, this will throw an error,
-		// failing the call.
-		this.verifyBlobValidity(blobId);
-
 		const pending = this.pendingBlobs.get(blobId);
 		if (pending) {
 			return pending.blob;
 		}
+
+		// Let runtime know that the corresponding GC node was requested.
+		this.blobRequested(getGCNodePathFromBlobId(blobId));
+
+		// Verify that the blob is valid, i.e., it has not been garbage collected. If it is, this will throw an error,
+		// failing the call.
+		this.verifyBlobValidity(blobId);
+
 		let storageId: string;
 		if (this.runtime.attachState === AttachState.Detached) {
 			assert(this.redirectTable.has(blobId), 0x383 /* requesting unknown blobs */);
@@ -359,9 +363,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			assert(!!attachedStorageId, 0x11f /* "requesting unknown blobs" */);
 			storageId = attachedStorageId;
 		}
-
-		// Let runtime know that the corresponding GC node was requested.
-		this.blobRequested(getGCNodePathFromBlobId(blobId));
 
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
@@ -855,25 +856,25 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		const error = responseToException(
 			createResponseError(
 				404,
-				"Blob was deleted",
+				`Blob was ${state}`,
 				request,
 				state === "tombstoned" ? { [TombstoneResponseHeaderKey]: true } : undefined,
 			),
 			request,
 		);
-		sendGCUnexpectedUsageEvent(
-			this.mc,
-			{
-				eventName:
-					state === "tombstoned"
-						? "GC_Tombstone_Blob_Requested"
-						: "GC_Deleted_Blob_Requested",
-				category: shouldFail ? "error" : "generic",
-				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-			},
-			[BlobManager.basePath],
-			error,
-		);
+		// Only log deleted events. Tombstone events are logged by garbage collector.
+		if (state === "deleted") {
+			sendGCUnexpectedUsageEvent(
+				this.mc,
+				{
+					eventName: "GC_Deleted_Blob_Requested",
+					category: shouldFail ? "error" : "generic",
+					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
+				},
+				[BlobManager.basePath],
+				error,
+			);
+		}
 		if (shouldFail) {
 			throw error;
 		}

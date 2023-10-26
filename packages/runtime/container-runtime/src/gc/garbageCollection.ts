@@ -4,7 +4,7 @@
  */
 
 import { LazyPromise, Timer } from "@fluidframework/core-utils";
-import { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	gcTreeKey,
 	IGarbageCollectionData,
@@ -22,11 +22,7 @@ import {
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 
-import {
-	AllowInactiveRequestHeaderKey,
-	InactiveResponseHeaderKey,
-	RuntimeHeaders,
-} from "../containerRuntime";
+import { InactiveResponseHeaderKey, RuntimeHeaderData } from "../containerRuntime";
 import { ClientSessionExpiredError } from "../error";
 import { IRefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
@@ -874,7 +870,7 @@ export class GarbageCollector implements IGarbageCollector {
 		reason: "Loaded" | "Changed",
 		timestampMs?: number,
 		packagePath?: readonly string[],
-		requestHeaders?: IRequestHeader,
+		headerData?: RuntimeHeaderData,
 	) {
 		if (!this.configs.shouldRunGC) {
 			return;
@@ -890,7 +886,7 @@ export class GarbageCollector implements IGarbageCollector {
 			completedGCRuns: this.completedRuns,
 			isTombstoned: this.tombstones.includes(nodePath),
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
-			viaHandle: requestHeaders?.[RuntimeHeaders.viaHandle],
+			headers: headerData,
 		});
 
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
@@ -905,7 +901,7 @@ export class GarbageCollector implements IGarbageCollector {
 		const shouldThrowOnInactiveLoad =
 			!this.isSummarizerClient &&
 			this.configs.throwOnInactiveLoad === true &&
-			requestHeaders?.[AllowInactiveRequestHeaderKey] !== true;
+			headerData?.allowInactive !== true;
 		const state = this.unreferencedNodesState.get(nodePath)?.state;
 
 		if (shouldThrowOnInactiveLoad && state === "Inactive") {

@@ -4,7 +4,6 @@
  */
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
@@ -19,6 +18,7 @@ import {
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
 } from "../summary";
+import { RuntimeHeaderData } from "../containerRuntime";
 
 /**
  * @public
@@ -257,7 +257,7 @@ export interface IGarbageCollector {
 		reason: "Loaded" | "Changed",
 		timestampMs?: number,
 		packagePath?: readonly string[],
-		requestHeaders?: IRequestHeader,
+		headerData?: RuntimeHeaderData,
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
 	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
