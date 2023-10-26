@@ -1383,11 +1383,12 @@ export const node: NodeApi;
 
 // @alpha
 export interface NodeApi {
-    is: <TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema) => value is ProxyNode<TSchema>;
-    on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => () => void;
-    parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
-    schema: (node: SharedTreeNode) => TreeNodeSchema;
-    status: (node: SharedTreeNode) => TreeStatus;
+    readonly is: <TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema) => value is ProxyNode<TSchema>;
+    readonly key: (node: SharedTreeNode) => string | number;
+    readonly on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => () => void;
+    readonly parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
+    readonly schema: (node: SharedTreeNode) => TreeNodeSchema;
+    readonly status: (node: SharedTreeNode) => TreeStatus;
 }
 
 // @alpha

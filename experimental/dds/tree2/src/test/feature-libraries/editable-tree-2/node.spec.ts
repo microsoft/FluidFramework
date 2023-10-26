@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { rootFieldKey } from "../../../core";
 import { ProxyRoot, SharedTreeNode, node, TreeStatus, Any } from "../../../feature-libraries";
 import { SchemaBuilder } from "../../../domains";
 import { itWithRoot } from "./utils";
@@ -13,12 +14,12 @@ describe("node API", () => {
 	const object = sb.object("child", {
 		content: sb.number,
 	});
-	const list = sb.list(sb.number);
+	const list = sb.list(object);
 	const parent = sb.object("parent", { object, list });
 	const treeSchema = sb.intoSchema(parent);
 	const initialTree: ProxyRoot<typeof treeSchema, "javaScript"> = {
 		object: { content: 42 },
-		list: [],
+		list: [{ content: 42 }, { content: 42 }, { content: 42 }],
 	};
 
 	describe("schema", () => {
@@ -60,6 +61,26 @@ describe("node API", () => {
 
 		itWithRoot("root", treeSchema, initialTree, (root) => {
 			assert.equal(node.parent(root), undefined);
+		});
+	});
+
+	describe("key", () => {
+		itWithRoot("object", treeSchema, initialTree, (root) => {
+			for (const key of Object.keys(root) as Iterable<keyof typeof root>) {
+				const child = root[key];
+				assert.equal(node.key(child), key);
+			}
+		});
+
+		itWithRoot("list", treeSchema, initialTree, (root) => {
+			for (let key = 0; key < root.list.length; key += 1) {
+				const child = root.list[key];
+				assert.equal(node.key(child), key);
+			}
+		});
+
+		itWithRoot("root", treeSchema, initialTree, (root) => {
+			assert.equal(node.key(root), rootFieldKey);
 		});
 	});
 
@@ -146,7 +167,7 @@ describe("node API", () => {
 		});
 
 		describe("list", () => {
-			check((root) => root.list.insertAtEnd([root.list.length]));
+			check((root) => root.list.insertAtEnd([{ content: root.list.length }]));
 		});
 
 		// TODO: map
