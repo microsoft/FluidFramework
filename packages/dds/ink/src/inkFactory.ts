@@ -16,6 +16,7 @@ import { pkgVersion } from "./packageVersion";
 /**
  * Factory for Ink.
  * @sealed
+ * @public
  */
 export class InkFactory implements IChannelFactory {
 	/**

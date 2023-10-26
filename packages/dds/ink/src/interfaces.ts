@@ -7,6 +7,7 @@ import { ISharedObject, ISharedObjectEvents } from "@fluidframework/shared-objec
 
 /**
  * Data about a single point in an ink stroke
+ * @public
  */
 export interface IInkPoint {
 	/**
@@ -32,6 +33,7 @@ export interface IInkPoint {
 
 /**
  * RGBA color.
+ * @public
  */
 export interface IColor {
 	/**
@@ -55,6 +57,9 @@ export interface IColor {
 	a: number;
 }
 
+/**
+ * @public
+ */
 export interface IInkEvents extends ISharedObjectEvents {
 	(event: "stylus", listener: (operation: IStylusOperation) => void);
 	(event: "clear", listener: () => void);
@@ -62,12 +67,14 @@ export interface IInkEvents extends ISharedObjectEvents {
 
 /**
  * Shared data structure for representing ink.
+ * @public
  */
 export interface IInk extends ISharedObject<IInkEvents> {
 	/**
 	 * Create a stroke with the given pen information.
 	 * @param pen - The pen information for this stroke
 	 * @returns The stroke that was created
+	 * @public
 	 */
 	createStroke(pen: IPen): IInkStroke;
 
@@ -100,6 +107,7 @@ export interface IInk extends ISharedObject<IInkEvents> {
 
 /**
  * Pen data for the current stroke
+ * @public
  */
 export interface IPen {
 	/**
@@ -115,6 +123,7 @@ export interface IPen {
 
 /**
  * Signals a clear operation.
+ * @public
  */
 export interface IClearOperation {
 	/**
@@ -131,6 +140,7 @@ export interface IClearOperation {
 /**
  * Create stroke operations notify clients that a new stroke has been created, along with basic information about
  * the stroke.
+ * @public
  */
 export interface ICreateStrokeOperation {
 	/**
@@ -156,6 +166,7 @@ export interface ICreateStrokeOperation {
 
 /**
  * Base interface for stylus operations.
+ * @public
  */
 export interface IStylusOperation {
 	/**
@@ -176,11 +187,13 @@ export interface IStylusOperation {
 
 /**
  * Ink operations are one of several types.
+ * @public
  */
 export type IInkOperation = IClearOperation | ICreateStrokeOperation | IStylusOperation;
 
 /**
  * Represents a single ink stroke.
+ * @public
  */
 export interface IInkStroke {
 	/**
