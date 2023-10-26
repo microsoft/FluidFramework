@@ -459,6 +459,7 @@ function generateTwitterStatus(
 		status.entities.media = [mediaEntity];
 	}
 
+	// Now that 'status' is fully constructed, cast from Partial<TwitterStatus> to a full TwitterStatus.
 	return status as TwitterStatus;
 }
 
