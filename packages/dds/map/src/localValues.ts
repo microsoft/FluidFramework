@@ -42,11 +42,13 @@ export interface ILocalValue {
 }
 
 /**
- * Converts the provided `localValue` to its serialized form.
+ * Converts the provided localValue to its serializable form.
+ * Practically speaking, this means converting any handles to their serializable form.
  *
  * @param localValue - The value to serialize.
  * @param serializer - Data store runtime's serializer.
  * @param bind - Container type's handle.
+ * @returns a copy of localValue with any non-serializable properties transformed to be ready for serialization.
  *
  * @see {@link ILocalValue.makeSerialized}
  */
@@ -56,12 +58,13 @@ export function makeSerializable(
 	bind: IFluidHandle,
 	// eslint-disable-next-line import/no-deprecated
 ): ISerializableValue {
-	const value = localValue.makeSerialized(serializer, bind);
+	const { type, value } = localValue.makeSerialized(serializer, bind);
 	return {
-		type: value.type,
+		type,
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		value: value.value && JSON.parse(value.value),
+		value: value && JSON.parse(value),
 	};
+	//* Also return handles
 }
 
 /**
@@ -85,14 +88,15 @@ export class PlainLocalValue implements ILocalValue {
 	 * {@inheritDoc ILocalValue.makeSerialized}
 	 */
 	public makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue {
-		// Stringify to convert to the serialized handle values - and then parse in order to create
-		// a POJO for the op
+		// Stringify to convert to the serialized handle values.
+		// Callers may parse the value via JSON.parse to yield a POJO with handles in serializable form.
 		const value = serializeHandles(this.value, serializer, bind);
 
 		return {
 			type: this.type,
 			value,
 		};
+		//* Also return handles
 	}
 }
 

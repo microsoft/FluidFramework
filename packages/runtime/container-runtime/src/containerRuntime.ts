@@ -2063,6 +2063,7 @@ export class ContainerRuntime
 		const opContents = this.parseLocalOpContent(serializedOpContent);
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
+				//* rootMetadata is encapsulated within contents
 				return this.dataStores.applyStashedOp(opContents.contents);
 			case ContainerMessageType.Attach:
 				return this.dataStores.applyStashedAttachOp(opContents.contents);
@@ -3718,6 +3719,8 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp:
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
+
+				//* rootMetadata is encapsulated in contents here
 				this.dataStores.resubmitDataStoreOp(message.contents, localOpMetadata);
 				break;
 			case ContainerMessageType.Attach:
@@ -3772,6 +3775,7 @@ export class ContainerRuntime
 			case ContainerMessageType.FluidDataStoreOp:
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
+				//* rootMetadata is encapsulated in the contents here.  Irrelevant anyway.
 				this.dataStores.rollbackDataStoreOp(contents, localOpMetadata);
 				break;
 			default:

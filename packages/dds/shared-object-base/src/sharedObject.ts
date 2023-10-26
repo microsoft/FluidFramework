@@ -421,8 +421,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		//* TODO: We can't generically "roundtrip" content through makeHandlesSerializable,
 		//* so we'll have to plumb rootMetadata down to provide whatever is needed here.
 		//* Or make this abstract, but it may be difficult to recompute the rootMetadata, and better to just pass it.
-		// this.submitLocalMessage(content, localOpMetadata, ???);
 
+		// this.submitLocalMessage2({ content, localOpMetadata, rootMetadata: ???});
 		throw new Error(
 			"reSubmitCore must be overridden in order to correctly compute rootMetadata",
 		);

@@ -59,7 +59,7 @@ interface IDirectoryMessageHandler {
 	): void;
 
 	/**
-	 * Communicate the operation to remote clients.
+	 * Submit a message to remote clients based on a previous submit (aka reSubmit)
 	 * @param op - The directory operation to submit
 	 * @param localOpMetadata - The metadata to be submitted with the message.
 	 */
@@ -1259,6 +1259,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.serializer,
 			this.directory.handle,
 		);
+		//* Also get handles from makeSerializable
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, localValue, true);
@@ -1274,7 +1275,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "set",
 			value: serializableValue,
 		};
-		this.submitKeyMessage(op, previousValue);
+		this.submitKeyMessage(op, previousValue); //* Also pass handles
 		return this;
 	}
 

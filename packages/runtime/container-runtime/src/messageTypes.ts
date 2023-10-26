@@ -90,6 +90,7 @@ export interface RecentlyAddedContainerRuntimeMessageDetails {
 
 export type ContainerRuntimeDataStoreOpMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.FluidDataStoreOp,
+	//* Update to a new type that includes rootMetadata
 	IEnvelope
 >;
 export type InboundContainerRuntimeAttachMessage = TypedContainerRuntimeMessage<

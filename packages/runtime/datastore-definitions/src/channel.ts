@@ -161,7 +161,7 @@ export interface IDeltaHandler {
 }
 
 /**
- * Interface to represent a connection to a delta notification stream.
+ * Interface to represent a channel's connection to a delta notification stream.
  */
 export interface IDeltaConnection {
 	connected: boolean;
@@ -183,7 +183,7 @@ export interface IDeltaConnection {
 	 */
 	submit2?(data: {
 		/** The channel-specific content of the message to be sent */
-		messageContent: unknown;
+		messageContent: unknown; //* Rename to channelData or something?
 		/**
 		 * The local metadata associated with the message. This is kept locally by the runtime
 		 * and not sent to the server. It will be provided back when this message is acknowledged by the server.

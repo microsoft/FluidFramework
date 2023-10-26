@@ -13,6 +13,7 @@ import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
+	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
@@ -68,7 +69,7 @@ export interface IChannelContext {
 	updateUsedRoutes(usedRoutes: string[]): void;
 }
 
-export interface ChannelServiceEndpoints {
+export interface ChannelServiceEndpoints extends IChannelServices {
 	deltaConnection: ChannelDeltaConnection;
 	objectStorage: ChannelStorageService;
 }

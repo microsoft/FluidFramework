@@ -400,18 +400,32 @@ export class DataStores implements IDisposable {
 	public resubmitDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x160 /* "There should be a store context for the op" */);
+
+		//* rootMetadata is not passed down here.
+		//* This is NOT OK.
+		//* reSubmit gives the DDS liberty to do anything it wants (submit nothing, the same thing, something else)
+		//* We want to provide a good default experience (submit the same thing), and SharedObject can't recompute
+		//* rootMetadata, so we need to pass it down so it can be included in the default case.
 		context.reSubmit(envelope.contents, localOpMetadata);
 	}
 
 	public rollbackDataStoreOp(envelope: IEnvelope, localOpMetadata: unknown) {
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x2e8 /* "There should be a store context for the op" */);
+
+		//* rootMetadata is not passed down here.
+		//* This is ok because that metadata takes no effect until the op is broadcast.
+		//* It doesn't add additional info beyond the contents, so DDS doesn't need to get it back.
 		context.rollback(envelope.contents, localOpMetadata);
 	}
 
 	public async applyStashedOp(envelope: IEnvelope): Promise<unknown> {
 		const context = this.contexts.get(envelope.address);
 		assert(!!context, 0x161 /* "There should be a store context for the op" */);
+
+		//* rootMetadata is not passed down here.
+		//* This is ok because this function doesn't modify the stashed op contents (only the DDS state)
+		//* so the previously-calculated rootMetadata still applies (since it corresponds to the original contents)
 		return context.applyStashedOp(envelope.contents);
 	}
 
@@ -426,6 +440,7 @@ export class DataStores implements IDisposable {
 		local: boolean,
 		localMessageMetadata: unknown,
 	) {
+		//* Also has rootMetadata
 		const envelope = message.contents as IEnvelope;
 		const transformed = { ...message, contents: envelope.contents };
 		this.validateNotDeleted(envelope.address);
@@ -435,6 +450,8 @@ export class DataStores implements IDisposable {
 
 		// Notify that a GC node for the data store changed. This is used to detect if a deleted data store is
 		// being used.
+
+		//* Include added handles / outbound routes here
 		this.gcNodeUpdated(
 			`/${envelope.address}`,
 			message.timestamp,
