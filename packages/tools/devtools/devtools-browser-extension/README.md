@@ -111,15 +111,18 @@ To use a local build of this extension in your browser:
 Publishing the extension to the browser stores is (at least for now) a somewhat involved process.
 A detailed article covering the required steps can be found [here](https://github.com/microsoft/FluidFramework/blob/main/packages/tools/devtools/devtools-browser-extension/docs/Publish-Instructions.md).
 
+#### Telemetry Tokens
+
+If you're manually releasing or testing the Devtools browser extension using a local build, create your .env file with content like "DEVTOOLS_TELEMETRY_TOKEN=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c". In automated pipeline builds, the telemetry key will be fetched from the "prague-key-vault" group in Azure Ops, and output the generated extension in artifact named `devtools-extension-bundle`.
+
+TODO: how do I get the right token for publishing?
+
+For local tests, execute the command npm run `start:client:test`. This ensures the telemetry token is correctly integrated.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-## Inject telemetry key
-If you're manually releasing or testing the Devtools browser extension using a local build, create your .env file with content like  "DEVTOOLS_TELEMETRY_TOKEN=abcdefgh-ijkl-mnop-qrst-uvwxyz6ffd9c". In automated pipeline builds, the telemetry key will be fetched from the "prague-key-vault" group in Azure Ops, and output the generated extension in artifact named `devtools-extension-bundle`.
-`
-For local tests, execute the command npm run `start:client:test`. This ensures the telemetry token is correctly integrated.
 
 ## Contribution Guidelines
 
