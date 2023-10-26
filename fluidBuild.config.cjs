@@ -111,54 +111,63 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
-			"build-tools/packages/build-tools/src/test/data/",
-			"docs/layouts/",
-			"docs/themes/thxvscode/assets/",
-			"docs/themes/thxvscode/layouts/",
-			"docs/themes/thxvscode/static/assets/",
-			"docs/tutorials/.*\\.tsx?",
-			"azure/packages/azure-local-service/src/index.ts",
-			"experimental/PropertyDDS/packages/property-query/test/get_config.js",
-			"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
-			"server/gitrest/package.json",
-			"server/historian/package.json",
-			"tools/markdown-magic/test",
-			"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			"^docs/layouts/",
+			"^docs/themes/thxvscode/assets/",
+			"^docs/themes/thxvscode/layouts/",
+			"^docs/themes/thxvscode/static/assets/",
+			"^docs/tutorials/.*\\.tsx?",
+			"^server/gitrest/package.json",
+			"^server/historian/package.json",
+			"^tools/markdown-magic/test/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {
+			"extraneous-lockfiles": [
+				"^tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
-				"tools/api-markdown-documenter/src/test/snapshots/.*",
+				"^tools/api-markdown-documenter/src/test/snapshots/.*",
+			],
+			"js-ts-copyright-file-header": [
+				// These files all require a node shebang at the top of the file.
+				"^azure/packages/azure-local-service/src/index.ts",
+				"^experimental/PropertyDDS/packages/property-query/test/get_config.js",
+				"^experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+			],
+			"package-lockfiles-npm-version": [
+				"^tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
-				"common/build/eslint-config-fluid/package.json",
+				"^common/build/eslint-config-fluid/package.json",
 				// markdown-magic's build step update the README.md file that are checked in. No need to clean.
-				"tools/markdown-magic/package.json",
+				"^tools/markdown-magic/package.json",
 			],
 			"npm-package-json-script-mocha-config": [
 				// these doesn't use mocha config for reporters yet.
-				"server/",
-				"build-tools/",
-				"common/lib/common-utils/package.json",
+				"^server/",
+				"^build-tools/",
+				"^common/lib/common-utils/package.json",
 			],
 			"npm-package-json-test-scripts": [
-				"common/build/eslint-config-fluid/package.json",
-				"packages/test/mocha-test-setup/package.json",
-				"examples/apps/attributable-map/package.json",
+				"^common/build/eslint-config-fluid/package.json",
+				"^packages/test/mocha-test-setup/package.json",
+				"^examples/apps/attributable-map/package.json",
 			],
 			"npm-package-json-test-scripts-split": [
-				"server/",
-				"tools/",
-				"package.json",
-				"packages/test/test-service-load/package.json",
+				"^server/",
+				"^tools/",
+				"^package.json",
+				"^packages/test/test-service-load/package.json",
+				"^packages/tools/devtools/devtools-browser-extension/package.json",
+				"^packages/tools/devtools/devtools-view/package.json",
 			],
 			"npm-package-json-clean-script": [
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
-				"tools/markdown-magic",
+				"^tools/markdown-magic",
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
-				"tools/getkeys",
+				"^tools/getkeys",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
