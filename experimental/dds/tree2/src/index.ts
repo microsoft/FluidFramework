@@ -289,6 +289,7 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	encodeTreeSchema,
 } from "./feature-libraries";
 
 export {
@@ -308,6 +309,7 @@ export {
 	TypedTreeFactory,
 	TypedTreeOptions,
 	TypedTreeChannel,
+	SharedTreeContentSnapshot,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

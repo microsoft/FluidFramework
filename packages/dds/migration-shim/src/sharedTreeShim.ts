@@ -45,7 +45,7 @@ export class SharedTreeShim implements IChannel {
 	private services?: ShimChannelServices;
 	private _currentTree?: ISharedTree;
 	public get currentTree(): ISharedTree {
-		assert(this._currentTree !== undefined, "No current tree initialized");
+		assert(this._currentTree !== undefined, 0x7ed /* No current tree initialized */);
 		return this._currentTree;
 	}
 
@@ -109,7 +109,7 @@ export class SharedTreeShim implements IChannel {
 	}
 
 	private generateShimServicesOnce(services: IChannelServices): ShimChannelServices {
-		assert(this.services === undefined, "Already connected");
+		assert(this.services === undefined, 0x7ee /* Already connected */);
 		this.services = new ShimChannelServices(services, this.newTreeShimDeltaHandler);
 		return this.services;
 	}

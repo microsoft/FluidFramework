@@ -122,7 +122,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	private _legacyTree: LegacySharedTree | undefined;
 	private get legacyTree(): LegacySharedTree {
-		assert(this._legacyTree !== undefined, "Old tree not initialized");
+		assert(this._legacyTree !== undefined, 0x7e6 /* Old tree not initialized */);
 		return this._legacyTree;
 	}
 
@@ -200,14 +200,14 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	// Only reconnect to the new shared tree this limits us to only migrating
 	private reconnect(): void {
-		assert(this.services !== undefined, "Not connected");
-		assert(this.newTree !== undefined, "New tree not initialized");
+		assert(this.services !== undefined, 0x7e7 /* Not connected */);
+		assert(this.newTree !== undefined, 0x7e8 /* New tree not initialized */);
 		// This method attaches the newTree's delta handler to the MigrationShimDeltaHandler
 		this.newTree.connect(this.services);
 	}
 
 	private generateShimServicesOnce(services: IChannelServices): ShimChannelServices {
-		assert(this.services === undefined, "Already connected");
+		assert(this.services === undefined, 0x7e9 /* Already connected */);
 		this.services = new ShimChannelServices(services, this.migrationDeltaHandler);
 		return this.services;
 	}

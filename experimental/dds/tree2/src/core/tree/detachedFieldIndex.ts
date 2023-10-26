@@ -90,7 +90,7 @@ export class DetachedFieldIndex {
 
 	/**
 	 * Returns a field key for the given ID.
-	 * This does not save the field key on the index. To do so, call {@link getOrCreateEntry}.
+	 * This does not save the field key on the index. To do so, call {@link createEntry}.
 	 */
 	public toFieldKey(id: ForestRootId): FieldKey {
 		return brand(`${this.name}-${id}`);
@@ -114,14 +114,6 @@ export class DetachedFieldIndex {
 		return key;
 	}
 
-	/**
-	 * Retrieves the associated ForestRootId if any.
-	 * Otherwise, allocates a new one and associates it with the given DetachedNodeId.
-	 */
-	public getOrCreateEntry(nodeId: Delta.DetachedNodeId, count: number = 1): ForestRootId {
-		return this.tryGetEntry(nodeId) ?? this.createEntry(nodeId);
-	}
-
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
 		const found = deleteFromNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor);
 		assert(found, 0x7ab /* Unable to delete unknown entry */);
@@ -140,7 +132,7 @@ export class DetachedFieldIndex {
 						nodeId.major,
 						nodeId.minor + i,
 					) === undefined,
-					"Detached node ID already exists in index",
+					0x7ce /* Detached node ID already exists in index */,
 				);
 				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
 			}

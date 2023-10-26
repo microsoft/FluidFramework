@@ -78,7 +78,7 @@ import {
 	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
+import { sendGCUnexpectedUsageEvent } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -325,11 +325,7 @@ export abstract class FluidDataStoreContext
 			this.mc.logger,
 		);
 
-		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-		this.throwOnTombstoneUsage =
-			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-			this._containerRuntime.gcTombstoneEnforcementAllowed &&
-			this.clientDetails.type !== summarizerClientType;
+		this.throwOnTombstoneUsage = this._containerRuntime.gcThrowOnTombstoneUsage;
 
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
@@ -725,11 +721,17 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	public submitSignal(type: string, content: any) {
+	/**
+	 * Submits the signal to be sent to other clients.
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
+	public submitSignal(type: string, content: any, targetClientId?: string) {
 		this.verifyNotClosed("submitSignal");
 
 		assert(!!this.channel, 0x147 /* "Channel must exist on submitting signal" */);
-		return this._containerRuntime.submitDataStoreSignal(this.id, type, content);
+		return this._containerRuntime.submitDataStoreSignal(this.id, type, content, targetClientId);
 	}
 
 	/**

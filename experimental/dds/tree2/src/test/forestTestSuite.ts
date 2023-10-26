@@ -325,8 +325,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			assert(forest.anchors.isEmpty());
 		});
 
-		// Not testable until node destruction is implemented
-		it.skip("using an anchor that went away returns NotFound", () => {
+		it("using an anchor that went away returns NotFound", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
 
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
@@ -340,7 +339,9 @@ export function testForest(config: ForestTestConfiguration): void {
 			cursor.clear();
 
 			const mark: Delta.Mark = { count: 1, detach: detachId };
-			const delta: Delta.Root = new Map([[rootFieldKey, { local: [mark] }]]);
+			const delta: Delta.Root = new Map([
+				[rootFieldKey, { local: [mark], destroy: [{ id: detachId, count: 1 }] }],
+			]);
 			applyTestDelta(delta, forest);
 			applyTestDelta(delta, forest.anchors);
 
