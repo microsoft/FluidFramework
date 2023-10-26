@@ -571,7 +571,6 @@ export function applyTypesFromContext(
 			fields,
 		};
 	} else {
-		// Object
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const key of fieldKeysFromData(data)) {
 			assert(!fields.has(key), 0x6b3 /* Keys should not be duplicated */);
