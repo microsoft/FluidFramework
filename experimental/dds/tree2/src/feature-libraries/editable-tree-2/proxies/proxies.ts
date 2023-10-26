@@ -544,7 +544,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	has: {
-		value(key: string): unknown {
+		value(key: string): boolean {
 			const node = getMapNode(this);
 			return node.has(key);
 		},
