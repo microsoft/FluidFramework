@@ -49,8 +49,8 @@ describe("TestClient", () => {
 				UniversalSequenceNumber,
 				client.getClientId(),
 			);
-
-			assert.equal(exp, 4, "Marker with label not at expected position");
+			// value changed from 4 to 5 to create a ci failure
+			assert.equal(exp, 5, "Marker with label not at expected position");
 
 			const marker2 = client.searchForMarker(4, "Eop", false);
 
