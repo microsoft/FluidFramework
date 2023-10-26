@@ -6,7 +6,7 @@
 import { assert, compareArrays } from "@fluidframework/core-utils";
 import {
 	FieldKey,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	CursorLocationType,
 	FieldUpPath,
 	UpPath,
@@ -92,7 +92,7 @@ export class TreeShape {
 	public readonly positions: readonly NodePositionInfo[];
 
 	public constructor(
-		public readonly type: TreeSchemaIdentifier,
+		public readonly type: TreeNodeSchemaIdentifier,
 		public readonly hasValue: boolean,
 		public readonly fieldsArray: readonly FieldShape[],
 	) {
@@ -513,7 +513,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.mode = CursorLocationType.Fields;
 	}
 
-	public get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		return this.nodeInfo(CursorLocationType.Nodes).shape.type;
 	}
 

@@ -83,9 +83,9 @@
 	"devDependencies": {
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.25.0",
-		"@fluidframework/build-common": "^2.0.1",
-		"@fluidframework/build-tools": "^0.25.0",
+		"@fluid-tools/build-cli": "0.26.0-203096",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.7.1.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
@@ -97,7 +97,6 @@
 		"@types/sinon": "^7.0.13",
 		"@types/uuid": "^9.0.2",
 		"c8": "^7.7.1",
-		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
@@ -110,6 +109,10 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_ContainerRuntime": {
+				"forwardCompat": false
+			}
+		}
 	}
 }

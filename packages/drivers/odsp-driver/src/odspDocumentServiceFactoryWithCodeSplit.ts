@@ -13,8 +13,9 @@ import {
 import { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore";
 
 /**
- * @deprecated - This is deprecated in favour of OdspDocumentServiceFactory as the socket io is now loaded inside the
+ * @deprecated This is deprecated in favour of OdspDocumentServiceFactory as the socket io is now loaded inside the
  * other dynamically imported module.
+ * @public
  */
 export class OdspDocumentServiceFactoryWithCodeSplit
 	extends OdspDocumentServiceFactoryCore
