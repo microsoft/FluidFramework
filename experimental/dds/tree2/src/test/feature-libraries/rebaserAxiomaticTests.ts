@@ -143,21 +143,25 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							// This needs to be used to pass an updated RevisionMetadataSource to rebase.
 							const allTaggedEdits = [...inverses, editToRebaseOver];
 							for (let i = 0; i < sourceEdits.length; i++) {
-								const metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
+								let metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
 								const edit = sourceEdits[i];
 								const rebasedEdit = tagChange(
 									rebaseComposed(metadata, edit.change, currentComposedEdit),
 									edit.revision,
 								);
 								rebasedEditsWithCompose.push(rebasedEdit);
-								currentComposedEdit = makeAnonChange(
-									compose([
-										inverses[sourceEdits.length - i - 1],
-										currentComposedEdit,
-										rebasedEdit,
-									]),
-								);
 								allTaggedEdits.push(rebasedEdit);
+								metadata = defaultRevisionMetadataFromChanges(allTaggedEdits);
+								currentComposedEdit = makeAnonChange(
+									compose(
+										[
+											inverses[sourceEdits.length - i - 1],
+											currentComposedEdit,
+											rebasedEdit,
+										],
+										metadata,
+									),
+								);
 							}
 
 							for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
