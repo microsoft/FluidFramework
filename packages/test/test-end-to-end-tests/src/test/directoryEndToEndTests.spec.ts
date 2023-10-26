@@ -683,7 +683,7 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 			assert.strictEqual(root1SubDir.get("testKey2"), "testValue2", "Value 2 not present");
 			assert.strictEqual(root2SubDir.get("testKey"), "testValue", "Value 1 not present");
 		});
-	}); 
+	});
 
 	describe("Operations in local state", () => {
 		describe("Load new directory with data from local state and process ops", () => {
