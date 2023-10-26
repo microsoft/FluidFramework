@@ -142,7 +142,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
 		let index = 0;
-		for (const { change, revision, rollbackOf } of changes) {
+		for (const { change, revision } of changes) {
+			const fieldChangeInfo = revisionMetadata.tryGetInfo(
+				revision ?? change.fieldChange?.revision,
+			);
 			const { childChanges } = change;
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
@@ -162,25 +165,25 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (fieldChange === undefined) {
 					fieldChange = {
 						id: change.fieldChange.id,
-						revision: change.fieldChange.revision ?? revision,
+						revision: fieldChangeInfo?.revision,
 						wasEmpty: change.fieldChange.wasEmpty,
 					};
 				} else {
 					fieldChange.id = change.fieldChange.id;
-					fieldChange.revision = change.fieldChange.revision ?? revision;
+					fieldChange.revision = fieldChangeInfo?.revision;
 				}
 
 				let hasMatchingPriorInverse = false;
 				const maybePriorInverse = changes.findIndex((c) => {
-					// Change c may be a composite, in which case we need to look the revision of the fieldChange
-					const revisionOfC = c.revision ?? c.change.fieldChange?.revision;
-					const cIsRollbackOf =
-						revisionOfC === undefined
-							? undefined
-							: revisionMetadata.getInfo(revisionOfC)?.rollbackOf;
+					const cChangeInfo = revisionMetadata.tryGetInfo(
+						// Change c may be a composite, in which case we need to look the revision of the fieldChange
+						c.revision ?? c.change.fieldChange?.revision,
+					);
 					return (
-						(cIsRollbackOf !== undefined && cIsRollbackOf === revision) ||
-						(revisionOfC !== undefined && revisionOfC === rollbackOf)
+						(cChangeInfo?.rollbackOf !== undefined &&
+							cChangeInfo?.rollbackOf === fieldChangeInfo?.revision) ||
+						(cChangeInfo?.revision !== undefined &&
+							cChangeInfo?.revision === fieldChangeInfo?.rollbackOf)
 					);
 				});
 				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
@@ -210,7 +213,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 				if (change.fieldChange.newContent?.changes !== undefined) {
 					currentChildNodeChanges.push(
-						tagChange(change.fieldChange.newContent.changes, revision),
+						tagChange(change.fieldChange.newContent.changes, fieldChangeInfo?.revision),
 					);
 				}
 			}
