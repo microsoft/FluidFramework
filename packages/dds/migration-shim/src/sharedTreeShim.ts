@@ -5,7 +5,6 @@
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type IChannelAttributes,
-	type IChannel,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
@@ -21,6 +20,7 @@ import { assert } from "@fluidframework/core-utils";
 import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
 import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler.js";
 import { ShimHandle } from "./shimHandle.js";
+import { type IShim } from "./types.js";
 
 /**
  * SharedTreeShim is loaded by clients that join after the migration completes, and holds the new SharedTree.
@@ -33,14 +33,14 @@ import { ShimHandle } from "./shimHandle.js";
  *
  * @internal
  */
-export class SharedTreeShim implements IChannel {
+export class SharedTreeShim implements IShim {
 	public constructor(
 		public readonly id: string,
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly sharedTreeFactory: SharedTreeFactory,
 	) {
 		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler();
-		this.handle = new ShimHandle(this);
+		this.handle = new ShimHandle<SharedTreeShim>(this);
 	}
 
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;
@@ -56,7 +56,7 @@ export class SharedTreeShim implements IChannel {
 		return this.currentTree.attributes;
 	}
 
-	public handle: IFluidHandle;
+	public handle: IFluidHandle<SharedTreeShim>;
 	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}

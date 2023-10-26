@@ -42,20 +42,17 @@ class TestDataObject extends DataObject {
 		return (await handle.get()) as SharedTreeShim;
 	}
 
-	public createTree(type: string): SharedTreeShim {
+	public createTree(type: string): void {
 		const channel = this.runtime.createChannel(treeKey, type);
 		this.root.set(treeKey, channel.handle);
-		return channel as SharedTreeShim;
 	}
 }
 
+// New tree schema
 const builder = new SchemaBuilder({ scope: "test" });
-// For now this is the schema of the view.root
 const rootType = builder.object("abc", {
 	quantity: builder.number,
 });
-
-// This is some schema to be updated later
 const schema = builder.intoSchema(rootType);
 
 function getNewTreeView(tree: ISharedTree): ISharedTreeView {
@@ -110,8 +107,10 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		// This is a silent action to create the tree and store the its handle.
-		const shim1 = testObj1.createTree(sharedTreeShimFactory.type);
+		testObj1.createTree(sharedTreeShimFactory.type);
 		await provider.ensureSynchronized();
+		// Test that the local handle retrieval works
+		const shim1 = await testObj1.getTree();
 
 		const container2 = await provider.loadContainer(runtimeFactory);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
@@ -150,16 +149,19 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 			[LoaderHeader.version]: summaryVersion,
 		});
 
+		// Get the root node loaded from the new summary
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = await testObj3.getTree();
 		const tree3 = shim3.currentTree;
 		const view3 = getNewTreeView(tree3);
 		const rootNode3: ProxyNode<typeof rootType> = view3.root2(schema);
 
+		// Verify that it matches the previous node
 		await provider.ensureSynchronized();
 		assert(rootNode3.quantity === rootNode1.quantity, `Failed to load from summary`);
 		assert(rootNode3.quantity === testValue, "Failed to update the tree at all");
 
+		// Modify the root node and verify that it syncs
 		rootNode3.quantity = 4;
 		await provider.ensureSynchronized();
 		assert(rootNode1.quantity === 4, `Failed to modify new shared tree`);

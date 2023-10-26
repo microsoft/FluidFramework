@@ -11,11 +11,9 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	type IChannelAttributes,
-	type IChannel,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { FluidObjectHandle } from "@fluidframework/datastore";
 import {
 	type IExperimentalIncrementalSummaryContext,
 	type IGarbageCollectionData,
@@ -31,6 +29,8 @@ import { assert } from "@fluidframework/core-utils";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
 import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
+import { ShimHandle } from "./shimHandle.js";
+import { type IShim } from "./types.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -79,7 +79,7 @@ export interface IMigrationOp {
  *
  * @public
  */
-export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
+export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IShim {
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -95,7 +95,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		this.migrationDeltaHandler = new MigrationShimDeltaHandler(this.processMigrateOp);
 		// TODO: if we need to support the creation of legacy shared trees via the migration shim, we'll need to make
 		// sure that attaching the handle will make it live.
-		this.handle = new FluidObjectHandle(this, id, runtime.IFluidHandleContext);
+		this.handle = new ShimHandle<MigrationShim>(this);
 	}
 
 	// TODO: process migrate op implementation, it'll look something like this
@@ -215,7 +215,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
 		return this.currentTree.getGCData(fullGC);
 	}
-	public handle: IFluidHandle;
+	public handle: IFluidHandle<MigrationShim>;
 	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}

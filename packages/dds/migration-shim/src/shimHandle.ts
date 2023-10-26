@@ -4,7 +4,7 @@
  */
 
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type SharedTreeShim } from "./sharedTreeShim";
+import { type IShim } from "./types";
 
 /**
  * ShimHandle is a special class to handle the fact that we are essentially creating a proxy for a DDS.
@@ -14,8 +14,8 @@ import { type SharedTreeShim } from "./sharedTreeShim";
  * Local handles such as the FluidObjectHandle and the SharedObjectHandle don't work as they do not properly bind the
  * Shim's underlying DDS.
  */
-export class ShimHandle implements IFluidHandle<SharedTreeShim> {
-	public constructor(private readonly shim: SharedTreeShim) {}
+export class ShimHandle<TShim extends IShim> implements IFluidHandle<TShim> {
+	public constructor(private readonly shim: TShim) {}
 
 	public get absolutePath(): string {
 		return this.shim.currentTree.handle.absolutePath;
@@ -26,13 +26,13 @@ export class ShimHandle implements IFluidHandle<SharedTreeShim> {
 	public attachGraph(): void {
 		return this.shim.currentTree.handle.attachGraph();
 	}
-	public async get(): Promise<SharedTreeShim> {
+	public async get(): Promise<TShim> {
 		return this.shim;
 	}
 	public bind(handle: IFluidHandle): void {
 		return this.shim.currentTree.handle.bind(handle);
 	}
-	public get IFluidHandle(): IFluidHandle<SharedTreeShim> {
+	public get IFluidHandle(): IFluidHandle<TShim> {
 		return this;
 	}
 }
