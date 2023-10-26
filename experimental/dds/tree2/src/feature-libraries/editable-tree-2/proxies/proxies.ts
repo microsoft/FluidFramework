@@ -37,6 +37,7 @@ import {
 	ProxyNodeUnion,
 	SharedTreeList,
 	SharedTreeMap,
+	SharedTreeNode,
 	SharedTreeObject,
 	getTreeNode,
 	setTreeNode,
@@ -46,13 +47,7 @@ import { getFactoryContent } from "./objectFactory";
 const proxyCacheSym = Symbol("ProxyCache");
 
 /** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
-function cacheProxy(
-	target: TreeNode,
-	proxy:
-		| SharedTreeList<AllowedTypes>
-		| SharedTreeObject<ObjectNodeSchema>
-		| SharedTreeMap<MapSchema>,
-): void {
+function cacheProxy(target: TreeNode, proxy: SharedTreeNode): void {
 	Object.defineProperty(target, proxyCacheSym, {
 		value: proxy,
 		writable: false,
