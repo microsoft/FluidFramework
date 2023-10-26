@@ -523,9 +523,6 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const node = getMapNode(this);
 			return node[Symbol.iterator]();
 		},
-		writable: false,
-		enumerable: false,
-		configurable: false,
 	},
 	get: {
 		value(key: string): unknown {
