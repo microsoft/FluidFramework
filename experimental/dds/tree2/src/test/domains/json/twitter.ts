@@ -8,6 +8,8 @@ import {
 	makeRandom,
 	SpaceEfficientWordMarkovChain,
 } from "@fluid-internal/stochastic-test-utils";
+import { SchemaBuilder } from "../../../domains";
+import { Any, ProxyNode } from "../../../feature-libraries";
 import {
 	createAlphabetFromUnicodeRange,
 	getRandomEnglishString,
@@ -18,170 +20,192 @@ import {
 // This file contains logic to generate a JSON file that is statistically similar to the well-known
 // json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
 
-/* eslint-disable @rushstack/no-new-null */
-export interface TwitterUser {
-	id: number;
-	id_str: string;
-	name: string;
-	screen_name: string;
-	location: string;
-	description: string;
-	url: string | null;
-	entities: {
-		url?: {
-			urls: {
-				url: string;
-				expanded_url: string;
-				display_url: string;
-				indices: number[];
-			}[];
-		};
-		description: {
-			urls: {
-				url: string;
-				expanded_url: string;
-				display_url: string;
-				indices: number[];
-			}[];
-		};
-	};
-	protected: boolean;
-	followers_count: number;
-	friends_count: number;
-	listed_count: number;
-	created_at: string;
-	favourites_count: number;
-	utc_offset: number | null;
-	time_zone: string | null;
-	geo_enabled: boolean;
-	verified: boolean;
-	statuses_count: number;
-	lang: string;
-	contributors_enabled: boolean;
-	is_translator: boolean;
-	is_translation_enabled: boolean;
-	profile_background_color: string;
-	profile_background_image_url: string;
-	profile_background_image_url_https: string;
-	profile_background_tile: boolean;
-	profile_image_url: string;
-	profile_image_url_https: string;
-	profile_banner_url?: string;
-	profile_link_color: string;
-	profile_sidebar_border_color: string;
-	profile_sidebar_fill_color: string;
-	profile_text_color: string;
-	profile_use_background_image: boolean;
-	default_profile: boolean;
-	default_profile_image: boolean;
-	following: boolean;
-	follow_request_sent: boolean;
-	notifications: boolean;
-}
+const _ = new SchemaBuilder({ scope: "json.twitter" });
 
-export interface TwitterMediaEntity {
-	id: number;
-	id_str: string;
-	indices: number[];
-	media_url: string;
-	media_url_https: string;
-	url: string;
-	display_url: string;
-	expanded_url: string;
-	type: string;
-	sizes: {
-		large: {
-			w: number;
-			h: number;
-			resize: "fit" | "crop";
-		};
-		medium: {
-			w: number;
-			h: number;
-			resize: "fit" | "crop";
-		};
-		thumb: {
-			w: number;
-			h: number;
-			resize: "fit" | "crop";
-		};
-		small: {
-			w: number;
-			h: number;
-			resize: "fit" | "crop";
-		};
-	};
-	source_status_id?: number;
-	source_status_id_str?: string;
-}
+type TwitterUser = ProxyNode<typeof twitterUser>;
+const twitterUser = _.object("User", {
+	id: _.number,
+	id_str: _.string,
+	name: _.string,
+	screen_name: _.string,
+	location: _.string,
+	description: _.string,
+	url: [_.string, _.null],
+	entities: _.object("User.Entities", {
+		url: _.optional(
+			_.object("User.Entities.Url", {
+				urls: _.list(
+					_.object("User.Entities.Url.Urls", {
+						url: _.string,
+						expanded_url: _.string,
+						display_url: _.string,
+						indices: _.list(_.number),
+					}),
+				),
+			}),
+		),
+		description: _.object("User.Entities.Description", {
+			urls: _.list(
+				_.object("User.Entities.Description.Url", {
+					url: _.string,
+					expanded_url: _.string,
+					display_url: _.string,
+					indices: _.list(_.number),
+				}),
+			),
+		}),
+	}),
+	protected: _.boolean,
+	followers_count: _.number,
+	friends_count: _.number,
+	listed_count: _.number,
+	created_at: _.string,
+	favourites_count: _.number,
+	utc_offset: [_.number, _.null],
+	time_zone: [_.string, _.null],
+	geo_enabled: _.boolean,
+	verified: _.boolean,
+	statuses_count: _.number,
+	lang: _.string,
+	contributors_enabled: _.boolean,
+	is_translator: _.boolean,
+	is_translation_enabled: _.boolean,
+	profile_background_color: _.string,
+	profile_background_image_url: _.string,
+	profile_background_image_url_https: _.string,
+	profile_background_tile: _.boolean,
+	profile_image_url: _.string,
+	profile_image_url_https: _.string,
+	profile_banner_url: _.string,
+	profile_link_color: _.string,
+	profile_sidebar_border_color: _.string,
+	profile_sidebar_fill_color: _.string,
+	profile_text_color: _.string,
+	profile_use_background_image: _.boolean,
+	default_profile: _.boolean,
+	default_profile_image: _.boolean,
+	following: _.boolean,
+	follow_request_sent: _.boolean,
+	notifications: _.boolean,
+});
 
-export interface TwitterStatus {
-	metadata: {
-		result_type: string;
-		iso_language_code: string;
-	};
-	created_at: string;
-	id: number;
-	id_str: string;
-	text: string;
-	source: string;
-	truncated: boolean;
-	in_reply_to_user_id: number | null;
-	in_reply_to_user_id_str: string | null;
-	in_reply_to_screen_name: string | null;
-	user: TwitterUser;
-	geo: null; // always null in source json
-	coordinates: null; // always null in source json
-	place: null; // always null in source json
-	contributors: null; // always null in source json
-	retweet_count: number;
-	favorite_count: number;
-	entities: {
-		hashtags: {
-			text: string;
-			indices: number[];
-		}[];
-		symbols: never[]; // always empty in source json
-		urls: {
-			url: string;
-			expanded_url: string;
-			display_url: string;
-			indices: number[];
-		}[];
-		user_mentions: {
-			screen_name: string;
-			name: string;
-			id: number;
-			id_str: string;
-			indices: number[];
-		}[];
-		media?: TwitterMediaEntity[];
-	};
-	favorited: boolean;
-	retweeted: boolean;
-	lang: string;
-	retweeted_status?: Omit<TwitterStatus, "retweeted_status">;
-	possibly_sensitive?: boolean;
-	in_reply_to_status_id: number | null;
-	in_reply_to_status_id_str: string | null;
-}
+type TwitterMediaEntity = ProxyNode<typeof twitterMediaEntity>;
+const twitterMediaEntity = _.object("Status.Entities.Media", {
+	id: _.number,
+	id_str: _.string,
+	indices: _.list(_.number),
+	media_url: _.string,
+	media_url_https: _.string,
+	url: _.string,
+	display_url: _.string,
+	expanded_url: _.string,
+	type: _.string,
+	sizes: _.object("Status.Entities.Media.Sizes", {
+		large: _.object("Status.Entities.Media.Sizes.Large", {
+			w: _.number,
+			h: _.number,
+			resize: _.string, // TODO: Enum support?  (was: "fit" | "crop")
+		}),
+		medium: _.object("Status.Entities.Media.Sizes.Medium", {
+			w: _.number,
+			h: _.number,
+			resize: _.string, // TODO: Enum support?  (was: "fit" | "crop")
+		}),
+		thumb: _.object("Status.Entities.Media.Sizes.Thumb", {
+			w: _.number,
+			h: _.number,
+			resize: _.string, // TODO: Enum support?  (was: "fit" | "crop")
+		}),
+		small: _.object("Status.Entities.Media.Sizes.Small", {
+			w: _.number,
+			h: _.number,
+			resize: _.string, // TODO: Enum support?  (was: "fit" | "crop")
+		}),
+	}),
+	source_status_id: _.optional(_.number),
+	source_status_id_str: _.optional(_.string),
+});
 
-export interface Twitter {
-	statuses: TwitterStatus[];
-	search_metadata: {
-		completed_in: number;
-		max_id: number;
-		max_id_str: string;
-		next_results: string;
-		query: string;
-		refresh_url: string;
-		count: number;
-		since_id: number;
-		since_id_str: string;
-	};
-}
+type TwitterStatus = ProxyNode<typeof twitterStatus>;
+const twitterStatus = _.object("Status", {
+	metadata: _.object("Status.Metadata", {
+		result_type: _.string,
+		iso_language_code: _.string,
+	}),
+	created_at: _.string,
+	id: _.number,
+	id_str: _.string,
+	text: _.string,
+	source: _.string,
+	truncated: _.boolean,
+	in_reply_to_user_id: [_.number, _.null],
+	in_reply_to_user_id_str: [_.string, _.null],
+	in_reply_to_screen_name: [_.string, _.null],
+	user: twitterUser,
+	geo: _.null, // could not find an example of non null value
+	coordinates: _.null, // could not find an example of non null value
+	place: _.null, // could not find an example of non null value
+	contributors: _.null, // could not find an example of non null value
+	retweet_count: _.number,
+	favorite_count: _.number,
+	entities: _.object("Status.Entities", {
+		hashtags: _.list(
+			_.object("Status.Entities.Hashtag", {
+				text: _.string,
+				indices: _.list(_.number),
+			}),
+		),
+		// TODO: 'symbols' was 'unknown'. What is the appropriate conversion?
+		symbols: _.list(_.boolean), // could not find a populated value from source json
+		urls: _.list(
+			_.object("Status.Entities.Url", {
+				url: _.string,
+				expanded_url: _.string,
+				display_url: _.string,
+				indices: _.list(_.number),
+			}),
+		),
+		user_mentions: _.list(
+			_.object("Status.Entities.UserMentions", {
+				screen_name: _.string,
+				name: _.string,
+				id: _.number,
+				id_str: _.string,
+				indices: _.list(_.number),
+			}),
+		),
+		media: _.optional(_.list(twitterMediaEntity)),
+	}),
+	favorited: _.boolean,
+	retweeted: _.boolean,
+	lang: _.string,
+	// TODO: was Omit<TwitterStatus, "retweeted_status">;
+	// TODO: optional() won't accept a lazy/recursive item.
+	retweeted_status: _.optional(Any),
+	possibly_sensitive: _.optional(_.boolean),
+	in_reply_to_status_id: [_.number, _.null],
+	in_reply_to_status_id_str: [_.string, _.null],
+});
 
-/* eslint-enable */
+export type Twitter = ProxyNode<typeof twitter>;
+export const twitter = _.object("Twitter", {
+	statuses: _.list(twitterStatus),
+	search_metadata: _.object("Twitter.SearchMetadata", {
+		completed_in: _.number,
+		max_id: _.number,
+		max_id_str: _.string,
+		next_results: _.string,
+		query: _.string,
+		refresh_url: _.string,
+		count: _.number,
+		since_id: _.number,
+		since_id_str: _.string,
+	}),
+});
+
+// TODO: Error: Object node field "type" of "json.twitter.Status.Entities.Media" schema from library
+// "json.twitter" uses "type" one of the banned field names
+// export const twitterSchema = _.intoSchema(twitter);
 
 /**
  * Generates a TwitterJson object as closely as possible to a specified byte size.
@@ -208,7 +232,7 @@ export function generateTwitterJsonByByteSize(
 	);
 	const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
 	const twitterJson: Twitter = {
-		statuses: [],
+		statuses: [] as any, // TODO: any[] does satisfy SharedTreeList
 		search_metadata: {
 			completed_in: 0.087,
 			max_id: 505874924095815700,
@@ -235,7 +259,8 @@ export function generateTwitterJsonByByteSize(
 		if (!allowOversize && currentJsonSizeInBytes + nextStatusSizeInBytes > sizeInBytes) {
 			break;
 		}
-		twitterJson.statuses.push(status);
+		// TODO: 'push()' is a painful omission from SharedTreeList<T>.
+		(twitterJson.statuses as unknown as TwitterStatus[]).push(status);
 		currentJsonSizeInBytes += nextStatusSizeInBytes;
 	}
 
@@ -262,7 +287,7 @@ export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1) 
 	);
 	const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
 	const twitterJson: Twitter = {
-		statuses: [],
+		statuses: [] as any, // TODO: any[] does satisfy SharedTreeList
 		search_metadata: {
 			completed_in: 0.087,
 			max_id: 505874924095815700,
@@ -277,7 +302,8 @@ export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1) 
 	};
 
 	for (let i = 0; i < numStatuses; i++) {
-		twitterJson.statuses.push(
+		// TODO: 'push' is a painful omission from SharedTreeList<T>.
+		(twitterJson.statuses as unknown as TwitterStatus[]).push(
 			generateTwitterStatus(
 				"standard",
 				random,
@@ -348,10 +374,10 @@ function generateTwitterStatus(
 		retweet_count: retweetCount,
 		favorite_count: favoriteCount,
 		entities: {
-			hashtags: [],
-			symbols: [],
-			urls: [],
-			user_mentions: [],
+			hashtags: [] as any, // TODO: any[] does satisfy SharedTreeList
+			symbols: [] as any, // TODO: any[] does satisfy SharedTreeList
+			urls: [] as any, // TODO: any[] does satisfy SharedTreeList
+			user_mentions: [] as any, // TODO: any[] does satisfy SharedTreeList
 		},
 		favorited: retweetCount > 0 ? true : false,
 		retweeted: favoriteCount > 0 ? true : false,
@@ -383,13 +409,15 @@ function generateTwitterStatus(
 	}
 
 	if (shouldAddHashtagEntity) {
-		status.entities.hashtags.push({
+		// TODO: 'push' is a painful omission from SharedTreeList<T>.
+		(status.entities.hashtags as unknown as any[]).push({
 			text: random.string(random.integer(2, 30), alphabet),
 			indices: [Math.floor(random.integer(0, 199)), Math.floor(random.integer(0, 199))],
 		});
 	}
 	if (shouldAddUrlEntity) {
-		status.entities.urls.push({
+		// TODO: 'push' is a painful omission from SharedTreeList<T>.
+		(status.entities.urls as unknown as any[]).push({
 			url: "http://t.co/ZkU4TZCGPG",
 			expanded_url: "http://www.tepco.co.jp/nu/fukushima-np/review/images/review1_01.gif",
 			display_url: "tepco.co.jp/nu/fukushima-n…",
@@ -398,7 +426,8 @@ function generateTwitterStatus(
 	}
 	if (shouldAddUserMentionsEntity) {
 		const userId = getRandomNumberString(random, 10, 10);
-		status.entities.user_mentions.push({
+		// TODO: 'push' is a painful omission from SharedTreeList<T>.
+		(status.entities.user_mentions as unknown as any[]).push({
 			screen_name: getRandomEnglishString(random, true, 6, 30),
 			name: random.string(random.integer(2, 30), alphabet),
 			id: Number(userId),
@@ -412,7 +441,10 @@ function generateTwitterStatus(
 		const mediaEntity: TwitterMediaEntity = {
 			id: Number(mediaStatusIdString),
 			id_str: "statusIdString",
-			indices: [Math.floor(random.integer(0, 199)), Math.floor(random.integer(0, 199))],
+			indices: [
+				Math.floor(random.integer(0, 199)),
+				Math.floor(random.integer(0, 199)),
+			] as any, // TODO: any[] does satisfy SharedTreeList
 			media_url: "http://pbs.twimg.com/media/BwU6g-dCcAALxAW.png",
 			media_url_https: "https://pbs.twimg.com/media/BwU6g-dCcAALxAW.png",
 			url: "http://t.co/okrAoxSbt0",
@@ -447,7 +479,7 @@ function generateTwitterStatus(
 			mediaEntity.source_status_id_str = getRandomNumberString(random, 18, 18);
 			mediaEntity.source_status_id = Number(mediaEntity.source_status_id_str);
 		}
-		status.entities.media = [mediaEntity];
+		status.entities.media = [mediaEntity] as any; // TODO: any[] does satisfy SharedTreeList
 	}
 
 	// Now that 'status' is fully constructed, cast from Partial<TwitterStatus> to a full TwitterStatus.
@@ -475,7 +507,7 @@ function generateTwitterUser(
 		entities: {
 			// This always appears on a user, even if its empty.
 			description: {
-				urls: [],
+				urls: [] as any, // TODO: any[] does satisfy SharedTreeList
 			},
 		},
 		protected: false,
@@ -520,13 +552,13 @@ function generateTwitterUser(
 					url: "http://t.co/V4oyL0xtZk",
 					expanded_url: "http://astore.amazon.co.jp/furniturewood-22",
 					display_url: "astore.amazon.co.jp/furniturewood-…",
-					indices: [random.integer(0, 199), random.integer(0, 199)],
+					indices: [random.integer(0, 199), random.integer(0, 199)] as any,
 				},
-			],
+			] as any,
 		};
 	}
 	if (shouldAddDescriptionUrlsEntity) {
-		user.entities.description.urls.push({
+		(user.entities.description.urls as unknown as any[]).push({
 			url: "http://t.co/8E91tqoeKX",
 			expanded_url: "http://ameblo.jp/2no38mae/",
 			display_url: "ameblo.jp/2no38mae/",
