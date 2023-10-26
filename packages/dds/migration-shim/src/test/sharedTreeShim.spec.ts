@@ -11,7 +11,6 @@ import {
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
-import { SharedMap } from "@fluidframework/map";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -23,16 +22,14 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type Typed,
 	type ISharedTreeView,
+	type ProxyNode,
 } from "@fluid-experimental/tree2";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
 import { type SharedTreeShim } from "../sharedTreeShim.js";
-import { type Shim } from "../shim.js";
-import { ShimFactory } from "../shimFactory.js";
 
 const treeKey = "treeKey";
 
@@ -50,30 +47,16 @@ class TestDataObject extends DataObject {
 		this.root.set(treeKey, channel.handle);
 		return channel as SharedTreeShim;
 	}
-
-	public async getMap(): Promise<Shim<SharedMap>> {
-		const handle: IFluidHandle<IChannel> | undefined =
-			this.root.get<IFluidHandle<IChannel>>(treeKey);
-		assert(handle !== undefined, "No handle found");
-
-		return (await handle.get()) as Shim<SharedMap>;
-	}
-
-	public createMap(type: string): Shim<SharedMap> {
-		const channel = this.runtime.createChannel(treeKey, type);
-		this.root.set(treeKey, channel.handle);
-		return channel as Shim<SharedMap>;
-	}
 }
 
 const builder = new SchemaBuilder({ scope: "test" });
 // For now this is the schema of the view.root
-const someType = builder.object("abc", {
+const rootType = builder.object("abc", {
 	quantity: builder.number,
 });
 
 // This is some schema to be updated later
-const schema = builder.intoSchema(SchemaBuilder.required(someType));
+const schema = builder.intoSchema(rootType);
 
 function getNewTreeView(tree: ISharedTree): ISharedTreeView {
 	return tree.schematizeView({
@@ -101,12 +84,11 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 	// V2 of the code: Registry setup to migrate the document
 	const newSharedTreeFactory = new SharedTreeFactory();
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
-	const mapShimFactory = new ShimFactory<SharedMap>(SharedMap.getFactory());
 
 	const dataObjectFactory = new DataObjectFactory(
 		"TestDataObject",
 		TestDataObject,
-		[sharedTreeShimFactory, mapShimFactory],
+		[sharedTreeShimFactory],
 		{},
 	);
 
@@ -127,29 +109,32 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
+		// This is a silent action to create the tree and store the its handle.
 		const shim1 = testObj1.createTree(sharedTreeShimFactory.type);
+		await provider.ensureSynchronized();
 
 		const container2 = await provider.loadContainer(runtimeFactory);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
-
-		await provider.ensureSynchronized();
+		// This is a silent check that we can get the tree after storing the handle
 		const shim2 = await testObj2.getTree();
 
-		// Get the migrated values from the new tree
+		// Get the tree from the shim
 		const tree1 = shim1.currentTree;
 		const tree2 = shim2.currentTree;
 
+		// Schematize our tree, this sends an op since we are a live container
 		const view1 = getNewTreeView(tree1);
 		const view2 = getNewTreeView(tree2);
-		const treeNode1 = view1.root as unknown as Typed<typeof someType>;
-		const treeNode2 = view2.root as unknown as Typed<typeof someType>;
-
 		await provider.ensureSynchronized();
+
+		// This does some typing and gives us the root node.
+		const rootNode1: ProxyNode<typeof rootType> = view1.root2(schema);
+		const rootNode2: ProxyNode<typeof rootType> = view2.root2(schema);
 
 		// Test that we can modify/send ops with the new Shared Tree
-		treeNode1.quantity = testValue;
+		rootNode1.quantity = testValue;
 		await provider.ensureSynchronized();
-		assert(treeNode2.quantity === treeNode1.quantity, "Failed to update the new tree via op");
+		assert(rootNode2.quantity === rootNode1.quantity, "Failed to update the new tree via op");
 
 		// Summarize
 		const { summarizer } = await createSummarizerFromFactory(
@@ -158,8 +143,7 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 			dataObjectFactory,
 		);
 		await provider.ensureSynchronized();
-		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
-		console.log(summaryTree);
+		const { summaryVersion } = await summarizeNow(summarizer);
 
 		// Load a new container
 		const container3 = await provider.loadContainer(runtimeFactory, undefined, {
@@ -170,61 +154,15 @@ describeNoCompat("SharedTreeShim", (getTestObjectProvider) => {
 		const shim3 = await testObj3.getTree();
 		const tree3 = shim3.currentTree;
 		const view3 = getNewTreeView(tree3);
-		const treeNode3 = view3.root as unknown as Typed<typeof someType>;
-		await provider.ensureSynchronized();
-		console.log(treeNode3);
-		treeNode3.quantity = 4;
-		await provider.ensureSynchronized();
-		assert(
-			treeNode3.quantity === treeNode1.quantity,
-			`Failed to summarize the tree data 3: ${treeNode3.quantity}, 1: ${treeNode1.quantity}`,
-		);
-		assert(treeNode3.quantity === testValue, "Failed to update the tree at all");
-	});
-
-	it("Can create and retrieve tree", async () => {
-		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1 = await provider.createContainer(runtimeFactory);
-		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
-		const shim1 = testObj1.createMap(mapShimFactory.type);
-
-		const container2 = await provider.loadContainer(runtimeFactory);
-		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
+		const rootNode3: ProxyNode<typeof rootType> = view3.root2(schema);
 
 		await provider.ensureSynchronized();
-		const shim2 = await testObj2.getMap();
+		assert(rootNode3.quantity === rootNode1.quantity, `Failed to load from summary`);
+		assert(rootNode3.quantity === testValue, "Failed to update the tree at all");
 
-		// Get the migrated values from the new tree
-		const map1 = shim1.currentTree;
-		const map2 = shim2.currentTree;
-		// Test that we can modify/send ops with the new Shared Tree
-		map1.set("test", testValue);
+		rootNode3.quantity = 4;
 		await provider.ensureSynchronized();
-		assert(map2.get("test") === map1.get("test"), "Failed to update the new map via op");
-
-		// Summarize
-		const { summarizer } = await createSummarizerFromFactory(
-			provider,
-			container1,
-			dataObjectFactory,
-		);
-		await provider.ensureSynchronized();
-		const { summaryVersion, summaryTree } = await summarizeNow(summarizer);
-		console.log(summaryTree);
-
-		// Load a new container
-		const container3 = await provider.loadContainer(runtimeFactory, undefined, {
-			[LoaderHeader.version]: summaryVersion,
-		});
-
-		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
-		const shim3 = await testObj3.getMap();
-		const map3 = shim3.currentTree;
-		await provider.ensureSynchronized();
-		assert(
-			map3.get("test") === map1.get("test"),
-			`Failed to summarize the tree data 3: ${map3.get("test")}, 1: ${map1.get("test")}`,
-		);
-		assert(map3.get("test") === testValue, "Failed to update the tree at all");
+		assert(rootNode1.quantity === 4, `Failed to modify new shared tree`);
+		assert(rootNode1.quantity === rootNode3.quantity, `Failed to sync new shared trees`);
 	});
 });
