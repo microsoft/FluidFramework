@@ -540,6 +540,11 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return mapNode.entries();
 		},
 	},
+	size: {
+		get(this: object) {
+			return getMapNode(this).size;
+		},
+	},
 	// TODO: implement the rest of the Map interface here
 };
 
@@ -555,13 +560,7 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
 	// Own properties on the dispatch object are surfaced as own properties of the proxy.
 	// (e.g., 'size', which is defined below).
-	const dispatch = Object.create(mapPrototype, {
-		size: {
-			get(this: object) {
-				return getMapNode(this).size;
-			},
-		},
-	});
+	const dispatch = Object.create(mapPrototype, {});
 
 	setTreeNode(dispatch, treeNode);
 
@@ -582,8 +581,8 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 			return false;
 		},
 		ownKeys: (target) => {
-			// TODO: double check that this is all we require here
-			return ["size"];
+			// All of Map's properties are inherited via its prototype, so there is nothing to return here,
+			return [];
 		},
 	});
 }
