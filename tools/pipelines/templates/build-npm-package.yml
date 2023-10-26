@@ -463,7 +463,7 @@ stages:
                   echo "Writing the following performance tests results to Aria/Kusto"
                   echo "Report Size:"
                   ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                  node --require @ff-internal/aria-logger bin/run --handlerModule dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                  node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
 
         # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -586,7 +586,7 @@ stages:
               pwd;
               ls -laR $(pipelineTelemetryWorkdir)/timingOutput/output.json;
               cat $(pipelineTelemetryWorkdir)/timingOutput/output.json;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
+              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '$(pipelineTelemetryWorkdir)/timingOutput/';
           env:
             BUILD_ID: $(Build.BuildId)
             ADO_API_TOKEN: $(System.AccessToken)
