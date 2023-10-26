@@ -13,6 +13,9 @@ import {
 import { pkgVersion } from "./packageVersion";
 import { SharedMatrix } from "./matrix";
 
+/**
+ * @public
+ */
 export class SharedMatrixFactory implements IChannelFactory {
 	public static Type = "https://graph.microsoft.com/types/sharedmatrix";
 
