@@ -40,6 +40,7 @@ import {
 	IRuntime,
 	ReadOnlyInfo,
 	isFluidCodeDetails,
+	IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IDocumentService,
@@ -1112,12 +1113,17 @@ export class Container
 		}
 	}
 
-	public async closeAndGetPendingLocalState(): Promise<string> {
+	public async closeAndGetPendingLocalState(
+		stopBlobAttachingSignal?: AbortSignal,
+	): Promise<string> {
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
 		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
-		const pendingState = await this.getPendingLocalStateCore({ notifyImminentClosure: true });
+		const pendingState = await this.getPendingLocalStateCore({
+			notifyImminentClosure: true,
+			stopBlobAttachingSignal,
+		});
 		this.close();
 		return pendingState;
 	}
@@ -1126,7 +1132,7 @@ export class Container
 		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
 	}
 
-	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
+	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -2517,7 +2523,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @experimental
+ * @alpha
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2525,7 +2531,7 @@ export interface IContainerExperimental extends IContainer {
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
-	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
+	 * @alpha misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState?(): Promise<string>;
@@ -2533,8 +2539,8 @@ export interface IContainerExperimental extends IContainer {
 	/**
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
-	 * @experimental
+	 * @alpha
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState?(): Promise<string>;
+	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

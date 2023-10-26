@@ -25,6 +25,7 @@ import {
 	ILoaderOptions,
 	ILoader,
 	LoaderHeader,
+	IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -3932,9 +3933,7 @@ export class ContainerRuntime
 
 	public notifyAttaching() {} // do nothing (deprecated method)
 
-	public async getPendingLocalState(props?: {
-		notifyImminentClosure: boolean;
-	}): Promise<unknown> {
+	public async getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -3944,6 +3943,7 @@ export class ContainerRuntime
 			async (event) => {
 				this.verifyNotClosed();
 				const waitBlobsToAttach = props?.notifyImminentClosure;
+				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
@@ -3952,7 +3952,7 @@ export class ContainerRuntime
 				// to close current batch.
 				this.flush();
 				const pendingAttachmentBlobs = waitBlobsToAttach
-					? await this.blobManager.attachAndGetPendingBlobs()
+					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
 					: undefined;
 				const pending = this.pendingStateManager.getLocalState();
 				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {
