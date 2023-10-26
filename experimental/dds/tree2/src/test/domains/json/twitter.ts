@@ -8,8 +8,6 @@ import {
 	makeRandom,
 	SpaceEfficientWordMarkovChain,
 } from "@fluid-internal/stochastic-test-utils";
-import { FieldKey } from "../../../core";
-import { brand } from "../../../util";
 import {
 	createAlphabetFromUnicodeRange,
 	getRandomEnglishString,
@@ -17,120 +15,10 @@ import {
 	getSizeInBytes,
 } from "./jsonGeneratorUtils";
 
-/**
- * This file contains logic to generate a JSON file that is statistically similar to the well-known
- * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
- */
-// Shared tree keys that map to the type used by the Twitter type/dataset
-export const Twitter = {
-	SharedTreeFieldKey: {
-		statuses: brand<FieldKey>("statuses"),
-		retweetCount: brand<FieldKey>("retweet_count"),
-		favoriteCount: brand<FieldKey>("favorite_count"),
-	},
-};
-
-export interface Twitter {
-	statuses: TwitterStatus[];
-	search_metadata: {
-		completed_in: number;
-		max_id: number;
-		max_id_str: string;
-		next_results: string;
-		query: string;
-		refresh_url: string;
-		count: number;
-		since_id: number;
-		since_id_str: string;
-	};
-}
+// This file contains logic to generate a JSON file that is statistically similar to the well-known
+// json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
 
 /* eslint-disable @rushstack/no-new-null */
-export interface TwitterStatus {
-	metadata: {
-		result_type: string;
-		iso_language_code: string;
-	};
-	created_at: string;
-	id: number;
-	id_str: string;
-	text: string;
-	source: string;
-	truncated: boolean;
-	in_reply_to_user_id: number | null;
-	in_reply_to_user_id_str: string | null;
-	in_reply_to_screen_name: string | null;
-	user: TwitterUser;
-	geo: null; // could not find an example of non null value
-	coordinates: null; // could not find an example of non null value
-	place: null; // could not find an example of non null value
-	contributors: null; // could not find an example of non null value
-	retweet_count: number;
-	favorite_count: number;
-	entities: {
-		hashtags: {
-			text: string;
-			indices: number[];
-		}[];
-		symbols: unknown[]; // could not find a populated value from source json
-		urls: {
-			url: string;
-			expanded_url: string;
-			display_url: string;
-			indices: number[];
-		}[];
-		user_mentions: {
-			screen_name: string;
-			name: string;
-			id: number;
-			id_str: string;
-			indices: number[];
-		}[];
-		media?: {
-			id: number;
-			id_str: string;
-			indices: number[];
-			media_url: string;
-			media_url_https: string;
-			url: string;
-			display_url: string;
-			expanded_url: string;
-			type: string;
-			sizes: {
-				large: {
-					w: number;
-					h: number;
-					resize: "fit" | "crop";
-				};
-				medium: {
-					w: number;
-					h: number;
-					resize: "fit" | "crop";
-				};
-				thumb: {
-					w: number;
-					h: number;
-					resize: "fit" | "crop";
-				};
-				small: {
-					w: number;
-					h: number;
-					resize: "fit" | "crop";
-				};
-			};
-			source_status_id?: number;
-			source_status_id_str?: string;
-		}[];
-	};
-	favorited: boolean;
-	retweeted: boolean;
-	lang: string;
-	retweeted_status?: Omit<TwitterStatus, "retweeted_status">;
-	possibly_sensitive?: boolean;
-	in_reply_to_status_id: number | null;
-	in_reply_to_status_id_str: string | null;
-}
-
 export interface TwitterUser {
 	id: number;
 	id_str: string;
@@ -190,6 +78,109 @@ export interface TwitterUser {
 	follow_request_sent: boolean;
 	notifications: boolean;
 }
+
+export interface TwitterMediaEntity {
+	id: number;
+	id_str: string;
+	indices: number[];
+	media_url: string;
+	media_url_https: string;
+	url: string;
+	display_url: string;
+	expanded_url: string;
+	type: string;
+	sizes: {
+		large: {
+			w: number;
+			h: number;
+			resize: "fit" | "crop";
+		};
+		medium: {
+			w: number;
+			h: number;
+			resize: "fit" | "crop";
+		};
+		thumb: {
+			w: number;
+			h: number;
+			resize: "fit" | "crop";
+		};
+		small: {
+			w: number;
+			h: number;
+			resize: "fit" | "crop";
+		};
+	};
+	source_status_id?: number;
+	source_status_id_str?: string;
+}
+
+export interface TwitterStatus {
+	metadata: {
+		result_type: string;
+		iso_language_code: string;
+	};
+	created_at: string;
+	id: number;
+	id_str: string;
+	text: string;
+	source: string;
+	truncated: boolean;
+	in_reply_to_user_id: number | null;
+	in_reply_to_user_id_str: string | null;
+	in_reply_to_screen_name: string | null;
+	user: TwitterUser;
+	geo: null; // always null in source json
+	coordinates: null; // always null in source json
+	place: null; // always null in source json
+	contributors: null; // always null in source json
+	retweet_count: number;
+	favorite_count: number;
+	entities: {
+		hashtags: {
+			text: string;
+			indices: number[];
+		}[];
+		symbols: never[]; // always empty in source json
+		urls: {
+			url: string;
+			expanded_url: string;
+			display_url: string;
+			indices: number[];
+		}[];
+		user_mentions: {
+			screen_name: string;
+			name: string;
+			id: number;
+			id_str: string;
+			indices: number[];
+		}[];
+		media?: TwitterMediaEntity[];
+	};
+	favorited: boolean;
+	retweeted: boolean;
+	lang: string;
+	retweeted_status?: Omit<TwitterStatus, "retweeted_status">;
+	possibly_sensitive?: boolean;
+	in_reply_to_status_id: number | null;
+	in_reply_to_status_id_str: string | null;
+}
+
+export interface Twitter {
+	statuses: TwitterStatus[];
+	search_metadata: {
+		completed_in: number;
+		max_id: number;
+		max_id_str: string;
+		next_results: string;
+		query: string;
+		refresh_url: string;
+		count: number;
+		since_id: number;
+		since_id_str: string;
+	};
+}
+
 /* eslint-enable */
 
 /**
@@ -233,18 +224,18 @@ export function generateTwitterJsonByByteSize(
 
 	let currentJsonSizeInBytes = getSizeInBytes(twitterJson);
 	while (currentJsonSizeInBytes < sizeInBytes) {
-		const twitterStatus = generateTwitterStatus(
+		const status = generateTwitterStatus(
 			"standard",
 			random,
 			textFieldMarkovChain,
 			userDescFieldMarkovChain,
 			basicJapaneseAlphabetString,
 		);
-		const nextStatusSizeInBytes = getSizeInBytes(twitterStatus);
+		const nextStatusSizeInBytes = getSizeInBytes(status);
 		if (!allowOversize && currentJsonSizeInBytes + nextStatusSizeInBytes > sizeInBytes) {
 			break;
 		}
-		twitterJson.statuses.push(twitterStatus);
+		twitterJson.statuses.push(status);
 		currentJsonSizeInBytes += nextStatusSizeInBytes;
 	}
 
@@ -312,7 +303,7 @@ function generateTwitterStatus(
 	const statusIdString = getRandomNumberString(random, 18, 18);
 	const retweetCount = Math.floor(random.integer(0, 99999));
 	const favoriteCount = Math.floor(random.integer(0, 99999));
-	const twitterUser = generateTwitterUser(random, userDescFieldMarkovChain, alphabet);
+	const user = generateTwitterUser(random, userDescFieldMarkovChain, alphabet);
 	// The following boolean values mirror the statistical probability of the original json
 	const shouldAddHashtagEntity = type === "standard" ? random.bool(0.07) : random.bool(0.027397);
 	const shouldAddUrlEntity = type === "standard" ? random.bool(0.12) : random.bool(0.068493);
@@ -325,7 +316,17 @@ function generateTwitterStatus(
 	const shouldAddInReplyToUserIdAndScreenName =
 		type === "standard" ? random.bool(0.09) : random.bool(0.041095);
 
-	const twitterStatus: any = {
+	// 'Partial<..> & Omit<..>' make the "in_reply_to_*" fields optional so that
+	// they can be dynamically added after the initial status object is created.
+	const status: Partial<TwitterStatus> &
+		Omit<
+			TwitterStatus,
+			| "in_reply_to_user_id"
+			| "in_reply_to_user_id_str"
+			| "in_reply_to_screen_name"
+			| "in_reply_to_status_id"
+			| "in_reply_to_status_id_str"
+		> = {
 		metadata: {
 			result_type: "recent",
 			iso_language_code: "ja",
@@ -335,15 +336,14 @@ function generateTwitterStatus(
 		id_str: `${statusIdString}`,
 		text: textFieldMarkovChain.generateData(144), // average length the original json text field is 123
 		// source can have unicode nested in it
-		source: `<a href=\"https://twitter.com/${twitterUser.screen_name}\" rel=\"nofollow\">
+		source: `<a href=\"https://twitter.com/${user.screen_name}\" rel=\"nofollow\">
          ${random.string(random.integer(2, 30), alphabet)}</a>`,
 		truncated: true, // no examples found where truncated was false
-		user: twitterUser,
-		// could not find an example of non null value for these 4 values (geo, coordinaes, place, contributors)
-		geo: null,
-		coordinates: null,
-		place: null,
-		contributors: null,
+		user,
+		geo: null, // always null in source json
+		coordinates: null, // always null in source json
+		place: null, // always null in source json
+		contributors: null, // always null in source json
 		possibly_sensitive: random.bool(),
 		retweet_count: retweetCount,
 		favorite_count: favoriteCount,
@@ -360,7 +360,7 @@ function generateTwitterStatus(
 	if (type === "standard") {
 		const shouldAddRetweet = random.bool(0.73);
 		if (shouldAddRetweet) {
-			twitterStatus.retweeted_status = generateTwitterStatus(
+			status.retweeted_status = generateTwitterStatus(
 				"retweet",
 				random,
 				textFieldMarkovChain,
@@ -371,26 +371,25 @@ function generateTwitterStatus(
 	}
 	if (shouldAddInReplyToStatusId) {
 		const inReplyToStatusId = getRandomNumberString(random, 18, 18);
-		twitterStatus.in_reply_to_status_id =
+		status.in_reply_to_status_id =
 			inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
-		twitterStatus.in_reply_to_status_id_str = inReplyToStatusId ?? null;
+		status.in_reply_to_status_id_str = inReplyToStatusId ?? null;
 	}
 	if (shouldAddInReplyToUserIdAndScreenName) {
 		const inReplyToUserId = getRandomNumberString(random, 10, 10);
-		twitterStatus.in_reply_to_user_id =
-			inReplyToUserId !== null ? Number(inReplyToUserId) : null;
-		twitterStatus.in_reply_to_user_id_str = inReplyToUserId ?? null;
-		twitterStatus.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
+		status.in_reply_to_user_id = inReplyToUserId !== null ? Number(inReplyToUserId) : null;
+		status.in_reply_to_user_id_str = inReplyToUserId ?? null;
+		status.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
 	}
 
 	if (shouldAddHashtagEntity) {
-		twitterStatus.entities.hashtags.push({
+		status.entities.hashtags.push({
 			text: random.string(random.integer(2, 30), alphabet),
 			indices: [Math.floor(random.integer(0, 199)), Math.floor(random.integer(0, 199))],
 		});
 	}
 	if (shouldAddUrlEntity) {
-		twitterStatus.entities.urls.push({
+		status.entities.urls.push({
 			url: "http://t.co/ZkU4TZCGPG",
 			expanded_url: "http://www.tepco.co.jp/nu/fukushima-np/review/images/review1_01.gif",
 			display_url: "tepco.co.jp/nu/fukushima-n…",
@@ -399,7 +398,7 @@ function generateTwitterStatus(
 	}
 	if (shouldAddUserMentionsEntity) {
 		const userId = getRandomNumberString(random, 10, 10);
-		twitterStatus.entities.user_mentions.push({
+		status.entities.user_mentions.push({
 			screen_name: getRandomEnglishString(random, true, 6, 30),
 			name: random.string(random.integer(2, 30), alphabet),
 			id: Number(userId),
@@ -410,7 +409,7 @@ function generateTwitterStatus(
 	if (shouldAddMediaEntity) {
 		const mediaStatusIdString = getRandomNumberString(random, 18, 18);
 		const shouldAddSourceIdData = random.bool();
-		const mediaEntity: any = {
+		const mediaEntity: TwitterMediaEntity = {
 			id: Number(mediaStatusIdString),
 			id_str: "statusIdString",
 			indices: [Math.floor(random.integer(0, 199)), Math.floor(random.integer(0, 199))],
@@ -448,10 +447,11 @@ function generateTwitterStatus(
 			mediaEntity.source_status_id_str = getRandomNumberString(random, 18, 18);
 			mediaEntity.source_status_id = Number(mediaEntity.source_status_id_str);
 		}
-		twitterStatus.entities.media = [mediaEntity];
+		status.entities.media = [mediaEntity];
 	}
 
-	return twitterStatus as TwitterStatus;
+	// Now that 'status' is fully constructed, cast from Partial<TwitterStatus> to a full TwitterStatus.
+	return status as TwitterStatus;
 }
 
 function generateTwitterUser(
