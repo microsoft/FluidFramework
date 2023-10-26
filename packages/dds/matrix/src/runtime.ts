@@ -14,6 +14,7 @@ import { pkgVersion } from "./packageVersion";
 import { SharedMatrix } from "./matrix";
 
 /**
+ * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedMatrix}.
  * @public
  */
 export class SharedMatrixFactory implements IChannelFactory {
