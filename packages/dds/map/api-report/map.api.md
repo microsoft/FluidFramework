@@ -204,9 +204,9 @@ export class MapFactory implements IChannelFactory {
     // (undocumented)
     get attributes(): IChannelAttributes;
     // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
+    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap_2;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap_2>;
     // (undocumented)
     static readonly Type = "https://graph.microsoft.com/types/map";
     // (undocumented)
@@ -265,7 +265,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
 }
 
 // @public
-export class SharedMap extends SharedObject<ISharedMapEvents> implements ISharedMap {
+export class SharedMap extends SharedObject<ISharedMapEvents_2> implements ISharedMap_2 {
     [Symbol.iterator](): IterableIterator<[string, any]>;
     readonly [Symbol.toStringTag]: string;
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);

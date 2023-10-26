@@ -12,7 +12,12 @@ import {
 	MockSharedObjectServices,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { DirectoryFactory, SharedDirectory } from "../../directory";
+import {
+	DirectoryFactory,
+	DirectoryLocalOpMetadata,
+	IDirectoryOperation,
+	SharedDirectory,
+} from "../../directory";
 import { ISharedDirectory } from "../../interfaces";
 
 function createConnectedDirectory(
@@ -28,6 +33,12 @@ function createConnectedDirectory(
 	const directory = new SharedDirectory(id, dataStoreRuntime, DirectoryFactory.Attributes);
 	directory.connect(services);
 	return directory;
+}
+
+class TestSharedDirectory extends SharedDirectory {
+	public testApplyStashedOp(content: IDirectoryOperation): DirectoryLocalOpMetadata {
+		return this.applyStashedOp(content) as DirectoryLocalOpMetadata;
+	}
 }
 
 async function populate(directory: SharedDirectory, content: unknown): Promise<void> {
@@ -451,6 +462,52 @@ describe("Directory Iteration Order", () => {
 
 			assertDirectoryIterationOrder(directory1, ["c", "d", "b", "a"]);
 			assertDirectoryIterationOrder(directory2, ["c", "d", "b", "a"]);
+		});
+	});
+
+	describe("Op Processing", () => {
+		let directory: TestSharedDirectory;
+
+		beforeEach(async () => {
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			directory = new TestSharedDirectory(
+				"dir1",
+				dataStoreRuntime,
+				DirectoryFactory.Attributes,
+			);
+		});
+
+		it("applyStashedOp", async () => {
+			const op1: IDirectoryOperation = {
+				type: "createSubDirectory",
+				path: "./",
+				subdirName: "c",
+			};
+			const op2: IDirectoryOperation = {
+				type: "createSubDirectory",
+				path: "./",
+				subdirName: "b",
+			};
+			const op3: IDirectoryOperation = {
+				type: "createSubDirectory",
+				path: "./",
+				subdirName: "a",
+			};
+			const op4: IDirectoryOperation = {
+				type: "deleteSubDirectory",
+				path: "./",
+				subdirName: "b",
+			};
+
+			directory.testApplyStashedOp(op1);
+			directory.testApplyStashedOp(op2);
+			directory.testApplyStashedOp(op3);
+
+			assertDirectoryIterationOrder(directory, ["c", "b", "a"]);
+
+			directory.testApplyStashedOp(op4);
+
+			assertDirectoryIterationOrder(directory, ["c", "a"]);
 		});
 	});
 });
