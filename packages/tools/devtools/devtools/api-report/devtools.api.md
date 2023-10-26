@@ -4,20 +4,24 @@
 
 ```ts
 
-import { ContainerKey } from '@fluid-experimental/devtools-core';
-import { DevtoolsLogger } from '@fluid-experimental/devtools-core';
-import { HasContainerKey } from '@fluid-experimental/devtools-core';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IFluidContainer } from '@fluidframework/fluid-static';
+import { ITelemetryBaseEvent } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 
 // @public
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IFluidContainer;
 }
 
-export { ContainerKey }
+// @public
+export type ContainerKey = string;
 
-export { DevtoolsLogger }
+// @public @sealed
+export class DevtoolsLogger implements ITelemetryBaseLogger {
+    constructor(baseLogger?: ITelemetryBaseLogger);
+    send(event: ITelemetryBaseEvent): void;
+}
 
 // @public
 export interface DevtoolsProps {
@@ -25,7 +29,10 @@ export interface DevtoolsProps {
     logger?: DevtoolsLogger;
 }
 
-export { HasContainerKey }
+// @public
+export interface HasContainerKey {
+    containerKey: ContainerKey;
+}
 
 // @public
 export interface IDevtools extends IDisposable {
