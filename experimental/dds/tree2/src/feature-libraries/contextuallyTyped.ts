@@ -132,10 +132,15 @@ export type FluidSerializableReadOnly =
 	| { readonly [P in string]?: FluidSerializableReadOnly };
 
 // TODO: replace test in FluidSerializer.encodeValue with this.
-export function isFluidHandle(value: undefined | FluidSerializableReadOnly): value is IFluidHandle {
+export function isFluidHandle(value: unknown): value is IFluidHandle {
 	if (typeof value !== "object" || value === null) {
 		return false;
 	}
+
+	if (!("IFluidHandle" in value)) {
+		return false;
+	}
+
 	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
 	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
 	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
@@ -395,7 +400,7 @@ function shallowCompatibilityTest(
 	);
 	const schema =
 		schemaData.treeSchema.get(type) ?? fail("requested type does not exist in schema");
-	if (isPrimitiveValue(data) || data === null) {
+	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
 		return allowsValue(schema.leafValue, data);
 	}
 	// TODO: once this is using view schema, replace with schemaIsLeaf
@@ -534,7 +539,7 @@ export function applyTypesFromContext(
 	const schema =
 		context.schema.treeSchema.get(type) ?? fail("requested type does not exist in schema");
 
-	if (isPrimitiveValue(data) || data === null) {
+	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
 		assert(
 			allowsValue(schema.leafValue, data),
 			0x4d3 /* unsupported schema for provided primitive */,
