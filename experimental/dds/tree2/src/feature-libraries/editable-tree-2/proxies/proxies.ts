@@ -524,12 +524,11 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node[Symbol.iterator]();
 		},
 	},
-	get: {
-		value(key: string): unknown {
-			const mapNode = getMapNode(this);
-			const field = mapNode.getBoxed(key);
-			return getProxyForField(field);
-		},
+	clear: {
+		// TODO
+	},
+	delete: {
+		// TODO
 	},
 	entries: {
 		value(): IterableIterator<[string, unknown]> {
@@ -537,12 +536,30 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return mapNode.entries();
 		},
 	},
+	get: {
+		value(key: string): unknown {
+			const mapNode = getMapNode(this);
+			const field = mapNode.getBoxed(key);
+			return getProxyForField(field);
+		},
+	},
+	has: {
+		// TODO
+	},
+	keys: {
+		// TODO
+	},
+	set: {
+		// TODO
+	},
 	size: {
 		get(this: object) {
 			return getMapNode(this).size;
 		},
 	},
-	// TODO: implement the rest of the Map interface here
+	values: {
+		// TODO
+	},
 };
 
 const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
