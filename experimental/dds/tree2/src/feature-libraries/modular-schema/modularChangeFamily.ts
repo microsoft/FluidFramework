@@ -762,10 +762,10 @@ export function revisionMetadataSourceFromInfo(
 		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
 		return index;
 	};
-	const getInfo = (revision: RevisionTag): RevisionInfo => {
-		return revInfos[getIndex(revision)];
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		return revision === undefined ? undefined : revInfos[getIndex(revision)];
 	};
-	return { getIndex, getInfo };
+	return { getIndex, tryGetInfo };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
