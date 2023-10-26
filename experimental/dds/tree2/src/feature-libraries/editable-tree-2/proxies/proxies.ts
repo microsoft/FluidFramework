@@ -527,6 +527,14 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		enumerable: false,
 		configurable: false,
 	},
+	get: {
+		value(key: string): unknown {
+			const mapNode = getMapNode(this);
+			const field = mapNode.getBoxed(key);
+			return getProxyForField(field);
+		},
+	},
+	// TODO: implement the rest of the Map interface here
 };
 
 const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
@@ -549,14 +557,6 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 				return getMapNode(this).size;
 			},
 		},
-		get: {
-			value(key: string): unknown {
-				const mapNode = getMapNode(dispatch);
-				const field = mapNode.getBoxed(key);
-				return getProxyForField(field);
-			},
-		},
-		// TODO: implement the rest of the Map interface here
 	});
 
 	setTreeNode(dispatch, treeNode);
