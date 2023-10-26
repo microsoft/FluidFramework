@@ -130,10 +130,10 @@ export interface TwitterStatus {
 	in_reply_to_user_id_str: string | null;
 	in_reply_to_screen_name: string | null;
 	user: TwitterUser;
-	geo: null; // could not find an example of non null value
-	coordinates: null; // could not find an example of non null value
-	place: null; // could not find an example of non null value
-	contributors: null; // could not find an example of non null value
+	geo: null; // always null in source json
+	coordinates: null; // always null in source json
+	place: null; // always null in source json
+	contributors: null; // always null in source json
 	retweet_count: number;
 	favorite_count: number;
 	entities: {
@@ -141,7 +141,7 @@ export interface TwitterStatus {
 			text: string;
 			indices: number[];
 		}[];
-		symbols: unknown[]; // could not find a populated value from source json
+		symbols: never[]; // always empty in source json
 		urls: {
 			url: string;
 			expanded_url: string;
@@ -340,11 +340,10 @@ function generateTwitterStatus(
          ${random.string(random.integer(2, 30), alphabet)}</a>`,
 		truncated: true, // no examples found where truncated was false
 		user,
-		// could not find an example of non null value for these 4 values (geo, coordinaes, place, contributors)
-		geo: null,
-		coordinates: null,
-		place: null,
-		contributors: null,
+		geo: null, // always null in source json
+		coordinates: null, // always null in source json
+		place: null, // always null in source json
+		contributors: null, // always null in source json
 		possibly_sensitive: random.bool(),
 		retweet_count: retweetCount,
 		favorite_count: favoriteCount,
