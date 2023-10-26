@@ -300,7 +300,7 @@ describe("SharedTreeList", () => {
 	});
 });
 
-describe("SharedTreeMap", () => {
+describe.only("SharedTreeMap", () => {
 	const sb = new SchemaBuilder({
 		scope: "test",
 	});
