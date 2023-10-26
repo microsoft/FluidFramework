@@ -1338,7 +1338,7 @@ importers:
 
   packages/tinylicious:
     specifiers:
-      '@fluidframework/build-common': ^2.0.2
+      '@fluidframework/build-common': ^2.0.3
       '@fluidframework/common-utils': ^3.0.0
       '@fluidframework/eslint-config-fluid': ^2.0.0
       '@fluidframework/gitresources': workspace:~
@@ -1438,7 +1438,7 @@ importers:
       uuid: 9.0.1
       winston: 3.9.0
     devDependencies:
-      '@fluidframework/build-common': 2.0.2
+      '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.0.0_kufnqfq7tb5rpdawkdb6g5smma
       '@fluidframework/mocha-test-setup': 2.0.0-internal.7.0.0
       '@microsoft/api-extractor': 7.38.0_@types+node@18.18.4

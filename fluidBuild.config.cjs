@@ -181,6 +181,9 @@ module.exports = {
 				"^server/",
 				"^tools/",
 			],
+			"npm-strange-package-name": [
+				"server/routerlicious/packages/*",
+			]
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -200,7 +203,6 @@ module.exports = {
 				npm: [
 					"@fluidframework",
 					"fluid-framework",
-					"tinylicious",
 					"@fluid-internal/client-utils",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
