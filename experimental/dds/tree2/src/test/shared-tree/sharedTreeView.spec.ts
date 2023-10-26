@@ -3,74 +3,146 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { Any } from "../../feature-libraries";
-import { createSharedTreeView } from "../../shared-tree";
-import { AllowedUpdateType, storedEmptyFieldSchema } from "../../core";
+import { Any, on } from "../../feature-libraries";
+import { runSynchronous } from "../../shared-tree";
 import { leaf, SchemaBuilder } from "../../domains";
-
-const builder = new SchemaBuilder({
-	scope: "test",
-	name: "Schematize Tree Tests",
-});
-const schema = builder.intoSchema(SchemaBuilder.optional(leaf.number));
-
-const builderGeneralized = new SchemaBuilder({
-	scope: "test",
-	name: "Schematize Tree Tests Generalized",
-});
-
-const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
+import {
+	createTestUndoRedoStacks,
+	jsonSequenceRootSchema,
+	toJsonableTree,
+	viewWithContent,
+} from "../utils";
 
 describe("sharedTreeView", () => {
-	describe("schematize", () => {
-		it("initialize tree", () => {
-			const tree = createSharedTreeView();
-			assert.equal(tree.storedSchema.rootFieldSchema, storedEmptyFieldSchema);
+	it("reads only one node", () => {
+		// This is a regression test for a scenario in which a transaction would apply its delta twice,
+		// inserting two nodes instead of just one
+		const view = viewWithContent({ schema: jsonSequenceRootSchema, initialTree: [] });
+		runSynchronous(view, (t) => {
+			t.context.root.insertNodes(0, [5]);
+		});
 
-			tree.schematize({
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: 10 as any,
+		assert.deepEqual(toJsonableTree(view), [{ type: leaf.number.name, value: 5 }]);
+	});
+
+	describe("Events", () => {
+		const builder = new SchemaBuilder({ scope: "Events test schema" });
+		const treeSchema = builder.object("root", {
+			x: builder.number,
+		});
+		const schema = builder.intoSchema(builder.optional(Any));
+
+		it("triggers events for local and subtree changes", () => {
+			const view = viewWithContent({
 				schema,
+				initialTree: {
+					x: 24,
+				},
 			});
-			assert.equal(tree.root, 10);
+			const rootNode = view.context.root.getNode(0);
+			const root = view.root as unknown as { x: number };
+			const log: string[] = [];
+			const unsubscribe = rootNode[on]("changing", () => log.push("change"));
+			const unsubscribeSubtree = rootNode[on]("subtreeChanging", () => {
+				log.push("subtree");
+			});
+			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
+			log.push("editStart");
+			root.x = 5;
+			log.push("editStart");
+			root.x = 6;
+			log.push("unsubscribe");
+			unsubscribe();
+			unsubscribeSubtree();
+			unsubscribeAfter();
+			log.push("editStart");
+			root.x = 7;
+
+			assert.deepEqual(log, [
+				"editStart",
+				"subtree",
+				"subtree",
+				"change",
+				"after",
+				"editStart",
+				"subtree",
+				"subtree",
+				"change",
+				"after",
+				"unsubscribe",
+				"editStart",
+			]);
 		});
 
-		it("noop upgrade", () => {
-			const tree = createSharedTreeView();
-			tree.storedSchema.update(schema);
-
-			// No op upgrade with AllowedUpdateType.None does not error
-			const schematized = tree.schematize({
-				allowedSchemaModifications: AllowedUpdateType.None,
-				initialTree: 10,
+		it("propagates path args for local and subtree changes", () => {
+			const view = viewWithContent({
 				schema,
+				initialTree: {
+					x: 24,
+				},
 			});
-			// And does not add initial tree:
-			assert.equal(schematized.root, undefined);
+			const rootNode = view.context.root.getNode(0);
+			const root = view.root as unknown as { x: number };
+			const log: string[] = [];
+			const unsubscribe = rootNode[on]("changing", (upPath) =>
+				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
+			);
+			const unsubscribeSubtree = rootNode[on]("subtreeChanging", (upPath) => {
+				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
+			});
+			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
+			log.push("editStart");
+			root.x = 5;
+			log.push("editStart");
+			root.x = 6;
+			log.push("unsubscribe");
+			unsubscribe();
+			unsubscribeSubtree();
+			unsubscribeAfter();
+			log.push("editStart");
+			root.x = 7;
+
+			assert.deepEqual(log, [
+				"editStart",
+				"subtree-rootFieldKey-0",
+				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
+				"after",
+				"editStart",
+				"subtree-rootFieldKey-0",
+				"subtree-rootFieldKey-0",
+				"change-rootFieldKey-0",
+				"after",
+				"unsubscribe",
+				"editStart",
+			]);
 		});
 
-		it("incompatible upgrade errors", () => {
-			const tree = createSharedTreeView();
-			tree.storedSchema.update(schemaGeneralized);
-			assert.throws(() => {
-				tree.schematize({
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: 5,
-					schema,
-				});
+		// TODO: unskip once forking revertibles is supported
+		it.skip("triggers a revertible event for a changes merged into the local branch", () => {
+			const tree1 = viewWithContent({
+				schema: jsonSequenceRootSchema,
+				initialTree: [],
 			});
-		});
+			const branch = tree1.fork();
 
-		it("upgrade schema", () => {
-			const tree = createSharedTreeView();
-			tree.storedSchema.update(schema);
-			const schematized = tree.schematize({
-				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-				initialTree: 5,
-				schema: schemaGeneralized,
-			});
-			// Initial tree should not be applied
-			assert.equal(schematized.root, undefined);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+				createTestUndoRedoStacks(tree1);
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
+				createTestUndoRedoStacks(branch);
+
+			// Insert node
+			branch.setContent(["42"]);
+
+			assert.equal(undoStack1.length, 0);
+			assert.equal(undoStack2.length, 1);
+
+			tree1.merge(branch);
+			assert.equal(undoStack1.length, 1);
+			assert.equal(undoStack2.length, 1);
+
+			unsubscribe1();
+			unsubscribe2();
 		});
 	});
 });
