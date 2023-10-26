@@ -117,8 +117,8 @@ describeNoCompat("SharedTree", (getTestObjectProvider) => {
 		// Get the views and root object to modify
 		const view1 = getNewTreeView(tree1);
 		const view2 = getNewTreeView(tree2);
-		const treeNode1 = view1.root as unknown as Typed<typeof someType>;
-		const treeNode2 = view2.root as unknown as Typed<typeof someType>;
+		const treeNode1 = view1.root2(schema);
+		const treeNode2 = view2.root2(schema);
 
 		await provider.ensureSynchronized();
 
