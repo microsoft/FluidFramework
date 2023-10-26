@@ -22,30 +22,73 @@ import {
  * json benchmarks twitter.json - https://raw.githubusercontent.com/serde-rs/json-benchmark/master/data/twitter.json
  */
 // Shared tree keys that map to the type used by the Twitter type/dataset
-export const Twitter = {
-	SharedTreeFieldKey: {
-		statuses: brand<FieldKey>("statuses"),
-		retweetCount: brand<FieldKey>("retweet_count"),
-		favoriteCount: brand<FieldKey>("favorite_count"),
-	},
+export const TwitterKey = {
+	statuses: brand<FieldKey>("statuses"),
+	retweetCount: brand<FieldKey>("retweet_count"),
+	favoriteCount: brand<FieldKey>("favorite_count"),
 };
 
-export interface Twitter {
-	statuses: TwitterStatus[];
-	search_metadata: {
-		completed_in: number;
-		max_id: number;
-		max_id_str: string;
-		next_results: string;
-		query: string;
-		refresh_url: string;
-		count: number;
-		since_id: number;
-		since_id_str: string;
+/* eslint-disable @rushstack/no-new-null */
+export interface TwitterUser {
+	id: number;
+	id_str: string;
+	name: string;
+	screen_name: string;
+	location: string;
+	description: string;
+	url: string | null;
+	entities: {
+		url?: {
+			urls: {
+				url: string;
+				expanded_url: string;
+				display_url: string;
+				indices: number[];
+			}[];
+		};
+		description: {
+			urls: {
+				url: string;
+				expanded_url: string;
+				display_url: string;
+				indices: number[];
+			}[];
+		};
 	};
+	protected: boolean;
+	followers_count: number;
+	friends_count: number;
+	listed_count: number;
+	created_at: string;
+	favourites_count: number;
+	utc_offset: number | null;
+	time_zone: string | null;
+	geo_enabled: boolean;
+	verified: boolean;
+	statuses_count: number;
+	lang: string;
+	contributors_enabled: boolean;
+	is_translator: boolean;
+	is_translation_enabled: boolean;
+	profile_background_color: string;
+	profile_background_image_url: string;
+	profile_background_image_url_https: string;
+	profile_background_tile: boolean;
+	profile_image_url: string;
+	profile_image_url_https: string;
+	profile_banner_url?: string;
+	profile_link_color: string;
+	profile_sidebar_border_color: string;
+	profile_sidebar_fill_color: string;
+	profile_text_color: string;
+	profile_use_background_image: boolean;
+	default_profile: boolean;
+	default_profile_image: boolean;
+	following: boolean;
+	follow_request_sent: boolean;
+	notifications: boolean;
 }
 
-/* eslint-disable @rushstack/no-new-null */
 export interface TwitterStatus {
 	metadata: {
 		result_type: string;
@@ -131,65 +174,21 @@ export interface TwitterStatus {
 	in_reply_to_status_id_str: string | null;
 }
 
-export interface TwitterUser {
-	id: number;
-	id_str: string;
-	name: string;
-	screen_name: string;
-	location: string;
-	description: string;
-	url: string | null;
-	entities: {
-		url?: {
-			urls: {
-				url: string;
-				expanded_url: string;
-				display_url: string;
-				indices: number[];
-			}[];
-		};
-		description: {
-			urls: {
-				url: string;
-				expanded_url: string;
-				display_url: string;
-				indices: number[];
-			}[];
-		};
+export interface Twitter {
+	statuses: TwitterStatus[];
+	search_metadata: {
+		completed_in: number;
+		max_id: number;
+		max_id_str: string;
+		next_results: string;
+		query: string;
+		refresh_url: string;
+		count: number;
+		since_id: number;
+		since_id_str: string;
 	};
-	protected: boolean;
-	followers_count: number;
-	friends_count: number;
-	listed_count: number;
-	created_at: string;
-	favourites_count: number;
-	utc_offset: number | null;
-	time_zone: string | null;
-	geo_enabled: boolean;
-	verified: boolean;
-	statuses_count: number;
-	lang: string;
-	contributors_enabled: boolean;
-	is_translator: boolean;
-	is_translation_enabled: boolean;
-	profile_background_color: string;
-	profile_background_image_url: string;
-	profile_background_image_url_https: string;
-	profile_background_tile: boolean;
-	profile_image_url: string;
-	profile_image_url_https: string;
-	profile_banner_url?: string;
-	profile_link_color: string;
-	profile_sidebar_border_color: string;
-	profile_sidebar_fill_color: string;
-	profile_text_color: string;
-	profile_use_background_image: boolean;
-	default_profile: boolean;
-	default_profile_image: boolean;
-	following: boolean;
-	follow_request_sent: boolean;
-	notifications: boolean;
 }
+
 /* eslint-enable */
 
 /**
@@ -233,18 +232,18 @@ export function generateTwitterJsonByByteSize(
 
 	let currentJsonSizeInBytes = getSizeInBytes(twitterJson);
 	while (currentJsonSizeInBytes < sizeInBytes) {
-		const twitterStatus = generateTwitterStatus(
+		const status = generateTwitterStatus(
 			"standard",
 			random,
 			textFieldMarkovChain,
 			userDescFieldMarkovChain,
 			basicJapaneseAlphabetString,
 		);
-		const nextStatusSizeInBytes = getSizeInBytes(twitterStatus);
+		const nextStatusSizeInBytes = getSizeInBytes(status);
 		if (!allowOversize && currentJsonSizeInBytes + nextStatusSizeInBytes > sizeInBytes) {
 			break;
 		}
-		twitterJson.statuses.push(twitterStatus);
+		twitterJson.statuses.push(status);
 		currentJsonSizeInBytes += nextStatusSizeInBytes;
 	}
 
@@ -325,7 +324,17 @@ function generateTwitterStatus(
 	const shouldAddInReplyToUserIdAndScreenName =
 		type === "standard" ? random.bool(0.09) : random.bool(0.041095);
 
-	const twitterStatus: any = {
+	// 'Partial<..> & Omit<..>' make the "in_reply_to_*" fields optional so that
+	// they can be dynamically added after the initial status object is created.
+	const status: Partial<TwitterStatus> &
+		Omit<
+			TwitterStatus,
+			| "in_reply_to_user_id"
+			| "in_reply_to_user_id_str"
+			| "in_reply_to_screen_name"
+			| "in_reply_to_status_id"
+			| "in_reply_to_status_id_str"
+		> = {
 		metadata: {
 			result_type: "recent",
 			iso_language_code: "ja",
@@ -360,7 +369,7 @@ function generateTwitterStatus(
 	if (type === "standard") {
 		const shouldAddRetweet = random.bool(0.73);
 		if (shouldAddRetweet) {
-			twitterStatus.retweeted_status = generateTwitterStatus(
+			status.retweeted_status = generateTwitterStatus(
 				"retweet",
 				random,
 				textFieldMarkovChain,
@@ -371,26 +380,25 @@ function generateTwitterStatus(
 	}
 	if (shouldAddInReplyToStatusId) {
 		const inReplyToStatusId = getRandomNumberString(random, 18, 18);
-		twitterStatus.in_reply_to_status_id =
+		status.in_reply_to_status_id =
 			inReplyToStatusId !== null ? Number(inReplyToStatusId) : null;
-		twitterStatus.in_reply_to_status_id_str = inReplyToStatusId ?? null;
+		status.in_reply_to_status_id_str = inReplyToStatusId ?? null;
 	}
 	if (shouldAddInReplyToUserIdAndScreenName) {
 		const inReplyToUserId = getRandomNumberString(random, 10, 10);
-		twitterStatus.in_reply_to_user_id =
-			inReplyToUserId !== null ? Number(inReplyToUserId) : null;
-		twitterStatus.in_reply_to_user_id_str = inReplyToUserId ?? null;
-		twitterStatus.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
+		status.in_reply_to_user_id = inReplyToUserId !== null ? Number(inReplyToUserId) : null;
+		status.in_reply_to_user_id_str = inReplyToUserId ?? null;
+		status.in_reply_to_screen_name = getRandomEnglishString(random, false, 6, 30);
 	}
 
 	if (shouldAddHashtagEntity) {
-		twitterStatus.entities.hashtags.push({
+		status.entities.hashtags.push({
 			text: random.string(random.integer(2, 30), alphabet),
 			indices: [Math.floor(random.integer(0, 199)), Math.floor(random.integer(0, 199))],
 		});
 	}
 	if (shouldAddUrlEntity) {
-		twitterStatus.entities.urls.push({
+		status.entities.urls.push({
 			url: "http://t.co/ZkU4TZCGPG",
 			expanded_url: "http://www.tepco.co.jp/nu/fukushima-np/review/images/review1_01.gif",
 			display_url: "tepco.co.jp/nu/fukushima-n…",
@@ -399,7 +407,7 @@ function generateTwitterStatus(
 	}
 	if (shouldAddUserMentionsEntity) {
 		const userId = getRandomNumberString(random, 10, 10);
-		twitterStatus.entities.user_mentions.push({
+		status.entities.user_mentions.push({
 			screen_name: getRandomEnglishString(random, true, 6, 30),
 			name: random.string(random.integer(2, 30), alphabet),
 			id: Number(userId),
@@ -448,10 +456,10 @@ function generateTwitterStatus(
 			mediaEntity.source_status_id_str = getRandomNumberString(random, 18, 18);
 			mediaEntity.source_status_id = Number(mediaEntity.source_status_id_str);
 		}
-		twitterStatus.entities.media = [mediaEntity];
+		status.entities.media = [mediaEntity];
 	}
 
-	return twitterStatus as TwitterStatus;
+	return status as TwitterStatus;
 }
 
 function generateTwitterUser(

@@ -37,7 +37,7 @@ import {
 import { jsonRoot, SchemaBuilder } from "../../../domains";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
+import { generateTwitterJsonByByteSize, TwitterKey } from "./twitter";
 import { CitmCatalog, generateCitmJson } from "./citm";
 import { clone } from "./jsObjectUtil";
 
@@ -224,18 +224,18 @@ function extractAvgValsFromTwitter(
 	cursor: ITreeCursor,
 	calculate: (x: number, y: number) => void,
 ): void {
-	cursor.enterField(Twitter.SharedTreeFieldKey.statuses); // move from root to field
+	cursor.enterField(TwitterKey.statuses); // move from root to field
 	cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
 	cursor.enterField(EmptyKey); // enter the array field at the node,
 
 	for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-		cursor.enterField(Twitter.SharedTreeFieldKey.retweetCount);
+		cursor.enterField(TwitterKey.retweetCount);
 		cursor.enterNode(0);
 		const retweetCount = cursor.value as number;
 		cursor.exitNode();
 		cursor.exitField();
 
-		cursor.enterField(Twitter.SharedTreeFieldKey.favoriteCount);
+		cursor.enterField(TwitterKey.favoriteCount);
 		cursor.enterNode(0);
 		const favoriteCount = cursor.value;
 		cursor.exitNode();
