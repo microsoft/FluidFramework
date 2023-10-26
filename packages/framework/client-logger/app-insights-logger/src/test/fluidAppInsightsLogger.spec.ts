@@ -45,6 +45,49 @@ describe("FluidAppInsightsLogger", () => {
 
 		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsEvent);
 	});
+
+	it("sortTelemetryFilters() orders filters from most specific to least specific", () => {
+		const expectedSortedFilterArray: TelemetryFilter[] = [
+			{
+				namespacePattern: "veryLongNamespacePattern",
+				categories: ["performance"],
+			},
+			{
+				namespacePattern: "veryLongNamespacePattern",
+				categories: ["performance", "generic"],
+			},
+			{
+				namespacePattern: "veryLongNamespacePattern",
+			},
+			{
+				categories: ["performance"],
+				namespacePattern: "namespace1",
+			},
+			{
+				categories: ["performance", "generic"],
+				namespacePattern: "namespace",
+			},
+			{
+				namespacePattern: "short",
+			},
+			{
+				categories: ["performance"],
+			},
+		];
+
+		const unsortedFilters: TelemetryFilter[] = [
+			expectedSortedFilterArray[2],
+			expectedSortedFilterArray[4],
+			expectedSortedFilterArray[6],
+			expectedSortedFilterArray[1],
+			expectedSortedFilterArray[3],
+			expectedSortedFilterArray[0],
+			expectedSortedFilterArray[5],
+		];
+
+		const sortedFilters = FluidAppInsightsLogger.sortTelemetryFilters(unsortedFilters);
+		assert.deepStrictEqual(sortedFilters, expectedSortedFilterArray);
+	});
 });
 
 describe("Telemetry Filter - filter mode", () => {
@@ -466,6 +509,49 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 		logger.send(event1);
 		logger.send(event2);
 		sinonAssert.callCount(trackEventSpy, 0);
+	});
+
+	it("inclusive filter mode DOES NOT SEND events that don't match the most specific filter despite matching more generic ones. ", () => {
+		const logger = new FluidAppInsightsLogger(appInsightsClient, {
+			filtering: {
+				mode: "inclusive",
+				filters: [
+					{
+						namespacePattern: "A:B",
+						categories: ["generic", "error"],
+					},
+					{
+						namespacePattern: "A:B:C",
+						categories: ["error"],
+					},
+				],
+			},
+		});
+
+		// should be excluded - the event matches the second filter but the first filter is more specific to just allow "error"
+		// for the given namespace so it should be evaulated first
+		const event1 = {
+			category: "generic",
+			eventName: "A:B:C",
+		};
+
+		// should be included - matches both filters
+		const event2 = {
+			category: "error",
+			eventName: "A:B:C",
+		};
+
+		logger.send(event1);
+		logger.send(event2);
+		sinonAssert.callCount(trackEventSpy, 1);
+		for (const call of trackEventSpy.getCalls()) {
+			sinonAssert.calledWithExactly(call, {
+				name: event2.eventName,
+				properties: {
+					...event2,
+				},
+			});
+		}
 	});
 });
 

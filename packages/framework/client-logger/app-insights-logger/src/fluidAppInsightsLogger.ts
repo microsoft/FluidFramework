@@ -66,8 +66,8 @@ export interface NamespaceFilter {
 	/**
 	 * A list of namespace patterns to explicitly exclude from the filter.
 	 *
-	 * @example
-	 * if you have a namespacePattern of "perf:latency" but want to exclude
+	 * @example If you have a namespacePattern of "perf:latency" but want to exclude
+	 *
 	 * events from "perf:latency:ops", you would add "perf:latency:ops" to this list.
 	 */
 	namespacePatternExceptions?: string[];
@@ -78,7 +78,37 @@ export interface NamespaceFilter {
  * to define a filter with logic for matching it to telemetry events.
  * Filters can include either a category, namespace or both types of filters; a valid filter must have at least one defined.
  *
+ * Events must satisify the following rules for a telemetry filter:
+ *
+ * 1. The event must match the requirements of the most specific relevant filter to it. This takes precedence over a more generic filter.
+ * The less categories and longer the namespace within a filter, the more specific it is. Definining no categories is equivalant to defining all categories.
+ *
+ * 2. If a {@link TelemetryFilter} specifies both `categories` and a `namespace`, the event must match both.
+ *
+ * 3. If only `categories` or a `namespace` is provided, the event should match either one of them.
+ *
+ * 4. If a `namespace` pattern exception is specified in the {@link TelemetryFilter}, the event should not match the exception pattern.
+ *
  * @public
+ *
+ * @example With the following configuration, an event `{ namespace: "A.B.C", categories: ["generic"] }` will not be sent despite matching the first, less specific filter because it did not match the second filter which was the most relevant and specific
+ * ```
+ * const logger = new FluidAppInsightsLogger(appInsightsClient, {
+ *			filtering: {
+ *				mode: "inclusive",
+ *				filters: [
+ *					{
+ *						namespacePattern: "A:B",
+ *						categories: ["generic", "error"],
+ *					},
+ *					{
+ *						namespacePattern: "A:B:C",
+ *						categories: ["error"],
+ *					},
+ *				],
+ *			},
+ *		});
+ * ```
  */
 export type TelemetryFilter = CategoryFilter | NamespaceFilter | (CategoryFilter & NamespaceFilter);
 
@@ -109,6 +139,13 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 				filters: [],
 			},
 		};
+
+		if (this.config.filtering.filters) {
+			// Sorts filters in order from most specific to least specific.
+			this.config.filtering.filters = FluidAppInsightsLogger.sortTelemetryFilters(
+				this.config.filtering.filters,
+			);
+		}
 	}
 
 	/**
@@ -140,9 +177,14 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**
 	 * Checks if a given telemetry event conforms to any of the provided {@link TelemetryFilter} rules.
 	 *
-	 * - If a {@link TelemetryFilter} specifies both a `category` and a `namespace`, the event must match both.
-	 * - If only a `category` or `namespace` is provided, the event should match either one of them.
-	 * - If a `namespace` pattern exception is specified in the {@link TelemetryFilter}, the event should not match the exception pattern.
+	 * 1. The event must match the requirements of the most specific relevant filter to it. This takes precedence over a more generic filter.
+	 * The less categories and longer the namespace within a filter, the more specific it is. Definining no categories is equivalant to defining all categories.
+	 *
+	 * 2. If a {@link TelemetryFilter} specifies both `categories` and a `namespace`, the event must match both.
+	 *
+	 * 3. If only `categories` or a `namespace` is provided, the event should match either one of them.
+	 *
+	 * 4. If a `namespace` pattern exception is specified in the {@link TelemetryFilter}, the event should not match the exception pattern.
 	 *
 	 * @param event - The telemetry event to check against the filters.
 	 *
@@ -150,42 +192,79 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 */
 	private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
 		for (const filter of this.config.filtering.filters ?? []) {
-			let matches = true;
+			if ("namespacePattern" in filter) {
+				if (event.eventName.startsWith(filter.namespacePattern)) {
+					// Found matching namespace pattern, since filters are ordered in most specific first,
+					// this is the most specific, relevant matching filter for the event.
 
-			// If the filter has atleast one category and none of them match the event's category, skip to next filter
-			if ("categories" in filter && filter.categories.length > 0) {
-				const hasMatch = filter.categories.find((category) => category === event.category);
-				if (!hasMatch) {
-					continue;
-				}
-			}
+					// By default, if no categories are defined then any category is a valid match.
+					let doesFilterCategoriesMatch = true;
+					if ("categories" in filter && filter.categories.length > 0) {
+						doesFilterCategoriesMatch = false;
+						const matchingCategory = filter.categories.find(
+							(category) => category === event.category,
+						);
+						doesFilterCategoriesMatch = matchingCategory ? true : false;
+					}
 
-			// If the filter has a namespacePattern, test the event's namespace against it
-			if (
-				"namespacePattern" in filter &&
-				!event.eventName.startsWith(filter.namespacePattern)
-			) {
-				continue;
-			}
-
-			// If the filter has any excludedNamespacePatterns, test the event's namespace against them
-			if (
-				"namespacePatternExceptions" in filter &&
-				filter.namespacePatternExceptions !== undefined
-			) {
-				for (const patternException of filter.namespacePatternExceptions) {
-					if (event.eventName.startsWith(patternException)) {
-						matches = false;
-						break;
+					if (doesFilterCategoriesMatch) {
+						// The most specific, relevant filter matches so no need to attempt to evaluate against other filters
+						// as long as the events namespace does not match any defined namespace exception.
+						if (filter.namespacePatternExceptions !== undefined) {
+							for (const patternException of filter.namespacePatternExceptions) {
+								if (event.eventName.startsWith(patternException)) {
+									return false;
+								}
+							}
+						}
+						return true;
+					} else {
+						return false;
 					}
 				}
 			}
+			// Filter only has categories defined
+			else if ("categories" in filter && filter.categories.length > 0) {
+				const doesFilterCategoriesMatch = filter.categories.find(
+					(category) => category === event.category,
+				);
 
-			// If the current filter matches the event, return it
-			if (matches) {
+				// This filter specified no namespaces but it has a category match.
+				// Since filters are ordered by most specific first, we know that no previous
+				// filters with namespaces matched so we can return true.
+				if (doesFilterCategoriesMatch) {
+					return true;
+				} else {
+					continue;
+				}
+			} else {
 				return true;
 			}
 		}
+
 		return false;
+	}
+
+	public static sortTelemetryFilters(filters: TelemetryFilter[]): TelemetryFilter[] {
+		return filters.sort((a, b) => {
+			const specificityScoreA = FluidAppInsightsLogger.getFilterSpecificityScore(a);
+			const specificityScoreB = FluidAppInsightsLogger.getFilterSpecificityScore(b);
+			return specificityScoreB - specificityScoreA;
+		});
+	}
+
+	private static getFilterSpecificityScore(filter: TelemetryFilter): number {
+		const hasNamespace = "namespacePattern" in filter;
+		const namespaceLength = hasNamespace ? filter.namespacePattern.length : 0;
+
+		let categoryScore: number;
+		if ("categories" in filter) {
+			const categoryCount = filter.categories.length;
+			categoryScore = categoryCount > 0 ? 1 / (categoryCount + 1) : 0;
+		} else {
+			categoryScore = -1; // Lowest score for no categories
+		}
+
+		return (hasNamespace ? 10000 : 0) + namespaceLength + categoryScore;
 	}
 }

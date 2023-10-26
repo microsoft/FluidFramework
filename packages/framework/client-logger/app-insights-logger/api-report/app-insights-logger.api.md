@@ -18,6 +18,8 @@ export interface CategoryFilter {
 export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
     constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig);
     send(event: ITelemetryBaseEvent): void;
+    // (undocumented)
+    static sortTelemetryFilters(filters: TelemetryFilter[]): TelemetryFilter[];
 }
 
 // @public
