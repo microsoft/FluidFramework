@@ -1,0 +1,19 @@
+{{ $input := . }}
+{{ if eq (printf "%T" $input) "string" }}
+	{{ $chars := split $input "" }}
+	{{ $current := "" }}
+	{{ range $char := $chars }}
+		{{ if and (ge $char "A") (le $char "Z") }}
+			{{ if gt (len $current) 0 }}
+				&#8203;{{ $current | safeHTML }}
+				{{ $current = "" }}
+			{{ end }}
+		{{ end }}
+		{{ $current = print $current $char }}
+	{{ end }}
+	{{ if gt (len $current) 0 }}
+		&#8203;{{ $current | safeHTML }}
+	{{ end }}
+{{ else }}
+	{{ $input }}
+{{ end }}

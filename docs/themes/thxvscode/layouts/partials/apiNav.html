@@ -101,33 +101,51 @@
                             {{- range (where $packagePages "Params.package" .) -}}
                                 {{ $targetPage = . }}
                             {{- end }}
-                        
+                            {{ $packageKey := index $.Site.Data.packageData $targetPage.Params.package }}
+                            {{ $apiDetails := index $.Site.Data.apiData $packageKey }}
                             {{ $isCurrentPage := strings.HasPrefix (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
+                            {{ $hasActiveLeaf := false }}
 
-                            <li {{ if $isCurrentPage }}class="active" {{ end }}>
+                            {{ range $category := slice "Interface" "Class" "Enum" }}
+                                {{ if isset $apiDetails $category }}
+                                    {{ $currentTrimmedLink := trim $current.RelPermalink " " }}
+                                    {{ $categoryLower := lower $category }}
+                                    
+                                    {{ range $item := index $apiDetails $category }}
+                                        {{ $isActiveItem := in $currentTrimmedLink (trim (print (lower $item) "-" $categoryLower "/") " ") }}
+                                        {{ if $isActiveItem }} {{ $hasActiveLeaf = true }} {{ end }}
+                                    {{ end }}
+                                {{ end }}
+                            {{ end }}
+
+                            <li class="{{ with $isCurrentPage }}active{{ end }} {{ if $hasActiveLeaf }}active-leaf{{ end }}">
                                 <a href="{{$targetPage.RelPermalink}}" class="packages"
-                                    {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }} "
-                                    {{ end }}>
+                                {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }} "
+                                {{ end }}>
                                     {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
                                 </a>
                                 {{ if $isCurrentPage }}
-                                    {{ $packageKey := index $.Site.Data.packageData $targetPage.Params.package }}
-                                    {{ $apiDetails := index $.Site.Data.apiData $packageKey }}
                                     <nav class="leaf-docs-nav">
+                                        {{ $plurals := dict "Interface" "Interfaces" "Class" "Classes" "Enum" "Enums" }}
+
                                         {{ range $category := slice "Interface" "Class" "Enum" }}
-                                            
                                             {{ if isset $apiDetails $category }}
-                                            {{ $isCategoryActive := in (trim $current.RelPermalink " ") (trim (lower $category) " ") }}
-                                                <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{else}}collapsed{{end}}">
-                                                    <a href="#" class="sub-heading {{ lower $category }}-link" data-toggle="collapse" data-target="#{{ lower $category }}-content">{{ $category }}</a>
-                                                    <ul id="{{ lower $category }}-content" class="collapse">
-                                                        {{ range index $apiDetails $category }}
-                                                            {{ $constructedLink := print (relURL "/docs/apis/") $packageKey "/" (lower .) "-" (lower $category) }}
-                                                            {{ $isCategoryActive := in (trim $current.RelPermalink " ") (trim (print (lower .) "-" (lower $category) "/") " ") }}
-                                                            <li class="{{if $isCategoryActive }}active expanded{{else}}collapsed{{end}}">
-                                                                <a class="leaf-node" href="{{ $constructedLink }}"
-                                                                    {{ if $isCategoryActive }}aria-label="Current Page: {{ . }} {{ $category }}"{{ end }}>
-                                                                    {{ . }}
+                                                {{ $currentTrimmedLink := trim $current.RelPermalink " " }}
+                                                {{ $categoryLower := lower $category }}
+                                                {{ $isCategoryActive := in $currentTrimmedLink $categoryLower }}
+                                                {{ $categoryPlural := index $plurals $category }}
+
+                                                <li class="panel type-definitions {{ if $isCategoryActive }}active expanded{{ else }}collapsed{{ end }}">
+                                                    <a href="#" class="api-item-kind {{ $categoryLower }}-link" data-toggle="collapse" data-target="#{{ $categoryLower }}-content">{{ $categoryPlural }}</a>
+                                                    
+                                                    <ul id="{{ $categoryLower }}-content" class="collapse {{ if $isCategoryActive }}in{{ end }}">
+                                                        {{ range $item := index $apiDetails $category }}
+                                                            {{ $itemLink := print (relURL "/docs/apis/") $packageKey "/" (lower $item) "-" $categoryLower }}
+                                                            {{ $isActiveItem := in $currentTrimmedLink (trim (print (lower $item) "-" $categoryLower "/") " ") }}
+
+                                                            <li class="{{ if $isActiveItem }}active expanded{{ else }}collapsed{{ end }}">
+                                                                <a class="leaf-node" href="{{ $itemLink }}" {{ if $isActiveItem }}aria-label="Current Page: {{ $item }} {{ $categoryPlural }}"{{ end }}>
+                                                                    {{ partial "break-on-capitals.html" $item }}
                                                                 </a>
                                                             </li>
                                                         {{ end }}
