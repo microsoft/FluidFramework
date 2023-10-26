@@ -25,7 +25,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"start": "node dist/www.js",
 		"tsc": "tsc",
-		"tslint": "tslint 'src/**/*.ts'"
+		"tslint": "tslint \"src/**/*.ts\""
 	},
 	"dependencies": {
 		"@fluidframework/historian-base": "^0.0.1",

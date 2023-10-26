@@ -367,15 +367,26 @@ function ensurePrivatePackagesComputed(): void {
 	});
 }
 
+interface ParsedArg {
+	arg: string;
+	original: string;
+}
+
 /**
- * Parses command line string into arguments following OS quote rules
+ * Parses command line string into arguments following OS quote rules.
+ *
+ * Note: no accommodation is made for a line of script where shell features are used
+ * such as redirects `>`, pipes `|`, or multiple command separators `&&` or `;`.
  *
  * @param commandLine - complete command line as a simple string
  * @param onlyDoubleQuotes - only consider double quotes for grouping
  * @returns array of ordered pairs of resolved `arg` strings (quotes and escapes resolved)
  *  and `original` corresponding strings.
  */
-function parseArgs(commandLine: string, { onlyDoubleQuotes }: { onlyDoubleQuotes: boolean }) {
+function parseArgs(
+	commandLine: string,
+	{ onlyDoubleQuotes }: { onlyDoubleQuotes: boolean },
+): ParsedArg[] {
 	const regexArg = onlyDoubleQuotes
 		? /(?<!\S)(?:[^\s"\\]|\\\S)*(?:(").*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"\\]|\\\S)*|$))*(?!\S)/g
 		: /(?<!\S)(?:[^\s'"\\]|\\\S)*(?:(['"]).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s'"\\]|\\\S)*|$))*(?!\S)/g;
@@ -396,29 +407,81 @@ function parseArgs(commandLine: string, { onlyDoubleQuotes }: { onlyDoubleQuotes
  * @param resolvedArg - string as it should appear to new process
  * @returns preferred string to use within a command line string
  */
-function quoteAndEscapeArgsForUniversalCommandLine(resolvedArg: string) {
+function quoteAndEscapeArgsForUniversalCommandLine(
+	resolvedArg: string,
+	{ forceQuote }: { forceQuote?: boolean } = {},
+) {
 	// Unix shells provide feature where arguments that can be resolved as globs
 	// are expanded before passed to new process. Detect those and group them
 	// to ensure consistent arg passing. (Grouping disables glob expansion.)
-	const regexGlob = /[*?[()]/;
+	const regexGlob = /[*?[]|\([^)]*\)/;
 	const notAGlob = resolvedArg.startsWith("-") || !regexGlob.test(resolvedArg);
 	// Double quotes are used for grouping arguments with whitespace and must be
 	// escaped with \ and \ itself must therefore be escaped.
 	// Unix shells also use single quotes for grouping. Rather than escape those,
 	// which Windows command shell would not unescape, those args must be grouped.
 	const escapedArg = resolvedArg.replace(/([\\"])/g, "\\$1");
-	return notAGlob && !/[\s']/.test(resolvedArg) ? escapedArg : `"${escapedArg}"`;
+	const canBeUnquoted = notAGlob && !forceQuote && !/[\s']/.test(resolvedArg);
+	return canBeUnquoted ? escapedArg : `"${escapedArg}"`;
 }
 
 /**
- * Parse command line as if unix shell, then form preferred command line
+ * Prepares argument to be part of command script line. It does some handling for
+ * special shell elements that parseArgs ignores.
  *
- * @param commandLine - unparsed command line
+ * @param parsedArg - one result from parseArgs
+ * @returns preferred string to use within a command script string
+ */
+function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg) {
+	// Check for exactly `&&` or `|`.
+	if (arg === "&&" || arg === "|") {
+		// Use quoting if original had any quoting.
+		return arg !== original ? `"${arg}"` : arg;
+	}
+
+	// Check for unquoted start of `&&` or `|`.
+	if (!/^['"]/.test(original)) {
+		const specialStart = /(^&&|^\|)(.+)$/.exec(arg);
+		if (specialStart) {
+			// Separate the `&&` or `|` from remainder that will be its own arg.
+			const remainder = quoteAndEscapeArgsForUniversalScriptLine({
+				arg: specialStart[2],
+				original: original.substring(specialStart[1].length),
+			});
+			return `${specialStart[1]} ${remainder}`;
+		}
+	}
+
+	// Check for unquoted tail `|`.
+	if (!/['"]$/.test(original)) {
+		const specialEnd = /^(.+)\|$/.exec(arg);
+		if (specialEnd) {
+			// Separate the `|` from prior that will be its own arg.
+			const prior = quoteAndEscapeArgsForUniversalScriptLine({
+				arg: specialEnd[1],
+				original: original.substring(0, original.length - 1),
+			});
+			return `${prior} |`;
+		}
+	}
+
+	// Among the special characters `>`, `|`, `;`, and `&`, check for `&` at
+	// start, pipe (with anything else), or `;`. Some common `&` uses like `2>&1`
+	// should also remain unquoted.
+	const forceQuote = /^&|[|;]/.test(arg);
+
+	return quoteAndEscapeArgsForUniversalCommandLine(arg, { forceQuote });
+}
+
+/**
+ * Parse script line as if unix shell, then form preferred script line.
+ *
+ * @param scriptLine - unparsed script line
  * @returns preferred command line
  */
-function getPreferredCommandLine(commandLine: string) {
-	return parseArgs(commandLine, { onlyDoubleQuotes: false })
-		.map((a) => quoteAndEscapeArgsForUniversalCommandLine(a.arg))
+function getPreferredScriptLine(scriptLine: string) {
+	return parseArgs(scriptLine, { onlyDoubleQuotes: false })
+		.map(quoteAndEscapeArgsForUniversalScriptLine)
 		.join(" ");
 }
 
@@ -881,6 +944,50 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
+		name: "npm-package-json-scripts-args",
+		match,
+		handler: (file) => {
+			let json;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			if (!hasScriptsField) {
+				return undefined;
+			}
+
+			const scriptsUsingInconsistentArgs = Object.entries(json.scripts)
+				.filter(([, scriptContent]) => {
+					const commandLine = scriptContent as string;
+					const preferredCommandLine = getPreferredScriptLine(commandLine);
+					return commandLine !== preferredCommandLine;
+				})
+				.map(([scriptName]) => scriptName);
+
+			return scriptsUsingInconsistentArgs.length > 0
+				? `${file} using inconsistent arguments in the following scripts:\n\t${scriptsUsingInconsistentArgs.join(
+						"\n\t",
+				  )}`
+				: undefined;
+		},
+		resolver: (file) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				Object.entries(json.scripts).forEach(([scriptName, scriptContent]) => {
+					if (scriptContent) {
+						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
+					}
+				});
+			});
+
+			return result;
+		},
+	},
+	{
 		name: "npm-package-json-test-scripts",
 		match,
 		handler: (file) => {
@@ -1153,7 +1260,7 @@ export const handlers: Handler[] = [
 			}
 
 			if (cleanScript) {
-				if (cleanScript !== getPreferredCommandLine(cleanScript)) {
+				if (cleanScript !== getPreferredScriptLine(cleanScript)) {
 					return "'clean' script should double quote the globs and only the globs";
 				}
 			}
@@ -1173,7 +1280,7 @@ export const handlers: Handler[] = [
 					clean += ` ${missing.join(" ")}`;
 				}
 				// clean up for grouping
-				json.scripts["clean"] = getPreferredCommandLine(clean);
+				json.scripts["clean"] = getPreferredScriptLine(clean);
 			});
 
 			return result;
