@@ -8,7 +8,8 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
-
+import { WindowMessageRelay } from "../WindowMessageRelay";
+import { MessageRelayContext } from "../MessageRelayContext";
 import { OpLatencyView } from "../components";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.
@@ -21,7 +22,13 @@ import { OpLatencyView } from "../components";
 
 describe("OpLatencyView component tests", () => {
 	it("Renders as expected", async (): Promise<void> => {
-		render(<OpLatencyView />);
+		render(
+			<MessageRelayContext.Provider
+				value={new WindowMessageRelay("fluid-framework-devtools-inline")}
+			>
+				<OpLatencyView />
+			</MessageRelayContext.Provider>,
+		);
 
 		// Check that outermost component container exists
 		const opLatencyMainContainerElement = await screen.findByTestId("test-op-latency-view");
