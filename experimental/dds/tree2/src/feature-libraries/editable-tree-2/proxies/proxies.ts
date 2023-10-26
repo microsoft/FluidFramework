@@ -534,6 +534,12 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return getProxyForField(field);
 		},
 	},
+	entries: {
+		value(): IterableIterator<[string, unknown]> {
+			const mapNode = getMapNode(this);
+			return mapNode.entries();
+		},
+	},
 	// TODO: implement the rest of the Map interface here
 };
 

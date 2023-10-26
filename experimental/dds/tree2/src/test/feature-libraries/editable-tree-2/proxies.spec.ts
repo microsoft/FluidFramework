@@ -110,6 +110,13 @@ describe("SharedTreeObject", () => {
 		assert.equal(root.map.get("baz"), undefined);
 	});
 
+	itWithRoot("can query for map entries", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.entries()), [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
 	itWithRoot("can iterate map entries", schema, initialTree, (root) => {
 		const expected = [
 			["foo", "Hello"],
