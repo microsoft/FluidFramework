@@ -8,9 +8,9 @@ import React from "react";
 // eslint-disable-next-line import/no-unassigned-import
 import "@testing-library/jest-dom";
 import { render, screen, within } from "@testing-library/react";
-import { WindowMessageRelay } from "../WindowMessageRelay";
 import { MessageRelayContext } from "../MessageRelayContext";
 import { OpLatencyView } from "../components";
+import { MockMessageRelay } from "./MockMessageRelay";
 
 // ResizeObserver is a hook used by Recharts that needs to be mocked for unit tests to function.
 // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
@@ -23,9 +23,7 @@ import { OpLatencyView } from "../components";
 describe("OpLatencyView component tests", () => {
 	it("Renders as expected", async (): Promise<void> => {
 		render(
-			<MessageRelayContext.Provider
-				value={new WindowMessageRelay("fluid-framework-devtools-inline")}
-			>
+			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
 				<OpLatencyView />
 			</MessageRelayContext.Provider>,
 		);
