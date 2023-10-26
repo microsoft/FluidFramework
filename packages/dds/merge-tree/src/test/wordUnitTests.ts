@@ -164,7 +164,7 @@ function measureFetch(startFile: string, withBookmarks = false) {
 			//     caBegin = 0;
 			// }
 			// curPG.pos is ca end
-			const curPG = client.searchForMarker(pos, "pg", false)!;
+			const curPG = client.searchForMarker(pos, "pg", true)!;
 			const properties = curPG.properties!;
 			const curSegOff = client.getContainingSegment(pos)!;
 			const curSeg = curSegOff.segment!;
