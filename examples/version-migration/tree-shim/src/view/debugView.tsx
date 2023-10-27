@@ -15,6 +15,9 @@ export const DebugView: React.FC<IDebugViewProps> = ({ model }: IDebugViewProps)
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>Debug info</h2>
+			<div>
+				<button onClick={model.DEBUG_triggerMigration}>Trigger migration</button>
+			</div>
 		</div>
 	);
 };

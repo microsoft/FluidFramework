@@ -55,6 +55,17 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			await runtime.getRootDataStore(newTreeInventoryListId),
 			"",
 		);
-		return new InventoryListAppModel(legacyTreeInventoryList, newTreeInventoryList);
+		return new InventoryListAppModel(
+			legacyTreeInventoryList,
+			newTreeInventoryList,
+			this.triggerMigration,
+		);
 	}
+
+	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.  For this
+	// demo we'll just trigger it with a debug button though.
+	private readonly triggerMigration = () => {
+		// TODO: implement
+		console.log("Migration triggered!");
+	};
 }

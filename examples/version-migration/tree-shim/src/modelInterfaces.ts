@@ -19,6 +19,10 @@ export interface IInventoryListAppModel {
 	 * An inventory tracker list using the new shared tree.
 	 */
 	readonly newTreeInventoryList: IInventoryList;
+	/**
+	 * For demo purposes, a debug API to manually trigger the migration.
+	 */
+	readonly DEBUG_triggerMigration: () => void;
 }
 
 export interface IInventoryItemEvents {
