@@ -8,9 +8,25 @@
 import { EventEmitter } from "events";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
+/**
+ * TODO
+ *
+ * @public
+ */
 export const connectedEventName = "connected";
+
+/**
+ * TODO
+ *
+ * @public
+ */
 export const disconnectedEventName = "disconnected";
 
+/**
+ * TODO
+ *
+ * @public
+ */
 export function safeRaiseEvent(
 	emitter: EventEmitter,
 	logger: ITelemetryLoggerExt,
@@ -31,6 +47,8 @@ export function safeRaiseEvent(
  * @param connected - A boolean tracking whether the connection was in a connected state or not
  * @param clientId - The connected/disconnected clientId
  * @param disconnectedReason - The reason for the connection to be disconnected (Used for telemetry purposes only)
+ *
+ * @public
  */
 export function raiseConnectedEvent(
 	logger: ITelemetryLoggerExt,

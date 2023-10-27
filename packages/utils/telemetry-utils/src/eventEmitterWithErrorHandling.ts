@@ -7,8 +7,12 @@ import { IEvent } from "@fluidframework/core-interfaces";
 
 /**
  * Event Emitter helper class
+ *
+ * @remarks
  * Any exceptions thrown by listeners will be caught and raised through "error" event.
  * Any exception thrown by "error" listeners will propagate to the caller.
+ *
+ * @public
  */
 export class EventEmitterWithErrorHandling<
 	TEvent extends IEvent = IEvent,

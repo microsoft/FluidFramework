@@ -30,7 +30,7 @@ import { TypedEventEmitter } from '@fluid-internal/client-utils';
 // @public (undocumented)
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
-// @public (undocumented)
+// @public
 export const connectedEventName = "connected";
 
 // @public
@@ -40,16 +40,11 @@ export function createChildLogger(props?: {
     properties?: ITelemetryLoggerPropertyBags;
 }): ITelemetryLoggerExt;
 
-// @public (undocumented)
+// @public
 export function createChildMonitoringContext(props: Parameters<typeof createChildLogger>[0]): MonitoringContext;
 
 // @public
-export function createMultiSinkLogger(props: {
-    namespace?: string;
-    properties?: ITelemetryLoggerPropertyBags;
-    loggers?: (ITelemetryBaseLogger | undefined)[];
-    tryInheritProperties?: true;
-}): ITelemetryLoggerExt;
+export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt;
 
 // @internal
 export function createSampledLogger(logger: ITelemetryLoggerExt, eventSampler?: IEventSampler): ISampledTelemetryLogger;
@@ -72,7 +67,7 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
     static wrapIfUnrecognized(originalError: unknown, dataProcessingCodepath: string, messageLike?: Partial<Pick<ISequencedDocumentMessage, "clientId" | "sequenceNumber" | "clientSequenceNumber" | "referenceSequenceNumber" | "minimumSequenceNumber" | "timestamp">>): IFluidErrorBase;
 }
 
-// @public (undocumented)
+// @public
 export const disconnectedEventName = "disconnected";
 
 // @public
@@ -82,7 +77,7 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     emit(event: EventEmitterEventType, ...args: unknown[]): boolean;
 }
 
-// @public (undocumented)
+// @public
 export const eventNamespaceSeparator: ":";
 
 // @internal
@@ -102,7 +97,7 @@ export const extractSafePropertiesFromMessage: (messageLike: Partial<Pick<ISeque
     messageTimestamp: number | undefined;
 };
 
-// @public (undocumented)
+// @public
 export function formatTick(tick: number): number;
 
 // @internal
@@ -265,7 +260,7 @@ export interface ITelemetryPropertiesExt {
     [index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
-// @public (undocumented)
+// @public
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L): MonitoringContext<L>;
 
 // @internal
@@ -283,7 +278,7 @@ export class LoggingError extends Error implements ILoggingError, Omit<IFluidErr
 // @public
 export function logIfFalse(condition: unknown, logger: ITelemetryBaseLogger, event: string | ITelemetryGenericEvent): condition is true;
 
-// @public (undocumented)
+// @public
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(logger: L, ...configs: (IConfigProviderBase | undefined)[]): MonitoringContext<L>;
 
 // @public
@@ -314,6 +309,14 @@ export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLo
     config: IConfigProvider;
     // (undocumented)
     logger: L;
+}
+
+// @public
+export interface MultiSinkLoggerProperties {
+    loggers?: (ITelemetryBaseLogger | undefined)[];
+    namespace?: string;
+    properties?: ITelemetryLoggerPropertyBags;
+    tryInheritProperties?: true;
 }
 
 // @internal
@@ -348,7 +351,7 @@ export class PerformanceEvent {
 // @public
 export function raiseConnectedEvent(logger: ITelemetryLoggerExt, emitter: EventEmitter, connected: boolean, clientId?: string, disconnectedReason?: string): void;
 
-// @public (undocumented)
+// @public
 export function safeRaiseEvent(emitter: EventEmitter, logger: ITelemetryLoggerExt, event: string, ...args: unknown[]): void;
 
 // @public
@@ -373,7 +376,7 @@ export const tagCodeArtifacts: <T extends Record<string, TelemetryEventPropertyT
         tag: TelemetryDataTag.CodeArtifact;
     }) | (T[P] extends undefined ? undefined : never); };
 
-// @public (undocumented)
+// @public
 export const tagData: <T extends TelemetryDataTag, V extends Record<string, TelemetryEventPropertyType | (() => TelemetryBaseEventPropertyType)>>(tag: T, values: V) => { [P in keyof V]: (V[P] extends () => TelemetryBaseEventPropertyType ? () => {
         value: ReturnType<V[P]>;
         tag: T;

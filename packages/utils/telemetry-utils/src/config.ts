@@ -7,17 +7,24 @@ import { Lazy } from "@fluidframework/core-utils";
 import { createChildLogger, tagCodeArtifacts } from "./logger";
 import { ITelemetryLoggerExt } from "./telemetryTypes";
 
+/**
+ * @public
+ */
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
 /**
- * Base interface for providing configurations to enable/disable/control features
+ * Base interface for providing configurations to enable/disable/control features.
+ *
+ * @public
  */
 export interface IConfigProviderBase {
 	getRawConfig(name: string): ConfigTypes;
 }
 
 /**
- * Explicitly typed interface for reading configurations
+ * Explicitly typed interface for reading configurations.
+ *
+ * @public
  */
 export interface IConfigProvider extends IConfigProviderBase {
 	getBoolean(name: string): boolean | undefined;
@@ -31,6 +38,8 @@ export interface IConfigProvider extends IConfigProviderBase {
  * Creates a base configuration provider based on `sessionStorage`
  *
  * @returns A lazy initialized base configuration provider with `sessionStorage` as the underlying config store
+ *
+ * @public
  */
 export const sessionStorageConfigProvider = new Lazy<IConfigProviderBase>(() =>
 	inMemoryConfigProvider(safeSessionStorage()),
@@ -245,13 +254,21 @@ export class CachedConfigProvider implements IConfigProvider {
 }
 
 /**
- * A type containing both a telemetry logger and a configuration provider
+ * A type containing both a telemetry logger and a configuration provider.
+ *
+ * @public
  */
 export interface MonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt> {
 	config: IConfigProvider;
 	logger: L;
 }
 
+/**
+ * Determines whether or not the provided object is a {@link MonitoringContext}.
+ * @remarks Can be used for type-narrowing.
+ *
+ * @public
+ */
 export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	obj: L,
 ): obj is L & MonitoringContext<L> {
@@ -259,6 +276,11 @@ export function loggerIsMonitoringContext<L extends ITelemetryBaseLogger = ITele
 	return isConfigProviderBase(maybeConfig?.config) && maybeConfig?.logger !== undefined;
 }
 
+/**
+ * Creates a {@link MonitoringContext} from the provided logger, if it isn't already one.
+ *
+ * @public
+ */
 export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 ): MonitoringContext<L> {
@@ -268,6 +290,17 @@ export function loggerToMonitoringContext<L extends ITelemetryBaseLogger = ITele
 	return mixinMonitoringContext<L>(logger, sessionStorageConfigProvider.value);
 }
 
+/**
+ * Creates a {@link MonitoringContext} from the provided logger.
+ *
+ * @remarks
+ * Assumes that the provided logger is not itself already a {@link MonitoringContext}, and will throw an error if it is.
+ * If you are unsure, use {@link loggerToMonitoringContext} instead.
+ *
+ * @throws If the provided logger is already a {@link MonitoringContext}.
+ *
+ * @public
+ */
 export function mixinMonitoringContext<L extends ITelemetryBaseLogger = ITelemetryLoggerExt>(
 	logger: L,
 	...configs: (IConfigProviderBase | undefined)[]
@@ -294,6 +327,12 @@ function isConfigProviderBase(obj: unknown): obj is IConfigProviderBase {
 	return typeof maybeConfig?.getRawConfig === "function";
 }
 
+/**
+ * Creates a child logger with a {@link MonitoringContext}.
+ *
+ * @see {@link loggerToMonitoringContext}
+ * @public
+ */
 export function createChildMonitoringContext(
 	props: Parameters<typeof createChildLogger>[0],
 ): MonitoringContext {

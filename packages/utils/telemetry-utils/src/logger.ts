@@ -40,9 +40,13 @@ export interface Memory {
 export interface PerformanceWithMemory extends IsomorphicPerformance {
 	readonly memory: Memory;
 }
+
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
- * Please do not modify existing entries for backwards compatibility.
+ *
+ * @privateRemarks Please do not modify existing entries for backwards compatibility.
+ *
+ * @public
  */
 export enum TelemetryDataTag {
 	/**
@@ -55,11 +59,21 @@ export enum TelemetryDataTag {
 	UserData = "UserData",
 }
 
+/**
+ * @public
+ */
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
+/**
+ * @public
+ */
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
+
+/**
+ * @public
+ */
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;
 	error?: ITelemetryLoggerPropertyBag;
@@ -67,9 +81,13 @@ export interface ITelemetryLoggerPropertyBags {
 
 /**
  * Attempts to parse number from string.
- * If fails,returns original string.
+ * If it fails, it will return the original string.
+ *
+ * @remarks
  * Used to make telemetry data typed (and support math operations, like comparison),
- * in places where we do expect numbers (like contentsize/duration property in http header)
+ * in places where we do expect numbers (like contentsize/duration property in http header).
+ *
+ * @public
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export function numberFromString(str: string | null | undefined): string | number | undefined {
@@ -80,10 +98,20 @@ export function numberFromString(str: string | null | undefined): string | numbe
 	return Number.isNaN(num) ? str : num;
 }
 
+/**
+ * TODO
+ *
+ * @public
+ */
 export function formatTick(tick: number): number {
 	return Math.floor(tick);
 }
 
+/**
+ * TODO
+ *
+ * @public
+ */
 export const eventNamespaceSeparator = ":" as const;
 
 /**
@@ -92,6 +120,9 @@ export const eventNamespaceSeparator = ":" as const;
  * Creates sub-logger that appends properties to all events
  */
 export abstract class TelemetryLogger implements ITelemetryLoggerExt {
+	/**
+	 * {@inheritDoc eventNamespaceSeparator}
+	 */
 	public static readonly eventNamespaceSeparator = eventNamespaceSeparator;
 
 	public static sanitizePkgName(name: string): string {
@@ -286,6 +317,8 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
  * @deprecated 0.56, remove TaggedLoggerAdapter once its usage is removed from
  * container-runtime. Issue: #8191
  * TaggedLoggerAdapter class can add tag handling to your logger.
+ *
+ * @public
  */
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	public constructor(private readonly logger: ITelemetryBaseLogger) {}
@@ -336,11 +369,14 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 }
 
 /**
- * Create a child logger based on the provided props object
- * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ * Create a child logger based on the provided props object.
  *
  * @remarks
  * Passing in no props object (i.e. undefined) will return a logger that is effectively a no-op.
+ *
+ * @param props - logger is the base logger the child will log to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
+ *
+ * @public
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
@@ -353,7 +389,7 @@ export function createChildLogger(props?: {
 /**
  * ChildLogger class contains various helper telemetry methods,
  * encoding in one place schemas for various types of Fluid telemetry events.
- * Creates sub-logger that appends properties to all events
+ * Creates sub-logger that appends properties to all events.
  */
 export class ChildLogger extends TelemetryLogger {
 	/**
@@ -449,16 +485,39 @@ export class ChildLogger extends TelemetryLogger {
 }
 
 /**
- * Create a logger which logs to multiple other loggers based on the provided props object
- * @param props - loggers are the base loggers that will logged to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
- * tryInheritProperties will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
+ * Input properties for {@link createMultiSinkLogger}.
+ *
+ * @public
  */
-export function createMultiSinkLogger(props: {
+export interface MultiSinkLoggerProperties {
+	/**
+	 * Will be prefixed to all event names.
+	 */
 	namespace?: string;
+
+	/**
+	 * Default properties that will be applied events.
+	 */
 	properties?: ITelemetryLoggerPropertyBags;
+
+	/**
+	 * The base loggers that will logged to after processing.
+	 */
 	loggers?: (ITelemetryBaseLogger | undefined)[];
+
+	/**
+	 * The logger will attempt to copy those loggers properties to this logger if they are of a known type.
+	 * I.e. one from this package.
+	 */
 	tryInheritProperties?: true;
-}): ITelemetryLoggerExt {
+}
+
+/**
+ * Create a logger which logs to multiple other loggers based on the provided props object.
+ *
+ * @public
+ */
+export function createMultiSinkLogger(props: MultiSinkLoggerProperties): ITelemetryLoggerExt {
 	return new MultiSinkLogger(
 		props.namespace,
 		props.properties,
@@ -551,10 +610,15 @@ export class MultiSinkLogger extends TelemetryLogger {
 }
 
 /**
- * Describes what events PerformanceEvent should log
- * By default, all events are logged, but client can override this behavior
+ * Describes what events {@link PerformanceEvent} should log.
+ *
+ * @remarks
+ * By default, all events are logged, but the client can override this behavior.
+ *
  * For example, there is rarely a need to record start event, as we really after
  * success / failure tracking, including duration (on success).
+ *
+ * @public
  */
 export interface IPerformanceEventMarkers {
 	start?: true;
@@ -563,7 +627,9 @@ export interface IPerformanceEventMarkers {
 }
 
 /**
- * Helper class to log performance events
+ * Helper class to log performance events.
+ *
+ * @public
  */
 export class PerformanceEvent {
 	/**
@@ -780,10 +846,13 @@ export class PerformanceEvent {
 
 /**
  * Null logger that no-ops for all telemetry events passed to it.
+ *
  * @deprecated This will be removed in a future release.
  * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
  * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * where the send() method does nothing and using that.
+ *
+ * @public
  */
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
@@ -853,6 +922,11 @@ function convertToBasePropertyTypeUntagged(
 	}
 }
 
+/**
+ * TODO
+ *
+ * @public
+ */
 export const tagData = <
 	T extends TelemetryDataTag,
 	V extends Record<
@@ -895,8 +969,13 @@ export const tagData = <
 		}, {}) as ReturnType<typeof tagData>;
 
 /**
- * Helper function to tag telemetry properties as CodeArtifacts. It supports properties of type
- * TelemetryBaseEventPropertyType as well as getters that return TelemetryBaseEventPropertyType.
+ * Helper function to tag telemetry properties as CodeArtifacts.
+ *
+ * @remarks
+ * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
+ * as well as callbacks that return that type.
+ *
+ * @public
  */
 export const tagCodeArtifacts = <
 	T extends Record<

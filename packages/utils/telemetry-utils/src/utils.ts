@@ -16,6 +16,8 @@ import { ITelemetryGenericEventExt, ITelemetryLoggerExt } from "./telemetryTypes
  * @param logger - The logger to log with
  * @param event - The string or event to log
  * @returns The outcome of the condition
+ *
+ * @public
  */
 export function logIfFalse(
 	condition: unknown,
