@@ -168,6 +168,7 @@ describe("optionalField", () => {
 				fieldChange: {
 					id: brand(2),
 					revision: change2.revision,
+					firstFieldChange: { revision: change1.revision, localId: brand(1) },
 					newContent: { set: testTree("tree2"), buildId: { localId: brand(42) } },
 					wasEmpty: true,
 				},
@@ -327,13 +328,15 @@ describe("optionalField", () => {
 			});
 
 			it("can rebase child change (field change ↷ field change)", () => {
-				const baseChange: OptionalChangeset = {
+				const baseUntagged: OptionalChangeset = {
 					fieldChange: {
 						id: brand(0),
 						wasEmpty: false,
 					},
 					childChanges: [["self", nodeChange1]],
 				};
+				const baseRevision = mintRevisionTag();
+				const base = tagChange(baseUntagged, baseRevision);
 				const changeToRebase: OptionalChangeset = {
 					fieldChange: {
 						id: brand(1),
@@ -364,16 +367,18 @@ describe("optionalField", () => {
 							buildId: { localId: brand(41) },
 						},
 					},
-					childChanges: [[{ localId: brand(0) }, arbitraryChildChange]],
+					childChanges: [
+						[{ localId: brand(0), revision: baseRevision }, arbitraryChildChange],
+					],
 				};
 
 				const actual = optionalChangeRebaser.rebase(
 					changeToRebase,
-					makeAnonChange(baseChange),
+					base,
 					childRebaser,
 					fakeIdAllocator,
 					failCrossFieldManager,
-					defaultRevisionMetadataFromChanges([]),
+					defaultRevisionMetadataFromChanges([base]),
 				);
 				assert.deepEqual(actual, expected);
 			});

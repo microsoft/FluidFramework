@@ -105,6 +105,7 @@ describe("defaultFieldKinds", () => {
 			fieldChange: {
 				id: brand(2),
 				revision: change2.revision,
+				firstFieldChange: { revision: change1.revision, localId: brand(1) },
 				newContent: { set: testTree("tree2"), buildId: { localId: brand(42) } },
 				wasEmpty: false,
 			},

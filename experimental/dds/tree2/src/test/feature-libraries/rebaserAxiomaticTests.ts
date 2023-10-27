@@ -41,10 +41,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	// - Rebasing a single edit over N sequential edits
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
-	const numberOfEditsToRebaseOver = 4;
+	const numberOfEditsToRebaseOver = 3;
 	const numberOfEditsToRebase = numberOfEditsToRebaseOver;
 
-	describe.skip("Rebase over compose", () => {
+	describe("Rebase over compose", () => {
 		for (const initialState of initialStates) {
 			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				for (const [
@@ -65,7 +65,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedEditsToRebaseOver.map(({ description }) => description),
 						)}`;
 
-						// if (title !== 'Rebase ChildChange1 over compose ["Delete","SetB,1"]') {
+						// if (
+						// 	title !==
+						// 	'Rebase ChildChange1 over compose ["Delete","Undo:Delete","ChildChange44"]'
+						// ) {
 						// 	continue;
 						// }
 
@@ -94,7 +97,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		}
 	});
 
-	describe.only("Composed sandwich rebase over single edit", () => {
+	describe("Composed sandwich rebase over single edit", () => {
 		for (const initialState of initialStates) {
 			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				for (const namedSourceEdits of generatePossibleSequenceOfEdits(

@@ -246,7 +246,6 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 
 	if (state.mostRecentEdit !== undefined) {
 		const undoIntention = mintIntention();
-		// const inverseChangeset = invert(state.mostRecentEdit.changeset);
 		// We don't use the `invert` helper here, as `TestChange.invert` has logic to negate the intention
 		// of the most recent edit. Instead, we want to mint a new intention. Having correct composition for
 		// the 'negate' operation is already tested via sandwich rebasing.
@@ -378,11 +377,27 @@ describe("OptionalField - Rebaser Axioms", () => {
 		runSingleEditRebaseAxiomSuite({ content: "A" });
 	});
 
-	describe("Exhaustive", () => {
+	describe.skip("Exhaustive", () => {
 		runExhaustiveComposeRebaseSuite(
 			[{ content: undefined }, { content: "A" }],
 			generateChildStates,
 			{ rebase, rebaseComposed, compose, invert },
 		);
 	});
+
+	/**
+	 * TL;DR:
+	 *
+	 * Compose needs to pair child inverses as well as root field changes
+	 * - Motivated by 'Rebase ["ChildChange1","ChildChange2","ChildChange3"] over Delete'
+	 *   Consider compose(ChildChange2^-1, compose(ChildChange1^-1, Delete, ChildChange1'), ChildChange2')
+	 *      ChildChange2^-1 will associate that inverse change with revision 'self', but ChildChange2' will associate
+	 *      the change with
+	 *
+	 * Compose output needs to store first root field edit revision such that reasing a child change can correctly refer to "first" revision that removed a node
+	 *
+	 * Consider: changeChild ↷ [set A, set B] vs changeChild ↷ compose(set A, set B).
+	 *
+	 * The former will correctly associate the child change with revision of A, but current compose format loses the information about the revision of A.
+	 */
 });

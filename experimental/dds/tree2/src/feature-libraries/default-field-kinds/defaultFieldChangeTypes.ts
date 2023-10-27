@@ -30,6 +30,8 @@ export interface OptionalFieldChange {
 	 */
 	readonly id: ChangesetLocalId;
 
+	readonly firstFieldChange?: ChangeAtomId;
+
 	/**
 	 * When populated, indicates the revision that this field change is associated with.
 	 * Is left undefined when the revision is the same as that of the whole changeset

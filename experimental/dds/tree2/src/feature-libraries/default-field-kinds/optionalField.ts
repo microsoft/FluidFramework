@@ -146,11 +146,22 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			const fieldChangeInfo = revisionMetadata.tryGetInfo(
 				revision ?? change.fieldChange?.revision,
 			);
+			const firstFieldChangeAtomId =
+				change.fieldChange !== undefined
+					? change.fieldChange.firstFieldChange ?? {
+							revision: revision ?? change.fieldChange.revision,
+							localId: change.fieldChange.id,
+					  }
+					: undefined;
 			const { childChanges } = change;
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
 					const taggedChildChange = tagChange(childChange, revision);
-					if (childId === "self") {
+					if (
+						childId === "self" ||
+						(firstFieldChangeAtomId !== undefined &&
+							areEqualChangeAtomIds(childId, firstFieldChangeAtomId))
+					) {
 						// childChange refers to the node that existed at the start of `change`,
 						// Thus in the composition, it should be referred to by whatever deletes that node in the future, which is what
 						// currentChildNodeChanges tracks
@@ -169,6 +180,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						wasEmpty: change.fieldChange.wasEmpty,
 					};
 				} else {
+					if (fieldChange.firstFieldChange === undefined) {
+						fieldChange.firstFieldChange = {
+							revision: fieldChange.revision,
+							localId: fieldChange.id,
+						};
+					}
 					fieldChange.id = change.fieldChange.id;
 					fieldChange.revision = fieldChangeInfo?.revision;
 				}
@@ -204,13 +221,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 				// Node was changed by this revision: flush the current changes
 				if (currentChildNodeChanges.length > 0) {
-					// TODO: is this legit? Rationale is composed changes won't have a revision. Realistically we want something more like 'revision of first field set within this composed change'.
-					if (revision !== undefined) {
-						addChildChange(
-							{ revision, localId: change.fieldChange.id },
-							...currentChildNodeChanges,
-						);
-					}
+					assert(firstFieldChangeAtomId !== undefined, "expected first field change");
+					addChildChange(firstFieldChangeAtomId, ...currentChildNodeChanges);
 					currentChildNodeChanges = [];
 				}
 
@@ -355,10 +367,36 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					// Rationale: when rebasing over a composition, changes to "self" should be rebased over the aggregate changes
 					// to the first removal. This assumes the list is ordered, which needs review.
 					// const overChildChange = overChildChanges.get(id) ?? over.childChanges?.[0][1];
-					const overChildChange = overChildChanges.get(id);
-					if (over.fieldChange !== undefined) {
-						// `childChange` refers to the node existing in this field before rebasing, but
-						// that node was removed by `over`.
+					const overChildChange = overChildChanges.get(
+						over.fieldChange?.firstFieldChange ??
+							(over.fieldChange !== undefined
+								? {
+										revision: over.fieldChange.revision ?? overTagged.revision,
+										localId: over.fieldChange.id,
+								  }
+								: id),
+					);
+					if (
+						over.fieldChange === undefined ||
+						(restoredUndoChangeId !== undefined &&
+							over.fieldChange.firstFieldChange !== undefined &&
+							areEqualChangeAtomIds(
+								restoredUndoChangeId,
+								over.fieldChange.firstFieldChange,
+							))
+					) {
+						// `over` never removed the node childChange refers to, or it is a composed change
+						// which ends by reviving that node.
+						const rebasedChild = rebaseChild(
+							childChange,
+							overChildChange,
+							NodeExistenceState.Alive,
+						);
+						if (rebasedChild !== undefined) {
+							perChildChanges.set(id, rebasedChild);
+						}
+					} else {
+						// `over` removed the node childChange refers to
 						const rebasedChild = rebaseChild(
 							childChange,
 							overChildChange,
@@ -366,7 +404,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						);
 						if (rebasedChild !== undefined) {
 							perChildChanges.set(
-								{
+								over.fieldChange?.firstFieldChange ?? {
 									// TODO: Document this choice. This isn't really the revision that deleted the node, but
 									// the one that puts it back such that if we later ressurect it, the child changes will
 									// apply to it... this matches what the previous code/format did, but it's not well-documented
@@ -382,16 +420,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 								},
 								rebasedChild,
 							);
-						}
-					} else {
-						// `over` didn't remove the node (its fieldChange is undefined)
-						const rebasedChild = rebaseChild(
-							childChange,
-							overChildChange,
-							NodeExistenceState.Alive,
-						);
-						if (rebasedChild !== undefined) {
-							perChildChanges.set(id, rebasedChild);
 						}
 					}
 				} else {
