@@ -136,7 +136,7 @@ export abstract class StateMachineCommand<
 
 				if (machine.state_is_final(state)) {
 					this.verbose(`Exiting. Final state: ${state}`);
-					this.exit(1);
+					this.exit(0);
 				}
 
 				// eslint-disable-next-line no-constant-condition
