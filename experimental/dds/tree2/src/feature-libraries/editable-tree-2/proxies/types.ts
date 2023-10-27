@@ -108,7 +108,7 @@ export interface SharedTreeList<
 	/**
 	 * Moves the specified item to the desired location in the list.
 	 * @param index - The index to move the item to.
-	 * This is relative to the list before moving the source item.
+	 * This is based on the state of the list before moving the source item.
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
 	 */
@@ -127,7 +127,7 @@ export interface SharedTreeList<
 	 * Moves the specified items to the start of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
@@ -136,7 +136,8 @@ export interface SharedTreeList<
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source list to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list or if the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(
 		sourceStart: number,
@@ -148,7 +149,7 @@ export interface SharedTreeList<
 	 * Moves the specified items to the end of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
@@ -157,7 +158,8 @@ export interface SharedTreeList<
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source list to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list or if the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(
 		sourceStart: number,
@@ -168,10 +170,10 @@ export interface SharedTreeList<
 	/**
 	 * Moves the specified items to the desired location within the list.
 	 * @param index - The index to move the items to.
-	 * This is relative to the list before moving the source items.
+	 * This is based on the state of the list before moving the source items.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
@@ -181,7 +183,8 @@ export interface SharedTreeList<
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source list to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list or if the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(
 		index: number,

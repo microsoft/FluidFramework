@@ -632,7 +632,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	/**
 	 * Moves the specified item to the desired location in the sequence.
 	 * @param index - The index to move the item to.
-	 * This is relative to the sequence before moving the source item.
+	 * This is based on the state of the sequence before moving the source item.
 	 * @param sourceIndex - The index of the item to move.
 	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
 	 */
@@ -651,7 +651,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * Moves the specified items to the start of the sequence.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
@@ -660,7 +660,8 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
+	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
 
@@ -668,7 +669,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * Moves the specified items to the end of the sequence.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
@@ -677,17 +678,18 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
+	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified items to the desired location within the sequence.
 	 * @param index - The index to move the items to.
-	 * This is relative to the sequence before moving the source items.
+	 * This is based on the state of the sequence before moving the source items.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
@@ -697,7 +699,8 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
 	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
+	 * if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(
 		index: number,

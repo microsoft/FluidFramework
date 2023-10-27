@@ -193,6 +193,33 @@ describe("SharedTreeList", () => {
 			list.removeRange(/* start: */ 1, /* end: */ 3);
 			assert.deepEqual(list, [0, 3]);
 		});
+
+		itWithRoot("removeRange() - all", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(/* start: */ 1, /* end: */ 3);
+			assert.deepEqual(list, [0, 3]);
+			list.removeRange();
+			assert.deepEqual(list, []);
+		});
+
+		itWithRoot("removeRange() - past end", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(/* start: */ 1, /* end: */ 3);
+			assert.deepEqual(list, [0, 3]);
+			list.removeRange(1, Infinity);
+			assert.deepEqual(list, [0]);
+		});
+
+		itWithRoot("removeRange() - empty range", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(2, 2);
+			assert.deepEqual(list, [0, 1, 2, 3]);
+		});
+
+		itWithRoot("removeRange() - empty list", schema, [], (list) => {
+			assert.deepEqual(list, []);
+			assert.throws(() => list.removeRange());
+		});
 	});
 
 	describe("moving items", () => {
