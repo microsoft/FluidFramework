@@ -1886,18 +1886,17 @@ export class ContainerRuntime
 		await this.dataStores.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
 		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
-		// Initialize snapshot details so that the packagePath is available which will be logged by GC in
-		// case of unexpected load of this data store.
-		await dataStoreContext.getInitialSnapshotDetails();
 
 		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
 		// the same as GC nodes id.
 		const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
+		// Get the initial snapshot details which contain the data store package path.
+		const details = await dataStoreContext.getInitialSnapshotDetails();
 		this.garbageCollector.nodeUpdated(
 			`/${urlWithoutQuery}`,
 			"Loaded",
 			undefined /* timestampMs */,
-			dataStoreContext.packagePath,
+			details.pkg,
 			headerData,
 		);
 

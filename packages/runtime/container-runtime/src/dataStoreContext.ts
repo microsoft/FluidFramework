@@ -1099,7 +1099,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return message;
 	}
 
-	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
@@ -1132,6 +1132,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			isRootDataStore,
 			snapshot,
 		};
+	});
+
+	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+		return this.initialSnapshotDetailsP;
 	}
 
 	/**
