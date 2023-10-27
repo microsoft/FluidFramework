@@ -14,6 +14,10 @@ export {
 	UnboxNode,
 	UnboxNodeUnion,
 	NodeKeyField,
+	IsArrayOfOne,
+	UnknownUnboxed,
+	FixedSizeTypeArrayToTypedTree,
+	TypedNodeUnionHelper,
 } from "./editableTreeTypes";
 
 export { NodeKeys } from "./nodeKeys";

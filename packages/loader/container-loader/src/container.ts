@@ -2345,8 +2345,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(message: any) {
-		this._deltaManager.submitSignal(JSON.stringify(message));
+	private submitSignal(content: any, targetClientId?: string) {
+		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
 	private processSignal(message: ISignalMessage) {
@@ -2440,7 +2440,7 @@ export class Container
 				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
-			(message) => this.submitSignal(message),
+			(content, targetClientId) => this.submitSignal(content, targetClientId),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
