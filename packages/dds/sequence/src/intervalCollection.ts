@@ -56,8 +56,6 @@ import {
 	createInterval,
 } from "./intervals";
 import {
-	EndpointIndex,
-	IEndpointIndex,
 	IIdIntervalIndex,
 	IOverlappingIntervalsIndex,
 	IntervalIndex,
@@ -239,7 +237,6 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	private static readonly legacyIdPrefix = "legacy";
 	public readonly overlappingIntervalsIndex: IOverlappingIntervalsIndex<TInterval>;
 	public readonly idIntervalIndex: IIdIntervalIndex<TInterval>;
-	public readonly endIntervalIndex: IEndpointIndex<TInterval>;
 	private readonly indexes: Set<IntervalIndex<TInterval>>;
 
 	constructor(
@@ -255,12 +252,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	) {
 		this.overlappingIntervalsIndex = new OverlappingIntervalsIndex(client, helpers);
 		this.idIntervalIndex = createIdIntervalIndex<TInterval>();
-		this.endIntervalIndex = new EndpointIndex(client, helpers);
-		this.indexes = new Set([
-			this.overlappingIntervalsIndex,
-			this.idIntervalIndex,
-			this.endIntervalIndex,
-		]);
+		this.indexes = new Set([this.overlappingIntervalsIndex, this.idIntervalIndex]);
 	}
 
 	public createLegacyId(start: number | "start" | "end", end: number | "start" | "end"): string {
@@ -884,26 +876,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	[Symbol.iterator](): Iterator<TInterval>;
 
 	/**
-	 * @returns a forward iterator over all intervals in this collection with start point equal to `startPosition`.
-	 */
-	CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-
-	/**
-	 * @returns a backward iterator over all intervals in this collection with start point equal to `startPosition`.
-	 */
-	CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-
-	/**
-	 * @returns a forward iterator over all intervals in this collection with end point equal to `endPosition`.
-	 */
-	CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-
-	/**
-	 * @returns a backward iterator over all intervals in this collection with end point equal to `endPosition`.
-	 */
-	CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-
-	/**
 	 * Gathers iteration results that optionally match a start/end criteria into the provided array.
 	 * @param results - Array to gather the results into. In lieu of a return value, this array will be populated with
 	 * intervals matching the query upon edit.
@@ -922,10 +894,6 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * Applies a function to each interval in this collection.
 	 */
 	map(fn: (interval: TInterval) => void): void;
-
-	previousInterval(pos: number): TInterval | undefined;
-
-	nextInterval(pos: number): TInterval | undefined;
 }
 
 /**
@@ -1897,56 +1865,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	}
 
 	/**
-	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithStartPosition}
-	 */
-	public CreateForwardIteratorWithStartPosition(
-		startPosition: number,
-	): IntervalCollectionIterator<TInterval> {
-		const iterator = new IntervalCollectionIterator<TInterval>(this, true, startPosition);
-		return iterator;
-	}
-
-	/**
-	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithStartPosition}
-	 */
-	public CreateBackwardIteratorWithStartPosition(
-		startPosition: number,
-	): IntervalCollectionIterator<TInterval> {
-		const iterator = new IntervalCollectionIterator<TInterval>(this, false, startPosition);
-		return iterator;
-	}
-
-	/**
-	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithEndPosition}
-	 */
-	public CreateForwardIteratorWithEndPosition(
-		endPosition: number,
-	): IntervalCollectionIterator<TInterval> {
-		const iterator = new IntervalCollectionIterator<TInterval>(
-			this,
-			true,
-			undefined,
-			endPosition,
-		);
-		return iterator;
-	}
-
-	/**
-	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithEndPosition}
-	 */
-	public CreateBackwardIteratorWithEndPosition(
-		endPosition: number,
-	): IntervalCollectionIterator<TInterval> {
-		const iterator = new IntervalCollectionIterator<TInterval>(
-			this,
-			false,
-			undefined,
-			endPosition,
-		);
-		return iterator;
-	}
-
-	/**
 	 * {@inheritdoc IIntervalCollection.gatherIterationResults}
 	 */
 	public gatherIterationResults(
@@ -1978,28 +1896,6 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		for (const interval of this.localCollection.idIntervalIndex) {
 			fn(interval);
 		}
-	}
-
-	/**
-	 * {@inheritdoc IIntervalCollection.previousInterval}
-	 */
-	public previousInterval(pos: number): TInterval | undefined {
-		if (!this.localCollection) {
-			throw new LoggingError("attachSequence must be called");
-		}
-
-		return this.localCollection.endIntervalIndex.previousInterval(pos);
-	}
-
-	/**
-	 * {@inheritdoc IIntervalCollection.nextInterval}
-	 */
-	public nextInterval(pos: number): TInterval | undefined {
-		if (!this.localCollection) {
-			throw new LoggingError("attachSequence must be called");
-		}
-
-		return this.localCollection.endIntervalIndex.nextInterval(pos);
 	}
 }
 

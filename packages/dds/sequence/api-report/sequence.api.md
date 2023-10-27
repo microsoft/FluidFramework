@@ -150,23 +150,11 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     attachIndex(index: IntervalIndex<TInterval>): void;
     change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
     changeProperties(id: string, props: PropertySet): any;
-    // (undocumented)
-    CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
-    // (undocumented)
-    CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
     detachIndex(index: IntervalIndex<TInterval>): boolean;
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;
     map(fn: (interval: TInterval) => void): void;
-    // (undocumented)
-    nextInterval(pos: number): TInterval | undefined;
-    // (undocumented)
-    previousInterval(pos: number): TInterval | undefined;
     removeIntervalById(id: string): TInterval | undefined;
 }
 
