@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
-import { node, typeNameSymbol } from "../../../feature-libraries";
+import { ProxyNode, ProxyRoot, node, typeNameSymbol } from "../../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
 
 describe("SharedTree proxies", () => {
@@ -20,6 +20,7 @@ describe("SharedTree proxies", () => {
 	const parentSchema = sb.object("parent", {
 		struct: childSchema,
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
+		map: sb.map("map", sb.optional(sb.string)),
 	});
 
 	const schema = sb.intoSchema(parentSchema);
@@ -27,6 +28,10 @@ describe("SharedTree proxies", () => {
 	const initialTree = {
 		struct: { content: 42 },
 		list: [42, 42, 42],
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
 	};
 
 	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
@@ -41,7 +46,11 @@ describe("SharedTree proxies", () => {
 		assert.equal(listProxyAgain, listProxy);
 	});
 
-	// TODO: Test map proxy re-use when maps are implemented
+	itWithRoot("cache and reuse maps", schema, initialTree, (root) => {
+		const mapProxy = root.map;
+		const mapProxyAgain = root.map;
+		assert.equal(mapProxyAgain, mapProxy);
+	});
 });
 
 describe("SharedTreeObject", () => {
@@ -63,7 +72,7 @@ describe("SharedTreeObject", () => {
 		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],
-		// map: sb.map("map", sb.optional(leaf.string)), // TODO Test Maps
+		map: sb.map("map", sb.optional(sb.string)),
 		list: sb.list(numberChild),
 	});
 
@@ -75,6 +84,10 @@ describe("SharedTreeObject", () => {
 		polyValue: "42",
 		polyChild: { content: "42", [typeNameSymbol]: stringChild.name },
 		polyValueChild: { content: 42 },
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
 		list: [{ content: 42 }, { content: 42 }],
 	};
 
@@ -88,6 +101,13 @@ describe("SharedTreeObject", () => {
 		for (const x of root.list) {
 			assert.equal(x.content, 42);
 		}
+	});
+
+	itWithRoot("can read maps", schema, initialTree, (root) => {
+		assert.equal(root.map.size, 2);
+		assert.equal(root.map.get("foo"), "Hello");
+		assert.equal(root.map.get("bar"), "World");
+		assert.equal(root.map.get("baz"), undefined);
 	});
 
 	itWithRoot("can read fields common to all polymorphic types", schema, initialTree, (root) => {
@@ -181,19 +201,19 @@ describe("SharedTreeList", () => {
 			const schema = _.intoSchema(_.list(_.number));
 			const initialTree = [0, 1, 2, 3];
 
-			itWithRoot("moveToStart()", schema, initialTree, (list) => {
+			itWithRoot("moveRangeToStart()", schema, initialTree, (list) => {
 				assert.deepEqual(list, [0, 1, 2, 3]);
-				list.moveToStart(/* sourceStart: */ 1, /* sourceEnd: */ 3);
+				list.moveRangeToStart(/* sourceStart: */ 1, /* sourceEnd: */ 3);
 				assert.deepEqual(list, [1, 2, 0, 3]);
 			});
 
-			itWithRoot("moveToEnd()", schema, initialTree, (list) => {
+			itWithRoot("moveRangeToEnd()", schema, initialTree, (list) => {
 				assert.deepEqual(list, [0, 1, 2, 3]);
-				list.moveToEnd(/* sourceStart: */ 1, /* sourceEnd: */ 3);
+				list.moveRangeToEnd(/* sourceStart: */ 1, /* sourceEnd: */ 3);
 				assert.deepEqual(list, [0, 3, 1, 2]);
 			});
 
-			describe("moveToIndex()", () => {
+			describe("moveRangeToIndex()", () => {
 				function check(index: number, start: number, end: number) {
 					const expected = initialTree.slice(0);
 					// Remove the moved items from [start..end).
@@ -219,7 +239,7 @@ describe("SharedTreeList", () => {
 						initialTree,
 						(list) => {
 							assert.deepEqual(list, initialTree);
-							list.moveToIndex(index, start, end);
+							list.moveRangeToIndex(index, start, end);
 							assert.deepEqual(list, expected);
 						},
 					);
@@ -253,29 +273,171 @@ describe("SharedTreeList", () => {
 				listB: ["b0", "b1"],
 			};
 
-			itWithRoot("moveToStart()", schema, initialTree, ({ listA, listB }) => {
+			itWithRoot("moveRangeToStart()", schema, initialTree, ({ listA, listB }) => {
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
-				listB.moveToStart(/* sourceStart: */ 0, /* sourceEnd: */ 1, listA);
+				listB.moveRangeToStart(/* sourceStart: */ 0, /* sourceEnd: */ 1, listA);
 				assert.deepEqual(listA, ["a1"]);
 				assert.deepEqual(listB, ["a0", "b0", "b1"]);
 			});
 
-			itWithRoot("moveToEnd()", schema, initialTree, ({ listA, listB }) => {
+			itWithRoot("moveRangeToEnd()", schema, initialTree, ({ listA, listB }) => {
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
-				listB.moveToEnd(/* sourceStart: */ 0, /* sourceEnd: */ 1, listA);
+				listB.moveRangeToEnd(/* sourceStart: */ 0, /* sourceEnd: */ 1, listA);
 				assert.deepEqual(listA, ["a1"]);
 				assert.deepEqual(listB, ["b0", "b1", "a0"]);
 			});
 
-			itWithRoot("moveToIndex()", schema, initialTree, ({ listA, listB }) => {
+			itWithRoot("moveRangeToIndex()", schema, initialTree, ({ listA, listB }) => {
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
-				listB.moveToIndex(/* index: */ 1, /* sourceStart: */ 0, /* sourceEnd: */ 1, listA);
+				listB.moveRangeToIndex(
+					/* index: */ 1,
+					/* sourceStart: */ 0,
+					/* sourceEnd: */ 1,
+					listA,
+				);
 				assert.deepEqual(listA, ["a1"]);
 				assert.deepEqual(listB, ["b0", "a0", "b1"]);
 			});
 		});
+
+		describe("between lists with overlapping types", () => {
+			const _ = new SchemaBuilder({
+				scope: "test",
+			});
+
+			const listA = _.list([_.string, _.number]);
+			const listB = _.list([_.number, _.boolean]);
+
+			const objectSchema = _.object("parent", {
+				listA,
+				listB,
+			});
+
+			const schema = _.intoSchema(objectSchema);
+
+			const initialTree = {
+				listA: ["a", 1],
+				listB: [2, true],
+			};
+
+			/** This function returns a union of both listA and listB, which exercises more interesting compile type-checking cases */
+			function getEitherList(
+				root: ProxyRoot<typeof schema>,
+				list: "a" | "b",
+			): ProxyNode<typeof listA> | ProxyNode<typeof listB> {
+				return list === "a" ? root.listA : root.listB;
+			}
+
+			itWithRoot("moveRangeToStart()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveRangeToStart(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [1, 2, true]);
+				list1.moveRangeToStart(/* sourceStart: */ 0, /* sourceEnd: */ 2, list2);
+				assert.deepEqual(list1, [1, 2, "a"]);
+				assert.deepEqual(list2, [true]);
+			});
+
+			itWithRoot("moveRangeToEnd()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveRangeToEnd(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [2, true, 1]);
+				list1.moveRangeToEnd(/* sourceStart: */ 0, /* sourceEnd: */ 1, list2);
+				assert.deepEqual(list1, ["a", 2]);
+				assert.deepEqual(list2, [true, 1]);
+			});
+
+			itWithRoot("moveRangeToIndex()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveRangeToIndex(
+					/* index: */ 1,
+					/* sourceStart: */ 1,
+					/* sourceEnd: */ 2,
+					list1,
+				);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [2, 1, true]);
+				list1.moveRangeToIndex(
+					/* index: */ 0,
+					/* sourceStart: */ 0,
+					/* sourceEnd: */ 2,
+					list2,
+				);
+				assert.deepEqual(list1, [2, 1, "a"]);
+				assert.deepEqual(list2, [true]);
+			});
+
+			itWithRoot("fails if incompatible type", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				assert.throws(() =>
+					list2.moveRangeToIndex(
+						/* index: */ 0,
+						/* sourceStart: */ 0,
+						/* sourceEnd: */ 1,
+						list1,
+					),
+				);
+			});
+		});
+	});
+});
+
+describe("SharedTreeMap", () => {
+	const sb = new SchemaBuilder({
+		scope: "test",
+	});
+
+	const rootSchema = sb.object("parent", {
+		map: sb.map("map", sb.optional(sb.string)),
+	});
+
+	const schema = sb.intoSchema(rootSchema);
+
+	const initialTree = {
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
+	};
+
+	itWithRoot("entries", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.entries()), [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
+	itWithRoot("keys", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.keys()), ["foo", "bar"]);
+	});
+
+	itWithRoot("values", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.values()), ["Hello", "World"]);
+	});
+
+	itWithRoot("iteration", schema, initialTree, (root) => {
+		const result = [];
+		for (const entry of root.map) {
+			result.push(entry);
+		}
+
+		assert.deepEqual(result, [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
+	itWithRoot("has", schema, initialTree, (root) => {
+		assert.equal(root.map.has("foo"), true);
+		assert.equal(root.map.has("bar"), true);
+		assert.equal(root.map.has("baz"), false);
 	});
 });

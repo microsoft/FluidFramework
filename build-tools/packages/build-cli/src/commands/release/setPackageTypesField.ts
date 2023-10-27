@@ -123,7 +123,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 
 		if (this.packageList.packagesUpdated.length === 0) {
 			this.errorLog(`No updates in package.json for ${this.flags.types} release tag`);
-			this.exit();
+			this.exit(1);
 		}
 
 		return this.packageList;

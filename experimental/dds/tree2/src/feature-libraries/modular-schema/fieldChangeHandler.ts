@@ -206,7 +206,7 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
  */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
-	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 }
 
 /**
@@ -216,5 +216,5 @@ export function getIntention(
 	rev: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
+	return revisionMetadata.tryGetInfo(rev)?.rollbackOf ?? rev;
 }
