@@ -125,8 +125,24 @@ export class FaultInjectionDocumentService implements IDocumentService {
 		);
 		const internal = await this.internal.connectToDeltaStream(client);
 
-		// this method is not expected to resolve until connected
-		await this.onlineP.promise;
+		const timeoutRaceId = 1001;
+		const timeoutP = new Promise<number>((resolve) => {
+			setTimeout(() => {
+				resolve(timeoutRaceId);
+			}, 30000);
+		});
+		const res = await Promise.race([
+			timeoutP,
+			// this method is not expected to resolve until connected or the timeout happens
+			this.onlineP.promise,
+		]);
+		if (res === timeoutRaceId) {
+			internal.dispose();
+			throwOfflineError();
+		}
+
+		// // this method is not expected to resolve until connected
+		// await this.onlineP.promise;
 		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal, this.online);
 		return this._currentDeltaStream;
 	}
