@@ -28,10 +28,10 @@ export class Interval implements ISerializableInterval {
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
 	public properties: PropertySet = createMap<any>();
-	
+
 	/** @internal */
 	public auxProps: PropertySet[] | undefined;
-	
+
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 * @internal
