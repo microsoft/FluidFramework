@@ -590,7 +590,7 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 			return Reflect.has(dispatch, key);
 		},
 		set: (target, key, newValue): boolean => {
-			// For MVP, we otherwise disallow setting properties (mutation is only available via the map mutation APIs).
+			// There aren't any `set` opperations appropriate for maps.
 			return false;
 		},
 		ownKeys: (target) => {
