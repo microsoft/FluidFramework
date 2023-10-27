@@ -246,13 +246,32 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 
 	if (state.mostRecentEdit !== undefined) {
 		const undoIntention = mintIntention();
+		// const inverseChangeset = invert(state.mostRecentEdit.changeset);
+		// We don't use the `invert` helper here, as `TestChange.invert` has logic to negate the intention
+		// of the most recent edit. Instead, we want to mint a new intention. Having correct composition for
+		// the 'negate' operation is already tested via sandwich rebasing.
+		const invertTestChangeViaNewIntention = (change: TestChange): TestChange => {
+			if ("inputContext" in change) {
+				return {
+					inputContext: change.outputContext,
+					outputContext: [...change.outputContext, undoIntention],
+					intentions: [undoIntention],
+				};
+			}
+			return TestChange.emptyChange;
+		};
+
+		const inverseChangeset = optionalChangeRebaser.invert(
+			state.mostRecentEdit.changeset,
+			invertTestChangeViaNewIntention as any,
+			// Optional fields should not generate IDs during invert
+			fakeIdAllocator,
+			failCrossFieldManager,
+		);
 		yield {
 			content: state.parent?.content,
 			mostRecentEdit: {
-				changeset: tagChange(
-					invert(state.mostRecentEdit.changeset),
-					tagFromIntention(undoIntention),
-				),
+				changeset: tagChange(inverseChangeset, tagFromIntention(undoIntention)),
 				intention: undoIntention,
 				description: `Undo:${state.mostRecentEdit.description}`,
 			},

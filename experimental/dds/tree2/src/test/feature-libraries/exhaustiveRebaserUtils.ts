@@ -123,7 +123,7 @@ function* depthFirstWalk<TContent, TChangeset>(
 }
 
 function makeIntentionMinter(): () => number {
-	let intent = 0;
+	let intent = 1;
 	return () => intent++;
 }
 

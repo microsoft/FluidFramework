@@ -41,7 +41,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	// - Rebasing a single edit over N sequential edits
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
-	const numberOfEditsToRebaseOver = 2;
+	const numberOfEditsToRebaseOver = 4;
 	const numberOfEditsToRebase = numberOfEditsToRebaseOver;
 
 	describe.skip("Rebase over compose", () => {
@@ -64,6 +64,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						const title = `Rebase ${name} over compose ${JSON.stringify(
 							namedEditsToRebaseOver.map(({ description }) => description),
 						)}`;
+
+						// if (title !== 'Rebase ChildChange1 over compose ["Delete","SetB,1"]') {
+						// 	continue;
+						// }
 
 						it(title, () => {
 							const editsToRebaseOver = namedEditsToRebaseOver.map(
@@ -90,7 +94,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		}
 	});
 
-	describe("Composed sandwich rebase over single edit", () => {
+	describe.only("Composed sandwich rebase over single edit", () => {
 		for (const initialState of initialStates) {
 			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
@@ -110,6 +114,22 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						const title = `Rebase ${JSON.stringify(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
+
+						// This test case motivates compose dropping changes with no associated revision
+						// (though not totally convinced that change is good)
+						// if (
+						// 	title !==
+						// 	'Rebase ["ChildChange1","ChildChange2","ChildChange3"] over Delete'
+						// ) {
+						// 	continue;
+						// }
+
+						// if (
+						// 	title !==
+						// 	'Rebase ["ChildChange1","Undo:ChildChange1","ChildChange25"] over Delete'
+						// ) {
+						// 	continue;
+						// }
 
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;

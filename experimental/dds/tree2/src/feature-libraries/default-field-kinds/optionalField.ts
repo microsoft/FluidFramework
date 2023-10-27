@@ -204,10 +204,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 				// Node was changed by this revision: flush the current changes
 				if (currentChildNodeChanges.length > 0) {
-					addChildChange(
-						{ revision, localId: change.fieldChange.id },
-						...currentChildNodeChanges,
-					);
+					// TODO: is this legit? Rationale is composed changes won't have a revision. Realistically we want something more like 'revision of first field set within this composed change'.
+					if (revision !== undefined) {
+						addChildChange(
+							{ revision, localId: change.fieldChange.id },
+							...currentChildNodeChanges,
+						);
+					}
 					currentChildNodeChanges = [];
 				}
 
@@ -349,6 +352,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			for (const [id, childChange] of change.childChanges) {
 				if (id === "self") {
+					// Rationale: when rebasing over a composition, changes to "self" should be rebased over the aggregate changes
+					// to the first removal. This assumes the list is ordered, which needs review.
+					// const overChildChange = overChildChanges.get(id) ?? over.childChanges?.[0][1];
 					const overChildChange = overChildChanges.get(id);
 					if (over.fieldChange !== undefined) {
 						// `childChange` refers to the node existing in this field before rebasing, but
