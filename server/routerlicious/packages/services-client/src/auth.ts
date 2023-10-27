@@ -32,7 +32,7 @@ export function validateTokenClaims(
 		);
 	}
 
-	if (!claims.scopes?.length) {
+	if (!(claims.scopes?.length)) {
 		throw new NetworkError(403, "Missing scopes in token claims");
 	}
 
