@@ -298,6 +298,46 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			getSequenceField(this).removeRange(start, end);
 		},
 	},
+	moveToStart: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			sourceIndex: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
+			} else {
+				getSequenceField(this).moveToStart(sourceIndex);
+			}
+		},
+	},
+	moveToEnd: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			sourceIndex: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
+			} else {
+				getSequenceField(this).moveToEnd(sourceIndex);
+			}
+		},
+	},
+	moveToIndex: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			index: number,
+			sourceIndex: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
+			} else {
+				getSequenceField(this).moveToIndex(index, sourceIndex);
+			}
+		},
+	},
 	moveRangeToStart: {
 		value(
 			this: SharedTreeList<AllowedTypes, "javaScript">,
