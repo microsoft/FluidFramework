@@ -164,9 +164,9 @@ For example:
 				"@fluidframework/merge-tree#build:test" // Overrides default, depends only on "build:test" task
 				// in dependent package "@fluidframework/merge-tree"
 			],
-         "copy:docs": [
-            "after": [ "build:docs" ]                   // if "build:docs" is trigger, "copy:docs" only run after it
-         ],
+			"copy:docs": [
+				"after": [ "build:docs" ] // if "build:docs" is triggered, "copy:docs" only run after it
+			],
 			"webpack": ["^tsc"] // Depends on `tsc` task of all of the dependent packages
 			// (if the task exists)
 		}

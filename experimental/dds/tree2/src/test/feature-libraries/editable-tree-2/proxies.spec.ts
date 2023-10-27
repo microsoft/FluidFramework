@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
-import { node, typeNameSymbol } from "../../../feature-libraries";
+import { ProxyNode, ProxyRoot, node, typeNameSymbol } from "../../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
 
 describe("SharedTree proxies", () => {
@@ -20,6 +20,7 @@ describe("SharedTree proxies", () => {
 	const parentSchema = sb.object("parent", {
 		struct: childSchema,
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
+		map: sb.map("map", sb.optional(sb.string)),
 	});
 
 	const schema = sb.intoSchema(parentSchema);
@@ -27,6 +28,10 @@ describe("SharedTree proxies", () => {
 	const initialTree = {
 		struct: { content: 42 },
 		list: [42, 42, 42],
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
 	};
 
 	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
@@ -41,7 +46,11 @@ describe("SharedTree proxies", () => {
 		assert.equal(listProxyAgain, listProxy);
 	});
 
-	// TODO: Test map proxy re-use when maps are implemented
+	itWithRoot("cache and reuse maps", schema, initialTree, (root) => {
+		const mapProxy = root.map;
+		const mapProxyAgain = root.map;
+		assert.equal(mapProxyAgain, mapProxy);
+	});
 });
 
 describe("SharedTreeObject", () => {
@@ -63,7 +72,7 @@ describe("SharedTreeObject", () => {
 		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],
-		// map: sb.map("map", sb.optional(leaf.string)), // TODO Test Maps
+		map: sb.map("map", sb.optional(sb.string)),
 		list: sb.list(numberChild),
 	});
 
@@ -75,6 +84,10 @@ describe("SharedTreeObject", () => {
 		polyValue: "42",
 		polyChild: { content: "42", [typeNameSymbol]: stringChild.name },
 		polyValueChild: { content: 42 },
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
 		list: [{ content: 42 }, { content: 42 }],
 	};
 
@@ -88,6 +101,13 @@ describe("SharedTreeObject", () => {
 		for (const x of root.list) {
 			assert.equal(x.content, 42);
 		}
+	});
+
+	itWithRoot("can read maps", schema, initialTree, (root) => {
+		assert.equal(root.map.size, 2);
+		assert.equal(root.map.get("foo"), "Hello");
+		assert.equal(root.map.get("bar"), "World");
+		assert.equal(root.map.get("baz"), undefined);
 	});
 
 	itWithRoot("can read fields common to all polymorphic types", schema, initialTree, (root) => {
@@ -277,5 +297,131 @@ describe("SharedTreeList", () => {
 				assert.deepEqual(listB, ["b0", "a0", "b1"]);
 			});
 		});
+
+		describe("between lists with overlapping types", () => {
+			const _ = new SchemaBuilder({
+				scope: "test",
+			});
+
+			const listA = _.list([_.string, _.number]);
+			const listB = _.list([_.number, _.boolean]);
+
+			const objectSchema = _.object("parent", {
+				listA,
+				listB,
+			});
+
+			const schema = _.intoSchema(objectSchema);
+
+			const initialTree = {
+				listA: ["a", 1],
+				listB: [2, true],
+			};
+
+			function getEitherList(
+				root: ProxyRoot<typeof schema>,
+				list: "a" | "b",
+			): ProxyNode<typeof listA> | ProxyNode<typeof listB> {
+				return list === "a" ? root.listA : root.listB;
+			}
+
+			itWithRoot("moveToStart()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveToStart(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [1, 2, true]);
+				list1.moveToStart(/* sourceStart: */ 0, /* sourceEnd: */ 2, list2);
+				assert.deepEqual(list1, [1, 2, "a"]);
+				assert.deepEqual(list2, [true]);
+			});
+
+			itWithRoot("moveToEnd()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveToEnd(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [2, true, 1]);
+				list1.moveToEnd(/* sourceStart: */ 0, /* sourceEnd: */ 1, list2);
+				assert.deepEqual(list1, ["a", 2]);
+				assert.deepEqual(list2, [true, 1]);
+			});
+
+			itWithRoot("moveToIndex()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveToIndex(/* index: */ 1, /* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [2, 1, true]);
+				list1.moveToIndex(/* index: */ 0, /* sourceStart: */ 0, /* sourceEnd: */ 2, list2);
+				assert.deepEqual(list1, [2, 1, "a"]);
+				assert.deepEqual(list2, [true]);
+			});
+
+			itWithRoot("fails if incompatible type", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				assert.throws(() =>
+					list2.moveToIndex(
+						/* index: */ 0,
+						/* sourceStart: */ 0,
+						/* sourceEnd: */ 1,
+						list1,
+					),
+				);
+			});
+		});
+	});
+});
+
+describe("SharedTreeMap", () => {
+	const sb = new SchemaBuilder({
+		scope: "test",
+	});
+
+	const rootSchema = sb.object("parent", {
+		map: sb.map("map", sb.optional(sb.string)),
+	});
+
+	const schema = sb.intoSchema(rootSchema);
+
+	const initialTree = {
+		map: new Map([
+			["foo", "Hello"],
+			["bar", "World"],
+		]),
+	};
+
+	itWithRoot("entries", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.entries()), [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
+	itWithRoot("keys", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.keys()), ["foo", "bar"]);
+	});
+
+	itWithRoot("values", schema, initialTree, (root) => {
+		assert.deepEqual(Array.from(root.map.values()), ["Hello", "World"]);
+	});
+
+	itWithRoot("iteration", schema, initialTree, (root) => {
+		const result = [];
+		for (const entry of root.map) {
+			result.push(entry);
+		}
+
+		assert.deepEqual(result, [
+			["foo", "Hello"],
+			["bar", "World"],
+		]);
+	});
+
+	itWithRoot("has", schema, initialTree, (root) => {
+		assert.equal(root.map.has("foo"), true);
+		assert.equal(root.map.has("bar"), true);
+		assert.equal(root.map.has("baz"), false);
 	});
 });

@@ -23,7 +23,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:copy", "build:test"],
+			dependsOn: ["commonjs", "build:esnext", "build:copy", "build:test", "build:artifacts"],
 			script: false,
 		},
 		"commonjs": {
@@ -34,6 +34,18 @@ module.exports = {
 			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
 			script: false,
 		},
+		"checks": {
+			dependsOn: ["prettier"],
+			script: false,
+		},
+		"checks:fix": {
+			dependsOn: ["^checks:fix"],
+			script: false,
+		},
+		"build:artifacts": {
+			dependsOn: ["build:manifest", "build:readme", "build:copy"],
+			script: false,
+		},
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
@@ -42,10 +54,16 @@ module.exports = {
 		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"build:readme": {
+			dependsOn: ["build:manifest"],
+			script: true,
+		},
+		"build:manifest": ["tsc"],
 		"depcruise": [],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
+		"prettier:fix": [],
 		"webpack": ["^tsc", "^build:esnext"],
 		"webpack:profile": ["^tsc", "^build:esnext"],
 		"clean": {
@@ -181,6 +199,27 @@ module.exports = {
 				"^server/",
 				"^tools/",
 			],
+			"npm-package-json-clean-script": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"tools/getkeys/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			"npm-strange-package-name": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
+			],
+			"npm-package-readmes": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
+			],
+			"npm-package-folder-name": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
+			],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -240,6 +279,7 @@ module.exports = {
 				["fluid-build", "@fluidframework/build-tools"],
 				["depcruise", "dependency-cruiser"],
 				["copyfiles", "copyfiles"],
+				["oclif", "oclif"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
