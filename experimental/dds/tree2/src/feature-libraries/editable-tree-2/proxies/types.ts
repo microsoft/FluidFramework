@@ -42,28 +42,26 @@ export interface SharedTreeList<
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
 	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
 	 */
 	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
 	 */
 	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
 	 * Removes the item at the specified location.
 	 * @param index - The index at which to remove the item.
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
 	removeAt(index: number): void;
 
@@ -71,7 +69,7 @@ export interface SharedTreeList<
 	 * Removes all items between the specified indices.
 	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the list.
 	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if `start` is not in the range [0, `list.length`).
 	 * If `end` is not supplied or is greater than the length of the list, all items after `start` are deleted.
 	 */
 	removeRange(start?: number, end?: number): void;

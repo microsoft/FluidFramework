@@ -593,7 +593,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * Removes all items between the specified indices.
 	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the sequence.
 	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 * @throws Throws if `start` is not in the range [0, `list.length`).
 	 * If `end` is not supplied or is greater than the length of the sequence, all items after `start` are deleted.
 	 */
 	removeRange(start?: number, end?: number): void;
