@@ -75,9 +75,11 @@ describe("editable-tree: node keys", () => {
 	it("can read local node keys", () => {
 		const { view, parentKey, childAKey, childBKey } = initializeView();
 		const parentNode = view.content;
-		// We know how the test tree looks and thus that these accesses won't return undefined.
-		const childA = parentNode.children.at(0)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-		const childB = parentNode.children.at(1)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+		const childA = parentNode.children.at(0);
+		const childB = parentNode.children.at(1);
+		// We know how the test tree looks so these should not be undefined.
+		assert(childA !== undefined, "Tried to access node that doesn't exist (index 0)");
+		assert(childB !== undefined, "Tried to access node that doesn't exist (index 1)");
 		assert.equal(parentNode.localNodeKey, parentKey);
 		assert.equal(childA.localNodeKey, childAKey);
 		assert.equal(childB.localNodeKey, childBKey);
@@ -86,9 +88,11 @@ describe("editable-tree: node keys", () => {
 	it("can read stable node keys", async () => {
 		const { view, parentKey, childAKey, childBKey } = initializeView();
 		const parentNode = view.content;
-		// We know how the test tree looks and thus that these accesses won't return undefined.
-		const childA = parentNode.children.at(0)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
-		const childB = parentNode.children.at(1)!; // eslint-disable-line @typescript-eslint/no-non-null-assertion
+		const childA = parentNode.children.at(0);
+		const childB = parentNode.children.at(1);
+		// We know how the test tree looks so these should not be undefined.
+		assert(childA !== undefined, "Tried to access node that doesn't exist (index 0)");
+		assert(childB !== undefined, "Tried to access node that doesn't exist (index 1)");
 		assert.equal(
 			parentNode[nodeKeyFieldKey].stableNodeKey,
 			view.context.nodeKeys.stabilize(parentKey),
