@@ -31,15 +31,11 @@ export {
 	stableGCVersion,
 	disableAttachmentBlobSweepKey,
 	disableDatastoreSweepKey,
-	throwOnTombstoneLoadKey,
-	throwOnTombstoneUsageKey,
 	UnreferencedState,
 } from "./gcDefinitions";
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
-	shouldAllowGcTombstoneEnforcement,
-	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
 } from "./gcHelpers";

@@ -9,9 +9,8 @@ import {
 	IdAllocator,
 	NestedMap,
 	brand,
-	decodeNestedMap,
 	deleteFromNestedMap,
-	encodeNestedMap,
+	forEachInNestedMap,
 	idAllocatorFromMaxId,
 	populateNestedMap,
 	setInNestedMap,
@@ -28,11 +27,6 @@ import * as Delta from "./delta";
  */
 export type ForestRootId = Brand<number, "tree.ForestRootId">;
 
-export interface Entry {
-	field: FieldKey;
-	root: ForestRootId;
-}
-
 type Major = string | number | undefined;
 type Minor = number;
 
@@ -41,7 +35,7 @@ type Minor = number;
  */
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
-	private detachedNodeToField: NestedMap<Major, Minor, Entry> = new Map();
+	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
 
 	/**
 	 * @param name - A name for the index, used as a prefix for the generated field keys.
@@ -53,20 +47,23 @@ export class DetachedFieldIndex {
 	) {}
 
 	public clone(): DetachedFieldIndex {
-		const clone = new DetachedFieldIndex(this.name, this.rootIdAllocator);
+		const clone = new DetachedFieldIndex(
+			this.name,
+			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
+		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
 		return clone;
 	}
 
-	public *entries(): Generator<Entry & { id: Delta.DetachedNodeId }> {
+	public *entries(): Generator<{ root: ForestRootId } & { id: Delta.DetachedNodeId }> {
 		for (const [major, innerMap] of this.detachedNodeToField) {
 			if (major !== undefined) {
 				for (const [minor, entry] of innerMap) {
-					yield { id: { major, minor }, ...entry };
+					yield { id: { major, minor }, root: entry };
 				}
 			} else {
 				for (const [minor, entry] of innerMap) {
-					yield { id: { minor }, ...entry };
+					yield { id: { minor }, root: entry };
 				}
 			}
 		}
@@ -93,7 +90,7 @@ export class DetachedFieldIndex {
 
 	/**
 	 * Returns a field key for the given ID.
-	 * This does not save the field key on the index. To do so, call {@link getOrCreateEntry}.
+	 * This does not save the field key on the index. To do so, call {@link createEntry}.
 	 */
 	public toFieldKey(id: ForestRootId): FieldKey {
 		return brand(`${this.name}-${id}`);
@@ -103,7 +100,7 @@ export class DetachedFieldIndex {
 	 * Returns the FieldKey associated with the given id.
 	 * Returns undefined if no such id is known to the index.
 	 */
-	public tryGetEntry(id: Delta.DetachedNodeId): Entry | undefined {
+	public tryGetEntry(id: Delta.DetachedNodeId): ForestRootId | undefined {
 		return tryGetFromNestedMap(this.detachedNodeToField, id.major, id.minor);
 	}
 
@@ -111,18 +108,10 @@ export class DetachedFieldIndex {
 	 * Returns the FieldKey associated with the given id.
 	 * Fails if no such id is known to the index.
 	 */
-	public getEntry(id: Delta.DetachedNodeId): Entry {
+	public getEntry(id: Delta.DetachedNodeId): ForestRootId {
 		const key = this.tryGetEntry(id);
 		assert(key !== undefined, 0x7aa /* Unknown removed node ID */);
 		return key;
-	}
-
-	/**
-	 * Retrieves the associated ForestRootId if any.
-	 * Otherwise, allocates a new one and associates it with the given DetachedNodeId.
-	 */
-	public getOrCreateEntry(nodeId: Delta.DetachedNodeId, count: number = 1): Entry {
-		return this.tryGetEntry(nodeId) ?? this.createEntry(nodeId);
 	}
 
 	public deleteEntry(nodeId: Delta.DetachedNodeId): void {
@@ -133,22 +122,31 @@ export class DetachedFieldIndex {
 	/**
 	 * Associates the DetachedNodeId with a field key and creates an entry for it in the index.
 	 */
-	public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): Entry {
+	public createEntry(nodeId?: Delta.DetachedNodeId, count: number = 1): ForestRootId {
 		const root = this.rootIdAllocator.allocate(count);
-		const field = this.toFieldKey(root);
-		const entry = { field, root };
-
 		if (nodeId !== undefined) {
 			for (let i = 0; i < count; i++) {
-				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, entry);
+				assert(
+					tryGetFromNestedMap(
+						this.detachedNodeToField,
+						nodeId.major,
+						nodeId.minor + i,
+					) === undefined,
+					"Detached node ID already exists in index",
+				);
+				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
 			}
 		}
-		return entry;
+		return root;
 	}
 
 	public encode(): string {
+		const data: [Major, Minor, ForestRootId][] = [];
+		forEachInNestedMap(this.detachedNodeToField, (root, key1, key2) => {
+			data.push([key1, key2, root]);
+		});
 		return JSON.stringify({
-			data: encodeNestedMap(this.detachedNodeToField),
+			data,
 			id: this.rootIdAllocator.getNextId(),
 		});
 	}
@@ -157,8 +155,13 @@ export class DetachedFieldIndex {
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: string): void {
-		const detachedFieldIndex: { data: string; id: number } = JSON.parse(data);
-		this.detachedNodeToField = decodeNestedMap(detachedFieldIndex.data);
+		const detachedFieldIndex: { data: readonly [Major, Minor, ForestRootId][]; id: number } =
+			JSON.parse(data);
+		const map = new Map();
+		for (const [major, minor, root] of detachedFieldIndex.data) {
+			setInNestedMap(map, major, minor, root);
+		}
+		this.detachedNodeToField = map;
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.id,
 		) as IdAllocator<ForestRootId>;

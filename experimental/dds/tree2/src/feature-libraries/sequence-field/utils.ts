@@ -4,7 +4,13 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
-import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
+import {
+	ChangeAtomId,
+	ChangesetLocalId,
+	RevisionTag,
+	TaggedChange,
+	areEqualChangeAtomIds,
+} from "../../core";
 import { brand, fail, getFirstFromRangeMap, getOrAddEmptyToMap, RangeMap } from "../../util";
 import {
 	addCrossFieldQuery,
@@ -87,9 +93,7 @@ export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): b
 	if (a === undefined || b === undefined) {
 		return a === b;
 	}
-	return (
-		a.localId === b.localId && a.revision === b.revision && areSameLineage(a.lineage, b.lineage)
-	);
+	return areEqualChangeAtomIds(a, b) && areSameLineage(a.lineage, b.lineage);
 }
 
 export function getInputCellId(

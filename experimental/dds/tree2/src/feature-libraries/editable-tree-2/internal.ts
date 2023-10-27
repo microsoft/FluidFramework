@@ -9,7 +9,7 @@ export {
 	TypedFieldInner,
 	UnboxFieldInner,
 	TypeArrayToTypedTreeArray,
-	StructFields,
+	ObjectNodeFields,
 	UnboxField,
 	UnboxNode,
 	UnboxNodeUnion,

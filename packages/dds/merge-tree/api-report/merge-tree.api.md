@@ -119,11 +119,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
-    // @deprecated (undocumented)
-    findTile(startPos: number, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
     // (undocumented)
     getClientId(): number;
     // (undocumented)
@@ -558,12 +553,8 @@ export interface IMoveInfo {
 export interface InsertContext {
     // (undocumented)
     candidateSegment?: ISegment;
-    // Warning: (ae-forgotten-export) The symbol "IMergeBlock" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
-    // Warning: (ae-forgotten-export) The symbol "ISegmentChanges" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
     // (undocumented)
@@ -692,8 +683,6 @@ export class LocalReferenceCollection {
     get empty(): boolean;
     // @internal
     has(lref: ReferencePosition): boolean;
-    // @internal
-    hierRefCount: number;
     // @internal (undocumented)
     isAfterTombstone(lref: LocalReferencePosition): boolean;
     // @internal (undocumented)
@@ -1034,8 +1023,6 @@ export interface SegmentGroup {
     previousProps?: PropertySet[];
     // (undocumented)
     refSeq: number;
-    // Warning: (ae-forgotten-export) The symbol "ISegmentLeaf" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     segments: ISegmentLeaf[];
 }

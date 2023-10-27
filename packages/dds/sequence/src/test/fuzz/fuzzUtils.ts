@@ -143,31 +143,31 @@ export interface IntervalOperationGenerationConfig extends SharedStringOperation
 }
 
 export const defaultSharedStringOperationGenerationConfig: Required<SharedStringOperationGenerationConfig> =
-{
-	maxStringLength: 1000,
-	maxInsertLength: 10,
-	weights: {
-		addText: 2,
-		removeRange: 1,
-		obliterateRange: 1,
-	},
-};
+	{
+		maxStringLength: 1000,
+		maxInsertLength: 10,
+		weights: {
+			addText: 2,
+			removeRange: 1,
+			obliterateRange: 1,
+		},
+	};
 export const defaultIntervalOperationGenerationConfig: Required<IntervalOperationGenerationConfig> =
-{
-	...defaultSharedStringOperationGenerationConfig,
-	maxIntervals: 100,
-	intervalCollectionNamePool: ["comments"],
-	propertyNamePool: ["prop1", "prop2", "prop3"],
-	validateInterval: 100,
-	weights: {
-		...defaultSharedStringOperationGenerationConfig.weights,
-		revertWeight: 2,
-		addInterval: 2,
-		deleteInterval: 2,
-		changeInterval: 2,
-		changeProperties: 2,
-	},
-};
+	{
+		...defaultSharedStringOperationGenerationConfig,
+		maxIntervals: 100,
+		intervalCollectionNamePool: ["comments"],
+		propertyNamePool: ["prop1", "prop2", "prop3"],
+		validateInterval: 100,
+		weights: {
+			...defaultSharedStringOperationGenerationConfig.weights,
+			revertWeight: 2,
+			addInterval: 2,
+			deleteInterval: 2,
+			changeInterval: 2,
+			changeProperties: 2,
+		},
+	};
 
 export interface LoggingInfo {
 	/** id of the interval to track over time */
@@ -209,14 +209,14 @@ export function makeReducer(
 ): Reducer<Operation | RevertOperation, ClientOpState> {
 	const withLogging =
 		<T>(baseReducer: Reducer<T, ClientOpState>): Reducer<T, ClientOpState> =>
-			async (state, operation) => {
-				if (loggingInfo !== undefined) {
-					logCurrentState(state, loggingInfo);
-					console.log("-".repeat(20));
-					console.log("Next operation:", JSON.stringify(operation, undefined, 4));
-				}
-				await baseReducer(state, operation);
-			};
+		async (state, operation) => {
+			if (loggingInfo !== undefined) {
+				logCurrentState(state, loggingInfo);
+				console.log("-".repeat(20));
+				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
+			}
+			await baseReducer(state, operation);
+		};
 
 	const reducer = combineReducers<Operation | RevertOperation, ClientOpState>({
 		addText: async ({ client }, { index, content }) => {
@@ -311,8 +311,8 @@ export function createSharedStringGeneratorOperations(
 
 	const lengthSatisfies =
 		(criteria: (length: number) => boolean): AcceptanceCondition<ClientOpState> =>
-			({ client }) =>
-				criteria(client.channel.getLength());
+		({ client }) =>
+			criteria(client.channel.getLength());
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
 	const isShorterThanMaxLength = lengthSatisfies((length) => length < options.maxStringLength);
 

@@ -55,6 +55,7 @@ declare function get_old_ClassDeclaration_CheckpointService():
 declare function use_current_ClassDeclaration_CheckpointService(
     use: TypeOnly<current.CheckpointService>);
 use_current_ClassDeclaration_CheckpointService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_CheckpointService());
 
 /*
@@ -67,6 +68,7 @@ declare function get_current_ClassDeclaration_CheckpointService():
 declare function use_old_ClassDeclaration_CheckpointService(
     use: TypeOnly<old.CheckpointService>);
 use_old_ClassDeclaration_CheckpointService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_CheckpointService());
 
 /*
@@ -464,6 +466,7 @@ declare function get_old_InterfaceDeclaration_ICheckpointService():
 declare function use_current_InterfaceDeclaration_ICheckpointService(
     use: TypeOnly<current.ICheckpointService>);
 use_current_InterfaceDeclaration_ICheckpointService(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ICheckpointService());
 
 /*
@@ -476,6 +479,7 @@ declare function get_current_InterfaceDeclaration_ICheckpointService():
 declare function use_old_InterfaceDeclaration_ICheckpointService(
     use: TypeOnly<old.ICheckpointService>);
 use_old_InterfaceDeclaration_ICheckpointService(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ICheckpointService());
 
 /*

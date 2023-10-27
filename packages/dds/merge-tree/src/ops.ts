@@ -9,7 +9,7 @@
 export enum ReferenceType {
 	Simple = 0x0,
 	/**
-	 * Allows this reference to be located using the `findTile` API on merge-tree.
+	 * Allows this reference to be located using the `searchForMarker` API on merge-tree.
 	 */
 	Tile = 0x1,
 	RangeBegin = 0x10,
@@ -43,7 +43,7 @@ export const MergeTreeDeltaType = {
 	REMOVE: 1,
 	ANNOTATE: 2,
 	/**
-	 * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
+	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
 	 */
 	GROUP: 3,
 	OBLITERATE: 4,
@@ -129,7 +129,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 }
 
 /**
- * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+ * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
  */
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.GROUP;

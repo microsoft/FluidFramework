@@ -1826,6 +1826,7 @@ declare function get_current_InterfaceDeclaration_SegmentGroup():
 declare function use_old_InterfaceDeclaration_SegmentGroup(
     use: TypeOnly<old.SegmentGroup>);
 use_old_InterfaceDeclaration_SegmentGroup(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_SegmentGroup());
 
 /*

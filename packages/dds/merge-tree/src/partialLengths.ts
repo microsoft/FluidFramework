@@ -633,8 +633,8 @@ export class PartialSequenceLengths {
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 		const isLocal =
 			segment.seq === UnassignedSequenceNumber ||
-			(removalInfo && removalIsLocal && (!moveInfo || moveIsLocal)) ||
-			(moveInfo && moveIsLocal && (!removalInfo || removalIsLocal));
+			(!!removalInfo && removalIsLocal && (!moveInfo || moveIsLocal)) ||
+			(!!moveInfo && moveIsLocal && (!removalInfo || removalIsLocal));
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq!;
 		let segmentLen = segment.cachedLength;
