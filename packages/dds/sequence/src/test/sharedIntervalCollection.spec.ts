@@ -21,20 +21,12 @@ import { Interval, IntervalType } from "../intervals";
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,
 	expected: readonly { start: number; end: number }[],
-	validateOverlapping: boolean = true,
 ) => {
 	const actual = Array.from(intervalCollection);
-	if (validateOverlapping) {
-		const overlapping = intervalCollection.findOverlappingIntervals(
-			Number.NEGATIVE_INFINITY,
-			Number.POSITIVE_INFINITY,
-		);
-		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
-	}
 	assert.strictEqual(
 		actual.length,
 		expected.length,
-		`findOverlappingIntervals() must return the expected number of intervals`,
+		`the number of intervals must be consistent`,
 	);
 
 	const actualPos = actual.map((interval) => {
@@ -105,10 +97,6 @@ describe("SharedIntervalCollection", () => {
 			collection2.add(10, 30, IntervalType.Simple);
 			assertIntervals(collection1, [{ start: 0, end: 20 }]);
 			assertIntervals(collection2, [{ start: 10, end: 30 }]);
-			assert.equal(Array.from(collection1.findOverlappingIntervals(1, 3)).length, 1);
-			assert.equal(Array.from(collection2.findOverlappingIntervals(1, 3)).length, 0);
-			assert.equal(Array.from(collection1.findOverlappingIntervals(1, 19)).length, 1);
-			assert.equal(Array.from(collection2.findOverlappingIntervals(1, 19)).length, 1);
 
 			runtimeFactory.processAllMessages();
 			const expected = [
@@ -117,10 +105,6 @@ describe("SharedIntervalCollection", () => {
 			];
 			assertIntervals(collection1, expected);
 			assertIntervals(collection2, expected);
-			assert.equal(Array.from(collection1.findOverlappingIntervals(1, 3)).length, 1);
-			assert.equal(Array.from(collection2.findOverlappingIntervals(1, 3)).length, 1);
-			assert.equal(Array.from(collection1.findOverlappingIntervals(1, 19)).length, 2);
-			assert.equal(Array.from(collection2.findOverlappingIntervals(1, 19)).length, 2);
 		});
 
 		it("Can remove intervals that were added", () => {

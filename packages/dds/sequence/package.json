@@ -122,6 +122,9 @@
 		"broken": {
 			"ClassDeclaration_SharedString": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IIntervalCollection": {
+				"backCompat": false
 			}
 		}
 	}
