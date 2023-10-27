@@ -1208,7 +1208,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.equal(changedEventData[1].key, "key2");
 		assert.equal(changedEventData[1].previousValue, undefined);
 	});
-  
+
 	it("Should rollback deleted subdirectories with the original order", () => {
 		let error: Error | undefined;
 
