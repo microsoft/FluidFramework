@@ -246,6 +246,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	[Symbol.iterator]: {
 		value: Array.prototype[Symbol.iterator],
 	},
+	at: {
+		value(this: SharedTreeList<AllowedTypes, "javaScript">, index: number): void {
+			getSequenceField(this).at(index);
+		},
+	},
 	insertAt: {
 		value(
 			this: SharedTreeList<AllowedTypes, "javaScript">,
