@@ -523,37 +523,37 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	entries: {
-		value(): IterableIterator<[string, unknown]> {
+		value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
 			const node = getMapNode(this);
 			return node.entries();
 		},
 	},
 	get: {
-		value(key: string): unknown {
+		value(this: SharedTreeMap<MapSchema>, key: string): unknown {
 			const node = getMapNode(this);
 			const field = node.getBoxed(key);
 			return getProxyForField(field);
 		},
 	},
 	has: {
-		value(key: string): boolean {
+		value(this: SharedTreeMap<MapSchema>, key: string): boolean {
 			const node = getMapNode(this);
 			return node.has(key);
 		},
 	},
 	keys: {
-		value(): IterableIterator<string> {
+		value(this: SharedTreeMap<MapSchema>): IterableIterator<string> {
 			const node = getMapNode(this);
 			return node.keys();
 		},
 	},
 	size: {
-		get(this: object) {
+		get(this: SharedTreeMap<MapSchema>) {
 			return getMapNode(this).size;
 		},
 	},
 	values: {
-		value(): IterableIterator<unknown> {
+		value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
 			const node = getMapNode(this);
 			return node.values();
 		},
