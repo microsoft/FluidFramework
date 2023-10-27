@@ -985,7 +985,6 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
