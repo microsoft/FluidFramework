@@ -17,7 +17,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
-import { List, RedBlackTree } from "./collections";
+import { DoublyLinkedList, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
@@ -919,7 +919,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private lastNormalizationRefSeq = 0;
 
-	private pendingRebase: List<SegmentGroup> | undefined;
+	private pendingRebase: DoublyLinkedList<SegmentGroup> | undefined;
 	/**
 	 * Given an pending operation and segment group, regenerate the op, so it
 	 * can be resubmitted

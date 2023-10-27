@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { List, ListNode, walkList } from "./collections";
+import { DoublyLinkedList, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
@@ -150,9 +150,9 @@ export function createDetachedLocalReferencePosition(
 }
 
 interface IRefsAtOffset {
-	before?: List<LocalReference>;
-	at?: List<LocalReference>;
-	after?: List<LocalReference>;
+	before?: DoublyLinkedList<LocalReference>;
+	at?: DoublyLinkedList<LocalReference>;
+	after?: DoublyLinkedList<LocalReference>;
 }
 
 function assertLocalReferences(lref: any): asserts lref is LocalReference {
@@ -325,9 +325,9 @@ export class LocalReferenceCollection {
 			lref.link(this.segment, offset, undefined);
 		} else {
 			const refsAtOffset = (this.refsByOffset[offset] = this.refsByOffset[offset] ?? {
-				at: new List(),
+				at: new DoublyLinkedList(),
 			});
-			const atRefs = (refsAtOffset.at = refsAtOffset.at ?? new List());
+			const atRefs = (refsAtOffset.at = refsAtOffset.at ?? new DoublyLinkedList());
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
@@ -458,7 +458,7 @@ export class LocalReferenceCollection {
 	 * @internal
 	 */
 	public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
-		const beforeRefs = this.refsByOffset[0]?.before ?? new List();
+		const beforeRefs = this.refsByOffset[0]?.before ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[0]?.before === undefined) {
 			const refsAtOffset = (this.refsByOffset[0] ??= { before: beforeRefs });
@@ -493,7 +493,7 @@ export class LocalReferenceCollection {
 	 */
 	public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
 		const lastOffset = this.segment.cachedLength - 1;
-		const afterRefs = this.refsByOffset[lastOffset]?.after ?? new List();
+		const afterRefs = this.refsByOffset[lastOffset]?.after ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[lastOffset]?.after === undefined) {
 			const refsAtOffset = (this.refsByOffset[lastOffset] ??= { after: afterRefs });
@@ -549,7 +549,8 @@ export class LocalReferenceCollection {
 		}
 		let offset = start?.getOffset() ?? (forward ? 0 : this.segment.cachedLength - 1);
 
-		const offsetPositions: List<IRefsAtOffset[keyof IRefsAtOffset]> = new List();
+		const offsetPositions: DoublyLinkedList<IRefsAtOffset[keyof IRefsAtOffset]> =
+			new DoublyLinkedList();
 		offsetPositions.push(
 			this.refsByOffset[offset]?.before,
 			this.refsByOffset[offset]?.at,
@@ -571,7 +572,7 @@ export class LocalReferenceCollection {
 			}
 		}
 
-		const listWalker = (pos: List<LocalReference>) => {
+		const listWalker = (pos: DoublyLinkedList<LocalReference>) => {
 			return walkList(
 				pos,
 				(node) => visitor(node.data),

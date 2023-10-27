@@ -9,7 +9,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
-import { Comparer, Heap, List, ListNode } from "./collections";
+import { Comparer, Heap, DoublyLinkedList, ListNode } from "./collections";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -420,7 +420,7 @@ export class MergeTree {
 
 	public readonly collabWindow = new CollaborationWindow();
 
-	public readonly pendingSegments = new List<SegmentGroup>();
+	public readonly pendingSegments = new DoublyLinkedList<SegmentGroup>();
 	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
@@ -1952,7 +1952,7 @@ export class MergeTree {
 	}
 
 	// Segments should either be removed remotely, removed locally, or inserted locally
-	private normalizeAdjacentSegments(affectedSegments: List<ISegmentLeaf>): void {
+	private normalizeAdjacentSegments(affectedSegments: DoublyLinkedList<ISegmentLeaf>): void {
 		// Eagerly demand this since we're about to shift elements in the list around
 		const currentOrder = Array.from(affectedSegments, ({ data: seg }) => ({
 			parent: seg.parent,
@@ -2074,7 +2074,7 @@ export class MergeTree {
 	 * it can fix up its local state to align with what would be expected of the op it resubmits.
 	 */
 	public normalizeSegmentsOnRebase(): void {
-		let currentRangeToNormalize = new List<ISegment>();
+		let currentRangeToNormalize = new DoublyLinkedList<ISegment>();
 		let rangeContainsLocalSegs = false;
 		let rangeContainsRemoteRemovedSegs = false;
 		const normalize = () => {
@@ -2097,7 +2097,7 @@ export class MergeTree {
 				currentRangeToNormalize.push(seg);
 			} else {
 				normalize();
-				currentRangeToNormalize = new List<ISegment>();
+				currentRangeToNormalize = new DoublyLinkedList<ISegment>();
 				rangeContainsLocalSegs = false;
 				rangeContainsRemoteRemovedSegs = false;
 			}
