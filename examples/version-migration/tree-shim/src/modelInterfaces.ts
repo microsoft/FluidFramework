@@ -6,11 +6,21 @@
 import { EventEmitter } from "events";
 import { TypedEmitter } from "tiny-typed-emitter";
 
+export interface IInventoryListAppModelEvents {
+	/**
+	 * This event signifies that the prior reference to the inventoryList has become invalid, and that any views
+	 * should be rebound to the current inventoryList reference.
+	 * TODO: Make sure I want this on the app model, rather than on the inventory list (some thin wrapper to perrmit
+	 * retaining the reference across the change)
+	 */
+	inventoryListChanged: () => void;
+}
+
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
  * for the application to run.
  */
-export interface IInventoryListAppModel {
+export interface IInventoryListAppModel extends TypedEmitter<IInventoryListAppModelEvents> {
 	/**
 	 * An inventory tracker list using the legacy shared tree.
 	 */
