@@ -230,7 +230,7 @@ export class Interval implements ISerializableInterval {
     overlaps(b: Interval): boolean;
     properties: PropertySet;
     // @internal (undocumented)
-    propertyManager: PropertiesManager;
+    readonly propertyManager: PropertiesManager;
     // @internal (undocumented)
     serialize(): ISerializedInterval;
     // (undocumented)
