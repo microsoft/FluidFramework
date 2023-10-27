@@ -264,6 +264,21 @@ export const selectionFlags = {
 		char: undefined,
 		aliases: ["releaseGroupRoots"],
 	}),
+	changed: Flags.boolean({
+		description:
+			"Select only packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with other options.",
+		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all", "packages"],
+		required: false,
+		helpGroup: "PACKAGE SELECTION",
+	}),
+	branch: Flags.string({
+		description:
+			"Filter to only packages that have been changed since this base branch. Can only be used with --changed.",
+		dependsOn: ["changed"],
+		required: false,
+		default: "main",
+		helpGroup: "PACKAGE SELECTION",
+	}),
 };
 
 /**
@@ -279,6 +294,8 @@ export interface selectionFlags {
 	readonly packages: boolean;
 	readonly releaseGroup: string[] | undefined;
 	readonly releaseGroupRoot: string[] | undefined;
+	readonly changed: boolean;
+	readonly branch: string;
 }
 
 /**

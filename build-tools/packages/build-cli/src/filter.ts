@@ -6,6 +6,7 @@
 import { Context, Package } from "@fluidframework/build-tools";
 import path from "node:path";
 import { filterFlags, selectionFlags } from "./flags";
+import { Repository } from "./lib";
 import { knownReleaseGroups, ReleaseGroup } from "./releaseGroups";
 
 /**
@@ -31,6 +32,8 @@ export interface PackageSelectionCriteria {
 	 * If set, only selects the single package in this directory.
 	 */
 	directory?: string;
+
+	changedSinceBranch: string | undefined;
 }
 
 /**
@@ -41,6 +44,7 @@ export const AllPackagesSelectionCriteria: PackageSelectionCriteria = {
 	releaseGroups: [...knownReleaseGroups],
 	releaseGroupRoots: [...knownReleaseGroups],
 	directory: undefined,
+	changedSinceBranch: undefined,
 };
 
 /**
@@ -76,6 +80,7 @@ export const parsePackageSelectionFlags = (flags: selectionFlags): PackageSelect
 					releaseGroups: (flags.releaseGroup as ReleaseGroup[]) ?? [],
 					releaseGroupRoots: (flags.releaseGroupRoot as ReleaseGroup[]) ?? [],
 					directory: flags.dir,
+					changedSinceBranch: flags.changed === true ? flags.branch : undefined,
 			  };
 
 	return options;
@@ -134,11 +139,32 @@ export type PackageWithKind = Package & { kind: PackageKind };
  * @param selection - The selection criteria to use to select packages.
  * @returns An array containing the selected packages.
  */
-const selectPackagesFromContext = (
+const selectPackagesFromContext = async (
 	context: Context,
 	selection: PackageSelectionCriteria,
-): PackageWithKind[] => {
+): Promise<PackageWithKind[]> => {
 	const selected: PackageWithKind[] = [];
+
+	if (selection.changedSinceBranch !== undefined) {
+		const git = new Repository({ baseDir: context.gitRepo.resolvedRoot });
+		const remote = await git.getRemote(context.originRemotePartialUrl);
+		if (remote === undefined) {
+			throw new Error(`Can't find a remote with ${context.originRemotePartialUrl}`);
+		}
+		const { packages } = await git.getChangedSinceRef(
+			selection.changedSinceBranch,
+			remote,
+			context,
+		);
+		selected.push(
+			...packages.map((p) => {
+				const pkg = Package.load(p.packageJsonFileName, "none", undefined, {
+					kind: "packageFromDirectory" as PackageKind,
+				});
+				return pkg;
+			}),
+		);
+	}
 
 	if (selection.directory !== undefined) {
 		const pkg = Package.load(
@@ -202,18 +228,18 @@ const selectPackagesFromContext = (
  * @param filter - An optional filter criteria to filter selected packages by.
  * @returns An object containing the selected packages and the filtered packages.
  */
-export const selectAndFilterPackages = (
+export async function selectAndFilterPackages(
 	context: Context,
 	selection: PackageSelectionCriteria,
 	filter?: PackageFilterOptions,
-): { selected: PackageWithKind[]; filtered: PackageWithKind[] } => {
-	const selected = selectPackagesFromContext(context, selection);
+): Promise<{ selected: PackageWithKind[]; filtered: PackageWithKind[] }> {
+	const selected = await selectPackagesFromContext(context, selection);
 
 	// Filter packages if needed
-	const filtered = filter === undefined ? selected : filterPackages(selected, filter);
+	const filtered = filter === undefined ? selected : await filterPackages(selected, filter);
 
 	return { selected, filtered };
-};
+}
 
 /**
  * Convenience type that extracts only the properties of a package that are needed for filtering.
@@ -228,10 +254,10 @@ type FilterablePackage = Pick<Package, "name" | "private">;
  * @typeParam T - The type of the package-like objects being filtered.
  * @returns An array containing only the filtered items.
  */
-export function filterPackages<T extends FilterablePackage>(
+export async function filterPackages<T extends FilterablePackage>(
 	packages: T[],
 	filters: PackageFilterOptions,
-): T[] {
+): Promise<T[]> {
 	const filtered = packages.filter((pkg) => {
 		if (filters === undefined) {
 			return true;

@@ -747,9 +747,7 @@ export async function npmCheckUpdatesHomegrown(
 	releaseGroup: ReleaseGroup | ReleasePackage | undefined,
 	depsToUpdate: ReleasePackage[],
 	releaseGroupFilter: ReleaseGroup | undefined,
-	// eslint-disable-next-line default-param-last
 	prerelease = false,
-	// eslint-disable-next-line default-param-last
 	writeChanges = true,
 	log?: Logger,
 ): Promise<{
@@ -778,6 +776,7 @@ export async function npmCheckUpdatesHomegrown(
 					independentPackages: false,
 					releaseGroups: [releaseGroup as ReleaseGroup],
 					releaseGroupRoots: [releaseGroup as ReleaseGroup],
+					changedSinceBranch: undefined,
 			  };
 
 	// Remove the filtered release group from the list if needed
@@ -789,7 +788,10 @@ export async function npmCheckUpdatesHomegrown(
 		}
 	}
 
-	const { filtered: packagesToUpdate } = selectAndFilterPackages(context, selectionCriteria);
+	const { filtered: packagesToUpdate } = await selectAndFilterPackages(
+		context,
+		selectionCriteria,
+	);
 	log?.info(
 		`Found ${Object.keys(dependencyVersionMap).length} dependencies to update across ${
 			packagesToUpdate.length
