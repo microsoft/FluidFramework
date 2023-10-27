@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
-import { node, typeNameSymbol } from "../../../feature-libraries";
+import { ProxyNode, ProxyRoot, node, typeNameSymbol } from "../../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
 
 describe("SharedTree proxies", () => {
@@ -295,6 +295,80 @@ describe("SharedTreeList", () => {
 				listB.moveToIndex(/* index: */ 1, /* sourceStart: */ 0, /* sourceEnd: */ 1, listA);
 				assert.deepEqual(listA, ["a1"]);
 				assert.deepEqual(listB, ["b0", "a0", "b1"]);
+			});
+		});
+
+		describe("between lists with overlapping types", () => {
+			const _ = new SchemaBuilder({
+				scope: "test",
+			});
+
+			const listA = _.list([_.string, _.number]);
+			const listB = _.list([_.number, _.boolean]);
+
+			const objectSchema = _.object("parent", {
+				listA,
+				listB,
+			});
+
+			const schema = _.intoSchema(objectSchema);
+
+			const initialTree = {
+				listA: ["a", 1],
+				listB: [2, true],
+			};
+
+			function getEitherList(
+				root: ProxyRoot<typeof schema>,
+				list: "a" | "b",
+			): ProxyNode<typeof listA> | ProxyNode<typeof listB> {
+				return list === "a" ? root.listA : root.listB;
+			}
+
+			itWithRoot("moveToStart()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveToStart(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [1, 2, true]);
+				list1.moveToStart(/* sourceStart: */ 0, /* sourceEnd: */ 2, list2);
+				assert.deepEqual(list1, [1, 2, "a"]);
+				assert.deepEqual(list2, [true]);
+			});
+
+			itWithRoot("moveToEnd()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveToEnd(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [2, true, 1]);
+				list1.moveToEnd(/* sourceStart: */ 0, /* sourceEnd: */ 1, list2);
+				assert.deepEqual(list1, ["a", 2]);
+				assert.deepEqual(list2, [true, 1]);
+			});
+
+			itWithRoot("moveToIndex()", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				list2.moveToIndex(/* index: */ 1, /* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				assert.deepEqual(list1, ["a"]);
+				assert.deepEqual(list2, [2, 1, true]);
+				list1.moveToIndex(/* index: */ 0, /* sourceStart: */ 0, /* sourceEnd: */ 2, list2);
+				assert.deepEqual(list1, [2, 1, "a"]);
+				assert.deepEqual(list2, [true]);
+			});
+
+			itWithRoot("fails if incompatible type", schema, initialTree, (root) => {
+				const list1 = getEitherList(root, "a");
+				const list2 = getEitherList(root, "b");
+				assert.throws(() =>
+					list2.moveToIndex(
+						/* index: */ 0,
+						/* sourceStart: */ 0,
+						/* sourceEnd: */ 1,
+						list1,
+					),
+				);
 			});
 		});
 	});
