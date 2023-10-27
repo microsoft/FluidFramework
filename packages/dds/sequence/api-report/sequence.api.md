@@ -159,6 +159,8 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     // (undocumented)
     CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval>;
     detachIndex(index: IntervalIndex<TInterval>): boolean;
+    // @deprecated (undocumented)
+    findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: number, end?: number): void;
     // (undocumented)
     getIntervalById(id: string): TInterval | undefined;

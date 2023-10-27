@@ -919,6 +919,13 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	): void;
 
 	/**
+	 * @deprecated - Users must manually attach the corresponding interval index to utilize this functionality
+	 * @returns an array of all intervals in this collection that overlap with the interval
+	 * `[startPosition, endPosition]`.
+	 */
+	findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[];
+
+	/**
 	 * Applies a function to each interval in this collection.
 	 */
 	map(fn: (interval: TInterval) => void): void;
@@ -1964,6 +1971,20 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			iteratesForward,
 			start,
 			end,
+		);
+	}
+
+	/**
+	 * {@inheritdoc IIntervalCollection.findOverlappingIntervals}
+	 */
+	public findOverlappingIntervals(startPosition: number, endPosition: number): TInterval[] {
+		if (!this.localCollection) {
+			throw new LoggingError("attachSequence must be called");
+		}
+
+		return this.localCollection.overlappingIntervalsIndex.findOverlappingIntervals(
+			startPosition,
+			endPosition,
 		);
 	}
 
