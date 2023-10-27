@@ -57,7 +57,7 @@ export function validateTokenClaims(
 		throw new NetworkError(403, "DocumentId in token claims does not match request.");
 	}
 
-	if (claims.scopes === undefined || claims.scopes.length === 0) {
+	if (!(claims.scopes?.length)) {
 		throw new NetworkError(403, "Missing scopes in token claims.");
 	}
 
