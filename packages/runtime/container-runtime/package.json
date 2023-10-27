@@ -136,9 +136,6 @@
 			"ClassDeclaration_SummaryCollection": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_ISummarizerRuntime": {
-				"backCompat": false
-			},
 			"InterfaceDeclaration_INackSummaryResult": {
 				"backCompat": false
 			},

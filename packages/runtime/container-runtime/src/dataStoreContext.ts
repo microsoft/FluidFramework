@@ -78,7 +78,7 @@ import {
 	summarizerClientType,
 } from "./summary";
 import { ContainerRuntime } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, throwOnTombstoneUsageKey } from "./gc";
+import { sendGCUnexpectedUsageEvent } from "./gc";
 
 function createAttributes(
 	pkg: readonly string[],
@@ -325,11 +325,7 @@ export abstract class FluidDataStoreContext
 			this.mc.logger,
 		);
 
-		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-		this.throwOnTombstoneUsage =
-			this.mc.config.getBoolean(throwOnTombstoneUsageKey) === true &&
-			this._containerRuntime.gcTombstoneEnforcementAllowed &&
-			this.clientDetails.type !== summarizerClientType;
+		this.throwOnTombstoneUsage = this._containerRuntime.gcThrowOnTombstoneUsage;
 
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
@@ -486,7 +482,16 @@ export abstract class FluidDataStoreContext
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.verifyNotClosed("process", true, extractSafePropertiesFromMessage(messageArg));
+		const safeTelemetryProps = extractSafePropertiesFromMessage(messageArg);
+		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
+		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
+		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
+		if (this.tombstoned && this.throwOnTombstoneUsage) {
+			throw new DataCorruptionError(
+				"Context is tombstoned! Call site [process]",
+				safeTelemetryProps,
+			);
+		}
 
 		const innerContents = messageArg.contents as FluidDataStoreMessage;
 		const message = {
@@ -1089,7 +1094,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return message;
 	}
 
-	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
@@ -1122,6 +1127,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			isRootDataStore,
 			snapshot,
 		};
+	});
+
+	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+		return this.initialSnapshotDetailsP;
 	}
 
 	/**
