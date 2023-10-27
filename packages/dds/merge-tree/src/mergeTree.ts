@@ -949,13 +949,32 @@ export class MergeTree {
 				return node.cachedLength;
 			} else {
 				this.computeLocalPartials(refSeq);
+
 				// Local client should see all segments except those after localSeq.
-				return node.partialLengths!.getPartialLength(refSeq, clientId, localSeq);
+				const partialLen = node.partialLengths!.getPartialLength(
+					refSeq,
+					clientId,
+					localSeq,
+				);
+
+				PartialSequenceLengths.options.verifyExpected?.(
+					this,
+					node,
+					refSeq,
+					clientId,
+					localSeq,
+				);
+
+				return partialLen;
 			}
 		} else {
 			// Sequence number within window
 			if (!node.isLeaf()) {
-				return node.partialLengths!.getPartialLength(refSeq, clientId);
+				const partialLen = node.partialLengths!.getPartialLength(refSeq, clientId);
+
+				PartialSequenceLengths.options.verifyExpected?.(this, node, refSeq, clientId);
+
+				return partialLen;
 			} else {
 				const segment = node;
 				const removalInfo = toRemovalInfo(segment);
@@ -1554,7 +1573,17 @@ export class MergeTree {
 				return undefined;
 			} else {
 				// Don't update ordinals because higher block will do it
-				return this.split(block);
+				const newNodeFromSplit = this.split(block);
+
+				PartialSequenceLengths.options.verifyExpected?.(this, block, refSeq, clientId);
+				PartialSequenceLengths.options.verifyExpected?.(
+					this,
+					newNodeFromSplit,
+					refSeq,
+					clientId,
+				);
+
+				return newNodeFromSplit;
 			}
 		} else {
 			return undefined;
@@ -2164,6 +2193,8 @@ export class MergeTree {
 			} else {
 				node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
 			}
+
+			PartialSequenceLengths.options.verifyExpected?.(this, node, seq, clientId);
 		}
 	}
 
