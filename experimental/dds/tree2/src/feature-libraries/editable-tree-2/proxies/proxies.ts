@@ -571,9 +571,9 @@ const getMapNode = <TSchema extends MapSchema>(target: object): MapNode<TSchema>
 
 function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTreeMap<TSchema> {
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
-	// Own properties on the dispatch object are surfaced as own properties of the proxy.
-	// (e.g., 'size', which is defined below).
-	const dispatch = Object.create(mapPrototype, {});
+	const dispatch = Object.create(mapPrototype, {
+		// Empty - JavaScript Maps do not expose any "own" properties.
+	});
 
 	setTreeNode(dispatch, treeNode);
 
