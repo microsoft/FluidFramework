@@ -212,9 +212,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
-    // (undocumented)
-    submitDataStoreSignal(address: string, type: string, content: any): void;
-    submitSignal(type: string, content: any): void;
+    submitDataStoreSignal(address: string, type: string, content: any, targetClientId?: string): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;
