@@ -420,7 +420,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		return !!this.properties && this.properties[key] !== undefined;
 	}
 
-	public isLeaf() {
+	public isLeaf(): this is ISegment {
 		return true;
 	}
 

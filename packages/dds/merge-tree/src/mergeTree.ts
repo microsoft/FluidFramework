@@ -1336,7 +1336,7 @@ export class MergeTree {
 
 		let segmentGroup: SegmentGroup;
 		const saveIfLocal = (locSegment: ISegment) => {
-			// Save segment so can assign sequence number when acked by server
+			// Save segment so we can assign sequence number when acked by server
 			if (this.collabWindow.collaborating) {
 				if (
 					locSegment.seq === UnassignedSequenceNumber &&
@@ -1441,20 +1441,21 @@ export class MergeTree {
 	// Assume called only when pos == len
 	private breakTie(pos: number, node: IMergeNode, seq: number) {
 		if (node.isLeaf()) {
-			if (pos === 0) {
-				// normalize the seq numbers
-				// if the new seg is local (UnassignedSequenceNumber) give it the highest possible
-				// seq for comparison, as it will get a seq higher than any other seq once sequences
-				// if the current seg is local (UnassignedSequenceNumber) give it the second highest
-				// possible seq, as the highest is reserved for the previous.
-				const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
-				const segSeq =
-					node.seq === UnassignedSequenceNumber
-						? Number.MAX_SAFE_INTEGER - 1
-						: node.seq ?? 0;
-				return newSeq > segSeq;
+			if (pos !== 0) {
+				return false;
 			}
-			return false;
+
+			// normalize the seq numbers
+			// if the new seg is local (UnassignedSequenceNumber) give it the highest possible
+			// seq for comparison, as it will get a seq higher than any other seq once sequences
+			// if the current seg is local (UnassignedSequenceNumber) give it the second highest
+			// possible seq, as the highest is reserved for the previous.
+			const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
+			const segSeq =
+				node.seq === UnassignedSequenceNumber
+					? Number.MAX_SAFE_INTEGER - 1
+					: node.seq ?? 0;
+			return newSeq > segSeq;
 		} else {
 			return true;
 		}
@@ -1736,7 +1737,7 @@ export class MergeTree {
 				removedSegments.push({ segment });
 			}
 
-			// Save segment so can assign removed sequence number when acked by server
+			// Save segment so we can assign removed sequence number when acked by server
 			if (this.collabWindow.collaborating) {
 				if (
 					segment.removedSeq === UnassignedSequenceNumber &&
@@ -2074,7 +2075,7 @@ export class MergeTree {
 		newOrder.forEach(computeDepth);
 		for (const [node] of Array.from(depths.entries()).sort((a, b) => b[1] - a[1])) {
 			if (!node.isLeaf()) {
-				this.nodeUpdateLengthNewStructure(node, false);
+				this.nodeUpdateLengthNewStructure(node);
 			}
 		}
 		newOrder.forEach(

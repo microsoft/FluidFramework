@@ -906,8 +906,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	private lastNormalizationRefSeq = 0;
 
 	private pendingRebase: DoublyLinkedList<SegmentGroup> | undefined;
+
 	/**
-	 * Given an pending operation and segment group, regenerate the op, so it
+	 * Given a pending operation and segment group, regenerate the op, so it
 	 * can be resubmitted
 	 * @param resetOp - The op to reset
 	 * @param segmentGroup - The segment group associated with the op
