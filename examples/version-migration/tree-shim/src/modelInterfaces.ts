@@ -40,6 +40,16 @@ export interface IInventoryItem extends TypedEmitter<IInventoryItemEvents> {
  * IInventoryList describes the public API surface for our inventory list object.
  */
 export interface IInventoryList extends EventEmitter {
+	/**
+	 * During initiation of the migration, any further writes will be lost post-migration.
+	 * This property (and the corresponding event below) signal that state to discourage writing.
+	 * For example, it would be a good idea to disable input fields in the view.
+	 * TODO: This may map well to existing concepts like readonly mode and not need any distinct flag.
+	 * However, it might also be appropriate to only disable writing on the tree-related portion of the
+	 * app but permit writing to other DDSs, which is more likely to be a unique concept.
+	 */
+	readonly writeOk: boolean;
+
 	readonly addItem: (name: string, quantity: number) => void;
 
 	readonly getItems: () => IInventoryItem[];
@@ -49,4 +59,8 @@ export interface IInventoryList extends EventEmitter {
 	 * TODO: Consider using tiny-typed-emitter if not using DataObject
 	 */
 	on(event: "itemAdded" | "itemDeleted", listener: (item: IInventoryItem) => void): this;
+	/**
+	 * Fire when the appropriateness of writing changes, view should disable the input fields accordingly
+	 */
+	on(event: "writeOkChanged", listener: () => void): this;
 }

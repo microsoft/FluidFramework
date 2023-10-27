@@ -78,6 +78,9 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		return this._tree;
 	}
 
+	// TODO: Hook up to shim
+	public readonly writeOk = true;
+
 	public readonly addItem = (name: string, quantity: number) => {
 		const addedNode: BuildNode = {
 			definition: "inventoryItem",

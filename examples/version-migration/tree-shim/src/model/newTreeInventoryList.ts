@@ -109,6 +109,9 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 	}
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
+	// TODO: Hook up to shim
+	public readonly writeOk = true;
+
 	public readonly addItem = (name: string, quantity: number) => {
 		this.inventoryItemList.insertAtEnd([
 			{
