@@ -10,7 +10,7 @@ import { SchemaBuilder } from "../../../domains";
 import { itWithRoot } from "./utils";
 
 describe("node API", () => {
-	const sb = new SchemaBuilder({ scope: "object" });
+	const sb = new SchemaBuilder({ scope: "test" });
 	const object = sb.object("child", {
 		content: sb.number,
 	});
@@ -45,6 +45,13 @@ describe("node API", () => {
 			assert.throws(() =>
 				node.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
 			);
+		});
+	});
+
+	describe("isListOf", () => {
+		itWithRoot("works", treeSchema, initialTree, (root) => {
+			assert.equal(node.isListOf(root.list, object), true);
+			assert.equal(node.isListOf(root.list, parent), false);
 		});
 	});
 

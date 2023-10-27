@@ -179,6 +179,7 @@ export {
 	SchemaBuilderOptions,
 	normalizeAllowedTypes,
 	normalizeField,
+	structuralName,
 } from "./schemaBuilderBase";
 export { SchemaBuilderInternal } from "./schemaBuilder";
 

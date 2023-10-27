@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
 import { leaf } from "../domains";
 import {
 	Any,
@@ -25,8 +24,9 @@ import {
 	FactoryTreeSchema,
 	Unenforced,
 	AllowedTypes,
+	structuralName,
 } from "../feature-libraries";
-import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
+import { RestrictiveReadonlyRecord, getOrCreate } from "../util";
 
 /**
  * A {@link ObjectNodeSchema} that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
@@ -389,40 +389,4 @@ function fieldHelper<Kind extends FieldKind>(kind: Kind) {
 	return <const T extends ImplicitAllowedTypes>(
 		allowedTypes: T,
 	): TreeFieldSchema<Kind, NormalizeAllowedTypes<T>> => SchemaBuilder.field(kind, allowedTypes);
-}
-
-export function structuralName<const T extends string>(
-	collectionName: T,
-	allowedTypes: TreeNodeSchema | Any | readonly TreeNodeSchema[],
-): `${T}<${string}>` {
-	let inner: string;
-	if (allowedTypes === Any) {
-		inner = "Any";
-	} else if (allowedTypes instanceof TreeNodeSchema) {
-		return structuralName(collectionName, [allowedTypes]);
-	} else {
-		assert(Array.isArray(allowedTypes), 0x7c7 /* Types should be an array */);
-		const names = allowedTypes.map((t): string => {
-			// Ensure that lazy types (functions) don't slip through here.
-			assert(t instanceof TreeNodeSchema, 0x7c8 /* invalid type provided */);
-			// TypeScript should know `t.name` is a string (from the extends constraint on TreeNodeSchema's name), but the linter objects.
-			// @ts-expect-error: Apparently TypeScript also fails to apply this constraint for some reason and is giving any:
-			type _check = requireFalse<isAny<typeof t.name>>;
-			// Adding `as string` here would silence the linter, but make this code less type safe (since if this became not a string, it would still build).
-			// Thus we explicitly check that this satisfies string.
-			// This would best be done by appending `satisfies string`, but the linter also rejects this.
-			// Therefor introducing a variable to do the same thing as `satisfies string` but such that the linter can understand:
-			const name: string = t.name;
-			// Just incase the compiler and linter really are onto something and this might sometimes not be a string, validate it:
-			assert(typeof name === "string", 0x7c9 /* Name should be a string */);
-			return name;
-		});
-		// Ensure name is order independent
-		names.sort();
-		// Ensure name can't have collisions by quoting and escaping any quotes in the names of types.
-		// Using JSON is a simple way to accomplish this.
-		// The outer `[]` around the result are also needed so that a single type name "Any" would not collide with the "any" case above.
-		inner = JSON.stringify(names);
-	}
-	return `${collectionName}<${inner}>`;
 }

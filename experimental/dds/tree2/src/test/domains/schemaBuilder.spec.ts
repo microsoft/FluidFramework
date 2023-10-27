@@ -16,12 +16,11 @@ import {
 	ProxyNode,
 	ObjectNodeSchema,
 	SharedTreeObject,
+	structuralName,
 } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { TypedNode, UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
-// eslint-disable-next-line import/no-internal-modules
-import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
 import { getFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/objectFactory";
 

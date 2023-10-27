@@ -4,11 +4,12 @@
  */
 
 import { fail } from "../../../util";
-import { TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
+import { NormalizeAllowedTypes, structuralName } from "../../schemaBuilderBase";
+import { Any, TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeNode, TreeStatus } from "../editableTreeTypes";
 import { getProxyForNode } from "./proxies";
-import { ProxyNode, SharedTreeNode, getTreeNode } from "./types";
+import { ProxyNode, SharedTreeList, SharedTreeNode, getTreeNode } from "./types";
 
 /**
  * Provides various functions for analyzing {@link SharedTreeNode}s.
@@ -36,6 +37,19 @@ export interface NodeApi {
 		value: unknown,
 		schema: TSchema,
 	) => value is ProxyNode<TSchema>;
+	/**
+	 * Narrow the type of the given value if it is a list containing the given schema.
+	 * @example
+	 * ```ts
+	 * if (node.isList(myNode, point)) {
+	 *     const y = myNode[0].y; // `myNode` is now known to be a list of `point`s.
+	 * }
+	 * ```
+	 */
+	readonly isListOf: <TSchema extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
+		value: unknown,
+		itemSchema: TSchema,
+	) => value is SharedTreeList<NormalizeAllowedTypes<TSchema>>;
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
@@ -76,6 +90,17 @@ export const nodeApi: NodeApi = {
 		schema: TSchema,
 	): value is ProxyNode<TSchema> => {
 		return getTreeNode(value)?.is(schema) ?? false;
+	},
+	isListOf: <TSchema extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
+		value: unknown,
+		itemTypes: TSchema,
+	): value is SharedTreeList<NormalizeAllowedTypes<TSchema>> => {
+		const schemaName = getTreeNode(value)?.schema.name;
+		// TODO: not gonna work. We don't know which part of the name is the scope and which part is not.
+		// const unscopedName =
+		// 	schemaName?.substring(schemaName.indexOf(".")) ?? fail("Malformed schema name.");
+
+		return structuralName("List", itemTypes) === unscopedName;
 	},
 	parent: (node: SharedTreeNode) => {
 		const treeNode = assertTreeNode(node).parentField.parent.parent;
