@@ -14,6 +14,8 @@ import type { IRootDataObject, LoadableObjectClass, LoadableObjectRecord } from 
 
 /**
  * Events emitted from {@link IFluidContainer}.
+ *
+ * @public
  */
 export interface IFluidContainerEvents extends IEvent {
 	/**
@@ -76,6 +78,8 @@ export interface IFluidContainerEvents extends IEvent {
  * Provides access to the data as well as status on the collaboration session.
  *
  * @remarks Note: external implementations of this interface are not supported.
+ *
+ * @public
  */
 export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
 	/**
@@ -196,6 +200,8 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
+ *
+ * @public
  */
 export class FluidContainer
 	extends TypedEventEmitter<IFluidContainerEvents>
