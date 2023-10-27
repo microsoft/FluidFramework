@@ -84,7 +84,7 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToStart(sourceStart: number, sourceEnd: number): void;
+	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the start of the sequence.
@@ -95,7 +95,11 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToStart(sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
+	moveRangeToStart(
+		sourceStart: number,
+		sourceEnd: number,
+		source: SharedTreeList<AllowedTypes>,
+	): void;
 
 	/**
 	 * Moves the specified items to the end of the sequence.
@@ -105,7 +109,7 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToEnd(sourceStart: number, sourceEnd: number): void;
+	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the end of the sequence.
@@ -116,7 +120,11 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToEnd(sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
+	moveRangeToEnd(
+		sourceStart: number,
+		sourceEnd: number,
+		source: SharedTreeList<AllowedTypes>,
+	): void;
 
 	/**
 	 * Moves the specified items to the desired location within the sequence.
@@ -127,7 +135,7 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the desired location within the sequence.
@@ -139,7 +147,7 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToIndex(
+	moveRangeToIndex(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,

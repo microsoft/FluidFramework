@@ -298,7 +298,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			getSequenceField(this).removeRange(start, end);
 		},
 	},
-	moveToStart: {
+	moveRangeToStart: {
 		value(
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			sourceStart: number,
@@ -306,17 +306,17 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			source?: SharedTreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
-				getSequenceField(this).moveToStart(
+				getSequenceField(this).moveRangeToStart(
 					sourceStart,
 					sourceEnd,
 					getSequenceField(source),
 				);
 			} else {
-				getSequenceField(this).moveToStart(sourceStart, sourceEnd);
+				getSequenceField(this).moveRangeToStart(sourceStart, sourceEnd);
 			}
 		},
 	},
-	moveToEnd: {
+	moveRangeToEnd: {
 		value(
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			sourceStart: number,
@@ -324,13 +324,17 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			source?: SharedTreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
-				getSequenceField(this).moveToEnd(sourceStart, sourceEnd, getSequenceField(source));
+				getSequenceField(this).moveRangeToEnd(
+					sourceStart,
+					sourceEnd,
+					getSequenceField(source),
+				);
 			} else {
-				getSequenceField(this).moveToEnd(sourceStart, sourceEnd);
+				getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd);
 			}
 		},
 	},
-	moveToIndex: {
+	moveRangeToIndex: {
 		value(
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			index: number,
@@ -339,14 +343,14 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			source?: SharedTreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
-				getSequenceField(this).moveToIndex(
+				getSequenceField(this).moveRangeToIndex(
 					index,
 					sourceStart,
 					sourceEnd,
 					getSequenceField(source),
 				);
 			} else {
-				getSequenceField(this).moveToIndex(index, sourceStart, sourceEnd);
+				getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
 			}
 		},
 	},

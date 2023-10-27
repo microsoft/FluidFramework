@@ -608,7 +608,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToStart(sourceStart: number, sourceEnd: number): void;
+	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the start of the sequence.
@@ -619,11 +619,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToStart<TTypesSource extends AllowedTypes>(
-		sourceStart: number,
-		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
-	): void;
+	moveRangeToStart(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified items to the end of the sequence.
@@ -633,7 +629,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToEnd(sourceStart: number, sourceEnd: number): void;
+	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the end of the sequence.
@@ -644,11 +640,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToEnd<TTypesSource extends AllowedTypes>(
-		sourceStart: number,
-		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
-	): void;
+	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified items to the desired location within the sequence.
@@ -659,7 +651,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the desired location within the sequence.
@@ -671,11 +663,11 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToIndex<TTypesSource extends AllowedTypes>(
+	moveRangeToIndex(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: Sequence<AllowedTypes>,
 	): void;
 
 	[boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
