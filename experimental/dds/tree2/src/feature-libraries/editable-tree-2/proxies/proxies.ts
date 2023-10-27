@@ -105,29 +105,32 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 ): ProxyNode<TSchema> {
 	const schema = treeNode.schema;
 
-	if (schemaIsMap(schema)) {
+	/**
+	 * Gets a cached proxy for `treeNode` if one was already created and cached.
+	 * Otherwise, creates a new proxy, caches it, and returns it.
+	 */
+	function getOrCreateProxy(createProxy: () => SharedTreeNode): ProxyNode<TSchema> {
 		const cachedProxy = getCachedProxy(treeNode);
 		if (cachedProxy !== undefined) {
 			return cachedProxy as ProxyNode<TSchema>;
 		}
 
-		const proxy = createMapProxy(treeNode);
+		const proxy = createProxy();
 		cacheProxy(treeNode, proxy);
 		return proxy as ProxyNode<TSchema>;
+	}
+
+	if (schemaIsMap(schema)) {
+		return getOrCreateProxy(() => createMapProxy(treeNode));
 	}
 	if (schemaIsLeaf(schema)) {
 		return treeNode.value as ProxyNode<TSchema>;
 	}
 	const isFieldNode = schemaIsFieldNode(schema);
 	if (isFieldNode || schemaIsObjectNode(schema)) {
-		const cachedProxy = getCachedProxy(treeNode);
-		if (cachedProxy !== undefined) {
-			return cachedProxy as ProxyNode<TSchema>;
-		}
-
-		const proxy = isFieldNode ? createListProxy(treeNode) : createObjectProxy(treeNode, schema);
-		cacheProxy(treeNode, proxy);
-		return proxy as ProxyNode<TSchema>;
+		return getOrCreateProxy(() =>
+			isFieldNode ? createListProxy(treeNode) : createObjectProxy(treeNode, schema),
+		);
 	}
 
 	fail("unrecognized node kind");
