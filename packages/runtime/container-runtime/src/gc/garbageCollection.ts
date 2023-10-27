@@ -868,6 +868,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param reason - Whether the node was loaded or changed.
 	 * @param timestampMs - The timestamp when the node changed.
 	 * @param packagePath - The package path of the node. This may not be available if the node hasn't been loaded yet.
+	 * @param request - The original request for loads to preserve it in telemetry.
 	 * @param requestHeaders - If the node was loaded via request path, the headers in the request.
 	 */
 	public nodeUpdated(

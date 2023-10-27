@@ -827,7 +827,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * Verifies that the blob with given id is node deleted, i.e., it has not been garbage collected. If the blob is GC'd,
+	 * Verifies that the blob with given id is not deleted, i.e., it has not been garbage collected. If the blob is GC'd,
 	 * log an error and throw if necessary.
 	 */
 	private verifyBlobNotDeleted(blobId: string) {
