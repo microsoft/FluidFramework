@@ -19,7 +19,7 @@ import {
 	TreeNodeSchema,
 	TreeSchema,
 } from "../../typed-schema";
-import { CheckTypesOverlap, AssignableFieldKinds, TreeNode } from "../editableTreeTypes";
+import { AssignableFieldKinds, TreeNode } from "../editableTreeTypes";
 
 /**
  * An object-like SharedTree node. Includes objects, lists, and maps.
@@ -84,7 +84,7 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToStart(sourceStart: number, sourceEnd: number): void;
+	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the start of the sequence.
@@ -95,10 +95,10 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToStart<TTypesSource extends AllowedTypes>(
+	moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: SharedTreeList<AllowedTypes>,
 	): void;
 
 	/**
@@ -109,7 +109,7 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToEnd(sourceStart: number, sourceEnd: number): void;
+	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the end of the sequence.
@@ -120,10 +120,10 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToEnd<TTypesSource extends AllowedTypes>(
+	moveRangeToEnd(
 		sourceStart: number,
 		sourceEnd: number,
-		source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: SharedTreeList<AllowedTypes>,
 	): void;
 
 	/**
@@ -135,7 +135,7 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
 	/**
 	 * Moves the specified items to the desired location within the sequence.
@@ -147,11 +147,11 @@ export interface SharedTreeList<
 	 * @remarks
 	 * All indices are relative to the sequence excluding the nodes being moved.
 	 */
-	moveToIndex<TTypesSource extends AllowedTypes>(
+	moveRangeToIndex(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: SharedTreeList<AllowedTypes>,
 	): void;
 }
 

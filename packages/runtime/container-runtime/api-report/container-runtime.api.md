@@ -141,7 +141,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
-    get gcThrowOnTombstoneLoad(): boolean;
     get gcThrowOnTombstoneUsage(): boolean;
     get gcTombstoneEnforcementAllowed(): boolean;
     // (undocumented)

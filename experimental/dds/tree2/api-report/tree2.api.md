@@ -1944,12 +1944,12 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
     readonly length: number;
     map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
     mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
-    moveToEnd(sourceStart: number, sourceEnd: number): void;
-    moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-    moveToIndex<TTypesSource extends AllowedTypes>(index: number, sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    moveToStart(sourceStart: number, sourceEnd: number): void;
-    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
 }
@@ -1989,12 +1989,12 @@ export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaSc
     insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
     insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
     insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
-    moveToEnd(sourceStart: number, sourceEnd: number): void;
-    moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-    moveToIndex<TTypesSource extends AllowedTypes>(index: number, sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    moveToStart(sourceStart: number, sourceEnd: number): void;
-    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
 }

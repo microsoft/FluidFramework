@@ -40,7 +40,6 @@ import {
 	TreeNode,
 	RequiredField,
 	boxedIterator,
-	CheckTypesOverlap,
 	TreeStatus,
 	NodeKeyField,
 } from "./editableTreeTypes";
@@ -224,12 +223,6 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	}
 }
 
-function assertIsLazySequence<TTypesSource extends AllowedTypes>(
-	sourceField: unknown,
-): asserts sourceField is LazySequence<TTypesSource> {
-	assert(sourceField instanceof LazySequence, 0x7b1 /* Unsupported sequence implementation. */);
-}
-
 export class LazySequence<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
 	implements Sequence<TTypes>
@@ -284,59 +277,63 @@ export class LazySequence<TTypes extends AllowedTypes>
 		fieldEditor.delete(removeStart, removeEnd - removeStart);
 	}
 
-	public moveToStart(sourceStart: number, sourceEnd: number): void;
-	public moveToStart<TTypesSource extends AllowedTypes>(
+	public moveRangeToStart(sourceStart: number, sourceEnd: number): void;
+	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: Sequence<AllowedTypes>,
 	): void;
-	public moveToStart<TTypesSource extends AllowedTypes>(
+	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source?: Sequence<AllowedTypes>,
 	): void {
-		this._moveToIndex(0, sourceStart, sourceEnd, source);
+		this._moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
 
-	public moveToEnd(sourceStart: number, sourceEnd: number): void;
-	public moveToEnd<TTypesSource extends AllowedTypes>(
+	public moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
+	public moveRangeToEnd(
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: Sequence<AllowedTypes>,
 	): void;
-	public moveToEnd<TTypesSource extends AllowedTypes>(
+	public moveRangeToEnd(
 		sourceStart: number,
 		sourceEnd: number,
-		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source?: Sequence<AllowedTypes>,
 	): void {
-		this._moveToIndex(this.length, sourceStart, sourceEnd, source);
+		this._moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
 
-	public moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-	public moveToIndex<TTypesSource extends AllowedTypes>(
+	public moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+	public moveRangeToIndex(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: Sequence<AllowedTypes>,
 	): void;
-	public moveToIndex<TTypesSource extends AllowedTypes>(
+	public moveRangeToIndex(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source?: Sequence<AllowedTypes>,
 	): void {
-		this._moveToIndex(index, sourceStart, sourceEnd, source);
+		this._moveRangeToIndex(index, sourceStart, sourceEnd, source);
 	}
 
-	private _moveToIndex<TTypesSource extends AllowedTypes>(
+	private _moveRangeToIndex(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source?: Sequence<AllowedTypes>,
 	): void {
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
+
 		// TODO: determine support for move across different sequence types
-		assertIsLazySequence(sourceField);
+		assert(
+			sourceField instanceof LazySequence,
+			0x7b1 /* Unsupported sequence implementation. */,
+		);
 		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
