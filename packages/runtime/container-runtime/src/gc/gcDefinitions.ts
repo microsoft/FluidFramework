@@ -4,6 +4,7 @@
  */
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
@@ -251,12 +252,16 @@ export interface IGarbageCollector {
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
 	refreshLatestSummary(result: IRefreshSummaryResult): Promise<void>;
-	/** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
+	/**
+	 * Called when a node with the given path is updated. If the node is inactive or tombstoned, this will log an error
+	 * or throw an error if failing on incorrect usage is configured.
+	 */
 	nodeUpdated(
 		nodePath: string,
 		reason: "Loaded" | "Changed",
 		timestampMs?: number,
 		packagePath?: readonly string[],
+		request?: IRequest,
 		headerData?: RuntimeHeaderData,
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */

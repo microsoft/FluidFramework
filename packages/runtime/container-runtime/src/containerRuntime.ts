@@ -105,7 +105,6 @@ import {
 	TelemetryContext,
 	ReadAndParseBlob,
 	responseToException,
-	createResponseError,
 } from "@fluidframework/runtime-utils";
 import { v4 as uuid } from "uuid";
 import { ContainerFluidHandleContext } from "./containerHandleContext";
@@ -1188,11 +1187,6 @@ export class ContainerRuntime
 		return this.garbageCollector.tombstoneEnforcementAllowed;
 	}
 
-	/** If true, throw an error when a tombstone data store is retrieved */
-	public get gcThrowOnTombstoneLoad(): boolean {
-		return this.garbageCollector.throwOnTombstoneLoad;
-	}
-
 	/** If true, throw an error when a tombstone data store is used. */
 	public get gcThrowOnTombstoneUsage(): boolean {
 		return this.garbageCollector.throwOnTombstoneUsage;
@@ -1892,28 +1886,17 @@ export class ContainerRuntime
 		const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
 		// Get the initial snapshot details which contain the data store package path.
 		const details = await dataStoreContext.getInitialSnapshotDetails();
+
+		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
+		// is configured.
 		this.garbageCollector.nodeUpdated(
 			`/${urlWithoutQuery}`,
 			"Loaded",
 			undefined /* timestampMs */,
 			details.pkg,
+			request,
 			headerData,
 		);
-
-		// If the data store is tombstoned and tombstone enforcement is configured, throw an error.
-		if (
-			dataStoreContext.tombstoned &&
-			this.gcThrowOnTombstoneLoad &&
-			!headerData.allowTombstone
-		) {
-			// The requested data store is removed by gc. Create a 404 gc response exception.
-			throw responseToException(
-				createResponseError(404, "DataStore was tombstoned", request, {
-					[TombstoneResponseHeaderKey]: true,
-				}),
-				request,
-			);
-		}
 		return dataStoreContext.realize();
 	}
 

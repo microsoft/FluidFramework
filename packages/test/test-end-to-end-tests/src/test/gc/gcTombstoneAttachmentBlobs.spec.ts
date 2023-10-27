@@ -130,7 +130,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
 				assert.equal(
 					response.value,
-					`Blob was tombstoned: ${blobHandle.absolutePath.substring(8)}`,
+					`Blob was tombstoned: ${blobHandle.absolutePath}`,
 					`Unexpected response value`,
 				);
 				assert(container2.closed !== true, "Container should not have closed");

@@ -196,6 +196,7 @@ export class GCTelemetryTracker {
 		) {
 			return;
 		}
+
 		// Add the unique event id so that we don't generate a log for this event again in this session.
 		this.loggedUnreferencedEvents.add(uniqueEventId);
 

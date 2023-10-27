@@ -22,7 +22,11 @@ import {
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils";
 
-import { InactiveResponseHeaderKey, RuntimeHeaderData } from "../containerRuntime";
+import {
+	InactiveResponseHeaderKey,
+	RuntimeHeaderData,
+	TombstoneResponseHeaderKey,
+} from "../containerRuntime";
 import { ClientSessionExpiredError } from "../error";
 import { IRefreshSummaryResult } from "../summary";
 import { generateGCConfigs } from "./gcConfigs";
@@ -858,7 +862,8 @@ export class GarbageCollector implements IGarbageCollector {
 	}
 
 	/**
-	 * Called when a node with the given id is updated. If the node is inactive, log an error.
+	 * Called when a node with the given id is updated. If the node is inactive or tombstoned, this will log an error
+	 * or throw an error if failing on incorrect usage is configured.
 	 * @param nodePath - The path of the node that changed.
 	 * @param reason - Whether the node was loaded or changed.
 	 * @param timestampMs - The timestamp when the node changed.
@@ -870,11 +875,14 @@ export class GarbageCollector implements IGarbageCollector {
 		reason: "Loaded" | "Changed",
 		timestampMs?: number,
 		packagePath?: readonly string[],
+		request?: IRequest,
 		headerData?: RuntimeHeaderData,
 	) {
 		if (!this.configs.shouldRunGC) {
 			return;
 		}
+
+		const isTombstoned = this.tombstones.includes(nodePath);
 
 		// This will log if appropriate
 		this.telemetryTracker.nodeUsed({
@@ -884,35 +892,44 @@ export class GarbageCollector implements IGarbageCollector {
 				timestampMs ?? this.runtime.getCurrentReferenceTimestampMs(),
 			packagePath,
 			completedGCRuns: this.completedRuns,
-			isTombstoned: this.tombstones.includes(nodePath),
+			isTombstoned,
 			lastSummaryTime: this.getLastSummaryTimestampMs(),
 			headers: headerData,
 		});
 
+		const nodeType = this.runtime.getNodeType(nodePath);
+
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
-		if (
-			reason !== "Loaded" ||
-			![GCNodeType.Blob, GCNodeType.DataStore].includes(this.runtime.getNodeType(nodePath))
-		) {
+		if (reason !== "Loaded" || ![GCNodeType.Blob, GCNodeType.DataStore].includes(nodeType)) {
 			return;
 		}
 
-		// We may throw when loading an Inactive object, depending on these preconditions
-		const shouldThrowOnInactiveLoad =
-			!this.isSummarizerClient &&
-			this.configs.throwOnInactiveLoad === true &&
-			headerData?.allowInactive !== true;
-		const state = this.unreferencedNodesState.get(nodePath)?.state;
-
-		if (shouldThrowOnInactiveLoad && state === "Inactive") {
-			const request: IRequest = { url: nodePath };
-			const error = responseToException(
-				createResponseError(404, "Object is inactive", request, {
-					[InactiveResponseHeaderKey]: true,
+		const errorRequest: IRequest = request ?? { url: nodePath };
+		// If the object is tombstoned and tombstone enforcement is configured, throw an error.
+		if (isTombstoned && this.throwOnTombstoneLoad && headerData?.allowTombstone !== true) {
+			// The requested data store is removed by gc. Create a 404 gc response exception.
+			throw responseToException(
+				createResponseError(404, `${nodeType} was tombstoned`, errorRequest, {
+					[TombstoneResponseHeaderKey]: true,
 				}),
-				request,
+				errorRequest,
 			);
-			throw error;
+		}
+
+		// If the object is inactive and inactive enforcement is configured, throw an error.
+		if (this.unreferencedNodesState.get(nodePath)?.state === "Inactive") {
+			const shouldThrowOnInactiveLoad =
+				!this.isSummarizerClient &&
+				this.configs.throwOnInactiveLoad === true &&
+				headerData?.allowInactive !== true;
+			if (shouldThrowOnInactiveLoad) {
+				throw responseToException(
+					createResponseError(404, `${nodeType} is inactive`, errorRequest, {
+						[InactiveResponseHeaderKey]: true,
+					}),
+					errorRequest,
+				);
+			}
 		}
 	}
 

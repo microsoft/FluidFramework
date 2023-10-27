@@ -39,8 +39,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils";
-import { ContainerRuntime, TombstoneResponseHeaderKey } from "./containerRuntime";
-import { sendGCUnexpectedUsageEvent, disableAttachmentBlobSweepKey } from "./gc";
+import { disableAttachmentBlobSweepKey } from "./gc";
 import { IBlobMetadata } from "./metadata";
 
 /**
@@ -99,7 +98,6 @@ export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
 	"attachState" | "connected" | "logger" | "clientDetails"
 > &
-	Pick<ContainerRuntime, "gcTombstoneEnforcementAllowed" | "gcThrowOnTombstoneLoad"> &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
 type ICreateBlobResponseWithTTL = ICreateBlobResponse & Partial<Record<"minTTLInSeconds", number>>;
@@ -339,17 +337,18 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
+		// Verify that the blob is not deleted, i.e., it has not been garbage collected. If it is, this will throw
+		// an error, failing the call.
+		this.verifyBlobNotDeleted(blobId);
+		// Let runtime know that the corresponding GC node was requested.
+		// Note that this will throw if the blob is inactive or tombstoned and throwing on incorrect usage
+		// is configured.
+		this.blobRequested(getGCNodePathFromBlobId(blobId));
+
 		const pending = this.pendingBlobs.get(blobId);
 		if (pending) {
 			return pending.blob;
 		}
-
-		// Let runtime know that the corresponding GC node was requested.
-		this.blobRequested(getGCNodePathFromBlobId(blobId));
-
-		// Verify that the blob is valid, i.e., it has not been garbage collected. If it is, this will throw an error,
-		// failing the call.
-		this.verifyBlobValidity(blobId);
 
 		let storageId: string;
 		if (this.runtime.attachState === AttachState.Detached) {
@@ -828,56 +827,28 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	/**
-	 * Verifies that the blob with given id is valid, i.e., it has not been garbage collected. If the blob is GC'd,
+	 * Verifies that the blob with given id is node deleted, i.e., it has not been garbage collected. If the blob is GC'd,
 	 * log an error and throw if necessary.
 	 */
-	private verifyBlobValidity(blobId: string) {
-		/**
-		 * A blob can be in one of the following states:
-		 * 1. "deleted" - It has been deleted by garbage collection sweep phase.
-		 * 2. "tombstoned" - It is ready for deletion but sweep phase isn't enabled and tombstone feature is enabled.
-		 * 3. "valid" - It has not been deleted or tombstoned.
-		 */
-		let state: "valid" | "tombstoned" | "deleted" = "valid";
-		if (this.isBlobDeleted(getGCNodePathFromBlobId(blobId))) {
-			state = "deleted";
-		} else if (this.tombstonedBlobs.has(blobId)) {
-			state = "tombstoned";
-		}
-
-		if (state === "valid") {
+	private verifyBlobNotDeleted(blobId: string) {
+		if (!this.isBlobDeleted(getGCNodePathFromBlobId(blobId))) {
 			return;
 		}
 
-		// If the blob is deleted or throw on tombstone load is enabled, throw an error which will fail any attempt
-		// to load the blob.
-		const shouldFail = state === "deleted" || this.runtime.gcThrowOnTombstoneLoad;
 		const request = { url: blobId };
 		const error = responseToException(
-			createResponseError(
-				404,
-				`Blob was ${state}`,
-				request,
-				state === "tombstoned" ? { [TombstoneResponseHeaderKey]: true } : undefined,
-			),
+			createResponseError(404, `Blob was deleted`, request),
 			request,
 		);
 		// Only log deleted events. Tombstone events are logged by garbage collector.
-		if (state === "deleted") {
-			sendGCUnexpectedUsageEvent(
-				this.mc,
-				{
-					eventName: "GC_Deleted_Blob_Requested",
-					category: shouldFail ? "error" : "generic",
-					gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-				},
-				[BlobManager.basePath],
-				error,
-			);
-		}
-		if (shouldFail) {
-			throw error;
-		}
+		this.mc.logger.sendErrorEvent(
+			{
+				eventName: "GC_Deleted_Blob_Requested",
+				pkg: BlobManager.basePath,
+			},
+			error,
+		);
+		throw error;
 	}
 
 	public setRedirectTable(table: Map<string, string>) {
