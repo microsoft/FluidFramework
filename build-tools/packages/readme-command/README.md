@@ -39,7 +39,7 @@ Adds commands to README.md in current directory.
 
 ```
 USAGE
-  $ fluid-readme generate readme --dir <value> [--aliases] [--multi] [--repository-prefix <value>] [--version <value>]
+  $ fluid-readme generate readme --dir <value> [--multi] [--aliases] [--repository-prefix <value>] [--version <value>]
 
 FLAGS
   --[no-]aliases               include aliases in the command list

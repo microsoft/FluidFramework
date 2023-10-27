@@ -40,7 +40,7 @@ Get info about the merge status of branches in the repo. Uses "main" and "next" 
 
 ```
 USAGE
-  $ flub merge info [--json] [-v | --quiet] [-b <value>]
+  $ flub merge info [-v | --quiet] [--json] [-b <value>]
 
 FLAGS
   -b, --branch=<value>...  A branch name. Use this argument multiple times to provide multiple branch names.

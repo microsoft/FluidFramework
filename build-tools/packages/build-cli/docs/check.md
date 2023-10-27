@@ -14,9 +14,10 @@ Checks that all packages have the same version set in package.json. The packages
 
 ```
 USAGE
-  $ flub check buildVersion [-v | --quiet] [--version <value> | --path <value>] [--fix] [--concurrency <value>] [--all |
-    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+  $ flub check buildVersion [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+    [--version <value> | --path <value>] [--fix]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -65,7 +66,7 @@ Checks if a changeset was added when compared against a branch. This is used in 
 
 ```
 USAGE
-  $ flub check changeset -b <value> [--json] [-v | --quiet]
+  $ flub check changeset -b <value> [-v | --quiet] [--json]
 
 FLAGS
   -b, --branch=<value>  (required) The branch to compare against.

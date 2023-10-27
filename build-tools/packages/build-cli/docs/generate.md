@@ -16,9 +16,10 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--all | --dir <value> | --packages
-    | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+  $ flub generate assertTags [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages | -g
+    client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+    [--disableConfig]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -159,7 +160,7 @@ Generates a new changeset file. You will be prompted to select the packages affe
 
 ```
 USAGE
-  $ flub generate changeset [--json] [-v | --quiet] [-b <value>] [--empty -g
+  $ flub generate changeset [-v | --quiet] [--json] [-b <value>] [--empty -g
     client|server|azure|build-tools|gitrest|historian] [--all] [--uiMode default|simple]
 
 FLAGS
@@ -216,7 +217,7 @@ Generates a summary of all changesets. This is used to generate an UPCOMING.md f
 
 ```
 USAGE
-  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [--json] [-v | --quiet]
+  $ flub generate upcoming -g client|server|azure|build-tools|gitrest|historian -t major|minor [-v | --quiet] [--json]
     [--out <value>]
 
 FLAGS

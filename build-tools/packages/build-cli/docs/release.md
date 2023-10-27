@@ -60,7 +60,7 @@ Determines release information based on a git tag argument.
 
 ```
 USAGE
-  $ flub release fromTag TAG [--json] [-v | --quiet]
+  $ flub release fromTag TAG [-v | --quiet] [--json]
 
 ARGUMENTS
   TAG  A git tag that represents a release. May begin with 'refs/tags/'.
@@ -95,8 +95,8 @@ Prints a list of released versions of a package or release group. Releases are g
 
 ```
 USAGE
-  $ flub release history [--json] [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>]
-    [-l <value>]
+  $ flub release history [-v | --quiet] [-g client|server|azure|build-tools|gitrest|historian | -p <value>] [-l
+    <value>] [--json]
 
 FLAGS
   -g, --releaseGroup=<option>  Name of a release group.
@@ -139,7 +139,7 @@ Generates a report of Fluid Framework releases.
 
 ```
 USAGE
-  $ flub release report [--json] [-v | --quiet] [-i | -r | -s] [-g
+  $ flub release report [-v | --quiet] [--json] [-i | -r | -s] [-g
     client|server|azure|build-tools|gitrest|historian] [-o <value>]
 
 FLAGS
@@ -242,9 +242,10 @@ Updates which .d.ts file is referenced by the `types` field in package.json. Thi
 
 ```
 USAGE
-  $ flub release setPackageTypesField --types <value> [--json] [-v | --quiet] [--checkFileExists] [--concurrency <value>] [--all |
-    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
+  $ flub release setPackageTypesField --types <value> [-v | --quiet] [--concurrency <value>] [--all | --dir <value> | --packages |
+    -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>] [--json]
+    [--checkFileExists]
 
 FLAGS
   --[no-]checkFileExists  Check if the file path exists

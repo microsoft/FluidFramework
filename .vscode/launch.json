@@ -31,7 +31,7 @@
 		},
 		{
 			"name": "flub",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
@@ -58,7 +58,7 @@
 		},
 		{
 			"name": "flub generate bundleStats",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
@@ -68,7 +68,7 @@
 		{
 			// Runs the `flub release report --all` command with a debugger attached.
 			"name": "flub release report",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
@@ -78,7 +78,7 @@
 		{
 			// Runs the `flub list --private` command with a debugger attached.
 			"name": "flub list",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
@@ -88,7 +88,7 @@
 		{
 			// Runs the `flub generate upcoming` command with a debugger attached.
 			"name": "flub generate upcoming",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
@@ -98,7 +98,7 @@
 		{
 			// Runs the `flub generate changeset` command with a debugger attached.
 			"name": "flub generate changeset",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}/build-tools",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
@@ -108,7 +108,7 @@
 		{
 			// Runs the `flub exec` command with a debugger attached.
 			"name": "flub exec",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}/build-tools",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
@@ -117,16 +117,16 @@
 		{
 			// Runs the `flub test-only-filter` command with a debugger attached.
 			"name": "flub test-only-filter",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
-			"cwd": "${workspaceFolder}/build-tools",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
+			"cwd": "${workspaceFolder}/build-tools/packages/build-cli",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["test-only-filter", "--all"],
+			"args": ["test-only-filter", "--json", "--all"],
 		},
 		{
 			"name": "flub bump deps",
-			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
@@ -141,6 +141,23 @@
 				"--no-commit",
 				"--no-install",
 			],
+		},
+		{
+			"name": "fluid-bump-version",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/dist/bumpVersion/bumpVersionCli.js",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["-d", "@fluidframework/common-utils@^0.33.1000"],
+		},
+		{
+			"name": "layer-check",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/dist/layerCheck/layerCheck.js",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"args": ["--verbose"],
+			"cwd": "${workspaceFolder}",
+			"type": "node",
 		},
 		{
 			"type": "node",
