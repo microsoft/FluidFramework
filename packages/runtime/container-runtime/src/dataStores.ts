@@ -50,12 +50,7 @@ import { buildSnapshotTree } from "@fluidframework/driver-utils";
 import { assert, Lazy } from "@fluidframework/core-utils";
 import { v4 as uuid } from "uuid";
 import { DataStoreContexts } from "./dataStoreContexts";
-import {
-	ContainerRuntime,
-	defaultRuntimeHeaderData,
-	RuntimeHeaderData,
-	TombstoneResponseHeaderKey,
-} from "./containerRuntime";
+import { ContainerRuntime, defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime";
 import {
 	FluidDataStoreContext,
 	RemoteFluidDataStoreContext,
@@ -442,9 +437,6 @@ export class DataStores implements IDisposable {
 			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
-
-		this.validateNotTombstoned(context, requestHeaderData);
-
 		return context;
 	}
 
@@ -464,8 +456,6 @@ export class DataStores implements IDisposable {
 		if (context === undefined) {
 			return undefined;
 		}
-		// Check if the data store is tombstoned. If so, we want to log a telemetry event.
-		this.checkIfTombstoned(context, requestHeaderData);
 		return context;
 	}
 
@@ -513,62 +503,6 @@ export class DataStores implements IDisposable {
 				createResponseError(404, "DataStore was deleted", request),
 				request,
 			);
-		}
-	}
-
-	/**
-	 * Checks if the data store has not been marked as tombstone by GC or not.
-	 * @param context - the data store context in question
-	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been tombstoned
-	 * @returns true if the data store is tombstoned. Otherwise, returns false.
-	 */
-	private checkIfTombstoned(
-		context: FluidDataStoreContext,
-		requestHeaderData: RuntimeHeaderData,
-	) {
-		if (!context.tombstoned) {
-			return false;
-		}
-		const logErrorEvent =
-			this.runtime.gcThrowOnTombstoneLoad && !requestHeaderData.allowTombstone;
-		sendGCUnexpectedUsageEvent(
-			this.mc,
-			{
-				eventName: "GC_Tombstone_DataStore_Requested",
-				category: logErrorEvent ? "error" : "generic",
-				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-				id: context.id,
-				headers: JSON.stringify(requestHeaderData),
-				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-			},
-			context.isLoaded ? context.packagePath : undefined,
-		);
-		return true;
-	}
-
-	/**
-	 * Validates that the data store context requested has not been marked as tombstone by GC.
-	 * @param context - the data store context in question
-	 * @param request - the request information to log if the validation detects the data store has been tombstoned
-	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been tombstoned
-	 */
-	private validateNotTombstoned(
-		context: FluidDataStoreContext,
-		requestHeaderData: RuntimeHeaderData,
-	) {
-		if (this.checkIfTombstoned(context, requestHeaderData)) {
-			// The requested data store is removed by gc. Create a 404 gc response exception.
-			const request: IRequest = { url: context.id };
-			const error = responseToException(
-				createResponseError(404, "DataStore was deleted", request, {
-					[TombstoneResponseHeaderKey]: true,
-				}),
-				request,
-			);
-			// Throw an error if configured via options and via request headers.
-			if (this.runtime.gcThrowOnTombstoneLoad && !requestHeaderData.allowTombstone) {
-				throw error;
-			}
 		}
 	}
 
