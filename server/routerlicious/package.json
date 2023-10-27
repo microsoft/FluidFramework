@@ -1,7 +1,6 @@
 {
 	"name": "root",
 	"version": "3.0.0",
-	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
@@ -35,7 +34,6 @@
 		"generate:packageList:internal-dev": "flub list --no-private -g server --feed internal-dev > feeds/internal-dev.txt",
 		"generate:packageList:internal-test": "flub list --no-private -g server --feed internal-test > feeds/internal-test.txt",
 		"generate:packageList:public": "flub list --no-private -g server --feed public > feeds/public.txt",
-		"preinstall": "node scripts/only-pnpm.cjs",
 		"layer-check": "cd ../.. && npm run layer-check",
 		"lint": "npm run prettier && npm run ci:eslint",
 		"lint:fix": "npm run prettier:fix && pnpm run -r --no-sort --stream lint:fix",
