@@ -196,13 +196,14 @@ module.exports = {
 				"@fluid-tools",
 			],
 			// These packages are known unscoped packages.
-			unscopedPackages: ["fluid-framework", "fluidframework-docs"],
+			unscopedPackages: ["fluid-framework", "fluidframework-docs", "tinylicious"],
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
 				npm: [
 					"@fluidframework",
 					"fluid-framework",
+					"tinylicious",
 					"@fluid-internal/client-utils",
 				],
 				// A list of packages published to our internal-build feed. Note that packages published
