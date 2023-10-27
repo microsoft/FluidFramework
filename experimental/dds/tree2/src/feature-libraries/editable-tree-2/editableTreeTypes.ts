@@ -601,6 +601,65 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	removeRange(start?: number, end?: number): void;
 
 	/**
+	 * Moves the specified item to the start of the sequence.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if `sourceIndex` is invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToStart(sourceIndex: number): void;
+
+	/**
+	 * Moves the specified item to the start of the sequence.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source sequence to move the item out of.
+	 * @throws Throws if `sourceIndex` is invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToStart(sourceIndex: number, source: Sequence<AllowedTypes>): void;
+
+	/**
+	 * Moves the specified item to the end of the sequence.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if `sourceIndex` is invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToEnd(sourceIndex: number): void;
+
+	/**
+	 * Moves the specified item to the end of the sequence.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source sequence to move the item out of.
+	 * @throws Throws if `sourceIndex` is invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToEnd(sourceIndex: number, source: Sequence<AllowedTypes>): void;
+
+	/**
+	 * Moves the specified item to the desired location in the sequence.
+	 * @param index - The index to move the item to.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex(index: number, sourceIndex: number): void;
+
+	/**
+	 * Moves the specified item to the desired location in the sequence.
+	 * @param index - The index to move the item to.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source sequence to move the item out of.
+	 * @throws Throws if any of the input indices are invalid.
+	 * @remarks
+	 * All indices are relative to the sequence excluding the nodes being moved.
+	 */
+	moveToIndex(index: number, sourceIndex: number, source: Sequence<AllowedTypes>): void;
+
+	/**
 	 * Moves the specified items to the start of the sequence.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
