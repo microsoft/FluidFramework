@@ -158,11 +158,9 @@ export interface HasReattachFields {
 	 */
 	inverseOf?: RevisionTag;
 }
-export const HasReattachFields = Type.Composite([
-	Type.Object({
-		inverseOf: Type.Optional(RevisionTagSchema),
-	}),
-]);
+export const HasReattachFields = Type.Object({
+	inverseOf: Type.Optional(RevisionTagSchema),
+});
 
 export interface NoopMark {
 	/**
