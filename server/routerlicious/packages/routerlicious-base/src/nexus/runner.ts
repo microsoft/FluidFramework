@@ -2,23 +2,19 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import cluster from "cluster";
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClientManager,
-	IDeltaService,
 	IDocumentStorage,
 	IOrdererManager,
-	IProducer,
 	IRunner,
 	ITenantManager,
 	IThrottler,
 	IThrottleAndUsageStorageManager,
 	IWebServer,
 	IWebServerFactory,
-	IDocumentRepository,
 	ITokenRevocationManager,
 	IWebSocketTracker,
 	IRevokedTokenChecker,
@@ -26,21 +22,18 @@ import {
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { createMetricClient } from "@fluidframework/server-services";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
 import {
 	configureWebSocketServices,
 	ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
-import * as app from "./app";
-import { IDocumentDeleteService } from "./services";
 
-export class AlfredRunner implements IRunner {
+export class NexusRunner implements IRunner {
 	private server: IWebServer;
 	private runningDeferred: Deferred<void>;
 	private stopped: boolean = false;
-	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.AlfredRunner);
+	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.NexusRunner);
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
@@ -48,21 +41,13 @@ export class AlfredRunner implements IRunner {
 		private readonly port: string | number,
 		private readonly orderManager: IOrdererManager,
 		private readonly tenantManager: ITenantManager,
-		private readonly restTenantThrottlers: Map<string, IThrottler>,
-		private readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly socketConnectTenantThrottler: IThrottler,
 		private readonly socketConnectClusterThrottler: IThrottler,
 		private readonly socketSubmitOpThrottler: IThrottler,
 		private readonly socketSubmitSignalThrottler: IThrottler,
-		private readonly singleUseTokenCache: ICache,
 		private readonly storage: IDocumentStorage,
 		private readonly clientManager: IClientManager,
-		private readonly appTenants: IAlfredTenant[],
-		private readonly deltaService: IDeltaService,
-		private readonly producer: IProducer,
 		private readonly metricClientConfig: any,
-		private readonly documentRepository: IDocumentRepository,
-		private readonly documentDeleteService: IDocumentDeleteService,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
@@ -76,44 +61,31 @@ export class AlfredRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		const usingClusterModule: boolean | undefined = this.config.get("alfred:useNodeCluster");
-		// Don't include application logic in primary thread when Node.js cluster module is enabled.
-		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
+		this.server = this.serverFactory.create();
 
-		if (includeAppLogic) {
-			// Create the HTTP server and attach alfred to it
-			const alfred = app.create(
-				this.config,
-				this.tenantManager,
-				this.restTenantThrottlers,
-				this.restClusterThrottlers,
-				this.singleUseTokenCache,
-				this.storage,
-				this.appTenants,
-				this.deltaService,
-				this.producer,
-				this.documentRepository,
-				this.documentDeleteService,
-				this.tokenRevocationManager,
-				this.revokedTokenChecker,
-				this.collaborationSessionEventEmitter,
-			);
-			alfred.set("port", this.port);
-			this.server = this.serverFactory.create(alfred);
+		const httpServer = this.server.httpServer;
 
-			const maxNumberOfClientsPerDocument = this.config.get(
-				"alfred:maxNumberOfClientsPerDocument",
-			);
-			const numberOfMessagesPerTrace = this.config.get("alfred:numberOfMessagesPerTrace");
-			const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
-			const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
-			const isClientConnectivityCountingEnabled = this.config.get(
-				"usage:clientConnectivityCountingEnabled",
-			);
-			const isSignalUsageCountingEnabled = this.config.get(
-				"usage:signalUsageCountingEnabled",
-			);
+		const maxNumberOfClientsPerDocument = this.config.get(
+			"nexus:maxNumberOfClientsPerDocument",
+		);
+		const numberOfMessagesPerTrace = this.config.get("nexus:numberOfMessagesPerTrace");
+		const maxTokenLifetimeSec = this.config.get("auth:maxTokenLifetimeSec");
+		const isTokenExpiryEnabled = this.config.get("auth:enableTokenExpiration");
+		const isClientConnectivityCountingEnabled = this.config.get(
+			"usage:clientConnectivityCountingEnabled",
+		);
+		const isSignalUsageCountingEnabled = this.config.get("usage:signalUsageCountingEnabled");
 
+		httpServer.on("error", (error) => this.onError(error));
+		httpServer.on("listening", () => this.onListening());
+		httpServer.on("upgrade", (req, socket, initialMsgBuffer) =>
+			this.setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer),
+		);
+
+		if (cluster.isPrimary && this.server.webSocketServer === null) {
+			// Listen on provided port, on all network interfaces.
+			httpServer.listen(this.port);
+		} else {
 			// Register all the socket.io stuff
 			configureWebSocketServices(
 				this.server.webSocketServer,
@@ -141,27 +113,16 @@ export class AlfredRunner implements IRunner {
 				this.collaborationSessionEventEmitter,
 			);
 
+			// Listen on primary thread port, on all network interfaces.
+			httpServer.listen(cluster.isPrimary ? this.port : 0);
+
 			if (this.tokenRevocationManager) {
 				this.tokenRevocationManager.start().catch((error) => {
 					// Prevent service crash if token revocation manager fails to start
 					Lumberjack.error("Failed to start token revocation manager.", undefined, error);
 				});
 			}
-		} else {
-			// Create an HTTP server with a blank request listener
-			this.server = this.serverFactory.create(null);
 		}
-
-		const httpServer = this.server.httpServer;
-		httpServer.on("error", (error) => this.onError(error));
-		httpServer.on("listening", () => this.onListening());
-		httpServer.on("upgrade", (req, socket, initialMsgBuffer) =>
-			this.setupConnectionMetricOnUpgrade(req, socket, initialMsgBuffer),
-		);
-		// Listen on primary thread port, on all network interfaces,
-		// or allow cluster module to assign random port for worker thread.
-		httpServer.listen(cluster.isPrimary ? this.port : 0);
-
 		this.stopped = false;
 
 		return this.runningDeferred.promise;
@@ -172,7 +133,6 @@ export class AlfredRunner implements IRunner {
 			Lumberjack.info("AlfredRunner.stop already called, returning early.");
 			return;
 		}
-
 		this.stopped = true;
 		Lumberjack.info("AlfredRunner.stop starting.");
 
