@@ -419,7 +419,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					} catch (error: any) {
 						const inactiveError: InactiveLoadError | undefined = error;
 						assert.equal(inactiveError?.code, 404, "Incorrect error status code");
-						assert.equal(inactiveError?.message, `Object is inactive: ${dataStoreUrl}`);
+						assert.equal(
+							inactiveError?.message,
+							`DataStore is inactive: ${dataStoreUrl}`,
+						);
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
 							true,
