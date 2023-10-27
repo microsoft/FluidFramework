@@ -273,7 +273,7 @@ export const selectionFlags = {
 	}),
 	branch: Flags.string({
 		description:
-			"Filter to only packages that have been changed since this base branch. Can only be used with --changed.",
+			"Select only packages that have been changed when compared to this base branch. Can only be used with --changed.",
 		dependsOn: ["changed"],
 		required: false,
 		default: "main",

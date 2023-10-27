@@ -28,8 +28,8 @@ PACKAGE SELECTION FLAGS
                                   <options: client|server|azure|build-tools|gitrest|historian|all>
   --all                           Run on all packages and release groups. Cannot be used with --all, --dir,
                                   --releaseGroup, or --releaseGroupRoot.
-  --branch=<value>                [default: main] Filter to only packages that have been changed since this base branch.
-                                  Can only be used with --changed.
+  --branch=<value>                [default: main] Select only packages that have been changed when compared to this base
+                                  branch. Can only be used with --changed.
   --changed                       Select only packages that have changed when compared to a base branch. Use the
                                   --branch option to specify a different base branch. Cannot be used with other options.
   --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --dir,
