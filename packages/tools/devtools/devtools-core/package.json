@@ -80,7 +80,7 @@
 	"devDependencies": {
 		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.1.0",
 		"@fluid-tools/build-cli": "0.26.0-203096",
-		"@fluidframework/build-common": "^2.0.2",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",

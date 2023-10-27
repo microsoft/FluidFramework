@@ -57,7 +57,7 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "0.26.0-203096",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/build-common": "^2.0.2",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",

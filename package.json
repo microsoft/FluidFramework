@@ -148,7 +148,7 @@
 		"@changesets/cli": "^2.26.1",
 		"@fluid-private/changelog-generator-wrapper": "file:tools/changelog-generator-wrapper",
 		"@fluid-tools/build-cli": "0.26.0-203096",
-		"@fluidframework/build-common": "^2.0.2",
+		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.26.0-203096",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/test-tools": "^1.0.195075",
