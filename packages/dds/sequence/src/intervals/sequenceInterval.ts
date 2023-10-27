@@ -106,12 +106,13 @@ export class SequenceInterval implements ISerializableInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
-	public properties: PropertySet;
+	public properties: PropertySet = createMap<any>();
+
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 * @internal
 	 */
-	public propertyManager: PropertiesManager;
+	public propertyManager: PropertiesManager = new PropertiesManager();
 
 	/**
 	 * @internal
@@ -144,9 +145,6 @@ export class SequenceInterval implements ISerializableInterval {
 		public readonly startSide: Side = Side.Before,
 		public readonly endSide: Side = Side.Before,
 	) {
-		this.propertyManager = new PropertiesManager();
-		this.properties = {};
-
 		if (props) {
 			this.addProperties(props);
 		}
@@ -342,7 +340,6 @@ export class SequenceInterval implements ISerializableInterval {
 		seq?: number,
 		op?: ICombiningOp,
 	): PropertySet | undefined {
-		this.initializeProperties();
 		return this.propertyManager.addProperties(this.properties, newProps, op, seq, collab);
 	}
 
@@ -429,7 +426,6 @@ export class SequenceInterval implements ISerializableInterval {
 			endSide ?? this.endSide,
 		);
 		if (this.properties) {
-			newInterval.initializeProperties();
 			this.propertyManager.copyTo(
 				this.properties,
 				newInterval.properties,
@@ -437,15 +433,6 @@ export class SequenceInterval implements ISerializableInterval {
 			);
 		}
 		return newInterval;
-	}
-
-	private initializeProperties(): void {
-		if (!this.propertyManager) {
-			this.propertyManager = new PropertiesManager();
-		}
-		if (!this.properties) {
-			this.properties = createMap<any>();
-		}
 	}
 }
 

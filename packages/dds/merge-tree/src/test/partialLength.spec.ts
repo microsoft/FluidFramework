@@ -6,7 +6,7 @@
 import { UnassignedSequenceNumber } from "../constants";
 import { MergeTree } from "../mergeTree";
 import { MergeTreeDeltaType } from "../ops";
-import { PartialSequenceLengths, verify } from "../partialLengths";
+import { PartialSequenceLengths, verify, verifyExpected } from "../partialLengths";
 import { TextSegment } from "../textSegment";
 import { insertSegments, insertText, markRangeRemoved, validatePartialLengths } from "./testUtils";
 
@@ -18,6 +18,7 @@ describe("partial lengths", () => {
 
 	beforeEach(() => {
 		PartialSequenceLengths.options.verifier = verify;
+		PartialSequenceLengths.options.verifyExpected = verifyExpected;
 		mergeTree = new MergeTree();
 		insertSegments({
 			mergeTree,
@@ -34,6 +35,7 @@ describe("partial lengths", () => {
 
 	afterEach(() => {
 		PartialSequenceLengths.options.verifier = undefined;
+		PartialSequenceLengths.options.verifyExpected = undefined;
 	});
 
 	it("passes with no additional ops", () => {

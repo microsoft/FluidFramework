@@ -17,7 +17,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IIntegerRange } from "./base";
-import { List, RedBlackTree } from "./collections";
+import { DoublyLinkedList, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
@@ -182,6 +182,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			return undefined;
 		}
 	}
+
 	/**
 	 * Annotates the markers with the provided properties
 	 * @param marker - The marker to annotate
@@ -195,9 +196,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		combiningOp?: ICombiningOp,
 	): IMergeTreeAnnotateMsg | undefined {
 		const annotateOp = createAnnotateMarkerOp(marker, props, combiningOp)!;
-
-		return this.applyAnnotateRangeOp({ op: annotateOp }) ? annotateOp : undefined;
+		this.applyAnnotateRangeOp({ op: annotateOp });
+		return annotateOp;
 	}
+
 	/**
 	 * Annotates the range with the provided properties
 	 * @param start - The inclusive start position of the range to annotate
@@ -213,11 +215,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		combiningOp: ICombiningOp | undefined,
 	): IMergeTreeAnnotateMsg | undefined {
 		const annotateOp = createAnnotateRangeOp(start, end, props, combiningOp);
-
-		if (this.applyAnnotateRangeOp({ op: annotateOp })) {
-			return annotateOp;
-		}
-		return undefined;
+		this.applyAnnotateRangeOp({ op: annotateOp });
+		return annotateOp;
 	}
 
 	/**
@@ -435,9 +434,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	/**
 	 * Performs the remove based on the provided op
 	 * @param opArgs - The ops args for the op
-	 * @returns True if the remove was applied. False if it could not be.
 	 */
-	private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
+	private applyRemoveRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
 			opArgs.op.type === MergeTreeDeltaType.REMOVE,
 			0x02d /* "Unexpected op type on range remove!" */,
@@ -455,16 +453,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			false,
 			opArgs,
 		);
-
-		return true;
 	}
 
 	/**
 	 * Performs the annotate based on the provided op
 	 * @param opArgs - The ops args for the op
-	 * @returns True if the annotate was applied. False if it could not be.
 	 */
-	private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
+	private applyAnnotateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
 			opArgs.op.type === MergeTreeDeltaType.ANNOTATE,
 			0x02e /* "Unexpected op type on range annotate!" */,
@@ -472,10 +467,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
-
-		if (!range) {
-			return false;
-		}
 
 		this._mergeTree.annotateRange(
 			range.start,
@@ -487,8 +478,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			clientArgs.sequenceNumber,
 			opArgs,
 		);
-
-		return true;
 	}
 
 	/**
@@ -504,10 +493,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const op = opArgs.op;
 		const clientArgs = this.getClientSequenceArgs(opArgs);
 		const range = this.getValidOpRange(op, clientArgs);
-
-		if (!range) {
-			return false;
-		}
 
 		let segments: ISegment[] | undefined;
 		if (op.seg) {
@@ -526,6 +511,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			clientArgs.sequenceNumber,
 			opArgs,
 		);
+
 		return true;
 	}
 
@@ -919,9 +905,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private lastNormalizationRefSeq = 0;
 
-	private pendingRebase: List<SegmentGroup> | undefined;
+	private pendingRebase: DoublyLinkedList<SegmentGroup> | undefined;
+
 	/**
-	 * Given an pending operation and segment group, regenerate the op, so it
+	 * Given a pending operation and segment group, regenerate the op, so it
 	 * can be resubmitted
 	 * @param resetOp - The op to reset
 	 * @param segmentGroup - The segment group associated with the op

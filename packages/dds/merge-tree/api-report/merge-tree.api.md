@@ -58,7 +58,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
-    isLeaf(): boolean;
+    isLeaf(): this is ISegment;
     // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
