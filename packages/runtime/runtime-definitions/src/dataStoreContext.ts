@@ -46,6 +46,8 @@ import { IIdCompressor } from "./id-compressor";
 
 /**
  * Runtime flush mode handling
+ *
+ * @public
  */
 export enum FlushMode {
 	/**
@@ -60,6 +62,11 @@ export enum FlushMode {
 	TurnBased,
 }
 
+/**
+ * @remarks Note: this API is experimental and not ready for production use.
+ *
+ * @alpha
+ */
 export enum FlushModeExperimental {
 	/**
 	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
@@ -67,8 +74,6 @@ export enum FlushModeExperimental {
 	 *
 	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
 	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
-	 *
-	 * @experimental - Not ready for use
 	 */
 	Async = 2,
 }
@@ -76,6 +81,8 @@ export enum FlushModeExperimental {
 /**
  * This tells the visibility state of a Fluid object. It basically tracks whether the object is not visible, visible
  * locally within the container only or visible globally to all clients.
+ *
+ * @public
  */
 export const VisibilityState = {
 	/**
@@ -101,8 +108,14 @@ export const VisibilityState = {
 	 */
 	GloballyVisible: "GloballyVisible",
 };
+/** @public */
 export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilityState];
 
+/**
+ * Events emitted by {@link IContainerRuntimeBase}.
+ *
+ * @public
+ */
 export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void);
 	/**
@@ -118,18 +131,27 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * Encapsulates the return codes of the aliasing API.
  *
  * 'Success' - the datastore has been successfully aliased. It can now be used.
+ *
  * 'Conflict' - there is already a datastore bound to the provided alias. To acquire it's entry point, use
  * the `IContainerRuntime.getAliasedDataStoreEntryPoint` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
+ *
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
+ *
+ * @public
  */
 export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
  * Exposes some functionality/features of a data store:
+ *
  * - Handle to the data store's entryPoint
+ *
  * - Fluid router for the data store
+ *
  * - Can be assigned an alias
+ *
+ * @public
  */
 export interface IDataStore {
 	/**
@@ -183,7 +205,10 @@ export interface IDataStore {
 
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
- * TODO: this should be merged into IFluidDataStoreContext
+ *
+ * @privateRemarks TODO: this should be merged into {@link IFluidDataStoreContext}.
+ *
+ * @public
  */
 export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeBaseEvents> {
 	readonly logger: ITelemetryBaseLogger;
@@ -263,7 +288,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
- * and connection state notifications
+ * and connection state notifications.
+ *
+ * @public
  */
 export interface IFluidDataStoreChannel extends IDisposable {
 	readonly id: string;
@@ -369,6 +396,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	readonly IFluidRouter: IFluidRouter;
 }
 
+/**
+ * @public
+ */
 export type CreateChildSummarizerNodeFn = (
 	summarizeInternal: SummarizeInternalFn,
 	getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
@@ -378,13 +408,21 @@ export type CreateChildSummarizerNodeFn = (
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
 ) => ISummarizerNodeWithGC;
 
+/**
+ * Events emitted by {@link IFluidDataStoreContext}.
+ *
+ * @public
+ */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
 /**
- * Represents the context for the data store. It is used by the data store runtime to
- * get information and call functionality to the container.
+ * Represents the context for the data store.
+ *
+ * @remarks It is used by the data store runtime to get information and call functionality to the container.
+ *
+ * @public
  */
 export interface IFluidDataStoreContext
 	extends IEventProvider<IFluidDataStoreContextEvents>,
@@ -520,6 +558,9 @@ export interface IFluidDataStoreContext
 	addedGCOutboundReference?(srcHandle: IFluidHandle, outboundHandle: IFluidHandle): void;
 }
 
+/**
+ * @public
+ */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**
 	 * Binds a runtime to the context.

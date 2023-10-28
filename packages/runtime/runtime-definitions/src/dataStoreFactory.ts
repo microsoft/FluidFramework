@@ -5,15 +5,26 @@
 
 import { IFluidDataStoreContext, IFluidDataStoreChannel } from "./dataStoreContext";
 
+/**
+ * @public
+ */
 export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory = "IFluidDataStoreFactory";
 
+/**
+ * @public
+ */
 export interface IProvideFluidDataStoreFactory {
 	readonly IFluidDataStoreFactory: IFluidDataStoreFactory;
 }
 
 /**
- * IFluidDataStoreFactory create data stores.  It is associated with an identifier (its `type` member)
- * and usually provided to consumers using this mapping through a data store registry.
+ * Create data stores.
+ *
+ * @remarks
+ * It is associated with an identifier (its `type` member) and usually provided to consumers using this mapping
+ * through a data store registry.
+ *
+ * @public
  */
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	/**

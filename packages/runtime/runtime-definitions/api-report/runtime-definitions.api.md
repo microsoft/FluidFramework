@@ -91,7 +91,7 @@ export enum FlushMode {
     TurnBased = 1
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export enum FlushModeExperimental {
     Async = 2
 }
@@ -138,7 +138,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     uploadBlob(blob: ArrayBufferLike, signal?: AbortSignal): Promise<IFluidHandle<ArrayBufferLike>>;
 }
 
-// @public (undocumented)
+// @public
 export interface IContainerRuntimeBaseEvents extends IEvent {
     // (undocumented)
     (event: "batchBegin", listener: (op: ISequencedDocumentMessage) => void): any;
@@ -276,7 +276,7 @@ export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
     attachRuntime(factory: IProvideFluidDataStoreFactory, dataStoreRuntime: IFluidDataStoreChannel): Promise<void>;
 }
 
-// @public (undocumented)
+// @public
 export interface IFluidDataStoreContextEvents extends IEvent {
     // (undocumented)
     (event: "attaching" | "attached", listener: () => void): any;
@@ -339,7 +339,7 @@ export interface IInboundSignalMessage extends ISignalMessage {
     type: string;
 }
 
-// @public
+// @public (undocumented)
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };

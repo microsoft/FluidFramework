@@ -10,6 +10,9 @@ import {
 	SerializedIdCompressorWithOngoingSession,
 } from "./persisted-types";
 
+/**
+ * @public
+ */
 export interface IIdCompressorCore {
 	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
@@ -41,6 +44,7 @@ export interface IIdCompressorCore {
 /**
  * A distributed UUID generator and compressor.
  *
+ * @remarks
  * Generates arbitrary non-colliding v4 UUIDs, called stable IDs, for multiple "sessions" (which can be distributed across the network),
  * providing each session with the ability to map these UUIDs to `numbers`.
  *
@@ -99,6 +103,7 @@ export interface IIdCompressorCore {
  * These two spaces naturally define a rule: consumers of compressed IDs should use session-space IDs, but serialized forms such as ops
  * should use op-space IDs.
  *
+ * @public
  */
 export interface IIdCompressor {
 	localSessionId: SessionId;

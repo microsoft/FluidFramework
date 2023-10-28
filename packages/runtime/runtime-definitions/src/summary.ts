@@ -15,6 +15,8 @@ import { IGarbageCollectionData, IGarbageCollectionDetailsBase } from "./garbage
 
 /**
  * Contains the aggregation data from a Tree/Subtree.
+ *
+ * @public
  */
 export interface ISummaryStats {
 	treeNodeCount: number;
@@ -26,10 +28,16 @@ export interface ISummaryStats {
 
 /**
  * Represents the summary tree for a node along with the statistics for that tree.
+ *
+ * @remarks
  * For example, for a given data store, it contains the data for data store along with a subtree for
  * each of its DDS.
- * Any component that implements IChannelContext, IFluidDataStoreChannel or extends SharedObject
+ *
+ * Any component that implements {@link @fluidframework/datastore#IChannelContext}, {@link IFluidDataStoreChannel}
+ * or extends {@link @fluidframework/shared-object-base#SharedObject}
  * will be taking part of the summarization process.
+ *
+ * @public
  */
 export interface ISummaryTreeWithStats {
 	/**
@@ -45,6 +53,8 @@ export interface ISummaryTreeWithStats {
 
 /**
  * Represents a summary at a current sequence number.
+ *
+ * @public
  */
 export interface ISummarizeResult {
 	stats: ISummaryStats;
@@ -53,7 +63,8 @@ export interface ISummarizeResult {
 
 /**
  * Contains the same data as ISummaryResult but in order to avoid naming collisions,
- * the data store summaries are wrapped around an array of labels identified by pathPartsForChildren.
+ * the data store summaries are wrapped around an array of labels identified by
+ * {@link ISummarizeInternalResult.pathPartsForChildren}.
  *
  * @example
  *
@@ -65,6 +76,8 @@ export interface ISummarizeResult {
  *   ...
  *     "path1":
  * ```
+ *
+ * @public
  */
 export interface ISummarizeInternalResult extends ISummarizeResult {
 	id: string;
@@ -75,8 +88,11 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 }
 
 /**
- * @experimental - Can be deleted/changed at any time
- * Contains the necessary information to allow DDSes to do incremental summaries
+ * Contains the necessary information to allow DDSes to do incremental summaries.
+ *
+ * @remarks Note: this API is experimental and not ready for production use.
+ *
+ * @public
  */
 export interface IExperimentalIncrementalSummaryContext {
 	/**
@@ -101,6 +117,11 @@ export interface IExperimentalIncrementalSummaryContext {
 	summaryPath: string;
 }
 
+/**
+ * @remarks Note: this API is experimental and not ready for production use.
+ *
+ * @public
+ */
 export type SummarizeInternalFn = (
 	fullTree: boolean,
 	trackState: boolean,
@@ -108,6 +129,9 @@ export type SummarizeInternalFn = (
 	incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 ) => Promise<ISummarizeInternalResult>;
 
+/**
+ * @public
+ */
 export interface ISummarizerNodeConfig {
 	/**
 	 * True to reuse previous handle when unchanged since last acked summary.
@@ -126,6 +150,9 @@ export interface ISummarizerNodeConfig {
 	readonly throwOnFailure?: true;
 }
 
+/**
+ * @public
+ */
 export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 	/**
 	 * True if GC is disabled. If so, don't track GC related state for a summary.
@@ -134,11 +161,18 @@ export interface ISummarizerNodeConfigWithGC extends ISummarizerNodeConfig {
 	readonly gcDisabled?: boolean;
 }
 
+/**
+ * @public
+ */
 export enum CreateSummarizerNodeSource {
 	FromSummary,
 	FromAttach,
 	Local,
 }
+
+/**
+ * @public
+ */
 export type CreateChildSummarizerNodeParam =
 	| {
 			type: CreateSummarizerNodeSource.FromSummary;
@@ -152,6 +186,9 @@ export type CreateChildSummarizerNodeParam =
 			type: CreateSummarizerNodeSource.Local;
 	  };
 
+/**
+ * @public
+ */
 export interface ISummarizerNode {
 	/**
 	 * Latest successfully acked summary reference sequence number
@@ -220,7 +257,10 @@ export interface ISummarizerNode {
 }
 
 /**
- * Extends the functionality of ISummarizerNode to support garbage collection. It adds / updates the following APIs:
+ * Extends the functionality of ISummarizerNode to support garbage collection.
+ *
+ * @remarks
+ * It adds / updates the following APIs:
  *
  * `usedRoutes`: The routes in this node that are currently in use.
  *
@@ -240,6 +280,8 @@ export interface ISummarizerNode {
  * `isReferenced`: This tells whether this node is referenced in the document or not.
  *
  * `updateUsedRoutes`: Used to notify this node of routes that are currently in use in it.
+ *
+ * @public
  */
 export interface ISummarizerNodeWithGC extends ISummarizerNode {
 	createChild(
@@ -289,8 +331,13 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 	isReferenced(): boolean;
 
 	/**
-	 * After GC has run, called to notify this node of routes that are used in it. These are used for the following:
+	 * After GC has run, called to notify this node of routes that are used in it.
+	 *
+	 * @remarks
+	 * These are used for the following:
+	 *
 	 * 1. To identify if this node is being referenced in the document or not.
+	 *
 	 * 2. To identify if this node or any of its children's used routes changed since last summary.
 	 *
 	 * @param usedRoutes - The routes that are used in this node.
@@ -298,11 +345,17 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
 	updateUsedRoutes(usedRoutes: string[]): void;
 }
 
+/**
+ * @public
+ */
 export const channelsTreeName = ".channels";
 
 /**
  * Contains telemetry data relevant to summarization workflows.
- * This object is expected to be modified directly by various summarize methods.
+ *
+ * @remarks This object is expected to be modified directly by various summarize methods.
+ *
+ * @public
  */
 export interface ITelemetryContext {
 	/**
@@ -340,6 +393,12 @@ export interface ITelemetryContext {
 	serialize(): string;
 }
 
+/**
+ * @public
+ */
 export const blobCountPropertyName = "BlobCount";
 
+/**
+ * @public
+ */
 export const totalBlobSizePropertyName = "TotalBlobSize";
