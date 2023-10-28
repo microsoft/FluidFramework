@@ -75,6 +75,8 @@ describe("GC Telemetry Tracker", () => {
 				inactiveTimeoutMs,
 				sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
 				tombstoneEnforcementAllowed: false,
+				throwOnTombstoneLoad: false,
+				throwOnTombstoneUsage: false,
 			},
 			isSummarizerClient,
 			{ createContainerRuntimeVersion: pkgVersion },
@@ -283,7 +285,8 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: "GarbageCollector:GC_Tombstone_DataStore_Revived",
-						...tagCodeArtifacts({ url: nodes[2] }),
+						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 				],
 				"inactive events not as expected",

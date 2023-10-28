@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	type IChannelAttributes,
-	type IChannel,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
@@ -30,13 +29,14 @@ import { assert } from "@fluidframework/core-utils";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChannelServices.js";
 import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
-import { type IStampedContents } from "./types.js";
 import { PreMigrationDeltaConnection, StampDeltaConnection } from "./shimDeltaConnection.js";
+import { ShimHandle } from "./shimHandle.js";
+import { type IShim, type IStampedContents } from "./types.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
  *
- * @public
+ * @internal
  */
 export interface IMigrationEvent extends IEvent {
 	/**
@@ -78,9 +78,9 @@ export interface IMigrationOp {
  * attributes to point at the SharedTreeShimFactory.  This will cause future clients to load with a SharedTreeShim and
  * the new SharedTree snapshot instead after the next summarization.
  *
- * @public
+ * @internal
  */
-export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
+export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IShim {
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -97,6 +97,9 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 			this.processMigrateOp,
 			this.newTreeFactory.attributes,
 		);
+		// TODO: if we need to support the creation of legacy shared trees via the migration shim, we'll need to make
+		// sure that attaching the handle will make it live.
+		this.handle = new ShimHandle<MigrationShim>(this);
 	}
 
 	// TODO: process migrate op implementation, it'll look something like this
@@ -240,6 +243,8 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
 		return this.currentTree.getGCData(fullGC);
 	}
-	public handle!: IFluidHandle;
-	public IFluidLoadable!: IFluidLoadable;
+	public handle: IFluidHandle<MigrationShim>;
+	public get IFluidLoadable(): IFluidLoadable {
+		return this;
+	}
 }

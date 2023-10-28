@@ -258,7 +258,7 @@ export function assertValidRangeIndices(
 	endIndex: number,
 	array: { readonly length: number },
 ) {
-	assert(endIndex > startIndex, 0x79c /* Range indices are malformed. */);
+	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
 }
