@@ -22,13 +22,23 @@ import { SharedTreeFactory } from '@fluid-experimental/tree';
 import { SharedTreeFactory as SharedTreeFactory_2 } from '@fluid-experimental/tree2';
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
-// @public
+// @internal
 export interface IMigrationEvent extends IEvent {
     (event: "migrated", listener: () => void): any;
 }
 
-// @public
-export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
+// @internal
+export interface IShim extends IChannel {
+    // (undocumented)
+    create(): void;
+    // (undocumented)
+    currentTree: ISharedTree | SharedTree;
+    // (undocumented)
+    load(channelServices: IChannelServices): Promise<void>;
+}
+
+// @internal
+export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IShim {
     constructor(id: string, runtime: IFluidDataStoreRuntime, legacyTreeFactory: SharedTreeFactory, newTreeFactory: SharedTreeFactory_2, populateNewSharedObjectFn: (legacyTree: SharedTree, newTree: ISharedTree) => void);
     // (undocumented)
     get attributes(): IChannelAttributes;
@@ -43,11 +53,11 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
-    handle: IFluidHandle;
+    handle: IFluidHandle<MigrationShim>;
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    IFluidLoadable: IFluidLoadable;
+    get IFluidLoadable(): IFluidLoadable;
     // (undocumented)
     isAttached(): boolean;
     // (undocumented)
@@ -68,7 +78,7 @@ export class MigrationShimFactory implements IChannelFactory {
 }
 
 // @internal
-export class SharedTreeShim implements IChannel {
+export class SharedTreeShim implements IShim {
     constructor(id: string, runtime: IFluidDataStoreRuntime, sharedTreeFactory: SharedTreeFactory_2);
     // (undocumented)
     get attributes(): IChannelAttributes;
@@ -83,7 +93,7 @@ export class SharedTreeShim implements IChannel {
     // (undocumented)
     getGCData(fullGC?: boolean | undefined): IGarbageCollectionData;
     // (undocumented)
-    handle: IFluidHandle;
+    handle: IFluidHandle<SharedTreeShim>;
     // (undocumented)
     readonly id: string;
     // (undocumented)
