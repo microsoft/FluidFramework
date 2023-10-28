@@ -122,7 +122,6 @@ module.exports = {
 			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
-			"server/routerlicious/packages/tinylicious",
 		],
 	},
 
