@@ -207,7 +207,7 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 }
 
 /**
- * Given the a list proxy, returns its underlying LazySequence field.
+ * Given a list proxy, returns its underlying LazySequence field.
  */
 const getSequenceField = <TTypes extends AllowedTypes>(
 	list: SharedTreeList<AllowedTypes, "javaScript">,
@@ -241,8 +241,8 @@ function itemsAsContextuallyTyped(
  */
 const listPrototypeProperties: PropertyDescriptorMap = {
 	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
-	// above because 'Array.prototype[Symbol.iterator].name' returns "values" (i.e., Symbol.iterator
-	// is an alias for the '.values()' function.)
+	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
+	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
 	[Symbol.iterator]: {
 		value: Array.prototype[Symbol.iterator],
 	},
@@ -415,7 +415,8 @@ function asIndex(key: string | symbol, length: number) {
 export function createListProxy<TTypes extends AllowedTypes>(
 	treeNode: TreeNode,
 ): SharedTreeList<TTypes> {
-	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
+	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
+	// the proxy target to be a plain JS array (see comments below when we instantiate the Proxy).
 	// Own properties on the dispatch object are surfaced as own properties of the proxy.
 	// (e.g., 'length', which is defined below).
 	//
