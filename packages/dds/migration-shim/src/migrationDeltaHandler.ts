@@ -6,8 +6,8 @@
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
-import { isStampedMessage } from "./utils.js";
+import { type IShimDeltaHandler } from "./types.js";
+import { messageStampMatchesAttributes as messageStampMatchesAttributes } from "./utils.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
@@ -29,19 +29,6 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		) => boolean,
 		private readonly attributes: IChannelAttributes,
 	) {}
-
-	public preSubmit(content: IStampedContents, _: unknown): void {
-		assert(!this.isPreAttachState(), "Can't submit ops before attaching tree handler");
-		if (this.isUsingOldV1()) {
-			return;
-		}
-		assert(this.isUsingNewV2(), "Should be using new handler after swap");
-		content.fluidMigrationStamp = {
-			...this.attributes,
-		};
-	}
-	// Note: we may only need to stamp v2 ops as v1 ops can be considered non-stamped ops.
-
 	// Introduction of invariant, we always expect an old handler.
 	public hasTreeDeltaHandler(): boolean {
 		return this.legacyTreeHandler !== undefined;
@@ -53,8 +40,19 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		return handler;
 	}
 
+	private _attached = false;
+	public get attached(): boolean {
+		return this._attached;
+	}
+
+	public markAttached(): void {
+		this._attached = true;
+	}
+
 	public isPreAttachState(): boolean {
-		return this.legacyTreeHandler === undefined && this.newTreeHandler === undefined;
+		const preAttach = this.legacyTreeHandler === undefined && this.newTreeHandler === undefined;
+		assert(!preAttach || !this.attached, "Should not be attached in preAttach state");
+		return preAttach;
 	}
 
 	public isUsingOldV1(): boolean {
@@ -62,7 +60,9 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	}
 
 	public isUsingNewV2(): boolean {
-		return this.legacyTreeHandler !== undefined && this.newTreeHandler !== undefined;
+		const isUsingV2 = this.legacyTreeHandler !== undefined && this.newTreeHandler !== undefined;
+		assert(!isUsingV2 || this.attached, "Should be attached if in v2 state");
+		return isUsingV2;
 	}
 
 	// Allow for the handler to be swapped out for the new SharedTree's handler
@@ -100,12 +100,11 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 			}
 		} else {
 			// Drop v1 ops
-			if (!isStampedMessage(message, this.attributes)) {
+			if (!messageStampMatchesAttributes(message, this.attributes)) {
 				return;
 			}
 		}
 		// Another thought, flatten the IShimDeltaHandler and the MigrationShim into one class
-		// TODO: drop extra migration ops and drop v1 ops after migration
 		return this.treeDeltaHandler.process(message, local, localOpMetadata);
 	}
 

@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
-import { isStampedMessage } from "./utils.js";
+import { type IShimDeltaHandler } from "./types.js";
+import { messageStampMatchesAttributes } from "./utils.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the SharedTreeShim distributed data structure.
@@ -28,11 +28,15 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 		return handler;
 	}
 
-	public preSubmit(content: IStampedContents, localOpMetadata: unknown): void {
-		content.fluidMigrationStamp = {
-			...this.attributes,
-		};
+	private _attached = false;
+	public get attached(): boolean {
+		return this._attached;
 	}
+
+	public markAttached(): void {
+		this._attached = true;
+	}
+
 	public attachTreeDeltaHandler(handler: IDeltaHandler): void {
 		assert(this._handler === undefined, 0x7ec /* Should only be able to connect once! */);
 		this._handler = handler;
@@ -49,7 +53,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		// Drop v1 ops
-		if (!isStampedMessage(message, this.attributes)) {
+		if (!messageStampMatchesAttributes(message, this.attributes)) {
 			return;
 		}
 		return this.handler.process(message, local, localOpMetadata);

@@ -31,7 +31,7 @@ export function attributesMatch(
  * @param attributes - the v2 attributes we expect to accept
  * @returns true if the message is stamped in the v2 format
  */
-export function isStampedMessage(
+export function messageStampMatchesAttributes(
 	message: ISequencedDocumentMessage,
 	attributes: IChannelAttributes,
 ): boolean {

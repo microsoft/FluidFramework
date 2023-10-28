@@ -21,13 +21,9 @@ export interface IShimDeltaHandler extends IDeltaHandler {
 	 */
 	hasTreeDeltaHandler(): boolean;
 
-	/**
-	 * This allows the shim to stamp the op with the appropriate metadata before submitting it to the delta connection.
-	 *
-	 * @param content - content of the op we are stamping
-	 * @param localOpMetadata - metadata of the op we are stamping
-	 */
-	preSubmit(content: IStampedContents, localOpMetadata: unknown): void;
+	attached: boolean;
+
+	markAttached(): void;
 }
 
 /**

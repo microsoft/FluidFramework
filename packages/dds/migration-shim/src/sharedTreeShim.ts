@@ -18,16 +18,17 @@ import {
 import { type ISharedTree, type SharedTreeFactory } from "@fluid-experimental/tree2";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
+import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChannelServices.js";
 import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler.js";
+import { StampDeltaConnection } from "./shimDeltaConnection.js";
 
 /**
  * SharedTreeShim is loaded by clients that join after the migration completes, and holds the new SharedTree.
  *
  * @remarks
  *
- * Its sole responsibility should be to drop v1 &
- * migrate ops. It should not be responsible for any other migration logic. This should make the class easier to reason
+ * Its sole responsibility should be to drop v1 & migrate ops. It should not be responsible for any other migration
+ * logic. This should make the classes easier to reason about.
  * about.
  *
  * @internal
@@ -42,7 +43,7 @@ export class SharedTreeShim implements IChannel {
 	}
 
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;
-	private services?: ShimChannelServices;
+	private services?: IChannelServices;
 	private _currentTree?: ISharedTree;
 	public get currentTree(): ISharedTree {
 		assert(this._currentTree !== undefined, 0x7ed /* No current tree initialized */);
@@ -82,7 +83,6 @@ export class SharedTreeShim implements IChannel {
 		return this.currentTree.isAttached();
 	}
 	public connect(services: IChannelServices): void {
-		// TODO: wrap services before passing it down to currentTree with the appropriate IDeltaHandler.
 		const shimServices = this.generateShimServicesOnce(services);
 		return this.currentTree.connect(shimServices);
 	}
@@ -108,10 +108,18 @@ export class SharedTreeShim implements IChannel {
 		this._currentTree = this.sharedTreeFactory.create(this.runtime, this.id);
 	}
 
-	private generateShimServicesOnce(services: IChannelServices): ShimChannelServices {
+	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
 		assert(this.services === undefined, 0x7ee /* Already connected */);
-		this.services = new ShimChannelServices(services, this.newTreeShimDeltaHandler);
-		return this.services;
+		this.services = services;
+		const shimServices = {
+			objectStorage: this.services.objectStorage,
+			deltaConnection: new StampDeltaConnection(
+				this.services.deltaConnection,
+				this.newTreeShimDeltaHandler,
+				this.sharedTreeFactory.attributes,
+			),
+		};
+		return shimServices;
 	}
 
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
