@@ -69,7 +69,6 @@ export {
 	IMarkerModifiedAction,
 	IMergeNodeCommon,
 	IMoveInfo,
-	InsertContext,
 	IRemovalInfo,
 	ISegment,
 	ISegmentAction,

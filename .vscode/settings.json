@@ -65,7 +65,7 @@
 		"editor.defaultFormatter": "esbenp.prettier-vscode",
 	},
 	"[typescript]": {
-		"editor.defaultFormatter": "vscode.typescript-language-features",
+		"editor.defaultFormatter": "esbenp.prettier-vscode",
 	},
 
 	// Customizations for VSCode search results.

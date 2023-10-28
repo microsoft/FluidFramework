@@ -550,20 +550,6 @@ export interface IMoveInfo {
 }
 
 // @internal (undocumented)
-export interface InsertContext {
-    // (undocumented)
-    candidateSegment?: ISegment;
-    // (undocumented)
-    continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
-    // (undocumented)
-    leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
-    // (undocumented)
-    prepareEvents?: boolean;
-    // (undocumented)
-    structureChange?: boolean;
-}
-
-// @internal (undocumented)
 export interface IRBAugmentation<TKey, TData> {
     // (undocumented)
     update(node: RBNode<TKey, TData>): void;
