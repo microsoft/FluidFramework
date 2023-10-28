@@ -559,6 +559,21 @@ describe("List", () => {
 				check(["a", "b"], "a", /* start: */ -Infinity);
 			});
 
+			describe("at()", () => {
+				const check = (array: readonly string[], index: number) => {
+					test2("at", array, noInit, index);
+				};
+
+				check([], 0);
+				check([], -1);
+				check(["a", "b"], 0);
+				check(["a", "b"], 1);
+				check(["a", "b"], 2);
+				check(["a", "b"], -1);
+				check(["a", "b"], -2);
+				check(["a", "b"], -3);
+			});
+
 			describe("join()", () => {
 				const check = (array: readonly string[], separator?: string) => {
 					test2("join", array, noInit, separator);
