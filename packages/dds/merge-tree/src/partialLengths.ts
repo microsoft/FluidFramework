@@ -1301,6 +1301,7 @@ export function verify(partialSeqLengths: PartialSequenceLengths) {
 			!!partialSeqLengths["partialLengths"],
 			0x059 /* "Client view exists but flat view does not!" */,
 		);
+
 		verifyPartialLengths(partialSeqLengths, partialSeqLengths["partialLengths"], false);
 	} else {
 		// If we don't have a client view, we shouldn't have the flat view either

@@ -9,7 +9,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
-import { Comparer, Heap, List, ListNode } from "./collections";
+import { Comparer, Heap, DoublyLinkedList, ListNode } from "./collections";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -458,7 +458,7 @@ export class MergeTree {
 
 	public readonly collabWindow = new CollaborationWindow();
 
-	public readonly pendingSegments = new List<SegmentGroup>();
+	public readonly pendingSegments = new DoublyLinkedList<SegmentGroup>();
 	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
@@ -735,8 +735,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
-				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
-				if ((prevParent && child === prevParent) || child === node) {
+				if ((!!prevParent && child === prevParent) || child === node) {
 					break;
 				}
 				totalOffset += this.nodeLength(child, refSeq, clientId, localSeq) ?? 0;
@@ -1027,6 +1026,7 @@ export class MergeTree {
 				return node.cachedLength;
 			} else {
 				this.computeLocalPartials(refSeq);
+
 				// Local client should see all segments except those after localSeq.
 				const partialLen = node.partialLengths!.getPartialLength(
 					refSeq,
@@ -1323,9 +1323,8 @@ export class MergeTree {
 		}
 
 		if (
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
-			(!_segmentGroup.previousProps && previousProps) ||
-			(_segmentGroup.previousProps && !previousProps)
+			(!_segmentGroup.previousProps && !!previousProps) ||
+			(!!_segmentGroup.previousProps && !previousProps)
 		) {
 			throw new Error("All segments in group should have previousProps or none");
 		}
@@ -1698,6 +1697,7 @@ export class MergeTree {
 			if (pos !== 0) {
 				return false;
 			}
+
 			// normalize the seq numbers
 			// if the new seg is local (UnassignedSequenceNumber) give it the highest possible
 			// seq for comparison, as it will get a seq higher than any other seq once sequences
@@ -1706,6 +1706,7 @@ export class MergeTree {
 			const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
 			const segSeq =
 				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : node.seq ?? 0;
+
 			return (
 				newSeq > segSeq ||
 				(node.movedSeq !== undefined &&
@@ -2143,7 +2144,7 @@ export class MergeTree {
 				removedSegments.push({ segment });
 			}
 
-			// Save segment so can assign removed sequence number when acked by server
+			// Save segment so we can assign removed sequence number when acked by server
 			if (this.collabWindow.collaborating) {
 				if (
 					segment.removedSeq === UnassignedSequenceNumber &&
@@ -2388,7 +2389,7 @@ export class MergeTree {
 	}
 
 	// Segments should either be removed remotely, removed locally, or inserted locally
-	private normalizeAdjacentSegments(affectedSegments: List<ISegmentLeaf>): void {
+	private normalizeAdjacentSegments(affectedSegments: DoublyLinkedList<ISegmentLeaf>): void {
 		// Eagerly demand this since we're about to shift elements in the list around
 		const currentOrder = Array.from(affectedSegments, ({ data: seg }) => ({
 			parent: seg.parent,
@@ -2510,7 +2511,7 @@ export class MergeTree {
 	 * it can fix up its local state to align with what would be expected of the op it resubmits.
 	 */
 	public normalizeSegmentsOnRebase(): void {
-		let currentRangeToNormalize = new List<ISegment>();
+		let currentRangeToNormalize = new DoublyLinkedList<ISegment>();
 		let rangeContainsLocalSegs = false;
 		let rangeContainsRemoteRemovedSegs = false;
 		const normalize = () => {
@@ -2533,7 +2534,7 @@ export class MergeTree {
 				currentRangeToNormalize.push(seg);
 			} else {
 				normalize();
-				currentRangeToNormalize = new List<ISegment>();
+				currentRangeToNormalize = new DoublyLinkedList<ISegment>();
 				rangeContainsLocalSegs = false;
 				rangeContainsRemoteRemovedSegs = false;
 			}
