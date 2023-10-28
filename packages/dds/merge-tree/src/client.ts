@@ -458,7 +458,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		this._mergeTree.rollback(op as IMergeTreeDeltaOp, localOpMetadata as SegmentGroup);
 	}
 
-	private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): boolean {
+	private applyObliterateRangeOp(opArgs: IMergeTreeDeltaOpArgs): void {
 		assert(
 			opArgs.op.type === MergeTreeDeltaType.OBLITERATE,
 			"Unexpected op type on range obliterate!",
@@ -476,8 +476,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			false,
 			opArgs,
 		);
-
-		return true;
 	}
 
 	/**
