@@ -93,6 +93,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
  * @remarks Note: this API is experimental and not ready for production use.
  *
  * @public
+ * @experimental
  */
 export interface IExperimentalIncrementalSummaryContext {
 	/**
@@ -118,8 +119,6 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 /**
- * @remarks Note: this API is experimental and not ready for production use.
- *
  * @public
  */
 export type SummarizeInternalFn = (
