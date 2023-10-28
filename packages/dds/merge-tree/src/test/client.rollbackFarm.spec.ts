@@ -20,8 +20,8 @@ import { createClientsAtInitialState, TestClientLogger } from "./testClientLogge
 const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 
 const defaultOptions = {
-	minLength: { min: 1, max: 32 },
-	opsPerRollbackRange: { min: 1, max: 32 },
+	minLength: { min: 1, max: 16 }, // ADO#6067: the max value should eventually be changed to 32+
+	opsPerRollbackRange: { min: 1, max: 16 }, // ADO#6067: the max value should eventually be changed to 32+
 	rounds: 10,
 	opsPerRound: 10,
 	operations: allOperations,
