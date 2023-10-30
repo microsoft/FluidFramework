@@ -207,14 +207,18 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 */
 	private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
 		for (const filter of this.config.filtering.filters ?? []) {
-			if ("namespacePattern" in filter) {
+			if ("namespacePattern" in filter && filter.namespacePattern !== undefined) {
 				if (event.eventName.startsWith(filter.namespacePattern)) {
 					// Found matching namespace pattern, since filters are ordered in most specific first,
 					// this is the most specific, relevant matching filter for the event.
 
 					// By default, if no categories are defined then any category is a valid match.
 					let doesFilterCategoriesMatch = true;
-					if ("categories" in filter && filter.categories.length > 0) {
+					if (
+						"categories" in filter &&
+						filter.categories !== undefined &&
+						filter.categories.length > 0
+					) {
 						doesFilterCategoriesMatch = false;
 						const matchingCategory = filter.categories.find(
 							(category) => category === event.category,
@@ -239,7 +243,11 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 				}
 			}
 			// Filter only has categories defined
-			else if ("categories" in filter && filter.categories.length > 0) {
+			else if (
+				"categories" in filter &&
+				filter.categories !== undefined &&
+				filter.categories.length > 0
+			) {
 				const doesFilterCategoriesMatch = filter.categories.find(
 					(category) => category === event.category,
 				);
@@ -283,9 +291,9 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 						);
 					}
 				}
-			} else if ("categories" in filter) {
+			} else if ("categories" in filter && filter.categories !== undefined) {
 				// These are filters that only contain "categories". For the purpose of this validation logic, we are treating filters
-				// that does not contain a defined namespace as the the same as a blank "" namespace (which will match any event).
+				// that does not contain a defined namespace as the the same as a blank "" namespace pattern (which will match any event).
 				if (uniqueFilterNamespaces.has("")) {
 					throw new Error("Cannot have multiple filters that only define categories");
 				}
