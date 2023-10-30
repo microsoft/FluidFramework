@@ -628,6 +628,7 @@ export function makeOpsMap<T extends ISerializableInterval>(): Map<
  */
 export type DeserializeCallback = (properties: PropertySet) => void;
 
+/*
 class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	implements Iterator<TInterval>
 {
@@ -659,7 +660,7 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 			done: true,
 		};
 	}
-}
+} */
 
 /**
  * Change events emitted by `IntervalCollection`s
@@ -1897,59 +1898,105 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * @returns an iterator over all intervals in this collection.
 	 */
-	public [Symbol.iterator](): IntervalCollectionIterator<TInterval> {
+	public [Symbol.iterator](): Iterator<TInterval> {
+		if (!this.localCollection) {
+			// Return an empty iterator if the localCollection is undefined.
+			return {
+				next: () => {
+					return {
+						value: undefined,
+						done: true,
+					};
+				},
+			};
+		}
+		return this.localCollection.idIntervalIndex[Symbol.iterator]();
+		/*
 		const iterator = new IntervalCollectionIterator<TInterval>(this);
-		return iterator;
+		return iterator; */
 	}
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithStartPosition}
 	 */
-	public CreateForwardIteratorWithStartPosition(
-		startPosition: number,
-	): IntervalCollectionIterator<TInterval> {
+	public CreateForwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval> {
+		/*
 		const iterator = new IntervalCollectionIterator<TInterval>(this, true, startPosition);
-		return iterator;
+		return iterator; */
+		if (!this.localCollection) {
+			// Return an empty iterator if the localCollection is undefined.
+			return {
+				next: () => {
+					return {
+						value: undefined,
+						done: true,
+					};
+				},
+			};
+		}
+		return this.localCollection.overlappingIntervalsIndex.createForwardIteratorWithStartPosition(
+			startPosition,
+		);
 	}
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithStartPosition}
 	 */
-	public CreateBackwardIteratorWithStartPosition(
-		startPosition: number,
-	): IntervalCollectionIterator<TInterval> {
-		const iterator = new IntervalCollectionIterator<TInterval>(this, false, startPosition);
-		return iterator;
+	public CreateBackwardIteratorWithStartPosition(startPosition: number): Iterator<TInterval> {
+		if (!this.localCollection) {
+			// Return an empty iterator if the localCollection is undefined.
+			return {
+				next: () => {
+					return {
+						value: undefined,
+						done: true,
+					};
+				},
+			};
+		}
+		return this.localCollection.overlappingIntervalsIndex.createBackwardIteratorWithStartPosition(
+			startPosition,
+		);
 	}
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateForwardIteratorWithEndPosition}
 	 */
-	public CreateForwardIteratorWithEndPosition(
-		endPosition: number,
-	): IntervalCollectionIterator<TInterval> {
-		const iterator = new IntervalCollectionIterator<TInterval>(
-			this,
-			true,
-			undefined,
+	public CreateForwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval> {
+		if (!this.localCollection) {
+			// Return an empty iterator if the localCollection is undefined.
+			return {
+				next: () => {
+					return {
+						value: undefined,
+						done: true,
+					};
+				},
+			};
+		}
+		return this.localCollection.overlappingIntervalsIndex.createForwardIteratorWithEndPosition(
 			endPosition,
 		);
-		return iterator;
 	}
 
 	/**
 	 * {@inheritdoc IIntervalCollection.CreateBackwardIteratorWithEndPosition}
 	 */
-	public CreateBackwardIteratorWithEndPosition(
-		endPosition: number,
-	): IntervalCollectionIterator<TInterval> {
-		const iterator = new IntervalCollectionIterator<TInterval>(
-			this,
-			false,
-			undefined,
+	public CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval> {
+		if (!this.localCollection) {
+			// Return an empty iterator if the localCollection is undefined.
+			return {
+				next: () => {
+					return {
+						value: undefined,
+						done: true,
+					};
+				},
+			};
+		}
+		return this.localCollection.overlappingIntervalsIndex.createBackwardIteratorWithEndPosition(
 			endPosition,
 		);
-		return iterator;
 	}
 
 	/**

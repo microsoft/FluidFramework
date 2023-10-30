@@ -271,6 +271,7 @@ declare function get_old_InterfaceDeclaration_IOverlappingIntervalsIndex():
 declare function use_current_InterfaceDeclaration_IOverlappingIntervalsIndex(
     use: TypeOnly<current.IOverlappingIntervalsIndex<any>>);
 use_current_InterfaceDeclaration_IOverlappingIntervalsIndex(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IOverlappingIntervalsIndex());
 
 /*
@@ -775,6 +776,7 @@ declare function get_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlappin
 declare function use_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
     use: TypeOnly<current.SequenceIntervalIndexes.Overlapping>);
 use_current_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_SequenceIntervalIndexes_Overlapping());
 
 /*

@@ -24,6 +24,7 @@ import { SharedStringFactory } from "../sequenceFactory";
 import { IIntervalCollection, Side } from "../intervalCollection";
 import { IntervalIndex } from "../intervalIndex";
 import { IntervalStickiness, SequenceInterval, ISerializableInterval } from "../intervals";
+import { assertIntervals } from "./intervalUtils";
 
 class MockIntervalIndex<TInterval extends ISerializableInterval>
 	implements IntervalIndex<TInterval>
@@ -55,6 +56,7 @@ class MockIntervalIndex<TInterval extends ISerializableInterval>
 	}
 }
 
+/*
 const assertIntervals = (
 	sharedString: SharedString,
 	intervalCollection: IIntervalCollection<SequenceInterval>,
@@ -82,7 +84,7 @@ const assertIntervals = (
 		return { start, end };
 	});
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
-};
+}; */
 
 function assertIntervalEquals(
 	string: SharedString,

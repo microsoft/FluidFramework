@@ -37,6 +37,14 @@ export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInter
 		start?: SequencePlace,
 		end?: SequencePlace,
 	): void;
+
+	createForwardIteratorWithStartPosition(startPosition: SequencePlace): Iterator<TInterval>;
+
+	createBackwardIteratorWithStartPosition(startPosition: SequencePlace): Iterator<TInterval>;
+
+	createForwardIteratorWithEndPosition(endPosition: SequencePlace): Iterator<TInterval>;
+
+	createBackwardIteratorWithEndPosition(endPosition: SequencePlace): Iterator<TInterval>;
 }
 
 /**
@@ -142,6 +150,94 @@ export class OverlappingIntervalsIndex<TInterval extends ISerializableInterval>
 				}
 			}
 		}
+	}
+
+	public createForwardIteratorWithStartPosition(
+		startPosition: SequencePlace,
+	): Iterator<TInterval> {
+		const results: TInterval[] = [];
+		this.gatherIterationResults(results, true, startPosition);
+
+		let index = 0;
+		// Return the custom iterator object.
+		return {
+			next: () => {
+				return index < results.length
+					? {
+							value: results[index++],
+							done: false,
+					  }
+					: {
+							value: undefined,
+							done: true,
+					  };
+			},
+		};
+	}
+
+	public createBackwardIteratorWithStartPosition(
+		startPosition: SequencePlace,
+	): Iterator<TInterval> {
+		const results: TInterval[] = [];
+		this.gatherIterationResults(results, false, startPosition);
+
+		let index = 0;
+		// Return the custom iterator object.
+		return {
+			next: () => {
+				return index < results.length
+					? {
+							value: results[index++],
+							done: false,
+					  }
+					: {
+							value: undefined,
+							done: true,
+					  };
+			},
+		};
+	}
+
+	public createForwardIteratorWithEndPosition(endPosition: SequencePlace): Iterator<TInterval> {
+		const results: TInterval[] = [];
+		this.gatherIterationResults(results, true, undefined, endPosition);
+
+		let index = 0;
+		// Return the custom iterator object.
+		return {
+			next: () => {
+				return index < results.length
+					? {
+							value: results[index++],
+							done: false,
+					  }
+					: {
+							value: undefined,
+							done: true,
+					  };
+			},
+		};
+	}
+
+	public createBackwardIteratorWithEndPosition(endPosition: SequencePlace): Iterator<TInterval> {
+		const results: TInterval[] = [];
+		this.gatherIterationResults(results, false, undefined, endPosition);
+
+		let index = 0;
+		// Return the custom iterator object.
+		return {
+			next: () => {
+				return index < results.length
+					? {
+							value: results[index++],
+							done: false,
+					  }
+					: {
+							value: undefined,
+							done: true,
+					  };
+			},
+		};
 	}
 
 	public findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[] {

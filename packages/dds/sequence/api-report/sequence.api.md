@@ -323,6 +323,14 @@ export enum IntervalType {
 // @public (undocumented)
 export interface IOverlappingIntervalsIndex<TInterval extends ISerializableInterval> extends IntervalIndex<TInterval> {
     // (undocumented)
+    createBackwardIteratorWithEndPosition(endPosition: SequencePlace): Iterator<TInterval>;
+    // (undocumented)
+    createBackwardIteratorWithStartPosition(startPosition: SequencePlace): Iterator<TInterval>;
+    // (undocumented)
+    createForwardIteratorWithEndPosition(endPosition: SequencePlace): Iterator<TInterval>;
+    // (undocumented)
+    createForwardIteratorWithStartPosition(startPosition: SequencePlace): Iterator<TInterval>;
+    // (undocumented)
     findOverlappingIntervals(start: SequencePlace, end: SequencePlace): TInterval[];
     gatherIterationResults(results: TInterval[], iteratesForward: boolean, start?: SequencePlace, end?: SequencePlace): void;
 }

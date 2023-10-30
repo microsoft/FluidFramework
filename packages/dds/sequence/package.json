@@ -122,6 +122,12 @@
 		"broken": {
 			"ClassDeclaration_SharedString": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IOverlappingIntervalsIndex": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_SequenceIntervalIndexes.Overlapping": {
+				"forwardCompat": false
 			}
 		}
 	}

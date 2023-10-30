@@ -17,10 +17,11 @@ import {
 } from "../sharedIntervalCollection";
 import { IIntervalCollection } from "../intervalCollection";
 import { Interval, IntervalType } from "../intervals";
+import { idCompareFn, endpointCompareFn } from "./intervalUtils";
 
 const assertIntervals = (
 	intervalCollection: IIntervalCollection<Interval>,
-	expected: readonly { start: number; end: number }[],
+	expected: { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
 	const actual = Array.from(intervalCollection);
@@ -29,6 +30,8 @@ const assertIntervals = (
 			Number.NEGATIVE_INFINITY,
 			Number.POSITIVE_INFINITY,
 		);
+		actual.sort(idCompareFn);
+		overlapping.sort(idCompareFn);
 		assert.deepEqual(actual, overlapping, "Interval search returned inconsistent results");
 	}
 	assert.strictEqual(
@@ -41,6 +44,8 @@ const assertIntervals = (
 		assert(interval);
 		return { start: interval.start, end: interval.end };
 	});
+	actualPos.sort(endpointCompareFn);
+	expected.sort(endpointCompareFn);
 	assert.deepEqual(actualPos, expected, "intervals are not as expected");
 };
 
