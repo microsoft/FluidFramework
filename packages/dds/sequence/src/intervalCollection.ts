@@ -929,8 +929,16 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 */
 	map(fn: (interval: TInterval) => void): void;
 
+	/**
+	 * @deprecated - due to the forthcoming change where the endpointIndex will no longer be
+	 * automatically added to the collection.
+	 */
 	previousInterval(pos: number): TInterval | undefined;
 
+	/**
+	 * @deprecated - due to the forthcoming change where the endIntervalIndex will no longer be
+	 * automatically added to the collection.
+	 */
 	nextInterval(pos: number): TInterval | undefined;
 }
 

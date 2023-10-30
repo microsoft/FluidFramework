@@ -78,8 +78,7 @@ export class TableDocument extends DataObject<{ Events: ITableDocumentEvents }> 
 	}
 
 	public async getRange(label: string) {
-		const intervals = this.matrix.getIntervalCollection(label);
-		const interval = intervals.nextInterval(0);
+		const interval = this.matrix.getNextInterval(label);
 		return new CellRange(interval, this.localRefToRowCol);
 	}
 
