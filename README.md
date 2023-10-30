@@ -222,7 +222,7 @@ First, start Tinylicious by running these commands from `/server/routerlicious/`
 pnpm install
 ```
 
-`/server/routerlicious/packages/tinylicious`:
+Then these commands from `/server/routerlicious/packages/tinylicious`:
 
 ```shell
 pnpm run build
