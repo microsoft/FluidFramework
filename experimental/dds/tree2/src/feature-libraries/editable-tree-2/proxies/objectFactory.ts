@@ -75,10 +75,11 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 		return content.map(extractFactoryContent) as T;
 	} else if (content instanceof Map) {
 		// `content` is a map
+		const map = new Map();
 		for (const [k, v] of content) {
-			content.set(k, extractFactoryContent(v));
+			map.set(k, extractFactoryContent(v));
 		}
-		return content;
+		return map as T;
 	} else if (content !== null && typeof content === "object") {
 		const copy: Record<string, unknown> = {};
 		const factoryContent = (content as Partial<HasFactoryContent<object>>)[
