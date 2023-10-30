@@ -69,6 +69,7 @@ import {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
+	IMergeTreeOptions,
 } from "./index";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
@@ -122,7 +123,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		// Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
-		options?: PropertySet,
+		options?: IMergeTreeOptions & PropertySet,
 	) {
 		super();
 		this._mergeTree = new MergeTree(options);
