@@ -60,6 +60,15 @@ describe("node API", () => {
 				node.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
 			);
 		});
+		itWithRoot("narrows", treeSchema, initialTree, (root) => {
+			const untyped: SharedTreeNode = root.object;
+			if (node.is(untyped, object)) {
+				const _ = untyped.content;
+			} else {
+				// @ts-expect-error: `content` shouldn't be a known property because `untyped` hasn't been narrowed.
+				const _ = untyped.content;
+			}
+		});
 	});
 
 	describe("isListOf", () => {
@@ -87,6 +96,16 @@ describe("node API", () => {
 			assert.equal(node.isListOf(root.anyList, Any), true);
 			assert.equal(node.isListOf(root.anyList, object), false);
 			assert.equal(node.isListOf(root.anyList, sb.number), false);
+		});
+
+		itWithRoot("narrows", treeSchema, initialTree, (root) => {
+			const untyped: SharedTreeNode = root.list;
+			if (node.isListOf(untyped, object)) {
+				const _ = untyped[0].content;
+			} else {
+				// @ts-expect-error: `content` shouldn't be a known property because `untyped` hasn't been narrowed.
+				const _ = untyped[0].content;
+			}
 		});
 	});
 
