@@ -1748,17 +1748,13 @@ export class MergeTree {
 			// ensure we walk down the far edge of the tree, even if all sub-tree is eligible for zamboni
 			const isLastNonLeafBlock =
 				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
-			let len =
+			const len =
 				this.nodeLength(child, refSeq, clientId) ?? (isLastChildBlock ? 0 : undefined);
 
 			if (len === undefined) {
-				if (this.breakTie(_pos, child, seq)) {
-					len = 0;
-				} else {
-					// if the seg len is undefined, the segment
-					// will be removed, so should just be skipped for now
-					continue;
-				}
+				// if the seg len is undefined, the segment
+				// will be removed, so should just be skipped for now
+				continue;
 			}
 
 			assert(len >= 0, 0x4bc /* Length should not be negative */);
