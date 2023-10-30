@@ -4,12 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
+import { Static, Type } from "@sinclair/typebox";
 import {
 	Brand,
 	IdAllocator,
 	NestedMap,
 	brand,
 	deleteFromNestedMap,
+	fail,
 	forEachInNestedMap,
 	idAllocatorFromMaxId,
 	populateNestedMap,
@@ -17,6 +19,7 @@ import {
 	tryGetFromNestedMap,
 } from "../../util";
 import { FieldKey } from "../schema-stored";
+import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
 import * as Delta from "./delta";
 
 /**
@@ -27,6 +30,8 @@ import * as Delta from "./delta";
  */
 export type ForestRootId = Brand<number, "tree.ForestRootId">;
 
+export const version = 1.0;
+
 type Major = string | number | undefined;
 type Minor = number;
 
@@ -36,6 +41,11 @@ type Minor = number;
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
 	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
+	private readonly codec: IJsonCodec<{
+		data: NestedMap<Major, Minor, ForestRootId>;
+		id: ForestRootId;
+	}>;
+	private readonly options: ICodecOptions;
 
 	/**
 	 * @param name - A name for the index, used as a prefix for the generated field keys.
@@ -44,12 +54,17 @@ export class DetachedFieldIndex {
 	public constructor(
 		private readonly name: string,
 		private rootIdAllocator: IdAllocator<ForestRootId>,
-	) {}
+		options?: ICodecOptions,
+	) {
+		this.options = options ?? { jsonValidator: noopValidator };
+		this.codec = makeDetachedNodeToFieldCodec(this.options);
+	}
 
 	public clone(): DetachedFieldIndex {
 		const clone = new DetachedFieldIndex(
 			this.name,
 			idAllocatorFromMaxId(this.rootIdAllocator.getNextId()) as IdAllocator<ForestRootId>,
+			this.options,
 		);
 		populateNestedMap(this.detachedNodeToField, clone.detachedNodeToField);
 		return clone;
@@ -141,29 +156,105 @@ export class DetachedFieldIndex {
 	}
 
 	public encode(): string {
-		const data: [Major, Minor, ForestRootId][] = [];
-		forEachInNestedMap(this.detachedNodeToField, (root, key1, key2) => {
-			data.push([key1, key2, root]);
-		});
-		return JSON.stringify({
-			data,
+		return this.codec.encode({
+			data: this.detachedNodeToField,
 			id: this.rootIdAllocator.getNextId(),
-		});
+		}) as string;
 	}
 
 	/**
 	 * Loads the tree index from the given string, this overrides any existing data.
 	 */
 	public loadData(data: string): void {
-		const detachedFieldIndex: { data: readonly [Major, Minor, ForestRootId][]; id: number } =
-			JSON.parse(data);
-		const map = new Map();
-		for (const [major, minor, root] of detachedFieldIndex.data) {
-			setInNestedMap(map, major, minor, root);
-		}
-		this.detachedNodeToField = map;
+		const detachedFieldIndex: {
+			data: NestedMap<Major, Minor, ForestRootId>;
+			id: number;
+		} = this.codec.decode(data);
+
 		this.rootIdAllocator = idAllocatorFromMaxId(
 			detachedFieldIndex.id,
 		) as IdAllocator<ForestRootId>;
+		this.detachedNodeToField = detachedFieldIndex.data;
 	}
+}
+
+// Define the Major and Minor types:
+const MajorSchema = Type.Union([Type.String(), Type.Number(), Type.Undefined()]);
+const MinorSchema = Type.Number();
+
+const ForestRootIdSchema = Type.Any();
+
+// Define the tuple:
+const TupleSchema = Type.Tuple([MajorSchema, MinorSchema, ForestRootIdSchema]);
+
+export const Format = Type.Object({
+	version: Type.Literal(version),
+	data: Type.Array(TupleSchema),
+	id: ForestRootIdSchema,
+});
+
+export type Format = Static<typeof Format>;
+
+const Versioned = Type.Object({
+	version: Type.Number(),
+});
+type Versioned = Static<typeof Versioned>;
+
+export function makeDetachedNodeToFieldCodec({
+	jsonValidator: validator,
+}: ICodecOptions): IJsonCodec<{
+	data: NestedMap<Major, Minor, ForestRootId>;
+	id: ForestRootId;
+}> {
+	const versionedValidator = validator.compile(Versioned);
+	const formatValidator = validator.compile(Format);
+	return {
+		encode: (data: {
+			data: NestedMap<Major, Minor, ForestRootId>;
+			id: ForestRootId;
+		}): string => {
+			const detachedNodeToFieldData: [Major, Minor, ForestRootId][] = [];
+			forEachInNestedMap(data.data, (root, key1, key2) => {
+				detachedNodeToFieldData.push([key1, key2, root]);
+			});
+			const encoded = {
+				version,
+				data: detachedNodeToFieldData,
+				id: data.id,
+			};
+			assert(
+				versionedValidator.check(encoded),
+				0x5c6 /* Encoded detachedNodeToField data should be versioned */,
+			);
+			assert(formatValidator.check(encoded), 0x5c7 /* Encoded schema should validate */);
+			return JSON.stringify(encoded);
+		},
+		decode: (
+			data: string,
+		): {
+			data: NestedMap<Major, Minor, ForestRootId>;
+			id: ForestRootId;
+		} => {
+			const parsed = JSON.parse(data);
+
+			if (!versionedValidator.check(parsed)) {
+				fail("invalid serialized data: did not have a version");
+			}
+			// When more versions exist, we can switch on the version here.
+			if (parsed.version !== version) {
+				fail("Unexpected version for serialized data");
+			}
+			if (!formatValidator.check(parsed)) {
+				fail("Serialized data failed validation");
+			}
+			const map = new Map();
+			for (const [major, minor, root] of parsed.data) {
+				setInNestedMap(map, major, minor, root);
+			}
+			return {
+				data: map,
+				id: parsed.id,
+			};
+		},
+	};
 }
