@@ -127,20 +127,19 @@ export class ScribeLambdaFactory
 				(error) => true /* shouldRetry */,
 			)) as IDocument;
 
-			if (JSON.parse(document.scribe)?.isCorrupt) {
-				Lumberjack.info(
-					`Received attempt to connect to a corrupted document.`,
-					lumberProperties,
-				);
-				return new NoOpLambda(context);
-			}
-
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
 				// If the document doesn't exist or is marked for deletion then we trivially accept every message.
 				const errorMessage = `Received attempt to connect to a missing/deleted document.`;
 				context.log?.error(errorMessage, { messageMetaData });
 				Lumberjack.error(errorMessage, lumberProperties);
+				return new NoOpLambda(context);
+			}
+			if (JSON.parse(document.scribe)?.isCorrupt) {
+				Lumberjack.info(
+					`Received attempt to connect to a corrupted document.`,
+					lumberProperties,
+				);
 				return new NoOpLambda(context);
 			}
 			if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
