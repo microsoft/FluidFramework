@@ -31,6 +31,7 @@ import {
 	Range,
 	PlaceIndex,
 	Value,
+	ITreeCursorSynchronous,
 } from "../../core";
 import {
 	brand,
@@ -319,6 +320,10 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 		}
 
 		return;
+	}
+
+	public getRootCursor(): ITreeCursorSynchronous {
+		return singleMapTreeCursor(this.roots);
 	}
 }
 

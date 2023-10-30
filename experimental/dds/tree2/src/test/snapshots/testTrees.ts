@@ -6,6 +6,7 @@
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand } from "../../util";
 import {
+	ForestType,
 	ISharedTree,
 	ISharedTreeView,
 	InitializeAndSchematizeConfiguration,
@@ -26,7 +27,10 @@ import {
 import { AllowedUpdateType, FieldKey, JsonableTree, UpPath, rootFieldKey } from "../../core";
 import { leaf, SchemaBuilder } from "../../domains";
 
-const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	forest: ForestType.Optimized,
+});
 
 const builder = new SchemaBuilder({ scope: "test trees" });
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.sequence(Any));
