@@ -1056,8 +1056,6 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
     contentSnapshot(): SharedTreeContentSnapshot;
     schematizeView<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
-    // @deprecated
-    readonly view: ISharedTreeView;
 }
 
 // @alpha
