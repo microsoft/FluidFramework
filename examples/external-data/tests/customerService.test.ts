@@ -197,17 +197,13 @@ describe("mock-customer-service", () => {
 			expect(webhookChangeNotification).toMatchObject({
 				data: taskDataUpdate,
 			});
-		} catch (error) {
-			fail(error);
 		} finally {
 			await closeServer(localService);
 		}
 	});
 	/* eslint-enable @typescript-eslint/no-non-null-assertion */
 
-	// Skipping to close off the broadcast-signal loop. Tested manually and it works well.
-	// Unclear why localServiceApp is failing to post right for this test.
-	it.skip("register-session-url: Complete data flow", async () => {
+	it("register-session-url: Complete data flow", async () => {
 		// Set up mock local Fluid service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";
@@ -250,11 +246,14 @@ describe("mock-customer-service", () => {
 
 			// Verify our listener was notified of data change.
 			expect(webhookChangeNotification).toMatchObject({
-				externalTaskListId,
-				taskData: taskDataUpdate,
+				signalContent:{
+					contents: {
+						content: {
+							externalTaskListId
+						}
+					}
+				}
 			});
-		} catch (error) {
-			fail(error);
 		} finally {
 			await closeServer(localService);
 		}
