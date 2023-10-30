@@ -13,11 +13,11 @@ export enum ReferenceType {
 	 */
 	Tile = 0x1,
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	NestBegin = 0x2,
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	NestEnd = 0x4,
 	RangeBegin = 0x10,
@@ -51,7 +51,7 @@ export const MergeTreeDeltaType = {
 	REMOVE: 1,
 	ANNOTATE: 2,
 	/**
-	 * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
+	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
 	 */
 	GROUP: 3,
 } as const;
@@ -120,7 +120,7 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 }
 
 /**
- * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+ * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
  */
 export interface IMergeTreeGroupMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.GROUP;

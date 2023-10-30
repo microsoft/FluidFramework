@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import { type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type IShimDeltaHandler } from "./types";
+import { type IShimDeltaHandler } from "./types.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the SharedTreeShim distributed data structure.
@@ -21,12 +21,12 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	private _handler?: IDeltaHandler;
 	private get handler(): IDeltaHandler {
 		const handler = this._handler;
-		assert(handler !== undefined, "No handler to process op");
+		assert(handler !== undefined, 0x7eb /* No handler to process op */);
 		return handler;
 	}
 
 	public attachTreeDeltaHandler(handler: IDeltaHandler): void {
-		assert(this._handler === undefined, "Should only be able to connect once!");
+		assert(this._handler === undefined, 0x7ec /* Should only be able to connect once! */);
 		this._handler = handler;
 	}
 

@@ -23,7 +23,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:copy", "build:test"],
+			dependsOn: ["commonjs", "build:esnext", "build:copy", "build:test", "build:artifacts"],
 			script: false,
 		},
 		"commonjs": {
@@ -34,6 +34,18 @@ module.exports = {
 			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
 			script: false,
 		},
+		"checks": {
+			dependsOn: ["prettier"],
+			script: false,
+		},
+		"checks:fix": {
+			dependsOn: ["^checks:fix"],
+			script: false,
+		},
+		"build:artifacts": {
+			dependsOn: ["build:manifest", "build:readme", "build:copy"],
+			script: false,
+		},
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
@@ -42,10 +54,16 @@ module.exports = {
 		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"build:readme": {
+			dependsOn: ["build:manifest"],
+			script: true,
+		},
+		"build:manifest": ["tsc"],
 		"depcruise": [],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
+		"prettier:fix": [],
 		"webpack": ["^tsc", "^build:esnext"],
 		"webpack:profile": ["^tsc", "^build:esnext"],
 		"clean": {
@@ -111,25 +129,32 @@ module.exports = {
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
-			"build-tools/packages/build-tools/src/test/data/",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
 			"docs/themes/thxvscode/static/assets/",
 			"docs/tutorials/.*\\.tsx?",
-			"azure/packages/azure-local-service/src/index.ts",
-			"experimental/PropertyDDS/packages/property-query/test/get_config.js",
-			"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
 			"server/gitrest/package.json",
 			"server/historian/package.json",
-			"tools/markdown-magic/test",
-			"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			"tools/markdown-magic/test/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {
+			"extraneous-lockfiles": [
+				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
+			],
+			"js-ts-copyright-file-header": [
+				// These files all require a node shebang at the top of the file.
+				"azure/packages/azure-local-service/src/index.ts",
+				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
+				"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+			],
+			"package-lockfiles-npm-version": [
+				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
@@ -139,9 +164,9 @@ module.exports = {
 			],
 			"npm-package-json-script-mocha-config": [
 				// these doesn't use mocha config for reporters yet.
-				"server/",
-				"build-tools/",
-				"common/lib/common-utils/package.json",
+				"^server/",
+				"^build-tools/",
+				"^common/lib/common-utils/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
@@ -153,12 +178,47 @@ module.exports = {
 				"tools/",
 				"package.json",
 				"packages/test/test-service-load/package.json",
+				"packages/tools/devtools/devtools-browser-extension/package.json",
+				"packages/tools/devtools/devtools-view/package.json",
 			],
 			"npm-package-json-clean-script": [
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
-				"tools/markdown-magic",
+				"^tools/markdown-magic",
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
-				"tools/getkeys",
+				"^tools/getkeys",
+			],
+			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
+			"npm-package-exports-field": [
+				// We deliberately improperly import from deep in the package tree while we migrate everything into other
+				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
+				"^build-tools/packages/build-tools/package.json",
+				"^common/",
+				"^examples/",
+				"^experimental/",
+				"^packages/",
+				"^server/",
+				"^tools/",
+			],
+			"npm-package-json-clean-script": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"tools/getkeys/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			"npm-strange-package-name": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
+			],
+			"npm-package-readmes": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
+			],
+			"npm-package-folder-name": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
 			],
 		},
 		packageNames: {
@@ -218,6 +278,8 @@ module.exports = {
 				["flub", "@fluid-tools/build-cli"],
 				["fluid-build", "@fluidframework/build-tools"],
 				["depcruise", "dependency-cruiser"],
+				["copyfiles", "copyfiles"],
+				["oclif", "oclif"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
@@ -243,6 +305,18 @@ module.exports = {
 				ignoreTasks: ["tsc:watch"],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
+		},
+	},
+
+	assertTagging: {
+		enabledPaths: [
+			/^common\/lib\/common-utils/i,
+			/^experimental/i,
+			/^packages/i,
+			/^server\/routerlicious\/packages\/protocol-base/i,
+		],
+		assertionFunctions: {
+			assert: 1,
 		},
 	},
 

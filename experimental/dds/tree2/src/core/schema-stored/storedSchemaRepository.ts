@@ -6,10 +6,10 @@
 import { Dependee, SimpleDependee } from "../dependency-tracking";
 import { createEmitter, ISubscribable } from "../../events";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
-	SchemaData,
+	TreeStoredSchema,
 	storedEmptyFieldSchema,
 } from "./schema";
 
@@ -23,12 +23,12 @@ export interface SchemaEvents {
 	/**
 	 * Schema change is about to be applied.
 	 */
-	beforeSchemaChange(newSchema: SchemaData): void;
+	beforeSchemaChange(newSchema: TreeStoredSchema): void;
 
 	/**
 	 * Schema change was just applied.
 	 */
-	afterSchemaChange(newSchema: SchemaData): void;
+	afterSchemaChange(newSchema: TreeStoredSchema): void;
 }
 
 /**
@@ -37,12 +37,15 @@ export interface SchemaEvents {
  * TODO: could implement more fine grained dependency tracking.
  * @alpha
  */
-export interface StoredSchemaRepository extends Dependee, ISubscribable<SchemaEvents>, SchemaData {
+export interface StoredSchemaRepository
+	extends Dependee,
+		ISubscribable<SchemaEvents>,
+		TreeStoredSchema {
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
 	 */
-	update(newSchema: SchemaData): void;
+	update(newSchema: TreeStoredSchema): void;
 }
 
 /**
@@ -68,7 +71,7 @@ export class InMemoryStoredSchemaRepository
 	 * Combined with support for such namespaces in the allowed sets in the schema objects,
 	 * that might provide a decent alternative to mapFields (which is a bit odd).
 	 */
-	public constructor(data?: SchemaData) {
+	public constructor(data?: TreeStoredSchema) {
 		super("StoredSchemaRepository");
 		this.data = cloneSchemaData(data ?? defaultSchemaData);
 	}
@@ -77,7 +80,7 @@ export class InMemoryStoredSchemaRepository
 		return this.events.on(eventName, listener);
 	}
 
-	public get rootFieldSchema(): FieldStoredSchema {
+	public get rootFieldSchema(): TreeFieldStoredSchema {
 		return this.data.rootFieldSchema;
 	}
 
@@ -85,7 +88,7 @@ export class InMemoryStoredSchemaRepository
 		return this.data.treeSchema;
 	}
 
-	public update(newSchema: SchemaData): void {
+	public update(newSchema: TreeStoredSchema): void {
 		this.events.emit("beforeSchemaChange", newSchema);
 
 		this.data.rootFieldSchema = newSchema.rootFieldSchema;
@@ -99,21 +102,21 @@ export class InMemoryStoredSchemaRepository
 	}
 }
 
-export interface MutableSchemaData extends SchemaData {
-	rootFieldSchema: FieldStoredSchema;
+export interface MutableSchemaData extends TreeStoredSchema {
+	rootFieldSchema: TreeFieldStoredSchema;
 	treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
 
-export function schemaDataIsEmpty(data: SchemaData): boolean {
+export function schemaDataIsEmpty(data: TreeStoredSchema): boolean {
 	return data.treeSchema.size === 0;
 }
 
-export const defaultSchemaData: SchemaData = {
+export const defaultSchemaData: TreeStoredSchema = {
 	treeSchema: new Map(),
 	rootFieldSchema: storedEmptyFieldSchema,
 };
 
-export function cloneSchemaData(data: SchemaData): MutableSchemaData {
+export function cloneSchemaData(data: TreeStoredSchema): MutableSchemaData {
 	return {
 		treeSchema: new Map(data?.treeSchema ?? []),
 		rootFieldSchema: data?.rootFieldSchema ?? storedEmptyFieldSchema,

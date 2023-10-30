@@ -4,7 +4,7 @@
  */
 
 export {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
@@ -15,7 +15,7 @@ export {
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
-	SchemaData,
+	TreeStoredSchema,
 	PrimitiveValueSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,

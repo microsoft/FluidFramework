@@ -3,21 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
+import { assert } from "@fluidframework/core-utils";
+import { brand, fail } from "../../../util";
 import {
 	AllowedTypes,
 	FieldNodeSchema,
-	FieldSchema,
-	StructSchema,
+	TreeFieldSchema,
+	ObjectNodeSchema,
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsStruct,
+	schemaIsObjectNode,
+	MapSchema,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
 	FieldNode,
+	MapNode,
 	OptionalField,
 	RequiredField,
 	TreeNode,
@@ -26,36 +29,25 @@ import {
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
-import { getBoxedField } from "../lazyTree";
-import { LazyEntity } from "../lazyEntity";
-import { ProxyField, ProxyNode, SharedTreeList, SharedTreeObject } from "./types";
-import { createNodeApi, nodeSym } from "./node";
-
-/** Symbol used to store a private/internal reference to the underlying editable tree node. */
-const treeNodeSym = Symbol("TreeNode");
-
-/** Helper to retrieve the stored tree node. */
-export function getTreeNode(target: object): TreeNode {
-	return (target as any)[treeNodeSym] as TreeNode;
-}
-
-/** Helper to set the stored tree node. */
-export function setTreeNode(target: any, treeNode: TreeNode) {
-	Object.defineProperty(target, treeNodeSym, {
-		value: treeNode,
-		writable: false,
-		enumerable: false,
-		configurable: false,
-	});
-}
+import { LazyObjectNode, getBoxedField } from "../lazyTree";
+import { ContextuallyTypedNodeData } from "../../contextuallyTyped";
+import {
+	ProxyField,
+	ProxyNode,
+	ProxyNodeUnion,
+	SharedTreeList,
+	SharedTreeMap,
+	SharedTreeNode,
+	SharedTreeObject,
+	getTreeNode,
+	setTreeNode,
+} from "./types";
+import { getFactoryContent } from "./objectFactory";
 
 const proxyCacheSym = Symbol("ProxyCache");
 
 /** Cache the proxy that wraps the given tree node so that the proxy can be re-used in future reads */
-function cacheProxy(
-	target: TreeNode,
-	proxy: SharedTreeList<AllowedTypes> | SharedTreeObject<StructSchema>,
-): void {
+function cacheProxy(target: TreeNode, proxy: SharedTreeNode): void {
 	Object.defineProperty(target, proxyCacheSym, {
 		value: proxy,
 		writable: false,
@@ -69,25 +61,13 @@ function getCachedProxy(treeNode: TreeNode): ProxyNode<TreeNodeSchema> | undefin
 	return (treeNode as unknown as { [proxyCacheSym]: ProxyNode<TreeNodeSchema> })[proxyCacheSym];
 }
 
-/**
- * Checks if the given object is a {@link SharedTreeObject}
- * @alpha
- */
-export function is<TSchema extends StructSchema>(
-	x: unknown,
-	schema: TSchema,
-): x is SharedTreeObject<TSchema> {
-	// TODO: Do this a better way. Perhaps, should `treeNodeSym` be attached to object proxies via `setTreeNode`?
-	return (x as any)[treeNodeSym].schema === schema;
-}
-
 /** Retrieve the associated proxy for the given field. */
-export function getProxyForField<TSchema extends FieldSchema>(
+export function getProxyForField<TSchema extends TreeFieldSchema>(
 	field: TypedField<TSchema>,
 ): ProxyField<TSchema> {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.required>>;
+			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.required>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -95,7 +75,7 @@ export function getProxyForField<TSchema extends FieldSchema>(
 			return getProxyForNode(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			const asValue = field as TypedField<FieldSchema<typeof FieldKinds.optional>>;
+			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.optional>>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -125,41 +105,51 @@ export function getProxyForNode<TSchema extends TreeNodeSchema>(
 ): ProxyNode<TSchema> {
 	const schema = treeNode.schema;
 
-	if (schemaIsMap(schema)) {
-		fail("Map not implemented");
-	}
-	if (schemaIsLeaf(schema)) {
-		return treeNode.value as ProxyNode<TSchema>;
-	}
-	const isFieldNode = schemaIsFieldNode(schema);
-	if (isFieldNode || schemaIsStruct(schema)) {
+	/**
+	 * Gets a cached proxy for `treeNode` if one was already created and cached.
+	 * Otherwise, creates a new proxy, caches it, and returns it.
+	 */
+	function getOrCreateProxy(createProxy: () => SharedTreeNode): ProxyNode<TSchema> {
 		const cachedProxy = getCachedProxy(treeNode);
 		if (cachedProxy !== undefined) {
 			return cachedProxy as ProxyNode<TSchema>;
 		}
 
-		const proxy = isFieldNode ? createListProxy(treeNode) : createObjectProxy(treeNode, schema);
+		const proxy = createProxy();
 		cacheProxy(treeNode, proxy);
 		return proxy as ProxyNode<TSchema>;
+	}
+
+	if (schemaIsMap(schema)) {
+		return getOrCreateProxy(() => createMapProxy(treeNode));
+	}
+	if (schemaIsLeaf(schema)) {
+		return treeNode.value as ProxyNode<TSchema>;
+	}
+	const isFieldNode = schemaIsFieldNode(schema);
+	if (isFieldNode || schemaIsObjectNode(schema)) {
+		return getOrCreateProxy(() =>
+			isFieldNode ? createListProxy(treeNode) : createObjectProxy(treeNode, schema),
+		);
 	}
 
 	fail("unrecognized node kind");
 }
 
-export function createObjectProxy<TSchema extends StructSchema, TTypes extends AllowedTypes>(
+export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes extends AllowedTypes>(
 	content: TypedNodeUnion<TTypes>,
 	schema: TSchema,
 ): SharedTreeObject<TSchema> {
-	const nodeApi = createNodeApi(content);
-
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
-	// 'null prototype' you would get from on object literal '{}' or 'Object.create(null)'.  This is
-	// because 'deepEquals' uses 'Object.getPrototypeOf' as a way to quickly reject objects with different
-	// prototype chains.
+	// prototype as an object literal '{}'.  This is because 'deepEquals' uses 'Object.getPrototypeOf'
+	// as a way to quickly reject objects with different prototype chains.
+	//
+	// (Note that the prototype of an object literal appears as '[Object: null prototype] {}', not because
+	// the prototype is null, but because the prototype object itself has a null prototype.)
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	return new Proxy(
+	const proxy = new Proxy(
 		{},
 		{
 			get(target, key): unknown {
@@ -167,32 +157,30 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				if (field !== undefined) {
 					return getProxyForField(field);
 				}
-				switch (key) {
-					case treeNodeSym:
-						return content;
-					case nodeSym:
-						return nodeApi;
-					default:
-						return Reflect.get(target, key);
-				}
+
+				return Reflect.get(target, key);
 			},
 			set(target, key, value) {
-				const fieldSchema = content.schema.structFields.get(key as FieldKey);
+				const fieldSchema = content.schema.objectNodeFields.get(key as FieldKey);
 
 				if (fieldSchema === undefined) {
 					return false;
 				}
 
-				// TODO: Is it safe to assume 'content' is a LazyEntity?
-				const field = getBoxedField(content as LazyEntity, key as FieldKey, fieldSchema);
+				// TODO: Is it safe to assume 'content' is a LazyObjectNode?
+				assert(content instanceof LazyObjectNode, 0x7e0 /* invalid content */);
+				assert(typeof key === "string", 0x7e1 /* invalid key */);
+				const field = getBoxedField(content, brand(key), fieldSchema);
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {
-						(field as RequiredField<AllowedTypes>).content = value;
+						(field as RequiredField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					case FieldKinds.optional: {
-						(field as OptionalField<AllowedTypes>).content = value;
+						(field as OptionalField<AllowedTypes>).content =
+							getFactoryContent(value) ?? value;
 						break;
 					}
 					default:
@@ -202,10 +190,10 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 				return true;
 			},
 			has: (target, key) => {
-				return schema.structFields.has(key as FieldKey);
+				return schema.objectNodeFields.has(key as FieldKey);
 			},
 			ownKeys: (target) => {
-				return [...schema.structFields.keys()];
+				return [...schema.objectNodeFields.keys()];
 			},
 			getOwnPropertyDescriptor: (target, key) => {
 				const field = content.tryGetField(key as FieldKey);
@@ -225,51 +213,198 @@ export function createObjectProxy<TSchema extends StructSchema, TTypes extends A
 			},
 		},
 	) as SharedTreeObject<TSchema>;
+	setTreeNode(proxy, content);
+	return proxy;
 }
 
-const getField = <TTypes extends AllowedTypes>(target: object) => {
-	const treeNode = getTreeNode(target) as FieldNode<FieldNodeSchema>;
+/**
+ * Given the a list proxy, returns its underlying LazySequence field.
+ */
+const getSequenceField = <TTypes extends AllowedTypes>(
+	list: SharedTreeList<AllowedTypes, "javaScript">,
+) => {
+	const treeNode = getTreeNode(list) as FieldNode<FieldNodeSchema>;
 	const field = treeNode.content;
 	return field as LazySequence<TTypes>;
 };
 
+// Converts a proxy union to contextually typed data, extracting factory content if necessary.
+const asContextuallyTypedData = (value: ProxyNodeUnion<AllowedTypes, "javaScript">) =>
+	(value === null || typeof value !== "object"
+		? value // Return primitives as-is
+		: getFactoryContent(value) ?? value) as ContextuallyTypedNodeData; // Otherwise extract factory content (if necessary).
+
+// Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
+// typed data prior to forwarding to 'LazySequence.insert*()'.
+function itemsAsContextuallyTyped(
+	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
+): Iterable<ContextuallyTypedNodeData> {
+	// If the iterable is not already an array, copy it into an array to use '.map()' below.
+	return Array.isArray(iterable)
+		? iterable.map(asContextuallyTypedData)
+		: Array.from(iterable, asContextuallyTypedData);
+}
+
+// #region Create dispatch map for lists
+
 // TODO: Experiment with alternative dispatch methods to see if we can improve performance.
 
-// For brevity, the current implementation dynamically builds a property descriptor map from a list of
-// functions we want to re-expose via the proxy.
-
-const staticDispatchMap: PropertyDescriptorMap = {};
-
-// TODO: Historically I've been impressed by V8's ability to inline compositions of functions, but it's
-// still worth seeing if manually inlining 'thisContext' can improve performance.
-
-/* eslint-disable @typescript-eslint/ban-types */
-/* eslint-disable @typescript-eslint/unbound-method */
-
 /**
- * Adds a PropertyDescriptor for the given function to the 'staticDispatchMap'.  The 'thisContext' function
- * receives the original 'this' argument (which is the proxy) and returns the desired 'this' context
- * for the function call.  (We use 'thisContext' to redirect calls to the underlying LazySequence.)
+ * PropertyDescriptorMap used to build the prototype for our SharedListNode dispatch object.
  */
-function addDescriptor(
-	map: PropertyDescriptorMap,
-	fn: Function,
-	thisContext: (self: object) => object,
-) {
-	map[fn.name] = {
-		get: () =>
-			function (this: any, ...args: any[]) {
-				return fn.apply(thisContext(this), args) as unknown;
-			},
-		enumerable: false,
-		configurable: false,
-	};
-}
+const listPrototypeProperties: PropertyDescriptorMap = {
+	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
+	// above because 'Array.prototype[Symbol.iterator].name' returns "values" (i.e., Symbol.iterator
+	// is an alias for the '.values()' function.)
+	[Symbol.iterator]: {
+		value: Array.prototype[Symbol.iterator],
+	},
+	insertAt: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			index: number,
+			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
+		): void {
+			getSequenceField(this).insertAt(index, itemsAsContextuallyTyped(value));
+		},
+	},
+	insertAtStart: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
+		): void {
+			getSequenceField(this).insertAtStart(itemsAsContextuallyTyped(value));
+		},
+	},
+	insertAtEnd: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
+		): void {
+			getSequenceField(this).insertAtEnd(itemsAsContextuallyTyped(value));
+		},
+	},
+	removeAt: {
+		value(this: SharedTreeList<AllowedTypes, "javaScript">, index: number): void {
+			getSequenceField(this).removeAt(index);
+		},
+	},
+	removeRange: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			start?: number,
+			end?: number,
+		): void {
+			getSequenceField(this).removeRange(start, end);
+		},
+	},
+	moveToStart: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			sourceIndex: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
+			} else {
+				getSequenceField(this).moveToStart(sourceIndex);
+			}
+		},
+	},
+	moveToEnd: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			sourceIndex: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
+			} else {
+				getSequenceField(this).moveToEnd(sourceIndex);
+			}
+		},
+	},
+	moveToIndex: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			index: number,
+			sourceIndex: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
+			} else {
+				getSequenceField(this).moveToIndex(index, sourceIndex);
+			}
+		},
+	},
+	moveRangeToStart: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			sourceStart: number,
+			sourceEnd: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveRangeToStart(
+					sourceStart,
+					sourceEnd,
+					getSequenceField(source),
+				);
+			} else {
+				getSequenceField(this).moveRangeToStart(sourceStart, sourceEnd);
+			}
+		},
+	},
+	moveRangeToEnd: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			sourceStart: number,
+			sourceEnd: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveRangeToEnd(
+					sourceStart,
+					sourceEnd,
+					getSequenceField(source),
+				);
+			} else {
+				getSequenceField(this).moveRangeToEnd(sourceStart, sourceEnd);
+			}
+		},
+	},
+	moveRangeToIndex: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			index: number,
+			sourceStart: number,
+			sourceEnd: number,
+			source?: SharedTreeList<AllowedTypes>,
+		): void {
+			if (source !== undefined) {
+				getSequenceField(this).moveRangeToIndex(
+					index,
+					sourceStart,
+					sourceEnd,
+					getSequenceField(source),
+				);
+			} else {
+				getSequenceField(this).moveRangeToIndex(index, sourceStart, sourceEnd);
+			}
+		},
+	},
+};
+
+/* eslint-disable @typescript-eslint/unbound-method */
 
 // For compatibility, we are initially implement 'readonly T[]' by applying the Array.prototype methods
 // to the list proxy.  Over time, we should replace these with efficient implementations on LazySequence
 // to avoid re-entering the proxy as these methods access 'length' and the indexed properties.
 //
+// For brevity, the current implementation dynamically builds a property descriptor map from a list of
+// Array functions we want to re-expose via the proxy.
+
 // TODO: This assumes 'Function.name' matches the property name on 'Array.prototype', which may be
 // dubious across JS engines.
 [
@@ -309,35 +444,14 @@ function addDescriptor(
 	// Array.prototype.unshift,
 	Array.prototype.values,
 ].forEach((fn) => {
-	addDescriptor(staticDispatchMap, fn, (proxy) => proxy);
+	listPrototypeProperties[fn.name] = { value: fn };
 });
-
-// These are methods implemented by LazySequence that we expose through the proxy.
-[
-	LazySequence.prototype.insertAt,
-	LazySequence.prototype.removeAt,
-	LazySequence.prototype.insertAtStart,
-	LazySequence.prototype.insertAtEnd,
-	LazySequence.prototype.removeRange,
-	LazySequence.prototype.moveToStart,
-	LazySequence.prototype.moveToEnd,
-	LazySequence.prototype.moveToIndex,
-].forEach((fn) => {
-	addDescriptor(staticDispatchMap, fn, getField);
-});
-
-// [Symbol.iterator] is an alias for 'Array.prototype.values', as 'Function.name' returns 'values'.
-staticDispatchMap[Symbol.iterator] = {
-	value: Array.prototype[Symbol.iterator],
-	writable: false,
-	enumerable: false,
-	configurable: false,
-};
 
 /* eslint-enable @typescript-eslint/unbound-method */
-/* eslint-enable @typescript-eslint/ban-types */
 
-const prototype = Object.create(Object.prototype, staticDispatchMap);
+const listPrototype = Object.create(Object.prototype, listPrototypeProperties);
+
+// #endregion
 
 /**
  * Helper to coerce property keys to integer indexes (or undefined if not an in-range integer).
@@ -363,18 +477,12 @@ export function createListProxy<TTypes extends AllowedTypes>(
 	// (e.g., 'length', which is defined below).
 	//
 	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
-	const dispatch = Object.create(prototype, {
+	const dispatch = Object.create(listPrototype, {
 		length: {
-			get(this: object) {
-				return getField(this).length;
+			get(this: SharedTreeList<AllowedTypes, "javaScript">) {
+				return getSequenceField(this).length;
 			},
 			set() {},
-			enumerable: false,
-			configurable: false,
-		},
-		[nodeSym]: {
-			value: createNodeApi(treeNode),
-			writable: false,
 			enumerable: false,
 			configurable: false,
 		},
@@ -387,7 +495,7 @@ export function createListProxy<TTypes extends AllowedTypes>(
 	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
 	return new Proxy<SharedTreeList<TTypes>>([] as any, {
 		get: (target, key) => {
-			const field = getField(dispatch);
+			const field = getSequenceField(dispatch);
 			const maybeIndex = asIndex(key, field.length);
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
@@ -408,19 +516,19 @@ export function createListProxy<TTypes extends AllowedTypes>(
 			return false;
 		},
 		has: (target, key) => {
-			const field = getField(dispatch);
+			const field = getSequenceField(dispatch);
 			const maybeIndex = asIndex(key, field.length);
 			return maybeIndex !== undefined || Reflect.has(dispatch, key);
 		},
 		ownKeys: (target) => {
-			const field = getField(dispatch);
+			const field = getSequenceField(dispatch);
 
 			// TODO: Would a lazy iterator to produce the indexes work / be more efficient?
 			// TODO: Need to surface 'Symbol.isConcatSpreadable' as an own key.
 			return Array.from({ length: field.length }, (_, index) => `${index}`).concat("length");
 		},
 		getOwnPropertyDescriptor: (target, key) => {
-			const field = getField(dispatch);
+			const field = getSequenceField(dispatch);
 			const maybeIndex = asIndex(key, field.length);
 			if (maybeIndex !== undefined) {
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
@@ -438,13 +546,100 @@ export function createListProxy<TTypes extends AllowedTypes>(
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for 'length' must be a simple
 				// value property (as opposed to using getter) and be declared writable / non-configurable.
 				return {
-					value: getField(dispatch).length,
+					value: getSequenceField(dispatch).length,
 					writable: true,
 					enumerable: false,
 					configurable: false,
 				};
 			}
 			return Reflect.getOwnPropertyDescriptor(dispatch, key);
+		},
+	});
+}
+
+// #region Create dispatch map for maps
+
+const mapStaticDispatchMap: PropertyDescriptorMap = {
+	[Symbol.iterator]: {
+		value(this: SharedTreeMap<MapSchema>) {
+			const node = getMapNode(this);
+			return node[Symbol.iterator]();
+		},
+	},
+	entries: {
+		value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
+			const node = getMapNode(this);
+			return node.entries();
+		},
+	},
+	get: {
+		value(this: SharedTreeMap<MapSchema>, key: string): unknown {
+			const node = getMapNode(this);
+			const field = node.getBoxed(key);
+			return getProxyForField(field);
+		},
+	},
+	has: {
+		value(this: SharedTreeMap<MapSchema>, key: string): boolean {
+			const node = getMapNode(this);
+			return node.has(key);
+		},
+	},
+	keys: {
+		value(this: SharedTreeMap<MapSchema>): IterableIterator<string> {
+			const node = getMapNode(this);
+			return node.keys();
+		},
+	},
+	size: {
+		get(this: SharedTreeMap<MapSchema>) {
+			return getMapNode(this).size;
+		},
+	},
+	values: {
+		value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
+			const node = getMapNode(this);
+			return node.values();
+		},
+	},
+	// TODO: clear, delete, set. Will require mutation APIs to be added to MapNode.
+};
+
+const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
+
+// #endregion
+
+const getMapNode = <TSchema extends MapSchema>(target: object): MapNode<TSchema> => {
+	return getTreeNode(target) as MapNode<TSchema>;
+};
+
+function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTreeMap<TSchema> {
+	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
+	const dispatch = Object.create(mapPrototype, {
+		// Empty - JavaScript Maps do not expose any "own" properties.
+	});
+
+	setTreeNode(dispatch, treeNode);
+
+	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
+	// a dispatch object to see if it improves performance.
+	return new Proxy<SharedTreeMap<TSchema>>(new Map<string, ProxyNode<TSchema>>(), {
+		get: (target, key, receiver): unknown => {
+			return Reflect.get(dispatch, key);
+		},
+		getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
+			return Reflect.getOwnPropertyDescriptor(dispatch, key);
+		},
+		has: (target, key) => {
+			return Reflect.has(dispatch, key);
+		},
+		set: (target, key, newValue): boolean => {
+			// There aren't any `set` opperations appropriate for maps.
+			return false;
+		},
+		ownKeys: (target) => {
+			// All of Map's properties are inherited via its prototype, so there is nothing to return here,
+			return [];
 		},
 	});
 }

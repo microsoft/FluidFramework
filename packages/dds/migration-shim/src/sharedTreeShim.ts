@@ -5,7 +5,6 @@
 import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type IChannelAttributes,
-	type IChannel,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
@@ -18,8 +17,10 @@ import {
 import { type ISharedTree, type SharedTreeFactory } from "@fluid-experimental/tree2";
 import { AttachState } from "@fluidframework/container-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices";
-import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler";
+import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
+import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler.js";
+import { ShimHandle } from "./shimHandle.js";
+import { type IShim } from "./types.js";
 
 /**
  * SharedTreeShim is loaded by clients that join after the migration completes, and holds the new SharedTree.
@@ -32,20 +33,21 @@ import { SharedTreeShimDeltaHandler } from "./sharedTreeDeltaHandler";
  *
  * @internal
  */
-export class SharedTreeShim implements IChannel {
+export class SharedTreeShim implements IShim {
 	public constructor(
 		public readonly id: string,
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly sharedTreeFactory: SharedTreeFactory,
 	) {
 		this.newTreeShimDeltaHandler = new SharedTreeShimDeltaHandler();
+		this.handle = new ShimHandle<SharedTreeShim>(this);
 	}
 
 	private readonly newTreeShimDeltaHandler: SharedTreeShimDeltaHandler;
 	private services?: ShimChannelServices;
 	private _currentTree?: ISharedTree;
-	private get currentTree(): ISharedTree {
-		assert(this._currentTree !== undefined, "No current tree initialized");
+	public get currentTree(): ISharedTree {
+		assert(this._currentTree !== undefined, 0x7ed /* No current tree initialized */);
 		return this._currentTree;
 	}
 
@@ -53,8 +55,8 @@ export class SharedTreeShim implements IChannel {
 		// TODO: investigate if we need to add the shim attributes to denote the transition from v1 -> v2 with v1 ops -> v2 ops
 		return this.currentTree.attributes;
 	}
-	// TODO handle
-	public handle!: IFluidHandle;
+
+	public handle: IFluidHandle<SharedTreeShim>;
 	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
@@ -109,7 +111,7 @@ export class SharedTreeShim implements IChannel {
 	}
 
 	private generateShimServicesOnce(services: IChannelServices): ShimChannelServices {
-		assert(this.services === undefined, "Already connected");
+		assert(this.services === undefined, 0x7ee /* Already connected */);
 		this.services = new ShimChannelServices(services, this.newTreeShimDeltaHandler);
 		return this.services;
 	}
