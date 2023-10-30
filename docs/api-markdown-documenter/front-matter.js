@@ -4,9 +4,10 @@
  */
 
 const {
-	ApiItemUtilities,
 	createDocumentWriter,
-	MarkdownRenderer,
+	getLinkForApiItem,
+	getUnscopedPackageName,
+	renderNodeAsMarkdown,
 	transformTsdocNode,
 } = require("@fluid-tools/api-markdown-documenter");
 const { ApiItemKind } = require("@microsoft/api-extractor-model");
@@ -38,7 +39,7 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 		}
 
 		const documentWriter = createDocumentWriter();
-		MarkdownRenderer.renderNode(summaryParagraph, documentWriter, {
+		renderNodeAsMarkdown(summaryParagraph, documentWriter, {
 			customRenderers,
 		});
 		return documentWriter.getText().replace(/"/g, "'").trim();
@@ -91,15 +92,14 @@ function createHugoFrontMatter(apiItem, config, customRenderers) {
 		if (!frontMatter.members[element.kind]) {
 			frontMatter.members[element.kind] = {};
 		}
-		const link = ApiItemUtilities.getLinkForApiItem(element, config);
+		const link = getLinkForApiItem(element, config);
 		frontMatter.members[element.kind][element.displayName] = link.target;
 	});
 
 	const associatedPackage = apiItem.getAssociatedPackage();
 	if (associatedPackage) {
 		frontMatter.package = associatedPackage.name.replace(/"/g, "").replace(/!/g, "");
-		frontMatter.unscopedPackageName =
-			ApiItemUtilities.getUnscopedPackageName(associatedPackage);
+		frontMatter.unscopedPackageName = getUnscopedPackageName(associatedPackage);
 	} else {
 		frontMatter.package = "undefined";
 	}
