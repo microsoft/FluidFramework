@@ -7,10 +7,9 @@ importers:
 
   .:
     specifiers:
-      '@fluid-tools/api-markdown-documenter': ^0.10.0
+      '@fluid-tools/api-markdown-documenter': ^0.10.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic
       '@fluidframework/build-common': ^2.0.0
-      '@microsoft/api-extractor-model': ~7.28.2
       '@rushstack/node-core-library': ^3.59.4
       '@tylerbu/dl-cli': 1.1.2-tylerbu-0
       '@vscode/codicons': 0.0.33
@@ -38,10 +37,9 @@ importers:
       rimraf: ^5.0.1
       start-server-and-test: ^2.0.0
     dependencies:
-      '@fluid-tools/api-markdown-documenter': 0.10.0
+      '@fluid-tools/api-markdown-documenter': 0.10.1
       '@fluid-tools/markdown-magic': file:../tools/markdown-magic_bfrwj6ys6wock6p526xv5vf35u
       '@fluidframework/build-common': 2.0.0
-      '@microsoft/api-extractor-model': 7.28.2
       '@rushstack/node-core-library': 3.59.4
       '@tylerbu/dl-cli': 1.1.2-tylerbu-0
       '@vscode/codicons': 0.0.33
@@ -148,13 +146,13 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     dev: false
 
-  /@fluid-tools/api-markdown-documenter/0.10.0:
-    resolution: {integrity: sha512-ct+oFr0CvOtZsSqNGwoFWwwyd1xv6QSK3MdpkL8AH0euij0gLgaCxBKz44KhXIBVZXj5QiVuzbyD8hRDXr86Jg==}
+  /@fluid-tools/api-markdown-documenter/0.10.1:
+    resolution: {integrity: sha512-U2vQomHX18SVJvQ/U6xM6z5hCyqL4qxcbB44LwG5u2shIhhrCtVH22//skSPobiNIDgjYmyd5EP+NcLj2pxEig==}
     dependencies:
       '@microsoft/api-documenter': 7.23.9
       '@microsoft/api-extractor-model': 7.28.2
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.60.0
+      '@rushstack/node-core-library': 3.61.0
       chalk: 4.1.2
     transitivePeerDependencies:
       - '@types/node'
@@ -365,23 +363,6 @@ packages:
       jju: 1.4.0
       resolve: 1.22.2
       semver: 7.3.8
-      z-schema: 5.0.5
-    dev: false
-
-  /@rushstack/node-core-library/3.60.0:
-    resolution: {integrity: sha512-PcyrqhILvzU+65wMFybQ2VeGNnU5JzhDq2OvUi3j6jPUxyllM7b2hrRUwCuVaYboewYzIbpzXFzgxe2K7ii1nw==}
-    peerDependencies:
-      '@types/node': '*'
-    peerDependenciesMeta:
-      '@types/node':
-        optional: true
-    dependencies:
-      colors: 1.2.5
-      fs-extra: 7.0.1
-      import-lazy: 4.0.0
-      jju: 1.4.0
-      resolve: 1.22.2
-      semver: 7.5.4
       z-schema: 5.0.5
     dev: false
 

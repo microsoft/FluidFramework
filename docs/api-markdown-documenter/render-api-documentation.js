@@ -4,13 +4,13 @@
  */
 
 const {
+	ApiItemKind,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
 	MarkdownRenderer,
 	transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
-const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
 const path = require("path");

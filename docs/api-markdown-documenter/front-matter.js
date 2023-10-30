@@ -4,12 +4,12 @@
  */
 
 const {
+	ApiItemKind,
 	ApiItemUtilities,
 	createDocumentWriter,
 	MarkdownRenderer,
 	transformTsdocNode,
 } = require("@fluid-tools/api-markdown-documenter");
-const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const os = require("os");
 
 const generatedContentNotice =
