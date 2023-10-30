@@ -25,10 +25,10 @@ import {
 	StoredSchemaCollection,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { TreeCompressionStrategy } from "../shared-tree";
 import { idAllocatorFromMaxId } from "../util";
 import { EncodedChunk, decode, schemaCompressedEncode, uncompressedEncode } from "./chunked-forest";
 import { FullSchemaPolicy } from "./modular-schema";
+import { TreeCompressionStrategy } from "./treeCompressionUtils";
 
 /**
  * The storage key for the blob in the summary containing tree data

@@ -10,10 +10,15 @@ import {
 	ISharedTreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
-	TreeCompressionStrategy,
 	runSynchronous,
 } from "../../shared-tree";
-import { Any, FieldKinds, TreeFieldSchema, singleTextCursor } from "../../feature-libraries";
+import {
+	Any,
+	FieldKinds,
+	TreeCompressionStrategy,
+	TreeFieldSchema,
+	singleTextCursor,
+} from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
 	TestTreeProviderLite,

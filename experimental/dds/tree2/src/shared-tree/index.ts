@@ -9,7 +9,6 @@ export {
 	SharedTreeOptions,
 	SharedTree,
 	ForestType,
-	TreeCompressionStrategy,
 	SharedTreeContentSnapshot,
 } from "./sharedTree";
 

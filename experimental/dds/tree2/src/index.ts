@@ -289,6 +289,7 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	TreeCompressionStrategy,
 } from "./feature-libraries";
 
 export {
@@ -305,7 +306,6 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	ForestType,
-	TreeCompressionStrategy,
 	TypedTreeFactory,
 	TypedTreeOptions,
 	TypedTreeChannel,

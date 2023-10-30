@@ -31,7 +31,7 @@ import { NodeShape } from "./nodeShape";
  * Encode data from `cursor` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
- * TODO: This function should eventually also take in the FieldSchema to more efficiently compress the nodes.
+ * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
  */
 export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
