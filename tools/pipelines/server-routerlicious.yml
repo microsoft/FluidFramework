@@ -116,7 +116,6 @@ extends:
     docs: true
     containerBaseDir: /usr/src/server
     checks:
-    - generate:packageList
     - prettier
     - check:versions
     additionalBuildArguments: --build-context root=.

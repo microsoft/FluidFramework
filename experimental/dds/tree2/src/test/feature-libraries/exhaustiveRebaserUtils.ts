@@ -47,7 +47,7 @@ export interface BoundFieldChangeRebaser<TChangeset> {
 		change: TChangeset,
 		...baseChanges: TaggedChange<TChangeset>[]
 	): TChangeset;
-	compose(changes: TaggedChange<TChangeset>[]): TChangeset;
+	compose(changes: TaggedChange<TChangeset>[], metadata?: RevisionMetadataSource): TChangeset;
 }
 
 export interface NamedChangeset<TChangeset> {

@@ -42,6 +42,7 @@ import {
 	InitializeAndSchematizeConfiguration,
 	ISharedTreeBranchView,
 	runSynchronous,
+	SharedTreeContentSnapshot,
 } from "../shared-tree";
 import {
 	Any,
@@ -62,6 +63,7 @@ import {
 	revisionMetadataSourceFromInfo,
 	singleTextCursor,
 	TypedField,
+	jsonableTreeFromForest,
 } from "../feature-libraries";
 import {
 	Delta,
@@ -78,12 +80,7 @@ import {
 	ChangeFamilyEditor,
 	ChangeFamily,
 	TaggedChange,
-	TreeSchemaBuilder,
-	treeSchema,
 	FieldUpPath,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
-	IForestSubscription,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
 	AllowedUpdateType,
@@ -98,7 +95,7 @@ import {
 	Revertible,
 	RevertibleKind,
 } from "../core";
-import { JsonCompatible, Named, brand } from "../util";
+import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import {
@@ -526,9 +523,17 @@ export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): v
 
 const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
+/**
+ * This does NOT check that the trees have the same edits, same edit manager state or anything like that.
+ * This ONLY checks if the content of the forest of the main branch of the trees match.
+ */
 export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
 	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
-	validateViewConsistency(treeA.view, treeB.view, `id: ${treeA.id} vs id: ${treeB.id}`);
+	validateSnapshotConsistency(
+		treeA.contentSnapshot(),
+		treeB.contentSnapshot(),
+		`id: ${treeA.id} vs id: ${treeB.id}`,
+	);
 }
 
 function contentToJsonableTree(content: TreeContent): JsonableTree[] {
@@ -541,7 +546,19 @@ function contentToJsonableTree(content: TreeContent): JsonableTree[] {
 
 export function validateTreeContent(tree: ISharedTreeView, content: TreeContent): void {
 	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
-	assert.deepEqual(schemaCodec.encode(tree.storedSchema), schemaCodec.encode(content.schema));
+	expectSchemaEqual(tree.storedSchema, content.schema);
+}
+
+export function expectSchemaEqual(
+	a: TreeStoredSchema,
+	b: TreeStoredSchema,
+	idDifferentiator: string | undefined = undefined,
+): void {
+	assert.deepEqual(
+		schemaCodec.encode(a),
+		schemaCodec.encode(b),
+		`Inconsistent schema: ${idDifferentiator}`,
+	);
 }
 
 export function validateViewConsistency(
@@ -549,16 +566,24 @@ export function validateViewConsistency(
 	treeB: ISharedTreeView,
 	idDifferentiator: string | undefined = undefined,
 ): void {
+	validateSnapshotConsistency(
+		{ tree: toJsonableTree(treeA), schema: treeA.storedSchema },
+		{ tree: toJsonableTree(treeB), schema: treeB.storedSchema },
+		idDifferentiator,
+	);
+}
+
+export function validateSnapshotConsistency(
+	treeA: SharedTreeContentSnapshot,
+	treeB: SharedTreeContentSnapshot,
+	idDifferentiator: string | undefined = undefined,
+): void {
 	assert.deepEqual(
-		toJsonableTree(treeA),
-		toJsonableTree(treeB),
+		treeA.tree,
+		treeB.tree,
 		`Inconsistent json representation: ${idDifferentiator}`,
 	);
-	assert.deepEqual(
-		schemaCodec.encode(treeA.storedSchema),
-		schemaCodec.encode(treeB.storedSchema),
-		`Inconsistent schema: ${idDifferentiator}`,
-	);
+	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
 export function viewWithContent(
@@ -639,14 +664,6 @@ export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): IShar
 
 export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
 	return jsonableTreeFromForest(tree.forest);
-}
-
-export function jsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
-	const readCursor = forest.allocateCursor();
-	moveToDetachedField(forest, readCursor);
-	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
-	readCursor.free();
-	return jsonable;
 }
 
 /**
@@ -859,18 +876,6 @@ export function defaultRevisionMetadataFromChanges(
 		}
 	}
 	return revisionMetadataSourceFromInfo(revInfos);
-}
-
-/**
- * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
- */
-export function namedTreeSchema(
-	data: TreeSchemaBuilder & Named<string>,
-): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
-	return {
-		name: brand(data.name),
-		...treeSchema({ ...data }),
-	};
 }
 
 /**

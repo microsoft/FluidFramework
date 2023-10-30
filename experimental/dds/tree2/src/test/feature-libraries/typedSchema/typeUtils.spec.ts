@@ -35,6 +35,8 @@ import {
 	type check1_ = requireTrue<areSafelyAssignable<ArrayToUnion<[1]>, 1>>;
 	type Case2 = ArrayToUnion<[1, 2]>;
 	type check2_ = requireTrue<areSafelyAssignable<Case2, 1 | 2>>;
+	type Case3 = ArrayToUnion<number[]>;
+	type check3_ = requireTrue<areSafelyAssignable<Case3, number>>;
 }
 
 // Test Unbrand

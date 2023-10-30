@@ -40,7 +40,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	fieldSchema,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -290,6 +289,7 @@ export {
 	SchemaCollection,
 	FactoryTreeSchema,
 	treeSchemaFromStoredSchema,
+	encodeTreeSchema,
 } from "./feature-libraries";
 
 export {
@@ -309,6 +309,7 @@ export {
 	TypedTreeFactory,
 	TypedTreeOptions,
 	TypedTreeChannel,
+	SharedTreeContentSnapshot,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

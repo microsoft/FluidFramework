@@ -25,6 +25,7 @@ import {
 	ILoaderOptions,
 	ILoader,
 	LoaderHeader,
+	IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
@@ -166,7 +167,6 @@ import {
 	IGarbageCollector,
 	IGCRuntimeOptions,
 	IGCStats,
-	shouldAllowGcTombstoneEnforcement,
 	trimLeadingAndTrailingSlashes,
 } from "./gc";
 import { channelToDataStore, IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
@@ -513,6 +513,7 @@ export interface RuntimeHeaderData {
 	wait?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
+	allowInactive?: boolean;
 }
 
 /** Default values for Runtime Headers */
@@ -520,6 +521,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
 	viaHandle: false,
 	allowTombstone: false,
+	allowInactive: false,
 };
 
 /**
@@ -989,7 +991,7 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	private readonly submitSignalFn: (contents: any) => void;
+	private readonly submitSignalFn: (content: any, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -1181,10 +1183,15 @@ export class ContainerRuntime
 	 */
 	private nextSummaryNumber: number;
 
-	/**
-	 * If false, loading or using a Tombstoned object should merely log, not fail
-	 */
-	public readonly gcTombstoneEnforcementAllowed: boolean;
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	public get gcTombstoneEnforcementAllowed(): boolean {
+		return this.garbageCollector.tombstoneEnforcementAllowed;
+	}
+
+	/** If true, throw an error when a tombstone data store is used. */
+	public get gcThrowOnTombstoneUsage(): boolean {
+		return this.garbageCollector.throwOnTombstoneUsage;
+	}
 
 	/**
 	 * GUID to identify a document in telemetry
@@ -1330,11 +1337,6 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this._connected = connected;
-
-		this.gcTombstoneEnforcementAllowed = shouldAllowGcTombstoneEnforcement(
-			metadata?.gcFeatureMatrix?.tombstoneGeneration /* persisted */,
-			this.runtimeOptions.gcOptions[gcTombstoneGenerationOptionName] /* current */,
-		);
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -1867,6 +1869,9 @@ export class ContainerRuntime
 		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
 		}
+		if (typeof request.headers?.[AllowInactiveRequestHeaderKey] === "boolean") {
+			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
+		}
 
 		// We allow Tombstone requests for sub-DataStore objects
 		if (requestForChild) {
@@ -1876,20 +1881,24 @@ export class ContainerRuntime
 		await this.dataStores.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
 		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
-		const dataStoreChannel = await dataStoreContext.realize();
 
 		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
 		// the same as GC nodes id.
 		const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
+		// Get the initial snapshot details which contain the data store package path.
+		const details = await dataStoreContext.getInitialSnapshotDetails();
+
+		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
+		// is configured.
 		this.garbageCollector.nodeUpdated(
 			`/${urlWithoutQuery}`,
 			"Loaded",
 			undefined /* timestampMs */,
-			dataStoreContext.packagePath,
-			request?.headers,
+			details.pkg,
+			request,
+			headerData,
 		);
-
-		return dataStoreChannel;
+		return dataStoreContext.realize();
 	}
 
 	/** Adds the container's metadata to the given summary tree. */
@@ -2533,6 +2542,12 @@ export class ContainerRuntime
 				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
 			);
 		}
+		this.garbageCollector.nodeUpdated(
+			`/${internalId}`,
+			"Loaded",
+			undefined /* timestampMs */,
+			context.packagePath,
+		);
 		return channel.entryPoint;
 	}
 
@@ -2659,16 +2674,28 @@ export class ContainerRuntime
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any) {
+	public submitSignal(type: string, content: any, targetClientId?: string) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope, targetClientId);
 	}
 
-	public submitDataStoreSignal(address: string, type: string, content: any) {
+	/**
+	 * Submits the signal to be sent to other clients.
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
+	public submitDataStoreSignal(
+		address: string,
+		type: string,
+		content: any,
+		targetClientId?: string,
+	) {
 		const envelope = this.createNewSignalEnvelope(address, type, content);
-		return this.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope, targetClientId);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -3928,9 +3955,7 @@ export class ContainerRuntime
 
 	public notifyAttaching() {} // do nothing (deprecated method)
 
-	public async getPendingLocalState(props?: {
-		notifyImminentClosure: boolean;
-	}): Promise<unknown> {
+	public async getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -3940,6 +3965,7 @@ export class ContainerRuntime
 			async (event) => {
 				this.verifyNotClosed();
 				const waitBlobsToAttach = props?.notifyImminentClosure;
+				const stopBlobAttachingSignal = props?.stopBlobAttachingSignal;
 				if (this._orderSequentiallyCalls !== 0) {
 					throw new UsageError("can't get state during orderSequentially");
 				}
@@ -3948,7 +3974,7 @@ export class ContainerRuntime
 				// to close current batch.
 				this.flush();
 				const pendingAttachmentBlobs = waitBlobsToAttach
-					? await this.blobManager.attachAndGetPendingBlobs()
+					? await this.blobManager.attachAndGetPendingBlobs(stopBlobAttachingSignal)
 					: undefined;
 				const pending = this.pendingStateManager.getLocalState();
 				if (!pendingAttachmentBlobs && !this.hasPendingMessages()) {

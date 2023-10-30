@@ -57,7 +57,6 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 			description: "Check if the file path exists",
 			default: true,
 			allowNo: true,
-			required: true,
 		}),
 		...PackageCommand.flags,
 	};
@@ -71,10 +70,12 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 		const configOptions = ExtractorConfig.tryLoadForFolder({
 			startingFolder: pkg.directory,
 		});
+
 		if (configOptions === undefined) {
 			this.verbose(`No api-extractor config found for ${pkg.name}. Skipping.`);
 			return;
 		}
+
 		updatePackageJsonFile(pkg.directory, (json) => {
 			if (json.types !== undefined && json.typings !== undefined) {
 				throw new Error(
@@ -90,7 +91,14 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 				);
 			}
 
-			const extractorConfig = ExtractorConfig.prepare(configOptions);
+			/**
+			 * When preparing the configuration object, folder and file paths referenced in the configuration are checked for existence,
+			 * and an error is reported if they are not found.
+			 */
+			const extractorConfig = ExtractorConfig.prepare({
+				...configOptions,
+				ignoreMissingEntryPoint: this.flags.checkFileExists,
+			});
 			assert(this.flags.types !== undefined, "--types flag must be provided.");
 
 			const packageUpdated = updatePackageJsonTypes(
@@ -115,7 +123,7 @@ export default class SetReleaseTagPublishingCommand extends PackageCommand<
 
 		if (this.packageList.packagesUpdated.length === 0) {
 			this.errorLog(`No updates in package.json for ${this.flags.types} release tag`);
-			this.exit();
+			this.exit(1);
 		}
 
 		return this.packageList;
