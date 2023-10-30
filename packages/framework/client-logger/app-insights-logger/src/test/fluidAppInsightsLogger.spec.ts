@@ -70,7 +70,7 @@ describe("FluidAppInsightsLogger", () => {
 				filters: [
 					{
 						namespacePattern: "A:B:C",
-						namespacePatternExceptions: ["D:C:A"],
+						namespacePatternExceptions: new Set(["D:C:A"]),
 					},
 				],
 			},
@@ -378,11 +378,11 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 	const configFilters: TelemetryFilter[] = [
 		{
 			namespacePattern: namespaceFilterPattern1,
-			namespacePatternExceptions: [namespaceFilterPattern1Exception],
+			namespacePatternExceptions: new Set([namespaceFilterPattern1Exception]),
 		},
 		{
 			namespacePattern: namespaceFilterPattern2,
-			namespacePatternExceptions: [namespaceFilterPattern2Exception],
+			namespacePatternExceptions: new Set([namespaceFilterPattern2Exception]),
 		},
 	];
 	const exclusiveLoggerFilterConfig: FluidAppInsightsLoggerConfig = {
@@ -612,7 +612,7 @@ describe("Telemetry Filter - Category & Namespace Combination Filtering", () => 
 		{
 			categories: ["performance"],
 			namespacePattern: "perf:latency",
-			namespacePatternExceptions: ["perf:latency:ops"],
+			namespacePatternExceptions: new Set(["perf:latency:ops"]),
 		},
 	];
 	const exclusiveLoggerFilterConfig: FluidAppInsightsLoggerConfig = {

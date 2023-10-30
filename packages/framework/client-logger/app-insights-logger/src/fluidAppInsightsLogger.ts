@@ -74,7 +74,7 @@ export interface NamespaceFilter {
 	 *
 	 * events from "perf:latency:ops", you would add "perf:latency:ops" to this list.
 	 */
-	namespacePatternExceptions?: string[];
+	namespacePatternExceptions?: Set<string>;
 }
 
 /**
@@ -276,19 +276,11 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 					uniqueFilterNamespaces.add(filter.namespacePattern);
 				}
 
-				const uniqueFilterNamespaceExceptions = new Set<string>();
 				for (const patternException of filter.namespacePatternExceptions ?? []) {
 					if (!patternException.startsWith(filter.namespacePattern)) {
 						throw new Error(
 							"Cannot have a namespace pattern exception that is not a child of the parent namespace",
 						);
-					}
-					if (uniqueFilterNamespaceExceptions.has(patternException)) {
-						throw new Error(
-							"Cannot have duplicate namespace pattern exception filters",
-						);
-					} else {
-						uniqueFilterNamespaceExceptions.add(patternException);
 					}
 				}
 				validatedFilters.push(filter);

@@ -33,7 +33,7 @@ export interface FluidAppInsightsLoggerConfig {
 // @public
 export interface NamespaceFilter {
     namespacePattern: string;
-    namespacePatternExceptions?: string[];
+    namespacePatternExceptions?: Set<string>;
 }
 
 export { TelemetryEventCategory }
