@@ -60,7 +60,10 @@ describe("FluidAppInsightsLogger", () => {
 				],
 			},
 		};
-		assert.throws(() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig));
+		assert.throws(
+			() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig),
+			new Error("Cannot have duplicate namespace pattern filters"),
+		);
 	});
 
 	it("constructor() throws error when filter config with namespace pattern exception that is not part of the parent pattern is provided", () => {
@@ -75,7 +78,12 @@ describe("FluidAppInsightsLogger", () => {
 				],
 			},
 		};
-		assert.throws(() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig));
+		assert.throws(
+			() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig),
+			new Error(
+				"Cannot have a namespace pattern exception that is not a child of the parent namespace",
+			),
+		);
 	});
 
 	it("constructor() throws error when multiple filters that only define categories are provided", () => {
@@ -92,7 +100,10 @@ describe("FluidAppInsightsLogger", () => {
 				],
 			},
 		};
-		assert.throws(() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig));
+		assert.throws(
+			() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig),
+			new Error("Cannot have multiple filters that only define categories"),
+		);
 	});
 });
 

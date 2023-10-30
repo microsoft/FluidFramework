@@ -136,7 +136,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	private readonly config: FluidAppInsightsLoggerConfig;
 	public constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig) {
 		this.baseLoggingClient = client;
-		// Deep copy config to internal array
+		// Deep copy config to prevent issues if user mutates the object they passed in
 		this.config = config
 			? structuredClone(config)
 			: {
@@ -150,8 +150,14 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 			this.validateFilters(this.config.filtering.filters);
 			// Sort filters by longest namespace first.
 			this.config.filtering.filters.sort((a, b) => {
-				const namespaceALength = "namespacePattern" in a ? a.namespacePattern.length : 0;
-				const namespaceBLength = "namespacePattern" in b ? b.namespacePattern.length : 0;
+				const namespaceALength =
+					"namespacePattern" in a && a.namespacePattern !== undefined
+						? a.namespacePattern.length
+						: 0;
+				const namespaceBLength =
+					"namespacePattern" in b && b.namespacePattern !== undefined
+						? b.namespacePattern.length
+						: 0;
 				return namespaceBLength - namespaceALength;
 			});
 		}
@@ -261,10 +267,9 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 */
 	private validateFilters(filters: TelemetryFilter[]): void {
 		const uniqueFilterNamespaces = new Set<string>();
-		let hasPureCategoryFilter = false; // filter that only contains categories.
 
 		for (const filter of filters) {
-			if ("namespacePattern" in filter) {
+			if ("namespacePattern" in filter && filter.namespacePattern !== undefined) {
 				if (uniqueFilterNamespaces.has(filter.namespacePattern)) {
 					throw new Error("Cannot have duplicate namespace pattern filters");
 				} else {
@@ -279,11 +284,14 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 					}
 				}
 			} else if ("categories" in filter) {
-				// These are filters that only contain "categories".
-				if (hasPureCategoryFilter) {
+				// These are filters that only contain "categories". For the purpose of this validation logic, we are treating filters
+				// that does not contain a defined namespace as the the same as a blank "" namespace (which will match any event).
+				if (uniqueFilterNamespaces.has("")) {
 					throw new Error("Cannot have multiple filters that only define categories");
 				}
-				hasPureCategoryFilter = true;
+				uniqueFilterNamespaces.add("");
+			} else {
+				throw new Error("Invalid filter does not have either a namespace or a category.");
 			}
 		}
 	}
