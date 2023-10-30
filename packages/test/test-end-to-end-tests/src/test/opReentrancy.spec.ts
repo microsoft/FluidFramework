@@ -20,6 +20,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
+import { ContainerRuntime } from "@fluidframework/container-runtime";
 
 describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
@@ -236,6 +237,52 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			assert.strictEqual(
 				sharedDirectory1.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
 				sharedDirectory2.getSubDirectory(topLevel)?.getSubDirectory(innerLevel)?.get(key),
+			);
+		});
+
+		it.only(`Eventual consistency for shared directories with op reentry and disconnect - ${
+			enableGroupedBatching ? "Grouped" : "Regular"
+		} batches`, async function () {
+			if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
+				// This test is flaky on Tinylicious. ADO:5010
+				this.skip();
+			}
+
+			await setupContainers({
+				...testContainerConfig,
+				runtimeOptions: {
+					enableGroupedBatching,
+				},
+			});
+
+			// Force both containers in write mode
+			sharedString1.insertText(0, "");
+			sharedString2.insertText(0, "");
+			await provider.ensureSynchronized();
+
+			const topLevel = "dir1";
+			sharedDirectory1.createSubDirectory(topLevel);
+			await provider.ensureSynchronized();
+
+			sharedDirectory2.createSubDirectory(topLevel);
+			await provider.ensureSynchronized();
+
+			container2.connect();
+			sharedDirectory2.deleteSubDirectory(topLevel);
+			container2.connect();
+			container2.disconnect();
+			(dataObject2.context.containerRuntime as ContainerRuntime).ensureNoDataModelChanges(
+				() => {
+					sharedDirectory2.createSubDirectory(topLevel);
+				},
+			);
+
+			container2.connect();
+			await provider.ensureSynchronized();
+
+			assert.strictEqual(
+				sharedDirectory1.getSubDirectory(topLevel)?.absolutePath,
+				sharedDirectory2.getSubDirectory(topLevel)?.absolutePath,
 			);
 		});
 	});
