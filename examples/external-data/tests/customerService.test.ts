@@ -22,6 +22,27 @@ const localServicePort = 5002;
 const externalTaskListId = "task-list-1";
 
 /**
+ * Helper function for registering with the external service for notifications.
+ */
+const registerExternalServiceWebhook = async (taskListId: string): Promise<Response> => {
+	const webhookRegistrationResponse = await fetch(
+		`http://localhost:${externalDataServicePort}/register-for-webhook`,
+		{
+			method: "POST",
+			headers: {
+				"Access-Control-Allow-Origin": "*",
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				url: `http://localhost:${customerServicePort}/external-data-webhook?externalTaskListId=${taskListId}`,
+				externalTaskListId: taskListId,
+			}),
+		},
+	);
+	return webhookRegistrationResponse;
+};
+
+/**
  * Helper function for updating data within the external data service.
  * It also tests the response for a given code as well and will fail if it doesnt match.
  */
@@ -134,17 +155,15 @@ describe("mock-customer-service", () => {
 
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
-	it.skip("register-for-webhook: Complete data flow", async () => {
+	it("register-for-webhook: Complete data flow", async () => {
 		// Set up mock local service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
-
-		// Bind listener
-		let wasFluidNotifiedForChange = false;
-		let webhookChangeNotification;
-
 		const tenantId = "tinylicious";
 		const documentId = "container1";
 
+		// Bind listener
+		let webhookChangeNotification;
+		let wasFluidNotifiedForChange = false;
 		localServiceApp.post(`/${tenantId}/${documentId}/broadcast-signal`, (request, result) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			webhookChangeNotification = request.body;
@@ -155,27 +174,20 @@ describe("mock-customer-service", () => {
 		const localService: Server = localServiceApp.listen(localServicePort);
 
 		try {
-			// Register with the external service for notifications
-			const webhookRegistrationResponse = await fetch(
-				`http://localhost:${externalDataServicePort}/register-for-webhook`,
-				{
-					method: "POST",
-					headers: {
-						"Access-Control-Allow-Origin": "*",
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						url: `http://localhost:${localServicePort}/external-data-webhook?externalTaskListId=${externalTaskListId}`,
-						externalTaskListId,
-					}),
-				},
+			// 1. Register Fluid container URL for notifications with the customer service
+			const registerSessionUrl = await registerSessionWithCustomerService(
+				externalTaskListId,
+				tenantId,
+				documentId,
 			);
+			expect(registerSessionUrl.status).toBe(200);
 
-			if (!webhookRegistrationResponse.ok) {
-				fail(`Webhook registration failed. Code: ${webhookRegistrationResponse.status}.`);
-			}
+			// 2. Register with the external service for notifications
+			const webhookRegistrationResponse =
+				await registerExternalServiceWebhook(externalTaskListId);
+			expect(webhookRegistrationResponse.status).toBe(200);
 
-			// Update external data
+			// 3. Update external data
 			const taskDataUpdate = {
 				42: {
 					name: "Determine the meaning of life",
@@ -183,17 +195,21 @@ describe("mock-customer-service", () => {
 				},
 			};
 			const dataUpdateResponse = await updateExternalData(taskDataUpdate, externalTaskListId);
-			if (dataUpdateResponse.status !== 200) {
-				fail(`Data update failed. Code: ${dataUpdateResponse.status}`);
-			}
+			expect(dataUpdateResponse.status).toBe(200);
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.
 			await delay(1000);
 
-			// Verify our listener was notified of data change.
+			// 4. Verify our listener was notified of data change.
 			expect(wasFluidNotifiedForChange).toBe(true);
 			expect(webhookChangeNotification).toMatchObject({
-				data: taskDataUpdate,
+				signalContent: {
+					contents: {
+						content: {
+							externalTaskListId,
+						},
+					},
+				},
 			});
 		} finally {
 			await closeServer(localService);
@@ -244,13 +260,13 @@ describe("mock-customer-service", () => {
 
 			// Verify our listener was notified of data change.
 			expect(webhookChangeNotification).toMatchObject({
-				signalContent:{
+				signalContent: {
 					contents: {
 						content: {
-							externalTaskListId
-						}
-					}
-				}
+							externalTaskListId,
+						},
+					},
+				},
 			});
 		} finally {
 			await closeServer(localService);
@@ -300,13 +316,13 @@ describe("mock-customer-service", () => {
 
 			// Verify our listener was notified of data change.
 			expect(webhookChangeNotification).toMatchObject({
-				signalContent:{
+				signalContent: {
 					contents: {
 						content: {
-							externalTaskListId
-						}
-					}
-				}
+							externalTaskListId,
+						},
+					},
+				},
 			});
 			// Set the webhookChangeNotification variable back to undefined.
 			webhookChangeNotification = undefined;
