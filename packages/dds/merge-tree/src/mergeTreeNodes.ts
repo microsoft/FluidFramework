@@ -121,8 +121,6 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
  * Note that merge-tree does not currently support moving and only supports
  * obliterate. The fields below include "move" in their names to avoid renaming
  * in the future, when moves _are_ supported.
- *
- * @alpha
  */
 export interface IMoveInfo {
 	/**
