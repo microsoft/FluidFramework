@@ -24,6 +24,7 @@ export function addFactory<TSchema extends ObjectNodeSchema>(
 		// Shallow copy the content and then add the type name symbol to it.
 		// The copy is necessary so that the input `content` object can be re-used as the contents of a different typed/named node in another `create` call.
 		const contentCopy = { ...content };
+		// Add the symbol as a non-enumerable property to keep it hidden.
 		Object.defineProperty(contentCopy, typeNameSymbol, { value: schema.name });
 		Object.defineProperty(node, factoryContentSymbol, { value: contentCopy });
 		for (const [key] of schema.objectNodeFields) {
@@ -69,11 +70,17 @@ export function addFactory<TSchema extends ObjectNodeSchema>(
 export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaScript">>(
 	content: T,
 ): T {
-	const copy: Record<string, unknown> = {};
 	if (Array.isArray(content)) {
 		// `content` is an array
 		return content.map(extractFactoryContent) as T;
+	} else if (content instanceof Map) {
+		// `content` is a map
+		for (const [k, v] of content) {
+			content.set(k, extractFactoryContent(v));
+		}
+		return content;
 	} else if (content !== null && typeof content === "object") {
+		const copy: Record<string, unknown> = {};
 		const factoryContent = (content as Partial<HasFactoryContent<object>>)[
 			factoryContentSymbol
 		];
@@ -83,22 +90,23 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 				(factoryContent as { [typeNameSymbol]?: string })[typeNameSymbol] ??
 				fail("Expected schema type name to be set on factory object content");
 
+			// Copy the type name from the factory content to the output object.
+			// This ensures that all objects from factories can be checked for their nominal type if necessary.
 			Object.defineProperty(copy, typeNameSymbol, { value: typeName });
 			for (const [p, v] of Object.entries(factoryContent)) {
 				copy[p] = extractFactoryContent(v);
 			}
 		} else {
-			// `content` is a POJO object (but may have factory-created objects within it)
+			// `content` is a plain javascript object (but may have factory-created objects within it)
 			for (const [p, v] of Object.entries(content)) {
 				copy[p] = extractFactoryContent(v);
 			}
 		}
+		return copy as T;
 	} else {
 		// `content` is a primitive
 		return content;
 	}
-	// TODO: Handle maps
-	return copy as T;
 }
 
 /**

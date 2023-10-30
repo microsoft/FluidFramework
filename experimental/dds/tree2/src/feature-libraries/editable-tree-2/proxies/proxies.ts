@@ -617,7 +617,7 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	return new Proxy<SharedTreeMap<TSchema>>(new Map<string, ProxyNode<TSchema>>(), {
+	return new Proxy<SharedTreeMap<TSchema>>(new Map<string, ProxyField<TSchema["mapFields"]>>(), {
 		get: (target, key, receiver): unknown => {
 			return Reflect.get(dispatch, key);
 		},
