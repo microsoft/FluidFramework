@@ -6,6 +6,8 @@
 import { strict as assert } from "assert";
 import {
 	EmptyKey,
+	FieldKey,
+	TreeFieldStoredSchema,
 	TreeNodeSchemaIdentifier,
 	TreeNodeStoredSchema,
 	ValueSchema,
@@ -18,12 +20,20 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/storedToViewSchema";
+import { brand } from "../../util";
 
 describe("storedToViewSchema", () => {
 	describe("fieldSchemaFromStoredSchema", () => {
-		const schemaX = new TreeNodeSchema({ name: "z" }, "x", { leafValue: ValueSchema.Number });
-		const schemaY = new TreeNodeSchema({ name: "z" }, "y", { leafValue: ValueSchema.Number });
-		const schemaMap = new Map([[schemaX.name, schemaX]]);
+		const schemaX = TreeNodeSchema.create({ name: "z" }, "x", {
+			leafValue: ValueSchema.Number,
+		});
+		const schemaY = TreeNodeSchema.create({ name: "z" }, "y", {
+			leafValue: ValueSchema.Number,
+		});
+		const schemaMap = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>([
+			[schemaX.name, schemaX],
+			[schemaY.name, schemaY],
+		]);
 		const roundTrip = [
 			["any", TreeFieldSchema.create(FieldKinds.optional, [Any])],
 			["forbidden", TreeFieldSchema.create(FieldKinds.forbidden, [Any])],
@@ -51,51 +61,65 @@ describe("storedToViewSchema", () => {
 		});
 
 		it("oneOfEach", () => {
-			const schemaLeaf = new TreeNodeSchema({ name: "z" }, "leaf", {
+			const schemaLeaf: TreeNodeStoredSchema = {
 				leafValue: ValueSchema.Number,
-			});
-			const schemaObject = new TreeNodeSchema({ name: "z" }, "object", {
-				objectNodeFields: {
-					foo: {
-						kind: { identifier: FieldKinds.required.identifier },
-						types: new Set(["leaf"]),
-					},
-				},
-			});
-			const schemaRecursive = new TreeNodeSchema({ name: "z" }, "Recursive", {
-				objectNodeFields: {
-					foo: {
-						kind: { identifier: FieldKinds.sequence.identifier },
-						types: new Set(["Recursive"]),
-					},
-				},
-			});
+				objectNodeFields: new Map(),
+			};
+
+			const schemaObject: TreeNodeStoredSchema = {
+				objectNodeFields: new Map<FieldKey, TreeFieldStoredSchema>([
+					[
+						brand<FieldKey>("foo"),
+						{
+							kind: { identifier: FieldKinds.required.identifier },
+							types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
+						} satisfies TreeFieldStoredSchema,
+					],
+				] satisfies [FieldKey, TreeFieldStoredSchema][]),
+			};
+
+			const schemaRecursive: TreeNodeStoredSchema = {
+				objectNodeFields: new Map<FieldKey, TreeFieldStoredSchema>([
+					[
+						brand<FieldKey>("foo"),
+						{
+							kind: { identifier: FieldKinds.optional.identifier },
+							types: new Set<TreeNodeSchemaIdentifier>([brand("Recursive")]),
+						} satisfies TreeFieldStoredSchema,
+					],
+				] satisfies [FieldKey, TreeFieldStoredSchema][]),
+			};
+
 			// Current policy is to treat this case as an object.
-			const schemaEmptyKey = new TreeNodeSchema({ name: "z" }, "EmptyKey", {
-				objectNodeFields: {
-					[EmptyKey]: {
-						kind: { identifier: FieldKinds.required.identifier },
-						types: new Set(["leaf"]),
-					},
-				},
-			});
-			const schemaMap = new TreeNodeSchema({ name: "z" }, "map", {
+			const schemaEmptyKey: TreeNodeStoredSchema = {
+				objectNodeFields: new Map<FieldKey, TreeFieldStoredSchema>([
+					[
+						EmptyKey,
+						{
+							kind: { identifier: FieldKinds.required.identifier },
+							types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
+						} satisfies TreeFieldStoredSchema,
+					],
+				] satisfies [FieldKey, TreeFieldStoredSchema][]),
+			};
+			const schemaMap: TreeNodeStoredSchema = {
+				objectNodeFields: new Map(),
 				mapFields: {
 					kind: { identifier: FieldKinds.optional.identifier },
-					types: new Set(["leaf"]),
+					types: new Set<TreeNodeSchemaIdentifier>([brand("leaf")]),
 				},
-			});
+			};
 			const stored = {
 				rootFieldSchema: {
 					kind: { identifier: FieldKinds.optional.identifier },
-					types: new Set([schemaMap.name, schemaObject.name]),
+					types: new Set<TreeNodeSchemaIdentifier>([brand("map"), brand("object")]),
 				},
 				nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>([
-					[schemaMap.name, schemaMap],
-					[schemaEmptyKey.name, schemaEmptyKey],
-					[schemaRecursive.name, schemaRecursive],
-					[schemaObject.name, schemaObject],
-					[schemaLeaf.name, schemaLeaf],
+					[brand("map"), schemaMap],
+					[brand("EmptyKey"), schemaEmptyKey],
+					[brand("Recursive"), schemaRecursive],
+					[brand("object"), schemaObject],
+					[brand("leaf"), schemaLeaf],
 				]),
 			};
 			const viewSchema = treeSchemaFromStoredSchema(stored);

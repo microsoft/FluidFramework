@@ -30,14 +30,14 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema
 		if (innerSchema.leafValue !== undefined) {
 			map.set(
 				identifier,
-				new TreeNodeSchema({ name: "intoTypedSchema" }, identifier, {
+				TreeNodeSchema.create({ name: "intoTypedSchema" }, identifier, {
 					leafValue: innerSchema.leafValue,
 				}),
 			);
 		} else if (innerSchema.mapFields !== undefined) {
 			map.set(
 				identifier,
-				new TreeNodeSchema({ name: "intoTypedSchema" }, identifier, {
+				TreeNodeSchema.create({ name: "intoTypedSchema" }, identifier, {
 					mapFields: fieldSchemaFromStoredSchema(
 						innerSchema.mapFields,
 						map,
@@ -52,7 +52,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema
 			const fieldsObject = mapToObject(fields);
 			map.set(
 				identifier,
-				new TreeNodeSchema({ name: "intoTypedSchema" }, identifier, {
+				TreeNodeSchema.create({ name: "intoTypedSchema" }, identifier, {
 					objectNodeFields: fieldsObject,
 				}),
 			);
