@@ -206,7 +206,6 @@
 			white-space: normal;
 			width: 100%;
 		}
-
 	}
 
 	.docs-home {
@@ -294,25 +293,25 @@
 }
 
 #docs-navbar > .nav .active:not(.active-leaf) > .packages:before {
-    content: "";
-    position: absolute;
-    height: 7px;
-    width: 7px;
-    background-color: $link-color;
-    top: 10px;
-    left: -4px;
-    @include border-radius(100%);
+	content: "";
+	position: absolute;
+	height: 7px;
+	width: 7px;
+	background-color: $link-color;
+	top: 10px;
+	left: -4px;
+	@include border-radius(100%);
 }
 
 #docs-navbar > .nav .active > .leaf-node:before {
-    content: "";
-    position: absolute;
-    height: 7px;
-    width: 7px;
-    background-color: $link-color;
-    top: 10px;
-    left: -4px;
-    @include border-radius(100%);
+	content: "";
+	position: absolute;
+	height: 7px;
+	width: 7px;
+	background-color: $link-color;
+	top: 10px;
+	left: -4px;
+	@include border-radius(100%);
 }
 
 /* Subnav L1 active */

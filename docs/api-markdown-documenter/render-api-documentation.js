@@ -55,7 +55,6 @@ async function renderApiDocumentation() {
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
-		includeBreadcrumb: false,
 		createDefaultLayout: layoutContent,
 		packageFilterPolicy: (apiPackage) => {
 			// Skip `@fluid-internal` packages
