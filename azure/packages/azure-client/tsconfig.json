@@ -5,6 +5,7 @@
 		"outDir": "./dist",
 		"composite": true,
 		"types": ["node"],
+    "moduleResolution": "node16",
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
