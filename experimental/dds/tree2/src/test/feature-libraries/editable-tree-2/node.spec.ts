@@ -5,7 +5,14 @@
 
 import { strict as assert } from "assert";
 import { rootFieldKey } from "../../../core";
-import { ProxyRoot, SharedTreeNode, node, TreeStatus, Any } from "../../../feature-libraries";
+import {
+	ProxyRoot,
+	SharedTreeNode,
+	node,
+	TreeStatus,
+	Any,
+	typeNameSymbol,
+} from "../../../feature-libraries";
 import { SchemaBuilder } from "../../../domains";
 import { itWithRoot } from "./utils";
 
@@ -15,11 +22,18 @@ describe("node API", () => {
 		content: sb.number,
 	});
 	const list = sb.list(object);
-	const parent = sb.object("parent", { object, list });
+	const parent = sb.object("parent", {
+		object,
+		list,
+		anyList: sb.list(Any),
+		polyList: sb.list([object, list]),
+	});
 	const treeSchema = sb.intoSchema(parent);
-	const initialTree: ProxyRoot<typeof treeSchema, "javaScript"> = {
+	const initialTree = {
 		object: { content: 42 },
 		list: [{ content: 42 }, { content: 42 }, { content: 42 }],
+		anyList: ["any"],
+		polyList: [{ [typeNameSymbol]: "test.child", content: 42 }],
 	};
 
 	describe("schema", () => {
@@ -49,16 +63,35 @@ describe("node API", () => {
 	});
 
 	describe("isListOf", () => {
-		itWithRoot("works", treeSchema, initialTree, (root) => {
+		itWithRoot("not a list", treeSchema, initialTree, (root) => {
+			assert.equal(node.isListOf(root, parent), false);
+			assert.equal(node.isListOf(root.object, object), false);
+		});
+
+		itWithRoot("single schema", treeSchema, initialTree, (root) => {
 			assert.equal(node.isListOf(root.list, object), true);
 			assert.equal(node.isListOf(root.list, parent), false);
+		});
+
+		itWithRoot("multiple schema", treeSchema, initialTree, (root) => {
+			assert.equal(node.isListOf(root.list, [object, list]), false);
+			assert.equal(node.isListOf(root.polyList, [object, list]), true);
+			assert.equal(node.isListOf(root.polyList, [list, object]), true);
+			assert.equal(node.isListOf(root.polyList, [parent]), false);
+			assert.equal(node.isListOf(root.polyList, [object]), false);
+			assert.equal(node.isListOf(root.polyList, [list]), false);
+		});
+
+		itWithRoot("any", treeSchema, initialTree, (root) => {
+			assert.equal(node.isListOf(root.list, Any), false);
+			assert.equal(node.isListOf(root.anyList, Any), true);
+			assert.equal(node.isListOf(root.anyList, object), false);
+			assert.equal(node.isListOf(root.anyList, sb.number), false);
 		});
 	});
 
 	describe("parent", () => {
 		itWithRoot("object", treeSchema, initialTree, (root) => {
-			const child = root.object;
-			const p = node.parent(child);
 			assert.equal(node.parent(root.object), root);
 		});
 

@@ -3,9 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
-import { NormalizeAllowedTypes, structuralName } from "../../schemaBuilderBase";
-import { Any, TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
+import { compareSets, fail } from "../../../util";
+import {
+	ImplicitAllowedTypes,
+	NormalizeAllowedTypes,
+	normalizeAllowedTypes,
+} from "../../schemaBuilderBase";
+import {
+	AllowedTypes,
+	Any,
+	TreeNodeSchema,
+	allowedTypesToTypeSet,
+	schemaIsFieldNode,
+} from "../../typed-schema";
+import { LazyItem } from "../../typed-schema/flexList";
+import { allowedTypesSchemaSet } from "../../typed-schema/typedTreeSchema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeNode, TreeStatus } from "../editableTreeTypes";
 import { getProxyForNode } from "./proxies";
@@ -38,7 +50,7 @@ export interface NodeApi {
 		schema: TSchema,
 	) => value is ProxyNode<TSchema>;
 	/**
-	 * Narrow the type of the given value if it is a list containing the given schema.
+	 * Narrow the type of the given value if it is a list that allows items of exactly the given schema.
 	 * @example
 	 * ```ts
 	 * if (node.isList(myNode, point)) {
@@ -46,9 +58,9 @@ export interface NodeApi {
 	 * }
 	 * ```
 	 */
-	readonly isListOf: <TSchema extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
+	readonly isListOf: <TSchema extends ImplicitAllowedTypes>(
 		value: unknown,
-		itemSchema: TSchema,
+		itemTypes: TSchema,
 	) => value is SharedTreeList<NormalizeAllowedTypes<TSchema>>;
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
@@ -91,16 +103,28 @@ export const nodeApi: NodeApi = {
 	): value is ProxyNode<TSchema> => {
 		return getTreeNode(value)?.is(schema) ?? false;
 	},
-	isListOf: <TSchema extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
+	isListOf: <TSchema extends ImplicitAllowedTypes>(
 		value: unknown,
 		itemTypes: TSchema,
 	): value is SharedTreeList<NormalizeAllowedTypes<TSchema>> => {
-		const schemaName = getTreeNode(value)?.schema.name;
-		// TODO: not gonna work. We don't know which part of the name is the scope and which part is not.
-		// const unscopedName =
-		// 	schemaName?.substring(schemaName.indexOf(".")) ?? fail("Malformed schema name.");
-
-		return structuralName("List", itemTypes) === unscopedName;
+		const treeNode = getTreeNode(value);
+		if (treeNode === undefined || !schemaIsFieldNode(treeNode.schema)) {
+			// If the node being checked is not a list node, return false.
+			return false;
+		}
+		const fieldSchemaTypeSet = treeNode.schema.objectNodeFields.get("").types;
+		const normalizedItemTypes = normalizeAllowedTypes(itemTypes);
+		const itemTypeSet = allowedTypesToTypeSet(normalizedItemTypes);
+		if (fieldSchemaTypeSet === undefined || itemTypeSet === undefined) {
+			return fieldSchemaTypeSet === itemTypeSet;
+		}
+		// Return true iff the sets of types match exactly
+		return compareSets({
+			a: itemTypeSet,
+			b: fieldSchemaTypeSet,
+			aExtra: () => false,
+			bExtra: () => false,
+		});
 	},
 	parent: (node: SharedTreeNode) => {
 		const treeNode = assertTreeNode(node).parentField.parent.parent;
