@@ -240,7 +240,7 @@ describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObje
 			);
 		});
 
-		it.only(`Eventual consistency for shared directories with op reentry and disconnect - ${
+		it(`Eventual consistency for shared directories with op reentry and disconnect - ${
 			enableGroupedBatching ? "Grouped" : "Regular"
 		} batches`, async function () {
 			if (provider.driver.type === "t9s" || provider.driver.type === "tinylicious") {
