@@ -103,7 +103,7 @@
                             {{- end }}
                             {{ $packageKey := index $.Site.Data.packageData $targetPage.Params.package }}
                             {{ $apiDetails := index $.Site.Data.apiData $packageKey }}
-                            {{ $isCurrentPage := strings.HasPrefix (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
+                            {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
                             {{ $hasActiveLeaf := false }}
 
                             {{ range $category := slice "Interface" "Class" "Enum" }}
