@@ -1119,7 +1119,8 @@ export class MergeTree {
 
 		if (minSeq > this.collabWindow.minSeq) {
 			this.collabWindow.minSeq = minSeq;
-			this.moveSeqs = this.moveSeqs.filter((seq) => seq > minSeq);
+			const firstMoveSeqIdx = this.moveSeqs.findIndex((seq) => seq >= minSeq);
+			this.moveSeqs = firstMoveSeqIdx === -1 ? [] : this.moveSeqs.slice(firstMoveSeqIdx);
 			if (MergeTree.options.zamboniSegments) {
 				zamboniSegments(this);
 			}

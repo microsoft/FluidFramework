@@ -117,25 +117,25 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 
 /**
  * Tracks information about when and where this segment was moved to.
- * @example - Suppose a merge tree had 3 TextSegments "X", "A", and "B", and
- * received the operation `move({ start: 0, end: 1 }, { dest: 3 }, { seq: 30 })`
- * (moving the "X" after the "A" and the "B").
- * After processing this operation, it would have the segments
- * `[<moved "X" tombstone>, "A", "B", "X"]`. The moved "X" tombstone segment
- * would have the following IMoveInfo:
- * `{ movedSeq: 30, moveDst: <reference to living "X" segment>}`
+ *
+ * Note that merge-tree does not currently support moving and only supports
+ * obliterate. The fields below include "move" in their names to avoid renaming
+ * in the future, when moves _are_ supported.
+ *
+ * @alpha
  */
 export interface IMoveInfo {
 	/**
 	 * Local seq at which this segment was moved if the move is yet-to-be
-	 * acked. Only set on the tombstone "source" segment of the move.
+	 * acked.
 	 */
 	localMovedSeq?: number;
+
 	/**
-	 * The first seq at which this segment was moved. Only set on the tombstone
-	 * "source" segment of the move.
+	 * The first seq at which this segment was moved.
 	 */
 	movedSeq: number;
+
 	/**
 	 * All seqs at which this segment was moved. In the case of overlapping,
 	 * concurrent moves this array will contain multiple seqs.
@@ -145,20 +145,26 @@ export interface IMoveInfo {
 	 * The first element corresponds to the seq of the first move
 	 */
 	movedSeqs: number[];
+
 	/**
 	 * A reference to the inserted destination segment corresponding to this
 	 * segment's move.
+	 *
 	 * If undefined, the move was an obliterate.
 	 *
 	 * Currently this field is unused, as we only support obliterate operations
 	 */
 	moveDst?: ReferencePosition;
+
 	/**
 	 * List of client IDs that have moved this segment.
-	 * The client that actually moved the segment (i.e. whose move op was sequenced first) is stored as the first
-	 * client in this list. Other clients in the list have all issued concurrent ops to move the segment.
+	 *
+	 * The client that actually moved the segment (i.e. whose move op was sequenced
+	 * first) is stored as the first client in this list. Other clients in the
+	 * list have all issued concurrent ops to move the segment.
 	 */
 	movedClientIds: number[];
+
 	/**
 	 * If this segment was inserted into a concurrently moved range and
 	 * the move op was sequenced before the insertion op. In this case,
