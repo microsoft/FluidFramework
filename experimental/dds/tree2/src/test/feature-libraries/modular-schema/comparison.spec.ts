@@ -28,6 +28,73 @@ import {
 import { Named, brand } from "../../../util";
 import { defaultSchemaPolicy, FieldKinds } from "../../../feature-libraries";
 
+/**
+ * APIs to help build schema.
+ *
+ * See typedSchema.ts for a wrapper for these APIs that captures the types as TypeScript types
+ * in addition to runtime data.
+ */
+
+/**
+ * Empty readonly map.
+ */
+const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
+
+/**
+ * Helper for building {@link TreeFieldStoredSchema}.
+ * @alpha
+ */
+function fieldSchema(
+	kind: { identifier: FieldKindIdentifier },
+	types?: Iterable<TreeNodeSchemaIdentifier>,
+): TreeFieldStoredSchema {
+	return {
+		kind,
+		types: types === undefined ? undefined : new Set(types),
+	};
+}
+
+/**
+ * See {@link TreeNodeStoredSchema} for details.
+ */
+interface TreeNodeStoredSchemaBuilder {
+	readonly objectNodeFields?: { [key: string]: TreeFieldStoredSchema };
+	readonly mapFields?: TreeFieldStoredSchema;
+	readonly leafValue?: ValueSchema;
+}
+
+/**
+ * Helper for building {@link TreeNodeStoredSchema}.
+ */
+function treeNodeStoredSchema(data: TreeNodeStoredSchemaBuilder): TreeNodeStoredSchema {
+	const objectNodeFields = new Map();
+	const fields = data.objectNodeFields ?? {};
+	// eslint-disable-next-line no-restricted-syntax
+	for (const key in fields) {
+		if (Object.prototype.hasOwnProperty.call(fields, key)) {
+			objectNodeFields.set(brand(key), fields[key]);
+		}
+	}
+
+	return {
+		objectNodeFields,
+		mapFields: data.mapFields,
+		leafValue: data.leafValue,
+	};
+}
+
+/**
+ * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
+ */
+function namedTreeNodeStoredSchema(
+	data: TreeNodeStoredSchemaBuilder & Named<string>,
+): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
+	return {
+		name: brand(data.name),
+		...treeNodeStoredSchema({ ...data }),
+	};
+}
+
 describe("Schema Comparison", () => {
 	/**
 	 * TreeFieldStoredSchema permits anything.
@@ -442,76 +509,4 @@ function intoSimpleObject(obj: unknown): unknown {
 		}
 	}
 	return out;
-}
-
-/**
- * APIs to help build schema.
- *
- * See typedSchema.ts for a wrapper for these APIs that captures the types as TypeScript types
- * in addition to runtime data.
- */
-
-/**
- * Empty readonly set.
- */
-export const emptySet: ReadonlySet<never> = new Set();
-
-/**
- * Empty readonly map.
- */
-export const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
-
-/**
- * Helper for building {@link TreeFieldStoredSchema}.
- * @alpha
- */
-function fieldSchema(
-	kind: { identifier: FieldKindIdentifier },
-	types?: Iterable<TreeNodeSchemaIdentifier>,
-): TreeFieldStoredSchema {
-	return {
-		kind,
-		types: types === undefined ? undefined : new Set(types),
-	};
-}
-
-/**
- * See {@link TreeNodeStoredSchema} for details.
- */
-interface TreeNodeStoredSchemaBuilder {
-	readonly objectNodeFields?: { [key: string]: TreeFieldStoredSchema };
-	readonly mapFields?: TreeFieldStoredSchema;
-	readonly leafValue?: ValueSchema;
-}
-
-/**
- * Helper for building {@link TreeNodeStoredSchema}.
- */
-function treeNodeStoredSchema(data: TreeNodeStoredSchemaBuilder): TreeNodeStoredSchema {
-	const objectNodeFields = new Map();
-	const fields = data.objectNodeFields ?? {};
-	// eslint-disable-next-line no-restricted-syntax
-	for (const key in fields) {
-		if (Object.prototype.hasOwnProperty.call(fields, key)) {
-			objectNodeFields.set(brand(key), fields[key]);
-		}
-	}
-
-	return {
-		objectNodeFields,
-		mapFields: data.mapFields,
-		leafValue: data.leafValue,
-	};
-}
-
-/**
- * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
- */
-function namedTreeNodeStoredSchema(
-	data: TreeNodeStoredSchemaBuilder & Named<string>,
-): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
-	return {
-		name: brand(data.name),
-		...treeNodeStoredSchema({ ...data }),
-	};
 }

@@ -23,7 +23,7 @@ describe("schemaSummarizer", () => {
 				rootFieldSchema: {
 					kind: "Forbidden",
 				},
-				treeSchema: [],
+				nodeSchema: [],
 				version: "1.0.0",
 			};
 			assert.deepEqual(encoded, snapshot);
@@ -43,7 +43,7 @@ describe("schemaSummarizer", () => {
 						"com.fluidframework.leaf.null",
 					],
 				},
-				treeSchema: [
+				nodeSchema: [
 					{
 						leafValue: undefined,
 						mapFields: undefined,

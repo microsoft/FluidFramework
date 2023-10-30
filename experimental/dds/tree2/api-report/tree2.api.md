@@ -516,7 +516,7 @@ export enum DiscardResult {
 }
 
 // @alpha
-function downCast<TSchema extends TreeNodeSchema>(schema: TSchema, tree: UntypedTreeCore<any, any>): tree is TypedNode_2<TSchema>;
+function downCast<TSchema extends TreeNodeSchema>(schema: TSchema, tree: UntypedTreeCore): tree is TypedNode_2<TSchema>;
 
 // @alpha
 export type DownPath = PathStep[];
@@ -2437,7 +2437,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 }
 
 // @alpha
-export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = UntypedField<TContext>> extends Iterable<TField> {
+export interface UntypedTreeCore<out TContext = UntypedTreeContext, out TField = UntypedField<TContext>> extends Iterable<TField> {
     readonly [contextSymbol]: TContext;
     [getField](fieldKey: FieldKey): TField;
     // (undocumented)

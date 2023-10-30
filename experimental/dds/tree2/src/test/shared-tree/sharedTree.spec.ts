@@ -957,7 +957,7 @@ describe("SharedTree", () => {
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const treeSchema = builder.object("root", {
+		const rootTreeNodeSchema = builder.object("root", {
 			x: builder.number,
 		});
 		const schema = builder.intoSchema(builder.optional(Any));
