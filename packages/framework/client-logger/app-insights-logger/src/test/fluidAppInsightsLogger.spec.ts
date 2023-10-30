@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import type Sinon from "sinon";
@@ -46,26 +46,87 @@ describe("FluidAppInsightsLogger", () => {
 		sinonAssert.calledWith(trackEventSpy, expectedAppInsightsEvent);
 	});
 
-	it("sortTelemetryFilters() orders filters from most specific to least specific", () => {
+	it("constructor() throws error when filter config with duplicate namespaces is provided", () => {
+		const invalidConfig: FluidAppInsightsLoggerConfig = {
+			filtering: {
+				mode: "inclusive",
+				filters: [
+					{
+						namespacePattern: "A:B:C",
+					},
+					{
+						namespacePattern: "A:B:C",
+					},
+				],
+			},
+		};
+		assert.throws(() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig));
+	});
+
+	it("constructor() throws error when filter config with namespace pattern exception that is not part of the parent pattern is provided", () => {
+		const invalidConfig: FluidAppInsightsLoggerConfig = {
+			filtering: {
+				mode: "inclusive",
+				filters: [
+					{
+						namespacePattern: "A:B:C",
+						namespacePatternExceptions: ["D:C:A"],
+					},
+				],
+			},
+		};
+		assert.throws(() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig));
+	});
+
+	it("constructor() merges redundant pure category filters", () => {
+		const invalidConfig: FluidAppInsightsLoggerConfig = {
+			filtering: {
+				mode: "inclusive",
+				filters: [
+					{
+						categories: ["error", "generic"],
+					},
+					{
+						categories: ["error"],
+					},
+					{
+						categories: ["performance"],
+					},
+				],
+			},
+		};
+		const logger = new FluidAppInsightsLogger(appInsightsClient, invalidConfig);
+		assert.strictEqual(logger.filters.length, 1);
+		if ("categories" in logger.filters[0]) {
+			assert.strictEqual(true, logger.filters[0].categories.includes("error"));
+			assert.strictEqual(true, logger.filters[0].categories.includes("generic"));
+			assert.strictEqual(true, logger.filters[0].categories.includes("performance"));
+		} else {
+			// The merged category filter should be a CateogryFilter and have the "categories" attribute
+			fail();
+		}
+	});
+
+	it("sortTelemetryFilters() orders filters from longest namespace to shortest", () => {
 		const expectedSortedFilterArray: TelemetryFilter[] = [
 			{
-				namespacePattern: "veryLongNamespacePattern",
+				namespacePattern: "veryLongNamespacePattern333",
 				categories: ["performance"],
 			},
 			{
-				namespacePattern: "veryLongNamespacePattern",
+				namespacePattern: "veryLongNamespacePattern22",
 				categories: ["performance", "generic"],
 			},
 			{
-				namespacePattern: "veryLongNamespacePattern",
+				namespacePattern: "veryLongNamespacePattern1",
 			},
 			{
-				categories: ["performance"],
 				namespacePattern: "namespace1",
+				categories: ["performance"],
 			},
 			{
-				categories: ["performance", "generic"],
 				namespacePattern: "namespace",
+				categories: ["performance", "generic"],
 			},
 			{
 				namespacePattern: "short",
@@ -85,8 +146,13 @@ describe("FluidAppInsightsLogger", () => {
 			expectedSortedFilterArray[5],
 		];
 
-		const sortedFilters = FluidAppInsightsLogger.sortTelemetryFilters(unsortedFilters);
-		assert.deepStrictEqual(sortedFilters, expectedSortedFilterArray);
+		const logger = new FluidAppInsightsLogger(appInsightsClient, {
+			filtering: { mode: "exclusive", filters: unsortedFilters },
+		});
+
+		debugger;
+
+		assert.deepStrictEqual(logger.filters, expectedSortedFilterArray);
 	});
 });
 
@@ -177,7 +243,7 @@ describe("Telemetry Filter - Category Filtering", () => {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 	});
 
-	it("exclusive filtering mode DOES SEND events that DO MATCH with atleast one category within a single filter containing multiple categories", () => {
+	it("exclusive filtering mode DOES NOT SEND events that DO MATCH with atleast one category within a single filter containing multiple categories", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, {
 			filtering: {
 				mode: "exclusive",
@@ -305,14 +371,18 @@ describe("Telemetry Filter - Category Filtering", () => {
 describe("Telemetry Filter - Namespace Filtering", () => {
 	let appInsightsClient: ApplicationInsights;
 	let trackEventSpy: Sinon.SinonSpy;
+	const namespaceFilterPattern1 = "perf:latency";
+	const namespaceFilterPattern2 = "perf:memory";
+	const namespaceFilterPattern1Exception = `${namespaceFilterPattern1}:ops`;
+	const namespaceFilterPattern2Exception = `${namespaceFilterPattern2}:container`;
 	const configFilters: TelemetryFilter[] = [
 		{
-			namespacePattern: "perf:latency",
-			namespacePatternExceptions: ["perf:latency:ops"],
+			namespacePattern: namespaceFilterPattern1,
+			namespacePatternExceptions: [namespaceFilterPattern1Exception],
 		},
 		{
-			namespacePattern: "perf:memory",
-			namespacePatternExceptions: ["perf:memory:container"],
+			namespacePattern: namespaceFilterPattern2,
+			namespacePatternExceptions: [namespaceFilterPattern2Exception],
 		},
 	];
 	const exclusiveLoggerFilterConfig: FluidAppInsightsLoggerConfig = {
@@ -339,37 +409,32 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 		trackEventSpy = spy(appInsightsClient, "trackEvent");
 	});
 
-	it("exclusive filter mode DOES NOT SEND events that PARITALLY MATCH with one of multiple namespace filters", () => {
+	it("exclusive filter mode DOES NOT SEND events that MATCH with one of multiple namespace filters", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, exclusiveLoggerFilterConfig);
 		// should be excluded - partial match with namespace filter
 		const event1 = {
 			category: "performance",
-			eventName: "perf:latency:signals",
+			eventName: `${namespaceFilterPattern1}:signals`,
 		};
 		// should be excluded - partial match with second namespace filter
 		const event2 = {
 			category: "performance",
-			eventName: "perf:memory:ops:summary",
+			eventName: `${namespaceFilterPattern2}:ops:summary`,
 		};
-		logger.send(event1);
-		logger.send(event2);
-		sinonAssert.callCount(trackEventSpy, 0);
-	});
-
-	it("exclusive filter mode DOES NOT SEND events that PERFECTLY MATCH with one of multiple namespace filters", () => {
-		const logger = new FluidAppInsightsLogger(appInsightsClient, exclusiveLoggerFilterConfig);
 		// should be excluded - perfect match with namespace filter
-		const event1 = {
+		const event3 = {
 			category: "performance",
-			eventName: "perf:latency",
+			eventName: namespaceFilterPattern1,
 		};
 		// should be excluded - perfect match with second namespace filter
-		const event2 = {
+		const event4 = {
 			category: "performance",
-			eventName: "perf:memory",
+			eventName: namespaceFilterPattern2,
 		};
 		logger.send(event1);
 		logger.send(event2);
+		logger.send(event3);
+		logger.send(event4);
 		sinonAssert.callCount(trackEventSpy, 0);
 	});
 
@@ -395,74 +460,64 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 		}
 	});
 
-	it("exclusive filter mode DOES SEND events that PARITALLY MATCH with one of multiple namespace filters if they also partially match with a namespace exception", () => {
+	it("exclusive filter mode DOES SEND events that MATCH with one of multiple namespace filters if they also partially match with a namespace exception", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, exclusiveLoggerFilterConfig);
 		// should be included - partial match with namespace filter but also partially matches namespace pattern exception
 		const event1 = {
 			category: "performance",
-			eventName: "perf:latency:ops:roundTripTime",
+			eventName: `${namespaceFilterPattern1Exception}:roundTripTime`,
 		};
 		// should be included - partial match with second namespace filter but also partially matches namespace pattern exception
 		const event2 = {
 			category: "performance",
-			eventName: "perf:memory:container:summary",
+			eventName: `${namespaceFilterPattern2Exception}:summary`,
 		};
-		logger.send(event1);
-		logger.send(event2);
-		sinonAssert.callCount(trackEventSpy, 2);
-	});
-
-	it("exclusive filter mode DOES SEND events that PERFECTLY MATCH with one of multiple namespace filters if they also perfectly match with a namespace exception", () => {
-		const logger = new FluidAppInsightsLogger(appInsightsClient, exclusiveLoggerFilterConfig);
 		// should be included - partial match with namespace filter but also perfectly matches namespace pattern exception
-		const event1 = {
+		const event3 = {
 			category: "performance",
-			eventName: "perf:latency:ops",
+			eventName: namespaceFilterPattern1Exception,
 		};
 		// should be included - partial match with second namespace filter but also perfectly matches namespace pattern exception
-		const event2 = {
+		const event4 = {
 			category: "performance",
-			eventName: "perf:memory:container",
+			eventName: namespaceFilterPattern2Exception,
 		};
 		logger.send(event1);
 		logger.send(event2);
-		sinonAssert.callCount(trackEventSpy, 2);
+		logger.send(event3);
+		logger.send(event4);
+		sinonAssert.callCount(trackEventSpy, 4);
 	});
 
 	// ------------------------------------------------------------------------------------
 
-	it("inclusive filter mode DOES SEND events that PARITALLY MATCH with one of multiple namespace filters", () => {
+	it("inclusive filter mode DOES SEND events that MATCH with one of multiple namespace filters", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, inclusiveLoggerFilterConfig);
 		// should be included - partial match with namespace filter
 		const event1 = {
 			category: "performance",
-			eventName: "perf:latency:signals",
+			eventName: `${namespaceFilterPattern1}:signals`,
 		};
 		// should be included - partial match with second namespace filter
 		const event2 = {
 			category: "performance",
-			eventName: "perf:memory:ops:summary",
+			eventName: `${namespaceFilterPattern2}:ops:summary`,
 		};
-		logger.send(event1);
-		logger.send(event2);
-		sinonAssert.callCount(trackEventSpy, 2);
-	});
-
-	it("inclusive filter mode DOES SEND events that PERFECTLY MATCH with one of multiple namespace filters", () => {
-		const logger = new FluidAppInsightsLogger(appInsightsClient, inclusiveLoggerFilterConfig);
 		// should be included - perfect match with namespace filter
-		const event1 = {
+		const event3 = {
 			category: "performance",
-			eventName: "perf:latency",
+			eventName: namespaceFilterPattern1,
 		};
 		// should be included - perfect match with second namespace filter
-		const event2 = {
+		const event4 = {
 			category: "performance",
-			eventName: "perf:memory",
+			eventName: namespaceFilterPattern2,
 		};
 		logger.send(event1);
 		logger.send(event2);
-		sinonAssert.callCount(trackEventSpy, 2);
+		logger.send(event3);
+		logger.send(event4);
+		sinonAssert.callCount(trackEventSpy, 4);
 	});
 
 	it("inclusive filter mode DOES NOT SEND events that DO NOT MATCH with one of multiple namespace filters", () => {
@@ -477,41 +532,36 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 		sinonAssert.callCount(trackEventSpy, 0);
 	});
 
-	it("inclusive filter mode DOES NOT SEND events that PARITALLY MATCH with one of multiple namespace filters if they also partially match with a namespace exception", () => {
+	it("inclusive filter mode DOES NOT SEND events that MATCH with one of multiple namespace filters if they also partially match with a namespace exception", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, inclusiveLoggerFilterConfig);
 		// should be excluded - partial match with namespace filter but also partially matches namespace pattern exception
 		const event1 = {
 			category: "performance",
-			eventName: "perf:latency:ops:roundTripTime",
+			eventName: `${namespaceFilterPattern1}:ops:roundTripTime`,
 		};
 		// should be excluded - partial match with second namespace filter but also partially matches namespace pattern exception
 		const event2 = {
 			category: "performance",
-			eventName: "perf:memory:container:summary",
+			eventName: `${namespaceFilterPattern2}:container:summary`,
 		};
-		logger.send(event1);
-		logger.send(event2);
-		sinonAssert.callCount(trackEventSpy, 0);
-	});
-
-	it("inclusive filter mode DOES NOT SEND events that PERFECTLY MATCH with one of multiple namespace filters if they also perfectly match with a namespace exception", () => {
-		const logger = new FluidAppInsightsLogger(appInsightsClient, inclusiveLoggerFilterConfig);
 		// should be excluded - partial match with namespace filter but also perfectly matches namespace pattern exception
-		const event1 = {
+		const event3 = {
 			category: "performance",
-			eventName: "perf:latency:ops",
+			eventName: namespaceFilterPattern1Exception,
 		};
 		// should be excluded - partial match with second namespace filter but also perfectly matches namespace pattern exception
-		const event2 = {
+		const event4 = {
 			category: "performance",
-			eventName: "perf:memory:container",
+			eventName: namespaceFilterPattern2Exception,
 		};
 		logger.send(event1);
 		logger.send(event2);
+		logger.send(event3);
+		logger.send(event4);
 		sinonAssert.callCount(trackEventSpy, 0);
 	});
 
-	it("inclusive filter mode DOES NOT SEND events that don't match the most specific filter despite matching more generic ones. ", () => {
+	it("inclusive filter mode DOES NOT SEND events that DO NOT MATCH the most specific filter despite matching more generic ones. ", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, {
 			filtering: {
 				mode: "inclusive",
@@ -528,14 +578,14 @@ describe("Telemetry Filter - Namespace Filtering", () => {
 			},
 		});
 
-		// should be excluded - the event matches the second filter but the first filter is more specific to just allow "error"
-		// for the given namespace so it should be evaulated first
+		// should be excluded because the event matches the "A:B" filter but the "A:B:C" filter is more specific
+		// so it should be evaluated first and it only allows "errors".
 		const event1 = {
 			category: "generic",
 			eventName: "A:B:C",
 		};
 
-		// should be included - matches both filters
+		// should be included because it matches the "A:B:C" filter that should be getting applied to it
 		const event2 = {
 			category: "error",
 			eventName: "A:B:C",

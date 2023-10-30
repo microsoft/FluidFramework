@@ -32,6 +32,10 @@ export interface FluidAppInsightsLoggerConfig {
 		/**
 		 * Controls the filtering of log events.
 		 * Leaving this undefined will be treated as an empty array.
+		 *
+		 * In order for the filters to be valid they must meet the following conditions:
+		 * 1. There must not be any two filters with the same `namespacePattern`.
+		 * 2. All {@link NamespaceFilter} must not have any defined `namespacePatternException` that is not a child of the parent `namespacePattern`
 		 */
 		filters?: TelemetryFilter[];
 	};
@@ -129,10 +133,10 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 */
 	private readonly baseLoggingClient: ApplicationInsights;
 	private readonly config: FluidAppInsightsLoggerConfig;
+	private readonly _filters: TelemetryFilter[];
 
 	public constructor(client: ApplicationInsights, config?: FluidAppInsightsLoggerConfig) {
 		this.baseLoggingClient = client;
-
 		this.config = config ?? {
 			filtering: {
 				mode: "exclusive",
@@ -140,12 +144,21 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 			},
 		};
 
-		if (this.config.filtering.filters) {
-			// Sorts filters in order from most specific to least specific.
-			this.config.filtering.filters = FluidAppInsightsLogger.sortTelemetryFilters(
-				this.config.filtering.filters,
-			);
-		}
+		// Deep copy filters to internal array
+		this._filters =
+			this.config.filtering.filters?.map((filter) => structuredClone(filter)) ?? [];
+		// Validate and merge redundant filters.
+		this._filters = this.validateFilters(this._filters);
+		// Sort filters by longest namespace first.
+		this._filters.sort((a, b) => {
+			const namespaceALength = "namespacePattern" in a ? a.namespacePattern.length : 0;
+			const namespaceBLength = "namespacePattern" in b ? b.namespacePattern.length : 0;
+			return namespaceBLength - namespaceALength;
+		});
+	}
+
+	public get filters(): TelemetryFilter[] {
+		return this._filters;
 	}
 
 	/**
@@ -191,7 +204,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 * @returns boolean `true` if the event matches any filter, otherwise `false`.
 	 */
 	private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
-		for (const filter of this.config.filtering.filters ?? []) {
+		for (const filter of this.filters) {
 			if ("namespacePattern" in filter) {
 				if (event.eventName.startsWith(filter.namespacePattern)) {
 					// Found matching namespace pattern, since filters are ordered in most specific first,
@@ -245,26 +258,58 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 		return false;
 	}
 
-	public static sortTelemetryFilters(filters: TelemetryFilter[]): TelemetryFilter[] {
-		return filters.sort((a, b) => {
-			const specificityScoreA = FluidAppInsightsLogger.getFilterSpecificityScore(a);
-			const specificityScoreB = FluidAppInsightsLogger.getFilterSpecificityScore(b);
-			return specificityScoreB - specificityScoreA;
-		});
-	}
+	/**
+	 * Checks an array of telemetry filters for any issues, merges redundant filters, and returns a fully validated array.
+	 *
+	 * @throws - an Error if there are two filters with duplicate namespace patterns or a filter with a pattern exception that is not a child of the parent pattern.
+	 */
+	private validateFilters(filters: TelemetryFilter[]): TelemetryFilter[] {
+		const uniqueFilterNamespaces = new Set<string>();
+		const pureCategoryFilters = new Set<TelemetryEventCategory>(); // Set of Categories from filters that only contain categories.
+		const validatedFilters: TelemetryFilter[] = [];
 
-	private static getFilterSpecificityScore(filter: TelemetryFilter): number {
-		const hasNamespace = "namespacePattern" in filter;
-		const namespaceLength = hasNamespace ? filter.namespacePattern.length : 0;
+		for (const filter of filters) {
+			if ("namespacePattern" in filter) {
+				if (uniqueFilterNamespaces.has(filter.namespacePattern)) {
+					throw new Error("Cannot have duplicate namespace pattern filters");
+				} else {
+					uniqueFilterNamespaces.add(filter.namespacePattern);
+				}
 
-		let categoryScore: number;
-		if ("categories" in filter) {
-			const categoryCount = filter.categories.length;
-			categoryScore = categoryCount > 0 ? 1 / (categoryCount + 1) : 0;
-		} else {
-			categoryScore = -1; // Lowest score for no categories
+				const uniqueFilterNamespaceExceptions = new Set<string>();
+				for (const patternException of filter.namespacePatternExceptions ?? []) {
+					if (!patternException.startsWith(filter.namespacePattern)) {
+						throw new Error(
+							"Cannot have a namespace pattern exception that is not a child of the parent namespace",
+						);
+					}
+					if (uniqueFilterNamespaceExceptions.has(patternException)) {
+						throw new Error(
+							"Cannot have duplicate namespace pattern exception filters",
+						);
+					} else {
+						uniqueFilterNamespaceExceptions.add(patternException);
+					}
+				}
+				validatedFilters.push(filter);
+			} else if ("categories" in filter) {
+				// These are filters that only contain "categories".
+				for (const category of filter.categories) {
+					if (pureCategoryFilters.has(category)) {
+						console.warn("Redundant category filters found. Filters will be merged.");
+					}
+					pureCategoryFilters.add(category);
+				}
+			}
 		}
 
-		return (hasNamespace ? 10000 : 0) + namespaceLength + categoryScore;
+		if (pureCategoryFilters.size > 0) {
+			// Merges all pure category filters into a single one.
+			validatedFilters.push({
+				categories: [...pureCategoryFilters],
+			});
+		}
+
+		return validatedFilters;
 	}
 }
