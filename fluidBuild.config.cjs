@@ -205,7 +205,6 @@ module.exports = {
 				"tools/markdown-magic/package.json",
 			],
 			"npm-strange-package-name": [
-				"server/routerlicious/packages/package.json",
 				"server/gitrest/package.json",
 				"server/historian/package.json",
 				"package.json",
