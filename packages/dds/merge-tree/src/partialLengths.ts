@@ -930,7 +930,6 @@ export class PartialSequenceLengths {
 						moveIsLocal ||
 						(!removalIsLocal && moveInfo.movedSeq > removalInfo.removedSeq));
 
-				// eslint-disable-next-line unicorn/prefer-switch
 				if (seq === segment.seq) {
 					// if this segment was moved on insert, its length should
 					// only be visible to the inserting client
@@ -944,7 +943,9 @@ export class PartialSequenceLengths {
 					} else {
 						seqSeglen += segment.cachedLength;
 					}
-				} else if (seq === removalInfo?.removedSeq) {
+				}
+
+				if (seq === removalInfo?.removedSeq) {
 					// if the remove op happened before an overlapping obliterate,
 					// all clients can see the remove at this seq. otherwise, only
 					// the removing client is aware of the remove
@@ -953,7 +954,9 @@ export class PartialSequenceLengths {
 					} else {
 						remoteObliteratedLen -= segment.cachedLength;
 					}
-				} else if (seq === moveInfo?.movedSeq) {
+				}
+
+				if (seq === moveInfo?.movedSeq) {
 					if (removeHappenedFirst) {
 						remoteObliteratedLen -= segment.cachedLength;
 					} else if (
