@@ -155,6 +155,21 @@ describe("SharedTreeObject factories", () => {
 				[{ content: 42 }, { content: 42 }],
 			);
 		});
+		it("extracts an array of maps", () => {
+			assert.deepEqual(extractFactoryContent([new Map([["a", 42]])]), [new Map([["a", 42]])]);
+		});
+		it("extracts a map of primitives", () => {
+			assert.deepEqual(extractFactoryContent(new Map([["a", 42]])), new Map([["a", 42]]));
+		});
+		it("extracts a map of objects", () => {
+			assert.deepEqual(
+				extractFactoryContent(new Map([["a", childA.create({ content: 42 })]])),
+				new Map([["a", { content: 42 }]]),
+			);
+		});
+		it("extracts a map of arrays", () => {
+			assert.deepEqual(extractFactoryContent(new Map([["a", [42]]])), new Map([["a", [42]]]));
+		});
 		it("extracts an object tree", () => {
 			assert.deepEqual(
 				extractFactoryContent(
@@ -170,7 +185,5 @@ describe("SharedTreeObject factories", () => {
 				},
 			);
 		});
-
-		// TODO: nest Maps as well
 	});
 });
