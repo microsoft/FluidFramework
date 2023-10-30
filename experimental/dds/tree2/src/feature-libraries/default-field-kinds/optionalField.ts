@@ -141,6 +141,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
+		let pendingCurrentChildNodeFlush = true;
 		let index = 0;
 		for (const { change, revision } of changes) {
 			const fieldChangeInfo = revisionMetadata.tryGetInfo(
@@ -204,6 +205,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					);
 				});
 				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
+				const priorInverse = hasMatchingPriorInverse
+					? changes[maybePriorInverse]
+					: undefined;
 
 				if (change.fieldChange.newContent !== undefined) {
 					if (hasMatchingPriorInverse) {
@@ -220,10 +224,31 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				}
 
 				// Node was changed by this revision: flush the current changes
-				if (currentChildNodeChanges.length > 0) {
+				if (currentChildNodeChanges.length > 0 && pendingCurrentChildNodeFlush) {
 					assert(firstFieldChangeAtomId !== undefined, "expected first field change");
 					addChildChange(firstFieldChangeAtomId, ...currentChildNodeChanges);
+				}
+
+				if (hasMatchingPriorInverse) {
+					let maybeExisting = perChildChanges.get({
+						revision:
+							priorInverse?.revision ??
+							priorInverse?.change.fieldChange?.revision ??
+							fail("No revision associated with prior inverse"),
+						localId:
+							priorInverse?.change.fieldChange?.id ??
+							fail("No id associated with prior inverse"),
+					});
+					if (maybeExisting === undefined) {
+						currentChildNodeChanges = [];
+						pendingCurrentChildNodeFlush = true;
+					} else {
+						currentChildNodeChanges = maybeExisting;
+						pendingCurrentChildNodeFlush = false;
+					}
+				} else {
 					currentChildNodeChanges = [];
+					pendingCurrentChildNodeFlush = true;
 				}
 
 				if (change.fieldChange.newContent?.changes !== undefined) {

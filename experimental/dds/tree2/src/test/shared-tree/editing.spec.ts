@@ -41,7 +41,7 @@ const rootNode: UpPath = {
 	parentIndex: 0,
 };
 
-describe("Editing", () => {
+describe.only("Editing", () => {
 	describe("Sequence Field", () => {
 		it("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
@@ -1724,8 +1724,29 @@ describe("Editing", () => {
 	});
 
 	describe("Optional Field", () => {
+		it.only("can rebase foo", () => {
+			const tree1 = makeTreeFromJson([{ foo: "1" }]);
+			const tree2 = tree1.fork();
+			const tree3 = tree1.fork();
+
+			tree2.editor
+				.valueField({ parent: rootNode, field: brand("foo") })
+				.set(singleTextCursor({ type: leaf.string.name, value: "2" }));
+
+			tree3.editor
+				.valueField({ parent: rootNode, field: brand("foo") })
+				.set(singleTextCursor({ type: leaf.string.name, value: "3" }));
+
+			tree3.rebaseOnto(tree2);
+			// tree1.merge(tree2, false);
+			// tree1.merge(tree3, false);
+			// tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree3], [{ foo: "3" }]);
+		});
+
 		// TODO unskip these tests once optional fields track transient nodes
-		it.skip("can rebase a node replacement and a dependent edit to the new node", () => {
+		it("can rebase a node replacement and a dependent edit to the new node", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
 
