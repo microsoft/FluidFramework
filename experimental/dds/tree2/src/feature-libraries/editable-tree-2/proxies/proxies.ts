@@ -24,6 +24,7 @@ import {
 	TreeNode,
 	TypedField,
 	TypedNodeUnion,
+	UnknownUnboxed,
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
@@ -247,8 +248,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		value: Array.prototype[Symbol.iterator],
 	},
 	at: {
-		value(this: SharedTreeList<AllowedTypes, "javaScript">, index: number): void {
-			getSequenceField(this).at(index);
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			index: number,
+		): UnknownUnboxed | undefined {
+			return getSequenceField(this).at(index);
 		},
 	},
 	insertAt: {
