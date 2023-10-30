@@ -16,16 +16,60 @@ import {
 } from "@fluid-experimental/tree";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
-import { InventoryItem } from "./inventoryItem";
+import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
 
 const legacySharedTreeKey = "legacySharedTree";
 
+/**
+ * LegacyTreeInventoryItem is the local object with a friendly interface for the view to use.
+ * The LegacyTreeInventoryList can bind these to its inventory items to abstract out how the values are
+ * changed.
+ */
+export class LegacyTreeInventoryItem
+	extends TypedEmitter<IInventoryItemEvents>
+	implements IInventoryItem
+{
+	public get id() {
+		return this._id;
+	}
+	public get name() {
+		return this._name;
+	}
+	public get quantity() {
+		return this._quantity;
+	}
+	public set quantity(newQuantity: number) {
+		// Setting the quantity does not directly update the value, but rather roundtrips it through
+		// the backing data by using the provided callback.  We trust that later this will result in
+		// handleQuantityUpdate getting called when the true backing data changes.
+		this._setQuantity(newQuantity);
+	}
+	/**
+	 * handleQuantityUpdate is not available on IInventoryItem intentionally, since it should not be
+	 * available to the view.  Instead it is to be called by the backing data when the true value
+	 * of the data changes.
+	 */
+	public handleQuantityUpdate(newQuantity: number) {
+		this._quantity = newQuantity;
+		this.emit("quantityChanged");
+	}
+	public constructor(
+		private readonly _id: string,
+		private readonly _name: string,
+		private _quantity: number,
+		private readonly _setQuantity: (quantity: number) => void,
+		public readonly deleteItem: () => void,
+	) {
+		super();
+	}
+}
+
 export class LegacyTreeInventoryList extends DataObject implements IInventoryList {
 	private _tree: LegacySharedTree | undefined;
-	private readonly _inventoryItems = new Map<string, InventoryItem>();
+	private readonly _inventoryItems = new Map<string, LegacyTreeInventoryItem>();
 
 	private get tree() {
 		if (this._tree === undefined) {
@@ -214,7 +258,14 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 		}
 	}
 
-	private makeInventoryItemFromInventoryItemNode(inventoryItemNode: TreeViewNode): InventoryItem {
+	// Note that because accessing and modifying the legacy SharedTree depends so much on access to the tree itself
+	// (in order to have access to tree.currentView.getViewNode and tree.applyEdit) it's more difficult to encapsulate
+	// an individual inventory item with its corresponding subtree.  Here I prefer to pass callbacks wrapping that
+	// access to the LegacyTreeInventoryItem rather than hand out access to the whole tree, whereas NewTreeInventoryItem
+	// can do most of its work with just the item node.
+	private makeInventoryItemFromInventoryItemNode(
+		inventoryItemNode: TreeViewNode,
+	): LegacyTreeInventoryItem {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const idNodeId = inventoryItemNode.traits.get("id" as TraitLabel)![0];
 		const idNode = this.tree.currentView.getViewNode(idNodeId);
@@ -238,7 +289,7 @@ export class LegacyTreeInventoryList extends DataObject implements IInventoryLis
 			this.tree.applyEdit(Change.delete(StableRange.only(inventoryItemNode.identifier)));
 		};
 
-		return new InventoryItem(id, name, quantity, setQuantity, deleteItem);
+		return new LegacyTreeInventoryItem(id, name, quantity, setQuantity, deleteItem);
 	}
 }
 

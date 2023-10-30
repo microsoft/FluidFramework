@@ -290,6 +290,7 @@ export {
 	SchemaCollection,
 	FactoryTreeSchema,
 	TreeCompressionStrategy,
+	encodeTreeSchema,
 } from "./feature-libraries";
 
 export {

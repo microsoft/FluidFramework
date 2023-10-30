@@ -382,25 +382,27 @@ describe("optionalField", () => {
 
 	describe("optionalFieldIntoDelta", () => {
 		it("can be converted to a delta when field was empty", () => {
+			const outerNodeId = makeDetachedNodeId(tag, 41);
+			const innerNodeId = makeDetachedNodeId(tag, 1);
 			const expected: Delta.FieldChanges = {
-				build: [{ id: { minor: 41 }, trees: [testTreeCursor("tree1")] }],
+				build: [{ id: outerNodeId, trees: [testTreeCursor("tree1")] }],
 				global: [
 					{
-						id: { minor: 41 },
+						id: outerNodeId,
 						fields: new Map<FieldKey, Delta.FieldChanges>([
 							[
 								fooKey,
 								{
 									build: [
 										{
-											id: makeDetachedNodeId(tag, 1),
+											id: innerNodeId,
 											trees: [testTreeCursor("nodeChange1")],
 										},
 									],
 									local: [
 										{
 											count: 1,
-											attach: makeDetachedNodeId(tag, 1),
+											attach: innerNodeId,
 											detach: { major: tag, minor: 0 },
 										},
 									],
@@ -409,7 +411,7 @@ describe("optionalField", () => {
 						]),
 					},
 				],
-				local: [{ count: 1, attach: { minor: 41 } }],
+				local: [{ count: 1, attach: outerNodeId }],
 			};
 
 			const actual = optionalFieldIntoDelta(change1, (change) =>
