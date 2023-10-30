@@ -464,6 +464,8 @@ export interface IRuntime extends IDisposable {
     getEntryPoint(): Promise<FluidObject | undefined>;
     // @alpha
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
+    // @deprecated
+    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;

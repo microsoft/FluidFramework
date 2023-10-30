@@ -3931,6 +3931,11 @@ export class ContainerRuntime
 		);
 	}
 
+<<<<<<< HEAD
+=======
+	public notifyAttaching() {} // do nothing (deprecated method)
+
+>>>>>>> aadf1f2f6c59a5cf67d0d0a371e2e1af3107fcc4
 	public async getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,

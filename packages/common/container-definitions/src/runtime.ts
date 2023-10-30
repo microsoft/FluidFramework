@@ -103,6 +103,16 @@ export interface IRuntime extends IDisposable {
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
+<<<<<<< HEAD
+=======
+
+	/**
+	 * Notify runtime that container is moving to "Attaching" state
+	 * @param snapshot - snapshot created at attach time
+	 * @deprecated not necessary after op replay moved to Container
+	 */
+	notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
+>>>>>>> aadf1f2f6c59a5cf67d0d0a371e2e1af3107fcc4
 
 	/**
 	 * Notify runtime that we have processed a saved message, so that it can do async work (applying
