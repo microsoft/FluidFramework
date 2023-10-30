@@ -423,7 +423,7 @@ describe("Editing", () => {
 		it("intra-field move", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 
-			tree1.editor.sequenceField(rootField).move(0, 1, 1);
+			tree1.editor.sequenceField(rootField).move(0, 1, 2);
 
 			expectJsonTree(tree1, ["B", "A"]);
 		});
@@ -592,10 +592,10 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 			const fooField = tree1.editor.sequenceField({ parent: listNode, field: brand("") });
-			fooField.move(0, 1, 1);
+			fooField.move(0, 1, 2);
 
 			const rootSequence = tree1.editor.sequenceField(rootField);
-			rootSequence.move(0, 1, 1);
+			rootSequence.move(0, 1, 2);
 
 			tree1.transaction.commit();
 
@@ -610,7 +610,7 @@ describe("Editing", () => {
 
 			const sequence = tree2.editor.sequenceField(rootField);
 			sequence.move(1, 1, 0);
-			sequence.move(2, 1, 3);
+			sequence.move(2, 1, 4);
 			tree2.transaction.commit();
 			tree.merge(tree2);
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
@@ -623,7 +623,7 @@ describe("Editing", () => {
 			tree2.transaction.start();
 
 			const sequence = tree2.editor.sequenceField(rootField);
-			sequence.move(0, 1, 1);
+			sequence.move(0, 1, 2);
 			sequence.move(3, 1, 2);
 			tree2.transaction.commit();
 			tree.merge(tree2);
@@ -1300,6 +1300,18 @@ describe("Editing", () => {
 			tree.transaction.commit();
 
 			const expectedState: JsonCompatible = [{ src: {}, dst: ["A", "B"] }];
+			expectJsonTree(tree, expectedState);
+		});
+
+		it("can move a node out from a field and into a field under a sibling", () => {
+			const rootNode2: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 1,
+			};
+			const tree = makeTreeFromJson(["A", {}]);
+			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
+			const expectedState: JsonCompatible = [{ foo: "A" }];
 			expectJsonTree(tree, expectedState);
 		});
 

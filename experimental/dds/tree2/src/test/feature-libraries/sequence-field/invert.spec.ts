@@ -124,7 +124,7 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("move => return", () => {
-		const input = composeAnonChanges([Change.modify(0, childChange1), Change.move(0, 2, 3)]);
+		const input = composeAnonChanges([Change.modify(0, childChange1), Change.move(0, 2, 5)]);
 		const expected = composeAnonChanges([
 			Change.modify(3, inverseChildChange1),
 			Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }),

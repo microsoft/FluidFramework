@@ -702,7 +702,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ modify", () => {
-		const move = Change.move(0, 1, 1);
+		const move = Change.move(0, 1, 2);
 		const changes = TestChange.mint([], 42);
 		const modify = Change.modify(1, changes);
 		const expected = [
@@ -715,7 +715,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ delete", () => {
-		const move = Change.move(1, 1, 3);
+		const move = Change.move(1, 1, 4);
 		const deletion = Change.delete(3, 1);
 		const expected = Change.delete(1, 1);
 		const actual = shallowCompose([makeAnonChange(move), makeAnonChange(deletion)]);
@@ -754,9 +754,9 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ move (forward)", () => {
-		const move1 = Change.move(0, 1, 1, brand(0));
-		const move2 = Change.move(1, 1, 2, brand(1));
-		const expected = Change.move(0, 1, 2, brand(1));
+		const move1 = Change.move(0, 1, 2, brand(0));
+		const move2 = Change.move(1, 1, 3, brand(1));
+		const expected = Change.move(0, 1, 3, brand(1));
 		const actual = shallowCompose([makeAnonChange(move1), makeAnonChange(move2)]);
 		assert.deepEqual(actual, expected);
 	});
@@ -771,7 +771,7 @@ describe("SequenceField - Compose", () => {
 
 	it("move ○ move with no net effect (back and forward)", () => {
 		const move1 = Change.move(1, 1, 0);
-		const move2 = Change.move(0, 1, 1);
+		const move2 = Change.move(0, 1, 2);
 		const expected = [
 			{ count: 1 },
 			Mark.moveIn(1, { localId: brand(0), revision: tag2 }),
@@ -782,7 +782,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ move with no net effect (forward and back)", () => {
-		const move1 = Change.move(0, 1, 1);
+		const move1 = Change.move(0, 1, 2);
 		const move2 = Change.move(1, 1, 0);
 		const expected = [
 			Mark.moveIn(1, { localId: brand(0), revision: tag2 }),

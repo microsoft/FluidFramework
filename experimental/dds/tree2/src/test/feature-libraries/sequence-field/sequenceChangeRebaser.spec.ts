@@ -329,7 +329,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 
 	it("[Move ABC, Return ABC] ↷ Delete B", () => {
 		const delB = tagChange(Change.delete(1, 1), tag1);
-		const movABC = tagChange(Change.move(0, 3, 1), tag2);
+		const movABC = tagChange(Change.move(0, 3, 4), tag2);
 		const retABC = tagChange(Change.return(1, 3, 0, { revision: tag2, localId: id0 }), tag4);
 		const movABC2 = rebaseTagged(movABC, delB);
 		const invMovABC = invert(movABC);

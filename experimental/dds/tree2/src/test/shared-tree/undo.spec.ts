@@ -101,7 +101,7 @@ const testCases: {
 		name: "the move of a node",
 		edit: (actedOn) => {
 			const field = actedOn.editor.sequenceField(rootField);
-			field.move(0, 2, 2);
+			field.move(0, 2, 4);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["C", "D", "A", "B"],
@@ -114,7 +114,7 @@ const testCases: {
 				parent: undefined,
 				field: rootFieldKey,
 			});
-			field.move(1, 1, 3);
+			field.move(1, 1, 4);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "C", "D", "B"],

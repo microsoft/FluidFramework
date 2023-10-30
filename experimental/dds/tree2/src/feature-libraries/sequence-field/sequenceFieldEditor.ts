@@ -29,15 +29,18 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	 *
 	 * @param sourceIndex - The index of the first node move
 	 * @param count - The number of nodes to move
-	 * @param destIndex - The index the nodes should be moved to, interpreted after removing the moving nodes
-	 * @returns a tuple containing a changeset for the move out and a changeset for the move in
+	 * @param destIndex - The index the nodes should be moved to, interpreted before detaching the moved nodes
 	 */
 	move(
 		sourceIndex: number,
 		count: number,
 		destIndex: number,
 		id: ChangesetLocalId,
-	): [moveOut: Changeset<never>, moveIn: Changeset<never>];
+	): Changeset<never>;
+
+	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset<never>;
+	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset<never>;
+
 	return(
 		sourceIndex: number,
 		count: number,
@@ -90,21 +93,59 @@ export const sequenceFieldEditor = {
 		count: number,
 		destIndex: number,
 		id: ChangesetLocalId,
-	): [moveOut: Changeset<never>, moveIn: Changeset<never>] {
-		const moveOut: Mark<never> = {
-			type: "MoveOut",
-			id,
-			count,
-		};
-
+	): Changeset<never> {
 		const moveIn: Mark<never> = {
 			type: "MoveIn",
 			id,
 			count,
 			cellId: { localId: id },
 		};
+		const moveOut: Mark<never> = {
+			type: "MoveOut",
+			id,
+			count,
+		};
+		const indexAfterMoveOut = sourceIndex + count;
+		const marks = new MarkListFactory<never>();
+		marks.pushOffset(Math.min(sourceIndex, destIndex));
+		if (destIndex <= sourceIndex) {
+			// The destination is fully before the source
+			marks.pushContent(moveIn);
+			marks.pushOffset(sourceIndex - destIndex);
+			marks.pushContent(moveOut);
+		} else if (indexAfterMoveOut <= destIndex) {
+			// The destination is fully after the source
+			marks.pushContent(moveOut);
+			marks.pushOffset(destIndex - indexAfterMoveOut);
+			marks.pushContent(moveIn);
+		} else {
+			const count1 = destIndex - sourceIndex;
+			const count2 = indexAfterMoveOut - destIndex;
+			// The destination is in the middle of the source
+			marks.pushContent({ ...moveOut, count: count1 });
+			marks.pushContent(moveIn);
+			marks.pushContent({ ...moveOut, count: count2, id: brand<MoveId>(id + count1) });
+		}
+		return marks.list;
+	},
 
-		return [markAtIndex(sourceIndex, moveOut), markAtIndex(destIndex, moveIn)];
+	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset<never> {
+		const moveOut: Mark<never> = {
+			type: "MoveOut",
+			id,
+			count,
+		};
+		return markAtIndex(sourceIndex, moveOut);
+	},
+
+	moveIn(destIndex: number, count: number, id: ChangesetLocalId): Changeset<never> {
+		const moveIn: Mark<never> = {
+			type: "MoveIn",
+			id,
+			count,
+			cellId: { localId: id },
+		};
+		return markAtIndex(destIndex, moveIn);
 	},
 
 	return(

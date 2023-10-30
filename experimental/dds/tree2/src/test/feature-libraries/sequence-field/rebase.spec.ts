@@ -572,7 +572,7 @@ describe("SequenceField - Rebase", () => {
 	it("modify ↷ move", () => {
 		const inner = TestChange.mint([0], 1);
 		const modify = Change.modify(0, inner);
-		const move = Change.move(0, 1, 3);
+		const move = Change.move(0, 1, 4);
 		const expected = Change.modify(3, inner);
 		const rebased = rebase(modify, move);
 		assert.deepEqual(rebased, expected);
@@ -588,8 +588,8 @@ describe("SequenceField - Rebase", () => {
 
 	it("move ↷ move", () => {
 		const moveA = Change.move(2, 2, 0);
-		const moveB = Change.move(2, 2, 3);
-		const expected = Change.move(0, 2, 3);
+		const moveB = Change.move(2, 2, 5);
+		const expected = Change.move(0, 2, 5);
 		const rebased = rebase(moveB, moveA);
 		assert.deepEqual(rebased, expected);
 	});
