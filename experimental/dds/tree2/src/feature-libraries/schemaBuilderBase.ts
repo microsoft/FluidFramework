@@ -79,7 +79,7 @@ export class SchemaBuilderBase<
 	private readonly lintConfiguration: SchemaLintConfiguration;
 	private readonly libraries: Set<SchemaLibraryData>;
 	private finalized: boolean = false;
-	private readonly treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	private readonly treeNodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
 	private readonly adapters: Adapters = {};
 	/**
 	 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
@@ -130,8 +130,8 @@ export class SchemaBuilderBase<
 	}
 
 	protected addNodeSchema<T extends TreeNodeSchema<string, any>>(schema: T): void {
-		assert(!this.treeSchema.has(schema.name), 0x799 /* Conflicting TreeNodeSchema names */);
-		this.treeSchema.set(schema.name, schema as TreeNodeSchema);
+		assert(!this.treeNodeSchema.has(schema.name), 0x799 /* Conflicting TreeNodeSchema names */);
+		this.treeNodeSchema.set(schema.name, schema as TreeNodeSchema);
 	}
 
 	private finalizeCommon(field?: TreeFieldSchema): SchemaLibraryData {
@@ -139,7 +139,7 @@ export class SchemaBuilderBase<
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
-			treeSchema: this.treeSchema,
+			nodeSchema: this.treeNodeSchema,
 			adapters: this.adapters,
 		});
 
@@ -155,7 +155,7 @@ export class SchemaBuilderBase<
 		const aggregated = this.finalizeCommon();
 
 		// Full library set (instead of just aggregated) is kept since it is required to handle deduplication of libraries included through different paths.
-		return { treeSchema: aggregated.treeSchema, libraries: this.libraries };
+		return { nodeSchema: aggregated.nodeSchema, libraries: this.libraries };
 	}
 
 	/**
@@ -173,7 +173,7 @@ export class SchemaBuilderBase<
 		const library = this.finalizeCommon(field);
 
 		const typed: TreeSchema<NormalizeField<TSchema, TDefaultKind>> = {
-			treeSchema: library.treeSchema,
+			nodeSchema: library.nodeSchema,
 			adapters: library.adapters,
 			rootFieldSchema: field,
 			policy: defaultSchemaPolicy,
