@@ -297,8 +297,7 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
 		thisArg?: any,
 	): void;
 
-	// TODO: Add `set` method when FieldKind provides a setter (and derive the type from it).
-	// set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+	set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	/**
 	 * Iterate through all fields in the map.

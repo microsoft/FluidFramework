@@ -22,7 +22,7 @@ import {
 	TreeValue,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
-import { ContextuallyTypedNodeData } from "../contextuallyTyped";
+import { ContextuallyTypedFieldData, ContextuallyTypedNodeData } from "../contextuallyTyped";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -56,6 +56,7 @@ import {
 	TreeStatus,
 	RequiredField,
 	OptionalField,
+	FlexibleFieldContent,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -68,6 +69,7 @@ import {
 } from "./lazyEntity";
 import { unboxedField } from "./unboxed";
 import { treeStatusFromAnchorCache } from "./utilities";
+import { SchemaBuilder } from "../../domains";
 
 const lazyTreeSlot = anchorSlot<LazyTreeNode>();
 
@@ -408,20 +410,20 @@ export class LazyMap<TSchema extends MapSchema>
 		) as TypedField<TSchema["mapFields"]>;
 	}
 
-	// TODO: when appropriate add setter that delegates to field kind specific setter.
-	// public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
-	// 	const field = this.get(key);
-	// 	if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
-	// 		field.setContent(content);
-	// 	} else {
-	// 		assert(
-	// 			field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
-	// 			"unexpected map field kind",
-	// 		);
-	// 		// TODO: fix merge semantics.
-	// 		field.replaceRange(0, field.length, content as Iterable<ContextuallyTypedNodeData>);
-	// 	}
-	// }
+	public set(key: FieldKey, content: ContextuallyTypedFieldData): void {
+		const field = this.getBoxed(key);
+		if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
+			field.content = content;
+		} else {
+			assert(
+				field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
+				"Unexpected map field kind",
+			);
+			// TODO: fix merge semantics.
+			field.removeRange(0, field.length);
+			field.insertAtStart(content as Iterable<ContextuallyTypedNodeData>);
+		}
+	}
 
 	public override [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
 		return super[boxedIterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
