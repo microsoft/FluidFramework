@@ -193,6 +193,33 @@ describe("SharedTreeList", () => {
 			list.removeRange(/* start: */ 1, /* end: */ 3);
 			assert.deepEqual(list, [0, 3]);
 		});
+
+		itWithRoot("removeRange() - all", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(/* start: */ 1, /* end: */ 3);
+			assert.deepEqual(list, [0, 3]);
+			list.removeRange();
+			assert.deepEqual(list, []);
+		});
+
+		itWithRoot("removeRange() - past end", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(/* start: */ 1, /* end: */ 3);
+			assert.deepEqual(list, [0, 3]);
+			list.removeRange(1, Infinity);
+			assert.deepEqual(list, [0]);
+		});
+
+		itWithRoot("removeRange() - empty range", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(2, 2);
+			assert.deepEqual(list, [0, 1, 2, 3]);
+		});
+
+		itWithRoot("removeRange() - empty list", schema, [], (list) => {
+			assert.deepEqual(list, []);
+			assert.throws(() => list.removeRange());
+		});
 	});
 
 	describe("moving items", () => {
@@ -200,6 +227,28 @@ describe("SharedTreeList", () => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const schema = _.intoSchema(_.list(_.number));
 			const initialTree = [0, 1, 2, 3];
+
+			itWithRoot("moveToStart()", schema, initialTree, (list) => {
+				assert.deepEqual(list, [0, 1, 2, 3]);
+				list.moveToStart(1);
+				assert.deepEqual(list, [1, 0, 2, 3]);
+			});
+
+			itWithRoot("moveToEnd()", schema, initialTree, (list) => {
+				assert.deepEqual(list, [0, 1, 2, 3]);
+				list.moveToEnd(1);
+				assert.deepEqual(list, [0, 2, 3, 1]);
+			});
+
+			itWithRoot("moveToIndex()", schema, initialTree, (list) => {
+				assert.deepEqual(list, [0, 1, 2, 3]);
+				list.moveToIndex(1, 2);
+				assert.deepEqual(list, [0, 2, 1, 3]);
+				list.moveToIndex(2, 1);
+				assert.deepEqual(list, [0, 2, 1, 3]);
+				list.moveToIndex(2, 0);
+				assert.deepEqual(list, [2, 0, 1, 3]);
+			});
 
 			itWithRoot("moveRangeToStart()", schema, initialTree, (list) => {
 				assert.deepEqual(list, [0, 1, 2, 3]);
@@ -273,6 +322,30 @@ describe("SharedTreeList", () => {
 				listB: ["b0", "b1"],
 			};
 
+			itWithRoot("moveToStart()", schema, initialTree, ({ listA, listB }) => {
+				assert.deepEqual(listA, ["a0", "a1"]);
+				assert.deepEqual(listB, ["b0", "b1"]);
+				listB.moveToStart(0, listA);
+				assert.deepEqual(listA, ["a1"]);
+				assert.deepEqual(listB, ["a0", "b0", "b1"]);
+			});
+
+			itWithRoot("moveToEnd()", schema, initialTree, ({ listA, listB }) => {
+				assert.deepEqual(listA, ["a0", "a1"]);
+				assert.deepEqual(listB, ["b0", "b1"]);
+				listB.moveToEnd(0, listA);
+				assert.deepEqual(listA, ["a1"]);
+				assert.deepEqual(listB, ["b0", "b1", "a0"]);
+			});
+
+			itWithRoot("moveToIndex()", schema, initialTree, ({ listA, listB }) => {
+				assert.deepEqual(listA, ["a0", "a1"]);
+				assert.deepEqual(listB, ["b0", "b1"]);
+				listB.moveToIndex(/* index: */ 1, /* sourceStart: */ 0, listA);
+				assert.deepEqual(listA, ["a1"]);
+				assert.deepEqual(listB, ["b0", "a0", "b1"]);
+			});
+
 			itWithRoot("moveRangeToStart()", schema, initialTree, ({ listA, listB }) => {
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
@@ -331,10 +404,10 @@ describe("SharedTreeList", () => {
 				return list === "a" ? root.listA : root.listB;
 			}
 
-			itWithRoot("moveRangeToStart()", schema, initialTree, (root) => {
+			itWithRoot("move to start", schema, initialTree, (root) => {
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
-				list2.moveRangeToStart(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				list2.moveToStart(1, list1);
 				assert.deepEqual(list1, ["a"]);
 				assert.deepEqual(list2, [1, 2, true]);
 				list1.moveRangeToStart(/* sourceStart: */ 0, /* sourceEnd: */ 2, list2);
@@ -342,10 +415,10 @@ describe("SharedTreeList", () => {
 				assert.deepEqual(list2, [true]);
 			});
 
-			itWithRoot("moveRangeToEnd()", schema, initialTree, (root) => {
+			itWithRoot("move to end", schema, initialTree, (root) => {
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
-				list2.moveRangeToEnd(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				list2.moveToEnd(1, list1);
 				assert.deepEqual(list1, ["a"]);
 				assert.deepEqual(list2, [2, true, 1]);
 				list1.moveRangeToEnd(/* sourceStart: */ 0, /* sourceEnd: */ 1, list2);
@@ -353,15 +426,10 @@ describe("SharedTreeList", () => {
 				assert.deepEqual(list2, [true, 1]);
 			});
 
-			itWithRoot("moveRangeToIndex()", schema, initialTree, (root) => {
+			itWithRoot("move to index", schema, initialTree, (root) => {
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
-				list2.moveRangeToIndex(
-					/* index: */ 1,
-					/* sourceStart: */ 1,
-					/* sourceEnd: */ 2,
-					list1,
-				);
+				list2.moveToIndex(/* index: */ 1, /* sourceIndex */ 1, list1);
 				assert.deepEqual(list1, ["a"]);
 				assert.deepEqual(list2, [2, 1, true]);
 				list1.moveRangeToIndex(
