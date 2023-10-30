@@ -1397,6 +1397,7 @@ export const node: NodeApi;
 // @alpha
 export interface NodeApi {
     readonly is: <TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema) => value is ProxyNode<TSchema>;
+    readonly isListOf: <TSchema extends ImplicitAllowedTypes>(value: unknown, itemTypes: TSchema) => value is SharedTreeList<NormalizeAllowedTypes<TSchema>>;
     readonly key: (node: SharedTreeNode) => string | number;
     readonly on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => () => void;
     readonly parent: (node: SharedTreeNode) => SharedTreeNode | undefined;

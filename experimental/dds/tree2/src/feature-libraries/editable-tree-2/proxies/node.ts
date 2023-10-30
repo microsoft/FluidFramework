@@ -9,15 +9,7 @@ import {
 	NormalizeAllowedTypes,
 	normalizeAllowedTypes,
 } from "../../schemaBuilderBase";
-import {
-	AllowedTypes,
-	Any,
-	TreeNodeSchema,
-	allowedTypesToTypeSet,
-	schemaIsFieldNode,
-} from "../../typed-schema";
-import { LazyItem } from "../../typed-schema/flexList";
-import { allowedTypesSchemaSet } from "../../typed-schema/typedTreeSchema";
+import { TreeNodeSchema, allowedTypesToTypeSet, schemaIsFieldNode } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeNode, TreeStatus } from "../editableTreeTypes";
 import { getProxyForNode } from "./proxies";
