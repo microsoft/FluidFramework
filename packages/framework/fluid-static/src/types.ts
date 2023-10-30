@@ -245,8 +245,13 @@ export interface IMember {
 }
 
 /**
- * An extended member object that includes currentConnection.
+ * An extended {@link IMember}, which includes {@link Myself.currentConnection}.
  *
  * @public
  */
-export type Myself<M extends IMember = IMember> = M & { currentConnection: string };
+export type Myself<M extends IMember = IMember> = M & {
+	/**
+	 * TODO
+	 */
+	currentConnection: string;
+};
