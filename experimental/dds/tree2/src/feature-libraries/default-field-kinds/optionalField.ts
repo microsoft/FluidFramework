@@ -180,9 +180,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						revision: fieldChangeInfo?.revision,
 						wasEmpty: change.fieldChange.wasEmpty,
 					};
+					if (change.fieldChange.firstFieldChange !== undefined) {
+						fieldChange.firstFieldChange = change.fieldChange.firstFieldChange;
+					}
 				} else {
 					if (fieldChange.firstFieldChange === undefined) {
-						fieldChange.firstFieldChange = {
+						fieldChange.firstFieldChange = fieldChange.firstFieldChange ?? {
 							revision: fieldChange.revision,
 							localId: fieldChange.id,
 						};

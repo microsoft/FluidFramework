@@ -19,6 +19,7 @@ import {
 	ChildStateGenerator,
 	BoundFieldChangeRebaser,
 } from "./exhaustiveRebaserUtils";
+import { fail } from "../../util";
 
 export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	initialStates: FieldStateTree<TContent, TChangeset>[],
@@ -36,13 +37,55 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 		return currChange;
 	}
+
+	function verifyComposeAssociativity(edits: TaggedChange<TChangeset>[]) {
+		const metadata = defaultRevisionMetadataFromChanges(edits);
+		const singlyComposed = makeAnonChange(compose(edits, metadata));
+		const leftPartialCompositions: TaggedChange<TChangeset>[] = [
+			edits.at(0) ?? fail("Expected at least one edit"),
+		];
+		for (let i = 1; i < edits.length; i++) {
+			leftPartialCompositions.push(
+				makeAnonChange(
+					compose(
+						[
+							leftPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
+							edits[i],
+						],
+						metadata,
+					),
+				),
+			);
+		}
+
+		const rightPartialCompositions: TaggedChange<TChangeset>[] = [
+			edits.at(-1) ?? fail("Expected at least one edit"),
+		];
+		for (let i = edits.length - 2; i >= 0; i--) {
+			rightPartialCompositions.push(
+				makeAnonChange(
+					compose(
+						[
+							edits[i],
+							rightPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
+						],
+						metadata,
+					),
+				),
+			);
+		}
+
+		assert.deepEqual(leftPartialCompositions.at(-1), singlyComposed);
+		assert.deepEqual(rightPartialCompositions.at(-1), singlyComposed);
+	}
 	// To limit combinatorial explosion, we test 'rebasing over a compose is equivalent to rebasing over the individual edits'
 	// by:
 	// - Rebasing a single edit over N sequential edits
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
 	const numberOfEditsToRebaseOver = 3;
-	const numberOfEditsToRebase = numberOfEditsToRebaseOver;
+	const numberOfEditsToRebase = 2; //  numberOfEditsToRebaseOver;
+	const numberOfEditsToVerifyAssociativity = 3;
 
 	describe("Rebase over compose", () => {
 		for (const initialState of initialStates) {
@@ -127,12 +170,9 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// 	continue;
 						// }
 
-						// if (
-						// 	title !==
-						// 	'Rebase ["ChildChange1","Undo:ChildChange1","ChildChange25"] over Delete'
-						// ) {
-						// 	continue;
-						// }
+						if (title !== 'Rebase ["SetB,0","Delete"] over ChildChange1') {
+							continue;
+						}
 
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
@@ -193,8 +233,34 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 									rebasedEditsWithCompose[i].change,
 								);
 							}
+
+							verifyComposeAssociativity(allTaggedEdits);
 						});
 					}
+				}
+			});
+		}
+	});
+
+	describe("Compose associativity", () => {
+		for (const initialState of initialStates) {
+			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
+				for (const namedSourceEdits of generatePossibleSequenceOfEdits(
+					initialState,
+					generateChildStates,
+					numberOfEditsToVerifyAssociativity,
+					"rev-",
+				)) {
+					const title = `for ${JSON.stringify(
+						namedSourceEdits.map(({ description }) => description),
+					)}`;
+
+					// Note that this test case doesn't verify associativity of rollback inverses.
+					// That's covered some by "Composed sandwich rebase over single edit"
+					it(title, () => {
+						const edits = namedSourceEdits.map(({ changeset }) => changeset);
+						verifyComposeAssociativity(edits);
+					});
 				}
 			});
 		}

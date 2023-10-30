@@ -1724,7 +1724,9 @@ describe.only("Editing", () => {
 	});
 
 	describe("Optional Field", () => {
-		it.only("can rebase foo", () => {
+		// minimization of seed 14 top-level fuzz test.
+		// relates to compose associativity.
+		it("can rebase TODO naming", () => {
 			const tree1 = makeTreeFromJson([{ foo: "1" }]);
 			const tree2 = tree1.fork();
 			const tree3 = tree1.fork();
