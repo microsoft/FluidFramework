@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert, fail } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { ApplicationInsights, type IEventTelemetry } from "@microsoft/applicationinsights-web";
 import type Sinon from "sinon";
@@ -78,81 +78,21 @@ describe("FluidAppInsightsLogger", () => {
 		assert.throws(() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig));
 	});
 
-	it("constructor() merges redundant pure category filters", () => {
+	it("constructor() throws error when multiple filters that only define categories are provided", () => {
 		const invalidConfig: FluidAppInsightsLoggerConfig = {
 			filtering: {
 				mode: "inclusive",
 				filters: [
 					{
-						categories: ["error", "generic"],
-					},
-					{
 						categories: ["error"],
 					},
 					{
-						categories: ["performance"],
+						categories: ["generic", "performance"],
 					},
 				],
 			},
 		};
-		const logger = new FluidAppInsightsLogger(appInsightsClient, invalidConfig);
-		assert.strictEqual(logger.filters.length, 1);
-		if ("categories" in logger.filters[0]) {
-			assert.strictEqual(true, logger.filters[0].categories.includes("error"));
-			assert.strictEqual(true, logger.filters[0].categories.includes("generic"));
-			assert.strictEqual(true, logger.filters[0].categories.includes("performance"));
-		} else {
-			// The merged category filter should be a CateogryFilter and have the "categories" attribute
-			fail();
-		}
-	});
-
-	it("sortTelemetryFilters() orders filters from longest namespace to shortest", () => {
-		const expectedSortedFilterArray: TelemetryFilter[] = [
-			{
-				namespacePattern: "veryLongNamespacePattern333",
-				categories: ["performance"],
-			},
-			{
-				namespacePattern: "veryLongNamespacePattern22",
-				categories: ["performance", "generic"],
-			},
-			{
-				namespacePattern: "veryLongNamespacePattern1",
-			},
-			{
-				namespacePattern: "namespace1",
-				categories: ["performance"],
-			},
-			{
-				namespacePattern: "namespace",
-				categories: ["performance", "generic"],
-			},
-			{
-				namespacePattern: "short",
-			},
-			{
-				categories: ["performance"],
-			},
-		];
-
-		const unsortedFilters: TelemetryFilter[] = [
-			expectedSortedFilterArray[2],
-			expectedSortedFilterArray[4],
-			expectedSortedFilterArray[6],
-			expectedSortedFilterArray[1],
-			expectedSortedFilterArray[3],
-			expectedSortedFilterArray[0],
-			expectedSortedFilterArray[5],
-		];
-
-		const logger = new FluidAppInsightsLogger(appInsightsClient, {
-			filtering: { mode: "exclusive", filters: unsortedFilters },
-		});
-
-		debugger;
-
-		assert.deepStrictEqual(logger.filters, expectedSortedFilterArray);
+		assert.throws(() => new FluidAppInsightsLogger(appInsightsClient, invalidConfig));
 	});
 });
 
@@ -213,10 +153,7 @@ describe("Telemetry Filter - Category Filtering", () => {
 	let trackEventSpy: Sinon.SinonSpy;
 	const configFilters: TelemetryFilter[] = [
 		{
-			categories: ["performance"],
-		},
-		{
-			categories: ["generic"],
+			categories: ["performance", "generic"],
 		},
 	];
 	const exclusiveLoggerFilterConfig: FluidAppInsightsLoggerConfig = {
@@ -272,12 +209,12 @@ describe("Telemetry Filter - Category Filtering", () => {
 
 	it("exclusive filter mode DOES NOT SEND events that DO MATCH with one of multiple category filters", () => {
 		const logger = new FluidAppInsightsLogger(appInsightsClient, exclusiveLoggerFilterConfig);
-		// should be excluded - match with category filter
+		// should be excluded - match with category in filter
 		const event1 = {
 			category: "performance",
 			eventName: "perf:latency:ops",
 		};
-		// should be excluded - match with second category filter
+		// should be excluded - match with category in filter
 		const event2 = {
 			category: "generic",
 			eventName: "perf:memory:container",
@@ -345,7 +282,7 @@ describe("Telemetry Filter - Category Filtering", () => {
 			category: "performance",
 			eventName: "perf:latency:ops",
 		};
-		// should be included - match with second category filter
+		// should be included - match with category filter
 		const event2 = {
 			category: "generic",
 			eventName: "perf:memory:container",
