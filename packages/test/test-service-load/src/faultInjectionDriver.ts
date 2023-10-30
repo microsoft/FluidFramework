@@ -23,7 +23,7 @@ import {
 	INack,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
-import { LoggingError } from "@fluidframework/telemetry-utils";
+import { LoggingError, wrapError } from "@fluidframework/telemetry-utils";
 
 export class FaultInjectionDocumentServiceFactory implements IDocumentServiceFactory {
 	private readonly _documentServices = new Map<IResolvedUrl, FaultInjectionDocumentService>();
@@ -115,6 +115,9 @@ export class FaultInjectionDocumentService implements IDocumentService {
 	}
 
 	public dispose(error?: any) {
+		this.onlineP.reject(
+			wrapError(error, (message) => new FaultInjectionError(`disposed: ${message}`, false)),
+		);
 		this.internal.dispose(error);
 	}
 
