@@ -369,7 +369,7 @@ function getSlideToSegment(
 			result.seg = seg;
 			return false;
 		}
-		// TODO: moveSeq should be taken into account here
+		// TODO: ADO#3715 moveSeq should be taken into account here
 		if (cache !== undefined && seg.removedSeq === segment.removedSeq) {
 			cache.set(seg, result);
 		}

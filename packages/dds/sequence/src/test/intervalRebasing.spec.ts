@@ -296,6 +296,8 @@ describe("interval rebasing", () => {
 	// concurrently obliterate "C" in this context.
 	//
 	// in both cases, it's not clear to me how we detect when we're reconnecting
+	//
+	// ADO#3714
 	it.skip("...", () => {
 		// AB
 		// A-C-B
@@ -314,8 +316,7 @@ describe("interval rebasing", () => {
 		assertConsistent(clients);
 	});
 
-	// todo: a failing obliterate reconnect test. i have not yet investigated
-	// this error
+	// todo: ADO#3714 Failing obliterate reconnect test
 	it.skip("...", () => {
 		clients[0].sharedString.insertText(0, "AB");
 		clients[1].sharedString.insertText(0, "CD");
