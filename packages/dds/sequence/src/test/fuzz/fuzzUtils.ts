@@ -166,6 +166,7 @@ export const defaultIntervalOperationGenerationConfig: Required<IntervalOperatio
 			deleteInterval: 2,
 			changeInterval: 2,
 			changeProperties: 2,
+			obliterateRange: 0,
 		},
 	};
 
