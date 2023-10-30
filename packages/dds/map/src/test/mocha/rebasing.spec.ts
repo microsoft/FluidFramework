@@ -9,6 +9,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntime,
 	MockStorage,
+	MockContainerRuntimeForReconnection,
 } from "@fluidframework/test-runtime-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { MapFactory, SharedMap } from "../../map";
@@ -200,6 +201,26 @@ describe("Rebasing", () => {
 
 				assert.strictEqual(directory1SubDir.size, 0, "Dir 1 no key should exist");
 				assert.strictEqual(directory2SubDir.size, 0, "Dir 2 no key should exist");
+				areDirectoriesEqual(dir1, dir2);
+			});
+
+			it("Rebasing ops with disconnections maintains eventual consistency", () => {
+				dir1.createSubDirectory("dir1");
+				dir2.createSubDirectory("dir1");
+
+				containerRuntime1.flush();
+				containerRuntime2.flush();
+				containerRuntimeFactory.processAllMessages();
+				(containerRuntime2 as MockContainerRuntimeForReconnection).connected = true;
+				dir2.deleteSubDirectory("dir1");
+				containerRuntime2.flush();
+				(containerRuntime2 as MockContainerRuntimeForReconnection).connected = true;
+				(containerRuntime2 as MockContainerRuntimeForReconnection).connected = false;
+				dir2.createSubDirectory("dir1");
+				containerRuntime2.rebase();
+				(containerRuntime2 as MockContainerRuntimeForReconnection).connected = true;
+				containerRuntime2.flush();
+				containerRuntimeFactory.processAllMessages();
 				areDirectoriesEqual(dir1, dir2);
 			});
 		});
