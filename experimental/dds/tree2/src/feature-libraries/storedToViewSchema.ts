@@ -26,7 +26,7 @@ import {
  */
 export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema {
 	const map: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
-	for (const [identifier, innerSchema] of schema.treeSchema) {
+	for (const [identifier, innerSchema] of schema.nodeSchema) {
 		if (innerSchema.leafValue !== undefined) {
 			map.set(
 				identifier,
@@ -62,7 +62,7 @@ export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema
 		adapters: {},
 		policy: defaultSchemaPolicy,
 		rootFieldSchema: fieldSchemaFromStoredSchema(schema.rootFieldSchema, map),
-		treeSchema: map,
+		nodeSchema: map,
 	};
 }
 
