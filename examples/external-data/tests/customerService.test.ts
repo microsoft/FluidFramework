@@ -134,8 +134,6 @@ describe("mock-customer-service", () => {
 
 	// We have omitted `@types/supertest` due to cross-package build issue.
 	// So for these tests we have to live with `any`.
-	// Skipping to close off the broadcast-signal loop. Tested manually and it works well.
-	// Unclear why localServiceApp is failing to post right for this test.
 	it.skip("register-for-webhook: Complete data flow", async () => {
 		// Set up mock local service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
@@ -261,7 +259,7 @@ describe("mock-customer-service", () => {
 
 	// Skipping to close off the broadcast-signal loop. Tested manually and it works well.
 	// Unclear why localServiceApp is failing to post right for this test.
-	it.skip("events-listener: Complete data flow for session-end event", async () => {
+	it("events-listener: Complete data flow for session-end event", async () => {
 		// Set up mock local Fluid service, which will be registered as webhook listener
 		const localServiceApp = initializeMockFluidService(express());
 		const tenantId = "tinylicious";
@@ -281,8 +279,8 @@ describe("mock-customer-service", () => {
 			// 1. Register Fluid container URL for notifications with the customer service
 			const registerSessionUrl = await registerSessionWithCustomerService(
 				externalTaskListId,
-				documentId,
 				tenantId,
+				documentId,
 			);
 			expect(registerSessionUrl.status).toBe(200);
 
@@ -299,12 +297,16 @@ describe("mock-customer-service", () => {
 
 			// Delay for a bit to ensure time enough for our webhook listener to have been called.
 			await delay(1000);
+
 			// Verify our listener was notified of data change.
 			expect(webhookChangeNotification).toMatchObject({
-				documentId,
-				tenantId,
-				externalTaskListId,
-				taskData: taskDataUpdate,
+				signalContent:{
+					contents: {
+						content: {
+							externalTaskListId
+						}
+					}
+				}
 			});
 			// Set the webhookChangeNotification variable back to undefined.
 			webhookChangeNotification = undefined;
@@ -346,8 +348,6 @@ describe("mock-customer-service", () => {
 			await delay(1000);
 			// Verify that we did not recieve a new change notification
 			expect(webhookChangeNotification).toBeUndefined();
-		} catch (error) {
-			fail(error);
 		} finally {
 			await closeServer(localService);
 		}
