@@ -82,7 +82,7 @@ type Versioned = Static<typeof Versioned>;
 export function encodeRepo(repo: TreeStoredSchema): Format {
 	const treeSchema: TreeSchemaFormat[] = [];
 	const rootFieldSchema = encodeField(repo.rootFieldSchema);
-	for (const [name, schema] of repo.treeSchema) {
+	for (const [name, schema] of repo.nodeSchema) {
 		treeSchema.push(encodeTree(name, schema));
 	}
 	treeSchema.sort(compareNamed);
@@ -142,7 +142,7 @@ function decode(f: Format): TreeStoredSchema {
 	}
 	return {
 		rootFieldSchema: decodeField(f.rootFieldSchema),
-		treeSchema,
+		nodeSchema: treeSchema,
 	};
 }
 

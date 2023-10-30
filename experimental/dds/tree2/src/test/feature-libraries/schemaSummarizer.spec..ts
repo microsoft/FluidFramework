@@ -17,7 +17,7 @@ describe("schemaSummarizer", () => {
 		it("empty", () => {
 			const encoded = encodeTreeSchema({
 				rootFieldSchema: storedEmptyFieldSchema,
-				treeSchema: new Map(),
+				nodeSchema: new Map(),
 			});
 			const snapshot = {
 				rootFieldSchema: {

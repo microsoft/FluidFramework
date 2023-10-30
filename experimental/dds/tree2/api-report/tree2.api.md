@@ -715,11 +715,6 @@ interface Fields {
 }
 
 // @alpha
-export function fieldSchema(kind: {
-    identifier: FieldKindIdentifier;
-}, types?: Iterable<TreeNodeSchemaIdentifier>): TreeFieldStoredSchema;
-
-// @alpha
 export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
     readonly field: FieldKey;
     readonly parent: TUpPath | undefined;
@@ -1879,7 +1874,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 
 // @alpha
 export interface SchemaCollection extends StoredSchemaCollection {
-    readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
+    readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
 }
 
 // @alpha
@@ -2058,7 +2053,7 @@ export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
 // @alpha
 export interface StoredSchemaCollection {
-    readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+    readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
 
 // @alpha

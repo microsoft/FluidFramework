@@ -139,7 +139,7 @@ export class SchemaBuilderBase<
 		this.finalized = true;
 		this.libraries.add({
 			name: this.name,
-			treeSchema: this.treeSchema,
+			nodeSchema: this.treeSchema,
 			adapters: this.adapters,
 		});
 
@@ -155,7 +155,7 @@ export class SchemaBuilderBase<
 		const aggregated = this.finalizeCommon();
 
 		// Full library set (instead of just aggregated) is kept since it is required to handle deduplication of libraries included through different paths.
-		return { treeSchema: aggregated.treeSchema, libraries: this.libraries };
+		return { nodeSchema: aggregated.nodeSchema, libraries: this.libraries };
 	}
 
 	/**
@@ -173,7 +173,7 @@ export class SchemaBuilderBase<
 		const library = this.finalizeCommon(field);
 
 		const typed: TreeSchema<NormalizeField<TSchema, TDefaultKind>> = {
-			treeSchema: library.treeSchema,
+			nodeSchema: library.nodeSchema,
 			adapters: library.adapters,
 			rootFieldSchema: field,
 			policy: defaultSchemaPolicy,

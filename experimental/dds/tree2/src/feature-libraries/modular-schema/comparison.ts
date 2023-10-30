@@ -161,9 +161,9 @@ export function allowsRepoSuperset(
 			return false;
 		}
 	}
-	for (const [key, schema] of original.treeSchema) {
+	for (const [key, schema] of original.nodeSchema) {
 		// TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
-		if (!allowsTreeSuperset(policy, original, schema, superset.treeSchema.get(key))) {
+		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
 			return false;
 		}
 	}
@@ -197,7 +197,7 @@ export function isNeverFieldRecursive(
 				!isNeverTreeRecursive(
 					policy,
 					originalData,
-					originalData.treeSchema.get(type),
+					originalData.nodeSchema.get(type),
 					parentTypeStack,
 				)
 			) {

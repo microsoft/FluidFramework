@@ -197,7 +197,7 @@ export function getAllowedTypes(
 	typeSet: TreeTypeSet,
 ): ReadonlySet<TreeNodeSchemaIdentifier> {
 	// TODO: Performance: avoid the `undefined` case being frequent, possibly with caching in the caller of `getPossibleChildTypes`.
-	return typeSet ?? new Set(schemaData.treeSchema.keys());
+	return typeSet ?? new Set(schemaData.nodeSchema.keys());
 }
 
 /**
@@ -394,7 +394,7 @@ function shallowCompatibilityTest(
 		0x6b2 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 	const schema =
-		schemaData.treeSchema.get(type) ?? fail("requested type does not exist in schema");
+		schemaData.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
 	if (isPrimitiveValue(data) || data === null) {
 		return allowsValue(schema.leafValue, data);
 	}
@@ -532,7 +532,7 @@ export function applyTypesFromContext(
 
 	const type = possibleTypes[0];
 	const schema =
-		context.schema.treeSchema.get(type) ?? fail("requested type does not exist in schema");
+		context.schema.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
 
 	if (isPrimitiveValue(data) || data === null) {
 		assert(

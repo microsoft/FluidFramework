@@ -517,5 +517,5 @@ export interface SchemaCollection extends StoredSchemaCollection {
 	/**
 	 * {@inheritdoc SchemaCollection}
 	 */
-	readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
 }
