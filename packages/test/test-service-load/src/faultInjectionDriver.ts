@@ -123,11 +123,12 @@ export class FaultInjectionDocumentService implements IDocumentService {
 			this._currentDeltaStream?.disposed !== false,
 			"Document service factory should only have one open connection",
 		);
-		const internal = await this.internal.connectToDeltaStream(client);
-
 		// this method is not expected to resolve until connected
 		await this.onlineP.promise;
-		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(internal, this.online);
+		this._currentDeltaStream = new FaultInjectionDocumentDeltaConnection(
+			await this.internal.connectToDeltaStream(client),
+			this.online,
+		);
 		return this._currentDeltaStream;
 	}
 
