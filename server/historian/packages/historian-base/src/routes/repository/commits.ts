@@ -16,6 +16,7 @@ import {
 	throttle,
 	getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
@@ -66,9 +67,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/commits",
-		utils.validateRequestParams("sha"),
+		validateRequestParams("sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const commitsP = getCommits(
 				request.params.tenantId,

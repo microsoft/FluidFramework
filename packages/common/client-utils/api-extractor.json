@@ -1,16 +1,4 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-common-report.json",
-	"messages": {
-		"extractorMessageReporting": {
-			"ae-missing-release-tag": {
-				"logLevel": "error",
-				"addToApiReportFile": false
-			},
-			"ae-incompatible-release-tags": {
-				"logLevel": "error",
-				"addToApiReportFile": false
-			}
-		}
-	}
+	"extends": "@fluidframework/build-common/api-extractor-base.json"
 }

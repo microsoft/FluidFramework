@@ -9,12 +9,12 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import {
 	ContainerRuntime,
-	Summarizer,
 	ISummarizer,
 	ISummarizeResults,
 	ISummaryRuntimeOptions,
 	DefaultSummaryConfiguration,
 	SummaryCollection,
+	TEST_requestSummarizer,
 } from "@fluidframework/container-runtime";
 import { ISummaryContext } from "@fluidframework/driver-definitions";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
@@ -85,7 +85,7 @@ async function createMainContainerAndSummarizer(
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
 	}
-	const summarizer = await Summarizer.create(loader, absoluteUrl);
+	const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 	await waitForSummarizerConnection(summarizer);
 	return {
 		mainContainer: container,
@@ -103,7 +103,7 @@ async function createSummarizerFromContainer(
 	if (absoluteUrl === undefined) {
 		throw new Error("URL could not be resolved");
 	}
-	const summarizer = await Summarizer.create(loader, absoluteUrl);
+	const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 	await waitForSummarizerConnection(summarizer);
 	return summarizer;
 }

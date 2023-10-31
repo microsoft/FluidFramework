@@ -4,7 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey, PathVisitor, ProtoNodes, UpPath, topDownPath } from "../../core";
+import {
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
+	FieldKey,
+	PathVisitor,
+	PlaceUpPath,
+	ProtoNodes,
+	RangeUpPath,
+	UpPath,
+	topDownPath,
+} from "../../core";
 import { Events, ISubscribable } from "../../events";
 import { brand, getOrCreate } from "../../util";
 import { on } from "../untypedTree";
@@ -248,7 +258,7 @@ export const BindingType = {
  *
  * @alpha
  */
-export type BindingContextType = typeof BindingType[keyof typeof BindingType];
+export type BindingContextType = (typeof BindingType)[keyof typeof BindingType];
 
 /**
  * The binding context attribution common to all binding events
@@ -322,6 +332,64 @@ abstract class AbstractPathVisitor implements PathVisitor {
 	protected readonly registeredListeners: Map<BindingContextType, Map<FieldKey, CallTree>> =
 		new Map();
 	public constructor(protected readonly options: BinderOptions) {}
+
+	// TODO: make these methods abstract and make AbstractPathVisitor implementations implement them
+	public afterCreate(content: DetachedRangeUpPath): void {}
+	public beforeDestroy(content: DetachedRangeUpPath): void {}
+	public beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {}
+	public afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
+		this.onInsert(
+			{
+				parent: destination.parent,
+				parentField: destination.field,
+				parentIndex: destination.start,
+			},
+			this.getContent(destination),
+		);
+	}
+	public beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {}
+	public afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {
+		this.onDelete(
+			{
+				parent: source.parent,
+				parentField: source.field,
+				parentIndex: source.index,
+			},
+			destination.end - destination.start,
+		);
+	}
+	public beforeReplace(
+		newContent: DetachedRangeUpPath,
+		oldContent: RangeUpPath,
+		oldContentDestination: DetachedPlaceUpPath,
+	): void {}
+	public afterReplace(
+		newContentSource: DetachedPlaceUpPath,
+		newContent: RangeUpPath,
+		oldContent: DetachedRangeUpPath,
+	): void {
+		this.onDelete(
+			{
+				parent: newContent.parent,
+				parentField: newContent.field,
+				parentIndex: newContent.start,
+			},
+			oldContent.end - oldContent.start,
+		);
+		this.onInsert(
+			{
+				parent: newContent.parent,
+				parentField: newContent.field,
+				parentIndex: newContent.start,
+			},
+			this.getContent(newContent),
+		);
+	}
+	protected getContent(range: RangeUpPath): ProtoNodes {
+		// TODO: either lookup the content in the forest or stop providing the content in the events
+		return [];
+	}
+
 	public abstract onDelete(path: UpPath, count: number): void;
 	public abstract onInsert(path: UpPath, content: ProtoNodes): void;
 	public registerListener(

@@ -49,7 +49,10 @@ class SocketIoSocket implements IWebSocket {
 }
 
 class SocketIoServer extends EventEmitter implements IWebSocketServer {
-	constructor(server: http.Server, private readonly io: Server) {
+	constructor(
+		server: http.Server,
+		private readonly io: Server,
+	) {
 		super();
 
 		this.io.attach(server);

@@ -8,15 +8,14 @@ import {
 	ChangesetLocalId,
 	mintRevisionTag,
 	RevisionTag,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { MarkMaker as Mark } from "./testEdits";
 
 const dummyMark = Mark.delete(1, brand(0));
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = mintRevisionTag();
 
 describe("SequenceField - MarkListFactory", () => {
@@ -129,17 +128,17 @@ describe("SequenceField - MarkListFactory", () => {
 
 	it("Can merge consecutive revives", () => {
 		const factory = new SF.MarkListFactory();
-		const revive1 = Mark.revive(fakeRepair(detachedBy, 0, 1), {
+		const revive1 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
-		const revive2 = Mark.revive(fakeRepair(detachedBy, 1, 1), {
+		const revive2 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(1),
 		});
 		factory.pushContent(revive1);
 		factory.pushContent(revive2);
-		const expected = Mark.revive(fakeRepair(detachedBy, 0, 2), {
+		const expected = Mark.revive(2, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
@@ -167,11 +166,11 @@ describe("SequenceField - MarkListFactory", () => {
 
 	it("Does not merge revives with gaps", () => {
 		const factory = new SF.MarkListFactory();
-		const revive1 = Mark.revive(fakeRepair(detachedBy, 0, 1), {
+		const revive1 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
-		const revive2 = Mark.revive(fakeRepair(detachedBy, 2, 1), {
+		const revive2 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(2),
 		});

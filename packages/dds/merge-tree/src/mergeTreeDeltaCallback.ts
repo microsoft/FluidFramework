@@ -47,7 +47,7 @@ export const MergeTreeMaintenanceType = {
 	ACKNOWLEDGED: -4,
 } as const;
 export type MergeTreeMaintenanceType =
-	typeof MergeTreeMaintenanceType[keyof typeof MergeTreeMaintenanceType];
+	(typeof MergeTreeMaintenanceType)[keyof typeof MergeTreeMaintenanceType];
 
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
 
@@ -92,6 +92,9 @@ export interface IMergeTreeClientSequenceArgs {
 	readonly sequenceNumber: number;
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export type MergeTreeDeltaCallback = (
 	opArgs: IMergeTreeDeltaOpArgs,
 	deltaArgs: IMergeTreeDeltaCallbackArgs,
@@ -101,6 +104,9 @@ export type MergeTreeDeltaCallback = (
 export interface IMergeTreeMaintenanceCallbackArgs
 	extends IMergeTreeDeltaCallbackArgs<MergeTreeMaintenanceType> {}
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export type MergeTreeMaintenanceCallback = (
 	MaintenanceArgs: IMergeTreeMaintenanceCallbackArgs,
 	opArgs: IMergeTreeDeltaOpArgs | undefined,

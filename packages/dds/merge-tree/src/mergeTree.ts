@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
 import { assert } from "@fluidframework/core-utils";
@@ -259,7 +259,6 @@ function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
 		}
 	}
 }
-
 function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeStackMap) {
 	// eslint-disable-next-line guard-for-in, no-restricted-syntax
 	for (const label in deltaStackMap) {
@@ -276,7 +275,6 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
 		}
 	}
 }
-
 function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePosition) {
 	if (refTypeIncludesFlag(delta, ReferenceType.NestBegin)) {
 		stack.push(delta);
@@ -907,6 +905,7 @@ export class MergeTree {
 			const children = parent.children;
 			for (let childIndex = 0; childIndex < parent.childCount; childIndex++) {
 				const child = children[childIndex];
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 				if ((prevParent && child === prevParent) || child === node) {
 					break;
 				}
@@ -1295,7 +1294,7 @@ export class MergeTree {
 	}
 
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
 		const searchInfo: IMarkerSearchRangeInfo = {
@@ -1317,7 +1316,7 @@ export class MergeTree {
 	// TODO: filter function
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * @deprecated - Use searchForMarker instead.
+	 * @deprecated Use searchForMarker instead.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
@@ -1622,6 +1621,7 @@ export class MergeTree {
 		}
 
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
 			(!_segmentGroup.previousProps && previousProps) ||
 			(_segmentGroup.previousProps && !previousProps)
 		) {
@@ -2472,8 +2472,8 @@ export class MergeTree {
 		}
 
 		const newOrder = Array.from(affectedSegments.map(({ data }) => data));
-		newOrder.forEach((seg) =>
-			seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
+		newOrder.forEach(
+			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.beforeSlide?.(lref)),
 		);
 		const perSegmentTrackingGroups = new Map<ISegment, TrackingGroup[]>();
 		for (const segment of newOrder) {
@@ -2513,8 +2513,8 @@ export class MergeTree {
 				this.nodeUpdateLengthNewStructure(node, false);
 			}
 		}
-		newOrder.forEach((seg) =>
-			seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
+		newOrder.forEach(
+			(seg) => seg.localRefs?.walkReferences((lref) => lref.callbacks?.afterSlide?.(lref)),
 		);
 	}
 

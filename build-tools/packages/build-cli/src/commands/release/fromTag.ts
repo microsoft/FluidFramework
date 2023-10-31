@@ -21,24 +21,24 @@ const tagRefPrefix = "refs/tags/";
  * This command is used in CI to determine release information when a new release tag is pushed.
  */
 export default class FromTagCommand extends ReleaseReportBaseCommand<typeof FromTagCommand> {
-	static summary = "Determines release information based on a git tag argument.";
+	static readonly summary = "Determines release information based on a git tag argument.";
 
-	static description =
+	static readonly description =
 		"This command is used in CI to determine release information when a new release tag is pushed.";
 
-	static enableJsonFlag = true;
+	static readonly enableJsonFlag = true;
 
-	static args = {
+	static readonly args = {
 		tag: Args.string({
 			required: true,
 			description: "A git tag that represents a release. May begin with 'refs/tags/'.",
 		}),
-	};
+	} as const;
 
 	defaultMode: ReleaseSelectionMode = "inRepo";
 	releaseGroupName: ReleaseGroup | undefined;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "Get release information based on a git tag.",
 			command: "<%= config.bin %> <%= command.id %> build-tools_v0.13.0",
@@ -63,7 +63,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 		const context = await this.getContext();
 
 		const [releaseGroup, version, tag] = await this.parseTag(tagInput);
-		this.releaseGroupName = releaseGroup.name;
+		this.releaseGroupName = releaseGroup.name as ReleaseGroup;
 
 		this.releaseData = await this.collectReleaseData(
 			context,
@@ -152,5 +152,5 @@ const getReleaseTitle = (
 ): string => {
 	const name = releaseGroup === MonoRepoKind.Client ? "Fluid Framework" : releaseGroup;
 	// e.g. Fluid Framework v2.0.0-internal.4.1.0 (minor)
-	return `${name} v${version} (${releaseType})`;
+	return `${name} v${version.version} (${releaseType})`;
 };

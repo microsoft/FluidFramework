@@ -667,7 +667,6 @@ declare function get_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs():
 declare function use_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
     use: TypeOnly<old.IMergeTreeDeltaOpArgs>);
 use_old_InterfaceDeclaration_IMergeTreeDeltaOpArgs(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IMergeTreeDeltaOpArgs());
 
 /*

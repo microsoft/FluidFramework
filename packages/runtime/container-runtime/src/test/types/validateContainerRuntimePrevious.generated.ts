@@ -164,7 +164,6 @@ declare function get_current_ClassDeclaration_ContainerRuntime():
 declare function use_old_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<old.ContainerRuntime>);
 use_old_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -285,7 +284,6 @@ declare function get_current_InterfaceDeclaration_IAckSummaryResult():
 declare function use_old_InterfaceDeclaration_IAckSummaryResult(
     use: TypeOnly<old.IAckSummaryResult>);
 use_old_InterfaceDeclaration_IAckSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAckSummaryResult());
 
 /*
@@ -310,7 +308,6 @@ declare function get_current_InterfaceDeclaration_IAckedSummary():
 declare function use_old_InterfaceDeclaration_IAckedSummary(
     use: TypeOnly<old.IAckedSummary>);
 use_old_InterfaceDeclaration_IAckedSummary(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IAckedSummary());
 
 /*
@@ -359,7 +356,6 @@ declare function get_current_InterfaceDeclaration_IBroadcastSummaryResult():
 declare function use_old_InterfaceDeclaration_IBroadcastSummaryResult(
     use: TypeOnly<old.IBroadcastSummaryResult>);
 use_old_InterfaceDeclaration_IBroadcastSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IBroadcastSummaryResult());
 
 /*
@@ -696,7 +692,6 @@ declare function get_current_InterfaceDeclaration_INackSummaryResult():
 declare function use_old_InterfaceDeclaration_INackSummaryResult(
     use: TypeOnly<old.INackSummaryResult>);
 use_old_InterfaceDeclaration_INackSummaryResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_INackSummaryResult());
 
 /*
@@ -985,7 +980,6 @@ declare function get_current_InterfaceDeclaration_ISummarizerRuntime():
 declare function use_old_InterfaceDeclaration_ISummarizerRuntime(
     use: TypeOnly<old.ISummarizerRuntime>);
 use_old_InterfaceDeclaration_ISummarizerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummarizerRuntime());
 
 /*
@@ -1058,7 +1052,6 @@ declare function get_current_InterfaceDeclaration_ISummaryAckMessage():
 declare function use_old_InterfaceDeclaration_ISummaryAckMessage(
     use: TypeOnly<old.ISummaryAckMessage>);
 use_old_InterfaceDeclaration_ISummaryAckMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryAckMessage());
 
 /*
@@ -1251,7 +1244,6 @@ declare function get_current_InterfaceDeclaration_ISummaryNackMessage():
 declare function use_old_InterfaceDeclaration_ISummaryNackMessage(
     use: TypeOnly<old.ISummaryNackMessage>);
 use_old_InterfaceDeclaration_ISummaryNackMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryNackMessage());
 
 /*
@@ -1276,7 +1268,6 @@ declare function get_current_InterfaceDeclaration_ISummaryOpMessage():
 declare function use_old_InterfaceDeclaration_ISummaryOpMessage(
     use: TypeOnly<old.ISummaryOpMessage>);
 use_old_InterfaceDeclaration_ISummaryOpMessage(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ISummaryOpMessage());
 
 /*
@@ -1398,6 +1389,30 @@ declare function use_old_TypeAliasDeclaration_OpActionEventName(
     use: TypeOnly<old.OpActionEventName>);
 use_old_TypeAliasDeclaration_OpActionEventName(
     get_current_TypeAliasDeclaration_OpActionEventName());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails():
+    TypeOnly<old.RecentlyAddedContainerRuntimeMessageDetails>;
+declare function use_current_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails(
+    use: TypeOnly<current.RecentlyAddedContainerRuntimeMessageDetails>);
+use_current_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails(
+    get_old_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails():
+    TypeOnly<current.RecentlyAddedContainerRuntimeMessageDetails>;
+declare function use_old_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails(
+    use: TypeOnly<old.RecentlyAddedContainerRuntimeMessageDetails>);
+use_old_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails(
+    get_current_InterfaceDeclaration_RecentlyAddedContainerRuntimeMessageDetails());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1541,7 +1556,6 @@ declare function get_current_ClassDeclaration_Summarizer():
 declare function use_old_ClassDeclaration_Summarizer(
     use: TypeOnly<old.Summarizer>);
 use_old_ClassDeclaration_Summarizer(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Summarizer());
 
 /*
@@ -1590,7 +1604,6 @@ declare function get_current_ClassDeclaration_SummaryCollection():
 declare function use_old_ClassDeclaration_SummaryCollection(
     use: TypeOnly<old.SummaryCollection>);
 use_old_ClassDeclaration_SummaryCollection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_SummaryCollection());
 
 /*
@@ -1616,6 +1629,30 @@ declare function use_old_TypeAliasDeclaration_SummaryStage(
     use: TypeOnly<old.SummaryStage>);
 use_old_TypeAliasDeclaration_SummaryStage(
     get_current_TypeAliasDeclaration_SummaryStage());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_TEST_requestSummarizer": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_TEST_requestSummarizer():
+    TypeOnly<typeof old.TEST_requestSummarizer>;
+declare function use_current_FunctionDeclaration_TEST_requestSummarizer(
+    use: TypeOnly<typeof current.TEST_requestSummarizer>);
+use_current_FunctionDeclaration_TEST_requestSummarizer(
+    get_old_FunctionDeclaration_TEST_requestSummarizer());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_TEST_requestSummarizer": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_TEST_requestSummarizer():
+    TypeOnly<typeof current.TEST_requestSummarizer>;
+declare function use_old_FunctionDeclaration_TEST_requestSummarizer(
+    use: TypeOnly<typeof old.TEST_requestSummarizer>);
+use_old_FunctionDeclaration_TEST_requestSummarizer(
+    get_current_FunctionDeclaration_TEST_requestSummarizer());
 
 /*
 * Validate forward compat by using old type in place of current type

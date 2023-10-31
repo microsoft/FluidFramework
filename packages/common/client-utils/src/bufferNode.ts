@@ -11,6 +11,7 @@
  * @internal
  */
 export declare class Buffer extends Uint8Array {
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
 	toString(encoding?: "utf8" | "utf-8" | "base64"): string;
 
 	/**
@@ -48,6 +49,7 @@ export type IsoBuffer = Buffer;
  */
 export function Uint8ArrayToString(
 	arr: Uint8Array,
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
 	encoding?: "utf8" | "utf-8" | "base64",
 ): string {
 	// Buffer extends Uint8Array.  Therefore, 'arr' may already be a Buffer, in
@@ -82,5 +84,6 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  */
 export const bufferToString = (
 	blob: ArrayBufferLike,
+	// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged
 	encoding: "utf8" | "utf-8" | "base64",
 ): string => IsoBuffer.from(blob).toString(encoding);

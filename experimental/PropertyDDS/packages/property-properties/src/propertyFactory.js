@@ -697,35 +697,34 @@ class PropertyFactory {
 
 		if (in_compareRemote) {
 			var that = this;
-			this._remoteScopedAndVersionedTemplates.iterate(function (
-				scope,
-				remoteVersionedTemplates,
-			) {
-				if (remoteVersionedTemplates.has(typeidWithoutVersion)) {
-					var previousRemoteVersion = remoteVersionedTemplates
-						.item(typeidWithoutVersion)
-						.getNearestPreviousItem(version);
-
-					if (previousRemoteVersion) {
-						validationResults = that._templateValidator.validate(
-							in_template.serializeCanonical(),
-							previousRemoteVersion.getPropertyTemplate().serializeCanonical(),
-						);
-						warnings.push.apply(warnings, validationResults.warnings);
-					} else {
-						var nextRemoteVersion = remoteVersionedTemplates
+			this._remoteScopedAndVersionedTemplates.iterate(
+				function (scope, remoteVersionedTemplates) {
+					if (remoteVersionedTemplates.has(typeidWithoutVersion)) {
+						var previousRemoteVersion = remoteVersionedTemplates
 							.item(typeidWithoutVersion)
-							.getNearestNextItem(version);
-						if (nextRemoteVersion) {
+							.getNearestPreviousItem(version);
+
+						if (previousRemoteVersion) {
 							validationResults = that._templateValidator.validate(
-								nextRemoteVersion.getPropertyTemplate().serializeCanonical(),
 								in_template.serializeCanonical(),
+								previousRemoteVersion.getPropertyTemplate().serializeCanonical(),
 							);
 							warnings.push.apply(warnings, validationResults.warnings);
+						} else {
+							var nextRemoteVersion = remoteVersionedTemplates
+								.item(typeidWithoutVersion)
+								.getNearestNextItem(version);
+							if (nextRemoteVersion) {
+								validationResults = that._templateValidator.validate(
+									nextRemoteVersion.getPropertyTemplate().serializeCanonical(),
+									in_template.serializeCanonical(),
+								);
+								warnings.push.apply(warnings, validationResults.warnings);
+							}
 						}
 					}
-				}
-			});
+				},
+			);
 		}
 
 		if (!_.isEmpty(warnings)) {
@@ -1349,8 +1348,8 @@ class PropertyFactory {
 				currentPropertyVarName = `property${currentPropertyNumber}`;
 				creationFunctionSource += `const ${currentPropertyVarName} =
                     new parameters[${currentParameterIndex}](parameters[${
-					currentParameterIndex + 1
-				}]);\n`;
+						currentParameterIndex + 1
+					}]);\n`;
 				currentParameterIndex += 2;
 
 				// Insert / append the property to the parent

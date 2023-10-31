@@ -142,6 +142,7 @@ export class MockDeltaManager
 		return undefined as any as string;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get maxMessageSize(): number {
 		return 0;
 	}
@@ -150,6 +151,7 @@ export class MockDeltaManager
 		return undefined as any as IClientConfiguration;
 	}
 
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get active(): boolean {
 		return true;
 	}

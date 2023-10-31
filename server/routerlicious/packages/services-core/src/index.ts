@@ -163,3 +163,4 @@ export {
 	TokenRevokedError,
 	createCompositeTokenId,
 } from "./tokenRevocationManager";
+export { IServiceMessageResourceManager } from "./serviceMessage";

@@ -100,22 +100,20 @@ export async function performFuzzActionsAsync<
 	const applyOperation: (operation: TOperation) => Promise<TState> = async (op) =>
 		(await reducer(state, op)) ?? state;
 
-	for (
-		let operation = await generator(state);
-		operation !== done;
-		operation = await generator(state)
-	) {
-		operations.push(operation);
-
-		try {
+	try {
+		for (
+			let operation = await generator(state);
+			operation !== done;
+			operation = await generator(state)
+		) {
+			operations.push(operation);
 			state = (await applyOperation(operation)) ?? state;
-		} catch (err) {
-			console.log(`Error encountered on operation number ${operations.length}`);
-			if (saveInfo?.saveOnFailure === true) {
-				await saveOpsToFile(saveInfo.filepath, operations);
-			}
-			throw err;
 		}
+	} catch (err) {
+		if (saveInfo?.saveOnFailure === true) {
+			await saveOpsToFile(saveInfo.filepath, operations);
+		}
+		throw err;
 	}
 
 	if (saveInfo?.saveOnSuccess === true) {
@@ -131,7 +129,7 @@ export async function performFuzzActionsAsync<
  * @param filepath - path to the file
  * @param operations - operations to save in the file
  */
-async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
+export async function saveOpsToFile(filepath: string, operations: { type: string | number }[]) {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
 	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
@@ -217,18 +215,16 @@ export function performFuzzActions<
 			: combineReducers<TOperation, TState>(reducerOrMap);
 	const applyOperation: (operation: TOperation) => TState = (op) => reducer(state, op) ?? state;
 
-	for (let operation = generator(state); operation !== done; operation = generator(state)) {
-		operations.push(operation);
-
-		try {
+	try {
+		for (let operation = generator(state); operation !== done; operation = generator(state)) {
+			operations.push(operation);
 			state = applyOperation(operation);
-		} catch (err) {
-			console.log(`Error encountered on operation number ${operations.length}`);
-			if (saveInfo?.saveOnFailure === true) {
-				saveOpsToFileSync(saveInfo.filepath, operations);
-			}
-			throw err;
 		}
+	} catch (err) {
+		if (saveInfo?.saveOnFailure === true) {
+			saveOpsToFileSync(saveInfo.filepath, operations);
+		}
+		throw err;
 	}
 
 	if (saveInfo?.saveOnSuccess === true) {

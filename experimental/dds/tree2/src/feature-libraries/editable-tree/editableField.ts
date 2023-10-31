@@ -9,8 +9,8 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldStoredSchema,
-	TreeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeStoredSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -38,6 +38,7 @@ import {
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
 import { assertValidIndex, fail, assertNonNegativeSafeInteger } from "../../util";
+import { TreeStatus } from "../editable-tree-2";
 import {
 	AdaptingProxyHandler,
 	adaptWithProxy,
@@ -50,7 +51,6 @@ import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
 	EditableTree,
-	TreeStatus,
 	UnwrappedEditableField,
 	UnwrappedEditableTree,
 	proxyTargetSymbol,
@@ -60,7 +60,7 @@ import { ProxyTarget } from "./ProxyTarget";
 
 export function makeField(
 	context: ProxyContext,
-	fieldSchema: FieldStoredSchema,
+	fieldSchema: TreeFieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): EditableField {
 	const fieldAnchor = cursor.buildFieldAnchor();
@@ -73,7 +73,7 @@ export function makeField(
 		const anchorNode =
 			context.forest.anchors.locate(fieldAnchor.parent) ??
 			fail("parent anchor node should always exist since field is under a node");
-		anchorNode.on("afterDelete", () => {
+		anchorNode.on("afterDestroy", () => {
 			targetSequence.free();
 		});
 	}
@@ -88,8 +88,8 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  * @returns the key, if any, of the primary array field.
  */
 function getPrimaryArrayKey(
-	type: TreeStoredSchema,
-): { key: FieldKey; schema: FieldStoredSchema } | undefined {
+	type: TreeNodeStoredSchema,
+): { key: FieldKey; schema: TreeFieldStoredSchema } | undefined {
 	const primary = getPrimaryField(type);
 	if (primary === undefined) {
 		return undefined;
@@ -115,7 +115,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public constructor(
 		context: ProxyContext,
 		// TODO: use view schema typed in editableTree
-		public readonly fieldSchema: FieldStoredSchema,
+		public readonly fieldSchema: TreeFieldStoredSchema,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -237,7 +237,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	 */
 	private valueFieldEditor(): ValueFieldEditBuilder {
 		assert(
-			this.kind === FieldKinds.value,
+			this.kind === FieldKinds.required,
 			0x6bb /* Field kind must be a value to edit as a value. */,
 		);
 		const fieldPath = this.cursor.getFieldPath();
@@ -253,7 +253,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				}
 				return this.getNode(0);
 			}
-			case Multiplicity.Value: {
+			case Multiplicity.Single: {
 				return this.getNode(0);
 			}
 			case Multiplicity.Forbidden: {
@@ -280,7 +280,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 				fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
 				break;
 			}
-			case FieldKinds.value: {
+			case FieldKinds.required: {
 				const fieldEditor = this.valueFieldEditor();
 				assert(
 					content.length === 1,
@@ -613,7 +613,7 @@ function unwrappedTree(
 ): UnwrappedEditableTree {
 	const nodeTypeName = cursor.type;
 	const nodeType =
-		context.schema.treeSchema.get(nodeTypeName) ??
+		context.schema.nodeSchema.get(nodeTypeName) ??
 		fail("requested type does not exist in schema");
 	// Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
 	if (isPrimitive(nodeType)) {
@@ -636,12 +636,12 @@ function unwrappedTree(
 
 /**
  * @param context - the common context of the field.
- * @param fieldSchema - the FieldStoredSchema of the field.
+ * @param fieldSchema - the TreeFieldStoredSchema of the field.
  * @param cursor - the cursor, which must point to the field being proxified.
  */
 export function unwrappedField(
 	context: ProxyContext,
-	fieldSchema: FieldStoredSchema,
+	fieldSchema: TreeFieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): UnwrappedEditableField {
 	const fieldKind = getFieldKind(fieldSchema);
@@ -668,6 +668,7 @@ export function unwrappedField(
 export function isEditableField(field: UnwrappedEditableField): field is EditableField {
 	return (
 		typeof field === "object" &&
+		field !== null &&
 		isFieldProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
 }

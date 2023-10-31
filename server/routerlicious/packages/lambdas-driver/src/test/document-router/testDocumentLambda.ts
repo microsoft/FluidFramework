@@ -21,7 +21,10 @@ export class TestLambda implements IPartitionLambda {
 	private failHandler = false;
 	private throwHandler = false;
 
-	constructor(config: IPartitionLambdaConfig, private readonly context: IContext) {
+	constructor(
+		config: IPartitionLambdaConfig,
+		private readonly context: IContext,
+	) {
 		this.documentId = config.documentId;
 		assert(this.documentId);
 	}

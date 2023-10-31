@@ -16,6 +16,7 @@ import {
 	throttle,
 	getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
@@ -80,9 +81,9 @@ export function create(
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/tags",
-		utils.validateRequestParams("tenantId"),
+		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const tagP = createTag(
 				request.params.tenantId,
@@ -95,9 +96,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/tags/*",
-		utils.validateRequestParams("tenantId", 0),
+		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const tagP = getTag(
 				request.params.tenantId,

@@ -174,9 +174,8 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 			// resolution progress is tracked by the Feature 465 work item in AzDO
 			runtimeOptions: { flushMode: FlushMode.Immediate },
 			provideEntryPoint: async (containerRuntime: IContainerRuntime) => {
-				const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(
-					rootDataStoreId,
-				);
+				const entryPoint =
+					await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 				if (entryPoint === undefined) {
 					throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
 				}

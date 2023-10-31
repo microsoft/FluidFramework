@@ -102,12 +102,21 @@ describeInstallVersions(
 )("Op Compression self-healing with old loader", (getProvider) =>
 	compressionSuite(async () => {
 		const provider = getProvider();
+		// Ensure support for endpoint names for r11s driver. ODSP might need similar help at some point if we have
+		// scenarios that run into issues otherwise.
+		const driverConfig =
+			provider.driver.endpointName !== undefined
+				? {
+						r11s: { r11sEndpointName: provider.driver.endpointName },
+				  }
+				: undefined;
 		return getVersionedTestObjectProvider(
 			pkgVersion, // base version
 			loaderWithoutCompressionField, // loader version
 			{
 				type: provider.driver.type,
 				version: pkgVersion,
+				config: driverConfig,
 			}, // driver version
 			pkgVersion, // runtime version
 			pkgVersion, // datastore runtime version

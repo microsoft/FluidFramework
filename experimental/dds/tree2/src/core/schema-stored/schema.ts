@@ -6,38 +6,30 @@
 import { Brand, brand, brandedStringType } from "../../util";
 
 /**
- * Example internal schema representation types.
- */
-
-/**
- * Stable identifier, used when persisting data.
- *
- * This intentionally does not support any concept of versioning or name-spacing:
- * users of it can include versions and namespaces in if they want, or features for them could be added later.
- *
- * Can be used either:
- * 1. Record just this in the persisted data.
- * When loading the data, see if the loader has a schema with a matching name, and if so, use that.
- * Optionally validate loaded data against schema.
- * 2. Persist the whole schema.
- * Use the identifier to associate it with schema when loading to check that the schema match.
- * @alpha
- */
-export type SchemaIdentifier = TreeSchemaIdentifier;
-
-/**
- * SchemaIdentifier for a Tree.
+ * SchemaIdentifier for a TreeNode.
  * Also known as "Definition"
+ *
+ * Stable identifier, used when persisting data.
  * @alpha
  */
-export type TreeSchemaIdentifier = Brand<string, "tree.Schema">;
-export const TreeSchemaIdentifierSchema = brandedStringType<TreeSchemaIdentifier>();
+export type TreeNodeSchemaIdentifier = Brand<string, "tree.TreeNodeSchemaIdentifier">;
 
 /**
- * Key (aka Name or Label) for a field which is scoped to a specific TreeStoredSchema.
+ * TypeBox Schema for encoding {@link TreeNodeSchemaIdentifiers} in persisted data.
+ */
+export const TreeNodeSchemaIdentifierSchema = brandedStringType<TreeNodeSchemaIdentifier>();
+
+/**
+ * Key (aka Name or Label) for a field which is scoped to a specific TreeNodeStoredSchema.
+ *
+ * Stable identifier, used when persisting data.
  * @alpha
  */
 export type FieldKey = Brand<string, "tree.FieldKey">;
+
+/**
+ * TypeBox Schema for encoding {@link FieldKey} in persisted data.
+ */
 export const FieldKeySchema = brandedStringType<FieldKey>();
 
 /**
@@ -53,12 +45,18 @@ export const FieldKindIdentifierSchema = brandedStringType<FieldKindIdentifier>(
 /**
  * Schema for what {@link TreeValue} is allowed on a Leaf node.
  * @alpha
+ *
+ * @privateRemarks
+ * This is currently leaked into some persisted formats.
+ * A full audit of persisted formats is needed,
+ * and all types which are used in them should be moved to locations which indicated they are persisted, or duplicated into a persisted and non-persisted version with explicit encoding between them.
  */
 export enum ValueSchema {
 	Number,
 	String,
 	Boolean,
 	FluidHandle,
+	Null,
 }
 
 /**
@@ -74,11 +72,11 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
  * Providing multiple values here allows polymorphism, tagged union style.
  *
  * If not specified, types are unconstrained
- * (equivalent to the set containing every TreeSchemaIdentifier defined in the document).
+ * (equivalent to the set containing every TreeNodeSchemaIdentifier defined in the document).
  *
  * Note that even when unconstrained, children must still be in-schema for their own type.
  *
- * In the future, this could be extended to allow inlining a TreeStoredSchema here
+ * In the future, this could be extended to allow inlining a TreeNodeStoredSchema here
  * (or some similar structural schema system).
  * For structural types which could go here, there are a few interesting options:
  *
@@ -86,7 +84,7 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
  * and use this as a replacement for values on the tree nodes.
  *
  * - Allow expression structural constraints for child trees, for example requiring specific traits
- * (ex: via TreeStoredSchema), instead of by type.
+ * (ex: via TreeNodeStoredSchema), instead of by type.
  *
  * There are two ways this could work:
  *
@@ -99,7 +97,7 @@ export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | Val
  * Care would need to be taken to make sure this is sound for the schema updating mechanisms.
  * @alpha
  */
-export type TreeTypeSet = ReadonlySet<TreeSchemaIdentifier> | undefined;
+export type TreeTypeSet = ReadonlySet<TreeNodeSchemaIdentifier> | undefined;
 
 /**
  * Specifies which field kind to use.
@@ -116,7 +114,7 @@ export interface FieldKindSpecifier<T = FieldKindIdentifier> {
 /**
  * @alpha
  */
-export interface FieldStoredSchema {
+export interface TreeFieldStoredSchema {
 	readonly kind: FieldKindSpecifier;
 	/**
 	 * The set of allowed child types.
@@ -131,43 +129,49 @@ export interface FieldStoredSchema {
  * @remarks
  * This mainly show up in:
  * 1. The root default field for documents.
- * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
+ * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  *
  * @alpha
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
-export const storedEmptyFieldSchema: FieldStoredSchema = {
+/**
+ * A schema for empty fields (fields which must always be empty).
+ * There are multiple ways this could be encoded, but this is the most explicit.
+ */
+export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
+	// This kind requires the field to be empty.
 	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
-	types: undefined,
+	// This type set also forces the field to be empty not not allowing any types as all.
+	types: new Set(),
 };
 
 /**
  * @alpha
  */
-export interface TreeStoredSchema {
+export interface TreeNodeStoredSchema {
 	/**
-	 * Schema for fields with keys scoped to this TreeStoredSchema.
+	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
 	 *
-	 * This refers to the FieldStoredSchema directly
-	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldStoredSchema map).
+	 * This refers to the TreeFieldStoredSchema directly
+	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
 	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
-	readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
+	readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
 
 	/**
-	 * Constraint for fields not mentioned in `structFields`.
+	 * Constraint for fields not mentioned in `objectNodeFields`.
 	 * If undefined, all such fields must be empty.
 	 *
 	 * Allows using using the fields as a map, with the keys being
-	 * FieldKeys and the values being constrained by this FieldStoredSchema.
+	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
 	 *
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
 	 */
-	readonly mapFields?: FieldStoredSchema;
+	readonly mapFields?: TreeFieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree
@@ -185,13 +189,31 @@ export interface TreeStoredSchema {
 }
 
 /**
- * View of schema data that can be stored in a document.
+ * Document schema data that can be stored in a document.
  *
+ * @remarks
  * Note: the owner of this may modify it over time:
  * thus if needing to hand onto a specific version, make a copy.
  * @alpha
  */
-export interface SchemaData {
-	readonly rootFieldSchema: FieldStoredSchema;
-	readonly treeSchema: ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema>;
+export interface TreeStoredSchema extends StoredSchemaCollection {
+	/**
+	 * Schema for the root field which contains the whole tree.
+	 */
+	readonly rootFieldSchema: TreeFieldStoredSchema;
+}
+
+/**
+ * Collection of TreeNodeSchema data that can be stored in a document.
+ *
+ * @remarks
+ * Note: the owner of this may modify it over time:
+ * thus if needing to hand onto a specific version, make a copy.
+ * @alpha
+ */
+export interface StoredSchemaCollection {
+	/**
+	 * {@inheritdoc StoredSchemaCollection}
+	 */
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }

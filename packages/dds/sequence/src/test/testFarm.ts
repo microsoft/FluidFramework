@@ -1469,7 +1469,10 @@ export class DocumentTree {
 	id: string | undefined;
 	static randPack = new RandomPack();
 
-	constructor(public name: string, public children: DocumentNode[]) {}
+	constructor(
+		public name: string,
+		public children: DocumentNode[],
+	) {}
 
 	addToMergeTree(client: MergeTree.TestClient, docNode: DocumentNode) {
 		if (typeof docNode === "string") {

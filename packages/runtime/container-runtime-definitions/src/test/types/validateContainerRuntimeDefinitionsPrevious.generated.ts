@@ -31,7 +31,6 @@ declare function get_old_InterfaceDeclaration_IContainerRuntime():
 declare function use_current_InterfaceDeclaration_IContainerRuntime(
     use: TypeOnly<current.IContainerRuntime>);
 use_current_InterfaceDeclaration_IContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IContainerRuntime());
 
 /*
@@ -97,11 +96,23 @@ use_old_InterfaceDeclaration_IContainerRuntimeEvents(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {"forwardCompat": false}
+* "InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {"forwardCompat": false}
 */
+declare function get_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated():
+    TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>;
+declare function use_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
+    use: TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>);
+use_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
+    get_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "RemovedInterfaceDeclaration_IDataStoreWithBindToContext_Deprecated": {"backCompat": false}
+* "InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated": {"backCompat": false}
 */
+declare function get_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated():
+    TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>;
+declare function use_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
+    use: TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>);
+use_old_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated(
+    get_current_InterfaceDeclaration_IContainerRuntimeWithResolveHandle_Deprecated());

@@ -71,9 +71,14 @@ describe("GC Telemetry Tracker", () => {
 		};
 		const tracker = new GCTelemetryTracker(
 			mc,
-			{ inactiveTimeoutMs, sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined },
+			{
+				inactiveTimeoutMs,
+				sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
+				tombstoneEnforcementAllowed: false,
+				throwOnTombstoneLoad: false,
+				throwOnTombstoneUsage: false,
+			},
 			isSummarizerClient,
-			false /* gcTombstoneEnforcementAllowed */,
 			{ createContainerRuntimeVersion: pkgVersion },
 			getNodeType,
 			(nodeId: string) => unreferencedNodesState.get(nodeId),
@@ -280,7 +285,8 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: "GarbageCollector:GC_Tombstone_DataStore_Revived",
-						...tagCodeArtifacts({ url: nodes[2] }),
+						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 				],
 				"inactive events not as expected",

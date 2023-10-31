@@ -165,9 +165,8 @@ async function submitAndAckSummary(
 	});
 	assert(result.stage === "submit", "The summary was not submitted");
 	// Wait for the above summary to be ack'd.
-	const ackedSummary = await summarizerClient.summaryCollection.waitSummaryAck(
-		summarySequenceNumber,
-	);
+	const ackedSummary =
+		await summarizerClient.summaryCollection.waitSummaryAck(summarySequenceNumber);
 	// Update the container runtime with the given ack. We have to do this manually because there is no summarizer
 	// client in these tests that takes care of this.
 	await summarizerClient.containerRuntime.refreshLatestSummaryAck({
@@ -336,12 +335,10 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 		it("Stores handle when data store changes, but no handles are modified", async () => {
 			// Load a new summarizerClient from the full GC tree
 			const summarizerClient2 = await getNewSummarizer();
-			const tree1 = await summarizerClient1.containerRuntime.storage.getSnapshotTree()[
-				gcTreeKey
-			];
-			const tree2 = await summarizerClient2.containerRuntime.storage.getSnapshotTree()[
-				gcTreeKey
-			];
+			const tree1 =
+				await summarizerClient1.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
+			const tree2 =
+				await summarizerClient2.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
 			assert.deepEqual(tree2, tree1, "GC trees between containers should be the same!");
 
 			// Make a change in dataStoreA.
@@ -358,12 +355,10 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 
 			// Summarize on a new summarizer client and validate that a GC blob handle is generated.
 			await submitSummaryAndValidateState(summarizerClient3, isTreeHandle);
-			const tree3 = await summarizerClient1.containerRuntime.storage.getSnapshotTree()[
-				gcTreeKey
-			];
-			const tree4 = await summarizerClient3.containerRuntime.storage.getSnapshotTree()[
-				gcTreeKey
-			];
+			const tree3 =
+				await summarizerClient1.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
+			const tree4 =
+				await summarizerClient3.containerRuntime.storage.getSnapshotTree()[gcTreeKey];
 			assert.deepEqual(tree2, tree3, "GC trees with handles should be the same!");
 			assert.deepEqual(
 				tree3,

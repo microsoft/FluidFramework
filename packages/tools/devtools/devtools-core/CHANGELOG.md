@@ -1,5 +1,17 @@
 # @fluid-experimental/devtools-core
 
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+### Minor Changes
+
+-   tree2: Rename "Value" Multiplicity and FieldKind ([#17622](https://github.com/microsoft/FluidFramework/issues/17622)) [bb68aeb30c](https://github.com/microsoft/FluidFramework/commits/bb68aeb30cfb3d4e0e82f04f1771ad4cb69e23af)
+
+    `Multiplicity.Value` has been renamed to `Multiplicity.Single` and `FieldKinds.value` has been renamed to `FieldKinds.required`.
+
 ## 2.0.0-internal.7.0.0
 
 ### Major Changes

@@ -4,13 +4,14 @@
  */
 
 const {
+	ApiItemKind,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
-	renderDocumentAsMarkdown,
+	MarkdownRenderer,
 	transformApiModel,
+	getUnscopedPackageName,
 } = require("@fluid-tools/api-markdown-documenter");
-const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
 const path = require("path");
@@ -84,7 +85,7 @@ async function renderApiDocumentation() {
 		throw error;
 	}
 
-	processMetaDataFromDocuments(documents);
+	buildNavBar(documents);
 
 	console.groupEnd();
 
@@ -95,7 +96,7 @@ async function renderApiDocumentation() {
 		documents.map(async (document) => {
 			let fileContents;
 			try {
-				fileContents = renderDocumentAsMarkdown(document, {
+				fileContents = MarkdownRenderer.renderDocument(document, {
 					startingHeadingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
 					customRenderers,
 				});
@@ -137,32 +138,40 @@ async function renderApiDocumentation() {
  * Results are saved to 'apiData.yaml' and 'packageData.yaml' in the 'data' directory.
  *
  * @param {Array<Object>} documents - List of documents containing metadata.
- * @param {Object} documents[].documentItemMetadata - Metadata for a document item.
- * @param {string} documents[].documentItemMetadata.apiItemName - Name of the API item.
- * @param {string} documents[].documentItemMetadata.apiItemKind - Kind of the API item (e.g., Class, Interface, Package).
- * @param {string} documents[].documentItemMetadata.packageName - Name of the package to which the API item belongs.
+ * @param {Object} documents[].apiItem - Metadata for a document item.
+ * @param {string} documents[].apiItem.displayName - Name of the API item.
+ * @param {string} documents[].apiItem.kind - Kind of the API item (e.g., Class, Interface, Package).
  *
  * @returns {void}
  */
-function processMetaDataFromDocuments(documents) {
+function buildNavBar(documents) {
 	const { APIMap, packageMap } = documents.reduce(
-		(
-			{ APIMap, packageMap },
-			{ documentItemMetadata: { apiItemName, apiItemKind, packageName } },
-		) => {
-			if (apiItemKind === ApiItemKind.Package) {
+		({ APIMap, packageMap }, document) => {
+			if(document.apiItem === undefined) {
+				return { APIMap, packageMap };
+			}
+
+			const {
+				apiItem: { displayName, kind },
+			} = document;
+
+			const associatedPackage = document.apiItem.getAssociatedPackage();
+			const packageName =
+				associatedPackage === undefined
+					? undefined
+					: getUnscopedPackageName(associatedPackage);
+
+			if (kind === ApiItemKind.Package) {
 				return {
 					APIMap,
-					packageMap: { ...packageMap, [apiItemName]: packageName },
+					packageMap: { ...packageMap, [displayName]: packageName },
 				};
 			}
 
-			if (
-				[ApiItemKind.Class, ApiItemKind.Interface, ApiItemKind.Enum].includes(apiItemKind)
-			) {
+			if ([ApiItemKind.Class, ApiItemKind.Interface, ApiItemKind.Enum].includes(kind)) {
 				APIMap[packageName] = APIMap[packageName] || {};
-				APIMap[packageName][apiItemKind] = APIMap[packageName][apiItemKind] || [];
-				APIMap[packageName][apiItemKind].push(apiItemName);
+				APIMap[packageName][kind] = APIMap[packageName][kind] || [];
+				APIMap[packageName][kind].push(displayName);
 			}
 			return { APIMap, packageMap };
 		},

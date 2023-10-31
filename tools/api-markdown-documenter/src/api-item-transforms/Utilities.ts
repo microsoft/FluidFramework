@@ -5,13 +5,10 @@
 import { ApiItem, IResolveDeclarationReferenceResult } from "@microsoft/api-extractor-model";
 import { DocDeclarationReference } from "@microsoft/tsdoc";
 
-import { Link } from "../Link";
 import { DocumentNode, SectionNode } from "../documentation-domain";
-import {
-	getDocumentPathForApiItem,
-	getLinkForApiItem,
-	getUnscopedPackageName,
-} from "./ApiItemUtilities";
+import { Link } from "../Link";
+import { getUnscopedPackageName } from "../utilities";
+import { getDocumentPathForApiItem, getLinkForApiItem } from "./ApiItemTransformUtilities";
 import { TsdocNodeTransformOptions } from "./TsdocNodeTransforms";
 import { ApiItemTransformationConfiguration } from "./configuration";
 import { wrapInSection } from "./helpers";

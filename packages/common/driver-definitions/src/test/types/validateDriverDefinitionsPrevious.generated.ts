@@ -79,7 +79,6 @@ declare function get_old_VariableDeclaration_DriverErrorTypes():
 declare function use_current_VariableDeclaration_DriverErrorTypes(
     use: TypeOnly<typeof current.DriverErrorTypes>);
 use_current_VariableDeclaration_DriverErrorTypes(
-    // @ts-expect-error compatibility expected to be broken
     get_old_VariableDeclaration_DriverErrorTypes());
 
 /*
@@ -332,7 +331,6 @@ declare function get_current_InterfaceDeclaration_IDeltasFetchResult():
 declare function use_old_InterfaceDeclaration_IDeltasFetchResult(
     use: TypeOnly<old.IDeltasFetchResult>);
 use_old_InterfaceDeclaration_IDeltasFetchResult(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDeltasFetchResult());
 
 /*
@@ -357,7 +355,6 @@ declare function get_current_InterfaceDeclaration_IDocumentDeltaConnection():
 declare function use_old_InterfaceDeclaration_IDocumentDeltaConnection(
     use: TypeOnly<old.IDocumentDeltaConnection>);
 use_old_InterfaceDeclaration_IDocumentDeltaConnection(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IDocumentDeltaConnection());
 
 /*

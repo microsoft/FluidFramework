@@ -91,7 +91,6 @@ declare function get_current_InterfaceDeclaration_IRouterliciousDriverPolicies()
 declare function use_old_InterfaceDeclaration_IRouterliciousDriverPolicies(
     use: TypeOnly<old.IRouterliciousDriverPolicies>);
 use_old_InterfaceDeclaration_IRouterliciousDriverPolicies(
-    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_IRouterliciousDriverPolicies());
 
 /*
@@ -213,3 +212,51 @@ declare function use_old_EnumDeclaration_RouterliciousErrorType(
     use: TypeOnly<old.RouterliciousErrorType>);
 use_old_EnumDeclaration_RouterliciousErrorType(
     get_current_EnumDeclaration_RouterliciousErrorType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_RouterliciousErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_RouterliciousErrorTypes():
+    TypeOnly<typeof old.RouterliciousErrorTypes>;
+declare function use_current_VariableDeclaration_RouterliciousErrorTypes(
+    use: TypeOnly<typeof current.RouterliciousErrorTypes>);
+use_current_VariableDeclaration_RouterliciousErrorTypes(
+    get_old_VariableDeclaration_RouterliciousErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_RouterliciousErrorTypes": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_RouterliciousErrorTypes():
+    TypeOnly<typeof current.RouterliciousErrorTypes>;
+declare function use_old_VariableDeclaration_RouterliciousErrorTypes(
+    use: TypeOnly<typeof old.RouterliciousErrorTypes>);
+use_old_VariableDeclaration_RouterliciousErrorTypes(
+    get_current_VariableDeclaration_RouterliciousErrorTypes());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_RouterliciousErrorTypes": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_RouterliciousErrorTypes():
+    TypeOnly<old.RouterliciousErrorTypes>;
+declare function use_current_TypeAliasDeclaration_RouterliciousErrorTypes(
+    use: TypeOnly<current.RouterliciousErrorTypes>);
+use_current_TypeAliasDeclaration_RouterliciousErrorTypes(
+    get_old_TypeAliasDeclaration_RouterliciousErrorTypes());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_RouterliciousErrorTypes": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_RouterliciousErrorTypes():
+    TypeOnly<current.RouterliciousErrorTypes>;
+declare function use_old_TypeAliasDeclaration_RouterliciousErrorTypes(
+    use: TypeOnly<old.RouterliciousErrorTypes>);
+use_old_TypeAliasDeclaration_RouterliciousErrorTypes(
+    get_current_TypeAliasDeclaration_RouterliciousErrorTypes());

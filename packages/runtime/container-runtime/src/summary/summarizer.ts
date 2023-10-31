@@ -15,9 +15,8 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { ILoader, LoaderHeader } from "@fluidframework/container-definitions";
 import { DriverHeader } from "@fluidframework/driver-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { FluidObject, IFluidHandleContext, IRequest } from "@fluidframework/core-interfaces";
+import { responseToException } from "@fluidframework/runtime-utils";
 import { ISummaryConfiguration } from "../containerRuntime";
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator";
 import { summarizerClientType } from "./summarizerClientElection";
@@ -50,7 +49,10 @@ export class SummarizingWarning
 	readonly errorType = summarizingError;
 	readonly canRetry = true;
 
-	constructor(errorMessage: string, readonly logged: boolean = false) {
+	constructor(
+		errorMessage: string,
+		readonly logged: boolean = false,
+	) {
 		super(errorMessage);
 	}
 
@@ -67,6 +69,7 @@ export const createSummarizingWarning = (errorMessage: string, logged: boolean) 
  * Summarizer is responsible for coordinating when to generate and send summaries.
  * It is the main entry point for summary work.
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
+ * @public
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	public get ISummarizer() {
@@ -108,6 +111,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * interface will expect an absolute URL and will not handle "/".
 	 * @param loader - the loader that resolves the request
 	 * @param url - the URL used to resolve the container
+	 * @deprecated Creating a summarizer is not a publicly supported API. Please remove all usage of this static method.
 	 */
 	public static async create(loader: ILoader, url: string): Promise<ISummarizer> {
 		const request: IRequest = {
@@ -124,12 +128,20 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		};
 
 		const resolvedContainer = await loader.resolve(request);
-		const fluidObject: FluidObject<ISummarizer> | undefined = resolvedContainer.getEntryPoint
-			? await resolvedContainer.getEntryPoint?.()
-			: // eslint-disable-next-line import/no-deprecated
-			  await requestFluidObject<FluidObject<ISummarizer>>(resolvedContainer, {
-					url: "_summarizer",
-			  });
+		let fluidObject: FluidObject<ISummarizer> | undefined;
+
+		// Older containers may not have the "getEntryPoint" API
+		// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
+		if (resolvedContainer.getEntryPoint !== undefined) {
+			fluidObject = await resolvedContainer.getEntryPoint();
+		} else {
+			const response = await resolvedContainer.request({ url: "_summarizer" });
+			if (response.status !== 200 || response.mimeType !== "fluid/object") {
+				throw responseToException(response, request);
+			}
+			fluidObject = response.value;
+		}
+
 		if (fluidObject?.ISummarizer === undefined) {
 			throw new UsageError("Fluid object does not implement ISummarizer");
 		}

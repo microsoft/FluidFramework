@@ -3,24 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, SchemaAware, SchemaBuilder, ValueSchema } from "@fluid-experimental/tree2";
+import {
+	AllowedUpdateType,
+	InitializeAndSchematizeConfiguration,
+	ProxyNode,
+	SchemaBuilder,
+} from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder("inventory app");
-export const float64 = builder.leaf("number", ValueSchema.Number);
-export const string = builder.leaf("string", ValueSchema.String);
+const builder = new SchemaBuilder({ scope: "com.contoso.app.inventory" });
 
-export const part = builder.struct("Contoso:Part-1.0.0", {
-	name: SchemaBuilder.field(FieldKinds.value, string),
-	quantity: SchemaBuilder.field(FieldKinds.value, float64),
+export type Part = ProxyNode<typeof Part>;
+export const Part = builder.object("Part", {
+	name: builder.string,
+	quantity: builder.number,
 });
 
-export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: SchemaBuilder.field(FieldKinds.sequence, part),
+export type Inventory = ProxyNode<typeof Inventory>;
+export const Inventory = builder.object("Inventory", {
+	parts: builder.list(Part),
 });
 
-export const rootField = SchemaBuilder.field(FieldKinds.value, inventory);
-export type RootField = SchemaAware.TypedField<typeof rootField>;
-
-export const schema = builder.intoDocumentSchema(rootField);
-
-export type Inventory = SchemaAware.TypedNode<typeof inventory>;
+export const treeConfiguration = {
+	schema: builder.intoSchema(Inventory),
+	allowedSchemaModifications: AllowedUpdateType.None,
+	initialTree: {
+		parts: {
+			// TODO: FieldNodes should not require wrapper object
+			"": [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		},
+	},
+} satisfies InitializeAndSchematizeConfiguration;

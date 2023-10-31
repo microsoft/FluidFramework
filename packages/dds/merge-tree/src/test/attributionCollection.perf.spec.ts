@@ -143,7 +143,10 @@ class TreeAttributionCollection implements IAttributionCollection<AttributionKey
 		compareNumbers,
 	);
 
-	public constructor(private _length: number, baseEntry?: AttributionKey | null) {
+	public constructor(
+		private _length: number,
+		baseEntry?: AttributionKey | null,
+	) {
 		if (baseEntry !== undefined) {
 			this.entries.put(0, baseEntry);
 		}

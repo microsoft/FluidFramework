@@ -17,6 +17,7 @@ import {
 	canDeleteDoc,
 	TokenRevokeScopeType,
 	DocDeleteScopeType,
+	getGlobalTimeoutContext,
 } from "@fluidframework/server-services-client";
 import type {
 	ICache,
@@ -25,7 +26,11 @@ import type {
 } from "@fluidframework/server-services-core";
 import type { RequestHandler, Request, Response } from "express";
 import type { Provider } from "nconf";
-import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getGlobalTelemetryContext,
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 
 /**
@@ -52,7 +57,7 @@ export function validateTokenClaims(
 		throw new NetworkError(403, "DocumentId in token claims does not match request.");
 	}
 
-	if (claims.scopes === undefined || claims.scopes.length === 0) {
+	if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {
 		throw new NetworkError(403, "Missing scopes in token claims.");
 	}
 
@@ -287,7 +292,12 @@ export function verifyStorageToken(
 				tenantManager,
 				moreOptions,
 			);
-			return next();
+			// Riddler is known to take too long sometimes. Check timeout before continuing.
+			getGlobalTimeoutContext().checkTimeout();
+			return getGlobalTelemetryContext().bindPropertiesAsync(
+				{ tenantId, documentId },
+				async () => next(),
+			);
 		} catch (error) {
 			if (isNetworkError(error)) {
 				return respondWithNetworkError(res, error);
@@ -326,7 +336,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		if (claims.scopes === undefined || claims.scopes.length === 0) {
+		if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {
 			return respondWithNetworkError(
 				response,
 				new NetworkError(403, "Missing scopes in token claims."),

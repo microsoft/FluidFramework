@@ -100,7 +100,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal(content: any): void;
+	submitSignal(content: any, targetClientId?: string): void;
 
 	/**
 	 * Submits messages to relay service.
@@ -133,10 +133,10 @@ export interface IConnectionManagerFactoryArgs {
 	readonly incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => void;
 
 	/**
-	 * Called by connection manager for each incoming signals.
-	 * Maybe called before connectHandler is called (initial signals on socket connection)
+	 * Called by connection manager for each incoming signal.
+	 * May be called before connectHandler is called (due to initial signals on socket connection)
 	 */
-	readonly signalHandler: (message: ISignalMessage) => void;
+	readonly signalHandler: (signals: ISignalMessage[]) => void;
 
 	/**
 	 * Called when connection manager experiences delay in connecting to relay service.

@@ -60,7 +60,7 @@ export const OdspErrorTypes = {
 	 */
 	blockedIPAddress: "blockedIPAddress",
 } as const;
-export type OdspErrorTypes = typeof OdspErrorTypes[keyof typeof OdspErrorTypes];
+export type OdspErrorTypes = (typeof OdspErrorTypes)[keyof typeof OdspErrorTypes];
 
 /**
  * ODSP Error types.

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import {
 	FieldKey,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	UpPath,
 	getDetachedFieldContainingPath,
 	rootField,
@@ -17,7 +17,8 @@ import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
 import { getField } from "../untypedTree";
-import { EditableTree, TreeStatus } from "./editableTreeTypes";
+import { TreeStatus } from "../editable-tree-2";
+import { EditableTree } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -29,12 +30,12 @@ import { EditableTree, TreeStatus } from "./editableTreeTypes";
  * Checking for this object case is done elsewhere.
  * @alpha
  */
-export function isPrimitive(schema: TreeStoredSchema): boolean {
+export function isPrimitive(schema: TreeNodeStoredSchema): boolean {
 	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.
 	// Since the above is not done yet, use use a heuristic:
 	return (
 		schema.leafValue !== undefined &&
-		schema.structFields.size === 0 &&
+		schema.objectNodeFields.size === 0 &&
 		schema.mapFields === undefined
 	);
 }

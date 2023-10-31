@@ -13,7 +13,7 @@ const hexadecimalCharCodes = Array.from('09afAF').map((c) => c.charCodeAt(0)) as
 	a: number,
 	f: number,
 	A: number,
-	F: number
+	F: number,
 ];
 
 function isHexadecimalCharacter(charCode: number): boolean {

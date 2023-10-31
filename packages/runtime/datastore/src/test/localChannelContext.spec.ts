@@ -29,7 +29,7 @@ describe("LocalChannelContext Tests", () => {
 				return {
 					type,
 					attributes: { type, snapshotFormatVersion: "0" },
-					create: () => ({} as any as IChannel),
+					create: () => ({}) as any as IChannel,
 					load: async () => Promise.resolve({} as any as IChannel),
 				};
 			},

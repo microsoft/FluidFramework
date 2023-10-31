@@ -16,6 +16,7 @@ import {
 	throttle,
 	getParam,
 } from "@fluidframework/server-services-utils";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
@@ -86,9 +87,9 @@ export function create(
 
 	router.post(
 		"/repos/:ignored?/:tenantId/git/trees",
-		utils.validateRequestParams("tenantId"),
+		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const treeP = createTree(
 				request.params.tenantId,
@@ -101,9 +102,9 @@ export function create(
 
 	router.get(
 		"/repos/:ignored?/:tenantId/git/trees/:sha",
-		utils.validateRequestParams("tenantId", "sha"),
+		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyTokenNotRevoked(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const treeP = getTree(

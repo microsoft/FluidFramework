@@ -83,4 +83,4 @@ export const EditType = {
 /**
  * @internal
  */
-export type EditType = typeof EditType[keyof typeof EditType];
+export type EditType = (typeof EditType)[keyof typeof EditType];

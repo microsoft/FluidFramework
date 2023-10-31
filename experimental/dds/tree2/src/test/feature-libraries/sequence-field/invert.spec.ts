@@ -12,7 +12,7 @@ import {
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { deepFreeze, fakeRepair } from "../../utils";
+import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
 import { composeAnonChanges, invert as invertChange } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
@@ -194,7 +194,7 @@ describe("SequenceField - Invert", () => {
 		it("revert-only redundant revive => skip", () => {
 			const input = [
 				Mark.modify(childChange1),
-				Mark.revive(fakeRepair(tag1, 0, 1), undefined, {
+				Mark.revive(1, undefined, {
 					inverseOf: tag1,
 					changes: childChange2,
 				}),
@@ -231,13 +231,7 @@ describe("SequenceField - Invert", () => {
 		it("intentional redundant revive => skip", () => {
 			const input = composeAnonChanges([
 				Change.modify(0, childChange1),
-				Change.redundantRevive(
-					1,
-					1,
-					{ revision: tag1, localId: brand(0) },
-					undefined,
-					true,
-				),
+				Change.redundantRevive(1, 1, { revision: tag1, localId: brand(0) }, true),
 				Change.modify(2, childChange2),
 			]);
 			const expected = composeAnonChanges([

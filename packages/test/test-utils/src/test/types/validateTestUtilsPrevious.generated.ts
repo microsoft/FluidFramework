@@ -456,6 +456,30 @@ use_old_FunctionDeclaration_createAndAttachContainer(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore():
+    TypeOnly<typeof old.createContainerRuntimeFactoryWithDefaultDataStore>;
+declare function use_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
+    use: TypeOnly<typeof current.createContainerRuntimeFactoryWithDefaultDataStore>);
+use_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
+    get_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore():
+    TypeOnly<typeof current.createContainerRuntimeFactoryWithDefaultDataStore>;
+declare function use_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
+    use: TypeOnly<typeof old.createContainerRuntimeFactoryWithDefaultDataStore>);
+use_old_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore(
+    get_current_VariableDeclaration_createContainerRuntimeFactoryWithDefaultDataStore());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "VariableDeclaration_createDocumentId": {"forwardCompat": false}
 */
 declare function get_old_VariableDeclaration_createDocumentId():

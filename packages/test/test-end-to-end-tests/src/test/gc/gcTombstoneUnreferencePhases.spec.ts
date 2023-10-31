@@ -71,9 +71,8 @@ describeNoCompat("GC unreference phases", (getTestObjectProvider) => {
 		});
 
 		// create datastore and blob
-		const dataStore = await mainDataStore._context.containerRuntime.createDataStore(
-			TestDataObjectType,
-		);
+		const dataStore =
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType);
 		const dataStoreHandle = dataStore.entryPoint;
 		assert(dataStoreHandle !== undefined, "Expected a handle when creating a datastore");
 		const blobContents = "Blob contents";

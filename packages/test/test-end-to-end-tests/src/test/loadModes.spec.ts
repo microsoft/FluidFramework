@@ -28,7 +28,11 @@ import {
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
-import { ContainerRuntime, ISummarizer, Summarizer } from "@fluidframework/container-runtime";
+import {
+	ContainerRuntime,
+	ISummarizer,
+	TEST_requestSummarizer,
+} from "@fluidframework/container-runtime";
 import { SharedMap } from "@fluidframework/map";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
@@ -178,7 +182,7 @@ describeNoCompat("LoadModes", (getTestObjectProvider) => {
 		if (absoluteUrl === undefined) {
 			throw new Error("URL could not be resolved");
 		}
-		const summarizer = await Summarizer.create(loader, absoluteUrl);
+		const summarizer = await TEST_requestSummarizer(loader, absoluteUrl);
 		await waitForSummarizerConnection(summarizer);
 		return summarizer;
 	}

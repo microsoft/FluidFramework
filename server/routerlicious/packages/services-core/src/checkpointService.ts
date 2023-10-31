@@ -24,7 +24,8 @@ export class CheckpointService implements ICheckpointService {
 		private readonly documentRepository: IDocumentRepository,
 		private readonly isLocalCheckpointEnabled: boolean,
 	) {}
-	localCheckpointEnabled: boolean = this.isLocalCheckpointEnabled;
+	private readonly localCheckpointEnabled: boolean = this.isLocalCheckpointEnabled;
+	private globalCheckpointFailed: boolean = false;
 	async writeCheckpoint(
 		documentId: string,
 		tenantId: string,
@@ -75,6 +76,7 @@ export class CheckpointService implements ICheckpointService {
 					service,
 					checkpoint,
 					this.localCheckpointEnabled,
+					true /* writeToLocalOnFailure */,
 			  ));
 	}
 
@@ -98,8 +100,10 @@ export class CheckpointService implements ICheckpointService {
 		service: string,
 		checkpoint: IScribe | IDeliState,
 		localCheckpointEnabled: boolean,
+		writeToLocalOnFailure: boolean = false,
 	) {
 		const lumberProperties = getLumberBaseProperties(documentId, tenantId);
+		let deleteLocalCheckpoint = true;
 
 		const checkpointFilter = {
 			documentId,
@@ -112,16 +116,46 @@ export class CheckpointService implements ICheckpointService {
 
 		try {
 			await this.documentRepository.updateOne(checkpointFilter, checkpointData, null);
+			this.globalCheckpointFailed = false;
 		} catch (error) {
 			Lumberjack.error(
 				`Error writing checkpoint to the global database.`,
 				lumberProperties,
 				error,
 			);
-			throw error;
+			this.globalCheckpointFailed = true;
+			// Only delete local checkpoint if we can successfully write a global checkpoint
+			deleteLocalCheckpoint = false;
+			if (writeToLocalOnFailure && localCheckpointEnabled) {
+				const globalCheckpointErrorMetric = Lumberjack.newLumberMetric(
+					LumberEventName.GlobalCheckpointError,
+				);
+
+				try {
+					Lumberjack.info(
+						`Error writing checkpoint to global database. Writing to local database.`,
+						lumberProperties,
+					);
+					globalCheckpointErrorMetric.setProperties({
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: documentId,
+						service,
+					});
+					await this.writeLocalCheckpoint(documentId, tenantId, checkpoint);
+					globalCheckpointErrorMetric.success(
+						`Local checkpoint successful after global checkpoint failure.`,
+					);
+				} catch (err) {
+					globalCheckpointErrorMetric.error(
+						`Local checkpoint failed after global checkpoint failure.`,
+						err,
+					);
+					throw err;
+				}
+			}
 		}
 
-		if (localCheckpointEnabled) {
+		if (localCheckpointEnabled && deleteLocalCheckpoint) {
 			try {
 				await this.checkpointRepository.deleteCheckpoint(documentId, tenantId);
 			} catch (error) {
@@ -290,10 +324,17 @@ export class CheckpointService implements ICheckpointService {
 
 		return checkpoint ? checkpoint : this.documentRepository.readOne({ documentId, tenantId });
 	}
+
+	public getLocalCheckpointEnabled() {
+		return this.localCheckpointEnabled;
+	}
+
+	public getGlobalCheckpointFailed() {
+		return this.globalCheckpointFailed;
+	}
 }
 
 export interface ICheckpointService {
-	localCheckpointEnabled: boolean;
 	writeCheckpoint(
 		documentId: string,
 		tenantId: string,
@@ -320,4 +361,6 @@ export interface ICheckpointService {
 		localCheckpointEnabled?: boolean,
 		activeClients?: boolean,
 	): Promise<any>;
+	getGlobalCheckpointFailed(): boolean;
+	getLocalCheckpointEnabled(): boolean;
 }
