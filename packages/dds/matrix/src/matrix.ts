@@ -60,6 +60,7 @@ interface ISetOpMetadata {
 	rowsRefSeq: number;
 	colsRefSeq: number;
 	referenceSeqNumber: number;
+	clientId: string | undefined;
 }
 
 export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
@@ -73,6 +74,10 @@ export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 	 *
 	 * @remarks Listener parameters:
 	 *
+	 * - `row` - Row number at which conflict happened.
+	 *
+	 * - `col` - Col number at which conflict happened.
+	 *
 	 * - `currentValue` - The current value of the cell.
 	 *
 	 * - `ignoredValue` - The value that this client tried to set in the cell and got ignored due to conflict.
@@ -80,13 +85,23 @@ export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 	 * - `target` - The {@link SharedMatrix} itself.
 	 */
 	(
-		event: "resolveConflict",
+		event: "conflict",
 		listener: (
+			row: number,
+			col: number,
 			currentValue: MatrixItem<T>,
 			ignoredValue: MatrixItem<T>,
 			target: IEventThisPlaceHolder,
 		) => void,
 	);
+}
+
+/**
+ * This represents the item which is used to track the client which modified the cell last.
+ */
+interface CellLastWriteTrackerItem {
+	seqNum: number; // Seq number of op which last modified this cell
+	clientId: string; // clientId of the client which last modified this cell
 }
 
 /**
@@ -128,7 +143,7 @@ export class SharedMatrix<T = any>
 
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private pending = new SparseArray2D<number>(); // Tracks pending writes.
-	private cellLastWriteTracker = new SparseArray2D<number>(); // Tracks last writes sequence numner in a cell.
+	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence numner in a cell.
 
 	constructor(
 		runtime: IFluidDataStoreRuntime,
@@ -239,23 +254,7 @@ export class SharedMatrix<T = any>
 			0x01a /* "Trying to set out-of-bounds cell!" */,
 		);
 
-		const applied = this.setCellCore(row, col, value);
-		// If the operation is not applied then raise conflict.
-		if (!applied) {
-			this.emit(
-				"resolveConflict",
-				this.cells.getCell(
-					this.rows.handleCache.getHandle(row),
-					this.cols.handleCache.getHandle(col),
-				), // Current value
-				value, // Ignored value
-			);
-		}
-
-		// Avoid reentrancy by raising change notifications after the op is queued.
-		for (const consumer of this.consumers.values()) {
-			consumer.cellsChanged(row, col, 1, 1, this);
-		}
+		this.setCellCore(row, col, value);
 	}
 
 	public setCells(
@@ -282,24 +281,7 @@ export class SharedMatrix<T = any>
 		let c = colStart;
 
 		for (const value of values) {
-			const applied = this.setCellCore(r, c, value);
-			// If the operation is not applied then raise conflict else notify consumers of the change.
-			if (!applied) {
-				this.emit(
-					"resolveConflict",
-					this.cells.getCell(
-						this.rows.handleCache.getHandle(r),
-						this.cols.handleCache.getHandle(c),
-					), // Current value
-					value, // Ignored value
-				);
-			} else {
-				// Avoid reentrancy by raising change notifications after the op is queued.
-				for (const consumer of this.consumers.values()) {
-					consumer.cellsChanged(r, c, 1, 1, this);
-				}
-			}
-
+			this.setCellCore(r, c, value);
 			if (++c === endCol) {
 				c = colStart;
 				r++;
@@ -313,11 +295,7 @@ export class SharedMatrix<T = any>
 		value: MatrixItem<T>,
 		rowHandle = this.rows.getAllocatedHandle(row),
 		colHandle = this.cols.getAllocatedHandle(col),
-	): boolean {
-		// If there is a pending change, then don't apply this change due to FWW.
-		if (this.pending.getCell(rowHandle, colHandle) !== undefined) {
-			return false;
-		}
+	) {
 		if (this.undo !== undefined) {
 			let oldValue = this.cells.getCell(rowHandle, colHandle);
 			if (oldValue === null) {
@@ -332,7 +310,11 @@ export class SharedMatrix<T = any>
 		if (this.isAttached()) {
 			this.sendSetCellOp(row, col, value, rowHandle, colHandle);
 		}
-		return true;
+
+		// Avoid reentrancy by raising change notifications after the op is queued.
+		for (const consumer of this.consumers.values()) {
+			consumer.cellsChanged(row, col, 1, 1, this);
+		}
 	}
 
 	private sendSetCellOp(
@@ -364,6 +346,7 @@ export class SharedMatrix<T = any>
 			rowsRefSeq,
 			colsRefSeq,
 			referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
+			clientId: this.runtime.clientId,
 		};
 
 		this.submitLocalMessage(op, metadata);
@@ -619,16 +602,23 @@ export class SharedMatrix<T = any>
 					rowsRefSeq,
 					colsRefSeq,
 					referenceSeqNumber,
+					clientId,
 				} = localOpMetadata as ISetOpMetadata;
 
-				const lastWriteSeqNumber = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
-				// If we generated this op, after seeing the last set op, then regenerate the op, otherwise
-				// raise conflict.
-				if (lastWriteSeqNumber === undefined || referenceSeqNumber >= lastWriteSeqNumber) {
-					const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
-					const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
-
-					if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
+				const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
+					rowHandle,
+					colHandle,
+				);
+				const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
+				const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
+				if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
+					// If we generated this op, after seeing the last set op, or it was from this client only
+					// then regenerate the op, otherwise raise conflict.
+					if (
+						lastCellModificationDetails === undefined ||
+						clientId === this.runtime.clientId ||
+						referenceSeqNumber >= lastCellModificationDetails.seqNum
+					) {
 						this.sendSetCellOp(
 							row,
 							col,
@@ -639,14 +629,17 @@ export class SharedMatrix<T = any>
 							rowsRefSeq,
 							colsRefSeq,
 						);
+					} else {
+						this.emit(
+							"conflict",
+							row,
+							col,
+							this.cells.getCell(rowHandle, colHandle), // Current value
+							setOp.value, // Ignored value
+						);
 					}
-				} else {
-					this.emit(
-						"resolveConflict",
-						this.cells.getCell(rowHandle, colHandle), // Current value
-						setOp.value, // Ignored value
-					);
 				}
+
 				break;
 			}
 		}
@@ -677,9 +670,7 @@ export class SharedMatrix<T = any>
 
 			this.cells = SparseArray2D.load(cellData);
 			this.pending = SparseArray2D.load(pendingCliSeqData);
-			if (this.cellLastWriteTracker !== undefined) {
-				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
-			}
+			this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
 		}
@@ -709,70 +700,57 @@ export class SharedMatrix<T = any>
 
 				const { row, col } = contents;
 
-				if (local) {
-					// We are receiving the ACK for a local pending set operation.
-					const { rowHandle, colHandle } = localOpMetadata as ISetOpMetadata;
-					const lastWriteSeqNumber = this.cellLastWriteTracker.getCell(
-						rowHandle,
-						colHandle,
-					);
+				const adjustedRow = this.rows.adjustPosition(row, rawMessage);
+				if (adjustedRow !== undefined) {
+					const adjustedCol = this.cols.adjustPosition(col, rawMessage);
 
-					// If we tried to Overwrite the cell value or doing first write on this cell.
-					if (
-						lastWriteSeqNumber === undefined ||
-						rawMessage.referenceSequenceNumber >= lastWriteSeqNumber
-					) {
-						this.cellLastWriteTracker.setCell(
+					if (adjustedCol !== undefined) {
+						const rowHandle =
+							(localOpMetadata as ISetOpMetadata)?.rowHandle ??
+							this.rows.getAllocatedHandle(adjustedRow);
+						const colHandle =
+							(localOpMetadata as ISetOpMetadata)?.colHandle ??
+							this.cols.getAllocatedHandle(adjustedCol);
+
+						assert(
+							isHandleValid(rowHandle) && isHandleValid(colHandle),
+							0x022 /* "SharedMatrix row and/or col handles are invalid!" */,
+						);
+
+						const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
 							rowHandle,
 							colHandle,
-							rawMessage.sequenceNumber,
 						);
-					} else if (rawMessage.referenceSequenceNumber < lastWriteSeqNumber) {
-						// conflict. We would already set the right contents in the cell, when we would have received
-						// set op for that cell from other client.
+
 						const { value } = contents;
-						this.emit(
-							"resolveConflict",
-							this.cells.getCell(rowHandle, colHandle), // Current value
-							value, // Ignored value
-						);
-					}
-				} else {
-					const adjustedRow = this.rows.adjustPosition(row, rawMessage);
-
-					if (adjustedRow !== undefined) {
-						const adjustedCol = this.cols.adjustPosition(col, rawMessage);
-
-						if (adjustedCol !== undefined) {
-							const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
-							const colHandle = this.cols.getAllocatedHandle(adjustedCol);
-
-							assert(
-								isHandleValid(rowHandle) && isHandleValid(colHandle),
-								0x022 /* "SharedMatrix row and/or col handles are invalid!" */,
-							);
-
-							const lastWriteSeqNumber = this.cellLastWriteTracker.getCell(
-								rowHandle,
-								colHandle,
-							);
-							// If someone tried to Overwrite the cell value or first write on this cell.
-							if (
-								lastWriteSeqNumber === undefined ||
-								rawMessage.referenceSequenceNumber >= lastWriteSeqNumber
-							) {
-								const { value } = contents;
+						assert(rawMessage.clientId !== null, "clientid should not be null!!");
+						// If someone tried to Overwrite the cell value or first write on this cell or
+						// same client tried to modify the cell.
+						if (
+							lastCellModificationDetails === undefined ||
+							lastCellModificationDetails.clientId === rawMessage.clientId ||
+							rawMessage.referenceSequenceNumber >= lastCellModificationDetails.seqNum
+						) {
+							if (!local) {
 								this.cells.setCell(rowHandle, colHandle, value);
-								this.cellLastWriteTracker.setCell(
-									rowHandle,
-									colHandle,
-									rawMessage.sequenceNumber,
-								);
-
 								for (const consumer of this.consumers.values()) {
 									consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
 								}
 							}
+							this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
+								seqNum: rawMessage.sequenceNumber,
+								clientId: rawMessage.clientId,
+							});
+						} else if (local) {
+							// conflict. We would already set the right contents in the cell, when we would have received
+							// set op for that cell from other client.
+							this.emit(
+								"conflict",
+								row,
+								col,
+								this.cells.getCell(rowHandle, colHandle), // Current value
+								value, // Ignored value
+							);
 						}
 					}
 				}
@@ -894,6 +872,7 @@ export class SharedMatrix<T = any>
 				rowsRefSeq,
 				colsRefSeq,
 				referenceSeqNumber: this.runtime.deltaManager.lastSequenceNumber,
+				clientId: this.runtime.clientId,
 			};
 
 			this.pending.setCell(rowHandle, colHandle, localSeq);
