@@ -219,9 +219,7 @@ module.exports = {
 				"server/historian/package.json",
 				"package.json",
 			],
-      "npm-package-json-script-dep": [
-        "^build-tools/",
-      ],
+			"npm-package-json-script-dep": ["^build-tools/"],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
