@@ -18,6 +18,7 @@ import {
 import { brand, fakeIdAllocator } from "../../../util";
 import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import {
+	optionalChangeHandler,
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
@@ -471,6 +472,92 @@ describe("optionalField", () => {
 				),
 				expected,
 			);
+		});
+	});
+
+	describe("getRelevantRemovedTrees", () => {
+		const replace = tagChange(
+			optionalFieldEditor.set(testTreeCursor(""), false, brand(1), brand(2)),
+			mintRevisionTag(),
+		);
+		const nestedChange = tagChange(
+			optionalFieldEditor.buildChildChange(0, nodeChange1),
+			mintRevisionTag(),
+		);
+		it("returns empty for a set operation", () => {
+			const actual = optionalChangeHandler.getRelevantRemovedTrees(replace.change);
+			assert.deepEqual(actual, []);
+		});
+		it("returns empty for nested changes", () => {
+			const change = optionalFieldEditor.buildChildChange(0, nodeChange1);
+			const actual = optionalChangeHandler.getRelevantRemovedTrees(change);
+			assert.deepEqual(actual, []);
+		});
+		it("returns empty for nested changes to a node being overwritten", () => {
+			const changes = [nestedChange, replace];
+			const changeAndReplace = optionalChangeRebaser.compose(
+				changes,
+				(): NodeChangeset => nodeChange1,
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges(changes),
+			);
+			const actual = optionalChangeHandler.getRelevantRemovedTrees(changeAndReplace);
+			assert.deepEqual(actual, []);
+		});
+		it("returns restored nodes", () => {
+			const restore = optionalChangeRebaser.invert(
+				replace,
+				() => assert.fail("Should not need to invert children"),
+				fakeIdAllocator,
+				failCrossFieldManager,
+			);
+			const actual = optionalChangeHandler.getRelevantRemovedTrees(restore);
+			const expected = [makeDetachedNodeId(replace.revision, 1)];
+			assert.deepEqual(actual, expected);
+		});
+		it("returns nodes with nested changes when those nodes are already deleted", () => {
+			const rebasedNestedChange = optionalChangeRebaser.rebase(
+				nestedChange.change,
+				replace,
+				() => nodeChange1,
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([replace, nestedChange]),
+			);
+			const actual = optionalChangeHandler.getRelevantRemovedTrees(rebasedNestedChange);
+			const expected = [makeDetachedNodeId(replace.revision, 1)];
+			assert.deepEqual(actual, expected);
+		});
+		it("only returns a node once even if is both being restored and has nested changes", () => {
+			const rebasedNestedChange = optionalChangeRebaser.rebase(
+				nestedChange.change,
+				replace,
+				() => nodeChange1,
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([replace, nestedChange]),
+			);
+			const restore = optionalChangeRebaser.invert(
+				replace,
+				() => assert.fail("Should not need to invert children"),
+				fakeIdAllocator,
+				failCrossFieldManager,
+			);
+			const changes = [
+				tagChange(rebasedNestedChange, nestedChange.revision),
+				tagChange(restore, mintRevisionTag()),
+			];
+			const changeAndRestore = optionalChangeRebaser.compose(
+				changes,
+				(): NodeChangeset => nodeChange1,
+				fakeIdAllocator,
+				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges(changes),
+			);
+			const actual = optionalChangeHandler.getRelevantRemovedTrees(changeAndRestore);
+			const expected = [makeDetachedNodeId(replace.revision, 1)];
+			assert.deepEqual(actual, expected);
 		});
 	});
 });

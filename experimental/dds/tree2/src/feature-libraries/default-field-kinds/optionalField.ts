@@ -32,6 +32,7 @@ import {
 	NodeExistenceState,
 	FieldChangeHandler,
 } from "../modular-schema";
+import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
@@ -563,11 +564,7 @@ export function optionalFieldIntoDelta(
 			delta.build = [{ id: buildId, trees: content }];
 		} else {
 			const changeId = (update as { revert: ChangeAtomId }).revert;
-			const restoreId = {
-				major: changeId.revision,
-				minor: changeId.localId,
-			};
-			mark.attach = restoreId;
+			mark.attach = makeDetachedNodeId(changeId.revision, changeId.localId);
 		}
 		if (update.changes !== undefined) {
 			const fields = deltaFromChild(update.changes);
@@ -583,6 +580,8 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	editor: optionalFieldEditor,
 
 	intoDelta: optionalFieldIntoDelta,
+	getRelevantRemovedTrees,
+
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChanges === undefined && change.fieldChange === undefined,
 };
@@ -593,4 +592,41 @@ function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
 	}
 
 	return areEqualChangeAtomIds(a, b);
+}
+
+function getRelevantRemovedTrees(change: OptionalChangeset): Delta.DetachedNodeId[] {
+	const nodes: Delta.DetachedNodeId[] = [];
+	let removedNode: ChangeAtomId | undefined;
+	let restoredNode: ChangeAtomId | undefined;
+	const fieldChange = change.fieldChange;
+	if (fieldChange !== undefined) {
+		removedNode = { revision: fieldChange.revision, localId: fieldChange.id };
+		const newContent = fieldChange.newContent;
+		if (
+			newContent !== undefined &&
+			Object.prototype.hasOwnProperty.call(newContent, "revert")
+		) {
+			// This tree is being restored by this change, so it is a relevant removed tree.
+			restoredNode = (newContent as { revert: ChangeAtomId }).revert;
+			nodes.push(nodeIdFromChangeAtom(restoredNode));
+		}
+	}
+	if (change.childChanges !== undefined) {
+		for (const [deletedBy, _] of change.childChanges) {
+			if (
+				deletedBy === "self" ||
+				(removedNode !== undefined && areEqualChangeIds(deletedBy, removedNode))
+			) {
+				// This node is in the document at the time this change applies, so it isn't a relevant removed tree.
+			} else {
+				if (restoredNode !== undefined && areEqualChangeIds(deletedBy, restoredNode)) {
+					// This tree is a relevant removed tree, but it is already included in the list
+				} else {
+					// This tree is being edited by this change, so it is a relevant removed tree.
+					nodes.push(nodeIdFromChangeAtom(deletedBy));
+				}
+			}
+		}
+	}
+	return nodes;
 }
