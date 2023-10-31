@@ -2191,9 +2191,9 @@ export interface TreeNode extends Tree<TreeNodeSchema> {
 
 // @alpha
 export class TreeNodeSchema<Name extends string = string, T extends Unenforced<TreeSchemaSpecification> = TreeSchemaSpecification> {
-    constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
     readonly builder: Named<string>;
+    static create<Name extends string, T extends TreeSchemaSpecification>(builder: Named<string>, name: Name, info: T): TreeNodeSchema<Name, T>;
     // (undocumented)
     readonly info: Assume<T, TreeSchemaSpecification>;
     // (undocumented)
@@ -2224,6 +2224,9 @@ export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema> ext
     readonly policy: FullSchemaPolicy;
     readonly rootFieldSchema: T;
 }
+
+// @alpha
+export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema;
 
 // @alpha
 type TreeSchemaSpecification = [
