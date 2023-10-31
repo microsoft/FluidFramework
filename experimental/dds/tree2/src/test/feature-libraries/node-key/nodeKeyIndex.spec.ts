@@ -215,7 +215,7 @@ describe("Node Key Index", () => {
 		const nodeSchemaNoKey = builder2.map("node", SchemaBuilder.optional(Any));
 
 		const nodeSchemaDataNoKey = builder2.intoSchema(SchemaBuilder.optional(nodeSchemaNoKey));
-		assert(!nodeSchemaDataNoKey.treeSchema.has(nodeKeyTreeSchema.name));
+		assert(!nodeSchemaDataNoKey.nodeSchema.has(nodeKeyTreeSchema.name));
 
 		const nodeKeyManager = createMockNodeKeyManager();
 

@@ -83,7 +83,7 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
  * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
  */
 export function jsonableTreeFromFieldCursor(cursor: ITreeCursor): JsonableTree[] {
-	assert(cursor.mode === CursorLocationType.Fields, "must start at field");
+	assert(cursor.mode === CursorLocationType.Fields, 0x7ca /* must start at field */);
 	return mapCursorField(cursor, jsonableTreeFromCursor);
 }
 

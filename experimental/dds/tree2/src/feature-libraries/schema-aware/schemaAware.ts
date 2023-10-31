@@ -297,20 +297,19 @@ export type NodeDataFor<Mode extends ApiMode, TSchema extends TreeNodeSchema> = 
  * Provided schema must be included in the schema for the tree being viewed (getting this wrong will error).
  * @alpha
  */
-// TODO: tests
 export function downCast<TSchema extends TreeNodeSchema>(
 	schema: TSchema,
-	tree: UntypedTreeCore<any, any>,
+	tree: UntypedTreeCore,
 ): tree is TypedNode<TSchema> {
 	assert(typeof tree === "object", 0x72b /* downCast only valid on wrapped nodes */);
-	assert(tree !== null, "downCast only valid on wrapped nodes");
+	assert(tree !== null, 0x7d5 /* downCast only valid on wrapped nodes */);
 	assert(
 		!isFluidHandle(tree as unknown as FluidSerializableReadOnly),
-		"downCast only valid on wrapped nodes",
+		0x7d6 /* downCast only valid on wrapped nodes */,
 	);
 
 	const contextSchema = tree[contextSymbol].schema;
-	const lookedUp = contextSchema.treeSchema.get(schema.name);
+	const lookedUp = contextSchema.nodeSchema.get(schema.name);
 	// TODO: for this to pass, schematized view must have the view schema, not just stored schema.
 	assert(lookedUp === schema, 0x68c /* cannot downcast to a schema the tree is not using */);
 

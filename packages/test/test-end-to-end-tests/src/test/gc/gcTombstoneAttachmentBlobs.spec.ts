@@ -85,10 +85,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"fails retrieval of tombstones attachment blobs",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "noninteractive/summarizer",
 				},
 			],
 			async () => {
@@ -126,7 +130,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
 				assert.equal(
 					response.value,
-					`Blob was deleted: ${blobHandle.absolutePath.substring(8)}`,
+					`Blob was tombstoned: ${blobHandle.absolutePath}`,
 					`Unexpected response value`,
 				);
 				assert(container2.closed !== true, "Container should not have closed");
@@ -154,10 +158,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"fails retrieval of blobs that are de-duped in same container and are tombstoned",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -203,7 +211,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for blob handle 1`,
 				);
 				assert(
-					response1.value.startsWith("Blob was deleted:"),
+					response1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected response value for blob handle 1`,
 				);
 
@@ -214,7 +222,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for blob handle 2`,
 				);
 				assert(
-					response2.value.startsWith("Blob was deleted:"),
+					response2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected response value for blob handle 2`,
 				);
 			},
@@ -224,9 +232,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"Can un-tombstone attachment blob by storing a handle",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
-				{ eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived" },
+				{
+					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Revived",
+					clientType: "noninteractive/summarizer",
+				},
 			],
 			async () => {
 				const { dataStore: mainDataStore, summarizer } =
@@ -266,7 +279,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for blob handle 1`,
 				);
 				assert(
-					response1.value.startsWith("Blob was deleted:"),
+					response1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected response value for blob handle 1`,
 				);
 				container2.close();
@@ -295,7 +308,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"logs error on retrieval of tombstones attachment blobs when ThrowOnTombstoneUsage is not enabled",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -441,7 +456,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded in detached container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -497,7 +514,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// not have access to the blob's handle.
 				const response = await container2.request({ url: blobHandle.absolutePath });
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-				assert(response.value.startsWith("Blob was deleted:"), `Unexpected response value`);
+				assert(
+					response.value.startsWith("Blob was tombstoned:"),
+					`Unexpected response value`,
+				);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
 		);
@@ -506,10 +526,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded in detached and de-duped in attached container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -584,7 +608,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for local handle`,
 				);
 				assert(
-					localResponse1.value.startsWith("Blob was deleted:"),
+					localResponse1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 1`,
 				);
 
@@ -595,7 +619,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for storage handle`,
 				);
 				assert(
-					localResponse2.value.startsWith("Blob was deleted:"),
+					localResponse2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 			},
@@ -605,13 +629,19 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded and de-duped in detached container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -693,7 +723,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for local handle 1`,
 				);
 				assert(
-					localResponse1.value.startsWith("Blob was deleted:"),
+					localResponse1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 1`,
 				);
 
@@ -704,7 +734,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for local handle 2`,
 				);
 				assert(
-					localResponse2.value.startsWith("Blob was deleted:"),
+					localResponse2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 
@@ -715,7 +745,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for storage handle`,
 				);
 				assert(
-					localResponse3.value.startsWith("Blob was deleted:"),
+					localResponse3.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 3`,
 				);
 			},
@@ -762,7 +792,9 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded in disconnected container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -809,7 +841,10 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 				// not have access to the blob's handle.
 				const response = await container2.request({ url: blobHandle.absolutePath });
 				assert.strictEqual(response?.status, 404, `Expecting a 404 response`);
-				assert(response.value.startsWith("Blob was deleted:"), `Unexpected response value`);
+				assert(
+					response.value.startsWith("Blob was tombstoned:"),
+					`Unexpected response value`,
+				);
 				assert(container2.closed !== true, "Container should not have closed");
 			},
 		);
@@ -818,10 +853,14 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded in disconnected and de-duped in connected container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -886,7 +925,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for local handle`,
 				);
 				assert(
-					localResponse1.value.startsWith("Blob was deleted:"),
+					localResponse1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 1`,
 				);
 
@@ -897,7 +936,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for storage handle`,
 				);
 				assert(
-					localResponse2.value.startsWith("Blob was deleted:"),
+					localResponse2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 			},
@@ -907,13 +946,19 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 			"tombstones blobs uploaded and de-duped in disconnected container",
 			[
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 				{
-					eventName: "fluid:telemetry:BlobManager:GC_Tombstone_Blob_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -986,7 +1031,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for local handle 1`,
 				);
 				assert(
-					localResponse1.value.startsWith("Blob was deleted:"),
+					localResponse1.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 1`,
 				);
 
@@ -997,7 +1042,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for local handle 2`,
 				);
 				assert(
-					localResponse2.value.startsWith("Blob was deleted:"),
+					localResponse2.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 
@@ -1008,7 +1053,7 @@ describeNoCompat("GC attachment blob tombstone tests", (getTestObjectProvider) =
 					`Expecting a 404 response for storage handle`,
 				);
 				assert(
-					localResponse3.value.startsWith("Blob was deleted:"),
+					localResponse3.value.startsWith("Blob was tombstoned:"),
 					`Unexpected value for local handle 2`,
 				);
 			},
