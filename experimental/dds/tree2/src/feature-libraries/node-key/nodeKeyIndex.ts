@@ -27,7 +27,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, ObjectNode> {
 	 */
 	public static hasNodeKeyTreeSchema(schema: TreeStoredSchema): boolean {
 		// TODO: make TreeStoredSchema contain ViewSchema and compare by reference to nodeKeyTreeSchema.
-		const treeSchema = schema.treeSchema.get(nodeKeyTreeIdentifier);
+		const treeSchema = schema.nodeSchema.get(nodeKeyTreeIdentifier);
 		if (treeSchema === undefined) {
 			return false;
 		}

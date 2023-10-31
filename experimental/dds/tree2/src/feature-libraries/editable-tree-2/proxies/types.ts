@@ -248,7 +248,10 @@ export type ObjectFields<
  * A map of string keys to tree objects.
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<
+	string,
+	ProxyField<TSchema["mapFields"]>
+>;
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.

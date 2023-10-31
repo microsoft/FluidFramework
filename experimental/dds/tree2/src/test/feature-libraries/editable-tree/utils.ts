@@ -43,7 +43,7 @@ export function expectTreeEquals(
 	expected: JsonableTree,
 ): void {
 	assert(inputField !== undefined);
-	const expectedType = schemaData.treeSchema.get(expected.type) ?? fail("missing field");
+	const expectedType = schemaData.nodeSchema.get(expected.type) ?? fail("missing field");
 	const primary = getPrimaryField(expectedType);
 	if (primary !== undefined) {
 		assert(isEditableField(inputField));
@@ -155,7 +155,7 @@ export function expectNodeEquals(
 ): void {
 	assert.equal(expected.type, node[typeNameSymbol]);
 	assert.equal(expected.value, node[valueSymbol]);
-	const nodeSchema = schemaData.treeSchema.get(expected.type) ?? fail("type");
+	const nodeSchema = schemaData.nodeSchema.get(expected.type) ?? fail("type");
 	assert.deepEqual(nodeSchema, node[typeSymbol]);
 	if (isPrimitiveValue(expected.value)) {
 		assert(isPrimitive(nodeSchema));
