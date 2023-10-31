@@ -10,7 +10,7 @@ const {
 	loadModel,
 	MarkdownRenderer,
 	transformApiModel,
-	getUnscopedPackageName,
+	ApiItemUtilities,
 } = require("@fluid-tools/api-markdown-documenter");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
@@ -147,19 +147,17 @@ async function renderApiDocumentation() {
 function buildNavBar(documents) {
 	const { APIMap, packageMap } = documents.reduce(
 		({ APIMap, packageMap }, document) => {
-			if(document.apiItem === undefined) {
+			if (document.apiItem === undefined) {
 				return { APIMap, packageMap };
 			}
 
-			const {
-				apiItem: { displayName, kind },
-			} = document;
-
-			const associatedPackage = document.apiItem.getAssociatedPackage();
+			const associatedPackage = document.apiItem?.getAssociatedPackage();
 			const packageName =
 				associatedPackage === undefined
 					? undefined
-					: getUnscopedPackageName(associatedPackage);
+					: ApiItemUtilities.getUnscopedPackageName(associatedPackage);
+
+			const { displayName, kind } = document.apiItem;
 
 			if (kind === ApiItemKind.Package) {
 				return {
