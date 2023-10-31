@@ -585,6 +585,17 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node.keys();
 		},
 	},
+	set: {
+		value(
+			this: SharedTreeMap<MapSchema>,
+			key: string,
+			content: ProxyNodeUnion<AllowedTypes, "javaScript">,
+		): SharedTreeMap<MapSchema> {
+			const node = getMapNode(this);
+			node.set(key, extractFactoryContent(content as any)); // TODO: why is this being treated as `unknown`?
+			return this;
+		},
+	},
 	size: {
 		get(this: SharedTreeMap<MapSchema>) {
 			return getMapNode(this).size;

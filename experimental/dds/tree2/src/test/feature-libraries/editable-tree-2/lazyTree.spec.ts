@@ -348,7 +348,7 @@ describe("LazyLeaf", () => {
 	});
 });
 
-describe.only("LazyMap", () => {
+describe("LazyMap", () => {
 	const schemaBuilder = new SchemaBuilder({
 		scope: "test",
 		libraries: [leafDomain.library],

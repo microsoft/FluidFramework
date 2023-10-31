@@ -458,7 +458,7 @@ describe("SharedTreeList", () => {
 	});
 });
 
-describe("SharedTreeMap", () => {
+describe.only("SharedTreeMap", () => {
 	const sb = new SchemaBuilder({
 		scope: "test",
 	});
@@ -507,5 +507,13 @@ describe("SharedTreeMap", () => {
 		assert.equal(root.map.has("foo"), true);
 		assert.equal(root.map.has("bar"), true);
 		assert.equal(root.map.has("baz"), false);
+	});
+
+	itWithRoot("set", schema, initialTree, (root) => {
+		root.map.set("baz", "42");
+
+		assert.equal(root.map.size, 3);
+		assert(root.map.has("baz"));
+		assert.equal(root.map.get("baz"), "42");
 	});
 });
