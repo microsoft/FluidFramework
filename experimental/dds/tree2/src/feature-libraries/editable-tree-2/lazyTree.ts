@@ -410,7 +410,10 @@ export class LazyMap<TSchema extends MapSchema>
 		) as TypedField<TSchema["mapFields"]>;
 	}
 
-	public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
+	public set(
+		key: FieldKey,
+		content: FlexibleFieldContent<TSchema["mapFields"]> | undefined,
+	): void {
 		const field = this.getBoxed(key);
 		if (
 			field.is(
@@ -431,8 +434,16 @@ export class LazyMap<TSchema extends MapSchema>
 
 			// TODO: fix merge semantics.
 			sequenceField.removeRange(0, field.length);
-			sequenceField.insertAtStart(content as Iterable<ContextuallyTypedNodeData>);
+			if (content !== undefined) {
+				sequenceField.insertAtStart(content as Iterable<ContextuallyTypedNodeData>);
+			}
 		}
+	}
+
+	public delete(key: FieldKey): void {
+		// Since all keys implicitly exist under a Map node, "deleting" a key/value pair is the same as setting
+		// the value to undefined.
+		this.set(key, undefined);
 	}
 
 	public override [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {

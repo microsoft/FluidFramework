@@ -302,7 +302,20 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
 	 * @param key - The key under which the new value will be set.
 	 * @param content - The new value to associate with `key`.
 	 */
-	set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+	set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void; // TODO: useful to return itself like JS map?
+
+	/**
+	 * Deletes the value associated with `key` from the map, if it exists.
+	 *
+	 * @remarks
+	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
+	 * deleted. This is an intentional design choice. Since this data structure is distributed in nature, it isn't
+	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
+	 * is more likely to create issues / promote bad usage patterns than offer useful information.
+	 *
+	 * @param key - The key whose associated value will be deleted.
+	 */
+	delete(key: string): void;
 
 	/**
 	 * Iterate through all fields in the map.

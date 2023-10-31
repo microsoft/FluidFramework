@@ -560,6 +560,12 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node[Symbol.iterator]();
 		},
 	},
+	delete: {
+		value(this: SharedTreeMap<MapSchema>, key: string): void {
+			const node = getMapNode(this);
+			node.delete(key);
+		},
+	},
 	entries: {
 		value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
 			const node = getMapNode(this);

@@ -400,13 +400,25 @@ describe("LazyMap", () => {
 		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
 
-	it("Value assignment generates edits", () => {
+	it("set", () => {
 		assert.equal(editCallCount, 0);
 
 		node.set(brand("baz"), "First edit");
 		assert.equal(editCallCount, 1);
 
 		node.set(brand("foo"), "Second edit");
+		assert.equal(editCallCount, 2);
+	});
+
+	it("delete", () => {
+		assert.equal(editCallCount, 0);
+
+		// Even though there is no value currently associated with "baz", we still need to
+		// emit a delete op, so this should generate an edit.
+		node.delete(brand("baz"));
+		assert.equal(editCallCount, 1);
+
+		node.delete(brand("foo"));
 		assert.equal(editCallCount, 2);
 	});
 });

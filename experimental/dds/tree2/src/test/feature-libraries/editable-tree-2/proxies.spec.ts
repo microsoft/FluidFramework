@@ -510,10 +510,32 @@ describe.only("SharedTreeMap", () => {
 	});
 
 	itWithRoot("set", schema, initialTree, (root) => {
+		// Insert new value
 		root.map.set("baz", "42");
-
 		assert.equal(root.map.size, 3);
 		assert(root.map.has("baz"));
 		assert.equal(root.map.get("baz"), "42");
+
+		// Override existing value
+		root.map.set("baz", "37");
+		assert.equal(root.map.size, 3);
+		assert(root.map.has("baz"));
+		assert.equal(root.map.get("baz"), "37");
+
+		// "Un-set" existing value
+		root.map.set("baz", undefined);
+		assert.equal(root.map.size, 2);
+		assert(!root.map.has("baz"));
+	});
+
+	itWithRoot("delete", schema, initialTree, (root) => {
+		// Delete existing value
+		root.map.delete("bar");
+		assert.equal(root.map.size, 1);
+		assert(!root.map.has("bar"));
+
+		// Delete non-present value
+		root.map.delete("baz");
+		assert.equal(root.map.size, 1);
 	});
 });
