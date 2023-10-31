@@ -94,6 +94,7 @@ export interface EditGeneratorOpWeights {
 	abort: number;
 	undo: number;
 	redo: number;
+	move: number;
 	// This is explicitly all-or-nothing. If changing to be partially specifiable, the override logic to apply default values
 	// needs to be updated since this is a nested object.
 	fieldSelection: FieldSelectionWeights;
@@ -107,6 +108,7 @@ const defaultEditGeneratorOpWeights: EditGeneratorOpWeights = {
 	abort: 0,
 	undo: 0,
 	redo: 0,
+	move: 0,
 	fieldSelection: defaultFieldSelectionWeights,
 	synchronizeTrees: 0,
 };
@@ -247,6 +249,61 @@ export const makeEditGenerator = (
 		}
 	};
 
+	const move = (state: FuzzTestState): FieldEditTypes => {
+		const tree = state.client.channel;
+		const fieldInfo = selectTreeField(
+			fuzzViewFromTree(tree),
+			state.random,
+			weights.fieldSelection,
+			(f) => f.type === "sequence" && f.content.length > 1,
+		);
+		assert(fieldInfo.type === "sequence", "Move should only be performed on sequence fields");
+		const { content: field } = fieldInfo;
+		assert(field.length > 1, "Sequence must have at least two elements to perform a move");
+
+		// Only two valid moves if length of two
+		if (field.length === 2) {
+			const fromIndex = state.random.integer(0, 1);
+			const toIndex = fromIndex === 0 ? 1 : 0;
+
+			return {
+				type: "sequence",
+				edit: {
+					type: "move",
+					dstIndex: toIndex,
+					count: 1,
+					firstNode: downPathFromNode(field.at(fromIndex)),
+				},
+			};
+		}
+
+		const start = state.random.integer(0, field.length - 1);
+		// If we choose the first node in the sequence we can't grab the whole sequence
+		// and still have something to move to
+		const count =
+			start === 0
+				? state.random.integer(1, field.length - start - 1)
+				: state.random.integer(1, field.length - start);
+
+		const validMoveIndices: number[] = [];
+		for (let i = 0; i < field.length; i++) {
+			if (i < start || i > start + count) {
+				validMoveIndices.push(i);
+			}
+		}
+		const moveIndex = state.random.pick(validMoveIndices);
+
+		return {
+			type: "sequence",
+			edit: {
+				type: "move",
+				dstIndex: moveIndex,
+				count,
+				firstNode: downPathFromNode(field.at(start)),
+			},
+		};
+	};
+
 	const fieldEdit = createWeightedGenerator<FieldEditTypes, FuzzTestState>([
 		[
 			insert,
@@ -268,6 +325,17 @@ export const makeEditGenerator = (
 					random,
 					weights.fieldSelection,
 					deletableFieldFilter,
+				) !== "no-valid-fields",
+		],
+		[
+			move,
+			weights.move,
+			({ client, random }) =>
+				trySelectTreeField(
+					fuzzViewFromTree(client.channel),
+					random,
+					weights.fieldSelection,
+					(f) => f.type === "sequence" && f.content.length > 1,
 				) !== "no-valid-fields",
 		],
 	]);
