@@ -89,5 +89,14 @@ export function itWithRoot<TRoot extends TreeFieldSchema>(
  * Similar to JSON stringify, but preserves `undefined` and numbers numbers as-is at the root.
  */
 export function pretty(arg: unknown): number | undefined | string {
-	return arg === undefined ? "undefined" : typeof arg === "number" ? arg : JSON.stringify(arg);
+	if (arg === undefined) {
+		return "undefined";
+	}
+	if (typeof arg === "number") {
+		return arg;
+	}
+	if (typeof arg === "string") {
+		return `"${arg}"`;
+	}
+	return JSON.stringify(arg);
 }

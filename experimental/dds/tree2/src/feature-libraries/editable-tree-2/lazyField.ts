@@ -246,10 +246,18 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	public at(index: number): UnboxNodeUnion<TTypes> | undefined {
-		if (index < -this.length || index >= this.length) {
+		// The logic here follows what Array.prototype.at does to handle any kind of index at runtime.
+		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at for details.
+		let finalIndex = Math.trunc(+index);
+		if (isNaN(finalIndex)) {
+			finalIndex = 0;
+		}
+		if (finalIndex < -this.length || finalIndex >= this.length) {
 			return undefined;
 		}
-		const finalIndex = index < 0 ? index + this.length : index;
+		if (finalIndex < 0) {
+			finalIndex = finalIndex + this.length;
+		}
 		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
