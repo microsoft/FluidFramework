@@ -12,7 +12,7 @@ import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from
 import { LocalReferenceCollection } from "./localReference";
 import { IMergeTreeDeltaOpArgs } from "./mergeTreeDeltaCallback";
 import { TrackingGroupCollection } from "./mergeTreeTracking";
-import { ICombiningOp, IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
+import { IJSONSegment, IMarkerDef, MergeTreeDeltaType, ReferenceType } from "./ops";
 import { computeHierarchicalOrdinal } from "./ordinal";
 import { PartialSequenceLengths } from "./partialLengths";
 import { clone, createMap, MapLike, PropertySet } from "./properties";
@@ -193,7 +193,6 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
 	properties?: PropertySet;
 	addProperties(
 		newProps: PropertySet,
-		op?: ICombiningOp,
 		seq?: number,
 		collabWindow?: CollaborationWindow,
 		rollback?: PropertiesRollback,
@@ -399,7 +398,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public addProperties(
 		newProps: PropertySet,
-		op?: ICombiningOp,
 		seq?: number,
 		collabWindow?: CollaborationWindow,
 		rollback: PropertiesRollback = PropertiesRollback.None,
@@ -409,7 +407,6 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		return this.propertyManager.addProperties(
 			this.properties,
 			newProps,
-			op,
 			seq,
 			collabWindow?.collaborating,
 			rollback,
@@ -667,20 +664,8 @@ export const compareNumbers = (a: number, b: number) => a - b;
 
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
-export interface IConsensusInfo {
-	marker: Marker;
-	callback: (m: Marker) => void;
-}
-
 export interface SegmentAccumulator {
 	segments: ISegment[];
-}
-/**
- * @internal
- */
-export interface MinListener {
-	minRequired: number;
-	onMinGE(minSeq: number): void;
 }
 
 export function debugMarkerToString(marker: Marker): string {

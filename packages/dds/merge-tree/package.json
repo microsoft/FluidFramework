@@ -170,6 +170,18 @@
 			},
 			"ClassDeclaration_TextSegment": {
 				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_ICombiningOp": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IConsensusInfo": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IConsensusValue": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

@@ -64,7 +64,6 @@ export {
 	compareNumbers,
 	compareStrings,
 	debugMarkerToString,
-	IConsensusInfo,
 	IJSONMarkerSegment,
 	IMarkerModifiedAction,
 	IMergeNodeCommon,
@@ -94,7 +93,6 @@ export {
 	createRemoveRangeOp,
 } from "./opBuilder";
 export {
-	ICombiningOp,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,
@@ -108,14 +106,7 @@ export {
 	MergeTreeDeltaType,
 	ReferenceType,
 } from "./ops";
-export {
-	addProperties,
-	createMap,
-	IConsensusValue,
-	MapLike,
-	matchProperties,
-	PropertySet,
-} from "./properties";
+export { addProperties, createMap, MapLike, matchProperties, PropertySet } from "./properties";
 export {
 	compareReferencePositions,
 	DetachedReferencePosition,

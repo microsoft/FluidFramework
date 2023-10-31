@@ -94,13 +94,6 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 	relativePos2?: IRelativePosition;
 }
 
-export interface ICombiningOp {
-	name: string;
-	defaultValue?: any;
-	minValue?: any;
-	maxValue?: any;
-}
-
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	type: typeof MergeTreeDeltaType.ANNOTATE;
 	pos1?: number;
@@ -108,7 +101,6 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	pos2?: number;
 	relativePos2?: IRelativePosition;
 	props: Record<string, any>;
-	combiningOp?: ICombiningOp;
 }
 
 /**

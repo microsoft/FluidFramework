@@ -23,7 +23,6 @@ import { LocalReferencePosition, SlidingPreference } from "./localReference";
 import {
 	CollaborationWindow,
 	compareStrings,
-	IConsensusInfo,
 	IMergeLeaf,
 	ISegment,
 	ISegmentAction,
@@ -43,7 +42,6 @@ import {
 	createRemoveRangeOp,
 } from "./opBuilder";
 import {
-	ICombiningOp,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -104,7 +102,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 	private readonly clientNameToIds = new RedBlackTree<string, number>(compareStrings);
 	private readonly shortClientIdMap: string[] = [];
-	private readonly pendingConsensus = new Map<string, IConsensusInfo>();
 
 	constructor(
 		// Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
@@ -154,48 +151,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * Annotate a marker and call the callback on consensus.
-	 * @param marker - The marker to annotate
-	 * @param props - The properties to annotate the marker with
-	 * @param consensusCallback - The callback called when consensus is reached
-	 * @returns The annotate op if valid, otherwise undefined
-	 */
-	public annotateMarkerNotifyConsensus(
-		marker: Marker,
-		props: PropertySet,
-		consensusCallback: (m: Marker) => void,
-	): IMergeTreeAnnotateMsg | undefined {
-		const combiningOp: ICombiningOp = {
-			name: "consensus",
-		};
-
-		const annotateOp = this.annotateMarker(marker, props, combiningOp);
-
-		if (annotateOp) {
-			const consensusInfo: IConsensusInfo = {
-				callback: consensusCallback,
-				marker,
-			};
-			this.pendingConsensus.set(marker.getId()!, consensusInfo);
-			return annotateOp;
-		} else {
-			return undefined;
-		}
-	}
-
-	/**
 	 * Annotates the markers with the provided properties
 	 * @param marker - The marker to annotate
 	 * @param props - The properties to annotate the marker with
-	 * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
 	 * @returns The annotate op if valid, otherwise undefined
 	 */
-	public annotateMarker(
-		marker: Marker,
-		props: PropertySet,
-		combiningOp?: ICombiningOp,
-	): IMergeTreeAnnotateMsg | undefined {
-		const annotateOp = createAnnotateMarkerOp(marker, props, combiningOp)!;
+	public annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined {
+		const annotateOp = createAnnotateMarkerOp(marker, props)!;
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;
 	}
@@ -205,16 +167,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param start - The inclusive start position of the range to annotate
 	 * @param end - The exclusive end position of the range to annotate
 	 * @param props - The properties to annotate the range with
-	 * @param combiningOp - Specifies how to combine values for the property, such as "incr" for increment.
 	 * @returns The annotate op if valid, otherwise undefined
 	 */
 	public annotateRangeLocal(
 		start: number,
 		end: number,
 		props: PropertySet,
-		combiningOp: ICombiningOp | undefined,
 	): IMergeTreeAnnotateMsg | undefined {
-		const annotateOp = createAnnotateRangeOp(start, end, props, combiningOp);
+		const annotateOp = createAnnotateRangeOp(start, end, props);
 		this.applyAnnotateRangeOp({ op: annotateOp });
 		return annotateOp;
 	}
@@ -472,7 +432,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			range.start,
 			range.end,
 			op.props,
-			op.combiningOp,
 			clientArgs.referenceSequenceNumber,
 			clientArgs.clientId,
 			clientArgs.sequenceNumber,
@@ -626,25 +585,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	private ackPendingSegment(opArgs: IMergeTreeDeltaRemoteOpArgs) {
-		const ackOp = (deltaOpArgs: IMergeTreeDeltaRemoteOpArgs) => {
-			this._mergeTree.ackPendingSegment(deltaOpArgs);
-			if (deltaOpArgs.op.type === MergeTreeDeltaType.ANNOTATE) {
-				if (deltaOpArgs.op.combiningOp && deltaOpArgs.op.combiningOp.name === "consensus") {
-					this.updateConsensusProperty(deltaOpArgs.op, deltaOpArgs.sequencedMessage);
-				}
-			}
-		};
-
 		if (opArgs.op.type === MergeTreeDeltaType.GROUP) {
 			for (const memberOp of opArgs.op.ops) {
-				ackOp({
+				this._mergeTree.ackPendingSegment({
 					groupOp: opArgs.op,
 					op: memberOp,
 					sequencedMessage: opArgs.sequencedMessage,
 				});
 			}
 		} else {
-			ackOp(opArgs);
+			this._mergeTree.ackPendingSegment(opArgs);
 		}
 	}
 
@@ -744,7 +694,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							segmentPosition,
 							segmentPosition + segment.cachedLength,
 							resetOp.props,
-							resetOp.combiningOp,
 						);
 					}
 					break;
@@ -1062,16 +1011,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					break;
 			}
 		}
-	}
-	updateConsensusProperty(op: IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
-		const markerId = op.relativePos1!.id!;
-		const consensusInfo = this.pendingConsensus.get(markerId);
-		if (consensusInfo) {
-			consensusInfo.marker.addProperties(op.props, op.combiningOp, msg.sequenceNumber);
-		}
-		this._mergeTree.addMinSeqListener(msg.sequenceNumber, () =>
-			consensusInfo!.callback(consensusInfo!.marker),
-		);
 	}
 
 	updateMinSeq(minSeq: number) {

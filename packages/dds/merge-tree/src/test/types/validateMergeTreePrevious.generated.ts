@@ -266,75 +266,38 @@ use_old_InterfaceDeclaration_IAttributionCollectionSpec(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICombiningOp": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_ICombiningOp": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_ICombiningOp():
-    TypeOnly<old.ICombiningOp>;
-declare function use_current_InterfaceDeclaration_ICombiningOp(
-    use: TypeOnly<current.ICombiningOp>);
-use_current_InterfaceDeclaration_ICombiningOp(
-    get_old_InterfaceDeclaration_ICombiningOp());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_ICombiningOp": {"backCompat": false}
+* "RemovedInterfaceDeclaration_ICombiningOp": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_ICombiningOp():
-    TypeOnly<current.ICombiningOp>;
-declare function use_old_InterfaceDeclaration_ICombiningOp(
-    use: TypeOnly<old.ICombiningOp>);
-use_old_InterfaceDeclaration_ICombiningOp(
-    get_current_InterfaceDeclaration_ICombiningOp());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConsensusInfo": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IConsensusInfo": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IConsensusInfo():
-    TypeOnly<old.IConsensusInfo>;
-declare function use_current_InterfaceDeclaration_IConsensusInfo(
-    use: TypeOnly<current.IConsensusInfo>);
-use_current_InterfaceDeclaration_IConsensusInfo(
-    get_old_InterfaceDeclaration_IConsensusInfo());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConsensusInfo": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IConsensusInfo": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IConsensusInfo():
-    TypeOnly<current.IConsensusInfo>;
-declare function use_old_InterfaceDeclaration_IConsensusInfo(
-    use: TypeOnly<old.IConsensusInfo>);
-use_old_InterfaceDeclaration_IConsensusInfo(
-    // @ts-expect-error compatibility expected to be broken
-    get_current_InterfaceDeclaration_IConsensusInfo());
 
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConsensusValue": {"forwardCompat": false}
+* "RemovedInterfaceDeclaration_IConsensusValue": {"forwardCompat": false}
 */
-declare function get_old_InterfaceDeclaration_IConsensusValue():
-    TypeOnly<old.IConsensusValue>;
-declare function use_current_InterfaceDeclaration_IConsensusValue(
-    use: TypeOnly<current.IConsensusValue>);
-use_current_InterfaceDeclaration_IConsensusValue(
-    get_old_InterfaceDeclaration_IConsensusValue());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "InterfaceDeclaration_IConsensusValue": {"backCompat": false}
+* "RemovedInterfaceDeclaration_IConsensusValue": {"backCompat": false}
 */
-declare function get_current_InterfaceDeclaration_IConsensusValue():
-    TypeOnly<current.IConsensusValue>;
-declare function use_old_InterfaceDeclaration_IConsensusValue(
-    use: TypeOnly<old.IConsensusValue>);
-use_old_InterfaceDeclaration_IConsensusValue(
-    get_current_InterfaceDeclaration_IConsensusValue());
 
 /*
 * Validate forward compat by using old type in place of current type

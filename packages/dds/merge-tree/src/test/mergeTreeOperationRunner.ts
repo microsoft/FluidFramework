@@ -27,7 +27,7 @@ export const removeRange: TestOperation = (client: TestClient, opStart: number, 
 	client.removeRangeLocal(opStart, opEnd);
 
 export const annotateRange: TestOperation = (client: TestClient, opStart: number, opEnd: number) =>
-	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId }, undefined);
+	client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,

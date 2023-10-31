@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ICombiningOp } from "./ops";
-
 export interface MapLike<T> {
 	[index: string]: T;
 }
@@ -15,58 +13,6 @@ export interface MapLike<T> {
 export type PropertySet = MapLike<any>;
 
 // Assume these are created with Object.create(null)
-
-export interface IConsensusValue {
-	seq: number;
-	value: any;
-}
-
-export function combine(
-	combiningInfo: ICombiningOp,
-	currentValue: any,
-	newValue: any,
-	seq?: number,
-) {
-	let _currentValue = currentValue;
-
-	if (_currentValue === undefined) {
-		_currentValue = combiningInfo.defaultValue;
-	}
-	// Fixed set of operations for now
-
-	switch (combiningInfo.name) {
-		case "incr":
-			_currentValue += newValue as number;
-			if (combiningInfo.minValue) {
-				if (_currentValue < combiningInfo.minValue) {
-					_currentValue = combiningInfo.minValue;
-				}
-			}
-			break;
-		case "consensus":
-			if (_currentValue === undefined) {
-				const cv: IConsensusValue = {
-					value: newValue,
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					seq: seq!,
-				};
-
-				_currentValue = cv;
-			} else {
-				const cv = _currentValue as IConsensusValue;
-				if (cv.seq === -1) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					cv.seq = seq!;
-				}
-			}
-			break;
-		default:
-			break;
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return _currentValue;
-}
 
 /**
  * @internal
@@ -98,12 +44,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 	return true;
 }
 
-export function extend<T>(
-	base: MapLike<T>,
-	extension: MapLike<T> | undefined,
-	combiningOp?: ICombiningOp,
-	seq?: number,
-) {
+export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
 	if (extension !== undefined) {
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
 		for (const key in extension) {
@@ -112,10 +53,7 @@ export function extend<T>(
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete base[key];
 			} else {
-				base[key] =
-					combiningOp && combiningOp.name !== "rewrite"
-						? combine(combiningOp, base[key], v, seq)
-						: v;
+				base[key] = v;
 			}
 		}
 	}
@@ -140,17 +78,9 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 /**
  * @internal
  */
-export function addProperties(
-	oldProps: PropertySet | undefined,
-	newProps: PropertySet,
-	op?: ICombiningOp,
-	seq?: number,
-) {
-	let _oldProps = oldProps;
-	if (!_oldProps || (op && op.name === "rewrite")) {
-		_oldProps = createMap<any>();
-	}
-	extend(_oldProps, newProps, op, seq);
+export function addProperties(oldProps: PropertySet | undefined, newProps: PropertySet) {
+	const _oldProps = oldProps ?? createMap<any>();
+	extend(_oldProps, newProps);
 	return _oldProps;
 }
 
