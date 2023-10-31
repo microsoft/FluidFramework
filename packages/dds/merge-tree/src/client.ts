@@ -16,7 +16,6 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
-import { IIntegerRange } from "./base";
 import { DoublyLinkedList, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
@@ -71,6 +70,15 @@ import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
+
+/**
+ * A range [start, end)
+ * @internal
+ */
+export interface IIntegerRange {
+	start: number;
+	end: number;
+}
 
 /**
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
