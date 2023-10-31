@@ -87,32 +87,29 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract readonly type: string;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: PropertySet);
-    // @internal (undocumented)
+    // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, consensusCallback: (m: Marker) => void): IMergeTreeAnnotateMsg | undefined;
     annotateRangeLocal(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg | undefined;
     // (undocumented)
     applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
-    // @internal (undocumented)
-    applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-    // @internal (undocumented)
-    applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-    // @internal (undocumented)
-    applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     // (undocumented)
-    cloneFromSegments(): Client;
-    // @internal
+    applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
+    // (undocumented)
+    applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
+    // (undocumented)
+    applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
     createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    // @internal (undocumented)
+    // (undocumented)
     createTextHelper(): IMergeTreeTextHelper;
     findReconnectionPosition(segment: ISegment, localSeq: number): number;
     // (undocumented)
     getClientId(): number;
-    // @internal (undocumented)
+    // (undocumented)
     getCollabWindow(): CollaborationWindow;
     // (undocumented)
     getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
@@ -123,7 +120,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     getCurrentSeq(): number;
     // (undocumented)
     getLength(): number;
-    // @internal (undocumented)
+    // (undocumented)
     getLongClientId(shortClientId: number): string;
     // (undocumented)
     getMarkerFromId(id: string): ISegment | undefined;
@@ -154,10 +151,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
-    // @internal
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
-    // @internal
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
@@ -171,7 +166,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     startOrUpdateCollaboration(longClientId: string | undefined, minSeq?: number, currentSeq?: number): void;
     // (undocumented)
     summarize(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer, catchUpMsgs: ISequencedDocumentMessage[]): ISummaryTreeWithStats;
-    // @internal (undocumented)
+    // (undocumented)
     updateMinSeq(minSeq: number): void;
     // (undocumented)
     protected walkAllSegments<TClientData>(action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;

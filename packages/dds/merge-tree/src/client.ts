@@ -97,6 +97,9 @@ export interface IClientEvents {
 	);
 }
 
+/**
+ * @internal
+ */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
 
@@ -138,8 +141,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * This method peeks the tail of that queue, and returns the segments groups there.
 	 * It is used to get the segment group(s) for the previous operations.
 	 * @param count - The number segment groups to get peek from the tail of the queue. Default 1.
-	 *
-	 * @internal
 	 */
 	public peekPendingSegmentGroups(count: number = 1): SegmentGroup | SegmentGroup[] | undefined {
 		const pending = this._mergeTree.pendingSegments;
@@ -348,9 +349,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	/**
-	 * @internal
-	 */
 	public getCollabWindow(): CollaborationWindow {
 		return this._mergeTree.collabWindow;
 	}
@@ -383,8 +381,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param canSlideToEndpoint - Whether or not the created local reference can
 	 * slide onto one of the special endpoint segments denoting the position
 	 * before the start of or after the end of the tree
-	 *
-	 * @internal
 	 */
 	public createLocalReferencePosition(
 		segment: ISegment | "start" | "end",
@@ -655,15 +651,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	// as functions are modified move them above the eslint-disabled waterline and lint them
-
-	cloneFromSegments() {
-		const clone = new Client(this.specToSegment, this.logger, this._mergeTree.options);
-		const segments: ISegment[] = [];
-		const newRoot = this._mergeTree.blockClone(this._mergeTree.root, segments);
-		clone._mergeTree.root = newRoot;
-		return clone;
-	}
 	getOrAddShortClientId(longClientId: string) {
 		if (!this.clientNameToIds.get(longClientId)) {
 			this.addLongClientId(longClientId);
@@ -675,16 +662,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
 
-	/**
-	 * @internal
-	 */
 	getLongClientId(shortClientId: number) {
 		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
 	}
 
-	/**
-	 * @internal
-	 */
 	addLongClientId(longClientId: string) {
 		this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
 		this.shortClientIdMap.push(longClientId);
@@ -842,22 +823,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	/**
-	 * @internal
-	 */
 	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-	/**
-	 * @internal
-	 */
 	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
-	/**
-	 * @internal
-	 */
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-	/**
-	 * @internal
-	 */
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
 		let metadata: SegmentGroup | SegmentGroup[] | undefined;
 		const stashed = true;
@@ -944,8 +913,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * can be resubmitted
 	 * @param resetOp - The op to reset
 	 * @param segmentGroup - The segment group associated with the op
-	 *
-	 * @internal
 	 */
 	public regeneratePendingOp(
 		resetOp: IMergeTreeOp,
@@ -1015,9 +982,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 
-	/**
-	 * @internal
-	 */
 	public createTextHelper(): IMergeTreeTextHelper {
 		return new MergeTreeTextHelper(this._mergeTree);
 	}
@@ -1112,9 +1076,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 	}
 
-	/**
-	 * @internal
-	 */
 	updateMinSeq(minSeq: number) {
 		this._mergeTree.setMinSeq(minSeq);
 	}
