@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { RevisionTag } from "../../core";
-import { IdAllocator } from "../modular-schema";
+import { IdAllocator } from "../../util";
 import { Mark } from "./format";
 import { applyMoveEffectsToMark, MoveEffectTable } from "./moveEffectTable";
 import { splitMark } from "./utils";

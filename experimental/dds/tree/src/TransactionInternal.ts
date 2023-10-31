@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { assertWithMessage, copyPropertyIfDefined, fail, Result } from './Common';
 import { NodeId, DetachedSequenceId, TraitLabel, isDetachedSequenceId } from './Identifiers';
 import { rangeFromStableRange } from './TreeViewUtilities';

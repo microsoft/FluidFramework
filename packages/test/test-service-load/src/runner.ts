@@ -11,17 +11,26 @@ import {
 	DriverEndpoint,
 } from "@fluidframework/test-driver-definitions";
 import { Loader, ConnectionState, IContainerExperimental } from "@fluidframework/container-loader";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequestHeader, LogLevel } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils";
-import { assert, delay } from "@fluidframework/common-utils";
+import { assert, delay } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { ILoadTest, IRunConfig } from "./loadTestDataStore";
-import { createCodeLoader, createLogger, createTestDriver, getProfile, safeExit } from "./utils";
+import {
+	configProvider,
+	createCodeLoader,
+	createLogger,
+	createTestDriver,
+	getProfile,
+	globalConfigurations,
+	safeExit,
+} from "./utils";
 import { FaultInjectionDocumentServiceFactory } from "./faultInjectionDriver";
 import {
 	generateConfigurations,
@@ -99,7 +108,8 @@ async function main() {
 			driverEndpointName: endpoint,
 			profile: profileName,
 		},
-		random.pick([LogLevel.verbose, LogLevel.default]),
+		// Turn on verbose events for ALL stress test runs.
+		random.pick([LogLevel.verbose]),
 	);
 
 	// this will enabling capturing the full stack for errors
@@ -219,13 +229,14 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			const testConfiguration = configurations[runConfig.runId % configurations.length];
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
 					loaderOptions: runConfig.loaderConfig,
 					containerOptions: containerOptions[runConfig.runId % containerOptions.length],
 					logLevel: runConfig.logger.minLogLevel,
-					configurations: configurations[runConfig.runId % configurations.length],
+					configurations: { ...globalConfigurations, ...testConfiguration },
 				}),
 			});
 			const loader = new Loader({
@@ -236,11 +247,7 @@ async function runnerProcess(
 				),
 				logger: runConfig.logger,
 				options: runConfig.loaderConfig,
-				configProvider: {
-					getRawConfig(name) {
-						return configurations[runConfig.runId % configurations.length][name];
-					},
-				},
+				configProvider: configProvider(testConfiguration),
 			});
 
 			const stashedOps = stashedOpP ? await stashedOpP : undefined;
@@ -249,6 +256,7 @@ async function runnerProcess(
 			container = await loader.resolve({ url, headers }, stashedOps);
 
 			container.connect();
+			// eslint-disable-next-line import/no-deprecated
 			const test = await requestFluidObject<ILoadTest>(container, "/");
 
 			// Retain old behavior of runtime being disposed on container close
@@ -346,9 +354,8 @@ function scheduleFaultInjection(
 				container.connectionState === ConnectionState.Connected &&
 				container.resolvedUrl !== undefined
 			) {
-				const deltaConn = ds.documentServices.get(
-					container.resolvedUrl,
-				)?.documentDeltaConnection;
+				const deltaConn = ds.documentServices.get(container.resolvedUrl)
+					?.documentDeltaConnection;
 				if (deltaConn !== undefined && !deltaConn.disposed) {
 					// 1 in numClients chance of non-retritable error to not overly conflict with container close
 					const canRetry = random.bool(1 - 1 / runConfig.testConfig.numClients);

@@ -4,7 +4,7 @@
  */
 
 import { FluidAppOdspUrlResolver } from "@fluid-tools/fluidapp-odsp-urlresolver";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import { OdspSampleCache } from "./odspPersistantCache";

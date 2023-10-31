@@ -458,7 +458,7 @@ class TestIncrementalSummaryTreeDDS extends SharedObject {
  */
 describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
-	const dataObjectFactory = new TestFluidObjectFactory([
+	const defaultFactory = new TestFluidObjectFactory([
 		[
 			TestIncrementalSummaryTreeDDS.getFactory().type,
 			TestIncrementalSummaryTreeDDS.getFactory(),
@@ -473,13 +473,12 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
 		runtime.IFluidHandleContext.resolveHandle(request);
-	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-		dataObjectFactory,
-		[[dataObjectFactory.type, Promise.resolve(dataObjectFactory)]],
-		undefined,
-		[innerRequestHandler],
+	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+		defaultFactory,
+		registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+		requestHandlers: [innerRequestHandler],
 		runtimeOptions,
-	);
+	});
 
 	const createContainer = async (): Promise<IContainer> => {
 		return provider.createContainer(runtimeFactory);
@@ -495,7 +494,7 @@ describeNoCompat("Incremental summaries can be generated for DDSes", (getTestObj
 		const createSummarizerResult = await createSummarizerFromFactory(
 			provider,
 			container,
-			dataObjectFactory,
+			defaultFactory,
 			summaryVersion,
 			getContainerRuntimeApi(pkgVersion, pkgVersion)
 				.ContainerRuntimeFactoryWithDefaultDataStore,

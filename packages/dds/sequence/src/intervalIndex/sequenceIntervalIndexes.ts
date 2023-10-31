@@ -10,6 +10,7 @@ import { IOverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 /**
  * This namespace contains specialiazations of indexes which support spatial queries
  * specifically for `SequenceInterval`s.
+ * @public
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace SequenceIntervalIndexes {
@@ -27,6 +28,6 @@ export namespace SequenceIntervalIndexes {
 		findOverlappingIntervalsBySegoff(
 			startSegoff: { segment: ISegment | undefined; offset: number | undefined },
 			endSegoff: { segment: ISegment | undefined; offset: number | undefined },
-		);
+		): Iterable<SequenceInterval>;
 	}
 }

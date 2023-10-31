@@ -5,7 +5,7 @@
 
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,

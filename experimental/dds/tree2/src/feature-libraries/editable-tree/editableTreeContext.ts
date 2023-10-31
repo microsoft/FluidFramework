@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IEditableForest,
 	moveToDetachedField,
 	FieldAnchor,
 	Anchor,
 	ForestEvents,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKey,
-	SchemaData,
+	TreeStoredSchema,
 } from "../../core";
 import { ISubscribable } from "../../events";
 import { DefaultEditBuilder } from "../default-field-kinds";
-import { NodeKeyManager } from "../node-key";
 import { FieldGenerator, NewFieldContent } from "../contextuallyTyped";
 import { EditableField, UnwrappedEditableField } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
@@ -75,7 +74,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	 * Schema used within this context.
 	 * All data must conform to these schema.
 	 */
-	readonly schema: SchemaData;
+	readonly schema: TreeStoredSchema;
 
 	/**
 	 * Call before editing.
@@ -102,7 +101,7 @@ export interface EditableTreeContext extends ISubscribable<ForestEvents> {
 	/**
 	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
 	 */
-	fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+	fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**
@@ -125,13 +124,12 @@ export class ProxyContext implements EditableTreeContext {
 	 */
 	public constructor(
 		public readonly forest: IEditableForest,
-		public readonly schema: SchemaData,
+		public readonly schema: TreeStoredSchema,
 		public readonly editor: DefaultEditBuilder,
-		public readonly nodeKeys: NodeKeyManager,
 		public readonly nodeKeyFieldKey?: FieldKey,
 	) {
 		this.eventUnregister = [
-			this.forest.on("beforeDelta", () => {
+			this.forest.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
 		];
@@ -204,18 +202,11 @@ export class ProxyContext implements EditableTreeContext {
  *
  * @param forest - the Forest
  * @param editor - an editor that makes changes to the forest.
- * @param nodeKeyManager - an object which handles node key generation and conversion
- * @param nodeKeyFieldKey - an optional field key under which node keys are stored in this tree.
- * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
- * @returns {@link EditableTreeContext} which is used to manage the cursors and anchors within the EditableTrees:
- * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getEditableTreeContext(
 	forest: IEditableForest,
-	schema: SchemaData,
+	schema: TreeStoredSchema,
 	editor: DefaultEditBuilder,
-	nodeKeyManager: NodeKeyManager,
-	nodeKeyFieldKey?: FieldKey,
 ): EditableTreeContext {
-	return new ProxyContext(forest, schema, editor, nodeKeyManager, nodeKeyFieldKey);
+	return new ProxyContext(forest, schema, editor);
 }

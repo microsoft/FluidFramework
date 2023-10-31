@@ -22,10 +22,9 @@ import { TestConsumer } from "./testconsumer";
 function createConnectedMatrix(id: string, runtimeFactory: MockContainerRuntimeFactory) {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	const matrix = new SharedMatrix(dataStoreRuntime, id, SharedMatrixFactory.Attributes);
+	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	matrix.connect({
-		deltaConnection: runtimeFactory
-			.createContainerRuntime(dataStoreRuntime)
-			.createDeltaConnection(),
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),
 	});
 	return matrix;

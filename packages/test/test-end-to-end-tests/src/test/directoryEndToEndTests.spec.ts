@@ -106,14 +106,17 @@ describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
 			// Directory was created in beforeEach
 			assert.ok(
 				sharedDirectory1,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the directory in root1, instead got ${sharedDirectory1}`,
 			);
 			assert.ok(
 				sharedDirectory2,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the directory in root2, instead got ${sharedDirectory2}`,
 			);
 			assert.ok(
 				sharedDirectory3,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Couldn't find the directory in root3, instead got ${sharedDirectory3}`,
 			);
 		});
@@ -1204,5 +1207,32 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.equal(changedEventData.length, 2);
 		assert.equal(changedEventData[1].key, "key2");
 		assert.equal(changedEventData[1].previousValue, undefined);
+	});
+
+	it("Should rollback deleted subdirectory when multiple subdirectories exist", () => {
+		let error: Error | undefined;
+
+		sharedDir.createSubDirectory("dir2");
+		sharedDir.createSubDirectory("dir3");
+		sharedDir.createSubDirectory("dir1");
+
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedDir.deleteSubDirectory("dir3");
+				throw new Error("callback failure");
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false);
+		// rollback
+		assert.equal(sharedDir.countSubDirectory(), 3);
+		assert.equal(subDirCreatedEventData.length, 4);
+		assert.deepStrictEqual(subDirCreatedEventData, ["dir2", "dir3", "dir1", "dir3"]);
+		assert.equal(subDirDeletedEventData.length, 1);
+		assert.equal(subDirDeletedEventData[0], "dir3");
 	});
 });

@@ -16,7 +16,8 @@ import {
 	ITestContainerConfig,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-internal/test-version-utils";
-import { delay, stringToBuffer } from "@fluidframework/common-utils";
+import { stringToBuffer } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
@@ -97,7 +98,6 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 
 	beforeEach(async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
-		settings["Fluid.GarbageCollection.Test.SweepAttachmentBlobs"] = true;
 		settings["Fluid.GarbageCollection.RunSweep"] = true;
 		settings["Fluid.GarbageCollection.TestOverride.SweepTimeoutMs"] = sweepTimeoutMs;
 	});

@@ -102,9 +102,9 @@ export class ReferenceVersionBag extends VersionBag {
 				const existingReference = this.referenceData.get(entryName);
 				const message = `Inconsistent dependency to ${pkg.name}\n  ${version.padStart(
 					10,
-				)} in ${newReference}\n  ${existing.padStart(10)} in ${
-					existingReference?.reference
-				}`;
+				)} in ${newReference}\n  ${existing.padStart(
+					10,
+				)} in ${existingReference?.reference}`;
 				if (
 					existingReference?.reference &&
 					this.publishedPackage.has(existingReference.reference) &&
@@ -295,7 +295,7 @@ export class ReferenceVersionBag extends VersionBag {
 	}
 	public needRelease(name: string) {
 		if (this.needBump(name)) {
-			const data = this.referenceData.get(name)!;
+			const data = this.referenceData.get(name);
 			return !data || !data.published;
 		}
 		return false;

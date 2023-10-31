@@ -102,8 +102,11 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 
 	it("can create the cell in 3 containers correctly", async () => {
 		// Cell was created and populated in beforeEach
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.ok(sharedCell1, `Couldn't find the cell in container1, instead got ${sharedCell1}`);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.ok(sharedCell2, `Couldn't find the cell in container2, instead got ${sharedCell2}`);
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		assert.ok(sharedCell3, `Couldn't find the cell in container3, instead got ${sharedCell3}`);
 	});
 

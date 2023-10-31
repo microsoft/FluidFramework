@@ -25,6 +25,13 @@ export {
 	AnchorSet,
 	DetachedField,
 	UpPath,
+	Range,
+	RangeUpPath,
+	PlaceUpPath,
+	PlaceIndex,
+	NodeIndex,
+	DetachedPlaceUpPath,
+	DetachedRangeUpPath,
 	FieldUpPath,
 	Anchor,
 	RootField,
@@ -50,13 +57,19 @@ export {
 	getDepth,
 	mapCursorField,
 	mapCursorFields,
+	iterateCursorField,
 	getMapTreeField,
 	MapTree,
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	combineVisitors,
+	announceDelta,
+	applyDelta,
+	makeDetachedFieldIndex,
 	setGenericTreeField,
 	DeltaVisitor,
+	AnnouncedVisitor,
 	PathVisitor,
 	SparseNode,
 	getDescendant,
@@ -68,7 +81,11 @@ export {
 	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
-	isSkipMark,
+	deltaForRootInitialization,
+	deltaForSet,
+	emptyFieldChanges,
+	isEmptyFieldChanges,
+	makeDetachedNodeId,
 	emptyDelta,
 	AnchorSlot,
 	AnchorNode,
@@ -81,6 +98,9 @@ export {
 	ProtoNodes,
 	CursorMarker,
 	isCursor,
+	DetachedFieldIndex,
+	ForestRootId,
+	getDetachedFieldContainingPath,
 } from "./tree";
 
 export {
@@ -101,18 +121,18 @@ export {
 export {
 	FieldKey,
 	FieldKeySchema,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
 	PrimitiveValueSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
 	fieldSchema,
@@ -124,11 +144,13 @@ export {
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	cloneSchemaData,
+	StoredSchemaCollection,
 } from "./schema-stored";
 
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
+	areEqualChangeAtomIds,
 	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
@@ -162,6 +184,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { RepairDataStore, ReadonlyRepairDataStore, IRepairDataStoreProvider } from "./repair";
-
-export { UndoRedoManager, LocalCommitSource } from "./undo";
+export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";

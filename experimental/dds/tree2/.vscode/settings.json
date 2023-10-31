@@ -12,4 +12,5 @@
 	],
 	"mochaExplorer.configFile": ".mocharc.js",
 	"mochaExplorer.timeout": 999999,
+	"cSpell.words": ["endregion"],
 }

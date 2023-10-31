@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import {
 	IChannelAttributes,
 	IChannelStorageService,
@@ -22,13 +22,7 @@ import {
 	SharedObject,
 } from "@fluidframework/shared-object-base";
 import { ICodecOptions, IJsonCodec } from "../codec";
-import {
-	ChangeFamily,
-	Delta,
-	ChangeFamilyEditor,
-	IRepairDataStoreProvider,
-	GraphCommit,
-} from "../core";
+import { ChangeFamily, Delta, ChangeFamilyEditor, GraphCommit } from "../core";
 import { brand, JsonCompatibleReadOnly, generateStableId } from "../util";
 import { createEmitter, TransformEvents } from "../events";
 import { SharedTreeBranch, getChangeReplaceType } from "./branch";
@@ -116,7 +110,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
 	 *
-	 * @remarks - Since there is currently only one format, this can just be cached on the class.
+	 * @remarks Since there is currently only one format, this can just be cached on the class.
 	 * With more write formats active, it may make sense to keep around the "usual" format codec
 	 * (the one for the current persisted configuration) and resolve codecs for different versions
 	 * as necessary (e.g. an upgrade op came in, or the configuration changed within the collab window
@@ -136,7 +130,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 	public constructor(
 		summarizables: readonly Summarizable[],
 		private readonly changeFamily: ChangeFamily<TEditor, TChange>,
-		repairDataStoreProvider: IRepairDataStoreProvider<TChange>,
 		options: ICodecOptions,
 		// Base class arguments
 		id: string,
@@ -153,7 +146,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		 */
 		// TODO: Change this type to be the Session ID type provided by the IdCompressor when available.
 		const localSessionId = generateStableId();
-		this.editManager = new EditManager(changeFamily, localSessionId, repairDataStoreProvider);
+		this.editManager = new EditManager(changeFamily, localSessionId);
 		this.editManager.on("newTrunkHead", (head) => {
 			this.changeEvents.emit("newSequencedChange", head.change);
 		});
@@ -194,7 +187,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.messageCodec = makeMessageCodec(changeFamily.codecs.resolve(formatVersion).json);
+		this.messageCodec = makeMessageCodec(
+			changeFamily.codecs.resolve(formatVersion).json,
+			options,
+		);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -231,7 +227,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		await Promise.all(loadSummaries);
-		this.editManager.afterSummaryLoad();
 	}
 
 	/**
@@ -282,22 +277,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
-	}
-
-	/**
-	 * Undoes the last completed transaction made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	public undo(): void {
-		this.editManager.localBranch.undo();
-	}
-
-	/**
-	 * Redoes the last completed undo made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	public redo(): void {
-		this.editManager.localBranch.redo();
 	}
 
 	/**

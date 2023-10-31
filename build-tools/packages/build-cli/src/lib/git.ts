@@ -87,6 +87,8 @@ export class Repository {
 	}
 
 	/**
+	 * Get the merge base between the current HEAD and the remote branch.
+	 *
 	 * @param branch - The branch to compare against.
 	 * @param remote - The remote to compare against.
 	 * @param localRef - The local ref to compare against. Defaults to HEAD.
@@ -98,12 +100,14 @@ export class Repository {
 		localRef = "HEAD",
 	): Promise<string> {
 		const base = await this.gitClient
-			.fetch(["--all"]) // make sure we have the latest remote refs
+			.fetch([remote]) // make sure we have the latest remote refs
 			.raw("merge-base", `refs/remotes/${remote}/${branch}`, localRef);
 		return base;
 	}
 
 	/**
+	 * Get the merge base between two refs.
+	 *
 	 * @param ref1 - The first ref to compare.
 	 * @param ref2 - The ref to compare against.
 	 * @returns The ref of the merge base between the two refs.

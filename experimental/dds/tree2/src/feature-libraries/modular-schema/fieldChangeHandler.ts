@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Delta, TaggedChange, RevisionTag, ChangesetLocalId } from "../../core";
-import { fail, Invariant } from "../../util";
+import { Delta, TaggedChange, RevisionTag } from "../../core";
+import { fail, IdAllocator, Invariant } from "../../util";
 import { ICodecFamily, IJsonCodec } from "../../codec";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import { CrossFieldManager } from "./crossFieldQueries";
@@ -13,7 +13,6 @@ import { NodeChangeset, RevisionInfo } from "./modularChangeTypes";
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
- * @alpha
  */
 export interface FieldChangeHandler<
 	TChangeset,
@@ -27,7 +26,7 @@ export interface FieldChangeHandler<
 		change: TaggedChange<TChangeset>,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.MarkList;
+	): Delta.FieldChanges;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -36,9 +35,6 @@ export interface FieldChangeHandler<
 	isEmpty(change: TChangeset): boolean;
 }
 
-/**
- * @alpha
- */
 export interface FieldChangeRebaser<TChangeset> {
 	/**
 	 * Compose a collection of changesets into a single one.
@@ -74,7 +70,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
@@ -85,7 +80,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	amendInvert(
 		invertedChange: TChangeset,
 		originalRevision: RevisionTag | undefined,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
 	): TChangeset;
@@ -123,12 +117,12 @@ export interface FieldChangeRebaser<TChangeset> {
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (changes: TChangeset[]) => TChangeset;
-	invert: (change: TChangeset, reviver: NodeReviver) => TChangeset;
+	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
-		invert: (change, _invertChild, reviver, _genId) => data.invert(change.change, reviver),
+		invert: (change, _invertChild, _genId) => data.invert(change.change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
 	});
 }
@@ -146,9 +140,6 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	};
 }
 
-/**
- * @alpha
- */
 export interface FieldEditor<TChangeset> {
 	/**
 	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
@@ -161,16 +152,7 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
-
-/**
- * @alpha
- */
-export type NodeReviver = (
-	revision: RevisionTag,
-	index: number,
-	count: number,
-) => Delta.ProtoNode[];
+export type ToDelta = (child: NodeChangeset) => Delta.FieldMap;
 
 /**
  * @alpha
@@ -207,13 +189,6 @@ export type NodeChangeRebaser = (
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 /**
- * Allocates a block of `count` consecutive IDs and returns the first ID in the block.
- * For convenience can be called with no parameters to allocate a single ID.
- * @alpha
- */
-export type IdAllocator = (count?: number) => ChangesetLocalId;
-
-/**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
  * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
  * compose or rebase operation.
@@ -231,7 +206,7 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
  */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
-	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 }
 
 /**
@@ -241,5 +216,5 @@ export function getIntention(
 	rev: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
+	return revisionMetadata.tryGetInfo(rev)?.rollbackOf ?? rev;
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { EventEmitterWithErrorHandling, ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils';
 import { IDisposable, IErrorEvent, ITelemetryProperties } from '@fluidframework/core-interfaces';
 import { assertWithMessage, fail, RestOrArray, unwrapRestOrArray } from './Common';
@@ -320,6 +320,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 
 	/**
 	 * Rebases the ongoing edit to the latest revision loaded by this 'Checkout'.
+	 *
 	 * If the rebase succeeds (none of the changes in the ongoing edit became invalid), the ongoing edit will remain open and the current
 	 * view will reflect those changes.
 	 *
@@ -327,7 +328,8 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 * currentView will return to showing the newest committed revision as it always does when there is no ongoing edit.
 	 *
 	 * Must only be called during an open edit.
-	 * @returns - the result of the rebase.
+	 *
+	 * @returns The result of the rebase.
 	 */
 	public rebaseCurrentEdit(): EditValidationResult.Valid | EditValidationResult.Invalid {
 		assert(this.currentEdit !== undefined, 0x605 /* An edit is not open. */);

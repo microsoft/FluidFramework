@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { ContainerMessageType } from "..";
+import { ContainerMessageType } from "../messageTypes";
 import { IBatch } from "./definitions";
 
 /**
@@ -20,6 +20,10 @@ interface IGroupedMessage {
 	contents?: unknown;
 	metadata?: Record<string, unknown>;
 	compression?: string;
+}
+
+function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
+	return opContents?.type === OpGroupingManager.groupedBatchOp;
 }
 
 export class OpGroupingManager {
@@ -68,14 +72,11 @@ export class OpGroupingManager {
 	}
 
 	public ungroupOp(op: ISequencedDocumentMessage): ISequencedDocumentMessage[] {
-		if (
-			(op.contents as { type?: unknown } | undefined)?.type !==
-			OpGroupingManager.groupedBatchOp
-		) {
+		if (!isGroupContents(op.contents)) {
 			return [op];
 		}
 
-		const messages = (op.contents as IGroupedBatchMessageContents).contents;
+		const messages = op.contents.contents;
 		let fakeCsn = 1;
 		return messages.map((subMessage) => ({
 			...op,

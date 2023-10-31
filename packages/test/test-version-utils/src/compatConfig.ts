@@ -2,9 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert } from "@fluidframework/common-utils";
-import { Lazy } from "@fluidframework/core-utils";
-import { fromInternalScheme } from "@fluid-tools/version-tools";
+import { assert, Lazy } from "@fluidframework/core-utils";
+import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import {
 	CompatKind,
 	compatKind,
@@ -186,6 +185,8 @@ export interface CompatVersionConfig {
 	name: string;
 	createWith: CompatVersion;
 	loadWith: CompatVersion;
+	kind: CompatKind;
+	compatVersion: number | string;
 }
 
 export const getCrossVersionCompatConfig = (): CompatVersionConfig[] => {
@@ -194,23 +195,27 @@ export const getCrossVersionCompatConfig = (): CompatVersionConfig[] => {
 		delta,
 	}));
 
+	const adjustPublicMajor = detectVersionScheme(pkgVersion) !== "internal";
+
 	return allDefaultDeltaVersions
 		.map((createVersion) =>
 			allDefaultDeltaVersions.map((loadVersion) => {
 				const createRange = getRequestedRange(
 					createVersion.base,
 					createVersion.delta,
-					/* adjustPublicMajor */ true,
+					adjustPublicMajor,
 				);
 				const loadRange = getRequestedRange(
 					loadVersion.base,
 					loadVersion.delta,
-					/* adjustPublicMajor */ true,
+					adjustPublicMajor,
 				);
 				return {
 					name: `CROSS VERSION COMPAT create with [${createRange}], load with [${loadRange}]`,
 					createWith: createVersion,
 					loadWith: loadVersion,
+					kind: CompatKind.Loader,
+					compatVersion: pkgVersion,
 				};
 			}),
 		)
@@ -242,6 +247,7 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 		defaultCompatVersions.ltsVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
+		_configList.push(...getCrossVersionCompatConfig());
 	} else {
 		compatVersions.forEach((value) => {
 			if (value === "LTS") {
@@ -324,6 +330,7 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
+		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- rethrowing the originally caught value
 		throw error;
 	}
 }

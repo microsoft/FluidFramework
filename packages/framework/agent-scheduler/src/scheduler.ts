@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
@@ -440,7 +441,7 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 		const response = await super.request(request);
 		if (response.status === 404) {
 			if (request.url === "" || request.url === "/") {
-				const agentScheduler = await this.entryPoint?.get();
+				const agentScheduler = await this.entryPoint.get();
 				assert(
 					agentScheduler !== undefined,
 					0x466 /* entryPoint for AgentSchedulerRuntime should have been initialized by now */,
@@ -453,6 +454,9 @@ class AgentSchedulerRuntime extends FluidDataStoreRuntime {
 	}
 }
 
+/**
+ * @public
+ */
 export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	public static readonly type = "_scheduler";
 	public readonly type = AgentSchedulerFactory.type;
@@ -470,13 +474,12 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
 	): Promise<IAgentScheduler> {
 		const packagePath = [...parentContext.packagePath, AgentSchedulerFactory.type];
 		const dataStore = await parentContext.containerRuntime.createDataStore(packagePath);
-		const entryPoint: FluidObject<IAgentScheduler> | undefined =
-			await dataStore.entryPoint?.get();
+		const entryPoint: FluidObject<IAgentScheduler> = await dataStore.entryPoint.get();
 
 		// AgentSchedulerRuntime always puts an AgentScheduler object in the data store's entryPoint, but double-check
 		// while we plumb entryPoints correctly everywhere, so we can be sure the cast below is fine.
 		assert(
-			entryPoint?.IAgentScheduler !== undefined,
+			entryPoint.IAgentScheduler !== undefined,
 			0x467 /* The data store's entryPoint is not an AgentScheduler! */,
 		);
 		return entryPoint as unknown as AgentScheduler;

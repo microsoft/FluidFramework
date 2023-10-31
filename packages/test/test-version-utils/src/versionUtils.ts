@@ -314,7 +314,12 @@ export function getRequestedRange(
 		);
 
 		if (adjustPublicMajor === false) {
-			return internalSchema(publicVersion.version, internalVersion.version, requested);
+			const internalSchemeVersion = internalSchema(
+				publicVersion.version,
+				internalVersion.version,
+				requested,
+			);
+			return resolveVersion(internalSchemeVersion, false);
 		}
 	}
 

@@ -9,6 +9,7 @@ import {
 	ITelemetryLogger,
 	IDisposable,
 	IFluidHandleContext,
+	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IFluidHandle,
 	FluidObject,
@@ -111,8 +112,9 @@ export interface IFluidDataStoreRuntime
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	submitSignal(type: string, content: any): void;
+	submitSignal(type: string, content: any, targetClientId?: string): void;
 
 	/**
 	 * Returns the current quorum.
@@ -131,22 +133,18 @@ export interface IFluidDataStoreRuntime
 
 	/**
 	 * Exposes a handle to the root object / entryPoint of the data store. Use this as the primary way of interacting
-	 * with it. If this property is undefined (meaning that exposing the entryPoint hasn't been implemented in a
-	 * particular scenario) fall back to the current approach of requesting the root object through the request pattern.
-	 *
-	 * @remarks The plan is that eventually the data store will stop providing IFluidRouter functionality, this property
-	 * will become non-optional and return an IFluidHandle (no undefined) and will become the only way to access
-	 * the data store's entryPoint.
+	 * with it.
 	 */
-	readonly entryPoint?: IFluidHandle<FluidObject>;
+	readonly entryPoint: IFluidHandle<FluidObject>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
 }

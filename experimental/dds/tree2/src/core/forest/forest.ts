@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ISubscribable } from "../../events";
 import { Dependee } from "../dependency-tracking";
 import { StoredSchemaRepository, FieldKey } from "../schema-stored";
 import {
 	Anchor,
 	AnchorSet,
-	Delta,
 	DetachedField,
 	detachedFieldAsKey,
 	ITreeCursor,
 	rootField,
+	UpPath,
 } from "../tree";
 import type { IEditableForest } from "./editableForest";
 
@@ -35,14 +35,16 @@ import type { IEditableForest } from "./editableForest";
  */
 export interface ForestEvents {
 	/**
-	 * Delta is about to be applied to forest.
+	 * The forest is about to be changed.
+	 * Emitted before the first change in a batch of changes.
 	 */
-	beforeDelta(delta: Delta.Root): void;
+	beforeChange(): void;
 
 	/**
-	 * Delta was just applied to forest.
+	 * The forest was just changed.
+	 * Emitted after the last change in a batch of changes.
 	 */
-	afterDelta(delta: Delta.Root): void;
+	afterChange(): void;
 }
 
 /**
@@ -88,6 +90,16 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 		destination: FieldAnchor,
 		cursorToMove: ITreeSubscriptionCursor,
 	): TreeNavigationResult;
+
+	/**
+	 * Set `cursorToMove` to location described by path.
+	 * This is NOT a relative move: current position is discarded.
+	 * Path must point to existing node. If a destination is not provided, the cursor
+	 * is moved to a special dummy node above the detached fields.
+	 * This dummy node can be used to read the detached fields,
+	 * but other operations (such as inspecting the dummy node's type or path) should not be relied upon.
+	 */
+	moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void;
 
 	/**
 	 * True if there are no nodes in the forest at all.

@@ -5,17 +5,17 @@
 
 import { Named, fail } from "../../util";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKey,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	TreeStoredSchema,
-	TreeSchemaIdentifier,
-	SchemaData,
 	Adapters,
 	AdaptedViewSchema,
 	Compatibility,
 } from "../../core";
 import { FullSchemaPolicy, allowsRepoSuperset, isNeverTree } from "../modular-schema";
-import { TypedSchemaCollection } from "./schemaBuilder";
+import { TreeSchema } from "./typedTreeSchema";
 
 /**
  * A collection of View information for schema, including policy.
@@ -24,7 +24,7 @@ export class ViewSchema {
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
 		public readonly adapters: Adapters,
-		public readonly schema: TypedSchemaCollection,
+		public readonly schema: TreeSchema,
 	) {}
 
 	/**
@@ -37,7 +37,7 @@ export class ViewSchema {
 	 * TODO: this API violates the parse don't validate design philosophy.
 	 * It should be wrapped with (or replaced by) a parse style API.
 	 */
-	public checkCompatibility(stored: SchemaData): {
+	public checkCompatibility(stored: TreeStoredSchema): {
 		read: Compatibility;
 		write: Compatibility;
 		writeAllowingStoredSchemaUpdates: Compatibility;
@@ -88,7 +88,7 @@ export class ViewSchema {
 	 * TODO: have a way for callers to get invalidated on schema updates.
 	 * Maybe pass in StoredSchemaRepository and optional ObservingDependent?
 	 */
-	public adaptRepo(stored: SchemaData): AdaptedViewSchema {
+	public adaptRepo(stored: TreeStoredSchema): AdaptedViewSchema {
 		// Sanity check on adapters:
 		// it's probably a bug it they use the never types,
 		// since there never is a reason to have a never type as an adapter input,
@@ -102,7 +102,7 @@ export class ViewSchema {
 
 		const adapted = {
 			rootFieldSchema: this.adaptField(stored.rootFieldSchema),
-			treeSchema: new Map<TreeSchemaIdentifier, TreeStoredSchema>(),
+			treeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(),
 		};
 
 		for (const [key, schema] of stored.treeSchema) {
@@ -117,9 +117,9 @@ export class ViewSchema {
 	/**
 	 * Adapt original such that it allows member types which can be adapted to its specified types.
 	 */
-	private adaptField(original: FieldStoredSchema): FieldStoredSchema {
+	private adaptField(original: TreeFieldStoredSchema): TreeFieldStoredSchema {
 		if (original.types !== undefined) {
-			const types: Set<TreeSchemaIdentifier> = new Set(original.types);
+			const types: Set<TreeNodeSchemaIdentifier> = new Set(original.types);
 			for (const treeAdapter of this.adapters?.tree ?? []) {
 				if (types.has(treeAdapter.input)) {
 					types.delete(treeAdapter.input);
@@ -132,18 +132,18 @@ export class ViewSchema {
 		return original;
 	}
 
-	private adaptTree(original: TreeStoredSchema): TreeStoredSchema {
-		const structFields: Map<FieldKey, FieldStoredSchema> = new Map();
-		for (const [key, schema] of original.structFields) {
+	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
+		const objectNodeFields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
+		for (const [key, schema] of original.objectNodeFields) {
 			// TODO: support missing field adapters.
-			structFields.set(key, this.adaptField(schema));
+			objectNodeFields.set(key, this.adaptField(schema));
 		}
 		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
 		// so copying the data over manually is better.
 		return {
 			mapFields: original.mapFields,
 			leafValue: original.leafValue,
-			structFields,
+			objectNodeFields,
 		};
 	}
 }

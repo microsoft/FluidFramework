@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { stringToBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import { stringToBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -33,6 +33,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 	protected readonly blobsShaCache = new Map<string, string>();
 	private readonly summaryTreeUploadManager: ISummaryUploadManager;
 
+	// eslint-disable-next-line @typescript-eslint/class-literal-property-style
 	public get repositoryUrl(): string {
 		return "";
 	}

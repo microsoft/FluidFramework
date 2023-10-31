@@ -36,7 +36,10 @@ async function readStream<T>(stream): Promise<T[]> {
 }
 
 export class Collection<T> implements ICollection<T> {
-	constructor(private readonly db: any, private readonly property: ICollectionProperty) {}
+	constructor(
+		private readonly db: any,
+		private readonly property: ICollectionProperty,
+	) {}
 
 	public aggregate(pipeline: any, options?: any): any {
 		throw new Error("Method Not Implemented");

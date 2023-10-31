@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Timer } from "@fluidframework/common-utils";
+import { assert, Timer } from "@fluidframework/core-utils";
 import { UnreferencedState } from "./gcDefinitions";
 
 /** A wrapper around common-utils Timer that requires the timeout when calling start/restart */

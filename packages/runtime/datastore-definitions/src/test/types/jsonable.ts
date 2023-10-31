@@ -18,6 +18,8 @@ foo<Z>(new Z());
 
 // test class with getter
 class getter {
+    // The point here is to test a getter
+    // eslint-disable-next-line @typescript-eslint/class-literal-property-style
     public get baz(): number {
         return 0;
     }

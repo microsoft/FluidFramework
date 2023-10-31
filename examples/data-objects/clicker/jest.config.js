@@ -20,6 +20,16 @@ module.exports = {
 	transform: {
 		"^.+\\.ts?$": "ts-jest",
 	},
+	reporters: [
+		"default",
+		[
+			"jest-junit",
+			{
+				outputDirectory: "nyc",
+				outputName: "jest-junit-report.xml",
+			},
+		],
+	],
 	// While we still have transitive dependencies on 'uuid<9.0.0', force the CJS entry point:
 	// See: https://stackoverflow.com/questions/73203367/jest-syntaxerror-unexpected-token-export-with-uuid-library
 	moduleNameMapper: { "^uuid$": "uuid" },

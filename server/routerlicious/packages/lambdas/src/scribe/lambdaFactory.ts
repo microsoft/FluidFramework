@@ -37,13 +37,14 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
+	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
 import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
-import { initializeProtocol, sendToDeli } from "./utils";
+import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
 import { PendingMessageReader } from "./pendingMessageReader";
 
@@ -156,6 +157,11 @@ export class ScribeLambdaFactory
 					return new NoOpLambda(context);
 				}
 			}
+
+			scribeSessionMetric?.setProperty(
+				CommonProperties.isEphemeralContainer,
+				document?.isEphemeralContainer ?? false,
+			);
 
 			gitManager = await this.tenantManager.getTenantGitManager(tenantId, documentId);
 			summaryReader = new SummaryReader(
@@ -294,7 +300,9 @@ export class ScribeLambdaFactory
 			logOffset: lastCheckpoint.logOffset,
 			protocolHead: latestSummary.protocolHead,
 			numOpsSinceLastSummary: opsSinceLastSummary.length,
-			LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
+			lastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
+			clientCount: lastCheckpoint.protocolState.members.length,
+			clients: getClientIds(lastCheckpoint.protocolState, 5),
 		};
 		Lumberjack.info(`Creating scribe lambda`, scribeLambdaProperties);
 		const scribeLambda = new ScribeLambda(
@@ -315,6 +323,7 @@ export class ScribeLambdaFactory
 			this.disableTransientTenantFiltering,
 			this.restartOnCheckpointFailure,
 			this.kafkaCheckpointOnReprocessingOp,
+			document.isEphemeralContainer ?? false,
 		);
 
 		await this.sendLambdaStartResult(tenantId, documentId, {

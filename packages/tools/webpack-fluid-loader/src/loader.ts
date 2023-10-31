@@ -5,7 +5,7 @@
 
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
-import { assert, Deferred } from "@fluidframework/common-utils";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import {
 	AttachState,
 	IFluidCodeResolver,

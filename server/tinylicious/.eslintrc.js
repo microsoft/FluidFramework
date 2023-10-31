@@ -14,5 +14,8 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"import/no-internal-modules": "off",
 		"import/no-nodejs-modules": "off",
+
+		// Requires strictNullChecks
+		"@typescript-eslint/prefer-nullish-coalescing": "off",
 	},
 };

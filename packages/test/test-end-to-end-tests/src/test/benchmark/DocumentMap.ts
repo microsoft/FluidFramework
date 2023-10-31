@@ -143,13 +143,13 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 			[SharedMap.getFactory(), SharedMap.getFactory()],
 			[],
 		);
-		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore(
-			this.dataObjectFactory,
-			[[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)]],
-			undefined,
-			undefined,
+		this.runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory: this.dataObjectFactory,
+			registryEntries: [
+				[this.dataObjectFactory.type, Promise.resolve(this.dataObjectFactory)],
+			],
 			runtimeOptions,
-		);
+		});
 		switch (this.props.documentType) {
 			case "DocumentMap":
 				this.keysInMap = this.props.documentTypeInfo.numberOfItems;

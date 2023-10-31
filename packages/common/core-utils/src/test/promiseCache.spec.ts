@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 import { PromiseCache } from "../..";
 
@@ -35,7 +35,7 @@ describe("PromiseCache", () => {
 			assert.equal(get_WhenPresent, "one");
 
 			const addOrGet_WhenPresent = await pc.addOrGet(1, async () => {
-				throw new Error();
+				throw new Error("Test error");
 			});
 			assert.equal(addOrGet_WhenPresent, "one");
 
@@ -63,7 +63,7 @@ describe("PromiseCache", () => {
 			assert.equal(add_WhenAbsent, true);
 
 			const add_WhenPresent = pc.add(1, async () => {
-				throw new Error();
+				throw new Error("Test error");
 			});
 			assert.equal(add_WhenPresent, false);
 

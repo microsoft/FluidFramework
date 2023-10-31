@@ -29,14 +29,14 @@ import { StateMachineCommand } from "../stateMachineCommand";
  */
 
 export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCommand> {
-	static summary = "Releases a package or release group.";
-	static description = `The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
+	static readonly summary = "Releases a package or release group.";
+	static readonly description = `The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
 
     The command runs a number of checks automatically to make sure the branch is in a good state for a release. If any of the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have not yet been released, then the command prompts to perform the release of the dependency, then run the release command again.
 
     This process is continued until all the dependencies have been released, after which the release group itself is released.`;
 
-	machine = FluidReleaseMachine;
+	readonly machine = FluidReleaseMachine;
 	handler: StateHandler | undefined;
 	data: FluidReleaseStateHandlerData | undefined;
 
@@ -45,7 +45,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		this.data = undefined;
 	}
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
 			exclusive: ["package"],
 			required: false,
@@ -60,13 +60,13 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		skipChecks: skipCheckFlag,
 		...checkFlags,
 		...StateMachineCommand.flags,
-	};
+	} as const;
 
-	async init() {
+	async init(): Promise<void> {
 		await super.init();
 
 		const [context] = await Promise.all([this.getContext(), this.initMachineHooks()]);
-		const flags = this.flags;
+		const { argv, flags, logger, machine } = this;
 
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const rgOrPackageName = flags.releaseGroup ?? flags.package!;
@@ -92,9 +92,9 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 		// oclif doesn't support nullable boolean flags, so this works around that limitation by checking the args
 		// passed into the command. If neither are passed, then the default is determined by the branch config.
-		const userPolicyCheckChoice = this.argv.includes("--policyCheck")
+		const userPolicyCheckChoice = argv.includes("--policyCheck")
 			? true
-			: this.argv.includes("--no-policyCheck")
+			: argv.includes("--no-policyCheck")
 			? false
 			: undefined;
 
@@ -103,13 +103,13 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			context.originalBranchName,
 		);
 
-		this.handler = new FluidReleaseStateHandler(this.machine, this.logger);
+		this.handler = new FluidReleaseStateHandler(machine, logger);
 
 		this.data = {
 			releaseGroup,
 			releaseVersion,
 			context,
-			promptWriter: new PromptWriter(this.logger),
+			promptWriter: new PromptWriter(logger),
 			bumpType: flags.bumpType as VersionBumpType,
 			versionScheme: detectVersionScheme(releaseVersion),
 			shouldSkipChecks: flags.skipChecks,
@@ -120,7 +120,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 			shouldCommit: flags.commit && !flags.skipChecks,
 			shouldInstall: flags.install && !flags.skipChecks,
 			shouldCheckBranchUpdate: flags.updateCheck && !flags.skipChecks,
-			exitFunc: (code?: number): void => this.exit(code),
+			exitFunc: (code: number): void => this.exit(code),
 			command: this,
 		};
 	}

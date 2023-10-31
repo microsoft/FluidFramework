@@ -6,6 +6,7 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import type { IAppModel, IBaseDocument } from "../model-interface";
@@ -61,6 +62,7 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		runtime: IContainerRuntime,
 		container: IContainer,
 	): Promise<AppModel> {
+		// eslint-disable-next-line import/no-deprecated
 		const taskListCollection = await requestFluidObject<IBaseDocument>(
 			await runtime.getRootDataStore(taskListCollectionId),
 			"",

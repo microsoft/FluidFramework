@@ -6,18 +6,18 @@
 import {
 	Value,
 	FieldKey,
-	FieldStoredSchema,
-	TreeSchemaIdentifier,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
 	ForestEvents,
-	SchemaData,
+	TreeStoredSchema,
 	UpPath,
 	PathVisitor,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 } from "../core";
 import { ISubscribable } from "../events";
 import { Named } from "../util";
 import { PrimitiveValue, MarkedArrayLike, typeNameSymbol, valueSymbol } from "./contextuallyTyped";
-import { TreeStatus } from "./editable-tree";
+import { TreeNode, TreeStatus } from "./editable-tree-2";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -83,7 +83,7 @@ export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeC
 	 * The name of the node type.
 	 */
 	// TODO: remove this favor of typeSymbol once its the view schema
-	readonly [typeNameSymbol]: TreeSchemaIdentifier;
+	readonly [typeNameSymbol]: TreeNodeSchemaIdentifier;
 
 	/**
 	 * Value stored on this node.
@@ -114,7 +114,7 @@ export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = Untyped
 	 * If this node is well-formed, it must follow this schema.
 	 */
 	// TODO: update implementation to use view schema in typed views.
-	readonly [typeSymbol]: TreeStoredSchema & Named<TreeSchemaIdentifier>;
+	readonly [typeSymbol]: TreeNodeStoredSchema & Named<TreeNodeSchemaIdentifier>;
 
 	/**
 	 * A common context of a "forest" of EditableTrees.
@@ -188,9 +188,9 @@ export interface UntypedField<
 	TUnwrappedChild = UnwrappedUntypedTree<TContext>,
 > extends MarkedArrayLike<TUnwrappedChild> {
 	/**
-	 * The `FieldStoredSchema` of this field.
+	 * The `TreeFieldStoredSchema` of this field.
 	 */
-	readonly fieldSchema: FieldStoredSchema;
+	readonly fieldSchema: TreeFieldStoredSchema;
 
 	/**
 	 * The `FieldKey` of this field.
@@ -243,7 +243,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 	 *
 	 * The root's schema is tracked under {@link rootFieldKey}.
 	 */
-	readonly schema: SchemaData;
+	readonly schema: TreeStoredSchema;
 
 	/**
 	 * Call before editing.
@@ -269,6 +269,18 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 }
 
 /**
+ * An event raised on a {@link TreeNode}.
+ *
+ * @alpha
+ */
+export interface TreeEvent {
+	/**
+	 * The node of the tree where the listener receiving the event is attached.
+	 */
+	readonly target: TreeNode;
+}
+
+/**
  * A collection of events that can be raised by an {@link EditableTree}.
  * These events are triggered while the internal data structures are being updated.
  * Thus these events must not trigger reading of the anchorSet or forest.
@@ -286,7 +298,6 @@ export interface EditableTreeEvents {
 	 * Raised when a specific EditableTree node is changing.
 	 * This includes its fields.
 	 * @param upPath - the path corresponding to the location of the node being changed, upward.
-	 * @param value - the new value stored in the node.
 	 */
 	changing(upPath: UpPath): void;
 
@@ -299,4 +310,58 @@ export interface EditableTreeEvents {
 	 * @returns a visitor to traverse the subtree or `void`.
 	 */
 	subtreeChanging(upPath: UpPath): PathVisitor | void;
+
+	/**
+	 * Raised on a node right before a change is applied to one of its fields or the fields of a descendant node.
+	 *
+	 * @param event - The event object. See {@link TreeEvent} for details.
+	 *
+	 * @remarks
+	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.afterChange}) is dependent
+	 * on the implementation of SharedTree. In general, these events will fire once for every atomic editing operation
+	 * supported by SharedTree; {@link EditableTreeEvents.beforeChange} before the change is applied, and
+	 * {@link EditableTreeEvents.afterChange} after it is.
+	 *
+	 * {@link Sequence} fields present two exceptions:
+	 *
+	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
+	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link Sequence}
+	 * field the following will happen:
+	 * - {@link EditableTreeEvents.beforeChange} will fire once before either new node is present in the tree.
+	 * - {@link EditableTreeEvents.afterChange} will fire once after the first node is present in the tree, but the second one isn't.
+	 * - {@link EditableTreeEvents.beforeChange} will fire once before the second node is present in the tree, but the first one already is.
+	 * - {@link EditableTreeEvents.afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
+	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
+	 *
+	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
+	 * while they are being detached from their source location, and once when they are being attached at the target location.
+	 */
+	beforeChange(event: TreeEvent): void;
+
+	/**
+	 * Raised on a node right after a change is applied to one of its fields or the fields of a descendant node.
+	 *
+	 * @param event - The event object. See {@link TreeEvent} for details.
+	 *
+	 * @remarks
+	 * What exactly qualifies as a change that triggers this event (or {@link EditableTreeEvents.beforeChange}) is dependent
+	 * on the implementation of SharedTree. In general, these events will fire once for every atomic editing operation supported
+	 * by SharedTree; {@link EditableTreeEvents.beforeChange} before the change is applied, and
+	 * {@link EditableTreeEvents.afterChange} after it is.
+	 *
+	 * {@link Sequence} fields present two exceptions:
+	 *
+	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
+	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link Sequence}
+	 * field the following will happen:
+	 * - {@link EditableTreeEvents.beforeChange} will fire once before either new node is present in the tree.
+	 * - {@link EditableTreeEvents.afterChange} will fire once after the first node is present in the tree, but the second one isn't.
+	 * - {@link EditableTreeEvents.beforeChange} will fire once before the second node is present in the tree, but the first one already is.
+	 * - {@link EditableTreeEvents.afterChange} will fire once after the second node is present in the tree (so at this point both nodes are).
+	 * Something similar applies to removing nodes from a sequence, and moving them to another sequence.
+	 *
+	 * The second one is that for an operation to move nodes, events will fire *twice* for each node being moved; once
+	 * while they are being detached from their source location, and once when they are being attached at the target location.
+	 */
+	afterChange(event: TreeEvent): void;
 }

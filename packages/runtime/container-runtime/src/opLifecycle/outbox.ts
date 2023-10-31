@@ -9,7 +9,7 @@ import {
 	MonitoringContext,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IBatchMessage, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { ICompressionRuntimeOptions } from "../containerRuntime";
@@ -65,10 +65,13 @@ export interface IOutboxParameters {
 export function getLongStack<T>(action: () => T, length: number = 50): T {
 	const errorObj = Error as any;
 	if (
+		/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
+		// ?? is not logically equivalent when the first clause returns false.
 		(
 			Object.getOwnPropertyDescriptor(errorObj, "stackTraceLimit") ||
 			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(errorObj), "stackTraceLimit")
 		)?.writable !== true
+		/* eslint-enable @typescript-eslint/prefer-nullish-coalescing */
 	) {
 		return action();
 	}

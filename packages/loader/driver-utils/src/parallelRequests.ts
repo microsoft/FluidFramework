@@ -2,8 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { assert, Deferred, performance } from "@fluidframework/common-utils";
+import { performance } from "@fluid-internal/client-utils";
 import { ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { assert, Deferred } from "@fluidframework/core-utils";
 import { ITelemetryLoggerExt, PerformanceEvent } from "@fluidframework/telemetry-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltasFetchResult, IStream, IStreamResult } from "@fluidframework/driver-definitions";
@@ -27,12 +28,13 @@ type WorkingState = "working" | "done" | "canceled";
  * @param payloadSize - batch size
  * @param logger - logger to use
  * @param requestCallback - callback to request batches
- * @returns - Queue that can be used to retrieve data
+ * @returns Queue that can be used to retrieve data
+ * @public
  */
 export class ParallelRequests<T> {
 	private latestRequested: number;
 	private nextToDeliver: number;
-	private readonly results: Map<number, T[]> = new Map();
+	private readonly results = new Map<number, T[]>();
 	private workingState: WorkingState = "working";
 	private requestsInFlight = 0;
 	private readonly endEvent = new Deferred<void>();
@@ -337,6 +339,7 @@ export class ParallelRequests<T> {
 /**
  * Helper queue class to allow async push / pull
  * It's essentially a pipe allowing multiple writers, and single reader
+ * @public
  */
 export class Queue<T> implements IStream<T> {
 	private readonly queue: Promise<IStreamResult<T>>[] = [];
@@ -404,7 +407,7 @@ const waitForOnline = async (): Promise<void> => {
  * @param logger - logger object to use to log progress & errors
  * @param signal - cancelation signal
  * @param scenarioName - reason for fetching ops
- * @returns - an object with resulting ops and cancellation / partial result flags
+ * @returns An object with resulting ops and cancellation / partial result flags
  */
 async function getSingleOpBatch(
 	get: (telemetryProps: ITelemetryProperties) => Promise<IDeltasFetchResult>,
@@ -529,7 +532,8 @@ async function getSingleOpBatch(
  * @param logger - Logger to log progress and errors
  * @param signal - Cancelation signal
  * @param scenarioName - Reason for fetching ops
- * @returns - Messages fetched
+ * @returns Messages fetched
+ * @public
  */
 export function requestOps(
 	get: (
@@ -650,12 +654,18 @@ export function requestOps(
 	return queue;
 }
 
+/**
+ * @public
+ */
 export const emptyMessageStream: IStream<ISequencedDocumentMessage[]> = {
 	read: async () => {
 		return { done: true };
 	},
 };
 
+/**
+ * @public
+ */
 export function streamFromMessages(
 	messagesArg: Promise<ISequencedDocumentMessage[]>,
 ): IStream<ISequencedDocumentMessage[]> {
@@ -672,6 +682,9 @@ export function streamFromMessages(
 	};
 }
 
+/**
+ * @public
+ */
 export function streamObserver<T>(
 	stream: IStream<T>,
 	handler: (value: IStreamResult<T>) => void,

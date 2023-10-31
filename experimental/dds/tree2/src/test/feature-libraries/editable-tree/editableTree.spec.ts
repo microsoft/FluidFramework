@@ -6,7 +6,7 @@
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { EmptyKey, Value, FieldKey, rootFieldKey, JsonableTree } from "../../../core";
-import { brand, clone, fail, isAssignableTo, requireTrue } from "../../../util";
+import { brand, clone, fail, requireAssignableTo } from "../../../util";
 import {
 	EditableTree,
 	EditableField,
@@ -24,10 +24,9 @@ import {
 	getPrimaryField,
 	ContextuallyTypedNodeData,
 	ContextuallyTypedNodeDataObject,
-	MarkedArrayLike,
 	parentField,
 	contextSymbol,
-	SchemaBuilder,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
 
 import {
@@ -41,6 +40,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/editable-tree/editableTreeContext";
 
+import { SchemaBuilder, leaf } from "../../../domains";
 import {
 	fullSchemaData,
 	personSchema,
@@ -50,7 +50,6 @@ import {
 	stringSchema,
 	phonesSchema,
 	optionalChildSchema,
-	int32Schema,
 	personData,
 	personJsonableTree,
 	buildTestSchema,
@@ -286,7 +285,7 @@ describe("editable-tree: read-only", () => {
 
 		const emptyOptional = buildTestTree(
 			{},
-			SchemaBuilder.field(FieldKinds.value, optionalChildSchema),
+			TreeFieldSchema.create(FieldKinds.required, [optionalChildSchema]),
 		).unwrappedRoot;
 		assert(isEditableTree(emptyOptional));
 		// Check empty field does not show up:
@@ -294,9 +293,9 @@ describe("editable-tree: read-only", () => {
 
 		const fullOptional = buildTestTree(
 			{
-				child: { [typeNameSymbol]: int32Schema.name, [valueSymbol]: 1 },
+				child: { [typeNameSymbol]: leaf.number.name, [valueSymbol]: 1 },
 			},
-			SchemaBuilder.field(FieldKinds.value, optionalChildSchema),
+			TreeFieldSchema.create(FieldKinds.required, [optionalChildSchema]),
 		).unwrappedRoot;
 		assert(isEditableTree(fullOptional));
 		// Check full field does show up:
@@ -306,7 +305,7 @@ describe("editable-tree: read-only", () => {
 			{
 				[valueSymbol]: 1,
 			},
-			SchemaBuilder.field(FieldKinds.value, float64Schema),
+			TreeFieldSchema.create(FieldKinds.required, [float64Schema]),
 		).root.content;
 		assert(isEditableTree(hasValue));
 		// Value does show up when not empty:
@@ -314,7 +313,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("sequence roots are sequence fields", () => {
-		const rootSchema = SchemaBuilder.field(FieldKinds.sequence, optionalChildSchema);
+		const rootSchema = TreeFieldSchema.create(FieldKinds.sequence, [optionalChildSchema]);
 		const schemaData = buildTestSchema(rootSchema);
 		// Test empty
 		{
@@ -346,7 +345,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("value roots are unwrapped", () => {
-		const schemaData = buildTestSchema(SchemaBuilder.fieldValue(optionalChildSchema));
+		const schemaData = buildTestSchema(SchemaBuilder.required(optionalChildSchema));
 		const forest = setupForest(schemaData, {});
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert(isEditableTree(context.unwrappedRoot));
@@ -355,7 +354,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("optional roots are unwrapped", () => {
-		const schemaData = buildTestSchema(SchemaBuilder.fieldOptional(optionalChildSchema));
+		const schemaData = buildTestSchema(SchemaBuilder.optional(optionalChildSchema));
 		// Empty
 		{
 			const forest = setupForest(schemaData, undefined);
@@ -375,22 +374,22 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("primitives are unwrapped at root", () => {
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, int32Schema);
+		const rootSchema = TreeFieldSchema.create(FieldKinds.required, [leaf.number]);
 		const schemaData = buildTestSchema(rootSchema);
 		const forest = setupForest(schemaData, 1);
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert.equal(context.unwrappedRoot, 1);
-		expectFieldEquals(schemaData, context.root, [{ type: int32Schema.name, value: 1 }]);
+		expectFieldEquals(schemaData, context.root, [{ type: leaf.number.name, value: 1 }]);
 		context.free();
 	});
 
 	it("primitives under node are unwrapped, but may be accessed without unwrapping", () => {
-		const builder = new SchemaBuilder("test", {}, personSchemaLibrary);
-		const parentSchema = builder.struct("parent", {
-			child: SchemaBuilder.field(FieldKinds.value, stringSchema),
+		const builder = new SchemaBuilder({ scope: "test", libraries: [personSchemaLibrary] });
+		const parentSchema = builder.object("parent", {
+			child: stringSchema,
 		});
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, parentSchema);
-		const schemaData = builder.intoDocumentSchema(rootSchema);
+		const rootSchema = TreeFieldSchema.create(FieldKinds.required, [parentSchema]);
+		const schemaData = builder.intoSchema(rootSchema);
 		const forest = setupForest(schemaData, { child: "x" });
 		const context = getReadonlyEditableTreeContext(forest, schemaData);
 		assert(isEditableTree(context.unwrappedRoot));
@@ -404,7 +403,7 @@ describe("editable-tree: read-only", () => {
 	});
 
 	it("array nodes get unwrapped", () => {
-		const rootSchema = SchemaBuilder.field(FieldKinds.value, phonesSchema);
+		const rootSchema = TreeFieldSchema.create(FieldKinds.required, [phonesSchema]);
 		assert(getPrimaryField(phonesSchema) !== undefined);
 		const schemaData = buildTestSchema(rootSchema);
 
@@ -433,7 +432,7 @@ describe("editable-tree: read-only", () => {
 			const data = [
 				{
 					type: phonesSchema.name,
-					fields: { [EmptyKey]: [{ type: int32Schema.name, value: 1 }] },
+					fields: { [EmptyKey]: [{ type: leaf.number.name, value: 1 }] },
 				},
 			];
 			const forest = setupForest(schemaData, [1]);
@@ -510,7 +509,7 @@ describe("editable-tree: read-only", () => {
 		assert(isEditableField(proxy.address.phones));
 		assert.equal(proxy.address.phones.length, 4);
 		assert.equal(proxy.address.phones[1], 123456879);
-		const expectedPhones: Value[] = [
+		const expectedPhones: unknown[] = [
 			"+49123456778",
 			123456879,
 			{
@@ -524,7 +523,7 @@ describe("editable-tree: read-only", () => {
 		];
 		let i = 0;
 		for (const phone of proxy.address.phones ?? []) {
-			const expectedPhone: Value = expectedPhones[i++];
+			const expectedPhone = expectedPhones[i++];
 			if (isPrimitiveValue(phone)) {
 				assert.equal(phone, expectedPhone);
 			} else if (isEditableField(phone)) {
@@ -591,8 +590,8 @@ describe("editable-tree: read-only", () => {
 		assert.equal([...simplePhonesNode].length, 1);
 		const simplePhonesSchema = simplePhonesNode[typeSymbol];
 		assert.equal(simplePhonesSchema.mapFields, undefined);
-		assert.equal(simplePhonesSchema.structFields.size, 1);
-		const simplePhonesPrimaryKey = [...simplePhonesSchema.structFields.keys()][0];
+		assert.equal(simplePhonesSchema.objectNodeFields.size, 1);
+		const simplePhonesPrimaryKey = [...simplePhonesSchema.objectNodeFields.keys()][0];
 		// primary key must be the same across the schema
 		assert.equal(simplePhonesPrimaryKey, phonesPrimary.key);
 		// get the primary field
@@ -609,21 +608,13 @@ describe("editable-tree: read-only", () => {
 
 // This is only to cover the type checking, consider as a helper to properly define the contextually typed API
 {
-	type _checkTree = requireTrue<isAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>>;
-	type _checkUnwrappedTree = requireTrue<
-		isAssignableTo<UnwrappedEditableTree, ContextuallyTypedNodeData>
+	type _checkTree = requireAssignableTo<EditableTree, ContextuallyTypedNodeDataObject>;
+	type _checkUnwrappedTree = requireAssignableTo<
+		UnwrappedEditableTree,
+		ContextuallyTypedNodeData
 	>;
-	type _checkField = requireTrue<
-		isAssignableTo<ContextuallyTypedNodeData | undefined, UnwrappedEditableField>
+	type _checkUnwrappedField = requireAssignableTo<
+		UnwrappedEditableField,
+		ContextuallyTypedNodeData | undefined
 	>;
-	const x: ContextuallyTypedNodeDataObject = 0 as any as EditableTree;
-	const xx: MarkedArrayLike<ContextuallyTypedNodeData> = 0 as any as EditableField;
-
-	// TODO: there seems to be a bug in TypeCheck library, since
-	// this should fail, but it does not (undefined should break it).
-	type _checkFail = requireTrue<
-		isAssignableTo<UnwrappedEditableField, ContextuallyTypedNodeData>
-	>;
-	// This does fail, but it should check the same as the above
-	// const _dummyValue: ContextuallyTypedNodeData = 0 as any as UnwrappedEditableField;
 }

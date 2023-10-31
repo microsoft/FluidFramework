@@ -12,7 +12,17 @@ import {
 	Count,
 } from "./formatGeneric";
 
-export const version = "unstable-development";
+// TODO: Versions from here and schemaIndexFormat.ts should eventually be deduplicated into one version.
+export const version = 1.0;
+
+// Compatible versions used for format/version validation.
+// TODO: A proper version update policy will need to be documented.
+export const validVersions = new Set([version]);
+
+export const Versioned = Type.Object({
+	version: Type.Number(),
+});
+type Versioned = Static<typeof Versioned>;
 
 /**
  * Top level length is implied from length of data array.

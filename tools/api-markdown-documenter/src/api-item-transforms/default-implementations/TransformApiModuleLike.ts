@@ -15,7 +15,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import { SectionNode } from "../../documentation-domain";
-import { ApiModuleLike, filterByKind } from "../ApiItemUtilities";
+import { ApiModuleLike, filterByKind } from "../../utilities";
 import { ApiItemTransformationConfiguration } from "../configuration";
 import { createChildDetailsSection, createMemberTables } from "../helpers";
 
@@ -190,5 +190,5 @@ export function transformApiModuleLike(
 		}
 	}
 
-	return config.createChildContentSections(apiItem, children, config);
+	return config.createDefaultLayout(apiItem, children, config);
 }

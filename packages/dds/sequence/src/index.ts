@@ -19,7 +19,6 @@ export { IMapMessageLocalMetadata, IValueOpEmitter, SequenceOptions } from "./de
 export {
 	IInterval,
 	Interval,
-	IIntervalHelpers,
 	IntervalOpType,
 	IntervalType,
 	ISerializableInterval,
@@ -27,6 +26,7 @@ export {
 	SequenceInterval,
 	SerializedIntervalDelta,
 	IntervalStickiness,
+	IIntervalHelpers,
 	sequenceIntervalHelpers,
 } from "./intervals";
 export {
@@ -35,6 +35,9 @@ export {
 	IIntervalCollection,
 	IntervalLocator,
 	intervalLocatorFromEndpoint,
+	Side,
+	InteriorSequencePlace,
+	SequencePlace,
 } from "./intervalCollection";
 export {
 	IntervalIndex,

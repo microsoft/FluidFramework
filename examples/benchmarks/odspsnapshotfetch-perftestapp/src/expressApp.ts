@@ -14,7 +14,7 @@ import {
 	OdspTokenConfig,
 } from "@fluidframework/tool-utils";
 import { getServer, IOdspTokens } from "@fluidframework/odsp-doclib-utils";
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import config from "../webpack.config.js";
 
 const getThisOrigin = (port: number): string => `http://localhost:${port}`;

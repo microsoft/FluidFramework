@@ -31,6 +31,7 @@ export {
 	LoggingError,
 	NORMALIZED_ERROR_TYPE,
 	normalizeError,
+	overwriteStack,
 	wrapError,
 	wrapErrorAndLog,
 } from "./errorLogging";
@@ -67,7 +68,7 @@ export {
 export { MockLogger } from "./mockLogger";
 export { ThresholdCounter } from "./thresholdCounter";
 export { SampledTelemetryHelper } from "./sampledTelemetryHelper";
-export { logIfFalse } from "./utils";
+export { logIfFalse, createSampledLogger, IEventSampler, ISampledTelemetryLogger } from "./utils";
 export {
 	TelemetryEventPropertyTypeExt,
 	ITelemetryEventExt,
@@ -77,4 +78,5 @@ export {
 	ITelemetryLoggerExt,
 	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryPropertiesExt,
+	TelemetryEventCategory,
 } from "./telemetryTypes";

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, Timer, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { assert, Timer } from "@fluidframework/core-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { isRuntimeMessage } from "@fluidframework/driver-utils";
 import { IEvent } from "@fluidframework/core-interfaces";

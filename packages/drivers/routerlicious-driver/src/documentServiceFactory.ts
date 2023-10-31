@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { getW3CData } from "@fluidframework/driver-base";
 import {
 	FiveDaysMs,
@@ -47,7 +47,6 @@ const defaultRouterliciousDriverPolicies: IRouterliciousDriverPolicies = {
 	enablePrefetch: true,
 	maxConcurrentStorageRequests: 100,
 	maxConcurrentOrdererRequests: 100,
-	aggregateBlobsSmallerThanBytes: undefined,
 	enableDiscovery: false,
 	enableWholeSummaryUpload: false,
 	enableRestLess: true,
@@ -340,7 +339,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			caching: this.driverPolicies.enablePrefetch
 				? LoaderCachingPolicy.Prefetch
 				: LoaderCachingPolicy.NoCaching,
-			minBlobSize: this.driverPolicies.aggregateBlobsSmallerThanBytes,
 			maximumCacheDurationMs: maximumSnapshotCacheDurationMs,
 		};
 

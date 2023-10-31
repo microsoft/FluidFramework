@@ -20,4 +20,14 @@ module.exports = {
 	transform: {
 		"^.+\\.ts?$": "ts-jest",
 	},
+	reporters: [
+		"default",
+		[
+			"jest-junit",
+			{
+				outputDirectory: "nyc",
+				outputName: "jest-junit-report.xml",
+			},
+		],
+	],
 };

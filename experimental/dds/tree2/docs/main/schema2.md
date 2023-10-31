@@ -110,12 +110,12 @@ Workstream 3
 ### Mid term
 
 -   Add support for custom field names for struct fields.
--   Update editable tree (and schema aware APIs) to leverage node kinds.
--   Define base node API and implementation
--   Extend base for each kind.
--   Remove use of symbols on editable tree APIs
--   Remove use of proxies for nodes: dynamically generate custom struct node subclasses from schema.
--   Remove support for "undefined" values from Leaf nodes.
+-   (Being does as editable-tree-2) Update editable tree (and schema aware APIs) to leverage node kinds.
+-   (Done) Define base node API and implementation
+-   (Done) Extend base for each kind.
+-   (Done) Remove use of symbols on editable tree APIs
+-   (Done) Remove use of proxies for nodes: dynamically generate custom struct node subclasses from schema.
+-   (Done) Remove support for "undefined" values from Leaf nodes.
 
 ### Longer term
 

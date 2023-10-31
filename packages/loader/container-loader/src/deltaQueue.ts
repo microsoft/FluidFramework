@@ -4,7 +4,8 @@
  */
 
 import { IDeltaQueue, IDeltaQueueEvents } from "@fluidframework/container-definitions";
-import { assert, performance, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import Deque from "double-ended-queue";
 
 export interface IDeltaQueueWriter<T> {

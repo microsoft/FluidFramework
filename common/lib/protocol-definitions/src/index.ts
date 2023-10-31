@@ -44,6 +44,7 @@ export {
 	ISentSignalMessage,
 	ISequencedDocumentAugmentedMessage,
 	ISequencedDocumentMessage,
+	ISequencedDocumentMessageExperimental,
 	ISequencedDocumentSystemMessage,
 	IServerError,
 	ISignalMessage,

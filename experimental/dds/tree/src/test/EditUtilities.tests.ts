@@ -4,7 +4,7 @@
  */
 
 import { expect } from 'chai';
-import { assert } from '@fluidframework/common-utils';
+import { assert } from '@fluidframework/core-utils';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { MockFluidDataStoreRuntime } from '@fluidframework/test-runtime-utils';
 import { FluidSerializer } from '@fluidframework/shared-object-base';

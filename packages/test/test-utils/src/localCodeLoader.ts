@@ -71,13 +71,14 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,
-							IRuntimeFactory: new ContainerRuntimeFactoryWithDefaultDataStore(
+							IRuntimeFactory: new ContainerRuntimeFactoryWithDefaultDataStore({
 								defaultFactory,
-								[[defaultFactory.type, Promise.resolve(defaultFactory)]],
-								undefined,
-								[innerRequestHandler],
+								registryEntries: [
+									[defaultFactory.type, Promise.resolve(defaultFactory)],
+								],
+								requestHandlers: [innerRequestHandler],
 								runtimeOptions,
-							),
+							}),
 						},
 					};
 				}

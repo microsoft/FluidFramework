@@ -18,11 +18,13 @@ import * as assert from "assert";
 import {
 	TaskDefinitions,
 	TaskDefinitionsOnDisk,
+	TaskConfig,
 	getTaskDefinitions,
+	normalizeGlobalTaskDefinitions,
 } from "../common/fluidTaskDefinitions";
 import registerDebug from "debug";
 
-const traceBuildPackageCreate = registerDebug("fluid-build:package:create");
+const traceTaskDef = registerDebug("fluid-build:task:definition");
 const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");
 const traceGraph = registerDebug("fluid-build:graph");
 
@@ -60,7 +62,10 @@ class BuildContext {
 	public readonly fileHashCache = new FileHashCache();
 	public readonly taskStats = new TaskStats();
 	public readonly failedTaskLines: string[] = [];
-	constructor(public readonly workerPool?: WorkerPool) {}
+	constructor(
+		public readonly repoPackageMap: Map<string, Package>,
+		public readonly workerPool?: WorkerPool,
+	) {}
 }
 
 export class BuildPackage {
@@ -68,20 +73,22 @@ export class BuildPackage {
 	public readonly dependentPackages = new Array<BuildPackage>();
 	public level: number = -1;
 	private buildP?: Promise<BuildResult>;
-	private readonly taskDefinitions: TaskDefinitions;
+
+	// This field shouldn't be used directly, use getTaskDefinition instead
+	private readonly _taskDefinitions: TaskDefinitions;
 
 	constructor(
 		public readonly buildContext: BuildContext,
 		public readonly pkg: Package,
-		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
+		globalTaskDefinitions: TaskDefinitions,
 	) {
-		this.taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions);
-		traceBuildPackageCreate(
-			`${pkg.nameColored}: created. Task def: ${JSON.stringify(
-				this.taskDefinitions,
-				undefined,
-				2,
-			)}`,
+		this._taskDefinitions = getTaskDefinitions(
+			this.pkg.packageJson,
+			globalTaskDefinitions,
+			this.pkg.isReleaseGroupRoot,
+		);
+		traceTaskDef(
+			`${pkg.nameColored}: Task def: ${JSON.stringify(this._taskDefinitions, undefined, 2)}`,
 		);
 	}
 
@@ -97,10 +104,11 @@ export class BuildPackage {
 
 		const pendingInitDep: Task[] = [];
 		const tasks = taskNames
-			.map((value) => this.getTask(value, pendingInitDep)!)
+			.map((value) => this.getTask(value, pendingInitDep))
 			.filter((task) => task !== undefined);
 
 		while (pendingInitDep.length !== 0) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const task = pendingInitDep.pop()!;
 			task.initializeDependentTasks(pendingInitDep);
 		}
@@ -108,8 +116,33 @@ export class BuildPackage {
 		return tasks.length !== 0;
 	}
 
+	private getTaskDefinition(taskName: string): TaskConfig | undefined {
+		let taskDefinition = this._taskDefinitions[taskName];
+		if (taskDefinition === undefined && this.pkg.isReleaseGroupRoot) {
+			const isReleaseGroupRootScriptEnabled =
+				this.pkg.packageJson.fluidBuild?.tasks !== undefined;
+			const script = this.pkg.getScript(taskName);
+			if (
+				// Only enable release group root script if it is explicitly defined, for places that don't use it yet
+				!isReleaseGroupRootScriptEnabled ||
+				// if there is no script or the script starts with "fluid-build", then use the default
+				script === undefined ||
+				script.startsWith("fluid-build ")
+			) {
+				// default for release group root is to depend on the task of all packages in the release group
+				taskDefinition = {
+					dependsOn: [`^${taskName}`],
+					script: false,
+					before: [],
+					after: [],
+				};
+			}
+		}
+		return taskDefinition;
+	}
+
 	private createTask(taskName: string, pendingInitDep: Task[]) {
-		const config = this.taskDefinitions[taskName];
+		const config = this.getTaskDefinition(taskName);
 		if (config?.script === false) {
 			const task = TaskFactory.CreateTargetTask(this, taskName);
 			pendingInitDep.push(task);
@@ -120,7 +153,7 @@ export class BuildPackage {
 
 	private createScriptTask(taskName: string, pendingInitDep: Task[]) {
 		const command = this.pkg.getScript(taskName);
-		if (command !== undefined) {
+		if (command !== undefined && !command.startsWith("fluid-build ")) {
 			const task = TaskFactory.Create(this, command, pendingInitDep, taskName);
 			pendingInitDep.push(task);
 			return task;
@@ -128,10 +161,15 @@ export class BuildPackage {
 		return undefined;
 	}
 
-	private getTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
+	private getTask(taskName: string, pendingInitDep: Task[] | undefined): Task | undefined {
 		const existing = this.tasks.get(taskName);
 		if (existing) {
 			return existing;
+		}
+
+		if (pendingInitDep === undefined) {
+			// when pendingInitDep is undefined, it means we don't expect to instantiate the reference task
+			return undefined;
 		}
 
 		const task = this.createTask(taskName, pendingInitDep);
@@ -142,7 +180,7 @@ export class BuildPackage {
 	}
 
 	public getScriptTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
-		const config = this.taskDefinitions[taskName];
+		const config = this.getTaskDefinition(taskName);
 		if (config?.script === false) {
 			// it is not a script task
 			return undefined;
@@ -159,16 +197,28 @@ export class BuildPackage {
 		return task;
 	}
 
-	public getDependentTasks(task: Task, taskName: string, pendingInitDep: Task[]) {
-		const dependentTasks: Task[] = [];
-		const taskConfig = this.taskDefinitions[taskName];
+	public getDependsOnTasks(task: Task, taskName: string, pendingInitDep: Task[]) {
+		const taskConfig = this.getTaskDefinition(taskName);
 		if (taskConfig === undefined) {
-			return dependentTasks;
+			return [];
 		}
 
-		traceTaskDepTask(`${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`);
-		for (const dep of taskConfig.dependsOn) {
-			let found = false;
+		traceTaskDepTask(
+			`Expanding dependsOn: ${task.nameColored} -> ${JSON.stringify(taskConfig.dependsOn)}`,
+		);
+		const matchedTasks = this.getMatchedTasks(taskConfig.dependsOn, pendingInitDep);
+		matchedTasks.forEach((matchedTask) => {
+			traceTaskDepTask(`${task.nameColored} -> ${matchedTask.nameColored}`);
+		});
+		return matchedTasks;
+	}
+
+	private getMatchedTasks(deps: string[], pendingInitDep?: Task[]) {
+		const matchedTasks: Task[] = [];
+		for (const dep of deps) {
+			// If pendingInitDep is undefined, that mean we don't expect the task to be found, so pretend that we already found it.
+
+			let found = pendingInitDep === undefined;
 			// should have be replaced already.
 			assert.notStrictEqual(dep, "...");
 			if (dep.startsWith("^")) {
@@ -176,8 +226,7 @@ export class BuildPackage {
 				for (const depPackage of this.dependentPackages) {
 					const depTask = depPackage.getTask(dep.substring(1), pendingInitDep);
 					if (depTask !== undefined) {
-						traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
-						dependentTasks.push(depTask);
+						matchedTasks.push(depTask);
 					}
 				}
 			} else if (dep.includes("#")) {
@@ -186,8 +235,7 @@ export class BuildPackage {
 					if (pkg === depPackage.pkg.name) {
 						const depTask = depPackage.getTask(script, pendingInitDep);
 						if (depTask !== undefined) {
-							traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
-							dependentTasks.push(depTask);
+							matchedTasks.push(depTask);
 							found = true;
 						}
 						break;
@@ -196,8 +244,7 @@ export class BuildPackage {
 			} else {
 				const depTask = this.getTask(dep, pendingInitDep);
 				if (depTask !== undefined) {
-					traceTaskDepTask(`${task.nameColored} -> ${depTask.nameColored}`);
-					dependentTasks.push(depTask);
+					matchedTasks.push(depTask);
 					found = true;
 				}
 			}
@@ -205,8 +252,7 @@ export class BuildPackage {
 				throw new Error(`${this.pkg.nameColored}: Unable to find dependent '${dep}'`);
 			}
 		}
-
-		return dependentTasks;
+		return matchedTasks;
 	}
 
 	public finalizeDependentTasks() {
@@ -215,26 +261,64 @@ export class BuildPackage {
 			if (task.taskName === undefined) {
 				return;
 			}
-			const taskConfig = this.taskDefinitions[task.taskName];
+			const taskConfig = this.getTaskDefinition(task.taskName);
 			if (taskConfig === undefined) {
 				return;
 			}
-			if (taskConfig.before.includes("*")) {
-				this.tasks.forEach((depTask) => {
-					if (depTask !== task) {
-						traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
-						depTask.dependentTasks!.push(task);
-					}
-				});
-			} else {
-				for (const dep of taskConfig.before) {
-					const depTask = this.tasks.get(dep);
-					if (depTask === undefined) {
-						continue;
-					}
-					traceTaskDepTask(`${depTask.nameColored} -> ${task.nameColored}`);
-					depTask.dependentTasks!.push(task);
+
+			// Expand the star entry to all scheduled tasks
+			const expandStar = (
+				deps: string[],
+				additionalFilter: (depTaskName: string) => boolean,
+			) => {
+				const newDeps = deps.filter((dep) => dep !== "*");
+				if (newDeps.length === deps.length) {
+					return newDeps;
 				}
+				const taskNames = Array.from(this.tasks.keys());
+				// avoid circular dependency
+				const filteredTaskNames = taskNames.filter(
+					(depTaskName) => depTaskName !== task.taskName && additionalFilter(depTaskName),
+				);
+				return newDeps.concat(filteredTaskNames);
+			};
+
+			if (taskConfig.before.length !== 0) {
+				// We don't want parent packages to inject dependencies to the child packages,
+				// so ^ and # are not supported for 'before'
+				const before = expandStar(
+					taskConfig.before,
+					/* ignore mutual before "*" */
+					(depTaskName) => !this.getTaskDefinition(depTaskName)?.before.includes("*"),
+				);
+				traceTaskDepTask(
+					`Expanding before: ${task.nameColored} -> ${JSON.stringify(before)}`,
+				);
+				const matchedTasks = this.getMatchedTasks(before);
+				for (const matchedTask of matchedTasks) {
+					traceTaskDepTask(`${matchedTask.nameColored} -> ${task.nameColored}`);
+					// initializeDependentTask should have been called on all the task already
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					matchedTask.dependentTasks!.push(task);
+				}
+			}
+
+			if (taskConfig.after.length !== 0) {
+				const after = expandStar(
+					taskConfig.after,
+					/* ignore mutual after "*" */
+					(depTaskName) => !this.getTaskDefinition(depTaskName)?.after.includes("*"),
+				);
+				traceTaskDepTask(
+					`Expanding after: ${task.nameColored} -> ${JSON.stringify(after)}`,
+				);
+				const matchedTasks = this.getMatchedTasks(taskConfig.after);
+				matchedTasks.forEach((matchedTask) => {
+					traceTaskDepTask(`${task.nameColored} -> ${matchedTask.nameColored}`);
+				});
+				// initializeDependentTask should have been called on all the task already
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				task.dependentTasks!.push(...matchedTasks);
 			}
 		});
 	}
@@ -290,22 +374,54 @@ export class BuildPackage {
 	}
 }
 
+/**
+ * BuildGraph is a representation of all the tasks and the dependent order
+ * specified by the task definitions.
+ *
+ * To create the graph:
+ * 1. Initialize BuildPackages
+ * 	  a. Create the BuildPackage nodes for packages that are matched (on the command line)
+ *       and then transitively create dependent packages as needed. Not all repo packages
+ *       will have a BuildPackage created.
+ *    b. Detect if there is a circular dependency by assign level to packages. The package
+ *       level has no other use currently.
+ * 2. Tasks and dependencies graph
+ *    a. Create the initial task specified on the command line.  Without --dep option, the
+ *       the initial task will only for created for matched BuildPackages. With --dep option
+ *       the initial task will be created for all instantiated BuildPackages (i.e. all the
+ *       package that is transitive dependencies of the matched BuildPackages).
+ *	  b. Transitively resolve and create dependent tasks starting from the initial tasks
+ *       based on the `dependsOn` specified in the TaskDefinitions
+ *    c. Resolve all `before` and `after` dependencies to tasks that is already instantiated.
+ * 	     `before` and `after` doesn't cause new task to be created, only match to existing tasks.
+ * 3. Initialize gather up all the leaf tasks dependencies.
+ * 4. Assign tasks weight to prioritize tasks based on how expansive the tasks depending on
+ *    this one will unblock.
+ */
 export class BuildGraph {
 	private matchedPackages = 0;
 	private readonly buildPackages = new Map<Package, BuildPackage>();
-	private readonly buildContext = new BuildContext(
-		options.worker
-			? new WorkerPool(options.workerThreads, options.workerMemoryLimit)
-			: undefined,
-	);
+	private readonly buildContext;
 
 	public constructor(
 		packages: Map<string, Package>,
+		releaseGroupPackages: Package[],
 		private readonly buildTaskNames: string[],
 		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
 	) {
-		this.initializePackages(packages, globalTaskDefinitions, getDepFilter);
+		this.buildContext = new BuildContext(
+			packages,
+			options.worker
+				? new WorkerPool(options.workerThreads, options.workerMemoryLimit)
+				: undefined,
+		);
+		this.initializePackages(
+			packages,
+			releaseGroupPackages,
+			globalTaskDefinitions,
+			getDepFilter,
+		);
 		this.populateLevel();
 		this.initializeTasks(buildTaskNames);
 	}
@@ -399,7 +515,7 @@ export class BuildGraph {
 
 	private getBuildPackage(
 		pkg: Package,
-		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
+		globalTaskDefinitions: TaskDefinitions,
 		pendingInitDep: BuildPackage[],
 	) {
 		let buildPackage = this.buildPackages.get(pkg);
@@ -421,14 +537,23 @@ export class BuildGraph {
 
 	private initializePackages(
 		packages: Map<string, Package>,
-		globalTaskDefinitions: TaskDefinitionsOnDisk | undefined,
+		releaseGroupPackages: Package[],
+		globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
 		getDepFilter: (pkg: Package) => (dep: Package) => boolean,
 	) {
+		const globalTaskDefinitions = normalizeGlobalTaskDefinitions(globalTaskDefinitionsOnDisk);
 		const pendingInitDep: BuildPackage[] = [];
 		for (const pkg of packages.values()) {
 			// Start with only matched packages
 			if (pkg.matched) {
 				this.getBuildPackage(pkg, globalTaskDefinitions, pendingInitDep);
+			}
+		}
+
+		for (const releaseGroupPackage of releaseGroupPackages) {
+			// Start with only matched packages
+			if (releaseGroupPackage.matched) {
+				this.getBuildPackage(releaseGroupPackage, {}, pendingInitDep);
 			}
 		}
 
@@ -441,14 +566,22 @@ export class BuildGraph {
 			if (node === undefined) {
 				break;
 			}
+			if (node.pkg.isReleaseGroupRoot) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				for (const dep of node.pkg.monoRepo!.packages) {
+					traceGraph(`Package dependency: ${node.pkg.nameColored} => ${dep.nameColored}`);
+					node.dependentPackages.push(
+						this.getBuildPackage(dep, globalTaskDefinitions, pendingInitDep),
+					);
+				}
+				continue;
+			}
 			const depFilter = getDepFilter(node.pkg);
 			for (const { name, version } of node.pkg.combinedDependencies) {
 				const dep = packages.get(name);
 				if (dep) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const satisfied =
-						version!.startsWith("workspace:") ||
-						semver.satisfies(dep.version, version!);
+						version.startsWith("workspace:") || semver.satisfies(dep.version, version);
 					if (satisfied) {
 						if (depFilter(dep)) {
 							traceGraph(
@@ -528,12 +661,14 @@ export class BuildGraph {
 			node.finalizeDependentTasks();
 		});
 
+		traceGraph("dependent task initialized");
+
 		// All the task has been created, initialize the dependent tasks
 		this.buildPackages.forEach((node) => {
 			node.initializeDependentLeafTasks();
 		});
 
-		traceGraph("dependent task initialized");
+		traceGraph("dependent leaf task initialized");
 
 		// All the task has been created, initialize the dependent tasks
 		this.buildPackages.forEach((node) => {

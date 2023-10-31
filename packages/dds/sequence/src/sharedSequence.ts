@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { BaseSegment, IJSONSegment, ISegment, PropertySet } from "@fluidframework/merge-tree";
 import {
 	IChannelAttributes,
@@ -15,14 +15,16 @@ import { SharedSegmentSequence } from "./sequence";
 const MaxRun = 128;
 
 /**
- * @deprecated - IJSONRunSegment will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @deprecated IJSONRunSegment will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @public
  */
 export interface IJSONRunSegment<T> extends IJSONSegment {
 	items: Serializable<T>[];
 }
 
 /**
- * @deprecated - SubSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @deprecated SubSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @public
  */
 export class SubSequence<T> extends BaseSegment {
 	public static readonly typeString: string = "SubSequence";
@@ -105,7 +107,8 @@ export class SubSequence<T> extends BaseSegment {
 }
 
 /**
- * @deprecated - SharedSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @deprecated SharedSequence will be removed in a upcoming release. It has been moved to the fluid-experimental/sequence-deprecated package
+ * @public
  */
 export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 	constructor(

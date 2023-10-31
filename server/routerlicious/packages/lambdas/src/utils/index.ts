@@ -7,6 +7,8 @@ export {
 	createNackMessage,
 	createRoomJoinMessage,
 	createRoomLeaveMessage,
+	createRuntimeMessage,
+	IRuntimeSignalEnvelope,
 } from "./messageGenerator";
 export { NoOpLambda } from "./noOpLambda";
 export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelper";

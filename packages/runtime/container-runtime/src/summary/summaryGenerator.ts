@@ -16,7 +16,7 @@ import {
 	IPromiseTimer,
 	IPromiseTimerResult,
 	Timer,
-} from "@fluidframework/common-utils";
+} from "@fluidframework/core-utils";
 import { MessageType } from "@fluidframework/protocol-definitions";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions";
@@ -47,12 +47,12 @@ export async function raceTimer<T>(
 	cancellationToken?: ISummaryCancellationToken,
 ): Promise<raceTimerResult<T>> {
 	const promises: Promise<raceTimerResult<T>>[] = [
-		promise.then((value) => ({ result: "done", value } as const)),
-		timer.then(({ timerResult: result }) => ({ result } as const)),
+		promise.then((value) => ({ result: "done", value }) as const),
+		timer.then(({ timerResult: result }) => ({ result }) as const),
 	];
 	if (cancellationToken !== undefined) {
 		promises.push(
-			cancellationToken.waitCancelled.then(() => ({ result: "cancelled" } as const)),
+			cancellationToken.waitCancelled.then(() => ({ result: "cancelled" }) as const),
 		);
 	}
 	return Promise.race(promises);

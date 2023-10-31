@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { EventForwarder } from "@fluidframework/common-utils";
+import { EventForwarder } from "@fluid-internal/client-utils";
 import {
 	IDeltaManager,
 	IDeltaManagerEvents,
@@ -101,8 +101,8 @@ export class DeltaManagerProxyBase
 		super.dispose();
 	}
 
-	public submitSignal(content: any): void {
-		return this.deltaManager.submitSignal(content);
+	public submitSignal(content: any, targetClientId?: string): void {
+		return this.deltaManager.submitSignal(content, targetClientId);
 	}
 
 	public flush(): void {

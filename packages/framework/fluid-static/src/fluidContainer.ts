@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	AttachState,

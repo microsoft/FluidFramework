@@ -168,7 +168,7 @@ describe("chunkDecoding", () => {
 			const log: string[] = [];
 			const basic = new BasicChunk(brand("foo"), new Map());
 			const decoders = [makeLoggingDecoder(log, basic)];
-			const stream = { data: [[]], offset: 0 };
+			const stream: StreamCursor = { data: [[]], offset: 0 };
 			const result = decoder.decode(decoders, stream);
 			assert.deepEqual(log, []);
 			assert.equal(result, emptyChunk);

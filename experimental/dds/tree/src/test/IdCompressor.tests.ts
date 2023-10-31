@@ -94,7 +94,7 @@ describe('IdCompressor', () => {
 		it('can create compressed IDs with v5 overrides', () => {
 			const compressor = createCompressor(Client.Client1);
 			const uuidA = v5('foo', '7834b437-6e8c-4936-a1a3-0130b1178f17');
-			const uuidB = uuidA.slice(0, uuidA.length - 1) + (uuidA.charAt(uuidA.length - 1) === 'a' ? 'b' : 'a');
+			const uuidB = uuidA.slice(0, uuidA.length - 1) + (uuidA.endsWith('a') ? 'b' : 'a');
 			const idA = compressor.generateCompressedId(uuidA);
 			const idB = compressor.generateCompressedId(uuidB);
 			expect(compressor.decompress(idA)).to.equal(uuidA);

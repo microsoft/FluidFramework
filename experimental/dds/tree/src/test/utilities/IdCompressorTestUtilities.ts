@@ -436,7 +436,7 @@ export class IdCompressorTestNetwork {
 		): Iterable<
 			[
 				current: [compressor: IdCompressor, idData: TestIdData],
-				next?: [compressor: IdCompressor, idData: TestIdData]
+				next?: [compressor: IdCompressor, idData: TestIdData],
 			]
 		> {
 			let current = getNextLogWithEntryAt(0, columnIndex);

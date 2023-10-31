@@ -67,3 +67,41 @@ const props = {
 
 Lumberjack.log("Sample message", LogLevel.Info, properties);
 ```
+
+### Global Telemetry Context
+
+When using Lumberjack in Node.js, we can take advantage of [Node.js Asynchronous Context](https://nodejs.org/docs/latest-v18.x/api/async_context.html#class-asyncresource) to bind telemetry properties to the async context which ensures their availability in telemetry without manually adding them to a log's properties param.
+
+```typescript
+import {
+	getGlobalTelemetryContext,
+	bindTelemetryContext,
+} from "@fluidframework/server-services-telemetry";
+import { configureLogging } from "@fluidframework/server-services-utils";
+
+// Do this once at server boot.
+// By default, this will enable global context using Node.js AsyncLocalStorage.
+configureLogging(configPath);
+
+// Do this in codepath entrypoints when common telemetry properties become available.
+getGlobalTelemetryContext().bindProperties({ documentId }, () => {
+	// INSIDE OF documentId CONTEXT
+	getGlobalTelemetryContext().bindProperties({ tenantId }, () => {
+		// INSIDE OF tenantId, documentId CONTEXT
+		getGlobalTelemetryContext().bindProperties({ sessionId, tenantId: "override" }, () => {
+			// INSIDE OF tenantId: "override", documentId, sessionId CONTEXT
+		});
+		// INSIDE OF tenantId, documentId CONTEXT
+	});
+});
+
+// You can also use async/await
+const result = await getGlobalTelemetryContext().bindPropertiesAsync({ documentId }, async () => {
+	// INSIDE OF documentId CONTEXT
+	const apiResult = await callApi();
+	return apiResult;
+});
+
+// Do this in your Express.js app
+app.use(bindTelemetryContext());
+```

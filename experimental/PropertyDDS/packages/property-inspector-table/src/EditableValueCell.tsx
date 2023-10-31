@@ -49,14 +49,7 @@ const styles = () =>
 const EditableValueCell: React.FunctionComponent<
 	WithStyles<typeof styles> & IEditableValueCellProps
 > = (props) => {
-	const {
-		classes,
-		className,
-		followReferences,
-		rowData,
-		iconRenderer,
-		...restProps // tslint:disable-line
-	} = props;
+	const { classes, className, followReferences, rowData, iconRenderer, ...restProps } = props;
 
 	return (
 		<div className={classNames(className, classes.container)} {...restProps}>

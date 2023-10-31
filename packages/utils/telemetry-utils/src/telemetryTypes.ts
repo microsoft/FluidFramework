@@ -3,15 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ITelemetryBaseLogger,
-	LogLevel,
-	TelemetryEventCategory,
-} from "@fluidframework/core-interfaces";
+import { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
+
+/**
+ * The categories FF uses when instrumenting the code.
+ *
+ * generic - Informational log event
+ * error - Error log event, ideally 0 of these are logged during a session
+ * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
+ */
+export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 /**
  * Property types that can be logged.
- * Includes extra types beyond TelemetryEventPropertyType (which will be deprecated in favor of this one)
+ * Includes extra types beyond TelemetryBaseEventPropertyType, which must be converted before sending to a base logger
  */
 export type TelemetryEventPropertyTypeExt =
 	| string
@@ -28,6 +33,8 @@ export type TelemetryEventPropertyTypeExt =
  * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
  * to mark pieces of information that should be organized or handled differently by loggers in various first or third
  * party scenarios. For example, tags are used to mark personal information that should not be stored in logs.
+ *
+ * @deprecated Use Tagged<TelemetryEventPropertyTypeExt>
  */
 export interface ITaggedTelemetryPropertyTypeExt {
 	value: TelemetryEventPropertyTypeExt;
@@ -38,7 +45,7 @@ export interface ITaggedTelemetryPropertyTypeExt {
  * JSON-serializable properties, which will be logged with telemetry.
  */
 export interface ITelemetryPropertiesExt {
-	[index: string]: TelemetryEventPropertyTypeExt | ITaggedTelemetryPropertyTypeExt;
+	[index: string]: TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>;
 }
 
 /**
@@ -92,7 +99,7 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel?: LogLevel.verbose | LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 
 	/**
@@ -111,6 +118,6 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel?: LogLevel.verbose | LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
 	): void;
 }

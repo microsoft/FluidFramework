@@ -47,16 +47,10 @@ import {
 } from "@fluidframework/telemetry-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { buildSnapshotTree } from "@fluidframework/driver-utils";
-import { assert } from "@fluidframework/common-utils";
-import { Lazy } from "@fluidframework/core-utils";
+import { assert, Lazy } from "@fluidframework/core-utils";
 import { v4 as uuid } from "uuid";
 import { DataStoreContexts } from "./dataStoreContexts";
-import {
-	ContainerRuntime,
-	defaultRuntimeHeaderData,
-	RuntimeHeaderData,
-	TombstoneResponseHeaderKey,
-} from "./containerRuntime";
+import { ContainerRuntime, defaultRuntimeHeaderData, RuntimeHeaderData } from "./containerRuntime";
 import {
 	FluidDataStoreContext,
 	RemoteFluidDataStoreContext,
@@ -66,12 +60,7 @@ import {
 } from "./dataStoreContext";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs";
 import { IDataStoreAliasMessage, isDataStoreAliasMessage } from "./dataStore";
-import {
-	GCNodeType,
-	sweepDatastoresKey,
-	throwOnTombstoneLoadKey,
-	sendGCUnexpectedUsageEvent,
-} from "./gc";
+import { GCNodeType, disableDatastoreSweepKey, sendGCUnexpectedUsageEvent } from "./gc";
 import {
 	summarizerClientType,
 	IContainerRuntimeMetadata,
@@ -105,8 +94,6 @@ export class DataStores implements IDisposable {
 	// Stores the ids of new data stores between two GC runs. This is used to notify the garbage collector of new
 	// root data stores that are added.
 	private dataStoresSinceLastGC: string[] = [];
-	/** If true, throw an error when a tombstone data store is retrieved. */
-	private readonly throwOnTombstoneLoad: boolean;
 	// The handle to the container runtime. This is used mainly for GC purposes to represent outbound reference from
 	// the container runtime to other nodes.
 	private readonly containerRuntimeHandle: IFluidHandle;
@@ -140,12 +127,6 @@ export class DataStores implements IDisposable {
 			"/",
 			this.runtime.IFluidHandleContext,
 		);
-
-		// Tombstone should only throw when the feature flag is enabled and the client isn't a summarizer
-		this.throwOnTombstoneLoad =
-			this.mc.config.getBoolean(throwOnTombstoneLoadKey) === true &&
-			this.runtime.gcTombstoneEnforcementAllowed &&
-			this.runtime.clientDetails.type !== summarizerClientType;
 
 		// Extract stores stored inside the snapshot
 		const fluidDataStores = new Map<string, ISnapshotTree>();
@@ -213,7 +194,7 @@ export class DataStores implements IDisposable {
 
 	public async waitIfPendingAlias(maybeAlias: string): Promise<AliasResult> {
 		const pendingAliasPromise = this.pendingAliases.get(maybeAlias);
-		return pendingAliasPromise === undefined ? "Success" : pendingAliasPromise;
+		return pendingAliasPromise ?? "Success";
 	}
 
 	public processAttachMessage(message: ISequencedDocumentMessage, local: boolean) {
@@ -456,9 +437,6 @@ export class DataStores implements IDisposable {
 			const request: IRequest = { url: id };
 			throw responseToException(create404Response(request), request);
 		}
-
-		this.validateNotTombstoned(context, requestHeaderData);
-
 		return context;
 	}
 
@@ -478,8 +456,6 @@ export class DataStores implements IDisposable {
 		if (context === undefined) {
 			return undefined;
 		}
-		// Check if the data store is tombstoned. If so, we want to log a telemetry event.
-		this.checkIfTombstoned(context, requestHeaderData);
 		return context;
 	}
 
@@ -527,61 +503,6 @@ export class DataStores implements IDisposable {
 				createResponseError(404, "DataStore was deleted", request),
 				request,
 			);
-		}
-	}
-
-	/**
-	 * Checks if the data store has not been marked as tombstone by GC or not.
-	 * @param context - the data store context in question
-	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been tombstoned
-	 * @returns true if the data store is tombstoned. Otherwise, returns false.
-	 */
-	private checkIfTombstoned(
-		context: FluidDataStoreContext,
-		requestHeaderData: RuntimeHeaderData,
-	) {
-		if (!context.tombstoned) {
-			return false;
-		}
-		const logErrorEvent = this.throwOnTombstoneLoad && !requestHeaderData.allowTombstone;
-		sendGCUnexpectedUsageEvent(
-			this.mc,
-			{
-				eventName: "GC_Tombstone_DataStore_Requested",
-				category: logErrorEvent ? "error" : "generic",
-				isSummarizerClient: this.runtime.clientDetails.type === summarizerClientType,
-				id: context.id,
-				headers: JSON.stringify(requestHeaderData),
-				gcTombstoneEnforcementAllowed: this.runtime.gcTombstoneEnforcementAllowed,
-			},
-			context.isLoaded ? context.packagePath : undefined,
-		);
-		return true;
-	}
-
-	/**
-	 * Validates that the data store context requested has not been marked as tombstone by GC.
-	 * @param context - the data store context in question
-	 * @param request - the request information to log if the validation detects the data store has been tombstoned
-	 * @param requestHeaderData - the request header information to log if the validation detects the data store has been tombstoned
-	 */
-	private validateNotTombstoned(
-		context: FluidDataStoreContext,
-		requestHeaderData: RuntimeHeaderData,
-	) {
-		if (this.checkIfTombstoned(context, requestHeaderData)) {
-			// The requested data store is removed by gc. Create a 404 gc response exception.
-			const request: IRequest = { url: context.id };
-			const error = responseToException(
-				createResponseError(404, "DataStore was deleted", request, {
-					[TombstoneResponseHeaderKey]: true,
-				}),
-				request,
-			);
-			// Throw an error if configured via options and via request headers.
-			if (this.throwOnTombstoneLoad && !requestHeaderData.allowTombstone) {
-				throw error;
-			}
 		}
 	}
 
@@ -821,11 +742,11 @@ export class DataStores implements IDisposable {
 	 * Delete data stores and its objects that are sweep ready.
 	 * @param sweepReadyDataStoreRoutes - The routes of data stores and its objects that are sweep ready and should
 	 * be deleted.
-	 * @returns - The routes of data stores and its objects that were deleted.
+	 * @returns The routes of data stores and its objects that were deleted.
 	 */
 	public deleteSweepReadyNodes(sweepReadyDataStoreRoutes: string[]): string[] {
 		// If sweep for data stores is not enabled, return empty list indicating nothing is deleted.
-		if (this.mc.config.getBoolean(sweepDatastoresKey) !== true) {
+		if (this.mc.config.getBoolean(disableDatastoreSweepKey) === true) {
 			return [];
 		}
 		for (const route of sweepReadyDataStoreRoutes) {

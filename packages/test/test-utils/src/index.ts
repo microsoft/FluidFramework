@@ -39,3 +39,4 @@ export {
 	TimeoutWithValue,
 } from "./timeoutUtils";
 export { waitForContainerConnection } from "./containerUtils";
+export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore";

@@ -22,7 +22,8 @@ import {
 	IVersion,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { delay, TypedEventEmitter } from "@fluidframework/common-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { delay } from "@fluidframework/core-utils";
 import { ReplayController } from "./replayController";
 
 const ReplayDocumentId = "documentId";

@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, stringToBuffer } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IdCreationRange,
 	IIdCompressor,

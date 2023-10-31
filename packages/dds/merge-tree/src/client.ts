@@ -13,7 +13,8 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
-import { assert, TypedEventEmitter, unreachableCase } from "@fluidframework/common-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
 // eslint-disable-next-line import/no-deprecated
 import { IIntegerRange } from "./base";
@@ -61,6 +62,7 @@ import { SnapshotLegacy } from "./snapshotlegacy";
 import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
+// eslint-disable-next-line import/no-deprecated
 import { ReferencePosition, RangeStackMap, DetachedReferencePosition } from "./referencePositions";
 import { MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
@@ -376,13 +378,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param offset - Offset on the segment at which to place the local reference
 	 * @param refType - ReferenceType for the created local reference
 	 * @param properties - PropertySet to place on the created local reference
+	 * @param canSlideToEndpoint - Whether or not the created local reference can
+	 * slide onto one of the special endpoint segments denoting the position
+	 * before the start of or after the end of the tree
 	 */
 	public createLocalReferencePosition(
-		segment: ISegment,
+		segment: ISegment | "start" | "end",
 		offset: number | undefined,
 		refType: ReferenceType,
 		properties: PropertySet | undefined,
 		slidingPreference?: SlidingPreference,
+		canSlideToEndpoint?: boolean,
 	): LocalReferencePosition {
 		return this._mergeTree.createLocalReferencePosition(
 			segment,
@@ -390,6 +396,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			refType,
 			properties,
 			slidingPreference,
+			canSlideToEndpoint,
 		);
 	}
 
@@ -1047,8 +1054,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
 		return this._mergeTree.getStackContext(
 			startPos,
@@ -1172,7 +1180,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	/**
-	 * @deprecated - Use searchForMarker instead.
+	 * @deprecated Use searchForMarker instead.
 	 */
 	findTile(startPos: number, tileLabel: string, preceding = true) {
 		const clientId = this.getClientId();

@@ -9,7 +9,8 @@ import {
 	IEventProvider,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { TypedEventEmitter, assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	createChildLogger,
 	ITelemetryLoggerExt,
@@ -113,7 +114,7 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 		parentLogger: ITelemetryBaseLogger,
 		/** Creates summarizer by asking interactive container to spawn summarizing container and
 		 * get back its Summarizer instance. */
-		private readonly requestSummarizerFn: () => Promise<ISummarizer>,
+		private readonly createSummarizerFn: () => Promise<ISummarizer>,
 		private readonly startThrottler: IThrottler,
 		{
 			initialDelayMs = defaultInitialDelayMs,
@@ -263,7 +264,7 @@ export class SummaryManager extends TypedEventEmitter<ISummarizerEvents> impleme
 				);
 				this.state = SummaryManagerState.Running;
 
-				const summarizer = await this.requestSummarizerFn();
+				const summarizer = await this.createSummarizerFn();
 				this.summarizer = summarizer;
 				this.summarizer.on("summarize", this.handleSummarizeEvent);
 

@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { isStableId } from "@fluidframework/container-runtime";
 import {
-	DetachedField,
 	FieldKey,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	UpPath,
-	keyAsDetachedField,
+	getDetachedFieldContainingPath,
 	rootField,
 } from "../../core";
 import { brand } from "../../util";
@@ -18,7 +17,8 @@ import { valueSymbol } from "../contextuallyTyped";
 import { FieldKinds } from "../default-field-kinds";
 import { StableNodeKey } from "../node-key";
 import { getField } from "../untypedTree";
-import { EditableTree, TreeStatus } from "./editableTreeTypes";
+import { TreeStatus } from "../editable-tree-2";
+import { EditableTree } from "./editableTreeTypes";
 
 /**
  * @returns true iff `schema` trees should default to being viewed as just their value when possible.
@@ -30,12 +30,12 @@ import { EditableTree, TreeStatus } from "./editableTreeTypes";
  * Checking for this object case is done elsewhere.
  * @alpha
  */
-export function isPrimitive(schema: TreeStoredSchema): boolean {
+export function isPrimitive(schema: TreeNodeStoredSchema): boolean {
 	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.
 	// Since the above is not done yet, use use a heuristic:
 	return (
 		schema.leafValue !== undefined &&
-		schema.structFields.size === 0 &&
+		schema.objectNodeFields.size === 0 &&
 		schema.mapFields === undefined
 	);
 }
@@ -105,23 +105,6 @@ export function getStableNodeKey(
 		);
 		return brand(id);
 	}
-}
-
-/**
- * Checks whether or not a given path is parented under the root field.
- * @param path - the path you want to check.
- * @returns the {@link DetachedField} which contains the path.
- */
-export function getDetachedFieldContainingPath(path: UpPath): DetachedField {
-	let currentPath = path;
-	while (currentPath !== undefined) {
-		if (currentPath.parent === undefined) {
-			return keyAsDetachedField(currentPath.parentField);
-		} else {
-			currentPath = currentPath.parent;
-		}
-	}
-	return keyAsDetachedField(path.parentField);
 }
 
 /**

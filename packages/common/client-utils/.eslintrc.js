@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/minimal"), "prettier"],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
 		project: [
 			"./tsconfig.json",
@@ -12,9 +12,5 @@ module.exports = {
 			"./src/test/jest/tsconfig.json",
 			"./src/test/types/tsconfig.json",
 		],
-	},
-	rules: {
-		// TODO: Remove once this config extends `recommended` or `strict` above.
-		"@typescript-eslint/explicit-function-return-type": "error",
 	},
 };

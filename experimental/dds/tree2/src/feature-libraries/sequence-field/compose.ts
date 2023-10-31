@@ -3,17 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 import { ChangeAtomId, makeAnonChange, RevisionTag, tagChange, TaggedChange } from "../../core";
-import { asMutable, brand, fail } from "../../util";
+import { asMutable, brand, fakeIdAllocator, IdAllocator } from "../../util";
 import {
 	CrossFieldManager,
 	CrossFieldTarget,
 	getIntention,
-	IdAllocator,
 	RevisionMetadataSource,
 } from "../modular-schema";
-import { Changeset, Mark, MarkList, MoveId, NoopMarkType, CellId, NoopMark } from "./format";
+import {
+	Changeset,
+	Mark,
+	MarkList,
+	MoveId,
+	NoopMarkType,
+	CellId,
+	NoopMark,
+	Insert,
+} from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
@@ -35,7 +43,6 @@ import {
 	areOutputCellsEmpty,
 	areInputCellsEmpty,
 	compareLineages,
-	isNewAttach,
 	isDetachMark,
 	markHasCellEffect,
 	withNodeChange,
@@ -44,12 +51,14 @@ import {
 	markEmptiesCells,
 	splitMark,
 	markIsTransient,
-	isGenerativeMark,
+	isInsert,
 	areOverlappingIdRanges,
+	isNewAttach,
+	isReattach,
 	getDetachCellId,
 	getInputCellId,
 } from "./utils";
-import { GenerativeMark, EmptyInputCellMark } from "./helperTypes";
+import { EmptyInputCellMark } from "./helperTypes";
 
 /**
  * @alpha
@@ -164,12 +173,9 @@ function composeMarks<TNodeChange>(
 		return withNodeChange(baseMark, nodeChange);
 	}
 	if (markIsTransient(baseMark)) {
-		if (isGenerativeMark(newMark)) {
+		if (isInsert(newMark)) {
 			// TODO: Make `withNodeChange` preserve type information so we don't need to cast here
-			const nonTransient = withNodeChange(
-				baseMark,
-				nodeChange,
-			) as GenerativeMark<TNodeChange>;
+			const nonTransient = withNodeChange(baseMark, nodeChange) as Insert<TNodeChange>;
 			delete nonTransient.transientDetach;
 			return nonTransient;
 		}
@@ -186,7 +192,7 @@ function composeMarks<TNodeChange>(
 			);
 			return baseMark;
 		}
-		if (newMark.type === "ReturnTo") {
+		if (isReattach(newMark)) {
 			// It's possible for ReturnTo to occur after a transient, but only if muted ReturnTo.
 			// Why possible: if the transient is a revive, then it's possible that the newMark comes from a client that
 			// knew about the node, and tried to move it out and return it.
@@ -299,7 +305,7 @@ function composeMarks<TNodeChange>(
 		}
 
 		assert(isDeleteMark(newMark), 0x71c /* Unexpected mark type */);
-		assert(isGenerativeMark(baseMark), 0x71d /* Expected generative mark */);
+		assert(isInsert(baseMark), 0x7d7 /* Expected insert mark */);
 		const newMarkRevision = newMark.revision ?? newRev;
 		assert(newMarkRevision !== undefined, 0x71e /* Unable to compose anonymous marks */);
 		return withNodeChange(
@@ -392,7 +398,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 		cloned.revision = revision;
 	}
 
-	if (cloned.type !== "MoveIn" && cloned.type !== "ReturnTo" && cloned.changes !== undefined) {
+	if (cloned.type !== "MoveIn" && cloned.changes !== undefined) {
 		cloned.changes = composeChild([tagChange(cloned.changes, revision)]);
 		return cloned;
 	}
@@ -420,7 +426,7 @@ function amendComposeI<TNodeChange>(
 		undefined,
 		moveEffects,
 		true,
-		() => fail("Should not generate IDs"),
+		fakeIdAllocator,
 		// TODO: Should pass in revision for new changes
 		(a, b) => composeChildChanges(a, b, undefined, composeChild),
 	);
@@ -440,8 +446,7 @@ function amendComposeI<TNodeChange>(
 				mark = replacementMark ?? mark;
 				break;
 			}
-			case "MoveIn":
-			case "ReturnTo": {
+			case "MoveIn": {
 				const replacementMark = getReplacementMark(
 					moveEffects,
 					CrossFieldTarget.Destination,
@@ -478,7 +483,7 @@ function amendComposeI<TNodeChange>(
 export class ComposeQueue<T> {
 	private readonly baseMarks: MarkQueue<T>;
 	private readonly newMarks: MarkQueue<T>;
-	private readonly cancelledInserts: Set<RevisionTag> = new Set();
+	private readonly cancelledInserts = new Set<RevisionTag>();
 
 	public constructor(
 		baseRevision: RevisionTag | undefined,
@@ -554,7 +559,7 @@ export class ComposeQueue<T> {
 				const baseRevision = baseMark.revision ?? this.baseMarks.revision;
 				const baseIntention = getIntention(baseRevision, this.revisionMetadata);
 				if (baseRevision === undefined || baseIntention === undefined) {
-					// The base revision always be defined except when squashing changes into a transaction.
+					// The base revision should always be defined except when squashing changes into a transaction.
 					// In the future, we want to support reattaches in the new change here.
 					// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
 					// (which will be obtained by rebasing the reattach over interim changes
@@ -636,7 +641,6 @@ export class ComposeQueue<T> {
 		if (newMark !== undefined) {
 			switch (newMark.type) {
 				case "MoveIn":
-				case "ReturnTo":
 					{
 						const baseMark = getReplacementMark(
 							this.moveEffects,
@@ -791,12 +795,11 @@ function areInverseMovesAtIntermediateLocation(
 	newIntention: RevisionTag | undefined,
 ): boolean {
 	assert(
-		(baseMark.type === "MoveIn" || baseMark.type === "ReturnTo") &&
-			(newMark.type === "MoveOut" || newMark.type === "ReturnFrom"),
+		baseMark.type === "MoveIn" && (newMark.type === "MoveOut" || newMark.type === "ReturnFrom"),
 		0x6d0 /* baseMark should be an attach and newMark should be a detach */,
 	);
 
-	if (baseMark.type === "ReturnTo" && baseMark.cellId?.revision === newIntention) {
+	if (isReattach(baseMark) && baseMark.cellId?.revision === newIntention) {
 		return true;
 	}
 

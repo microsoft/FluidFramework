@@ -9,7 +9,8 @@ import {
 	createChildLogger,
 	UsageError,
 } from "@fluidframework/telemetry-utils";
-import { assert, TypedEventEmitter } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions";
 import { IClient, IQuorumClients, ISequencedClient } from "@fluidframework/protocol-definitions";
 import { summarizerClientType } from "./summarizerClientElection";
@@ -224,7 +225,10 @@ export interface IOrderedClientElectionEvents extends IEvent {
 	);
 }
 
-/** Serialized state of IOrderedClientElection. */
+/**
+ * Serialized state of IOrderedClientElection.
+ * @public
+ */
 export interface ISerializedElection {
 	/** Sequence number at the time of the latest election. */
 	readonly electionSequenceNumber: number;

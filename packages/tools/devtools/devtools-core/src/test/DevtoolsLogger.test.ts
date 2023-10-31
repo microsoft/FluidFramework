@@ -5,7 +5,7 @@
 
 import { expect } from "chai";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 
 import { DevtoolsLogger } from "../DevtoolsLogger";

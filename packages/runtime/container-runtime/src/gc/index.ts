@@ -5,7 +5,7 @@
 
 export { GarbageCollector } from "./garbageCollection";
 export {
-	currentGCVersion,
+	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	disableSweepLogKey,
@@ -15,7 +15,7 @@ export {
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
-	gcVersionUpgradeToV3Key,
+	gcVersionUpgradeToV4Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
@@ -29,20 +29,15 @@ export {
 	runSessionExpiryKey,
 	runSweepKey,
 	stableGCVersion,
-	sweepAttachmentBlobsKey,
-	sweepDatastoresKey,
-	throwOnTombstoneLoadKey,
-	throwOnTombstoneUsageKey,
+	disableAttachmentBlobSweepKey,
+	disableDatastoreSweepKey,
 	UnreferencedState,
 } from "./gcDefinitions";
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
-	shouldAllowGcTombstoneEnforcement,
-	shouldAllowGcSweep,
 	trimLeadingAndTrailingSlashes,
 	unpackChildNodesGCDetails,
-	tagAsCodeArtifact,
 } from "./gcHelpers";
 export { runGarbageCollection } from "./gcReferenceGraphAlgorithm";
 export {

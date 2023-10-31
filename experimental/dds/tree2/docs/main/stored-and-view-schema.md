@@ -11,10 +11,10 @@ graph LR;
         stored[Stored Schema]
         stored-->fieldMap["Field Schema Map"]
         fieldMap--Keys-->GlobalFieldKeys
-        fieldMap--Values-->FieldStoredSchema["Global FieldStoredSchema"]
+        fieldMap--Values-->TreeFieldStoredSchema["Global TreeFieldStoredSchema"]
         stored-->treeMap["Tree Schema Map"]
         treeMap--Keys-->TreeSchemaIdentifiers
-        treeMap--Values-->TreeStoredSchema
+        treeMap--Values-->TreeNodeStoredSchema
         tree[Tree]
         tree-.->TreeSchemaIdentifiers
         tree-.->GlobalFieldKeys
@@ -31,10 +31,10 @@ graph LR;
         view["View Schema"]
         view-->vfieldMap["Field Schema Map"]
         vfieldMap--Keys-->vGlobalFieldKeys["GlobalFieldKeys"]
-        vfieldMap--Values-->vFieldSchema["Global FieldStoredSchema"]
+        vfieldMap--Values-->vFieldSchema["Global TreeFieldStoredSchema"]
         view-->vtreeMap["Tree Schema Map"]
         vtreeMap--Keys-->vTreeSchemaIdentifiers["TreeSchemaIdentifiers"]
-        vtreeMap--Values-->vTreeSchema["TreeStoredSchema"]
+        vtreeMap--Values-->vTreeSchema["TreeNodeStoredSchema"]
     end
 ```
 
@@ -182,7 +182,7 @@ Definitions for adjectives used with polymorphism:
 -   open: does not require modifying the declaration of the field to create a new type which can be used in it.
 -   closed: requires modifying the declaration of the field to create a new type which can be used in it.
 
-The example schema system includes bounded closed polymorphism (via unions in fields), and unbounded open polymorphism (via fields with unconstrained types). However, it does not support bounded open polymorphism. If support for bounded open polymorphism was added, it would be done by modifying FieldStoredSchema.type. See its doc comment for details.
+The example schema system includes bounded closed polymorphism (via unions in fields), and unbounded open polymorphism (via fields with unconstrained types). However, it does not support bounded open polymorphism. If support for bounded open polymorphism was added, it would be done by modifying TreeFieldStoredSchema.type. See its doc comment for details.
 
 There are a few reasons to leave bounded open polymorphism out of initial versions:
 
@@ -307,7 +307,7 @@ Readonly (for most people) public schema documents would compose interestingly w
 
 Even if we can't make it work as a separate DDS, it should be implemented such that it would be easy to reuse the code as a schema-DDS.
 
-## Typescript Typing
+## TypeScript Typing
 
 It is be possible to have an embedded DSL for schema declaration in the style of [typebox](https://www.npmjs.com/package/@sinclair/typebox) which produces both compile time types and runtime schema data.
 This allows for schema-aware APIs (for example for tree reading and editing) to be provided without code gen.

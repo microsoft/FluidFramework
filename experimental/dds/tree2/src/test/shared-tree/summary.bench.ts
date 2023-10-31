@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { IsoBuffer } from "@fluidframework/common-utils";
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTree, ITree } from "@fluidframework/protocol-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions";
 import {
@@ -25,7 +25,7 @@ import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTre
 
 // number of nodes in test for wide trees
 const nodesCountWide: [numberOfNodes: number, minLength: number, maxLength: number][] = [
-	[1, 1000, 2000],
+	[1, 1000, 2500],
 	[10, 1000, 10000],
 	[100, 1000, 500000],
 ];

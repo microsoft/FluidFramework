@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, bufferToString, IsoBuffer } from "@fluidframework/common-utils";
+import { bufferToString, IsoBuffer } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidDataStoreRuntime,
@@ -15,24 +16,24 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { ICodecOptions, IJsonCodec } from "../codec";
+import { ICodecOptions, IJsonCodec, SchemaValidationFunction } from "../codec";
 import {
 	cachedValue,
 	Dependee,
 	Dependent,
 	ICachedValue,
 	recordDependency,
-	FieldStoredSchema,
-	SchemaData,
-	StoredSchemaRepository,
+	TreeFieldStoredSchema,
 	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	StoredSchemaRepository,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { isJsonObject, JsonCompatibleReadOnly } from "../util";
-import { makeSchemaCodec } from "./schemaIndexFormat";
+import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -48,7 +49,7 @@ export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
 	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
-	private readonly codec: IJsonCodec<SchemaData, string>;
+	private readonly codec: IJsonCodec<TreeStoredSchema, Format>;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -58,7 +59,8 @@ export class SchemaSummarizer implements Summarizable {
 		this.codec = makeSchemaCodec(options);
 		this.schemaBlob = cachedValue(async (observer) => {
 			recordDependency(observer, this.schema);
-			const schemaText = this.codec.encode(this.schema);
+			// Currently no Fluid handles are used, so just use JSON.stringify.
+			const schemaText = JSON.stringify(this.codec.encode(this.schema));
 
 			// For now we are not chunking the the schema, but still put it in a reusable blob:
 			return this.runtime.uploadBlob(IsoBuffer.from(schemaText));
@@ -71,7 +73,8 @@ export class SchemaSummarizer implements Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const dataString = this.codec.encode(this.schema);
+		// Currently no Fluid handles are used, so just use JSON.stringify.
+		const dataString = JSON.stringify(this.codec.encode(this.schema));
 		return createSingleBlobSummary(schemaStringKey, dataString);
 	}
 
@@ -123,14 +126,15 @@ export class SchemaSummarizer implements Summarizable {
 		);
 
 		const schemaString = bufferToString(schemaBuffer, "utf-8");
-		const decoded = this.codec.decode(schemaString);
+		// Currently no Fluid handles are used, so just use JSON.parse.
+		const decoded = this.codec.decode(JSON.parse(schemaString));
 		this.schema.update(decoded);
 	}
 }
 
 interface SchemaOp {
 	readonly type: "SchemaOp";
-	readonly data: string;
+	readonly data: Format;
 }
 
 /**
@@ -141,13 +145,15 @@ interface SchemaOp {
 export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	implements StoredSchemaRepository
 {
-	private readonly codec: IJsonCodec<SchemaData, string>;
+	private readonly codec: IJsonCodec<TreeStoredSchema, Format, unknown>;
+	private readonly formatValidator: SchemaValidationFunction<typeof Format>;
 	public constructor(
 		public readonly inner: TRepository,
 		private readonly submit: (op: SchemaOp) => void,
 		options: ICodecOptions,
 	) {
 		this.codec = makeSchemaCodec(options);
+		this.formatValidator = options.jsonValidator.compile(Format);
 	}
 
 	public on<K extends keyof SchemaEvents>(eventName: K, listener: SchemaEvents[K]): () => void {
@@ -184,8 +190,8 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		const op: JsonCompatibleReadOnly = content;
 		if (isJsonObject(op) && op.type === "SchemaOp") {
 			assert(
-				typeof op.data === "string",
-				0x5e3 /* expected string data for resubmitted schema op */,
+				this.formatValidator.check(op.data),
+				0x79b /* unexpected format for resubmitted schema op */,
 			);
 			const schemaOp: SchemaOp = {
 				type: op.type,
@@ -197,7 +203,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return false;
 	}
 
-	public update(newSchema: SchemaData): void {
+	public update(newSchema: TreeStoredSchema): void {
 		const op: SchemaOp = { type: "SchemaOp", data: this.codec.encode(newSchema) };
 		this.submit(op);
 		this.inner.update(newSchema);
@@ -219,23 +225,36 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return this.inner.listDependees?.bind(this.inner);
 	}
 
-	public get rootFieldSchema(): FieldStoredSchema {
+	public get rootFieldSchema(): TreeFieldStoredSchema {
 		return this.inner.rootFieldSchema;
 	}
 
-	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
+	public get treeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 		return this.inner.treeSchema;
 	}
 
-	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): SchemaData | undefined {
+	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): TreeStoredSchema | undefined {
 		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
-			assert(
-				typeof encodedOp.data === "string",
-				0x6ca /* SchemaOps should have string data */,
-			);
 			return this.codec.decode(encodedOp.data);
 		}
 
 		return undefined;
 	}
+}
+
+/**
+ * Dumps schema into a deterministic JSON compatible semi-human readable but unspecified format.
+ *
+ * @remarks
+ * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
+ *
+ * This format may change across major versions of this package: such changes are considered breaking.
+ * Beyond that, no compatibility guarantee is provided for this format: it should never be relied upon to load data, it should only be used for comparing outputs from this function.
+ * @privateRemarks
+ * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
+ * This intentionally does not leak the format types in the API.
+ * @alpha
+ */
+export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
+	return encodeRepo(schema);
 }

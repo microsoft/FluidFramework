@@ -5,7 +5,7 @@
 
 /* eslint-disable tsdoc/syntax */
 /* eslint-disable no-bitwise */
-import { assert } from "@fluidframework/common-utils";
+import { assert } from "@fluidframework/core-utils";
 
 /**
  * A map in which entries are always added in key-sorted order.

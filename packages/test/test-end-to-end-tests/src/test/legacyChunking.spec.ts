@@ -59,7 +59,7 @@ describeInstallVersions(
 
 		const ContainerRuntimeFactoryWithDefaultDataStore_Old =
 			getContainerRuntimeApi(versionWithChunking).ContainerRuntimeFactoryWithDefaultDataStore;
-		const oldRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore_Old(
+		const oldRuntimeFactory = new (ContainerRuntimeFactoryWithDefaultDataStore_Old as any)(
 			oldDataObjectFactory,
 			[[oldDataObjectFactory.type, Promise.resolve(oldDataObjectFactory)]],
 			undefined,

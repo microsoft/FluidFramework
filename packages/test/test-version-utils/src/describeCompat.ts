@@ -235,5 +235,4 @@ export const describeLoaderCompat: DescribeCompat = createCompatDescribe(false, 
 	CompatKind.Loader,
 ]);
 
-export const describeFullCompat: DescribeCompat = createCompatDescribe(false);
-export const describeFullVersionCompat: DescribeCompat = createCompatDescribe(true);
+export const describeFullCompat: DescribeCompat = createCompatDescribe(true);
