@@ -19,7 +19,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
+		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -51,7 +51,7 @@
 	"devDependencies": {
 		"@fluid-tools/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.26.0-203096",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@types/react": "^17.0.44",
 		"css-loader": "^1.0.0",
