@@ -132,7 +132,7 @@ export class DetachedFieldIndex {
 						nodeId.major,
 						nodeId.minor + i,
 					) === undefined,
-					"Detached node ID already exists in index",
+					0x7ce /* Detached node ID already exists in index */,
 				);
 				setInNestedMap(this.detachedNodeToField, nodeId.major, nodeId.minor + i, root + i);
 			}

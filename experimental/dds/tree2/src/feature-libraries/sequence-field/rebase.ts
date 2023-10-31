@@ -80,8 +80,7 @@ export function rebase<TNodeChange>(
 	nodeExistenceState: NodeExistenceState = NodeExistenceState.Alive,
 ): Changeset<TNodeChange> {
 	assert(base.revision !== undefined, 0x69b /* Cannot rebase over changeset with no revision */);
-	const baseInfo =
-		base.revision === undefined ? undefined : revisionMetadata.getInfo(base.revision);
+	const baseInfo = revisionMetadata.tryGetInfo(base.revision);
 	const baseIntention = baseInfo?.rollbackOf ?? base.revision;
 	return rebaseMarkList(
 		change,

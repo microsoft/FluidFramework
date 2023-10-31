@@ -303,10 +303,10 @@ export function downCast<TSchema extends TreeNodeSchema>(
 	tree: UntypedTreeCore<any, any>,
 ): tree is TypedNode<TSchema> {
 	assert(typeof tree === "object", 0x72b /* downCast only valid on wrapped nodes */);
-	assert(tree !== null, "downCast only valid on wrapped nodes");
+	assert(tree !== null, 0x7d5 /* downCast only valid on wrapped nodes */);
 	assert(
 		!isFluidHandle(tree as unknown as FluidSerializableReadOnly),
-		"downCast only valid on wrapped nodes",
+		0x7d6 /* downCast only valid on wrapped nodes */,
 	);
 
 	const contextSchema = tree[contextSymbol].schema;
