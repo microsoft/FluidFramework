@@ -12,6 +12,7 @@ import {
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { FluidObject } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import { buildRuntimeRequestHandler, RuntimeRequestHandler } from "@fluidframework/request-handler";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
@@ -61,22 +62,29 @@ export const createTestContainerRuntimeFactory = (
 			context: IContainerContext,
 			existing: boolean,
 		): Promise<IRuntime & IContainerRuntime> {
-			const runtime: ContainerRuntime = await containerRuntimeCtor.load(
+			const runtime: ContainerRuntime = await containerRuntimeCtor.loadRuntime({
 				context,
-				[
+				registryEntries: [
 					["default", Promise.resolve(this.dataStoreFactory)],
 					[this.type, Promise.resolve(this.dataStoreFactory)],
 				],
 				// eslint-disable-next-line import/no-deprecated
-				buildRuntimeRequestHandler(
+				requestHandler: buildRuntimeRequestHandler(
 					// eslint-disable-next-line import/no-deprecated
 					defaultRouteRequestHandler("default"),
 					...this.requestHandlers,
 				),
-				this.runtimeOptions,
-				context.scope,
+				runtimeOptions: this.runtimeOptions,
+				containerScope: context.scope,
 				existing,
-			);
+				async provideEntryPoint(containerRuntime: IContainerRuntime): Promise<FluidObject> {
+					const handle = await containerRuntime.getAliasedDataStoreEntryPoint("default");
+					if (handle === undefined) {
+						throw new Error("Could not get default data store entry point");
+					}
+					return handle.get();
+				},
+			});
 
 			return runtime;
 		}
