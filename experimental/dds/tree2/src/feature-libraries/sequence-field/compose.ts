@@ -590,7 +590,7 @@ export class ComposeQueue<T> {
 				fail("Expected defined output ID");
 
 			if (markEmptiesCells(baseMark) && baseCellId.revision === undefined) {
-				// The base revision always be defined except when squashing changes into a transaction.
+				// The base revision should always be defined except when squashing changes into a transaction.
 				// In the future, we want to support reattaches in the new change here.
 				// We will need to be able to order the base mark relative to the new mark by looking at the lineage of the new mark
 				// (which will be obtained by rebasing the reattach over interim changes
