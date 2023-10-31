@@ -196,13 +196,13 @@ export class SchemaBuilderBase<
 		`${TScope}.${Name}`,
 		{ objectNodeFields: { [key in keyof T]: NormalizeField<T[key], TDefaultKind> } }
 	> {
-		const schema = new TreeNodeSchema(this, this.scoped(name), {
+		const schema = TreeNodeSchema.create(this, this.scoped(name), {
 			objectNodeFields: transformObjectMap(
 				t,
 				(field): TreeFieldSchema => this.normalizeField(field),
 			) as {
 				[key in keyof T]: NormalizeField<T[key], TDefaultKind>;
-			},
+			} & RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 		});
 		this.addNodeSchema(schema);
 		return schema;
@@ -233,7 +233,7 @@ export class SchemaBuilderBase<
 		name: Name,
 		fieldSchema: T,
 	): TreeNodeSchema<`${TScope}.${Name}`, { mapFields: T }> {
-		const schema = new TreeNodeSchema(this, this.scoped(name), {
+		const schema = TreeNodeSchema.create(this, this.scoped(name), {
 			mapFields: fieldSchema,
 		});
 		this.addNodeSchema(schema);
@@ -274,7 +274,7 @@ export class SchemaBuilderBase<
 		`${TScope}.${Name}`,
 		{ objectNodeFields: { [""]: NormalizeField<T, TDefaultKind> } }
 	> {
-		const schema = new TreeNodeSchema(this, this.scoped(name), {
+		const schema = TreeNodeSchema.create(this, this.scoped(name), {
 			objectNodeFields: { [""]: this.normalizeField(fieldSchema) },
 		});
 		this.addNodeSchema(schema);
