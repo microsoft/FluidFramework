@@ -60,7 +60,7 @@ export function initializeContent(
 		assert(rootKind === FieldKinds.required.identifier, 0x5c8 /* Unexpected kind */);
 		// Replace value kind with optional kind in root field schema:
 		incrementalSchemaUpdate = {
-			treeSchema: schema.treeSchema,
+			nodeSchema: schema.nodeSchema,
 			rootFieldSchema: {
 				kind: FieldKinds.optional,
 				types: rootSchema.types,

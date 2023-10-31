@@ -4,13 +4,13 @@
  */
 
 const {
+	ApiItemKind,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	loadModel,
-	renderDocumentAsMarkdown,
+	MarkdownRenderer,
 	transformApiModel,
 } = require("@fluid-tools/api-markdown-documenter");
-const { ApiItemKind } = require("@microsoft/api-extractor-model");
 const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs-extra");
 const path = require("path");
@@ -86,7 +86,7 @@ async function renderApiDocumentation() {
 		documents.map(async (document) => {
 			let fileContents;
 			try {
-				fileContents = renderDocumentAsMarkdown(document, {
+				fileContents = MarkdownRenderer.renderDocument(document, {
 					startingHeadingLevel: 2, // Hugo will inject its document titles as 1st level headings, so start content heading levels at 2.
 					customRenderers,
 				});
