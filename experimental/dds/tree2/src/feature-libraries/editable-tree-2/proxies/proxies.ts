@@ -15,9 +15,18 @@ import {
 	schemaIsMap,
 	schemaIsObjectNode,
 	MapSchema,
+	FieldNodeSchema,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
-import { OptionalField, RequiredField, TreeNode, TypedField } from "../editableTreeTypes";
+import {
+	FieldNode,
+	MapNode,
+	ObjectNode,
+	OptionalField,
+	RequiredField,
+	TreeNode,
+	TypedField,
+} from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
@@ -84,12 +93,15 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 	if (schemaIsLeaf(schema)) {
 		return treeNode.value as ProxyNode<TSchema>;
 	}
-	if (schemaIsMap(schema) && treeNode.is(schema)) {
-		return setTreeNode(createMapProxy(), treeNode) as ProxyNode<TSchema>;
-	} else if (schemaIsFieldNode(schema) && treeNode.is(schema)) {
-		return setTreeNode(createListProxy(), treeNode) as ProxyNode<TSchema>;
-	} else if (schemaIsObjectNode(schema) && treeNode.is(schema)) {
-		return setTreeNode(createObjectProxy(schema), treeNode) as ProxyNode<TSchema>;
+	if (schemaIsMap(schema)) {
+		return setTreeNode(createMapProxy(), treeNode as MapNode<MapSchema>) as ProxyNode<TSchema>;
+	} else if (schemaIsFieldNode(schema)) {
+		return setTreeNode(
+			createListProxy(),
+			treeNode as FieldNode<FieldNodeSchema>,
+		) as ProxyNode<TSchema>;
+	} else if (schemaIsObjectNode(schema)) {
+		return setTreeNode(createObjectProxy(schema), treeNode as ObjectNode) as ProxyNode<TSchema>;
 	} else {
 		fail("unrecognized node kind");
 	}
@@ -116,6 +128,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 					return getProxyForField(field);
 				}
 
+				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 				return Reflect.get(target, key, proxy);
 			},
 			set(target, key, value) {
@@ -447,7 +460,7 @@ function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> 
 			//       inner field.
 			return maybeIndex !== undefined
 				? getOrCreateNodeProxy(field.boxedAt(maybeIndex))
-				: // Pass the proxy as the receiver here, so that the map methods on the prototype receive `proxy` as `this`.
+				: // Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 				  (Reflect.get(dispatch, key, proxy) as unknown);
 		},
 		set: (target, key, newValue, receiver) => {
@@ -567,6 +580,7 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 		new Map<string, ProxyField<TSchema["mapFields"]>>(),
 		{
 			get: (target, key, receiver): unknown => {
+				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 				return Reflect.get(dispatch, key, proxy);
 			},
 			getOwnPropertyDescriptor: (target, key): PropertyDescriptor | undefined => {
