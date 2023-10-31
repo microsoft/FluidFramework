@@ -54,6 +54,7 @@
 		"glob": "^7.2.3",
 		"http-server": "^14.1.1",
 		"hugo-extended": "^0.113.0",
+		"js-yaml": "^4.1.0",
 		"linkcheck-bin": "3.0.0-0",
 		"markdown-magic": "npm:@tylerbu/markdown-magic@2.4.0-tylerbu-1",
 		"markdown-magic-package-json": "^2.0.2",
@@ -69,9 +70,6 @@
 		"replace-in-file": "^7.0.1",
 		"rimraf": "^5.0.1",
 		"start-server-and-test": "^2.0.0"
-	},
-	"devDependencies": {
-		"js-yaml": "^4.1.0"
 	},
 	"pnpm": {
 		"overrides": {
