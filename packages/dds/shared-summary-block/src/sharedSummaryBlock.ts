@@ -34,6 +34,8 @@ interface ISharedSummaryBlockDataSerializable {
 /**
  * Implementation of a shared summary block. It does not generate any ops. It is only part of the summary.
  * Data should be set in this object in response to a remote op.
+ *
+ * @public
  */
 export class SharedSummaryBlock extends SharedObject implements ISharedSummaryBlock {
 	/**

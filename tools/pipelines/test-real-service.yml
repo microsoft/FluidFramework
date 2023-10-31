@@ -25,9 +25,9 @@ variables:
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 - name: testPackage
-  value: "@fluid-internal/test-end-to-end-tests"
+  value: "@fluid-private/test-end-to-end-tests"
   readonly: true
-- name: toolAbsolutePath
+- name: absolutePathToTelemetryGenerator
   value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
 
@@ -160,60 +160,64 @@ stages:
           login__microsoft__secret: $(login-microsoft-secret)
           login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-  
-  # Capture per-pipeline stage results
-  - stage: runAfterAll
-    displayName: Retrieve and upload E2E per-pipeline-stage stats to Kusto
-    condition: always()
+
+  # Capture telemetry about pipeline stages
+  - stage: upload_run_telemetry
+    displayName: Upload pipeline run telemetry to Kusto
+    condition: succeededOrFailed()
     dependsOn:
       - e2e_local_server
       - e2e_tinylicious
       - e2e_routerlicious
       - e2e_frs
       - e2e_odsp
-
     jobs:
-      - template: templates/include-test-perf-benchmarks.yml
+    - job: upload_run_telemetry
+      displayName: Upload pipeline run telemetry to Kusto
+      pool: Small
+      variables:
+      - group: ado-feeds
+
+      steps:
+      - template: templates/include-telemetry-setup.yml
         parameters:
-            testWorkspace: ${{ variables.testWorkspace }}
-            poolBuild: Small
-            customSteps:
+          devFeedUrl: $(ado-feeds-dev)
+          officeFeedUrl: $(ado-feeds-office)
+          isCheckoutNeeded: true
+      - task: Bash@3
+        displayName: Retrieve buildId results
+        env:
+          BUILD_ID: $(Build.BuildId)
+          ADO_API_TOKEN: $(System.AccessToken)
+          PIPELINE: 'EndToEndTests'
+        inputs:
+          targetType: 'inline'
+          workingDirectory: $(absolutePathToTelemetryGenerator)
+          script: |
+            echo "creating output folder"
+            mkdir -p ${{ variables.testWorkspace }}/timingOutput
+            echo "Retrieving pipeline run timeline data command ..."
+            echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+            curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+            pwd;
+            ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
+            cat ${{ variables.testWorkspace }}/timingOutput/output.json;
+            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
 
-            - task: Bash@3
-              displayName: Retrieve buildId results
-              inputs:
-                targetType: 'inline'
-                workingDirectory: $(toolAbsolutePath)
-                script: |
-                  echo "creating output folder"
-                  mkdir -p ${{ variables.testWorkspace }}/timingOutput
-                  echo "Executing curl command ..."
-                  echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
-                  curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
-                  pwd;
-                  ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-                  cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-                  node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
-              env:
-                BUILD_ID: $(Build.BuildId)
-                ADO_API_TOKEN: $(System.AccessToken)
-                PIPELINE: 'EndToEndTests'
-
-            # Retrieve E2E test pass rate
-            - task: Bash@3
-              displayName: Retrieve test pass rate
-              env:
-                BUILD_ID: $(Build.BuildId)
-                ADO_API_TOKEN: $(System.AccessToken)
-                BASE_OUTPUT_FOLDER: ${{ variables.testWorkspace }}
-                BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
-                PIPELINE: 'EndToEndTests'
-              inputs:
-                targetType: 'inline'
-                workingDirectory: $(toolAbsolutePath)
-                script: |
-                  echo "Fetching pass rate data and saving into JSON files"
-                  node "$BUILD_SOURCES_DIRECTORY/scripts/get-test-pass-rate.mjs"
-                  echo "Files created. Now running telemetry-generator"
-                  node --require @ff-internal/aria-logger bin/run --handlerModule "$(toolAbsolutePath)/dist/handlers/testPassRate.js" --dir "$BASE_OUTPUT_FOLDER/stageFiles"
-                
+      # Retrieve E2E test pass rate
+      - task: Bash@3
+        displayName: Retrieve test pass rate
+        env:
+          BUILD_ID: $(Build.BuildId)
+          ADO_API_TOKEN: $(System.AccessToken)
+          BASE_OUTPUT_FOLDER: ${{ variables.testWorkspace }}
+          BUILD_SOURCES_DIRECTORY: $(Build.SourcesDirectory)
+          PIPELINE: 'EndToEndTests'
+        inputs:
+          targetType: 'inline'
+          workingDirectory: $(absolutePathToTelemetryGenerator)
+          script: |
+            echo "Fetching pass rate data and saving into JSON files"
+            node "$BUILD_SOURCES_DIRECTORY/scripts/get-test-pass-rate.mjs"
+            echo "Files created. Now running telemetry-generator"
+            node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$BASE_OUTPUT_FOLDER/stageFiles"

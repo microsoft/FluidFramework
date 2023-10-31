@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { List, walkList } from "./collections";
+import { DoublyLinkedList, walkList } from "./collections";
 import { ISegment, SegmentGroup } from "./mergeTreeNodes";
 
 export class SegmentGroupCollection {
-	private readonly segmentGroups: List<SegmentGroup>;
+	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;
 
 	constructor(private readonly segment: ISegment) {
-		this.segmentGroups = new List<SegmentGroup>();
+		this.segmentGroups = new DoublyLinkedList<SegmentGroup>();
 	}
 
 	public get size() {

@@ -67,6 +67,7 @@ declare function get_current_ClassDeclaration_BaseSegment():
 declare function use_old_ClassDeclaration_BaseSegment(
     use: TypeOnly<old.BaseSegment>);
 use_old_ClassDeclaration_BaseSegment(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_BaseSegment());
 
 /*
@@ -1040,6 +1041,7 @@ declare function get_current_ClassDeclaration_LocalReferenceCollection():
 declare function use_old_ClassDeclaration_LocalReferenceCollection(
     use: TypeOnly<old.LocalReferenceCollection>);
 use_old_ClassDeclaration_LocalReferenceCollection(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_LocalReferenceCollection());
 
 /*
@@ -1112,6 +1114,7 @@ declare function get_current_ClassDeclaration_Marker():
 declare function use_old_ClassDeclaration_Marker(
     use: TypeOnly<old.Marker>);
 use_old_ClassDeclaration_Marker(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_Marker());
 
 /*

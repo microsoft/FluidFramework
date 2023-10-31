@@ -26,7 +26,7 @@ import {
 	ValueFieldEditBuilder,
 } from "../default-field-kinds";
 import { assertValidIndex, assertValidRangeIndices, brand, disposeSymbol, fail } from "../../util";
-import { AllowedTypes, FieldSchema } from "../typed-schema";
+import { AllowedTypes, TreeFieldSchema } from "../typed-schema";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
 import { Context } from "./context";
 import {
@@ -60,7 +60,7 @@ import { treeStatusFromAnchorCache, treeStatusFromDetachedField } from "./utilit
 
 export function makeField(
 	context: Context,
-	schema: FieldSchema,
+	schema: TreeFieldSchema,
 	cursor: ITreeSubscriptionCursor,
 ): TreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
@@ -90,14 +90,14 @@ export function makeField(
  * the nodes of {@link EditableField} by means of the cursors.
  */
 export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedTypes>
-	extends LazyEntity<FieldSchema<TKind, TTypes>, FieldAnchor>
+	extends LazyEntity<TreeFieldSchema<TKind, TTypes>, FieldAnchor>
 	implements TreeField
 {
 	public readonly key: FieldKey;
 
 	public constructor(
 		context: Context,
-		schema: FieldSchema<TKind, TTypes>,
+		schema: TreeFieldSchema<TKind, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -108,7 +108,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		makePropertyNotEnumerable(this, "key");
 	}
 
-	public is<TSchema extends FieldSchema>(schema: TSchema): this is TypedField<TSchema> {
+	public is<TSchema extends TreeFieldSchema>(schema: TSchema): this is TypedField<TSchema> {
 		assert(
 			this.context.schema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
 			0x77c /* Narrowing must be done to a kind that exists in this context */,
@@ -224,13 +224,19 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 	}
 }
 
+function assertIsLazySequence<TTypesSource extends AllowedTypes>(
+	sourceField: unknown,
+): asserts sourceField is LazySequence<TTypesSource> {
+	assert(sourceField instanceof LazySequence, 0x7b1 /* Unsupported sequence implementation. */);
+}
+
 export class LazySequence<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
 	implements Sequence<TTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.sequence, TTypes>,
+		schema: TreeFieldSchema<typeof FieldKinds.sequence, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -329,29 +335,34 @@ export class LazySequence<TTypes extends AllowedTypes>
 		source?: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
 	): void {
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
+		// TODO: determine support for move across different sequence types
+		assertIsLazySequence(sourceField);
 		assertValidRangeIndices(sourceStart, sourceEnd, sourceField);
 		if (this.schema.types !== undefined && sourceField !== this) {
 			for (let i = sourceStart; i < sourceEnd; i++) {
-				const sourceNode = sourceField.at(sourceStart);
+				const sourceNode = sourceField.boxedAt(sourceStart);
 				if (!this.schema.types.has(sourceNode.schema.name)) {
 					throw new Error("Type in source sequence is not allowed in destination.");
 				}
 			}
 		}
-		const count = sourceEnd - sourceStart;
+		const movedCount = sourceEnd - sourceStart;
 		let destinationIndex = index;
 		if (sourceField === this) {
-			destinationIndex -= count;
+			if (destinationIndex > sourceStart) {
+				destinationIndex =
+					destinationIndex < sourceEnd
+						? sourceStart // destination overlaps with source range -> slide to left
+						: (destinationIndex -= movedCount); // destination after source range -> subtract moved count
+			}
 		}
 		assertValidIndex(destinationIndex, this, true);
-		// TODO: determine support for move across different sequence types
-		assert(source instanceof LazySequence, "Unsupported sequence implementation.");
-		const sourceFieldPath = (sourceField as LazySequence<TTypesSource>).getFieldPath();
+		const sourceFieldPath = sourceField.getFieldPath();
 		const destinationFieldPath = this.getFieldPath();
 		this.context.editor.move(
 			sourceFieldPath,
 			sourceStart,
-			count,
+			movedCount,
 			destinationFieldPath,
 			destinationIndex,
 		);
@@ -364,7 +375,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.required, TTypes>,
+		schema: TreeFieldSchema<typeof FieldKinds.required, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -401,7 +412,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.optional, TTypes>,
+		schema: TreeFieldSchema<typeof FieldKinds.optional, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -441,7 +452,7 @@ export class LazyNodeKeyField<TTypes extends AllowedTypes>
 {
 	public constructor(
 		context: Context,
-		schema: FieldSchema<typeof FieldKinds.nodeKey, TTypes>,
+		schema: TreeFieldSchema<typeof FieldKinds.nodeKey, TTypes>,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -459,9 +470,9 @@ export class LazyNodeKeyField<TTypes extends AllowedTypes>
 	public get stableNodeKey(): StableNodeKey {
 		const cursor = this[cursorSymbol];
 		cursor.enterNode(0);
-		assert(cursor.type === nodeKeyTreeIdentifier, "invalid node key type");
+		assert(cursor.type === nodeKeyTreeIdentifier, 0x7b2 /* invalid node key type */);
 		const stableKey = cursor.value;
-		assert(typeof stableKey === "string", "invalid node key type");
+		assert(typeof stableKey === "string", 0x7b3 /* invalid node key type */);
 		cursor.exitNode();
 		return brand(stableKey as StableId);
 	}
@@ -474,7 +485,7 @@ export class LazyForbiddenField<TTypes extends AllowedTypes> extends LazyField<
 
 type Builder = new <TTypes extends AllowedTypes>(
 	context: Context,
-	schema: FieldSchema<any, TTypes>,
+	schema: TreeFieldSchema<any, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 	fieldAnchor: FieldAnchor,
 ) => LazyField<any, TTypes>;

@@ -4,7 +4,7 @@
  */
 
 export { Comparer, Heap } from "./heap";
-export { List, ListNode, ListNodeRange, walkList } from "./list";
+export { DoublyLinkedList, ListNode, ListNodeRange, walkList } from "./list";
 export {
 	ConflictAction,
 	Dictionary,
