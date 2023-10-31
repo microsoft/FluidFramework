@@ -100,7 +100,7 @@ export interface IConnectionManager {
 	 * Submits signal to relay service.
 	 * Called only when active connection is present.
 	 */
-	submitSignal(content: any): void;
+	submitSignal(content: any, targetClientId?: string): void;
 
 	/**
 	 * Submits messages to relay service.

@@ -40,7 +40,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	fieldSchema,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -289,6 +288,7 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	encodeTreeSchema,
 } from "./feature-libraries";
 
 export {

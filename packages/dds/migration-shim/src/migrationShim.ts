@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import {
 	type IChannelAttributes,
-	type IChannel,
 	type IChannelServices,
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
@@ -30,11 +29,13 @@ import { assert } from "@fluidframework/core-utils";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
 import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
+import { ShimHandle } from "./shimHandle.js";
+import { type IShim } from "./types.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
  *
- * @public
+ * @internal
  */
 export interface IMigrationEvent extends IEvent {
 	/**
@@ -76,9 +77,9 @@ export interface IMigrationOp {
  * attributes to point at the SharedTreeShimFactory.  This will cause future clients to load with a SharedTreeShim and
  * the new SharedTree snapshot instead after the next summarization.
  *
- * @public
+ * @internal
  */
-export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IChannel {
+export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IShim {
 	public constructor(
 		public readonly id: string,
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -92,6 +93,9 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		super();
 		// TODO: consider flattening this class
 		this.migrationDeltaHandler = new MigrationShimDeltaHandler(this.processMigrateOp);
+		// TODO: if we need to support the creation of legacy shared trees via the migration shim, we'll need to make
+		// sure that attaching the handle will make it live.
+		this.handle = new ShimHandle<MigrationShim>(this);
 	}
 
 	// TODO: process migrate op implementation, it'll look something like this
@@ -118,7 +122,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	private _legacyTree: LegacySharedTree | undefined;
 	private get legacyTree(): LegacySharedTree {
-		assert(this._legacyTree !== undefined, "Old tree not initialized");
+		assert(this._legacyTree !== undefined, 0x7e6 /* Old tree not initialized */);
 		return this._legacyTree;
 	}
 
@@ -196,14 +200,14 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	// Only reconnect to the new shared tree this limits us to only migrating
 	private reconnect(): void {
-		assert(this.services !== undefined, "Not connected");
-		assert(this.newTree !== undefined, "New tree not initialized");
+		assert(this.services !== undefined, 0x7e7 /* Not connected */);
+		assert(this.newTree !== undefined, 0x7e8 /* New tree not initialized */);
 		// This method attaches the newTree's delta handler to the MigrationShimDeltaHandler
 		this.newTree.connect(this.services);
 	}
 
 	private generateShimServicesOnce(services: IChannelServices): ShimChannelServices {
-		assert(this.services === undefined, "Already connected");
+		assert(this.services === undefined, 0x7e9 /* Already connected */);
 		this.services = new ShimChannelServices(services, this.migrationDeltaHandler);
 		return this.services;
 	}
@@ -211,6 +215,8 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {
 		return this.currentTree.getGCData(fullGC);
 	}
-	public handle!: IFluidHandle;
-	public IFluidLoadable!: IFluidLoadable;
+	public handle: IFluidHandle<MigrationShim>;
+	public get IFluidLoadable(): IFluidLoadable {
+		return this;
+	}
 }

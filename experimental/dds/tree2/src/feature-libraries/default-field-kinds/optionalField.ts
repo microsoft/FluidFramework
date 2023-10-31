@@ -125,6 +125,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
 		const addChildChange = (id: ChangeId, ...changeList: TaggedChange<NodeChangeset>[]) => {
@@ -138,7 +141,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
+		let index = 0;
 		for (const { change, revision } of changes) {
+			const fieldChangeInfo = revisionMetadata.tryGetInfo(
+				revision ?? change.fieldChange?.revision,
+			);
 			const { childChanges } = change;
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
@@ -158,18 +165,41 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (fieldChange === undefined) {
 					fieldChange = {
 						id: change.fieldChange.id,
-						revision: change.fieldChange.revision ?? revision,
+						revision: fieldChangeInfo?.revision,
 						wasEmpty: change.fieldChange.wasEmpty,
 					};
 				} else {
 					fieldChange.id = change.fieldChange.id;
-					fieldChange.revision = change.fieldChange.revision ?? revision;
+					fieldChange.revision = fieldChangeInfo?.revision;
 				}
 
+				let hasMatchingPriorInverse = false;
+				const maybePriorInverse = changes.findIndex((c) => {
+					const cChangeInfo = revisionMetadata.tryGetInfo(
+						// Change c may be a composite, in which case we need to look the revision of the fieldChange
+						c.revision ?? c.change.fieldChange?.revision,
+					);
+					return (
+						(cChangeInfo?.rollbackOf !== undefined &&
+							cChangeInfo?.rollbackOf === fieldChangeInfo?.revision) ||
+						(cChangeInfo?.revision !== undefined &&
+							cChangeInfo?.revision === fieldChangeInfo?.rollbackOf)
+					);
+				});
+				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
+
 				if (change.fieldChange.newContent !== undefined) {
-					fieldChange.newContent = { ...change.fieldChange.newContent };
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						fieldChange.newContent = { ...change.fieldChange.newContent };
+					}
 				} else {
-					delete fieldChange.newContent;
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						delete fieldChange.newContent;
+					}
 				}
 
 				// Node was changed by this revision: flush the current changes
@@ -183,10 +213,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 				if (change.fieldChange.newContent?.changes !== undefined) {
 					currentChildNodeChanges.push(
-						tagChange(change.fieldChange.newContent.changes, revision),
+						tagChange(change.fieldChange.newContent.changes, fieldChangeInfo?.revision),
 					);
 				}
 			}
+			index++;
 		}
 
 		if (currentChildNodeChanges.length > 0) {
@@ -525,7 +556,7 @@ export function optionalFieldIntoDelta(
 			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
 			const content = [singleTextCursor(setUpdate.set)];
 			const buildId = makeDetachedNodeId(
-				setUpdate.buildId.revision,
+				setUpdate.buildId.revision ?? change.fieldChange.revision ?? revision,
 				setUpdate.buildId.localId,
 			);
 			mark.attach = buildId;
