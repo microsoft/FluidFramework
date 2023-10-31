@@ -261,28 +261,12 @@ export const makeEditGenerator = (
 		const { content: field } = fieldInfo;
 		assert(field.length > 1, "Sequence must have at least two elements to perform a move");
 
-		// Only two valid moves if length of two
-		if (field.length === 2) {
-			const fromIndex = state.random.integer(0, 1);
-			const toIndex = fromIndex === 0 ? 1 : 0;
-
-			return {
-				type: "sequence",
-				edit: {
-					type: "move",
-					dstIndex: toIndex,
-					count: 1,
-					firstNode: downPathFromNode(field.at(fromIndex)),
-				},
-			};
-		}
-
 		const start = state.random.integer(0, field.length - 1);
 		// If we choose the first node in the sequence we can't grab the whole sequence
 		// and still have something to move to
 		const count =
 			start === 0
-				? state.random.integer(1, field.length - start - 1)
+				? state.random.integer(1, field.length - 1)
 				: state.random.integer(1, field.length - start);
 
 		const validMoveIndices: number[] = [];
