@@ -76,9 +76,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-tools/version-tools": "workspace:*",
-		"@fluidframework/build-tools": "workspace:*",
-		"@fluidframework/bundle-size-tools": "workspace:*",
+		"@fluid-tools/version-tools": "workspace:~",
+		"@fluidframework/build-tools": "workspace:~",
+		"@fluidframework/bundle-size-tools": "workspace:~",
 		"@microsoft/api-extractor": "^7.36.1",
 		"@oclif/core": "^3.9.0",
 		"@oclif/plugin-autocomplete": "^2.3.10",
@@ -120,7 +120,7 @@
 		"type-fest": "^2.19.0"
 	},
 	"devDependencies": {
-		"@fluid-private/readme-command": "workspace:*",
+		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@microsoft/api-extractor": "^7.36.1",

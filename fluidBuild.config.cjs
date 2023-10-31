@@ -93,7 +93,7 @@ module.exports = {
 		},
 		"build-tools": {
 			directory: "build-tools",
-			defaultInterdependencyRange: "workspace:*",
+			defaultInterdependencyRange: "workspace:~",
 		},
 		"server": {
 			directory: "server/routerlicious",
@@ -219,6 +219,9 @@ module.exports = {
 				"server/historian/package.json",
 				"package.json",
 			],
+      "npm-package-json-script-dep": [
+        "^build-tools/",
+      ],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.

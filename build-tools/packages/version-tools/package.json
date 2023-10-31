@@ -86,7 +86,7 @@
 		"table": "^6.8.1"
 	},
 	"devDependencies": {
-		"@fluid-private/readme-command": "workspace:*",
+		"@fluid-private/readme-command": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@microsoft/api-extractor": "^7.36.1",

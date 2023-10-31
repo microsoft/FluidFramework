@@ -12,9 +12,9 @@ importers:
       '@commitlint/cli': ^17.6.6
       '@commitlint/config-conventional': ^17.6.6
       '@commitlint/cz-commitlint': ^17.5.0
-      '@fluid-tools/build-cli': 0.26.0-203096
+      '@fluid-tools/build-cli': 0.26.1
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': 0.26.0-203096
+      '@fluidframework/build-tools': 0.26.1
       '@microsoft/api-documenter': ^7.22.24
       '@microsoft/api-extractor': ^7.36.1
       c8: ^7.14.0
@@ -25,6 +25,7 @@ importers:
       copyfiles: ^2.4.1
       cz-conventional-changelog: ^3.3.0
       cz-customizable: ^7.0.0
+      eslint: ~8.51.0
       inquirer: ^8.2.5
       prettier: ~3.0.3
       rimraf: ^4.4.1
@@ -35,9 +36,9 @@ importers:
       '@commitlint/cli': 17.6.6
       '@commitlint/config-conventional': 17.6.6
       '@commitlint/cz-commitlint': 17.5.0_i4x6owxztfhigiiqlxwntt4k24
-      '@fluid-tools/build-cli': 0.26.0-203096_typescript@5.1.6
+      '@fluid-tools/build-cli': 0.26.1_zo5p53osjv3ha4sgr6kpvl7c7y
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.26.0-203096
+      '@fluidframework/build-tools': 0.26.1
       '@microsoft/api-documenter': 7.22.24
       '@microsoft/api-extractor': 7.36.1
       c8: 7.14.0
@@ -48,6 +49,7 @@ importers:
       copyfiles: 2.4.1
       cz-conventional-changelog: 3.3.0_typescript@5.1.6
       cz-customizable: 7.0.0
+      eslint: 8.51.0
       inquirer: 8.2.5
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -57,11 +59,11 @@ importers:
 
   packages/build-cli:
     specifiers:
-      '@fluid-private/readme-command': workspace:*
-      '@fluid-tools/version-tools': workspace:*
+      '@fluid-private/readme-command': workspace:~
+      '@fluid-tools/version-tools': workspace:~
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': workspace:*
-      '@fluidframework/bundle-size-tools': workspace:*
+      '@fluidframework/build-tools': workspace:~
+      '@fluidframework/bundle-size-tools': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.0.0
       '@microsoft/api-extractor': ^7.36.1
       '@oclif/core': ^3.9.0
@@ -212,9 +214,9 @@ importers:
 
   packages/build-tools:
     specifiers:
-      '@fluid-tools/version-tools': workspace:*
+      '@fluid-tools/version-tools': workspace:~
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/bundle-size-tools': workspace:*
+      '@fluidframework/bundle-size-tools': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.0.0
       '@manypkg/get-packages': ^2.2.0
       '@octokit/core': ^4.2.4
@@ -399,7 +401,7 @@ importers:
 
   packages/version-tools:
     specifiers:
-      '@fluid-private/readme-command': workspace:*
+      '@fluid-private/readme-command': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/eslint-config-fluid': ^3.0.0
       '@microsoft/api-extractor': ^7.36.1
@@ -780,15 +782,6 @@ packages:
       jsdoc-type-pratt-parser: 4.0.0
     dev: true
 
-  /@eslint-community/eslint-utils/4.4.0:
-    resolution: {integrity: sha512-1/sA4dwrzBAyeUoQ6oxahHKmrZvsnLCg4RfxW3ZFGGmQkSNQPFNLV9CUEFQP1x9EYXHTo5p6xdhZM1Ne9p/AfA==}
-    engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
-    peerDependencies:
-      eslint: ^6.0.0 || ^7.0.0 || >=8.0.0 || 8.51.0
-    dependencies:
-      eslint-visitor-keys: 3.4.3
-    dev: true
-
   /@eslint-community/eslint-utils/4.4.0_eslint@8.51.0:
     resolution: {integrity: sha512-1/sA4dwrzBAyeUoQ6oxahHKmrZvsnLCg4RfxW3ZFGGmQkSNQPFNLV9CUEFQP1x9EYXHTo5p6xdhZM1Ne9p/AfA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
@@ -800,11 +793,6 @@ packages:
 
   /@eslint-community/regexpp/4.10.0:
     resolution: {integrity: sha512-Cu96Sd2By9mCNTx2iyKOmq10v22jUVQv0lQnlGNy16oE9589yE+QADPbrMGCkA51cKZSg3Pu/aTJVTGfL/qjUA==}
-    engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
-    dev: true
-
-  /@eslint-community/regexpp/4.7.0:
-    resolution: {integrity: sha512-+HencqxU7CFJnQb7IKtuNBqS6Yx3Tz4kOL8BJXo+JyeiBm5MEX6pO8onXDkjrkCRlfYXS1Axro15ZjVFe9YgsA==}
     engines: {node: ^12.0.0 || ^14.0.0 || >=16.0.0}
 
   /@eslint/eslintrc/2.1.2:
@@ -827,14 +815,14 @@ packages:
     resolution: {integrity: sha512-HxjQ8Qn+4SI3/AFv6sOrDB+g6PpUTDwSJiQqOrnneEk8L71161srI9gjzzZvYVbzHiVg/BvcH95+cK/zfIt4pg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
-  /@fluid-tools/build-cli/0.26.0-203096_typescript@5.1.6:
-    resolution: {integrity: sha512-CY2090id26hcxhB2xYQXMn4OzV2k6XvAS2pCMLh4Rq4imbKgb5RPTi2l0kQMJlhfFbnC5kvOJtSnq9mrn6TKkQ==}
+  /@fluid-tools/build-cli/0.26.1_zo5p53osjv3ha4sgr6kpvl7c7y:
+    resolution: {integrity: sha512-eqvUMIcJVgXdWN1tQrdVhx0FnLhstfcx4VywmmlT+nNt197sq2Lar5M+7C7enN3zlysctt3mJ9WIgcvZfc1Dew==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.26.0-203096_typescript@5.1.6
-      '@fluidframework/build-tools': 0.26.0-203096
-      '@fluidframework/bundle-size-tools': 0.26.0-203096
+      '@fluid-tools/version-tools': 0.26.2_typescript@5.1.6
+      '@fluidframework/build-tools': 0.26.1
+      '@fluidframework/bundle-size-tools': 0.26.2
       '@microsoft/api-extractor': 7.36.1
       '@oclif/core': 3.9.0
       '@oclif/plugin-autocomplete': 2.3.10_typescript@5.1.6
@@ -861,7 +849,7 @@ packages:
       minimatch: 7.4.6
       node-fetch: 2.6.9
       npm-check-updates: 16.10.15
-      oclif: 4.0.3_typescript@5.1.6
+      oclif: 4.0.3_zo5p53osjv3ha4sgr6kpvl7c7y
       prettier: 3.0.3
       prompts: 2.4.2
       read-pkg-up: 7.0.1
@@ -872,6 +860,7 @@ packages:
       sort-package-json: 1.57.0
       strip-ansi: 6.0.1
       table: 6.8.1
+      ts-morph: 17.0.1
       type-fest: 2.19.0
     transitivePeerDependencies:
       - '@swc/core'
@@ -892,8 +881,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluid-tools/version-tools/0.26.0-203096_typescript@5.1.6:
-    resolution: {integrity: sha512-Ur63CFUM8VbZPDFHzwgySJlKx9TG4PgEKJOkubJzlLLqWg3tB/cE43CrLMQMRhCCwHo6N+IW/pS769EkXB/XQQ==}
+  /@fluid-tools/version-tools/0.26.2_typescript@5.1.6:
+    resolution: {integrity: sha512-eP83WLzUQUA3FKfUcc800DNA7II+sPl0erKaMTqkzrjwLnqVfFcAI+uyXCq1x4KWh8Zp6nPptOj/X1D9IwlvQA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
@@ -919,13 +908,13 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.26.0-203096:
-    resolution: {integrity: sha512-dM8nJ3ZRe6lrXFIWBDOE629aNCMcHGZAO1xx1z8RT5Zgzu8EBasMzpThwdAzKXTrqFQjQHEVwfONDNGscyYT6g==}
+  /@fluidframework/build-tools/0.26.1:
+    resolution: {integrity: sha512-+wbQv/TPj8ek0/6/yyUIrteDw8OiJi09ueHoYVkGrypMwL2TsMkHvUxcD1Pk5BVsMnflu3osT/9Jd8cP8DzlzA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
-      '@fluid-tools/version-tools': 0.26.0-203096_typescript@5.1.6
-      '@fluidframework/bundle-size-tools': 0.26.0-203096
+      '@fluid-tools/version-tools': 0.26.2_typescript@5.1.6
+      '@fluidframework/bundle-size-tools': 0.26.2
       '@manypkg/get-packages': 2.2.0
       '@octokit/core': 4.2.4
       '@rushstack/node-core-library': 3.59.5
@@ -963,8 +952,8 @@ packages:
       - webpack-cli
     dev: true
 
-  /@fluidframework/bundle-size-tools/0.26.0-203096:
-    resolution: {integrity: sha512-OrZ/LAiaPhHsmRBKICD+UTaNSzRNzrBz3vKXlBxjHeoMDxssTetpwaVZKfCHa00BtWmlARKtSu/rBHNnxmWX1g==}
+  /@fluidframework/bundle-size-tools/0.26.2:
+    resolution: {integrity: sha512-nkZf70j2N5CJKVeukhpXesNn5qZZdjGqvE774uqT4InIkQKAZ132SLY3wFOorAZEI00OW3y+Ut99weLStze8TQ==}
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -2598,24 +2587,6 @@ packages:
       - typescript
     dev: true
 
-  /@typescript-eslint/utils/6.7.5_typescript@5.1.6:
-    resolution: {integrity: sha512-pfRRrH20thJbzPPlPc4j0UNGvH1PjPlhlCMq4Yx7EGjV7lvEeGX0U6MJYe8+SyFutWgSHsdbJ3BXzZccYggezA==}
-    engines: {node: ^16.0.0 || >=18.0.0}
-    peerDependencies:
-      eslint: ^7.0.0 || ^8.0.0 || 8.51.0
-    dependencies:
-      '@eslint-community/eslint-utils': 4.4.0
-      '@types/json-schema': 7.0.14
-      '@types/semver': 7.5.0
-      '@typescript-eslint/scope-manager': 6.7.5
-      '@typescript-eslint/types': 6.7.5
-      '@typescript-eslint/typescript-estree': 6.7.5_typescript@5.1.6
-      semver: 7.5.4
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-    dev: true
-
   /@typescript-eslint/utils/6.7.5_zo5p53osjv3ha4sgr6kpvl7c7y:
     resolution: {integrity: sha512-pfRRrH20thJbzPPlPc4j0UNGvH1PjPlhlCMq4Yx7EGjV7lvEeGX0U6MJYe8+SyFutWgSHsdbJ3BXzZccYggezA==}
     engines: {node: ^16.0.0 || >=18.0.0}
@@ -2790,12 +2761,12 @@ packages:
     dependencies:
       event-target-shim: 5.0.1
 
-  /acorn-import-assertions/1.9.0_acorn@8.8.2:
+  /acorn-import-assertions/1.9.0_acorn@8.10.0:
     resolution: {integrity: sha512-cmMwop9x+8KFhxvKrKfPYmN6/pKTYYHBqLa0DfvVZcKMJWNyWLnaqND7dx/qn66R7ewM1UX5XMaDVP5wlVTaVA==}
     peerDependencies:
       acorn: ^8
     dependencies:
-      acorn: 8.8.2
+      acorn: 8.10.0
 
   /acorn-jsx/5.3.2_acorn@8.10.0:
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -2810,16 +2781,6 @@ packages:
 
   /acorn/8.10.0:
     resolution: {integrity: sha512-F0SAmZ8iUtS//m8DmCTA0jlh6TDKkHQyK6xc6V4KDTyZKA9dnvX9/3sRTVQrWm79glUAZbnmmNcdYwUIHWVybw==}
-    engines: {node: '>=0.4.0'}
-    hasBin: true
-
-  /acorn/8.8.0:
-    resolution: {integrity: sha512-QOxyigPVrpZ2GXT+PFyZTl6TtOFc5egxHIP9IlQ+RbupQuX4RkT/Bee4/kQuC02Xkzg84JcT7oLYtDIQxp+v7w==}
-    engines: {node: '>=0.4.0'}
-    hasBin: true
-
-  /acorn/8.8.2:
-    resolution: {integrity: sha512-xjIYgE8HBrkpd/sJqOGNspf8uHG+NOHGOw6a/Urj8taM2EXfdNAH2oFcPeIFfsv3+kz/mJrS5VuMqbNLjCa2vw==}
     engines: {node: '>=0.4.0'}
     hasBin: true
 
@@ -5031,32 +4992,6 @@ packages:
       semver: 6.3.1
     dev: true
 
-  /eslint-plugin-perfectionist/2.2.0_typescript@5.1.6:
-    resolution: {integrity: sha512-/nG2Uurd6AY7CI6zlgjHPOoiPY8B7EYMUWdNb5w+EzyauYiQjjD5lQwAI1FlkBbCCFFZw/CdZIPQhXumYoiyaw==}
-    peerDependencies:
-      astro-eslint-parser: ^0.16.0
-      eslint: '>=8.0.0 || 8.51.0'
-      svelte: '>=3.0.0'
-      svelte-eslint-parser: ^0.33.0
-      vue-eslint-parser: '>=9.0.0'
-    peerDependenciesMeta:
-      astro-eslint-parser:
-        optional: true
-      svelte:
-        optional: true
-      svelte-eslint-parser:
-        optional: true
-      vue-eslint-parser:
-        optional: true
-    dependencies:
-      '@typescript-eslint/utils': 6.7.5_typescript@5.1.6
-      minimatch: 9.0.3
-      natural-compare-lite: 1.4.0
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-    dev: true
-
   /eslint-plugin-perfectionist/2.2.0_zo5p53osjv3ha4sgr6kpvl7c7y:
     resolution: {integrity: sha512-/nG2Uurd6AY7CI6zlgjHPOoiPY8B7EYMUWdNb5w+EzyauYiQjjD5lQwAI1FlkBbCCFFZw/CdZIPQhXumYoiyaw==}
     peerDependencies:
@@ -5228,7 +5163,7 @@ packages:
     hasBin: true
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0_eslint@8.51.0
-      '@eslint-community/regexpp': 4.7.0
+      '@eslint-community/regexpp': 4.10.0
       '@eslint/eslintrc': 2.1.2
       '@eslint/js': 8.51.0
       '@humanwhocodes/config-array': 0.11.11
@@ -8320,7 +8255,7 @@ packages:
       - typescript
       - vue-eslint-parser
 
-  /oclif/4.0.3_typescript@5.1.6:
+  /oclif/4.0.3_zo5p53osjv3ha4sgr6kpvl7c7y:
     resolution: {integrity: sha512-Bq7t1bJvAKYwW3DKQIzok3jkXv7yUIMneoSec1qUr9wfSqzRTZQB0UUDovwlT/L+3TBMVoRyw1WeX+YDvfRJNA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
@@ -8333,7 +8268,7 @@ packages:
       aws-sdk: 2.1313.0
       change-case: 4.1.2
       debug: 4.3.4
-      eslint-plugin-perfectionist: 2.2.0_typescript@5.1.6
+      eslint-plugin-perfectionist: 2.2.0_zo5p53osjv3ha4sgr6kpvl7c7y
       find-yarn-workspace-root: 2.0.0
       fs-extra: 8.1.0
       github-slugger: 1.5.0
@@ -10224,7 +10159,7 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 18.18.6
-      acorn: 8.8.0
+      acorn: 8.10.0
       acorn-walk: 8.2.0
       arg: 4.1.3
       create-require: 1.1.1
@@ -10255,7 +10190,7 @@ packages:
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
-      acorn: 8.8.0
+      acorn: 8.10.0
       acorn-walk: 8.2.0
       arg: 4.1.3
       create-require: 1.1.1
@@ -10702,8 +10637,8 @@ packages:
       '@webassemblyjs/ast': 1.11.6
       '@webassemblyjs/wasm-edit': 1.11.6
       '@webassemblyjs/wasm-parser': 1.11.6
-      acorn: 8.8.2
-      acorn-import-assertions: 1.9.0_acorn@8.8.2
+      acorn: 8.10.0
+      acorn-import-assertions: 1.9.0_acorn@8.10.0
       browserslist: 4.21.4
       chrome-trace-event: 1.0.3
       enhanced-resolve: 5.15.0
