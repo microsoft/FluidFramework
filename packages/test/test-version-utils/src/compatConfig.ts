@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { assert, Lazy } from "@fluidframework/core-utils";
-import { fromInternalScheme } from "@fluid-tools/version-tools";
+import { detectVersionScheme, fromInternalScheme } from "@fluid-tools/version-tools";
 import {
 	CompatKind,
 	compatKind,
@@ -16,6 +16,7 @@ import {
 import { ensurePackageInstalled } from "./testApi.js";
 import { pkgVersion } from "./packageVersion.js";
 import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
+import { getRequestedRange } from "./versionUtils.js";
 
 /*
  * Generate configuration combinations for a particular compat version
@@ -31,10 +32,12 @@ interface CompatConfig {
 	dataRuntime?: string | number;
 }
 
-// N and N - 1
-const defaultVersions = [0, -1];
-// we are currently supporting 1.3.4 long-term
-const LTSVersions = ["^1.3.4"];
+const defaultCompatVersions = {
+	// N and N - 1
+	currentVersionDeltas: [0, -1],
+	// we are currently supporting 1.3.4 long-term
+	ltsVersions: ["^1.3.4"],
+};
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
 	if (compatVersion === 0) {
@@ -56,7 +59,9 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 	};
 
 	const compatVersionStr =
-		typeof compatVersion === "string" ? compatVersion : `N${compatVersion}`;
+		typeof compatVersion === "string"
+			? `${compatVersion} (N)`
+			: `${getRequestedRange(baseVersion, compatVersion)} (N${compatVersion})`;
 	return [
 		{
 			name: `compat ${compatVersionStr} - old loader`,
@@ -132,15 +137,20 @@ const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
 };
 
 const genBackCompatConfig = (compatVersion: number): CompatConfig[] => {
+	const compatVersionStr =
+		typeof compatVersion === "string"
+			? `${compatVersion} (N)`
+			: `${getRequestedRange(baseVersion, compatVersion)} (N${compatVersion})`;
+
 	return [
 		{
-			name: `compat back N${compatVersion} - older loader`,
+			name: `compat back ${compatVersionStr} - older loader`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat back N${compatVersion} - older loader + older driver`,
+			name: `compat back ${compatVersionStr} - older loader + older driver`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -166,6 +176,53 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	return _configList;
 };
 
+export interface CompatVersion {
+	base: string;
+	delta: number;
+}
+
+export interface CompatVersionConfig {
+	name: string;
+	createWith: CompatVersion;
+	loadWith: CompatVersion;
+	kind: CompatKind;
+	compatVersion: number | string;
+}
+
+export const getCrossVersionCompatConfig = (): CompatVersionConfig[] => {
+	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas.map((delta) => ({
+		base: pkgVersion,
+		delta,
+	}));
+
+	const adjustPublicMajor = detectVersionScheme(pkgVersion) !== "internal";
+
+	return allDefaultDeltaVersions
+		.map((createVersion) =>
+			allDefaultDeltaVersions.map((loadVersion) => {
+				const createRange = getRequestedRange(
+					createVersion.base,
+					createVersion.delta,
+					adjustPublicMajor,
+				);
+				const loadRange = getRequestedRange(
+					loadVersion.base,
+					loadVersion.delta,
+					adjustPublicMajor,
+				);
+				return {
+					name: `CROSS VERSION COMPAT create with [${createRange}], load with [${loadRange}]`,
+					createWith: createVersion,
+					loadWith: loadVersion,
+					kind: CompatKind.Loader,
+					compatVersion: pkgVersion,
+				};
+			}),
+		)
+		.reduce((a, b) => a.concat(b))
+		.filter((config) => config.createWith !== config.loadWith);
+};
+
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	// set it in the env for parallel workers
 	if (compatKind) {
@@ -181,19 +238,20 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
 	let _configList: CompatConfig[] = [];
 	if (!compatVersions || compatVersions.length === 0) {
-		defaultVersions.forEach((value) => {
+		defaultCompatVersions.currentVersionDeltas.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
 		}
-		LTSVersions.forEach((value) => {
+		defaultCompatVersions.ltsVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
+		_configList.push(...getCrossVersionCompatConfig());
 	} else {
 		compatVersions.forEach((value) => {
 			if (value === "LTS") {
-				LTSVersions.forEach((lts) => {
+				defaultCompatVersions.ltsVersions.forEach((lts) => {
 					_configList.push(...genLTSConfig(lts));
 				});
 			} else if (value === "FULL") {

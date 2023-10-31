@@ -10,9 +10,12 @@ import {
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
-import { configList, mochaGlobalSetup } from "./compatConfig.js";
-import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
-import { testBaseVersion } from "./baseVersion.js";
+import { configList, mochaGlobalSetup, getCrossVersionCompatConfig } from "./compatConfig.js";
+import {
+	getVersionedTestObjectProviderFromApis,
+	getCompatVersionedTestObjectProvider,
+} from "./compatUtils.js";
+import { baseVersion, testBaseVersion } from "./baseVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -28,7 +31,12 @@ await mochaGlobalSetup();
  * Mocha Utils for test to generate the compat variants.
  */
 function createCompatSuite(
-	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
+	tests: (
+		this: Mocha.Suite,
+		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
+		apis: CompatApis,
+	) => void,
+	enableVersionCompat: boolean,
 	compatFilter?: CompatKind[],
 ) {
 	return function (this: Mocha.Suite) {
@@ -107,6 +115,81 @@ function createCompatSuite(
 				});
 			});
 		}
+
+		if (enableVersionCompat) {
+			const versionConfigs = getCrossVersionCompatConfig();
+			for (const config of versionConfigs) {
+				describe(config.name, function () {
+					let provider: TestObjectProvider;
+					let resetAfterEach: boolean;
+					const dataRuntimeApi = getDataRuntimeApi(baseVersion, config.createWith.base);
+					const apis: CompatApis = {
+						containerRuntime: getContainerRuntimeApi(
+							baseVersion,
+							config.createWith.base,
+						),
+						dataRuntime: dataRuntimeApi,
+						dds: dataRuntimeApi.dds,
+						driver: getDriverApi(baseVersion, config.createWith.base),
+						loader: getLoaderApi(baseVersion, config.createWith.base),
+					};
+
+					before(async function () {
+						this.timeout(180000);
+						try {
+							provider = await getCompatVersionedTestObjectProvider(
+								config.createWith,
+								config.loadWith,
+								{
+									type: driver,
+									config: {
+										r11s: { r11sEndpointName },
+										odsp: { tenantIndex },
+									},
+								},
+							);
+						} catch (error) {
+							const logger = createChildLogger({
+								logger: getTestLogger?.(),
+								namespace: "DescribeCompatSetup",
+							});
+							logger.sendErrorEvent(
+								{
+									eventName: "TestObjectProviderLoadFailed",
+									driverType: driver,
+								},
+								error,
+							);
+							throw error;
+						}
+						Object.defineProperty(this, "__fluidTestProvider", { get: () => provider });
+					});
+
+					tests.bind(this)((options?: ITestObjectProviderOptions) => {
+						resetAfterEach = options?.resetAfterEach ?? true;
+						if (options?.syncSummarizer === true) {
+							provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
+						}
+						return provider;
+					}, apis);
+
+					afterEach(function (done: Mocha.Done) {
+						const logErrors = getUnexpectedLogErrorException(provider.logger);
+						// if the test failed for another reason
+						// then we don't need to check errors
+						// and fail the after each as well
+						if (this.currentTest?.state === "passed") {
+							done(logErrors);
+						} else {
+							done();
+						}
+						if (resetAfterEach) {
+							provider.reset();
+						}
+					});
+				});
+			}
+		}
 	};
 }
 
@@ -129,20 +212,26 @@ export type DescribeCompatSuite = (
 export type DescribeCompat = DescribeCompatSuite &
 	Record<"skip" | "only" | "noCompat", DescribeCompatSuite>;
 
-function createCompatDescribe(compatFilter?: CompatKind[]): DescribeCompat {
+function createCompatDescribe(
+	enableVersionCompat: boolean,
+	compatFilter?: CompatKind[],
+): DescribeCompat {
 	const d: DescribeCompat = (name, tests) =>
-		describe(name, createCompatSuite(tests, compatFilter));
-	d.skip = (name, tests) => describe.skip(name, createCompatSuite(tests, compatFilter));
-	d.only = (name, tests) => describe.only(name, createCompatSuite(tests, compatFilter));
-	d.noCompat = (name, tests) => describe(name, createCompatSuite(tests, [CompatKind.None]));
+		describe(name, createCompatSuite(tests, enableVersionCompat, compatFilter));
+	d.skip = (name, tests) =>
+		describe.skip(name, createCompatSuite(tests, enableVersionCompat, compatFilter));
+	d.only = (name, tests) =>
+		describe.only(name, createCompatSuite(tests, enableVersionCompat, compatFilter));
+	d.noCompat = (name, tests) =>
+		describe(name, createCompatSuite(tests, enableVersionCompat, [CompatKind.None]));
 	return d;
 }
 
-export const describeNoCompat: DescribeCompat = createCompatDescribe([CompatKind.None]);
+export const describeNoCompat: DescribeCompat = createCompatDescribe(false, [CompatKind.None]);
 
-export const describeLoaderCompat: DescribeCompat = createCompatDescribe([
+export const describeLoaderCompat: DescribeCompat = createCompatDescribe(false, [
 	CompatKind.None,
 	CompatKind.Loader,
 ]);
 
-export const describeFullCompat: DescribeCompat = createCompatDescribe();
+export const describeFullCompat: DescribeCompat = createCompatDescribe(true);

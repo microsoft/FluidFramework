@@ -224,6 +224,10 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		return this.kernel.has(key);
 	}
 
+	public test(): string {
+		return "test";
+	}
+
 	/**
 	 * {@inheritDoc ISharedMap.set}
 	 */

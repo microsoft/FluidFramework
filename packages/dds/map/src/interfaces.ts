@@ -365,6 +365,8 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string,
 	 * @returns The {@link ISharedMap} itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
+
+	test(): string;
 }
 
 /**

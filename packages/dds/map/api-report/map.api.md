@@ -175,6 +175,8 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
+    // (undocumented)
+    test(): string;
 }
 
 // @public
@@ -293,6 +295,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
     get size(): number;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
+    // (undocumented)
+    test(): string;
     values(): IterableIterator<any>;
 }
 
