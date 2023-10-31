@@ -3,5 +3,6 @@
 	"compilerOptions": {
 		"outDir": "./lib",
 		"module": "esnext",
+		"moduleResolution": "node",
 	},
 }

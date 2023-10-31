@@ -13,6 +13,7 @@
 		"outDir": "./dist",
 		"types": ["node", "react", "react-dom"],
 		"module": "esnext",
+		"moduleResolution": "node",
 		"resolveJsonModule": true,
 	},
 	"include": ["src/**/*"],

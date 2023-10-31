@@ -4,6 +4,7 @@
 		"allowSyntheticDefaultImports": true,
 		"target": "es6",
 		"module": "esnext",
+		"moduleResolution": "node",
 		"outDir": "dist",
 		"jsx": "react",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],

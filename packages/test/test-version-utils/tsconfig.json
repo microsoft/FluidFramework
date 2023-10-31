@@ -6,6 +6,7 @@
 		"outDir": "./dist",
 		"composite": true,
 		"module": "esnext",
+		"moduleResolution": "node",
 	},
 	"include": ["src/**/*"],
 }

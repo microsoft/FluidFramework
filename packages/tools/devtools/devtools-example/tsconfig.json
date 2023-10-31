@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"rootDir": "src",
 		"outDir": "dist",
-		"module": "ESNext",
+		"module": "esnext",
+		"moduleResolution": "node",
 		"composite": true,
 		"jsx": "react",
 		"types": ["jest", "node", "puppeteer", "jest-environment-puppeteer"],

@@ -9,6 +9,7 @@
 		"declarationMap": false,
 		"strictNullChecks": false,
 		"module": "esnext",
+		"moduleResolution": "node",
 	},
 	"include": ["./**/*"],
 	"references": [

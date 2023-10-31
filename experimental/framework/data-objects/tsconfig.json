@@ -3,6 +3,7 @@
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"module": "esnext",
+		"moduleResolution": "node",
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"composite": true,
