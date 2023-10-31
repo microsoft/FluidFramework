@@ -153,7 +153,7 @@ Each package can be augmented the tasks definition by adding task definitions un
 
 For example:
 
-```json5
+```jsonc
 {
 	"fluidBuild": {
 		"tasks": {
