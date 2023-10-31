@@ -299,7 +299,6 @@ describe("Directory Iteration Order", () => {
 						ci: {
 							csn: 4,
 							ccIds: ["client1"],
-							ccsn: 1,
 						},
 					},
 					c: {
@@ -315,7 +314,6 @@ describe("Directory Iteration Order", () => {
 								ci: {
 									csn: 5,
 									ccIds: ["client1"],
-									ccsn: 1,
 								},
 							},
 							c_a: {
@@ -323,7 +321,6 @@ describe("Directory Iteration Order", () => {
 								ci: {
 									csn: 6,
 									ccIds: ["client1"],
-									ccsn: 1,
 								},
 							},
 						},
@@ -338,7 +335,6 @@ describe("Directory Iteration Order", () => {
 						ci: {
 							csn: 4,
 							ccIds: ["client2"],
-							ccsn: 2,
 						},
 					},
 				},

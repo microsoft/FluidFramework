@@ -230,7 +230,7 @@ export interface ICreateInfo {
 	/**
 	 * Client Sequence number associated with this subdirectory
 	 */
-	ccsn?: number;
+	// ccsn?: number;
 }
 
 /**
@@ -777,6 +777,8 @@ export class SharedDirectory
 	protected populate(data: IDirectoryDataObject): void {
 		const stack: [SubDirectory, IDirectoryDataObject][] = [];
 		stack.push([this.root, data]);
+		const tempSeqNums = new Map<number, number>();
+
 		while (stack.length > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const [currentSubDir, currentSubDirObject] = stack.pop()!;
@@ -785,8 +787,23 @@ export class SharedDirectory
 					currentSubDirObject.subdirectories,
 				)) {
 					let newSubDir = currentSubDir.getSubDirectory(subdirName) as SubDirectory;
+					let seqNumCollection: SeqNumCollection;
 					if (!newSubDir) {
 						const createInfo = subdirObject.ci;
+						if (createInfo !== undefined && createInfo.csn > -1) {
+							if (!tempSeqNums.has(createInfo.csn)) {
+								tempSeqNums.set(createInfo.csn, 0);
+							}
+							let fakeClientSeq = tempSeqNums.get(createInfo.csn) as number;
+							seqNumCollection = { seq: createInfo.csn, clientSeq: fakeClientSeq };
+							tempSeqNums.set(createInfo.csn, ++fakeClientSeq);
+						} else {
+							seqNumCollection = {
+								seq: 0,
+								clientSeq: ++currentSubDir.localCreationSeq,
+							};
+						}
+						/*
 						const seqNumCollection =
 							createInfo !== undefined && createInfo.csn > -1
 								? {
@@ -794,7 +811,7 @@ export class SharedDirectory
 										clientSeq:
 											createInfo.ccsn ?? ++currentSubDir.localCreationSeq,
 								  }
-								: { seq: 0, clientSeq: ++currentSubDir.localCreationSeq };
+								: { seq: 0, clientSeq: ++currentSubDir.localCreationSeq }; */
 						newSubDir = new SubDirectory(
 							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
 							// sub directory. This could be done at serialization time too, but we need to maintain
@@ -2162,7 +2179,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const createInfo: ICreateInfo = {
 			csn: this.seqNumCollection.seq,
 			ccIds: Array.from(this.clientIds),
-			ccsn: this.seqNumCollection.clientSeq,
+			// ccsn: this.seqNumCollection.clientSeq,
 		};
 		return createInfo;
 	}

@@ -407,12 +407,12 @@ describe("Directory", () => {
 		});
 
 		describe("Serialize", () => {
-			it.skip("Should serialize an empty directory as a JSON object", () => {
+			it("Should serialize an empty directory as a JSON object", () => {
 				const serialized = serialize(directory);
 				assert.equal(serialized, '{"ci":{"csn":0,"ccIds":[]}}');
 			});
 
-			it.skip("Should serialize a directory without subdirectories as a JSON object", () => {
+			it("Should serialize a directory without subdirectories as a JSON object", () => {
 				directory.set("first", "second");
 				directory.set("third", "fourth");
 				directory.set("fifth", "sixth");
@@ -426,7 +426,7 @@ describe("Directory", () => {
 				assert.equal(serialized, expected);
 			});
 
-			it.skip("Should serialize a directory with subdirectories as a JSON object", () => {
+			it("Should serialize a directory with subdirectories as a JSON object", () => {
 				directory.set("first", "second");
 				directory.set("third", "fourth");
 				directory.set("fifth", "sixth");
@@ -445,7 +445,7 @@ describe("Directory", () => {
 				assert.equal(serialized, expected);
 			});
 
-			it.skip("Should serialize an undefined value", () => {
+			it("Should serialize an undefined value", () => {
 				directory.set("first", "second");
 				directory.set("third", "fourth");
 				directory.set("fifth", undefined);
