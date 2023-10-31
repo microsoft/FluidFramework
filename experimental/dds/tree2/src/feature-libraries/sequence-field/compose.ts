@@ -177,10 +177,10 @@ function composeMarks<TNodeChange>(
 		if (markEmptiesCells(baseMark)) {
 			if (isMoveDestination(newMark.attach) && isMoveSource(newMark.detach)) {
 				assert(isMoveSource(baseMark), "Unexpected mark type");
-				
+
 				// The base changeset and new changeset both move these nodes.
 				// Call the original position of the nodes A, the position after the base changeset is applied B,
-				// and the position after the new changeset is applied C.				
+				// and the position after the new changeset is applied C.
 				// The new changeset moves the nodes from B, temporarily returns them to A, and then moves them to C.
 				// The composition of the base and new changesets will be a move directly from A to C,
 				// since the move from A to B cancels out with the return from B to A.
@@ -312,8 +312,8 @@ function composeMarks<TNodeChange>(
 	} else if (!markHasCellEffect(baseMark)) {
 		return withRevision(withNodeChange(newMark, nodeChange), newRev);
 	} else if (!markHasCellEffect(newMark)) {
-		if (isMoveMark(baseMark) && nodeChange !== undefined) {
-			setModifyAfter(moveEffects, baseMark.revision, baseMark.id, nodeChange, composeChild);
+		if (isMoveDestination(baseMark) && nodeChange !== undefined) {
+			setModifyAfter(moveEffects, getEndpoint(baseMark, undefined), nodeChange, composeChild);
 			return baseMark;
 		}
 		return withNodeChange(baseMark, nodeChange);
@@ -326,14 +326,7 @@ function composeMarks<TNodeChange>(
 		const detach = extractMarkEffect(withRevision(newMark, newRev));
 
 		if (isMoveDestination(attach) && nodeChange !== undefined) {
-			const endpoint = getEndpoint(attach, undefined);
-			setModifyAfter(
-				moveEffects,
-				endpoint.revision,
-				endpoint.localId,
-				nodeChange,
-				composeChild,
-			);
+			setModifyAfter(moveEffects, getEndpoint(attach, undefined), nodeChange, composeChild);
 
 			localNodeChange = undefined;
 		}
@@ -771,8 +764,7 @@ function compareCellPositions(
 // TODO: Reduce the duplication between this and other MoveEffect helpers
 function setModifyAfter<T>(
 	moveEffects: MoveEffectTable<T>,
-	revision: RevisionTag | undefined,
-	id: MoveId,
+	{ revision, localId: id }: ChangeAtomId,
 	modifyAfter: T,
 	composeChanges: NodeChangeComposer<T>,
 ) {
