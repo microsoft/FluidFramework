@@ -54,6 +54,7 @@ importers:
       glob: 7.2.3
       http-server: 14.1.1
       hugo-extended: 0.113.0
+      js-yaml: 4.1.0
       linkcheck-bin: 3.0.0-0
       markdown-magic: /@tylerbu/markdown-magic/2.4.0-tylerbu-1
       markdown-magic-package-json: 2.0.2
@@ -69,8 +70,6 @@ importers:
       replace-in-file: 7.0.1
       rimraf: 5.0.1
       start-server-and-test: 2.0.0
-    devDependencies:
-      js-yaml: 4.1.0
 
 packages:
 
@@ -965,6 +964,7 @@ packages:
 
   /argparse/2.0.1:
     resolution: {integrity: sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==}
+    dev: false
 
   /arr-diff/4.0.0:
     resolution: {integrity: sha512-YVIQ82gZPGBebQV/a8dar4AitzCQs0jjXwMPZllpXMaGjXPYVUawSxQrRsjhjupyVxEvbHgUmIhKVlND+j02kA==}
@@ -3654,6 +3654,7 @@ packages:
     hasBin: true
     dependencies:
       argparse: 2.0.1
+    dev: false
 
   /jsdoc-type-pratt-parser/3.1.0:
     resolution: {integrity: sha512-MgtD0ZiCDk9B+eI73BextfRrVQl0oyzRG8B2BjORts6jbunj4ScKPcyXGTbB6eXL4y9TzxCm6hyeLq/2ASzNdw==}
@@ -4419,7 +4420,7 @@ packages:
     dependencies:
       hosted-git-info: 4.1.0
       is-core-module: 2.12.1
-      semver: 7.5.2
+      semver: 7.5.4
       validate-npm-package-license: 3.0.4
     dev: false
 
@@ -5227,14 +5228,6 @@ packages:
 
   /semver/7.3.8:
     resolution: {integrity: sha512-NB1ctGL5rlHrPJtFDVIVzTyQylMLu9N9VICA6HSFJo8MCGVTMW6gfpicwKmmK/dAjTOrqu5l63JJOpDSrAis3A==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dependencies:
-      lru-cache: 6.0.0
-    dev: false
-
-  /semver/7.5.2:
-    resolution: {integrity: sha512-SoftuTROv/cRjCze/scjGyiDtcUyxw1rgYQSZY7XTmtR5hX+dm76iDbTH8TkLPHCQmlbQVSSbNZCPM2hb0knnQ==}
     engines: {node: '>=10'}
     hasBin: true
     dependencies:

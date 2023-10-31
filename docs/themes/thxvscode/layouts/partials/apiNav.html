@@ -145,7 +145,7 @@
 
                                                             <li class="{{ if $isActiveItem }}active expanded{{ else }}collapsed{{ end }}">
                                                                 <a class="leaf-node" href="{{ $itemLink }}" {{ if $isActiveItem }}aria-label="Current Page: {{ $item }} {{ $categoryPlural }}"{{ end }}>
-                                                                    {{ partial "break-on-capitals.html" $item }}
+                                                                    {{ partial "breakOnCapitals.html" $item }}
                                                                 </a>
                                                             </li>
                                                         {{ end }}
