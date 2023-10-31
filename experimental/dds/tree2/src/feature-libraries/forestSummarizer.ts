@@ -45,7 +45,7 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		const rootCursor = this.forest.getRootCursor();
+		const rootCursor = this.forest.getCursorAboveDetachedFields();
 		const fields = mapCursorFields(rootCursor, (cursor) => [
 			rootCursor.getFieldKey(),
 			mapCursorField(cursor, jsonableTreeFromCursor),

@@ -845,7 +845,7 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
-    getRootCursor(): ITreeCursorSynchronous;
+    getCursorAboveDetachedFields(): ITreeCursorSynchronous;
     readonly isEmpty: boolean;
     moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;

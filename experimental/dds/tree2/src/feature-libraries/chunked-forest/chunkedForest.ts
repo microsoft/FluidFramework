@@ -357,7 +357,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		}
 	}
 
-	public getRootCursor(): ITreeCursorSynchronous {
+	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
 		const rootCursor = this.roots.cursor();
 		rootCursor.enterNode(0);
 		return rootCursor;
@@ -449,6 +449,6 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildChunkedForest(chunker: IChunker, anchors?: AnchorSet): IEditableForest {
+export function buildChunkedForest(chunker: IChunker, anchors?: AnchorSet): ChunkedForest {
 	return new ChunkedForest(makeRoot(), chunker.schema, chunker, anchors);
 }
