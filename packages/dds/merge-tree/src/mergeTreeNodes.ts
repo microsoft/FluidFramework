@@ -672,10 +672,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
 		return 0;
 	}
 
-	hasSimpleType(simpleTypeName: string) {
-		return !!this.properties && this.properties[reservedMarkerSimpleTypeKey] === simpleTypeName;
-	}
-
 	getProperties() {
 		return this.properties;
 	}
