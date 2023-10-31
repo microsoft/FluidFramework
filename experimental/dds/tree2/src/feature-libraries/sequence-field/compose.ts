@@ -12,16 +12,7 @@ import {
 	getIntention,
 	RevisionMetadataSource,
 } from "../modular-schema";
-import {
-	Changeset,
-	Mark,
-	MarkList,
-	MoveId,
-	NoopMarkType,
-	CellId,
-	NoopMark,
-	CellMark,
-} from "./format";
+import { Changeset, Mark, MarkList, NoopMarkType, CellId, NoopMark, CellMark } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { MarkQueue } from "./markQueue";
 import {
