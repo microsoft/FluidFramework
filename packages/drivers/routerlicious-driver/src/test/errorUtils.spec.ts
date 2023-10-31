@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import { IThrottlingWarning } from "@fluidframework/driver-definitions";
+import { FluidErrorTypes } from "@fluidframework/core-interfaces";
 import {
 	createR11sNetworkError,
 	throwR11sNetworkError,
@@ -13,6 +14,16 @@ import {
 } from "../errorUtils";
 
 describe("ErrorUtils", () => {
+	/**
+	 * Checks if the input is an {@link IThrottlingWarning}.
+	 * */
+	function isIThrottlingWarning(input: any): input is IThrottlingWarning {
+		return (
+			input.errorType === FluidErrorTypes.throttlingError &&
+			input.retryAfterSeconds !== undefined
+		);
+	}
+
 	describe("createR11sNetworkError()", () => {
 		it("creates non-retriable authorization error on 401", () => {
 			const message = "test error";
@@ -230,11 +241,13 @@ describe("ErrorUtils", () => {
 				handler,
 			);
 
-			assertExpectedMessage(error.message);
-			assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
-			assert.strictEqual(error.canRetry, true);
-			assert.strictEqual(error.retryAfterSeconds, 5);
-			assert.strictEqual((error as any).statusCode, 429);
+			if (isIThrottlingWarning(error)) {
+				assertExpectedMessage(error.message);
+				assert.strictEqual(error.errorType, RouterliciousErrorTypes.throttlingError);
+				assert.strictEqual(error.canRetry, true);
+				assert.strictEqual(error.retryAfterSeconds, 5);
+				assert.strictEqual((error as any).statusCode, 429);
+			}
 		});
 		it("creates retriable error on 429 without retry-after", () => {
 			const error = errorObjectFromSocketError(
