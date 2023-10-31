@@ -765,13 +765,13 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ delete", () => {
-		const move = Change.move(1, 1, 3);
-		const deletion = Change.delete(3, 1);
+		const move = Change.move(1, 1, 3, brand(0));
+		const deletion = Change.delete(3, 1, brand(1));
 		const expected = [
 			{ count: 1 },
 			Mark.moveOut(1, brand(0)),
 			{ count: 2 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(0))),
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
 		];
 		const actual = shallowCompose([makeAnonChange(move), makeAnonChange(deletion)]);
 		assert.deepEqual(actual, expected);

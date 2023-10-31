@@ -360,7 +360,6 @@ function composeMarks<TNodeChange>(
 		// TODO: Cancel marks even when there are node changes
 		if (
 			localNodeChange === undefined &&
-			baseMark.cellId.revision !== undefined &&
 			areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
 		) {
 			// The output and input cell IDs are the same, so this mark has no effect.
