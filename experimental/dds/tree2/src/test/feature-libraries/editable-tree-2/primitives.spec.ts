@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../../domains";
-import { createTreeView, pretty } from "./utils";
+import { itWithRoot, pretty } from "./utils";
 
 const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 const schema = _.intoSchema(_.optional(leaf.all));
@@ -43,14 +43,15 @@ const testCases = [
 // a tree with an 'undefined' root.
 describe("Primitives", () => {
 	describe("satisfy 'deepEquals'", () => {
-		for (const testCase of testCases) {
-			const view = createTreeView(schema, testCase);
-			const real = testCase;
-			const proxy = view.root2(schema);
-
-			it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
-				assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
-			});
+		for (const initialTree of testCases) {
+			itWithRoot(
+				`deepEquals(${pretty(initialTree)}, ${pretty(initialTree)})`,
+				schema,
+				initialTree,
+				(proxy) => {
+					assert.deepEqual(proxy, initialTree, "Proxy must satisfy 'deepEquals'.");
+				},
+			);
 		}
 	});
 });

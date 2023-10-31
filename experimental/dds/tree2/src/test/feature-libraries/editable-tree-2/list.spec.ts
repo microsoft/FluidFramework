@@ -4,25 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../../domains";
-import { createTreeView, pretty } from "./utils";
-
-const builder = new SchemaBuilder({ scope: "test" });
-
-export const stringList = builder.fieldNode("List<string>", builder.sequence(leaf.string));
-
-export const numberList = builder.fieldNode("List<number>", builder.sequence(leaf.number));
-
-// TODO: Using separate arrays for 'numbers' and 'strings' is a workaround for
-//       UnboxNodeUnion not unboxing unions.
-const root = builder.object("root", {
-	strings: stringList,
-	numbers: numberList,
-});
-
-const schema = builder.intoSchema(root);
+import { itWithRoot, makeSchema, pretty } from "./utils";
 
 describe("List", () => {
+	const listOfStringSchema = makeSchema((_) => _.list(_.string));
+	const listOfNumberSchema = makeSchema((_) => _.list(_.number));
+
 	/** Formats 'args' array, inserting commas and eliding trailing undefines.  */
 	function prettyArgs(...args: any[]) {
 		return args.reduce((prev: string, arg, index) => {
@@ -55,31 +42,6 @@ describe("List", () => {
 		return Array.from({ length }, (_, i) => String.fromCodePoint(0x41 + i));
 	}
 
-	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
-	function createTree() {
-		// Consider 'initializeTreeWithContent' for readonly tests?
-		const view = createTreeView(schema, { numbers: [], strings: [] });
-		return view.root2(schema);
-	}
-
-	// TODO: Combine createList helpers once we unbox unions.
-	/** Helper that creates a new List<number> proxy */
-	function createNumberList(items: readonly number[]) {
-		const list = createTree().numbers;
-		list.insertAtStart(items);
-		assert.deepEqual(list, items);
-		return list;
-	}
-
-	// TODO: Combine createList helpers once we unbox unions.
-	/** Helper that creates a new List<string> proxy */
-	function createStringList(items: readonly string[]) {
-		const list = createTree().strings;
-		list.insertAtStart(items);
-		assert.deepEqual(list, items);
-		return list;
-	}
-
 	describe("implements 'readonly T[]'", () => {
 		describe("is Array", () => {
 			// Ensure that invoking 'fn' on an array-like subject returns the same result
@@ -93,12 +55,16 @@ describe("List", () => {
 			) {
 				const array = init ?? [];
 				const expected = fn(array);
-				const subject = createStringList(array);
 
-				it(`${name}(${pretty(array)}) -> ${pretty(expected)}`, () => {
-					const actual = fn(subject);
-					assert.deepEqual(actual, expected);
-				});
+				itWithRoot(
+					`${name}(${pretty(array)}) -> ${pretty(expected)}`,
+					listOfStringSchema,
+					array,
+					(subject) => {
+						const actual = fn(subject);
+						assert.deepEqual(actual, expected);
+					},
+				);
 			}
 
 			// Array.isArray is the modern way to detect arrays.
@@ -142,12 +108,16 @@ describe("List", () => {
 		function test1<U>(fn: (subject: readonly string[]) => U, init?: readonly string[]) {
 			const array = init ?? [];
 			const expected = fn(array);
-			const subject = createStringList(array);
 
-			it(`${pretty(array)} -> ${pretty(expected)}`, () => {
-				const actual = fn(subject);
-				assert.deepEqual(actual, expected);
-			});
+			itWithRoot(
+				`${pretty(array)} -> ${pretty(expected)}`,
+				listOfStringSchema,
+				array,
+				(subject) => {
+					const actual = fn(subject);
+					assert.deepEqual(actual, expected);
+				},
+			);
 		}
 
 		describe("Array.length", () => {
@@ -259,19 +229,25 @@ describe("List", () => {
 					assert.deepEqual(actual, expected);
 				}
 
-				it(`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(
-					expected,
-				)}`, () => {
-					const subject = init(createStringList(array));
-					innerTest(subject, subject);
-				});
+				itWithRoot(
+					`${pretty(array)}.${fnName}(${prettyArgs(...args)}) -> ${pretty(expected)}`,
+					listOfStringSchema,
+					array,
+					(subject) => {
+						innerTest(subject, subject);
+					},
+				);
 
-				it(`Array.prototype.${fnName}.call(${prettyArgs(array, ...args)}) -> ${pretty(
-					expected,
-				)}`, () => {
-					const subject = createStringList(array);
-					innerTest(subject, Array.prototype);
-				});
+				itWithRoot(
+					`Array.prototype.${fnName}.call(${prettyArgs(array, ...args)}) -> ${pretty(
+						expected,
+					)}`,
+					listOfStringSchema,
+					array,
+					(subject) => {
+						innerTest(subject, Array.prototype);
+					},
+				);
 			}
 
 			// TODO: The List proxy implement does not currently allow [Symbol.isConcatSpreadable] to be set.
@@ -315,13 +291,22 @@ describe("List", () => {
 				const checkRhs = (left: string[], others: string[][], spreadable: boolean) => {
 					const clones = others.map((other) => setSpreadable(other.slice(), spreadable));
 					const expected = left.concat(...clones);
-					it(`${prettyCall("concat", left, others, expected)}`, () => {
-						const proxies = others.map((other) =>
-							setSpreadable(createStringList(other), spreadable),
-						);
-						const actual = left.concat(...proxies);
-						assert.deepEqual(actual, expected);
-					});
+
+					itWithRoot(
+						`${prettyCall("concat", left, others, expected)}`,
+						makeSchema((_) => _.list(_.list(_.string))),
+						[],
+						(subjects) => {
+							const proxies = others.map((other) => {
+								// To create a proxy, we first insert the each array from 'others' into
+								// the tree and then read back the resulting proxy.
+								subjects.insertAtEnd(other as any);
+								return setSpreadable(subjects[subjects.length - 1], spreadable);
+							});
+							const actual = left.concat(...proxies);
+							assert.deepEqual(actual, expected);
+						},
+					);
 				};
 
 				const tests = [
@@ -457,19 +442,28 @@ describe("List", () => {
 							assert.deepEqual(actualArgs, expectedArgs);
 						}
 
-						it(`${pretty(array)}.${fnName}(callback, ${prettyArgs(
-							otherArgs,
-						)}) -> ${pretty(expectedResult)}:${pretty(expectedArgs)}`, () => {
-							const subject = createStringList(array);
-							innerTest(subject, subject);
-						});
-
-						it(`Array.prototype.${fnName}.call(${prettyArgs(
+						itWithRoot(
+							`${pretty(array)}.${fnName}(callback, ${prettyArgs(
+								otherArgs,
+							)}) -> ${pretty(expectedResult)}:${pretty(expectedArgs)}`,
+							listOfStringSchema,
 							array,
-							...otherArgs,
-						)}) -> ${pretty(expected)}`, () => {
-							innerTest(createStringList(array), Array.prototype);
-						});
+							(subject) => {
+								innerTest(subject, subject);
+							},
+						);
+
+						itWithRoot(
+							`Array.prototype.${fnName}.call(${prettyArgs(
+								array,
+								...otherArgs,
+							)}) -> ${pretty(expected)}`,
+							listOfStringSchema,
+							array,
+							(subject) => {
+								innerTest(subject, Array.prototype);
+							},
+						);
 					};
 				}
 
@@ -620,11 +614,15 @@ describe("List", () => {
 				// TODO: Use 'test2' once we unbox unions.
 				const check = (array: readonly number[]) => {
 					const expected = array.toLocaleString();
-					it(prettyCall("toLocaleString", array, [], expected), () => {
-						const subject = createNumberList(array);
-						const actual = subject.toLocaleString();
-						assert.deepEqual(actual, expected);
-					});
+					itWithRoot(
+						prettyCall("toLocaleString", array, [], expected),
+						listOfNumberSchema,
+						array,
+						(subject) => {
+							const actual = subject.toLocaleString();
+							assert.deepEqual(actual, expected);
+						},
+					);
 				};
 
 				// TODO: Pass explicit locale when permitted by TS lib.
@@ -637,11 +635,15 @@ describe("List", () => {
 				// TODO: Use 'test2' once we unbox unions.
 				const check = (array: readonly number[]) => {
 					const expected = array.toString();
-					it(prettyCall("toString", array, [], expected), () => {
-						const subject = createNumberList(array);
-						const actual = subject.toString();
-						assert.deepEqual(actual, expected);
-					});
+					itWithRoot(
+						prettyCall("toString", array, [], expected),
+						listOfNumberSchema,
+						array,
+						(subject) => {
+							const actual = subject.toString();
+							assert.deepEqual(actual, expected);
+						},
+					);
 				};
 
 				// We do not expect to see a thousands separator.
@@ -653,23 +655,24 @@ describe("List", () => {
 	// TODO: Post-MVP
 
 	describe("implements T[]", () => {
-		describe("Setting [index: number] is disallowed (for MVP)", () => {
-			const subject = createStringList([]);
+		itWithRoot(
+			"disallows setting [index: number] (for MVP)",
+			listOfStringSchema,
+			[],
+			(subject) => {
+				assert.throws(() => {
+					(subject as any)[0] = "a";
+				});
 
-			assert.throws(() => {
-				(subject as any)[0] = "a";
-			});
+				subject.insertAtStart(["a", "b", "c"]);
 
-			subject.insertAtStart(["a", "b", "c"]);
+				assert.throws(() => {
+					(subject as any)[0] = "a";
+				});
+			},
+		);
 
-			assert.throws(() => {
-				(subject as any)[0] = "a";
-			});
-		});
-
-		describe("Setting .length is disallowed (for MVP)", () => {
-			const subject = createStringList([]);
-
+		itWithRoot("disallows setting .length (for MVP)", listOfStringSchema, [], (subject) => {
 			assert.throws(() => {
 				(subject as any).length = 0;
 			});

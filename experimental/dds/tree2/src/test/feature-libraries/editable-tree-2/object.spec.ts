@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { LeafSchema, TreeSchema } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
 import { TreeValue } from "../../../core";
-import { createTreeView, itWithRoot, makeSchema, pretty } from "./utils";
+import { itWithRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase {
 	initialTree: object;
@@ -38,14 +38,14 @@ function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
 		describe("satisfies 'deepEquals'", () => {
 			for (const { schema, initialTree } of testCases) {
-				const view = createTreeView(schema, initialTree);
-				const real = initialTree;
-				const proxy = view.root2(schema);
-
-				// We do not use 'itWithRoot()' so we can pretty-print the 'proxy' in the test title.
-				it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
-					assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
-				});
+				itWithRoot(
+					`deepEquals(${pretty(initialTree)}, ${pretty(initialTree)})`,
+					schema,
+					initialTree,
+					(proxy) => {
+						assert.deepEqual(proxy, initialTree, "Proxy must satisfy 'deepEquals'.");
+					},
+				);
 			}
 		});
 
