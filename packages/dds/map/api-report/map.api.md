@@ -41,7 +41,6 @@ export class DirectoryFactory implements IChannelFactory {
 // @public
 export interface ICreateInfo {
     ccIds: string[];
-    ccsn?: number;
     csn: number;
 }
 
