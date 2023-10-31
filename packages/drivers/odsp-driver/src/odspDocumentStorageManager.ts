@@ -658,6 +658,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 	private async getDelayLoadedSummaryManager() {
 		assert(this.odspSummaryModuleLoaded === false, 0x56f /* Should be loaded only once */);
+		/* eslint-disable import/no-unresolved */
 		const module = await import(
 			/* webpackChunkName: "summaryModule" */ "./odspSummaryUploadManager.js"
 		)
@@ -669,6 +670,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.logger.sendErrorEvent({ eventName: "SummaryModuleLoadFailed" }, error);
 				throw error;
 			});
+		/* eslint-enable import/no-unresolved */
 		this.odspSummaryUploadManager = new module.OdspSummaryUploadManager(
 			this.odspResolvedUrl.endpoints.snapshotStorageUrl,
 			this.getStorageToken,

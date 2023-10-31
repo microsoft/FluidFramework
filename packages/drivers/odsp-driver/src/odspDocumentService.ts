@@ -261,6 +261,7 @@ export class OdspDocumentService implements IDocumentService {
 	 */
 	private async getDelayLoadedDeltaStream() {
 		assert(this.odspSocketModuleLoaded === false, 0x507 /* Should be loaded only once */);
+		/* eslint-disable import/no-unresolved */
 		const module = await import(
 			/* webpackChunkName: "socketModule" */ "./odspDelayLoadedDeltaStream.js"
 		)
@@ -272,6 +273,7 @@ export class OdspDocumentService implements IDocumentService {
 				this.mc.logger.sendErrorEvent({ eventName: "SocketModuleLoadFailed" }, error);
 				throw error;
 			});
+		/* eslint-enable import/no-unresolved */
 		this.odspDelayLoadedDeltaStream = new module.OdspDelayLoadedDeltaStream(
 			this.odspResolvedUrl,
 			this._policies,

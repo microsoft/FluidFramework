@@ -13,6 +13,7 @@ import { IContainer } from '@fluidframework/container-definitions';
 import { IContainerContext } from '@fluidframework/container-definitions';
 import { IContainerRuntime } from '@fluidframework/container-runtime-definitions';
 import { IContainerRuntimeOptions } from '@fluidframework/container-runtime';
+import { IDetachedModel as IDetachedModel_2 } from './interfaces';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import type { IEventProvider } from '@fluidframework/core-interfaces';
 import { IFluidCodeDetails } from '@fluidframework/container-definitions';
@@ -279,7 +280,7 @@ export class SameContainerMigrator extends TypedEventEmitter<ISameContainerMigra
 export class SessionStorageModelLoader<ModelType> implements IModelLoader<ModelType> {
     constructor(codeLoader: ICodeDetailsLoader, logger?: ITelemetryBaseLogger | undefined);
     // (undocumented)
-    createDetached(version: string): Promise<IDetachedModel<ModelType>>;
+    createDetached(version: string): Promise<IDetachedModel_2<ModelType>>;
     // (undocumented)
     loadExisting(id: string): Promise<ModelType>;
     // (undocumented)
@@ -299,7 +300,7 @@ export class StaticCodeLoader implements ICodeDetailsLoader {
 export class TinyliciousModelLoader<ModelType> implements IModelLoader<ModelType> {
     constructor(codeLoader: ICodeDetailsLoader);
     // (undocumented)
-    createDetached(version: string): Promise<IDetachedModel<ModelType>>;
+    createDetached(version: string): Promise<IDetachedModel_2<ModelType>>;
     // (undocumented)
     loadExisting(id: string): Promise<ModelType>;
     // (undocumented)

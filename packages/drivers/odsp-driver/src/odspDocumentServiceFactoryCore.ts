@@ -169,6 +169,7 @@ export class OdspDocumentServiceFactoryCore
 				// We can delay load this module as this path will not be executed in load flows and create flow
 				// while only happens once in lifetime of a document happens in the background after creation of
 				// detached container.
+				/* eslint-disable import/no-unresolved */
 				const module = await import(
 					/* webpackChunkName: "createNewModule" */ "./createNewModule.js"
 				)
@@ -183,6 +184,8 @@ export class OdspDocumentServiceFactoryCore
 						);
 						throw error;
 					});
+				/* eslint-enable import/no-unresolved */
+
 				odspResolvedUrl = isNewFileInfo(fileInfo)
 					? await module.createNewFluidFile(
 							getStorageToken,

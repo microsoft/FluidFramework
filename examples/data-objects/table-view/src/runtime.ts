@@ -9,12 +9,14 @@ import React from "react";
 import { TableModel, tableModelType } from "./tableModel";
 import { TableView } from "./tableView";
 
+/* eslint-disable import/no-unresolved */
 const tableModelFactory = createDataStoreFactory(
 	tableModelType,
 	import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel.js").then((m) =>
 		m.TableModel.getFactory(),
 	),
 );
+/* eslint-enable import/no-unresolved */
 
 const tableViewCallback = (model: TableModel) => React.createElement(TableView, { model });
 

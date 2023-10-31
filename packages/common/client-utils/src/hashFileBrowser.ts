@@ -53,10 +53,12 @@ export async function hashFile(
 	// from the main chunk and will be of non-trivial size.  It will not be served
 	// under normal circumstances.
 	if (crypto.subtle === undefined) {
+		/* eslint-disable import/no-unresolved */
 		return import(
 			/* webpackChunkName: "FluidFramework-HashFallback" */
 			"./hashFileNode.js"
 		).then(async (m) => m.hashFile(file, algorithm, hashEncoding));
+		/* eslint-enable import/no-unresolved */
 	}
 
 	// This is split up this way to facilitate testing (see the test for more info)
