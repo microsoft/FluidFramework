@@ -204,7 +204,7 @@ export interface IContainerContext {
     // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
-    readonly submitSignalFn: (contents: any) => void;
+    readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
     // (undocumented)
@@ -260,7 +260,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;
-    submitSignal(content: any): void;
+    submitSignal(content: any, targetClientId?: string): void;
     readonly version: string;
 }
 
