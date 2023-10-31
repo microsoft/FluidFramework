@@ -318,11 +318,14 @@ export interface TransientEffect extends HasRevisionTag {
 	detach: Detach;
 }
 
-export const TransientEffect = Type.Object({
-	type: Type.Literal("Transient"),
-	attach: Attach,
-	detach: Detach,
-});
+export const TransientEffect = Type.Composite([
+	HasRevisionTag,
+	Type.Object({
+		type: Type.Literal("Transient"),
+		attach: Attach,
+		detach: Detach,
+	}),
+]);
 
 export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect;
 export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);
