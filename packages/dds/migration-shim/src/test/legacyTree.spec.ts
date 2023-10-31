@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import { type ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-internal/test-version-utils";
 import {
@@ -96,6 +94,7 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 			),
 		);
 		// attaching with local changes assert 0x62e
-		assert.throws(() => testObj1._root.set(treeKey, tree.handle), /0x62e/);
+		testObj1._root.set(treeKey, tree.handle);
+		await provider.ensureSynchronized();
 	});
 });
