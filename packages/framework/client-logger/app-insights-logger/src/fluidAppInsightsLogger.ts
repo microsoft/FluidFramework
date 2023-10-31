@@ -31,10 +31,13 @@ export interface FluidAppInsightsLoggerConfig {
 		mode: "inclusive" | "exclusive";
 		/**
 		 * Controls the filtering of log events.
-		 * Leaving this undefined will be treated as an empty array.
+		 *
+		 * @remarks Leaving this undefined will be treated as an empty array.
 		 *
 		 * In order for the filters to be valid they must meet the following conditions:
+		 *
 		 * 1. There must not be any two filters with the same `namespacePattern`.
+		 *
 		 * 2. All {@link NamespaceFilter} must not have any defined `namespacePatternException` that is not a child of the parent `namespacePattern`
 		 */
 		filters?: TelemetryFilter[];
@@ -70,8 +73,8 @@ export interface NamespaceFilter {
 	/**
 	 * A list of namespace patterns to explicitly exclude from the filter.
 	 *
-	 * @example If you have a namespacePattern of "perf:latency" but want to exclude
-	 *
+	 * @example
+	 * If you have a namespacePattern of "perf:latency" but want to exclude
 	 * events from "perf:latency:ops", you would add "perf:latency:ops" to this list.
 	 */
 	namespacePatternExceptions?: Set<string>;
@@ -96,7 +99,8 @@ export interface NamespaceFilter {
  *
  * @public
  *
- * @example With the following configuration, an event `{ namespace: "A.B.C", categories: ["generic"] }` will not be sent despite matching the first, less specific filter because it did not match the second filter which was the most relevant and specific
+ * @example
+ * With the following configuration, an event `{ namespace: "A.B.C", categories: ["generic"] }` will not be sent despite matching the first, less specific filter because it did not match the second filter which was the most relevant and specific
  * ```
  * const logger = new FluidAppInsightsLogger(appInsightsClient, {
  *			filtering: {
@@ -203,7 +207,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	 *
 	 * @param event - The telemetry event to check against the filters.
 	 *
-	 * @returns boolean `true` if the event matches any filter, otherwise `false`.
+	 * @returns `true` if the event matches any filter, otherwise `false`.
 	 */
 	private doesEventMatchFilter(event: ITelemetryBaseEvent): boolean {
 		for (const filter of this.config.filtering.filters ?? []) {
@@ -271,7 +275,7 @@ export class FluidAppInsightsLogger implements ITelemetryBaseLogger {
 	/**
 	 * Checks an array of telemetry filters for any issues, merges redundant filters, and returns a fully validated array.
 	 *
-	 * @throws - an Error if there are two filters with duplicate namespace patterns or a filter with a pattern exception that is not a child of the parent pattern.
+	 * @throws An Error if there are two filters with duplicate namespace patterns or a filter with a pattern exception that is not a child of the parent pattern.
 	 */
 	private validateFilters(filters: TelemetryFilter[]): void {
 		const uniqueFilterNamespaces = new Set<string>();
