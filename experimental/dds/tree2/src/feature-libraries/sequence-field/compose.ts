@@ -608,6 +608,7 @@ export class ComposeQueue<T> {
 				newMark,
 				this.newRevision,
 				this.cancelledInserts,
+				this.revisionMetadata,
 			);
 			if (cmp < 0) {
 				return { baseMark: this.baseMarks.dequeueUpTo(-cmp) };
@@ -672,8 +673,9 @@ function compareCellPositions(
 	newMark: EmptyInputCellMark<unknown>,
 	newIntention: RevisionTag | undefined,
 	cancelledInserts: Set<RevisionTag>,
+	metadata: RevisionMetadataSource,
 ): number {
-	const newCellId = getInputCellId(newMark, newIntention, undefined);
+	const newCellId = getInputCellId(newMark, newIntention, metadata);
 	assert(newCellId !== undefined, 0x71f /* Should have cell ID */);
 	if (baseCellId.revision === newCellId.revision) {
 		if (isNewAttach(newMark)) {
