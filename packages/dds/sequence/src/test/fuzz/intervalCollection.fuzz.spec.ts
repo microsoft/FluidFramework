@@ -227,14 +227,6 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	createDDSFuzzSuite(noReconnectModel, {
 		...options,
-		// AB#4477: Same root cause as skipped regression test in intervalCollection.spec.ts--search for 4477.
-		skip: [80, 9, 12, 44, 31, 56],
-		// TODO:AB#5338: IntervalCollection doesn't correctly handle edits made while detached. Once supported,
-		// this config should be enabled (deleting is sufficient: detached start is enabled by default)
-		detachedStartOptions: {
-			enabled: false,
-			attachProbability: 0.2,
-		},
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});

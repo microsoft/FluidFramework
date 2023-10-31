@@ -246,7 +246,7 @@ export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTre
 // @internal (undocumented)
 export function createMap<T>(): MapLike<T>;
 
-// @public
+// @internal
 export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg;
 
 // @public
@@ -502,7 +502,6 @@ export interface IMergeTreeOptions {
     attribution?: IMergeTreeAttributionOptions;
     // (undocumented)
     catchUpBlobName?: string;
-    // (undocumented)
     mergeTreeEnableObliterate?: boolean;
     // @alpha
     mergeTreeReferencesCanSlideToEndpoint?: boolean;

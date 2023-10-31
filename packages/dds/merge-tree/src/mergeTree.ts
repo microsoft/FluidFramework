@@ -248,6 +248,14 @@ export interface IMergeTreeOptions {
 	 */
 	attribution?: IMergeTreeAttributionOptions;
 
+	/**
+	 * Enables support for the obliterate operation -- a stronger form of remove
+	 * which deletes concurrently inserted segments
+	 *
+	 * Obliterate is currently experimental and may not work in all scenarios.
+	 *
+	 * Default value: false
+	 */
 	mergeTreeEnableObliterate?: boolean;
 }
 
