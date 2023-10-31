@@ -18,7 +18,7 @@ describe("SharedTree proxies", () => {
 	});
 
 	const parentSchema = sb.object("parent", {
-		struct: childSchema,
+		object: childSchema,
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
 		map: sb.map("map", sb.optional(sb.string)),
 	});
@@ -26,7 +26,7 @@ describe("SharedTree proxies", () => {
 	const schema = sb.intoSchema(parentSchema);
 
 	const initialTree = {
-		struct: { content: 42 },
+		object: { content: 42 },
 		list: [42, 42, 42],
 		map: new Map([
 			["foo", "Hello"],
@@ -34,10 +34,10 @@ describe("SharedTree proxies", () => {
 		]),
 	};
 
-	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
-		const structProxy = root.struct;
-		const structProxyAgain = root.struct;
-		assert.equal(structProxyAgain, structProxy);
+	itWithRoot("cache and reuse objects", schema, initialTree, (root) => {
+		const objectProxy = root.object;
+		const objectProxyAgain = root.object;
+		assert.equal(objectProxyAgain, objectProxy);
 	});
 
 	itWithRoot("cache and reuse lists", schema, initialTree, (root) => {
