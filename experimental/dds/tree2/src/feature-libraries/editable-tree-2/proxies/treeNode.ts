@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { fail } from "../../../util";
 import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapSchema } from "../../typed-schema";
 import { TreeNode, ObjectNode, FieldNode, MapNode } from "../editableTreeTypes";
@@ -75,6 +76,10 @@ export function setTreeNode<T extends SharedTreeMap<MapSchema>>(
 	treeNode: MapNode<MapSchema>,
 ): T;
 export function setTreeNode<T extends SharedTreeNode>(target: T, treeNode: TreeNode): T {
+	assert(
+		!treeNodeMap.has(target) && tryGetTreeNodeTarget(treeNode) === undefined,
+		"Unexpected TreeNode mapping: mapping already established",
+	);
 	treeNodeMap.set(target, treeNode);
 	Object.defineProperty(treeNode, treeNodeSymbol, { value: target });
 	return target;
