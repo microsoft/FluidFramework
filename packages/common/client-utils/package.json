@@ -12,7 +12,6 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"browser": {
 		"./dist/indexNode.js": "./dist/indexBrowser.js",
 		"./lib/indexNode.js": "./lib/indexBrowser.js"
@@ -23,7 +22,6 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:jest npm:build:test:types",
 		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
 		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",

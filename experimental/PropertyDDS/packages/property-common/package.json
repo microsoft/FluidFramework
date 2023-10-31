@@ -11,13 +11,11 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
