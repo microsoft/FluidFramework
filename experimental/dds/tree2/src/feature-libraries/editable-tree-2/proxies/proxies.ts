@@ -157,8 +157,8 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 				}
 
 				// TODO: Is it safe to assume 'content' is a LazyObjectNode?
-				assert(content instanceof LazyObjectNode, "invalid content");
-				assert(typeof key === "string", "invalid key");
+				assert(content instanceof LazyObjectNode, 0x7e0 /* invalid content */);
+				assert(typeof key === "string", 0x7e1 /* invalid key */);
 				const field = getBoxedField(content, brand(key), fieldSchema);
 
 				switch (field.schema.kind) {
