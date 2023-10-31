@@ -177,6 +177,18 @@ function composeMarks<TNodeChange>(
 		if (markEmptiesCells(baseMark)) {
 			if (isMoveDestination(newMark.attach) && isMoveSource(newMark.detach)) {
 				assert(isMoveSource(baseMark), "Unexpected mark type");
+				
+				// The base changeset and new changeset both move these nodes.
+				// Call the original position of the nodes A, the position after the base changeset is applied B,
+				// and the position after the new changeset is applied C.				
+				// The new changeset moves the nodes from B, temporarily returns them to A, and then moves them to C.
+				// The composition of the base and new changesets will be a move directly from A to C,
+				// since the move from A to B cancels out with the return from B to A.
+				// This if-block is handling marks at A.
+				// When we compose the marks at B we will link the start of the base move (A to B)
+				// with the end of the new move (B to C).
+				// Because we are replacing the mark representing the start of the move with the new changeset's
+				// move-out from A, we update the base move-in at B to consider that it's start point.
 				setEndpoint(
 					moveEffects,
 					CrossFieldTarget.Destination,
