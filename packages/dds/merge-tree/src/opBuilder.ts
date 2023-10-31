@@ -51,6 +51,8 @@ export function createAnnotateMarkerOp(
  * @param props - The properties to annotate the range with
  * @param combiningOp - Optional. Specifies how to combine values for the property, such as "incr" for increment.
  * @returns The annotate op
+ *
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
  */
 export function createAnnotateRangeOp(
 	start: number,
@@ -72,6 +74,8 @@ export function createAnnotateRangeOp(
  *
  * @param start - The inclusive start of the range to remove
  * @param end - The exclusive end of the range to remove
+ *
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
  */
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg {
 	return {
@@ -85,11 +89,16 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
  *
  * @param pos - The position to insert the segment at
  * @param segment - The segment to insert
+ *
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
  */
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg {
 	return createInsertOp(pos, segment.toJSONObject());
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
 	return {
 		pos1: pos,

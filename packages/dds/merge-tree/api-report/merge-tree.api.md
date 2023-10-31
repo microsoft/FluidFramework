@@ -35,7 +35,7 @@ export interface AttributionPolicy {
 
 // @public (undocumented)
 export abstract class BaseSegment extends MergeNode implements ISegment {
-    // (undocumented)
+    // @deprecated (undocumented)
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
@@ -87,7 +87,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     abstract readonly type: string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
     constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: PropertySet);
     // (undocumented)
@@ -192,7 +192,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 // @public @deprecated (undocumented)
 export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefined;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export class CollaborationWindow {
     // (undocumented)
     clientId: number;
@@ -226,7 +226,7 @@ export type ConflictAction<TKey, TData> = (key: TKey, currentKey: TKey, data: TD
 // @public @deprecated
 export function createAnnotateMarkerOp(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): IMergeTreeAnnotateMsg | undefined;
 
-// @public
+// @public @deprecated
 export function createAnnotateRangeOp(start: number, end: number, props: PropertySet, combiningOp: ICombiningOp | undefined): IMergeTreeAnnotateMsg;
 
 // @public (undocumented)
@@ -238,16 +238,16 @@ export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg;
 // @alpha (undocumented)
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function createInsertSegmentOp(pos: number, segment: ISegment): IMergeTreeInsertMsg;
 
 // @public @deprecated (undocumented)
 export function createMap<T>(): MapLike<T>;
 
-// @public
+// @public @deprecated
 export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemoveMsg;
 
 // @public (undocumented)
@@ -531,7 +531,7 @@ export interface IMergeTreeSegmentDelta {
     segment: ISegment;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface IMergeTreeTextHelper {
     // (undocumented)
     getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
@@ -570,6 +570,7 @@ export interface IRemovalInfo {
 
 // @public
 export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
+    // @deprecated
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
     addProperties(newProps: PropertySet, op?: ICombiningOp, seq?: number, collabWindow?: CollaborationWindow, rollback?: PropertiesRollback): PropertySet | undefined;
@@ -1011,7 +1012,7 @@ export interface SegmentAccumulator {
     segments: ISegment[];
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export interface SegmentGroup {
     // (undocumented)
     localSeq: number;
@@ -1028,13 +1029,13 @@ export class SegmentGroupCollection {
     constructor(segment: ISegment);
     // (undocumented)
     copyTo(segment: ISegment): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     dequeue(): SegmentGroup | undefined;
     // (undocumented)
     get empty(): boolean;
-    // (undocumented)
+    // @deprecated (undocumented)
     enqueue(segmentGroup: SegmentGroup): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     pop?(): SegmentGroup | undefined;
     // (undocumented)
     get size(): number;
@@ -1076,7 +1077,7 @@ export interface SortedDictionary<TKey, TData> extends Dictionary<TKey, TData> {
     min(): Property<TKey, TData> | undefined;
 }
 
-// @public
+// @public @deprecated
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<T, string> {
     // (undocumented)
     protected findItemPosition(item: T): {
@@ -1087,12 +1088,12 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
     protected getKey(item: T): string;
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export type SortedSegmentSetItem = ISegment | LocalReferencePosition | {
     readonly segment: ISegment;
 };
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export abstract class SortedSet<T, U extends string | number> {
     // (undocumented)
     addOrUpdate(newItem: T, update?: (existingItem: T, newItem: T) => void): void;
@@ -1163,7 +1164,7 @@ export class TextSegment extends BaseSegment {
     readonly type = "TextSegment";
 }
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined;
 
 // @public (undocumented)
@@ -1204,10 +1205,10 @@ export class TrackingGroupCollection {
 // @public @deprecated (undocumented)
 export const TreeMaintenanceSequenceNumber = -2;
 
-// @public (undocumented)
+// @public @deprecated (undocumented)
 export const UnassignedSequenceNumber = -1;
 
-// @public
+// @public @deprecated
 export const UniversalSequenceNumber = 0;
 
 // (No @packageDocumentation comment for this package)
