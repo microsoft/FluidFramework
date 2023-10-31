@@ -282,6 +282,7 @@ export class SharedMatrix<T = any>
 
 		for (const value of values) {
 			this.setCellCore(r, c, value);
+
 			if (++c === endCol) {
 				c = colStart;
 				r++;
@@ -639,7 +640,6 @@ export class SharedMatrix<T = any>
 						);
 					}
 				}
-
 				break;
 			}
 		}
