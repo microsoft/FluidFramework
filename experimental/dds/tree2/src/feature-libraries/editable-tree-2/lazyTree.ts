@@ -40,7 +40,6 @@ import {
 import { EditableTreeEvents, TreeEvent } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { LocalNodeKey } from "../node-key";
-import { SchemaBuilder } from "../../domains"; // TODO: this is a problem
 import { Context } from "./context";
 import {
 	FieldNode,
@@ -413,12 +412,18 @@ export class LazyMap<TSchema extends MapSchema>
 
 	public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
 		const field = this.getBoxed(key);
-		if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
+		if (
+			field.is(
+				TreeFieldSchema.create(FieldKinds.optional, this.schema.mapFields.allowedTypes),
+			)
+		) {
 			const optionalField: OptionalField<AllowedTypes> = field;
 			optionalField.content = content;
 		} else {
 			assert(
-				field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
+				field.is(
+					TreeFieldSchema.create(FieldKinds.sequence, this.schema.mapFields.allowedTypes),
+				),
 				"Unexpected map field kind",
 			);
 
