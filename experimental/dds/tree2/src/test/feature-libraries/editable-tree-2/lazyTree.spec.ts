@@ -591,7 +591,7 @@ function checkPropertyInvariants(root: Tree): void {
 			// TODO: more robust check for schema names
 			if (key === "type") {
 				assert(typeof child === "string");
-				assert(root.context.schema.treeSchema.has(brand(child)));
+				assert(root.context.schema.nodeSchema.has(brand(child)));
 			} else {
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
 			}

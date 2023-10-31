@@ -105,7 +105,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
-			this.context.schema.treeSchema.get(this.typeName) !== undefined,
+			this.context.schema.nodeSchema.get(this.typeName) !== undefined,
 			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 	}
@@ -132,7 +132,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 	public get type(): TreeNodeStoredSchema {
 		return (
-			this.context.schema.treeSchema.get(this.typeName) ??
+			this.context.schema.nodeSchema.get(this.typeName) ??
 			fail("requested type does not exist in schema")
 		);
 	}
@@ -229,7 +229,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			cursor.enterField(key);
 			fieldSchema = getFieldSchema(
 				key,
-				this.context.schema.treeSchema.get(parentType) ??
+				this.context.schema.nodeSchema.get(parentType) ??
 					fail("requested schema that does not exist"),
 			);
 		}
