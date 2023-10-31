@@ -121,7 +121,6 @@ module.exports = {
 			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
-			"server/tinylicious",
 		],
 	},
 
@@ -298,7 +297,6 @@ module.exports = {
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
-			"tinylicious",
 		],
 		fluidBuildTasks: {
 			tsc: {
