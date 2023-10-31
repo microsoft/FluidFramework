@@ -1,0 +1,28 @@
+diff --git a/ts-common-config.json b/ts-common-config.json
+index 14dfddbdbafc1215af6df223e0b7553b7ac85866..4f2f168f7b3c0feda799122fe1d5598a3ef8aa94 100644
+--- a/ts-common-config.json
++++ b/ts-common-config.json
+@@ -1,12 +1,12 @@
+ {
+ 	"exclude": ["dist", "node_modules"],
+ 	"compilerOptions": {
+-		"target": "ES2020",
++		"target": "ES2022",
+ 		"declaration": true,
+ 		"declarationMap": true,
+ 		"esModuleInterop": true,
+-		"module": "commonjs",
+-		"moduleResolution": "node",
++		"module": "node16",
++		"moduleResolution": "node16",
+ 		"noUnusedLocals": true,
+ 		"sourceMap": true,
+ 		"inlineSources": true,
+@@ -15,6 +15,6 @@
+ 		"types": [],
+ 		"strict": true,
+ 		"pretty": true,
+-		"lib": ["ES2020", "DOM", "DOM.Iterable"]
++		"lib": ["ES2022", "DOM", "DOM.Iterable"]
+ 	}
+ }

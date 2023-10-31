@@ -32,9 +32,20 @@ import {
 	normalizeError,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils";
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
+// const io = require("socket.io-client");
+// let socketio;
+// let Socket;
+// // eslint-disable-next-line @typescript-eslint/no-floating-promises
+// (async () => {
+//   socketio = await import("socket.io-client");
+//   Socket = typeof socketio.Socket;
+// })();
+
 import type { Socket } from "socket.io-client";
 // For now, this package is versioned and released in unison with the specific drivers
-import { pkgVersion as driverVersion } from "./packageVersion";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**
  * Represents a connection to a stream of delta updates.

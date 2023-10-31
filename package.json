@@ -365,6 +365,9 @@
 				"@types/node",
 				"fluid-framework"
 			]
+		},
+		"patchedDependencies": {
+			"@fluidframework/build-common@2.0.3": "patches/@fluidframework__build-common@2.0.3.patch"
 		}
 	}
 }
