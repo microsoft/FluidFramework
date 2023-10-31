@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
 import { TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
-import { TreeNode, TreeStatus } from "../editableTreeTypes";
-import { getProxyForNode } from "./proxies";
-import { ProxyNode, SharedTreeNode, getTreeNode } from "./types";
+import { TreeStatus } from "../editableTreeTypes";
+import { getOrCreateNodeProxy } from "./proxies";
+import { getEditNode, tryGetEditNode } from "./editNode";
+import { ProxyNode, SharedTreeNode } from "./types";
 
 /**
  * Provides various functions for analyzing {@link SharedTreeNode}s.
@@ -69,48 +69,44 @@ export interface NodeApi {
  */
 export const nodeApi: NodeApi = {
 	schema: (node: SharedTreeNode) => {
-		return assertTreeNode(node).schema;
+		return getEditNode(node).schema;
 	},
 	is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
 	): value is ProxyNode<TSchema> => {
-		return getTreeNode(value)?.is(schema) ?? false;
+		return tryGetEditNode(value)?.is(schema) ?? false;
 	},
 	parent: (node: SharedTreeNode) => {
-		const treeNode = assertTreeNode(node).parentField.parent.parent;
-		if (treeNode !== undefined) {
-			return getProxyForNode(treeNode);
+		const editNode = getEditNode(node).parentField.parent.parent;
+		if (editNode !== undefined) {
+			return getOrCreateNodeProxy(editNode);
 		}
 
 		return undefined;
 	},
 	key: (node: SharedTreeNode) => {
-		const treeNode = assertTreeNode(node);
+		const editNode = getEditNode(node);
 		const parent = nodeApi.parent(node);
 		if (parent !== undefined) {
 			const parentSchema = nodeApi.schema(parent);
 			if (schemaIsFieldNode(parentSchema)) {
 				// The parent of `node` is a list
-				return treeNode.parentField.index;
+				return editNode.parentField.index;
 			}
 		}
 
 		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
-		return treeNode.parentField.parent.key;
+		return editNode.parentField.parent.key;
 	},
 	on: <K extends keyof EditableTreeEvents>(
 		node: SharedTreeNode,
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	) => {
-		return assertTreeNode(node).on(eventName, listener);
+		return getEditNode(node).on(eventName, listener);
 	},
 	status: (node: SharedTreeNode) => {
-		return assertTreeNode(node).treeStatus();
+		return getEditNode(node).treeStatus();
 	},
 };
-
-function assertTreeNode(node: SharedTreeNode): TreeNode {
-	return getTreeNode(node) ?? fail("Expected a SharedTreeNode");
-}
