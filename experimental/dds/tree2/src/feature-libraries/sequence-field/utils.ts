@@ -41,12 +41,15 @@ import {
 	CellMark,
 	TransientEffect,
 	MarkEffect,
-	MoveMarkEffect,
-	MoveDestination,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
-import { EmptyInputCellMark, DetachedCellMark } from "./helperTypes";
+import {
+	EmptyInputCellMark,
+	DetachedCellMark,
+	MoveDestination,
+	MoveMarkEffect,
+} from "./helperTypes";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
 	return change.length === 0;

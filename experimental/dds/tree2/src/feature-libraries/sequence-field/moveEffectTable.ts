@@ -7,16 +7,9 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
-import {
-	CellMark,
-	Mark,
-	MarkEffect,
-	MoveDestination,
-	MoveId,
-	MoveMarkEffect,
-	MoveSource,
-} from "./format";
+import { CellMark, Mark, MarkEffect, MoveId, MoveSource } from "./format";
 import { areEqualCellIds, cloneMark, isTransientEffect, splitMark } from "./utils";
+import { MoveDestination, MoveMarkEffect } from "./helperTypes";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
 

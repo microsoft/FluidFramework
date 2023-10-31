@@ -294,9 +294,6 @@ export const ReturnFrom = Type.Composite(
 export type MoveSource = MoveOut | ReturnFrom;
 export const MoveSource = Type.Union([MoveOut, ReturnFrom]);
 
-export type MoveDestination = MoveIn;
-export type MoveMarkEffect = MoveSource | MoveDestination;
-
 export type Attach = Insert | MoveIn;
 export const Attach = Type.Union([Insert, MoveIn]);
 
