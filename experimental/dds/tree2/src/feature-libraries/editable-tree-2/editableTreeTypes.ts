@@ -297,6 +297,11 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
 		thisArg?: any,
 	): void;
 
+	/**
+	 * Sets a new value associated with `key`.
+	 * @param key - The key under which the new value will be set.
+	 * @param content - The new value to associate with `key`.
+	 */
 	set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	/**

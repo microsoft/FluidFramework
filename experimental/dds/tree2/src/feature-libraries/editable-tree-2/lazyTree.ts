@@ -22,7 +22,7 @@ import {
 	TreeValue,
 } from "../../core";
 import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
-import { ContextuallyTypedFieldData, ContextuallyTypedNodeData } from "../contextuallyTyped";
+import { ContextuallyTypedNodeData } from "../contextuallyTyped";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -40,6 +40,7 @@ import {
 import { EditableTreeEvents, TreeEvent } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { LocalNodeKey } from "../node-key";
+import { SchemaBuilder } from "../../domains"; // TODO: this is a problem
 import { Context } from "./context";
 import {
 	FieldNode,
@@ -57,6 +58,7 @@ import {
 	RequiredField,
 	OptionalField,
 	FlexibleFieldContent,
+	type Sequence,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -69,7 +71,6 @@ import {
 } from "./lazyEntity";
 import { unboxedField } from "./unboxed";
 import { treeStatusFromAnchorCache } from "./utilities";
-import { SchemaBuilder } from "../../domains";
 
 const lazyTreeSlot = anchorSlot<LazyTreeNode>();
 
@@ -410,18 +411,22 @@ export class LazyMap<TSchema extends MapSchema>
 		) as TypedField<TSchema["mapFields"]>;
 	}
 
-	public set(key: FieldKey, content: ContextuallyTypedFieldData): void {
+	public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
 		const field = this.getBoxed(key);
 		if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
-			field.content = content;
+			const optionalField: OptionalField<AllowedTypes> = field;
+			optionalField.content = content;
 		} else {
 			assert(
 				field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
 				"Unexpected map field kind",
 			);
+
+			const sequenceField: Sequence<AllowedTypes> = field;
+
 			// TODO: fix merge semantics.
-			field.removeRange(0, field.length);
-			field.insertAtStart(content as Iterable<ContextuallyTypedNodeData>);
+			sequenceField.removeRange(0, field.length);
+			sequenceField.insertAtStart(content as Iterable<ContextuallyTypedNodeData>);
 		}
 	}
 
