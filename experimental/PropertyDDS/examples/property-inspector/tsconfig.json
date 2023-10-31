@@ -3,7 +3,6 @@
 	"compilerOptions": {
 		"allowSyntheticDefaultImports": true,
 		"target": "es6",
-
 		"outDir": "dist",
 		"jsx": "react",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],

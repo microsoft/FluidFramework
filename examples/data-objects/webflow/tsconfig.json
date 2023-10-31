@@ -12,7 +12,6 @@
 		// we likely want to standardize the esnext build directory.
 		"outDir": "./dist",
 		"types": ["node", "react", "react-dom"],
-
 		"resolveJsonModule": true,
 	},
 	"include": ["src/**/*"],
