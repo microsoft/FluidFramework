@@ -24,7 +24,6 @@
 		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\" \"docs/api/*/**\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
-		"compile": "fluid-build --task compile",
 		"format": "npm run prettier:fix",
 		"generate:packageList": "concurrently npm:generate:packageList:*",
 		"generate:packageList:internal-build": "flub list --no-private -g build-tools --feed internal-build --outFile feeds/internal-build.txt",
