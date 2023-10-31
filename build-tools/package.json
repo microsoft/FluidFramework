@@ -12,7 +12,7 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"build": "pnpm run generate:packageList && pnpm run build:compile && pnpm run lint && pnpm run build:docs",
-		"build:compile": "pnpm run -r --stream build:compile",
+		"build:compile": "fluid-build --task compile",
 		"build:docs": "pnpm run -r --no-sort --stream build:docs",
 		"build:fast": "fluid-build --root .. -g build-tools",
 		"changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 2 --commit-path . -t build-tools_v --context lerna.json",
@@ -24,6 +24,7 @@
 		"clean:docs": "rimraf --glob \"**/_api-extractor-temp\" \"docs/api/*/**\"",
 		"clean:nyc": "rimraf --glob \"nyc/**\"",
 		"commit": "git-cz",
+		"compile": "fluid-build --task compile",
 		"format": "npm run prettier:fix",
 		"generate:packageList": "concurrently npm:generate:packageList:*",
 		"generate:packageList:internal-build": "flub list --no-private -g build-tools --feed internal-build --outFile feeds/internal-build.txt",
