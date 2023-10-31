@@ -19,7 +19,7 @@ import {
 	TreeNodeSchema,
 	TreeSchema,
 } from "../../typed-schema";
-import { AssignableFieldKinds, TreeNode } from "../editableTreeTypes";
+import { AssignableFieldKinds } from "../editableTreeTypes";
 
 /**
  * An object-like SharedTree node. Includes objects, lists, and maps.
@@ -329,24 +329,3 @@ export type ProxyRoot<
 	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;
-
-/** Symbol used to store a private/internal reference to the underlying editable tree node. */
-const treeNodeSym = Symbol("TreeNode");
-
-/** Helper to retrieve the stored tree node. */
-export function getTreeNode(target: unknown): TreeNode | undefined {
-	if (typeof target === "object" && target !== null) {
-		return (target as { [treeNodeSym]?: TreeNode })[treeNodeSym];
-	}
-
-	return undefined;
-}
-
-/** Helper to set the stored tree node. */
-export function setTreeNode(target: any, treeNode: TreeNode) {
-	Object.defineProperty(target, treeNodeSym, {
-		value: treeNode,
-		// TODO: Investigate if this can be removed by properly implementing key-related traps in the proxy
-		configurable: true,
-	});
-}
