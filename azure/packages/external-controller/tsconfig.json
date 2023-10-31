@@ -2,8 +2,6 @@
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"module": "esnext",
-		"moduleResolution": "node",
 		"outDir": "dist",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
 	},

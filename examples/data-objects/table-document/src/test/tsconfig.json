@@ -6,8 +6,6 @@
 		"types": ["node", "mocha"],
 		"declaration": false,
 		"declarationMap": false,
-		"module": "esnext",
-		"moduleResolution": "node",
 	},
 	"include": ["./**/*"],
 	"references": [
