@@ -1504,11 +1504,7 @@ export class MergeTree {
 						isLastNonLeafBlock,
 					);
 					if (splitNode === undefined) {
-						if (context.structureChange) {
-							this.nodeUpdateLengthNewStructure(block);
-						} else {
-							this.blockUpdateLength(block, seq, clientId);
-						}
+						this.blockUpdateLength(block, seq, clientId);
 						return undefined;
 					} else if (splitNode === MergeTree.theUnfinishedNode) {
 						_pos -= len; // Act as if shifted segment
@@ -1530,9 +1526,6 @@ export class MergeTree {
 						childIndex++; // Insert after
 					} else {
 						// No change
-						if (context.structureChange) {
-							this.nodeUpdateLengthNewStructure(block);
-						}
 						return undefined;
 					}
 				}
@@ -1564,11 +1557,7 @@ export class MergeTree {
 				if (fromSplit) {
 					this.nodeUpdateOrdinals(fromSplit);
 				}
-				if (context.structureChange) {
-					this.nodeUpdateLengthNewStructure(block);
-				} else {
-					this.blockUpdateLength(block, seq, clientId);
-				}
+				this.blockUpdateLength(block, seq, clientId);
 				return undefined;
 			} else {
 				// Don't update ordinals because higher block will do it
@@ -1664,7 +1653,7 @@ export class MergeTree {
 						segment,
 						segmentGroup,
 						localSeq,
-						propertyDeltas ? propertyDeltas : {},
+						propertyDeltas ?? {},
 					);
 				} else {
 					if (MergeTree.options.zamboniSegments) {

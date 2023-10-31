@@ -341,39 +341,11 @@ export interface NodeAction<TClientData> {
 
 /**
  * @internal
- * */
-export interface BlockUpdateActions {
-	child: (block: IMergeBlock, index: number) => void;
-}
-
-/**
- * @internal
  */
 export interface InsertContext {
 	candidateSegment?: ISegment;
-	prepareEvents?: boolean;
-	structureChange?: boolean;
 	leaf: (segment: ISegment | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: IMergeBlock) => boolean;
-}
-
-/**
- * @internal
- */
-export interface SegmentActions<TClientData> {
-	leaf?: ISegmentAction<TClientData>;
-	shift?: NodeAction<TClientData>;
-	contains?: NodeAction<TClientData>;
-	pre?: BlockAction<TClientData>;
-	post?: BlockAction<TClientData>;
-}
-
-/**
- * @internal
- */
-export interface SearchResult {
-	text: string;
-	pos: number;
 }
 
 /**
