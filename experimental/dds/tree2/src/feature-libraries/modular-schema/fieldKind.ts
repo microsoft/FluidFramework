@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/core-utils";
 import {
 	TreeFieldStoredSchema,
 	FieldKindIdentifier,
-	fieldSchema,
 	TreeStoredSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
@@ -105,7 +104,12 @@ export class FieldKindWithEditor<
 		originalTypes: TreeTypeSet,
 		superset: TreeFieldStoredSchema,
 	): boolean {
-		if (isNeverField(policy, originalData, fieldSchema(this, originalTypes))) {
+		if (
+			isNeverField(policy, originalData, {
+				kind: this,
+				types: originalTypes,
+			})
+		) {
 			return true;
 		}
 		if (isNeverField(policy, originalData, superset)) {
