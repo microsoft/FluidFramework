@@ -32,8 +32,16 @@ export {
 	CompatModeBehavior,
 	RecentlyAddedContainerRuntimeMessageDetails,
 } from "./messageTypes";
+export { IBlobManagerLoadInfo } from "./blobManager";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry";
-export { IGCRuntimeOptions, IGCStats } from "./gc";
+export {
+	GCNodeType,
+	IGCMetadata,
+	GCFeatureMatrix,
+	GCVersion,
+	IGCRuntimeOptions,
+	IGCStats,
+} from "./gc";
 export {
 	IAckedSummary,
 	ISummarizer,
@@ -49,6 +57,8 @@ export {
 	IBroadcastSummaryResult,
 	ICancellationToken,
 	IConnectableRuntime,
+	IContainerRuntimeMetadata,
+	ICreateContainerMetadata,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
@@ -57,6 +67,7 @@ export {
 	IRefreshSummaryAckOptions,
 	ISubmitSummaryOpResult,
 	ISubmitSummaryOptions,
+	ISerializedElection,
 	ISummarizeOptions,
 	ISummarizerEvents,
 	ISummarizerInternalsProvider,
@@ -69,6 +80,7 @@ export {
 	ISummary,
 	ISummaryCollectionOpEvents,
 	ISummaryAckMessage,
+	ISummaryMetadataMessage,
 	ISummaryNackMessage,
 	ISummaryOpMessage,
 	OpActionEventListener,

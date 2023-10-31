@@ -21,6 +21,9 @@ import { SharedString } from "../sharedString";
 import { SequenceIntervalIndexes } from "./sequenceIntervalIndexes";
 import { OverlappingIntervalsIndex } from "./overlappingIntervalsIndex";
 
+/**
+ * @public
+ */
 class OverlappingSequenceIntervalsIndex
 	extends OverlappingIntervalsIndex<SequenceInterval>
 	implements SequenceIntervalIndexes.Overlapping
@@ -66,6 +69,9 @@ class OverlappingSequenceIntervalsIndex
 	}
 }
 
+/**
+ * @public
+ */
 export function createOverlappingSequenceIntervalsIndex(
 	sharedString: SharedString,
 ): SequenceIntervalIndexes.Overlapping {

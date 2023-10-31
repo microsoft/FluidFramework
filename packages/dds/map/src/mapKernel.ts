@@ -614,8 +614,8 @@ export class MapKernel {
 			return false;
 		}
 
-		const pendingKeyMessageId = this.pendingKeys.get(op.key);
-		if (pendingKeyMessageId !== undefined) {
+		const pendingKeyMessageIds = this.pendingKeys.get(op.key);
+		if (pendingKeyMessageIds !== undefined) {
 			// Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
 			// and don't process the op.
 			if (local) {
@@ -623,14 +623,12 @@ export class MapKernel {
 					localOpMetadata !== undefined && isMapKeyLocalOpMetadata(localOpMetadata),
 					0x014 /* pendingMessageId is missing from the local client's operation */,
 				);
-				const pendingMessageIds = this.pendingKeys.get(op.key);
 				assert(
-					pendingMessageIds !== undefined &&
-						pendingMessageIds[0] === localOpMetadata.pendingMessageId,
+					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
 					0x2fa /* Unexpected pending message received */,
 				);
-				pendingMessageIds.shift();
-				if (pendingMessageIds.length === 0) {
+				pendingKeyMessageIds.shift();
+				if (pendingKeyMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
 				}
 			}
@@ -783,15 +781,16 @@ export class MapKernel {
 
 		// no need to submit messages for op's that have been aborted
 		const pendingMessageIds = this.pendingKeys.get(op.key);
-		if (
-			pendingMessageIds === undefined ||
-			pendingMessageIds[0] !== localOpMetadata.pendingMessageId
-		) {
+		if (pendingMessageIds === undefined) {
 			return;
 		}
 
-		// clear the old pending message id
-		pendingMessageIds.shift();
+		const index = pendingMessageIds.findIndex((id) => id === localOpMetadata.pendingMessageId);
+		if (index === -1) {
+			return;
+		}
+
+		pendingMessageIds.splice(index, 1);
 		if (pendingMessageIds.length === 0) {
 			this.pendingKeys.delete(op.key);
 		}

@@ -40,6 +40,10 @@ export class TscTask extends LeafTask {
 		return this._tscUtils;
 	}
 
+	protected get isIncremental() {
+		const config = this.readTsConfig();
+		return config?.options.incremental;
+	}
 	protected async checkLeafIsUpToDate() {
 		const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 		if (tsBuildInfoFileFullPath === undefined) {
@@ -232,10 +236,6 @@ export class TscTask extends LeafTask {
 				return undefined;
 			}
 			this._tsConfig = options;
-
-			if (!options.options.incremental) {
-				console.warn(`${this.node.pkg.nameColored}: warning: incremental not enabled`);
-			}
 		}
 
 		return this._tsConfig;

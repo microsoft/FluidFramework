@@ -7,7 +7,10 @@ import path from "path";
 import * as JSON5 from "json5";
 import * as semver from "semver";
 import { Package, PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
-import { getTaskDefinitions } from "../../common/fluidTaskDefinitions";
+import {
+	normalizeGlobalTaskDefinitions,
+	getTaskDefinitions,
+} from "../../common/fluidTaskDefinitions";
 import { getEsLintConfigFilePath } from "../../common/taskUtils";
 import { FluidRepo } from "../../common/fluidRepo";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
@@ -229,7 +232,8 @@ function isFluidBuildEnabled(root: string, json: PackageJson) {
  */
 function hasTaskDependency(root: string, json: PackageJson, taskName: string, searchDep: string) {
 	const rootConfig = getFluidBuildConfig(root);
-	const taskDefinitions = getTaskDefinitions(json, rootConfig?.tasks);
+	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
+	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
 	if (taskDefinitions[taskName]) {

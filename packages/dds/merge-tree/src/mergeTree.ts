@@ -5,13 +5,12 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable @typescript-eslint/consistent-type-assertions */
-
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/prefer-optional-chain, no-bitwise */
 
 import { assert } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
-// eslint-disable-next-line import/no-deprecated
 import { Comparer, Heap, List, ListNode, Stack } from "./collections";
 import {
 	LocalClientId,
@@ -38,7 +37,6 @@ import {
 	IncrementalExecOp,
 	IncrementalMapState,
 	InsertContext,
-	// eslint-disable-next-line import/no-deprecated
 	internedSpaces,
 	IRemovalInfo,
 	ISegment,
@@ -70,17 +68,13 @@ import {
 	ReferenceType,
 } from "./ops";
 import { PartialSequenceLengths } from "./partialLengths";
-// eslint-disable-next-line import/no-deprecated
 import { createMap, extend, MapLike, PropertySet } from "./properties";
 import {
 	refTypeIncludesFlag,
 	ReferencePosition,
 	DetachedReferencePosition,
-	// eslint-disable-next-line import/no-deprecated
 	RangeStackMap,
-	// eslint-disable-next-line import/no-deprecated
 	refHasRangeLabel,
-	// eslint-disable-next-line import/no-deprecated
 	refGetRangeLabels,
 	refGetTileLabels,
 	refHasTileLabel,
@@ -145,17 +139,14 @@ interface IReferenceSearchInfo {
 interface IMarkerSearchRangeInfo {
 	mergeTree: MergeTree;
 	rangeLabels: string[];
-	// eslint-disable-next-line import/no-deprecated
 	stacks: RangeStackMap;
 }
 
 function applyLeafRangeMarker(marker: Marker, searchInfo: IMarkerSearchRangeInfo) {
 	for (const rangeLabel of searchInfo.rangeLabels) {
-		// eslint-disable-next-line import/no-deprecated
 		if (refHasRangeLabel(marker, rangeLabel)) {
 			let currentStack = searchInfo.stacks[rangeLabel];
 			if (currentStack === undefined) {
-				// eslint-disable-next-line import/no-deprecated
 				currentStack = new Stack<Marker>();
 				searchInfo.stacks[rangeLabel] = currentStack;
 			}
@@ -268,8 +259,6 @@ function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
 		}
 	}
 }
-
-// eslint-disable-next-line import/no-deprecated
 function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeStackMap) {
 	// eslint-disable-next-line guard-for-in, no-restricted-syntax
 	for (const label in deltaStackMap) {
@@ -277,7 +266,6 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
 		if (!deltaStack.empty()) {
 			let currentStack = currentStackMap[label];
 			if (currentStack === undefined) {
-				// eslint-disable-next-line import/no-deprecated
 				currentStack = new Stack<ReferencePosition>();
 				currentStackMap[label] = currentStack;
 			}
@@ -287,8 +275,6 @@ function applyStackDelta(currentStackMap: RangeStackMap, deltaStackMap: RangeSta
 		}
 	}
 }
-
-// eslint-disable-next-line import/no-deprecated
 function applyRangeReference(stack: Stack<ReferencePosition>, delta: ReferencePosition) {
 	if (refTypeIncludesFlag(delta, ReferenceType.NestBegin)) {
 		stack.push(delta);
@@ -320,13 +306,11 @@ function addNodeReferences(
 	node: IMergeNode,
 	rightmostTiles: MapLike<ReferencePosition>,
 	leftmostTiles: MapLike<ReferencePosition>,
-	// eslint-disable-next-line import/no-deprecated
 	rangeStacks: RangeStackMap,
 ) {
 	function updateRangeInfo(label: string, refPos: ReferencePosition) {
 		let stack = rangeStacks[label];
 		if (stack === undefined) {
-			// eslint-disable-next-line import/no-deprecated
 			stack = new Stack<ReferencePosition>();
 			rangeStacks[label] = stack;
 		}
@@ -347,7 +331,6 @@ function addNodeReferences(
 					addTileIfNotPresent(segment, leftmostTiles);
 				}
 				if (segment.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
-					// eslint-disable-next-line import/no-deprecated
 					const rangeLabels = refGetRangeLabels(segment);
 					if (rangeLabels) {
 						for (const label of rangeLabels) {
@@ -368,7 +351,6 @@ function addNodeReferences(
 							addTileIfNotPresent(lref, leftmostTiles);
 						}
 						if (lref.refType & (ReferenceType.NestBegin | ReferenceType.NestEnd)) {
-							// eslint-disable-next-line import/no-deprecated
 							for (const label of refGetRangeLabels(lref)!) {
 								updateRangeInfo(label, lref);
 							}
@@ -380,7 +362,6 @@ function addNodeReferences(
 	} else {
 		const block = <IHierBlock>node;
 		applyStackDelta(rangeStacks, block.rangeStacks);
-		// eslint-disable-next-line import/no-deprecated
 		extend(rightmostTiles, block.rightmostTiles);
 		extendIfUndefined(leftmostTiles, block.leftmostTiles);
 	}
@@ -400,16 +381,12 @@ function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefine
 class HierMergeBlock extends MergeBlock implements IHierBlock {
 	public rightmostTiles: MapLike<ReferencePosition>;
 	public leftmostTiles: MapLike<ReferencePosition>;
-	// eslint-disable-next-line import/no-deprecated
 	public rangeStacks: MapLike<Stack<ReferencePosition>>;
 
 	constructor(childCount: number) {
 		super(childCount);
-		// eslint-disable-next-line import/no-deprecated
 		this.rightmostTiles = createMap<ReferencePosition>();
-		// eslint-disable-next-line import/no-deprecated
 		this.leftmostTiles = createMap<ReferencePosition>();
-		// eslint-disable-next-line import/no-deprecated
 		this.rangeStacks = createMap<Stack<ReferencePosition>>();
 	}
 
@@ -422,7 +399,6 @@ class HierMergeBlock extends MergeBlock implements IHierBlock {
 		// eslint-disable-next-line guard-for-in, no-restricted-syntax
 		for (const key in this.rangeStacks) {
 			const stack = this.rangeStacks[key];
-			// eslint-disable-next-line import/no-deprecated
 			strbuf += internedSpaces(indentCount);
 			strbuf += `${key}: `;
 			for (const item of stack.items) {
@@ -1318,12 +1294,11 @@ export class MergeTree {
 	}
 
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	public getStackContext(startPos: number, clientId: number, rangeLabels: string[]) {
 		const searchInfo: IMarkerSearchRangeInfo = {
 			mergeTree: this,
-			// eslint-disable-next-line import/no-deprecated
 			stacks: createMap<Stack<Marker>>(),
 			rangeLabels,
 		};
@@ -1341,7 +1316,7 @@ export class MergeTree {
 	// TODO: filter function
 	/**
 	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * @deprecated - Use searchForMarker instead.
+	 * @deprecated Use searchForMarker instead.
 	 *
 	 * @param startPos - Position at which to start the search
 	 * @param clientId - clientId dictating the perspective to search from
@@ -2602,9 +2577,7 @@ export class MergeTree {
 		let len: number | undefined;
 		const hierBlock = block.hierBlock();
 		if (hierBlock) {
-			// eslint-disable-next-line import/no-deprecated
 			hierBlock.rightmostTiles = createMap<Marker>();
-			// eslint-disable-next-line import/no-deprecated
 			hierBlock.leftmostTiles = createMap<Marker>();
 			hierBlock.rangeStacks = {};
 		}
@@ -2686,7 +2659,6 @@ export class MergeTree {
 		this.nodeMap(refSeq, clientId, handler, accum, undefined, start, end);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public incrementalBlockMap<TContext>(stateStack: Stack<IncrementalMapState<TContext>>) {
 		while (!stateStack.empty()) {
 			// We already check the stack is not empty

@@ -12,17 +12,17 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 import { InventoryListAppModel } from "./appModel";
 import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList";
-import { TreeInventoryListFactory } from "./treeInventoryList";
+import { NewTreeInventoryListFactory } from "./newTreeInventoryList";
 
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
-export const treeInventoryListId = "tree-inventory-list";
+export const newTreeInventoryListId = "new-tree-inventory-list";
 
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	public constructor() {
 		super(
 			new Map([
 				LegacyTreeInventoryListFactory.registryEntry,
-				TreeInventoryListFactory.registryEntry,
+				NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
 		);
 	}
@@ -35,8 +35,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			LegacyTreeInventoryListFactory.type,
 		);
 		await legacyTreeInventoryList.trySetAlias(legacyTreeInventoryListId);
-		const treeInventoryList = await runtime.createDataStore(TreeInventoryListFactory.type);
-		await treeInventoryList.trySetAlias(treeInventoryListId);
+		const newTreeInventoryList = await runtime.createDataStore(
+			NewTreeInventoryListFactory.type,
+		);
+		await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
 	}
 
 	/**
@@ -49,10 +51,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			"",
 		);
 		// eslint-disable-next-line import/no-deprecated
-		const treeInventoryList = await requestFluidObject<IInventoryList>(
-			await runtime.getRootDataStore(treeInventoryListId),
+		const newTreeInventoryList = await requestFluidObject<IInventoryList>(
+			await runtime.getRootDataStore(newTreeInventoryListId),
 			"",
 		);
-		return new InventoryListAppModel(legacyTreeInventoryList, treeInventoryList);
+		return new InventoryListAppModel(legacyTreeInventoryList, newTreeInventoryList);
 	}
 }

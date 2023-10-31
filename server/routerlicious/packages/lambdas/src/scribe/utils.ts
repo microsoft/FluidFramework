@@ -47,3 +47,7 @@ export const sendToDeli = (
 
 	return producer.send([message], tenantId, documentId);
 };
+
+export const getClientIds = (protocolState: IProtocolState, clientCount: number) => {
+	return protocolState.members.slice(0, clientCount).map((member) => member[0]);
+};
