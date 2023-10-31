@@ -42,7 +42,7 @@ import {
 	getTreeNode,
 	setTreeNode,
 } from "./types";
-import { getFactoryContent } from "./objectFactory";
+import { extractFactoryContent } from "./objectFactory";
 
 const proxyCacheSym = Symbol("ProxyCache");
 
@@ -175,12 +175,12 @@ export function createObjectProxy<TSchema extends ObjectNodeSchema, TTypes exten
 				switch (field.schema.kind) {
 					case FieldKinds.required: {
 						(field as RequiredField<AllowedTypes>).content =
-							getFactoryContent(value) ?? value;
+							extractFactoryContent(value);
 						break;
 					}
 					case FieldKinds.optional: {
 						(field as OptionalField<AllowedTypes>).content =
-							getFactoryContent(value) ?? value;
+							extractFactoryContent(value);
 						break;
 					}
 					default:
@@ -228,12 +228,6 @@ const getSequenceField = <TTypes extends AllowedTypes>(
 	return field as LazySequence<TTypes>;
 };
 
-// Converts a proxy union to contextually typed data, extracting factory content if necessary.
-const asContextuallyTypedData = (value: ProxyNodeUnion<AllowedTypes, "javaScript">) =>
-	(value === null || typeof value !== "object"
-		? value // Return primitives as-is
-		: getFactoryContent(value) ?? value) as ContextuallyTypedNodeData; // Otherwise extract factory content (if necessary).
-
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function itemsAsContextuallyTyped(
@@ -241,8 +235,8 @@ function itemsAsContextuallyTyped(
 ): Iterable<ContextuallyTypedNodeData> {
 	// If the iterable is not already an array, copy it into an array to use '.map()' below.
 	return Array.isArray(iterable)
-		? iterable.map(asContextuallyTypedData)
-		: Array.from(iterable, asContextuallyTypedData);
+		? iterable.map((item) => extractFactoryContent(item) as ContextuallyTypedNodeData)
+		: Array.from(iterable, (item) => extractFactoryContent(item) as ContextuallyTypedNodeData);
 }
 
 // #region Create dispatch map for lists
@@ -623,7 +617,7 @@ function createMapProxy<TSchema extends MapSchema>(treeNode: TreeNode): SharedTr
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	return new Proxy<SharedTreeMap<TSchema>>(new Map<string, ProxyNode<TSchema>>(), {
+	return new Proxy<SharedTreeMap<TSchema>>(new Map<string, ProxyField<TSchema["mapFields"]>>(), {
 		get: (target, key, receiver): unknown => {
 			return Reflect.get(dispatch, key);
 		},

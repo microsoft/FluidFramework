@@ -209,5 +209,5 @@ export interface StoredSchemaCollection {
 	/**
 	 * {@inheritdoc StoredSchemaCollection}
 	 */
-	readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
