@@ -241,7 +241,7 @@ export class Sanitizer {
 		return result.valid;
 	};
 
-	readonly chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, this.debug);
+	readonly chunkProcessor = new ChunkedOpProcessor(this.objectMatchesSchema, false);
 
 	constructor(
 		readonly messages: ISequencedDocumentMessage[],

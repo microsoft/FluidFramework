@@ -367,7 +367,8 @@
 			]
 		},
 		"patchedDependencies": {
-			"@fluidframework/build-common@2.0.3": "patches/@fluidframework__build-common@2.0.3.patch"
+			"@fluidframework/build-common@2.0.3": "patches/@fluidframework__build-common@2.0.3.patch",
+			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch"
 		}
 	}
 }

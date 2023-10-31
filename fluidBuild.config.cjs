@@ -195,7 +195,6 @@ module.exports = {
 				"^common/",
 				"^examples/",
 				"^experimental/",
-				"^packages/",
 				"^server/",
 				"^tools/",
 			],
