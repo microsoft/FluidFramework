@@ -559,7 +559,7 @@ describe("List", () => {
 				check(["a", "b"], "a", /* start: */ -Infinity);
 			});
 
-			describe.only("at()", () => {
+			describe("at()", () => {
 				const check = (array: readonly string[], index: unknown) => {
 					test2("at", array, noInit, index);
 				};
