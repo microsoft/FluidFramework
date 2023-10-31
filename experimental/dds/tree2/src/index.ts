@@ -290,6 +290,7 @@ export {
 	FactoryTreeSchema,
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
+	boxedIterator,
 } from "./feature-libraries";
 
 export {

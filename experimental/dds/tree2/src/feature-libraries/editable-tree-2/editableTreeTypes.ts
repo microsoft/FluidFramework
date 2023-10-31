@@ -25,7 +25,8 @@ import { FieldKind } from "../modular-schema";
 import { TreeContext } from "./context";
 
 /**
- * Allows boxed iteration of a tree/field
+ * Allows boxed iteration of a trees.
+ * @alpha
  */
 export const boxedIterator = Symbol();
 

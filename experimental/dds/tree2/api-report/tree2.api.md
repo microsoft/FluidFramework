@@ -224,6 +224,9 @@ export interface BindTree<T = BindTreeDefault> extends PathStep {
 export type BindTreeDefault = BindTree;
 
 // @alpha
+export const boxedIterator: unique symbol;
+
+// @alpha
 export type Brand<ValueType, Name extends string> = ValueType & BrandedType<ValueType, Name>;
 
 // @alpha

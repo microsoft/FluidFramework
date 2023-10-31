@@ -16,8 +16,10 @@ import { SharedString } from "@fluidframework/sequence";
 import {
 	SharedTreeFactory,
 	type ISharedTree,
-	type UntypedTree,
-	type UntypedField,
+	treeSchemaFromStoredSchema,
+	type TreeField,
+	type TreeNode,
+	boxedIterator,
 } from "@fluid-experimental/tree2";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { EditType } from "../CommonInterfaces";
@@ -248,20 +250,27 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 ): Promise<FluidObjectTreeNode> => {
 	const sharedTree = sharedObject as ISharedTree;
 
-	const contextRoot = sharedTree.view.context.root;
+	const schema = treeSchemaFromStoredSchema(sharedTree.contentSnapshot().schema);
+	const view = sharedTree.requireSchema(schema, () => {
+		throw new Error("Schema changed");
+	});
+	if (view === undefined) {
+		throw new Error("failed to apply schema");
+	}
+	const contextRoot = view.editableTree2(schema);
+
 	const children: Record<string, VisualChildNode> = {};
 
-	const iterateNodes = async (field: UntypedField): Promise<void> => {
-		for (const child of field) {
-			await iterateFields(child as unknown as UntypedTree);
+	const iterateNodes = async (field: TreeField): Promise<void> => {
+		for (const child of field[boxedIterator]()) {
+			await iterateFields(child);
 		}
 	};
 
-	const iterateFields = async (node: UntypedTree): Promise<void> => {
-		for (const field of node) {
+	const iterateFields = async (node: TreeNode): Promise<void> => {
+		for (const field of node[boxedIterator]()) {
 			const renderedChild = await visualizeChildData(field);
-
-			children[field.fieldKey as string] = renderedChild;
+			children[field.key] = renderedChild;
 		}
 	};
 
