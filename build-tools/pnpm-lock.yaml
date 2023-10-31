@@ -12,9 +12,9 @@ importers:
       '@commitlint/cli': ^17.6.6
       '@commitlint/config-conventional': ^17.6.6
       '@commitlint/cz-commitlint': ^17.5.0
-      '@fluid-tools/build-cli': 0.26.1
+      '@fluid-tools/build-cli': 0.26.2
       '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': 0.26.1
+      '@fluidframework/build-tools': 0.26.2
       '@microsoft/api-documenter': ^7.22.24
       '@microsoft/api-extractor': ^7.36.1
       c8: ^7.14.0
@@ -36,9 +36,9 @@ importers:
       '@commitlint/cli': 17.6.6
       '@commitlint/config-conventional': 17.6.6
       '@commitlint/cz-commitlint': 17.5.0_i4x6owxztfhigiiqlxwntt4k24
-      '@fluid-tools/build-cli': 0.26.1_zo5p53osjv3ha4sgr6kpvl7c7y
+      '@fluid-tools/build-cli': 0.26.2_zo5p53osjv3ha4sgr6kpvl7c7y
       '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.26.1
+      '@fluidframework/build-tools': 0.26.2
       '@microsoft/api-documenter': 7.22.24
       '@microsoft/api-extractor': 7.36.1
       c8: 7.14.0
@@ -815,13 +815,13 @@ packages:
     resolution: {integrity: sha512-HxjQ8Qn+4SI3/AFv6sOrDB+g6PpUTDwSJiQqOrnneEk8L71161srI9gjzzZvYVbzHiVg/BvcH95+cK/zfIt4pg==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
 
-  /@fluid-tools/build-cli/0.26.1_zo5p53osjv3ha4sgr6kpvl7c7y:
-    resolution: {integrity: sha512-eqvUMIcJVgXdWN1tQrdVhx0FnLhstfcx4VywmmlT+nNt197sq2Lar5M+7C7enN3zlysctt3mJ9WIgcvZfc1Dew==}
+  /@fluid-tools/build-cli/0.26.2_zo5p53osjv3ha4sgr6kpvl7c7y:
+    resolution: {integrity: sha512-0L0vuo8l/ksYaEgmX9G/R7PO9XQHC1WTFNw4cp7ipDwbrSOA1MbSAnIRYjIqrzeD+CEyKFUsWZrTR7669g9YUg==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:
       '@fluid-tools/version-tools': 0.26.2_typescript@5.1.6
-      '@fluidframework/build-tools': 0.26.1
+      '@fluidframework/build-tools': 0.26.2
       '@fluidframework/bundle-size-tools': 0.26.2
       '@microsoft/api-extractor': 7.36.1
       '@oclif/core': 3.9.0
@@ -908,8 +908,8 @@ packages:
     hasBin: true
     dev: true
 
-  /@fluidframework/build-tools/0.26.1:
-    resolution: {integrity: sha512-+wbQv/TPj8ek0/6/yyUIrteDw8OiJi09ueHoYVkGrypMwL2TsMkHvUxcD1Pk5BVsMnflu3osT/9Jd8cP8DzlzA==}
+  /@fluidframework/build-tools/0.26.2:
+    resolution: {integrity: sha512-rHw00d5XZj4InkQWrVWFhclr6lYAZmBbzSw0jBwWUHJ4S+ZDQbanPVufBscxI+NhTHJeErQ+LmvKbQRSY0COYA==}
     engines: {node: '>=14.17.0'}
     hasBin: true
     dependencies:

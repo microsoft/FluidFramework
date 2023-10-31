@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.26.2",
+	"version": "0.27.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
