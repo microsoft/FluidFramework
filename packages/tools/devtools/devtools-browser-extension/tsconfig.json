@@ -9,6 +9,8 @@
 		"target": "es2018",
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
+		"moduleResolution": "node",
+		"module": "CommonJS",
 	},
 	"include": ["src/**/*"],
 }

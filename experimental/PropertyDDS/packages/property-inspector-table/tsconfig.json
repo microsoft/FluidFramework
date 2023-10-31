@@ -6,6 +6,8 @@
 		"typeRoots": ["../node_modules/@types"],
 		"declarationDir": "./dist",
 		"outDir": "./dist",
+		"moduleResolution": "node",
+		"module": "CommonJS",
 	},
 	"exclude": ["dist", "node_modules"],
 	"include": ["src/**/*", "assets/**/*", "custom.d.ts"],
