@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
 import { TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
-import { TreeNode, TreeStatus } from "../editableTreeTypes";
-import { getProxyForNode } from "./proxies";
-import { ProxyNode, SharedTreeNode, getTreeNode } from "./types";
+import { TreeStatus } from "../editableTreeTypes";
+import { getOrCreateNodeProxy } from "./proxies";
+import { getTreeNode, tryGetTreeNode } from "./treeNode";
+import { ProxyNode, SharedTreeNode } from "./types";
 
 /**
  * Provides various functions for analyzing {@link SharedTreeNode}s.
@@ -69,24 +69,24 @@ export interface NodeApi {
  */
 export const nodeApi: NodeApi = {
 	schema: (node: SharedTreeNode) => {
-		return assertTreeNode(node).schema;
+		return getTreeNode(node).schema;
 	},
 	is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
 	): value is ProxyNode<TSchema> => {
-		return getTreeNode(value)?.is(schema) ?? false;
+		return tryGetTreeNode(value)?.is(schema) ?? false;
 	},
 	parent: (node: SharedTreeNode) => {
-		const treeNode = assertTreeNode(node).parentField.parent.parent;
+		const treeNode = getTreeNode(node).parentField.parent.parent;
 		if (treeNode !== undefined) {
-			return getProxyForNode(treeNode);
+			return getOrCreateNodeProxy(treeNode);
 		}
 
 		return undefined;
 	},
 	key: (node: SharedTreeNode) => {
-		const treeNode = assertTreeNode(node);
+		const treeNode = getTreeNode(node);
 		const parent = nodeApi.parent(node);
 		if (parent !== undefined) {
 			const parentSchema = nodeApi.schema(parent);
@@ -104,13 +104,9 @@ export const nodeApi: NodeApi = {
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	) => {
-		return assertTreeNode(node).on(eventName, listener);
+		return getTreeNode(node).on(eventName, listener);
 	},
 	status: (node: SharedTreeNode) => {
-		return assertTreeNode(node).treeStatus();
+		return getTreeNode(node).treeStatus();
 	},
 };
-
-function assertTreeNode(node: SharedTreeNode): TreeNode {
-	return getTreeNode(node) ?? fail("Expected a SharedTreeNode");
-}
