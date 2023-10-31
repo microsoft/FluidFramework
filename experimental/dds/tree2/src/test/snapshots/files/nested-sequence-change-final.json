@@ -173,7 +173,7 @@
                 "content": {
                   "version": 1,
                   "data": [],
-                  "id": 1
+                  "maxId": 1
                 },
                 "encoding": "utf-8"
               }

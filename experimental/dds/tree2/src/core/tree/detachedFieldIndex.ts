@@ -10,6 +10,7 @@ import {
 	IdAllocator,
 	NestedMap,
 	brand,
+	brandedNumberType,
 	deleteFromNestedMap,
 	fail,
 	forEachInNestedMap,
@@ -43,7 +44,7 @@ export class DetachedFieldIndex {
 	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
 	private readonly codec: IJsonCodec<{
 		data: NestedMap<Major, Minor, ForestRootId>;
-		id: ForestRootId;
+		maxId: ForestRootId;
 	}>;
 	private readonly options: ICodecOptions;
 
@@ -158,7 +159,7 @@ export class DetachedFieldIndex {
 	public encode(): string {
 		return this.codec.encode({
 			data: this.detachedNodeToField,
-			id: this.rootIdAllocator.getNextId(),
+			maxId: this.rootIdAllocator.getNextId(),
 		}) as string;
 	}
 
@@ -168,11 +169,11 @@ export class DetachedFieldIndex {
 	public loadData(data: string): void {
 		const detachedFieldIndex: {
 			data: NestedMap<Major, Minor, ForestRootId>;
-			id: number;
+			maxId: number;
 		} = this.codec.decode(data);
 
 		this.rootIdAllocator = idAllocatorFromMaxId(
-			detachedFieldIndex.id,
+			detachedFieldIndex.maxId,
 		) as IdAllocator<ForestRootId>;
 		this.detachedNodeToField = detachedFieldIndex.data;
 	}
@@ -182,7 +183,7 @@ export class DetachedFieldIndex {
 const MajorSchema = Type.Union([Type.String(), Type.Number(), Type.Undefined()]);
 const MinorSchema = Type.Number();
 
-const ForestRootIdSchema = Type.Any();
+const ForestRootIdSchema = brandedNumberType<ForestRootId>();
 
 // Define the tuple:
 const TupleSchema = Type.Tuple([MajorSchema, MinorSchema, ForestRootIdSchema]);
@@ -190,7 +191,7 @@ const TupleSchema = Type.Tuple([MajorSchema, MinorSchema, ForestRootIdSchema]);
 export const Format = Type.Object({
 	version: Type.Literal(version),
 	data: Type.Array(TupleSchema),
-	id: ForestRootIdSchema,
+	maxId: ForestRootIdSchema,
 });
 
 export type Format = Static<typeof Format>;
@@ -204,14 +205,14 @@ export function makeDetachedNodeToFieldCodec({
 	jsonValidator: validator,
 }: ICodecOptions): IJsonCodec<{
 	data: NestedMap<Major, Minor, ForestRootId>;
-	id: ForestRootId;
+	maxId: ForestRootId;
 }> {
 	const versionedValidator = validator.compile(Versioned);
 	const formatValidator = validator.compile(Format);
 	return {
 		encode: (data: {
 			data: NestedMap<Major, Minor, ForestRootId>;
-			id: ForestRootId;
+			maxId: ForestRootId;
 		}): string => {
 			const detachedNodeToFieldData: [Major, Minor, ForestRootId][] = [];
 			forEachInNestedMap(data.data, (root, key1, key2) => {
@@ -220,7 +221,7 @@ export function makeDetachedNodeToFieldCodec({
 			const encoded = {
 				version,
 				data: detachedNodeToFieldData,
-				id: data.id,
+				maxId: data.maxId,
 			};
 			assert(
 				versionedValidator.check(encoded),
@@ -233,7 +234,7 @@ export function makeDetachedNodeToFieldCodec({
 			data: string,
 		): {
 			data: NestedMap<Major, Minor, ForestRootId>;
-			id: ForestRootId;
+			maxId: ForestRootId;
 		} => {
 			const parsed = JSON.parse(data);
 
@@ -253,7 +254,7 @@ export function makeDetachedNodeToFieldCodec({
 			}
 			return {
 				data: map,
-				id: parsed.id,
+				maxId: parsed.maxId,
 			};
 		},
 	};
