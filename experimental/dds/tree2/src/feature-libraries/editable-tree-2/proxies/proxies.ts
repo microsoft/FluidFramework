@@ -40,7 +40,7 @@ import {
 	SharedTreeObject,
 } from "./types";
 import { extractFactoryContent } from "./objectFactory";
-import { tryGetTreeNodeTarget, setTreeNode, getTreeNode } from "./treeNode";
+import { tryGetEditNodeTarget, setEditNode, getEditNode } from "./editNode";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -82,26 +82,26 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 }
 
 export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
-	treeNode: TreeNode,
+	editNode: TreeNode,
 ): ProxyNode<TSchema> {
-	const cachedProxy = tryGetTreeNodeTarget(treeNode);
+	const cachedProxy = tryGetEditNodeTarget(editNode);
 	if (cachedProxy !== undefined) {
 		return cachedProxy as ProxyNode<TSchema>;
 	}
 
-	const schema = treeNode.schema;
+	const schema = editNode.schema;
 	if (schemaIsLeaf(schema)) {
-		return treeNode.value as ProxyNode<TSchema>;
+		return editNode.value as ProxyNode<TSchema>;
 	}
 	if (schemaIsMap(schema)) {
-		return setTreeNode(createMapProxy(), treeNode as MapNode<MapSchema>) as ProxyNode<TSchema>;
+		return setEditNode(createMapProxy(), editNode as MapNode<MapSchema>) as ProxyNode<TSchema>;
 	} else if (schemaIsFieldNode(schema)) {
-		return setTreeNode(
+		return setEditNode(
 			createListProxy(),
-			treeNode as FieldNode<FieldNodeSchema>,
+			editNode as FieldNode<FieldNodeSchema>,
 		) as ProxyNode<TSchema>;
 	} else if (schemaIsObjectNode(schema)) {
-		return setTreeNode(createObjectProxy(schema), treeNode as ObjectNode) as ProxyNode<TSchema>;
+		return setEditNode(createObjectProxy(schema), editNode as ObjectNode) as ProxyNode<TSchema>;
 	} else {
 		fail("unrecognized node kind");
 	}
@@ -123,7 +123,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 		{},
 		{
 			get(target, key): unknown {
-				const field = getTreeNode(proxy).tryGetField(key as FieldKey);
+				const field = getEditNode(proxy).tryGetField(key as FieldKey);
 				if (field !== undefined) {
 					return getProxyForField(field);
 				}
@@ -132,17 +132,17 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 				return Reflect.get(target, key, proxy);
 			},
 			set(target, key, value) {
-				const treeNode = getTreeNode(proxy);
-				const fieldSchema = treeNode.schema.objectNodeFields.get(key as FieldKey);
+				const editNode = getEditNode(proxy);
+				const fieldSchema = editNode.schema.objectNodeFields.get(key as FieldKey);
 
 				if (fieldSchema === undefined) {
 					return false;
 				}
 
 				// TODO: Is it safe to assume 'content' is a LazyObjectNode?
-				assert(treeNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
+				assert(editNode instanceof LazyObjectNode, 0x7e0 /* invalid content */);
 				assert(typeof key === "string", 0x7e1 /* invalid key */);
-				const field = getBoxedField(treeNode, brand(key), fieldSchema);
+				const field = getBoxedField(editNode, brand(key), fieldSchema);
 
 				switch (field.schema.kind) {
 					case FieldKinds.required: {
@@ -168,7 +168,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 				return [...schema.objectNodeFields.keys()];
 			},
 			getOwnPropertyDescriptor: (target, key) => {
-				const field = getTreeNode(proxy).tryGetField(key as FieldKey);
+				const field = getEditNode(proxy).tryGetField(key as FieldKey);
 
 				if (field === undefined) {
 					return undefined;
@@ -193,7 +193,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
  */
 const getSequenceField = <TTypes extends AllowedTypes>(
 	list: SharedTreeList<AllowedTypes, "javaScript">,
-) => getTreeNode(list).content as LazySequence<TTypes>;
+) => getEditNode(list).content as LazySequence<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
@@ -521,43 +521,43 @@ function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> 
 const mapStaticDispatchMap: PropertyDescriptorMap = {
 	[Symbol.iterator]: {
 		value(this: SharedTreeMap<MapSchema>) {
-			const node = getTreeNode(this);
+			const node = getEditNode(this);
 			return node[Symbol.iterator]();
 		},
 	},
 	entries: {
 		value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
-			const node = getTreeNode(this);
+			const node = getEditNode(this);
 			return node.entries();
 		},
 	},
 	get: {
 		value(this: SharedTreeMap<MapSchema>, key: string): unknown {
-			const node = getTreeNode(this);
+			const node = getEditNode(this);
 			const field = node.getBoxed(key);
 			return getProxyForField(field);
 		},
 	},
 	has: {
 		value(this: SharedTreeMap<MapSchema>, key: string): boolean {
-			const node = getTreeNode(this);
+			const node = getEditNode(this);
 			return node.has(key);
 		},
 	},
 	keys: {
 		value(this: SharedTreeMap<MapSchema>): IterableIterator<string> {
-			const node = getTreeNode(this);
+			const node = getEditNode(this);
 			return node.keys();
 		},
 	},
 	size: {
 		get(this: SharedTreeMap<MapSchema>) {
-			return getTreeNode(this).size;
+			return getEditNode(this).size;
 		},
 	},
 	values: {
 		value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
-			const node = getTreeNode(this);
+			const node = getEditNode(this);
 			return node.values();
 		},
 	},
