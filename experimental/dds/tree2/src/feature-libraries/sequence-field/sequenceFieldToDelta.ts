@@ -8,7 +8,7 @@ import { fail, Mutable } from "../../util";
 import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
-import { MarkList, NoopMarkType, ReturnFrom } from "./format";
+import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
