@@ -46,6 +46,7 @@ import {
 	MockDependent,
 	applyTestDelta,
 	expectEqualFieldPaths,
+	expectEqualPaths,
 	jsonSequenceRootSchema,
 } from "./utils";
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite";
@@ -253,6 +254,23 @@ export function testForest(config: ForestTestConfiguration): void {
 				TreeNavigationResult.Ok,
 			);
 			expectEqualFieldPaths(cursor.getFieldPath(), childPath);
+		});
+
+		describe("moveCursorToPath", () => {
+			it("moves cursor to specified path.", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+				initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+				const cursor = forest.allocateCursor();
+				const path: UpPath = {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: 0,
+				};
+
+				forest.moveCursorToPath(path, cursor);
+				expectEqualPaths(path, cursor.getPath());
+			});
 		});
 
 		it("anchors creation and use", () => {

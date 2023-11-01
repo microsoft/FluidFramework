@@ -4,8 +4,6 @@
  */
 
 // Allow importing from this specific file which is being tested:
-/* eslint-disable-next-line import/no-internal-modules */
-import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest";
 import {
@@ -29,6 +27,7 @@ import {
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
 import { jsonRoot, jsonSchema, SchemaBuilder, singleJsonCursor } from "../../../domains";
+import { expectEqualPaths } from "../../utils";
 
 const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	[
@@ -100,24 +99,6 @@ describe("ChunkedForest", () => {
 				factory: (schema) => buildChunkedForest(chunker(schema)),
 				skipCursorErrorCheck: true,
 			});
-			describe("moveCursorToPath", () => {
-				it("moves cursor to specified path.", () => {
-					const forest = buildChunkedForest(
-						chunker(new InMemoryStoredSchemaRepository(jsonDocumentSchema)),
-					);
-					initializeForest(forest, [singleJsonCursor([1, 2])]);
-
-					const cursor = forest.allocateCursor();
-					const path: UpPath = {
-						parent: undefined,
-						parentField: rootFieldKey,
-						parentIndex: 0,
-					};
-
-					forest.moveCursorToPath(path, cursor);
-					assert.deepEqual(path, cursor.getPath());
-				});
-			});
 
 			it("getCursorAboveDetachedFields", () => {
 				const forest = buildChunkedForest(
@@ -130,7 +111,7 @@ describe("ChunkedForest", () => {
 					parentField: rootFieldKey,
 					parentIndex: 0,
 				};
-				assert.deepEqual(cursor.getPath(), expectedPath);
+				expectEqualPaths(cursor.getPath(), expectedPath);
 			});
 		});
 	}

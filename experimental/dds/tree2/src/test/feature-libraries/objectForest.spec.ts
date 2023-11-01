@@ -9,7 +9,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest";
-import { FieldKey, UpPath, initializeForest, rootFieldKey } from "../../core";
+import { FieldKey, initializeForest, rootFieldKey } from "../../core";
 import { JsonCompatible, brand } from "../../util";
 
 import { testForest } from "../forestTestSuite";
@@ -80,34 +80,18 @@ describe("object-forest", () => {
 		});
 	});
 
-	describe("moveCursorToPath", () => {
-		it("moves cursor to specified path.", () => {
-			const forest = buildForest();
-			initializeForest(forest, [singleJsonCursor([1, 2])]);
-
-			const cursor = forest.allocateCursor();
-			const path: UpPath = {
-				parent: undefined,
-				parentField: rootFieldKey,
-				parentIndex: 0,
-			};
-
-			forest.moveCursorToPath(path, cursor);
-			assert.deepEqual(path, cursor.getPath());
-		});
-		it("undefined path points to dummy node above detachedFields.", () => {
-			const forest = buildForest();
-			initializeForest(forest, [singleJsonCursor([1, 2])]);
-			const cursor = forest.allocateCursor();
-			forest.moveCursorToPath(undefined, cursor);
-			assert.deepEqual(cursor.getFieldKey(), singleMapTreeCursor(forest.roots).getFieldKey());
-		});
+	it("moveCursorToPath with an undefined path points to dummy node above detachedFields.", () => {
+		const forest = buildForest();
+		initializeForest(forest, [singleJsonCursor([1, 2])]);
+		const cursor = forest.allocateCursor();
+		forest.moveCursorToPath(undefined, cursor);
+		assert.deepEqual(cursor.getFieldKey(), singleMapTreeCursor(forest.roots).getFieldKey());
 	});
 
 	it("getCursorAboveDetachedFields", () => {
 		const forest = buildForest();
 		initializeForest(forest, [singleJsonCursor([1, 2])]);
 		const cursor = forest.getCursorAboveDetachedFields();
-		assert.deepEqual(cursor.getFieldKey(), singleMapTreeCursor(forest.roots).getFieldKey());
+		assert.deepEqual(cursor, singleMapTreeCursor(forest.roots));
 	});
 });
