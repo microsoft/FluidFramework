@@ -761,17 +761,19 @@ export function revisionMetadataSourceFromInfo(
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
 		return index >= 0 ? index : undefined;
 	};
-	const getInfo = (revision: RevisionTag): RevisionInfo => {
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
 		const index = getIndex(revision);
-		assert(index !== undefined, "Unknown revisions");
-		return revInfos[index];
+		return index === undefined ? undefined : revInfos[index];
 	};
 
 	const getIntentions = (): RevisionTag[] => {
 		return revInfos.map((info) => info.rollbackOf ?? info.revision);
 	};
 
-	return { getIndex, getInfo, getIntentions };
+	return { getIndex, tryGetInfo, getIntentions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {

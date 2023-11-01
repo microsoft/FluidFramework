@@ -123,7 +123,10 @@ export function sequenceFieldToDelta<TNodeChange>(
 						delete deltaMark.fields;
 					}
 					if (isNewAttach(mark)) {
-						assert(mark.content !== undefined, "New insert must have content");
+						assert(
+							mark.content !== undefined,
+							0x7dc /* New insert must have content */,
+						);
 						build.push({
 							id: buildId,
 							trees: mark.content.map(singleTextCursor),

@@ -211,7 +211,7 @@ export class SchemaBuilder<
 			};
 		}
 	> {
-		const schema = new TreeNodeSchema(this, this.scoped(name as TName & Name), {
+		const schema = TreeNodeSchema.create(this, this.scoped(name as TName & Name), {
 			objectNodeFields: { [""]: this.sequence(allowedTypes) },
 		});
 		this.addNodeSchema(schema);
@@ -401,10 +401,10 @@ export function structuralName<const T extends string>(
 	} else if (allowedTypes instanceof TreeNodeSchema) {
 		return structuralName(collectionName, [allowedTypes]);
 	} else {
-		assert(Array.isArray(allowedTypes), "Types should be an array");
+		assert(Array.isArray(allowedTypes), 0x7c7 /* Types should be an array */);
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
-			assert(t instanceof TreeNodeSchema, "invalid type provided");
+			assert(t instanceof TreeNodeSchema, 0x7c8 /* invalid type provided */);
 			// TypeScript should know `t.name` is a string (from the extends constraint on TreeNodeSchema's name), but the linter objects.
 			// @ts-expect-error: Apparently TypeScript also fails to apply this constraint for some reason and is giving any:
 			type _check = requireFalse<isAny<typeof t.name>>;
@@ -414,7 +414,7 @@ export function structuralName<const T extends string>(
 			// Therefor introducing a variable to do the same thing as `satisfies string` but such that the linter can understand:
 			const name: string = t.name;
 			// Just incase the compiler and linter really are onto something and this might sometimes not be a string, validate it:
-			assert(typeof name === "string", "Name should be a string");
+			assert(typeof name === "string", 0x7c9 /* Name should be a string */);
 			return name;
 		});
 		// Ensure name is order independent

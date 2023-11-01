@@ -66,7 +66,7 @@ const unexpectedDelegate = () => assert.fail("Unexpected call");
 const revisionMetadata: RevisionMetadataSource = {
 	getIntentions: () => assert.fail("Unexpected revision index query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
-	getInfo: () => assert.fail("Unexpected revision info query"),
+	tryGetInfo: () => assert.fail("Unexpected revision info query"),
 };
 
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {

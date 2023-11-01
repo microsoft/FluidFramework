@@ -294,7 +294,7 @@ export function getEffectiveNodeChanges<TNodeChange>(
 		return undefined;
 	}
 	const type = mark.type;
-	assert(type !== "MoveIn", "MoveIn marks should not have changes");
+	assert(type !== "MoveIn", 0x7dd /* MoveIn marks should not have changes */);
 	switch (type) {
 		case "Insert":
 			if (isNewAttach(mark)) {

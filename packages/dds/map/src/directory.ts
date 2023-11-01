@@ -2447,10 +2447,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	private undeleteSubDirectoryTree(directory: SubDirectory): void {
-		// Restore deleted subdirectory tree. This will unmark "deleted" from the subdirectories from bottom to top.
-		for (const [_, subDirectory] of this._subdirectories.entries()) {
-			this.undeleteSubDirectoryTree(subDirectory);
-		}
+		// Restore deleted subdirectory tree. Need to undispose the current directory first, then get access to the iterator.
+		// This will unmark "deleted" from the subdirectories from top to bottom.
 		directory.undispose();
+		for (const [_, subDirectory] of directory.subdirectories()) {
+			this.undeleteSubDirectoryTree(subDirectory as SubDirectory);
+		}
 	}
 }
