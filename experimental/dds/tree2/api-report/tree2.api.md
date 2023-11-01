@@ -1320,7 +1320,7 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
     getBoxed(key: string): TypedField<TSchema["mapFields"]>;
     has(key: string): boolean;
     keys(): IterableIterator<FieldKey>;
-    set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void;
+    set(key: string, value: FlexibleFieldContent<TSchema["mapFields"]>): void;
     readonly size: number;
     values(): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">>;
 }
