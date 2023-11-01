@@ -200,21 +200,67 @@ describe("SharedTreeList", () => {
 			root.strings.insertAtStart(["a"]);
 			root.strings.insertAt(1, ["b"]);
 			root.strings.insertAtEnd(["c"]);
-			const _errors = () => {
-				// @ts-expect-error Inserted content needs to be non-string iterable
-				root.strings.insertAtStart("d");
-				// @ts-expect-error Inserted content needs to be non-string iterable
-				root.strings.insertAt(1, "e");
-				// @ts-expect-error Inserted content needs to be non-string iterable
-				root.strings.insertAtEnd("f");
-			};
-			const gh: Iterable<string> = "gh";
-			root.strings.insertAtStart(gh);
-			const ij: Iterable<string> = "ij";
-			root.strings.insertAt(3, ij);
-			const kl: Iterable<string> = "kl";
-			root.strings.insertAtEnd(kl);
-			assert.deepEqual(root.strings, ["g", "h", "a", "i", "j", "b", "c", "k", "l"]);
+
+			const string: string = "hello";
+			const stringLiteral: "hello" = "hello" as const;
+			const iterableOrString: Iterable<string> | string = "hello";
+			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(stringLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(iterableOrString);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(iterableOrLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, stringLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, iterableOrString);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, iterableOrLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(stringLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(iterableOrString);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(iterableOrLiteral);
+			});
+
+			const de = "de"[Symbol.iterator]();
+			root.strings.insertAtStart(de);
+			const fg = "fg"[Symbol.iterator]();
+			root.strings.insertAt(3, fg);
+			const hi = "hi"[Symbol.iterator]();
+			root.strings.insertAtEnd(hi);
+			assert.deepEqual(root.strings, ["d", "e", "a", "f", "g", "b", "c", "h", "i"]);
 		});
 
 		itWithRoot("booleans", schema, initialTree, (root) => {

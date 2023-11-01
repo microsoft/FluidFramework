@@ -197,9 +197,14 @@ const getSequenceField = <TTypes extends AllowedTypes>(
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
-function itemsAsContextuallyTyped(
+function contextualizeInsertedListContent(
 	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 ): Iterable<ContextuallyTypedNodeData> {
+	if (typeof iterable === "string") {
+		throw new TypeError(
+			"Attempted to directly insert a string as iterable list content. Wrap the input string 's' in an array ('[s]') to insert it as a single item or, supply the iterator of the string directly via 's[Symbol.iterator]()' if intending to insert each Unicode code point as a separate item.",
+		);
+	}
 	// If the iterable is not already an array, copy it into an array to use '.map()' below.
 	return Array.isArray(iterable)
 		? iterable.map((item) => extractFactoryContent(item) as ContextuallyTypedNodeData)
@@ -226,7 +231,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAt(index, itemsAsContextuallyTyped(value));
+			getSequenceField(this).insertAt(index, contextualizeInsertedListContent(value));
 		},
 	},
 	insertAtStart: {
@@ -234,7 +239,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAtStart(itemsAsContextuallyTyped(value));
+			getSequenceField(this).insertAtStart(contextualizeInsertedListContent(value));
 		},
 	},
 	insertAtEnd: {
@@ -242,7 +247,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAtEnd(itemsAsContextuallyTyped(value));
+			getSequenceField(this).insertAtEnd(contextualizeInsertedListContent(value));
 		},
 	},
 	removeAt: {
