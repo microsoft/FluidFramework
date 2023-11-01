@@ -34,14 +34,28 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
 		"rebuild": "npm run clean && npm run build",
 		"test": "concurrently npm:test:jest npm:test:mocha",
-		"test:coverage": "npm run test:jest:coverage",
+		"test:coverage": "concurrently npm:test:jest:coverage npm:test:mocha:coverage",
 		"test:jest": "jest",
 		"test:jest:coverage": "jest --coverage --ci",
-		"test:mocha:fail": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
+		"test:mocha": "mocha dist/screenshot-tests/Screenshot.test.js --delay",
+		"test:mocha:coverage": "c8 npm run test:mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:screenshots": "npm run test:mocha",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [],
+		"include": [],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
 		"@fluentui/react": "^8.109.4",
@@ -89,6 +103,7 @@
 		"@types/react-dom": "^17.0.18",
 		"@types/recharts": "^1.8.24",
 		"@types/testing-library__jest-dom": "^5.14.5",
+		"c8": "^7.7.1",
 		"chai": "^4.2.0",
 		"chalk": "^2.4.2",
 		"concurrently": "^8.2.1",

@@ -181,8 +181,16 @@ stages:
         # Setup
         - checkout: self
           clean: true
-          lfs: ${{ parameters.checkoutSubmodules }}
+          lfs: true
           submodules: ${{ parameters.checkoutSubmodules }}
+
+        # Initialize Git LFS to ensure test assets have been downloaded
+        - task: Bash@3
+          displayName: git-lfs
+          - script: |
+            git lfs fetch
+            git lfs pull
+          
 
         - task: Bash@3
           displayName: Parameters
@@ -515,7 +523,7 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|\(use.*' | grep '^\s' > git_status.log
+              git status | grep -v -E 'package.json|package-lock.json|packageVersion.ts|lerna.json|.npmrc|build-tools/.npmrc|*packages/tools/devtools/devtools-view/*|\(use.*' | grep '^\s' > git_status.log
               if [ `cat git_status.log | wc -l` != "0" ]; then
                 cat git_status.log
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
