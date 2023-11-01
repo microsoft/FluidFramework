@@ -13,7 +13,7 @@ import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces"
 import { InventoryListAppModel } from "./appModel";
 import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList";
 import { NewTreeInventoryListFactory } from "./newTreeInventoryList";
-import { InventoryListFactory } from "./inventoryList";
+import { InventoryList, InventoryListFactory } from "./inventoryList";
 
 export const inventoryListId = "inventory-list";
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
@@ -51,7 +51,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
 		// eslint-disable-next-line import/no-deprecated
-		const inventoryList = await requestFluidObject<IInventoryList>(
+		const inventoryList = await requestFluidObject<InventoryList>(
 			await runtime.getRootDataStore(inventoryListId),
 			"",
 		);
@@ -68,14 +68,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 		return new InventoryListAppModel(
 			inventoryList,
 			newTreeInventoryList,
-			this.triggerMigration,
+			inventoryList.DEBUG_triggerMigration,
 		);
 	}
-
-	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.  For this
-	// demo we'll just trigger it with a debug button though.
-	private readonly triggerMigration = () => {
-		// TODO: implement
-		console.log("Migration triggered!");
-	};
 }

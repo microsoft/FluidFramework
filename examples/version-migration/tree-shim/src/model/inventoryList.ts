@@ -4,14 +4,22 @@
  */
 
 import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
-import { ForestType, SharedTreeFactory, typeboxValidator } from "@fluid-experimental/tree2";
+import {
+	ForestType,
+	ISharedTree,
+	SharedTreeFactory,
+	typeboxValidator,
+} from "@fluid-experimental/tree2";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 import { LegacyTreeInventoryListModel } from "./legacyTreeInventoryListModel";
+import { NewTreeInventoryListModel } from "./newTreeInventoryListModel";
 
-const sharedTreeKey = "sharedTree";
+const whichTreeKey = "whichTree";
+const legacySharedTreeKey = "legacySharedTree";
+const newSharedTreeKey = "newSharedTree";
 
 const newTreeFactory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
@@ -43,15 +51,23 @@ export class InventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
+		this.root.set(whichTreeKey, "legacy");
 		const legacySharedTree = this.runtime.createChannel(
 			undefined,
 			LegacySharedTree.getFactory().type,
 		) as LegacySharedTree;
 
+		const newSharedTree = this.runtime.createChannel(
+			undefined,
+			newTreeFactory.type,
+		) as ISharedTree;
+
 		// TODO: Here probably should be instantiating the new one instead really.
 		LegacyTreeInventoryListModel.initializeTree(legacySharedTree);
+		NewTreeInventoryListModel.initializeTree(newSharedTree);
 
-		this.root.set(sharedTreeKey, legacySharedTree.handle);
+		this.root.set(legacySharedTreeKey, legacySharedTree.handle);
+		this.root.set(newSharedTreeKey, newSharedTree.handle);
 	}
 
 	/**
@@ -59,10 +75,20 @@ export class InventoryList extends DataObject implements IInventoryList {
 	 * DataObject, by registering an event listener for changes to the inventory list.
 	 */
 	protected async hasInitialized() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const tree = await this.root.get<IFluidHandle<LegacySharedTree>>(sharedTreeKey)!.get();
-		// TODO: Here detect whether we really got a legacy or new tree back and instantiate the right model
-		this._model = new LegacyTreeInventoryListModel(tree);
+		const whichTree = this.root.get(whichTreeKey);
+		if (whichTree === "legacy") {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const tree = await this.root
+				.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
+				.get();
+			// TODO: Here detect whether we really got a legacy or new tree back and instantiate the right model
+			this._model = new LegacyTreeInventoryListModel(tree);
+		} else {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const tree = await this.root.get<IFluidHandle<ISharedTree>>(newSharedTreeKey)!.get();
+			// TODO: Here detect whether we really got a legacy or new tree back and instantiate the right model
+			this._model = new NewTreeInventoryListModel(tree);
+		}
 		// TODO: These need to be swapped when the model swaps
 		this._model.on("itemAdded", (item) => {
 			this.emit("itemAdded", item);
@@ -71,6 +97,13 @@ export class InventoryList extends DataObject implements IInventoryList {
 			this.emit("itemDeleted", item);
 		});
 	}
+
+	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.  For this
+	// demo we'll just trigger it with a debug button though.
+	public readonly DEBUG_triggerMigration = () => {
+		console.log("Triggering migration");
+		this.root.set(whichTreeKey, "new");
+	};
 }
 
 /**

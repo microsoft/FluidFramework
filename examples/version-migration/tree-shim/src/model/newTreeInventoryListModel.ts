@@ -45,30 +45,6 @@ const schema = builder.intoSchema(inventorySchema);
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
 class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements IInventoryItem {
-	public static initializeTree(tree: ISharedTree): void {
-		tree.schematizeView({
-			initialTree: {
-				inventoryItemList: {
-					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
-					"": [
-						{
-							id: uuid(),
-							name: "nut",
-							quantity: 0,
-						},
-						{
-							id: uuid(),
-							name: "bolt",
-							quantity: 0,
-						},
-					],
-				},
-			},
-			allowedSchemaModifications: AllowedUpdateType.None,
-			schema,
-		});
-	}
-
 	private readonly _unregisterChangingEvent: () => void;
 	public get id() {
 		return this._inventoryItemNode.id;
@@ -104,7 +80,31 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 	};
 }
 
-export class NewTreeInventoryList extends EventEmitter implements IInventoryList {
+export class NewTreeInventoryListModel extends EventEmitter implements IInventoryList {
+	public static initializeTree(tree: ISharedTree): void {
+		tree.schematizeView({
+			initialTree: {
+				inventoryItemList: {
+					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
+					"": [
+						{
+							id: uuid(),
+							name: "nut",
+							quantity: 0,
+						},
+						{
+							id: uuid(),
+							name: "bolt",
+							quantity: 0,
+						},
+					],
+				},
+			},
+			allowedSchemaModifications: AllowedUpdateType.None,
+			schema,
+		});
+	}
+
 	private _inventoryItemList: InventoryItemList | undefined;
 	private get inventoryItemList(): InventoryItemList {
 		if (this._inventoryItemList === undefined) {
