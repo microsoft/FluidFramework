@@ -2604,12 +2604,7 @@ export class MergeTree {
 			) {
 				node.partialLengths.update(node, seq, clientId, this.collabWindow);
 			} else {
-				node.partialLengths = PartialSequenceLengths.combine(
-					node,
-					this.collabWindow,
-					undefined,
-					undefined,
-				);
+				node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
 			}
 
 			PartialSequenceLengths.options.verifyExpected?.(this, node, seq, clientId);
