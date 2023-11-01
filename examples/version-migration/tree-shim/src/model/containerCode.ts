@@ -13,7 +13,9 @@ import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces"
 import { InventoryListAppModel } from "./appModel";
 import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList";
 import { NewTreeInventoryListFactory } from "./newTreeInventoryList";
+import { InventoryListFactory } from "./inventoryList";
 
+export const inventoryListId = "inventory-list";
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
 export const newTreeInventoryListId = "new-tree-inventory-list";
 
@@ -21,6 +23,7 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	public constructor() {
 		super(
 			new Map([
+				InventoryListFactory.registryEntry,
 				LegacyTreeInventoryListFactory.registryEntry,
 				NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
@@ -31,6 +34,8 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
+		const inventoryList = await runtime.createDataStore(InventoryListFactory.type);
+		await inventoryList.trySetAlias(inventoryListId);
 		const legacyTreeInventoryList = await runtime.createDataStore(
 			LegacyTreeInventoryListFactory.type,
 		);
@@ -46,17 +51,22 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
 		// eslint-disable-next-line import/no-deprecated
-		const legacyTreeInventoryList = await requestFluidObject<IInventoryList>(
-			await runtime.getRootDataStore(legacyTreeInventoryListId),
+		const inventoryList = await requestFluidObject<IInventoryList>(
+			await runtime.getRootDataStore(inventoryListId),
 			"",
 		);
+		// eslint-disable-next-line import/no-deprecated
+		// const legacyTreeInventoryList = await requestFluidObject<IInventoryList>(
+		// 	await runtime.getRootDataStore(legacyTreeInventoryListId),
+		// 	"",
+		// );
 		// eslint-disable-next-line import/no-deprecated
 		const newTreeInventoryList = await requestFluidObject<IInventoryList>(
 			await runtime.getRootDataStore(newTreeInventoryListId),
 			"",
 		);
 		return new InventoryListAppModel(
-			legacyTreeInventoryList,
+			inventoryList,
 			newTreeInventoryList,
 			this.triggerMigration,
 		);
