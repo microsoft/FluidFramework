@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import {
 	FieldChangeHandler,
 	FieldChangeRebaser,
-	FieldKind,
 	Multiplicity,
 	FieldEditor,
 	NodeChangeset,
@@ -15,6 +14,7 @@ import {
 	FieldChange,
 	ModularChangeset,
 	RevisionInfo,
+	FieldKindWithEditor,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -28,6 +28,7 @@ import {
 	mintRevisionTag,
 	tagRollbackInverse,
 	assertIsRevisionTag,
+	deltaForSet,
 } from "../../../core";
 import { brand, fail } from "../../../util";
 import { makeCodecFamily, noopValidator } from "../../../codec";
@@ -67,19 +68,21 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (childCodec) => makeCodecFamily([[0, childCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: ({ change }, deltaFromChild) => [deltaFromChild(change)],
+	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
+		local: [{ count: 1, fields: deltaFromChild(change) }],
+	}),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
-const singleNodeField = new FieldKind(
-	brand("SingleNode"),
-	Multiplicity.Value,
+const singleNodeField = new FieldKindWithEditor(
+	"SingleNode",
+	Multiplicity.Single,
 	singleNodeHandler,
 	(a, b) => false,
 	new Set(),
 );
 
-const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKind> = new Map(
+const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> = new Map(
 	[singleNodeField, valueField].map((field) => [field.identifier, field]),
 );
 
@@ -90,6 +93,9 @@ const tag2: RevisionTag = mintRevisionTag();
 
 const fieldA: FieldKey = brand("a");
 const fieldB: FieldKey = brand("b");
+
+const detachId = { minor: 424242 };
+const buildId = { minor: 424243 };
 
 const valueChange1a: ValueChangeset = { old: 0, new: 1 };
 const valueChange1b: ValueChangeset = { old: 0, new: 2 };
@@ -584,41 +590,24 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const valueDelta1: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
-					type: Delta.MarkType.Insert,
-					content: [singleJsonCursor(1)],
-				},
-			];
-
-			const valueDelta2: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Delete,
-					count: 1,
-				},
-				{
-					type: Delta.MarkType.Insert,
-					content: [singleJsonCursor(2)],
-				},
-			];
-
-			const nodeDelta: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					fields: new Map([[fieldA, valueDelta1]]),
-				},
-			];
+			const nodeDelta: Delta.FieldChanges = {
+				local: [
+					{
+						count: 1,
+						fields: new Map([
+							[fieldA, deltaForSet(singleJsonCursor(1), buildId, detachId)],
+						]),
+					},
+				],
+			};
 
 			const expectedDelta: Delta.Root = new Map([
 				[fieldA, nodeDelta],
-				[fieldB, valueDelta2],
+				[fieldB, deltaForSet(singleJsonCursor(2), buildId, detachId)],
 			]);
 
-			assertDeltaEqual(family.intoDelta(rootChange1a), expectedDelta);
+			const actual = family.intoDelta(makeAnonChange(rootChange1a));
+			assertDeltaEqual(actual, expectedDelta);
 		});
 	});
 
@@ -679,11 +668,15 @@ describe("ModularChangeFamily", () => {
 			composeChild,
 			genId,
 			crossFieldManager,
-			{ getIndex, getInfo },
+			{ getIndex, tryGetInfo },
 		): RevisionTag[] => {
 			const relevantRevisions = [rev1, rev2, rev3, rev4];
-			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
-			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
 			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
@@ -703,11 +696,15 @@ describe("ModularChangeFamily", () => {
 			rebaseChild,
 			genId,
 			crossFieldManager,
-			{ getIndex, getInfo },
+			{ getIndex, tryGetInfo },
 		): RevisionTag[] => {
 			const relevantRevisions = [rev1, rev2, rev4];
-			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
-			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
 			assert.deepEqual(revsIndices, [0, 1, 2]);
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
@@ -731,9 +728,9 @@ describe("ModularChangeFamily", () => {
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
 			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
 		} as unknown as FieldChangeHandler<RevisionTag[]>;
-		const field = new FieldKind(
-			brand("ChecksRevIndexing"),
-			Multiplicity.Value,
+		const field = new FieldKindWithEditor(
+			"ChecksRevIndexing",
+			Multiplicity.Single,
 			handler,
 			(a, b) => false,
 			new Set(),
@@ -795,4 +792,9 @@ describe("ModularChangeFamily", () => {
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
 	});
+
+	function ensureIndexDefined(index: number | undefined): number {
+		assert(index !== undefined, "Unexpected undefined index");
+		return index;
+	}
 });

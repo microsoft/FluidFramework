@@ -1,0 +1,112 @@
+{
+  "type": "tree",
+  "tree": {
+    "type": "tree",
+    "indexes": {
+      "type": "tree",
+      "entries": [
+        {
+          "type": "tree",
+          "EditManager": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "String": {
+                "type": "blob",
+                "content": {
+                  "trunk": [],
+                  "branches": []
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Schema": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "SchemaString": {
+                "type": "blob",
+                "content": {
+                  "version": "1.0.0",
+                  "nodeSchema": [
+                    {
+                      "name": "com.fluidframework.leaf.boolean",
+                      "objectNodeFields": [],
+                      "leafValue": 2
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.handle",
+                      "objectNodeFields": [],
+                      "leafValue": 3
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.null",
+                      "objectNodeFields": [],
+                      "leafValue": 4
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.number",
+                      "objectNodeFields": [],
+                      "leafValue": 0
+                    },
+                    {
+                      "name": "com.fluidframework.leaf.string",
+                      "objectNodeFields": [],
+                      "leafValue": 1
+                    },
+                    {
+                      "name": "test trees.TestInner",
+                      "mapFields": {
+                        "kind": "Sequence"
+                      },
+                      "objectNodeFields": []
+                    }
+                  ],
+                  "rootFieldSchema": {
+                    "kind": "Sequence"
+                  }
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "Forest": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "ForestTree": {
+                "type": "blob",
+                "content": [],
+                "encoding": "utf-8"
+              }
+            }
+          }
+        },
+        {
+          "type": "tree",
+          "DetachedFieldIndex": {
+            "type": "tree",
+            "tree": {
+              "type": "blob",
+              "DetachedFieldIndexBlob": {
+                "type": "blob",
+                "content": {
+                  "data": [],
+                  "id": -1
+                },
+                "encoding": "utf-8"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

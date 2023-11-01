@@ -31,8 +31,9 @@ import {
 
 import { assert } from "@fluidframework/core-utils";
 import { IDataObjectProps, PureDataObject, DataObjectTypes } from "../data-objects";
-/*
+/**
  * Useful interface in places where it's useful to do type erasure for PureDataObject generic
+ * @public
  */
 export interface IRootDataObjectFactory extends IFluidDataStoreFactory {
 	// eslint-disable-next-line import/no-deprecated
@@ -61,6 +62,7 @@ async function createDataObject<
 	// request mixin in
 	runtimeClass = mixinRequestHandler(
 		async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+			// The provideEntryPoint callback below always returns TObj, so this cast is safe
 			const dataObject = (await runtimeArg.entryPoint.get()) as TObj;
 			assert(
 				dataObject.request !== undefined,
@@ -127,6 +129,7 @@ async function createDataObject<
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
+ * @public
  */
 export class PureDataObjectFactory<
 		TObj extends PureDataObject<I>,

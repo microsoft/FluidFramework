@@ -1,5 +1,17 @@
 # @fluidframework/container-runtime
 
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+### Minor Changes
+
+-   container-runtime: `Summarizer.create(...)` has been deprecated ([#17563](https://github.com/microsoft/FluidFramework/issues/17563)) [4264a3fd18](https://github.com/microsoft/FluidFramework/commits/4264a3fd18ee84e72137982e11438db444cd80f0)
+
+    The public static method `Summarizer.create(...)` has been deprecated and will be removed in a future major release. Creating a summarizer is not a publicly supported API. Please remove all usage of this method.
+
 ## 2.0.0-internal.7.0.0
 
 ### Major Changes

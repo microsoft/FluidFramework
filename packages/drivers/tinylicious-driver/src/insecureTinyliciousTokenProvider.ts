@@ -11,6 +11,8 @@ import { v4 as uuid } from "uuid";
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
  * to get up and running.
+ *
+ * @public
  */
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 	constructor(
@@ -47,7 +49,7 @@ export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 	): string {
 		const userId = uuid();
 		const match = userId.match(/^([\da-f]{8})-([\da-f]{4})/);
-		const userName = match !== null ? match[0] : userId; // Just use the first two segments of the (fake) userId as a fake name.
+		const userName = match === null ? userId : match[0]; // Just use the first two segments of the (fake) userId as a fake name.
 
 		// Current time in seconds
 		const now = Math.round(Date.now() / 1000);

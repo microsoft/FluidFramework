@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { assert } from "@fluidframework/core-utils";
@@ -160,10 +161,8 @@ export class PropertiesManager {
 		newManager: PropertiesManager,
 	): PropertySet | undefined {
 		if (oldProps) {
-			if (!newProps) {
-				// eslint-disable-next-line no-param-reassign
-				newProps = createMap<any>();
-			}
+			// eslint-disable-next-line no-param-reassign
+			newProps ??= createMap<any>();
 			if (!newManager) {
 				throw new Error("Must provide new PropertyManager");
 			}

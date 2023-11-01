@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -585,7 +585,23 @@ export class ConnectionManager implements IConnectionManager {
 					this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
 					connection = undefined;
 				}
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectionReceived",
+						connected: connection !== undefined && connection.disposed === false,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 			} catch (origError: any) {
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectToDeltaStreamException",
+						connected: connection !== undefined && connection.disposed === false,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
 					connection = new NoDeltaStream(origError.storageOnlyReason, {
 						text: origError.message,
@@ -674,8 +690,8 @@ export class ConnectionManager implements IConnectionManager {
 			);
 		}
 
-		// Check for abort signal after while loop as well
-		if (abortSignal.aborted === true) {
+		// Check for abort signal after while loop as well or we've been disposed
+		if (abortSignal.aborted === true || this._disposed) {
 			connection.dispose();
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
@@ -736,7 +752,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		// Remove listeners first so we don't try to retrigger this flow accidentally through reconnectOnError
 		connection.off("op", this.opHandler);
-		connection.off("signal", this.props.signalHandler);
+		connection.off("signal", this.signalHandler);
 		connection.off("nack", this.nackHandler);
 		connection.off("disconnect", this.disconnectHandlerInternal);
 		connection.off("error", this.errorHandler);
@@ -834,7 +850,7 @@ export class ConnectionManager implements IConnectionManager {
 		this._outbound.resume();
 
 		connection.on("op", this.opHandler);
-		connection.on("signal", this.props.signalHandler);
+		connection.on("signal", this.signalHandler);
 		connection.on("nack", this.nackHandler);
 		connection.on("disconnect", this.disconnectHandlerInternal);
 		connection.on("error", this.errorHandler);
@@ -900,28 +916,32 @@ export class ConnectionManager implements IConnectionManager {
 				type: SignalType.Clear,
 			}),
 		};
-		this.props.signalHandler(clearSignal);
 
-		for (const priorClient of connection.initialClients ?? []) {
-			const joinSignal: ISignalMessage = {
+		// list of signals to process due to this new connection
+		let signalsToProcess: ISignalMessage[] = [clearSignal];
+
+		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
+			(priorClient) => ({
 				clientId: null, // system signal
 				content: JSON.stringify({
 					type: SignalType.ClientJoin,
 					content: priorClient, // ISignalClient
 				}),
-			};
-			this.props.signalHandler(joinSignal);
+			}),
+		);
+		if (clientJoinSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(clientJoinSignals);
 		}
 
 		// Unfortunately, there is no defined order between initialSignals (including join & leave signals)
 		// and connection.initialClients. In practice, connection.initialSignals quite often contains join signal
 		// for "self" and connection.initialClients does not contain "self", so we have to process them after
 		// "clear" signal above.
-		if (connection.initialSignals !== undefined) {
-			for (const signal of connection.initialSignals) {
-				this.props.signalHandler(signal);
-			}
+		if (connection.initialSignals !== undefined && connection.initialSignals.length > 0) {
+			signalsToProcess = signalsToProcess.concat(connection.initialSignals);
 		}
+
+		this.props.signalHandler(signalsToProcess);
 	}
 
 	/**
@@ -1047,9 +1067,9 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: any) {
+	public submitSignal(content: any, targetClientId?: string) {
 		if (this.connection !== undefined) {
-			this.connection.submitSignal(content);
+			this.connection.submitSignal(content, targetClientId);
 		} else {
 			this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
 		}
@@ -1137,6 +1157,11 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly opHandler = (documentId: string, messagesArg: ISequencedDocumentMessage[]) => {
 		const messages = Array.isArray(messagesArg) ? messagesArg : [messagesArg];
 		this.props.incomingOpHandler(messages, "opHandler");
+	};
+
+	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]) => {
+		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		this.props.signalHandler(signals);
 	};
 
 	// Always connect in write mode after getting nacked.

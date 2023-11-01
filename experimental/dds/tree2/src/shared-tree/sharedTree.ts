@@ -13,7 +13,15 @@ import {
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
-import { InMemoryStoredSchemaRepository } from "../core";
+import {
+	Compatibility,
+	InMemoryStoredSchemaRepository,
+	JsonableTree,
+	TreeStoredSchema,
+	makeDetachedFieldIndex,
+	moveToDetachedField,
+	schemaDataIsEmpty,
+} from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
 import {
 	defaultSchemaPolicy,
@@ -23,25 +31,54 @@ import {
 	DefaultEditBuilder,
 	DefaultChangeset,
 	buildForest,
-	ForestRepairDataStoreProvider,
 	SchemaEditor,
-	NodeKeyIndex,
-	createNodeKeyManager,
-	ModularChangeset,
-	nodeKeyFieldKey,
-	FieldSchema,
+	TreeFieldSchema,
 	buildChunkedForest,
 	makeTreeChunker,
+	DetachedFieldIndexSummarizer,
+	createNodeKeyManager,
+	nodeKeyFieldKey,
+	TypedField,
+	jsonableTreeFromFieldCursor,
+	TreeSchema,
+	ViewSchema,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
-import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
+import { type TypedTreeChannel } from "./typedTree";
+import {
+	InitializeAndSchematizeConfiguration,
+	afterSchemaChanges,
+	initializeContent,
+	schematize,
+} from "./schematizedTree";
 import {
 	ISharedTreeView,
+	SharedTreeView,
 	ViewEvents,
 	createSharedTreeView,
-	schematizeView,
 } from "./sharedTreeView";
+
+/**
+ * Copy of data from an {@link ISharedTree} at some point in time.
+ * @remarks
+ * This is unrelated to Fluids concept of "snapshots".
+ * @alpha
+ */
+export interface SharedTreeContentSnapshot {
+	/**
+	 * The schema stored in the document.
+	 *
+	 * @remarks
+	 * Edits to the schema can mutate the schema stored of the tree which took this snapshot (but this snapshot will remain the same)
+	 * This is mainly useful for debugging cases where schematize reports an incompatible view schema.
+	 */
+	readonly schema: TreeStoredSchema;
+	/**
+	 * All {@link TreeStatus#InDocument} content.
+	 */
+	readonly tree: JsonableTree[];
+}
 
 /**
  * Collaboratively editable tree distributed data-structure,
@@ -50,14 +87,15 @@ import {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject {
+export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	/**
-	 * Get view without schematizing.
+	 * Provides a copy of the current content of the tree.
+	 * This can be useful for inspecting the tree when no suitable view schema is available.
+	 * This is only intended for use in testing and exceptional code paths: it is not performant.
 	 *
-	 * @deprecated This API will be removed as part of making views use view schema.
+	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
-	// TODO: migrate all usages of this to alternatives or avoid using ISharedTree.
-	readonly view: ISharedTreeView;
+	contentSnapshot(): SharedTreeContentSnapshot;
 
 	/**
 	 * Takes in a tree and returns a view of it that conforms to the view schema.
@@ -85,9 +123,29 @@ export interface ISharedTree extends ISharedObject {
 	 * - Implement schema-aware API for return type.
 	 * - Support adapters for handling out of schema data.
 	 */
-	schematize<TRoot extends FieldSchema>(
+	schematizeView<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
+
+	/**
+	 * Like {@link ISharedTree.schematizeView}, but will never modify the document.
+	 *
+	 * @param schema - The view schema to use.
+	 * @param onSchemaIncompatible - A callback.
+	 * Invoked when the returned ISharedTreeView becomes invalid to use due to a change to the stored schema which makes it incompatible with the view schema.
+	 * Called at most once.
+	 * @returns a view compatible with the provided schema, or undefined if the stored schema is not compatible with the provided view schema.
+	 * If this becomes invalid to use due to a change in the stored schema, onSchemaIncompatible will be invoked.
+	 *
+	 * @privateRemarks
+	 * TODO:
+	 * Once views actually have a view schema, onSchemaIncompatible can become an event on the view (which ends its lifetime),
+	 * instead of a separate callback.
+	 */
+	requireSchema<TRoot extends TreeFieldSchema>(
+		schema: TreeSchema<TRoot>,
+		onSchemaIncompatible: () => void,
+	): ISharedTreeView | undefined;
 }
 
 /**
@@ -102,9 +160,8 @@ export class SharedTree
 	private readonly _events: ISubscribable<ViewEvents> &
 		IEmitter<ViewEvents> &
 		HasListeners<ViewEvents>;
-	public readonly view: ISharedTreeView;
+	public readonly view: SharedTreeView;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
-	private readonly nodeKeyIndex: NodeKeyIndex;
 
 	public constructor(
 		id: string,
@@ -119,18 +176,14 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
+		const removedTrees = makeDetachedFieldIndex("repair");
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
+		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
-		const repairProvider = new ForestRepairDataStoreProvider(
-			forest,
-			schema,
-			(change: ModularChangeset) => changeFamily.intoDelta(change),
-		);
 		super(
-			[schemaSummarizer, forestSummarizer],
+			[schemaSummarizer, forestSummarizer, removedTreesSummarizer],
 			changeFamily,
-			repairProvider,
 			options,
 			id,
 			runtime,
@@ -138,7 +191,6 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this.nodeKeyIndex = new NodeKeyIndex(brand(nodeKeyFieldKey));
 		this._events = createEmitter<ViewEvents>();
 		this.view = createSharedTreeView({
 			branch: this.getLocalBranch(),
@@ -147,22 +199,82 @@ export class SharedTree
 			// This allows editing schema on the view without sending ops, which is incorrect behavior.
 			schema,
 			forest,
-			repairProvider,
-			nodeKeyManager: createNodeKeyManager(this.runtime.idCompressor),
-			nodeKeyIndex: this.nodeKeyIndex,
 			events: this._events,
+			removedTrees,
 		});
 	}
 
-	public schematize<TRoot extends FieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView {
-		// TODO:
-		// This should work, but schema editing on views doesn't send ops.
-		// this.view.schematize(config);
-		// For now, use this as a workaround:
-		schematizeView(this.view, config, this.storedSchema);
+	public requireSchema<TRoot extends TreeFieldSchema>(
+		schema: TreeSchema<TRoot>,
+		onSchemaIncompatible: () => void,
+	): ISharedTreeView | undefined {
+		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
+		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
+		if (
+			compatibility.write !== Compatibility.Compatible ||
+			compatibility.read !== Compatibility.Compatible
+		) {
+			return undefined;
+		}
+
+		const onSchemaChange = () => {
+			const compatibilityInner = viewSchema.checkCompatibility(this.storedSchema);
+			if (
+				compatibilityInner.write !== Compatibility.Compatible ||
+				compatibilityInner.read !== Compatibility.Compatible
+			) {
+				onSchemaIncompatible();
+				return false;
+			} else {
+				return true;
+			}
+		};
+
+		afterSchemaChanges(this._events, this.storedSchema, onSchemaChange);
+
 		return this.view;
+	}
+
+	public contentSnapshot(): SharedTreeContentSnapshot {
+		const cursor = this.view.forest.allocateCursor();
+		try {
+			moveToDetachedField(this.view.forest, cursor);
+			return {
+				schema: new InMemoryStoredSchemaRepository(this.storedSchema),
+				tree: jsonableTreeFromFieldCursor(cursor),
+			};
+		} finally {
+			cursor.free();
+		}
+	}
+
+	public schematizeView<TRoot extends TreeFieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): SharedTreeView {
+		// TODO:
+		// When this becomes a more proper out of schema adapter, editing should be made lazy.
+		// This will improve support for readonly documents, cross version collaboration and attribution.
+
+		// Check for empty.
+		if (this.view.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
+			this.view.transaction.start();
+			initializeContent(this.storedSchema, config.schema, () =>
+				this.view.setContent(config.initialTree),
+			);
+			this.view.transaction.commit();
+		}
+
+		schematize(this.view.events, this.storedSchema, config);
+
+		return this.view;
+	}
+
+	public schematize<TRoot extends TreeFieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): TypedField<TRoot> {
+		const nodeKeyManager = createNodeKeyManager(this.runtime.idCompressor);
+		const view = this.schematizeView(config);
+		return view.editableTree2(config.schema, nodeKeyManager, brand(nodeKeyFieldKey));
 	}
 
 	/**
@@ -202,9 +314,6 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		// The identifier index must be populated after both the schema and forest have loaded.
-		// TODO: Create an ISummarizer for the identifier index and ensure it loads after the other indexes.
-		this.nodeKeyIndex.scanKeys(this.view.context);
 		this._events.emit("afterBatch");
 	}
 }
@@ -244,9 +353,9 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
  * @alpha
  */
 export class SharedTreeFactory implements IChannelFactory {
-	public type: string = "SharedTree";
+	public readonly type: string = "https://graph.microsoft.com/types/tree";
 
-	public attributes: IChannelAttributes = {
+	public readonly attributes: IChannelAttributes = {
 		type: this.type,
 		snapshotFormatVersion: "0.0.0",
 		packageVersion: "0.0.0",

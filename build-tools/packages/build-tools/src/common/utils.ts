@@ -16,7 +16,7 @@ export function getExecutableFromCommand(command: string) {
 		// Find the first flag argument, and filter them out. Assumes flags come at the end of the command, and that all
 		// subsequent arguments are flags.
 		const flagsStartIndex = commands.findIndex((c) => c.startsWith("-"));
-		toReturn = commands.slice(0, flagsStartIndex).join(" ");
+		toReturn = flagsStartIndex !== -1 ? commands.slice(0, flagsStartIndex).join(" ") : command;
 	} else {
 		toReturn = commands[0];
 	}
@@ -69,7 +69,7 @@ export async function execAsync(
 	options: child_process.ExecOptions,
 	pipeStdIn?: string,
 ): Promise<ExecAsyncResult> {
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve) => {
 		const p = child_process.exec(command, options, (error, stdout, stderr) => {
 			resolve({ error, stdout, stderr });
 		});

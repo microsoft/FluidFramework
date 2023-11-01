@@ -17,7 +17,7 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -76,9 +76,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@2.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
@@ -103,6 +103,11 @@
 		"webpack": "^5.82.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"InterfaceDeclaration_IBroadcastSignalEventPayload": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		}
 	}
 }

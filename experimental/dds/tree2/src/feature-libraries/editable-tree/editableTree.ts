@@ -10,9 +10,9 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldStoredSchema,
-	TreeSchemaIdentifier,
-	TreeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeNodeStoredSchema,
 	mapCursorFields,
 	CursorLocationType,
 	FieldAnchor,
@@ -30,7 +30,6 @@ import {
 	typeNameSymbol,
 	valueSymbol,
 } from "../contextuallyTyped";
-import { LocalNodeKey } from "../node-key";
 import { FieldKinds } from "../default-field-kinds";
 import {
 	EditableTreeEvents,
@@ -40,13 +39,10 @@ import {
 	typeSymbol,
 	contextSymbol,
 	treeStatus,
+	TreeEvent,
 } from "../untypedTree";
-import {
-	AdaptingProxyHandler,
-	adaptWithProxy,
-	getStableNodeKey,
-	treeStatusFromPath,
-} from "./utilities";
+import { TreeStatus } from "../editable-tree-2";
+import { AdaptingProxyHandler, adaptWithProxy, treeStatusFromPath } from "./utilities";
 import { ProxyContext } from "./editableTreeContext";
 import {
 	EditableField,
@@ -55,7 +51,6 @@ import {
 	proxyTargetSymbol,
 	localNodeKeySymbol,
 	setField,
-	TreeStatus,
 } from "./editableTreeTypes";
 import { makeField, unwrappedField } from "./editableField";
 import { ProxyTarget } from "./ProxyTarget";
@@ -75,7 +70,7 @@ export function makeTree(context: ProxyContext, cursor: ITreeSubscriptionCursor)
 	const newTarget = new NodeProxyTarget(context, cursor, anchorNode, anchor);
 	const output = adaptWithProxy(newTarget, nodeProxyHandler);
 	anchorNode.slots.set(editableTreeSlot, output);
-	anchorNode.on("afterDelete", cleanupTree);
+	anchorNode.on("afterDestroy", cleanupTree);
 	return output;
 }
 
@@ -107,11 +102,11 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		this.proxy = adaptWithProxy(this, nodeProxyHandler);
 		anchorNode.slots.set(editableTreeSlot, this.proxy);
-		this.removeDeleteCallback = anchorNode.on("afterDelete", cleanupTree);
+		this.removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
-			this.context.schema.treeSchema.get(this.typeName) !== undefined,
-			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the SchemaData */,
+			this.context.schema.nodeSchema.get(this.typeName) !== undefined,
+			0x5b1 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 	}
 
@@ -131,13 +126,13 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		this.context.forest.anchors.forget(anchor);
 	}
 
-	public get typeName(): TreeSchemaIdentifier {
+	public get typeName(): TreeNodeSchemaIdentifier {
 		return this.cursor.type;
 	}
 
-	public get type(): TreeStoredSchema {
+	public get type(): TreeNodeStoredSchema {
 		return (
-			this.context.schema.treeSchema.get(this.typeName) ??
+			this.context.schema.nodeSchema.get(this.typeName) ??
 			fail("requested type does not exist in schema")
 		);
 	}
@@ -154,7 +149,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 		return getFieldKind(this.getFieldSchema(field));
 	}
 
-	public getFieldSchema(field: FieldKey): FieldStoredSchema {
+	public getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
 		return getFieldSchema(field, this.type);
 	}
 
@@ -204,7 +199,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 
 		cursor.exitNode();
 		assert(key === cursor.getFieldKey(), 0x715 /* mismatched keys */);
-		let fieldSchema: FieldStoredSchema;
+		let fieldSchema: TreeFieldStoredSchema;
 
 		// Check if the current node is in a detached sequence.
 		if (this.anchorNode.parent === undefined) {
@@ -234,7 +229,7 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			cursor.enterField(key);
 			fieldSchema = getFieldSchema(
 				key,
-				this.context.schema.treeSchema.get(parentType) ??
+				this.context.schema.nodeSchema.get(parentType) ??
 					fail("requested schema that does not exist"),
 			);
 		}
@@ -261,16 +256,58 @@ export class NodeProxyTarget extends ProxyTarget<Anchor> {
 			case "changing": {
 				const unsubscribeFromChildrenChange = this.anchorNode.on(
 					"childrenChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) =>
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
+						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromChildrenChange;
 			}
 			case "subtreeChanging": {
 				const unsubscribeFromSubtreeChange = this.anchorNode.on(
 					"subtreeChanging",
-					(anchorNode: AnchorNode) => listener(anchorNode),
+					(anchorNode: AnchorNode) =>
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be an AnchorNode. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
+						listener(anchorNode as unknown as AnchorNode & TreeEvent),
 				);
 				return unsubscribeFromSubtreeChange;
+			}
+			case "beforeChange": {
+				const unsubscribeFromChildrenBeforeChange = this.anchorNode.on(
+					"beforeChange",
+					(anchorNode: AnchorNode) => {
+						const treeNode = anchorNode.slots.get(editableTreeSlot);
+						assert(
+							treeNode !== undefined,
+							0x7d1 /* tree node not found in anchor node slots */,
+						);
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
+						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
+					},
+				);
+				return unsubscribeFromChildrenBeforeChange;
+			}
+			case "afterChange": {
+				const unsubscribeFromChildrenAfterChange = this.anchorNode.on(
+					"afterChange",
+					(anchorNode: AnchorNode) => {
+						const treeNode = anchorNode.slots.get(editableTreeSlot);
+						assert(
+							treeNode !== undefined,
+							0x7d2 /* tree node not found in anchor node slots */,
+						);
+						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
+						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
+						// for changing and subtreeChanging match the one for beforeChange and afterChange.
+						listener({ target: treeNode } as unknown as AnchorNode & TreeEvent);
+					},
+				);
+				return unsubscribeFromChildrenAfterChange;
 			}
 			default:
 				unreachableCase(eventName);
@@ -312,8 +349,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 				return target.context;
 			case on:
 				return target.on.bind(target);
-			case localNodeKeySymbol:
-				return getLocalNodeKey(target);
 			default:
 				return undefined;
 		}
@@ -455,13 +490,6 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 					value: target.on.bind(target),
 					writable: false,
 				};
-			case localNodeKeySymbol:
-				return {
-					configurable: true,
-					enumerable: false,
-					value: getLocalNodeKey(target),
-					writable: false,
-				};
 			default:
 				return undefined;
 		}
@@ -475,24 +503,7 @@ const nodeProxyHandler: AdaptingProxyHandler<NodeProxyTarget, EditableTree> = {
 export function isEditableTree(field: UnwrappedEditableField): field is EditableTree {
 	return (
 		typeof field === "object" &&
+		field !== null &&
 		isNodeProxyTarget(field[proxyTargetSymbol] as ProxyTarget<Anchor | FieldAnchor>)
 	);
-}
-
-/**
- * Retrieves the {@link LocalNodeKey} for the given node.
- * @remarks TODO: Optimize this to be a fast path that gets a {@link LocalNodeKey} directly from the
- * forest rather than getting the {@link StableNodeKey} and the compressing it.
- */
-function getLocalNodeKey(target: NodeProxyTarget): LocalNodeKey | undefined {
-	if (target.context.nodeKeyFieldKey === undefined) {
-		return undefined;
-	}
-
-	const stableNodeKey = getStableNodeKey(target.context.nodeKeyFieldKey, target.proxy);
-	if (stableNodeKey === undefined) {
-		return undefined;
-	}
-
-	return target.context.nodeKeys.localizeNodeKey(stableNodeKey);
 }

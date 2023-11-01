@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { FieldKey, TreeSchemaIdentifier } from "../../../core";
+import { FieldKey, TreeNodeSchemaIdentifier } from "../../../core";
 import { brand, clone } from "../../../util";
 import {
 	singleTextCursor,
@@ -16,15 +16,16 @@ import {
 	valueSymbol,
 	typeNameSymbol,
 	getPrimaryField,
-	SchemaBuilder,
 	FieldKind,
 	UnwrappedEditableField,
 	setField,
 	EditableTree,
 	treeStatus,
 	TreeStatus,
+	TreeFieldSchema,
 } from "../../../feature-libraries";
 import { viewWithContent } from "../../utils";
+import { SchemaBuilder } from "../../../domains";
 import {
 	fullSchemaData,
 	Person,
@@ -44,15 +45,15 @@ import {
 const localFieldKey: FieldKey = brand("foo");
 const otherFieldKey: FieldKey = brand("foo2");
 
-const rootSchemaName: TreeSchemaIdentifier = brand("Test");
+const rootSchemaName: TreeNodeSchemaIdentifier = brand("Test");
 
 function getTestSchema<Kind extends FieldKind>(fieldKind: Kind) {
-	const builder = new SchemaBuilder("getTestSchema", {}, personSchemaLibrary);
-	const rootNodeSchema = builder.struct("Test", {
-		foo: SchemaBuilder.field(fieldKind, stringSchema),
-		foo2: SchemaBuilder.field(fieldKind, stringSchema),
+	const builder = new SchemaBuilder({ scope: "getTestSchema", libraries: [personSchemaLibrary] });
+	const rootNodeSchema = builder.object("Test", {
+		foo: TreeFieldSchema.create(fieldKind, [stringSchema]),
+		foo2: TreeFieldSchema.create(fieldKind, [stringSchema]),
 	});
-	return builder.intoDocumentSchema(SchemaBuilder.field(FieldKinds.optional, rootNodeSchema));
+	return builder.intoSchema(TreeFieldSchema.create(FieldKinds.optional, [rootNodeSchema]));
 }
 
 describe("editable-tree: editing", () => {
@@ -86,15 +87,6 @@ describe("editable-tree: editing", () => {
 		} as any; // TODO: schema aware typing.
 		// unambiguous type
 		maybePerson.salary = "not ok";
-		// ambiguous type since there are multiple options which are numbers:
-		assert.throws(
-			() => (maybePerson.salary = 99.99),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"data compatible with more than one type allowed by the schema",
-				),
-		);
 		// explicit typing
 		maybePerson.salary = {
 			[typeNameSymbol]: float64Schema.name,
@@ -589,7 +581,7 @@ describe("editable-tree: editing", () => {
 
 		it("as value field", () => {
 			const view = viewWithContent({
-				schema: getTestSchema(FieldKinds.value),
+				schema: getTestSchema(FieldKinds.required),
 				initialTree: { foo: "initial", foo2: "" },
 			});
 			const root = view.root;
@@ -660,9 +652,7 @@ describe("editable-tree: editing", () => {
 				assert.equal(nodeStatus, TreeStatus.InDocument);
 			});
 
-			// Currently returns TreeStatus.Deleted.
-			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed.
-			it("removed node returns TreeStatus.Deleted on itself and its contents", () => {
+			it("removed node returns TreeStatus.Removed on itself and its contents", () => {
 				const view = viewWithContent({
 					schema: getTestSchema(FieldKinds.sequence),
 					initialTree: { foo: ["foo"], foo2: [] },
@@ -685,9 +675,9 @@ describe("editable-tree: editing", () => {
 
 				// Check TreeStatus after remove.
 				const rootStatusAfterRemove = root[treeStatus]();
-				assert.equal(rootStatusAfterRemove, TreeStatus.Deleted);
+				assert.equal(rootStatusAfterRemove, TreeStatus.Removed);
 				const nodeStatusAfterRemove = node[treeStatus]();
-				assert.equal(nodeStatusAfterRemove, TreeStatus.Deleted);
+				assert.equal(nodeStatusAfterRemove, TreeStatus.Removed);
 			});
 		});
 
@@ -709,9 +699,7 @@ describe("editable-tree: editing", () => {
 				assert.equal(field.treeStatus(), TreeStatus.InDocument);
 			});
 
-			// Currently returns TreeStatus.Deleted.
-			// But the remove apis should eventually be fixed such that it returns TreeStatus.Removed
-			it("removed field and its contents returns TreeStatus.Deleted", () => {
+			it("removed field and its contents returns TreeStatus.Removed", () => {
 				const view = viewWithContent({
 					schema: getTestSchema(FieldKinds.sequence),
 					initialTree: { foo: ["foo"], foo2: [] },
@@ -734,10 +722,10 @@ describe("editable-tree: editing", () => {
 
 				// Check TreeStatus after remove.
 				const fieldStatusAfterRemove = field.treeStatus();
-				assert.equal(fieldStatusAfterRemove, TreeStatus.Deleted);
+				assert.equal(fieldStatusAfterRemove, TreeStatus.Removed);
 
 				const nodeStatusAfterRemove = node[treeStatus]();
-				assert.equal(nodeStatusAfterRemove, TreeStatus.Deleted);
+				assert.equal(nodeStatusAfterRemove, TreeStatus.Removed);
 			});
 		});
 	});

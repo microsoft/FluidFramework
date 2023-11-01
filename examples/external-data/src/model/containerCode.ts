@@ -19,7 +19,7 @@ const taskListCollectionId = "base-document";
  * fetching the new data. This is an enum as there may be more signals that need to be created.
  */
 const SignalType = {
-	ExternalDataChanged: "ExternalDataChange",
+	ExternalDataChanged: "ExternalDataChanged_V1.0.0",
 };
 
 /**
@@ -66,16 +66,17 @@ export class BaseDocumentContainerRuntimeFactory extends ModelContainerRuntimeFa
 		);
 		// Register listener only once the model is fully loaded and ready
 		runtime.on("signal", (message) => {
-			if (
-				(message?.content as { type?: unknown } | undefined)?.type ===
-				SignalType.ExternalDataChanged
-			) {
-				const taskListId = (message?.content as { taskListId?: unknown } | undefined)
-					?.taskListId as string;
-				const taskList = taskListCollection.getTaskList(taskListId);
+			if (message?.type === SignalType.ExternalDataChanged) {
+				const externalTaskListId = (
+					message?.content as { externalTaskListId?: unknown } | undefined
+				)?.externalTaskListId as string;
+				if (externalTaskListId === undefined) {
+					throw new Error("Signal with undefined externalTaskListId");
+				}
+				const taskList = taskListCollection.getTaskList(externalTaskListId);
 				if (taskList === undefined) {
 					throw new Error(
-						`TaskList with id '${taskListId}' does not exist in collection`,
+						`TaskList with id '${externalTaskListId}' does not exist in collection`,
 					);
 				}
 				taskList.importExternalData().catch(console.error);

@@ -125,7 +125,7 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.3.1/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v2.3.10/src/commands/autocomplete/index.ts)_
 
 ## `fluv help [COMMANDS]`
 
@@ -145,7 +145,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v5.2.11/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.4/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
@@ -222,6 +222,8 @@ EXAMPLES
 
     $ fluv version latest -r 2.0.0 2.0.0-internal.1.0.0 1.0.0 0.56.1000
 ```
+
+_See code: [src/commands/version/latest.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/src/commands/version/latest.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->
 

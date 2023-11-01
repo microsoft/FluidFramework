@@ -14,45 +14,37 @@ import {
 	IEditableForest,
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
-	UndoRedoManager,
-	LocalCommitSource,
-	schemaDataIsEmpty,
-	applyDelta,
+	combineVisitors,
+	visitDelta,
+	DetachedFieldIndex,
+	makeDetachedFieldIndex,
+	FieldKey,
+	Revertible,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
 	UnwrappedEditableField,
 	EditableTreeContext,
 	IDefaultEditBuilder,
-	StableNodeKey,
-	EditableTree,
 	DefaultChangeset,
-	NodeKeyIndex,
 	buildForest,
 	DefaultChangeFamily,
 	getEditableTreeContext,
-	ForestRepairDataStoreProvider,
 	DefaultEditBuilder,
 	NewFieldContent,
 	NodeKeyManager,
-	createNodeKeyManager,
-	LocalNodeKey,
-	ForestRepairDataStore,
-	ModularChangeset,
-	nodeKeyFieldKey,
-	FieldSchema,
-	TypedSchemaCollection,
+	TreeFieldSchema,
+	TreeSchema,
 	getTreeContext,
 	TypedField,
+	createNodeKeyManager,
+	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
+	getProxyForField,
+	ProxyField,
 } from "../feature-libraries";
-import { SharedTreeBranch } from "../shared-tree-core";
+import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
-import {
-	InitializeAndSchematizeConfiguration,
-	initializeContent,
-	schematize,
-} from "./schematizedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -70,21 +62,13 @@ export interface ViewEvents {
 
 	/**
 	 * A revertible change has been made to this view.
+	 * Applications which subscribe to this event are expected to revert or discard revertibles they acquire, if they so choose (failure to do so will leak memory).
+	 * The provided revertible is inherently bound to the view that raised the event, calling `revert` won't apply to forked views.
 	 *
 	 * @remarks
-	 * This event is made available to allow consumers to manage reverting changes to different DDSes.
-	 * The event along with the {@link LocalCommitSource} communicates a change has been made that can be undone or redone on
-	 * the {@link ISharedTreeView}. However, the {@link ISharedTreeView} completely manages its own undo/redo
-	 * stack which cannot be modified and no additional information about the change is provided.
-	 *
-	 * Revertible events are emitted when merging a view into this view but not when rebasing this view onto another view. This is because
-	 * rebasing onto another view can cause the relative ordering of existing revertible commits to change.
-	 *
-	 * @privateRemarks
-	 * It is possible to make this event work for rebasing onto another view but this event is currently only necessary for the
-	 * local branch which cannot be rebased onto another branch.
+	 * This event provides a {@link Revertible} object that can be used to revert the change.
 	 */
-	revertible(source: LocalCommitSource): void;
+	revertible(revertible: Revertible): void;
 }
 
 /**
@@ -155,28 +139,6 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly editor: IDefaultEditBuilder;
 
 	/**
-	 * Undoes the last completed transaction made by the client.
-	 *
-	 * @remarks
-	 * Calling this does nothing if there are no transactions in the
-	 * undo stack.
-	 *
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	undo(): void;
-
-	/**
-	 * Redoes the last completed undo made by the client.
-	 *
-	 * @remarks
-	 * Calling this does nothing if there are no transactions in the
-	 * redo stack. New local transactions will not clear the redo stack.
-	 *
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	redo(): void;
-
-	/**
 	 * A collection of functions for managing transactions.
 	 */
 	readonly transaction: ITransaction;
@@ -220,40 +182,6 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
 	/**
-	 * A collection of utilities for managing {@link StableNodeKey}s.
-	 * A node key can be assigned to a node and allows that node to be easily retrieved from the tree at a later time. (see `nodeKey.map`).
-	 * @remarks {@link LocalNodeKey}s are put on nodes via a special field (see {@link localNodeKeySymbol}.
-	 * A node with a node key in its schema must always have a node key.
-	 */
-	readonly nodeKey: {
-		/**
-		 * Create a new {@link LocalNodeKey} which can be used as the key for a node in the tree.
-		 */
-		generate(): LocalNodeKey;
-		/**
-		 * Convert the given {@link LocalNodeKey} into a UUID that can be serialized.
-		 * @param key - the key to convert
-		 */
-		stabilize(key: LocalNodeKey): StableNodeKey;
-		/**
-		 * Convert a {@link StableNodeKey} back into its {@link LocalNodeKey} form.
-		 * @param key - the key to convert
-		 */
-		localize(key: StableNodeKey): LocalNodeKey;
-		/**
-		 * A map of all {@link LocalNodeKey}s in the document to their corresponding nodes.
-		 */
-		map: ReadonlyMap<LocalNodeKey, EditableTree>;
-	};
-
-	/**
-	 * @deprecated {@link ISharedTree.schematize} which will replace this. View schema should be applied before creating an ISharedTreeView.
-	 */
-	schematize<TRoot extends FieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView;
-
-	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
 	 *
 	 * Warning: This API is not fully tested yet and is still under development.
@@ -266,9 +194,9 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
 	 * using the returned tree is invalid and is likely to error or corrupt the document.
 	 */
-	editableTree2<TRoot extends FieldSchema>(
-		viewSchema: TypedSchemaCollection<TRoot>,
-	): TypedField<TRoot>;
+	editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
+
+	root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
 }
 
 /**
@@ -283,21 +211,13 @@ export function createSharedTreeView(args?: {
 	changeFamily?: DefaultChangeFamily;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
-	repairProvider?: ForestRepairDataStoreProvider<DefaultChangeset>;
-	nodeKeyManager?: NodeKeyManager;
-	nodeKeyIndex?: NodeKeyIndex;
 	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
-}): ISharedTreeView {
+	removedTrees?: DetachedFieldIndex;
+}): SharedTreeView {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
 	const changeFamily =
 		args?.changeFamily ?? new DefaultChangeFamily({ jsonValidator: noopValidator });
-	const repairDataStoreProvider =
-		args?.repairProvider ??
-		new ForestRepairDataStoreProvider(forest, schema, (change) =>
-			changeFamily.intoDelta(change),
-		);
-	const undoRedoManager = UndoRedoManager.create(changeFamily);
 	const branch =
 		args?.branch ??
 		new SharedTreeBranch(
@@ -306,21 +226,11 @@ export function createSharedTreeView(args?: {
 				revision: assertIsRevisionTag("00000000-0000-4000-8000-000000000000"),
 			},
 			changeFamily,
-			repairDataStoreProvider,
-			undoRedoManager,
 		);
-	const nodeKeyManager = args?.nodeKeyManager ?? createNodeKeyManager();
-	const context = getEditableTreeContext(
-		forest,
-		schema,
-		branch.editor,
-		nodeKeyManager,
-		brand(nodeKeyFieldKey),
-	);
-	const nodeKeyIndex = args?.nodeKeyIndex ?? new NodeKeyIndex(brand(nodeKeyFieldKey));
+	const context = getEditableTreeContext(forest, schema, branch.editor);
 	const events = args?.events ?? createEmitter();
 
-	const transaction = new Transaction(branch, changeFamily, forest);
+	const transaction = new Transaction(branch);
 
 	return new SharedTreeView(
 		transaction,
@@ -329,9 +239,8 @@ export function createSharedTreeView(args?: {
 		schema,
 		forest,
 		context,
-		nodeKeyManager,
-		nodeKeyIndex,
 		events,
+		args?.removedTrees,
 	);
 }
 
@@ -371,14 +280,10 @@ export interface ITransaction {
 class Transaction implements ITransaction {
 	public constructor(
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
-		private readonly changeFamily: DefaultChangeFamily,
-		private readonly forest: IEditableForest,
 	) {}
 
 	public start(): void {
-		this.branch.startTransaction(
-			new ForestRepairDataStore(this.forest, (change) => this.changeFamily.intoDelta(change)),
-		);
+		this.branch.startTransaction();
 		this.branch.editor.enterTransaction();
 	}
 	public commit(): TransactionResult.Commit {
@@ -421,23 +326,37 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		public readonly context: EditableTreeContext,
-		private readonly nodeKeyManager: NodeKeyManager,
-		private readonly nodeKeyIndex: NodeKeyIndex,
 		public readonly events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
+		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
-		branch.on("change", ({ change }) => {
-			if (change !== undefined) {
-				const delta = this.changeFamily.intoDelta(change);
-				applyDelta(delta, this.forest.anchors);
-				applyDelta(delta, this.forest);
-				this.nodeKeyIndex.scanKeys(this.context);
+		branch.on("change", (event) => {
+			if (event.change !== undefined) {
+				const delta = this.changeFamily.intoDelta(event.change);
+				const anchorVisitor = this.forest.anchors.acquireVisitor();
+				const combinedVisitor = combineVisitors(
+					[this.forest.acquireVisitor(), anchorVisitor],
+					[anchorVisitor],
+				);
+				visitDelta(delta, combinedVisitor, this.removedTrees);
+				combinedVisitor.free();
 				this.events.emit("afterBatch");
 			}
+			if (event.type === "replace" && getChangeReplaceType(event) === "transactionCommit") {
+				const transactionRevision = event.newCommits[0].revision;
+				for (const transactionStep of event.removedCommits) {
+					this.removedTrees.updateMajor(transactionStep.revision, transactionRevision);
+				}
+			}
 		});
-		branch.on("revertible", (type) => {
-			this.events.emit("revertible", type);
+		branch.on("revertible", (revertible) => {
+			// if there are no listeners, discard the revertible to avoid memory leaks
+			if (!this.events.hasListeners("revertible")) {
+				revertible.discard();
+			} else {
+				this.events.emit("revertible", revertible);
+			}
 		});
 	}
 
@@ -449,39 +368,33 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		return this.branch.editor;
 	}
 
-	public readonly nodeKey: ISharedTreeView["nodeKey"] = {
-		generate: () => this.nodeKeyManager.generateLocalNodeKey(),
-		stabilize: (key) => this.nodeKeyManager.stabilizeNodeKey(key),
-		localize: (key) => this.nodeKeyManager.localizeNodeKey(key),
-		map: this.nodeKeyIndex,
-	};
-
-	public undo() {
-		this.branch.undo();
-	}
-
-	public redo() {
-		this.branch.redo();
-	}
-
-	public schematize<TRoot extends FieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView {
-		schematizeView(this, config, this.storedSchema);
-		return this;
-	}
-
-	public editableTree2<TRoot extends FieldSchema>(
-		viewSchema: TypedSchemaCollection<TRoot>,
+	public editableTree2<TRoot extends TreeFieldSchema>(
+		viewSchema: TreeSchema<TRoot>,
+		nodeKeyManager?: NodeKeyManager,
+		nodeKeyFieldKey?: FieldKey,
 	): TypedField<TRoot> {
 		const context = getTreeContext(
 			viewSchema,
 			this.forest,
 			this.branch.editor,
-			this.nodeKeyManager,
-			this.nodeKeyIndex.fieldKey,
+			nodeKeyManager ?? createNodeKeyManager(),
+			nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 		);
 		return context.root as TypedField<TRoot>;
+	}
+
+	public root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>) {
+		// TODO:
+		// this allocates and leaks a new editable tree context (when used it will add content to the AnchorSet which refers back to the context).
+		// Additionally its assumed there will be exactly one context per view and any TreeNodes cached on the AnchorSets will belong to that context.
+		// Calling this more than once would violate that assumption, but currently does not error.
+		// Therefore root2, like editableTree2 should really only be called once.
+		// However, since getProxyForField returns an object that no longer reflects the root after the root is edited (unlike the root field in editableTree2)
+		// users will need to call root2 again whenever that might have happened to get the new root.
+		// This makes it impractical to use this efficiently and correctly at the same time.
+		// This method is also undocumented which thus doesn't provide sufficient guidance to resolve this issue.
+		const rootField = this.editableTree2(viewSchema);
+		return getProxyForField(rootField);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
@@ -493,20 +406,9 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		// TODO: ensure editing this clone of the schema does the right thing.
 		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
-		const repairDataStoreProvider = new ForestRepairDataStoreProvider(
-			forest,
-			storedSchema,
-			(change: ModularChangeset) => this.changeFamily.intoDelta(change),
-		);
-		const branch = this.branch.fork(repairDataStoreProvider);
-		const context = getEditableTreeContext(
-			forest,
-			storedSchema,
-			branch.editor,
-			this.nodeKeyManager,
-			this.nodeKeyIndex.fieldKey,
-		);
-		const transaction = new Transaction(branch, this.changeFamily, forest);
+		const branch = this.branch.fork();
+		const context = getEditableTreeContext(forest, storedSchema, branch.editor);
+		const transaction = new Transaction(branch);
 		return new SharedTreeView(
 			transaction,
 			branch,
@@ -514,9 +416,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			storedSchema,
 			forest,
 			context,
-			this.nodeKeyManager,
-			this.nodeKeyIndex.clone(context),
 			createEmitter(),
+			this.removedTrees.clone(),
 		);
 	}
 
@@ -559,32 +460,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	public dispose(): void {
 		this.branch.dispose();
 	}
-}
-
-/**
- * @param view - view to edit.
- * @param config - config to apply.
- * @param storedSchema - provided separate from view since editing schema of view doesn't send ops properly.
- */
-// TODO: once schematize is removed from ISharedTreeView, this should be moved/integrated into SharedTree.
-export function schematizeView<TRoot extends FieldSchema>(
-	view: ISharedTreeView,
-	config: InitializeAndSchematizeConfiguration<TRoot>,
-	storedSchema: StoredSchemaRepository,
-): void {
-	// TODO:
-	// When this becomes a more proper out of schema adapter, editing should be made lazy.
-	// This will improve support for readonly documents, cross version collaboration and attribution.
-
-	// Check for empty.
-	// TODO: Better detection of empty case
-	if (view.forest.isEmpty && schemaDataIsEmpty(storedSchema)) {
-		view.transaction.start();
-		initializeContent(storedSchema, config.schema, () => view.setContent(config.initialTree));
-		view.transaction.commit();
-	}
-
-	schematize(view.events, storedSchema, config);
 }
 
 /**

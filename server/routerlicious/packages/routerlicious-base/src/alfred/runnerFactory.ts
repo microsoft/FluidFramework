@@ -4,6 +4,9 @@
  */
 
 import * as os from "os";
+import cluster from "cluster";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import {
 	LocalNodeFactory,
@@ -113,16 +116,30 @@ export class AlfredResources implements core.IResources {
 		public socketTracker?: core.IWebSocketTracker,
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
+		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
+		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 	) {
 		const socketIoAdapterConfig = config.get("alfred:socketIoAdapter");
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		const socketIoConfig = config.get("alfred:socketIo");
-		this.webServerFactory = new services.SocketIoWebServerFactory(
-			this.redisConfig,
-			socketIoAdapterConfig,
-			httpServerConfig,
-			socketIoConfig,
+		const nodeClusterConfig: Partial<services.INodeClusterConfig> | undefined = config.get(
+			"alfred:nodeClusterConfig",
 		);
+		const useNodeCluster = config.get("alfred:useNodeCluster");
+		this.webServerFactory = useNodeCluster
+			? new services.SocketIoNodeClusterWebServerFactory(
+					redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+					nodeClusterConfig,
+			  )
+			: new services.SocketIoWebServerFactory(
+					this.redisConfig,
+					socketIoAdapterConfig,
+					httpServerConfig,
+					socketIoConfig,
+			  );
 	}
 
 	public async dispose(): Promise<void> {
@@ -131,7 +148,15 @@ export class AlfredResources implements core.IResources {
 		const tokenRevocationManagerP = this.tokenRevocationManager
 			? this.tokenRevocationManager.close()
 			: Promise.resolve();
-		await Promise.all([producerClosedP, mongoClosedP, tokenRevocationManagerP]);
+		const serviceMessageManagerP = this.serviceMessageResourceManager
+			? this.serviceMessageResourceManager.close()
+			: Promise.resolve();
+		await Promise.all([
+			producerClosedP,
+			mongoClosedP,
+			tokenRevocationManagerP,
+			serviceMessageManagerP,
+		]);
 	}
 }
 
@@ -461,7 +486,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// Disable by default because microsoft/FluidFramework/pull/#9223 set chunking to disabled by default.
 		// Therefore, default clients will ignore server's 16kb message size limit.
 		const verifyMaxMessageSize = config.get("alfred:verifyMaxMessageSize") ?? false;
-		const address = `${await utils.getHostIp()}:4000`;
 
 		// This cache will be used to store connection counts for logging connectionCount metrics.
 		let redisCache: core.ICache;
@@ -493,6 +517,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			redisCache = new services.RedisCache(redisClientForLogging);
 		}
 
+		const address = `${await utils.getHostIp()}:4000`;
 		const nodeFactory = new LocalNodeFactory(
 			os.hostname(),
 			address,
@@ -504,7 +529,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			deliCheckpointService,
 			scribeCheckpointService,
 			60000,
-			() => new NodeWebSocketServer(4000),
+			() => new NodeWebSocketServer(cluster.isPrimary ? 4000 : 0),
 			maxSendMessageSize,
 			winston,
 		);
@@ -525,6 +550,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			kafkaOrdererFactory,
 		);
 
+		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
+
 		// Tenants attached to the apps this service exposes
 		const appTenants = config.get("alfred:tenants") as { id: string; key: string }[];
 
@@ -534,6 +561,9 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		const deltaService = new DeltaService(opsCollection, tenantManager);
 		const documentDeleteService =
 			customizations?.documentDeleteService ?? new DocumentDeleteService();
+
+		// Service Message setup
+		const serviceMessageResourceManager = customizations?.serviceMessageResourceManager;
 
 		// Set up token revocation if enabled
 		/**
@@ -588,6 +618,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			socketTracker,
 			tokenRevocationManager,
 			revokedTokenChecker,
+			collaborationSessionEvents,
+			serviceMessageResourceManager,
 		);
 	}
 }
@@ -621,6 +653,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.socketTracker,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
+			resources.collaborationSessionEvents,
 		);
 	}
 }

@@ -36,7 +36,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * The flags defined on the base class.
 	 */
-	static baseFlags = {
+	static readonly baseFlags = {
 		root: rootPathFlag({
 			helpGroup: "GLOBAL",
 		}),
@@ -60,7 +60,7 @@ export abstract class BaseCommand<T extends typeof Command>
 			hidden: true,
 			helpGroup: "GLOBAL",
 		}),
-	};
+	} as const;
 
 	protected flags!: Flags<T>;
 	protected args!: Args<T>;
@@ -79,6 +79,7 @@ export abstract class BaseCommand<T extends typeof Command>
 		const { args, flags } = await this.parse({
 			flags: this.ctor.flags,
 			baseFlags: (super.ctor as typeof BaseCommand).baseFlags,
+			enableJsonFlag: this.ctor.enableJsonFlag,
 			args: this.ctor.args,
 			strict: this.ctor.strict,
 		});
@@ -88,19 +89,19 @@ export abstract class BaseCommand<T extends typeof Command>
 		this.suppressLogging = this.flags.quiet;
 	}
 
-	protected async catch(err: Error & { exitCode?: number }): Promise<any> {
+	protected async catch(err: Error & { exitCode?: number }): Promise<unknown> {
 		// add any custom logic to handle errors from the command
 		// or simply return the parent class error handling
 		return super.catch(err);
 	}
 
-	protected async finally(_: Error | undefined): Promise<any> {
+	protected async finally(_: Error | undefined): Promise<unknown> {
 		// called after run and catch regardless of whether or not the command errored
 		return super.finally(_);
 	}
 
 	/**
-	 * @returns A default logger that can be passed to core functions enabling them to log using the command logging
+	 * A default logger that can be passed to core functions enabling them to log using the command logging
 	 * system
 	 */
 	protected get logger(): CommandLogger {
@@ -127,14 +128,14 @@ export abstract class BaseCommand<T extends typeof Command>
 	 */
 	async getContext(): Promise<Context> {
 		if (this._context === undefined) {
-			const resolvedRoot = await (this.flags.root ?? getResolvedFluidRoot(this.logger));
-			const gitRepo = new GitRepo(resolvedRoot, this.logger);
+			const resolvedRoot = await (this.flags.root ?? getResolvedFluidRoot());
+			const gitRepo = new GitRepo(resolvedRoot);
 			const branch = await gitRepo.getCurrentBranchName();
 
 			this.verbose(`Repo: ${resolvedRoot}`);
 			this.verbose(`Branch: ${branch}`);
 
-			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch, this.logger);
+			this._context = new Context(gitRepo, "microsoft/FluidFramework", branch);
 		}
 
 		return this._context;
@@ -143,14 +144,14 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * Outputs a horizontal rule.
 	 */
-	public logHr() {
+	public logHr(): void {
 		this.log("=".repeat(Math.max(10, process.stdout.columns)));
 	}
 
 	/**
 	 * Logs a message with an indent.
 	 */
-	public logIndent(input: string, indentNumber = 2) {
+	public logIndent(input: string, indentNumber = 2): void {
 		const message = indentString(input, indentNumber);
 		this.log(message);
 	}
@@ -158,7 +159,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * Logs an informational message.
 	 */
-	public info(message: string | Error | undefined) {
+	public info(message: string | Error | undefined): void {
 		if (!this.suppressLogging) {
 			this.log(`INFO: ${message}`);
 		}
@@ -167,7 +168,7 @@ export abstract class BaseCommand<T extends typeof Command>
 	/**
 	 * Logs an error without exiting.
 	 */
-	public errorLog(message: string | Error | undefined) {
+	public errorLog(message: string | Error | undefined): void {
 		if (!this.suppressLogging) {
 			this.log(chalk.red(`ERROR: ${message}`));
 		}
@@ -189,6 +190,7 @@ export abstract class BaseCommand<T extends typeof Command>
 		return this.suppressLogging ? "" : super.warn(message);
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated Use {@link BaseCommand.warning} or {@link BaseCommand.warningWithDebugTrace} instead.
 	 */
@@ -244,9 +246,15 @@ export abstract class BaseCommand<T extends typeof Command>
 	public error(input: unknown, options?: unknown): void {
 		if (!this.suppressLogging) {
 			if (typeof input === "string") {
+				// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
+				// not worth replicating in this call.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 				super.error(chalk.red(input), options as any);
 			}
 
+			// Ignoring lint error because the typings here come from oclif and the options type oclif has is complex. It's
+			// not worth replicating in this call.
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
 			return super.error(input as Error, options as any);
 		}
 	}

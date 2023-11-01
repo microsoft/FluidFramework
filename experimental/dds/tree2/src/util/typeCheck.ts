@@ -15,8 +15,9 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * Utilities for manipulating the typescript typechecker.
  *
  * @remarks
- * Note: much of this library (the variance parts)
- * will be able to be replaced with TypeScript 4.7 explicit variance annotations.
+ * While it appears the the variance parts of this library are made obsolete by TypeScript 4.7's explicit variance annotations,
+ * many cases still type check with incorrect variance even when using the explicit annotations,
+ * and are fixed by using the patterns in this library.
  *
  * TypeScript uses structural typing if there are no private or protected members,
  * and variance of generic type parameters depends on their usages.
@@ -38,7 +39,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests";
  * If compiled with a TypeScript configuration that is not strict enough for these features to work,
  * the test suite should fail to build.
  *
- * Classes in typescript by default allow all assignments:
+ * Classes in TypeScript by default allow all assignments:
  * its only though adding members that any type constraints actually get applied.
  * This library provides types that can be used on a protected member of a class to add the desired constraints.
  *
@@ -94,7 +95,7 @@ export interface MakeNominal {}
  *
  * @alpha
  */
-export interface Contravariant<T> {
+export interface Contravariant<in T> {
 	_removeCovariance?: (_: T) => void;
 }
 
@@ -109,30 +110,8 @@ export interface Contravariant<T> {
  *
  * @alpha
  */
-export interface Covariant<T> {
+export interface Covariant<out T> {
 	_removeContravariance?: T;
-}
-
-/**
- * Constrain generic type parameters to Bivariant.
- * Unused Generic type parameters don't constrain a type at all:
- * Adding Bivariant does the most minimal constraint:
- * it only prevents assignment between types when neither of the two Ts extends the
- * other.
- *
- * @example
- *
- * ```typescript
- * protected _typeCheck?: Bivariant<T>;
- * ```
- *
- * @alpha
- */
-export interface Bivariant<T> {
-	/**
-	 * See {@link Bivariant}
-	 */
-	_constrainToBivariant?(_: T): void;
 }
 
 /**
@@ -146,7 +125,7 @@ export interface Bivariant<T> {
  *
  * @alpha
  */
-export interface Invariant<T> extends Contravariant<T>, Covariant<T> {}
+export interface Invariant<in out T> extends Contravariant<T>, Covariant<T> {}
 
 /**
  * Compile time assert that X is True.
@@ -169,13 +148,12 @@ export type requireFalse<_X extends false> = true;
 /**
  * Returns a type parameter that is true iff Source is assignable to Destination.
  *
+ * @privateRemarks
+ * Use of [] in the extends clause prevents unions from being distributed over this conditional and returning `boolean` in some cases.
+ * @see {@link https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#distributive-conditional-types | distributive-conditional-types} for details.
  * @alpha
  */
-export type isAssignableTo<Source, Destination> = isAny<Source> extends true
-	? true
-	: Source extends Destination
-	? true
-	: false;
+export type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
 
 /**
  * Returns a type parameter that is true iff Subset is a strict subset of Superset.
@@ -210,10 +188,13 @@ export type eitherIsAny<A, B> = true extends isAny<A> | isAny<B> ? true : false;
 /**
  * Returns a type parameter that is true iff T is any.
  *
+ * @privateRemarks
+ * Only `never` is assignable to `never` (`any` isn't),
+ * but `any` distributes over the `extends` here while nothing else should.
+ * This can be used to detect `any`.
  * @alpha
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type isAny<T> = boolean extends (T extends {} ? true : false) ? true : false;
+export type isAny<T> = boolean extends (T extends never ? true : false) ? true : false;
 
 /**
  * Compile time assert that A is assignable to (extends) B.

@@ -17,12 +17,13 @@ import {
 	Delta,
 	FieldKey,
 	IEditableForest,
-	ITreeSubscriptionCursor,
 	JsonableTree,
+	makeDetachedFieldIndex,
 	mapCursorField,
 	mapCursorFields,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
+import { idAllocatorFromMaxId } from "../util";
 import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
 
 /**
@@ -35,12 +36,7 @@ const treeBlobKey = "ForestTree";
  */
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
-
-	private readonly cursor: ITreeSubscriptionCursor;
-
-	public constructor(private readonly forest: IEditableForest) {
-		this.cursor = this.forest.allocateCursor();
-	}
+	public constructor(private readonly forest: IEditableForest) {}
 
 	/**
 	 * Synchronous monolithic summarization of tree content.
@@ -50,12 +46,11 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		this.forest.moveCursorToPath(undefined, this.cursor);
-		const fields = mapCursorFields(this.cursor, (cursor) => [
-			this.cursor.getFieldKey(),
+		const rootCursor = this.forest.getCursorAboveDetachedFields();
+		const fields = mapCursorFields(rootCursor, (cursor) => [
+			rootCursor.getFieldKey(),
 			mapCursorField(cursor, jsonableTreeFromCursor),
 		]);
-		this.cursor.clear();
 		return stringify(fields);
 	}
 
@@ -98,16 +93,20 @@ export class ForestSummarizer implements Summarizable {
 			// forest summary format.
 			const fields = parse(treeBufferString) as [FieldKey, JsonableTree[]][];
 
-			const delta: [FieldKey, Delta.Insert[]][] = fields.map(([fieldKey, content]) => {
-				const insert: Delta.Insert = {
-					type: Delta.MarkType.Insert,
-					content: content.map(singleTextCursor),
-				};
-				return [fieldKey, [insert]];
+			const allocator = idAllocatorFromMaxId();
+			const delta: [FieldKey, Delta.FieldChanges][] = fields.map(([fieldKey, content]) => {
+				const buildId = { minor: allocator.allocate(content.length) };
+				return [
+					fieldKey,
+					{
+						build: [{ id: buildId, trees: content.map(singleTextCursor) }],
+						local: [{ count: content.length, attach: buildId }],
+					},
+				];
 			});
 
-			assert(this.forest.isEmpty, "forest must be empty");
-			applyDelta(new Map(delta), this.forest);
+			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
+			applyDelta(new Map(delta), this.forest, makeDetachedFieldIndex("init"));
 		}
 	}
 }

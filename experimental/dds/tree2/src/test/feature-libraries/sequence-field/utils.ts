@@ -5,20 +5,26 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	MemoizedIdRangeAllocator,
 	RevisionInfo,
+	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
-import { ChangesetLocalId, Delta, TaggedChange, makeAnonChange, tagChange } from "../../../core";
+import {
+	ChangesetLocalId,
+	Delta,
+	RevisionTag,
+	TaggedChange,
+	makeAnonChange,
+	tagChange,
+} from "../../../core";
 import { TestChange } from "../../testChange";
 import {
-	assertMarkListEqual,
+	assertFieldChangesEqual,
 	deepFreeze,
 	defaultRevisionMetadataFromChanges,
-	fakeTaggedRepair as fakeRepair,
 } from "../../utils";
-import { brand, fail, IdAllocator, idAllocatorFromMaxId } from "../../../util";
+import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
 export function composeAnonChanges(changes: TestChangeset[]): TestChangeset {
@@ -82,11 +88,17 @@ function composeI<T>(
 	return composed;
 }
 
-export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
+export function rebase(
+	change: TestChangeset,
+	base: TaggedChange<TestChangeset>,
+	revisionMetadata?: RevisionMetadataSource,
+): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
-	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+	const metadata =
+		revisionMetadata ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	let rebasedChange = SF.rebase(
@@ -124,6 +136,14 @@ export function rebaseTagged(
 	return currChange;
 }
 
+export function rebaseOverComposition(
+	change: TestChangeset,
+	base: TestChangeset,
+	metadata: RevisionMetadataSource,
+): TestChangeset {
+	return rebase(change, makeAnonChange(base), metadata);
+}
+
 function resetCrossFieldTable(table: SF.CrossFieldTable) {
 	table.isInvalidated = false;
 	table.srcQueries.clear();
@@ -135,8 +155,8 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 	let inverted = SF.invert(
 		change,
 		TestChange.invert,
-		fakeRepair,
-		() => fail("Sequence fields should not generate IDs during invert"),
+		// Sequence fields should not generate IDs during invert
+		fakeIdAllocator,
 		table,
 	);
 
@@ -147,8 +167,8 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		inverted = SF.amendInvert(
 			inverted,
 			change.revision,
-			fakeRepair,
-			() => fail("Sequence fields should not generate IDs during invert"),
+			// Sequence fields should not generate IDs during invert
+			fakeIdAllocator,
 			table,
 		);
 		assert(!table.isInvalidated, "Invert should not need more than one amend pass");
@@ -158,14 +178,13 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
-	assertMarkListEqual(toDelta(actual), toDelta(expected));
+	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset): Delta.MarkList {
-	return SF.sequenceFieldToDelta(
-		makeAnonChange(change),
-		TestChange.toDelta,
-		MemoizedIdRangeAllocator.fromNextId(),
+export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.FieldChanges {
+	deepFreeze(change);
+	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
+		TestChange.toDelta(tagChange(childChange, revision)),
 	);
 }
 

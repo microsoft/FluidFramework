@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -84,9 +84,9 @@
 		"ws": "^7.4.6"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.22.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.22.0",
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@2.0.0",
