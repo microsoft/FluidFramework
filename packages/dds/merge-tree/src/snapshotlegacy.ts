@@ -14,7 +14,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants";
 import { ISegment } from "./mergeTreeNodes";
-// eslint-disable-next-line import/no-deprecated
 import { matchProperties } from "./properties";
 import {
 	JsonSegmentSpecs,
@@ -217,7 +216,6 @@ export class SnapshotLegacy {
 			) {
 				if (
 					prev?.canAppend(segment) &&
-					// eslint-disable-next-line import/no-deprecated
 					matchProperties(prev.properties, segment.properties)
 				) {
 					prev = prev.clone();

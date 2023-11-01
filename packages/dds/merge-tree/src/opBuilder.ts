@@ -13,6 +13,7 @@ import {
 	IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
 	IMergeTreeDeltaOp,
+	IMergeTreeObliterateMsg,
 } from "./ops";
 import { PropertySet } from "./properties";
 
@@ -76,6 +77,22 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
 		pos1: start,
 		pos2: end,
 		type: MergeTreeDeltaType.REMOVE,
+	};
+}
+
+/**
+ * Creates the op to obliterate a range
+ *
+ * @param start - The inclusive start of the range to obliterate
+ * @param end - The exclusive end of the range to obliterate
+ *
+ * @internal
+ */
+export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
+	return {
+		pos1: start,
+		pos2: end,
+		type: MergeTreeDeltaType.OBLITERATE,
 	};
 }
 

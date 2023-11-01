@@ -434,14 +434,6 @@ export type ILoaderOptions = {
     maxClientLeaveWaitTime?: number;
 };
 
-// @public @deprecated (undocumented)
-export interface IPendingLocalState {
-    // (undocumented)
-    pendingRuntimeState: unknown;
-    // (undocumented)
-    url: string;
-}
-
 // @public (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
@@ -472,8 +464,6 @@ export interface IRuntime extends IDisposable {
     getEntryPoint(): Promise<FluidObject | undefined>;
     // @alpha
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
-    // @deprecated
-    notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
@@ -500,10 +490,10 @@ export const isFluidCodeDetails: (details: unknown) => details is Readonly<IFlui
 // @public
 export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
-// @public
+// @internal
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     // (undocumented)
-    blobsContents: {
+    blobsContents?: {
         [path: string]: ArrayBufferLike;
     };
     // (undocumented)

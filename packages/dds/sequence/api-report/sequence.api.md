@@ -40,7 +40,6 @@ import { MergeTreeMaintenanceType } from '@fluidframework/merge-tree';
 import { MergeTreeRevertibleDriver } from '@fluidframework/merge-tree';
 import { PropertiesManager } from '@fluidframework/merge-tree';
 import { PropertySet } from '@fluidframework/merge-tree';
-import { RangeStackMap } from '@fluidframework/merge-tree';
 import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
@@ -231,7 +230,7 @@ export class Interval implements ISerializableInterval {
     overlaps(b: Interval): boolean;
     properties: PropertySet;
     // @internal (undocumented)
-    propertyManager: PropertiesManager;
+    readonly propertyManager: PropertiesManager;
     // @internal (undocumented)
     serialize(): ISerializedInterval;
     // (undocumented)
@@ -311,8 +310,6 @@ export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof Interv
 
 // @public (undocumented)
 export enum IntervalType {
-    // @deprecated (undocumented)
-    Nest = 1,
     // (undocumented)
     Simple = 0,
     SlideOnRemove = 2,
@@ -568,8 +565,6 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
         posAfterEnd: number | undefined;
     };
     // @deprecated (undocumented)
-    getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap;
-    // @deprecated (undocumented)
     groupOperation(groupOp: IMergeTreeGroupMsg): void;
     // @internal
     protected guardReentrancy: <TRet>(callback: () => TRet) => TRet;
@@ -628,11 +623,6 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
-    // @deprecated
-    findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
-        tile: ReferencePosition;
-        pos: number;
-    } | undefined;
     static getFactory(): SharedStringFactory;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;

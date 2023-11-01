@@ -27,6 +27,7 @@ export interface SequenceOffsets {
 	 * @remarks We use null here rather than undefined as round-tripping through JSON converts
 	 * undefineds to null anyway
 	 */
+	// eslint-disable-next-line @rushstack/no-new-null
 	seqs: (number | AttributionKey | null)[];
 	posBreakpoints: number[];
 }
@@ -44,7 +45,9 @@ export interface SerializedAttributionCollection extends SequenceOffsets {
  * @internal
  */
 export interface IAttributionCollectionSpec<T> {
+	// eslint-disable-next-line @rushstack/no-new-null
 	root: Iterable<{ offset: number; key: T | null }>;
+	// eslint-disable-next-line @rushstack/no-new-null
 	channels?: { [name: string]: Iterable<{ offset: number; key: T | null }> };
 	length: number;
 }
@@ -122,7 +125,9 @@ export interface IAttributionCollection<T> {
 
 // note: treats null and undefined as equivalent
 export function areEqualAttributionKeys(
+	// eslint-disable-next-line @rushstack/no-new-null
 	a: AttributionKey | null | undefined,
+	// eslint-disable-next-line @rushstack/no-new-null
 	b: AttributionKey | null | undefined,
 ): boolean {
 	if (!a && !b) {
@@ -162,6 +167,7 @@ export class AttributionCollection implements IAttributionCollection<Attribution
 
 	public constructor(
 		private _length: number,
+		// eslint-disable-next-line @rushstack/no-new-null
 		baseEntry?: AttributionKey | null,
 	) {
 		if (baseEntry !== undefined) {

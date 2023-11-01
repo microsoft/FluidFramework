@@ -17,7 +17,7 @@ import { MockStorage } from "@fluidframework/test-runtime-utils";
 import { Trace } from "@fluid-internal/client-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
 import { Client } from "../client";
-import { List } from "../collections";
+import { DoublyLinkedList } from "../collections";
 import { UnassignedSequenceNumber } from "../constants";
 import { IMergeBlock, IMergeLeaf, ISegment, Marker, MaxNodesInBlock } from "../mergeTreeNodes";
 import { createAnnotateRangeOp, createInsertSegmentOp, createRemoveRangeOp } from "../opBuilder";
@@ -121,11 +121,10 @@ export class TestClient extends Client {
 	): Promise<TestClient> {
 		const client2 = new TestClient(options, specToSeg);
 		const { catchupOpsP } = await client2.load(
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			{
 				logger: client2.logger,
 				clientId: newLongClientId,
-			} as IFluidDataStoreRuntime,
+			} as any as IFluidDataStoreRuntime,
 			storage,
 			TestClient.serializer,
 		);
@@ -135,8 +134,9 @@ export class TestClient extends Client {
 
 	public readonly mergeTree: MergeTree;
 
-	public readonly checkQ: List<string> = new List<string>();
-	protected readonly q: List<ISequencedDocumentMessage> = new List<ISequencedDocumentMessage>();
+	public readonly checkQ: DoublyLinkedList<string> = new DoublyLinkedList<string>();
+	protected readonly q: DoublyLinkedList<ISequencedDocumentMessage> =
+		new DoublyLinkedList<ISequencedDocumentMessage>();
 
 	private readonly textHelper: MergeTreeTextHelper;
 	constructor(options?: PropertySet, specToSeg = specToSegment) {
@@ -176,11 +176,7 @@ export class TestClient extends Client {
 		overwrite?: boolean;
 		opArgs: IMergeTreeDeltaOpArgs;
 	}): void {
-		this.mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
-	}
-
-	public obliterateRangeLocal(start: number, end: number) {
-		return this.removeRangeLocal(start, end);
+		this.mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
 	}
 
 	public getText(start?: number, end?: number): string {

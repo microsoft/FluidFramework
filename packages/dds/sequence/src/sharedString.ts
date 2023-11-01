@@ -13,7 +13,6 @@ import {
 	ISegmentAction,
 	Marker,
 	PropertySet,
-	ReferencePosition,
 	ReferenceType,
 	refHasTileLabel,
 	TextSegment,
@@ -218,28 +217,6 @@ export class SharedString
 	}
 
 	/**
-	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * Note that Markers receive `ReferenceType.Tile` by default.
-	 * @deprecated Use `searchForMarker` instead.
-	 * @param startPos - Position at which to start the search
-	 * @param clientId - clientId dictating the perspective to search from
-	 * @param tileLabel - Label of the tile to search for
-	 * @param preceding - Whether the desired tile comes before (true) or after (false) `startPos`
-	 */
-	public findTile(
-		startPos: number | undefined,
-		tileLabel: string,
-		preceding = true,
-	):
-		| {
-				tile: ReferencePosition;
-				pos: number;
-		  }
-		| undefined {
-		return this.client.findTile(startPos ?? 0, tileLabel, preceding);
-	}
-
-	/**
 	 * Searches a string for the nearest marker in either direction to a given start position.
 	 * The search will include the start position, so markers at the start position are valid
 	 * results of the search.
@@ -427,10 +404,8 @@ const gatherTextAndMarkers: ISegmentAction<ITextAndMarkerAccumulator> = (
 	} else {
 		if (placeholder && placeholder.length > 0) {
 			const placeholderText =
-				placeholder === "*"
-					? // eslint-disable-next-line @typescript-eslint/no-base-to-string
-					  `\n${segment.toString()}`
-					: placeholder.repeat(segment.cachedLength);
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
+				placeholder === "*" ? `\n${segment}` : placeholder.repeat(segment.cachedLength);
 			textSegment.text += placeholderText;
 		} else {
 			const marker = segment as Marker;

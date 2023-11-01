@@ -155,7 +155,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 	function assertBlobContents<T>(subtree: ISnapshotTreeWithBlobContents, key: string): T {
 		const id = subtree.blobs[key];
 		assert(id, `blob id for ${key} missing`);
-		const contents = subtree.blobsContents[id];
+		const contents = subtree.blobsContents?.[id];
 		assert(contents, `blob contents for ${key} missing`);
 		return JSON.parse(bufferToString(contents, "utf8")) as T;
 	}
@@ -278,7 +278,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 			// Check blobs contents for protocolAttributes
 			const protocolAttributesBlobId = snapshotTree.trees[".protocol"].blobs.attributes;
 			assert(
-				snapshotTree.trees[".protocol"].blobsContents[protocolAttributesBlobId] !==
+				snapshotTree.trees[".protocol"].blobsContents?.[protocolAttributesBlobId] !==
 					undefined,
 				"Blobs should contain attributes blob",
 			);
