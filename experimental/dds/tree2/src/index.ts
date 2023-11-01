@@ -40,7 +40,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	fieldSchema,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,

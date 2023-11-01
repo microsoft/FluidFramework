@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type IDeltaHandler } from "@fluidframework/datastore-definitions";
+import { type ISharedTree } from "@fluid-experimental/tree2";
+import { type SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
+import {
+	type IChannel,
+	type IChannelServices,
+	type IDeltaHandler,
+} from "@fluidframework/datastore-definitions";
 
 /**
  * An interface for a shim delta handler intercepts another delta handler.
@@ -20,4 +26,15 @@ export interface IShimDeltaHandler extends IDeltaHandler {
 	 * Otherwise the IShimDeltaHandler will not be able to process ops.
 	 */
 	hasTreeDeltaHandler(): boolean;
+}
+
+/**
+ * An interface for a shim channel that intercepts a LegacySharedTree or new SharedTree DDS.
+ *
+ * @internal
+ */
+export interface IShim extends IChannel {
+	create(): void;
+	load(channelServices: IChannelServices): Promise<void>;
+	currentTree: ISharedTree | LegacySharedTree;
 }
