@@ -488,18 +488,16 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 function markFollowsMoves(mark: Mark<unknown>): boolean {
 	const type = mark.type;
 	switch (type) {
+		case "Insert":
 		case "Delete":
 		case "MoveOut":
-		case "Transient":			
+		case "Transient":
 			return true;
-		case "Insert":
-			// TODO: Does this need to be false for new inserts?
-			return isReattach(mark);
 		case NoopMarkType:
 		case "ReturnFrom":
 		case "MoveIn":
 		case "Placeholder":
-			return false;		
+			return false;
 		default:
 			unreachableCase(type);
 	}

@@ -736,12 +736,9 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
-	it("revive and move ↷ move", () =>{
+	it("revive and move ↷ move", () => {
 		const reviveAndMove = [
-			Mark.transient(
-				Mark.revive(1, undefined),
-			Mark.moveOut(1, brand(1)),
-			),
+			Mark.transient(Mark.revive(1, undefined), Mark.moveOut(1, brand(1))),
 			{ count: 2 },
 			Mark.moveIn(1, brand(1)),
 		];
@@ -749,12 +746,9 @@ describe("SequenceField - Rebase", () => {
 		const move = Change.move(0, 1, 1);
 		const rebased = rebase(reviveAndMove, move);
 		const expected = [
-			{ count: 1},
-			Mark.transient(
-				Mark.revive(1, undefined),
-			Mark.moveOut(1, brand(1)),
-			),
-			{ count: 1},
+			{ count: 1 },
+			Mark.transient(Mark.revive(1, undefined), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
 			Mark.moveIn(1, brand(1)),
 		];
 
