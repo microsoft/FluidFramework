@@ -4,7 +4,6 @@
  */
 import { expect } from "chai";
 
-import { ApiItemKind } from "@microsoft/api-extractor-model";
 import {
 	DocumentNode,
 	HeadingNode,
@@ -18,11 +17,6 @@ import { renderDocument } from "../Render";
 describe("Document Markdown rendering tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
-			documentItemMetadata: {
-				apiItemName: "Foo-package",
-				apiItemKind: ApiItemKind.Package,
-				packageName: "Foo-package",
-			},
 			children: [
 				new SectionNode(
 					[

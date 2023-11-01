@@ -17,6 +17,10 @@ import {
 	ContextuallyTypedNodeData,
 	Any,
 	TreeStatus,
+	TreeFieldSchema,
+	SchemaBuilderInternal,
+	boxedIterator,
+	TreeSchema,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
@@ -153,6 +157,60 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("requireSchema", () => {
+		const factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+		});
+		const schemaEmpty = new SchemaBuilderInternal({
+			scope: "com.fluidframework.test",
+			lint: { rejectEmpty: false, rejectForbidden: false },
+		}).intoSchema(TreeFieldSchema.empty);
+
+		function updateSchema(tree: SharedTree, schema: TreeSchema): void {
+			tree.storedSchema.update(schema);
+			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
+			tree.view.events.emit("afterBatch");
+		}
+
+		it("empty", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const view = tree.requireSchema(schemaEmpty, () => assert.fail()) ?? assert.fail();
+			assert.deepEqual([...view.editableTree2(schemaEmpty)[boxedIterator]()], []);
+		});
+
+		it("differing schema errors and schema change callback", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const builder = new SchemaBuilder({ scope: "test" });
+			const schemaGeneralized = builder.intoSchema(builder.optional(Any));
+			{
+				const view = tree.requireSchema(schemaGeneralized, () => assert.fail());
+				assert.equal(view, undefined);
+			}
+
+			const log: string[] = [];
+			{
+				const view = tree.requireSchema(schemaEmpty, () => log.push("empty"));
+				assert(view !== undefined);
+			}
+			assert.deepEqual(log, []);
+			updateSchema(tree, schemaGeneralized);
+
+			assert.deepEqual(log, ["empty"]);
+
+			{
+				const view = tree.requireSchema(schemaGeneralized, () =>
+					// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
+					(log as string[]).push("general"),
+				);
+				assert(view !== undefined);
+			}
+			assert.deepEqual(log, ["empty"]);
+			updateSchema(tree, schemaEmpty);
+			assert.deepEqual(log, ["empty", "general"]);
+		});
+	});
+
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e" });
 		const schema = builder.intoSchema(leaf.number);
@@ -182,7 +240,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(snapshot.tree, []);
 			expectSchemaEqual(snapshot.schema, {
 				rootFieldSchema: storedEmptyFieldSchema,
-				treeSchema: new Map(),
+				nodeSchema: new Map(),
 			});
 		}
 		sharedTree.schematize({
@@ -957,7 +1015,7 @@ describe("SharedTree", () => {
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const treeSchema = builder.object("root", {
+		const rootTreeNodeSchema = builder.object("root", {
 			x: builder.number,
 		});
 		const schema = builder.intoSchema(builder.optional(Any));
@@ -1345,15 +1403,15 @@ describe("SharedTree", () => {
 
 		itView("properly fork the tree schema", (parent) => {
 			const schemaA: TreeStoredSchema = {
-				treeSchema: new Map([]),
+				nodeSchema: new Map([]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: TreeStoredSchema = {
-				treeSchema: new Map([[leaf.number.name, leaf.number]]),
+				nodeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
-				return t.storedSchema.treeSchema.size === 0 ? "schemaA" : "schemaB";
+				return t.storedSchema.nodeSchema.size === 0 ? "schemaA" : "schemaB";
 			}
 
 			parent.storedSchema.update(schemaA);

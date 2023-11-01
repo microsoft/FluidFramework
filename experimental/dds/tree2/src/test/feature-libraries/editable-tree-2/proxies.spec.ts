@@ -18,7 +18,7 @@ describe("SharedTree proxies", () => {
 	});
 
 	const parentSchema = sb.object("parent", {
-		struct: childSchema,
+		object: childSchema,
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
 		map: sb.map("map", sb.optional(sb.string)),
 	});
@@ -26,7 +26,7 @@ describe("SharedTree proxies", () => {
 	const schema = sb.intoSchema(parentSchema);
 
 	const initialTree = {
-		struct: { content: 42 },
+		object: { content: 42 },
 		list: [42, 42, 42],
 		map: new Map([
 			["foo", "Hello"],
@@ -34,10 +34,10 @@ describe("SharedTree proxies", () => {
 		]),
 	};
 
-	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
-		const structProxy = root.struct;
-		const structProxyAgain = root.struct;
-		assert.equal(structProxyAgain, structProxy);
+	itWithRoot("cache and reuse objects", schema, initialTree, (root) => {
+		const objectProxy = root.object;
+		const objectProxyAgain = root.object;
+		assert.equal(objectProxyAgain, objectProxy);
 	});
 
 	itWithRoot("cache and reuse lists", schema, initialTree, (root) => {
@@ -175,6 +175,53 @@ describe("SharedTreeList", () => {
 			const newItem = obj.create({ id: "B" });
 			list.insertAt(1, [newItem]);
 			assert.deepEqual(list, [{ id: "A" }, { id: "B" }, { id: "C" }]);
+		});
+	});
+
+	describe("inserting primitive", () => {
+		const _ = new SchemaBuilder({ scope: "test" });
+		const obj = _.object("Obj", {
+			numbers: _.list(_.number),
+			strings: _.list(_.string),
+			booleans: _.list(_.boolean),
+		});
+		const schema = _.intoSchema(obj);
+		const initialTree = { numbers: [], strings: [], booleans: [] };
+		itWithRoot("numbers", schema, initialTree, (root) => {
+			root.numbers.insertAtStart([0]);
+			root.numbers.insertAt(1, [1]);
+			root.numbers.insertAtEnd([2]);
+			assert.deepEqual(root.numbers, [0, 1, 2]);
+		});
+
+		itWithRoot("strings", schema, initialTree, (root) => {
+			// This test catches a usability regression in which strings can be passed directly as content to insert,
+			// because strings are also iterables of strings. Passing a string directly as an iterable is very likely not what the user intends.
+			root.strings.insertAtStart(["a"]);
+			root.strings.insertAt(1, ["b"]);
+			root.strings.insertAtEnd(["c"]);
+			const _errors = () => {
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAtStart("d");
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAt(1, "e");
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAtEnd("f");
+			};
+			const gh: Iterable<string> = "gh";
+			root.strings.insertAtStart(gh);
+			const ij: Iterable<string> = "ij";
+			root.strings.insertAt(3, ij);
+			const kl: Iterable<string> = "kl";
+			root.strings.insertAtEnd(kl);
+			assert.deepEqual(root.strings, ["g", "h", "a", "i", "j", "b", "c", "k", "l"]);
+		});
+
+		itWithRoot("booleans", schema, initialTree, (root) => {
+			root.booleans.insertAtStart([true]);
+			root.booleans.insertAt(1, [false]);
+			root.booleans.insertAtEnd([true]);
+			assert.deepEqual(root.booleans, [true, false, true]);
 		});
 	});
 

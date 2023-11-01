@@ -114,6 +114,9 @@ export class TextSegment extends BaseSegment {
 	}
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export interface IMergeTreeTextHelper {
 	getText(
 		refSeq: number,

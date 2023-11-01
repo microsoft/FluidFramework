@@ -161,9 +161,9 @@ export function allowsRepoSuperset(
 			return false;
 		}
 	}
-	for (const [key, schema] of original.treeSchema) {
+	for (const [key, schema] of original.nodeSchema) {
 		// TODO: I think its ok to use the tree from superset here, but I should confirm it is, and document why.
-		if (!allowsTreeSuperset(policy, original, schema, superset.treeSchema.get(key))) {
+		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
 			return false;
 		}
 	}
@@ -197,7 +197,7 @@ export function isNeverFieldRecursive(
 				!isNeverTreeRecursive(
 					policy,
 					originalData,
-					originalData.treeSchema.get(type),
+					originalData.nodeSchema.get(type),
 					parentTypeStack,
 				)
 			) {
@@ -220,9 +220,9 @@ export function isNeverFieldRecursive(
 export function isNeverTree(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,
-	tree: TreeNodeStoredSchema | undefined,
+	treeNode: TreeNodeStoredSchema | undefined,
 ): boolean {
-	return isNeverTreeRecursive(policy, originalData, tree, new Set());
+	return isNeverTreeRecursive(policy, originalData, treeNode, new Set());
 }
 
 /**
@@ -234,26 +234,26 @@ export function isNeverTree(
 export function isNeverTreeRecursive(
 	policy: FullSchemaPolicy,
 	originalData: TreeStoredSchema,
-	tree: TreeNodeStoredSchema | undefined,
+	treeNode: TreeNodeStoredSchema | undefined,
 	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
-	if (tree === undefined) {
+	if (treeNode === undefined) {
 		return true;
 	}
-	if (parentTypeStack.has(tree)) {
+	if (parentTypeStack.has(treeNode)) {
 		return true;
 	}
 	try {
-		parentTypeStack.add(tree);
+		parentTypeStack.add(treeNode);
 		if (
 			(
-				policy.fieldKinds.get(normalizeField(tree.mapFields).kind.identifier) ??
+				policy.fieldKinds.get(normalizeField(treeNode.mapFields).kind.identifier) ??
 				fail("missing field kind")
 			).multiplicity === Multiplicity.Single
 		) {
 			return true;
 		}
-		for (const field of tree.objectNodeFields.values()) {
+		for (const field of treeNode.objectNodeFields.values()) {
 			// TODO: this can recurse infinitely for schema that include themselves in a value field.
 			// This breaks even if there are other allowed types.
 			// Such schema should either be rejected (as an error here) or considered never (and thus detected by this).
@@ -265,7 +265,7 @@ export function isNeverTreeRecursive(
 
 		return false;
 	} finally {
-		parentTypeStack.delete(tree);
+		parentTypeStack.delete(treeNode);
 	}
 }
 
