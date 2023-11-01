@@ -14,6 +14,7 @@ export type SortedSegmentSetItem =
 	| ISegment
 	| LocalReferencePosition
 	| { readonly segment: ISegment };
+
 /**
  * Stores a unique and sorted set of segments, or objects with segments
  *

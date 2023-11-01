@@ -60,11 +60,19 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     // (undocumented)
     isLeaf(): this is ISegment;
     // (undocumented)
+    localMovedSeq?: number;
+    // (undocumented)
     localRefs?: LocalReferenceCollection;
     // (undocumented)
     localRemovedSeq?: number;
     // (undocumented)
     localSeq?: number;
+    // (undocumented)
+    movedClientIds?: number[];
+    // (undocumented)
+    movedSeq?: number;
+    // (undocumented)
+    movedSeqs?: number[];
     // (undocumented)
     properties?: PropertySet;
     // (undocumented)
@@ -85,6 +93,8 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     abstract readonly type: string;
+    // (undocumented)
+    wasMovedOnInsert?: boolean | undefined;
 }
 
 // @internal (undocumented)
@@ -151,6 +161,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     readonly logger: ITelemetryLoggerExt;
     // (undocumented)
     longClientId: string | undefined;
+    // @alpha
+    obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
     peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
@@ -392,7 +404,7 @@ export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDel
 }
 
 // @public (undocumented)
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg;
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg;
 
 // @public (undocumented)
 export interface IMergeTreeDeltaOpArgs {
@@ -502,7 +514,7 @@ export interface IRemovalInfo {
 }
 
 // @public
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
     // @internal
     ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
     // (undocumented)
@@ -674,7 +686,7 @@ export class MergeNode implements IMergeNodeCommon {
 }
 
 // @public (undocumented)
-export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE;
+export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE | typeof MergeTreeDeltaType.OBLITERATE;
 
 // @public (undocumented)
 export type MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationType | MergeTreeMaintenanceType;
@@ -698,6 +710,7 @@ export const MergeTreeDeltaType: {
     readonly REMOVE: 1;
     readonly ANNOTATE: 2;
     readonly GROUP: 3;
+    readonly OBLITERATE: 4;
 };
 
 // @public (undocumented)

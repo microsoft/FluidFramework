@@ -46,6 +46,7 @@ export const MergeTreeDeltaType = {
 	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
 	 */
 	GROUP: 3,
+	OBLITERATE: 4,
 } as const;
 
 export type MergeTreeDeltaType = (typeof MergeTreeDeltaType)[keyof typeof MergeTreeDeltaType];
@@ -94,6 +95,22 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 	relativePos2?: IRelativePosition;
 }
 
+export interface IMergeTreeObliterateMsg extends IMergeTreeDelta {
+	type: typeof MergeTreeDeltaType.OBLITERATE;
+	pos1?: number;
+	/**
+	 * This field is currently unused, but we keep it around to make the union
+	 * type of all merge-tree messages have the same fields
+	 */
+	relativePos1?: never;
+	pos2?: number;
+	/**
+	 * This field is currently unused, but we keep it around to make the union
+	 * type of all merge-tree messages have the same fields
+	 */
+	relativePos2?: never;
+}
+
 export interface ICombiningOp {
 	name: string;
 	defaultValue?: any;
@@ -123,6 +140,10 @@ export interface IJSONSegment {
 	props?: Record<string, any>;
 }
 
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg;
+export type IMergeTreeDeltaOp =
+	| IMergeTreeInsertMsg
+	| IMergeTreeRemoveMsg
+	| IMergeTreeAnnotateMsg
+	| IMergeTreeObliterateMsg;
 
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;

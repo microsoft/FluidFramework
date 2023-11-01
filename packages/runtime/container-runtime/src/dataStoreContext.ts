@@ -487,7 +487,16 @@ export abstract class FluidDataStoreContext
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.verifyNotClosed("process", true, extractSafePropertiesFromMessage(messageArg));
+		const safeTelemetryProps = extractSafePropertiesFromMessage(messageArg);
+		// On op process, tombstone error is logged in garbage collector. So, set "checkTombstone" to false when calling
+		// "verifyNotClosed" which logs tombstone errors. Throw error if tombstoned and throwing on load is configured.
+		this.verifyNotClosed("process", false /* checkTombstone */, safeTelemetryProps);
+		if (this.tombstoned && this.throwOnTombstoneUsage) {
+			throw new DataCorruptionError(
+				"Context is tombstoned! Call site [process]",
+				safeTelemetryProps,
+			);
+		}
 
 		const innerContents = messageArg.contents as FluidDataStoreMessage;
 		const message = {
@@ -1096,7 +1105,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return message;
 	}
 
-	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
 		let attributes: ReadFluidDataStoreAttributes;
 		let isRootDataStore = false;
@@ -1129,6 +1138,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			isRootDataStore,
 			snapshot,
 		};
+	});
+
+	public async getInitialSnapshotDetails(): Promise<ISnapshotDetails> {
+		return this.initialSnapshotDetailsP;
 	}
 
 	/**

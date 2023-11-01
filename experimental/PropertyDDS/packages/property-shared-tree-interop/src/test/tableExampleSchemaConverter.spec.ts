@@ -104,7 +104,7 @@ describe("LlsSchemaConverter", () => {
 
 	it("Enum", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const table = fullSchemaData.treeSchema.get(brand(`converted.${tableTypeName}`));
+		const table = fullSchemaData.nodeSchema.get(brand(`converted.${tableTypeName}`));
 		assert(table !== undefined);
 		const encoding = table.objectNodeFields.get(brand("encoding"));
 		assert(encoding !== undefined);
@@ -114,11 +114,11 @@ describe("LlsSchemaConverter", () => {
 
 	it("Missing Refs", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const typeNames = new Set(fullSchemaData.treeSchema.keys());
+		const typeNames = new Set(fullSchemaData.nodeSchema.keys());
 		for (const typeName of typeNames) {
-			const treeSchema = fullSchemaData.treeSchema.get(typeName);
-			assert(treeSchema !== undefined);
-			treeSchema.objectNodeFields.forEach((field, fieldKey) => {
+			const nodeSchema = fullSchemaData.nodeSchema.get(typeName);
+			assert(nodeSchema !== undefined);
+			nodeSchema.objectNodeFields.forEach((field, fieldKey) => {
 				if (field.types) {
 					field.types.forEach((type) => {
 						assert(
@@ -128,8 +128,8 @@ describe("LlsSchemaConverter", () => {
 					});
 				}
 			});
-			if (treeSchema.mapFields?.types) {
-				treeSchema.mapFields.types.forEach((type) => {
+			if (nodeSchema.mapFields?.types) {
+				nodeSchema.mapFields.types.forEach((type) => {
 					assert(
 						typeNames.has(type),
 						`Missing type "${type}" in tree schema "${typeName}" for extra local fields`,
@@ -141,7 +141,7 @@ describe("LlsSchemaConverter", () => {
 
 	it("Check Structure", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const table = fullSchemaData.treeSchema.get(brand(`converted.${tableTypeName}`));
+		const table = fullSchemaData.nodeSchema.get(brand(`converted.${tableTypeName}`));
 		assert(table !== undefined);
 		assert(table.objectNodeFields !== undefined);
 
@@ -150,7 +150,7 @@ describe("LlsSchemaConverter", () => {
 		assert(extendedRows.types !== undefined);
 		assert(extendedRows.types.has(brand("converted.array<Test:ExtendedRow-1.0.0>")));
 
-		const extendedRowsSchema = fullSchemaData.treeSchema.get(
+		const extendedRowsSchema = fullSchemaData.nodeSchema.get(
 			brand("converted.Test:ExtendedRow-1.0.0"),
 		);
 		assert(extendedRowsSchema !== undefined);
@@ -158,7 +158,7 @@ describe("LlsSchemaConverter", () => {
 		assert(info !== undefined);
 		assert(info.types !== undefined);
 		assert(info.types.has(brand("converted.map<Test:RowInfo-1.0.0>")));
-		const infoType = fullSchemaData.treeSchema.get(brand("converted.Test:RowInfo-1.0.0"));
+		const infoType = fullSchemaData.nodeSchema.get(brand("converted.Test:RowInfo-1.0.0"));
 		assert(infoType !== undefined);
 
 		const uint64 = infoType.objectNodeFields.get(brand("data"));
@@ -167,7 +167,7 @@ describe("LlsSchemaConverter", () => {
 		expect(uint64.types.has(brand("converted.Uint64"))).toBeTruthy();
 		assert(uint64.types.has(brand("converted.Uint64")));
 		const uint64Type =
-			fullSchemaData.treeSchema.get(brand("converted.Uint64")) ?? fail("missing schema");
+			fullSchemaData.nodeSchema.get(brand("converted.Uint64")) ?? fail("missing schema");
 		assert(schemaIsFieldNode(uint64Type));
 		assert(
 			uint64Type.objectNodeFields
@@ -178,7 +178,7 @@ describe("LlsSchemaConverter", () => {
 
 	it("Inheritance Translation", () => {
 		const fullSchemaData = convertSchema(FieldKinds.optional, new Set([tableTypeName]));
-		const row = fullSchemaData.treeSchema.get(brand("converted.array<Test:Row-1.0.0>"));
+		const row = fullSchemaData.nodeSchema.get(brand("converted.array<Test:Row-1.0.0>"));
 		assert(row !== undefined);
 		assert(row.objectNodeFields !== undefined);
 		const field = row.objectNodeFields.get(EmptyKey);

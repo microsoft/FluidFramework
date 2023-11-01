@@ -2,17 +2,18 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable import/no-deprecated */
 
 import { ISegment, Marker } from "./mergeTreeNodes";
 import {
 	ICombiningOp,
 	IMergeTreeAnnotateMsg,
+	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
 	IMergeTreeInsertMsg,
 	IMergeTreeRemoveMsg,
 	MergeTreeDeltaType,
 	IMergeTreeDeltaOp,
+	IMergeTreeObliterateMsg,
 } from "./ops";
 import { PropertySet } from "./properties";
 
@@ -86,6 +87,22 @@ export function createRemoveRangeOp(start: number, end: number): IMergeTreeRemov
 }
 
 /**
+ * Creates the op to obliterate a range
+ *
+ * @param start - The inclusive start of the range to obliterate
+ * @param end - The exclusive end of the range to obliterate
+ *
+ * @internal
+ */
+export function createObliterateRangeOp(start: number, end: number): IMergeTreeObliterateMsg {
+	return {
+		pos1: start,
+		pos2: end,
+		type: MergeTreeDeltaType.OBLITERATE,
+	};
+}
+
+/**
  *
  * @param pos - The position to insert the segment at
  * @param segment - The segment to insert
@@ -117,9 +134,11 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
  *
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
 	return {
 		ops,
+		// eslint-disable-next-line import/no-deprecated
 		type: MergeTreeDeltaType.GROUP,
 	};
 }

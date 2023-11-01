@@ -126,6 +126,7 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_Client": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"RemovedTypeAliasDeclaration_RangeStackMap": {
@@ -232,6 +233,9 @@
 			"RemovedFunctionDeclaration_createAnnotateMarkerOp": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"VariableDeclaration_MergeTreeDeltaType": {
+				"forwardCompat": false
 			}
 		}
 	}

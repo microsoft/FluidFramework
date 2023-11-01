@@ -182,7 +182,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(snapshot.tree, []);
 			expectSchemaEqual(snapshot.schema, {
 				rootFieldSchema: storedEmptyFieldSchema,
-				treeSchema: new Map(),
+				nodeSchema: new Map(),
 			});
 		}
 		sharedTree.schematize({
@@ -957,7 +957,7 @@ describe("SharedTree", () => {
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const treeSchema = builder.object("root", {
+		const rootTreeNodeSchema = builder.object("root", {
 			x: builder.number,
 		});
 		const schema = builder.intoSchema(builder.optional(Any));
@@ -1345,15 +1345,15 @@ describe("SharedTree", () => {
 
 		itView("properly fork the tree schema", (parent) => {
 			const schemaA: TreeStoredSchema = {
-				treeSchema: new Map([]),
+				nodeSchema: new Map([]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: TreeStoredSchema = {
-				treeSchema: new Map([[leaf.number.name, leaf.number]]),
+				nodeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
-				return t.storedSchema.treeSchema.size === 0 ? "schemaA" : "schemaB";
+				return t.storedSchema.nodeSchema.size === 0 ? "schemaA" : "schemaB";
 			}
 
 			parent.storedSchema.update(schemaA);

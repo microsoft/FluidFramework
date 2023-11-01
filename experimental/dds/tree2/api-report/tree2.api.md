@@ -516,7 +516,7 @@ export enum DiscardResult {
 }
 
 // @alpha
-function downCast<TSchema extends TreeNodeSchema>(schema: TSchema, tree: UntypedTreeCore<any, any>): tree is TypedNode_2<TSchema>;
+function downCast<TSchema extends TreeNodeSchema>(schema: TSchema, tree: UntypedTreeCore): tree is TypedNode_2<TSchema>;
 
 // @alpha
 export type DownPath = PathStep[];
@@ -713,11 +713,6 @@ interface Fields {
     // (undocumented)
     readonly [key: string]: TreeFieldSchema;
 }
-
-// @alpha
-export function fieldSchema(kind: {
-    identifier: FieldKindIdentifier;
-}, types?: Iterable<TreeNodeSchemaIdentifier>): TreeFieldStoredSchema;
 
 // @alpha
 export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
@@ -1879,7 +1874,7 @@ export interface SchemaBuilderOptions<TScope extends string = string> {
 
 // @alpha
 export interface SchemaCollection extends StoredSchemaCollection {
-    readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
+    readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
 }
 
 // @alpha
@@ -1944,12 +1939,18 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
     readonly length: number;
     map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
     mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
-    moveToEnd(sourceStart: number, sourceEnd: number): void;
-    moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-    moveToIndex<TTypesSource extends AllowedTypes>(index: number, sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    moveToStart(sourceStart: number, sourceEnd: number): void;
-    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
+    moveToEnd(sourceIndex: number): void;
+    moveToEnd(sourceIndex: number, source: Sequence<AllowedTypes>): void;
+    moveToIndex(index: number, sourceIndex: number): void;
+    moveToIndex(index: number, sourceIndex: number, source: Sequence<AllowedTypes>): void;
+    moveToStart(sourceIndex: number): void;
+    moveToStart(sourceIndex: number, source: Sequence<AllowedTypes>): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
 }
@@ -1989,18 +1990,24 @@ export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaSc
     insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
     insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
     insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
-    moveToEnd(sourceStart: number, sourceEnd: number): void;
-    moveToEnd<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-    moveToIndex<TTypesSource extends AllowedTypes>(index: number, sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
-    moveToStart(sourceStart: number, sourceEnd: number): void;
-    moveToStart<TTypesSource extends AllowedTypes>(sourceStart: number, sourceEnd: number, source: SharedTreeList<CheckTypesOverlap<TTypesSource, TTypes>>): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
+    moveRangeToEnd(sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+    moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number): void;
+    moveRangeToStart(sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
+    moveToEnd(sourceIndex: number): void;
+    moveToEnd(sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+    moveToIndex(index: number, sourceIndex: number): void;
+    moveToIndex(index: number, sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+    moveToStart(sourceIndex: number): void;
+    moveToStart(sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
     removeAt(index: number): void;
     removeRange(start?: number, end?: number): void;
 }
 
 // @alpha
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyField<TSchema["mapFields"]>>;
 
 // @alpha
 export type SharedTreeNode = SharedTreeList<AllowedTypes> | SharedTreeObject<ObjectNodeSchema> | SharedTreeMap<MapSchema>;
@@ -2046,7 +2053,7 @@ export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
 // @alpha
 export interface StoredSchemaCollection {
-    readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+    readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }
 
 // @alpha
@@ -2430,7 +2437,7 @@ export interface UntypedTreeContext extends ISubscribable<ForestEvents> {
 }
 
 // @alpha
-export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = UntypedField<TContext>> extends Iterable<TField> {
+export interface UntypedTreeCore<out TContext = UntypedTreeContext, out TField = UntypedField<TContext>> extends Iterable<TField> {
     readonly [contextSymbol]: TContext;
     [getField](fieldKey: FieldKey): TField;
     // (undocumented)

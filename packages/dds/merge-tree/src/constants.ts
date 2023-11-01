@@ -4,7 +4,7 @@
  */
 
 /**
- * The sequence number at which all ops can be seen.
+ * The sequence number which can be seen by all ops.
  *
  * This is useful in the context of snapshot loading, rollback, among other
  * scenarios.
@@ -19,6 +19,9 @@ export const UniversalSequenceNumber = 0;
  * @internal
  */
 export const UnassignedSequenceNumber = -1;
+
 export const TreeMaintenanceSequenceNumber = -2;
+
 export const LocalClientId = -1;
+
 export const NonCollabClient = -2;
