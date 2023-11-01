@@ -320,7 +320,6 @@ function invertMark<TNodeChange>(
 				inverses.push(inverted);
 			}
 
-			// TODO: Handle inverse changes
 			return inverses;
 		}
 		case "Placeholder":
