@@ -580,7 +580,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	editor: optionalFieldEditor,
 
 	intoDelta: optionalFieldIntoDelta,
-	getRelevantRemovedTrees,
+	relevantRemovedTrees,
 
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChanges === undefined && change.fieldChange === undefined,
@@ -594,7 +594,7 @@ function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
 	return areEqualChangeAtomIds(a, b);
 }
 
-function* getRelevantRemovedTrees(change: OptionalChangeset): Iterable<Delta.DetachedNodeId> {
+function* relevantRemovedTrees(change: OptionalChangeset): Iterable<Delta.DetachedNodeId> {
 	let removedNode: ChangeAtomId | undefined;
 	let restoredNode: ChangeAtomId | undefined;
 	const fieldChange = change.fieldChange;

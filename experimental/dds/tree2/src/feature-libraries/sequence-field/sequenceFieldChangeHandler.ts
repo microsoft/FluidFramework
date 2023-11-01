@@ -10,7 +10,7 @@ import { sequenceFieldChangeCodecFactory } from "./sequenceFieldChangeEncoder";
 import { SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor";
 import { sequenceFieldToDelta } from "./sequenceFieldToDelta";
 import { isEmpty } from "./utils";
-import { getRelevantRemovedTrees } from "./getRelevantRemovedTrees";
+import { relevantRemovedTrees } from "./relevantRemovedTrees";
 
 export type SequenceFieldChangeHandler = FieldChangeHandler<Changeset, SequenceFieldEditor>;
 
@@ -19,6 +19,6 @@ export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	codecsFactory: sequenceFieldChangeCodecFactory,
 	editor: sequenceFieldEditor,
 	intoDelta: sequenceFieldToDelta,
-	getRelevantRemovedTrees,
+	relevantRemovedTrees,
 	isEmpty,
 };

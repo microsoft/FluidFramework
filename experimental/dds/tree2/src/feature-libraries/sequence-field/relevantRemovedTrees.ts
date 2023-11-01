@@ -9,7 +9,7 @@ import { Changeset } from "./format";
 import { isMoveMark } from "./moveEffectTable";
 import { isDetachMark, isInsert, isReattach } from "./utils";
 
-export function* getRelevantRemovedTrees(changeset: Changeset): Iterable<Delta.DetachedNodeId> {
+export function* relevantRemovedTrees(changeset: Changeset): Iterable<Delta.DetachedNodeId> {
 	for (const mark of changeset) {
 		if (mark.cellId !== undefined) {
 			if (isInsert(mark) && isReattach(mark)) {

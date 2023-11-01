@@ -27,7 +27,7 @@ export interface FieldChangeHandler<
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.FieldChanges;
-	readonly getRelevantRemovedTrees: (change: TChangeset) => Iterable<Delta.DetachedNodeId>;
+	readonly relevantRemovedTrees: (change: TChangeset) => Iterable<Delta.DetachedNodeId>;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field

@@ -71,7 +71,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
-	getRelevantRemovedTrees: (change) => [],
+	relevantRemovedTrees: (change) => [],
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
