@@ -685,7 +685,7 @@ describe("MergeTree", () => {
 
 					assert.equal(segment.segmentGroups.size, 1);
 					assert.equal(segment.properties?.propertySource, "local");
-					assert(!segment.properties?.remoteProperty);
+					assert.equal(segment.properties?.remoteProperty, 1);
 				});
 
 				it("sequenced local before remote", () => {
@@ -772,8 +772,8 @@ describe("MergeTree", () => {
 					);
 					const segment = segmentInfo.segment as BaseSegment;
 
-					assert(!segment.properties?.remoteOnly);
-					assert(!segment.properties?.propertySource);
+					assert.equal(segment.properties?.remoteOnly, 1);
+					assert.equal(segment.properties?.propertySource, "remote");
 					assert.equal(segment.properties?.secondSource, "local2");
 				});
 			});
