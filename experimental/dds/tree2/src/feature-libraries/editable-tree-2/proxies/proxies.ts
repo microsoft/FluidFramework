@@ -202,7 +202,7 @@ function contextualizeInsertedListContent(
 ): Iterable<ContextuallyTypedNodeData> {
 	if (typeof iterable === "string") {
 		throw new TypeError(
-			"Attempted to directly insert a string as iterable list content. Wrap the input string 's' in an array ('[s]') or, if this was intentional, supply the iterator of the string directly via 's[Symbol.iterator]()'",
+			"Attempted to directly insert a string as iterable list content. Wrap the input string 's' in an array ('[s]') to insert it as a single item or, supply the iterator of the string directly via 's[Symbol.iterator]()' if intending to insert each Unicode code point as a separate item.",
 		);
 	}
 	// If the iterable is not already an array, copy it into an array to use '.map()' below.
