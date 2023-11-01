@@ -702,7 +702,7 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
-	it("[move, move] ↷ delete", () => {
+	it("move chain ↷ delete", () => {
 		const del = Change.delete(0, 1);
 		const move = [
 			Mark.moveOut(1, brand(0), {
@@ -731,6 +731,31 @@ describe("SequenceField - Rebase", () => {
 				finalEndpoint: { localId: brand(0) },
 				isSrcConflicted: true,
 			}),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("revive and move ↷ move", () =>{
+		const reviveAndMove = [
+			Mark.transient(
+				Mark.revive(1, undefined),
+			Mark.moveOut(1, brand(1)),
+			),
+			{ count: 2 },
+			Mark.moveIn(1, brand(1)),
+		];
+
+		const move = Change.move(0, 1, 1);
+		const rebased = rebase(reviveAndMove, move);
+		const expected = [
+			{ count: 1},
+			Mark.transient(
+				Mark.revive(1, undefined),
+			Mark.moveOut(1, brand(1)),
+			),
+			{ count: 1},
+			Mark.moveIn(1, brand(1)),
 		];
 
 		assert.deepEqual(rebased, expected);

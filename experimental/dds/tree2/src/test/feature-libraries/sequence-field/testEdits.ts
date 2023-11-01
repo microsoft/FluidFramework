@@ -376,14 +376,18 @@ function createTransientMark<TChange>(
 	detach: SF.CellMark<SF.Detach, TChange>,
 	overrides?: Partial<SF.CellMark<SF.TransientEffect, TChange>>,
 ): SF.CellMark<SF.TransientEffect, TChange> {
-	return {
+	const transient: SF.CellMark<SF.TransientEffect, TChange> = {
 		type: "Transient",
-		cellId: attach.cellId,
 		count: attach.count,
 		attach: SF.extractMarkEffect(attach),
 		detach: SF.extractMarkEffect(detach),
 		...overrides,
 	};
+
+	if (attach.cellId !== undefined) {
+		transient.cellId = attach.cellId;
+	}
+	return transient;
 }
 
 function overrideCellId<TMark extends SF.HasMarkFields<unknown>>(

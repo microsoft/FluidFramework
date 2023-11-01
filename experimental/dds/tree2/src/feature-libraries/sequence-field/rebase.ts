@@ -490,16 +490,16 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 	switch (type) {
 		case "Delete":
 		case "MoveOut":
+		case "Transient":			
 			return true;
 		case "Insert":
+			// TODO: Does this need to be false for new inserts?
 			return isReattach(mark);
 		case NoopMarkType:
 		case "ReturnFrom":
 		case "MoveIn":
 		case "Placeholder":
-			return false;
-		case "Transient":
-			fail("Should not rebase composite marks");
+			return false;		
 		default:
 			unreachableCase(type);
 	}
