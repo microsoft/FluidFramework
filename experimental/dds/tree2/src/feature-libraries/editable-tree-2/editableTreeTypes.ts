@@ -309,7 +309,10 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
 	 *
 	 * @remarks
 	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
-	 * deleted. This is an intentional design choice. Since this data structure is distributed in nature, it isn't
+	 * deleted.
+	 *
+	 * @privateRemarks
+	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
 	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
 	 * is more likely to create issues / promote bad usage patterns than offer useful information.
 	 *
