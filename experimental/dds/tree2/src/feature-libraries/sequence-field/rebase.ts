@@ -127,7 +127,6 @@ function rebaseMarkList<TNodeChange>(
 	// At the time we process an attach we don't know about detaches of later nodes,
 	// so we record marks which should have their lineage updated if we encounter a detach.
 	const lineageRecipients: Mark<TNodeChange>[] = [];
-	const lineageEntries: LineageEntry[] = [];
 
 	// For each revision, stores a list of IDs of detaches encountered in the base changeset which are adjacent to the current position.
 	const detachBlocks = new Map<RevisionTag, IdRange[]>();
@@ -158,34 +157,26 @@ function rebaseMarkList<TNodeChange>(
 				metadata,
 			);
 
-
 			assert(
 				areInputCellsEmpty(rebasedMark) && rebasedMark.cellId.revision !== undefined,
 				"Mark should have empty input cells after rebasing over a cell-emptying mark",
-			);			
+			);
 
-			if (isInverseAttach(baseMark)) {
-				assert(detachId.revision !== undefined, 0x74c /* Detach ID should have revision */);
-				lineageEntries.push({
-					revision: detachId.revision,
-					id: detachId.localId,
-					count: baseMark.count,
-				});
-			} else {
-				addIdRange(getOrAddEmptyToMap(detachBlocks, detachId.revision), {
-					id: detachId.localId,
-					count: baseMark.count,
-				});
-				
+			addIdRange(getOrAddEmptyToMap(detachBlocks, detachId.revision), {
+				id: detachId.localId,
+				count: baseMark.count,
+			});
+
+			if (!isInverseAttach(baseMark)) {
 				setMarkAdjacentCells(
 					rebasedMark,
 					detachBlocks.get(rebasedMark.cellId.revision) ?? [],
-				);				
+				);
 			}
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
-			handleLineage(rebasedMark, lineageRecipients, detachBlocks, lineageEntries, metadata);
+			handleLineage(rebasedMark, lineageRecipients, detachBlocks, metadata);
 		}
 		factory.push(rebasedMark);
 
@@ -709,17 +700,10 @@ function getMovedMark<T>(
 	return undefined;
 }
 
-interface LineageEntry {
-	revision: RevisionTag;
-	id: ChangesetLocalId;
-	count: number;
-}
-
 function handleLineage<T>(
 	rebasedMark: Mark<T>,
 	lineageRecipients: Mark<T>[],
 	detachBlocks: Map<RevisionTag, IdRange[]>,
-	lineageEntries: LineageEntry[],
 	metadata: RevisionMetadataSource,
 ) {
 	const lineageHolder = getLineageHolder(rebasedMark);
@@ -730,12 +714,6 @@ function handleLineage<T>(
 
 	const cellRevision = getInputCellId(rebasedMark, undefined, undefined)?.revision;
 	const index = cellRevision !== undefined ? metadata.getIndex(cellRevision) : undefined;
-
-	for (const entry of lineageEntries) {
-		if (index === undefined || index < getKnownRevisionIndex(entry.revision, metadata)) {
-			addLineageEntry(lineageHolder, entry.revision, entry.id, entry.count, entry.count);
-		}
-	}
 
 	for (const [revision, detachBlock] of detachBlocks.entries()) {
 		if (index === undefined || index < getKnownRevisionIndex(revision, metadata)) {
