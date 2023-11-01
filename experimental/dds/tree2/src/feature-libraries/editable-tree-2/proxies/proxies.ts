@@ -598,7 +598,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			content: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
 			const node = getMapNode(this);
-			node.set(key, extractFactoryContent(content as any)); // TODO: why is this being treated as `unknown`?
+			node.set(key, extractFactoryContent(content as any));
 			return this;
 		},
 	},
