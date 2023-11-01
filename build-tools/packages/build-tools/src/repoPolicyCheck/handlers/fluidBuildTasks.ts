@@ -482,7 +482,12 @@ export const handlers: Handler[] = [
 				for (const script in json.scripts) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const command = json.scripts[script]!;
-					if (command.startsWith("tsc") && !ignore.has(script)) {
+					if (
+						command.startsWith("tsc") &&
+						// tsc --watch tasks are long-running processes and don't need the standard task deps
+						!command.includes("--watch") &&
+						!ignore.has(script)
+					) {
 						try {
 							const checkDeps = getTscCommandDependencies(
 								packageDir,
