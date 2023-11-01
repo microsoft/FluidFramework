@@ -179,7 +179,7 @@ function composeMarks<TNodeChange>(
 				// When we compose the marks at B we will link the start of the base move (A to B)
 				// with the end of the new move (B to C).
 				// Because we are replacing the mark representing the start of the move with the new changeset's
-				// move-out from A, we update the base move-in at B to consider that it's start point.
+				// move-out from A, we update the base move-in at B to consider that its start point.
 				setEndpoint(
 					moveEffects,
 					CrossFieldTarget.Destination,
