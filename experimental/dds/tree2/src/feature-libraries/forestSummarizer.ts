@@ -18,7 +18,6 @@ import {
 	FieldKey,
 	IEditableForest,
 	ITreeCursorSynchronous,
-	ITreeSubscriptionCursor,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	mapCursorFields,
@@ -41,8 +40,6 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	private readonly cursor: ITreeSubscriptionCursor;
-
 	private readonly schema: StoredSchemaCollection;
 	private readonly policy: FullSchemaPolicy;
 	private readonly encodeType: TreeCompressionStrategy;
@@ -53,7 +50,6 @@ export class ForestSummarizer implements Summarizable {
 		policy: FullSchemaPolicy,
 		encodeType: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
 	) {
-		this.cursor = this.forest.allocateCursor();
 		this.schema = schema;
 		this.policy = policy;
 		this.encodeType = encodeType;
@@ -67,18 +63,12 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		this.forest.moveCursorToPath(undefined, this.cursor);
+		const rootCursor = this.forest.getCursorAboveDetachedFields();
 		// TODO: Encode all detached fields in one operation for better performance and compression
-		const fields = mapCursorFields(this.cursor, (cursor) => [
-			this.cursor.getFieldKey(),
-			encodeSummary(
-				cursor as ITreeCursorSynchronous,
-				this.schema,
-				this.policy,
-				this.encodeType,
-			),
+		const fields = mapCursorFields(rootCursor, (cursor) => [
+			rootCursor.getFieldKey(),
+			encodeSummary(cursor, this.schema, this.policy, this.encodeType),
 		]);
-		this.cursor.clear();
 		return stringify(fields);
 	}
 
