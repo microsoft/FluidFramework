@@ -103,7 +103,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		return { local: markList };
 	},
 	// Generic changes do not target removed trees.
-	getRelevantRemovedTrees: (change: GenericChangeset): Delta.DetachedNodeId[] => [],
+	getRelevantRemovedTrees: (change: GenericChangeset): Iterable<Delta.DetachedNodeId> => [],
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 

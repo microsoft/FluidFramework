@@ -594,8 +594,7 @@ function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
 	return areEqualChangeAtomIds(a, b);
 }
 
-function getRelevantRemovedTrees(change: OptionalChangeset): Delta.DetachedNodeId[] {
-	const nodes: Delta.DetachedNodeId[] = [];
+function* getRelevantRemovedTrees(change: OptionalChangeset): Iterable<Delta.DetachedNodeId> {
 	let removedNode: ChangeAtomId | undefined;
 	let restoredNode: ChangeAtomId | undefined;
 	const fieldChange = change.fieldChange;
@@ -608,7 +607,7 @@ function getRelevantRemovedTrees(change: OptionalChangeset): Delta.DetachedNodeI
 		) {
 			// This tree is being restored by this change, so it is a relevant removed tree.
 			restoredNode = (newContent as { revert: ChangeAtomId }).revert;
-			nodes.push(nodeIdFromChangeAtom(restoredNode));
+			yield nodeIdFromChangeAtom(restoredNode);
 		}
 	}
 	if (change.childChanges !== undefined) {
@@ -623,10 +622,9 @@ function getRelevantRemovedTrees(change: OptionalChangeset): Delta.DetachedNodeI
 					// This tree is a relevant removed tree, but it is already included in the list
 				} else {
 					// This tree is being edited by this change, so it is a relevant removed tree.
-					nodes.push(nodeIdFromChangeAtom(deletedBy));
+					yield nodeIdFromChangeAtom(deletedBy);
 				}
 			}
 		}
 	}
-	return nodes;
 }
