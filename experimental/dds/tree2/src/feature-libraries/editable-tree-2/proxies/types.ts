@@ -19,7 +19,7 @@ import {
 	TreeNodeSchema,
 	TreeSchema,
 } from "../../typed-schema";
-import { AssignableFieldKinds, TreeNode } from "../editableTreeTypes";
+import { AssignableFieldKinds } from "../editableTreeTypes";
 
 /**
  * An object-like SharedTree node. Includes objects, lists, and maps.
@@ -43,20 +43,36 @@ export interface SharedTreeList<
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAt<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		index: number,
+		value: T extends string ? never : string extends T ? never : T,
+	): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAtStart<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		value: T extends string ? never : string extends T ? never : T,
+	): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAtEnd<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		value: T extends string ? never : string extends T ? never : T,
+	): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -248,7 +264,10 @@ export type ObjectFields<
  * A map of string keys to tree objects.
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<
+	string,
+	ProxyField<TSchema["mapFields"]>
+>;
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.
@@ -326,24 +345,3 @@ export type ProxyRoot<
 	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;
-
-/** Symbol used to store a private/internal reference to the underlying editable tree node. */
-const treeNodeSym = Symbol("TreeNode");
-
-/** Helper to retrieve the stored tree node. */
-export function getTreeNode(target: unknown): TreeNode | undefined {
-	if (typeof target === "object" && target !== null) {
-		return (target as { [treeNodeSym]?: TreeNode })[treeNodeSym];
-	}
-
-	return undefined;
-}
-
-/** Helper to set the stored tree node. */
-export function setTreeNode(target: any, treeNode: TreeNode) {
-	Object.defineProperty(target, treeNodeSym, {
-		value: treeNode,
-		// TODO: Investigate if this can be removed by properly implementing key-related traps in the proxy
-		configurable: true,
-	});
-}
