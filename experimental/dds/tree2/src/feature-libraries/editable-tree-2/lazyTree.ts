@@ -434,8 +434,8 @@ export class LazyMap<TSchema extends MapSchema>
 	}
 
 	public delete(key: FieldKey): void {
-		// Since all keys implicitly exist under a Map node, "deleting" a key/value pair is the same as setting
-		// the value to undefined.
+		// Since all keys implicitly exist under a Map node, and we represent "no value" with `undefined`,
+		// "deleting" a key/value pair is the same as setting the value to `undefined`.
 		this.set(key, undefined);
 	}
 
