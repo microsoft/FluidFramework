@@ -11,6 +11,8 @@
 			"jest-environment-puppeteer",
 			"expect-puppeteer",
 		],
+    "moduleResolution": "node10",
+    "module": "esnext",
 	},
 	"include": ["src/**/*.ts"],
 }

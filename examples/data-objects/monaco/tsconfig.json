@@ -4,6 +4,8 @@
 		"outDir": "lib",
 		"jsx": "react",
 		"types": ["react"],
+    "moduleResolution": "node10",
+    "module": "ESNext",
 	},
 	"include": ["src/**/*"],
 }

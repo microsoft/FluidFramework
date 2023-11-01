@@ -12,7 +12,7 @@ import { TableView } from "./tableView";
 /* eslint-disable import/no-unresolved */
 const tableModelFactory = createDataStoreFactory(
 	tableModelType,
-	import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel.js").then((m) =>
+	import(/* webpackChunkName: "table-view", webpackPreload: true */ "./tableModel").then((m) =>
 		m.TableModel.getFactory(),
 	),
 );

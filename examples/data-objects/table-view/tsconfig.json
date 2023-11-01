@@ -5,6 +5,8 @@
 		"rootDir": "./src",
 		"outDir": "lib",
 		"types": ["react"],
+    "moduleResolution": "node10",
+    "module": "esnext",
 	},
 	"include": ["src/**/*"],
 }
