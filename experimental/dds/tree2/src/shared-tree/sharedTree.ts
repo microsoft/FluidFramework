@@ -89,14 +89,6 @@ export interface SharedTreeContentSnapshot {
  */
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	/**
-	 * Get view without schematizing.
-	 *
-	 * @deprecated This API will be removed as part of making views use view schema.
-	 */
-	// TODO: migrate all usages of this to alternatives or avoid using ISharedTree.
-	readonly view: ISharedTreeView;
-
-	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
 	 * This is only intended for use in testing and exceptional code paths: it is not performant.
