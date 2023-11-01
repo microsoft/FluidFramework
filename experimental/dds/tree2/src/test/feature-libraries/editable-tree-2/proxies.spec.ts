@@ -178,6 +178,63 @@ describe("SharedTreeList", () => {
 		});
 	});
 
+	describe("inserting primitive", () => {
+		const _ = new SchemaBuilder({ scope: "test" });
+		const obj = _.object("Obj", {
+			numbers: _.list(_.number),
+			strings: _.list(_.string),
+			booleans: _.list(_.boolean),
+		});
+		const schema = _.intoSchema(obj);
+		const initialTree = { numbers: [], strings: [], booleans: [] };
+		itWithRoot("numbers", schema, initialTree, (root) => {
+			root.numbers.insertAtStart([0]);
+			root.numbers.insertAt(1, [1]);
+			root.numbers.insertAtEnd([2]);
+			assert.throws(() => {
+				// @ts-expect-error Inserted content needs to be iterable
+				root.numbers.insertAtStart(3);
+				// @ts-expect-error Inserted content needs to be iterable
+				root.numbers.insertAt(1, 4);
+				// @ts-expect-error Inserted content needs to be iterable
+				root.numbers.insertAtEnd(5);
+			});
+			assert.deepEqual(root.numbers, [0, 1, 2]);
+		});
+
+		itWithRoot("strings", schema, initialTree, (root) => {
+			// This test catches a usability regression in which strings can be passed directly as content to insert,
+			// because strings are also iterables of strings. Passing a string directly as an iterable is very likely not what the user intends.
+			root.strings.insertAtStart(["a"]);
+			root.strings.insertAt(1, ["b"]);
+			root.strings.insertAtEnd(["c"]);
+			assert.throws(() => {
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAtStart("d");
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAt(1, "e");
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAtEnd("f");
+			});
+			assert.deepEqual(root.strings, ["a", "b", "c"]);
+		});
+
+		itWithRoot("booleans", schema, initialTree, (root) => {
+			root.booleans.insertAtStart([true]);
+			root.booleans.insertAt(1, [false]);
+			root.booleans.insertAtEnd([true]);
+			assert.throws(() => {
+				// @ts-expect-error Inserted content needs to be iterable
+				root.booleans.insertAtStart(false);
+				// @ts-expect-error Inserted content needs to be iterable
+				root.booleans.insertAt(1, true);
+				// @ts-expect-error Inserted content needs to be iterable
+				root.booleans.insertAtEnd(false);
+			});
+			assert.deepEqual(root.booleans, [true, false, true]);
+		});
+	});
+
 	describe("removing items", () => {
 		const _ = new SchemaBuilder({ scope: "test" });
 		const schema = _.intoSchema(_.list(_.number));
