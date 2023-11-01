@@ -24,11 +24,7 @@ export interface IInventoryListAppModel extends TypedEmitter<IInventoryListAppMo
 	/**
 	 * An inventory tracker list using the legacy shared tree.
 	 */
-	readonly legacyTreeInventoryList: IInventoryList;
-	/**
-	 * An inventory tracker list using the new shared tree.
-	 */
-	readonly newTreeInventoryList: IInventoryList;
+	readonly inventoryList: IInventoryList;
 	/**
 	 * For demo purposes, a debug API to manually trigger the migration.
 	 */

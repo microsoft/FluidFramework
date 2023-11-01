@@ -20,17 +20,9 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = ({
 	model,
 }: IInventoryListAppViewProps) => {
 	return (
-		<>
-			<h1>Using legacy SharedTree</h1>
-			<InventoryListView
-				inventoryList={model.legacyTreeInventoryList}
-				disabled={!model.legacyTreeInventoryList.writeOk}
-			/>
-			<h1>Using new SharedTree</h1>
-			<InventoryListView
-				inventoryList={model.newTreeInventoryList}
-				disabled={!model.newTreeInventoryList.writeOk}
-			/>
-		</>
+		<InventoryListView
+			inventoryList={model.inventoryList}
+			disabled={!model.inventoryList.writeOk}
+		/>
 	);
 };

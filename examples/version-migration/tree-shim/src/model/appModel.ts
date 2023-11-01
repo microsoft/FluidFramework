@@ -19,8 +19,7 @@ export class InventoryListAppModel
 	implements IInventoryListAppModel
 {
 	public constructor(
-		public readonly legacyTreeInventoryList: IInventoryList,
-		public readonly newTreeInventoryList: IInventoryList,
+		public readonly inventoryList: IInventoryList,
 		public readonly DEBUG_triggerMigration: () => void,
 	) {
 		super();
