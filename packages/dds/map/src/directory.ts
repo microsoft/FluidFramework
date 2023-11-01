@@ -791,6 +791,9 @@ export class SharedDirectory
 						// "fake" client sequence number to signify the loading order, and there is no need to retain
 						// the actual client sequence number at this point.
 						if (createInfo !== undefined && createInfo.csn > -1) {
+							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
+							// sub directory. This could be done at serialization time too, but we need to maintain
+							// back compat too and also we will actually know the state when it was serialized.
 							if (!tempSeqNums.has(createInfo.csn)) {
 								tempSeqNums.set(createInfo.csn, 0);
 							}
@@ -804,10 +807,6 @@ export class SharedDirectory
 							};
 						}
 						newSubDir = new SubDirectory(
-							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
-							// sub directory. This could be done at serialization time too, but we need to maintain
-							// back compat too and also we will actually know the state when it was serialized.
-							// createInfo !== undefined && createInfo.csn > -1 ? createInfo.csn : 0,
 							seqNumCollection,
 							createInfo !== undefined
 								? new Set<string>(createInfo.ccIds)
