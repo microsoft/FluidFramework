@@ -404,6 +404,7 @@ export class MergeTree {
 	public readonly collabWindow = new CollaborationWindow();
 
 	public readonly pendingSegments = new DoublyLinkedList<SegmentGroup>();
+
 	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
@@ -1144,12 +1145,11 @@ export class MergeTree {
 	) {
 		let _segmentGroup = segmentGroup;
 		if (_segmentGroup === undefined) {
-			// TODO: review the cast
 			_segmentGroup = {
 				segments: [],
 				localSeq,
 				refSeq: this.collabWindow.currentSeq,
-			} as any as SegmentGroup;
+			};
 			if (previousProps) {
 				_segmentGroup.previousProps = [];
 			}
@@ -1612,7 +1612,12 @@ export class MergeTree {
 					props.markerId === segment.properties?.markerId,
 				0x5ad /* Cannot change the markerId of an existing marker */,
 			);
-			const propertyDeltas = segment.addProperties(props, seq, this.collabWindow, rollback);
+			const propertyDeltas = segment.addProperties(
+				props,
+				seq,
+				this.collabWindow.collaborating,
+				rollback,
+			);
 			deltaSegments.push({ segment, propertyDeltas });
 			if (this.collabWindow.collaborating) {
 				if (seq === UnassignedSequenceNumber) {
@@ -1645,6 +1650,23 @@ export class MergeTree {
 				zamboniSegments(this);
 			}
 		}
+	}
+
+	/**
+	 * @alpha
+	 */
+	public obliterateRange(
+		start: number,
+		end: number,
+		refSeq: number,
+		clientId: number,
+		seq: number,
+		overwrite: boolean = false,
+		opArgs: IMergeTreeDeltaOpArgs,
+	): void {
+		throw new UsageError(
+			"Attempted to use obliterate. Obliterate is not currently implemented.",
+		);
 	}
 
 	public markRangeRemoved(

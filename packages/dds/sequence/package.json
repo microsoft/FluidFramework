@@ -129,8 +129,11 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedString": {
-				"backCompat": false,
-				"forwardCompat": false
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringSegment": {
+				"backCompat": false
 			}
 		}
 	}

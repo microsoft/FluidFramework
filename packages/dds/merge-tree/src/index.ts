@@ -27,13 +27,7 @@ export {
 	RedBlackTree,
 	SortedDictionary,
 } from "./collections";
-export {
-	LocalClientId,
-	NonCollabClient,
-	TreeMaintenanceSequenceNumber,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "./constants";
+export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 export {
 	createDetachedLocalReferencePosition,
 	LocalReferenceCollection,
@@ -52,20 +46,15 @@ export {
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 	IMergeTreeSegmentDelta,
-	MergeTreeDeltaCallback,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
-	MergeTreeMaintenanceCallback,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback";
 export {
 	BaseSegment,
 	CollaborationWindow,
-	compareNumbers,
-	compareStrings,
 	debugMarkerToString,
 	IJSONMarkerSegment,
-	IMarkerModifiedAction,
 	IMergeNodeCommon,
 	IRemovalInfo,
 	ISegment,
@@ -74,7 +63,6 @@ export {
 	MergeNode,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SegmentAccumulator,
 	SegmentGroup,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
@@ -85,7 +73,6 @@ export {
 	TrackingGroupCollection,
 } from "./mergeTreeTracking";
 export {
-	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
 	createGroupOp,
 	createInsertOp,
