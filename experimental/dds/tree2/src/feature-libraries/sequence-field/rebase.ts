@@ -476,12 +476,14 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 }
 
 function markFollowsMoves(mark: Mark<unknown>): boolean {
+	assert(!isNewAttach(mark), "New attaches should not be rebased over moves");
 	const type = mark.type;
 	switch (type) {
 		case "Insert":
 		case "Delete":
 		case "MoveOut":
 		case "Transient":
+			// TODO: Handle cases where transient attach and detach have different move-following policies.
 			return true;
 		case NoopMarkType:
 		case "ReturnFrom":
