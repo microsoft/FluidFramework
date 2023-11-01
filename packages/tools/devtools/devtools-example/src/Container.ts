@@ -6,7 +6,7 @@
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import type { IContainer } from "@fluidframework/container-definitions";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { AppData } from "./FluidObject";
 
 /**
