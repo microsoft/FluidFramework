@@ -57,6 +57,16 @@ export interface ForestEvents {
  */
 export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
 	/**
+	 * Set of anchors this forest is tracking.
+	 *
+	 * To keep these anchors usable, this AnchorSet must be updated / rebased for any changes made to the forest.
+	 * It is the responsibility of the caller of the forest-editing methods to do this, not the forest itself.
+	 * The caller performs these updates because it has more semantic knowledge about the edits, which can be needed to
+	 * update the anchors in a semantically optimal way.
+	 */
+	readonly anchors: AnchorSet;
+
+	/**
 	 * Create an independent copy of this forest, that uses the provided schema and anchors.
 	 *
 	 * The new copy will not invalidate observers (dependents) of the old one.
