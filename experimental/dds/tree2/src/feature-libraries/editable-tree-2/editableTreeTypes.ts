@@ -298,14 +298,15 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
 	): void;
 
 	/**
-	 * Sets a new value associated with `key`.
-	 * @param key - The key under which the new value will be set.
-	 * @param content - The new value to associate with `key`.
+	 * Adds or updates an entry in the map with a specified `key` and a `value`.
+	 *
+	 * @param key - The key of the element to add to the map.
+	 * @param value - The value of the element to add to the map.
 	 */
-	set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]>): void; // TODO: useful to return itself like JS map?
+	set(key: string, value: FlexibleFieldContent<TSchema["mapFields"]>): void;
 
 	/**
-	 * Deletes the value associated with `key` from the map, if it exists.
+	 * Removes the specified element from this map by its `key`.
 	 *
 	 * @remarks
 	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
@@ -316,7 +317,7 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
 	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
 	 * is more likely to create issues / promote bad usage patterns than offer useful information.
 	 *
-	 * @param key - The key whose associated value will be deleted.
+	 * @param key - The key of the element to remove from the map.
 	 */
 	delete(key: string): void;
 
