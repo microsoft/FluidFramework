@@ -38,14 +38,14 @@
 			"type": "node",
 			"args": ["release", "-g", "client", "-v", "--no-policyCheck"],
 		},
-    {
+		{
 			"name": "flub check policy",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}/build-tools",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["check", "policy",],
+			"args": ["check", "policy"],
 		},
 		{
 			"name": "flub check policy",
@@ -304,7 +304,7 @@
 				"--exit",
 			],
 			"cwd": "${fileDirname}",
-			"skipFiles": ["<node_internals>/**", "**/node_modules/**"],
+			"skipFiles": ["**/node_modules/**"],
 			"outFiles": [
 				// This config avoids loading dependent packages' test files, while using the same technique
 				// as the "Debug Current Test (JS)" config to load source maps for test files in the current

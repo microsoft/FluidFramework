@@ -90,7 +90,11 @@ function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): T
 			inputContext ??= change.inputContext;
 			if (verify && outputContext !== undefined) {
 				// The input context should match the output context of the previous change.
-				assert.deepEqual(change.inputContext, outputContext);
+				try {
+					assert.deepEqual(change.inputContext, outputContext);
+				} catch (error) {
+					throw error;
+				}
 			}
 			outputContext = composeIntentions(outputContext ?? inputContext, change.intentions);
 			intentions = composeIntentions(intentions, change.intentions);

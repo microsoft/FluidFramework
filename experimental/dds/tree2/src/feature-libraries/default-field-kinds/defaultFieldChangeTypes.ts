@@ -30,8 +30,6 @@ export interface OptionalFieldChange {
 	 */
 	readonly id: ChangesetLocalId;
 
-	readonly firstFieldChange?: ChangeAtomId;
-
 	/**
 	 * When populated, indicates the revision that this field change is associated with.
 	 * Is left undefined when the revision is the same as that of the whole changeset
@@ -44,17 +42,43 @@ export interface OptionalFieldChange {
 	 */
 	newContent?: NodeUpdate;
 
+	// TODO: This is no longer necessary for each change within array of field changes.
+	// Maybe should be moved to OptionalChangeset.
 	/**
 	 * Whether the field was empty in the state this change is based on.
 	 */
 	wasEmpty: boolean;
 }
 
+/**
+ * TL;DR:
+ *
+ * The general representation here needs to be closed under composition of optional changesets (though this shouldn't typically go over the wire, though
+ * there are some complications with transactions that I haven't thought through).
+ *
+ * A single optional change comprises a (maybe) change to the root field, and a (maybe) change to the child of the existing fields' contents.
+ *
+ * Since the format must support rebasing such a change over other changes faithfully as well as composing it with other changes (and inverses),
+ * this leads to a representation where an optional changeset specifies:
+ *
+ * - A sequence of changes to the root field (implies ordered) which were applied in succession
+ */
+
+/**
+ * @privateRemarks - This type is used to represent changes to an optional field.
+ * Because the same type is reused for singular changes (e.g. "set content to Foo") and compositions of several changes,
+ * the format is a bit awkward. TODO: rewrite in more informative terms.
+ */
 export interface OptionalChangeset {
 	/**
-	 * If defined, specifies the new content for the field.
+	 * If length > 0, the last element specifies new content for the field.
+	 * Other elements specify intermediate states of the field
+	 * @remarks - Intermediate content should generally not need to be communicated over the wire, but is necessary at
+	 * rebase and compose time to produce correct results axiomatically.
 	 */
-	fieldChange?: OptionalFieldChange;
+	fieldChanges: OptionalFieldChange[];
+
+	activeFieldChange: ChangeAtomId | "start" | "end";
 
 	/**
 	 * Changes to nodes which occupied this field prior to this changeset at some point.

@@ -110,7 +110,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 						// if (
 						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["Delete","Undo:Delete","ChildChange44"]'
+						// 	'Rebase ChildChange1 over compose ["Delete","Undo:Delete","Delete"]'
 						// ) {
 						// 	continue;
 						// }
@@ -132,7 +132,11 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 								edit.change,
 								...editsToRebaseOver,
 							);
-							assert.deepEqual(rebaseWithCompose, rebaseWithoutCompose);
+							try {
+								assert.deepEqual(rebaseWithCompose, rebaseWithoutCompose);
+							} catch (error) {
+								throw error;
+							}
 						});
 					}
 				}
@@ -170,7 +174,11 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// 	continue;
 						// }
 
-						if (title !== 'Rebase ["SetB,0","Delete"] over ChildChange1') {
+						// if (title !== 'Rebase ["SetB,0","SetB,1"] over Delete') {
+						// 	continue;
+						// }
+
+						if (title !== 'Rebase ["ChildChange1","SetB,1"] over SetA,0') {
 							continue;
 						}
 
@@ -254,6 +262,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					const title = `for ${JSON.stringify(
 						namedSourceEdits.map(({ description }) => description),
 					)}`;
+
+					// if (title !== 'for ["SetA,0","ChildChange2","Delete"]') {
+					// 	continue;
+					// }
 
 					// Note that this test case doesn't verify associativity of rollback inverses.
 					// That's covered some by "Composed sandwich rebase over single edit"

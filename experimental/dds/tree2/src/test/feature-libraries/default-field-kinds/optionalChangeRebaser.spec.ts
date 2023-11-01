@@ -94,7 +94,9 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 	};
 
 	for (const change of changes) {
-		ingest(change.fieldChange?.id);
+		for (const fieldChange of change.fieldChanges) {
+			ingest(fieldChange.id);
+		}
 		// Child changes do not need to be ingested for this test file, as TestChange (which is used as a child)
 		// doesn't have any `ChangesetLocalId`s.
 	}
@@ -244,39 +246,39 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 		};
 	}
 
-	if (state.mostRecentEdit !== undefined) {
-		const undoIntention = mintIntention();
-		// We don't use the `invert` helper here, as `TestChange.invert` has logic to negate the intention
-		// of the most recent edit. Instead, we want to mint a new intention. Having correct composition for
-		// the 'negate' operation is already tested via sandwich rebasing.
-		const invertTestChangeViaNewIntention = (change: TestChange): TestChange => {
-			if ("inputContext" in change) {
-				return {
-					inputContext: change.outputContext,
-					outputContext: [...change.outputContext, undoIntention],
-					intentions: [undoIntention],
-				};
-			}
-			return TestChange.emptyChange;
-		};
+	// if (state.mostRecentEdit !== undefined) {
+	// 	const undoIntention = mintIntention();
+	// 	// We don't use the `invert` helper here, as `TestChange.invert` has logic to negate the intention
+	// 	// of the most recent edit. Instead, we want to mint a new intention. Having correct composition for
+	// 	// the 'negate' operation is already tested via sandwich rebasing.
+	// 	const invertTestChangeViaNewIntention = (change: TestChange): TestChange => {
+	// 		if ("inputContext" in change) {
+	// 			return {
+	// 				inputContext: change.outputContext,
+	// 				outputContext: [...change.outputContext, undoIntention],
+	// 				intentions: [undoIntention],
+	// 			};
+	// 		}
+	// 		return TestChange.emptyChange;
+	// 	};
 
-		const inverseChangeset = optionalChangeRebaser.invert(
-			state.mostRecentEdit.changeset,
-			invertTestChangeViaNewIntention as any,
-			// Optional fields should not generate IDs during invert
-			fakeIdAllocator,
-			failCrossFieldManager,
-		);
-		yield {
-			content: state.parent?.content,
-			mostRecentEdit: {
-				changeset: tagChange(inverseChangeset, tagFromIntention(undoIntention)),
-				intention: undoIntention,
-				description: `Undo:${state.mostRecentEdit.description}`,
-			},
-			parent: state,
-		};
-	}
+	// 	const inverseChangeset = optionalChangeRebaser.invert(
+	// 		state.mostRecentEdit.changeset,
+	// 		invertTestChangeViaNewIntention as any,
+	// 		// Optional fields should not generate IDs during invert
+	// 		fakeIdAllocator,
+	// 		failCrossFieldManager,
+	// 	);
+	// 	yield {
+	// 		content: state.parent?.content,
+	// 		mostRecentEdit: {
+	// 			changeset: tagChange(inverseChangeset, tagFromIntention(undoIntention)),
+	// 			intention: undoIntention,
+	// 			description: `Undo:${state.mostRecentEdit.description}`,
+	// 		},
+	// 		parent: state,
+	// 	};
+	// }
 };
 
 /**

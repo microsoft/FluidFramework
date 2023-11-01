@@ -23,18 +23,19 @@ function makeOptionalFieldCodec(
 	return {
 		encode: (change: OptionalChangeset) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
-			if (change.fieldChange !== undefined) {
+			if (change.fieldChanges.length > 0) {
+				// TODO: Codec logic needs to be resolved. current impl is no good.
+				const fieldChange = change.fieldChanges[0];
+
 				encoded.fieldChange = {
-					id: change.fieldChange.id,
-					wasEmpty: change.fieldChange.wasEmpty,
+					id: fieldChange.id,
+					wasEmpty: change.fieldChanges[0].wasEmpty,
 				};
-				if (change.fieldChange.revision !== undefined) {
-					encoded.fieldChange.revision = change.fieldChange.revision;
+				if (fieldChange.revision !== undefined) {
+					encoded.fieldChange.revision = fieldChange.revision;
 				}
-				if (change.fieldChange.newContent !== undefined) {
-					encoded.fieldChange.newContent = nodeUpdateCodec.encode(
-						change.fieldChange.newContent,
-					);
+				if (fieldChange.newContent !== undefined) {
+					encoded.fieldChange.newContent = nodeUpdateCodec.encode(fieldChange.newContent);
 				}
 			}
 
@@ -49,7 +50,10 @@ function makeOptionalFieldCodec(
 		},
 
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
-			const decoded: Mutable<OptionalChangeset> = {};
+			const decoded: Mutable<OptionalChangeset> = {
+				fieldChanges: [],
+				activeFieldChange: "end",
+			};
 			if (encoded.fieldChange !== undefined) {
 				const decodedFieldChange: Mutable<OptionalFieldChange> = {
 					id: encoded.fieldChange.id,
@@ -63,7 +67,7 @@ function makeOptionalFieldCodec(
 						encoded.fieldChange.newContent,
 					);
 				}
-				decoded.fieldChange = decodedFieldChange;
+				decoded.fieldChanges.push(decodedFieldChange);
 			}
 
 			if (encoded.childChanges !== undefined) {
