@@ -32,6 +32,11 @@ export interface IRevertible {
     revert(): any;
 }
 
+// @public
+export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
+    (event: "conflict", listener: (row: number, col: number, currentValue: MatrixItem<T>, ignoredValue: MatrixItem<T>, target: IEventThisPlaceHolder) => void): any;
+}
+
 // @public (undocumented)
 export interface IUndoConsumer {
     // (undocumented)
