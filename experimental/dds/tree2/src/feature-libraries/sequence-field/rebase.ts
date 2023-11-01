@@ -158,6 +158,12 @@ function rebaseMarkList<TNodeChange>(
 				metadata,
 			);
 
+
+			assert(
+				areInputCellsEmpty(rebasedMark) && rebasedMark.cellId.revision !== undefined,
+				"Mark should have empty input cells after rebasing over a cell-emptying mark",
+			);			
+
 			if (isInverseAttach(baseMark)) {
 				assert(detachId.revision !== undefined, 0x74c /* Detach ID should have revision */);
 				lineageEntries.push({
@@ -170,18 +176,11 @@ function rebaseMarkList<TNodeChange>(
 					id: detachId.localId,
 					count: baseMark.count,
 				});
-			}
-
-			assert(
-				areInputCellsEmpty(rebasedMark) && rebasedMark.cellId.revision !== undefined,
-				"Mark should have empty input cells after rebasing over a cell-emptying mark",
-			);
-
-			if (!isInverseAttach(baseMark)) {
+				
 				setMarkAdjacentCells(
 					rebasedMark,
 					detachBlocks.get(rebasedMark.cellId.revision) ?? [],
-				);
+				);				
 			}
 		}
 
