@@ -32,6 +32,7 @@ import {
 	getOutputCellId,
 	getEndpoint,
 	isReattach,
+	splitMark,
 } from "./utils";
 import {
 	Changeset,
@@ -696,7 +697,12 @@ function getMovedMark<T>(
 			newEffect,
 			false,
 		);
-		return effect.value.movedMark;
+
+		if (effect.value.movedMark.count === count) {
+			return effect.value.movedMark;
+		}
+		const [mark1, _mark2] = splitMark(effect.value.movedMark, count);
+		return mark1;
 	}
 
 	return undefined;
