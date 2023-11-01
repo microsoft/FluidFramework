@@ -1,7 +1,7 @@
 {
 	"extends": ["./tsconfig.esm.json"],
 	"compilerOptions": {
-    "composite": false,
+		"composite": false,
 		"types": ["node", "mocha"],
 		"declaration": false,
 		"declarationMap": false,

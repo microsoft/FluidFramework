@@ -1,7 +1,7 @@
 {
-  "extends": ["./tsconfig.base.json"],
+	"extends": ["./tsconfig.base.json"],
 	"compilerOptions": {
 		"module": "ESNext",
-    "moduleResolution": "Node10"
-	}
+		"moduleResolution": "Node10",
+	},
 }
