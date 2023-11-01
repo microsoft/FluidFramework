@@ -19,7 +19,7 @@ import {
 	TreeNodeSchema,
 	TreeSchema,
 } from "../../typed-schema";
-import { AssignableFieldKinds, TreeNode } from "../editableTreeTypes";
+import { AssignableFieldKinds } from "../editableTreeTypes";
 
 /**
  * An object-like SharedTree node. Includes objects, lists, and maps.
@@ -42,58 +42,118 @@ export interface SharedTreeList<
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are invalid.
+	 * @throws Throws if `index` is not in the range [0, `list.length`).
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAt<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		index: number,
+		value: T extends string ? never : string extends T ? never : T,
+	): void;
 
 	/**
-	 * Inserts new item(s) at the start of the sequence.
+	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are invalid.
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAtStart<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		value: T extends string ? never : string extends T ? never : T,
+	): void;
 
 	/**
-	 * Inserts new item(s) at the end of the sequence.
+	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are invalid.
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAtEnd<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		value: T extends string ? never : string extends T ? never : T,
+	): void;
 
 	/**
 	 * Removes the item at the specified location.
 	 * @param index - The index at which to remove the item.
-	 * @throws Throws if any of the input indices are invalid.
+	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
 	removeAt(index: number): void;
 
 	/**
 	 * Removes all items between the specified indices.
-	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the sequence.
+	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the list.
 	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if any of the input indices are invalid.
-	 * If `end` is not supplied or is greater than the length of the sequence, all items after `start` are deleted.
+	 * @throws Throws if `start` is not in the range [0, `list.length`).
+	 * @throws Throws if `end` is less than `start`.
+	 * If `end` is not supplied or is greater than the length of the list, all items after `start` are deleted.
 	 */
 	removeRange(start?: number, end?: number): void;
 
 	/**
-	 * Moves the specified items to the start of the sequence.
+	 * Moves the specified item to the start of the list.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 */
+	moveToStart(sourceIndex: number): void;
+
+	/**
+	 * Moves the specified item to the start of the list.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source list to move the item out of.
+	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 */
+	moveToStart(sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+
+	/**
+	 * Moves the specified item to the end of the list.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 */
+	moveToEnd(sourceIndex: number): void;
+
+	/**
+	 * Moves the specified item to the end of the list.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source list to move the item out of.
+	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 */
+	moveToEnd(sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+
+	/**
+	 * Moves the specified item to the desired location in the list.
+	 * @param index - The index to move the item to.
+	 * This is based on the state of the list before moving the source item.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 */
+	moveToIndex(index: number, sourceIndex: number): void;
+
+	/**
+	 * Moves the specified item to the desired location in the list.
+	 * @param index - The index to move the item to.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source list to move the item out of.
+	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 */
+	moveToIndex(index: number, sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+
+	/**
+	 * Moves the specified items to the start of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 
 	/**
-	 * Moves the specified items to the start of the sequence.
+	 * Moves the specified items to the start of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @param source - The source list to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToStart(
 		sourceStart: number,
@@ -102,23 +162,20 @@ export interface SharedTreeList<
 	): void;
 
 	/**
-	 * Moves the specified items to the end of the sequence.
+	 * Moves the specified items to the end of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
 	/**
-	 * Moves the specified items to the end of the sequence.
+	 * Moves the specified items to the end of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @param source - The source list to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToEnd(
 		sourceStart: number,
@@ -127,25 +184,23 @@ export interface SharedTreeList<
 	): void;
 
 	/**
-	 * Moves the specified items to the desired location within the sequence.
+	 * Moves the specified items to the desired location within the list.
 	 * @param index - The index to move the items to.
+	 * This is based on the state of the list before moving the source items.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @throws Throws if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
 
 	/**
-	 * Moves the specified items to the desired location within the sequence.
+	 * Moves the specified items to the desired location within the list.
 	 * @param index - The index to move the items to.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @param source - The source list to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
 	moveRangeToIndex(
 		index: number,
@@ -209,7 +264,10 @@ export type ObjectFields<
  * A map of string keys to tree objects.
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<
+	string,
+	ProxyField<TSchema["mapFields"]>
+>;
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.
@@ -287,24 +345,3 @@ export type ProxyRoot<
 	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;
-
-/** Symbol used to store a private/internal reference to the underlying editable tree node. */
-const treeNodeSym = Symbol("TreeNode");
-
-/** Helper to retrieve the stored tree node. */
-export function getTreeNode(target: unknown): TreeNode | undefined {
-	if (typeof target === "object" && target !== null) {
-		return (target as { [treeNodeSym]?: TreeNode })[treeNodeSym];
-	}
-
-	return undefined;
-}
-
-/** Helper to set the stored tree node. */
-export function setTreeNode(target: any, treeNode: TreeNode) {
-	Object.defineProperty(target, treeNodeSym, {
-		value: treeNode,
-		// TODO: Investigate if this can be removed by properly implementing key-related traps in the proxy
-		configurable: true,
-	});
-}

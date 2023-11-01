@@ -18,7 +18,7 @@ describe("SharedTree proxies", () => {
 	});
 
 	const parentSchema = sb.object("parent", {
-		struct: childSchema,
+		object: childSchema,
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
 		map: sb.map("map", sb.optional(sb.string)),
 	});
@@ -26,7 +26,7 @@ describe("SharedTree proxies", () => {
 	const schema = sb.intoSchema(parentSchema);
 
 	const initialTree = {
-		struct: { content: 42 },
+		object: { content: 42 },
 		list: [42, 42, 42],
 		map: new Map([
 			["foo", "Hello"],
@@ -34,10 +34,10 @@ describe("SharedTree proxies", () => {
 		]),
 	};
 
-	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
-		const structProxy = root.struct;
-		const structProxyAgain = root.struct;
-		assert.equal(structProxyAgain, structProxy);
+	itWithRoot("cache and reuse objects", schema, initialTree, (root) => {
+		const objectProxy = root.object;
+		const objectProxyAgain = root.object;
+		assert.equal(objectProxyAgain, objectProxy);
 	});
 
 	itWithRoot("cache and reuse lists", schema, initialTree, (root) => {
@@ -178,6 +178,99 @@ describe("SharedTreeList", () => {
 		});
 	});
 
+	describe("inserting primitive", () => {
+		const _ = new SchemaBuilder({ scope: "test" });
+		const obj = _.object("Obj", {
+			numbers: _.list(_.number),
+			strings: _.list(_.string),
+			booleans: _.list(_.boolean),
+		});
+		const schema = _.intoSchema(obj);
+		const initialTree = { numbers: [], strings: [], booleans: [] };
+		itWithRoot("numbers", schema, initialTree, (root) => {
+			root.numbers.insertAtStart([0]);
+			root.numbers.insertAt(1, [1]);
+			root.numbers.insertAtEnd([2]);
+			assert.deepEqual(root.numbers, [0, 1, 2]);
+		});
+
+		itWithRoot("strings", schema, initialTree, (root) => {
+			// This test catches a usability regression in which strings can be passed directly as content to insert,
+			// because strings are also iterables of strings. Passing a string directly as an iterable is very likely not what the user intends.
+			root.strings.insertAtStart(["a"]);
+			root.strings.insertAt(1, ["b"]);
+			root.strings.insertAtEnd(["c"]);
+
+			const string: string = "hello";
+			const stringLiteral: "hello" = "hello" as const;
+			const iterableOrString: Iterable<string> | string = "hello";
+			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(stringLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(iterableOrString);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(iterableOrLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, stringLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, iterableOrString);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, iterableOrLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(stringLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(iterableOrString);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(iterableOrLiteral);
+			});
+
+			const de = "de"[Symbol.iterator]();
+			root.strings.insertAtStart(de);
+			const fg = "fg"[Symbol.iterator]();
+			root.strings.insertAt(3, fg);
+			const hi = "hi"[Symbol.iterator]();
+			root.strings.insertAtEnd(hi);
+			assert.deepEqual(root.strings, ["d", "e", "a", "f", "g", "b", "c", "h", "i"]);
+		});
+
+		itWithRoot("booleans", schema, initialTree, (root) => {
+			root.booleans.insertAtStart([true]);
+			root.booleans.insertAt(1, [false]);
+			root.booleans.insertAtEnd([true]);
+			assert.deepEqual(root.booleans, [true, false, true]);
+		});
+	});
+
 	describe("removing items", () => {
 		const _ = new SchemaBuilder({ scope: "test" });
 		const schema = _.intoSchema(_.list(_.number));
@@ -193,6 +286,33 @@ describe("SharedTreeList", () => {
 			list.removeRange(/* start: */ 1, /* end: */ 3);
 			assert.deepEqual(list, [0, 3]);
 		});
+
+		itWithRoot("removeRange() - all", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(/* start: */ 1, /* end: */ 3);
+			assert.deepEqual(list, [0, 3]);
+			list.removeRange();
+			assert.deepEqual(list, []);
+		});
+
+		itWithRoot("removeRange() - past end", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(/* start: */ 1, /* end: */ 3);
+			assert.deepEqual(list, [0, 3]);
+			list.removeRange(1, Infinity);
+			assert.deepEqual(list, [0]);
+		});
+
+		itWithRoot("removeRange() - empty range", schema, [0, 1, 2, 3], (list) => {
+			assert.deepEqual(list, [0, 1, 2, 3]);
+			list.removeRange(2, 2);
+			assert.deepEqual(list, [0, 1, 2, 3]);
+		});
+
+		itWithRoot("removeRange() - empty list", schema, [], (list) => {
+			assert.deepEqual(list, []);
+			assert.throws(() => list.removeRange());
+		});
 	});
 
 	describe("moving items", () => {
@@ -200,6 +320,28 @@ describe("SharedTreeList", () => {
 			const _ = new SchemaBuilder({ scope: "test" });
 			const schema = _.intoSchema(_.list(_.number));
 			const initialTree = [0, 1, 2, 3];
+
+			itWithRoot("moveToStart()", schema, initialTree, (list) => {
+				assert.deepEqual(list, [0, 1, 2, 3]);
+				list.moveToStart(1);
+				assert.deepEqual(list, [1, 0, 2, 3]);
+			});
+
+			itWithRoot("moveToEnd()", schema, initialTree, (list) => {
+				assert.deepEqual(list, [0, 1, 2, 3]);
+				list.moveToEnd(1);
+				assert.deepEqual(list, [0, 2, 3, 1]);
+			});
+
+			itWithRoot("moveToIndex()", schema, initialTree, (list) => {
+				assert.deepEqual(list, [0, 1, 2, 3]);
+				list.moveToIndex(1, 2);
+				assert.deepEqual(list, [0, 2, 1, 3]);
+				list.moveToIndex(2, 1);
+				assert.deepEqual(list, [0, 2, 1, 3]);
+				list.moveToIndex(2, 0);
+				assert.deepEqual(list, [2, 0, 1, 3]);
+			});
 
 			itWithRoot("moveRangeToStart()", schema, initialTree, (list) => {
 				assert.deepEqual(list, [0, 1, 2, 3]);
@@ -273,6 +415,30 @@ describe("SharedTreeList", () => {
 				listB: ["b0", "b1"],
 			};
 
+			itWithRoot("moveToStart()", schema, initialTree, ({ listA, listB }) => {
+				assert.deepEqual(listA, ["a0", "a1"]);
+				assert.deepEqual(listB, ["b0", "b1"]);
+				listB.moveToStart(0, listA);
+				assert.deepEqual(listA, ["a1"]);
+				assert.deepEqual(listB, ["a0", "b0", "b1"]);
+			});
+
+			itWithRoot("moveToEnd()", schema, initialTree, ({ listA, listB }) => {
+				assert.deepEqual(listA, ["a0", "a1"]);
+				assert.deepEqual(listB, ["b0", "b1"]);
+				listB.moveToEnd(0, listA);
+				assert.deepEqual(listA, ["a1"]);
+				assert.deepEqual(listB, ["b0", "b1", "a0"]);
+			});
+
+			itWithRoot("moveToIndex()", schema, initialTree, ({ listA, listB }) => {
+				assert.deepEqual(listA, ["a0", "a1"]);
+				assert.deepEqual(listB, ["b0", "b1"]);
+				listB.moveToIndex(/* index: */ 1, /* sourceStart: */ 0, listA);
+				assert.deepEqual(listA, ["a1"]);
+				assert.deepEqual(listB, ["b0", "a0", "b1"]);
+			});
+
 			itWithRoot("moveRangeToStart()", schema, initialTree, ({ listA, listB }) => {
 				assert.deepEqual(listA, ["a0", "a1"]);
 				assert.deepEqual(listB, ["b0", "b1"]);
@@ -331,10 +497,10 @@ describe("SharedTreeList", () => {
 				return list === "a" ? root.listA : root.listB;
 			}
 
-			itWithRoot("moveRangeToStart()", schema, initialTree, (root) => {
+			itWithRoot("move to start", schema, initialTree, (root) => {
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
-				list2.moveRangeToStart(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				list2.moveToStart(1, list1);
 				assert.deepEqual(list1, ["a"]);
 				assert.deepEqual(list2, [1, 2, true]);
 				list1.moveRangeToStart(/* sourceStart: */ 0, /* sourceEnd: */ 2, list2);
@@ -342,10 +508,10 @@ describe("SharedTreeList", () => {
 				assert.deepEqual(list2, [true]);
 			});
 
-			itWithRoot("moveRangeToEnd()", schema, initialTree, (root) => {
+			itWithRoot("move to end", schema, initialTree, (root) => {
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
-				list2.moveRangeToEnd(/* sourceStart: */ 1, /* sourceEnd: */ 2, list1);
+				list2.moveToEnd(1, list1);
 				assert.deepEqual(list1, ["a"]);
 				assert.deepEqual(list2, [2, true, 1]);
 				list1.moveRangeToEnd(/* sourceStart: */ 0, /* sourceEnd: */ 1, list2);
@@ -353,15 +519,10 @@ describe("SharedTreeList", () => {
 				assert.deepEqual(list2, [true, 1]);
 			});
 
-			itWithRoot("moveRangeToIndex()", schema, initialTree, (root) => {
+			itWithRoot("move to index", schema, initialTree, (root) => {
 				const list1 = getEitherList(root, "a");
 				const list2 = getEitherList(root, "b");
-				list2.moveRangeToIndex(
-					/* index: */ 1,
-					/* sourceStart: */ 1,
-					/* sourceEnd: */ 2,
-					list1,
-				);
+				list2.moveToIndex(/* index: */ 1, /* sourceIndex */ 1, list1);
 				assert.deepEqual(list1, ["a"]);
 				assert.deepEqual(list2, [2, 1, true]);
 				list1.moveRangeToIndex(

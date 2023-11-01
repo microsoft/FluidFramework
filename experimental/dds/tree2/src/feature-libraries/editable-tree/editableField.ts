@@ -611,7 +611,7 @@ function unwrappedTree(
 ): UnwrappedEditableTree {
 	const nodeTypeName = cursor.type;
 	const nodeType =
-		context.schema.treeSchema.get(nodeTypeName) ??
+		context.schema.nodeSchema.get(nodeTypeName) ??
 		fail("requested type does not exist in schema");
 	// Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
 	if (isPrimitive(nodeType)) {

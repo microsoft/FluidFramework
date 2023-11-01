@@ -277,6 +277,22 @@ export class LazySequence<TTypes extends AllowedTypes>
 		fieldEditor.delete(removeStart, removeEnd - removeStart);
 	}
 
+	public moveToStart(sourceIndex: number): void;
+	public moveToStart(sourceIndex: number, source: Sequence<AllowedTypes>): void;
+	public moveToStart(sourceIndex: number, source?: Sequence<AllowedTypes>): void {
+		this._moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
+	}
+	public moveToEnd(sourceIndex: number): void;
+	public moveToEnd(sourceIndex: number, source: Sequence<AllowedTypes>): void;
+	public moveToEnd(sourceIndex: number, source?: Sequence<AllowedTypes>): void {
+		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
+	}
+	public moveToIndex(index: number, sourceIndex: number): void;
+	public moveToIndex(index: number, sourceIndex: number, source: Sequence<AllowedTypes>): void;
+	public moveToIndex(index: number, sourceIndex: number, source?: Sequence<AllowedTypes>): void {
+		this._moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
+	}
+
 	public moveRangeToStart(sourceStart: number, sourceEnd: number): void;
 	public moveRangeToStart(
 		sourceStart: number,

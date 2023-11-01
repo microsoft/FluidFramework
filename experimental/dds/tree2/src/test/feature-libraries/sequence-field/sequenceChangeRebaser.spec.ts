@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
+	makeAnonChange,
 	emptyFieldChanges,
 	mintRevisionTag,
 	RevisionTag,
@@ -21,11 +22,12 @@ import {
 	compose,
 	composeAnonChanges,
 	invert,
+	rebaseOverComposition,
 	rebaseTagged,
 	toDelta,
 	withoutLineage,
 } from "./utils";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
+import { ChangeMaker as Change } from "./testEdits";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -51,15 +53,7 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 			composeAnonChanges([Change.insert(i, 1, 42), Change.modify(i, TestChange.mint([], 2))]),
 	],
 	["Insert", (i) => Change.insert(i, 2, 42)],
-	[
-		"TransientInsert",
-		(i) => [
-			{ count: i },
-			Mark.insert([singleTextCursor({ type, value: 1 })], brand(0), {
-				transientDetach: { revision: tag1, localId: brand(0) },
-			}),
-		],
-	],
+	["TransientInsert", (i) => composeAnonChanges([Change.insert(i, 1), Change.delete(i, 1)])],
 	["Delete", (i) => Change.delete(i, 2)],
 	[
 		"Revive",
@@ -72,17 +66,14 @@ const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<Te
 	],
 	[
 		"TransientRevive",
-		(i) => [
-			{ count: i },
-			Mark.revive(
-				1,
-				{
+		(i) =>
+			composeAnonChanges([
+				Change.revive(i, 1, {
 					revision: tag1,
 					localId: brand(0),
-				},
-				{ transientDetach: { revision: tag1, localId: brand(0) } },
-			),
-		],
+				}),
+				Change.delete(i, 1),
+			]),
 	],
 	[
 		"ConflictedRevive",
@@ -266,6 +257,39 @@ describe("SequenceField - Rebaser Axioms", () => {
 			});
 		}
 	});
+
+	describe.skip("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
+		// TODO: Support testing changesets with node changes.
+		// Currently node changes in B and C will incorrectly have the same input context, which is not correct.
+		const shallowTestChanges = testChanges.filter(
+			(change) => !["NestedChange", "MInsert"].includes(change[0]),
+		);
+		for (const [name1, makeChange1] of shallowTestChanges) {
+			for (const [name2, makeChange2] of shallowTestChanges) {
+				for (const [name3, makeChange3] of shallowTestChanges) {
+					const title = `${name1} ↷ [${name2}, ${name3}]`;
+					it(title, () => {
+						const a = tagChange(makeChange1(1, 1), tag1);
+						const b = tagChange(makeChange2(1, 1), tag2);
+						const c = tagChange(makeChange3(1, 1), tag3);
+						const a2 = rebaseTagged(a, b);
+						const rebasedIndividually = rebaseTagged(a2, c).change;
+						const bc = compose([b, c]);
+						const rebasedOverComposition = rebaseOverComposition(
+							a.change,
+							bc,
+							revisionMetadataSourceFromInfo([
+								{ revision: tag1 },
+								{ revision: tag2 },
+								{ revision: tag3 },
+							]),
+						);
+						assert.deepEqual(rebasedOverComposition, rebasedIndividually);
+					});
+				}
+			}
+		}
+	});
 });
 
 describe("SequenceField - Sandwich Rebasing", () => {
@@ -275,7 +299,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
 		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertA);
-		assert.deepEqual(insertB3.change, insertB.change);
+		assert.deepEqual(withoutLineage(insertB3.change), insertB.change);
 	});
 
 	// This test fails due to the rebaser incorrectly interpreting the order of the cell created by `insertT` and the cell targeted by `deleteB`.
@@ -309,7 +333,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const insertB2 = rebaseTagged(insertB, inverseA);
 		const insertB3 = rebaseTagged(insertB2, insertX);
 		const insertB4 = rebaseTagged(insertB3, insertA2);
-		assert.deepEqual(insertB4.change, Change.insert(3, 1));
+		assert.deepEqual(withoutLineage(insertB4.change), Change.insert(3, 1));
 	});
 
 	it("[Delete ABC, Revive ABC] ↷ Delete B", () => {
@@ -365,5 +389,16 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		const moveRollback = tagRollbackInverse(moveInverse, tag3, tag1);
 		const rebasedUndo = rebaseTagged(undo, moveRollback, move);
 		assert.deepEqual(rebasedUndo, undo);
+	});
+});
+
+describe.skip("SequenceField - Composed sandwich rebasing", () => {
+	it("Nested inserts rebasing", () => {
+		const insertA = tagChange(Change.insert(0, 2), tag1);
+		const insertB = tagChange(Change.insert(1, 1), tag2);
+		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
+		const sandwich = compose([inverseA, insertA]);
+		const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
+		assert.deepEqual(insertB2.change, insertB.change);
 	});
 });
