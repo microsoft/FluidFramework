@@ -9,9 +9,11 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
-import { IFluidMountableViewEntryPoint } from "@fluidframework/view-interfaces";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import {
+	IFluidMountableViewEntryPoint,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
 
 import React from "react";
 
@@ -50,7 +52,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
 				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
 				const codeMirror = await getDataStoreEntryPoint<CodeMirrorComponent>(
-					runtime,
+					containerRuntime,
 					defaultComponentId,
 				);
 
@@ -66,8 +68,6 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 
 				return {
 					getDefaultDataObject: async () => codeMirror as FluidObject,
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					getDefaultView: async () => view,
 					getMountableDefaultView,
 				};
 			},

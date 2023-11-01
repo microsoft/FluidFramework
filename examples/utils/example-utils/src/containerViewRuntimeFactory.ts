@@ -8,7 +8,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
-import { IFluidMountableViewEntryPoint } from "@fluidframework/view-interfaces";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
 
 const dataStoreId = "modelDataStore";
 
@@ -27,6 +27,11 @@ export async function getDataStoreEntryPoint<T>(
 	}
 
 	return entryPointHandle.get();
+}
+
+export interface IFluidMountableViewEntryPoint {
+	getDefaultDataObject(): Promise<FluidObject>;
+	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
 }
 
 /**
@@ -57,8 +62,6 @@ export class ContainerViewRuntimeFactory<T> extends BaseContainerRuntimeFactory 
 
 				return {
 					getDefaultDataObject: async () => entryPoint as FluidObject,
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					getDefaultView: async () => view,
 					getMountableDefaultView,
 				};
 			},

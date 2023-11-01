@@ -7,5 +7,4 @@ export {
 	IFluidMountableView,
 	IFluidMountableViewClass,
 	IProvideFluidMountableView,
-	IFluidMountableViewEntryPoint,
 } from "./mountableView";

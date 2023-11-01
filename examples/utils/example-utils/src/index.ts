@@ -7,6 +7,7 @@ export {
 	ContainerViewRuntimeFactory,
 	ViewCallback,
 	getDataStoreEntryPoint,
+	IFluidMountableViewEntryPoint,
 } from "./containerViewRuntimeFactory";
 export type {
 	DataTransformationCallback,

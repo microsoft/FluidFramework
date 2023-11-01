@@ -49,12 +49,3 @@ export interface IFluidMountableView extends IProvideFluidMountableView {
 	 */
 	unmount(): void;
 }
-
-/**
- * TODO: determine what is needed here
- */
-export interface IFluidMountableViewEntryPoint {
-	getDefaultDataObject(): Promise<FluidObject>;
-	getDefaultView(): Promise<IFluidMountableView>;
-	getMountableDefaultView(): Promise<IFluidMountableView>;
-}

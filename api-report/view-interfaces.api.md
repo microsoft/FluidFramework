@@ -22,16 +22,6 @@ export interface IFluidMountableViewClass {
     canMount(view: FluidObject): boolean;
 }
 
-// @public
-export interface IFluidMountableViewEntryPoint {
-    // (undocumented)
-    getDefaultDataObject(): Promise<FluidObject>;
-    // (undocumented)
-    getDefaultView(): Promise<IFluidMountableView>;
-    // (undocumented)
-    getMountableDefaultView(): Promise<IFluidMountableView>;
-}
-
 // @public (undocumented)
 export interface IProvideFluidMountableView {
     // (undocumented)

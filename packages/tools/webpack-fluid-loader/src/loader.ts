@@ -22,10 +22,7 @@ import { Loader } from "@fluidframework/container-loader";
 import { prefetchLatestSnapshot } from "@fluidframework/odsp-driver";
 import { HostStoragePolicy, IPersistedCache } from "@fluidframework/odsp-driver-definitions";
 import { IUser } from "@fluidframework/protocol-definitions";
-import {
-	IFluidMountableView,
-	IFluidMountableViewEntryPoint,
-} from "@fluidframework/view-interfaces";
+import { IFluidMountableView } from "@fluidframework/view-interfaces";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
 import { LocalDocumentServiceFactory, LocalResolver } from "@fluidframework/local-driver";
@@ -367,6 +364,14 @@ export async function start(
 	}
 }
 
+/**
+ * Webpack Fluid Loader assumes/knows the shape of the entryPoint
+ */
+interface IFluidMountableViewEntryPoint {
+	getDefaultDataObject(): Promise<FluidObject>;
+	getMountableDefaultView(path?: string): Promise<IFluidMountableView>;
+}
+
 async function getFluidObjectAndRender(container: IContainer, url: string, div: HTMLDivElement) {
 	const entryPoint = await container.getEntryPoint();
 
@@ -388,7 +393,10 @@ async function getFluidObjectAndRender(container: IContainer, url: string, div: 
 
 		fluidObject = response.value;
 	} else {
-		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView();
+		fluidObject = await (entryPoint as IFluidMountableViewEntryPoint).getMountableDefaultView(
+			// Remove starting "//"
+			url.slice(2),
+		);
 	}
 
 	if (fluidObject === undefined) {

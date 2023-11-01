@@ -9,9 +9,11 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils";
 import { MountableView } from "@fluidframework/view-adapters";
-import { IFluidMountableViewEntryPoint } from "@fluidframework/view-interfaces";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import {
+	IFluidMountableViewEntryPoint,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
 
 import React from "react";
 
@@ -40,14 +42,14 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 			context,
 			registryEntries: registry,
 			existing,
-			containerScope: context.scope,
+			containerScope: undefined,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {
 				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
 				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
 				const smdeDataObject = await getDataStoreEntryPoint<SmdeDataObject>(
-					runtime,
+					containerRuntime,
 					defaultComponentId,
 				);
 
@@ -62,8 +64,6 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 
 				return {
 					getDefaultDataObject: async () => smdeDataObject as FluidObject,
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-					getDefaultView: async () => view,
 					getMountableDefaultView,
 				};
 			},
