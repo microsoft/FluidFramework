@@ -1,4 +1,15 @@
 {
-	"exports": ["index"],
-	"imports": ["util", "core", "events", "feature-libraries", "codec"]
+	"tags": [
+		"chunked-forest"
+	],
+	"exports": [
+		"index"
+	],
+	"imports": [
+		"util",
+		"core",
+		"events",
+		"feature-libraries",
+		"codec"
+	]
 }
