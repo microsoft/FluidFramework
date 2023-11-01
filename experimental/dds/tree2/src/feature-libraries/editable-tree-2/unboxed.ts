@@ -56,7 +56,7 @@ export function unboxedUnion<TTypes extends AllowedTypes>(
 	if (type !== undefined) {
 		return unboxedTree(
 			context,
-			context.schema.treeSchema.get(type) ?? fail("missing schema"),
+			context.schema.nodeSchema.get(type) ?? fail("missing schema"),
 			cursor,
 		) as UnboxNodeUnion<TTypes>;
 	}

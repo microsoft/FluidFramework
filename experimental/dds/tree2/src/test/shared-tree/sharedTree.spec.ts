@@ -14,10 +14,13 @@ import {
 	singleTextCursor,
 	makeSchemaCodec,
 	jsonableTreeFromCursor,
-	on,
 	ContextuallyTypedNodeData,
 	Any,
 	TreeStatus,
+	TreeFieldSchema,
+	SchemaBuilderInternal,
+	boxedIterator,
+	TreeSchema,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
@@ -30,7 +33,6 @@ import {
 	expectSchemaEqual,
 	initializeTestTree,
 	jsonSequenceRootSchema,
-	toJsonableTree,
 	validateTree,
 	validateTreeContent,
 	validateViewConsistency,
@@ -70,30 +72,143 @@ const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 const fooKey: FieldKey = brand("foo");
 
 describe("SharedTree", () => {
-	// TODO: concurrent use of schematize should not double initialize. Should use constraints so second run conflicts.
-	it.skip("Concurrent Schematize", () => {
-		const provider = new TestTreeProviderLite(2);
-		const content: InitializeAndSchematizeConfiguration = {
-			schema: jsonSequenceRootSchema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: [1],
-		};
-		const tree1 = provider.trees[0].schematizeView(content);
-		provider.trees[1].schematizeView(content);
-		provider.processMessages();
-
-		validateRootField(tree1, [1]);
-	});
-
-	it("reads only one node", () => {
-		// This is a regression test for a scenario in which a transaction would apply its delta twice,
-		// inserting two nodes instead of just one
-		const view = viewWithContent({ schema: jsonSequenceRootSchema, initialTree: [] });
-		runSynchronous(view, (t) => {
-			t.context.root.insertNodes(0, [5]);
+	describe("schematize", () => {
+		const factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
 		});
 
-		assert.deepEqual(toJsonableTree(view), [{ type: leaf.number.name, value: 5 }]);
+		const builder = new SchemaBuilder({
+			scope: "test",
+			name: "Schematize Tree Tests",
+		});
+		const schema = builder.intoSchema(SchemaBuilder.optional(leaf.number));
+
+		const builderGeneralized = new SchemaBuilder({
+			scope: "test",
+			name: "Schematize Tree Tests Generalized",
+		});
+
+		const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
+
+		// TODO: concurrent use of schematize should not double initialize. Should use constraints so second run conflicts.
+		it.skip("Concurrent Schematize", () => {
+			const provider = new TestTreeProviderLite(2);
+			const content: InitializeAndSchematizeConfiguration = {
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [1],
+			};
+			const tree1 = provider.trees[0].schematizeView(content);
+			provider.trees[1].schematizeView(content);
+			provider.processMessages();
+
+			validateRootField(tree1, [1]);
+		});
+
+		it("initialize tree", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
+			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+
+			const view = tree.schematize({
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: 10 as any,
+				schema,
+			});
+			assert.equal(view.content, 10);
+		});
+
+		it("noop upgrade", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			tree.storedSchema.update(schema);
+
+			// No op upgrade with AllowedUpdateType.None does not error
+			const schematized = tree.schematizeView({
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: 10,
+				schema,
+			});
+			// And does not add initial tree:
+			assert.equal(schematized.root, undefined);
+		});
+
+		it("incompatible upgrade errors", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			tree.storedSchema.update(schemaGeneralized);
+			assert.throws(() => {
+				tree.schematize({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: 5,
+					schema,
+				});
+			});
+		});
+
+		it("upgrade schema", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			tree.storedSchema.update(schema);
+			const schematized = tree.schematizeView({
+				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+				initialTree: 5,
+				schema: schemaGeneralized,
+			});
+			// Initial tree should not be applied
+			assert.equal(schematized.root, undefined);
+		});
+	});
+
+	describe("requireSchema", () => {
+		const factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+		});
+		const schemaEmpty = new SchemaBuilderInternal({
+			scope: "com.fluidframework.test",
+			lint: { rejectEmpty: false, rejectForbidden: false },
+		}).intoSchema(TreeFieldSchema.empty);
+
+		function updateSchema(tree: SharedTree, schema: TreeSchema): void {
+			tree.storedSchema.update(schema);
+			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
+			tree.view.events.emit("afterBatch");
+		}
+
+		it("empty", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const view = tree.requireSchema(schemaEmpty, () => assert.fail()) ?? assert.fail();
+			assert.deepEqual([...view.editableTree2(schemaEmpty)[boxedIterator]()], []);
+		});
+
+		it("differing schema errors and schema change callback", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const builder = new SchemaBuilder({ scope: "test" });
+			const schemaGeneralized = builder.intoSchema(builder.optional(Any));
+			{
+				const view = tree.requireSchema(schemaGeneralized, () => assert.fail());
+				assert.equal(view, undefined);
+			}
+
+			const log: string[] = [];
+			{
+				const view = tree.requireSchema(schemaEmpty, () => log.push("empty"));
+				assert(view !== undefined);
+			}
+			assert.deepEqual(log, []);
+			updateSchema(tree, schemaGeneralized);
+
+			assert.deepEqual(log, ["empty"]);
+
+			{
+				const view = tree.requireSchema(schemaGeneralized, () =>
+					// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
+					(log as string[]).push("general"),
+				);
+				assert(view !== undefined);
+			}
+			assert.deepEqual(log, ["empty"]);
+			updateSchema(tree, schemaEmpty);
+			assert.deepEqual(log, ["empty", "general"]);
+		});
 	});
 
 	it("editable-tree-2-end-to-end", () => {
@@ -125,7 +240,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(snapshot.tree, []);
 			expectSchemaEqual(snapshot.schema, {
 				rootFieldSchema: storedEmptyFieldSchema,
-				treeSchema: new Map(),
+				nodeSchema: new Map(),
 			});
 		}
 		sharedTree.schematize({
@@ -900,96 +1015,10 @@ describe("SharedTree", () => {
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
 		const builder = new SchemaBuilder({ scope: "Events test schema" });
-		const treeSchema = builder.object("root", {
+		const rootTreeNodeSchema = builder.object("root", {
 			x: builder.number,
 		});
 		const schema = builder.intoSchema(builder.optional(Any));
-
-		it("triggers events for local and subtree changes", () => {
-			const view = viewWithContent({
-				schema,
-				initialTree: {
-					x: 24,
-				},
-			});
-			const rootNode = view.context.root.getNode(0);
-			const root = view.root as unknown as { x: number };
-			const log: string[] = [];
-			const unsubscribe = rootNode[on]("changing", () => log.push("change"));
-			const unsubscribeSubtree = rootNode[on]("subtreeChanging", () => {
-				log.push("subtree");
-			});
-			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
-			log.push("editStart");
-			root.x = 5;
-			log.push("editStart");
-			root.x = 6;
-			log.push("unsubscribe");
-			unsubscribe();
-			unsubscribeSubtree();
-			unsubscribeAfter();
-			log.push("editStart");
-			root.x = 7;
-
-			assert.deepEqual(log, [
-				"editStart",
-				"subtree",
-				"subtree",
-				"change",
-				"after",
-				"editStart",
-				"subtree",
-				"subtree",
-				"change",
-				"after",
-				"unsubscribe",
-				"editStart",
-			]);
-		});
-
-		it("propagates path args for local and subtree changes", () => {
-			const view = viewWithContent({
-				schema,
-				initialTree: {
-					x: 24,
-				},
-			});
-			const rootNode = view.context.root.getNode(0);
-			const root = view.root as unknown as { x: number };
-			const log: string[] = [];
-			const unsubscribe = rootNode[on]("changing", (upPath) =>
-				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
-			);
-			const unsubscribeSubtree = rootNode[on]("subtreeChanging", (upPath) => {
-				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
-			});
-			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
-			log.push("editStart");
-			root.x = 5;
-			log.push("editStart");
-			root.x = 6;
-			log.push("unsubscribe");
-			unsubscribe();
-			unsubscribeSubtree();
-			unsubscribeAfter();
-			log.push("editStart");
-			root.x = 7;
-
-			assert.deepEqual(log, [
-				"editStart",
-				"subtree-rootFieldKey-0",
-				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
-				"after",
-				"editStart",
-				"subtree-rootFieldKey-0",
-				"subtree-rootFieldKey-0",
-				"change-rootFieldKey-0",
-				"after",
-				"unsubscribe",
-				"editStart",
-			]);
-		});
 
 		it("triggers revertible events for local changes", () => {
 			const value = "42";
@@ -1037,33 +1066,6 @@ describe("SharedTree", () => {
 			assert.equal(redoStack1.length, 0);
 			assert.equal(undoStack2.length, 1);
 			assert.equal(redoStack2.length, 0);
-
-			unsubscribe1();
-			unsubscribe2();
-		});
-
-		// TODO: unskip once forking revertibles is supported
-		it.skip("triggers a revertible event for a changes merged into the local branch", () => {
-			const tree1 = viewWithContent({
-				schema: jsonSequenceRootSchema,
-				initialTree: [],
-			});
-			const branch = tree1.fork();
-
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-				createTestUndoRedoStacks(tree1);
-			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-				createTestUndoRedoStacks(branch);
-
-			// Insert node
-			branch.setContent(["42"]);
-
-			assert.equal(undoStack1.length, 0);
-			assert.equal(undoStack2.length, 1);
-
-			tree1.merge(branch);
-			assert.equal(undoStack1.length, 1);
-			assert.equal(undoStack2.length, 1);
 
 			unsubscribe1();
 			unsubscribe2();
@@ -1401,15 +1403,15 @@ describe("SharedTree", () => {
 
 		itView("properly fork the tree schema", (parent) => {
 			const schemaA: TreeStoredSchema = {
-				treeSchema: new Map([]),
+				nodeSchema: new Map([]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			const schemaB: TreeStoredSchema = {
-				treeSchema: new Map([[leaf.number.name, leaf.number]]),
+				nodeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
 			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
-				return t.storedSchema.treeSchema.size === 0 ? "schemaA" : "schemaB";
+				return t.storedSchema.nodeSchema.size === 0 ? "schemaA" : "schemaB";
 			}
 
 			parent.storedSchema.update(schemaA);

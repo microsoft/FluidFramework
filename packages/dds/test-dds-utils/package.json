@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-dds-utils",
-	"version": "2.0.0-internal.7.2.0",
+	"version": "2.0.0-internal.7.3.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -17,7 +17,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"clean": "rimraf --glob 'dist' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob dist \"*.tsbuildinfo\" \"*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -62,9 +62,9 @@
 		"mocha": "^10.2.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.26.0-203096",
+		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.26.0-203096",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
