@@ -1691,6 +1691,23 @@ export class MergeTree {
 		}
 	}
 
+	/**
+	 * @alpha
+	 */
+	public obliterateRange(
+		start: number,
+		end: number,
+		refSeq: number,
+		clientId: number,
+		seq: number,
+		overwrite: boolean = false,
+		opArgs: IMergeTreeDeltaOpArgs,
+	): void {
+		throw new UsageError(
+			"Attempted to use obliterate. Obliterate is not currently implemented.",
+		);
+	}
+
 	public markRangeRemoved(
 		start: number,
 		end: number,
