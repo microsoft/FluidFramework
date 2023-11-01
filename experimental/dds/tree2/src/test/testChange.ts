@@ -57,7 +57,7 @@ function isNonEmptyChange(
 function mint(inputContext: readonly number[], intention: number | number[]): NonEmptyTestChange {
 	const intentions = Array.isArray(intention) ? intention : [intention];
 	return {
-		inputContext: [...inputContext],
+		inputContext: composeIntentions([], inputContext),
 		intentions,
 		outputContext: composeIntentions(inputContext, intentions),
 	};
@@ -136,7 +136,11 @@ function rebase(
 	if (isNonEmptyChange(change)) {
 		if (isNonEmptyChange(over)) {
 			// Rebasing should only occur between two changes with the same input context
-			assert.deepEqual(change.inputContext, over.inputContext);
+			try {
+				assert.deepEqual(change.inputContext, over.inputContext);
+			} catch (error) {
+				throw error;
+			}
 			return {
 				inputContext: over.outputContext,
 				outputContext: composeIntentions(over.outputContext, change.intentions),

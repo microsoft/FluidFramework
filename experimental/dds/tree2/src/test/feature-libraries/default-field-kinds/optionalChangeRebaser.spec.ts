@@ -37,9 +37,10 @@ import {
 import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 import {
 	FieldStateTree,
-	getInputContext,
+	getSequentialEdits,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
+	NamedChangeset,
 } from "../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../rebaserAxiomaticTests";
 
@@ -186,6 +187,41 @@ function compose(
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
 
+function computeChildChangeInputContext(state: OptionalFieldTestState): number[] {
+	// This is effectively a filter of the intentions from all edits, such that it only includes
+	// intentions for edits which modify the same child as the final one in the changeset.
+	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
+	// content for what are meant to represent different nodes.
+	const states: OptionalFieldTestState[] = [];
+	for (
+		let current: OptionalFieldTestState | undefined = state;
+		current !== undefined;
+		current = current.parent
+	) {
+		states.push(current);
+	}
+	states.reverse();
+	const initialContent: string | undefined = states[0].content;
+	const finalContent = states.at(-1)?.content;
+	assert(
+		finalContent !== undefined,
+		"Child change input context should only be computed when the optional field has content.",
+	);
+	const intentions: number[] = [];
+	let currentContent: string | undefined;
+	for (const state of states) {
+		if (state.mostRecentEdit !== undefined && currentContent === finalContent) {
+			if (state.mostRecentEdit.changeset.change.childChanges !== undefined) {
+				intentions.push(state.mostRecentEdit.intention);
+			}
+		}
+
+		currentContent = state.content;
+	}
+
+	return intentions;
+}
+
 /**
  * See {@link ChildStateGenerator}
  */
@@ -194,7 +230,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<OptionalFieldTestState> {
-	const inputContext = getInputContext(state);
+	const edits = getSequentialEdits(state);
 	if (state.content !== undefined) {
 		const changeChildIntention = mintIntention();
 		yield {
@@ -202,7 +238,10 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			mostRecentEdit: {
 				changeset: tagChange(
 					OptionalChange.buildChildChange(
-						TestChange.mint(inputContext, changeChildIntention),
+						TestChange.mint(
+							computeChildChangeInputContext(state),
+							changeChildIntention,
+						),
 					),
 					tagFromIntention(changeChildIntention),
 				),
@@ -230,8 +269,9 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 	for (const value of ["A", "B"]) {
 		const setIntention = mintIntention();
 		// Using length of the input context guarantees set operations generated at different times also have different
-		// values, which should tend to be easier to debug
-		const newContents = `${value},${inputContext.length}`;
+		// values, which should tend to be easier to debug.
+		// This also makes the logic to determine intentions simpler.
+		const newContents = `${value},${edits.length}`;
 		yield {
 			content: newContents,
 			mostRecentEdit: {
@@ -240,7 +280,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 					tagFromIntention(setIntention),
 				),
 				intention: setIntention,
-				description: `Set${value},${inputContext.length}`,
+				description: `Set${value},${edits.length}`,
 			},
 			parent: state,
 		};

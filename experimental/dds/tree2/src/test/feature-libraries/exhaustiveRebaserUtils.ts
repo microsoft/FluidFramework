@@ -7,22 +7,21 @@ import { RevisionTag, TaggedChange } from "../../core";
 import { RevisionMetadataSource } from "../../feature-libraries";
 
 /**
- * Given a state tree, constructs the sequence of intentions which led to that state.
- * This is useful for constructing `TestChange`s.
+ * Given a state tree, constructs the sequence of edits which led to that state.
  */
-export function getInputContext<TContent, TChangeset>(
+export function getSequentialEdits<TContent, TChangeset>(
 	state: FieldStateTree<TContent, TChangeset>,
-): number[] {
-	const inputContext: number[] = [];
+): NamedChangeset<TChangeset>[] {
+	const edits: NamedChangeset<TChangeset>[] = [];
 	for (
 		let current: FieldStateTree<TContent, TChangeset> | undefined = state;
 		current?.mostRecentEdit !== undefined;
 		current = current.parent
 	) {
-		inputContext.push(current.mostRecentEdit.intention);
+		edits.push(current.mostRecentEdit);
 	}
-	inputContext.reverse();
-	return inputContext;
+	edits.reverse();
+	return edits;
 }
 
 /**

@@ -35,12 +35,13 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-describe("Fuzz - Top-Level", () => {
+describe.only("Fuzz - Top-Level", () => {
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
 	// TODO: Enable other types of ops.
 	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 		insert: 1,
+		delete: 1,
 	};
 	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
@@ -75,11 +76,6 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0,
 			skipMinimization: true,
-			// These seeds trigger 0x370 and 0x405 relatively frequently.
-			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
-			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
-			// these seeds once optional field supports storing changes to transient nodes.
-			skip: [14],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -108,11 +104,6 @@ describe("Fuzz - Top-Level", () => {
 			saveFailures: {
 				directory: failureDirectory,
 			},
-			// These seeds trigger 0x370 and 0x405 relatively frequently.
-			// See the test case "can rebase over successive sets" for a minimized version of 0x370.
-			// Both issues are likely related to current optional field rebasing semantics, and it may be possible to re-enable
-			// these seeds once optional field supports storing changes to transient nodes.
-			skip: [3, 16],
 		};
 		createDDSFuzzSuite(model, options);
 	});

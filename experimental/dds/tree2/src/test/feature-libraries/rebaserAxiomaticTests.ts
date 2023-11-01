@@ -84,7 +84,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
 	const numberOfEditsToRebaseOver = 3;
-	const numberOfEditsToRebase = 2; //  numberOfEditsToRebaseOver;
+	const numberOfEditsToRebase = 2; //numberOfEditsToRebaseOver;
 	const numberOfEditsToVerifyAssociativity = 3;
 
 	describe("Rebase over compose", () => {
@@ -110,7 +110,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 						if (
 							title !==
-							'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","Delete"]'
+							'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","ChildChange102"]'
 						) {
 							continue;
 						}

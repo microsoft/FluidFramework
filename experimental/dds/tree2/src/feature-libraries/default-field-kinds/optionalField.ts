@@ -16,7 +16,7 @@ import {
 	areEqualChangeAtomIds,
 	makeDetachedNodeId,
 } from "../../core";
-import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
+import { fail, Mutable, IdAllocator, SizedNestedMap, brand } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -504,17 +504,61 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		// E.g. rather than use firstOverFieldChange, we need to figure out the last change in `fieldChanges` which removed the same node that existed
 		// in the optional field in the start context of `change`.
 		// This generally applies to ids other than 'self' as well
-		// const adderToRemover = new ChildChangeMap<ChangeId>();
-		// let currentFieldChange: ChangeId = "self";
-		// for (const fieldChange of over.fieldChanges) {
-		// 	adderToRemover.set(currentFieldChange, {
-		// 		revision: fieldChange.revision ?? overTagged.revision,
-		// 		localId: fieldChange.id,
-		// 	});
-		// }
+		const adderToRemover = new ChildChangeMap<ChangeId>();
+		const removerToAdder = new ChildChangeMap<ChangeId>();
+		{
+			let currentNode: ChangeId = "self";
+			// todo: obvious kludge here
+			let fakeIds = 0;
+			for (const fieldChange of over.fieldChanges) {
+				const remover: ChangeId = {
+					revision: fieldChange.revision ?? overTagged.revision,
+					localId: fieldChange.id,
+				};
+				adderToRemover.set(currentNode, remover);
+				removerToAdder.set(remover, currentNode);
+				if (fieldChange.newContent !== undefined) {
+					if ("revert" in fieldChange.newContent) {
+						// Two options here: either revert via undo brings back the node which existed
+						// in the start context of the change it's undoing, OR it only does so if no
+						// intermediate field changes have happened.
+						// For now, assume the first.
+
+						const restoredNode: ChangeId = removerToAdder.get(
+							fieldChange.newContent.revert,
+						) ?? {
+							revision: brand("made-up") as any,
+							localId: brand(fakeIds++),
+						};
+						// adderToRemover.set(currentNode, restoredNode);
+						// removerToAdder.set(restoredNode, currentNode);
+						currentNode = restoredNode;
+					} else {
+						// this field change is a standard set.
+						// adderToRemover.set(currentNode, remover);
+						// removerToAdder.set(remover, currentNode);
+						currentNode = remover;
+					}
+				} else {
+					// this field change is a delete.
+					// adderToRemover.set(currentNode, remover);
+					// removerToAdder.set(remover, currentNode);
+					currentNode = remover;
+				}
+			}
+		}
 		// Note: rebasing *over* composed changes is a near-term goal. Rebasing composed changes is not.
 		// Generally, we only care about the first or last field change that we're rebasing over.
-		const firstOverFieldChange = over.fieldChanges[0];
+		let firstOverFieldChange = over.fieldChanges[0];
+		const selfRemover = adderToRemover.get("self");
+		if (selfRemover !== undefined && selfRemover !== "self") {
+			firstOverFieldChange =
+				over.fieldChanges.find(
+					(change) =>
+						(change.revision ?? overTagged.revision) === selfRemover.revision &&
+						change.id === selfRemover.localId,
+				) ?? firstOverFieldChange;
+		}
 		const finalOverFieldChange =
 			over.activeFieldChange === "end"
 				? over.fieldChanges[over.fieldChanges.length - 1]
@@ -791,7 +835,7 @@ export function optionalFieldIntoDelta(
 		mark.fields = deltaFromChild(childChange);
 	}
 
-	if (change.fieldChanges.length === 0) {
+	if (change.fieldChanges.length === 0 || change.activeFieldChange === "start") {
 		return delta;
 	}
 
