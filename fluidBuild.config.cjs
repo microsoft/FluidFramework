@@ -333,12 +333,7 @@ module.exports = {
 		],
 		fluidBuildTasks: {
 			tsc: {
-				ignoreTasks: [
-					"tsc:watch",
-					"watch:devtools",
-					"watch:devtools-core",
-					"watch:devtools-view",
-				],
+				ignoreTasks: ["tsc:watch"],
 				ignoreDevDependencies: ["@fluid-tools/webpack-fluid-loader"],
 			},
 		},
