@@ -301,6 +301,7 @@ export function applyMoveEffectsToMark<T>(
 	if (isTransientEffect(mark)) {
 		if (isMoveDestination(mark.attach)) {
 			if (isMoveSource(mark.detach)) {
+				// Move effects should not be applied to intermediate move locations.
 				return [mark];
 			}
 			const attachRevision = mark.attach.revision ?? mark.revision ?? revision;
@@ -314,7 +315,7 @@ export function applyMoveEffectsToMark<T>(
 
 			if (effect.length < mark.count) {
 				const [firstMark, secondMark] = splitMark(mark, effect.length);
-				const updatedAttach = { ...(firstMark.attach as MoveDestination) };
+				const updatedAttach = firstMark.attach as MoveDestination;
 				applyMoveEffectsToDest(
 					updatedAttach,
 					firstMark.count,
