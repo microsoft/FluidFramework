@@ -135,6 +135,8 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 
 	const adjusted = { ...effect, basis: newBasis };
 	const basisShift = newBasis - effect.basis;
+	assert(basisShift > 0, "Expected basis shift to be positive");
+
 	if (effect.endpoint !== undefined) {
 		adjusted.endpoint = {
 			...effect.endpoint,
@@ -142,8 +144,11 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 		};
 	}
 
-	// TODO: Handle splitting `movedMark`, as it may cover multiple cells
-	// and may have its own identifiers which need to be adjusted to the new basis.
+	if (effect.movedMark !== undefined) {
+		const [_mark1, mark2] = splitMark(effect.movedMark, basisShift);
+		adjusted.movedMark = mark2;
+	}
+
 	return adjusted;
 }
 
