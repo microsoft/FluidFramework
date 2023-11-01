@@ -86,7 +86,7 @@
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.7.1.0",
+		"@fluidframework/container-runtime-previous": "npm:@fluidframework/container-runtime@2.0.0-internal.7.2.0",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -109,10 +109,6 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_ContainerRuntime": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }
