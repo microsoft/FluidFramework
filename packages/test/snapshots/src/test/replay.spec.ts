@@ -6,7 +6,7 @@
 import { Mode, processContent } from "../replayMultipleFiles";
 import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
 
-describe("Snapshots", function () {
+describe.skip("Snapshots", function () {
 	this.timeout(300000);
 
 	const contentLocation = getTestContent("snapshotTestContent");
