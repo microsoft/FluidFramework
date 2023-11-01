@@ -212,6 +212,9 @@ function compatBehaviorAllowsMessageType(
 	return compatBehavior === "Ignore";
 }
 
+/**
+ * @public
+ */
 export interface ISummaryBaseConfiguration {
 	/**
 	 * Delay before first attempt to spawn summarizing container.
