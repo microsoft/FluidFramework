@@ -6,6 +6,7 @@
 import { Delta } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { Changeset } from "./format";
+import { isMoveMark } from "./moveEffectTable";
 import { isDetachMark, isInsert, isReattach } from "./utils";
 
 export function getRelevantRemovedTrees(changeset: Changeset): Delta.DetachedNodeId[] {
@@ -16,8 +17,13 @@ export function getRelevantRemovedTrees(changeset: Changeset): Delta.DetachedNod
 				// This tree is being restored.
 				nodes.push(nodeIdFromChangeAtom(mark.cellId));
 			} else if (isDetachMark(mark)) {
-				// This removed tree is being moved.
-				nodes.push(nodeIdFromChangeAtom(mark.cellId));
+				if (isMoveMark(mark)) {
+					// This removed tree is being moved.
+					nodes.push(nodeIdFromChangeAtom(mark.cellId));
+				} else {
+					// This removed tree is being deleted.
+					// We currently don't reassign the ID for such a tree, so it isn't relevant.
+				}
 			} else if (mark.type !== "MoveIn" && mark.changes !== undefined) {
 				// This removed tree is being edited.
 				nodes.push(nodeIdFromChangeAtom(mark.cellId));
