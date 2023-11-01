@@ -57,7 +57,6 @@ import {
 	RequiredField,
 	OptionalField,
 	FlexibleFieldContent,
-	type Sequence,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
