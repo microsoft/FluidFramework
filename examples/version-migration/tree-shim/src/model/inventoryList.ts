@@ -113,19 +113,29 @@ export class InventoryList extends DataObject implements IInventoryList {
 		this._model.on("itemDeleted", this.onItemDeleted);
 	}
 
-	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.  For this
-	// demo we'll just expose it through DEBUG and trigger it with a debug button.
+	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.
+	private async performMigration() {
+		// Do nothing if already migrated.
+		if (this.root.get(isMigratedKey) === true) {
+			return;
+		}
+
+		// TODO: This gets replaced with actually calling the migrate API on the shim.
+		this.root.set(isMigratedKey, true);
+		await this.setModel();
+		this.emit("backingDataChanged");
+	}
+
+	// For this demo we'll just expose the ability to trigger the migration through DEBUG, this method is sync
+	// to make it easy to hook up to a debug button.
 	private readonly triggerMigration = () => {
 		// Do nothing if already migrated.
 		if (this.root.get(isMigratedKey) === true) {
 			return;
 		}
 
-		console.log("Triggering migration");
-		this.root.set(isMigratedKey, true);
-		this.setModel()
+		this.performMigration()
 			.then(() => {
-				this.emit("backingDataChanged");
 				console.log("Migration complete");
 			})
 			.catch(console.error);
