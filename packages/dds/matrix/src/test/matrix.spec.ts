@@ -361,7 +361,7 @@ describe("Matrix", () => {
 				matrix1.setCell(0, 0, "1st");
 				matrix2.setCell(0, 0, "2nd");
 
-				await expect([["2nd"]]);
+				await expect([["1st"]]);
 			});
 
 			// Vets that clearing a cell at an unallocated row/col will locally discard
@@ -374,7 +374,7 @@ describe("Matrix", () => {
 				matrix1.setCell(0, 0, "x");
 				matrix2.setCell(0, 0, undefined);
 
-				await expect([[undefined]]);
+				await expect([["x"]]);
 			});
 
 			it("insert and set in new row", async () => {
