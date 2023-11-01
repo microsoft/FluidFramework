@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
 import { typeNameSymbol } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../../feature-libraries/editable-tree-2/proxies/objectFactory";
+import { extractFactoryContent } from "../../../feature-libraries/editable-tree-2/proxies/proxies";
 import { itWithRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
