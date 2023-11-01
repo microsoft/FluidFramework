@@ -142,7 +142,8 @@ function adjustMoveEffectBasis<T>(effect: MoveEffectWithBasis<T>, newBasis: Move
 		};
 	}
 
-	// TODO: Handle splitting `movedMark`
+	// TODO: Handle splitting `movedMark`, as it may cover multiple cells
+	// and may have its own identifiers which need to be adjusted to the new basis.
 	return adjusted;
 }
 
