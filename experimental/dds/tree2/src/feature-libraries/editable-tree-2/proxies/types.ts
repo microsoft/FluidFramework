@@ -43,20 +43,36 @@ export interface SharedTreeList<
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAt<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		index: number,
+		value: T extends string ? never : T,
+	): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAtStart<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		value: T extends string ? never : T,
+	): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
+	 * @privateRemarks
+	 * We explicitly prevent the user from passing "strings" in.
+	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+	insertAtEnd<T extends Iterable<ProxyNodeUnion<TTypes>>>(
+		value: T extends string ? never : T,
+	): void;
 
 	/**
 	 * Removes the item at the specified location.

@@ -178,6 +178,53 @@ describe("SharedTreeList", () => {
 		});
 	});
 
+	describe("inserting primitive", () => {
+		const _ = new SchemaBuilder({ scope: "test" });
+		const obj = _.object("Obj", {
+			numbers: _.list(_.number),
+			strings: _.list(_.string),
+			booleans: _.list(_.boolean),
+		});
+		const schema = _.intoSchema(obj);
+		const initialTree = { numbers: [], strings: [], booleans: [] };
+		itWithRoot("numbers", schema, initialTree, (root) => {
+			root.numbers.insertAtStart([0]);
+			root.numbers.insertAt(1, [1]);
+			root.numbers.insertAtEnd([2]);
+			assert.deepEqual(root.numbers, [0, 1, 2]);
+		});
+
+		itWithRoot("strings", schema, initialTree, (root) => {
+			// This test catches a usability regression in which strings can be passed directly as content to insert,
+			// because strings are also iterables of strings. Passing a string directly as an iterable is very likely not what the user intends.
+			root.strings.insertAtStart(["a"]);
+			root.strings.insertAt(1, ["b"]);
+			root.strings.insertAtEnd(["c"]);
+			const _errors = () => {
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAtStart("d");
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAt(1, "e");
+				// @ts-expect-error Inserted content needs to be non-string iterable
+				root.strings.insertAtEnd("f");
+			};
+			const gh: Iterable<string> = "gh";
+			root.strings.insertAtStart(gh);
+			const ij: Iterable<string> = "ij";
+			root.strings.insertAt(3, ij);
+			const kl: Iterable<string> = "kl";
+			root.strings.insertAtEnd(kl);
+			assert.deepEqual(root.strings, ["g", "h", "a", "i", "j", "b", "c", "k", "l"]);
+		});
+
+		itWithRoot("booleans", schema, initialTree, (root) => {
+			root.booleans.insertAtStart([true]);
+			root.booleans.insertAt(1, [false]);
+			root.booleans.insertAtEnd([true]);
+			assert.deepEqual(root.booleans, [true, false, true]);
+		});
+	});
+
 	describe("removing items", () => {
 		const _ = new SchemaBuilder({ scope: "test" });
 		const schema = _.intoSchema(_.list(_.number));
