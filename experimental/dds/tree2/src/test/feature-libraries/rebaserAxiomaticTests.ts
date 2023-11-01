@@ -108,12 +108,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedEditsToRebaseOver.map(({ description }) => description),
 						)}`;
 
-						// if (
-						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["Delete","Undo:Delete","Delete"]'
-						// ) {
-						// 	continue;
-						// }
+						if (
+							title !==
+							'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","Delete"]'
+						) {
+							continue;
+						}
 
 						it(title, () => {
 							const editsToRebaseOver = namedEditsToRebaseOver.map(
@@ -178,9 +178,13 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// 	continue;
 						// }
 
-						if (title !== 'Rebase ["ChildChange1","SetB,1"] over SetA,0') {
-							continue;
-						}
+						// if (title !== 'Rebase ["ChildChange1","SetB,1"] over SetA,0') {
+						// 	continue;
+						// }
+
+						// if (title !== 'Rebase ["SetB,0","ChildChange7"] over SetA,0') {
+						// 	continue;
+						// }
 
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;

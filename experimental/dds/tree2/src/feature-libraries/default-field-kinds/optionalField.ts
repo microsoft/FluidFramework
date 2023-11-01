@@ -82,6 +82,10 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 			: this.nestedMapData.tryGet(id.localId, id.revision);
 	}
 
+	public has(id: ChangeId): boolean {
+		return this.get(id) !== undefined;
+	}
+
 	public delete(id: ChangeId): boolean {
 		return id === "self"
 			? this.nestedMapData.delete("self", undefined)
@@ -154,6 +158,19 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		};
 
+		const rename = (id: ChangeId, newId: ChangeId) => {
+			const existingChanges = perChildChanges.get(id);
+			assert(perChildChanges.get(newId) === undefined, "Cannot rename to existing id");
+			if (existingChanges !== undefined) {
+				perChildChanges.delete(id);
+				perChildChanges.set(newId, existingChanges);
+			}
+		};
+
+		// Maps revisions that we might see in the future which resurrect a node to the childId that we're
+		// currently storing childChanges to that node under.
+		// const pendingRessurectRevisions = new ChildChangeMap<ChangeId>();
+
 		let currentActiveFieldChange: Mutable<OptionalFieldChange> | undefined;
 		// Child changes are keyed on the ChangeAtomId of the first field change that deleted the node they affect.
 		// However, since the node they affect can be revived by a later field change in the composition, we need to
@@ -183,6 +200,18 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			// Maybe not actually...
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
+					// if (childId !== "self") {
+					// 	const fieldChangeInfo = revisionMetadata.tryGetInfo(
+					// 		revision ?? childId.revision,
+					// 	);
+					// 	if (fieldChangeInfo?.rollbackOf !== undefined) {
+					// 		pendingRessurectRevisions.set(
+					// 			{ revision: fieldChangeInfo.rollbackOf, localId: childId.localId },
+					// 			childId,
+					// 		);
+					// 	}
+					// }
+
 					const taggedChildChange = tagChange(childChange, revision);
 					if (
 						childId === "self" ||
@@ -248,7 +277,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					// }
 
 					// Node was changed by this revision: flush the current changes
-					if (currentChildNodeChanges.length > 0) {
+					if (
+						currentChildNodeChanges.length > 0 &&
+						// TODO: review
+						change.activeFieldChange !== "start"
+					) {
 						const id: ChangeAtomId =
 							currentActiveNodeId === "firstToDelete"
 								? {
@@ -295,6 +328,34 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						} else {
 							currentActiveFieldChangeId = "start";
 						}
+
+						// Update changes
+						// TODO: Conceptualizing as a 'rename to self' and flushing as 'renaming self to id of deletion'
+						// seems conceptually cleaner here.
+						const renamedChanges = perChildChanges.get({
+							revision:
+								priorInverse.revision ??
+								fail("prior inverse should have been tagged with revision"),
+							localId: priorInverse.id,
+						});
+						if (renamedChanges !== undefined) {
+							currentChildNodeChanges.push(...renamedChanges);
+							perChildChanges.delete({
+								revision:
+									priorInverse.revision ??
+									fail("prior inverse should have been tagged with revision"),
+								localId: priorInverse.id,
+							});
+						}
+						// rename(
+						// 	{
+						// 		revision:
+						// 			priorInverse.revision ??
+						// 			fail("prior inverse should have been tagged with revision"),
+						// 		localId: priorInverse.id,
+						// 	},
+						// 	{ revision: fieldChange.revision ?? revision, localId: fieldChange.id },
+						// );
 					} else {
 						cumulativeFieldChanges.push(currentActiveFieldChange);
 						// currentActiveFieldChangeId = {
@@ -318,7 +379,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					) {
 						// We're restoring a node which previously existed.
 						// This is the ChangeAtomId for the revision which deleted the node we now recover.
-						currentActiveNodeId = fieldChange.newContent.revert;
+						currentActiveNodeId = "firstToDelete"; // fieldChange.newContent.revert;
 					} else {
 						currentActiveNodeId = "firstToDelete";
 					}
@@ -439,6 +500,18 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		existenceState?: NodeExistenceState,
 	): OptionalChangeset => {
 		const over = overTagged.change;
+		// TODO: This generally needs to be reworked to make sure the childId used for each child change is correct in the presence of revivals.
+		// E.g. rather than use firstOverFieldChange, we need to figure out the last change in `fieldChanges` which removed the same node that existed
+		// in the optional field in the start context of `change`.
+		// This generally applies to ids other than 'self' as well
+		// const adderToRemover = new ChildChangeMap<ChangeId>();
+		// let currentFieldChange: ChangeId = "self";
+		// for (const fieldChange of over.fieldChanges) {
+		// 	adderToRemover.set(currentFieldChange, {
+		// 		revision: fieldChange.revision ?? overTagged.revision,
+		// 		localId: fieldChange.id,
+		// 	});
+		// }
 		// Note: rebasing *over* composed changes is a near-term goal. Rebasing composed changes is not.
 		// Generally, we only care about the first or last field change that we're rebasing over.
 		const firstOverFieldChange = over.fieldChanges[0];
