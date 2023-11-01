@@ -8,7 +8,7 @@ import { fail, Mutable } from "../../util";
 import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { singleTextCursor } from "../treeTextCursor";
-import { MarkList, NoopMarkType } from "./format";
+import { MarkList, NoopMarkType, ReturnFrom } from "./format";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
@@ -93,7 +93,12 @@ export function sequenceFieldToDelta<TNodeChange>(
 				}
 				case "Delete": {
 					if (mark.cellId === undefined) {
-						deltaMark.detach = makeDetachedNodeId(mark.revision ?? revision, mark.id);
+						deltaMark.detach = nodeIdFromChangeAtom(
+							mark.detachIdOverride ?? {
+								revision: mark.revision ?? revision,
+								localId: mark.id,
+							},
+						);
 						local.push(deltaMark);
 					} else {
 						// Removal of already removed content is a no-op.
