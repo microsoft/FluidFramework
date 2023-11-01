@@ -1140,7 +1140,6 @@ describe("SequenceField - Compose", () => {
 		}
 	});
 
-	// TODO: Enable once node-following returns are supported
 	it("[move1, move2] ○ return1", () => {
 		const move1 = tagChange(Change.move(0, 1, 1), tag1);
 		const move2 = tagChange(Change.move(1, 1, 2), tag2);
