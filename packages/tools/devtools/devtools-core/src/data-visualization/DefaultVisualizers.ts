@@ -13,7 +13,7 @@ import { SharedCounter } from "@fluidframework/counter";
 import { type IDirectory, SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { SharedString } from "@fluidframework/sequence";
-import { SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
+import { SharedTreeFactory, type ISharedTree, encodeTreeSchema } from "@fluid-experimental/tree2";
 import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { EditType } from "../CommonInterfaces";
 import { type VisualizeChildData, type VisualizeSharedObject } from "./DataVisualization";
@@ -248,7 +248,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 		fluidObjectId: sharedTree.id,
 		children: {
 			tree: await visualizeChildData(content.tree),
-			schema: await visualizeChildData(content.schema),
+			schema: await visualizeChildData(encodeTreeSchema(content.schema)),
 		},
 		typeMetadata: "SharedTree",
 		nodeKind: VisualNodeKind.FluidTreeNode,
