@@ -17,7 +17,7 @@ import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
 import { LegacyTreeInventoryListModel } from "./legacyTreeInventoryListModel";
 import { NewTreeInventoryListModel } from "./newTreeInventoryListModel";
 
-const whichTreeKey = "whichTree";
+const isMigratedKey = "isMigrated";
 const legacySharedTreeKey = "legacySharedTree";
 const newSharedTreeKey = "newSharedTree";
 
@@ -51,7 +51,10 @@ export class InventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		this.root.set(whichTreeKey, "legacy");
+		// TODO: After integrating the shim this flag goes away.  It's just for staging so we can show the demo transitioning
+		// between using the legacy ST and new ST
+		this.root.set(isMigratedKey, false);
+
 		const legacySharedTree = this.runtime.createChannel(
 			undefined,
 			LegacySharedTree.getFactory().type,
@@ -75,8 +78,8 @@ export class InventoryList extends DataObject implements IInventoryList {
 	 * DataObject, by registering an event listener for changes to the inventory list.
 	 */
 	protected async hasInitialized() {
-		const whichTree = this.root.get(whichTreeKey);
-		if (whichTree === "legacy") {
+		const isMigrated = this.root.get(isMigratedKey);
+		if (!isMigrated) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const tree = await this.root
 				.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
@@ -99,10 +102,15 @@ export class InventoryList extends DataObject implements IInventoryList {
 	}
 
 	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.  For this
-	// demo we'll just trigger it with a debug button though.
-	public readonly DEBUG_triggerMigration = () => {
+	// demo we'll just expose it through DEBUG and trigger it with a debug button.
+	private readonly triggerMigration = () => {
 		console.log("Triggering migration");
-		this.root.set(whichTreeKey, "new");
+		this.root.set(isMigratedKey, true);
+	};
+
+	public readonly DEBUG = {
+		triggerMigration: this.triggerMigration,
+		isMigrated: () => this.root.get(isMigratedKey),
 	};
 }
 

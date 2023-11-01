@@ -20,7 +20,6 @@ export class InventoryListAppModel
 {
 	public constructor(
 		public readonly inventoryList: IInventoryList,
-		public readonly DEBUG_triggerMigration: () => void,
 	) {
 		super();
 		// inventoryList.on("migrationFinished", () => { this.emit("inventoryListChanged"); });

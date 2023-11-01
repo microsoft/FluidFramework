@@ -39,6 +39,6 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			await runtime.getRootDataStore(inventoryListId),
 			"",
 		);
-		return new InventoryListAppModel(inventoryList, inventoryList.DEBUG_triggerMigration);
+		return new InventoryListAppModel(inventoryList);
 	}
 }
