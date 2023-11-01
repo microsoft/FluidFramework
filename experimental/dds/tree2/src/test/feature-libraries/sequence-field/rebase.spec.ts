@@ -755,6 +755,26 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	it("delete ↷ move with multiple destinations", () => {
+		const del = [Mark.delete(2, brand(0))];
+		const move = [
+			Mark.moveOut(2, brand(0)),
+			{ count: 1 },
+			Mark.moveIn(1, brand(0)),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1)),
+		];
+
+		const rebased = rebase(del, move);
+		const expected = [
+			{ count: 1 },
+			Mark.delete(1, brand(0)),
+			{ count: 1 },
+			Mark.delete(1, brand(1)),
+		];
+		assert.deepEqual(rebased, expected);
+	});
+
 	describe("Over composition", () => {
 		it("insert ↷ [delete, delete]", () => {
 			const deletes: TestChangeset = shallowCompose([
