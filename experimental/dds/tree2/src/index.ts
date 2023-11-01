@@ -40,7 +40,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	fieldSchema,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -104,7 +103,7 @@ export {
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
-	RangeEntry,
+	RangeQueryResult,
 	Named,
 	oneFromSet,
 } from "./util";
@@ -290,6 +289,7 @@ export {
 	SchemaCollection,
 	FactoryTreeSchema,
 	TreeCompressionStrategy,
+	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
 } from "./feature-libraries";
 

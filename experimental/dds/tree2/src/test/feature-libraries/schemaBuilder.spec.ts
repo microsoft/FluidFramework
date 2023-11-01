@@ -100,8 +100,8 @@ describe("SchemaBuilderBase", () => {
 			const empty = schemaBuilder.object("empty", {});
 			const schema = schemaBuilder.intoSchema(SchemaBuilder.optional(empty));
 
-			assert.equal(schema.treeSchema.size, 1); // "empty"
-			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);
+			assert.equal(schema.nodeSchema.size, 1); // "empty"
+			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);
 		});
 	});
 
@@ -111,8 +111,8 @@ describe("SchemaBuilderBase", () => {
 			const empty = schemaBuilder.object("empty", {});
 			const schema = schemaBuilder.intoLibrary();
 
-			assert.equal(schema.treeSchema.size, 1); // "empty"
-			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);
+			assert.equal(schema.nodeSchema.size, 1); // "empty"
+			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);
 		});
 	});
 
@@ -120,7 +120,7 @@ describe("SchemaBuilderBase", () => {
 		assert.deepEqual(normalizeAllowedTypes(Any), [Any]);
 		assert.deepEqual(normalizeAllowedTypes([]), []);
 		assert.deepEqual(normalizeAllowedTypes([Any]), [Any]);
-		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
+		const treeSchema = TreeNodeSchema.create({ name: "test" }, "foo", {
 			leafValue: ValueSchema.String,
 		});
 		assert.deepEqual(normalizeAllowedTypes(treeSchema), [treeSchema]);
@@ -155,7 +155,7 @@ describe("SchemaBuilderBase", () => {
 			),
 		);
 
-		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
+		const treeSchema = TreeNodeSchema.create({ name: "test" }, "foo", {
 			leafValue: ValueSchema.String,
 		});
 

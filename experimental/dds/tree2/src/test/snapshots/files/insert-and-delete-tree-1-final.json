@@ -23,8 +23,8 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Delete",
                                 "count": 1,
+                                "type": "Delete",
                                 "id": 1
                               }
                             ]
@@ -61,7 +61,7 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
                       "objectNodeFields": [

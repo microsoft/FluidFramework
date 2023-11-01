@@ -14,6 +14,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
 import {
+	Compatibility,
 	InMemoryStoredSchemaRepository,
 	JsonableTree,
 	TreeStoredSchema,
@@ -40,12 +41,15 @@ import {
 	TypedField,
 	jsonableTreeFromFieldCursor,
 	TreeCompressionStrategy,
+	TreeSchema,
+	ViewSchema,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand } from "../util";
 import { type TypedTreeChannel } from "./typedTree";
 import {
 	InitializeAndSchematizeConfiguration,
+	afterSchemaChanges,
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
@@ -86,14 +90,6 @@ export interface SharedTreeContentSnapshot {
  */
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	/**
-	 * Get view without schematizing.
-	 *
-	 * @deprecated This API will be removed as part of making views use view schema.
-	 */
-	// TODO: migrate all usages of this to alternatives or avoid using ISharedTree.
-	readonly view: ISharedTreeView;
-
-	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
 	 * This is only intended for use in testing and exceptional code paths: it is not performant.
@@ -131,6 +127,26 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	schematizeView<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ISharedTreeView;
+
+	/**
+	 * Like {@link ISharedTree.schematizeView}, but will never modify the document.
+	 *
+	 * @param schema - The view schema to use.
+	 * @param onSchemaIncompatible - A callback.
+	 * Invoked when the returned ISharedTreeView becomes invalid to use due to a change to the stored schema which makes it incompatible with the view schema.
+	 * Called at most once.
+	 * @returns a view compatible with the provided schema, or undefined if the stored schema is not compatible with the provided view schema.
+	 * If this becomes invalid to use due to a change in the stored schema, onSchemaIncompatible will be invoked.
+	 *
+	 * @privateRemarks
+	 * TODO:
+	 * Once views actually have a view schema, onSchemaIncompatible can become an event on the view (which ends its lifetime),
+	 * instead of a separate callback.
+	 */
+	requireSchema<TRoot extends TreeFieldSchema>(
+		schema: TreeSchema<TRoot>,
+		onSchemaIncompatible: () => void,
+	): ISharedTreeView | undefined;
 }
 
 /**
@@ -192,6 +208,37 @@ export class SharedTree
 			events: this._events,
 			removedTrees,
 		});
+	}
+
+	public requireSchema<TRoot extends TreeFieldSchema>(
+		schema: TreeSchema<TRoot>,
+		onSchemaIncompatible: () => void,
+	): ISharedTreeView | undefined {
+		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
+		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
+		if (
+			compatibility.write !== Compatibility.Compatible ||
+			compatibility.read !== Compatibility.Compatible
+		) {
+			return undefined;
+		}
+
+		const onSchemaChange = () => {
+			const compatibilityInner = viewSchema.checkCompatibility(this.storedSchema);
+			if (
+				compatibilityInner.write !== Compatibility.Compatible ||
+				compatibilityInner.read !== Compatibility.Compatible
+			) {
+				onSchemaIncompatible();
+				return false;
+			} else {
+				return true;
+			}
+		};
+
+		afterSchemaChanges(this._events, this.storedSchema, onSchemaChange);
+
+		return this.view;
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {

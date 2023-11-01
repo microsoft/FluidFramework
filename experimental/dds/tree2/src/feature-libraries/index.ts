@@ -287,6 +287,8 @@ export {
 	addFactory,
 } from "./editable-tree-2";
 
+export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
+
 export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
 // Split into separate import and export for compatibility with API-Extractor.

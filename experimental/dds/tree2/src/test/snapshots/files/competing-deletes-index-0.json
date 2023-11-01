@@ -43,8 +43,8 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Delete",
                                 "count": 1,
+                                "type": "Delete",
                                 "id": 0,
                                 "cellId": {
                                   "revision": "beefbeef-beef-4000-8000-000000000007",
@@ -73,8 +73,8 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Delete",
                                 "count": 1,
+                                "type": "Delete",
                                 "id": 0,
                                 "cellId": {
                                   "revision": "beefbeef-beef-4000-8000-000000000007",
@@ -110,8 +110,8 @@
                                   "fieldKind": "Sequence",
                                   "change": [
                                     {
-                                      "type": "Delete",
                                       "count": 1,
+                                      "type": "Delete",
                                       "id": 0
                                     }
                                   ]
@@ -137,8 +137,8 @@
                                   "fieldKind": "Sequence",
                                   "change": [
                                     {
-                                      "type": "Delete",
                                       "count": 1,
+                                      "type": "Delete",
                                       "id": 0
                                     }
                                   ]
@@ -168,7 +168,7 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
                       "objectNodeFields": [

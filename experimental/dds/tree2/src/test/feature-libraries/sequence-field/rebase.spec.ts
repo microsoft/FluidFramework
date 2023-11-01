@@ -4,11 +4,18 @@
  */
 
 import { strict as assert } from "assert";
-import { SequenceField as SF } from "../../../feature-libraries";
-import { mintRevisionTag, RevisionTag, tagChange } from "../../../core";
+import { SequenceField as SF, revisionMetadataSourceFromInfo } from "../../../feature-libraries";
+import { ChangeAtomId, mintRevisionTag, RevisionTag, tagChange } from "../../../core";
 import { TestChange } from "../../testChange";
 import { brand } from "../../../util";
-import { checkDeltaEquality, composeAnonChanges, rebaseTagged, rebase as rebaseI } from "./utils";
+import {
+	checkDeltaEquality,
+	composeAnonChanges,
+	rebaseTagged,
+	rebase as rebaseI,
+	shallowCompose,
+	rebaseOverComposition,
+} from "./utils";
 import { cases, ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 const tag1: RevisionTag = mintRevisionTag();
@@ -592,5 +599,210 @@ describe("SequenceField - Rebase", () => {
 		const expected = Change.move(0, 2, 3);
 		const rebased = rebase(moveB, moveA);
 		assert.deepEqual(rebased, expected);
+	});
+
+	it("delete ↷ composite move", () => {
+		const move1 = Change.move(0, 1, 1, brand(0));
+		const move2 = Change.move(1, 1, 2, brand(1));
+		const move3 = Change.move(2, 1, 3, brand(2));
+		const move = composeAnonChanges([move1, move2, move3]);
+		const del = Change.delete(0, 1);
+		const rebased = rebase(del, move);
+		const expected = Change.delete(3, 1);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("rebasing over transient revive changes cell ID", () => {
+		const change = TestChange.mint([0], 1);
+		const modify = Change.modifyDetached(0, change, {
+			revision: tag1,
+			localId: brand(1),
+		});
+
+		const revive = [
+			Mark.transient(
+				Mark.revive(2, { revision: tag1, localId: brand(0) }),
+				Mark.delete(2, brand(2)),
+			),
+		];
+
+		const rebased = rebase(modify, revive, tag2);
+		const expected = Change.modifyDetached(0, change, {
+			revision: tag2,
+			localId: brand(3),
+			adjacentCells: [{ id: brand(2), count: 2 }],
+		});
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("rebasing over transient adds lineage", () => {
+		const insert = Change.insert(0, 1);
+		const transient = [Mark.transient(Mark.insert(2, brand(0)), Mark.delete(2, brand(2)))];
+		const rebased = rebase(insert, transient);
+		const expected = [
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(2), count: 2, offset: 0 }],
+			}),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("delete ↷ [move, delete]", () => {
+		const moveAndDelete = [
+			Mark.moveOut(1, brand(0)),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+		];
+
+		const del = Change.delete(0, 1);
+		const rebased = rebase(del, moveAndDelete);
+		const expected = [
+			{ count: 1 },
+			Mark.delete(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells: [{ id: brand(1), count: 1 }],
+				},
+			}),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("revive ↷ [revive, move]", () => {
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const reviveAndMove = [
+			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1)),
+		];
+		const revive = Change.intentionalRevive(0, 1, cellId);
+		const rebased = rebase(revive, reviveAndMove, tag2);
+		const expected = Change.redundantRevive(1, 1, cellId, true);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("revive ↷ [revive, move, delete]", () => {
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const reviveMoveDelete = [
+			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
+		];
+		const revive = Change.intentionalRevive(0, 1, cellId);
+		const rebased = rebase(revive, reviveMoveDelete, tag2);
+		const expected = Change.intentionalRevive(1, 1, {
+			revision: tag2,
+			localId: brand(2),
+			adjacentCells: [{ id: brand(2), count: 1 }],
+		});
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("move chain ↷ delete", () => {
+		const del = Change.delete(0, 1);
+		const move = [
+			Mark.moveOut(1, brand(0), {
+				finalEndpoint: { localId: brand(1) },
+			}),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1), { finalEndpoint: { localId: brand(0) } }),
+		];
+
+		const rebased = rebase(move, del);
+		const expected = [
+			Mark.moveOut(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(0),
+					adjacentCells: [{ id: brand(0), count: 1 }],
+				},
+				finalEndpoint: { localId: brand(1) },
+			}),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1), {
+				finalEndpoint: { localId: brand(0) },
+				isSrcConflicted: true,
+			}),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("revive and move ↷ move", () => {
+		const reviveAndMove = [
+			Mark.transient(Mark.revive(1, undefined), Mark.moveOut(1, brand(1))),
+			{ count: 2 },
+			Mark.moveIn(1, brand(1)),
+		];
+
+		const move = Change.move(0, 1, 1);
+		const rebased = rebase(reviveAndMove, move);
+		const expected = [
+			{ count: 1 },
+			Mark.transient(Mark.revive(1, undefined), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1)),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
+
+	describe("Over composition", () => {
+		it("insert ↷ [delete, delete]", () => {
+			const deletes: TestChangeset = shallowCompose([
+				tagChange(Change.delete(1, 2), tag1),
+				tagChange(Change.delete(0, 2), tag2),
+			]);
+
+			const insert = Change.insert(3, 1);
+			const rebased = rebaseOverComposition(
+				insert,
+				deletes,
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = [
+				Mark.insert(1, {
+					localId: brand(0),
+					lineage: [
+						{ revision: tag2, id: brand(0), count: 1, offset: 1 },
+						{ revision: tag1, id: brand(0), count: 2, offset: 2 },
+						{ revision: tag2, id: brand(1), count: 1, offset: 0 },
+					],
+				}),
+			];
+			assert.deepEqual(rebased, expected);
+		});
+
+		it("modify ↷ [delete, delete]", () => {
+			const deletes: TestChangeset = shallowCompose([
+				tagChange(Change.delete(1, 3), tag1),
+				tagChange(Change.delete(0, 2), tag2),
+			]);
+
+			const nodeChange = TestChange.mint([], 0);
+			const modify = Change.modify(3, nodeChange);
+			const rebased = rebaseOverComposition(
+				modify,
+				deletes,
+				revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+			);
+
+			const expected = Change.modifyDetached(0, nodeChange, {
+				revision: tag1,
+				localId: brand(2),
+				adjacentCells: [{ id: brand(0), count: 3 }],
+				lineage: [{ revision: tag2, id: brand(0), count: 2, offset: 1 }],
+			});
+			assert.deepEqual(rebased, expected);
+		});
 	});
 });

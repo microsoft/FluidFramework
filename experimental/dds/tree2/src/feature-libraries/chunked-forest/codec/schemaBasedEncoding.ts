@@ -86,7 +86,7 @@ export function treeShaper(
 	fieldHandler: FieldShaper,
 	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
-	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
+	const schema = fullSchema.nodeSchema.get(schemaName) ?? fail("missing schema");
 
 	// TODO:Performance:
 	// consider moving some optional and sequence fields to extra fields if they are commonly empty
