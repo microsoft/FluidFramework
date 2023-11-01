@@ -4,7 +4,6 @@
  */
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable import/no-deprecated */
 
 import { assert } from "@fluidframework/core-utils";
 import { AttributionKey } from "@fluidframework/runtime-definitions";
@@ -106,7 +105,7 @@ export interface IRemovalInfo {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
 	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
@@ -264,7 +263,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 		newProps: PropertySet,
 		op?: ICombiningOp,
 		seq?: number,
-		collabWindow?: CollaborationWindow,
+		collaborating?: boolean,
 		rollback?: PropertiesRollback,
 	): PropertySet | undefined;
 	clone(): ISegment;
@@ -284,17 +283,9 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * E.g. if the segment group is not first in the pending queue, or
 	 * an inserted segment does not have unassigned sequence number.
 	 *
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 * @internal
 	 */
 	ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-}
-
-/**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- */
-export interface IMarkerModifiedAction {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(marker: Marker): void;
 }
 
 export interface ISegmentAction<TClientData> {
@@ -386,12 +377,12 @@ export interface SearchResult {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export interface SegmentGroup {
 	segments: ISegment[];
 	previousProps?: PropertySet[];
-	localSeq: number;
+	localSeq?: number;
 	refSeq: number;
 }
 
@@ -483,7 +474,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		newProps: PropertySet,
 		op?: ICombiningOp,
 		seq?: number,
-		collabWindow?: CollaborationWindow,
+		collaborating?: boolean,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
@@ -493,7 +484,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			newProps,
 			op,
 			seq,
-			collabWindow?.collaborating,
+			collaborating,
 			rollback,
 		);
 	}
@@ -534,7 +525,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public abstract toJSONObject(): any;
 
 	/**
-	 * @deprecated This functionality was not meant to be exported and will be removed in a future release
+	 * @internal
 	 */
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
 		const currentSegmentGroup = this.segmentGroups.dequeue();
@@ -739,7 +730,7 @@ export class Marker extends BaseSegment implements ReferencePosition {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export class CollaborationWindow {
 	clientId = LocalClientId;
@@ -760,14 +751,8 @@ export class CollaborationWindow {
 	}
 }
 
-/**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- */
 export const compareNumbers = (a: number, b: number) => a - b;
 
-/**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- */
 export const compareStrings = (a: string, b: string) => a.localeCompare(b);
 
 export interface IConsensusInfo {
@@ -775,12 +760,6 @@ export interface IConsensusInfo {
 	callback: (m: Marker) => void;
 }
 
-/**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- */
-export interface SegmentAccumulator {
-	segments: ISegment[];
-}
 /**
  * @internal
  */

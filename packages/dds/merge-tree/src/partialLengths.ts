@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { Property, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";

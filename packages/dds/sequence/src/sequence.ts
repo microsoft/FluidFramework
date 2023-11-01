@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -17,6 +15,7 @@ import {
 import {
 	Client,
 	createAnnotateRangeOp,
+	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createRemoveRangeOp,
@@ -397,10 +396,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * @deprecated This method will no longer be public in an upcoming release as it is not safe to use outside of this class
-	 */
-	public submitSequenceMessage(message: IMergeTreeOp) {
+	private submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
 			return;
 		}
@@ -757,6 +753,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				stashMessage = {
 					...message,
 					referenceSequenceNumber: stashMessage.sequenceNumber - 1,
+					// eslint-disable-next-line import/no-deprecated
 					contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
 				};
 			}
