@@ -198,11 +198,8 @@ class TestDataObject1 extends DataObject implements SearchContent {
 		const sharedMatrix = SharedMatrix.create(this.runtime, this.matrixKey);
 		this.root.set(this.matrixKey, sharedMatrix.handle);
 
-		const dsFactory2 = await requestFluidObject<TestDataObject2>(
-			await this._context.containerRuntime.createDataStore(TestDataObjectType2),
-			"",
-		);
-		this.root.set("dsFactory2", dsFactory2.handle);
+		const ds2 = await this._context.containerRuntime.createDataStore(TestDataObjectType2);
+		this.root.set("dsFactory2", ds2.entryPoint);
 
 		const counter = SharedCounter.create(this.runtime, this.counterKey);
 		this.root.set(this.counterKey, counter.handle);
@@ -356,7 +353,7 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			mainContainer = await createContainer();
 			// Set an initial key. The Container is in read-only mode so the first op it sends will get nack'd and is
 			// re-sent. Do it here so that the extra events don't mess with rest of the test.
-			mainDataStore = await requestFluidObject<TestDataObject1>(mainContainer, "default");
+			mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject1;
 			mainDataStore._root.set("anytest", "anyvalue");
 			mainContainerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 			await waitForContainerConnection(mainContainer);
@@ -451,11 +448,8 @@ describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider
 			);
 
 			// Create a second data store.
-			const ds2 = await requestFluidObject<TestDataObject2>(
-				await mainContainerRuntime.createDataStore(TestDataObjectType2),
-				"",
-			);
-			mainDataStore._root.set("dataStore2", ds2.handle);
+			const ds2 = await mainContainerRuntime.createDataStore(TestDataObjectType2);
+			mainDataStore._root.set("dataStore2", ds2.entryPoint);
 
 			await provider.ensureSynchronized();
 

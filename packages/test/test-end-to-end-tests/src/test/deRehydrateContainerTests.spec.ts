@@ -36,7 +36,6 @@ import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";
 import { IRequest } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat } from "@fluid-internal/test-version-utils";
 import {
 	getSnapshotTreeFromSerializedContainer,
@@ -219,10 +218,9 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 	}
 
 	const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
-		const peerDataStore = await requestFluidObject<ITestFluidObject>(
-			await containerRuntime.createDataStore(["default"]),
-			"/",
-		);
+		const peerDataStore = (await (
+			await containerRuntime.createDataStore(["default"])
+		).entryPoint.get()) as ITestFluidObject;
 		return {
 			peerDataStore,
 			peerDataStoreRuntimeChannel: peerDataStore.channel,

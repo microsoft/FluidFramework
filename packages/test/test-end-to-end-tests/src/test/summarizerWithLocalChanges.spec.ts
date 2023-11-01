@@ -251,7 +251,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 		async () => {
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const dataObject = await dataStoreFactory1.createInstance(
 				rootDataObject.containerRuntime,
 			);
@@ -299,7 +299,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			settings["Fluid.Summarizer.ValidateSummaryBeforeUpload"] = false;
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const dataObject = await dataStoreFactory1.createInstance(
 				rootDataObject.containerRuntime,
 			);
@@ -409,7 +409,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 
 			// This data object will send ops during summarization because the factory uses mixinSummaryHandler
 			// to do so on every summarize.
@@ -477,10 +477,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 					false /* disableSummary */,
 					logger,
 				);
-				const rootDataObject = await requestFluidObject<RootTestDataObject>(
-					mainContainer,
-					"/",
-				);
+				const rootDataObject = (await mainContainer.getEntryPoint()) as RootTestDataObject;
 				const dataObject = await dataStoreFactory1.createInstance(
 					rootDataObject.containerRuntime,
 				);
@@ -586,7 +583,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
@@ -670,7 +667,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 			const summarizePromiseP = new Promise<ISummarizeEventProps>((resolve) => {
@@ -730,7 +727,7 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 			const container = await createContainer(provider, false /* disableSummary */);
 			await waitForContainerConnection(container);
 
-			const rootDataObject = await requestFluidObject<RootTestDataObject>(container, "/");
+			const rootDataObject = (await container.getEntryPoint()) as RootTestDataObject;
 			const containerRuntime = rootDataObject.containerRuntime as ContainerRuntime;
 
 			try {
