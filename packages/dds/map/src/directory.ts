@@ -226,11 +226,6 @@ export interface ICreateInfo {
 	 * clientids of the clients which created this sub directory.
 	 */
 	ccIds: string[];
-
-	/**
-	 * Client Sequence number associated with this subdirectory
-	 */
-	// ccsn?: number;
 }
 
 /**
@@ -777,12 +772,13 @@ export class SharedDirectory
 	protected populate(data: IDirectoryDataObject): void {
 		const stack: [SubDirectory, IDirectoryDataObject][] = [];
 		stack.push([this.root, data]);
-		const tempSeqNums = new Map<number, number>();
 
 		while (stack.length > 0) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const [currentSubDir, currentSubDirObject] = stack.pop()!;
 			if (currentSubDirObject.subdirectories) {
+				// Utilize a map to store the seq -> clientSeq for the newly created subdirectory
+				const tempSeqNums = new Map<number, number>();
 				for (const [subdirName, subdirObject] of Object.entries(
 					currentSubDirObject.subdirectories,
 				)) {
@@ -790,6 +786,10 @@ export class SharedDirectory
 					let seqNumCollection: SeqNumCollection;
 					if (!newSubDir) {
 						const createInfo = subdirObject.ci;
+						// We do not store the client sequence number in the storage because the order has already been
+						// guaranteed during the serialization process. As a result, it is only essential to utilize the
+						// "fake" client sequence number to signify the loading order, and there is no need to retain
+						// the actual client sequence number at this point.
 						if (createInfo !== undefined && createInfo.csn > -1) {
 							if (!tempSeqNums.has(createInfo.csn)) {
 								tempSeqNums.set(createInfo.csn, 0);
@@ -803,15 +803,6 @@ export class SharedDirectory
 								clientSeq: ++currentSubDir.localCreationSeq,
 							};
 						}
-						/*
-						const seqNumCollection =
-							createInfo !== undefined && createInfo.csn > -1
-								? {
-										seq: createInfo.csn,
-										clientSeq:
-											createInfo.ccsn ?? ++currentSubDir.localCreationSeq,
-								  }
-								: { seq: 0, clientSeq: ++currentSubDir.localCreationSeq }; */
 						newSubDir = new SubDirectory(
 							// If csn is -1, then initialize it with 0, otherwise we will never process ops for this
 							// sub directory. This could be done at serialization time too, but we need to maintain
@@ -2179,7 +2170,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const createInfo: ICreateInfo = {
 			csn: this.seqNumCollection.seq,
 			ccIds: Array.from(this.clientIds),
-			// ccsn: this.seqNumCollection.clientSeq,
 		};
 		return createInfo;
 	}
