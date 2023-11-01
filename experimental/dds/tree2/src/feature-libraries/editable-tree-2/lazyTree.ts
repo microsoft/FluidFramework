@@ -415,25 +415,18 @@ export class LazyMap<TSchema extends MapSchema>
 		content: FlexibleFieldContent<TSchema["mapFields"]> | undefined,
 	): void {
 		const field = this.getBoxed(key);
-		if (
-			field.is(
-				TreeFieldSchema.create(FieldKinds.optional, this.schema.mapFields.allowedTypes),
-			)
-		) {
-			const optionalField: OptionalField<AllowedTypes> = field;
+		const fieldSchema = this.schema.mapFields;
+
+		if (fieldSchema.kind === FieldKinds.optional) {
+			const optionalField = field as OptionalField<AllowedTypes>;
 			optionalField.content = content;
 		} else {
-			assert(
-				field.is(
-					TreeFieldSchema.create(FieldKinds.sequence, this.schema.mapFields.allowedTypes),
-				),
-				"Unexpected map field kind",
-			);
+			assert(fieldSchema.kind === FieldKinds.sequence, "Unexpected map field kind");
 
-			const sequenceField: Sequence<AllowedTypes> = field;
+			const sequenceField = field as Sequence<AllowedTypes>;
 
 			// TODO: fix merge semantics.
-			sequenceField.removeRange(0, field.length);
+			sequenceField.removeRange(0, sequenceField.length);
 			if (content !== undefined) {
 				sequenceField.insertAtStart(content as Iterable<ContextuallyTypedNodeData>);
 			}
