@@ -15,7 +15,6 @@ import { JsonCompatible, brand } from "../../util";
 import { testForest } from "../forestTestSuite";
 import { singleJsonCursor } from "../../domains";
 import { jsonableTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
-import { toJsonableTree } from "../utils";
 
 describe("object-forest", () => {
 	testForest({
