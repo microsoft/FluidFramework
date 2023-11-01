@@ -423,13 +423,9 @@ export class LazyMap<TSchema extends MapSchema>
 		} else {
 			assert(fieldSchema.kind === FieldKinds.sequence, "Unexpected map field kind");
 
-			const sequenceField = field as Sequence<AllowedTypes>;
-
-			// TODO: fix merge semantics.
-			sequenceField.removeRange(0, sequenceField.length);
-			if (content !== undefined) {
-				sequenceField.insertAtStart(content as Iterable<ContextuallyTypedNodeData>);
-			}
+			// TODO: implement setting of sequence fields once we have defined clear merged semantics for doing so.
+			// For now, we will throw an error, since the public API does not currently expose a way to do this anyways.
+			throw new Error("Setting of sequence values in maps is not yet supported.");
 		}
 	}
 
