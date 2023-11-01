@@ -227,7 +227,7 @@ export function makeDetachedNodeToFieldCodec({
 				versionedValidator.check(encoded),
 				"Encoded detachedNodeToField data should be versioned",
 			);
-			assert(formatValidator.check(encoded), 0x5c7 /* Encoded schema should validate */);
+			assert(formatValidator.check(encoded), "Encoded schema should validate");
 			return JSON.stringify(encoded);
 		},
 		decode: (
