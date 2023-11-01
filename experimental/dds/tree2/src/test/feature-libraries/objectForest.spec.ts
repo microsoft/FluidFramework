@@ -14,7 +14,7 @@ import { JsonCompatible, brand } from "../../util";
 
 import { testForest } from "../forestTestSuite";
 import { singleJsonCursor } from "../../domains";
-import { jsonableTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
+import { singleMapTreeCursor } from "../../feature-libraries";
 
 describe("object-forest", () => {
 	testForest({
@@ -86,13 +86,5 @@ describe("object-forest", () => {
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(undefined, cursor);
 		assert.deepEqual(cursor.getFieldKey(), singleMapTreeCursor(forest.roots).getFieldKey());
-	});
-
-	it("getCursorAboveDetachedFields", () => {
-		const forest = buildForest();
-		initializeForest(forest, [singleJsonCursor([1, 2])]);
-		const cursor = forest.getCursorAboveDetachedFields();
-		const expected = jsonableTreeFromCursor(singleMapTreeCursor(forest.roots));
-		assert.deepEqual(jsonableTreeFromCursor(cursor), expected);
 	});
 });

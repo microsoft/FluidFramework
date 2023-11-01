@@ -273,6 +273,20 @@ export function testForest(config: ForestTestConfiguration): void {
 			});
 		});
 
+		it("getCursorAboveDetachedFields", () => {
+			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+			initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+			const forestCursor = forest.allocateCursor();
+			moveToDetachedField(forest, forestCursor);
+			const expected = mapCursorField(forestCursor, jsonableTreeFromCursor);
+
+			const cursor = forest.getCursorAboveDetachedFields();
+			cursor.enterField(rootFieldKey);
+			const actual = mapCursorField(cursor, jsonableTreeFromCursor);
+			assert.deepEqual(actual, expected);
+		});
+
 		it("anchors creation and use", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
 			initializeForest(forest, [singleJsonCursor([1, 2])]);

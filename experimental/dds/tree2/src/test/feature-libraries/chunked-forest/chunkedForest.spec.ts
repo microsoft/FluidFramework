@@ -17,17 +17,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree";
 
-import {
-	initializeForest,
-	InMemoryStoredSchemaRepository,
-	rootFieldKey,
-	StoredSchemaRepository,
-	UpPath,
-} from "../../../core";
+import { StoredSchemaRepository } from "../../../core";
 import { defaultSchemaPolicy } from "../../../feature-libraries";
 import { testForest } from "../../forestTestSuite";
-import { jsonRoot, jsonSchema, SchemaBuilder, singleJsonCursor } from "../../../domains";
-import { expectEqualPaths } from "../../utils";
 
 const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	[
@@ -86,11 +78,6 @@ const chunkers: [string, (schema: StoredSchemaRepository) => IChunker][] = [
 	],
 ];
 
-const jsonDocumentSchema = new SchemaBuilder({
-	scope: "jsonDocumentSchema",
-	libraries: [jsonSchema],
-}).intoSchema(SchemaBuilder.sequence(jsonRoot));
-
 describe("ChunkedForest", () => {
 	for (const [name, chunker] of chunkers) {
 		describe(name, () => {
@@ -98,20 +85,6 @@ describe("ChunkedForest", () => {
 				suiteName: "ChunkedForest forest suite",
 				factory: (schema) => buildChunkedForest(chunker(schema)),
 				skipCursorErrorCheck: true,
-			});
-
-			it("getCursorAboveDetachedFields", () => {
-				const forest = buildChunkedForest(
-					chunker(new InMemoryStoredSchemaRepository(jsonDocumentSchema)),
-				);
-				initializeForest(forest, [singleJsonCursor([1, 2])]);
-				const cursor = forest.getCursorAboveDetachedFields();
-				const expectedPath: UpPath = {
-					parent: undefined,
-					parentField: rootFieldKey,
-					parentIndex: 0,
-				};
-				expectEqualPaths(cursor.getPath(), expectedPath);
 			});
 		});
 	}
