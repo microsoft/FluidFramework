@@ -1075,8 +1075,8 @@ describe("SequenceField - Compose", () => {
 			[0, 1, 2],
 			[2, 1, 0],
 		]) {
-			const move1 = tagChange(Change.move(a, 1, b), tag1);
-			const move2 = tagChange(Change.move(b, 1, c), tag2);
+			const move1 = tagChange(Change.move(a, 1, b > a ? b + 1 : b), tag1);
+			const move2 = tagChange(Change.move(b, 1, c > b ? c + 1 : c), tag2);
 			const return2 = tagRollbackInverse(
 				Change.return(c, 1, b, { revision: tag2, localId: brand(0) }),
 				tag3,
@@ -1094,13 +1094,13 @@ describe("SequenceField - Compose", () => {
 			[0, 1, 2],
 			[2, 1, 0],
 		]) {
-			const move1 = tagChange(Change.move(a, 1, b), tag1);
+			const move1 = tagChange(Change.move(a, 1, b > a ? b + 1 : b), tag1);
 			const return1 = tagRollbackInverse(
 				Change.return(b, 1, a, { revision: tag1, localId: brand(0) }),
 				tag2,
 				tag1,
 			);
-			const move2 = tagChange(Change.move(a, 1, c), tag3);
+			const move2 = tagChange(Change.move(a, 1, c > a ? c + 1 : c), tag3);
 			const part2 = shallowCompose([return1, move2]);
 			const composed = shallowCompose(
 				[move1, makeAnonChange(part2)],
@@ -1116,15 +1116,15 @@ describe("SequenceField - Compose", () => {
 			[0, 1, 2, 3],
 			[3, 2, 1, 0],
 		]) {
-			const move1 = tagChange(Change.move(a, 1, b), tag1);
-			const move2 = tagChange(Change.move(b, 1, c), tag2);
+			const move1 = tagChange(Change.move(a, 1, b > a ? b + 1 : b), tag1);
+			const move2 = tagChange(Change.move(b, 1, c > b ? c + 1 : c), tag2);
 			const part1 = shallowCompose([move1, move2]);
 			const return2 = tagRollbackInverse(
 				Change.return(c, 1, b, { revision: tag2, localId: brand(0) }),
 				tag3,
 				tag2,
 			);
-			const move3 = tagChange(Change.move(b, 1, d), tag4);
+			const move3 = tagChange(Change.move(b, 1, d > b ? d + 1 : d), tag4);
 			const part2 = shallowCompose([return2, move3]);
 			const composed = shallowCompose(
 				[makeAnonChange(part1), makeAnonChange(part2)],
@@ -1141,8 +1141,8 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("[move1, move2] ○ return1", () => {
-		const move1 = tagChange(Change.move(0, 1, 1), tag1);
-		const move2 = tagChange(Change.move(1, 1, 2), tag2);
+		const move1 = tagChange(Change.move(0, 1, 2), tag1);
+		const move2 = tagChange(Change.move(1, 1, 3), tag2);
 		const return1 = tagChange(
 			Change.return(2, 1, 0, { revision: tag1, localId: brand(0) }),
 			tag3,

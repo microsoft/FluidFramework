@@ -602,9 +602,9 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("delete ↷ composite move", () => {
-		const move1 = Change.move(0, 1, 1, brand(0));
-		const move2 = Change.move(1, 1, 2, brand(1));
-		const move3 = Change.move(2, 1, 3, brand(2));
+		const move1 = Change.move(0, 1, 2, brand(0));
+		const move2 = Change.move(1, 1, 3, brand(1));
+		const move3 = Change.move(2, 1, 4, brand(2));
 		const move = composeAnonChanges([move1, move2, move3]);
 		const del = Change.delete(0, 1);
 		const rebased = rebase(del, move);
@@ -743,7 +743,7 @@ describe("SequenceField - Rebase", () => {
 			Mark.moveIn(1, brand(1)),
 		];
 
-		const move = Change.move(0, 1, 1);
+		const move = Change.move(0, 1, 2);
 		const rebased = rebase(reviveAndMove, move);
 		const expected = [
 			{ count: 1 },
