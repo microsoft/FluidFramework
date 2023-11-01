@@ -690,5 +690,3 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 		return content;
 	}
 }
-
-// TODO: only allow extraction once
