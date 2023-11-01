@@ -560,10 +560,10 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		value(
 			this: SharedTreeMap<MapSchema>,
 			key: string,
-			content: ProxyNodeUnion<AllowedTypes, "javaScript">,
+			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
 			const node = getEditNode(this);
-			node.set(key, extractFactoryContent(content as any));
+			node.set(key, extractFactoryContent(value as any));
 			return this;
 		},
 	},
