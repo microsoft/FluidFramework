@@ -141,10 +141,12 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 		};
 		inventoryList.on("itemAdded", updateItems);
 		inventoryList.on("itemDeleted", updateItems);
+		inventoryList.on("backingDataChanged", updateItems);
 
 		return () => {
 			inventoryList.off("itemAdded", updateItems);
 			inventoryList.off("itemDeleted", updateItems);
+			inventoryList.off("backingDataChanged", updateItems);
 		};
 	}, [inventoryList]);
 

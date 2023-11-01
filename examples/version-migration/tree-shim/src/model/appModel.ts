@@ -3,25 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEmitter } from "tiny-typed-emitter";
-import type {
-	IInventoryList,
-	IInventoryListAppModel,
-	IInventoryListAppModelEvents,
-} from "../modelInterfaces";
+import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 
 /**
- * The InventoryListAppModel provides two inventory lists, one using legacy SharedTree
- * and the other using new SharedTree.  They function the same and share the same interface.
+ * The InventoryListAppModel just provides the inventoryList.
  */
-export class InventoryListAppModel
-	extends TypedEmitter<IInventoryListAppModelEvents>
-	implements IInventoryListAppModel
-{
-	public constructor(
-		public readonly inventoryList: IInventoryList,
-	) {
-		super();
-		// inventoryList.on("migrationFinished", () => { this.emit("inventoryListChanged"); });
-	}
+export class InventoryListAppModel implements IInventoryListAppModel {
+	public constructor(public readonly inventoryList: IInventoryList) {}
 }

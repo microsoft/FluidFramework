@@ -51,8 +51,8 @@ export class InventoryList extends DataObject implements IInventoryList {
 	};
 
 	protected async initializingFirstTime(): Promise<void> {
-		// TODO: After integrating the shim this flag goes away.  It's just for staging so we can show the demo transitioning
-		// between using the legacy ST and new ST
+		// TODO: After integrating the shim, this flag and the double tree goes away.  It's just for staging so
+		// we can show the demo transitioning between using the legacy ST and new ST
 		this.root.set(isMigratedKey, false);
 
 		const legacySharedTree = this.runtime.createChannel(
@@ -78,34 +78,57 @@ export class InventoryList extends DataObject implements IInventoryList {
 	 * DataObject, by registering an event listener for changes to the inventory list.
 	 */
 	protected async hasInitialized() {
+		await this.setModel();
+	}
+
+	private readonly onItemAdded = (item) => {
+		this.emit("itemAdded", item);
+	};
+
+	private readonly onItemDeleted = (item) => {
+		this.emit("itemDeleted", item);
+	};
+
+	private async setModel() {
+		// On initial load the _model is unset.  But when migrating we need to unregister listeners from the old model.
+		this._model?.off("itemAdded", this.onItemAdded);
+		this._model?.off("itemDeleted", this.onItemDeleted);
+
+		// TODO: This whole block becomes something like getting the shim.currentTree, checking which type it is, and
+		// instantiating the right model accordingly.
 		const isMigrated = this.root.get(isMigratedKey);
 		if (!isMigrated) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const tree = await this.root
 				.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
 				.get();
-			// TODO: Here detect whether we really got a legacy or new tree back and instantiate the right model
 			this._model = new LegacyTreeInventoryListModel(tree);
 		} else {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const tree = await this.root.get<IFluidHandle<ISharedTree>>(newSharedTreeKey)!.get();
-			// TODO: Here detect whether we really got a legacy or new tree back and instantiate the right model
 			this._model = new NewTreeInventoryListModel(tree);
 		}
-		// TODO: These need to be swapped when the model swaps
-		this._model.on("itemAdded", (item) => {
-			this.emit("itemAdded", item);
-		});
-		this._model.on("itemDeleted", (item) => {
-			this.emit("itemDeleted", item);
-		});
+
+		this._model.on("itemAdded", this.onItemAdded);
+		this._model.on("itemDeleted", this.onItemDeleted);
 	}
 
 	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.  For this
 	// demo we'll just expose it through DEBUG and trigger it with a debug button.
 	private readonly triggerMigration = () => {
+		// Do nothing if already migrated.
+		if (this.root.get(isMigratedKey) === true) {
+			return;
+		}
+
 		console.log("Triggering migration");
 		this.root.set(isMigratedKey, true);
+		this.setModel()
+			.then(() => {
+				this.emit("backingDataChanged");
+				console.log("Migration complete");
+			})
+			.catch(console.error);
 	};
 
 	public readonly DEBUG = {
