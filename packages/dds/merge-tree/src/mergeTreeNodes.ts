@@ -115,10 +115,75 @@ export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemova
 }
 
 /**
+ * Tracks information about when and where this segment was moved to.
+ *
+ * Note that merge-tree does not currently support moving and only supports
+ * obliterate. The fields below include "move" in their names to avoid renaming
+ * in the future, when moves _are_ supported.
+ */
+export interface IMoveInfo {
+	/**
+	 * Local seq at which this segment was moved if the move is yet-to-be
+	 * acked.
+	 */
+	localMovedSeq?: number;
+
+	/**
+	 * The first seq at which this segment was moved.
+	 */
+	movedSeq: number;
+
+	/**
+	 * All seqs at which this segment was moved. In the case of overlapping,
+	 * concurrent moves this array will contain multiple seqs.
+	 *
+	 * The seq at  `movedSeqs[i]` corresponds to the client id at `movedClientIds[i]`.
+	 *
+	 * The first element corresponds to the seq of the first move
+	 */
+	movedSeqs: number[];
+
+	/**
+	 * A reference to the inserted destination segment corresponding to this
+	 * segment's move.
+	 *
+	 * If undefined, the move was an obliterate.
+	 *
+	 * Currently this field is unused, as we only support obliterate operations
+	 */
+	moveDst?: ReferencePosition;
+
+	/**
+	 * List of client IDs that have moved this segment.
+	 *
+	 * The client that actually moved the segment (i.e. whose move op was sequenced
+	 * first) is stored as the first client in this list. Other clients in the
+	 * list have all issued concurrent ops to move the segment.
+	 */
+	movedClientIds: number[];
+
+	/**
+	 * If this segment was inserted into a concurrently moved range and
+	 * the move op was sequenced before the insertion op. In this case,
+	 * the segment is visible only to the inserting client
+	 *
+	 * `wasMovedOnInsert` only applies for acked obliterates. That is, if
+	 * a segment inserted by a remote client is moved on insertion by a local
+	 * and unacked obliterate, we do not consider it as having been moved
+	 * on insert
+	 *
+	 * If a segment is moved on insertion, its length is only ever visible to
+	 * the client that inserted the segment. This is relevant in partial length
+	 * calculations
+	 */
+	wasMovedOnInsert: boolean;
+}
+
+/**
  * A segment representing a portion of the merge tree.
  * Segments are leaf nodes of the merge tree and contain data.
  */
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo> {
+export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
 	readonly type: string;
 	readonly segmentGroups: SegmentGroupCollection;
 	readonly trackingCollection: TrackingGroupCollection;
@@ -384,6 +449,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public seq: number = UniversalSequenceNumber;
 	public removedSeq?: number;
 	public removedClientIds?: number[];
+	public movedSeq?: number;
+	public movedSeqs?: number[];
+	public movedClientIds?: number[];
+	public wasMovedOnInsert?: boolean | undefined;
 	public readonly segmentGroups: SegmentGroupCollection = new SegmentGroupCollection(this);
 	public readonly trackingCollection: TrackingGroupCollection = new TrackingGroupCollection(this);
 	/**
@@ -396,6 +465,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	public abstract readonly type: string;
 	public localSeq?: number;
 	public localRemovedSeq?: number;
+	public localMovedSeq?: number;
 
 	public addProperties(
 		newProps: PropertySet,
@@ -431,6 +501,10 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		b.removedClientIds = this.removedClientIds?.slice();
 		// TODO: copy removed client overlap and branch removal info
 		b.removedSeq = this.removedSeq;
+		b.movedClientIds = this.movedClientIds?.slice();
+		b.movedSeq = this.movedSeq;
+		b.movedSeqs = this.movedSeqs;
+		b.wasMovedOnInsert = this.wasMovedOnInsert;
 		b.seq = this.seq;
 		b.attribution = this.attribution?.clone();
 	}
@@ -509,6 +583,11 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 				leafSegment.seq = this.seq;
 				leafSegment.localSeq = this.localSeq;
 				leafSegment.clientId = this.clientId;
+				leafSegment.movedClientIds = this.movedClientIds?.slice();
+				leafSegment.movedSeq = this.movedSeq;
+				leafSegment.movedSeqs = this.movedSeqs?.slice();
+				leafSegment.localMovedSeq = this.localMovedSeq;
+				leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
 				this.segmentGroups.copyTo(leafSegment);
 				this.trackingCollection.copyTo(leafSegment);
 				if (this.localRefs) {

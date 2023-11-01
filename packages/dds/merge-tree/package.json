@@ -126,6 +126,7 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_Client": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"RemovedTypeAliasDeclaration_RangeStackMap": {
@@ -170,6 +171,9 @@
 			},
 			"ClassDeclaration_TextSegment": {
 				"backCompat": false
+			},
+			"VariableDeclaration_MergeTreeDeltaType": {
+				"forwardCompat": false
 			}
 		}
 	}
