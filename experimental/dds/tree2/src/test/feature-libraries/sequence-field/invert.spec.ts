@@ -14,6 +14,7 @@ import {
 import { TestChange } from "../../testChange";
 import { deepFreeze } from "../../utils";
 import { brand } from "../../../util";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { composeAnonChanges, invert as invertChange } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
@@ -163,6 +164,125 @@ describe("SequenceField - Invert", () => {
 		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
+	});
+
+	it("transient => transient", () => {
+		const transient = [
+			Mark.transient(Mark.insert(1, brand(1)), Mark.delete(1, brand(0)), {
+				changes: childChange1,
+			}),
+		];
+
+		const inverse = invert(transient);
+		const expected = [
+			Mark.transient(
+				Change.revive(0, 1, { revision: tag1, localId: brand(0) })[0] as SF.CellMark<
+					SF.Insert,
+					unknown
+				>,
+				Mark.delete(1, brand(1)),
+				{ changes: inverseChildChange1 },
+			),
+		];
+
+		assert.deepEqual(inverse, expected);
+	});
+
+	it("Muted transient => delete", () => {
+		const transient = [
+			Mark.transient(Mark.revive(1, undefined), Mark.delete(1, brand(0)), {
+				changes: childChange1,
+			}),
+		];
+
+		const inverse = invert(transient);
+		const expected = [
+			Mark.revive(
+				1,
+				{ revision: tag1, localId: brand(0) },
+				{ inverseOf: tag1, changes: inverseChildChange1 },
+			),
+		];
+
+		assert.deepEqual(inverse, expected);
+	});
+
+	it("Insert and move => move and delete", () => {
+		const insertAndMove = [
+			Mark.transient(Mark.insert(1, brand(0)), Mark.moveOut(1, brand(1)), {
+				changes: childChange1,
+			}),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1)),
+		];
+
+		const inverse = invert(insertAndMove);
+		const expected = [
+			Mark.transient(
+				Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
+				Mark.delete(1, brand(0)),
+			),
+			{ count: 1 },
+			Mark.returnFrom(1, brand(1), { changes: inverseChildChange1 }),
+		];
+
+		assert.deepEqual(inverse, expected);
+	});
+
+	it("Move and delete => revive and move", () => {
+		const moveAndDelete = [
+			Mark.moveOut(1, brand(0), { changes: childChange1 }),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+		];
+
+		const inverse = invert(moveAndDelete);
+		const expected = [
+			Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+			{ count: 1 },
+			Mark.transient(
+				Mark.revive(1, { revision: tag1, localId: brand(1) }, { inverseOf: tag1 }),
+				Mark.returnFrom(1, brand(0)),
+				{ changes: inverseChildChange1 },
+			),
+		];
+
+		assert.deepEqual(inverse, expected);
+	});
+
+	it("Move chain => return chain", () => {
+		const moves = [
+			Mark.moveOut(1, brand(0), {
+				changes: childChange1,
+				finalEndpoint: { localId: brand(1) },
+			}),
+			{ count: 1 },
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1), { finalEndpoint: { localId: brand(0) } }),
+		];
+
+		const inverse = invert(moves);
+		const expected = [
+			Mark.returnTo(
+				1,
+				brand(0),
+				{ revision: tag1, localId: brand(0) },
+				{ finalEndpoint: { localId: brand(1) } },
+			),
+			{ count: 1 },
+			Mark.transient(
+				Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
+				Mark.returnFrom(1, brand(0)),
+			),
+			{ count: 1 },
+			Mark.returnFrom(1, brand(1), {
+				changes: inverseChildChange1,
+				finalEndpoint: { localId: brand(0) },
+			}),
+		];
+
+		assert.deepEqual(inverse, expected);
 	});
 
 	describe("Redundant changes", () => {

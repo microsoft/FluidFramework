@@ -10,6 +10,7 @@ import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
 import {
 	CellId,
+	CellMark,
 	Changeset,
 	Insert,
 	Mark,
@@ -56,7 +57,7 @@ export const sequenceFieldEditor = {
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
 	): Changeset<never> => {
-		const mark: Insert<never> = {
+		const mark: CellMark<Insert, never> = {
 			type: "Insert",
 			count: cursors.length,
 			content: cursors.map(jsonableTreeFromCursor),
@@ -74,7 +75,7 @@ export const sequenceFieldEditor = {
 		isIntention: boolean = false,
 	): Changeset<never> => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
-		const mark: Insert<never> = {
+		const mark: CellMark<Insert, never> = {
 			type: "Insert",
 			count,
 			cellId: detachEvent,
@@ -118,13 +119,13 @@ export const sequenceFieldEditor = {
 		}
 
 		const id = brand<MoveId>(0);
-		const returnFrom: ReturnFrom<never> = {
+		const returnFrom: CellMark<ReturnFrom, never> = {
 			type: "ReturnFrom",
 			id,
 			count,
 		};
 
-		const returnTo: MoveIn = {
+		const returnTo: CellMark<MoveIn, never> = {
 			type: "MoveIn",
 			id,
 			count,

@@ -865,8 +865,9 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
     allocateCursor(): ITreeSubscriptionCursor;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
+    getCursorAboveDetachedFields(): ITreeCursorSynchronous;
     readonly isEmpty: boolean;
-    moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void;
+    moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void;
     tryMoveCursorToField(destination: FieldAnchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
     tryMoveCursorToNode(destination: Anchor, cursorToMove: ITreeSubscriptionCursor): TreeNavigationResult;
 }
@@ -1050,9 +1051,8 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 // @alpha
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
     contentSnapshot(): SharedTreeContentSnapshot;
+    requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): ISharedTreeView | undefined;
     schematizeView<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
-    // @deprecated
-    readonly view: ISharedTreeView;
 }
 
 // @alpha
@@ -1656,13 +1656,9 @@ interface Range_2 {
 export { Range_2 as Range }
 
 // @alpha
-export interface RangeEntry<T> {
-    // (undocumented)
+export interface RangeQueryResult<T> {
     length: number;
-    // (undocumented)
-    start: number;
-    // (undocumented)
-    value: T;
+    value: T | undefined;
 }
 
 // @alpha
@@ -1987,9 +1983,9 @@ export class SharedTreeFactory implements IChannelFactory {
 
 // @alpha
 export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaScript" | "sharedTree" = "sharedTree"> extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
-    insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
-    insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
-    insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
+    insertAt<T extends Iterable<ProxyNodeUnion<TTypes>>>(index: number, value: T extends string ? never : string extends T ? never : T): void;
+    insertAtEnd<T extends Iterable<ProxyNodeUnion<TTypes>>>(value: T extends string ? never : string extends T ? never : T): void;
+    insertAtStart<T extends Iterable<ProxyNodeUnion<TTypes>>>(value: T extends string ? never : string extends T ? never : T): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
     moveRangeToEnd(sourceStart: number, sourceEnd: number, source: SharedTreeList<AllowedTypes>): void;
     moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
@@ -2190,9 +2186,9 @@ export interface TreeNode extends Tree<TreeNodeSchema> {
 
 // @alpha
 export class TreeNodeSchema<Name extends string = string, T extends Unenforced<TreeSchemaSpecification> = TreeSchemaSpecification> {
-    constructor(builder: Named<string>, name: Name, info: T);
     // (undocumented)
     readonly builder: Named<string>;
+    static create<Name extends string, T extends TreeSchemaSpecification>(builder: Named<string>, name: Name, info: T): TreeNodeSchema<Name, T>;
     // (undocumented)
     readonly info: Assume<T, TreeSchemaSpecification>;
     // (undocumented)
@@ -2223,6 +2219,9 @@ export interface TreeSchema<out T extends TreeFieldSchema = TreeFieldSchema> ext
     readonly policy: FullSchemaPolicy;
     readonly rootFieldSchema: T;
 }
+
+// @alpha
+export function treeSchemaFromStoredSchema(schema: TreeStoredSchema): TreeSchema;
 
 // @alpha
 type TreeSchemaSpecification = [

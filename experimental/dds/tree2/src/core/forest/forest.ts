@@ -13,6 +13,7 @@ import {
 	DetachedField,
 	detachedFieldAsKey,
 	ITreeCursor,
+	ITreeCursorSynchronous,
 	rootField,
 	UpPath,
 } from "../tree";
@@ -94,12 +95,18 @@ export interface IForestSubscription extends Dependee, ISubscribable<ForestEvent
 	/**
 	 * Set `cursorToMove` to location described by path.
 	 * This is NOT a relative move: current position is discarded.
-	 * Path must point to existing node. If a destination is not provided, the cursor
-	 * is moved to a special dummy node above the detached fields.
+	 * Path must point to existing node.
+	 */
+	moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void;
+
+	/**
+	 * The cursor is moved to a special dummy node above the detached fields.
 	 * This dummy node can be used to read the detached fields,
 	 * but other operations (such as inspecting the dummy node's type or path) should not be relied upon.
+	 * While this method does not return an {@link ITreeSubscriptionCursor}, similar restrictions apply to its use:
+	 * the returned cursor must not used after any edits are made to the forest.
 	 */
-	moveCursorToPath(destination: UpPath | undefined, cursorToMove: ITreeSubscriptionCursor): void;
+	getCursorAboveDetachedFields(): ITreeCursorSynchronous;
 
 	/**
 	 * True if there are no nodes in the forest at all.

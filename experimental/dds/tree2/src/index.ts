@@ -103,7 +103,7 @@ export {
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
-	RangeEntry,
+	RangeQueryResult,
 	Named,
 	oneFromSet,
 } from "./util";
@@ -288,6 +288,7 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
 } from "./feature-libraries";
 

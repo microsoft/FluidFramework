@@ -211,7 +211,7 @@ export class SchemaBuilder<
 			};
 		}
 	> {
-		const schema = new TreeNodeSchema(this, this.scoped(name as TName & Name), {
+		const schema = TreeNodeSchema.create(this, this.scoped(name as TName & Name), {
 			objectNodeFields: { [""]: this.sequence(allowedTypes) },
 		});
 		this.addNodeSchema(schema);

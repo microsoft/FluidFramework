@@ -31,6 +31,7 @@ import {
 	Range,
 	PlaceIndex,
 	Value,
+	ITreeCursorSynchronous,
 } from "../../core";
 import {
 	brand,
@@ -320,6 +321,10 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 		return;
 	}
+
+	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		return singleMapTreeCursor(this.roots);
+	}
 }
 
 type ObjectField = MapTree[];
@@ -505,6 +510,6 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(anchors?: AnchorSet): IEditableForest {
+export function buildForest(anchors?: AnchorSet): ObjectForest {
 	return new ObjectForest(anchors);
 }
