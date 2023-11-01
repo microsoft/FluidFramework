@@ -120,7 +120,7 @@ describe("SchemaBuilderBase", () => {
 		assert.deepEqual(normalizeAllowedTypes(Any), [Any]);
 		assert.deepEqual(normalizeAllowedTypes([]), []);
 		assert.deepEqual(normalizeAllowedTypes([Any]), [Any]);
-		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
+		const treeSchema = TreeNodeSchema.create({ name: "test" }, "foo", {
 			leafValue: ValueSchema.String,
 		});
 		assert.deepEqual(normalizeAllowedTypes(treeSchema), [treeSchema]);
@@ -155,7 +155,7 @@ describe("SchemaBuilderBase", () => {
 			),
 		);
 
-		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
+		const treeSchema = TreeNodeSchema.create({ name: "test" }, "foo", {
 			leafValue: ValueSchema.String,
 		});
 

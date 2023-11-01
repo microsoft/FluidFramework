@@ -22,6 +22,7 @@ describe("schemaSummarizer", () => {
 			const snapshot = {
 				rootFieldSchema: {
 					kind: "Forbidden",
+					types: [],
 				},
 				nodeSchema: [],
 				version: "1.0.0",

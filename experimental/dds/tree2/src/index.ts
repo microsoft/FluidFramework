@@ -288,6 +288,7 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
 } from "./feature-libraries";
 
