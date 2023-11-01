@@ -84,6 +84,9 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
+	const unsampledTelemetry = localStorage.getItem("Fluid.Telemetry.DisableSampling");
+	// Render the text conditionally
+	const renderText = unsampledTelemetry !== "true";
 
 	React.useEffect(() => {
 		/**
@@ -176,6 +179,15 @@ export function OpLatencyView(): React.ReactElement {
 			<div className={styles.graphAboutContainer}>
 				<div className={styles.flexColumn}>
 					<Subtitle1>About</Subtitle1>
+					{renderText && (
+						<Body1Strong>
+							{`Unsampled telemetry has not been enabled in Devtools. To do so, open the web console and set the Disable Sampling flag to true using the following command:
+					localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`}
+							&nbsp;
+							{`This flag is only intended for local development with Devtools and should not be enabled in production scenarios.`}
+						</Body1Strong>
+					)}
+
 					<Body1>
 						{`This Graph shows Fluid Op (Operation) Latency metrics.
 					As you make changes in your Fluid-based application, you'll see this graph update in real time with latency data for any ops your client produces.`}
