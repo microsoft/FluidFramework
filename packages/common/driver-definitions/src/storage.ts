@@ -273,11 +273,11 @@ export interface IDocumentDeltaConnection
 	submit(messages: IDocumentMessage[]): void;
 
 	/**
-	 * Submit a new signal to the server
+	 * Submits a new signal to the server
 	 */
 	// TODO: Use something other than `any`.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(message: any): void;
+	submitSignal(content: any, targetClientId?: string): void;
 }
 
 export enum LoaderCachingPolicy {
