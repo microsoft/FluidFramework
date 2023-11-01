@@ -159,6 +159,9 @@ stages:
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
         checks: ${{ parameters.checks }}
+        # Install all dependencies, not just the root ones
+        dependencyInstallCommand: pnpm install --frozen-lockfile
+
 
   # Install / Build / Test Stage
   - stage: build
