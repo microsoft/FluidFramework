@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { IIntegerRange } from "./base";
 import { ISegment } from "./mergeTreeNodes";
 import { MergeTree } from "./mergeTree";

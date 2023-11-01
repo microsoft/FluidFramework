@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { IFluidHandle, type IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
@@ -37,7 +38,6 @@ import {
 import {
 	createAnnotateMarkerOp,
 	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertSegmentOp,
 	createObliterateRangeOp,
@@ -48,7 +48,6 @@ import {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeGroupMsg,
 	IMergeTreeInsertMsg,
 	IMergeTreeRemoveMsg,
@@ -99,6 +98,9 @@ export interface IClientEvents {
 	);
 }
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
 
@@ -871,7 +873,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	}
 
 	public applyStashedOp(op: IMergeTreeDeltaOp): SegmentGroup;
-	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
@@ -974,7 +975,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			if (Array.isArray(segmentGroup)) {
 				if (segmentGroup.length === 0) {
 					// sometimes we rebase to an empty op
-					// eslint-disable-next-line import/no-deprecated
 					return createGroupOp();
 				}
 				firstGroup = segmentGroup[0];
@@ -1029,7 +1029,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			);
 			opList.push(...this.resetPendingDeltaToOps(resetOp, segmentGroup));
 		}
-		// eslint-disable-next-line import/no-deprecated
 		return opList.length === 1 ? opList[0] : createGroupOp(...opList);
 	}
 
@@ -1093,7 +1092,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return segWindow.collaborating ? UnassignedSequenceNumber : UniversalSequenceNumber;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	localTransaction(groupOp: IMergeTreeGroupMsg) {
 		for (const op of groupOp.ops) {
 			const opArgs: IMergeTreeDeltaOpArgs = {

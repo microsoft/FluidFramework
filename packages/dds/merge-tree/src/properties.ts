@@ -16,6 +16,9 @@ export type PropertySet = MapLike<any>;
 
 // Assume these are created with Object.create(null)
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export interface IConsensusValue {
 	seq: number;
 	value: any;

@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable import/no-deprecated */
 /* eslint-disable no-bitwise */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
