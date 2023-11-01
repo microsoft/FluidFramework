@@ -28,6 +28,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions';
 import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
@@ -155,9 +156,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(props?: {
-        notifyImminentClosure: boolean;
-    }): Promise<unknown>;
+    getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown>;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // @deprecated
@@ -211,9 +210,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
-    // (undocumented)
-    submitDataStoreSignal(address: string, type: string, content: any): void;
-    submitSignal(type: string, content: any): void;
+    submitDataStoreSignal(address: string, type: string, content: any, targetClientId?: string): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;

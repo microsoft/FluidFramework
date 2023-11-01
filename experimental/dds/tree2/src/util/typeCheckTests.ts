@@ -205,6 +205,9 @@ export type EnforceTypeCheckTests =
 	| requireFalse<isAny<never>>
 	| requireFalse<isAny<{}>>
 	| requireFalse<isAny<boolean>>
+	| requireFalse<isAny<number | undefined>>
+	| requireFalse<isAny<1 & "x">>
+	| requireFalse<isAny<(1 & 2) | {}>>
 
 	// test isStrictSubset
 	| requireTrue<isStrictSubset<1, 1 | 2>>
@@ -222,6 +225,10 @@ export type EnforceTypeCheckTests =
 type _falseIsTrue = requireTrue<false>;
 // @ts-expect-error negative test
 type _trueIsFalse = requireFalse<true>;
+// @ts-expect-error negative test
+type _booleanIsTrue = requireTrue<boolean>;
+// @ts-expect-error negative test
+type _booleanIsFalse = requireFalse<boolean>;
 // @ts-expect-error negative test
 type _emptyNotAssignable = requireFalse<isAssignableTo<Empty1, Empty2>>;
 // @ts-expect-error negative test

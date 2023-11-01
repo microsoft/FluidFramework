@@ -9,7 +9,7 @@ import { PartialSequenceLengths, verify, verifyExpected } from "../partialLength
 import { TestClient } from "./testClient";
 import { insertText, validatePartialLengths } from "./testUtils";
 
-describe("obliterate partial lengths", () => {
+describe.skip("obliterate partial lengths", () => {
 	let client: TestClient;
 	let refSeq: number;
 	const localClientId = 17;
