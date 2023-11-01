@@ -578,7 +578,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node.values();
 		},
 	},
-	// TODO: clear, delete, set. Will require mutation APIs to be added to MapNode.
+	// TODO: add `clear` once we have established merge semantics for it.
 };
 
 const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);

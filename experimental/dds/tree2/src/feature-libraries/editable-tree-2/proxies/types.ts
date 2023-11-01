@@ -262,11 +262,15 @@ export type ObjectFields<
 
 /**
  * A map of string keys to tree objects.
+ *
+ * @privateRemarks
+ * Add support for `clear` once we have established merge semantics for it.
+ *
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<
-	string,
-	ProxyField<TSchema["mapFields"]>
+export type SharedTreeMap<TSchema extends MapSchema> = Omit<
+	Map<string, ProxyField<TSchema["mapFields"]>>,
+	"clear"
 >;
 
 /**
@@ -331,7 +335,7 @@ export type ProxyNode<
 	: TSchema extends MapSchema
 	? API extends "sharedTree"
 		? SharedTreeMap<TSchema>
-		: Map<string, ProxyField<TSchema["mapFields"], API>>
+		: ReadonlyMap<string, ProxyField<TSchema["mapFields"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
 		? SharedTreeList<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>
