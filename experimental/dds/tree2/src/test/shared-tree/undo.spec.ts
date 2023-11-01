@@ -323,7 +323,7 @@ describe("Undo and redo", () => {
 		unsubscribe();
 	});
 
-	it.skip("cab revert a reattach", () => {
+	it("can undo and redo an insert multiple times", () => {
 		const tree = makeTreeFromJson(["A", "B"]);
 
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree);
@@ -338,6 +338,24 @@ describe("Undo and redo", () => {
 		expectJsonTree(tree, ["A", "B"]);
 		redoStack.pop()?.revert();
 		expectJsonTree(tree, ["A", "B", "C"]);
+		unsubscribe();
+	});
+
+	it("can undo and redo a move multiple times", () => {
+		const tree = makeTreeFromJson(["A", "B"]);
+
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+		tree.editor.sequenceField(rootField).move(1, 1, 0);
+
+		expectJsonTree(tree, ["B", "A"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["B", "A"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["B", "A"]);
 		unsubscribe();
 	});
 });
