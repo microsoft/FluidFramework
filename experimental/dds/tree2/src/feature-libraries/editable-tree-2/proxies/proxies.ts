@@ -527,7 +527,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 	},
 	delete: {
 		value(this: SharedTreeMap<MapSchema>, key: string): void {
-			const node = getMapNode(this);
+			const node = getEditNode(this);
 			node.delete(key);
 		},
 	},
@@ -562,7 +562,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			key: string,
 			content: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
-			const node = getMapNode(this);
+			const node = getEditNode(this);
 			node.set(key, extractFactoryContent(content as any));
 			return this;
 		},
