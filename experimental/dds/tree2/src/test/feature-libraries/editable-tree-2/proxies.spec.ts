@@ -191,14 +191,6 @@ describe("SharedTreeList", () => {
 			root.numbers.insertAtStart([0]);
 			root.numbers.insertAt(1, [1]);
 			root.numbers.insertAtEnd([2]);
-			assert.throws(() => {
-				// @ts-expect-error Inserted content needs to be iterable
-				root.numbers.insertAtStart(3);
-				// @ts-expect-error Inserted content needs to be iterable
-				root.numbers.insertAt(1, 4);
-				// @ts-expect-error Inserted content needs to be iterable
-				root.numbers.insertAtEnd(5);
-			});
 			assert.deepEqual(root.numbers, [0, 1, 2]);
 		});
 
@@ -208,29 +200,27 @@ describe("SharedTreeList", () => {
 			root.strings.insertAtStart(["a"]);
 			root.strings.insertAt(1, ["b"]);
 			root.strings.insertAtEnd(["c"]);
-			assert.throws(() => {
+			const _errors = () => {
 				// @ts-expect-error Inserted content needs to be non-string iterable
 				root.strings.insertAtStart("d");
 				// @ts-expect-error Inserted content needs to be non-string iterable
 				root.strings.insertAt(1, "e");
 				// @ts-expect-error Inserted content needs to be non-string iterable
 				root.strings.insertAtEnd("f");
-			});
-			assert.deepEqual(root.strings, ["a", "b", "c"]);
+			};
+			const gh: Iterable<string> = "gh";
+			root.strings.insertAtStart(gh);
+			const ij: Iterable<string> = "ij";
+			root.strings.insertAt(3, ij);
+			const kl: Iterable<string> = "kl";
+			root.strings.insertAtEnd(kl);
+			assert.deepEqual(root.strings, ["g", "h", "a", "i", "j", "b", "c", "k", "l"]);
 		});
 
 		itWithRoot("booleans", schema, initialTree, (root) => {
 			root.booleans.insertAtStart([true]);
 			root.booleans.insertAt(1, [false]);
 			root.booleans.insertAtEnd([true]);
-			assert.throws(() => {
-				// @ts-expect-error Inserted content needs to be iterable
-				root.booleans.insertAtStart(false);
-				// @ts-expect-error Inserted content needs to be iterable
-				root.booleans.insertAt(1, true);
-				// @ts-expect-error Inserted content needs to be iterable
-				root.booleans.insertAtEnd(false);
-			});
 			assert.deepEqual(root.booleans, [true, false, true]);
 		});
 	});
