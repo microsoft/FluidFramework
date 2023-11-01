@@ -2051,8 +2051,8 @@ export class ContainerRuntime
 	 * more hacky code to modify the batch before it gets sent out.
 	 * @param content - An IdAllocationOp with "stashedState", which is a representation of un-ack'd local state.
 	 */
-  private async applyStashedIdAllocationOp(op: IdCreationRangeWithStashedState) {
-    // eslint-disable-next-line import/no-unresolved
+	private async applyStashedIdAllocationOp(op: IdCreationRangeWithStashedState) {
+		// eslint-disable-next-line import/no-unresolved
 		const { IdCompressor } = await import("./id-compressor/index.js");
 		this.idCompressor = IdCompressor.deserialize(op.stashedState);
 	}
