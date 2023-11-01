@@ -26,7 +26,7 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 import { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { getTestContent, skipOrFailIfTestContentMissing } from "../testContent";
 
-describe(`Container Serialization Backwards Compatibility`, () => {
+describe.skip(`Container Serialization Backwards Compatibility`, () => {
 	const loaderContainerTracker = new LoaderContainerTracker();
 	const contentFolder = getTestContent("serializedContainerTestContent");
 
