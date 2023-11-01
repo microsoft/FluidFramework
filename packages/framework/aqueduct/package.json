@@ -82,7 +82,7 @@
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.26.1",
-		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@2.0.0-internal.7.1.0",
+		"@fluidframework/aqueduct-previous": "npm:@fluidframework/aqueduct@2.0.0-internal.7.2.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
