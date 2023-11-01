@@ -193,7 +193,8 @@ describeNoCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 		const maps: ISharedMap[] = [];
 		for (const container of containers) {
 			if (!container.closed) {
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const maybeDataObject: FluidObject<ITestFluidObject> = await container.getEntryPoint();
+				const dataObject = maybeDataObject.ITestFluidObject
 				const map = await dataObject.getSharedObject<ISharedMap>("map");
 				const key = createDocumentId();
 				map.set(key, key);
