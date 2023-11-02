@@ -31,6 +31,7 @@ import {
 	IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
+import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
@@ -467,7 +468,7 @@ export function mixinNewClient<
 		if (isClientAddOp(op)) {
 			const newClient = await loadClient(
 				state.containerRuntimeFactory,
-				state.summarizerClient,
+				state.summarizerClient.channel.getAttachSummary(),
 				model.factory,
 				op.addedClientId,
 				options,
@@ -582,6 +583,7 @@ export function mixinAttach<
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA = state.clients[0];
+			const summaryTreeWithStats = clientA.channel.getAttachSummary();
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -591,7 +593,7 @@ export function mixinAttach<
 				Array.from({ length: options.numberOfClients }, async (_, index) =>
 					loadClient(
 						state.containerRuntimeFactory,
-						clientA,
+						summaryTreeWithStats,
 						model.factory,
 						index === 0 ? "summarizer" : makeFriendlyClientId(state.random, index),
 						options,
@@ -898,12 +900,12 @@ function createDetachedClient<TChannelFactory extends IChannelFactory>(
 
 async function loadClient<TChannelFactory extends IChannelFactory>(
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection,
-	summarizerClient: Client<TChannelFactory>,
+	summaryTreeWithStats: ISummaryTreeWithStats,
 	factory: TChannelFactory,
 	clientId: string,
 	options: Pick<DDSFuzzSuiteOptions, "emitter">,
 ): Promise<Client<TChannelFactory>> {
-	const { summary } = summarizerClient.channel.getAttachSummary();
+	const { summary } = summaryTreeWithStats;
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId });
 	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime, {
 		minimumSequenceNumber: containerRuntimeFactory.sequenceNumber,
@@ -978,7 +980,7 @@ export async function runTestForSeed<
 				Array.from({ length: options.numberOfClients }, async (_, i) =>
 					loadClient(
 						containerRuntimeFactory,
-						initialClient,
+						initialClient.channel.getAttachSummary(),
 						model.factory,
 						makeFriendlyClientId(random, i),
 						options,

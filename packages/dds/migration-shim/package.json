@@ -74,6 +74,8 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
+		"@fluid-internal/stochastic-test-utils": "workspace:~",
+		"@fluid-internal/test-dds-utils": "workspace:~",
 		"@fluid-internal/test-version-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/aqueduct": "workspace:~",
