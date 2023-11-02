@@ -31,6 +31,7 @@ import {
 	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
+	RemovedTreesFromChild,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
@@ -594,24 +595,29 @@ function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
 	return areEqualChangeAtomIds(a, b);
 }
 
-function* relevantRemovedTrees(change: OptionalChangeset): Iterable<Delta.DetachedNodeId> {
+function* relevantRemovedTrees(
+	change: OptionalChangeset,
+	removedTreesFromChild: RemovedTreesFromChild,
+): Iterable<Delta.DetachedNodeId> {
 	let removedNode: ChangeAtomId | undefined;
 	let restoredNode: ChangeAtomId | undefined;
 	const fieldChange = change.fieldChange;
 	if (fieldChange !== undefined) {
 		removedNode = { revision: fieldChange.revision, localId: fieldChange.id };
 		const newContent = fieldChange.newContent;
-		if (
-			newContent !== undefined &&
-			Object.prototype.hasOwnProperty.call(newContent, "revert")
-		) {
-			// This tree is being restored by this change, so it is a relevant removed tree.
-			restoredNode = (newContent as { revert: ChangeAtomId }).revert;
-			yield nodeIdFromChangeAtom(restoredNode);
+		if (newContent !== undefined) {
+			if (Object.prototype.hasOwnProperty.call(newContent, "revert")) {
+				// This tree is being restored by this change, so it is a relevant removed tree.
+				restoredNode = (newContent as { revert: ChangeAtomId }).revert;
+				yield nodeIdFromChangeAtom(restoredNode);
+			}
+			if (newContent.changes !== undefined) {
+				yield* removedTreesFromChild(newContent.changes);
+			}
 		}
 	}
 	if (change.childChanges !== undefined) {
-		for (const [deletedBy, _] of change.childChanges) {
+		for (const [deletedBy, child] of change.childChanges) {
 			if (
 				deletedBy === "self" ||
 				(removedNode !== undefined && areEqualChangeIds(deletedBy, removedNode))
@@ -625,6 +631,7 @@ function* relevantRemovedTrees(change: OptionalChangeset): Iterable<Delta.Detach
 					yield nodeIdFromChangeAtom(deletedBy);
 				}
 			}
+			yield* removedTreesFromChild(child);
 		}
 	}
 }

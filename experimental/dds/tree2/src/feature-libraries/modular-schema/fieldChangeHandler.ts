@@ -27,7 +27,10 @@ export interface FieldChangeHandler<
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.FieldChanges;
-	readonly relevantRemovedTrees: (change: TChangeset) => Iterable<Delta.DetachedNodeId>;
+	readonly relevantRemovedTrees: (
+		change: TChangeset,
+		removedTreesFromChild: RemovedTreesFromChild,
+	) => Iterable<Delta.DetachedNodeId>;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -188,6 +191,11 @@ export type NodeChangeRebaser = (
  * @alpha
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
+
+/**
+ * @alpha
+ */
+export type RemovedTreesFromChild = (child: NodeChangeset) => Iterable<Delta.DetachedNodeId>;
 
 /**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
