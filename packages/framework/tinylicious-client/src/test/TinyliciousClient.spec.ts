@@ -386,7 +386,7 @@ describe("TinyliciousClient", () => {
 			},
 		});
 
-		// Ensure that the 'map1' API is accessible without casting or surpressing lint rules:
+		// Ensure that the 'map1' API is accessible without casting or suppressing lint rules:
 		assert.equal(container.initialObjects.map1.get("nonexistent"), undefined);
 	});
 });
