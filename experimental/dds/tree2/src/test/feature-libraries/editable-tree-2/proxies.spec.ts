@@ -203,8 +203,6 @@ describe("SharedTreeList", () => {
 
 			const string: string = "hello";
 			const stringLiteral: "hello" = "hello" as const;
-			const iterableOrString: Iterable<string> | string = "hello";
-			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
 			assert.throws(() => {
 				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtStart(string);
@@ -212,14 +210,6 @@ describe("SharedTreeList", () => {
 			assert.throws(() => {
 				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtStart(stringLiteral);
-			});
-			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
-				root.strings.insertAtStart(iterableOrString);
-			});
-			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
-				root.strings.insertAtStart(iterableOrLiteral);
 			});
 			assert.throws(() => {
 				// @ts-expect-error Inserted content should not be a string
@@ -231,34 +221,41 @@ describe("SharedTreeList", () => {
 			});
 			assert.throws(() => {
 				// @ts-expect-error Inserted content should not be a string
-				root.strings.insertAt(0, iterableOrString);
-			});
-			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
-				root.strings.insertAt(0, iterableOrLiteral);
-			});
-			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtEnd(string);
 			});
 			assert.throws(() => {
 				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtEnd(stringLiteral);
 			});
+
+			// TODO: It would be nice if there were a way to prevent these unions at compile time as well.
+			// However, it might take some complicated type magic.
+			const iterableOrString: Iterable<string> | string = "hello";
+			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAtStart(iterableOrLiteral);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, iterableOrLiteral);
+			});
+			assert.throws(() => {
 				root.strings.insertAtEnd(iterableOrString);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtEnd(iterableOrLiteral);
 			});
 
-			const de = "de"[Symbol.iterator]();
+			const de: Iterable<string> = "de"[Symbol.iterator]();
 			root.strings.insertAtStart(de);
-			const fg = "fg"[Symbol.iterator]();
+			const fg: Iterable<string> = "fg"[Symbol.iterator]();
 			root.strings.insertAt(3, fg);
-			const hi = "hi"[Symbol.iterator]();
+			const hi: Iterable<string> = "hi"[Symbol.iterator]();
 			root.strings.insertAtEnd(hi);
 			assert.deepEqual(root.strings, ["d", "e", "a", "f", "g", "b", "c", "h", "i"]);
 		});
