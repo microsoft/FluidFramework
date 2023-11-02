@@ -360,16 +360,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 			}
 		}
 		const movedCount = sourceEnd - sourceStart;
-		let destinationIndex = index;
-		if (sourceField === this) {
-			if (destinationIndex > sourceStart) {
-				destinationIndex =
-					destinationIndex < sourceEnd
-						? sourceStart // destination overlaps with source range -> slide to left
-						: (destinationIndex -= movedCount); // destination after source range -> subtract moved count
-			}
-		}
-		assertValidIndex(destinationIndex, this, true);
+		assertValidIndex(index, this, true);
 		const sourceFieldPath = sourceField.getFieldPath();
 		const destinationFieldPath = this.getFieldPath();
 		this.context.editor.move(
@@ -377,7 +368,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 			sourceStart,
 			movedCount,
 			destinationFieldPath,
-			destinationIndex,
+			index,
 		);
 	}
 }

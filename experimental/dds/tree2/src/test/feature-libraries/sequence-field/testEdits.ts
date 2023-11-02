@@ -14,7 +14,7 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
+import { composeAnonChanges } from "./utils";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();
@@ -41,7 +41,7 @@ export const cases: {
 	]),
 	delete: createDeleteChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
-	move: createMoveChangeset(1, 2, 2),
+	move: createMoveChangeset(1, 2, 4),
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
 	transient_insert: [
 		{ count: 1 },
@@ -149,9 +149,7 @@ function createMoveChangeset(
 	destIndex: number,
 	id: ChangesetLocalId = brand(0),
 ): SF.Changeset<never> {
-	return composeAnonChangesShallow(
-		SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id),
-	);
+	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id);
 }
 
 function createReturnChangeset(
