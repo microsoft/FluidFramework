@@ -264,7 +264,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 		seq?: number,
 		collaborating?: boolean,
 		rollback?: PropertiesRollback,
-	): PropertySet | undefined;
+	): PropertySet;
 	clone(): ISegment;
 	canAppend(segment: ISegment): boolean;
 	append(segment: ISegment): void;

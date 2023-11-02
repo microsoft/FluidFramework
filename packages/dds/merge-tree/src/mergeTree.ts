@@ -1625,7 +1625,7 @@ export class MergeTree {
 						segment,
 						segmentGroup,
 						localSeq,
-						propertyDeltas ? propertyDeltas : {},
+						propertyDeltas,
 					);
 				} else {
 					if (MergeTree.options.zamboniSegments) {

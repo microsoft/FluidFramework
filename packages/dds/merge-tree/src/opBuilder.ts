@@ -131,7 +131,6 @@ export function createInsertOp(pos: number, segSpec: any): IMergeTreeInsertMsg {
 export function createGroupOp(...ops: IMergeTreeDeltaOp[]): IMergeTreeGroupMsg {
 	return {
 		ops,
-		// eslint-disable-next-line import/no-deprecated
 		type: MergeTreeDeltaType.GROUP,
 	};
 }

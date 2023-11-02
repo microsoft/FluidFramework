@@ -20,11 +20,6 @@ export enum PropertiesRollback {
 
 export class PropertiesManager {
 	private pendingKeyUpdateCount: MapLike<number> | undefined;
-	private pendingRewriteCount: number;
-
-	constructor() {
-		this.pendingRewriteCount = 0;
-	}
 
 	public ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg) {
 		this.decrementPendingCounts(annotateOp.props);
@@ -52,18 +47,8 @@ export class PropertiesManager {
 		seq?: number,
 		collaborating: boolean = false,
 		rollback: PropertiesRollback = PropertiesRollback.None,
-	): PropertySet | undefined {
+	): PropertySet {
 		this.pendingKeyUpdateCount ??= createMap<number>();
-
-		// There are outstanding local rewrites, so block all non-local changes
-		if (
-			this.pendingRewriteCount > 0 &&
-			seq !== UnassignedSequenceNumber &&
-			seq !== UniversalSequenceNumber &&
-			collaborating
-		) {
-			return undefined;
-		}
 
 		// Clean up counts for rolled back edits before modifying oldProps
 		if (collaborating && rollback === PropertiesRollback.Rollback) {
@@ -124,7 +109,6 @@ export class PropertiesManager {
 			for (const key of Object.keys(oldProps)) {
 				newProps[key] = oldProps[key];
 			}
-			newManager.pendingRewriteCount = this.pendingRewriteCount;
 			newManager.pendingKeyUpdateCount = createMap<number>();
 			for (const key of Object.keys(this.pendingKeyUpdateCount!)) {
 				newManager.pendingKeyUpdateCount[key] = this.pendingKeyUpdateCount![key];
@@ -134,7 +118,7 @@ export class PropertiesManager {
 	}
 
 	public hasPendingProperties() {
-		return this.pendingRewriteCount > 0 || Object.keys(this.pendingKeyUpdateCount!).length > 0;
+		return Object.keys(this.pendingKeyUpdateCount!).length > 0;
 	}
 
 	public hasPendingProperty(key: string): boolean {
