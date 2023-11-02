@@ -18,7 +18,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
 import { AllowedUpdateType, IEditableForest, ITreeCursorSynchronous } from "../../../core";
-import { ISharedTree, ISharedTreeView, ISharedTreeView2, TreeContent } from "../../../shared-tree";
+import { ISharedTree, ISharedTreeView2, TreeContent } from "../../../shared-tree";
 import { TestTreeProviderLite, forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 import { SchemaBuilder } from "../../../domains";
@@ -49,20 +49,6 @@ export function createTree(): ISharedTree {
 	const tree = new TestTreeProviderLite(1).trees[0];
 	assert(tree.isAttached());
 	return tree;
-}
-
-/**
- * @deprecated less general and less type safe than createTreeView2.
- */
-export function createTreeView<TRoot extends TreeFieldSchema>(
-	schema: TreeSchema<TRoot>,
-	initialTree: any,
-): ISharedTreeView {
-	return createTree().schematize({
-		allowedSchemaModifications: AllowedUpdateType.None,
-		initialTree,
-		schema,
-	}).branch;
 }
 
 export function createTreeView2<TRoot extends TreeFieldSchema>(
@@ -97,8 +83,11 @@ export function itWithRoot<TRoot extends TreeFieldSchema>(
 	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {
-		const view = createTreeView(schema, initialTree);
-		const root = view.root2(schema);
+		const view = createTreeView2(
+			schema,
+			initialTree as SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>,
+		);
+		const root = view.root;
 		fn(root);
 	});
 }
