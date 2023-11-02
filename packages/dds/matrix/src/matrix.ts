@@ -641,7 +641,7 @@ export class SharedMatrix<T = any>
 							row,
 							col,
 							this.cells.getCell(rowHandle, colHandle), // Current value
-							setOp.value, // Ignored value
+							parseHandles(setOp.value, this.serializer), // Ignored value
 						);
 					}
 				}
