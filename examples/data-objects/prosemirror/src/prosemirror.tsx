@@ -130,7 +130,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 		if (scope.ILoader === undefined) {
 			throw new Error("scope must include ILoader");
 		}
-		this._collabManager = new FluidCollabManager(this.text, scope.ILoader);
+		this._collabManager = new FluidCollabManager(this.text);
 
 		// Access for debugging
 		// eslint-disable-next-line @typescript-eslint/dot-notation
