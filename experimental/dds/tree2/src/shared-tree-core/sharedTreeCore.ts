@@ -178,7 +178,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			}
 		});
 
-		this.messageCodec = makeMessageCodec(changeFamily.codecs.resolve(formatVersion).json, options);
+		this.messageCodec = makeMessageCodec(
+			changeFamily.codecs.resolve(formatVersion).json,
+			options,
+		);
 		const editManagerSummarizable = new EditManagerSummarizer(this.editManager, options);
 		this.getSummarizables = () => {
 			const summarizablesCurrent = [editManagerSummarizable, ...summarizables.get()];
