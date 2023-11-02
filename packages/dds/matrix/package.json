@@ -16,7 +16,7 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
-		"bench:profile": "cd bench && tsc && node -r ts-node/register --prof src/index.ts --runInBand && node --prof-process isolate-0x*-v8.log > profile.txt && rm isolate-0x*-v8.log && cat profile.txt",
+		"bench:profile": "cd bench && tsc && node -r ts-node/register --prof --logfile=profile.log --no-logfile-per-isolate src/index.ts --runInBand && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in bench/profile.txt",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
@@ -38,7 +38,7 @@
 		"test:coverage": "c8 npm test",
 		"test:memory": "mocha --config src/test/memory/.mocharc.js",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.js",
-		"test:mocha": "mocha --recursive 'dist/test/**/*.spec.js' --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.js\" --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",

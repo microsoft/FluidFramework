@@ -154,6 +154,13 @@ module.exports = {
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
+			"npm-package-json-scripts-args": [
+				// server/routerlicious and server/routerlicious/packages/routerlicious use
+				// linux only scripts that would require extra logic to validate properly.
+				// Ideally no packages would use OS specific scripts.
+				"^server/routerlicious/package.json",
+				"^server/routerlicious/packages/routerlicious/package.json",
+			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
 				"common/build/eslint-config-fluid/package.json",

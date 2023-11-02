@@ -41,7 +41,7 @@
 		"start:tinylicious": "webpack serve --config webpack.config.cjs --env mode=tinylicious",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "cross-env NODE_OPTIONS=\"--experimental-loader esm-loader-css\" mocha --config src/test/.mocharc.cjs dist/test/**/*.spec.js",
+		"test:mocha": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --config src/test/.mocharc.cjs \"dist/test/**/*.spec.js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"webpack": "webpack --env production",
