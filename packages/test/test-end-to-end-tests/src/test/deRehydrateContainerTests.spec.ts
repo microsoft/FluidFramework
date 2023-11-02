@@ -31,7 +31,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IntervalType, SequenceInterval, SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
-import { Ink } from "@fluidframework/ink";
+import { Ink } from "@fluid-experimental/ink";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue, ConsensusOrderedCollection } from "@fluidframework/ordered-collection";
 import { SharedCounter } from "@fluidframework/counter";

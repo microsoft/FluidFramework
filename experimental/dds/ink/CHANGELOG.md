@@ -1,4 +1,4 @@
-# @fluidframework/ink
+# @fluid-experimental/ink
 
 ## 2.0.0-internal.7.2.0
 

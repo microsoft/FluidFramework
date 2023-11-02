@@ -1,12 +1,12 @@
 {
-	"name": "@fluidframework/ink",
+	"name": "@fluid-experimental/ink",
 	"version": "2.0.0-internal.8.0.0",
 	"description": "Ink DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/dds/ink"
+		"directory": "experimental/dds/ink"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -73,7 +73,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
-		"@fluidframework/ink-previous": "npm:@fluidframework/ink@2.0.0-internal.7.1.0",
+		"@fluid-experimental/ink-previous": "npm:@fluidframework/ink@2.0.0-internal.7.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",

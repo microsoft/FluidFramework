@@ -1,4 +1,4 @@
-# @fluidframework/ink
+# @fluid-experimental/ink
 
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
 

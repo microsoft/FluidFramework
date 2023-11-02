@@ -67,7 +67,7 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/file-driver": "workspace:~",
-		"@fluidframework/ink": "workspace:~",
+		"@fluid-experimental/ink": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",

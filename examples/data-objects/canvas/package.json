@@ -43,7 +43,7 @@
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
-		"@fluidframework/ink": "workspace:~",
+		"@fluid-experimental/ink": "workspace:~",
 		"react": "^17.0.1"
 	},
 	"devDependencies": {

@@ -8,7 +8,7 @@ import { IContainerContext } from "@fluidframework/container-definitions";
 import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/container-runtime";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { Ink } from "@fluidframework/ink";
+import { Ink } from "@fluid-experimental/ink";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";

@@ -13,7 +13,7 @@ import { ContainerMessageType } from "@fluidframework/container-runtime";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { DataStoreMessageType } from "@fluidframework/datastore";
 import { IDocumentServiceFactory, IResolvedUrl } from "@fluidframework/driver-definitions";
-import { Ink, IColor } from "@fluidframework/ink";
+import { Ink, IColor } from "@fluid-experimental/ink";
 import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";

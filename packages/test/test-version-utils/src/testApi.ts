@@ -15,7 +15,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 // Data Runtime API
 import { SharedCell } from "@fluidframework/cell";
 import { SharedCounter } from "@fluidframework/counter";
-import { Ink } from "@fluidframework/ink";
+import { Ink } from "@fluid-experimental/ink";
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
@@ -49,7 +49,7 @@ const packageList = [
 	"@fluidframework/container-runtime",
 	"@fluidframework/cell",
 	"@fluidframework/counter",
-	"@fluidframework/ink",
+	"@fluid-experimental/ink",
 	"@fluidframework/map",
 	"@fluidframework/matrix",
 	"@fluidframework/ordered-collection",
@@ -185,7 +185,7 @@ async function loadDataRuntime(baseVersion: string, requested?: number | string)
 			loadPackage(modulePath, "@fluidframework/cell"),
 			loadPackage(modulePath, "@fluidframework/counter"),
 			loadPackage(modulePath, "@fluidframework/matrix"),
-			loadPackage(modulePath, "@fluidframework/ink"),
+			loadPackage(modulePath, "@fluid-experimental/ink"),
 			loadPackage(modulePath, "@fluidframework/ordered-collection"),
 			loadPackage(modulePath, "@fluidframework/register-collection"),
 			loadPackage(

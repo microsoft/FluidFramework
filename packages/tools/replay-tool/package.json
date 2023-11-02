@@ -45,7 +45,7 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/file-driver": "workspace:~",
-		"@fluidframework/ink": "workspace:~",
+		"@fluid-experimental/ink": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",

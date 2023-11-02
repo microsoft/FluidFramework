@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IColor, InkCanvas } from "@fluidframework/ink";
+import { IColor, InkCanvas } from "@fluid-experimental/ink";
 
 import React, { useEffect, useRef, useState } from "react";
 
