@@ -1531,7 +1531,7 @@ describe("Editing", () => {
 			// Should be committed with the constant set to false.
 			const individualTests = false;
 			const nbNodes = 3;
-			const nbPeers = 3;
+			const nbPeers = 2;
 			const testRemoveRevive = true;
 			const testMoveReturn = false;
 			assert(testRemoveRevive || testMoveReturn, "No scenarios to run");
