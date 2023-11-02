@@ -242,11 +242,7 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
-				npm: [
-					"@fluidframework",
-					"fluid-framework",
-					"@fluid-internal/client-utils",
-				],
+				npm: ["@fluidframework", "fluid-framework", "@fluid-internal/client-utils"],
 				// A list of packages published to our internal-build feed. Note that packages published
 				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
