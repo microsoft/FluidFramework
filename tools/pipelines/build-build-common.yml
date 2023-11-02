@@ -83,3 +83,5 @@ extends:
     taskBuildDocs: false
     taskLint: false
     taskTest: [] # no tests
+    checks:
+    - prettier
