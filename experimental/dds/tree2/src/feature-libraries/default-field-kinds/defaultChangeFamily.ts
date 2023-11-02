@@ -90,7 +90,7 @@ export interface IDefaultEditBuilder {
 	 * Moves a subsequence from one sequence field to another sequence field.
 	 *
 	 * Note that the `destinationIndex` is interpreted based on the state of the sequence *before* the move operation.
-	 * For example, `move(field, 0, 2, field, 1)` changes `[A, B, C]` to `[B, A, C]`.
+	 * For example, `move(field, 0, 1, field, 2)` changes `[A, B, C]` to `[B, A, C]`.
 	 */
 	move(
 		sourceField: FieldUpPath,
@@ -184,21 +184,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		} else {
 			const detachPath = topDownPath(sourceField.parent);
 			const attachPath = topDownPath(destinationField.parent);
-			const minDepth = Math.min(detachPath.length, attachPath.length);
-			let sharedDepth = 0;
-			while (sharedDepth < minDepth) {
-				const detachStep = detachPath[sharedDepth];
-				const attachStep = attachPath[sharedDepth];
-				if (detachStep !== attachStep) {
-					if (
-						detachStep.parentField !== attachStep.parentField ||
-						detachStep.parentIndex !== attachStep.parentIndex
-					) {
-						break;
-					}
-				}
-				sharedDepth += 1;
-			}
+			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
 			let adjustedAttachField = destinationField;
 			// After the above loop, `sharedDepth` is the number of elements, starting from the root,
 			// that both paths have in common.
@@ -347,4 +333,26 @@ export interface SequenceFieldEditBuilder {
 	 * @param destIndex - the index the elements are moved to, interpreted before detaching the moved elements.
 	 */
 	move(sourceIndex: number, count: number, destIndex: number): void;
+}
+
+/**
+ * @returns The number of path elements that both paths share, starting at index 0.
+ */
+function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[]): number {
+	const minDepth = Math.min(pathA.length, pathB.length);
+	let sharedDepth = 0;
+	while (sharedDepth < minDepth) {
+		const detachStep = pathA[sharedDepth];
+		const attachStep = pathB[sharedDepth];
+		if (detachStep !== attachStep) {
+			if (
+				detachStep.parentField !== attachStep.parentField ||
+				detachStep.parentIndex !== attachStep.parentIndex
+			) {
+				break;
+			}
+		}
+		sharedDepth += 1;
+	}
+	return sharedDepth;
 }

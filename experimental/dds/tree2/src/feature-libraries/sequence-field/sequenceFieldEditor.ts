@@ -20,6 +20,7 @@ import {
 	MoveIn,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
+import { splitMark } from "./utils";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
@@ -106,7 +107,7 @@ export const sequenceFieldEditor = {
 			id,
 			count,
 		};
-		const indexAfterMoveOut = sourceIndex + count;
+		const firstIndexBeyondMoveOut = sourceIndex + count;
 		const marks = new MarkListFactory<never>();
 		marks.pushOffset(Math.min(sourceIndex, destIndex));
 		if (destIndex <= sourceIndex) {
@@ -114,18 +115,18 @@ export const sequenceFieldEditor = {
 			marks.pushContent(moveIn);
 			marks.pushOffset(sourceIndex - destIndex);
 			marks.pushContent(moveOut);
-		} else if (indexAfterMoveOut <= destIndex) {
+		} else if (firstIndexBeyondMoveOut <= destIndex) {
 			// The destination is fully after the source
 			marks.pushContent(moveOut);
-			marks.pushOffset(destIndex - indexAfterMoveOut);
+			marks.pushOffset(destIndex - firstIndexBeyondMoveOut);
 			marks.pushContent(moveIn);
 		} else {
-			const count1 = destIndex - sourceIndex;
-			const count2 = indexAfterMoveOut - destIndex;
+			const firstSectionLength = destIndex - sourceIndex;
 			// The destination is in the middle of the source
-			marks.pushContent({ ...moveOut, count: count1 });
+			const [moveOut1, moveOut2] = splitMark(moveOut, firstSectionLength);
+			marks.pushContent(moveOut1);
 			marks.pushContent(moveIn);
-			marks.pushContent({ ...moveOut, count: count2, id: brand<MoveId>(id + count1) });
+			marks.pushContent(moveOut2);
 		}
 		return marks.list;
 	},
