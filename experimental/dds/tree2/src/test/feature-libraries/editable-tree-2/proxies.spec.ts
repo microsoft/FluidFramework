@@ -184,9 +184,10 @@ describe("SharedTreeList", () => {
 			numbers: _.list(_.number),
 			strings: _.list(_.string),
 			booleans: _.list(_.boolean),
+			poly: _.list([_.number, _.string, _.boolean]),
 		});
 		const schema = _.intoSchema(obj);
-		const initialTree = { numbers: [], strings: [], booleans: [] };
+		const initialTree = { numbers: [], strings: [], booleans: [], poly: [] };
 		itWithRoot("numbers", schema, initialTree, (root) => {
 			root.numbers.insertAtStart([0]);
 			root.numbers.insertAt(1, [1]);
@@ -204,32 +205,24 @@ describe("SharedTreeList", () => {
 			const string: string = "hello";
 			const stringLiteral: "hello" = "hello" as const;
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtStart(string);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtStart(stringLiteral);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAt(0, string);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAt(0, stringLiteral);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtEnd(string);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtEnd(stringLiteral);
 			});
 
-			// TODO: It would be nice if there were a way to prevent these unions at compile time as well.
-			// However, it might take some complicated type magic.
 			const iterableOrString: Iterable<string> | string = "hello";
 			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
 			assert.throws(() => {
@@ -265,6 +258,16 @@ describe("SharedTreeList", () => {
 			root.booleans.insertAt(1, [false]);
 			root.booleans.insertAtEnd([true]);
 			assert.deepEqual(root.booleans, [true, false, true]);
+		});
+
+		itWithRoot("of multiple possible types", schema, initialTree, (root) => {
+			const allowsStrings: typeof root.numbers | typeof root.poly = root.poly;
+			allowsStrings.insertAtStart([42]);
+			const allowsStsrings: typeof root.strings | typeof root.poly = root.poly;
+			allowsStsrings.insertAt(1, ["s"]);
+			const allowsBooleans: typeof root.booleans | typeof root.poly = root.poly;
+			allowsBooleans.insertAtEnd([true]);
+			assert.deepEqual(root.poly, [42, "s", true]);
 		});
 	});
 
