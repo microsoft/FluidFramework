@@ -530,6 +530,12 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node[Symbol.iterator]();
 		},
 	},
+	delete: {
+		value(this: SharedTreeMap<MapSchema>, key: string): void {
+			const node = getEditNode(this);
+			node.delete(key);
+		},
+	},
 	entries: {
 		value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
 			const node = getEditNode(this);
@@ -555,6 +561,17 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node.keys();
 		},
 	},
+	set: {
+		value(
+			this: SharedTreeMap<MapSchema>,
+			key: string,
+			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
+		): SharedTreeMap<MapSchema> {
+			const node = getEditNode(this);
+			node.set(key, extractFactoryContent(value as any));
+			return this;
+		},
+	},
 	size: {
 		get(this: SharedTreeMap<MapSchema>) {
 			return getEditNode(this).size;
@@ -566,7 +583,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node.values();
 		},
 	},
-	// TODO: clear, delete, set. Will require mutation APIs to be added to MapNode.
+	// TODO: add `clear` once we have established merge semantics for it.
 };
 
 const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
