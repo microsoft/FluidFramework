@@ -516,6 +516,9 @@ export enum DiscardResult {
 }
 
 // @alpha
+export const disposeSymbol: unique symbol;
+
+// @alpha
 function downCast<TSchema extends TreeNodeSchema>(schema: TSchema, tree: UntypedTreeCore): tree is TypedNode_2<TSchema>;
 
 // @alpha
@@ -849,9 +852,13 @@ export interface IDefaultEditBuilder {
 }
 
 // @alpha
+export interface IDisposable {
+    [disposeSymbol](): void;
+}
+
+// @alpha
 export interface IEditableForest extends IForestSubscription {
     acquireVisitor(): DeltaVisitor;
-    readonly anchors: AnchorSet;
 }
 
 // @alpha
@@ -863,6 +870,7 @@ export interface IEmitter<E extends Events<E>> {
 // @alpha
 export interface IForestSubscription extends Dependee, ISubscribable<ForestEvents> {
     allocateCursor(): ITreeSubscriptionCursor;
+    readonly anchors: AnchorSet;
     clone(schema: StoredSchemaRepository, anchors: AnchorSet): IEditableForest;
     forgetAnchor(anchor: Anchor): void;
     getCursorAboveDetachedFields(): ITreeCursorSynchronous;
@@ -1051,8 +1059,9 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 // @alpha
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
     contentSnapshot(): SharedTreeContentSnapshot;
-    requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): ISharedTreeView | undefined;
-    schematizeView<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView;
+    requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): ISharedTreeView2<TRoot> | undefined;
+    // (undocumented)
+    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView2<TRoot>;
 }
 
 // @alpha
@@ -1062,7 +1071,9 @@ export interface ISharedTreeBranchView extends ISharedTreeView {
 
 // @alpha
 export interface ISharedTreeView extends AnchorLocator {
+    // @deprecated
     readonly context: EditableTreeContext;
+    // @deprecated
     editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
     readonly editor: IDefaultEditBuilder;
     readonly events: ISubscribable<ViewEvents>;
@@ -1071,13 +1082,22 @@ export interface ISharedTreeView extends AnchorLocator {
     merge(view: ISharedTreeBranchView): void;
     merge(view: ISharedTreeBranchView, disposeView: boolean): void;
     rebase(view: ISharedTreeBranchView): void;
+    // @deprecated
     get root(): UnwrappedEditableField;
-    // (undocumented)
+    // @deprecated (undocumented)
     root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    // @deprecated
     setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: ITransaction;
+}
+
+// @alpha
+export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema> extends IDisposable, TypedTreeView<TRoot> {
+    readonly branch: ISharedTreeView;
+    readonly context: TreeContext;
+    readonly editableTree: TypedField<TRoot>;
 }
 
 // @alpha (undocumented)
@@ -1928,7 +1948,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
     // (undocumented)
     [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
-    at(index: number): UnboxNodeUnion<TTypes>;
+    at(index: number): UnboxNodeUnion<TTypes> | undefined;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
     insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
     insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
@@ -2005,7 +2025,10 @@ export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaSc
 }
 
 // @alpha
-export type SharedTreeMap<TSchema extends MapSchema> = Omit<Map<string, ProxyField<TSchema["mapFields"]>>, "clear">;
+export interface SharedTreeMap<TSchema extends MapSchema> extends ReadonlyMap<string, ProxyField<TSchema["mapFields"]>> {
+    delete(key: string): void;
+    set(key: string, value: ProxyNodeUnion<AllowedTypes, "javaScript">): void;
+}
 
 // @alpha
 export type SharedTreeNode = SharedTreeList<AllowedTypes> | SharedTreeObject<ObjectNodeSchema> | SharedTreeMap<MapSchema>;
@@ -2317,7 +2340,7 @@ type TypedNodeUnionHelper<TTypes extends InternalTypedSchemaTypes.FlexList<TreeN
 
 // @alpha
 export interface TypedTreeChannel extends IChannel {
-    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): TypedField<TRoot>;
+    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): TypedTreeView<TRoot>;
 }
 
 // @alpha
@@ -2336,6 +2359,11 @@ export class TypedTreeFactory implements IChannelFactory {
 // @alpha
 export interface TypedTreeOptions extends SharedTreeOptions {
     readonly subtype: string;
+}
+
+// @alpha
+export interface TypedTreeView<in out TRoot extends TreeFieldSchema> {
+    readonly root: ProxyField<TRoot>;
 }
 
 // @alpha

@@ -65,17 +65,17 @@ const rootType = builder.object("abc", {
 });
 const schema = builder.intoSchema(rootType);
 function getNewTreeView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
-	});
+	}).branch;
 }
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
 	const quantity = getQuantity(legacyTree);
-	newTree.schematizeView({
+	newTree.schematize({
 		initialTree: {
 			quantity,
 		},
