@@ -398,7 +398,10 @@ export interface DDSFuzzSuiteOptions {
 	 * when one only cares about the counts or types of errors, and not the
 	 * exact contents of the test cases.
 	 *
-	 * Fuzz test minimization can add a couple seconds of overhead per failing
+	 * Minimization only works when the failure occurs as part of a reducer, and is mostly
+	 * useful if the model being tested defines {@link DDSFuzzModel.minimizationTransforms}.
+	 *
+	 * It can also add a couple seconds of overhead per failing
 	 * test case. See {@link MinimizationTransform} for additional context.
 	 */
 	skipMinimization?: boolean;
@@ -1032,10 +1035,16 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 			if (!shouldMinimize) {
 				throw error;
 			}
-
-			const operations = JSON.parse(
-				readFileSync(saveInfo.filepath).toString(),
-			) as TOperation[];
+			let file: Buffer;
+			try {
+				file = readFileSync(saveInfo.filepath);
+			} catch {
+				// File could not be read and likely does not exist.
+				// Test may have failed outside of the fuzz test portion (on setup or teardown).
+				// Throw original error that made test fail.
+				throw error;
+			}
+			const operations = JSON.parse(file.toString()) as TOperation[];
 			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
 
 			const minimized = await minimizer.minimize();

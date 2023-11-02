@@ -13,6 +13,8 @@ import {
 	ChangeAtomId,
 	RevisionTag,
 	JsonableTree,
+	areEqualChangeAtomIds,
+	makeDetachedNodeId,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -123,6 +125,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
 		const addChildChange = (id: ChangeId, ...changeList: TaggedChange<NodeChangeset>[]) => {
@@ -136,7 +141,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
+		let index = 0;
 		for (const { change, revision } of changes) {
+			const fieldChangeInfo = revisionMetadata.tryGetInfo(
+				revision ?? change.fieldChange?.revision,
+			);
 			const { childChanges } = change;
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
@@ -156,18 +165,41 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (fieldChange === undefined) {
 					fieldChange = {
 						id: change.fieldChange.id,
-						revision: change.fieldChange.revision ?? revision,
+						revision: fieldChangeInfo?.revision,
 						wasEmpty: change.fieldChange.wasEmpty,
 					};
 				} else {
 					fieldChange.id = change.fieldChange.id;
-					fieldChange.revision = change.fieldChange.revision ?? revision;
+					fieldChange.revision = fieldChangeInfo?.revision;
 				}
 
+				let hasMatchingPriorInverse = false;
+				const maybePriorInverse = changes.findIndex((c) => {
+					const cChangeInfo = revisionMetadata.tryGetInfo(
+						// Change c may be a composite, in which case we need to look the revision of the fieldChange
+						c.revision ?? c.change.fieldChange?.revision,
+					);
+					return (
+						(cChangeInfo?.rollbackOf !== undefined &&
+							cChangeInfo?.rollbackOf === fieldChangeInfo?.revision) ||
+						(cChangeInfo?.revision !== undefined &&
+							cChangeInfo?.revision === fieldChangeInfo?.rollbackOf)
+					);
+				});
+				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
+
 				if (change.fieldChange.newContent !== undefined) {
-					fieldChange.newContent = { ...change.fieldChange.newContent };
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						fieldChange.newContent = { ...change.fieldChange.newContent };
+					}
 				} else {
-					delete fieldChange.newContent;
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						delete fieldChange.newContent;
+					}
 				}
 
 				// Node was changed by this revision: flush the current changes
@@ -181,10 +213,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 				if (change.fieldChange.newContent?.changes !== undefined) {
 					currentChildNodeChanges.push(
-						tagChange(change.fieldChange.newContent.changes, revision),
+						tagChange(change.fieldChange.newContent.changes, fieldChangeInfo?.revision),
 					);
 				}
 			}
+			index++;
 		}
 
 		if (currentChildNodeChanges.length > 0) {
@@ -489,85 +522,59 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	{ change, revision }: TaggedChange<OptionalChangeset>,
 	deltaFromChild: ToDelta,
-): Delta.Mark[] {
+): Delta.FieldChanges {
+	const delta: Mutable<Delta.FieldChanges> = {};
 	const [_, childChange] = change.childChanges?.find(([changeId]) => changeId === "self") ?? [];
+	if (childChange === undefined && change.fieldChange === undefined) {
+		return delta;
+	}
+
+	const mark: Mutable<Delta.Mark> = { count: 1 };
+	delta.local = [mark];
+
+	if (childChange !== undefined) {
+		mark.fields = deltaFromChild(childChange);
+	}
 
 	if (change.fieldChange === undefined) {
-		return childChange !== undefined ? [deltaFromChild(childChange)] : [];
+		return delta;
 	}
 
-	const update = change.fieldChange?.newContent;
-	const id = {
-		major: change.fieldChange.revision ?? revision,
-		minor: change.fieldChange.id,
-	};
-	const hasOldFieldChanges: Mutable<Delta.HasModifications> = {};
-	// If there are changes to the old content, convert them into the delta format and save any resulting field changes
-	// TODO: maybe rethink how we use optionals so this pattern isn't so confusing
-	if (childChange !== undefined) {
-		const fields = deltaFromChild(childChange).fields;
-		if (fields !== undefined) {
-			hasOldFieldChanges.fields = fields;
-		}
+	if (!change.fieldChange.wasEmpty) {
+		const detachId = {
+			major: change.fieldChange.revision ?? revision,
+			minor: change.fieldChange.id,
+		};
+		mark.detach = detachId;
 	}
+
+	const update = change.fieldChange.newContent;
 	if (update === undefined) {
 		// The field is being cleared
-		if (!change.fieldChange.wasEmpty) {
-			return [{ type: Delta.MarkType.Remove, count: 1, detachId: id, ...hasOldFieldChanges }];
-		}
-		return [];
 	} else {
-		const hasNewFieldChanges: Mutable<Delta.HasModifications> = {};
-		if (update.changes !== undefined) {
-			const fields = deltaFromChild(update.changes).fields;
-			if (fields !== undefined) {
-				hasNewFieldChanges.fields = fields;
-			}
-		}
-		const hasOldContent: Mutable<Pick<Delta.Insert, "oldContent">> = {};
-		if (!change.fieldChange.wasEmpty) {
-			hasOldContent.oldContent = {
-				detachId: id,
-				...hasOldFieldChanges,
-			};
-		}
 		if (Object.prototype.hasOwnProperty.call(update, "set")) {
 			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
 			const content = [singleTextCursor(setUpdate.set)];
-			const buildId: Delta.DetachedNodeId = {
-				minor: setUpdate.buildId.localId,
-			};
-			if (setUpdate.buildId.revision !== undefined) {
-				buildId.major = setUpdate.buildId.revision;
-			}
-			return [
-				{
-					type: Delta.MarkType.Insert,
-					...hasNewFieldChanges,
-					...hasOldContent,
-					buildId,
-					content,
-				},
-			];
+			const buildId = makeDetachedNodeId(
+				setUpdate.buildId.revision ?? change.fieldChange.revision ?? revision,
+				setUpdate.buildId.localId,
+			);
+			mark.attach = buildId;
+			delta.build = [{ id: buildId, trees: content }];
 		} else {
 			const changeId = (update as { revert: ChangeAtomId }).revert;
 			const restoreId = {
 				major: changeId.revision,
 				minor: changeId.localId,
 			};
-			return [
-				{
-					type: Delta.MarkType.Restore,
-					count: 1,
-					newContent: {
-						...hasNewFieldChanges,
-						restoreId,
-					},
-					...hasOldContent,
-				},
-			];
+			mark.attach = restoreId;
+		}
+		if (update.changes !== undefined) {
+			const fields = deltaFromChild(update.changes);
+			delta.global = [{ id: mark.attach, fields }];
 		}
 	}
+	return delta;
 }
 
 export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
@@ -585,5 +592,5 @@ function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
 		return a === b;
 	}
 
-	return a.revision === b.revision && a.localId === b.localId;
+	return areEqualChangeAtomIds(a, b);
 }

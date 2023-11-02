@@ -9,6 +9,7 @@ export {
 	SharedTreeOptions,
 	SharedTree,
 	ForestType,
+	SharedTreeContentSnapshot,
 } from "./sharedTree";
 
 export {
@@ -27,3 +28,5 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 } from "./schematizedTree";
+
+export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typedTree";

@@ -1,0 +1,84 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# This template is intended to be used for common steps across stages of the test-perf-benchmarks.yml pipeline.
+# It downloads (from the artifacts produced by another pipeline) and installs a specified package that has performance tests.
+
+parameters:
+# Identifier for the pipeline that produced the artifact with the package to be installed.
+# Will be used for the 'pipeline' input for a DownloadPipelineArtifact task.
+- name: artifactPipeline
+  type: string
+
+# Identifier for the pipeline run that produced the artifact with the package to be installed.
+# Will be used for the 'buildId' input for a DownloadPipelineArtifact task.
+- name: artifactBuildId
+  type: string
+
+# Name of the package to be installed.
+- name: testPackageName
+  type: string
+
+# Path where the package should be installed. This template assumes an appropriate .npmrc file was already setup there
+# so dependencies can be resolved from our feeds.
+- name: installPath
+  type: string
+
+steps:
+- task: Bash@3
+  displayName: Set local template variables
+  inputs:
+    targetType: 'inline'
+    # Using a prefix on these variables to try to make them unique to minimize risk of conflicts with variables that
+    # use the same name in the pipeline that includes this template.
+    # Using isOutput=true variables was too complicated/dirty.
+    script: |
+      echo "Setting local variables for yml template"
+
+      # Doing the character replacements with sed at runtime because using replace() in ADO template expression (which
+      # are evaluated at compile-time) causes some weird interactions if the value provided for testPackageName is only
+      # available at runtime. Also, using ! as separator instead of the usual / because forward slash is something we
+      # need to replace.
+      TEST_PACKAGE_NAME=$(echo "${{ parameters.testPackageName }}" | sed -r 's!@!!g' | sed -r 's!/!-!g')
+      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-?.?.?-*.tgz"
+      echo "##vso[task.setvariable variable=itpbip_downloadPath]$(Pipeline.Workspace)/downloadedPackages"
+
+# Download package that has performance tests
+- task: DownloadPipelineArtifact@2
+  displayName: Download package with perf tests - ${{ parameters.testPackageName }}
+  inputs:
+    # It seems there's a bug and preferTriggeringPipeline is not respected.
+    # We force the behavior by explicitly specifying:
+    # - buildVersionToDownload: specific
+    # - buildId: <the id of the triggering build>
+    # preferTriggeringPipeline: true
+    source: specific
+    project: internal
+    pipeline: ${{ parameters.artifactPipeline }}
+    buildVersionToDownload: specific
+    buildId: ${{ parameters.artifactBuildId }}
+    artifact: pack
+    patterns: "**/$(itpbip_sanitizedPackageName)"
+    path: $(itpbip_downloadPath)
+    # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
+    # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
+
+# Install package that has performance tests
+- task: Bash@3
+  displayName: Install package with perf tests - ${{ parameters.testPackageName }}
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.installPath }}
+    script: |
+      echo "Installing ${{ parameters.testPackageName }}"
+
+      TEST_PACKAGE_PATH_PATTERN=$(itpbip_downloadPath)/scoped/$(itpbip_sanitizedPackageName)
+      echo "Looking for tarball with pattern $TEST_PACKAGE_PATH_PATTERN :"
+      ls -1 $TEST_PACKAGE_PATH_PATTERN
+
+      if [[ `ls -1 $TEST_PACKAGE_PATH_PATTERN | wc -l` -eq 1 ]]; then
+        npm install $(ls $TEST_PACKAGE_PATH_PATTERN)
+      else
+        echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackageName }}' not found, or more than one possible match found. See messages above."
+        exit -1
+      fi

@@ -42,9 +42,9 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @public
+// @alpha
 export interface IContainerExperimental extends IContainer {
-    closeAndGetPendingLocalState?(): Promise<string>;
+    closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
     getPendingLocalState?(): Promise<string>;
 }
 
@@ -91,6 +91,14 @@ export interface ILoaderServices {
     readonly urlResolver: IUrlResolver;
 }
 
+// @public
+export interface IParsedUrl {
+    id: string;
+    path: string;
+    query: string;
+    version: string | null | undefined;
+}
+
 // @public (undocumented)
 export interface IProtocolHandler extends IProtocolHandler_2 {
     // (undocumented)
@@ -133,6 +141,9 @@ export function requestResolvedObjectFromContainer(container: IContainer, header
 
 // @public
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;
+
+// @public
+export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined;
 
 // @public
 export function waitContainerToCatchUp(container: IContainer): Promise<boolean>;

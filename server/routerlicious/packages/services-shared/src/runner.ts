@@ -75,8 +75,12 @@ export async function run<T extends IResources>(
 		// Wait for the runner to complete
 		await runningP;
 	} finally {
-		// And then dispose of any resources
-		await resources.dispose();
+		try {
+			// And then dispose of any resources
+			await resources.dispose();
+		} catch (err) {
+			Lumberjack.error(`Could not dispose the resources due to error`, undefined, err);
+		}
 	}
 }
 

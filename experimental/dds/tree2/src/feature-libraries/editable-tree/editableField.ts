@@ -9,8 +9,8 @@ import {
 	FieldKey,
 	TreeNavigationResult,
 	ITreeSubscriptionCursor,
-	FieldStoredSchema,
-	TreeStoredSchema,
+	TreeFieldStoredSchema,
+	TreeNodeStoredSchema,
 	mapCursorField,
 	CursorLocationType,
 	FieldAnchor,
@@ -60,7 +60,7 @@ import { ProxyTarget } from "./ProxyTarget";
 
 export function makeField(
 	context: ProxyContext,
-	fieldSchema: FieldStoredSchema,
+	fieldSchema: TreeFieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): EditableField {
 	const fieldAnchor = cursor.buildFieldAnchor();
@@ -88,8 +88,8 @@ function isFieldProxyTarget(target: ProxyTarget<Anchor | FieldAnchor>): target i
  * @returns the key, if any, of the primary array field.
  */
 function getPrimaryArrayKey(
-	type: TreeStoredSchema,
-): { key: FieldKey; schema: FieldStoredSchema } | undefined {
+	type: TreeNodeStoredSchema,
+): { key: FieldKey; schema: TreeFieldStoredSchema } | undefined {
 	const primary = getPrimaryField(type);
 	if (primary === undefined) {
 		return undefined;
@@ -115,7 +115,7 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 	public constructor(
 		context: ProxyContext,
 		// TODO: use view schema typed in editableTree
-		public readonly fieldSchema: FieldStoredSchema,
+		public readonly fieldSchema: TreeFieldStoredSchema,
 		cursor: ITreeSubscriptionCursor,
 		fieldAnchor: FieldAnchor,
 	) {
@@ -371,11 +371,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		// This permits a move of 0 nodes starting at this.length, which does seem like it should be allowed.
 		assertValidIndex(sourceIndex + count, this, true);
 
-		let destinationLength = destination.length;
-		if (this.isSameAs(destination)) {
-			destinationLength -= count;
-		}
-		assertValidIndex(destinationIndex, { length: destinationLength }, true);
+		// The destination index is interpreted based on the state of the destination field *before* the move.
+		// This means we do not have to account the case where the moved nodes are being detached form the destination field.
+		assertValidIndex(destinationIndex, destination, true);
 
 		const destinationFieldPath = destination.cursor.getFieldPath();
 
@@ -613,7 +611,7 @@ function unwrappedTree(
 ): UnwrappedEditableTree {
 	const nodeTypeName = cursor.type;
 	const nodeType =
-		context.schema.treeSchema.get(nodeTypeName) ??
+		context.schema.nodeSchema.get(nodeTypeName) ??
 		fail("requested type does not exist in schema");
 	// Unwrap primitives or nodes having a primary field. Sequences unwrap nodes on their own.
 	if (isPrimitive(nodeType)) {
@@ -636,12 +634,12 @@ function unwrappedTree(
 
 /**
  * @param context - the common context of the field.
- * @param fieldSchema - the FieldStoredSchema of the field.
+ * @param fieldSchema - the TreeFieldStoredSchema of the field.
  * @param cursor - the cursor, which must point to the field being proxified.
  */
 export function unwrappedField(
 	context: ProxyContext,
-	fieldSchema: FieldStoredSchema,
+	fieldSchema: TreeFieldStoredSchema,
 	cursor: ITreeSubscriptionCursor,
 ): UnwrappedEditableField {
 	const fieldKind = getFieldKind(fieldSchema);

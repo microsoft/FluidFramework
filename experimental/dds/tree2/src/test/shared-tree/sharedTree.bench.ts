@@ -385,7 +385,7 @@ describe("SharedTree benchmarks", () => {
 				},
 				// Force batch size of 1
 				minBatchDurationSeconds: 0,
-			});
+			}).timeout(5000);
 		}
 	});
 });

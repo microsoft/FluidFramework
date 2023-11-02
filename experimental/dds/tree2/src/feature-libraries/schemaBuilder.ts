@@ -6,7 +6,7 @@
 import { ValueSchema } from "../core";
 import { SchemaBuilderBase, SchemaBuilderOptions } from "./schemaBuilderBase";
 import { FieldKinds } from "./default-field-kinds";
-import { TreeSchema } from "./typed-schema";
+import { TreeNodeSchema } from "./typed-schema";
 
 /**
  * Extends {@link SchemaBuilderBase} with functionality only used to create built in special libraries.
@@ -21,10 +21,10 @@ export class SchemaBuilderInternal<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeSchema} for a node that wraps a value.
+	 * Define (and add to this library) a {@link TreeNodeSchema} for a node that wraps a value.
 	 * Such nodes will be implicitly unwrapped to the value in some APIs.
 	 *
-	 * The name must be unique among all TreeSchema in the the document schema.
+	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 *
 	 * In addition to the normal properties of all nodes (having a schema for example),
 	 * Leaf nodes only contain a value.
@@ -36,8 +36,8 @@ export class SchemaBuilderInternal<
 	public leaf<Name extends string, const T extends ValueSchema>(
 		name: Name,
 		t: T,
-	): TreeSchema<`${TScope}.${Name}`, { leafValue: T }> {
-		const schema = new TreeSchema(this, this.scoped(name), { leafValue: t });
+	): TreeNodeSchema<`${TScope}.${Name}`, { leafValue: T }> {
+		const schema = TreeNodeSchema.create(this, this.scoped(name), { leafValue: t });
 		this.addNodeSchema(schema);
 		return schema;
 	}

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable no-bitwise */
 
 import {
@@ -87,7 +88,7 @@ export const IntervalOpType = {
 export enum IntervalType {
 	Simple = 0x0,
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	Nest = 0x1,
 

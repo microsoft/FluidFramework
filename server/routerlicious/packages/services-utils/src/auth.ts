@@ -57,7 +57,7 @@ export function validateTokenClaims(
 		throw new NetworkError(403, "DocumentId in token claims does not match request.");
 	}
 
-	if (claims.scopes === undefined || claims.scopes.length === 0) {
+	if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {
 		throw new NetworkError(403, "Missing scopes in token claims.");
 	}
 
@@ -336,7 +336,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		if (claims.scopes === undefined || claims.scopes.length === 0) {
+		if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {
 			return respondWithNetworkError(
 				response,
 				new NetworkError(403, "Missing scopes in token claims."),

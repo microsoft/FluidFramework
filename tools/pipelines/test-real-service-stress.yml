@@ -24,7 +24,7 @@ variables:
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: toolAbsolutePath
+- name: absolutePathToTelemetryGenerator
   value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
 - name: testPackage
@@ -135,39 +135,45 @@ stages:
           fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
           FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
-  - stage: runAfterAll
-    displayName: Retrieve and Upload pipeline run stats to Kusto
-    condition: always()
+  # Capture telemetry about pipeline stages
+  - stage: upload_run_telemetry
+    displayName: Upload pipeline run telemetry to Kusto
+    condition: succeededOrFailed()
     dependsOn:
       - stress_tests_odsp
       - stress_tests_odspdf
       - stress_tests_tinylicious
       - stress_tests_frs
       - stress_tests_frs_canary
-
     jobs:
-      - template: templates/include-test-perf-benchmarks.yml
-        parameters:
-          testWorkspace: ${{ variables.testWorkspace }}
-          poolBuild: Small
-          customSteps:
+    - job: upload_run_telemetry
+      displayName: Upload pipeline run telemetry to Kusto
+      pool: Small
+      variables:
+      - group: ado-feeds
 
-          - task: Bash@3
-            displayName: Retrieve buildId results
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(toolAbsolutePath)
-              script: |
-                echo "creating output folder"
-                mkdir -p ${{ variables.testWorkspace }}/timingOutput
-                echo "Executing curl command ..."
-                echo  'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline"'
-                curl -u ":$(System.AccessToken)" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$(Build.BuildId)/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
-                pwd;
-                ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-                cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-                node --require @ff-internal/aria-logger bin/run --handlerModule $(Build.SourcesDirectory)/tools/telemetry-generator/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
-            env:
-              BUILD_ID: $(Build.BuildId)
-              ADO_API_TOKEN: $(System.AccessToken)
-              PIPELINE: 'RealStressService'
+      steps:
+      - template: templates/include-telemetry-setup.yml
+        parameters:
+          devFeedUrl: $(ado-feeds-dev)
+          officeFeedUrl: $(ado-feeds-office)
+          isCheckoutNeeded: true
+      - task: Bash@3
+        displayName: Retrieve buildId results
+        inputs:
+          targetType: 'inline'
+          workingDirectory: $(absolutePathToTelemetryGenerator)
+          script: |
+            echo "creating output folder"
+            mkdir -p ${{ variables.testWorkspace }}/timingOutput
+            echo "Retrieving pipeline run timeline data command ..."
+            echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
+            curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
+            pwd;
+            ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
+            cat ${{ variables.testWorkspace }}/timingOutput/output.json;
+            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
+        env:
+          BUILD_ID: $(Build.BuildId)
+          ADO_API_TOKEN: $(System.AccessToken)
+          PIPELINE: 'RealStressService'

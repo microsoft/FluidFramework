@@ -216,7 +216,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
 	 */
 	// TODO: use `unknown` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	submitSignal(content: any): void;
+	submitSignal(content: any, targetClientId?: string): void;
 }
 
 /**

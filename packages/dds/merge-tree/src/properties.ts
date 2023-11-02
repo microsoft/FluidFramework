@@ -16,13 +16,16 @@ export type PropertySet = MapLike<any>;
 
 // Assume these are created with Object.create(null)
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export interface IConsensusValue {
 	seq: number;
 	value: any;
 }
 
 /**
- * @deprecated - This functionality was not intended for public export and will
+ * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
  */
 export function combine(
@@ -73,7 +76,7 @@ export function combine(
 }
 
 /**
- * @deprecated - This functionality was not intended for public export and will
+ * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
  */
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
@@ -104,7 +107,7 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 }
 
 /**
- * @deprecated - This functionality was not intended for public export and will
+ * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
  */
 export function extend<T>(
@@ -132,7 +135,7 @@ export function extend<T>(
 }
 
 /**
- * @deprecated - This functionality was not intended for public export and will
+ * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
  */
 export function clone<T>(extension: MapLike<T> | undefined) {
@@ -151,7 +154,7 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 }
 
 /**
- * @deprecated - This functionality was not intended for public export and will
+ * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
  */
 export function addProperties(
@@ -169,7 +172,7 @@ export function addProperties(
 }
 
 /**
- * @deprecated - This functionality was not intended for public export and will
+ * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
  */
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
@@ -185,7 +188,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 }
 
 /**
- * @deprecated - This functionality was not intended for public export and will
+ * @deprecated This functionality was not intended for public export and will
  * be removed in a future release.
  */
 // Create a MapLike with good performance.

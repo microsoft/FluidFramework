@@ -3,10 +3,17 @@
  * Licensed under the MIT License.
  */
 
+// Adding this unused import makes the generated d.ts file produced by TypeScript stop breaking API-Extractor's rollup generation.
+// Without this import, TypeScript generates inline `import("../..")` statements in the d.ts file,
+// which API-Extractor leaves as is when generating the rollup, leaving them pointing at the wrong directory.
+// TODO: Understand and/or remove the need for this workaround.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+import { ValueSchema } from "../../core";
+
 import {
 	AllowedTypes,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	SchemaBuilderInternal,
 } from "../../feature-libraries";
 import { requireAssignableTo } from "../../util";
@@ -35,7 +42,7 @@ export const jsonRoot = [() => jsonObject, () => jsonArray, ...jsonPrimitives] a
  */
 export const jsonObject = builder.mapRecursive(
 	"object",
-	FieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
+	TreeFieldSchema.createUnsafe(FieldKinds.optional, jsonRoot),
 );
 
 /**
@@ -43,10 +50,10 @@ export const jsonObject = builder.mapRecursive(
  */
 export const jsonArray = builder.fieldNodeRecursive(
 	"array",
-	FieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
+	TreeFieldSchema.createUnsafe(FieldKinds.sequence, jsonRoot),
 );
 
 /**
  * @alpha
  */
-export const jsonSchema = builder.finalize();
+export const jsonSchema = builder.intoLibrary();
