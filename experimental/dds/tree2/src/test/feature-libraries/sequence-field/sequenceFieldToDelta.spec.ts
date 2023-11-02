@@ -133,12 +133,28 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("delete", () => {
-		const changeset = Change.delete(0, 10, brand(42));
+		const changeset = [Mark.delete(10, brand(42))];
 		const expected: Delta.FieldChanges = {
 			local: [
 				{
 					count: 10,
 					detach: detachId,
+				},
+			],
+		};
+		const actual = toDelta(changeset, tag);
+		assert.deepStrictEqual(actual, expected);
+	});
+
+	it("delete with override", () => {
+		const changeset = [
+			Mark.delete(10, brand(42), { detachIdOverride: { revision: tag2, localId: brand(1) } }),
+		];
+		const expected: Delta.FieldChanges = {
+			local: [
+				{
+					count: 10,
+					detach: { major: tag2, minor: 1 },
 				},
 			],
 		};

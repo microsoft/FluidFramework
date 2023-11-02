@@ -111,6 +111,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				if (
+					(name1.startsWith("Revive") && name2.startsWith("ReturnTo")) ||
+					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
 					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Return"))
@@ -151,6 +153,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [name1, makeChange1] of testChanges) {
 			for (const [name2, makeChange2] of testChanges) {
 				if (
+					(name1.startsWith("Revive") && name2.startsWith("ReturnTo")) ||
+					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
 					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Return"))
@@ -193,8 +197,10 @@ describe("SequenceField - Rebaser Axioms", () => {
 			for (const [name2, makeChange2] of testChanges) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
 				if (
-					(name1.startsWith("Transient") || name2.startsWith("Transient")) &&
-					(name1.startsWith("Return") || name2.startsWith("Return"))
+					(name1.startsWith("Revive") && name2.startsWith("ReturnTo")) ||
+					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
+					((name1.startsWith("Transient") || name2.startsWith("Transient")) &&
+						(name1.startsWith("Return") || name2.startsWith("Return")))
 				) {
 					// These cases are malformed because the test changes are missing lineage to properly order the marks
 					continue;
@@ -353,7 +359,7 @@ describe("SequenceField - Sandwich Rebasing", () => {
 
 	it("[Move ABC, Return ABC] ↷ Delete B", () => {
 		const delB = tagChange(Change.delete(1, 1), tag1);
-		const movABC = tagChange(Change.move(0, 3, 1), tag2);
+		const movABC = tagChange(Change.move(0, 3, 4), tag2);
 		const retABC = tagChange(Change.return(1, 3, 0, { revision: tag2, localId: id0 }), tag4);
 		const movABC2 = rebaseTagged(movABC, delB);
 		const invMovABC = invert(movABC);
