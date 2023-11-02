@@ -19,10 +19,5 @@ export interface IInventoryListAppViewProps {
 export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = ({
 	model,
 }: IInventoryListAppViewProps) => {
-	return (
-		<InventoryListView
-			inventoryList={model.inventoryList}
-			disabled={!model.inventoryList.writeOk}
-		/>
-	);
+	return <InventoryListView migratingInventoryList={model.migratingInventoryList} />;
 };

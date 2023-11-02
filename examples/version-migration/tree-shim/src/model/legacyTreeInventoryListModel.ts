@@ -122,9 +122,6 @@ export class LegacyTreeInventoryListModel extends EventEmitter implements IInven
 
 	private readonly _inventoryItems = new Map<string, LegacyTreeInventoryItem>();
 
-	// TODO: Hook up to shim or remove
-	public readonly writeOk = true;
-
 	public constructor(private readonly _tree: LegacySharedTree) {
 		super();
 		// We must use a checkout in order to get "viewChange" events - it doesn't change any of the rest of our usage though.

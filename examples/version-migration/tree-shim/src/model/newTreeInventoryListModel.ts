@@ -81,6 +81,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 }
 
 export class NewTreeInventoryListModel extends EventEmitter implements IInventoryList {
+	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
 	public static initializeTree(tree: ISharedTree): void {
 		tree.schematizeView({
 			initialTree: {
@@ -113,9 +114,6 @@ export class NewTreeInventoryListModel extends EventEmitter implements IInventor
 		return this._inventoryItemList;
 	}
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
-
-	// TODO: Hook up to shim
-	public readonly writeOk = true;
 
 	public constructor(private readonly _tree: ISharedTree) {
 		super();

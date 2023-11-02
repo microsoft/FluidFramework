@@ -4,7 +4,7 @@
  */
 
 import React, { FC, useEffect, useRef, useState } from "react";
-import { IInventoryList, IInventoryItem } from "../modelInterfaces";
+import { IInventoryList, IInventoryItem, IMigrateBackingData } from "../modelInterfaces";
 
 export interface IInventoryItemViewProps {
 	inventoryItem: IInventoryItem;
@@ -122,33 +122,37 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 };
 
 export interface IInventoryListViewProps {
-	inventoryList: IInventoryList;
-	disabled?: boolean;
+	migratingInventoryList: IInventoryList & IMigrateBackingData;
 }
 
 export const InventoryListView: FC<IInventoryListViewProps> = ({
-	inventoryList,
-	disabled,
+	migratingInventoryList,
 }: IInventoryListViewProps) => {
 	const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>(
-		inventoryList.getItems(),
+		migratingInventoryList.getItems(),
 	);
+	const [disabled, setDisabled] = useState<boolean>(!migratingInventoryList.writeOk);
 	useEffect(() => {
 		const updateItems = () => {
 			// TODO: This blows away all the inventory items, making the granular add/delete events
 			// not so useful.  Is there a good way to make a more granular change?
-			setInventoryItems(inventoryList.getItems());
+			setInventoryItems(migratingInventoryList.getItems());
 		};
-		inventoryList.on("itemAdded", updateItems);
-		inventoryList.on("itemDeleted", updateItems);
-		inventoryList.on("backingDataChanged", updateItems);
+		const updateDisabled = () => {
+			setDisabled(!migratingInventoryList.writeOk);
+		};
+		migratingInventoryList.on("itemAdded", updateItems);
+		migratingInventoryList.on("itemDeleted", updateItems);
+		migratingInventoryList.on("backingDataChanged", updateItems);
+		migratingInventoryList.on("writeOkChanged", updateDisabled);
 
 		return () => {
-			inventoryList.off("itemAdded", updateItems);
-			inventoryList.off("itemDeleted", updateItems);
-			inventoryList.off("backingDataChanged", updateItems);
+			migratingInventoryList.off("itemAdded", updateItems);
+			migratingInventoryList.off("itemDeleted", updateItems);
+			migratingInventoryList.off("backingDataChanged", updateItems);
+			migratingInventoryList.off("writeOkChanged", updateDisabled);
 		};
-	}, [inventoryList]);
+	}, [migratingInventoryList]);
 
 	const inventoryItemViews = inventoryItems.map((inventoryItem) => {
 		return (
@@ -176,7 +180,7 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 						<td colSpan={2}>No items in inventory</td>
 					</tr>
 				)}
-				<AddItemView addItem={inventoryList.addItem} disabled={disabled} />
+				<AddItemView addItem={migratingInventoryList.addItem} disabled={disabled} />
 			</tbody>
 		</table>
 	);

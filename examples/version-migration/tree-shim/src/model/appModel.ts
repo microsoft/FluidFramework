@@ -3,11 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
+import type {
+	IInventoryList,
+	IInventoryListAppModel,
+	IMigrateBackingData,
+} from "../modelInterfaces";
 
 /**
  * The InventoryListAppModel just provides the inventoryList.
  */
 export class InventoryListAppModel implements IInventoryListAppModel {
-	public constructor(public readonly inventoryList: IInventoryList) {}
+	public constructor(
+		public readonly migratingInventoryList: IInventoryList & IMigrateBackingData,
+	) {}
 }

@@ -13,7 +13,7 @@ import {
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { IInventoryItem, IInventoryList } from "../modelInterfaces";
+import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces";
 import { LegacyTreeInventoryListModel } from "./legacyTreeInventoryListModel";
 import { NewTreeInventoryListModel } from "./newTreeInventoryListModel";
 
@@ -21,14 +21,18 @@ const isMigratedKey = "isMigrated";
 const legacySharedTreeKey = "legacySharedTree";
 const newSharedTreeKey = "newSharedTree";
 
+// Set to true to artificially slow down the migration.
+const DEBUG_migrateSlowly = false;
+
 const newTreeFactory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
 	// For now, ignore the forest argument - I think it's probably going away once the optimized one is ready anyway?  AB#6013
 	forest: ForestType.Reference,
 });
 
-export class InventoryList extends DataObject implements IInventoryList {
+export class InventoryList extends DataObject implements IInventoryList, IMigrateBackingData {
 	private _model: IInventoryList | undefined;
+	private _writeOk: boolean | undefined;
 
 	private get model() {
 		if (this._model === undefined) {
@@ -37,9 +41,11 @@ export class InventoryList extends DataObject implements IInventoryList {
 		return this._model;
 	}
 
-	// TODO Maybe just handle writeOk directly here rather than in the model.
 	public get writeOk() {
-		return this.model.writeOk;
+		if (this._writeOk === undefined) {
+			throw new Error("Not initialized properly");
+		}
+		return this._writeOk;
 	}
 
 	public readonly addItem = (name: string, quantity: number) => {
@@ -65,7 +71,9 @@ export class InventoryList extends DataObject implements IInventoryList {
 			newTreeFactory.type,
 		) as ISharedTree;
 
-		// TODO: Here probably should be instantiating the new one instead really.
+		// TODO: I call these initializeTree methods here because otherwise the trees may not be initialized before
+		// attaching (in particular the New SharedTree, which in this demo doesn't actually get used until the migration
+		// occurs.  After switching to the shim, these might be able to be simplified.
 		LegacyTreeInventoryListModel.initializeTree(legacySharedTree);
 		NewTreeInventoryListModel.initializeTree(newSharedTree);
 
@@ -79,6 +87,8 @@ export class InventoryList extends DataObject implements IInventoryList {
 	 */
 	protected async hasInitialized() {
 		await this.setModel();
+		// TODO: Inspect migration state and set writeOk appropriately, we may be mid-migration when loading.
+		this._writeOk = true;
 	}
 
 	private readonly onItemAdded = (item) => {
@@ -120,10 +130,22 @@ export class InventoryList extends DataObject implements IInventoryList {
 			return;
 		}
 
-		// TODO: This gets replaced with actually calling the migrate API on the shim.
+		// TODO: writeOk is actually driven by shim state/events and shouldn't be located in performMigration.
+		this._writeOk = false;
+		this.emit("writeOkChanged");
+
+		// Debug option to make it easier to observe the state changes.
+		if (DEBUG_migrateSlowly) {
+			await new Promise((resolve) => setTimeout(resolve, 1000));
+		}
+
+		// TODO: This flag set gets replaced with actually calling the migrate API on the shim.
 		this.root.set(isMigratedKey, true);
 		await this.setModel();
 		this.emit("backingDataChanged");
+
+		this._writeOk = true;
+		this.emit("writeOkChanged");
 	}
 
 	// For this demo we'll just expose the ability to trigger the migration through DEBUG, this method is sync

@@ -14,16 +14,16 @@ export interface IDebugViewProps {
 
 export const DebugView: React.FC<IDebugViewProps> = ({ model }: IDebugViewProps) => {
 	// For demo purposes, we're just reaching in to grab a debug object - this shouldn't exist in a production app.
-	const DEBUG = (model.inventoryList as InventoryList).DEBUG;
+	const DEBUG = (model.migratingInventoryList as InventoryList).DEBUG;
 
 	const [treeType, setTreeType] = useState(DEBUG.isMigrated() ? "New" : "Legacy");
 	useEffect(() => {
 		const onBackingDataChanged = () => {
 			setTreeType(DEBUG.isMigrated() ? "New" : "Legacy");
 		};
-		model.inventoryList.on("backingDataChanged", onBackingDataChanged);
+		model.migratingInventoryList.on("backingDataChanged", onBackingDataChanged);
 		return () => {
-			model.inventoryList.off("backingDataChanged", onBackingDataChanged);
+			model.migratingInventoryList.off("backingDataChanged", onBackingDataChanged);
 		};
 	}, [model]);
 
