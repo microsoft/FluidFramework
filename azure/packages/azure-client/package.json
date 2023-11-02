@@ -71,7 +71,7 @@
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.7.1.0",
+		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.0.0-internal.7.2.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
