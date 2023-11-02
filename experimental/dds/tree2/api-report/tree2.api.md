@@ -1948,7 +1948,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
     // (undocumented)
     [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
-    at(index: number): UnboxNodeUnion<TTypes>;
+    at(index: number): UnboxNodeUnion<TTypes> | undefined;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
     insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
     insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
