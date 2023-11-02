@@ -145,10 +145,10 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 	// do an extra test.
 	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
 	const getMember = (value as Partial<IFluidHandle>).get;
-	assert(
-		(typeof getMember === "function") === isHandle,
-		0x76e /* Fluid handle detection via get method should match detection via IFluidHandle field */,
-	);
+	if (typeof getMember !== "function") {
+		return false;
+	}
+
 	return isHandle;
 }
 
