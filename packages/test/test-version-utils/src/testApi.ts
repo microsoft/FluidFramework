@@ -49,7 +49,7 @@ const packageList = [
 	"@fluidframework/container-runtime",
 	"@fluidframework/cell",
 	"@fluidframework/counter",
-	"@fluid-experimental/ink",
+	"@fluidframework/ink",
 	"@fluidframework/map",
 	"@fluidframework/matrix",
 	"@fluidframework/ordered-collection",
