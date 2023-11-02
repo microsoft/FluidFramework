@@ -49,7 +49,7 @@ export interface SharedTreeList<
 	 */
 	insertAt<T extends Iterable<ProxyNodeUnion<TTypes>>>(
 		index: number,
-		value: T extends string ? never : string extends T ? never : T,
+		value: T extends string ? never : T,
 	): void;
 
 	/**
@@ -60,7 +60,7 @@ export interface SharedTreeList<
 	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
 	insertAtStart<T extends Iterable<ProxyNodeUnion<TTypes>>>(
-		value: T extends string ? never : string extends T ? never : T,
+		value: T extends string ? never : T,
 	): void;
 
 	/**
@@ -71,7 +71,7 @@ export interface SharedTreeList<
 	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
 	insertAtEnd<T extends Iterable<ProxyNodeUnion<TTypes>>>(
-		value: T extends string ? never : string extends T ? never : T,
+		value: T extends string ? never : T,
 	): void;
 
 	/**
