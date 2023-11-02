@@ -13,14 +13,12 @@ export type NodeUpdate =
 			 * ID associated with the creation of the new tree.
 			 */
 			buildId: ChangeAtomId;
-			changes?: NodeChangeset;
 	  }
 	| {
 			/**
 			 * The change being reverted.
 			 */
 			revert: ChangeAtomId;
-			changes?: NodeChangeset;
 	  };
 
 export interface OptionalFieldChange {
@@ -65,20 +63,35 @@ export interface OptionalFieldChange {
  */
 
 /**
+ * Id which identifies a piece of content within an optional field.
+ * If "start", represents the node occupying the field in the input context of the change
+ * If "end", represents the node occupying the field in the output context of the change
+ * Otherwise, a ChangeAtomId which identifies the node *removed* by that change.
+ *
+ * Note that for a given changeset, multiple ids may correspond to the same piece of content.
+ * Generally, change rebaser functions should take care to normalize their output to refer to the most recent change.
+ *
+ * @remarks - Using a ChangeAtomId associated with the removal of some node rather than the one that inserted that node is necessary to support rebase.
+ * Consider rebasing an OptionalChangeset with changes to the 'start' node over one which also has a fieldChange. This would require naming the
+ * original base revision (as 'start' no longer semantically refers to the correct place).
+ */
+export type ContentId = ChangeAtomId | "start" | "end";
+
+/**
  * @privateRemarks - This type is used to represent changes to an optional field.
  * Because the same type is reused for singular changes (e.g. "set content to Foo") and compositions of several changes,
  * the format is a bit awkward. TODO: rewrite in more informative terms.
  */
 export interface OptionalChangeset {
 	/**
-	 * If length > 0, the last element specifies new content for the field.
+	 * If length > 0, the last element specifies new content for the field. TODO: Update this doc comment to be correct.
 	 * Other elements specify intermediate states of the field
 	 * @remarks - Intermediate content should generally not need to be communicated over the wire, but is necessary at
 	 * rebase and compose time to produce correct results axiomatically.
 	 */
 	fieldChanges: OptionalFieldChange[];
 
-	activeFieldChange: ChangeAtomId | "start" | "end";
+	contentId: ContentId;
 
 	/**
 	 * Changes to nodes which occupied this field prior to this changeset at some point.
@@ -96,5 +109,5 @@ export interface OptionalChangeset {
 	 *
 	 * TODO: This isn't really `deletedBy` as it is so much `contentBefore`, i.e. similar semantics to how childChange worked before.
 	 */
-	childChanges?: [deletedBy: ChangeAtomId | "self", childChange: NodeChangeset][];
+	childChanges?: [childId: ContentId, childChange: NodeChangeset][];
 }

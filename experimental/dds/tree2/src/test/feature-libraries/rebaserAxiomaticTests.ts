@@ -110,7 +110,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 						if (
 							title !==
-							'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","ChildChange102"]'
+							'Rebase ChildChange1 over compose ["SetB,0","SetA,1","ChildChange90"]'
 						) {
 							continue;
 						}

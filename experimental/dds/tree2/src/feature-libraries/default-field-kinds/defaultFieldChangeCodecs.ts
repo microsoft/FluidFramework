@@ -52,7 +52,7 @@ function makeOptionalFieldCodec(
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
 			const decoded: Mutable<OptionalChangeset> = {
 				fieldChanges: [],
-				activeFieldChange: "end",
+				contentId: "end",
 			};
 			if (encoded.fieldChange !== undefined) {
 				const decodedFieldChange: Mutable<OptionalFieldChange> = {
@@ -93,9 +93,9 @@ function makeNodeUpdateCodec(
 					? { revert: update.revert }
 					: { set: update.set, buildId: update.buildId };
 
-			if (update.changes !== undefined) {
-				encoded.changes = childCodec.encode(update.changes);
-			}
+			// if (update.changes !== undefined) {
+			// 	encoded.changes = childCodec.encode(update.changes);
+			// }
 
 			return encoded as JsonCompatibleReadOnly & EncodedNodeUpdate<TAnySchema>;
 		},
@@ -105,9 +105,9 @@ function makeNodeUpdateCodec(
 					? { revert: encoded.revert }
 					: { set: encoded.set, buildId: encoded.buildId };
 
-			if (encoded.changes !== undefined) {
-				decoded.changes = childCodec.decode(encoded.changes);
-			}
+			// if (encoded.changes !== undefined) {
+			// 	decoded.changes = childCodec.decode(encoded.changes);
+			// }
 
 			return decoded;
 		},

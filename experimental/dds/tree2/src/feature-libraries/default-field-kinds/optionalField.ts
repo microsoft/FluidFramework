@@ -33,18 +33,16 @@ import {
 	FieldChangeHandler,
 	RevisionInfo,
 } from "../modular-schema";
-import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
+import { ContentId, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
-type ChangeId = ChangeAtomId | "self";
-
 interface IChildChangeMap<T> {
-	set(id: ChangeId, childChange: T): void;
-	get(id: ChangeId): T | undefined;
-	delete(id: ChangeId): boolean;
-	keys(): Iterable<ChangeId>;
+	set(id: ContentId, childChange: T): void;
+	get(id: ContentId): T | undefined;
+	delete(id: ContentId): boolean;
+	keys(): Iterable<ContentId>;
 	values(): Iterable<T>;
-	entries(): Iterable<[ChangeId, T]>;
+	entries(): Iterable<[ContentId, T]>;
 	readonly size: number;
 }
 
@@ -64,39 +62,39 @@ function isInverse(
 
 class ChildChangeMap<T> implements IChildChangeMap<T> {
 	private readonly nestedMapData = new SizedNestedMap<
-		ChangesetLocalId | "self",
+		ChangesetLocalId | Exclude<ContentId, ChangeAtomId>,
 		RevisionTag | undefined,
 		T
 	>();
-	public set(id: ChangeId, childChange: T): void {
-		if (id === "self") {
-			this.nestedMapData.set("self", undefined, childChange);
+	public set(id: ContentId, childChange: T): void {
+		if (typeof id === "string") {
+			this.nestedMapData.set(id, undefined, childChange);
 		} else {
 			this.nestedMapData.set(id.localId, id.revision, childChange);
 		}
 	}
 
-	public get(id: ChangeId): T | undefined {
-		return id === "self"
+	public get(id: ContentId): T | undefined {
+		return typeof id === "string"
 			? this.nestedMapData.tryGet(id, undefined)
 			: this.nestedMapData.tryGet(id.localId, id.revision);
 	}
 
-	public has(id: ChangeId): boolean {
+	public has(id: ContentId): boolean {
 		return this.get(id) !== undefined;
 	}
 
-	public delete(id: ChangeId): boolean {
-		return id === "self"
-			? this.nestedMapData.delete("self", undefined)
+	public delete(id: ContentId): boolean {
+		return typeof id === "string"
+			? this.nestedMapData.delete(id, undefined)
 			: this.nestedMapData.delete(id.localId, id.revision);
 	}
 
-	public keys(): Iterable<ChangeId> {
-		const changeIds: ChangeId[] = [];
+	public keys(): Iterable<ContentId> {
+		const changeIds: ContentId[] = [];
 		for (const [localId, nestedMap] of this.nestedMapData) {
-			if (localId === "self") {
-				changeIds.push("self");
+			if (typeof localId === "string") {
+				changeIds.push(localId);
 			} else {
 				for (const [revisionTag, _] of nestedMap) {
 					changeIds.push(
@@ -113,16 +111,16 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 	public values(): Iterable<T> {
 		return this.nestedMapData.values();
 	}
-	public entries(): Iterable<[ChangeId, T]> {
-		const entries: [ChangeId, T][] = [];
+	public entries(): Iterable<[ContentId, T]> {
+		const entries: [ContentId, T][] = [];
 		for (const changeId of this.keys()) {
-			if (changeId === "self") {
-				const entry = this.nestedMapData.tryGet("self", undefined);
+			if (typeof changeId === "string") {
+				const entry = this.nestedMapData.tryGet(changeId, undefined);
 				assert(
 					entry !== undefined,
 					0x770 /* Entry should not be undefined when iterating keys. */,
 				);
-				entries.push(["self", entry]);
+				entries.push([changeId, entry]);
 			} else {
 				const entry = this.nestedMapData.tryGet(changeId.localId, changeId.revision);
 				assert(
@@ -149,7 +147,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
-		const addChildChange = (id: ChangeId, ...changeList: TaggedChange<NodeChangeset>[]) => {
+		const addChildChange = (id: ContentId, ...changeList: TaggedChange<NodeChangeset>[]) => {
 			const existingChanges = perChildChanges.get(id);
 			if (existingChanges !== undefined) {
 				existingChanges.push(...changeList);
@@ -158,7 +156,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		};
 
-		const rename = (id: ChangeId, newId: ChangeId) => {
+		const rename = (id: ContentId, newId: ContentId) => {
 			const existingChanges = perChildChanges.get(id);
 			assert(perChildChanges.get(newId) === undefined, "Cannot rename to existing id");
 			if (existingChanges !== undefined) {
@@ -184,8 +182,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
 		let index = 0;
 		for (const { change, revision } of changes) {
-			if (change.activeFieldChange !== "start") {
-				currentActiveFieldChangeId = change.activeFieldChange;
+			if (change.contentId !== "start") {
+				currentActiveFieldChangeId = change.contentId;
 			}
 			const firstFieldChangeAtomId =
 				change.fieldChanges[0] !== undefined
@@ -200,28 +198,19 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			// Maybe not actually...
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
-					// if (childId !== "self") {
-					// 	const fieldChangeInfo = revisionMetadata.tryGetInfo(
-					// 		revision ?? childId.revision,
-					// 	);
-					// 	if (fieldChangeInfo?.rollbackOf !== undefined) {
-					// 		pendingRessurectRevisions.set(
-					// 			{ revision: fieldChangeInfo.rollbackOf, localId: childId.localId },
-					// 			childId,
-					// 		);
-					// 	}
-					// }
-
 					const taggedChildChange = tagChange(childChange, revision);
 					if (
-						childId === "self" ||
-						(firstFieldChangeAtomId !== undefined &&
+						childId === "start" ||
+						(typeof childId === "object" &&
+							firstFieldChangeAtomId !== undefined &&
 							areEqualChangeAtomIds(childId, firstFieldChangeAtomId))
 					) {
 						// childChange refers to the node that existed at the start of `change`,
 						// Thus in the composition, it should be referred to by whatever deletes that node in the future, which is what
 						// currentChildNodeChanges tracks
 						currentChildNodeChanges.push(taggedChildChange);
+					} else if (childId === "end") {
+						// pass--handle this at the end.
 					} else {
 						addChildChange(childId, taggedChildChange);
 					}
@@ -280,7 +269,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					if (
 						currentChildNodeChanges.length > 0 &&
 						// TODO: review
-						change.activeFieldChange !== "start"
+						change.contentId !== "start"
 					) {
 						const id: ChangeAtomId =
 							currentActiveNodeId === "firstToDelete"
@@ -384,37 +373,47 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						currentActiveNodeId = "firstToDelete";
 					}
 
-					if (fieldChange.newContent?.changes !== undefined) {
-						currentChildNodeChanges.push(
-							tagChange(fieldChange.newContent.changes, fieldChangeInfo?.revision),
-						);
-						assert(
-							currentActiveFieldChange.newContent !== undefined,
-							"Exepcted active content to be undefined",
-						);
-						delete currentActiveFieldChange.newContent.changes;
-					}
+					// if (fieldChange.newContent?.changes !== undefined) {
+					// 	currentChildNodeChanges.push(
+					// 		tagChange(fieldChange.newContent.changes, fieldChangeInfo?.revision),
+					// 	);
+					// 	assert(
+					// 		currentActiveFieldChange.newContent !== undefined,
+					// 		"Exepcted active content to be undefined",
+					// 	);
+					// 	delete currentActiveFieldChange.newContent.changes;
+					// }
 				}
 			}
 			index++;
+
+			if (childChanges !== undefined) {
+				for (const [childId, childChange] of childChanges) {
+					if (childId === "end") {
+						const taggedChildChange = tagChange(childChange, revision);
+						currentChildNodeChanges.push(taggedChildChange);
+					}
+				}
+			}
 		}
 
 		if (currentChildNodeChanges.length > 0) {
-			if (currentActiveFieldChangeId !== "start" && currentActiveFieldChange !== undefined) {
-				// TODO: Seems like currentActiveFieldChange might be wrong if we've ended in partial application of inverses... ?
-				assert(
-					currentActiveFieldChange.newContent !== undefined,
-					0x772 /* after node must be defined to receive changes */,
-				);
-				currentActiveFieldChange.newContent.changes = composeChild(currentChildNodeChanges);
-			} else {
-				addChildChange("self", ...currentChildNodeChanges);
-			}
+			addChildChange("end", ...currentChildNodeChanges);
+			// if (currentActiveFieldChangeId !== "start" && currentActiveFieldChange !== undefined) {
+			// 	// TODO: Seems like currentActiveFieldChange might be wrong if we've ended in partial application of inverses... ?
+			// 	assert(
+			// 		currentActiveFieldChange.newContent !== undefined,
+			// 		0x772 /* after node must be defined to receive changes */,
+			// 	);
+			// 	currentActiveFieldChange.newContent.changes = composeChild(currentChildNodeChanges);
+			// } else {
+			// 	addChildChange("self", ...currentChildNodeChanges);
+			// }
 		}
 
 		const composed: OptionalChangeset = {
 			fieldChanges: cumulativeFieldChanges,
-			activeFieldChange: currentActiveFieldChangeId,
+			contentId: currentActiveFieldChangeId,
 		};
 
 		if (perChildChanges.size > 0) {
@@ -434,13 +433,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		invertChild: NodeChangeInverter,
 	): OptionalChangeset => {
 		assert(change.fieldChanges.length < 2, "Only single field changes support inversion");
-		// Changes to the child that existed in this field before `change` was applied.
-		let originalChildChanges: NodeChangeset | undefined;
 		const inverseChildChanges = new ChildChangeMap<NodeChangeset>();
 		if (change.childChanges !== undefined) {
 			for (const [id, childChange] of change.childChanges) {
-				if (id === "self" && change.fieldChanges.length > 0) {
-					originalChildChanges = invertChild(childChange, 0);
+				if (id === "start" && change.fieldChanges.length > 0) {
+					inverseChildChanges.set("end", invertChild(childChange, 0));
+					// originalChildChanges = invertChild(childChange, 0);
+				} else if (id === "end" && change.fieldChanges.length > 0) {
+					inverseChildChanges.set("start", invertChild(childChange, 0));
+					// selfChanges = invertChild(childChange, 0);
 				} else {
 					inverseChildChanges.set(
 						// This makes assumptions about how sandwich rebasing works
@@ -451,11 +452,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		const selfChanges = change.fieldChanges[0]?.newContent?.changes;
-		if (selfChanges !== undefined) {
-			inverseChildChanges.set("self", invertChild(selfChanges, 0));
-		}
-
 		const inverse: OptionalChangeset = {
 			childChanges:
 				inverseChildChanges.size > 0
@@ -463,7 +459,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					: undefined,
 			fieldChanges: [],
 			// TODO: This also makes assumptions about not inverting compositions
-			activeFieldChange: change.fieldChanges.length > 0 ? "end" : "start",
+			contentId: change.fieldChanges.length > 0 ? "end" : "start",
 		};
 
 		const { fieldChanges } = change;
@@ -479,7 +475,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverseFieldChange.newContent = {
 					revert: { revision, localId: fieldChange.id },
-					changes: originalChildChanges,
 				};
 			}
 			inverse.fieldChanges.push(inverseFieldChange);
@@ -504,18 +499,24 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		// E.g. rather than use firstOverFieldChange, we need to figure out the last change in `fieldChanges` which removed the same node that existed
 		// in the optional field in the start context of `change`.
 		// This generally applies to ids other than 'self' as well
-		const adderToRemover = new ChildChangeMap<ChangeId>();
-		const removerToAdder = new ChildChangeMap<ChangeId>();
+
+		// Maps ContentId in `change` to corresponding (updated) ContentId after having rebased over `over`.
+		// Since multiple ContentIds may refer to the same node, we always update rebased changes to refer
+		// to the most recent reincarnation of that node with respect to the order of fieldChanges being rebased over.
+		const redirectTable = new ChildChangeMap<ContentId>();
+		const removerToAdder = new ChildChangeMap<ContentId>();
+
+		// const redirectTable = new ChildChangeMap<ContentId>();
 		{
-			let currentNode: ChangeId = "self";
+			let currentNode: ContentId = "start";
 			// todo: obvious kludge here
 			let fakeIds = 0;
 			for (const fieldChange of over.fieldChanges) {
-				const remover: ChangeId = {
+				const remover: ContentId = {
 					revision: fieldChange.revision ?? overTagged.revision,
 					localId: fieldChange.id,
 				};
-				adderToRemover.set(currentNode, remover);
+				redirectTable.set(currentNode, remover);
 				removerToAdder.set(remover, currentNode);
 				if (fieldChange.newContent !== undefined) {
 					if ("revert" in fieldChange.newContent) {
@@ -524,7 +525,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						// intermediate field changes have happened.
 						// For now, assume the first.
 
-						const restoredNode: ChangeId = removerToAdder.get(
+						// TODO: I think it's valid to just use 'remover' here as the fallback
+						const restoredNode: ContentId = removerToAdder.get(
 							fieldChange.newContent.revert,
 						) ?? {
 							revision: brand("made-up") as any,
@@ -532,6 +534,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						};
 						// adderToRemover.set(currentNode, restoredNode);
 						// removerToAdder.set(restoredNode, currentNode);
+
+						// TODO: Feels like we're missing a 'set' here.
 						currentNode = restoredNode;
 					} else {
 						// this field change is a standard set.
@@ -546,12 +550,22 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					currentNode = remover;
 				}
 			}
+			// currentNode is now the content id for whatever exists at the end of the over changeset.
+			redirectTable.set(currentNode, "start");
 		}
+
+		// if (change.fieldChanges.length === 0) {
+		// 	const maybeStartRedirect = redirectTable.get("start");
+		// 	if (maybeStartRedirect !== undefined) {
+		// 		redirectTable.set("end", maybeStartRedirect);
+		// 	}
+		// }
+
 		// Note: rebasing *over* composed changes is a near-term goal. Rebasing composed changes is not.
 		// Generally, we only care about the first or last field change that we're rebasing over.
 		let firstOverFieldChange = over.fieldChanges[0];
-		const selfRemover = adderToRemover.get("self");
-		if (selfRemover !== undefined && selfRemover !== "self") {
+		const selfRemover = redirectTable.get("start");
+		if (selfRemover !== undefined && typeof selfRemover !== "string") {
 			firstOverFieldChange =
 				over.fieldChanges.find(
 					(change) =>
@@ -560,14 +574,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				) ?? firstOverFieldChange;
 		}
 		const finalOverFieldChange =
-			over.activeFieldChange === "end"
+			over.contentId === "end"
 				? over.fieldChanges[over.fieldChanges.length - 1]
-				: over.activeFieldChange === "start"
+				: over.contentId === "start"
 				? undefined
 				: over.fieldChanges.find((change) => {
 						return (
-							change.revision === (over.activeFieldChange as ChangeAtomId).revision &&
-							change.id === (over.activeFieldChange as ChangeAtomId).localId
+							change.revision === (over.contentId as ChangeAtomId).revision &&
+							change.id === (over.contentId as ChangeAtomId).localId
 						);
 				  });
 		// assert(
@@ -607,17 +621,18 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 
 			for (const [id, childChange] of change.childChanges) {
-				if (id === "self") {
+				if (typeof id === "string") {
 					// Rationale: when rebasing over a composition, changes to "self" should be rebased over the aggregate changes
 					// to the first removal. This assumes the list is ordered, which needs review.
 					// const overChildChange = overChildChanges.get(id) ?? over.childChanges?.[0][1];
 					const overChildChange = overChildChanges.get(
-						firstOverFieldChange !== undefined
-							? {
-									revision: firstOverFieldChange.revision ?? overTagged.revision,
-									localId: firstOverFieldChange.id,
-							  }
-							: id,
+						redirectTable.get(id) ?? id,
+						// firstOverFieldChange !== undefined
+						// 	? {
+						// 			revision: firstOverFieldChange.revision ?? overTagged.revision,
+						// 			localId: firstOverFieldChange.id,
+						// 	  }
+						// 	: id,
 					);
 					if (
 						finalOverFieldChange === undefined ||
@@ -669,24 +684,24 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				} else {
 					if (
 						(restoredRollbackChangeId !== undefined &&
-							areEqualChangeIds(id, restoredRollbackChangeId)) ||
+							areEqualContentIds(id, restoredRollbackChangeId)) ||
 						(restoredUndoChangeId !== undefined &&
-							areEqualChangeIds(id, restoredUndoChangeId))
+							areEqualContentIds(id, restoredUndoChangeId))
 					) {
 						// childChange refers to changes to node being revived by `over`.
-						const overChange = finalOverFieldChange?.newContent?.changes;
+						const overChange = overChildChanges.get("end"); // finalOverFieldChange?.newContent?.changes;
 						const rebasedChild = rebaseChild(
 							childChange,
 							overChange,
 							NodeExistenceState.Alive,
 						);
 						if (rebasedChild !== undefined) {
-							perChildChanges.set("self", rebasedChild);
+							perChildChanges.set("end", rebasedChild);
 						}
 					} else {
 						// childChange refers to changes to node removed by some past revision. Rebase over any changes that
 						// `over` has to that same revision.
-						const overChange = overChildChanges.get(id);
+						const overChange = overChildChanges.get(redirectTable.get(id) ?? id);
 						const rebasedChild = rebaseChild(
 							childChange,
 							overChange,
@@ -713,7 +728,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const rebased: OptionalChangeset = {
 			fieldChanges: [],
 			// TODO: this makes assumptions about not rebasing compositions.
-			activeFieldChange: change.activeFieldChange,
+			contentId: change.contentId,
 		};
 		if (fieldChange !== undefined) {
 			rebased.fieldChanges.push(fieldChange);
@@ -791,20 +806,20 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 				wasEmpty,
 			},
 		],
-		activeFieldChange: "end",
+		contentId: "end",
 	}),
 
 	clear: (wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset => ({
 		fieldChanges: [{ id, wasEmpty }],
-		activeFieldChange: "end",
+		contentId: "end",
 	}),
 
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
 		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
 		return {
 			fieldChanges: [],
-			childChanges: [["self", childChange]],
-			activeFieldChange: "start",
+			childChanges: [["end", childChange]],
+			contentId: "start",
 		};
 	},
 };
@@ -823,7 +838,11 @@ export function optionalFieldIntoDelta(
 	// Maybe instead of 'muting', we just specially track the set index in the optional field that's the active node!
 
 	const delta: Mutable<Delta.FieldChanges> = {};
-	const [_, childChange] = change.childChanges?.find(([changeId]) => changeId === "self") ?? [];
+	const [_, childChange] =
+		change.childChanges?.find(
+			([changeId]) =>
+				changeId === "end" || (changeId === "start" && change.fieldChanges.length === 0),
+		) ?? [];
 	if (childChange === undefined && change.fieldChanges.length === 0) {
 		return delta;
 	}
@@ -835,7 +854,7 @@ export function optionalFieldIntoDelta(
 		mark.fields = deltaFromChild(childChange);
 	}
 
-	if (change.fieldChanges.length === 0 || change.activeFieldChange === "start") {
+	if (change.fieldChanges.length === 0 || change.contentId === "start") {
 		return delta;
 	}
 
@@ -869,8 +888,9 @@ export function optionalFieldIntoDelta(
 			};
 			mark.attach = restoreId;
 		}
-		if (update.changes !== undefined) {
-			const fields = deltaFromChild(update.changes);
+		const childChanges = change.childChanges?.find(([id]) => id === "end")?.[1];
+		if (childChanges !== undefined) {
+			const fields = deltaFromChild(childChanges);
 			delta.global = [{ id: mark.attach, fields }];
 		}
 	}
@@ -887,10 +907,13 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 		change.childChanges === undefined && change.fieldChanges.length === 0,
 };
 
-function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
+function areEqualContentIds(a: ContentId, b: ContentId): boolean {
 	if (typeof a === "string" || typeof b === "string") {
 		return a === b;
 	}
 
 	return areEqualChangeAtomIds(a, b);
 }
+
+// Ideas:
+// - Write strict 'isNormalized' function which we can assert on post-composition.
