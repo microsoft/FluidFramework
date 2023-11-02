@@ -16,13 +16,13 @@ import { ISharedObjectEvents } from '@fluidframework/shared-object-base';
 import { ISummaryTreeWithStats } from '@fluidframework/runtime-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 
-// @public
+// @alpha
 export interface IClearOperation {
     time: number;
     type: "clear";
 }
 
-// @public
+// @alpha
 export interface IColor {
     a: number;
     b: number;
@@ -30,7 +30,7 @@ export interface IColor {
     r: number;
 }
 
-// @public
+// @alpha
 export interface ICreateStrokeOperation {
     id: string;
     pen: IPen;
@@ -38,7 +38,7 @@ export interface ICreateStrokeOperation {
     type: "createStroke";
 }
 
-// @public
+// @alpha
 export interface IInk extends ISharedObject<IInkEvents> {
     appendPointToStroke(point: IInkPoint, id: string): IInkStroke;
     clear(): void;
@@ -47,7 +47,7 @@ export interface IInk extends ISharedObject<IInkEvents> {
     getStrokes(): IInkStroke[];
 }
 
-// @public (undocumented)
+// @alpha
 export interface IInkEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: "stylus", listener: (operation: IStylusOperation) => void): any;
@@ -55,10 +55,10 @@ export interface IInkEvents extends ISharedObjectEvents {
     (event: "clear", listener: () => void): any;
 }
 
-// @public
+// @alpha
 export type IInkOperation = IClearOperation | ICreateStrokeOperation | IStylusOperation;
 
-// @public
+// @alpha
 export interface IInkPoint {
     pressure: number;
     time: number;
@@ -66,14 +66,14 @@ export interface IInkPoint {
     y: number;
 }
 
-// @public
+// @alpha
 export interface IInkStroke {
     id: string;
     pen: IPen;
     points: IInkPoint[];
 }
 
-// @public @sealed
+// @alpha @sealed
 export class Ink extends SharedObject<IInkEvents> implements IInk {
     constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     appendPointToStroke(point: IInkPoint, id: string): IInkStroke;
@@ -95,7 +95,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export class InkCanvas {
     constructor(canvas: HTMLCanvasElement, model: IInk);
     // (undocumented)
@@ -108,7 +108,7 @@ export class InkCanvas {
     sizeCanvasBackingStore(): void;
 }
 
-// @public @sealed
+// @alpha @sealed
 export class InkFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;
@@ -124,13 +124,13 @@ export class InkFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @public
+// @alpha
 export interface IPen {
     color: IColor;
     thickness: number;
 }
 
-// @public
+// @alpha
 export interface IStylusOperation {
     id: string;
     point: IInkPoint;
