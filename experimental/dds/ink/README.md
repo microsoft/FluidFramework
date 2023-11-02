@@ -1,5 +1,8 @@
 # @fluidframework/ink
 
+Note: this package is experimental; its APIs may change without notice.
+Not recommended for production scenarios.
+
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
 
 <!-- prettier-ignore-start -->
