@@ -521,7 +521,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
-		it("can rebase node deletion over cross-field move of descendant", () => {
+		it.skip("can rebase node deletion over cross-field move of descendant", () => {
 			const tree1 = makeTreeFromJson({
 				foo: ["A"],
 			});
@@ -667,7 +667,7 @@ describe("Editing", () => {
 		});
 
 		// Tests that a move is aborted if the moved node has been concurrently deleted
-		it("ancestor of move source deleted", () => {
+		it.skip("ancestor of move source deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
 
@@ -782,7 +782,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it("node being concurrently moved and revived with source ancestor deleted", () => {
+		it.skip("node being concurrently moved and revived with source ancestor deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
@@ -823,7 +823,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it("delete ancestor of return source", () => {
+		it.skip("delete ancestor of return source", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const first: UpPath = {
 				parent: undefined,

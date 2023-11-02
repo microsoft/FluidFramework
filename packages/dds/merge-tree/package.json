@@ -105,9 +105,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"VariableDeclaration_MergeTreeDeltaType": {
-				"forwardCompat": false
-			},
 			"RemovedInterfaceDeclaration_IIntegerRange": {
 				"forwardCompat": false,
 				"backCompat": false
@@ -160,6 +157,64 @@
 				"forwardCompat": false,
 				"backCompat": false
 			},
+			"InterfaceDeclaration_SegmentGroup": {
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_Dictionary": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IConsensusInfo": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IConsensusValue": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_IMarkerModifiedAction": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_LocalClientId": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_MergeTreeDeltaCallback": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_MergeTreeMaintenanceCallback": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_NonCollabClient": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SegmentAccumulator": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedInterfaceDeclaration_SortedDictionary": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_TreeMaintenanceSequenceNumber": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_compareNumbers": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedVariableDeclaration_compareStrings": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedEnumDeclaration_PropertiesRollback": {
+				"forwardCompat": false
+			},
 			"ClassDeclaration_LocalReferenceCollection": {
 				"backCompat": false
 			},
@@ -175,8 +230,12 @@
 			"ClassDeclaration_TextSegment": {
 				"backCompat": false
 			},
-			"InterfaceDeclaration_SegmentGroup": {
+			"RemovedFunctionDeclaration_createAnnotateMarkerOp": {
+				"forwardCompat": false,
 				"backCompat": false
+			},
+			"VariableDeclaration_MergeTreeDeltaType": {
+				"forwardCompat": false
 			}
 		}
 	}

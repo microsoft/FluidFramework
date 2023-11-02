@@ -43,7 +43,7 @@ describe("SchemaIndex", () => {
 		const cases = [
 			{
 				version: "1.0.0" as const,
-				treeSchema: [],
+				nodeSchema: [],
 				rootFieldSchema: { kind: "x" as FieldKindIdentifier },
 			},
 		];
@@ -62,8 +62,8 @@ describe("SchemaIndex", () => {
 			{ version: "2.0.0" },
 			{ version: "1.0.0" },
 			{ version: "2.0.0" },
-			{ version: "1.0.0", treeSchema: [], globalFieldSchema: [] },
-			{ version: "1.0.0", treeSchema: [], extraField: 0 },
+			{ version: "1.0.0", nodeSchema: [], globalFieldSchema: [] },
+			{ version: "1.0.0", nodeSchema: [], extraField: 0 },
 		];
 		for (const data of badCases) {
 			assert.throws(() => codec.decode(data as unknown as Format));

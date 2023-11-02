@@ -110,6 +110,9 @@ export interface IClientEvents {
 	);
 }
 
+/**
+ * @internal
+ */
 export class Client extends TypedEventEmitter<IClientEvents> {
 	public longClientId: string | undefined;
 
@@ -704,15 +707,6 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 	}
 
-	// as functions are modified move them above the eslint-disabled waterline and lint them
-
-	cloneFromSegments() {
-		const clone = new Client(this.specToSegment, this.logger, this._mergeTree.options);
-		const segments: ISegment[] = [];
-		const newRoot = this._mergeTree.blockClone(this._mergeTree.root, segments);
-		clone._mergeTree.root = newRoot;
-		return clone;
-	}
 	getOrAddShortClientId(longClientId: string) {
 		if (!this.clientNameToIds.get(longClientId)) {
 			this.addLongClientId(longClientId);
@@ -720,16 +714,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return this.getShortClientId(longClientId);
 	}
 
-	getShortClientId(longClientId: string) {
+	protected getShortClientId(longClientId: string) {
 		return this.clientNameToIds.get(longClientId)!.data;
 	}
+
 	getLongClientId(shortClientId: number) {
 		return shortClientId >= 0 ? this.shortClientIdMap[shortClientId] : "original";
 	}
+
 	addLongClientId(longClientId: string) {
 		this.clientNameToIds.put(longClientId, this.shortClientIdMap.length);
 		this.shortClientIdMap.push(longClientId);
 	}
+
 	private getOrAddShortClientIdFromMessage(msg: Pick<ISequencedDocumentMessage, "clientId">) {
 		return this.getOrAddShortClientId(msg.clientId ?? "server");
 	}
@@ -786,6 +783,10 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			assert(
 				segmentGroup === segmentSegGroup,
 				0x035 /* "Segment group not at head of segment pending queue" */,
+			);
+			assert(
+				segmentGroup.localSeq !== undefined,
+				"expected segment group localSeq to be defined",
 			);
 			const segmentPosition = this.findReconnectionPosition(segment, segmentGroup.localSeq);
 			let newOp: IMergeTreeDeltaOp | undefined;
@@ -981,7 +982,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		this.updateSeqNumbers(msg.minimumSequenceNumber, msg.sequenceNumber);
 	}
 
-	public updateSeqNumbers(min: number, seq: number) {
+	private updateSeqNumbers(min: number, seq: number) {
 		const collabWindow = this.getCollabWindow();
 		// Equal is fine here due to SharedSegmentSequence<>.snapshotContent() potentially updating with same #
 		assert(
@@ -1177,7 +1178,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 		}
 	}
-	updateConsensusProperty(op: IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
+
+	private updateConsensusProperty(op: IMergeTreeAnnotateMsg, msg: ISequencedDocumentMessage) {
 		const markerId = op.relativePos1!.id!;
 		const consensusInfo = this.pendingConsensus.get(markerId);
 		if (consensusInfo) {
@@ -1216,6 +1218,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		return propertiesAtPosition;
 	}
+
 	getRangeExtentsOfPosition(pos: number) {
 		let posStart: number | undefined;
 		let posAfterEnd: number | undefined;
@@ -1228,9 +1231,11 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		}
 		return { posStart, posAfterEnd };
 	}
+
 	getCurrentSeq() {
 		return this.getCollabWindow().currentSeq;
 	}
+
 	getClientId() {
 		return this.getCollabWindow().clientId;
 	}

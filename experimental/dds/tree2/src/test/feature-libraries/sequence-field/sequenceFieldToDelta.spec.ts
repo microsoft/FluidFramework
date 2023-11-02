@@ -32,8 +32,11 @@ import { composeAnonChanges, toDelta } from "./utils";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
+const nodeY = { type, value: 1 };
 const content = [nodeX];
+const content2 = [nodeX, nodeY];
 const contentCursor: ITreeCursorSynchronous = singleTextCursor(nodeX);
+const contentCursor2: ITreeCursorSynchronous[] = content2.map((node) => singleTextCursor(node));
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
 const tag: RevisionTag = mintRevisionTag();
@@ -308,6 +311,98 @@ describe("SequenceField - toDelta", () => {
 		};
 		const actual = SF.sequenceFieldToDelta(makeAnonChange(changeset), deltaFromChild);
 		assertFieldChangesEqual(actual, expected);
+	});
+
+	describe("Transient changes", () => {
+		// TODO: Should test revives and returns in addition to inserts and moves
+		it("insert & delete", () => {
+			const changeset = [
+				Mark.transient(Mark.insert(content2, brand(0)), Mark.delete(2, brand(2))),
+			];
+			const delta = toDelta(changeset);
+			const buildId = { minor: 0 };
+			const expected: Delta.FieldChanges = {
+				build: [{ id: buildId, trees: contentCursor2 }],
+				rename: [{ count: 2, oldId: buildId, newId: { minor: 2 } }],
+			};
+			assertFieldChangesEqual(delta, expected);
+		});
+
+		it("insert & move", () => {
+			const changeset = [
+				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				{ count: 1 },
+				Mark.moveIn(2, brand(2)),
+			];
+			const delta = toDelta(changeset);
+			const buildId = { minor: 0 };
+			const id = { minor: 2 };
+			const expected: Delta.FieldChanges = {
+				build: [{ id: buildId, trees: contentCursor2 }],
+				rename: [{ oldId: buildId, newId: id, count: 2 }],
+				local: [{ count: 1 }, { count: 2, attach: id }],
+			};
+			assertFieldChangesEqual(delta, expected);
+		});
+
+		it("move & delete", () => {
+			const changeset = [
+				Mark.moveOut(2, brand(0)),
+				{ count: 1 },
+				Mark.transient(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
+			];
+			const delta = toDelta(changeset);
+
+			const id = { minor: 0 };
+			const expected: Delta.FieldChanges = {
+				local: [{ count: 2, detach: id }],
+				rename: [{ count: 2, oldId: id, newId: { minor: 2 } }],
+			};
+			assertFieldChangesEqual(delta, expected);
+		});
+
+		it("insert & move & delete", () => {
+			const changeset = [
+				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				{ count: 1 },
+				Mark.transient(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
+			];
+			const delta = toDelta(changeset);
+			const buildId = { minor: 0 };
+			const id1 = { minor: 2 };
+			const id2 = { minor: 4 };
+			const expected: Delta.FieldChanges = {
+				build: [{ id: buildId, trees: contentCursor2 }],
+				rename: [
+					{ count: 2, oldId: buildId, newId: id1 },
+					{ count: 2, oldId: id1, newId: id2 },
+				],
+			};
+			assertFieldChangesEqual(delta, expected);
+		});
+
+		it("move & move & move", () => {
+			const changeset = [
+				Mark.moveOut(2, brand(0), { finalEndpoint: { localId: brand(4) } }),
+				{ count: 1 },
+				Mark.transient(Mark.moveIn(2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.transient(Mark.moveIn(2, brand(2)), Mark.moveOut(2, brand(4))),
+				{ count: 1 },
+				Mark.moveIn(2, brand(4), { finalEndpoint: { localId: brand(0) } }),
+			];
+			const delta = toDelta(changeset);
+
+			const id = { minor: 0 };
+			const expected: Delta.FieldChanges = {
+				local: [
+					{ count: 2, detach: id },
+					{ count: 1 },
+					{ count: 1 },
+					{ count: 2, attach: id },
+				],
+			};
+			assertFieldChangesEqual(delta, expected);
+		});
 	});
 
 	describe("Muted changes", () => {

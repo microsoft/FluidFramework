@@ -105,6 +105,9 @@ export interface IRemovalInfo {
 	removedClientIds: number[];
 }
 
+/**
+ * @internal
+ */
 export function toRemovalInfo(maybe: Partial<IRemovalInfo> | undefined): IRemovalInfo | undefined {
 	if (maybe?.removedClientIds !== undefined && maybe?.removedSeq !== undefined) {
 		return maybe as IRemovalInfo;
@@ -274,7 +277,7 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 		newProps: PropertySet,
 		op?: ICombiningOp,
 		seq?: number,
-		collabWindow?: CollaborationWindow,
+		collaborating?: boolean,
 		rollback?: PropertiesRollback,
 	): PropertySet | undefined;
 	clone(): ISegment;
@@ -293,13 +296,10 @@ export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Parti
 	 * @throws - error if the segment state doesn't match segment group or op.
 	 * E.g. if the segment group is not first in the pending queue, or
 	 * an inserted segment does not have unassigned sequence number.
+	 *
+	 * @internal
 	 */
 	ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-}
-
-export interface IMarkerModifiedAction {
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type
-	(marker: Marker): void;
 }
 
 export interface ISegmentAction<TClientData> {
@@ -390,10 +390,13 @@ export interface SearchResult {
 	pos: number;
 }
 
+/**
+ * @internal
+ */
 export interface SegmentGroup {
 	segments: ISegmentLeaf[];
 	previousProps?: PropertySet[];
-	localSeq: number;
+	localSeq?: number;
 	refSeq: number;
 }
 
@@ -485,7 +488,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 		newProps: PropertySet,
 		op?: ICombiningOp,
 		seq?: number,
-		collabWindow?: CollaborationWindow,
+		collaborating?: boolean,
 		rollback: PropertiesRollback = PropertiesRollback.None,
 	) {
 		this.propertyManager ??= new PropertiesManager();
@@ -495,7 +498,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 			newProps,
 			op,
 			seq,
-			collabWindow?.collaborating,
+			collaborating,
 			rollback,
 		);
 	}
@@ -535,6 +538,9 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 	public abstract toJSONObject(): any;
 
+	/**
+	 * @internal
+	 */
 	public ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean {
 		const currentSegmentGroup = this.segmentGroups.dequeue();
 		assert(
@@ -752,6 +758,9 @@ export class Marker extends BaseSegment implements ReferencePosition {
 	}
 }
 
+/**
+ * @internal
+ */
 export class CollaborationWindow {
 	clientId = LocalClientId;
 	collaborating = false;
@@ -780,9 +789,6 @@ export interface IConsensusInfo {
 	callback: (m: Marker) => void;
 }
 
-export interface SegmentAccumulator {
-	segments: ISegment[];
-}
 /**
  * @internal
  */

@@ -23,7 +23,7 @@ import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../uti
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
-import { getFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/objectFactory";
+import { extractFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -248,15 +248,15 @@ describe("domains - SchemaBuilder", () => {
 			const z: number | undefined = x.recursive?.recursive?.number;
 		}
 
-		const inner = recursiveObject.create({ recursive: undefined, number: 5 });
+		const innerContents = { recursive: undefined, number: 5 };
+		const inner = recursiveObject.create(innerContents);
 		const testOptional = recursiveObject.create({ number: 5 });
-
-		const outer1 = recursiveObject.create({ recursive: inner, number: 1 });
+		const outer1 = recursiveObject.create({ recursive: innerContents, number: 1 });
 		const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
 
-		checkCreated(inner, { number: 5 });
+		checkCreated(inner, { number: 5, recursive: undefined });
 		checkCreated(testOptional, { number: 5 });
-		checkCreated(outer1, { number: 1, recursive: { number: 5 } });
+		checkCreated(outer1, { number: 1, recursive: { number: 5, recursive: undefined } });
 		checkCreated(outer2, { number: 1, recursive: { number: 5 } });
 	});
 
@@ -296,20 +296,10 @@ describe("domains - SchemaBuilder", () => {
 
 /**
  * These build objects are intentionally not holding the data their types make them appear to have as part of a workaround for https://github.com/microsoft/TypeScript/issues/43826.
- * This makes testing that these factory function do the correct thing a bit non-obvious:
  */
 export function checkCreated<TSchema extends ObjectNodeSchema>(
 	created: SharedTreeObject<TSchema>,
 	expected: ProxyNode<TSchema>,
 ): void {
-	const data = getFactoryContent(created);
-	// Strip symbols and look up factory data
-	const stripped = JSON.parse(
-		JSON.stringify(created, (key, value) =>
-			typeof value !== "object"
-				? (value as unknown)
-				: (getFactoryContent(value) as unknown) ?? (value as unknown),
-		),
-	);
-	assert.deepEqual(stripped, expected);
+	assert.deepEqual(extractFactoryContent(created), expected);
 }

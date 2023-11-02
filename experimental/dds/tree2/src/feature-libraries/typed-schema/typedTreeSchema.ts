@@ -100,7 +100,18 @@ export class TreeNodeSchema<
 
 	public readonly info: Assume<T, TreeSchemaSpecification>;
 
-	public constructor(
+	/**
+	 * Version of constructor with extends clauses. See {@link Unenforced} for why TreeNodeSchema can't have them on the constructor.
+	 */
+	public static create<Name extends string, T extends TreeSchemaSpecification>(
+		builder: Named<string>,
+		name: Name,
+		info: T,
+	): TreeNodeSchema<Name, T> {
+		return new TreeNodeSchema(builder, name, info);
+	}
+
+	private constructor(
 		public readonly builder: Named<string>,
 		name: Name,
 		info: T,
@@ -517,5 +528,5 @@ export interface SchemaCollection extends StoredSchemaCollection {
 	/**
 	 * {@inheritdoc SchemaCollection}
 	 */
-	readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
 }

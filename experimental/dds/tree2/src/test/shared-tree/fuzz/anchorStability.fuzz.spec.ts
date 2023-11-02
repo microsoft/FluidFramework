@@ -111,13 +111,14 @@ describe("Fuzz - anchor stability", () => {
 		});
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
+			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
+			const views = finalState.views ?? assert.fail("views should be defined");
+
 			// aborts any transactions that may still be in progress
-			const tree = finalState.clients[0].channel.view;
+			const tree = views[0];
 			tree.transaction.abort();
 			validateTree(tree, initialTreeJson);
-			const anchors = finalState.anchors;
-			assert(anchors !== undefined, "Anchors should be defined");
-			validateAnchors(finalState.clients[0].channel.view, anchors[0], true);
+			validateAnchors(tree, anchors[0], true);
 		});
 
 		createDDSFuzzSuite(model, {

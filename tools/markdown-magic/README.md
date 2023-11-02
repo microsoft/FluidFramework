@@ -290,5 +290,5 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 <!-- Links -->
 
-[tinylicious]: https://github.com/microsoft/FluidFramework/tree/main/server/tinylicious/
+[tinylicious]: https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious/
 [api-extractor]: https://api-extractor.com/

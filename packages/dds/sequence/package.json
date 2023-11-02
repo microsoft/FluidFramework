@@ -134,6 +134,9 @@
 			"ClassDeclaration_SharedString": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"TypeAliasDeclaration_SharedStringSegment": {
+				"backCompat": false
 			}
 		}
 	}
