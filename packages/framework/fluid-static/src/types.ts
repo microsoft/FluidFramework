@@ -222,3 +222,54 @@ export interface IMember {
  * An extended member object that includes currentConnection
  */
 export type Myself<M extends IMember = IMember> = M & { currentConnection: string };
+
+
+
+/**
+ * Summarizes signal load across connected client over a period of time
+ */
+export interface ISignalStatistics {
+
+	/**
+	 * Length of time (milliseconds) these statistics cover
+	 */
+	timespan: number
+
+	/**
+	 * Statistics for signals sent by client
+	 */
+	fromClients: ISignalTransmissionData;
+
+
+	/**
+	 * Statistics for signals sent to client
+	 */
+	toClients: ISignalTransmissionData;
+}
+
+
+/**
+* Data for signals transmitted between clients
+*/
+export interface ISignalTransmissionData {
+	/**
+	 * Count of signals
+	 */
+	count: number;
+
+	/**
+	 * Approximation of cumulative signal payloads in bytes
+	 */
+	size: number;
+
+	/**
+	 * Count of packets used for signals 
+	 */
+	packetCount: number;
+
+	/**
+	 * Approximation of cumulative signal payloads in bytes
+	 */
+	packetSize: number;
+
+}
