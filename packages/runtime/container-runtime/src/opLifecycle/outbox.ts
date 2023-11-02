@@ -236,7 +236,32 @@ export class Outbox {
 	public submitIdAllocation(message: BatchMessage) {
 		this.maybeFlushPartialBatch();
 
-		this.addMessageToBatchManager(this.idAllocationBatch, message);
+		if (
+			!this.idAllocationBatch.push(
+				message,
+				this.isContextReentrant(),
+				this.params.getCurrentSequenceNumbers().clientSequenceNumber,
+			)
+		) {
+			// BatchManager has two limits - soft limit & hard limit. Soft limit is only engaged
+			// when queue is not empty.
+			// Flush queue & retry. Failure on retry would mean - single message is bigger than hard limit
+			this.flushInternal(this.idAllocationBatch);
+
+			this.addMessageToBatchManager(this.idAllocationBatch, message);
+		}
+
+		// If compression is enabled, we will always successfully receive
+		// attach ops and compress then send them at the next JS turn, regardless
+		// of the overall size of the accumulated ops in the batch.
+		// However, it is more efficient to flush these ops faster, preferably
+		// after they reach a size which would benefit from compression.
+		if (
+			this.idAllocationBatch.contentSizeInBytes >=
+			this.params.config.compressionOptions.minimumBatchSizeInBytes
+		) {
+			this.flushInternal(this.idAllocationBatch);
+		}
 	}
 
 	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
