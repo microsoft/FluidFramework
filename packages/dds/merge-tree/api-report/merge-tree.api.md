@@ -676,8 +676,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
     // (undocumented)
     getSegment(): this;
     // (undocumented)
-    hasSimpleType(simpleTypeName: string): boolean;
-    // (undocumented)
     static is(segment: ISegment): segment is Marker;
     // (undocumented)
     static make(refType: ReferenceType, props?: PropertySet): Marker;

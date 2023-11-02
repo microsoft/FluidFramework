@@ -16,7 +16,6 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
-import { IIntegerRange } from "./base";
 import { DoublyLinkedList, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
@@ -61,7 +60,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree } from "./mergeTree";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import {
@@ -81,6 +80,15 @@ function removeMoveInfo(segment: Partial<IMoveInfo>): void {
 	delete segment.localMovedSeq;
 	delete segment.movedClientIds;
 	delete segment.wasMovedOnInsert;
+}
+
+/**
+ * A range [start, end)
+ * @internal
+ */
+export interface IIntegerRange {
+	start: number;
+	end: number;
 }
 
 /**

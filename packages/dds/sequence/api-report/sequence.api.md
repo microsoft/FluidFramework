@@ -20,9 +20,7 @@ import { IJSONSegment } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaCallbackArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree';
-import { IMergeTreeInsertMsg } from '@fluidframework/merge-tree';
 import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
-import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
 import { ISegmentAction } from '@fluidframework/merge-tree';
@@ -375,7 +373,7 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 
 // @public
 export interface ISharedString extends SharedSegmentSequence<SharedStringSegment> {
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
     insertText(pos: number, text: string, props?: PropertySet): void;
     posFromRelativePos(relativePos: IRelativePosition): number;
 }
@@ -591,7 +589,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected processGCDataCore(serializer: SummarySerializer): void;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
     // (undocumented)
-    removeRange(start: number, end: number): IMergeTreeRemoveMsg;
+    removeRange(start: number, end: number): void;
     protected replaceRange(start: number, end: number, segment: ISegment): void;
     resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
     // (undocumented)
@@ -630,13 +628,13 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     getTextWithPlaceholders(start?: number, end?: number): string;
     // (undocumented)
     id: string;
-    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): IMergeTreeInsertMsg | undefined;
+    insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
     insertMarkerRelative(relativePos1: IRelativePosition, refType: ReferenceType, props?: PropertySet): void;
     insertText(pos: number, text: string, props?: PropertySet): void;
     insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet): void;
     // (undocumented)
     get ISharedString(): ISharedString;
-    removeText(start: number, end: number): IMergeTreeRemoveMsg;
+    removeText(start: number, end: number): void;
     replaceText(start: number, end: number, text: string, props?: PropertySet): void;
     protected rollback(content: any, localOpMetadata: unknown): void;
     searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;

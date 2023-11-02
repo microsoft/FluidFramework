@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IIntegerRange } from "./base";
+import { IIntegerRange } from "./client";
 import { ISegment } from "./mergeTreeNodes";
 import { MergeTree } from "./mergeTree";
 import { IMergeTreeTextHelper, TextSegment } from "./textSegment";
