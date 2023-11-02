@@ -63,7 +63,7 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree } from "./mergeTree";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
@@ -123,7 +123,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		// Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
-		options?: PropertySet,
+		options?: IMergeTreeOptions & PropertySet,
 	) {
 		super();
 		this._mergeTree = new MergeTree(options);

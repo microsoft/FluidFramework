@@ -1481,13 +1481,14 @@ export class MergeTree {
 				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
 			const len =
 				this.nodeLength(child, refSeq, clientId) ?? (isLastChildBlock ? 0 : undefined);
+
 			if (len === undefined) {
-				// if the seg len in undefined, the segment
+				// if the seg len is undefined, the segment
 				// will be removed, so should just be skipped for now
 				continue;
-			} else {
-				assert(len >= 0, 0x4bc /* Length should not be negative */);
 			}
+
+			assert(len >= 0, 0x4bc /* Length should not be negative */);
 
 			if (_pos < len || (_pos === len && this.breakTie(_pos, child, seq))) {
 				// Found entry containing pos
