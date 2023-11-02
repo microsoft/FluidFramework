@@ -154,6 +154,7 @@ extends:
     - nyc/experimental
     - nyc/packages
     checks:
+    - checks
     - syncpack:deps
     - syncpack:versions
     - check:versions

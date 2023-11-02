@@ -26,17 +26,12 @@ import {
 } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat } from "@fluid-internal/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
-import { FlushMode } from "@fluidframework/runtime-definitions";
 
 const directoryId = "directoryKey";
 const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
-};
-const groupedBatchingContainerConfig: ITestContainerConfig = {
-	...testContainerConfig,
-	runtimeOptions: { enableGroupedBatching: true, flushMode: FlushMode.Immediate },
 };
 
 describeFullCompat("SharedDirectory", (getTestObjectProvider) => {
@@ -1213,33 +1208,31 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.equal(changedEventData[1].key, "key2");
 		assert.equal(changedEventData[1].previousValue, undefined);
 	});
-});
 
-describeNoCompat("SharedDirectory", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-	beforeEach(() => {
-		provider = getTestObjectProvider();
-	});
+	it("Should rollback deleted subdirectory when multiple subdirectories exist", () => {
+		let error: Error | undefined;
 
-	it("Rebasing batch doesn't hit 0x331", async () => {
-		// Grouped batching is needed for rebasing to happen
-		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
-		const sharedDir = await dataObject.getSharedObject<SharedDirectory>(directoryId);
-		const containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+		sharedDir.createSubDirectory("dir2");
+		sharedDir.createSubDirectory("dir3");
+		sharedDir.createSubDirectory("dir1");
 
-		const key = "testKey";
-		sharedDir.set(key, true);
-
-		containerRuntime.orderSequentially(() => {
-			// Need to do this inside orderSequentially
-			containerRuntime.ensureNoDataModelChanges(() => {
-				sharedDir.set(key, false);
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedDir.deleteSubDirectory("dir3");
+				throw new Error("callback failure");
 			});
-		});
+		} catch (err) {
+			error = err as Error;
+		}
 
-		await provider.ensureSynchronized();
-
-		assert.strictEqual(sharedDir.get(key), false);
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false);
+		// rollback
+		assert.equal(sharedDir.countSubDirectory(), 3);
+		assert.equal(subDirCreatedEventData.length, 4);
+		assert.deepStrictEqual(subDirCreatedEventData, ["dir2", "dir3", "dir1", "dir3"]);
+		assert.equal(subDirDeletedEventData.length, 1);
+		assert.equal(subDirDeletedEventData[0], "dir3");
 	});
 });

@@ -135,9 +135,15 @@ export interface TreeFieldStoredSchema {
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
+/**
+ * A schema for empty fields (fields which must always be empty).
+ * There are multiple ways this could be encoded, but this is the most explicit.
+ */
 export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
+	// This kind requires the field to be empty.
 	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
-	types: undefined,
+	// This type set also forces the field to be empty not not allowing any types as all.
+	types: new Set(),
 };
 
 /**
@@ -209,5 +215,5 @@ export interface StoredSchemaCollection {
 	/**
 	 * {@inheritdoc StoredSchemaCollection}
 	 */
-	readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }

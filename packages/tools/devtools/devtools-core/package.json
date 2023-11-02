@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/devtools-core",
-	"version": "2.0.0-internal.7.2.0",
+	"version": "2.0.0-internal.7.3.0",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -35,7 +35,7 @@
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha dist/**/*.test.js --exit",
+		"test:mocha": "mocha \"dist/**/*.test.js\" --exit",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
@@ -78,7 +78,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.1.0",
+		"@fluid-experimental/devtools-core-previous": "npm:@fluid-experimental/devtools-core@2.0.0-internal.7.2.0",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",

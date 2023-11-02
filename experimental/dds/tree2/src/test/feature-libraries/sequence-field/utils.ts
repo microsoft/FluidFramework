@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils";
 import {
 	RevisionInfo,
+	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
@@ -87,11 +88,17 @@ function composeI<T>(
 	return composed;
 }
 
-export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
+export function rebase(
+	change: TestChangeset,
+	base: TaggedChange<TestChangeset>,
+	revisionMetadata?: RevisionMetadataSource,
+): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
-	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+	const metadata =
+		revisionMetadata ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	let rebasedChange = SF.rebase(
@@ -127,6 +134,14 @@ export function rebaseTagged(
 	}
 
 	return currChange;
+}
+
+export function rebaseOverComposition(
+	change: TestChangeset,
+	base: TestChangeset,
+	metadata: RevisionMetadataSource,
+): TestChangeset {
+	return rebase(change, makeAnonChange(base), metadata);
 }
 
 function resetCrossFieldTable(table: SF.CrossFieldTable) {

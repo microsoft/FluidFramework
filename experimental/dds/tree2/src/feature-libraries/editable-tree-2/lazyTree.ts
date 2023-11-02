@@ -56,6 +56,7 @@ import {
 	TreeStatus,
 	RequiredField,
 	OptionalField,
+	FlexibleFieldContent,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -82,7 +83,7 @@ export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): Laz
 		assert(cached.context === context, 0x782 /* contexts must match */);
 		return cached;
 	}
-	const schema = context.schema.treeSchema.get(cursor.type) ?? fail("missing schema");
+	const schema = context.schema.nodeSchema.get(cursor.type) ?? fail("missing schema");
 	const output = buildSubclass(context, schema, cursor, anchorNode, anchor);
 	anchorNode.slots.set(lazyTreeSlot, output);
 	anchorNode.on("afterDestroy", cleanupTree);
@@ -148,7 +149,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		this.#removeDeleteCallback = anchorNode.on("afterDestroy", cleanupTree);
 
 		assert(
-			this.context.schema.treeSchema.get(this.schema.name) !== undefined,
+			this.context.schema.nodeSchema.get(this.schema.name) !== undefined,
 			0x784 /* There is no explicit schema for this node type. Ensure that the type is correct and the schema for it was added to the TreeStoredSchema */,
 		);
 
@@ -162,7 +163,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 		schema: TSchemaInner,
 	): this is TypedNode<TSchemaInner> {
 		assert(
-			this.context.schema.treeSchema.get(schema.name) === schema,
+			this.context.schema.nodeSchema.get(schema.name) === schema,
 			0x785 /* Narrowing must be done to a schema that exists in this context */,
 		);
 		return (this.schema as TreeNodeSchema) === schema;
@@ -242,7 +243,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 			cursor.enterField(key);
 			fieldSchema = getFieldSchema(
 				key,
-				this.context.schema.treeSchema.get(parentType) ??
+				this.context.schema.nodeSchema.get(parentType) ??
 					fail("requested schema that does not exist"),
 			);
 		}
@@ -292,7 +293,10 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 					"beforeChange",
 					(anchorNode: AnchorNode) => {
 						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						assert(
+							treeNode !== undefined,
+							0x7d3 /* tree node not found in anchor node slots */,
+						);
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for beforeChange and afterChange.
@@ -306,7 +310,10 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 					"afterChange",
 					(anchorNode: AnchorNode) => {
 						const treeNode = anchorNode.slots.get(lazyTreeSlot);
-						assert(treeNode !== undefined, "tree node not found in anchor node slots");
+						assert(
+							treeNode !== undefined,
+							0x7d4 /* tree node not found in anchor node slots */,
+						);
 						// Ugly casting workaround because I can't figure out how to make TS understand that in this case block
 						// the listener argument only needs to be a TreeEvent. Should go away if/when we make the listener signature
 						// for changing and subtreeChanging match the one for beforeChange and afterChange.
@@ -402,20 +409,30 @@ export class LazyMap<TSchema extends MapSchema>
 		) as TypedField<TSchema["mapFields"]>;
 	}
 
-	// TODO: when appropriate add setter that delegates to field kind specific setter.
-	// public set(key: FieldKey, content: FlexibleFieldContent<TSchema["mapFields"]>): void {
-	// 	const field = this.get(key);
-	// 	if (field.is(SchemaBuilder.optional(this.schema.mapFields.allowedTypes))) {
-	// 		field.setContent(content);
-	// 	} else {
-	// 		assert(
-	// 			field.is(SchemaBuilder.sequence(this.schema.mapFields.allowedTypes)),
-	// 			"unexpected map field kind",
-	// 		);
-	// 		// TODO: fix merge semantics.
-	// 		field.replaceRange(0, field.length, content as Iterable<ContextuallyTypedNodeData>);
-	// 	}
-	// }
+	public set(
+		key: FieldKey,
+		content: FlexibleFieldContent<TSchema["mapFields"]> | undefined,
+	): void {
+		const field = this.getBoxed(key);
+		const fieldSchema = this.schema.mapFields;
+
+		if (fieldSchema.kind === FieldKinds.optional) {
+			const optionalField = field as OptionalField<AllowedTypes>;
+			optionalField.content = content;
+		} else {
+			assert(fieldSchema.kind === FieldKinds.sequence, "Unexpected map field kind");
+
+			// TODO: implement setting of sequence fields once we have defined clear merged semantics for doing so.
+			// For now, we will throw an error, since the public API does not currently expose a way to do this anyways.
+			throw new Error("Setting of sequence values in maps is not yet supported.");
+		}
+	}
+
+	public delete(key: FieldKey): void {
+		// Since all keys implicitly exist under a Map node, and we represent "no value" with `undefined`,
+		// "deleting" a key/value pair is the same as setting the value to `undefined`.
+		this.set(key, undefined);
+	}
 
 	public override [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
 		return super[boxedIterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;

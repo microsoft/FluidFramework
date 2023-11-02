@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/sequence-deprecated",
-	"version": "2.0.0-internal.7.2.0",
+	"version": "2.0.0-internal.7.3.0",
 	"description": "Deprecated distributed sequences",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -33,7 +33,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.js\" -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",

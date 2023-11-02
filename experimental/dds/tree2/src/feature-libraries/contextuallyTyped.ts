@@ -198,7 +198,7 @@ export function getAllowedTypes(
 	typeSet: TreeTypeSet,
 ): ReadonlySet<TreeNodeSchemaIdentifier> {
 	// TODO: Performance: avoid the `undefined` case being frequent, possibly with caching in the caller of `getPossibleChildTypes`.
-	return typeSet ?? new Set(schemaData.treeSchema.keys());
+	return typeSet ?? new Set(schemaData.nodeSchema.keys());
 }
 
 /**
@@ -395,7 +395,7 @@ function shallowCompatibilityTest(
 		0x6b2 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 	const schema =
-		schemaData.treeSchema.get(type) ?? fail("requested type does not exist in schema");
+		schemaData.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
 	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
 		return allowsValue(schema.leafValue, data);
 	}
@@ -533,7 +533,7 @@ export function applyTypesFromContext(
 
 	const type = possibleTypes[0];
 	const schema =
-		context.schema.treeSchema.get(type) ?? fail("requested type does not exist in schema");
+		context.schema.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
 
 	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
 		assert(
@@ -552,6 +552,23 @@ export function applyTypesFromContext(
 			value: undefined,
 			type,
 			fields: new Map(children.length > 0 ? [[primary.key, children]] : []),
+		};
+	} else if (data instanceof Map) {
+		const fields: Map<FieldKey, MapTree[]> = new Map();
+		for (const [key, value] of data) {
+			assert(!fields.has(key), "Keys should not be duplicated");
+			const childSchema = getFieldSchema(key, schema);
+			const children = applyFieldTypesFromContext(context, childSchema, value);
+
+			if (children.length > 0) {
+				fields.set(key, children);
+			}
+		}
+
+		return {
+			value: undefined,
+			type,
+			fields,
 		};
 	} else {
 		const fields: Map<FieldKey, MapTree[]> = new Map();

@@ -101,7 +101,7 @@ const testCases: {
 		name: "the move of a node",
 		edit: (actedOn) => {
 			const field = actedOn.editor.sequenceField(rootField);
-			field.move(0, 2, 2);
+			field.move(0, 2, 4);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["C", "D", "A", "B"],
@@ -114,7 +114,7 @@ const testCases: {
 				parent: undefined,
 				field: rootFieldKey,
 			});
-			field.move(1, 1, 3);
+			field.move(1, 1, 4);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "C", "D", "B"],
@@ -320,6 +320,42 @@ describe("Undo and redo", () => {
 		expectJsonTree(tree, ["A", "B"]);
 		redoStack.pop()?.revert();
 		expectJsonTree(tree, ["B", "C"]);
+		unsubscribe();
+	});
+
+	it("can undo and redo an insert multiple times", () => {
+		const tree = makeTreeFromJson(["A", "B"]);
+
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+		tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+
+		expectJsonTree(tree, ["A", "B", "C"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B", "C"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B", "C"]);
+		unsubscribe();
+	});
+
+	it("can undo and redo a move multiple times", () => {
+		const tree = makeTreeFromJson(["A", "B"]);
+
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+		tree.editor.sequenceField(rootField).move(1, 1, 0);
+
+		expectJsonTree(tree, ["B", "A"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["B", "A"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["B", "A"]);
 		unsubscribe();
 	});
 });

@@ -35,6 +35,7 @@ import {
 	type ISharedTreeView,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { MigrationShimFactory } from "../migrationShimFactory.js";
 import { type MigrationShim } from "../migrationShim.js";
 import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
@@ -83,8 +84,10 @@ class TestDataObject extends DataObject {
 	// Makes it so we can get the tree stored as "tree"
 	public async hasInitialized(): Promise<void> {
 		// We are using runtime.getChannel here instead of fetching the handle
-		// TODO: handle tests
-		const tree = await this.runtime.getChannel("tree");
+		const handle: IFluidHandle<IChannel> | undefined =
+			this.root.get<IFluidHandle<IChannel>>("tree");
+		const tree = await handle?.get();
+		assert(tree !== undefined, "Tree channel should be defined");
 		this.channel = tree;
 	}
 
@@ -106,13 +109,13 @@ const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
 function getNewTreeView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
-	});
+	}).branch;
 }
 
 describeNoCompat("HotSwap", (getTestObjectProvider) => {
@@ -157,7 +160,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const quantity = legacyNode.payload.quantity as number;
-			newTree.schematizeView({
+			newTree.schematize({
 				initialTree: {
 					quantity,
 				},

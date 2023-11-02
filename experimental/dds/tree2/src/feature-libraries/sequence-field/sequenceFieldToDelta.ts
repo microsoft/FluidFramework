@@ -13,10 +13,12 @@ import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
 	getEffectiveNodeChanges,
-	isInsert,
+	getEndpoint,
+	getOutputCellId,
 	isNewAttach,
-	markIsTransient,
+	isTransientEffect,
 } from "./utils";
+import { isMoveDestination, isMoveSource } from "./moveEffectTable";
 
 export type ToDelta<TNodeChange> = (child: TNodeChange) => Delta.FieldMap;
 
@@ -45,21 +47,30 @@ export function sequenceFieldToDelta<TNodeChange>(
 		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
-			if (markIsTransient(mark)) {
-				const oldId = nodeIdFromChangeAtom(mark.cellId);
-				if (!areEqualChangeAtomIds(mark.cellId, mark.transientDetach)) {
-					// TODO: handle transient move-in/return-to
-					assert(isInsert(mark), "Unexpected non-insert transient mark");
-					if (mark.content !== undefined) {
+			if (isTransientEffect(mark)) {
+				if (isMoveDestination(mark.attach) && isMoveSource(mark.detach)) {
+					assert(mark.changes === undefined, "Transient moves should not have changes");
+					continue;
+				}
+
+				const outputId = getOutputCellId(mark, revision, undefined);
+				assert(outputId !== undefined, "Transient mark should have defined output cell ID");
+				const oldId = nodeIdFromChangeAtom(
+					isMoveDestination(mark.attach)
+						? getEndpoint(mark.attach, mark.revision ?? revision)
+						: mark.cellId,
+				);
+				if (!areEqualChangeAtomIds(mark.cellId, outputId)) {
+					if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
 						build.push({
 							id: oldId,
-							trees: mark.content.map(singleTextCursor),
+							trees: mark.attach.content.map(singleTextCursor),
 						});
 					}
 					rename.push({
 						count: mark.count,
 						oldId,
-						newId: nodeIdFromChangeAtom(mark.transientDetach),
+						newId: nodeIdFromChangeAtom(outputId),
 					});
 				}
 				if (deltaMark.fields) {
@@ -75,14 +86,19 @@ export function sequenceFieldToDelta<TNodeChange>(
 			switch (type) {
 				case "MoveIn": {
 					local.push({
-						attach: makeDetachedNodeId(mark.revision ?? revision, mark.id),
+						attach: nodeIdFromChangeAtom(getEndpoint(mark, revision)),
 						count: mark.count,
 					});
 					break;
 				}
 				case "Delete": {
 					if (mark.cellId === undefined) {
-						deltaMark.detach = makeDetachedNodeId(mark.revision ?? revision, mark.id);
+						deltaMark.detach = nodeIdFromChangeAtom(
+							mark.detachIdOverride ?? {
+								revision: mark.revision ?? revision,
+								localId: mark.id,
+							},
+						);
 						local.push(deltaMark);
 					} else {
 						// Removal of already removed content is a no-op.
@@ -93,6 +109,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				}
 				case "MoveOut":
 				case "ReturnFrom": {
+					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
 					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
 					if (mark.cellId === undefined) {
 						deltaMark.detach = detachId;
@@ -103,7 +120,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Insert": {
-					assert(mark.transientDetach === undefined, "Unexpected transient insert");
 					assert(mark.cellId !== undefined, "Active insert mark must have CellId");
 					const buildId = nodeIdFromChangeAtom(mark.cellId);
 					deltaMark.attach = buildId;
@@ -113,7 +129,10 @@ export function sequenceFieldToDelta<TNodeChange>(
 						delete deltaMark.fields;
 					}
 					if (isNewAttach(mark)) {
-						assert(mark.content !== undefined, "New insert must have content");
+						assert(
+							mark.content !== undefined,
+							0x7dc /* New insert must have content */,
+						);
 						build.push({
 							id: buildId,
 							trees: mark.content.map(singleTextCursor),
@@ -123,7 +142,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case NoopMarkType:
-					fail("Unexpected NoopMarkType where cell is supposed to be affected");
+				case "Transient":
+					fail("Unexpected mark type where cell is supposed to be affected");
 				case "Placeholder":
 					fail("Should not have placeholders in a changeset being converted to delta");
 				default:

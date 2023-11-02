@@ -14,7 +14,6 @@ import {
 	IEditableForest,
 	InMemoryStoredSchemaRepository,
 	assertIsRevisionTag,
-	schemaDataIsEmpty,
 	combineVisitors,
 	visitDelta,
 	DetachedFieldIndex,
@@ -41,16 +40,10 @@ import {
 	createNodeKeyManager,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	getProxyForField,
-	ProxyField,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
 import { noopValidator } from "../codec";
-import {
-	InitializeAndSchematizeConfiguration,
-	initializeContent,
-	schematize,
-} from "./schematizedTree";
 
 /**
  * Events for {@link ISharedTreeView}.
@@ -81,7 +74,11 @@ export interface ViewEvents {
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
- * @privateRemarks Implementations of this interface must implement the {@link branchKey} property.
+ * @privateRemarks
+ * Implementations of this interface must implement the {@link branchKey} property.
+ * TODO:
+ * This interface is the one without a View schema.
+ * For clarity it should be renamed to something like "BranchCheckout"
  * @alpha
  */
 export interface ISharedTreeView extends AnchorLocator {
@@ -96,6 +93,8 @@ export interface ISharedTreeView extends AnchorLocator {
 	 *
 	 * Currently any access to this view of the tree may allocate cursors and thus require
 	 * `context.prepareForEdit()` before editing can occur.
+	 *
+	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
 	 */
 	// TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
 	get root(): UnwrappedEditableField;
@@ -104,6 +103,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Sets the content of the root field of the tree.
 	 *
 	 * See {@link EditableTreeContext.unwrappedRoot} on how this works.
+	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
 	 */
 	setContent(data: NewFieldContent): void;
 
@@ -111,6 +111,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
 	 *
 	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
+	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
 	 */
 	readonly context: EditableTreeContext;
 
@@ -188,13 +189,6 @@ export interface ISharedTreeView extends AnchorLocator {
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
 
 	/**
-	 * @deprecated {@link ISharedTree.schematizeView} which will replace this. View schema should be applied before creating an ISharedTreeView.
-	 */
-	schematize<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView;
-
-	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
 	 *
 	 * Warning: This API is not fully tested yet and is still under development.
@@ -206,10 +200,10 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * As long as it is passed in here as a workaround, the caller must ensure that the stored schema is compatible.
 	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
 	 * using the returned tree is invalid and is likely to error or corrupt the document.
+	 *
+	 * @deprecated Use {@link ISharedTreeView2}.
 	 */
 	editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
-
-	root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
 }
 
 /**
@@ -381,13 +375,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		return this.branch.editor;
 	}
 
-	public schematize<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView {
-		schematizeView(this, config, this.storedSchema);
-		return this;
-	}
-
 	public editableTree2<TRoot extends TreeFieldSchema>(
 		viewSchema: TreeSchema<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
@@ -404,6 +391,15 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	}
 
 	public root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>) {
+		// TODO:
+		// this allocates and leaks a new editable tree context (when used it will add content to the AnchorSet which refers back to the context).
+		// Additionally its assumed there will be exactly one context per view and any TreeNodes cached on the AnchorSets will belong to that context.
+		// Calling this more than once would violate that assumption, but currently does not error.
+		// Therefore root2, like editableTree2 should really only be called once.
+		// However, since getProxyForField returns an object that no longer reflects the root after the root is edited (unlike the root field in editableTree2)
+		// users will need to call root2 again whenever that might have happened to get the new root.
+		// This makes it impractical to use this efficiently and correctly at the same time.
+		// This method is also undocumented which thus doesn't provide sufficient guidance to resolve this issue.
 		const rootField = this.editableTree2(viewSchema);
 		return getProxyForField(rootField);
 	}
@@ -471,32 +467,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 	public dispose(): void {
 		this.branch.dispose();
 	}
-}
-
-/**
- * @param view - view to edit.
- * @param config - config to apply.
- * @param storedSchema - provided separate from view since editing schema of view doesn't send ops properly.
- */
-// TODO: once schematize is removed from ISharedTreeView, this should be moved/integrated into SharedTree.
-export function schematizeView<TRoot extends TreeFieldSchema>(
-	view: ISharedTreeView,
-	config: InitializeAndSchematizeConfiguration<TRoot>,
-	storedSchema: StoredSchemaRepository,
-): void {
-	// TODO:
-	// When this becomes a more proper out of schema adapter, editing should be made lazy.
-	// This will improve support for readonly documents, cross version collaboration and attribution.
-
-	// Check for empty.
-	// TODO: Better detection of empty case
-	if (view.forest.isEmpty && schemaDataIsEmpty(storedSchema)) {
-		view.transaction.start();
-		initializeContent(storedSchema, config.schema, () => view.setContent(config.initialTree));
-		view.transaction.commit();
-	}
-
-	schematize(view.events, storedSchema, config);
 }
 
 /**

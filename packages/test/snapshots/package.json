@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-snapshots",
-	"version": "2.0.0-internal.7.2.0",
+	"version": "2.0.0-internal.7.3.0",
 	"private": true,
 	"description": "Comprehensive test of snapshot logic.",
 	"homepage": "https://fluidframework.com",
@@ -29,7 +29,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --experimental-worker --ignore 'dist/test/generate/*' dist/test",
+		"test:mocha": "mocha --experimental-worker --ignore \"dist/test/generate/*\" dist/test",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:new": "mocha --experimental-worker dist/test/generate/new.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:update": "mocha --experimental-worker dist/test/generate/update.spec.js --exit -r node_modules/@fluidframework/mocha-test-setup",

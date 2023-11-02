@@ -1,0 +1,10 @@
+{
+	"extends": ["./tsconfig.esm.json"],
+	"compilerOptions": {
+		"composite": false,
+		"types": ["node"],
+		"declaration": false,
+		"declarationMap": false,
+		"skipLibCheck": true,
+	},
+}
