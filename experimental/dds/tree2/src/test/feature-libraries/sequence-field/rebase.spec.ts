@@ -579,7 +579,7 @@ describe("SequenceField - Rebase", () => {
 	it("modify ↷ move", () => {
 		const inner = TestChange.mint([0], 1);
 		const modify = Change.modify(0, inner);
-		const move = Change.move(0, 1, 3);
+		const move = Change.move(0, 1, 4);
 		const expected = Change.modify(3, inner);
 		const rebased = rebase(modify, move);
 		assert.deepEqual(rebased, expected);
@@ -595,16 +595,16 @@ describe("SequenceField - Rebase", () => {
 
 	it("move ↷ move", () => {
 		const moveA = Change.move(2, 2, 0);
-		const moveB = Change.move(2, 2, 3);
-		const expected = Change.move(0, 2, 3);
+		const moveB = Change.move(2, 2, 5);
+		const expected = Change.move(0, 2, 5);
 		const rebased = rebase(moveB, moveA);
 		assert.deepEqual(rebased, expected);
 	});
 
 	it("delete ↷ composite move", () => {
-		const move1 = Change.move(0, 1, 1, brand(0));
-		const move2 = Change.move(1, 1, 2, brand(1));
-		const move3 = Change.move(2, 1, 3, brand(2));
+		const move1 = Change.move(0, 1, 2, brand(0));
+		const move2 = Change.move(1, 1, 3, brand(1));
+		const move3 = Change.move(2, 1, 4, brand(2));
 		const move = composeAnonChanges([move1, move2, move3]);
 		const del = Change.delete(0, 1);
 		const rebased = rebase(del, move);
@@ -743,7 +743,7 @@ describe("SequenceField - Rebase", () => {
 			Mark.moveIn(1, brand(1)),
 		];
 
-		const move = Change.move(0, 1, 1);
+		const move = Change.move(0, 1, 2);
 		const rebased = rebase(reviveAndMove, move);
 		const expected = [
 			{ count: 1 },

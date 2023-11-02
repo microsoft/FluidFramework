@@ -125,7 +125,7 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("move => return", () => {
-		const input = composeAnonChanges([Change.modify(0, childChange1), Change.move(0, 2, 3)]);
+		const input = composeAnonChanges([Change.modify(0, childChange1), Change.move(0, 2, 5)]);
 		const expected = composeAnonChanges([
 			Change.modify(3, inverseChildChange1),
 			Change.return(3, 2, 0, { revision: tag1, localId: brand(0) }),
@@ -138,7 +138,7 @@ describe("SequenceField - Invert", () => {
 		const input = composeAnonChanges([Change.modify(3, childChange1), Change.move(2, 2, 0)]);
 		const expected = composeAnonChanges([
 			Change.modify(1, inverseChildChange1),
-			Change.return(0, 2, 2, { revision: tag1, localId: brand(0) }),
+			Change.return(0, 2, 4, { revision: tag1, localId: brand(0) }),
 		]);
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
@@ -148,7 +148,7 @@ describe("SequenceField - Invert", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const input = composeAnonChanges([
 			Change.modify(0, childChange1),
-			Change.return(0, 2, 3, cellId),
+			Change.return(0, 2, 5, cellId),
 		]);
 
 		const expected: TestChangeset = [

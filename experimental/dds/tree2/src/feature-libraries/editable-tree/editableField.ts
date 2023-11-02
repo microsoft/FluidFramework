@@ -371,11 +371,9 @@ export class FieldProxyTarget extends ProxyTarget<FieldAnchor> implements Editab
 		// This permits a move of 0 nodes starting at this.length, which does seem like it should be allowed.
 		assertValidIndex(sourceIndex + count, this, true);
 
-		let destinationLength = destination.length;
-		if (this.isSameAs(destination)) {
-			destinationLength -= count;
-		}
-		assertValidIndex(destinationIndex, { length: destinationLength }, true);
+		// The destination index is interpreted based on the state of the destination field *before* the move.
+		// This means we do not have to account the case where the moved nodes are being detached form the destination field.
+		assertValidIndex(destinationIndex, destination, true);
 
 		const destinationFieldPath = destination.cursor.getFieldPath();
 
