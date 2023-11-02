@@ -106,6 +106,8 @@ export {
 	RangeQueryResult,
 	Named,
 	oneFromSet,
+	disposeSymbol,
+	IDisposable,
 } from "./util";
 
 export {
@@ -310,6 +312,8 @@ export {
 	TypedTreeOptions,
 	TypedTreeChannel,
 	SharedTreeContentSnapshot,
+	ISharedTreeView2,
+	TypedTreeView,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

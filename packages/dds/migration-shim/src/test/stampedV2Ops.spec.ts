@@ -122,13 +122,13 @@ const quantityType = builder.object("quantityObj", {
 const schema = builder.intoSchema(quantityType);
 
 function getNewTreeView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
-	});
+	}).branch;
 }
 
 describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
@@ -175,7 +175,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree.schematizeView({
+			newTree.schematize({
 				initialTree: {
 					quantity,
 				},

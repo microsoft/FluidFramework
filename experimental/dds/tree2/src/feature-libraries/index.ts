@@ -281,6 +281,7 @@ export {
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
 	addFactory,
+	Context,
 } from "./editable-tree-2";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
