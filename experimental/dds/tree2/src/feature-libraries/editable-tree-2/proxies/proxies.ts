@@ -30,7 +30,8 @@ import {
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
-import { ContextuallyTypedNodeData } from "../../contextuallyTyped";
+import { ContextuallyTypedNodeData, typeNameSymbol } from "../../contextuallyTyped";
+import { createRawObjectNode, extractRawNodeContent } from "../rawObjectNode";
 import {
 	ProxyField,
 	ProxyNode,
@@ -39,8 +40,7 @@ import {
 	SharedTreeMap,
 	SharedTreeObject,
 } from "./types";
-import { extractFactoryContent } from "./objectFactory";
-import { tryGetEditNodeTarget, setEditNode, getEditNode } from "./editNode";
+import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -197,9 +197,14 @@ const getSequenceField = <TTypes extends AllowedTypes>(
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
-function itemsAsContextuallyTyped(
+function contextualizeInsertedListContent(
 	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 ): Iterable<ContextuallyTypedNodeData> {
+	if (typeof iterable === "string") {
+		throw new TypeError(
+			"Attempted to directly insert a string as iterable list content. Wrap the input string 's' in an array ('[s]') to insert it as a single item or, supply the iterator of the string directly via 's[Symbol.iterator]()' if intending to insert each Unicode code point as a separate item.",
+		);
+	}
 	// If the iterable is not already an array, copy it into an array to use '.map()' below.
 	return Array.isArray(iterable)
 		? iterable.map((item) => extractFactoryContent(item) as ContextuallyTypedNodeData)
@@ -226,7 +231,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAt(index, itemsAsContextuallyTyped(value));
+			getSequenceField(this).insertAt(index, contextualizeInsertedListContent(value));
 		},
 	},
 	insertAtStart: {
@@ -234,7 +239,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAtStart(itemsAsContextuallyTyped(value));
+			getSequenceField(this).insertAtStart(contextualizeInsertedListContent(value));
 		},
 	},
 	insertAtEnd: {
@@ -242,7 +247,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAtEnd(itemsAsContextuallyTyped(value));
+			getSequenceField(this).insertAtEnd(contextualizeInsertedListContent(value));
 		},
 	},
 	removeAt: {
@@ -525,6 +530,12 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node[Symbol.iterator]();
 		},
 	},
+	delete: {
+		value(this: SharedTreeMap<MapSchema>, key: string): void {
+			const node = getEditNode(this);
+			node.delete(key);
+		},
+	},
 	entries: {
 		value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
 			const node = getEditNode(this);
@@ -550,6 +561,17 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node.keys();
 		},
 	},
+	set: {
+		value(
+			this: SharedTreeMap<MapSchema>,
+			key: string,
+			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
+		): SharedTreeMap<MapSchema> {
+			const node = getEditNode(this);
+			node.set(key, extractFactoryContent(value as any));
+			return this;
+		},
+	},
 	size: {
 		get(this: SharedTreeMap<MapSchema>) {
 			return getEditNode(this).size;
@@ -561,7 +583,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node.values();
 		},
 	},
-	// TODO: clear, delete, set. Will require mutation APIs to be added to MapNode.
+	// TODO: add `clear` once we have established merge semantics for it.
 };
 
 const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
@@ -600,4 +622,93 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 		},
 	);
 	return proxy;
+}
+
+/**
+ * Create a proxy to a {@link SharedTreeObject} that is backed by a raw object node (see {@link createRawObjectNode}).
+ * @param schema - the schema of the object node
+ * @param content - the content to be stored in the raw node.
+ * A copy of content is stored, the input `content` is not modified and can be safely reused in another call to {@link createRawObjectProxy}.
+ * @remarks
+ * Because this proxy is backed by a raw node, it has the same limitations as the node created by {@link createRawObjectNode}.
+ * Most if its properties and methods will error if read/called.
+ */
+export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
+	schema: TSchema,
+	content: ProxyNode<TSchema, "javaScript">,
+): SharedTreeObject<TSchema> {
+	// Shallow copy the content and then add the type name symbol to it.
+	const contentCopy = { ...content };
+	Object.defineProperty(contentCopy, typeNameSymbol, { value: schema.name });
+	const proxy = createObjectProxy(schema);
+	const editNode = createRawObjectNode(schema, contentCopy);
+	return setEditNode(proxy, editNode);
+}
+
+/**
+ * Given a content tree that is to be inserted into the shared tree, replace all subtrees that were created by factories
+ * (via {@link SharedTreeObjectFactory.create}) with the content that was passed to those factories.
+ * @remarks
+ * This functions works recursively.
+ * Factory-created objects that are nested inside of the content passed to other factory-created objects, and so on, will be in-lined.
+ * This function also adds the hidden {@link typeNameSymbol} of each object schema to the output.
+ * @example
+ * ```ts
+ * const x = foo.create({
+ *   a: 3, b: bar.create({
+ *     c: [baz.create({ d: 5 })]
+ *   })
+ * });
+ * const y = extractFactoryContent(y);
+ * y === {
+ *   [typeNameSymbol]: "foo", a: 3, b: {
+ *     [typeNameSymbol]: "bar", c: [{ [typeNameSymbol]: "baz", d: 5 }]
+ *  }
+ * }
+ * ```
+ */
+export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaScript">>(
+	content: T,
+): T {
+	if (Array.isArray(content)) {
+		// `content` is an array
+		return content.map(extractFactoryContent) as T;
+	} else if (content instanceof Map) {
+		// `content` is a map
+		const map = new Map();
+		for (const [k, v] of content) {
+			map.set(k, extractFactoryContent(v));
+		}
+		return map as T;
+	} else if (content !== null && typeof content === "object") {
+		const copy: Record<string, unknown> = {};
+		const editNode = tryGetEditNode(content);
+		if (editNode !== undefined) {
+			const factoryContent = extractRawNodeContent(editNode);
+			if (factoryContent === undefined) {
+				// We were passed a proxy, but that proxy doesn't have any raw content.
+				throw new Error("Cannot insert a node that is already in the tree");
+			}
+			// `content` is a factory-created object
+			const typeName =
+				(factoryContent as { [typeNameSymbol]?: string })[typeNameSymbol] ??
+				fail("Expected schema type name to be set on factory object content");
+
+			// Copy the type name from the factory content to the output object.
+			// This ensures that all objects from factories can be checked for their nominal type if necessary.
+			Object.defineProperty(copy, typeNameSymbol, { value: typeName });
+			for (const [p, v] of Object.entries(factoryContent)) {
+				copy[p] = extractFactoryContent(v);
+			}
+		} else {
+			// `content` is a plain javascript object (but may have factory-created objects within it)
+			for (const [p, v] of Object.entries(content)) {
+				copy[p] = extractFactoryContent(v);
+			}
+		}
+		return copy as T;
+	} else {
+		// `content` is a primitive
+		return content;
+	}
 }

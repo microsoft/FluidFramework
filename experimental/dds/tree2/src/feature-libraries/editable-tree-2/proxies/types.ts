@@ -43,36 +43,20 @@ export interface SharedTreeList<
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
-	 * @privateRemarks
-	 * We explicitly prevent the user from passing "strings" in.
-	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAt<T extends Iterable<ProxyNodeUnion<TTypes>>>(
-		index: number,
-		value: T extends string ? never : T,
-	): void;
+	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
-	 * @privateRemarks
-	 * We explicitly prevent the user from passing "strings" in.
-	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtStart<T extends Iterable<ProxyNodeUnion<TTypes>>>(
-		value: T extends string ? never : T,
-	): void;
+	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
-	 * @privateRemarks
-	 * We explicitly prevent the user from passing "strings" in.
-	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtEnd<T extends Iterable<ProxyNodeUnion<TTypes>>>(
-		value: T extends string ? never : T,
-	): void;
+	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -262,11 +246,15 @@ export type ObjectFields<
 
 /**
  * A map of string keys to tree objects.
+ *
+ * @privateRemarks
+ * Add support for `clear` once we have established merge semantics for it.
+ *
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<
-	string,
-	ProxyField<TSchema["mapFields"]>
+export type SharedTreeMap<TSchema extends MapSchema> = Omit<
+	Map<string, ProxyField<TSchema["mapFields"]>>,
+	"clear"
 >;
 
 /**
@@ -331,7 +319,7 @@ export type ProxyNode<
 	: TSchema extends MapSchema
 	? API extends "sharedTree"
 		? SharedTreeMap<TSchema>
-		: Map<string, ProxyField<TSchema["mapFields"], API>>
+		: ReadonlyMap<string, ProxyField<TSchema["mapFields"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
 		? SharedTreeList<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>

@@ -1711,7 +1711,7 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const otherLoadedTree = provider.trees[1];
-			expectSchemaEquality(tree.view.storedSchema, jsonSequenceRootSchema);
+			expectSchemaEquality(tree.contentSnapshot().schema, jsonSequenceRootSchema);
 			expectSchemaEquality(otherLoadedTree.storedSchema, jsonSequenceRootSchema);
 		});
 

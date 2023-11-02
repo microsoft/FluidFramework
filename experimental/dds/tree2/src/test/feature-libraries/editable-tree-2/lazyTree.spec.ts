@@ -356,13 +356,34 @@ describe("LazyMap", () => {
 	const mapNodeSchema = schemaBuilder.map("mapString", SchemaBuilder.optional(leafDomain.string));
 	const schema = schemaBuilder.intoSchema(mapNodeSchema);
 
-	const { context, cursor } = initializeTreeWithContent({
+	// Count the number of times edits have been generated.
+	let editCallCount = 0;
+	beforeEach(() => {
+		editCallCount = 0;
+	});
+
+	const editBuilder = new DefaultEditBuilder(
+		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		(change: DefaultChangeset) => {
+			editCallCount++;
+		},
+	);
+	const forest = forestWithContent({
 		schema,
 		initialTree: {
 			foo: "Hello",
 			bar: "world",
 		},
 	});
+	const context = getTreeContext(
+		schema,
+		forest,
+		editBuilder,
+		createMockNodeKeyManager(),
+		brand(nodeKeyFieldKey),
+	);
+
+	const cursor = initializeCursor(context, rootFieldAnchor);
 	cursor.enterNode(0);
 
 	const { anchor, anchorNode } = createAnchors(context, cursor);
@@ -377,6 +398,28 @@ describe("LazyMap", () => {
 		assert.notEqual(node.tryGetField(brand("foo")), undefined);
 		assert.notEqual(node.tryGetField(brand("bar")), undefined);
 		assert.equal(node.tryGetField(brand("baz")), undefined);
+	});
+
+	it("set", () => {
+		assert.equal(editCallCount, 0);
+
+		node.set(brand("baz"), "First edit");
+		assert.equal(editCallCount, 1);
+
+		node.set(brand("foo"), "Second edit");
+		assert.equal(editCallCount, 2);
+	});
+
+	it("delete", () => {
+		assert.equal(editCallCount, 0);
+
+		// Even though there is no value currently associated with "baz", we still need to
+		// emit a delete op, so this should generate an edit.
+		node.delete(brand("baz"));
+		assert.equal(editCallCount, 1);
+
+		node.delete(brand("foo"));
+		assert.equal(editCallCount, 2);
 	});
 });
 
@@ -439,7 +482,6 @@ describe("LazyObjectNode", () => {
 		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
 
-	// Validates that
 	it("Value assignment generates edits", () => {
 		assert.equal(editCallCount, 0);
 

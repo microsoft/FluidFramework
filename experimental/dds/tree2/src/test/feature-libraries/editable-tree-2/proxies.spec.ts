@@ -184,9 +184,10 @@ describe("SharedTreeList", () => {
 			numbers: _.list(_.number),
 			strings: _.list(_.string),
 			booleans: _.list(_.boolean),
+			poly: _.list([_.number, _.string, _.boolean]),
 		});
 		const schema = _.intoSchema(obj);
-		const initialTree = { numbers: [], strings: [], booleans: [] };
+		const initialTree = { numbers: [], strings: [], booleans: [], poly: [] };
 		itWithRoot("numbers", schema, initialTree, (root) => {
 			root.numbers.insertAtStart([0]);
 			root.numbers.insertAt(1, [1]);
@@ -200,21 +201,56 @@ describe("SharedTreeList", () => {
 			root.strings.insertAtStart(["a"]);
 			root.strings.insertAt(1, ["b"]);
 			root.strings.insertAtEnd(["c"]);
-			const _errors = () => {
-				// @ts-expect-error Inserted content needs to be non-string iterable
-				root.strings.insertAtStart("d");
-				// @ts-expect-error Inserted content needs to be non-string iterable
-				root.strings.insertAt(1, "e");
-				// @ts-expect-error Inserted content needs to be non-string iterable
-				root.strings.insertAtEnd("f");
-			};
-			const gh: Iterable<string> = "gh";
-			root.strings.insertAtStart(gh);
-			const ij: Iterable<string> = "ij";
-			root.strings.insertAt(3, ij);
-			const kl: Iterable<string> = "kl";
-			root.strings.insertAtEnd(kl);
-			assert.deepEqual(root.strings, ["g", "h", "a", "i", "j", "b", "c", "k", "l"]);
+
+			const string: string = "hello";
+			const stringLiteral: "hello" = "hello" as const;
+			assert.throws(() => {
+				root.strings.insertAtStart(string);
+			});
+			assert.throws(() => {
+				root.strings.insertAtStart(stringLiteral);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, string);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, stringLiteral);
+			});
+			assert.throws(() => {
+				root.strings.insertAtEnd(string);
+			});
+			assert.throws(() => {
+				root.strings.insertAtEnd(stringLiteral);
+			});
+
+			const iterableOrString: Iterable<string> | string = "hello";
+			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
+			assert.throws(() => {
+				root.strings.insertAtStart(iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAtStart(iterableOrLiteral);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, iterableOrLiteral);
+			});
+			assert.throws(() => {
+				root.strings.insertAtEnd(iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAtEnd(iterableOrLiteral);
+			});
+
+			const de: Iterable<string> = "de"[Symbol.iterator]();
+			root.strings.insertAtStart(de);
+			const fg: Iterable<string> = "fg"[Symbol.iterator]();
+			root.strings.insertAt(3, fg);
+			const hi: Iterable<string> = "hi"[Symbol.iterator]();
+			root.strings.insertAtEnd(hi);
+			assert.deepEqual(root.strings, ["d", "e", "a", "f", "g", "b", "c", "h", "i"]);
 		});
 
 		itWithRoot("booleans", schema, initialTree, (root) => {
@@ -222,6 +258,16 @@ describe("SharedTreeList", () => {
 			root.booleans.insertAt(1, [false]);
 			root.booleans.insertAtEnd([true]);
 			assert.deepEqual(root.booleans, [true, false, true]);
+		});
+
+		itWithRoot("of multiple possible types", schema, initialTree, (root) => {
+			const allowsStrings: typeof root.numbers | typeof root.poly = root.poly;
+			allowsStrings.insertAtStart([42]);
+			const allowsStsrings: typeof root.strings | typeof root.poly = root.poly;
+			allowsStsrings.insertAt(1, ["s"]);
+			const allowsBooleans: typeof root.booleans | typeof root.poly = root.poly;
+			allowsBooleans.insertAtEnd([true]);
+			assert.deepEqual(root.poly, [42, "s", true]);
 		});
 	});
 
@@ -554,5 +600,35 @@ describe("SharedTreeMap", () => {
 		assert.equal(root.map.has("foo"), true);
 		assert.equal(root.map.has("bar"), true);
 		assert.equal(root.map.has("baz"), false);
+	});
+
+	itWithRoot("set", schema, initialTree, (root) => {
+		// Insert new value
+		root.map.set("baz", "42");
+		assert.equal(root.map.size, 3);
+		assert(root.map.has("baz"));
+		assert.equal(root.map.get("baz"), "42");
+
+		// Override existing value
+		root.map.set("baz", "37");
+		assert.equal(root.map.size, 3);
+		assert(root.map.has("baz"));
+		assert.equal(root.map.get("baz"), "37");
+
+		// "Un-set" existing value
+		root.map.set("baz", undefined);
+		assert.equal(root.map.size, 2);
+		assert(!root.map.has("baz"));
+	});
+
+	itWithRoot("delete", schema, initialTree, (root) => {
+		// Delete existing value
+		root.map.delete("bar");
+		assert.equal(root.map.size, 1);
+		assert(!root.map.has("bar"));
+
+		// Delete non-present value
+		root.map.delete("baz");
+		assert.equal(root.map.size, 1);
 	});
 });
