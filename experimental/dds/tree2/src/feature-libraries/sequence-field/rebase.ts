@@ -114,7 +114,7 @@ function rebaseMarkList<TNodeChange>(
 	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
 	nodeExistenceState: NodeExistenceState,
 ): MarkList<TNodeChange> {
-	const factory = new MarkListFactory<TNodeChange>();
+	const rebasedMarks: Mark<TNodeChange>[] = [];
 	const queue = new RebaseQueue(
 		baseRevision,
 		baseMarkList,
@@ -179,7 +179,7 @@ function rebaseMarkList<TNodeChange>(
 		if (areInputCellsEmpty(rebasedMark)) {
 			handleLineage(rebasedMark, lineageRecipients, detachBlocks, metadata);
 		}
-		factory.push(rebasedMark);
+		rebasedMarks.push(rebasedMark);
 
 		if (!areOutputCellsEmpty(baseMark)) {
 			lineageRecipients.length = 0;
@@ -191,6 +191,15 @@ function rebaseMarkList<TNodeChange>(
 
 	// TODO: Should not merge marks until the end of the rebase pass,
 	// since `lineageRecipients` stores direct references to rebased marks.
+	return mergedMarkList(rebasedMarks);
+}
+
+function mergedMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
+	const factory = new MarkListFactory<T>();
+	for (const mark of marks) {
+		factory.push(mark);
+	}
+
 	return factory.list;
 }
 
