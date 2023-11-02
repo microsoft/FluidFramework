@@ -40,7 +40,6 @@ import {
 	createNodeKeyManager,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	getProxyForField,
-	ProxyField,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -205,11 +204,6 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * @deprecated Use {@link ISharedTreeView2}.
 	 */
 	editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
-
-	/**
-	 * @deprecated Use {@link TypedTreeView}.
-	 */
-	root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
 }
 
 /**

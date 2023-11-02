@@ -1084,8 +1084,6 @@ export interface ISharedTreeView extends AnchorLocator {
     rebase(view: ISharedTreeBranchView): void;
     // @deprecated
     get root(): UnwrappedEditableField;
-    // @deprecated (undocumented)
-    root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
     // @deprecated
     setContent(data: NewFieldContent): void;
