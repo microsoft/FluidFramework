@@ -95,6 +95,11 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"ClassDeclaration_FluidContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
