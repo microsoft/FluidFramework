@@ -3,17 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
 // eslint-disable-next-line import/no-deprecated
-import { BaseContainerRuntimeFactory, mountableViewRequestHandler } from "@fluidframework/aqueduct";
-// eslint-disable-next-line import/no-deprecated
-import { RuntimeRequestHandler } from "@fluidframework/request-handler";
-// eslint-disable-next-line import/no-deprecated
-import { RequestParser, requestFluidObject } from "@fluidframework/runtime-utils";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
 import { ICoordinate } from "@fluid-example/multiview-coordinate-interface";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
+import {
+	IFluidMountableViewEntryPoint,
+	getDataStoreEntryPoint,
+} from "@fluid-example/example-utils";
+import { FluidObject } from "@fluidframework/core-interfaces";
 
 import * as React from "react";
 
@@ -47,80 +49,56 @@ const createAndAttachCoordinate = async (
 	return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, "/");
 };
 
-// Just a little helper, since we're going to request multiple coordinates.
-async function requestObjectStoreFromId<T>(
-	request: RequestParser,
-	runtime: IContainerRuntime,
-	id: string,
-): Promise<T> {
-	const coordinateRequest = RequestParser.create({
-		url: ``,
-		headers: request.headers,
-	});
-	// eslint-disable-next-line import/no-deprecated
-	return requestFluidObject<T>(await runtime.getRootDataStore(id), coordinateRequest);
-}
-
-/**
- * When someone requests the default view off our container ("/"), we'll respond with a DefaultView.  To do so,
- * we need to retrieve those data models we created in containerInitializingFirstTime.
- */
-const defaultViewRequestHandler: RuntimeRequestHandler = async (
-	request: RequestParser,
-	runtime: IContainerRuntime,
-) => {
-	if (request.pathParts.length === 0) {
-		const simpleCoordinate = await requestObjectStoreFromId<Coordinate>(
-			request,
-			runtime,
-			simpleCoordinateComponentId,
-		);
-		const triangleCoordinate1 = await requestObjectStoreFromId<Coordinate>(
-			request,
-			runtime,
-			triangleCoordinateComponentId1,
-		);
-		const triangleCoordinate2 = await requestObjectStoreFromId<Coordinate>(
-			request,
-			runtime,
-			triangleCoordinateComponentId2,
-		);
-		const triangleCoordinate3 = await requestObjectStoreFromId<Coordinate>(
-			request,
-			runtime,
-			triangleCoordinateComponentId3,
-		);
-		const constellation = await requestObjectStoreFromId<Constellation>(
-			request,
-			runtime,
-			constellationComponentName,
-		);
-		const viewResponse = (
-			<DefaultView
-				simpleCoordinate={simpleCoordinate}
-				triangleCoordinate1={triangleCoordinate1}
-				triangleCoordinate2={triangleCoordinate2}
-				triangleCoordinate3={triangleCoordinate3}
-				constellation={constellation}
-			/>
-		);
-		return { status: 200, mimeType: "fluid/view", value: viewResponse };
-	}
-};
-
 export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	constructor() {
 		// We'll use a MountableView so webpack-fluid-loader can display us,
 		// and add our default view request handler.
 		super({
 			registryEntries,
-			requestHandlers: [
-				// eslint-disable-next-line import/no-deprecated
-				mountableViewRequestHandler(MountableView, [defaultViewRequestHandler]),
-			],
-			provideEntryPoint: () => {
-				// TODO: AB#4993
-				throw new Error("TODO");
+			provideEntryPoint: async (
+				containerRuntime: IContainerRuntime,
+			): Promise<IFluidMountableViewEntryPoint> => {
+				const simpleCoordinate = await getDataStoreEntryPoint<Coordinate>(
+					containerRuntime,
+					simpleCoordinateComponentId,
+				);
+				const triangleCoordinate1 = await getDataStoreEntryPoint<Coordinate>(
+					containerRuntime,
+					triangleCoordinateComponentId1,
+				);
+				const triangleCoordinate2 = await getDataStoreEntryPoint<Coordinate>(
+					containerRuntime,
+					triangleCoordinateComponentId2,
+				);
+				const triangleCoordinate3 = await getDataStoreEntryPoint<Coordinate>(
+					containerRuntime,
+					triangleCoordinateComponentId3,
+				);
+				const constellation = await getDataStoreEntryPoint<Constellation>(
+					containerRuntime,
+					constellationComponentName,
+				);
+				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
+				const view = (
+					<DefaultView
+						simpleCoordinate={simpleCoordinate}
+						triangleCoordinate1={triangleCoordinate1}
+						triangleCoordinate2={triangleCoordinate2}
+						triangleCoordinate3={triangleCoordinate3}
+						constellation={constellation}
+					/>
+				) as any;
+
+				let getMountableDefaultView = async () => view;
+				if (MountableView.canMount(view)) {
+					getMountableDefaultView = async () => new MountableView(view);
+				}
+
+				return {
+					getDefaultDataObject: async (): Promise<FluidObject> => ({}),
+					getMountableDefaultView,
+				};
+				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
 			},
 		});
 	}
@@ -166,7 +144,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 		const component =
 			aliasResult === "Success"
 				? dataStore
-				: await runtime.getRootDataStore(constellationComponentName);
+				: await getDataStoreEntryPoint<Constellation>(runtime, constellationComponentName);
 		// eslint-disable-next-line import/no-deprecated
 		const constellationComponent = await requestFluidObject<Constellation>(component, "/");
 

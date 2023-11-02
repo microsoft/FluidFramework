@@ -2250,6 +2250,7 @@ importers:
 
   examples/data-objects/multiview/container:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-example/multiview-constellation-model': workspace:~
       '@fluid-example/multiview-constellation-view': workspace:~
       '@fluid-example/multiview-coordinate-interface': workspace:~
@@ -2263,6 +2264,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.0.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -2295,6 +2297,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-example/example-utils': link:../../../utils/example-utils
       '@fluid-example/multiview-constellation-model': link:../constellation-model
       '@fluid-example/multiview-constellation-view': link:../constellation-view
       '@fluid-example/multiview-coordinate-interface': link:../interface
@@ -2305,6 +2308,7 @@ importers:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/container-runtime': link:../../../../packages/runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/request-handler': link:../../../../packages/framework/request-handler
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
       '@fluidframework/view-adapters': link:../../../../packages/framework/view-adapters
@@ -2653,6 +2657,7 @@ importers:
 
   examples/data-objects/prosemirror:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2704,6 +2709,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime

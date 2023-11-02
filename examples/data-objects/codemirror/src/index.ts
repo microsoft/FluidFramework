@@ -49,8 +49,6 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {
-				// ISSUE: IContainerRuntime doesn't have methods that expose data stores as IDataStore or
-				// IFluidDataStoreChannel, which expose entryPoint. getRootDataStore returns an IFluidRouter.
 				const codeMirror = await getDataStoreEntryPoint<CodeMirrorComponent>(
 					containerRuntime,
 					defaultComponentId,
