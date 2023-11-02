@@ -137,10 +137,6 @@ export function isFluidHandle(value: unknown): value is IFluidHandle {
 		return false;
 	}
 
-	if (!("IFluidHandle" in value)) {
-		return false;
-	}
-
 	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
 	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
 	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
