@@ -22,7 +22,6 @@ import { IMergeTreeDeltaOpArgs } from '@fluidframework/merge-tree';
 import { IMergeTreeGroupMsg } from '@fluidframework/merge-tree';
 import { IMergeTreeInsertMsg } from '@fluidframework/merge-tree';
 import { IMergeTreeMaintenanceCallbackArgs } from '@fluidframework/merge-tree';
-import { IMergeTreeObliterateMsg } from '@fluidframework/merge-tree';
 import { IMergeTreeRemoveMsg } from '@fluidframework/merge-tree';
 import { IRelativePosition } from '@fluidframework/merge-tree';
 import { ISegment } from '@fluidframework/merge-tree';
@@ -581,7 +580,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     protected loadedDeferred: Deferred<void>;
     localReferencePositionToPosition(lref: ReferencePosition): number;
     // @alpha
-    obliterateRange(start: number, end: number): IMergeTreeObliterateMsg;
+    obliterateRange(start: number, end: number): void;
     // (undocumented)
     protected onConnect(): void;
     // (undocumented)

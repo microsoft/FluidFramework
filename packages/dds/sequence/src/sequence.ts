@@ -296,8 +296,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 *
 	 * @alpha
 	 */
-	public obliterateRange(start: number, end: number): IMergeTreeObliterateMsg {
-		return this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
+	public obliterateRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.obliterateRangeLocal(start, end));
 	}
 
 	/**
