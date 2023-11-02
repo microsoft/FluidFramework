@@ -31,6 +31,7 @@ declare function get_old_InterfaceDeclaration_ContainerSchema():
 declare function use_current_InterfaceDeclaration_ContainerSchema(
     use: TypeOnly<current.ContainerSchema>);
 use_current_InterfaceDeclaration_ContainerSchema(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ContainerSchema());
 
 /*
@@ -72,26 +73,14 @@ use_old_ClassDeclaration_DOProviderContainerRuntimeFactory(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_DataObjectClass": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_DataObjectClass": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_DataObjectClass():
-    TypeOnly<old.DataObjectClass<any>>;
-declare function use_current_TypeAliasDeclaration_DataObjectClass(
-    use: TypeOnly<current.DataObjectClass<any>>);
-use_current_TypeAliasDeclaration_DataObjectClass(
-    get_old_TypeAliasDeclaration_DataObjectClass());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_DataObjectClass": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_DataObjectClass": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_DataObjectClass():
-    TypeOnly<current.DataObjectClass<any>>;
-declare function use_old_TypeAliasDeclaration_DataObjectClass(
-    use: TypeOnly<old.DataObjectClass<any>>);
-use_old_TypeAliasDeclaration_DataObjectClass(
-    get_current_TypeAliasDeclaration_DataObjectClass());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -295,6 +284,7 @@ declare function get_old_TypeAliasDeclaration_LoadableObjectClass():
 declare function use_current_TypeAliasDeclaration_LoadableObjectClass(
     use: TypeOnly<current.LoadableObjectClass<any>>);
 use_current_TypeAliasDeclaration_LoadableObjectClass(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_LoadableObjectClass());
 
 /*
@@ -319,6 +309,7 @@ declare function get_old_TypeAliasDeclaration_LoadableObjectClassRecord():
 declare function use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
     use: TypeOnly<current.LoadableObjectClassRecord>);
 use_current_TypeAliasDeclaration_LoadableObjectClassRecord(
+    // @ts-expect-error compatibility expected to be broken
     get_old_TypeAliasDeclaration_LoadableObjectClassRecord());
 
 /*
@@ -456,23 +447,11 @@ use_old_ClassDeclaration_ServiceAudience(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SharedObjectClass": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_SharedObjectClass": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_SharedObjectClass():
-    TypeOnly<old.SharedObjectClass<any>>;
-declare function use_current_TypeAliasDeclaration_SharedObjectClass(
-    use: TypeOnly<current.SharedObjectClass<any>>);
-use_current_TypeAliasDeclaration_SharedObjectClass(
-    get_old_TypeAliasDeclaration_SharedObjectClass());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_SharedObjectClass": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_SharedObjectClass": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_SharedObjectClass():
-    TypeOnly<current.SharedObjectClass<any>>;
-declare function use_old_TypeAliasDeclaration_SharedObjectClass(
-    use: TypeOnly<old.SharedObjectClass<any>>);
-use_old_TypeAliasDeclaration_SharedObjectClass(
-    get_current_TypeAliasDeclaration_SharedObjectClass());

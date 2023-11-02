@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { type IFluidHandle, type IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+	FluidStaticEntryPoint,
+	type IFluidHandle,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 import { SharedString } from "@fluidframework/sequence";
 import { SharedCell } from "@fluidframework/cell";
 import { SharedMatrix } from "@fluidframework/matrix";
-import { type SharedObjectClass } from "@fluidframework/fluid-static";
 import {
 	AllowedUpdateType,
 	type ISharedTree,
@@ -19,6 +22,7 @@ import {
 	leaf,
 } from "@fluid-experimental/tree2";
 import { type IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
+import { type _LoadableObjectClass } from "@fluidframework/fluid-static";
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
  */
@@ -192,7 +196,7 @@ export class AppData extends DataObject {
 	 *
 	 * The function below satisfies the requirements to populate the SharedTree within the application.
 	 */
-	private castSharedTreeType(): SharedObjectClass<ISharedTree> {
+	private castSharedTreeType(): _LoadableObjectClass<ISharedTree> {
 		/**
 		 * SharedTree class object containing static factory method used for {@link @fluidframework/fluid-static#IFluidContainer}.
 		 */
@@ -201,15 +205,19 @@ export class AppData extends DataObject {
 			public static getFactory(): SharedTreeFactory {
 				return new SharedTreeFactory();
 			}
+			public static readonly [FluidStaticEntryPoint] = {
+				IChannelFactory: this.getFactory(),
+			};
 		}
 
-		return SharedTree as unknown as SharedObjectClass<ISharedTree>;
+		return SharedTree as unknown as _LoadableObjectClass<ISharedTree>;
 	}
 
 	private generateSharedTree(runtime: IFluidDataStoreRuntime): ISharedTree {
 		const sharedTreeObject = this.castSharedTreeType();
 
-		const factory = sharedTreeObject.getFactory();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const factory = sharedTreeObject[FluidStaticEntryPoint].IChannelFactory!;
 		return runtime.createChannel(undefined, factory.type) as ISharedTree;
 	}
 

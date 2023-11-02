@@ -196,6 +196,7 @@ export interface IFluidContainer extends IEventProvider<IFluidContainerEvents> {
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}
  * will need to utilize or provide a service-specific implementation of this type that implements that method.
+ * @internal
  */
 export class FluidContainer
 	extends TypedEventEmitter<IFluidContainerEvents>

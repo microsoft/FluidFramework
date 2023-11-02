@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { IFluidHandle, FluidStaticEntryPoint } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter";
 
 export class TestDataObject extends DataObject {
@@ -15,6 +15,7 @@ export class TestDataObject extends DataObject {
 		[],
 		{},
 	);
+	public static readonly [FluidStaticEntryPoint] = this.factory;
 
 	constructor(props: IDataObjectProps) {
 		super(props);
@@ -45,6 +46,7 @@ export class CounterTestDataObject extends DataObject {
 		[SharedCounter.getFactory()],
 		{},
 	);
+	public static readonly [FluidStaticEntryPoint] = this.factory;
 
 	public increment(): void {
 		this.counter.increment(1);

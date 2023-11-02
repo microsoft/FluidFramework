@@ -77,4 +77,10 @@ export type {
 	TelemetryEventPropertyType, // deprecated
 } from "./logger";
 export { LogLevel } from "./logger";
-export { FluidObjectProviderKeys, FluidObject, FluidObjectKeys } from "./provider";
+export {
+	FluidObjectProviderKeys,
+	FluidObject,
+	FluidObjectKeys,
+	FluidStaticEntryPoint,
+	FluidStaticEntryPointProvider,
+} from "./provider";

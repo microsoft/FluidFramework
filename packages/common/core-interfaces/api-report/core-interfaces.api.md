@@ -30,6 +30,18 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
+// @public (undocumented)
+export const FluidStaticEntryPoint: unique symbol;
+
+// @public (undocumented)
+export type FluidStaticEntryPoint = typeof FluidStaticEntryPoint;
+
+// @public (undocumented)
+export interface FluidStaticEntryPointProvider {
+    // (undocumented)
+    [FluidStaticEntryPoint]?: FluidObject;
+}
+
 // @public
 export interface IDisposable {
     dispose(error?: Error): void;

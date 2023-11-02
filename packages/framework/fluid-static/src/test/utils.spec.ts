@@ -7,7 +7,9 @@ import { strict as assert } from "assert";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { MapFactory, SharedMap } from "@fluidframework/map";
 import { SharedString, SharedStringFactory } from "@fluidframework/sequence";
+import { FluidStaticEntryPoint } from "@fluidframework/core-interfaces";
 import { parseDataObjectsFromSharedObjects } from "../utils";
+import { ContainerSchema } from "../types";
 
 export class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
@@ -18,6 +20,7 @@ export class TestDataObject extends DataObject {
 		[],
 		{},
 	);
+	public static readonly [FluidStaticEntryPoint] = this.factory;
 }
 
 export class AnotherTestDataObject extends DataObject {
@@ -29,11 +32,12 @@ export class AnotherTestDataObject extends DataObject {
 		[],
 		{},
 	);
+	public static readonly [FluidStaticEntryPoint] = this.factory;
 }
 
 describe("parseDataObjectsFromSharedObjects", () => {
 	it("should be able to handle basic DDS types", () => {
-		const schema = {
+		const schema: ContainerSchema = {
 			initialObjects: {
 				map: SharedMap,
 				text: SharedString,
@@ -50,7 +54,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 	});
 
 	it("should be able to handle dup DDS types", () => {
-		const schema = {
+		const schema: ContainerSchema = {
 			initialObjects: {
 				map: SharedMap,
 				text: SharedString,
@@ -68,7 +72,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 	});
 
 	it("should be able to handle Data Objects", () => {
-		const schema = {
+		const schema: ContainerSchema = {
 			initialObjects: {
 				map: SharedMap,
 				do: TestDataObject,
@@ -84,7 +88,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 	});
 
 	it("should be able to dedup Data Objects", () => {
-		const schema = {
+		const schema: ContainerSchema = {
 			initialObjects: {
 				map: SharedMap,
 				do: TestDataObject,
@@ -101,7 +105,7 @@ describe("parseDataObjectsFromSharedObjects", () => {
 	});
 
 	it("should be able to dedup Data Objects even if passed as dynamic types", () => {
-		const schema = {
+		const schema: ContainerSchema = {
 			initialObjects: {
 				map: SharedMap,
 				do: TestDataObject,

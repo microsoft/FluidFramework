@@ -85,3 +85,19 @@ export type FluidObject<T = unknown> = {
  *
  */
 export type FluidObjectKeys<T> = keyof FluidObject<T>;
+
+/**
+ * @public
+ */
+export const FluidStaticEntryPoint = Symbol.for("FluidStaticEntryPoint");
+/**
+ * @public
+ */
+export type FluidStaticEntryPoint = typeof FluidStaticEntryPoint;
+
+/**
+ * @public
+ */
+export interface FluidStaticEntryPointProvider {
+	[FluidStaticEntryPoint]?: FluidObject;
+}

@@ -10,16 +10,15 @@ import {
 	defaultRouteRequestHandler,
 } from "@fluidframework/aqueduct";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-import { IFluidLoadable } from "@fluidframework/core-interfaces";
+import { FluidStaticEntryPoint, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
 	ContainerSchema,
-	DataObjectClass,
 	IRootDataObject,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
 	LoadableObjectRecord,
-	SharedObjectClass,
+	_LoadableObjectClass,
 } from "./types";
 import { isDataObjectClass, isSharedObjectClass, parseDataObjectsFromSharedObjects } from "./utils";
 
@@ -38,6 +37,7 @@ export interface RootDataObjectProps {
 /**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
+ * @internal
  */
 export class RootDataObject
 	extends DataObject<{ InitialState: RootDataObjectProps }>
@@ -119,9 +119,11 @@ export class RootDataObject
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: DataObjectClass<T>,
+		dataObjectClass: _LoadableObjectClass<T>,
 	): Promise<T> {
-		const factory = dataObjectClass.factory;
+		// needs error handling
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const factory = dataObjectClass[FluidStaticEntryPoint].IFluidDataStoreFactory!;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
 		const entryPoint = await dataStore.entryPoint.get();
@@ -129,9 +131,11 @@ export class RootDataObject
 	}
 
 	private createSharedObject<T extends IFluidLoadable>(
-		sharedObjectClass: SharedObjectClass<T>,
+		sharedObjectClass: _LoadableObjectClass<T>,
 	): T {
-		const factory = sharedObjectClass.getFactory();
+		// needs error handling
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const factory = sharedObjectClass[FluidStaticEntryPoint].IChannelFactory!;
 		const obj = this.runtime.createChannel(undefined, factory.type);
 		return obj as unknown as T;
 	}
@@ -146,6 +150,7 @@ const rootDataStoreId = "rootDOId";
  *
  * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
+ * @internal
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<

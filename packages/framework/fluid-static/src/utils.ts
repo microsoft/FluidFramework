@@ -4,21 +4,30 @@
  */
 
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions";
-import { ContainerSchema, DataObjectClass, LoadableObjectClass, SharedObjectClass } from "./types";
+import {
+	IFluidDataStoreFactory,
+	NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions";
+import { FluidStaticEntryPoint } from "@fluidframework/core-interfaces";
+import { ContainerSchema, LoadableObjectClass, _LoadableObjectClass } from "./types";
 
 /**
  * Runtime check to determine if a class is a DataObject type
  */
-export const isDataObjectClass = (obj: any): obj is DataObjectClass<any> => {
-	return obj?.factory !== undefined;
+export const isDataObjectClass = (
+	obj: any,
+): obj is _LoadableObjectClass<any> &
+	Record<typeof FluidStaticEntryPoint, IFluidDataStoreFactory> => {
+	return obj[FluidStaticEntryPoint].IFluidDataStoreFactory !== undefined;
 };
 
 /**
  * Runtime check to determine if a class is a SharedObject type
  */
-export const isSharedObjectClass = (obj: any): obj is SharedObjectClass<any> => {
-	return obj?.getFactory !== undefined;
+export const isSharedObjectClass = (
+	obj: any,
+): obj is _LoadableObjectClass<any> & Record<typeof FluidStaticEntryPoint, IChannelFactory> => {
+	return obj[FluidStaticEntryPoint].IChannelFactory !== undefined;
 };
 
 /**
@@ -34,9 +43,13 @@ export const parseDataObjectsFromSharedObjects = (
 
 	const tryAddObject = (obj: LoadableObjectClass<any>) => {
 		if (isSharedObjectClass(obj)) {
-			sharedObjects.add(obj.getFactory());
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			sharedObjects.add(obj[FluidStaticEntryPoint].IChannelFactory!);
 		} else if (isDataObjectClass(obj)) {
-			registryEntries.add([obj.factory.type, Promise.resolve(obj.factory)]);
+			registryEntries.add([
+				obj[FluidStaticEntryPoint].IFluidDataStoreFactory.type,
+				Promise.resolve(obj[FluidStaticEntryPoint].IFluidDataStoreFactory),
+			]);
 		} else {
 			throw new Error(`Entry is neither a DataObject or a SharedObject`);
 		}

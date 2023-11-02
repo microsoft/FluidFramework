@@ -17,7 +17,6 @@ export { DriverErrorType } from "@fluidframework/driver-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
 	ContainerSchema,
-	DataObjectClass,
 	IConnection,
 	IFluidContainer,
 	IFluidContainerEvents,
@@ -30,7 +29,6 @@ export type {
 	LoadableObjectCtor,
 	LoadableObjectRecord,
 	MemberChangedListener,
-	SharedObjectClass,
 } from "@fluidframework/fluid-static";
 export {
 	DOProviderContainerRuntimeFactory,

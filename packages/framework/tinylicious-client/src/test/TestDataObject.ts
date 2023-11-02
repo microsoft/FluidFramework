@@ -4,6 +4,7 @@
  */
 
 import { DataObject, DataObjectFactory, IDataObjectProps } from "@fluidframework/aqueduct";
+import { FluidStaticEntryPoint } from "@fluidframework/core-interfaces";
 
 export class TestDataObject extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
@@ -18,4 +19,5 @@ export class TestDataObject extends DataObject {
 	public constructor(props: IDataObjectProps) {
 		super(props);
 	}
+	public static readonly [FluidStaticEntryPoint] = this.factory;
 }

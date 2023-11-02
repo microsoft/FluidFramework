@@ -8,7 +8,6 @@ import { AttachState } from '@fluidframework/container-definitions';
 import { ConnectionState } from '@fluidframework/container-loader';
 import { ContainerErrorType } from '@fluidframework/container-definitions';
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { DataObjectClass } from '@fluidframework/fluid-static';
 import { DeserializeCallback } from '@fluidframework/sequence';
 import { DirectoryFactory } from '@fluidframework/map';
 import { DOProviderContainerRuntimeFactory } from '@fluidframework/fluid-static';
@@ -79,7 +78,6 @@ import { SharedDirectory } from '@fluidframework/map';
 import { SharedIntervalCollection } from '@fluidframework/sequence';
 import { SharedIntervalCollectionFactory } from '@fluidframework/sequence';
 import { SharedMap } from '@fluidframework/map';
-import { SharedObjectClass } from '@fluidframework/fluid-static';
 import { SharedSegmentSequence } from '@fluidframework/sequence';
 import { SharedSequence } from '@fluidframework/sequence';
 import { SharedString } from '@fluidframework/sequence';
@@ -94,8 +92,6 @@ export { ConnectionState }
 export { ContainerErrorType }
 
 export { ContainerSchema }
-
-export { DataObjectClass }
 
 export { DeserializeCallback }
 
@@ -236,8 +232,6 @@ export { SharedIntervalCollection }
 export { SharedIntervalCollectionFactory }
 
 export { SharedMap }
-
-export { SharedObjectClass }
 
 export { SharedSegmentSequence }
 

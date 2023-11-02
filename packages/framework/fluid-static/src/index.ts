@@ -14,7 +14,6 @@ export { DOProviderContainerRuntimeFactory } from "./rootDataObject";
 export { ServiceAudience } from "./serviceAudience";
 export {
 	ContainerSchema,
-	DataObjectClass,
 	IConnection,
 	IMember,
 	IRootDataObject,
@@ -25,6 +24,7 @@ export {
 	LoadableObjectCtor,
 	LoadableObjectRecord,
 	MemberChangedListener,
-	SharedObjectClass,
+	_ProvideChannelFactory,
+	_LoadableObjectClass,
 	Myself,
 } from "./types";

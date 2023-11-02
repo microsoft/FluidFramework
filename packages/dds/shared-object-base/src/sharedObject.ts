@@ -4,7 +4,12 @@
  */
 
 import { v4 as uuid } from "uuid";
-import { IFluidHandle, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IFluidHandle,
+	ITelemetryProperties,
+	FluidStaticEntryPoint,
+} from "@fluidframework/core-interfaces";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -23,6 +28,7 @@ import {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 	IChannelServices,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
@@ -587,6 +593,17 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 export abstract class SharedObject<
 	TEvent extends ISharedObjectEvents = ISharedObjectEvents,
 > extends SharedObjectCore<TEvent> {
+	/**
+	 * Get a factory for SharedMap to register with the data store.
+	 * @returns A factory that creates SharedMaps and loads them from storage.
+	 */
+	public static readonly [FluidStaticEntryPoint]: FluidObject = {
+		get IChannelFactory(): IChannelFactory | undefined {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return (this as any).getFactory?.();
+		},
+	};
+
 	/**
 	 * True while we are garbage collecting this object's data.
 	 */

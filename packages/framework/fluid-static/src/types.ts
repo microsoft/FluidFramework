@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import {
+	FluidObject,
+	IEvent,
+	IEventProvider,
+	IFluidLoadable,
+	FluidStaticEntryPoint,
+	FluidStaticEntryPointProvider,
+} from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions";
 
@@ -23,29 +30,21 @@ export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>
  *
  * @typeParam T - The class of the `DataObject` or `SharedObject`.
  */
-export type LoadableObjectClass<T extends IFluidLoadable> =
-	| DataObjectClass<T>
-	| SharedObjectClass<T>;
+export type LoadableObjectClass<T extends IFluidLoadable> = FluidStaticEntryPointProvider &
+	LoadableObjectCtor<T>;
 
 /**
- * A class that has a factory that can create a `DataObject` and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The class of the `DataObject`.
+ * should actually make channel factory a provider
+ * @internal
  */
-export type DataObjectClass<T extends IFluidLoadable> = {
-	readonly factory: IFluidDataStoreFactory;
-} & LoadableObjectCtor<T>;
-
+export interface _ProvideChannelFactory {
+	IChannelFactory: IChannelFactory & Partial<_ProvideChannelFactory>;
+}
 /**
- * A class that has a factory that can create a DDSes (`SharedObject`s) and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The class of the `SharedObject`.
+ * @internal
  */
-export type SharedObjectClass<T extends IFluidLoadable> = {
-	readonly getFactory: () => IChannelFactory;
-} & LoadableObjectCtor<T>;
+export type _LoadableObjectClass<T extends IFluidLoadable> = LoadableObjectCtor<T> &
+	Record<FluidStaticEntryPoint, FluidObject<_ProvideChannelFactory & IFluidDataStoreFactory>>;
 
 /**
  * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.
@@ -99,6 +98,7 @@ export interface ContainerSchema {
 /**
  * Holds the collection of objects that the container was initially created with, as well as provides the ability
  * to dynamically create further objects during usage.
+ * @internal
  */
 export interface IRootDataObject {
 	/**

@@ -17,6 +17,7 @@ import { IServiceAudience, IServiceAudienceEvents, IMember, Myself } from "./typ
  * the user and client details returned in {@link IMember}.
  *
  * @typeParam M - A service-specific {@link IMember} implementation.
+ * @internal
  */
 export abstract class ServiceAudience<M extends IMember = IMember>
 	extends TypedEventEmitter<IServiceAudienceEvents<M>>
