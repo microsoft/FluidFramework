@@ -13,6 +13,7 @@ import {
 	cursorToJsonObject,
 	jsonSchema,
 	JsonCompatible,
+	brand,
 } from "../../..";
 import {
 	buildForest,
@@ -23,6 +24,7 @@ import {
 	buildChunkedForest,
 } from "../../../feature-libraries";
 import {
+	FieldKey,
 	initializeForest,
 	InMemoryStoredSchemaRepository,
 	JsonableTree,
@@ -37,9 +39,16 @@ import {
 import { jsonRoot, SchemaBuilder } from "../../../domains";
 import { Canada, generateCanada } from "./canada";
 import { averageTwoValues, sum, sumMap } from "./benchmarks";
-import { generateTwitterJsonByByteSize, Twitter } from "./twitter";
+import { generateTwitterJsonByByteSize } from "./twitter";
 import { CitmCatalog, generateCitmJson } from "./citm";
 import { clone } from "./jsObjectUtil";
+
+// Shared tree keys that map to the type used by the Twitter type/dataset
+export const TwitterKey = {
+	statuses: brand<FieldKey>("statuses"),
+	retweetCount: brand<FieldKey>("retweet_count"),
+	favoriteCount: brand<FieldKey>("favorite_count"),
+};
 
 /**
  * Performance test suite that measures a variety of access patterns using ITreeCursor.
@@ -54,7 +63,7 @@ function bench(
 	const schemaCollection = new SchemaBuilder({
 		scope: "JsonCursor benchmark",
 		libraries: [jsonSchema],
-	}).toDocumentSchema(SchemaBuilder.optional(jsonRoot));
+	}).intoSchema(SchemaBuilder.optional(jsonRoot));
 	const schema = new InMemoryStoredSchemaRepository(schemaCollection);
 	for (const { name, getJson, dataConsumer } of data) {
 		describe(name, () => {
@@ -224,18 +233,18 @@ function extractAvgValsFromTwitter(
 	cursor: ITreeCursor,
 	calculate: (x: number, y: number) => void,
 ): void {
-	cursor.enterField(Twitter.SharedTreeFieldKey.statuses); // move from root to field
+	cursor.enterField(TwitterKey.statuses); // move from root to field
 	cursor.enterNode(0); // move from field to node at 0 (which is an object of type array)
 	cursor.enterField(EmptyKey); // enter the array field at the node,
 
 	for (let result = cursor.firstNode(); result; result = cursor.nextNode()) {
-		cursor.enterField(Twitter.SharedTreeFieldKey.retweetCount);
+		cursor.enterField(TwitterKey.retweetCount);
 		cursor.enterNode(0);
 		const retweetCount = cursor.value as number;
 		cursor.exitNode();
 		cursor.exitField();
 
-		cursor.enterField(Twitter.SharedTreeFieldKey.favoriteCount);
+		cursor.enterField(TwitterKey.favoriteCount);
 		cursor.enterNode(0);
 		const favoriteCount = cursor.value;
 		cursor.exitNode();

@@ -4,16 +4,15 @@
  */
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { ForestType } from "../../shared-tree";
+import { ForestType, TypedTreeFactory } from "../../shared-tree";
 import { AllowedUpdateType } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { TypedTreeFactory } from "../../typed-tree";
 import { leaf, SchemaBuilder } from "../../domains";
 
 describe("TypedTree", () => {
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e" });
-		const schema = builder.toDocumentSchema(leaf.number);
+		const schema = builder.intoSchema(leaf.number);
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,

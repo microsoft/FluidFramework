@@ -26,7 +26,7 @@ export interface FieldChangeHandler<
 		change: TaggedChange<TChangeset>,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.MarkList;
+	): Delta.FieldChanges;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -152,7 +152,7 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset) => Delta.FieldMap;
 
 /**
  * @alpha
@@ -206,7 +206,7 @@ export type RevisionIndexer = (tag: RevisionTag) => number;
  */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
-	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 }
 
 /**
@@ -216,5 +216,5 @@ export function getIntention(
 	rev: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
+	return revisionMetadata.tryGetInfo(rev)?.rollbackOf ?? rev;
 }

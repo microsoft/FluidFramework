@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryProperties } from "@fluidframework/core-interfaces";
+import { IDisposable, ITelemetryProperties, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 import { performance, TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -585,7 +585,23 @@ export class ConnectionManager implements IConnectionManager {
 					this.logger.sendTelemetryEvent({ eventName: "ReceivedClosedConnection" });
 					connection = undefined;
 				}
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectionReceived",
+						connected: connection !== undefined && connection.disposed === false,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 			} catch (origError: any) {
+				this.logger.sendTelemetryEvent(
+					{
+						eventName: "ConnectToDeltaStreamException",
+						connected: connection !== undefined && connection.disposed === false,
+					},
+					undefined,
+					LogLevel.verbose,
+				);
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
 					connection = new NoDeltaStream(origError.storageOnlyReason, {
 						text: origError.message,
@@ -674,8 +690,8 @@ export class ConnectionManager implements IConnectionManager {
 			);
 		}
 
-		// Check for abort signal after while loop as well
-		if (abortSignal.aborted === true) {
+		// Check for abort signal after while loop as well or we've been disposed
+		if (abortSignal.aborted === true || this._disposed) {
 			connection.dispose();
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
@@ -1051,9 +1067,9 @@ export class ConnectionManager implements IConnectionManager {
 		};
 	}
 
-	public submitSignal(content: any) {
+	public submitSignal(content: any, targetClientId?: string) {
 		if (this.connection !== undefined) {
-			this.connection.submitSignal(content);
+			this.connection.submitSignal(content, targetClientId);
 		} else {
 			this.logger.sendErrorEvent({ eventName: "submitSignalDisconnected" });
 		}

@@ -122,8 +122,8 @@ Note that --symlink\* changes any symlink, the tool will run the clean script fo
 ### Task and dependency definition
 
 `fluid-build` uses task and dependency definitions to construct a build graph. It is used to determine which task and
-the order to run in. The default definitions are located in at the root `fluidBuild.config.cjs` file under the `tasks` property.
-This definitions applies to all packages in the repo. Script tasks and dependencies specified in this default definitions
+the order to run in. The default definitions for packages are located in at the root `fluidBuild.config.cjs` file under the `tasks` property.
+This definitions applies to all packages in the repo (but not release group root). Script tasks and dependencies specified in this default definitions
 doesn't have to appear on every package and will be ignored if it is not found.
 
 The task definitions is an object with task names as keys, the task dependencies and config to define the action of the task.
@@ -153,16 +153,20 @@ Each package can be augmented the tasks definition by adding task definitions un
 
 For example:
 
-```json
+```jsonc
 {
 	"fluidBuild": {
 		"tasks": {
+			"build": ["...", "build:docs", "copy:docs"],
 			"tsc": ["...", "typetests:gen"], // Depends on "typetests:gen", including dependencies
 			// in default definition (i.e. "^tsc" in the above example)
 			"build:test": [
 				"@fluidframework/merge-tree#build:test" // Overrides default, depends only on "build:test" task
 				// in dependent package "@fluidframework/merge-tree"
 			],
+			"copy:docs": {
+				"after": ["build:docs"] // if "build:docs" is triggered, "copy:docs" only run after it
+			},
 			"webpack": ["^tsc"] // Depends on `tsc` task of all of the dependent packages
 			// (if the task exists)
 		}
@@ -170,10 +174,18 @@ For example:
 }
 ```
 
+When building release group, by default, it will trigger the task on all the packages within the release group. That also mean
+that scripts at the release group root are not considered.
+
+Release group root scripts support can be enabled by adding `fluidBuild.tasks` to the release group's `package.json`. `fluid-build`
+will follow the definition if specified for the task, or it will trigger the root script if the script doesn't invoke `fluid-build`.
+If the script doesn't exist or if it starts with `fluid-build`, then fluid-build will fall back to the default behavior of triggering the task
+on all the packages within the release group. There is no support for "global definitions." Task definitions in `fluidBuild.config.cjs` only apply to packages, not release group roots. Release group root scripts must be defined in the `fluidBuild.tasks` section of the root's `package.json`.
+
 ### Concurrency
 
 `fluid-build` will run task in parallel based on the dependencies information from the build graph. Task are queued
-when all the dependencies are "complete". By default, `fluid-build` will execute up to number of CPU of tasks.  
+when all the dependencies are "complete". By default, `fluid-build` will execute up to number of CPU of tasks.
 This can be overridden by the `--concurrency` option on the command line.
 
 ### Incremental and Tasks
@@ -233,7 +245,7 @@ repo and the local package's `package.json`. It will dump the full combined defi
 
 ### fluid-build:task:init\*
 
-These traces show the tasks and relationships in the build graph to diagnose task dependency and ordering problems.  
+These traces show the tasks and relationships in the build graph to diagnose task dependency and ordering problems.
 Debugging traces can be enabled for individual steps or for all of them.
 
 -   `fluid-build:task:init` - Trace the task that are created, to show what task is included

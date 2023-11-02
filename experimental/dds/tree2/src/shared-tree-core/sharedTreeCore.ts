@@ -197,7 +197,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.messageCodec = makeMessageCodec(changeFamily.codecs.resolve(formatVersion).json);
+		this.messageCodec = makeMessageCodec(
+			changeFamily.codecs.resolve(formatVersion).json,
+			options,
+		);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -287,22 +290,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
-	}
-
-	/**
-	 * Undoes the last completed transaction made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	public undo(): void {
-		this.editManager.localBranch.undo();
-	}
-
-	/**
-	 * Redoes the last completed undo made by the client.
-	 * It is invalid to call it while a transaction is open (this will be supported in the future).
-	 */
-	public redo(): void {
-		this.editManager.localBranch.redo();
 	}
 
 	/**

@@ -70,6 +70,8 @@ interface IDirectoryMessageHandler {
 
 /**
  * Operation indicating a value should be set for a key.
+ *
+ * @public
  */
 export interface IDirectorySetOperation {
 	/**
@@ -96,6 +98,8 @@ export interface IDirectorySetOperation {
 
 /**
  * Operation indicating a key should be deleted from the directory.
+ *
+ * @public
  */
 export interface IDirectoryDeleteOperation {
 	/**
@@ -115,12 +119,16 @@ export interface IDirectoryDeleteOperation {
 }
 
 /**
- * An operation on a specific key within a directory
+ * An operation on a specific key within a directory.
+ *
+ * @public
  */
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
+ *
+ * @public
  */
 export interface IDirectoryClearOperation {
 	/**
@@ -135,12 +143,16 @@ export interface IDirectoryClearOperation {
 }
 
 /**
- * An operation on one or more of the keys within a directory
+ * An operation on one or more of the keys within a directory.
+ *
+ * @public
  */
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
+ *
+ * @public
  */
 export interface IDirectoryCreateSubDirectoryOperation {
 	/**
@@ -161,6 +173,8 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 /**
  * Operation indicating a subdirectory should be deleted.
+ *
+ * @public
  */
 export interface IDirectoryDeleteSubDirectoryOperation {
 	/**
@@ -180,19 +194,25 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 }
 
 /**
- * An operation on the subdirectories within a directory
+ * An operation on the subdirectories within a directory.
+ *
+ * @public
  */
 export type IDirectorySubDirectoryOperation =
 	| IDirectoryCreateSubDirectoryOperation
 	| IDirectoryDeleteSubDirectoryOperation;
 
 /**
- * Any operation on a directory
+ * Any operation on a directory.
+ *
+ * @public
  */
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
 /**
  * Create info for the subdirectory.
+ *
+ * @public
  */
 export interface ICreateInfo {
 	/**
@@ -213,6 +233,8 @@ export interface ICreateInfo {
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
+ *
+ * @public
  */
 export interface IDirectoryDataObject {
 	/**
@@ -257,6 +279,7 @@ export interface IDirectoryNewStorageFormat {
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link SharedDirectory}.
  *
  * @sealed
+ * @public
  */
 export class DirectoryFactory implements IChannelFactory {
 	/**
@@ -325,6 +348,7 @@ export class DirectoryFactory implements IChannelFactory {
  * ```
  *
  * @sealed
+ * @public
  */
 export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>
@@ -1819,11 +1843,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const pendingMessageIds = this.pendingKeys.get(op.key);
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
-		if (
-			pendingMessageIds !== undefined &&
-			pendingMessageIds[0] === localOpMetadata.pendingMessageId
-		) {
-			pendingMessageIds.shift();
+		if (pendingMessageIds !== undefined) {
+			const index = pendingMessageIds.findIndex(
+				(id) => id === localOpMetadata.pendingMessageId,
+			);
+			if (index === -1) {
+				return;
+			}
+			pendingMessageIds.splice(index, 1);
 			if (pendingMessageIds.length === 0) {
 				this.pendingKeys.delete(op.key);
 			}
@@ -2134,8 +2161,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return false;
 		}
 
-		const pendingKeyMessageId = this.pendingKeys.get(op.key);
-		if (pendingKeyMessageId !== undefined) {
+		const pendingKeyMessageIds = this.pendingKeys.get(op.key);
+		if (pendingKeyMessageIds !== undefined) {
 			// Found an NACK op, clear it from the directory if the latest sequence number in the directory
 			// match the message's and don't process the op.
 			if (local) {
@@ -2143,14 +2170,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					localOpMetadata !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
 					0x011 /* pendingMessageId is missing from the local client's operation */,
 				);
-				const pendingMessageIds = this.pendingKeys.get(op.key);
 				assert(
-					pendingMessageIds !== undefined &&
-						pendingMessageIds[0] === localOpMetadata.pendingMessageId,
+					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
 					0x331 /* Unexpected pending message received */,
 				);
-				pendingMessageIds.shift();
-				if (pendingMessageIds.length === 0) {
+				pendingKeyMessageIds.shift();
+				if (pendingKeyMessageIds.length === 0) {
 					this.pendingKeys.delete(op.key);
 				}
 			}
@@ -2422,10 +2447,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	private undeleteSubDirectoryTree(directory: SubDirectory): void {
-		// Restore deleted subdirectory tree. This will unmark "deleted" from the subdirectories from bottom to top.
-		for (const [_, subDirectory] of this._subdirectories.entries()) {
-			this.undeleteSubDirectoryTree(subDirectory);
-		}
+		// Restore deleted subdirectory tree. Need to undispose the current directory first, then get access to the iterator.
+		// This will unmark "deleted" from the subdirectories from top to bottom.
 		directory.undispose();
+		for (const [_, subDirectory] of directory.subdirectories()) {
+			this.undeleteSubDirectoryTree(subDirectory as SubDirectory);
+		}
 	}
 }

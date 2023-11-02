@@ -19,6 +19,7 @@ import { PureDataObjectFactory } from "./pureDataObjectFactory";
  *
  * @typeParam TObj - DataObject (concrete type)
  * @typeParam I - The input types for the DataObject
+ * @public
  */
 export class DataObjectFactory<
 	TObj extends DataObject<I>,

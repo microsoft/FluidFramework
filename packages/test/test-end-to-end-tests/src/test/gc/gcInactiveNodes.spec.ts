@@ -40,6 +40,21 @@ import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-bas
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
+ * We manufacture a handle to simulate a bug where an object is unreferenced in GC's view
+ * (and reminder, interactive clients never update their GC data after loading),
+ * but someone still has a handle to it.
+ *
+ * It's possible to achieve this truly with multiple clients where one revives it mid-session
+ * after it was unreferenced for the inactive timeout, but that's more complex to implement
+ * in a test and is no better than this approach
+ */
+function manufactureHandle<T>(handleContext: IFluidHandleContext, url: string): IFluidHandle<T> {
+	const serializer = new FluidSerializer(handleContext, () => {});
+	const handle: IFluidHandle<T> = parseHandles({ type: "__fluid_handle__", url }, serializer);
+	return handle;
+}
+
+/**
  * Validates this scenario: When a GC node (data store or attachment blob) becomes inactive, i.e, it has been
  * unreferenced for a certain amount of time, using the node results in an error telemetry.
  */
@@ -314,28 +329,68 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			},
 		);
 
-		describe("Interactive (non-summarizer) clients", () => {
-			/**
-			 * We manufacture a handle to simulate a bug where an object is unrefenced in GC's view
-			 * (and reminder, interactive clients never update their GC data after loading),
-			 * but someone still has a handle to it.
-			 *
-			 * It's possible to achieve this truly with multiple clients where one revives it mid-session
-			 * after it was unreferenced for the inactive timeout, but that's more complex to implement
-			 * in a test and is no better than this approach
-			 */
-			function manufactureHandle<T>(
-				handleContext: IFluidHandleContext,
-				url: string,
-			): IFluidHandle<T> {
-				const serializer = new FluidSerializer(handleContext, () => {});
-				const handle: IFluidHandle<T> = parseHandles(
-					{ type: "__fluid_handle__", url },
-					serializer,
-				);
-				return handle;
-			}
+		itExpects(
+			"can generate events when unreferenced DDS is accessed after it's inactive",
+			[{ eventName: changedEvent }, { eventName: loadedEvent }],
+			async () => {
+				const summarizerRuntime = await createSummarizerClient({
+					...testContainerConfigWithThrowOption, // But summarizer should NOT throw
+					loaderProps: { logger: mockLogger },
+				});
+				const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
+				const dataObject = (await dataStore.entryPoint.get()) as ITestDataObject;
+				const dataStoreUrl = dataObject.handle.absolutePath;
+				const ddsUrl = dataObject._root.handle.absolutePath;
 
+				defaultDataStore._root.set("dataStore1", dataObject.handle);
+				await provider.ensureSynchronized();
+
+				// Mark dataStore1 as unreferenced, send an op and load its DDS.
+				defaultDataStore._root.delete("dataStore1");
+				dataObject._root.set("key", "value2");
+				await provider.ensureSynchronized();
+				await summarizerRuntime.resolveHandle({ url: ddsUrl });
+
+				// Summarize and validate that no unreferenced errors were logged.
+				await summarize(summarizerRuntime);
+				validateNoInactiveEvents();
+
+				// Wait for inactive timeout. This will ensure that the unreferenced DDS is inactive.
+				await waitForInactiveTimeout();
+
+				// Make changes to the inactive data store and validate that we get the changedEvent.
+				dataObject._root.set("key", "value");
+				await provider.ensureSynchronized();
+				// Load the DDS and validate that we get loadedEvent.
+				const response = await summarizerRuntime.resolveHandle({ url: ddsUrl });
+				assert.equal(
+					response.status,
+					200,
+					"Loading the inactive object should succeed on summarizer despite throwOnInactiveLoad option",
+				);
+				await summarize(summarizerRuntime);
+				mockLogger.assertMatch(
+					[
+						{
+							eventName: changedEvent,
+							timeout: inactiveTimeoutMs,
+							id: { value: dataStoreUrl, tag: TelemetryDataTag.CodeArtifact },
+							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
+						},
+						{
+							eventName: loadedEvent,
+							timeout: inactiveTimeoutMs,
+							id: { value: ddsUrl, tag: TelemetryDataTag.CodeArtifact },
+							pkg: { value: TestDataObjectType, tag: TelemetryDataTag.CodeArtifact },
+						},
+					],
+					"changed and loaded events not generated as expected",
+					true /* inlineDetailsProp */,
+				);
+			},
+		);
+
+		describe("Interactive (non-summarizer) clients", () => {
 			/**
 			 * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
 			 * but the test containers are wired up to route requests to this function.
@@ -419,7 +474,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					} catch (error: any) {
 						const inactiveError: InactiveLoadError | undefined = error;
 						assert.equal(inactiveError?.code, 404, "Incorrect error status code");
-						assert.equal(inactiveError?.message, `Object is inactive: ${dataStoreUrl}`);
+						assert.equal(
+							inactiveError?.message,
+							`DataStore is inactive: ${dataStoreUrl}`,
+						);
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
 							true,
@@ -442,7 +500,7 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 			);
 
 			itExpects(
-				"throwOnInactiveLoad: true; DDS handle.get -- throws but DOESN'T log",
+				"throwOnInactiveLoad: true; DDS handle.get -- Doesn't throw, and DOESN'T log",
 				[
 					// Bug: It SHOULD actually log
 					// {
@@ -502,20 +560,13 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 						defaultDataStoreContainer2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
 						ddsUrl,
 					);
-					try {
-						// This throws because the DataStore is inactive and throwOnInactiveLoad is set
-						await handle.get();
-						assert.fail("Expected handle.get to throw");
-					} catch (error: any) {
-						const inactiveError: InactiveLoadError | undefined = error;
-						assert.equal(inactiveError?.code, 404, "Incorrect error status code");
-						assert.equal(inactiveError?.message, `Object is inactive: ${ddsUrl}`);
-						assert.equal(
-							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
-							true,
-							"Inactive error from handle.get should include the tombstone flag",
-						);
-					}
+
+					// Even though the DataStore is inactive and throwOnInactiveLoad is set, we don't throw for DDSes for ease of use
+					await assert.doesNotReject(
+						async () => handle.get(),
+						"handle.get() for the DDS should not throw",
+					);
+
 					// Bug: It SHOULD actually log
 					// mockLogger.assertMatch(
 					// 	[

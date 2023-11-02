@@ -40,7 +40,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	fieldSchema,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -54,14 +53,14 @@ export {
 	ForestLocation,
 	ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
-	TreeSchemaIdentifier,
-	FieldStoredSchema,
+	TreeNodeSchemaIdentifier,
+	TreeFieldStoredSchema,
 	ValueSchema,
-	TreeStoredSchema,
+	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	FieldAnchor,
 	SchemaEvents,
 	ChangesetLocalId,
@@ -79,8 +78,12 @@ export {
 	Adapters,
 	TreeAdapter,
 	MapTree,
-	LocalCommitSource,
+	Revertible,
+	RevertibleKind,
+	RevertResult,
+	DiscardResult,
 	forbiddenFieldKindIdentifier,
+	StoredSchemaCollection,
 } from "./core";
 
 export {
@@ -124,7 +127,6 @@ export {
 	nodeKeyField,
 	nodeKeySchema,
 	leaf,
-	testRecursiveDomain,
 	SchemaBuilder,
 } from "./domains";
 
@@ -187,21 +189,16 @@ export {
 	UnwrappedUntypedTree,
 	UntypedTreeOrPrimitive,
 	AllowedTypes,
+	TreeNodeSchema,
 	TreeSchema,
-	Required,
-	Optional,
-	Sequence,
-	NodeKeyFieldKind,
-	Forbidden,
-	TypedSchemaCollection,
 	SchemaLibrary,
 	SchemaLibraryData,
-	FieldSchema,
+	TreeFieldSchema,
 	Any,
 	NewFieldContent,
 	NodeExistsConstraint,
 	cursorForTypedTreeData,
-	LazyTreeSchema,
+	LazyTreeNodeSchema,
 	FieldGenerator,
 	TreeDataContext,
 	createDataBinderBuffering,
@@ -252,9 +249,9 @@ export {
 	MapNode,
 	OptionalField,
 	RequiredField,
-	Sequence2,
-	Struct,
-	StructTyped,
+	Sequence,
+	ObjectNode,
+	ObjectNodeTyped,
 	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
@@ -266,7 +263,7 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
 	ImplicitFieldSchema,
@@ -283,7 +280,16 @@ export {
 	ProxyNodeUnion,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
+	node,
+	NodeApi,
+	SharedTreeNode,
+	Typed,
+	TreeEvent,
+	SharedTreeObjectFactory,
+	SchemaCollection,
+	FactoryTreeSchema,
+	treeSchemaFromStoredSchema,
+	encodeTreeSchema,
 } from "./feature-libraries";
 
 export {
@@ -300,13 +306,15 @@ export {
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
 	ForestType,
+	TypedTreeFactory,
+	TypedTreeOptions,
+	TypedTreeChannel,
+	SharedTreeContentSnapshot,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
 export { noopValidator } from "./codec";
 export { typeboxValidator } from "./external-utilities";
-
-export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typed-tree";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalTypes from "./internal";

@@ -16,6 +16,7 @@ import { DataObjectTypes } from "./types";
  * will automatically be registered.
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @public
  */
 export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,

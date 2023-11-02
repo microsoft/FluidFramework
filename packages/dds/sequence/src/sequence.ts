@@ -2,6 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
+/* eslint-disable import/no-deprecated */
+
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -14,7 +17,6 @@ import {
 import {
 	Client,
 	createAnnotateRangeOp,
-	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createInsertOp,
 	createRemoveRangeOp,
@@ -29,7 +31,6 @@ import {
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
-	// eslint-disable-next-line import/no-deprecated
 	matchProperties,
 	MergeTreeDeltaType,
 	PropertySet,
@@ -97,6 +98,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
+ * @public
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
@@ -113,6 +115,9 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	);
 }
 
+/**
+ * @public
+ */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
@@ -149,7 +154,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					if (
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
-						// eslint-disable-next-line import/no-deprecated
 						matchProperties(lastAnnotate.props, props)
 					) {
 						lastAnnotate.pos2 += r.segment.cachedLength;
@@ -268,7 +272,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
 	 */
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
@@ -395,7 +399,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @deprecated - This method will no longer be public in an upcoming release as it is not safe to use outside of this class
+	 * @deprecated This method will no longer be public in an upcoming release as it is not safe to use outside of this class
 	 */
 	public submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
@@ -449,7 +453,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	/**
-	 * @deprecated - this functionality is no longer supported and will be removed
+	 * @deprecated this functionality is no longer supported and will be removed
 	 */
 	public getStackContext(startPos: number, rangeLabels: string[]): RangeStackMap {
 		return this.client.getStackContext(startPos, rangeLabels);
@@ -621,7 +625,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 							m.minimumSequenceNumber < collabWindow.minSeq ||
 							m.referenceSequenceNumber < collabWindow.minSeq ||
 							m.sequenceNumber <= collabWindow.minSeq ||
-							m.sequenceNumber <= collabWindow.currentSeq
+							// sequenceNumber could be the same if messages are part of a grouped batch
+							m.sequenceNumber < collabWindow.currentSeq
 						) {
 							throw new Error(
 								`Invalid catchup operations in snapshot: ${JSON.stringify({
@@ -759,7 +764,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				stashMessage = {
 					...message,
 					referenceSequenceNumber: stashMessage.sequenceNumber - 1,
-					// eslint-disable-next-line import/no-deprecated
 					contents: ops.length !== 1 ? createGroupOp(...ops) : ops[0],
 				};
 			}

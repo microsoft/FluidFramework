@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaAware } from "../..";
+import { TreeValue } from "../../../core";
 import { RestrictiveReadonlyRecord } from "../../../util";
 import { FieldKinds } from "../../default-field-kinds";
 import { FieldKind } from "../../modular-schema";
@@ -11,20 +11,24 @@ import {
 	AllowedTypes,
 	Any,
 	FieldNodeSchema,
-	FieldSchema,
+	TreeFieldSchema,
 	InternalTypedSchemaTypes,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
+	TreeNodeSchema,
 	TreeSchema,
-	TypedSchemaCollection,
 } from "../../typed-schema";
-import {
-	CheckTypesOverlap,
-	FlexibleNodeContent,
-	Sequence,
-	AssignableFieldKinds,
-} from "../editableTreeTypes";
+import { AssignableFieldKinds } from "../editableTreeTypes";
+
+/**
+ * An object-like SharedTree node. Includes objects, lists, and maps.
+ * @alpha
+ */
+export type SharedTreeNode =
+	| SharedTreeList<AllowedTypes>
+	| SharedTreeObject<ObjectNodeSchema>
+	| SharedTreeMap<MapSchema>;
 
 /**
  * Implements 'readonly T[]' and the list mutation APIs.
@@ -38,119 +42,156 @@ export interface SharedTreeList<
 	 * Inserts new item(s) at a specified location.
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are invalid.
+	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
-	insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
-	 * Inserts new item(s) at the start of the sequence.
+	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
-	 * Inserts new item(s) at the end of the sequence.
+	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
-	 * @throws Throws if any of the input indices are invalid.
 	 */
-	insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes>>): void;
 
 	/**
 	 * Removes the item at the specified location.
 	 * @param index - The index at which to remove the item.
-	 * @throws Throws if any of the input indices are invalid.
+	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
 	removeAt(index: number): void;
 
 	/**
 	 * Removes all items between the specified indices.
-	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the sequence.
+	 * @param start - The starting index of the range to remove (inclusive). Defaults to the start of the list.
 	 * @param end - The ending index of the range to remove (exclusive).
-	 * @throws Throws if any of the input indices are invalid.
-	 * If `end` is not supplied or is greater than the length of the sequence, all items after `start` are deleted.
+	 * @throws Throws if `start` is not in the range [0, `list.length`).
+	 * @throws Throws if `end` is less than `start`.
+	 * If `end` is not supplied or is greater than the length of the list, all items after `start` are deleted.
 	 */
 	removeRange(start?: number, end?: number): void;
 
 	/**
-	 * Moves the specified items to the start of the sequence.
-	 * @param sourceStart - The starting index of the range to move (inclusive).
-	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * Moves the specified item to the start of the list.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
 	 */
-	moveToStart(sourceStart: number, sourceEnd: number): void;
+	moveToStart(sourceIndex: number): void;
 
 	/**
-	 * Moves the specified items to the start of the sequence.
+	 * Moves the specified item to the start of the list.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source list to move the item out of.
+	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 */
+	moveToStart(sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+
+	/**
+	 * Moves the specified item to the end of the list.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 */
+	moveToEnd(sourceIndex: number): void;
+
+	/**
+	 * Moves the specified item to the end of the list.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source list to move the item out of.
+	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
+	 */
+	moveToEnd(sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+
+	/**
+	 * Moves the specified item to the desired location in the list.
+	 * @param index - The index to move the item to.
+	 * This is based on the state of the list before moving the source item.
+	 * @param sourceIndex - The index of the item to move.
+	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 */
+	moveToIndex(index: number, sourceIndex: number): void;
+
+	/**
+	 * Moves the specified item to the desired location in the list.
+	 * @param index - The index to move the item to.
+	 * @param sourceIndex - The index of the item to move.
+	 * @param source - The source list to move the item out of.
+	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
+	 */
+	moveToIndex(index: number, sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+
+	/**
+	 * Moves the specified items to the start of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveToStart<TTypesSource extends AllowedTypes>(
+	moveRangeToStart(sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the start of the list.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @param source - The source list to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 */
+	moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: SharedTreeList<AllowedTypes>,
 	): void;
 
 	/**
-	 * Moves the specified items to the end of the sequence.
+	 * Moves the specified items to the end of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @throws Throws if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveToEnd(sourceStart: number, sourceEnd: number): void;
+	moveRangeToEnd(sourceStart: number, sourceEnd: number): void;
 
 	/**
-	 * Moves the specified items to the end of the sequence.
+	 * Moves the specified items to the end of the list.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @param source - The source sequence to move items out of.
-	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @param source - The source list to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveToEnd<TTypesSource extends AllowedTypes>(
+	moveRangeToEnd(
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
+		source: SharedTreeList<AllowedTypes>,
 	): void;
 
 	/**
-	 * Moves the specified items to the desired location within the sequence.
+	 * Moves the specified items to the desired location within the list.
+	 * @param index - The index to move the items to.
+	 * This is based on the state of the list before moving the source items.
+	 * @param sourceStart - The starting index of the range to move (inclusive).
+	 * @param sourceEnd - The ending index of the range to move (exclusive)
+	 * @throws Throws if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
+	 */
+	moveRangeToIndex(index: number, sourceStart: number, sourceEnd: number): void;
+
+	/**
+	 * Moves the specified items to the desired location within the list.
 	 * @param index - The index to move the items to.
 	 * @param sourceStart - The starting index of the range to move (inclusive).
 	 * @param sourceEnd - The ending index of the range to move (exclusive)
-	 * @throws Throws if any of the input indices are invalid.
-	 * @remarks
-	 * All indices are relative to the sequence excluding the nodes being moved.
+	 * @param source - The source list to move items out of.
+	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
+	 * if any of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveToIndex(index: number, sourceStart: number, sourceEnd: number): void;
-
-	// TODO: Should accept a proxy rather than sequence field as source.
-
-	// /**
-	//  * Moves the specified items to the desired location within the sequence.
-	//  * @param index - The index to move the items to.
-	//  * @param sourceStart - The starting index of the range to move (inclusive).
-	//  * @param sourceEnd - The ending index of the range to move (exclusive)
-	//  * @param source - The source sequence to move items out of.
-	//  * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence or if the input indices are invalid.
-	//  * @remarks
-	//  * All indices are relative to the sequence excluding the nodes being moved.
-	//  */
-	// moveToIndex<TTypesSource extends AllowedTypes>(
-	// 	index: number,
-	// 	sourceStart: number,
-	// 	sourceEnd: number,
-	// 	source: Sequence<CheckTypesOverlap<TTypesSource, TTypes>>,
-	// ): void;
+	moveRangeToIndex(
+		index: number,
+		sourceStart: number,
+		sourceEnd: number,
+		source: SharedTreeList<AllowedTypes>,
+	): void;
 }
 
 /**
@@ -158,45 +199,66 @@ export interface SharedTreeList<
  * @alpha
  */
 export type SharedTreeObject<
-	TSchema extends StructSchema,
+	TSchema extends ObjectNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = ObjectFields<TSchema["structFieldsObject"], API>;
+> = ObjectFields<TSchema["objectNodeFieldsObject"], API>;
 
 /**
  * Helper for generating the properties of a {@link SharedTreeObject}.
+ * @privateRemarks
+ * This type is composed of four subtypes for each mutually exclusive combination of "readonly" and "optional".
+ * If it were possible to map to getters and setters separately, the "readonly" cases would collapse, but this is not currently a feature in TS.
+ * See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
  * @alpha
  */
 export type ObjectFields<
-	TFields extends RestrictiveReadonlyRecord<string, FieldSchema>,
+	TFields extends RestrictiveReadonlyRecord<string, TreeFieldSchema>,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = {
-	// Add getter only (make property readonly) when the field is **not** of a kind that has a logical set operation.
-	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
+	// Filter for properties that are both assignable and optional; mark them `-readonly` and `?`.
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? TFields[key]["kind"] extends typeof FieldKinds.optional
+			? key
+			: never
+		: never]?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are assignable but are optional; mark them `-readonly` and `-?`.
+	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? TFields[key]["kind"] extends typeof FieldKinds.optional
+			? never
+			: key
+		: never]-?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are not assignable but are optional; mark them `readonly` and `?`.
 	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 		? never
-		: key]: ProxyField<TFields[key], API>;
-} & {
-	// Add setter (make property writable) when the field is of a kind that has a logical set operation.
-	// If we could map to getters and setters separately, we would preferably do that, but we can't.
-	// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
-	-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		: TFields[key]["kind"] extends typeof FieldKinds.optional
 		? key
-		: never]: ProxyField<TFields[key], API>;
+		: never]?: ProxyField<TFields[key], API>;
+} & {
+	// Filter for properties that are not assignable and are not optional; mark them `readonly` and `-?`.
+	readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
+		? never
+		: TFields[key]["kind"] extends typeof FieldKinds.optional
+		? never
+		: key]-?: ProxyField<TFields[key], API>;
 };
 
 /**
  * A map of string keys to tree objects.
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Map<string, ProxyNode<TSchema>>;
+export type SharedTreeMap<TSchema extends MapSchema> = Map<
+	string,
+	ProxyField<TSchema["mapFields"]>
+>;
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.
  * @alpha
  */
 export type ProxyField<
-	TSchema extends FieldSchema,
+	TSchema extends TreeFieldSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
 	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
@@ -235,7 +297,7 @@ export type ProxyNodeUnion<
 			[Index in keyof TTypes]: TTypes[Index] extends InternalTypedSchemaTypes.LazyItem<
 				infer InnerType
 			>
-				? InnerType extends TreeSchema
+				? InnerType extends TreeNodeSchema
 					? ProxyNode<InnerType, API>
 					: never
 				: never;
@@ -246,26 +308,24 @@ export type ProxyNodeUnion<
  * @alpha
  */
 export type ProxyNode<
-	TSchema extends TreeSchema,
+	TSchema extends TreeNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > = TSchema extends LeafSchema
-	? SchemaAware.InternalTypes.TypedValue<TSchema["leafValue"]>
+	? TreeValue<TSchema["leafValue"]>
 	: TSchema extends MapSchema
 	? API extends "sharedTree"
 		? SharedTreeMap<TSchema>
 		: Map<string, ProxyField<TSchema["mapFields"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
-		? SharedTreeList<TSchema["structFieldsObject"][""]["allowedTypes"], API>
-		: readonly ProxyNodeUnion<TSchema["structFieldsObject"][""]["allowedTypes"], API>[]
-	: TSchema extends StructSchema
+		? SharedTreeList<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>
+		: readonly ProxyNodeUnion<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>[]
+	: TSchema extends ObjectNodeSchema
 	? SharedTreeObject<TSchema, API>
 	: unknown;
 
 /** The root type (the type of the entire tree) for a given schema collection */
 export type ProxyRoot<
-	TSchema extends TypedSchemaCollection<any>,
+	TSchema extends TreeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = TSchema extends TypedSchemaCollection<infer TRootFieldSchema>
-	? ProxyField<TRootFieldSchema, API>
-	: never;
+> = TSchema extends TreeSchema<infer TRootFieldSchema> ? ProxyField<TRootFieldSchema, API> : never;

@@ -4,22 +4,20 @@
  */
 
 import { strict as assert } from "assert";
-import { AllowedUpdateType, mintRevisionTag } from "../../../core";
 import { isEditableTree } from "../../../feature-libraries";
-import { createSharedTreeView } from "../../../shared-tree";
 
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { ProxyContext } from "../../../feature-libraries/editable-tree/editableTreeContext";
 
+import { viewWithContent } from "../../utils";
 import { fullSchemaData, personData } from "./mockData";
 
 describe("editable-tree context", () => {
 	it("can free anchors", () => {
-		const view = createSharedTreeView(mintRevisionTag).schematize({
+		const view = viewWithContent({
 			schema: fullSchemaData,
 			initialTree: personData,
-			allowedSchemaModifications: AllowedUpdateType.None,
 		});
 		const context = view.context;
 		assert(isEditableTree(view.root));
@@ -34,10 +32,9 @@ describe("editable-tree context", () => {
 	});
 
 	it("can create fields while clearing the context in afterHandlers", () => {
-		const view = createSharedTreeView(mintRevisionTag).schematize({
+		const view = viewWithContent({
 			schema: fullSchemaData,
 			initialTree: personData,
-			allowedSchemaModifications: AllowedUpdateType.None,
 		});
 
 		view.context.on("afterChange", () => {

@@ -13,6 +13,8 @@ import {
 	mapCursorField,
 	ITreeCursorSynchronous,
 	setGenericTreeField,
+	IForestSubscription,
+	moveToDetachedField,
 } from "../core";
 import { CursorAdapter, singleStackTreeCursor } from "./treeCursorUtils";
 
@@ -75,4 +77,26 @@ export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree {
 		setGenericTreeField(node, cursor.getFieldKey(), field);
 	}
 	return node;
+}
+
+/**
+ * Extract a JsonableTree from the contents of the given ITreeCursor's current node.
+ */
+export function jsonableTreeFromFieldCursor(cursor: ITreeCursor): JsonableTree[] {
+	assert(cursor.mode === CursorLocationType.Fields, 0x7ca /* must start at field */);
+	return mapCursorField(cursor, jsonableTreeFromCursor);
+}
+
+/**
+ * Copy forest content into a JsonableTree.
+ * @remarks
+ * This is not a time or memory efficient way to pass around forest content:
+ * its intended for debugging and testing purposes when forest content is needed in a human readable serializable format.
+ */
+export function jsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
+	const readCursor = forest.allocateCursor();
+	moveToDetachedField(forest, readCursor);
+	const jsonable = jsonableTreeFromFieldCursor(readCursor);
+	readCursor.free();
+	return jsonable;
 }

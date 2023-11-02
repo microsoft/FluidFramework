@@ -61,10 +61,10 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
-                      "structFields": [
+                      "objectNodeFields": [
                         {
                           "kind": "Sequence",
                           "types": [
@@ -92,31 +92,31 @@
                           "com.fluidframework.leaf.null"
                         ]
                       },
-                      "structFields": []
+                      "objectNodeFields": []
                     },
                     {
                       "name": "com.fluidframework.leaf.boolean",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 2
                     },
                     {
                       "name": "com.fluidframework.leaf.handle",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 3
                     },
                     {
                       "name": "com.fluidframework.leaf.null",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 4
                     },
                     {
                       "name": "com.fluidframework.leaf.number",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 0
                     },
                     {
                       "name": "com.fluidframework.leaf.string",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 1
                     }
                   ],
@@ -170,7 +170,13 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[[\"beefbeef-beef-4000-8000-000000000004\",1,{\"field\":\"repair-1\",\"root\":1}]]",
+                  "data": [
+                    [
+                      "beefbeef-beef-4000-8000-000000000004",
+                      1,
+                      1
+                    ]
+                  ],
                   "id": 1
                 },
                 "encoding": "utf-8"
