@@ -82,7 +82,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 	};
 }
 
-export class NewTreeInventoryListModel extends EventEmitter implements IInventoryList {
+export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
 	public static initializeTree(tree: ISharedTree): void {
 		tree.schematizeView({

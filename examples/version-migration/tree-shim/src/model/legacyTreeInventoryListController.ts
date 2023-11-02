@@ -66,7 +66,7 @@ export class LegacyTreeInventoryItem
 	}
 }
 
-export class LegacyTreeInventoryListModel extends EventEmitter implements IInventoryList {
+export class LegacyTreeInventoryListController extends EventEmitter implements IInventoryList {
 	public static initializeTree(tree: LegacySharedTree): void {
 		const inventoryNode: BuildNode = {
 			definition: "inventory",

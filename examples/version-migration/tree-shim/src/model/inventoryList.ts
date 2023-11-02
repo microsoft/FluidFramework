@@ -14,8 +14,8 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { IInventoryItem, IInventoryList, IMigrateBackingData } from "../modelInterfaces";
-import { LegacyTreeInventoryListModel } from "./legacyTreeInventoryListModel";
-import { NewTreeInventoryListModel } from "./newTreeInventoryListModel";
+import { LegacyTreeInventoryListController } from "./legacyTreeInventoryListController";
+import { NewTreeInventoryListController } from "./newTreeInventoryListController";
 
 const isMigratedKey = "isMigrated";
 const legacySharedTreeKey = "legacySharedTree";
@@ -82,8 +82,8 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 		// TODO: I call these initializeTree methods here because otherwise the trees may not be initialized before
 		// attaching (in particular the New SharedTree, which in this demo doesn't actually get used until the migration
 		// occurs.  After switching to the shim, these might be able to be simplified.
-		LegacyTreeInventoryListModel.initializeTree(legacySharedTree);
-		NewTreeInventoryListModel.initializeTree(newSharedTree);
+		LegacyTreeInventoryListController.initializeTree(legacySharedTree);
+		NewTreeInventoryListController.initializeTree(newSharedTree);
 
 		this.root.set(legacySharedTreeKey, legacySharedTree.handle);
 		this.root.set(newSharedTreeKey, newSharedTree.handle);
@@ -119,11 +119,11 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 			const tree = await this.root
 				.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
 				.get();
-			this._model = new LegacyTreeInventoryListModel(tree);
+			this._model = new LegacyTreeInventoryListController(tree);
 		} else {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const tree = await this.root.get<IFluidHandle<ISharedTree>>(newSharedTreeKey)!.get();
-			this._model = new NewTreeInventoryListModel(tree);
+			this._model = new NewTreeInventoryListController(tree);
 		}
 
 		this._model.on("itemAdded", this.onItemAdded);
