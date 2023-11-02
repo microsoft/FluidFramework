@@ -18,9 +18,12 @@ import {
 	NodeChangeType,
 	ReturnFrom,
 	MoveIn,
+	MarkList,
+	MoveSource,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { splitMark } from "./utils";
+import { MoveDestination } from "./helperTypes";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
@@ -107,28 +110,7 @@ export const sequenceFieldEditor = {
 			id,
 			count,
 		};
-		const firstIndexBeyondMoveOut = sourceIndex + count;
-		const marks = new MarkListFactory<never>();
-		marks.pushOffset(Math.min(sourceIndex, destIndex));
-		if (destIndex <= sourceIndex) {
-			// The destination is fully before the source
-			marks.pushContent(moveIn);
-			marks.pushOffset(sourceIndex - destIndex);
-			marks.pushContent(moveOut);
-		} else if (firstIndexBeyondMoveOut <= destIndex) {
-			// The destination is fully after the source
-			marks.pushContent(moveOut);
-			marks.pushOffset(destIndex - firstIndexBeyondMoveOut);
-			marks.pushContent(moveIn);
-		} else {
-			const firstSectionLength = destIndex - sourceIndex;
-			// The destination is in the middle of the source
-			const [moveOut1, moveOut2] = splitMark(moveOut, firstSectionLength);
-			marks.pushContent(moveOut1);
-			marks.pushContent(moveIn);
-			marks.pushContent(moveOut2);
-		}
-		return marks.list;
+		return moveMarksToMarkList(sourceIndex, count, destIndex, moveOut, moveIn);
 	},
 
 	moveOut(sourceIndex: number, count: number, id: ChangesetLocalId): Changeset<never> {
@@ -156,10 +138,6 @@ export const sequenceFieldEditor = {
 		destIndex: number,
 		detachEvent: CellId,
 	): Changeset<never> {
-		if (count === 0) {
-			return [];
-		}
-
 		const id = brand<MoveId>(0);
 		const returnFrom: CellMark<ReturnFrom, never> = {
 			type: "ReturnFrom",
@@ -174,21 +152,43 @@ export const sequenceFieldEditor = {
 			cellId: detachEvent,
 		};
 
-		const factory = new MarkListFactory<never>();
-		if (sourceIndex < destIndex) {
-			factory.pushOffset(sourceIndex);
-			factory.pushContent(returnFrom);
-			factory.pushOffset(destIndex - sourceIndex);
-			factory.pushContent(returnTo);
-		} else {
-			factory.pushOffset(destIndex);
-			factory.pushContent(returnTo);
-			factory.pushOffset(sourceIndex - destIndex);
-			factory.pushContent(returnFrom);
-		}
-		return factory.list;
+		return moveMarksToMarkList(sourceIndex, count, destIndex, returnFrom, returnTo);
 	},
 };
+
+function moveMarksToMarkList(
+	sourceIndex: number,
+	count: number,
+	destIndex: number,
+	detach: CellMark<MoveSource, never>,
+	attach: CellMark<MoveDestination, never>,
+): MarkList<never> {
+	if (count === 0) {
+		return [];
+	}
+	const firstIndexBeyondMoveOut = sourceIndex + count;
+	const marks = new MarkListFactory<never>();
+	marks.pushOffset(Math.min(sourceIndex, destIndex));
+	if (destIndex <= sourceIndex) {
+		// The destination is fully before the source
+		marks.pushContent(attach);
+		marks.pushOffset(sourceIndex - destIndex);
+		marks.pushContent(detach);
+	} else if (firstIndexBeyondMoveOut <= destIndex) {
+		// The destination is fully after the source
+		marks.pushContent(detach);
+		marks.pushOffset(destIndex - firstIndexBeyondMoveOut);
+		marks.pushContent(attach);
+	} else {
+		const firstSectionLength = destIndex - sourceIndex;
+		// The destination is in the middle of the source
+		const [detach1, detach2] = splitMark(detach, firstSectionLength);
+		marks.pushContent(detach1);
+		marks.pushContent(attach);
+		marks.pushContent(detach2);
+	}
+	return marks.list;
+}
 
 function markAtIndex<TNodeChange>(index: number, mark: Mark<TNodeChange>): Changeset<TNodeChange> {
 	return index === 0 ? [mark] : [{ count: index }, mark];

@@ -780,7 +780,7 @@ describe("SequenceField - Compose", () => {
 	it("return ○ return", () => {
 		const cellId1: ChangeAtomId = { revision: tag2, localId: brand(0) };
 		const cellId2: ChangeAtomId = { revision: tag3, localId: brand(0) };
-		const return1 = tagChange(Change.return(0, 1, 3, cellId1), tag3);
+		const return1 = tagChange(Change.return(0, 1, 4, cellId1), tag3);
 		const return2 = tagChange(Change.return(3, 1, 0, cellId2), tag4);
 		const actual = shallowCompose([return1, return2]);
 
@@ -1078,7 +1078,7 @@ describe("SequenceField - Compose", () => {
 			const move1 = tagChange(Change.move(a, 1, b > a ? b + 1 : b), tag1);
 			const move2 = tagChange(Change.move(b, 1, c > b ? c + 1 : c), tag2);
 			const return2 = tagRollbackInverse(
-				Change.return(c, 1, b, { revision: tag2, localId: brand(0) }),
+				Change.return(c, 1, b > c ? b + 1 : b, { revision: tag2, localId: brand(0) }),
 				tag3,
 				tag2,
 			);
@@ -1096,7 +1096,7 @@ describe("SequenceField - Compose", () => {
 		]) {
 			const move1 = tagChange(Change.move(a, 1, b > a ? b + 1 : b), tag1);
 			const return1 = tagRollbackInverse(
-				Change.return(b, 1, a, { revision: tag1, localId: brand(0) }),
+				Change.return(b, 1, a > b ? a + 1 : a, { revision: tag1, localId: brand(0) }),
 				tag2,
 				tag1,
 			);
@@ -1120,7 +1120,7 @@ describe("SequenceField - Compose", () => {
 			const move2 = tagChange(Change.move(b, 1, c > b ? c + 1 : c), tag2);
 			const part1 = shallowCompose([move1, move2]);
 			const return2 = tagRollbackInverse(
-				Change.return(c, 1, b, { revision: tag2, localId: brand(0) }),
+				Change.return(c, 1, b > c ? b + 1 : b, { revision: tag2, localId: brand(0) }),
 				tag3,
 				tag2,
 			);
