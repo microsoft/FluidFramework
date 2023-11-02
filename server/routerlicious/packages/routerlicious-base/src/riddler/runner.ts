@@ -73,12 +73,12 @@ export class RiddlerRunner implements IRunner {
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
-			Lumberjack.info("RiddlerRunner.stop already called, returning early.");
+			Lumberjack.info("RiddlerRunner.stop already called, returning early.", { caller });
 			return;
 		}
 
 		this.stopped = true;
-		Lumberjack.info("RiddlerRunner.stop starting.");
+		Lumberjack.info("RiddlerRunner.stop starting.", { caller });
 
 		const runnerServerCloseTimeoutMs =
 			this.config?.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
