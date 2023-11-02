@@ -86,11 +86,10 @@ describeNoCompat("Op reentry and rebasing during pending batches", (getTestObjec
 				sharedMap.set("key", true);
 			},
 			reentrant: () => {
-				// ADO:6050. The call below would cause assert 0x2fa
-				// sharedMap.set("key", false);
+				sharedMap.set("key", false);
 			},
 			assertion: () => {
-				assert.strictEqual(sharedMap.get("key"), true);
+				assert.strictEqual(sharedMap.get("key"), false);
 			},
 		},
 		{

@@ -3,14 +3,20 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { LocalReferencePosition } from "./localReference";
 import { ISegment } from "./mergeTreeNodes";
 import { SortedSet } from "./sortedSet";
 
+/**
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
+ */
 export type SortedSegmentSetItem =
 	| ISegment
 	| LocalReferencePosition
 	| { readonly segment: ISegment };
+
 /**
  * Stores a unique and sorted set of segments, or objects with segments
  *
@@ -20,6 +26,8 @@ export type SortedSegmentSetItem =
  * segments ordered by their ordinals will always have the same order even if the ordinal values on
  * the segments changes. This invariant allows us to ensure the segments stay
  * ordered and unique, and that new segments can be inserted into that order.
+ *
+ * @deprecated This functionality was not meant to be exported and will be removed in a future release
  */
 export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<
 	T,

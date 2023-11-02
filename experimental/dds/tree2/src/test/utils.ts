@@ -80,11 +80,7 @@ import {
 	ChangeFamilyEditor,
 	ChangeFamily,
 	TaggedChange,
-	TreeSchemaBuilder,
-	treeSchema,
 	FieldUpPath,
-	TreeNodeSchemaIdentifier,
-	TreeNodeStoredSchema,
 	InMemoryStoredSchemaRepository,
 	initializeForest,
 	AllowedUpdateType,
@@ -99,7 +95,7 @@ import {
 	Revertible,
 	RevertibleKind,
 } from "../core";
-import { JsonCompatible, Named, brand } from "../util";
+import { JsonCompatible, brand } from "../util";
 import { ICodecFamily, withSchemaValidation } from "../codec";
 import { typeboxValidator } from "../external-utilities";
 import {
@@ -880,18 +876,6 @@ export function defaultRevisionMetadataFromChanges(
 		}
 	}
 	return revisionMetadataSourceFromInfo(revInfos);
-}
-
-/**
- * Helper for building {@link Named} {@link TreeNodeStoredSchema} without using {@link SchemaBuilder}.
- */
-export function namedTreeSchema(
-	data: TreeSchemaBuilder & Named<string>,
-): Named<TreeNodeSchemaIdentifier> & TreeNodeStoredSchema {
-	return {
-		name: brand(data.name),
-		...treeSchema({ ...data }),
-	};
 }
 
 /**

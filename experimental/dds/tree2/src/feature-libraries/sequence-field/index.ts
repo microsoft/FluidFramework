@@ -27,6 +27,8 @@ export {
 	HasMarkFields,
 	HasLineage,
 	IdRange,
+	CellMark,
+	TransientEffect,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
@@ -44,12 +46,13 @@ export {
 	areComposable,
 	areRebasable,
 	getInputLength,
-	isDetachMark,
+	isDetach,
 	DetachedNodeTracker,
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
 	cloneMark,
+	extractMarkEffect,
 } from "./utils";
 export {
 	isMoveMark,
