@@ -11,7 +11,7 @@ const tscDependsOn = ["^tsc", "build:genver"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "eslint", "ci:build:docs"],
+			dependsOn: ["compile", "eslint", "ci:build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"full": {
@@ -19,11 +19,11 @@ module.exports = {
 			script: false,
 		},
 		"build": {
-			dependsOn: ["compile", "lint", "build:docs"],
+			dependsOn: ["compile", "lint", "build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:copy", "build:test", "build:artifacts"],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -42,10 +42,6 @@ module.exports = {
 			dependsOn: ["^checks:fix"],
 			script: false,
 		},
-		"build:artifacts": {
-			dependsOn: ["build:manifest", "build:readme", "build:copy"],
-			script: false,
-		},
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
@@ -58,7 +54,10 @@ module.exports = {
 			dependsOn: ["build:manifest"],
 			script: true,
 		},
-		"build:manifest": ["tsc"],
+		"build:manifest": {
+			dependsOn: ["tsc"],
+			script: true,
+		},
 		"depcruise": [],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
@@ -94,7 +93,7 @@ module.exports = {
 		},
 		"build-tools": {
 			directory: "build-tools",
-			defaultInterdependencyRange: "workspace:*",
+			defaultInterdependencyRange: "workspace:~",
 		},
 		"server": {
 			directory: "server/routerlicious",
@@ -122,7 +121,6 @@ module.exports = {
 			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
-			"server/tinylicious",
 		],
 	},
 
@@ -155,6 +153,13 @@ module.exports = {
 			],
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
+			"npm-package-json-scripts-args": [
+				// server/routerlicious and server/routerlicious/packages/routerlicious use
+				// linux only scripts that would require extra logic to validate properly.
+				// Ideally no packages would use OS specific scripts.
+				"^server/routerlicious/package.json",
+				"^server/routerlicious/packages/routerlicious/package.json",
 			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
@@ -220,6 +225,7 @@ module.exports = {
 				"server/historian/package.json",
 				"package.json",
 			],
+			"npm-package-json-script-dep": ["^build-tools/"],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -298,7 +304,6 @@ module.exports = {
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
-			"tinylicious",
 		],
 		fluidBuildTasks: {
 			tsc: {

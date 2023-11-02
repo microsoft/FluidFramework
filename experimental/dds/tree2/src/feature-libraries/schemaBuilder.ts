@@ -37,7 +37,7 @@ export class SchemaBuilderInternal<
 		name: Name,
 		t: T,
 	): TreeNodeSchema<`${TScope}.${Name}`, { leafValue: T }> {
-		const schema = new TreeNodeSchema(this, this.scoped(name), { leafValue: t });
+		const schema = TreeNodeSchema.create(this, this.scoped(name), { leafValue: t });
 		this.addNodeSchema(schema);
 		return schema;
 	}

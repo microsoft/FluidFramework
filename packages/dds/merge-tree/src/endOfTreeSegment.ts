@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
+
 import { assert } from "@fluidframework/core-utils";
 import { LocalClientId } from "./constants";
 import { LocalReferenceCollection } from "./localReference";

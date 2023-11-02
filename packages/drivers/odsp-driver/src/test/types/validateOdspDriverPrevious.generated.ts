@@ -48,6 +48,102 @@ use_old_EnumDeclaration_ClpCompliantAppHeader(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_EpochTracker": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_EpochTracker():
+    TypeOnly<old.EpochTracker>;
+declare function use_current_ClassDeclaration_EpochTracker(
+    use: TypeOnly<current.EpochTracker>);
+use_current_ClassDeclaration_EpochTracker(
+    get_old_ClassDeclaration_EpochTracker());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_EpochTracker": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_EpochTracker():
+    TypeOnly<current.EpochTracker>;
+declare function use_old_ClassDeclaration_EpochTracker(
+    use: TypeOnly<old.EpochTracker>);
+use_old_ClassDeclaration_EpochTracker(
+    get_current_ClassDeclaration_EpochTracker());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FetchType": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_FetchType():
+    TypeOnly<old.FetchType>;
+declare function use_current_TypeAliasDeclaration_FetchType(
+    use: TypeOnly<current.FetchType>);
+use_current_TypeAliasDeclaration_FetchType(
+    get_old_TypeAliasDeclaration_FetchType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FetchType": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_FetchType():
+    TypeOnly<current.FetchType>;
+declare function use_old_TypeAliasDeclaration_FetchType(
+    use: TypeOnly<old.FetchType>);
+use_old_TypeAliasDeclaration_FetchType(
+    get_current_TypeAliasDeclaration_FetchType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FetchTypeInternal": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_FetchTypeInternal():
+    TypeOnly<old.FetchTypeInternal>;
+declare function use_current_TypeAliasDeclaration_FetchTypeInternal(
+    use: TypeOnly<current.FetchTypeInternal>);
+use_current_TypeAliasDeclaration_FetchTypeInternal(
+    get_old_TypeAliasDeclaration_FetchTypeInternal());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FetchTypeInternal": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_FetchTypeInternal():
+    TypeOnly<current.FetchTypeInternal>;
+declare function use_old_TypeAliasDeclaration_FetchTypeInternal(
+    use: TypeOnly<old.FetchTypeInternal>);
+use_old_TypeAliasDeclaration_FetchTypeInternal(
+    get_current_TypeAliasDeclaration_FetchTypeInternal());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICacheAndTracker": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ICacheAndTracker():
+    TypeOnly<old.ICacheAndTracker>;
+declare function use_current_InterfaceDeclaration_ICacheAndTracker(
+    use: TypeOnly<current.ICacheAndTracker>);
+use_current_InterfaceDeclaration_ICacheAndTracker(
+    get_old_InterfaceDeclaration_ICacheAndTracker());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICacheAndTracker": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ICacheAndTracker():
+    TypeOnly<current.ICacheAndTracker>;
+declare function use_old_InterfaceDeclaration_ICacheAndTracker(
+    use: TypeOnly<old.ICacheAndTracker>);
+use_old_InterfaceDeclaration_ICacheAndTracker(
+    get_current_InterfaceDeclaration_ICacheAndTracker());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IClpCompliantAppHeader": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IClpCompliantAppHeader():
@@ -68,6 +164,126 @@ declare function use_old_InterfaceDeclaration_IClpCompliantAppHeader(
     use: TypeOnly<old.IClpCompliantAppHeader>);
 use_old_InterfaceDeclaration_IClpCompliantAppHeader(
     get_current_InterfaceDeclaration_IClpCompliantAppHeader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_INonPersistentCache": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_INonPersistentCache():
+    TypeOnly<old.INonPersistentCache>;
+declare function use_current_InterfaceDeclaration_INonPersistentCache(
+    use: TypeOnly<current.INonPersistentCache>);
+use_current_InterfaceDeclaration_INonPersistentCache(
+    get_old_InterfaceDeclaration_INonPersistentCache());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_INonPersistentCache": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_INonPersistentCache():
+    TypeOnly<current.INonPersistentCache>;
+declare function use_old_InterfaceDeclaration_INonPersistentCache(
+    use: TypeOnly<old.INonPersistentCache>);
+use_old_InterfaceDeclaration_INonPersistentCache(
+    get_current_InterfaceDeclaration_INonPersistentCache());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspCache": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOdspCache():
+    TypeOnly<old.IOdspCache>;
+declare function use_current_InterfaceDeclaration_IOdspCache(
+    use: TypeOnly<current.IOdspCache>);
+use_current_InterfaceDeclaration_IOdspCache(
+    get_old_InterfaceDeclaration_IOdspCache());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspCache": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOdspCache():
+    TypeOnly<current.IOdspCache>;
+declare function use_old_InterfaceDeclaration_IOdspCache(
+    use: TypeOnly<old.IOdspCache>);
+use_old_InterfaceDeclaration_IOdspCache(
+    get_current_InterfaceDeclaration_IOdspCache());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspResponse": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOdspResponse():
+    TypeOnly<old.IOdspResponse<any>>;
+declare function use_current_InterfaceDeclaration_IOdspResponse(
+    use: TypeOnly<current.IOdspResponse<any>>);
+use_current_InterfaceDeclaration_IOdspResponse(
+    get_old_InterfaceDeclaration_IOdspResponse());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspResponse": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOdspResponse():
+    TypeOnly<current.IOdspResponse<any>>;
+declare function use_old_InterfaceDeclaration_IOdspResponse(
+    use: TypeOnly<old.IOdspResponse<any>>);
+use_old_InterfaceDeclaration_IOdspResponse(
+    get_current_InterfaceDeclaration_IOdspResponse());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPersistedFileCache": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPersistedFileCache():
+    TypeOnly<old.IPersistedFileCache>;
+declare function use_current_InterfaceDeclaration_IPersistedFileCache(
+    use: TypeOnly<current.IPersistedFileCache>);
+use_current_InterfaceDeclaration_IPersistedFileCache(
+    get_old_InterfaceDeclaration_IPersistedFileCache());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPersistedFileCache": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPersistedFileCache():
+    TypeOnly<current.IPersistedFileCache>;
+declare function use_old_InterfaceDeclaration_IPersistedFileCache(
+    use: TypeOnly<old.IPersistedFileCache>);
+use_old_InterfaceDeclaration_IPersistedFileCache(
+    get_current_InterfaceDeclaration_IPersistedFileCache());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPrefetchSnapshotContents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPrefetchSnapshotContents():
+    TypeOnly<old.IPrefetchSnapshotContents>;
+declare function use_current_InterfaceDeclaration_IPrefetchSnapshotContents(
+    use: TypeOnly<current.IPrefetchSnapshotContents>);
+use_current_InterfaceDeclaration_IPrefetchSnapshotContents(
+    get_old_InterfaceDeclaration_IPrefetchSnapshotContents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPrefetchSnapshotContents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPrefetchSnapshotContents():
+    TypeOnly<current.IPrefetchSnapshotContents>;
+declare function use_old_InterfaceDeclaration_IPrefetchSnapshotContents(
+    use: TypeOnly<old.IPrefetchSnapshotContents>);
+use_old_InterfaceDeclaration_IPrefetchSnapshotContents(
+    get_current_InterfaceDeclaration_IPrefetchSnapshotContents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -116,6 +332,30 @@ declare function use_old_InterfaceDeclaration_ISnapshotContents(
     use: TypeOnly<old.ISnapshotContents>);
 use_old_InterfaceDeclaration_ISnapshotContents(
     get_current_InterfaceDeclaration_ISnapshotContents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotContentsWithProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISnapshotContentsWithProps():
+    TypeOnly<old.ISnapshotContentsWithProps>;
+declare function use_current_InterfaceDeclaration_ISnapshotContentsWithProps(
+    use: TypeOnly<current.ISnapshotContentsWithProps>);
+use_current_InterfaceDeclaration_ISnapshotContentsWithProps(
+    get_old_InterfaceDeclaration_ISnapshotContentsWithProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotContentsWithProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISnapshotContentsWithProps():
+    TypeOnly<current.ISnapshotContentsWithProps>;
+declare function use_old_InterfaceDeclaration_ISnapshotContentsWithProps(
+    use: TypeOnly<old.ISnapshotContentsWithProps>);
+use_old_InterfaceDeclaration_ISnapshotContentsWithProps(
+    get_current_InterfaceDeclaration_ISnapshotContentsWithProps());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -356,6 +596,30 @@ declare function use_old_EnumDeclaration_SharingLinkHeader(
     use: TypeOnly<old.SharingLinkHeader>);
 use_old_EnumDeclaration_SharingLinkHeader(
     get_current_EnumDeclaration_SharingLinkHeader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SnapshotFormatSupportType": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_SnapshotFormatSupportType():
+    TypeOnly<old.SnapshotFormatSupportType>;
+declare function use_current_EnumDeclaration_SnapshotFormatSupportType(
+    use: TypeOnly<current.SnapshotFormatSupportType>);
+use_current_EnumDeclaration_SnapshotFormatSupportType(
+    get_old_EnumDeclaration_SnapshotFormatSupportType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SnapshotFormatSupportType": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_SnapshotFormatSupportType():
+    TypeOnly<current.SnapshotFormatSupportType>;
+declare function use_old_EnumDeclaration_SnapshotFormatSupportType(
+    use: TypeOnly<old.SnapshotFormatSupportType>);
+use_old_EnumDeclaration_SnapshotFormatSupportType(
+    get_current_EnumDeclaration_SnapshotFormatSupportType());
 
 /*
 * Validate forward compat by using old type in place of current type

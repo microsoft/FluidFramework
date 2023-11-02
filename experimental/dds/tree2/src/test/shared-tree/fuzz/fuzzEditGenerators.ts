@@ -233,11 +233,14 @@ export const makeEditGenerator = (
 				// It'd be reasonable to move this to config. The idea is that by avoiding large deletions,
 				// we're more likely to generate more interesting outcomes.
 				const count = state.random.integer(1, Math.min(3, field.length - start));
+				const node = field.at(start);
+				// We computed 'start' in a way that guarantees it's in-bounds, so at() shouldn't have returned undefined.
+				assert(node !== undefined, "Tried to access a node that doesn't exist");
 				return {
 					type: "sequence",
 					edit: {
 						type: "delete",
-						firstNode: downPathFromNode(field.at(start)),
+						firstNode: downPathFromNode(node),
 						count,
 					},
 				};

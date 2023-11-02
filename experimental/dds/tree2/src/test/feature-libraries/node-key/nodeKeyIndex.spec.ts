@@ -145,31 +145,35 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		tree.schematizeView({
-			initialTree: {
-				[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
-				child: undefined,
+		tree.schematize(
+			{
+				initialTree: {
+					[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
+					child: undefined,
+				},
+				schema: nodeSchemaData,
+				allowedSchemaModifications: AllowedUpdateType.None,
 			},
-			schema: nodeSchemaData,
-			allowedSchemaModifications: AllowedUpdateType.None,
-		});
+			createMockNodeKeyManager(),
+		);
 
 		await provider.ensureSynchronized();
 
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		const view2 = tree2
-			.schematizeView({
+		const view2 = tree2.schematize(
+			{
 				initialTree: {
 					[nodeKeyFieldKey]: "not used",
 					child: undefined,
 				},
 				schema: nodeSchemaData,
 				allowedSchemaModifications: AllowedUpdateType.None,
-			})
+			},
 			// Since the key was produced with a MockNodeKeyManager, we must use one to process it.
-			.editableTree2(nodeSchemaData, createMockNodeKeyManager());
+			createMockNodeKeyManager(),
+		);
 		assertIds(view2.context.nodeKeys, [
 			view2.context.nodeKeys.localize(manager1.stabilizeNodeKey(key)),
 		]);
@@ -215,7 +219,7 @@ describe("Node Key Index", () => {
 		const nodeSchemaNoKey = builder2.map("node", SchemaBuilder.optional(Any));
 
 		const nodeSchemaDataNoKey = builder2.intoSchema(SchemaBuilder.optional(nodeSchemaNoKey));
-		assert(!nodeSchemaDataNoKey.treeSchema.has(nodeKeyTreeSchema.name));
+		assert(!nodeSchemaDataNoKey.nodeSchema.has(nodeKeyTreeSchema.name));
 
 		const nodeKeyManager = createMockNodeKeyManager();
 
