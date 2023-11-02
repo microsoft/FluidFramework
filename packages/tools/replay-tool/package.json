@@ -33,6 +33,7 @@
 		"tsc": "tsc"
 	},
 	"dependencies": {
+		"@fluid-experimental/ink": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -45,7 +46,6 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/file-driver": "workspace:~",
-		"@fluid-experimental/ink": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",

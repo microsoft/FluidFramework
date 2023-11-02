@@ -55,6 +55,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/attributor": "workspace:~",
+		"@fluid-experimental/ink": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/test-drivers": "workspace:~",
 		"@fluid-tools/version-tools": "^0.26.1",
@@ -69,7 +70,6 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluid-experimental/ink": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/ordered-collection": "workspace:~",

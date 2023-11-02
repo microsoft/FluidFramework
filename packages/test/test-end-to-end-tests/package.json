@@ -74,6 +74,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/attributor": "workspace:~",
+		"@fluid-experimental/ink": "workspace:~",
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/test-loader-utils": "workspace:~",
@@ -94,7 +95,6 @@
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluid-experimental/ink": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/merge-tree": "workspace:~",
