@@ -485,6 +485,13 @@ function getPreferredScriptLine(scriptLine: string) {
 		.join(" ");
 }
 
+/**
+ * Tests that given value is defined.
+ */
+function isDefined<T>(v: T | undefined): v is T {
+	return v !== undefined;
+}
+
 let privatePackages: Set<string>;
 
 const match = /(^|\/)package\.json/i;
@@ -493,11 +500,9 @@ export const handlers: Handler[] = [
 		name: "npm-package-metadata-and-sorting",
 		match,
 		handler: (file) => {
-			let jsonStr: string;
-			let json;
+			let json: PackageJson;
 			try {
-				jsonStr = readFile(file);
-				json = JSON.parse(jsonStr);
+				json = JSON.parse(readFile(file));
 			} catch (err) {
 				return "Error parsing JSON file: " + file;
 			}
@@ -626,7 +631,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-readmes",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -654,7 +659,7 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -702,7 +707,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-folder-name",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -730,7 +735,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-license",
 		match,
 		handler: (file, root) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -775,7 +780,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-prettier",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -874,7 +879,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-clean",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -909,7 +914,7 @@ export const handlers: Handler[] = [
 				return;
 			}
 			const commandDep = new Map(commandPackages);
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -922,7 +927,9 @@ export const handlers: Handler[] = [
 
 			if (hasScriptsField) {
 				const commands = new Set(
-					Object.values(json.scripts as string[]).map((s) => s.split(" ")[0]),
+					Object.values(json.scripts)
+						.filter(isDefined)
+						.map((s) => s.split(" ")[0]),
 				);
 				for (const command of commands.values()) {
 					const dep = commandDep.get(command);
@@ -947,7 +954,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-scripts-args",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -994,7 +1001,7 @@ export const handlers: Handler[] = [
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1044,7 +1051,7 @@ export const handlers: Handler[] = [
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1090,7 +1097,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: (file) => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -1128,7 +1135,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: (file) => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1189,7 +1196,7 @@ export const handlers: Handler[] = [
 		handler: (file) => {
 			// This rule enforces that we have a module field in the package iff we have a ESM build
 			// So that tools like webpack will pack up the right version.
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1225,7 +1232,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: (file) => {
 			// This rule enforces the "clean" script will delete all the build and test output
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
