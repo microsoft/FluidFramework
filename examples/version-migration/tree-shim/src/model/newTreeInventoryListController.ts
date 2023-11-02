@@ -3,18 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
+
 import {
 	AllowedUpdateType,
-	ForestType,
 	ISharedTree,
 	node,
 	ProxyNode,
 	SchemaBuilder,
-	SharedTreeFactory,
-	typeboxValidator,
 } from "@fluid-experimental/tree2";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
@@ -43,14 +41,6 @@ const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
 
 // This call finalizes the schema into an object we can pass to schematize.
 const schema = builder.intoSchema(inventorySchema);
-
-const newTreeFactory = new SharedTreeFactory({
-	jsonValidator: typeboxValidator,
-	// For now, ignore the forest argument - I think it's probably going away once the optimized one is ready anyway?  AB#6013
-	forest: ForestType.Reference,
-});
-
-const sharedTreeKey = "sharedTree";
 
 /**
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
@@ -92,63 +82,37 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 	};
 }
 
-export class NewTreeInventoryList extends DataObject implements IInventoryList {
-	private _sharedTree: ISharedTree | undefined;
-	private get sharedTree(): ISharedTree {
-		if (this._sharedTree === undefined) {
-			throw new Error("Not initialized properly");
-		}
-		return this._sharedTree;
+export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
+	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
+	public static initializeTree(tree: ISharedTree): void {
+		tree.schematize({
+			initialTree: {
+				inventoryItemList: {
+					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
+					"": [
+						{
+							id: uuid(),
+							name: "nut",
+							quantity: 0,
+						},
+						{
+							id: uuid(),
+							name: "bolt",
+							quantity: 0,
+						},
+					],
+				},
+			},
+			allowedSchemaModifications: AllowedUpdateType.None,
+			schema,
+		});
 	}
-	private _inventoryItemList: InventoryItemList | undefined;
-	private get inventoryItemList(): InventoryItemList {
-		if (this._inventoryItemList === undefined) {
-			throw new Error("Not initialized properly");
-		}
-		return this._inventoryItemList;
-	}
+
+	private readonly _inventoryItemList: InventoryItemList;
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
-	// TODO: Hook up to shim
-	public readonly writeOk = true;
-
-	public readonly addItem = (name: string, quantity: number) => {
-		this.inventoryItemList.insertAtEnd([
-			{
-				// In a real-world scenario, this is probably a known unique inventory ID (rather than
-				// randomly generated).  Randomly generating here just for convenience.
-				id: uuid(),
-				name,
-				quantity,
-			},
-		]);
-	};
-
-	public readonly getItems = (): IInventoryItem[] => {
-		return [...this._inventoryItems.values()];
-	};
-
-	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = this.runtime.createChannel(
-			undefined,
-			newTreeFactory.type,
-		) as ISharedTree;
-		this.root.set(sharedTreeKey, this._sharedTree.handle);
-		// Convenient repro for bug AB#5975
-		// const retrievedSharedTree = await this._sharedTree.handle.get();
-		// if (this._sharedTree !== retrievedSharedTree) {
-		// 	console.log(this._sharedTree, retrievedSharedTree);
-		// 	throw new Error("handle doesn't roundtrip on initial creation");
-		// }
-	}
-
-	// This would usually live in hasInitialized - I'm using initializingFromExisting here due to bug AB#5975.
-	protected async initializingFromExisting(): Promise<void> {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<ISharedTree>>(sharedTreeKey)!.get();
-	}
-
-	protected async hasInitialized(): Promise<void> {
+	public constructor(private readonly _tree: ISharedTree) {
+		super();
 		// Note that although we always pass initialTree, it's only actually used on the first load and
 		// is ignored on subsequent loads.  AB#5974
 		// The schematizeView() call does a few things:
@@ -157,7 +121,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		// 3. On all loads, gets an (untyped) view of the data (the contents can't be accessed directly from the sharedTree).
 		// Then the root2() call applies a typing to the untyped view based on our schema.  After that we can actually
 		// reach in and grab the inventoryItems list.
-		this._inventoryItemList = this.sharedTree.schematize({
+		this._inventoryItemList = this._tree.schematize({
 			initialTree: {
 				inventoryItemList: {
 					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
@@ -184,8 +148,8 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
 		// node.on() is the way to register events on the list (the first argument).  AB#6051
-		node.on(this.inventoryItemList, "afterChange", () => {
-			for (const inventoryItemNode of this.inventoryItemList) {
+		node.on(this._inventoryItemList, "afterChange", () => {
+			for (const inventoryItemNode of this._inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.
 				if (!this._inventoryItems.has(inventoryItemNode.id)) {
@@ -197,7 +161,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 			}
 
 			// Search for deleted inventory items to update our collection
-			const currentInventoryIds = this.inventoryItemList.map((inventoryItemNode) => {
+			const currentInventoryIds = this._inventoryItemList.map((inventoryItemNode) => {
 				return inventoryItemNode.id;
 			});
 			for (const trackedItemId of this._inventoryItems.keys()) {
@@ -211,11 +175,27 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		});
 
 		// Last step of initializing is to populate our map of InventoryItems.
-		for (const inventoryItemNode of this.inventoryItemList) {
+		for (const inventoryItemNode of this._inventoryItemList) {
 			const inventoryItem = this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
 			this._inventoryItems.set(inventoryItemNode.id, inventoryItem);
 		}
 	}
+
+	public readonly addItem = (name: string, quantity: number) => {
+		this._inventoryItemList.insertAtEnd([
+			{
+				// In a real-world scenario, this is probably a known unique inventory ID (rather than
+				// randomly generated).  Randomly generating here just for convenience.
+				id: uuid(),
+				name,
+				quantity,
+			},
+		]);
+	};
+
+	public readonly getItems = (): IInventoryItem[] => {
+		return [...this._inventoryItems.values()];
+	};
 
 	private makeInventoryItemFromInventoryItemNode(
 		inventoryItemNode: InventoryItemNode,
@@ -223,21 +203,9 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		const removeItemFromTree = () => {
 			// We pass in the delete capability as a callback to withold this.inventory access from the
 			// inventory items.  AB#6015
-			this.inventoryItemList.removeAt(this.inventoryItemList.indexOf(inventoryItemNode));
+			this._inventoryItemList.removeAt(this._inventoryItemList.indexOf(inventoryItemNode));
 		};
 		const inventoryItem = new NewTreeInventoryItem(inventoryItemNode, removeItemFromTree);
 		return inventoryItem;
 	}
 }
-
-/**
- * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
- * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
- * scenario, the fourth argument is not used.
- */
-export const NewTreeInventoryListFactory = new DataObjectFactory<NewTreeInventoryList>(
-	"new-tree-inventory-list",
-	NewTreeInventoryList,
-	[newTreeFactory],
-	{},
-);
