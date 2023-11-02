@@ -216,8 +216,8 @@ export class AppData extends DataObject {
 	private generateSharedTree(runtime: IFluidDataStoreRuntime): ISharedTree {
 		const sharedTreeObject = this.castSharedTreeType();
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const factory = sharedTreeObject[FluidStaticEntryPoint].IChannelFactory!;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain
+		const factory = sharedTreeObject[FluidStaticEntryPoint]?.IChannelFactory!;
 		return runtime.createChannel(undefined, factory.type) as ISharedTree;
 	}
 

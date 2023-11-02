@@ -7,8 +7,6 @@
 import { AttachState } from '@fluidframework/container-definitions';
 import { BaseContainerRuntimeFactory } from '@fluidframework/aqueduct';
 import { ConnectionState } from '@fluidframework/container-definitions';
-import { FluidObject } from '@fluidframework/core-interfaces';
-import { FluidStaticEntryPoint } from '@fluidframework/core-interfaces';
 import { FluidStaticEntryPointProvider } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -112,7 +110,7 @@ export interface IServiceAudienceEvents<M extends IMember> extends IEvent {
 export type LoadableObjectClass<T extends IFluidLoadable> = FluidStaticEntryPointProvider & LoadableObjectCtor<T>;
 
 // @internal (undocumented)
-export type _LoadableObjectClass<T extends IFluidLoadable> = LoadableObjectCtor<T> & Record<FluidStaticEntryPoint, FluidObject<_ProvideChannelFactory & IFluidDataStoreFactory>>;
+export type _LoadableObjectClass<T extends IFluidLoadable> = LoadableObjectCtor<T> & FluidStaticEntryPointProvider<_ProvideChannelFactory & IFluidDataStoreFactory>;
 
 // @public
 export type LoadableObjectClassRecord = Record<string, LoadableObjectClass<any>>;

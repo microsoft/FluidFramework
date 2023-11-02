@@ -98,6 +98,6 @@ export type FluidStaticEntryPoint = typeof FluidStaticEntryPoint;
 /**
  * @public
  */
-export interface FluidStaticEntryPointProvider {
-	[FluidStaticEntryPoint]?: FluidObject;
+export interface FluidStaticEntryPointProvider<T = unknown> {
+	[FluidStaticEntryPoint]?: FluidObject<T>;
 }

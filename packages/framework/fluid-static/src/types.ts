@@ -4,11 +4,9 @@
  */
 
 import {
-	FluidObject,
 	IEvent,
 	IEventProvider,
 	IFluidLoadable,
-	FluidStaticEntryPoint,
 	FluidStaticEntryPointProvider,
 } from "@fluidframework/core-interfaces";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
@@ -44,7 +42,7 @@ export interface _ProvideChannelFactory {
  * @internal
  */
 export type _LoadableObjectClass<T extends IFluidLoadable> = LoadableObjectCtor<T> &
-	Record<FluidStaticEntryPoint, FluidObject<_ProvideChannelFactory & IFluidDataStoreFactory>>;
+	FluidStaticEntryPointProvider<_ProvideChannelFactory & IFluidDataStoreFactory>;
 
 /**
  * An object with a constructor that will return an {@link @fluidframework/core-interfaces#IFluidLoadable}.

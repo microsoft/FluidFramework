@@ -37,9 +37,9 @@ export const FluidStaticEntryPoint: unique symbol;
 export type FluidStaticEntryPoint = typeof FluidStaticEntryPoint;
 
 // @public (undocumented)
-export interface FluidStaticEntryPointProvider {
+export interface FluidStaticEntryPointProvider<T = unknown> {
     // (undocumented)
-    [FluidStaticEntryPoint]?: FluidObject;
+    [FluidStaticEntryPoint]?: FluidObject<T>;
 }
 
 // @public

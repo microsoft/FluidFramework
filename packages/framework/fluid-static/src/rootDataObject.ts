@@ -122,8 +122,8 @@ export class RootDataObject
 		dataObjectClass: _LoadableObjectClass<T>,
 	): Promise<T> {
 		// needs error handling
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const factory = dataObjectClass[FluidStaticEntryPoint].IFluidDataStoreFactory!;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain
+		const factory = dataObjectClass[FluidStaticEntryPoint]?.IFluidDataStoreFactory!;
 		const packagePath = [...this.context.packagePath, factory.type];
 		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
 		const entryPoint = await dataStore.entryPoint.get();
@@ -134,8 +134,8 @@ export class RootDataObject
 		sharedObjectClass: _LoadableObjectClass<T>,
 	): T {
 		// needs error handling
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const factory = sharedObjectClass[FluidStaticEntryPoint].IChannelFactory!;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-non-null-asserted-optional-chain
+		const factory = sharedObjectClass[FluidStaticEntryPoint]?.IChannelFactory!;
 		const obj = this.runtime.createChannel(undefined, factory.type);
 		return obj as unknown as T;
 	}
