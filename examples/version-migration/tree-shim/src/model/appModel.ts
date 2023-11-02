@@ -10,7 +10,7 @@ import type {
 } from "../modelInterfaces";
 
 /**
- * The InventoryListAppModel just provides the inventoryList.
+ * The InventoryListAppModel just provides the inventory list, which is also capable of migrating its backing data.
  */
 export class InventoryListAppModel implements IInventoryListAppModel {
 	public constructor(

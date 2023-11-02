@@ -6,6 +6,7 @@
 import React, { useEffect, useState } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces";
+// eslint-disable-next-line import/no-internal-modules
 import { InventoryList } from "../model/inventoryList";
 
 export interface IDebugViewProps {
@@ -25,7 +26,7 @@ export const DebugView: React.FC<IDebugViewProps> = ({ model }: IDebugViewProps)
 		return () => {
 			model.migratingInventoryList.off("backingDataChanged", onBackingDataChanged);
 		};
-	}, [model]);
+	}, [model, DEBUG]);
 
 	return (
 		<div>

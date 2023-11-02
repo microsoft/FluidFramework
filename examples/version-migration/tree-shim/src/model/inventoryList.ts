@@ -48,6 +48,14 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 		return this._writeOk;
 	}
 
+	private readonly isMigrated = () => {
+		const isMigrated = this.root.get<boolean>(isMigratedKey);
+		if (isMigrated === undefined) {
+			throw new Error("Not initialized properly");
+		}
+		return isMigrated;
+	};
+
 	public readonly addItem = (name: string, quantity: number) => {
 		this.model.addItem(name, quantity);
 	};
@@ -106,8 +114,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 
 		// TODO: This whole block becomes something like getting the shim.currentTree, checking which type it is, and
 		// instantiating the right model accordingly.
-		const isMigrated = this.root.get(isMigratedKey);
-		if (!isMigrated) {
+		if (!this.isMigrated()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const tree = await this.root
 				.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!
@@ -126,7 +133,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.
 	private async performMigration() {
 		// Do nothing if already migrated.
-		if (this.root.get(isMigratedKey) === true) {
+		if (this.isMigrated()) {
 			return;
 		}
 
@@ -152,7 +159,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 	// to make it easy to hook up to a debug button.
 	private readonly triggerMigration = () => {
 		// Do nothing if already migrated.
-		if (this.root.get(isMigratedKey) === true) {
+		if (this.isMigrated()) {
 			return;
 		}
 
@@ -165,7 +172,7 @@ export class InventoryList extends DataObject implements IInventoryList, IMigrat
 
 	public readonly DEBUG = {
 		triggerMigration: this.triggerMigration,
-		isMigrated: () => this.root.get(isMigratedKey),
+		isMigrated: this.isMigrated,
 	};
 }
 

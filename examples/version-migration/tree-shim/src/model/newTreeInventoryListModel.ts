@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import EventEmitter from "events";
+
 import {
 	AllowedUpdateType,
 	ISharedTree,
@@ -10,11 +12,11 @@ import {
 	ProxyNode,
 	SchemaBuilder,
 } from "@fluid-experimental/tree2";
+
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryItemEvents, IInventoryList } from "../modelInterfaces";
-import EventEmitter from "events";
 
 // To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
@@ -106,13 +108,7 @@ export class NewTreeInventoryListModel extends EventEmitter implements IInventor
 		});
 	}
 
-	private _inventoryItemList: InventoryItemList | undefined;
-	private get inventoryItemList(): InventoryItemList {
-		if (this._inventoryItemList === undefined) {
-			throw new Error("Not initialized properly");
-		}
-		return this._inventoryItemList;
-	}
+	private readonly _inventoryItemList: InventoryItemList;
 	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
 
 	public constructor(private readonly _tree: ISharedTree) {
@@ -154,8 +150,8 @@ export class NewTreeInventoryListModel extends EventEmitter implements IInventor
 		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
 		// node.on() is the way to register events on the list (the first argument).  AB#6051
-		node.on(this.inventoryItemList, "afterChange", () => {
-			for (const inventoryItemNode of this.inventoryItemList) {
+		node.on(this._inventoryItemList, "afterChange", () => {
+			for (const inventoryItemNode of this._inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.
 				if (!this._inventoryItems.has(inventoryItemNode.id)) {
@@ -167,7 +163,7 @@ export class NewTreeInventoryListModel extends EventEmitter implements IInventor
 			}
 
 			// Search for deleted inventory items to update our collection
-			const currentInventoryIds = this.inventoryItemList.map((inventoryItemNode) => {
+			const currentInventoryIds = this._inventoryItemList.map((inventoryItemNode) => {
 				return inventoryItemNode.id;
 			});
 			for (const trackedItemId of this._inventoryItems.keys()) {
@@ -181,14 +177,14 @@ export class NewTreeInventoryListModel extends EventEmitter implements IInventor
 		});
 
 		// Last step of initializing is to populate our map of InventoryItems.
-		for (const inventoryItemNode of this.inventoryItemList) {
+		for (const inventoryItemNode of this._inventoryItemList) {
 			const inventoryItem = this.makeInventoryItemFromInventoryItemNode(inventoryItemNode);
 			this._inventoryItems.set(inventoryItemNode.id, inventoryItem);
 		}
 	}
 
 	public readonly addItem = (name: string, quantity: number) => {
-		this.inventoryItemList.insertAtEnd([
+		this._inventoryItemList.insertAtEnd([
 			{
 				// In a real-world scenario, this is probably a known unique inventory ID (rather than
 				// randomly generated).  Randomly generating here just for convenience.
@@ -209,7 +205,7 @@ export class NewTreeInventoryListModel extends EventEmitter implements IInventor
 		const removeItemFromTree = () => {
 			// We pass in the delete capability as a callback to withold this.inventory access from the
 			// inventory items.  AB#6015
-			this.inventoryItemList.removeAt(this.inventoryItemList.indexOf(inventoryItemNode));
+			this._inventoryItemList.removeAt(this._inventoryItemList.indexOf(inventoryItemNode));
 		};
 		const inventoryItem = new NewTreeInventoryItem(inventoryItemNode, removeItemFromTree);
 		return inventoryItem;
