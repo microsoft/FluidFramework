@@ -17,6 +17,10 @@ import {
 	ContextuallyTypedNodeData,
 	Any,
 	TreeStatus,
+	TreeFieldSchema,
+	SchemaBuilderInternal,
+	boxedIterator,
+	TreeSchema,
 } from "../../feature-libraries";
 import { brand, fail, TransactionResult } from "../../util";
 import {
@@ -150,6 +154,60 @@ describe("SharedTree", () => {
 			});
 			// Initial tree should not be applied
 			assert.equal(schematized.root, undefined);
+		});
+	});
+
+	describe("requireSchema", () => {
+		const factory = new SharedTreeFactory({
+			jsonValidator: typeboxValidator,
+			forest: ForestType.Reference,
+		});
+		const schemaEmpty = new SchemaBuilderInternal({
+			scope: "com.fluidframework.test",
+			lint: { rejectEmpty: false, rejectForbidden: false },
+		}).intoSchema(TreeFieldSchema.empty);
+
+		function updateSchema(tree: SharedTree, schema: TreeSchema): void {
+			tree.storedSchema.update(schema);
+			// Workaround to trigger for schema update batching kludge in afterSchemaChanges
+			tree.view.events.emit("afterBatch");
+		}
+
+		it("empty", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const view = tree.requireSchema(schemaEmpty, () => assert.fail()) ?? assert.fail();
+			assert.deepEqual([...view.editableTree2(schemaEmpty)[boxedIterator]()], []);
+		});
+
+		it("differing schema errors and schema change callback", () => {
+			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
+			const builder = new SchemaBuilder({ scope: "test" });
+			const schemaGeneralized = builder.intoSchema(builder.optional(Any));
+			{
+				const view = tree.requireSchema(schemaGeneralized, () => assert.fail());
+				assert.equal(view, undefined);
+			}
+
+			const log: string[] = [];
+			{
+				const view = tree.requireSchema(schemaEmpty, () => log.push("empty"));
+				assert(view !== undefined);
+			}
+			assert.deepEqual(log, []);
+			updateSchema(tree, schemaGeneralized);
+
+			assert.deepEqual(log, ["empty"]);
+
+			{
+				const view = tree.requireSchema(schemaGeneralized, () =>
+					// TypeScript's type narrowing turned "log" into never[] here since it assumes methods never modify anything, so we have to cast it back to a string[]:
+					(log as string[]).push("general"),
+				);
+				assert(view !== undefined);
+			}
+			assert.deepEqual(log, ["empty"]);
+			updateSchema(tree, schemaEmpty);
+			assert.deepEqual(log, ["empty", "general"]);
 		});
 	});
 
@@ -1653,7 +1711,7 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const otherLoadedTree = provider.trees[1];
-			expectSchemaEquality(tree.view.storedSchema, jsonSequenceRootSchema);
+			expectSchemaEquality(tree.contentSnapshot().schema, jsonSequenceRootSchema);
 			expectSchemaEquality(otherLoadedTree.storedSchema, jsonSequenceRootSchema);
 		});
 

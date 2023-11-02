@@ -18,7 +18,7 @@ describe("SharedTree proxies", () => {
 	});
 
 	const parentSchema = sb.object("parent", {
-		struct: childSchema,
+		object: childSchema,
 		list: sb.fieldNode("list", sb.sequence(sb.number)),
 		map: sb.map("map", sb.optional(sb.string)),
 	});
@@ -26,7 +26,7 @@ describe("SharedTree proxies", () => {
 	const schema = sb.intoSchema(parentSchema);
 
 	const initialTree = {
-		struct: { content: 42 },
+		object: { content: 42 },
 		list: [42, 42, 42],
 		map: new Map([
 			["foo", "Hello"],
@@ -34,10 +34,10 @@ describe("SharedTree proxies", () => {
 		]),
 	};
 
-	itWithRoot("cache and reuse structs", schema, initialTree, (root) => {
-		const structProxy = root.struct;
-		const structProxyAgain = root.struct;
-		assert.equal(structProxyAgain, structProxy);
+	itWithRoot("cache and reuse objects", schema, initialTree, (root) => {
+		const objectProxy = root.object;
+		const objectProxyAgain = root.object;
+		assert.equal(objectProxyAgain, objectProxy);
 	});
 
 	itWithRoot("cache and reuse lists", schema, initialTree, (root) => {
@@ -175,6 +175,96 @@ describe("SharedTreeList", () => {
 			const newItem = obj.create({ id: "B" });
 			list.insertAt(1, [newItem]);
 			assert.deepEqual(list, [{ id: "A" }, { id: "B" }, { id: "C" }]);
+		});
+	});
+
+	describe("inserting primitive", () => {
+		const _ = new SchemaBuilder({ scope: "test" });
+		const obj = _.object("Obj", {
+			numbers: _.list(_.number),
+			strings: _.list(_.string),
+			booleans: _.list(_.boolean),
+		});
+		const schema = _.intoSchema(obj);
+		const initialTree = { numbers: [], strings: [], booleans: [] };
+		itWithRoot("numbers", schema, initialTree, (root) => {
+			root.numbers.insertAtStart([0]);
+			root.numbers.insertAt(1, [1]);
+			root.numbers.insertAtEnd([2]);
+			assert.deepEqual(root.numbers, [0, 1, 2]);
+		});
+
+		itWithRoot("strings", schema, initialTree, (root) => {
+			// This test catches a usability regression in which strings can be passed directly as content to insert,
+			// because strings are also iterables of strings. Passing a string directly as an iterable is very likely not what the user intends.
+			root.strings.insertAtStart(["a"]);
+			root.strings.insertAt(1, ["b"]);
+			root.strings.insertAtEnd(["c"]);
+
+			const string: string = "hello";
+			const stringLiteral: "hello" = "hello" as const;
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(stringLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAt(0, stringLiteral);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(string);
+			});
+			assert.throws(() => {
+				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtEnd(stringLiteral);
+			});
+
+			// TODO: It would be nice if there were a way to prevent these unions at compile time as well.
+			// However, it might take some complicated type magic.
+			const iterableOrString: Iterable<string> | string = "hello";
+			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
+			assert.throws(() => {
+				root.strings.insertAtStart(iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAtStart(iterableOrLiteral);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, iterableOrLiteral);
+			});
+			assert.throws(() => {
+				root.strings.insertAtEnd(iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAtEnd(iterableOrLiteral);
+			});
+
+			const de: Iterable<string> = "de"[Symbol.iterator]();
+			root.strings.insertAtStart(de);
+			const fg: Iterable<string> = "fg"[Symbol.iterator]();
+			root.strings.insertAt(3, fg);
+			const hi: Iterable<string> = "hi"[Symbol.iterator]();
+			root.strings.insertAtEnd(hi);
+			assert.deepEqual(root.strings, ["d", "e", "a", "f", "g", "b", "c", "h", "i"]);
+		});
+
+		itWithRoot("booleans", schema, initialTree, (root) => {
+			root.booleans.insertAtStart([true]);
+			root.booleans.insertAt(1, [false]);
+			root.booleans.insertAtEnd([true]);
+			assert.deepEqual(root.booleans, [true, false, true]);
 		});
 	});
 
@@ -507,5 +597,35 @@ describe("SharedTreeMap", () => {
 		assert.equal(root.map.has("foo"), true);
 		assert.equal(root.map.has("bar"), true);
 		assert.equal(root.map.has("baz"), false);
+	});
+
+	itWithRoot("set", schema, initialTree, (root) => {
+		// Insert new value
+		root.map.set("baz", "42");
+		assert.equal(root.map.size, 3);
+		assert(root.map.has("baz"));
+		assert.equal(root.map.get("baz"), "42");
+
+		// Override existing value
+		root.map.set("baz", "37");
+		assert.equal(root.map.size, 3);
+		assert(root.map.has("baz"));
+		assert.equal(root.map.get("baz"), "37");
+
+		// "Un-set" existing value
+		root.map.set("baz", undefined);
+		assert.equal(root.map.size, 2);
+		assert(!root.map.has("baz"));
+	});
+
+	itWithRoot("delete", schema, initialTree, (root) => {
+		// Delete existing value
+		root.map.delete("bar");
+		assert.equal(root.map.size, 1);
+		assert(!root.map.has("bar"));
+
+		// Delete non-present value
+		root.map.delete("baz");
+		assert.equal(root.map.size, 1);
 	});
 });
