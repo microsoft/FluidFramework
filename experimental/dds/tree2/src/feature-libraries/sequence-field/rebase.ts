@@ -182,8 +182,6 @@ function rebaseMarkList<TNodeChange>(
 		updateLineageState(lineageRecipients, detachBlocks, baseMark, baseRevision, metadata);
 	}
 
-	// TODO: Should not merge marks until the end of the rebase pass,
-	// since `lineageRecipients` stores direct references to rebased marks.
 	return mergedMarkList(rebasedMarks);
 }
 
