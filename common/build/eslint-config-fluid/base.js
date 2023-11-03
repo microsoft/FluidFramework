@@ -336,13 +336,7 @@ module.exports = {
 		"import/resolver": {
 			typescript: {
 				extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-				// alwaysTryTypes: true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
 			},
-			// typescript: true,
-			// node: {
-			// 	extensions: [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
-			// },
-			// node: true
 		},
 	},
 };
