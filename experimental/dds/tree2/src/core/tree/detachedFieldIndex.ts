@@ -18,7 +18,7 @@ import {
 import { FieldKey } from "../schema-stored";
 import { ICodecOptions, IJsonCodec, noopValidator } from "../../codec";
 import * as Delta from "./delta";
-import { Major, Minor } from "./detachedFieldIndexTypes";
+import { DetachedFieldSummaryType, Major, Minor } from "./detachedFieldIndexTypes";
 import { makeDetachedNodeToFieldCodec } from "./detachedFieldIndexCodec";
 
 /**
@@ -35,13 +35,7 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
 export class DetachedFieldIndex {
 	// TODO: don't store the field key in the index, it can be derived from the root ID
 	private detachedNodeToField: NestedMap<Major, Minor, ForestRootId> = new Map();
-	private readonly codec: IJsonCodec<
-		{
-			data: NestedMap<Major, Minor, ForestRootId>;
-			maxId: ForestRootId;
-		},
-		string
-	>;
+	private readonly codec: IJsonCodec<DetachedFieldSummaryType, string>;
 	private readonly options: ICodecOptions;
 
 	/**

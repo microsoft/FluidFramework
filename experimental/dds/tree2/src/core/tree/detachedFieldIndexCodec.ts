@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, IJsonCodec } from "../../codec";
-import { NestedMap, fail, forEachInNestedMap, setInNestedMap } from "../../util";
+import { fail, forEachInNestedMap, setInNestedMap } from "../../util";
 import { ForestRootId } from "./detachedFieldIndex";
 import { Format, Versioned, version } from "./detachedFieldIndexFormat";
 import { DetachedFieldSummaryType, Major, Minor } from "./detachedFieldIndexTypes";
@@ -16,10 +16,7 @@ export function makeDetachedNodeToFieldCodec({
 	const versionedValidator = validator.compile(Versioned);
 	const formatValidator = validator.compile(Format);
 	return {
-		encode: (data: {
-			data: NestedMap<Major, Minor, ForestRootId>;
-			maxId: ForestRootId;
-		}): string => {
+		encode: (data: DetachedFieldSummaryType): string => {
 			const detachedNodeToFieldData: [Major, Minor, ForestRootId][] = [];
 			forEachInNestedMap(data.data, (root, key1, key2) => {
 				detachedNodeToFieldData.push([key1, key2, root]);
@@ -36,12 +33,7 @@ export function makeDetachedNodeToFieldCodec({
 			assert(formatValidator.check(encoded), "Encoded schema should validate");
 			return JSON.stringify(encoded);
 		},
-		decode: (
-			data: string,
-		): {
-			data: NestedMap<Major, Minor, ForestRootId>;
-			maxId: ForestRootId;
-		} => {
+		decode: (data: string): DetachedFieldSummaryType => {
 			const parsed = JSON.parse(data);
 
 			if (!versionedValidator.check(parsed)) {
