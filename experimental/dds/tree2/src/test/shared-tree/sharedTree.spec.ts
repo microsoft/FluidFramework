@@ -212,6 +212,21 @@ describe("SharedTree", () => {
 		});
 	});
 
+	it("handle in op", async () => {
+		const provider = await TestTreeProvider.create(2);
+		assert(provider.trees[0].isAttached());
+		assert(provider.trees[1].isAttached());
+
+		const field = provider.trees[0].editor.optionalField({
+			parent: undefined,
+			field: rootFieldKey,
+		});
+		field.set(
+			singleTextCursor({ type: leaf.handle.name, value: provider.trees[0].handle }),
+			true,
+		);
+	});
+
 	it("editable-tree-2-end-to-end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e" });
 		const schema = builder.intoSchema(leaf.number);
