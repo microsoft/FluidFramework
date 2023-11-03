@@ -182,10 +182,10 @@ function rebaseMarkList<TNodeChange>(
 		updateLineageState(lineageRecipients, detachBlocks, baseMark, baseRevision, metadata);
 	}
 
-	return mergedMarkList(rebasedMarks);
+	return mergeMarkList(rebasedMarks);
 }
 
-function mergedMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
+function mergeMarkList<T>(marks: Mark<T>[]): Mark<T>[] {
 	const factory = new MarkListFactory<T>();
 	for (const mark of marks) {
 		factory.push(mark);
