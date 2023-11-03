@@ -159,7 +159,6 @@ describe("Odsp Error", () => {
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
 		if (
-			networkError.errorType !== OdspErrorTypes.genericNetworkError ||
 			!isIGenericNetworkError(networkError)
 		) {
 			assert.fail("networkError should be a genericNetworkError");
