@@ -4,8 +4,6 @@
  */
 
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { MountableView } from "@fluidframework/view-adapters";
 import { Constellation } from "@fluid-example/multiview-constellation-model";
@@ -41,12 +39,9 @@ const createAndAttachCoordinate = async (
 	name: string,
 ): Promise<ICoordinate> => {
 	const dataStore = await runtime.createDataStore(Coordinate.getFactory().type);
-	const aliasResult = await dataStore.trySetAlias(name);
-	const simpleCoordinateComponentRuntime =
-		aliasResult === "Success" ? dataStore : await runtime.getRootDataStore(name);
+	await dataStore.trySetAlias(name);
 
-	// eslint-disable-next-line import/no-deprecated
-	return requestFluidObject<ICoordinate>(simpleCoordinateComponentRuntime, "/");
+	return getDataStoreEntryPoint<ICoordinate>(runtime, name);
 };
 
 export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFactory {
@@ -140,13 +135,11 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 
 		// Create the constellation component
 		const dataStore = await runtime.createDataStore(Constellation.getFactory().type);
-		const aliasResult = await dataStore.trySetAlias(constellationComponentName);
-		const component =
-			aliasResult === "Success"
-				? dataStore
-				: await getDataStoreEntryPoint<Constellation>(runtime, constellationComponentName);
-		// eslint-disable-next-line import/no-deprecated
-		const constellationComponent = await requestFluidObject<Constellation>(component, "/");
+		await dataStore.trySetAlias(constellationComponentName);
+		const constellationComponent = await getDataStoreEntryPoint<Constellation>(
+			runtime,
+			constellationComponentName,
+		);
 
 		// Add a few stars
 		await constellationComponent.addStar(86, 74);
