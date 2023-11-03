@@ -19,7 +19,7 @@ describe("SharedTree proxies", () => {
 
 	const parentSchema = sb.object("parent", {
 		object: childSchema,
-		list: sb.fieldNode("list", sb.sequence(sb.number)),
+		list: sb.list(sb.number),
 		map: sb.map("map", sb.optional(sb.string)),
 	});
 
@@ -69,10 +69,11 @@ describe("SharedTreeObject", () => {
 	const parentSchema = sb.object("parent", {
 		content: sb.number,
 		child: numberChild,
+		optional: sb.optional(numberChild),
 		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],
-		map: sb.map("map", sb.optional(sb.string)),
+		map: sb.map("map", sb.string),
 		list: sb.list(numberChild),
 	});
 
@@ -81,6 +82,7 @@ describe("SharedTreeObject", () => {
 	const initialTree = {
 		content: 42,
 		child: { content: 42 },
+		optional: { content: 42 },
 		polyValue: "42",
 		polyChild: { content: "42", [typeNameSymbol]: stringChild.name },
 		polyValueChild: { content: 42 },
@@ -148,6 +150,22 @@ describe("SharedTreeObject", () => {
 			}
 		},
 	);
+
+	itWithRoot("can set fields", schema, initialTree, (root) => {
+		assert.equal(root.child.content, 42);
+		assert.equal(root.optional?.content, 42);
+		const newChild = numberChild.create({ content: 43 });
+		root.child = newChild;
+		assert.equal(root.child, newChild);
+		root.optional = numberChild.create(newChild);
+		assert.equal(root.optional.content, 43);
+	});
+
+	itWithRoot("can unset fields", schema, initialTree, (root) => {
+		assert.equal(root.optional?.content, 42);
+		root.optional = undefined;
+		assert.equal(root.optional, undefined);
+	});
 });
 
 describe("SharedTreeList", () => {
