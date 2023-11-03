@@ -154,16 +154,17 @@ export function OpLatencyView(): React.ReactElement {
 
 	return (
 		<div className={styles.mainContainer} data-testid="test-op-latency-view">
-			<h3>Op Latency</h3>
 			{renderInstructions ? (
-				<Body1Strong>
-					{`Unsampled telemetry has not been enabled in Devtools. To do so, open the web console and set the Disable Sampling flag to true using the following command:
-					localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`}
-					&nbsp;
-					{`This flag is only intended for local development with Devtools and should not be enabled in production scenarios.`}
-				</Body1Strong>
+				<Body1>
+					{`Unsampled telemetry has not been enabled and is necessary for this feature to work as designed. To enable it, open the web console and set the Disable Sampling flag to true using the following command:`}
+					<pre
+						style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}
+					>{`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`}</pre>
+					{`\nIMPORTANT: This flag is only intended for local development with Devtools and should not be enabled in production scenarios.`}
+				</Body1>
 			) : (
-				<div>
+				<div className={styles.mainContainer} data-testid="test-op-latency-view">
+					<h3>Op Latency</h3>
 					<DynamicComposedChart
 						margin={{
 							top: 15,
@@ -176,6 +177,7 @@ export function OpLatencyView(): React.ReactElement {
 							bottom: -5,
 						}}
 						yAxisUnitDisplayName="ms"
+						// NOTE: Because Op Latency data is not yet available, this is a placeholder
 						dataSets={[
 							durationOutboundBatchingData,
 							durationNetworkData,
