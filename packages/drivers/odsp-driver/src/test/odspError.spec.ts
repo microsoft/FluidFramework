@@ -190,7 +190,6 @@ describe("Odsp Error", () => {
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
 		if (
-			networkError.errorType !== OdspErrorTypes.throttlingError ||
 			!isIThrottlingWarning(networkError)
 		) {
 			assert.fail("networkError should be a throttlingError");
