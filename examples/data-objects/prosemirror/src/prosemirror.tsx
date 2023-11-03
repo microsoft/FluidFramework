@@ -6,8 +6,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-import { IFluidLoadable, IFluidHandle, FluidObject } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
+import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	FluidDataStoreRuntime,
+	FluidObjectHandle,
+	mixinRequestHandler,
+} from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import {
 	IMergeTreeInsertMsg,
@@ -24,7 +28,7 @@ import {
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
 import { EditorView } from "prosemirror-view";
-import { ILoader } from "@fluidframework/container-definitions";
+import { create404Response } from "@fluidframework/runtime-utils";
 
 import React, { useEffect, useRef } from "react";
 
@@ -67,12 +71,8 @@ function createTreeMarkerOps(
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
 export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvideRichTextEditor {
-	public static async load(
-		runtime: IFluidDataStoreRuntime,
-		context: IFluidDataStoreContext,
-		existing: boolean,
-	) {
-		const collection = new ProseMirror(runtime, context);
+	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
+		const collection = new ProseMirror(runtime);
 		await collection.initialize(existing);
 
 		return collection;
@@ -101,10 +101,7 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 	}
 	private readonly innerHandle: IFluidHandle<this>;
 
-	constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
-		private readonly context: IFluidDataStoreContext,
-	) {
+	constructor(private readonly runtime: IFluidDataStoreRuntime) {
 		super();
 
 		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
@@ -126,15 +123,17 @@ export class ProseMirror extends EventEmitter implements IFluidLoadable, IProvid
 		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
 		this.text = await this.root.get<IFluidHandle<SharedString>>("text")!.get();
 
-		const scope: FluidObject<ILoader> = this.context.scope;
-		if (scope.ILoader === undefined) {
-			throw new Error("scope must include ILoader");
-		}
 		this._collabManager = new FluidCollabManager(this.text);
 
 		// Access for debugging
 		// eslint-disable-next-line @typescript-eslint/dot-notation
 		window["easyComponent"] = this;
+	}
+
+	public async request(req: IRequest): Promise<IResponse> {
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
 	}
 }
 
@@ -147,7 +146,17 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		return new FluidDataStoreRuntime(
+		// request mixin in
+		const runtimeClass = mixinRequestHandler(
+			async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+				// The provideEntryPoint callback below always returns ProseMirror, so this cast is safe
+				const dataObject = (await runtimeArg.entryPoint.get()) as ProseMirror;
+				return dataObject.request?.(request);
+			},
+			FluidDataStoreRuntime,
+		);
+
+		return new runtimeClass(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
@@ -156,7 +165,7 @@ export class ProseMirrorFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
-			async (runtime: IFluidDataStoreRuntime) => ProseMirror.load(runtime, context, existing),
+			async (runtime: IFluidDataStoreRuntime) => ProseMirror.load(runtime, existing),
 		);
 	}
 }

@@ -50,6 +50,7 @@ export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntim
 			}),
 			runtimeOptions: this.runtimeOptions,
 			existing,
+			containerScope: context.scope,
 		});
 
 		if (!existing) {

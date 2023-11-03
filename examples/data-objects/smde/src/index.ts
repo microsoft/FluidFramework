@@ -42,7 +42,7 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 			context,
 			registryEntries: registry,
 			existing,
-			containerScope: undefined,
+			containerScope: context.scope,
 			provideEntryPoint: async (
 				containerRuntime: IContainerRuntime,
 			): Promise<IFluidMountableViewEntryPoint> => {

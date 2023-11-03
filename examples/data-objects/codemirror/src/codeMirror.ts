@@ -4,8 +4,12 @@
  */
 
 import { EventEmitter } from "events";
-import { IFluidLoadable, IFluidHandle } from "@fluidframework/core-interfaces";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore";
+import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	FluidDataStoreRuntime,
+	FluidObjectHandle,
+	mixinRequestHandler,
+} from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
 import {
@@ -14,6 +18,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
+import { create404Response } from "@fluidframework/runtime-utils";
 
 import { PresenceManager } from "./presence";
 
@@ -23,12 +28,8 @@ import { PresenceManager } from "./presence";
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
 export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable {
-	public static async load(
-		runtime: IFluidDataStoreRuntime,
-		context: IFluidDataStoreContext,
-		existing: boolean,
-	) {
-		const collection = new CodeMirrorComponent(runtime, context);
+	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
+		const collection = new CodeMirrorComponent(runtime);
 		await collection.initialize(existing);
 
 		return collection;
@@ -54,10 +55,7 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 
 	public readonly presenceManager: PresenceManager;
 
-	constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
-		/* Private */ context: IFluidDataStoreContext,
-	) {
+	constructor(private readonly runtime: IFluidDataStoreRuntime) {
 		super();
 		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
 		this.presenceManager = new PresenceManager(runtime);
@@ -78,6 +76,12 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable 
 		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
 		this._text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
 	}
+
+	public async request(req: IRequest): Promise<IResponse> {
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
+	}
 }
 
 export class SmdeFactory implements IFluidDataStoreFactory {
@@ -89,7 +93,17 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+		// request mixin in
+		const runtimeClass = mixinRequestHandler(
+			async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+				// The provideEntryPoint callback below always returns CodeMirrorComponent, so this cast is safe
+				const dataObject = (await runtimeArg.entryPoint.get()) as CodeMirrorComponent;
+				return dataObject.request?.(request);
+			},
+			FluidDataStoreRuntime,
+		);
+
+		return new runtimeClass(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
@@ -98,9 +112,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
-			async (_: IFluidDataStoreRuntime) =>
-				CodeMirrorComponent.load(runtime, context, existing),
+			async (runtime: IFluidDataStoreRuntime) => CodeMirrorComponent.load(runtime, existing),
 		);
-		return runtime;
 	}
 }
