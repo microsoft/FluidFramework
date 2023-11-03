@@ -133,7 +133,7 @@ export type FluidSerializableReadOnly =
 
 // TODO: replace test in FluidSerializer.encodeValue with this.
 export function isFluidHandle(value: unknown): value is IFluidHandle {
-	if (typeof value !== "object" || value === null) {
+	if (typeof value !== "object" || value === null || !("IFluidHandle" in value)) {
 		return false;
 	}
 
