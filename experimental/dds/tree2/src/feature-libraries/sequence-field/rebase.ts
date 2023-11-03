@@ -33,6 +33,7 @@ import {
 	getEndpoint,
 	isReattach,
 	splitMark,
+	isAttach,
 } from "./utils";
 import {
 	Changeset,
@@ -127,7 +128,7 @@ function rebaseMarkList<TNodeChange>(
 	// Each mark with empty input cells in `currMarkList` should have a lineage event added for all adjacent detaches in the base changeset.
 	// At the time we process an attach we don't know about detaches of later nodes,
 	// so we record marks which should have their lineage updated if we encounter a detach.
-	const lineageRecipients: Mark<TNodeChange>[] = [];
+	const lineageRecipients: LineageRecipientList = [];
 
 	// For each revision, stores a list of IDs of detaches encountered in the base changeset which are adjacent to the current position.
 	const detachBlocks = new Map<RevisionTag, IdRange[]>();
@@ -146,10 +147,18 @@ function rebaseMarkList<TNodeChange>(
 		// Note that we first add lineage for `baseMark` to `lineageRecipients`, then handle adding lineage to `rebasedMark`,
 		// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
 		// `rebasedMark` should already have a detach event for `baseMark`.
-		if (markEmptiesCells(baseMark) || isTransientEffect(baseMark)) {
+		if (
+			(markEmptiesCells(baseMark) || isTransientEffect(baseMark)) &&
+			!isInverseAttach(baseMark)
+		) {
 			const detachId = getOutputCellId(baseMark, baseRevision, metadata);
 			assert(detachId !== undefined, "Mark which empties cells should have a detach ID");
 			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
+			addIdRange(getOrAddEmptyToMap(detachBlocks, detachId.revision), {
+				id: detachId.localId,
+				count: baseMark.count,
+			});
+
 			addLineageToRecipients(
 				lineageRecipients,
 				detachId.revision,
@@ -163,30 +172,14 @@ function rebaseMarkList<TNodeChange>(
 				"Mark should have empty input cells after rebasing over a cell-emptying mark",
 			);
 
-			addIdRange(getOrAddEmptyToMap(detachBlocks, detachId.revision), {
-				id: detachId.localId,
-				count: baseMark.count,
-			});
-
-			if (!isInverseAttach(baseMark)) {
-				setMarkAdjacentCells(
-					rebasedMark,
-					detachBlocks.get(rebasedMark.cellId.revision) ?? [],
-				);
-			}
+			setMarkAdjacentCells(rebasedMark, detachBlocks.get(rebasedMark.cellId.revision) ?? []);
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
 			handleLineage(rebasedMark, lineageRecipients, detachBlocks, metadata);
 		}
 		rebasedMarks.push(rebasedMark);
-
-		if (!areOutputCellsEmpty(baseMark)) {
-			lineageRecipients.length = 0;
-
-			// TODO: Only clear detach blocks for revisions where this cell is known to be full
-			detachBlocks.clear();
-		}
+		updateLineageState(lineageRecipients, detachBlocks, baseMark, baseRevision, metadata);
 	}
 
 	// TODO: Should not merge marks until the end of the rebase pass,
@@ -717,16 +710,29 @@ function getMovedMark<T>(
 	return undefined;
 }
 
+type LineageRecipientList = (LineageRecipient | LineageGate)[];
+
+interface LineageRecipient {
+	readonly type: "Recipient";
+	readonly recipient: HasLineage;
+}
+
+interface LineageGate {
+	readonly type: "Gate";
+	readonly firstExcludedRevisionIndex: number;
+	readonly lastExcludedRevisionIndex: number;
+}
+
 function handleLineage<T>(
 	rebasedMark: Mark<T>,
-	lineageRecipients: Mark<T>[],
+	lineageRecipients: LineageRecipientList,
 	detachBlocks: Map<RevisionTag, IdRange[]>,
 	metadata: RevisionMetadataSource,
 ) {
-	const lineageHolder = getLineageHolder(rebasedMark);
+	const recipient = getLineageHolder(rebasedMark);
 
 	for (const revision of metadata.getIntentions()) {
-		tryRemoveLineageEvents(lineageHolder, revision);
+		tryRemoveLineageEvents(recipient, revision);
 	}
 
 	const cellRevision = getInputCellId(rebasedMark, undefined, undefined)?.revision;
@@ -735,24 +741,124 @@ function handleLineage<T>(
 	for (const [revision, detachBlock] of detachBlocks.entries()) {
 		if (index === undefined || index < getKnownRevisionIndex(revision, metadata)) {
 			for (const entry of detachBlock) {
-				addLineageEntry(lineageHolder, revision, entry.id, entry.count, entry.count);
+				addLineageEntry(recipient, revision, entry.id, entry.count, entry.count);
 			}
 		}
 	}
 
-	lineageRecipients.push(rebasedMark);
+	lineageRecipients.push({ type: "Recipient", recipient });
+}
+
+function updateLineageState(
+	lineageRecipients: LineageRecipientList,
+	detachBlocks: Map<RevisionTag, IdRange[]>,
+	baseMark: Mark<unknown>,
+	baseRevision: RevisionTag | undefined,
+	metadata: RevisionMetadataSource,
+) {
+	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark, baseRevision);
+	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
+	for (const revision of detachBlocks.keys()) {
+		const revisionIndex = getKnownRevisionIndex(revision, metadata);
+		if (attachRevisionIndex < revisionIndex && revisionIndex < detachRevisionIndex) {
+			detachBlocks.delete(revision);
+		}
+	}
+
+	if (-Infinity < detachRevisionIndex || attachRevisionIndex < Infinity) {
+		lineageRecipients.push({
+			type: "Gate",
+			firstExcludedRevisionIndex: attachRevisionIndex + 1,
+			lastExcludedRevisionIndex: detachRevisionIndex - 1,
+		});
+	}
+}
+
+function getAttachRevisionIndex(
+	metadata: RevisionMetadataSource,
+	baseMark: Mark<unknown>,
+	baseRevision: RevisionTag | undefined,
+): number {
+	if (!areInputCellsEmpty(baseMark)) {
+		return -Infinity;
+	}
+
+	if (markFillsCells(baseMark)) {
+		assert(isAttach(baseMark), "Onl attach marks can fill cells");
+		return getKnownRevisionIndex(
+			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
+			metadata,
+		);
+	}
+
+	if (isTransientEffect(baseMark)) {
+		return getKnownRevisionIndex(
+			baseMark.attach.revision ??
+				baseMark.revision ??
+				baseRevision ??
+				fail("Mark must have revision"),
+			metadata,
+		);
+	}
+
+	return Infinity;
+}
+
+function getDetachRevisionIndex(
+	metadata: RevisionMetadataSource,
+	baseMark: Mark<unknown>,
+	baseRevision: RevisionTag | undefined,
+): number {
+	if (!areOutputCellsEmpty(baseMark)) {
+		return Infinity;
+	}
+
+	if (markEmptiesCells(baseMark)) {
+		assert(isDetach(baseMark), "Only detach marks can empty cells");
+		return getKnownRevisionIndex(
+			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
+			metadata,
+		);
+	}
+
+	if (isTransientEffect(baseMark)) {
+		return getKnownRevisionIndex(
+			baseMark.detach.revision ??
+				baseMark.revision ??
+				baseRevision ??
+				fail("Mark must have revision"),
+			metadata,
+		);
+	}
+
+	return -Infinity;
 }
 
 function addLineageToRecipients(
-	recipients: Mark<unknown>[],
+	recipients: LineageRecipientList,
 	revision: RevisionTag,
 	id: ChangesetLocalId,
 	count: number,
 	metadata: RevisionMetadataSource,
 ) {
-	for (const mark of recipients) {
-		if (getInputCellId(mark, undefined, metadata)?.revision !== revision) {
-			addLineageEntry(getLineageHolder(mark), revision, id, count, 0);
+	const revisionIndex = getKnownRevisionIndex(revision, metadata);
+	for (let i = recipients.length - 1; i >= 0; i--) {
+		const entry = recipients[i];
+		const type = entry.type;
+		switch (type) {
+			case "Gate":
+				if (
+					entry.firstExcludedRevisionIndex <= revisionIndex &&
+					revisionIndex <= entry.lastExcludedRevisionIndex
+				) {
+					return;
+				}
+				break;
+			case "Recipient":
+				addLineageEntry(entry.recipient, revision, id, count, 0);
+				break;
+			default:
+				unreachableCase(type);
 		}
 	}
 }

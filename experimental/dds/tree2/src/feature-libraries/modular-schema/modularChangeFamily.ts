@@ -759,7 +759,15 @@ export function revisionMetadataSourceFromInfo(
 ): RevisionMetadataSource {
 	const getIndex = (revision: RevisionTag): number | undefined => {
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		return index >= 0 ? index : undefined;
+		if (index >= 0) {
+			return index;
+		}
+
+		const inverseIndex = revInfos.findIndex((revInfo) => revInfo.rollbackOf === revision);
+		if (inverseIndex >= 0) {
+			return revInfos.length - inverseIndex - 1;
+		}
+		return undefined;
 	};
 	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
 		if (revision === undefined) {

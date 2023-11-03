@@ -25,6 +25,7 @@ import {
 	rebaseOverComposition,
 	rebaseTagged,
 	toDelta,
+	withNormalizedLineage,
 	withoutLineage,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
@@ -258,16 +259,29 @@ describe("SequenceField - Rebaser Axioms", () => {
 		}
 	});
 
-	describe.skip("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
+	describe("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
 		// TODO: Support testing changesets with node changes.
 		// Currently node changes in B and C will incorrectly have the same input context, which is not correct.
 		const shallowTestChanges = testChanges.filter(
 			(change) => !["NestedChange", "MInsert"].includes(change[0]),
 		);
-		for (const [name1, makeChange1] of shallowTestChanges) {
-			for (const [name2, makeChange2] of shallowTestChanges) {
-				for (const [name3, makeChange3] of shallowTestChanges) {
-					const title = `${name1} ↷ [${name2}, ${name3}]`;
+
+		// TODO: Can we just rebase C over B?
+		const lineageFreeTestChanges = shallowTestChanges.filter(
+			(change) =>
+				![
+					"Revive",
+					"TransientRevive",
+					"ConflictedRevive",
+					"ReturnFrom",
+					"ReturnTo",
+				].includes(change[0]),
+		);
+
+		for (const [nameA, makeChange1] of shallowTestChanges) {
+			for (const [nameB, makeChange2] of shallowTestChanges) {
+				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
+					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
 					it(title, () => {
 						const a = tagChange(makeChange1(1, 1), tag1);
 						const b = tagChange(makeChange2(1, 1), tag2);
@@ -284,7 +298,13 @@ describe("SequenceField - Rebaser Axioms", () => {
 								{ revision: tag3 },
 							]),
 						);
-						assert.deepEqual(rebasedOverComposition, rebasedIndividually);
+
+						// TODO: Normalize lineages
+						// Sort entries
+						// Either merge as much as possible or split into single cell entries
+						const normalizedComposition = withNormalizedLineage(rebasedOverComposition);
+						const normalizedIndividual = withNormalizedLineage(rebasedIndividually);
+						assert.deepEqual(normalizedComposition, normalizedIndividual);
 					});
 				}
 			}
@@ -392,8 +412,8 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	});
 });
 
-describe.skip("SequenceField - Composed sandwich rebasing", () => {
-	it("Nested inserts rebasing", () => {
+describe("SequenceField - Composed sandwich rebasing", () => {
+	it("Nested inserts ↷ []", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
 		const insertB = tagChange(Change.insert(1, 1), tag2);
 		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
@@ -401,4 +421,9 @@ describe.skip("SequenceField - Composed sandwich rebasing", () => {
 		const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
 		assert.deepEqual(insertB2.change, insertB.change);
 	});
+
+	// it("Insert ↷ nested deletes", () => {
+	// 	const del1 = tagChange(Change.delete())
+	// 	const insert = tagChange(Change.insert(3, 1), tag3);
+	// });
 });
