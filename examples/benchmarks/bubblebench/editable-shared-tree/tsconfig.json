@@ -6,6 +6,7 @@
 		"lib": ["ESNext", "DOM"],
 		"outDir": "dist",
 		"jsx": "react",
+		"noImplicitAny": true,
 		"types": [
 			"react",
 			"react-dom",

@@ -108,9 +108,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	setContent(data: NewFieldContent): void;
 
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
-	 *
-	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
+	 * Context for controlling the EditableTree-1 nodes.
 	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
 	 */
 	readonly context: EditableTreeContext;
