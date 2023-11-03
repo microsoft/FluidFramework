@@ -1824,6 +1824,7 @@ importers:
 
   examples/data-objects/codemirror:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -1862,6 +1863,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
@@ -2248,6 +2250,7 @@ importers:
 
   examples/data-objects/multiview/container:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-example/multiview-constellation-model': workspace:~
       '@fluid-example/multiview-constellation-view': workspace:~
       '@fluid-example/multiview-coordinate-interface': workspace:~
@@ -2261,6 +2264,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.0.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -2293,6 +2297,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-example/example-utils': link:../../../utils/example-utils
       '@fluid-example/multiview-constellation-model': link:../constellation-model
       '@fluid-example/multiview-constellation-view': link:../constellation-view
       '@fluid-example/multiview-coordinate-interface': link:../interface
@@ -2303,6 +2308,7 @@ importers:
       '@fluidframework/aqueduct': link:../../../../packages/framework/aqueduct
       '@fluidframework/container-runtime': link:../../../../packages/runtime/container-runtime
       '@fluidframework/container-runtime-definitions': link:../../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces': link:../../../../packages/common/core-interfaces
       '@fluidframework/request-handler': link:../../../../packages/framework/request-handler
       '@fluidframework/runtime-utils': link:../../../../packages/runtime/runtime-utils
       '@fluidframework/view-adapters': link:../../../../packages/framework/view-adapters
@@ -2651,6 +2657,7 @@ importers:
 
   examples/data-objects/prosemirror:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2702,6 +2709,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
@@ -2873,6 +2881,7 @@ importers:
 
   examples/data-objects/smde:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
@@ -2892,6 +2901,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/view-adapters': workspace:~
+      '@fluidframework/view-interfaces': workspace:~
       '@types/events': ^3.0.0
       '@types/react': ^17.0.44
       '@types/simplemde': ^1.11.7
@@ -2910,6 +2920,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions': link:../../../packages/common/container-definitions
       '@fluidframework/container-runtime': link:../../../packages/runtime/container-runtime
@@ -2925,6 +2936,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
+      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       events: 3.3.0
       react: 17.0.2
       simplemde: 1.11.2
@@ -3092,6 +3104,7 @@ importers:
 
   examples/data-objects/todo:
     specifiers:
+      '@fluid-example/example-utils': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/aqueduct': workspace:~
@@ -3106,6 +3119,7 @@ importers:
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/test-utils': workspace:~
       '@fluidframework/view-adapters': workspace:~
+      '@fluidframework/view-interfaces': workspace:~
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
       '@types/jest-environment-puppeteer': 2.2.0
@@ -3134,6 +3148,7 @@ importers:
       webpack-dev-server: ~4.6.0
       webpack-merge: ^5.8.0
     dependencies:
+      '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/container-runtime-definitions': link:../../../packages/runtime/container-runtime-definitions
@@ -3142,6 +3157,7 @@ importers:
       '@fluidframework/runtime-utils': link:../../../packages/runtime/runtime-utils
       '@fluidframework/sequence': link:../../../packages/dds/sequence
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
+      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       react: 17.0.2
       react-dom: 17.0.2_react@17.0.2
       uuid: 9.0.1
@@ -3536,6 +3552,7 @@ importers:
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/tinylicious-driver': workspace:~
       '@fluidframework/view-adapters': workspace:~
+      '@fluidframework/view-interfaces': workspace:~
       '@microsoft/api-extractor': ^7.37.0
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
@@ -3567,6 +3584,7 @@ importers:
       '@fluidframework/task-manager': link:../../../packages/dds/task-manager
       '@fluidframework/tinylicious-driver': link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/view-adapters': link:../../../packages/framework/view-adapters
+      '@fluidframework/view-interfaces': link:../../../packages/framework/view-interfaces
       uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.26.2_bnjxas577mbdnhldblqqi36nsq
