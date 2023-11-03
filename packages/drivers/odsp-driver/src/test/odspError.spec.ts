@@ -34,20 +34,21 @@ describe("Odsp Error", () => {
 	/**
 	 * Checks if the input is an {@link IGenericNetworkError}.
 	 */
-	function isIGenericNetworkError(input: any): input is IGenericNetworkError {
+	function isIGenericNetworkError(input: unknown): input is IGenericNetworkError {
 		return (
-			input.errorType === DriverErrorTypes.genericNetworkError &&
-			input.statusCode !== undefined
+			(input as Partial<IGenericNetworkError>).errorType ===
+				DriverErrorTypes.genericNetworkError &&
+			(input as Partial<IGenericNetworkError>) !== undefined
 		);
 	}
 
 	/**
 	 * Checks if the input is an {@link IThrottlingWarning}.
 	 */
-	function isIThrottlingWarning(input: any): input is IThrottlingWarning {
+	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
 		return (
-			input.errorType === FluidErrorTypes.throttlingError &&
-			input.retryAfterSeconds !== undefined
+			(input as Partial<IThrottlingWarning>).errorType === FluidErrorTypes.throttlingError &&
+			(input as Partial<IThrottlingWarning>) !== undefined
 		);
 	}
 
