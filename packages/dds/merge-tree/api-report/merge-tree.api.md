@@ -99,7 +99,7 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 
 // @internal (undocumented)
 export class Client extends TypedEventEmitter<IClientEvents> {
-    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: PropertySet);
+    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: IMergeTreeOptions & PropertySet);
     // (undocumented)
     addLongClientId(longClientId: string): void;
     annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
@@ -634,8 +634,6 @@ export class Marker extends BaseSegment implements ReferencePosition {
     getProperties(): PropertySet | undefined;
     // (undocumented)
     getSegment(): this;
-    // (undocumented)
-    hasSimpleType(simpleTypeName: string): boolean;
     // (undocumented)
     static is(segment: ISegment): segment is Marker;
     // (undocumented)

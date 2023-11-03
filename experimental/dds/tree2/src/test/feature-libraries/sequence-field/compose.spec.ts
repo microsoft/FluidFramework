@@ -752,7 +752,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ modify", () => {
-		const move = Change.move(0, 1, 1);
+		const move = Change.move(0, 1, 2);
 		const changes = TestChange.mint([], 42);
 		const modify = Change.modify(1, changes);
 		const expected = [
@@ -765,7 +765,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ delete", () => {
-		const move = Change.move(1, 1, 3, brand(0));
+		const move = Change.move(1, 1, 4, brand(0));
 		const deletion = Change.delete(3, 1, brand(1));
 		const expected = [
 			{ count: 1 },
@@ -780,7 +780,7 @@ describe("SequenceField - Compose", () => {
 	it("return ○ return", () => {
 		const cellId1: ChangeAtomId = { revision: tag2, localId: brand(0) };
 		const cellId2: ChangeAtomId = { revision: tag3, localId: brand(0) };
-		const return1 = tagChange(Change.return(0, 1, 3, cellId1), tag3);
+		const return1 = tagChange(Change.return(0, 1, 4, cellId1), tag3);
 		const return2 = tagChange(Change.return(3, 1, 0, cellId2), tag4);
 		const actual = shallowCompose([return1, return2]);
 
@@ -853,8 +853,8 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ move (forward)", () => {
-		const move1 = Change.move(0, 1, 1, brand(0));
-		const move2 = Change.move(1, 1, 2, brand(1));
+		const move1 = Change.move(0, 1, 2, brand(0));
+		const move2 = Change.move(1, 1, 3, brand(1));
 		const actual = shallowCompose([makeAnonChange(move1), makeAnonChange(move2)]);
 		const expected = [
 			Mark.moveOut(1, brand(0), {
@@ -886,7 +886,7 @@ describe("SequenceField - Compose", () => {
 
 	it("move ○ move adjacent to starting position (back and forward)", () => {
 		const move1 = Change.move(1, 1, 0);
-		const move2 = Change.move(0, 1, 1);
+		const move2 = Change.move(0, 1, 2);
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		const expected = [
 			Mark.transient(
@@ -913,7 +913,7 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("move ○ move adjacent to starting position (forward and back)", () => {
-		const move1 = Change.move(0, 1, 1);
+		const move1 = Change.move(0, 1, 2);
 		const move2 = Change.move(1, 1, 0);
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		const expected = [
@@ -1075,10 +1075,10 @@ describe("SequenceField - Compose", () => {
 			[0, 1, 2],
 			[2, 1, 0],
 		]) {
-			const move1 = tagChange(Change.move(a, 1, b), tag1);
-			const move2 = tagChange(Change.move(b, 1, c), tag2);
+			const move1 = tagChange(Change.move(a, 1, b > a ? b + 1 : b), tag1);
+			const move2 = tagChange(Change.move(b, 1, c > b ? c + 1 : c), tag2);
 			const return2 = tagRollbackInverse(
-				Change.return(c, 1, b, { revision: tag2, localId: brand(0) }),
+				Change.return(c, 1, b > c ? b + 1 : b, { revision: tag2, localId: brand(0) }),
 				tag3,
 				tag2,
 			);
@@ -1094,13 +1094,13 @@ describe("SequenceField - Compose", () => {
 			[0, 1, 2],
 			[2, 1, 0],
 		]) {
-			const move1 = tagChange(Change.move(a, 1, b), tag1);
+			const move1 = tagChange(Change.move(a, 1, b > a ? b + 1 : b), tag1);
 			const return1 = tagRollbackInverse(
-				Change.return(b, 1, a, { revision: tag1, localId: brand(0) }),
+				Change.return(b, 1, a > b ? a + 1 : a, { revision: tag1, localId: brand(0) }),
 				tag2,
 				tag1,
 			);
-			const move2 = tagChange(Change.move(a, 1, c), tag3);
+			const move2 = tagChange(Change.move(a, 1, c > a ? c + 1 : c), tag3);
 			const part2 = shallowCompose([return1, move2]);
 			const composed = shallowCompose(
 				[move1, makeAnonChange(part2)],
@@ -1116,15 +1116,15 @@ describe("SequenceField - Compose", () => {
 			[0, 1, 2, 3],
 			[3, 2, 1, 0],
 		]) {
-			const move1 = tagChange(Change.move(a, 1, b), tag1);
-			const move2 = tagChange(Change.move(b, 1, c), tag2);
+			const move1 = tagChange(Change.move(a, 1, b > a ? b + 1 : b), tag1);
+			const move2 = tagChange(Change.move(b, 1, c > b ? c + 1 : c), tag2);
 			const part1 = shallowCompose([move1, move2]);
 			const return2 = tagRollbackInverse(
-				Change.return(c, 1, b, { revision: tag2, localId: brand(0) }),
+				Change.return(c, 1, b > c ? b + 1 : b, { revision: tag2, localId: brand(0) }),
 				tag3,
 				tag2,
 			);
-			const move3 = tagChange(Change.move(b, 1, d), tag4);
+			const move3 = tagChange(Change.move(b, 1, d > b ? d + 1 : d), tag4);
 			const part2 = shallowCompose([return2, move3]);
 			const composed = shallowCompose(
 				[makeAnonChange(part1), makeAnonChange(part2)],
@@ -1141,8 +1141,8 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("[move1, move2] ○ return1", () => {
-		const move1 = tagChange(Change.move(0, 1, 1), tag1);
-		const move2 = tagChange(Change.move(1, 1, 2), tag2);
+		const move1 = tagChange(Change.move(0, 1, 2), tag1);
+		const move2 = tagChange(Change.move(1, 1, 3), tag2);
 		const return1 = tagChange(
 			Change.return(2, 1, 0, { revision: tag1, localId: brand(0) }),
 			tag3,

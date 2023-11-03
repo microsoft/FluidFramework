@@ -16,7 +16,6 @@ import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { ITelemetryLoggerExt, LoggingError, UsageError } from "@fluidframework/telemetry-utils";
-import { IIntegerRange } from "./base";
 import { DoublyLinkedList, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants";
 import { LocalReferencePosition, SlidingPreference } from "./localReference";
@@ -62,13 +61,22 @@ import { SnapshotLoader } from "./snapshotLoader";
 import { IMergeTreeTextHelper } from "./textSegment";
 import { SnapshotV1 } from "./snapshotV1";
 import { ReferencePosition, DetachedReferencePosition } from "./referencePositions";
-import { MergeTree } from "./mergeTree";
+import { IMergeTreeOptions, MergeTree } from "./mergeTree";
 import { MergeTreeTextHelper } from "./MergeTreeTextHelper";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk";
 import { IMergeTreeClientSequenceArgs, IMergeTreeDeltaOpArgs } from "./index";
 
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
+
+/**
+ * A range [start, end)
+ * @internal
+ */
+export interface IIntegerRange {
+	start: number;
+	end: number;
+}
 
 /**
  * Emitted before this client's merge-tree normalizes its segments on reconnect, potentially
@@ -112,7 +120,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		// Passing this callback would be unnecessary if Client were merged with SharedSegmentSequence
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
 		public readonly logger: ITelemetryLoggerExt,
-		options?: PropertySet,
+		options?: IMergeTreeOptions & PropertySet,
 	) {
 		super();
 		this._mergeTree = new MergeTree(options);

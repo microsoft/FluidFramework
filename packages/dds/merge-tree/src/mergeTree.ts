@@ -1445,13 +1445,14 @@ export class MergeTree {
 				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
 			const len =
 				this.nodeLength(child, refSeq, clientId) ?? (isLastChildBlock ? 0 : undefined);
+
 			if (len === undefined) {
-				// if the seg len in undefined, the segment
+				// if the seg len is undefined, the segment
 				// will be removed, so should just be skipped for now
 				continue;
-			} else {
-				assert(len >= 0, 0x4bc /* Length should not be negative */);
 			}
+
+			assert(len >= 0, 0x4bc /* Length should not be negative */);
 
 			if (_pos < len || (_pos === len && this.breakTie(_pos, child, seq))) {
 				// Found entry containing pos
@@ -1468,11 +1469,7 @@ export class MergeTree {
 						isLastNonLeafBlock,
 					);
 					if (splitNode === undefined) {
-						if (context.structureChange) {
-							this.nodeUpdateLengthNewStructure(block);
-						} else {
-							this.blockUpdateLength(block, seq, clientId);
-						}
+						this.blockUpdateLength(block, seq, clientId);
 						return undefined;
 					} else if (splitNode === MergeTree.theUnfinishedNode) {
 						_pos -= len; // Act as if shifted segment
@@ -1494,9 +1491,6 @@ export class MergeTree {
 						childIndex++; // Insert after
 					} else {
 						// No change
-						if (context.structureChange) {
-							this.nodeUpdateLengthNewStructure(block);
-						}
 						return undefined;
 					}
 				}
@@ -1528,11 +1522,7 @@ export class MergeTree {
 				if (fromSplit) {
 					this.nodeUpdateOrdinals(fromSplit);
 				}
-				if (context.structureChange) {
-					this.nodeUpdateLengthNewStructure(block);
-				} else {
-					this.blockUpdateLength(block, seq, clientId);
-				}
+				this.blockUpdateLength(block, seq, clientId);
 				return undefined;
 			} else {
 				// Don't update ordinals because higher block will do it
