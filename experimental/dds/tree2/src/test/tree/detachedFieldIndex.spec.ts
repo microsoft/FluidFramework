@@ -89,7 +89,7 @@ describe("DetachedFieldIndex", () => {
 				});
 			}
 		});
-		describe("throws malformed data", () => {
+		describe("throws on receiving malformed data", () => {
 			for (const [name, data] of malformedData) {
 				it(name, () => {
 					const id = idAllocatorFromMaxId() as IdAllocator<ForestRootId>;
