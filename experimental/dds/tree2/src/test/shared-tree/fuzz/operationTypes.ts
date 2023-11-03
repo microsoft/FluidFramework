@@ -89,6 +89,9 @@ export interface FuzzDelete extends NodeRangePath {
 
 export interface FuzzMove extends NodeRangePath {
 	type: "move";
+	/**
+	 * The index (pre-move) to move the sequence to.
+	 */
 	dstIndex: number;
 }
 
