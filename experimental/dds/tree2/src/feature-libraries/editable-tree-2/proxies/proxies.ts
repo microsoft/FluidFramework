@@ -16,10 +16,12 @@ import {
 	schemaIsObjectNode,
 	MapSchema,
 	FieldNodeSchema,
+	MapFieldSchema,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
 	FieldNode,
+	FlexibleFieldContent,
 	MapNode,
 	ObjectNode,
 	OptionalField,
@@ -586,7 +588,9 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
 			const node = getEditNode(this);
-			const { content, hydrateProxies } = extractFactoryContent(value as any);
+			const { content, hydrateProxies } = extractFactoryContent(
+				value as FlexibleFieldContent<MapFieldSchema>,
+			);
 			node.set(key, content);
 			hydrateProxies?.(getMapChildNode(node, key));
 			return this;
@@ -619,7 +623,7 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<SharedTreeMap<TSchema>>(
-		new Map<string, ProxyField<TSchema["mapFields"]>>(),
+		new Map<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -712,7 +716,7 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 		return extractContentObject(content);
 	} else {
 		return {
-			content, // `content` is a primitive, or `undefined`
+			content, // `content` is a primitive, fluid handle, or `undefined`
 			hydrateProxies: undefined,
 		};
 	}
