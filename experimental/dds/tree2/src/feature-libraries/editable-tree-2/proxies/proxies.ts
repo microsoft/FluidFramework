@@ -31,7 +31,7 @@ import {
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
-import { ContextuallyTypedNodeData, typeNameSymbol } from "../../contextuallyTyped";
+import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../../contextuallyTyped";
 import { createRawObjectNode, extractRawNodeContent } from "../rawObjectNode";
 import {
 	ProxyField,
@@ -687,6 +687,8 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 			map.set(k, extractFactoryContent(v));
 		}
 		return map as T;
+	} else if (isFluidHandle(content)) {
+		return content;
 	} else if (content !== null && typeof content === "object") {
 		const copy: Record<string, unknown> = {};
 		const editNode = tryGetEditNode(content);
