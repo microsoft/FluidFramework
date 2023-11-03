@@ -74,7 +74,7 @@ export interface ChangeRebaser<TChangeset> {
 	 * - `rebase(a, compose([]))` is equal to `a`.
 	 * - `rebase(compose([]), a)` is equal to `compose([])`.
 	 */
-	rebase(change: TChangeset, over: TaggedChange<TChangeset>): TChangeset;
+	rebase(change: TChangeset, ...over: TaggedChange<TChangeset>[]): TChangeset;
 }
 
 /**

@@ -315,7 +315,7 @@ describe("SharedTreeCore", () => {
 	// This test triggers 0x4a6 at the time of writing, as rebasing tree2's final edit over tree1's final edit
 	// didn't properly track state related to the detached node the edit affects.
 	// When unskipping this test, it may be desirable to add assertions verifying the final state of the two trees.
-	it.skip("Regression test for 0x4a6", async () => {
+	it.only("Regression test for 0x4a6", async () => {
 		const containerRuntimeFactory = new MockContainerRuntimeFactory();
 		const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();

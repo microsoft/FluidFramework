@@ -31,8 +31,9 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		...baseChanges: TaggedChange<TChangeset>[]
 	): TaggedChange<TChangeset> {
 		let currChange = change;
+		const metadata = defaultRevisionMetadataFromChanges([change, ...baseChanges]);
 		for (const base of baseChanges) {
-			currChange = tagChange(rebase(currChange.change, base), currChange.revision);
+			currChange = tagChange(rebase(currChange.change, base, metadata), currChange.revision);
 		}
 
 		return currChange;
@@ -75,8 +76,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 			);
 		}
 
-		assert.deepEqual(leftPartialCompositions.at(-1), singlyComposed);
-		assert.deepEqual(rightPartialCompositions.at(-1), singlyComposed);
+		try {
+			assert.deepEqual(leftPartialCompositions.at(-1), singlyComposed);
+			assert.deepEqual(rightPartialCompositions.at(-1), singlyComposed);
+		} catch (error) {
+			throw error;
+		}
 	}
 	// To limit combinatorial explosion, we test 'rebasing over a compose is equivalent to rebasing over the individual edits'
 	// by:
@@ -108,12 +113,47 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedEditsToRebaseOver.map(({ description }) => description),
 						)}`;
 
-						if (
-							title !==
-							'Rebase ChildChange1 over compose ["SetB,0","SetA,1","ChildChange90"]'
-						) {
-							continue;
-						}
+						// if (
+						// 	title !==
+						// 	'Rebase ChildChange1 over compose ["SetB,0","SetA,1","ChildChange90"]'
+						// ) {
+						// 	continue;
+						// }
+
+						// if (
+						// 	title !==
+						// 	'Rebase ChildChange1 over compose ["Delete","Undo:Delete","ChildChange44"]'
+						// ) {
+						// 	continue;
+						// }
+
+						// if (
+						// 	title !==
+						// 	'Rebase ChildChange1 over compose ["ChildChange1","SetA,1","Undo:SetA,1"]'
+						// ) {
+						// 	continue;
+						// }
+
+						// if (
+						// 	title !==
+						// 	'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","Undo:Undo:SetB,0","Undo:Undo:Undo:SetB,0"]'
+						// ) {
+						// 	continue;
+						// }
+
+						// if (
+						// 	title !==
+						// 	'Rebase ChildChange1 over compose ["SetB,0","SetA,1","ChildChange90"]'
+						// ) {
+						// 	continue;
+						// }
+
+						// if (
+						// 	title !==
+						// 	'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","ChildChange102"]'
+						// ) {
+						// 	continue;
+						// }
 
 						it(title, () => {
 							const editsToRebaseOver = namedEditsToRebaseOver.map(
@@ -182,7 +222,15 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// 	continue;
 						// }
 
-						// if (title !== 'Rebase ["SetB,0","ChildChange7"] over SetA,0') {
+						// if (title !== 'Rebase ["ChildChange1","ChildChange2"] over Delete') {
+						// 	continue;
+						// }
+
+						// if (title !== 'Rebase ["Delete","Undo:Delete"] over ChildChange1') {
+						// 	continue;
+						// }
+
+						// if (title !== 'Rebase ["SetA,0","ChildChange2"] over SetA,0') {
 						// 	continue;
 						// }
 

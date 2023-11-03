@@ -362,6 +362,20 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 								fail("No revision associated with prior inverse"),
 							localId: priorInverse.id,
 						};
+
+						// There's a matching prior inverse, but this is also an undo. so check both ...? lol
+						if (
+							fieldChange.newContent !== undefined &&
+							"revert" in fieldChange.newContent
+						) {
+							const renamedChanges = perChildChanges.get(
+								fieldChange.newContent.revert,
+							);
+							if (renamedChanges !== undefined) {
+								currentChildNodeChanges.push(...renamedChanges);
+								perChildChanges.delete(fieldChange.newContent.revert);
+							}
+						}
 					} else if (
 						fieldChange.newContent !== undefined &&
 						"revert" in fieldChange.newContent
@@ -369,6 +383,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						// We're restoring a node which previously existed.
 						// This is the ChangeAtomId for the revision which deleted the node we now recover.
 						currentActiveNodeId = "firstToDelete"; // fieldChange.newContent.revert;
+
+						const renamedChanges = perChildChanges.get(fieldChange.newContent.revert);
+						if (renamedChanges !== undefined) {
+							currentChildNodeChanges.push(...renamedChanges);
+							perChildChanges.delete(fieldChange.newContent.revert);
+						}
 					} else {
 						currentActiveNodeId = "firstToDelete";
 					}
@@ -506,55 +526,104 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const redirectTable = new ChildChangeMap<ContentId>();
 		const removerToAdder = new ChildChangeMap<ContentId>();
 
-		// const redirectTable = new ChildChangeMap<ContentId>();
-		{
-			let currentNode: ContentId = "start";
-			// todo: obvious kludge here
-			let fakeIds = 0;
-			for (const fieldChange of over.fieldChanges) {
-				const remover: ContentId = {
-					revision: fieldChange.revision ?? overTagged.revision,
-					localId: fieldChange.id,
+		if (over.fieldChanges.length > 0) {
+			redirectTable.set("end", "end");
+			const lastFieldChange = over.fieldChanges[over.fieldChanges.length - 1];
+			if (
+				lastFieldChange.newContent !== undefined &&
+				"revert" in lastFieldChange.newContent
+			) {
+				redirectTable.set(lastFieldChange.newContent.revert, "end");
+			}
+
+			for (let i = over.fieldChanges.length - 2; i >= 0; i--) {
+				let fieldChange1 = over.fieldChanges[i];
+				let fieldChange2 = over.fieldChanges[i + 1];
+
+				const removerContentId: ContentId = {
+					revision: fieldChange2.revision ?? overTagged.revision,
+					localId: fieldChange2.id,
 				};
-				redirectTable.set(currentNode, remover);
-				removerToAdder.set(remover, currentNode);
-				if (fieldChange.newContent !== undefined) {
-					if ("revert" in fieldChange.newContent) {
-						// Two options here: either revert via undo brings back the node which existed
-						// in the start context of the change it's undoing, OR it only does so if no
-						// intermediate field changes have happened.
-						// For now, assume the first.
-
-						// TODO: I think it's valid to just use 'remover' here as the fallback
-						const restoredNode: ContentId = removerToAdder.get(
-							fieldChange.newContent.revert,
-						) ?? {
-							revision: brand("made-up") as any,
-							localId: brand(fakeIds++),
-						};
-						// adderToRemover.set(currentNode, restoredNode);
-						// removerToAdder.set(restoredNode, currentNode);
-
-						// TODO: Feels like we're missing a 'set' here.
-						currentNode = restoredNode;
-					} else {
-						// this field change is a standard set.
-						// adderToRemover.set(currentNode, remover);
-						// removerToAdder.set(remover, currentNode);
-						currentNode = remover;
-					}
-				} else {
-					// this field change is a delete.
-					// adderToRemover.set(currentNode, remover);
-					// removerToAdder.set(remover, currentNode);
-					currentNode = remover;
+				redirectTable.set(
+					removerContentId,
+					redirectTable.get(removerContentId) ?? removerContentId,
+				);
+				if (fieldChange1.newContent !== undefined && "revert" in fieldChange1.newContent) {
+					// fieldChange1 revives a node that existed at some point in the past. Unify this ContentId with fieldChange2.
+					redirectTable.set(
+						fieldChange1.newContent.revert,
+						redirectTable.get(removerContentId) ?? removerContentId,
+					);
 				}
 			}
-			// currentNode is now the content id for whatever exists at the end of the over changeset.
-			redirectTable.set(currentNode, "start");
+
+			const firstFieldChange = over.fieldChanges[0];
+			const firstRemoverContentId: ContentId = {
+				revision: firstFieldChange.revision ?? overTagged.revision,
+				localId: firstFieldChange.id,
+			};
+			redirectTable.set(
+				firstRemoverContentId,
+				redirectTable.get(firstRemoverContentId) ?? firstRemoverContentId,
+			);
+			redirectTable.set(
+				"start",
+				redirectTable.get(firstRemoverContentId) ?? firstRemoverContentId,
+			);
+		} else {
+			redirectTable.set("end", "end");
+			redirectTable.set("start", "end");
 		}
 
-		// if (change.fieldChanges.length === 0) {
+		// const redirectTable = new ChildChangeMap<ContentId>();
+		// {
+		// 	let currentNode: ContentId = "start";
+		// 	// todo: obvious kludge here
+		// 	let fakeIds = 0;
+		// 	for (const fieldChange of over.fieldChanges) {
+		// 		const remover: ContentId = {
+		// 			revision: fieldChange.revision ?? overTagged.revision,
+		// 			localId: fieldChange.id,
+		// 		};
+		// 		redirectTable.set(currentNode, remover);
+		// 		removerToAdder.set(remover, currentNode);
+		// 		if (fieldChange.newContent !== undefined) {
+		// 			if ("revert" in fieldChange.newContent) {
+		// 				// Two options here: either revert via undo brings back the node which existed
+		// 				// in the start context of the change it's undoing, OR it only does so if no
+		// 				// intermediate field changes have happened.
+		// 				// For now, assume the first.
+
+		// 				// TODO: I think it's valid to just use 'remover' here as the fallback
+		// 				const restoredNode: ContentId = removerToAdder.get(
+		// 					fieldChange.newContent.revert,
+		// 				) ?? {
+		// 					revision: brand("made-up") as any,
+		// 					localId: brand(fakeIds++),
+		// 				};
+		// 				// adderToRemover.set(currentNode, restoredNode);
+		// 				// removerToAdder.set(restoredNode, currentNode);
+
+		// 				// TODO: Feels like we're missing a 'set' here.
+		// 				currentNode = restoredNode;
+		// 			} else {
+		// 				// this field change is a standard set.
+		// 				// adderToRemover.set(currentNode, remover);
+		// 				// removerToAdder.set(remover, currentNode);
+		// 				currentNode = remover;
+		// 			}
+		// 		} else {
+		// 			// this field change is a delete.
+		// 			// adderToRemover.set(currentNode, remover);
+		// 			// removerToAdder.set(remover, currentNode);
+		// 			currentNode = remover;
+		// 		}
+		// 	}
+		// 	// currentNode is now the content id for whatever exists at the end of the over changeset.
+		// 	redirectTable.set(currentNode, change.fieldChanges.length > 0 ? "start" : "end");
+		// }
+
+		// if (change.fieldChanges.length === 0 && over.fieldChanges.length > 0) {
 		// 	const maybeStartRedirect = redirectTable.get("start");
 		// 	if (maybeStartRedirect !== undefined) {
 		// 		redirectTable.set("end", maybeStartRedirect);
@@ -626,7 +695,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					// to the first removal. This assumes the list is ordered, which needs review.
 					// const overChildChange = overChildChanges.get(id) ?? over.childChanges?.[0][1];
 					const overChildChange = overChildChanges.get(
-						redirectTable.get(id) ?? id,
+						// this should be equivalent to just "start" lol
+						redirectTable.get(id === "end" ? "start" : id) ?? id,
 						// firstOverFieldChange !== undefined
 						// 	? {
 						// 			revision: firstOverFieldChange.revision ?? overTagged.revision,
@@ -663,28 +733,33 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						);
 						if (rebasedChild !== undefined) {
 							perChildChanges.set(
-								{
-									// TODO: Document this choice. This isn't really the revision that deleted the node, but
-									// the one that puts it back such that if we later ressurect it, the child changes will
-									// apply to it... this matches what the previous code/format did, but it's not well-documented
-									// why it's the right choice.
-									// See the "can rebase a node replacement and a dependent edit to the new node" test case.
-									// This might be making assumptions on sandwich rebasing a la rollback tags (which could be
-									// an obstacle for postbase)
-									revision: getIntention(
-										firstOverFieldChange?.revision ?? overTagged.revision,
-										revisionMetadata,
-									),
-									localId: firstOverFieldChange.id,
-								},
+								redirectTable.get(id === "end" ? "start" : id) ?? id,
+								// {
+								// 	// TODO: Document this choice. This isn't really the revision that deleted the node, but
+								// 	// the one that puts it back such that if we later ressurect it, the child changes will
+								// 	// apply to it... this matches what the previous code/format did, but it's not well-documented
+								// 	// why it's the right choice.
+								// 	// See the "can rebase a node replacement and a dependent edit to the new node" test case.
+								// 	// This might be making assumptions on sandwich rebasing a la rollback tags (which could be
+								// 	// an obstacle for postbase)
+								// 	revision: getIntention(
+								// 		firstOverFieldChange?.revision ?? overTagged.revision,
+								// 		revisionMetadata,
+								// 	),
+								// 	localId: firstOverFieldChange.id,
+								// },
 								rebasedChild,
 							);
 						}
 					}
 				} else {
+					const restoredRollbackTestId = {
+						revision: getIntention(id.revision, revisionMetadata),
+						localId: id.localId,
+					};
 					if (
 						(restoredRollbackChangeId !== undefined &&
-							areEqualContentIds(id, restoredRollbackChangeId)) ||
+							areEqualContentIds(restoredRollbackTestId, restoredRollbackChangeId)) ||
 						(restoredUndoChangeId !== undefined &&
 							areEqualContentIds(id, restoredUndoChangeId))
 					) {
@@ -841,7 +916,8 @@ export function optionalFieldIntoDelta(
 	const [_, childChange] =
 		change.childChanges?.find(
 			([changeId]) =>
-				changeId === "end" || (changeId === "start" && change.fieldChanges.length === 0),
+				changeId === "start" || (changeId === "end" && change.fieldChanges.length === 0),
+			// changeId === "end" || (changeId === "start" && change.fieldChanges.length === 0),
 		) ?? [];
 	if (childChange === undefined && change.fieldChanges.length === 0) {
 		return delta;
@@ -889,6 +965,7 @@ export function optionalFieldIntoDelta(
 			mark.attach = restoreId;
 		}
 		const childChanges = change.childChanges?.find(([id]) => id === "end")?.[1];
+		// TODO: why is this global?
 		if (childChanges !== undefined) {
 			const fields = deltaFromChild(childChanges);
 			delta.global = [{ id: mark.attach, fields }];

@@ -32,7 +32,11 @@ export function getSequentialEdits<TContent, TChangeset>(
  */
 export interface BoundFieldChangeRebaser<TChangeset> {
 	invert(change: TaggedChange<TChangeset>): TChangeset;
-	rebase(change: TChangeset, base: TaggedChange<TChangeset>): TChangeset;
+	rebase(
+		change: TChangeset,
+		base: TaggedChange<TChangeset>,
+		metadata?: RevisionMetadataSource,
+	): TChangeset;
 	/**
 	 * Rebase the provided change over the composition of a set of base changes.
 	 *

@@ -75,7 +75,7 @@ describe.only("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			skipMinimization: true,
+			// skipMinimization: true,
 		};
 		createDDSFuzzSuite(model, options);
 	});

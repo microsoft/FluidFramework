@@ -1724,6 +1724,85 @@ describe.only("Editing", () => {
 	});
 
 	describe("Optional Field", () => {
+		/**
+		 * [
+    {
+        "type": "synchronize"
+    },
+    {
+        "type": "edit",
+        "contents": {
+            "type": "fieldEdit",
+            "change": {
+                "type": "optional",
+                "edit": {
+                    "type": "set",
+                    "key": "rootFieldKey",
+                    "value": {
+                        "type": "com.fluidframework.leaf.number",
+                        "value": 1510065716437105
+                    }
+                }
+            }
+        },
+        "clientId": "C"
+    },
+    {
+        "type": "edit",
+        "contents": {
+            "type": "fieldEdit",
+            "change": {
+                "type": "optional",
+                "edit": {
+                    "type": "set",
+                    "key": "rootFieldKey",
+                    "value": {
+                        "type": "tree2fuzz.node",
+                        "fields": {
+                            "requiredChild": [
+                                {
+                                    "type": "com.fluidframework.leaf.number",
+                                    "value": 6033343467622415
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "clientId": "B"
+    },
+    {
+        "type": "edit",
+        "contents": {
+            "type": "fieldEdit",
+            "change": {
+                "type": "required",
+                "edit": {
+                    "type": "set",
+                    "parent": [],
+                    "key": "requiredChild",
+                    "value": {
+                        "type": "tree2fuzz.node",
+                        "fields": {
+                            "requiredChild": [
+                                {
+                                    "type": "com.fluidframework.leaf.number",
+                                    "value": -7735028191681597
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "clientId": "B"
+    },
+    {
+        "type": "synchronize"
+    }
+]
+		 */
 		// minimization of seed 14 top-level fuzz test.
 		// relates to compose associativity.
 		it("can rebase TODO naming", () => {
@@ -1747,7 +1826,6 @@ describe.only("Editing", () => {
 			expectJsonTree([tree3], [{ foo: "3" }]);
 		});
 
-		// TODO unskip these tests once optional fields track transient nodes
 		it("can rebase a node replacement and a dependent edit to the new node", () => {
 			const tree1 = makeTreeFromJson([]);
 			const tree2 = tree1.fork();
@@ -1755,6 +1833,25 @@ describe.only("Editing", () => {
 			tree1.editor.optionalField(rootField).set(singleJsonCursor("41"), true);
 
 			tree2.editor.optionalField(rootField).set(singleJsonCursor({ foo: "42" }), true);
+
+			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
+			editor.set(singleTextCursor({ type: leaf.string.name, value: "43" }));
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], [{ foo: "43" }]);
+		});
+
+		it("can rebase a node replacement and a dependent edit to the new node incrementally", () => {
+			const tree1 = makeTreeFromJson([]);
+			const tree2 = tree1.fork();
+
+			tree1.editor.optionalField(rootField).set(singleJsonCursor("41"), true);
+
+			tree2.editor.optionalField(rootField).set(singleJsonCursor({ foo: "42" }), true);
+
+			tree1.merge(tree2, false);
 
 			const editor = tree2.editor.valueField({ parent: rootNode, field: brand("foo") });
 			editor.set(singleTextCursor({ type: leaf.string.name, value: "43" }));

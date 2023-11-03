@@ -118,11 +118,13 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 function rebase(
 	change: OptionalChangeset,
 	base: TaggedChange<OptionalChangeset>,
+	metadataArg?: RevisionMetadataSource,
 ): OptionalChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
-	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+	const metadata =
+		metadataArg ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
 	const moveEffects = failCrossFieldManager;
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	return optionalChangeRebaser.rebase(

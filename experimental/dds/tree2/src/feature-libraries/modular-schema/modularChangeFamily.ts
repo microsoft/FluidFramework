@@ -417,75 +417,84 @@ export class ModularChangeFamily
 
 	public rebase(
 		change: ModularChangeset,
-		over: TaggedChange<ModularChangeset>,
+		...overs: TaggedChange<ModularChangeset>[]
 	): ModularChangeset {
-		const maxId = Math.max(change.maxId ?? -1, over.change.maxId ?? -1);
-		const idState: IdAllocationState = { maxId };
-		const genId: IdAllocator = idAllocatorFromState(idState);
-		const crossFieldTable: RebaseTable = {
-			...newCrossFieldTable<FieldChange>(),
-			baseMapToRebased: new Map(),
-			baseChangeToContext: new Map(),
-			baseMapToParentField: new Map(),
-		};
-
-		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
+		let currentChange: ModularChangeset = change;
 		const revInfos: RevisionInfo[] = [];
-		revInfos.push(...revisionInfoFromTaggedChange(over));
+		for (const over of overs) {
+			revInfos.push(...revisionInfoFromTaggedChange(over));
+		}
+
 		if (change.revisions !== undefined) {
 			revInfos.push(...change.revisions);
 		}
+
+		// Problem appears to be here: we're not getting revision metadata from all relevant changes in the sandwich.
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
-		const rebasedFields = this.rebaseFieldMap(
-			change.fieldChanges,
-			tagChange(over.change.fieldChanges, over.revision),
-			genId,
-			crossFieldTable,
-			() => true,
-			revisionMetadata,
-			constraintState,
-		);
 
-		const rebasedChangeset = makeModularChangeset(
-			rebasedFields,
-			idState.maxId,
-			change.revisions,
-			constraintState.violationCount,
-		);
-		crossFieldTable.baseMapToRebased.set(over.change.fieldChanges, rebasedChangeset);
+		for (const over of overs) {
+			const maxId = Math.max(currentChange.maxId ?? -1, over.change.maxId ?? -1);
+			const idState: IdAllocationState = { maxId };
+			const genId: IdAllocator = idAllocatorFromState(idState);
+			const crossFieldTable: RebaseTable = {
+				...newCrossFieldTable<FieldChange>(),
+				baseMapToRebased: new Map(),
+				baseChangeToContext: new Map(),
+				baseMapToParentField: new Map(),
+			};
 
-		const constraintViolations = constraintState.violationCount;
+			const constraintState = newConstraintState(currentChange.constraintViolationCount ?? 0);
+			const rebasedFields = this.rebaseFieldMap(
+				currentChange.fieldChanges,
+				tagChange(over.change.fieldChanges, over.revision),
+				genId,
+				crossFieldTable,
+				() => true,
+				revisionMetadata,
+				constraintState,
+			);
 
-		crossFieldTable.invalidatedFields.clear();
-		const amendedFields = this.rebaseFieldMap(
-			rebasedChangeset.fieldChanges,
-			tagChange(over.change.fieldChanges, over.revision),
-			genId,
-			crossFieldTable,
-			() => true,
-			revisionMetadata,
-			constraintState,
-			true,
-		);
+			const rebasedChangeset = makeModularChangeset(
+				rebasedFields,
+				idState.maxId,
+				currentChange.revisions,
+				constraintState.violationCount,
+			);
+			crossFieldTable.baseMapToRebased.set(over.change.fieldChanges, rebasedChangeset);
 
-		// assert(
-		// 	crossFieldTable.invalidatedFields.size === 0,
-		// 	0x59f /* Should not need more than one amend pass. */,
-		// );
+			const constraintViolations = constraintState.violationCount;
 
-		assert(
-			constraintState.violationCount === constraintViolations,
-			0x5b4 /* Should not change constraint violation count during amend pass */,
-		);
+			crossFieldTable.invalidatedFields.clear();
+			const amendedFields = this.rebaseFieldMap(
+				rebasedChangeset.fieldChanges,
+				tagChange(over.change.fieldChanges, over.revision),
+				genId,
+				crossFieldTable,
+				() => true,
+				revisionMetadata,
+				constraintState,
+				true,
+			);
 
-		const amendedChangeset = makeModularChangeset(
-			amendedFields,
-			idState.maxId,
-			change.revisions,
-			constraintState.violationCount,
-		);
+			// assert(
+			// 	crossFieldTable.invalidatedFields.size === 0,
+			// 	0x59f /* Should not need more than one amend pass. */,
+			// );
 
-		return amendedChangeset;
+			assert(
+				constraintState.violationCount === constraintViolations,
+				0x5b4 /* Should not change constraint violation count during amend pass */,
+			);
+
+			currentChange = makeModularChangeset(
+				amendedFields,
+				idState.maxId,
+				currentChange.revisions,
+				constraintState.violationCount,
+			);
+		}
+
+		return currentChange;
 	}
 
 	private rebaseFieldMap(
@@ -762,8 +771,17 @@ export function revisionMetadataSourceFromInfo(
 		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
 		return index;
 	};
+	const tryGetIndex = (revision: RevisionTag): number | undefined => {
+		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
+		return index === -1 ? undefined : index;
+	};
 	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
-		return revision === undefined ? undefined : revInfos[getIndex(revision)];
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = tryGetIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
+		// return revision === undefined ? undefined : revInfos[getIndex(revision)];
 	};
 	return { getIndex, tryGetInfo };
 }

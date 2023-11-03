@@ -290,7 +290,8 @@ function rebaseChangeOverChanges<TChange>(
 	changeToRebase: TChange,
 	changesToRebaseOver: TaggedChange<TChange>[],
 ) {
-	return changesToRebaseOver.reduce((a, b) => changeRebaser.rebase(a, b), changeToRebase);
+	return changeRebaser.rebase(changeToRebase, ...changesToRebaseOver);
+	// return changesToRebaseOver.reduce((a, b) => changeRebaser.rebase(a, b), changeToRebase);
 }
 
 function inverseFromCommit<TChange>(
