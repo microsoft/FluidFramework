@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-// Get the test port from the global map and set it in env for this test
-const testTools = require("@fluidframework/test-tools");
-const { name } = require("./package.json");
+import { getTestPort } from "@fluidframework/test-tools";
+import type { Config } from "jest";
+import { name } from "./package.json";
 
-mappedPort = testTools.getTestPort(name);
+// Get the test port from the global map and set it in env for this test
+const mappedPort = getTestPort(name);
 process.env["PORT"] = mappedPort;
 
-module.exports = {
+const config = {
 	preset: "jest-puppeteer",
 	globals: {
 		PATH: `http://localhost:${mappedPort}`,
@@ -30,4 +31,6 @@ module.exports = {
 			},
 		],
 	],
-};
+} satisfies Config;
+
+export default config;
