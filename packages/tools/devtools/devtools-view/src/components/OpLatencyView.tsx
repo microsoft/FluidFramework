@@ -101,10 +101,6 @@ export function OpLatencyView(): React.ReactElement {
 					return false;
 				}
 
-				if (eventContents.clientType === "noninteractive/summarizer") {
-					return false;
-				}
-
 				setDurationOutboundBatchingData((currentData) => {
 					const newDataPoint = {
 						timestamp: message.data.event.timestamp,
