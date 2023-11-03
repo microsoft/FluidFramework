@@ -17,10 +17,10 @@ describe("ErrorUtils", () => {
 	/**
 	 * Checks if the input is an {@link IThrottlingWarning}.
 	 * */
-	function isIThrottlingWarning(input: any): input is IThrottlingWarning {
+	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
 		return (
-			input.errorType === FluidErrorTypes.throttlingError &&
-			input.retryAfterSeconds !== undefined
+			(input as Partial<IThrottlingWarning>).errorType === FluidErrorTypes.throttlingError &&
+			(input as Partial<IThrottlingWarning>).retryAfterSeconds !== undefined
 		);
 	}
 
