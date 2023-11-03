@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { DriverErrorTypes, IThrottlingWarning } from "@fluidframework/driver-definitions";
+import {
+	DriverErrorTypes,
+	IGenericNetworkError,
+	IThrottlingWarning,
+} from "@fluidframework/driver-definitions";
 import { createWriteError, GenericNetworkError } from "@fluidframework/driver-utils";
 import { OdspErrorTypes, OdspError, IOdspError } from "@fluidframework/odsp-driver-definitions";
 import { isILoggingError } from "@fluidframework/telemetry-utils";
@@ -16,6 +20,17 @@ describe("OdspErrorUtils", () => {
 		err.asdf = "asdf";
 		assert(isILoggingError(err), "Error should support getTelemetryProperties()");
 		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
+	}
+
+	/**
+	 * Checks if the input is an {@link IGenericNetworkError}.
+	 */
+	function isIGenericNetworkError(input: unknown): input is IGenericNetworkError {
+		return (
+			(input as Partial<IGenericNetworkError>).errorType ===
+				DriverErrorTypes.genericNetworkError &&
+			(input as Partial<IGenericNetworkError>) !== undefined
+		);
 	}
 
 	describe("createOdspNetworkError", () => {
@@ -36,7 +51,7 @@ describe("OdspErrorUtils", () => {
 				undefined /* retryAfterSeconds */,
 			);
 
-			assert("statusCode" in networkError);
+			assert(isIGenericNetworkError(networkError));
 			assert(
 				networkError.errorType === DriverErrorTypes.genericNetworkError,
 				"Error should be a genericNetworkError",
