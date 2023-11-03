@@ -216,6 +216,30 @@ use_old_InterfaceDeclaration_ILoaderServices(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IParsedUrl": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IParsedUrl():
+    TypeOnly<old.IParsedUrl>;
+declare function use_current_InterfaceDeclaration_IParsedUrl(
+    use: TypeOnly<current.IParsedUrl>);
+use_current_InterfaceDeclaration_IParsedUrl(
+    get_old_InterfaceDeclaration_IParsedUrl());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IParsedUrl": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IParsedUrl():
+    TypeOnly<current.IParsedUrl>;
+declare function use_old_InterfaceDeclaration_IParsedUrl(
+    use: TypeOnly<old.IParsedUrl>);
+use_old_InterfaceDeclaration_IParsedUrl(
+    get_current_InterfaceDeclaration_IParsedUrl());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IProtocolHandler": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IProtocolHandler():
@@ -356,6 +380,30 @@ declare function use_old_FunctionDeclaration_resolveWithLocationRedirectionHandl
     use: TypeOnly<typeof old.resolveWithLocationRedirectionHandling>);
 use_old_FunctionDeclaration_resolveWithLocationRedirectionHandling(
     get_current_FunctionDeclaration_resolveWithLocationRedirectionHandling());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_tryParseCompatibleResolvedUrl": {"forwardCompat": false}
+*/
+declare function get_old_FunctionDeclaration_tryParseCompatibleResolvedUrl():
+    TypeOnly<typeof old.tryParseCompatibleResolvedUrl>;
+declare function use_current_FunctionDeclaration_tryParseCompatibleResolvedUrl(
+    use: TypeOnly<typeof current.tryParseCompatibleResolvedUrl>);
+use_current_FunctionDeclaration_tryParseCompatibleResolvedUrl(
+    get_old_FunctionDeclaration_tryParseCompatibleResolvedUrl());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "FunctionDeclaration_tryParseCompatibleResolvedUrl": {"backCompat": false}
+*/
+declare function get_current_FunctionDeclaration_tryParseCompatibleResolvedUrl():
+    TypeOnly<typeof current.tryParseCompatibleResolvedUrl>;
+declare function use_old_FunctionDeclaration_tryParseCompatibleResolvedUrl(
+    use: TypeOnly<typeof old.tryParseCompatibleResolvedUrl>);
+use_old_FunctionDeclaration_tryParseCompatibleResolvedUrl(
+    get_current_FunctionDeclaration_tryParseCompatibleResolvedUrl());
 
 /*
 * Validate forward compat by using old type in place of current type

@@ -367,6 +367,131 @@ function ensurePrivatePackagesComputed(): void {
 	});
 }
 
+interface ParsedArg {
+	arg: string;
+	original: string;
+}
+
+/**
+ * Parses command line string into arguments following OS quote rules.
+ *
+ * Note: no accommodation is made for a line of script where shell features are used
+ * such as redirects `>`, pipes `|`, or multiple command separators `&&` or `;`.
+ *
+ * @param commandLine - complete command line as a simple string
+ * @param onlyDoubleQuotes - only consider double quotes for grouping
+ * @returns array of ordered pairs of resolved `arg` strings (quotes and escapes resolved)
+ *  and `original` corresponding strings.
+ */
+function parseArgs(
+	commandLine: string,
+	{ onlyDoubleQuotes }: { onlyDoubleQuotes: boolean },
+): ParsedArg[] {
+	const regexArg = onlyDoubleQuotes
+		? /(?<!\S)(?:[^\s"\\]|\\\S)*(?:(").*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s"\\]|\\\S)*|$))*(?!\S)/g
+		: /(?<!\S)(?:[^\s'"\\]|\\\S)*(?:(['"]).*?(?:(?<=[^\\](?:\\\\)*)\1(?:[^\s'"\\]|\\\S)*|$))*(?!\S)/g;
+	const regexQuotedSegment = onlyDoubleQuotes
+		? /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(")(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g
+		: /(?:^|(?<=(?:[^\\]|^)(?:\\\\)*))(['"])(.*?)(?:(?<=[^\\](?:\\\\)*)\1|$)/g;
+	const regexEscapedCharacters = onlyDoubleQuotes ? /\\([\\"])/g : /\\([\\'"])/g;
+	return [...commandLine.matchAll(regexArg)].map((matches) => ({
+		arg: matches[0].replace(regexQuotedSegment, "$2").replace(regexEscapedCharacters, "$1"),
+		original: matches[0],
+	}));
+}
+
+/**
+ * Applies universally understood grouping and escaping to form a single argument
+ * text to be used as part of a command line string.
+ *
+ * @param resolvedArg - string as it should appear to new process
+ * @returns preferred string to use within a command line string
+ */
+function quoteAndEscapeArgsForUniversalCommandLine(
+	resolvedArg: string,
+	{ forceQuote }: { forceQuote?: boolean } = {},
+) {
+	// Unix shells provide feature where arguments that can be resolved as globs
+	// are expanded before passed to new process. Detect those and group them
+	// to ensure consistent arg passing. (Grouping disables glob expansion.)
+	const regexGlob = /[*?[]|\([^)]*\)/;
+	const notAGlob = resolvedArg.startsWith("-") || !regexGlob.test(resolvedArg);
+	// Double quotes are used for grouping arguments with whitespace and must be
+	// escaped with \ and \ itself must therefore be escaped.
+	// Unix shells also use single quotes for grouping. Rather than escape those,
+	// which Windows command shell would not unescape, those args must be grouped.
+	const escapedArg = resolvedArg.replace(/([\\"])/g, "\\$1");
+	const canBeUnquoted = notAGlob && !forceQuote && !/[\s']/.test(resolvedArg);
+	return canBeUnquoted ? escapedArg : `"${escapedArg}"`;
+}
+
+/**
+ * Prepares argument to be part of command script line. It does some handling for
+ * special shell elements that parseArgs ignores.
+ *
+ * @param parsedArg - one result from parseArgs
+ * @returns preferred string to use within a command script string
+ */
+function quoteAndEscapeArgsForUniversalScriptLine({ arg, original }: ParsedArg) {
+	// Check for exactly `&&` or `|`.
+	if (arg === "&&" || arg === "|") {
+		// Use quoting if original had any quoting.
+		return arg !== original ? `"${arg}"` : arg;
+	}
+
+	// Check for unquoted start of `&&` or `|`.
+	if (!/^['"]/.test(original)) {
+		const specialStart = /(^&&|^\|)(.+)$/.exec(arg);
+		if (specialStart) {
+			// Separate the `&&` or `|` from remainder that will be its own arg.
+			const remainder = quoteAndEscapeArgsForUniversalScriptLine({
+				arg: specialStart[2],
+				original: original.substring(specialStart[1].length),
+			});
+			return `${specialStart[1]} ${remainder}`;
+		}
+	}
+
+	// Check for unquoted tail `|`.
+	if (!/['"]$/.test(original)) {
+		const specialEnd = /^(.+)\|$/.exec(arg);
+		if (specialEnd) {
+			// Separate the `|` from prior that will be its own arg.
+			const prior = quoteAndEscapeArgsForUniversalScriptLine({
+				arg: specialEnd[1],
+				original: original.substring(0, original.length - 1),
+			});
+			return `${prior} |`;
+		}
+	}
+
+	// Among the special characters `>`, `|`, `;`, and `&`, check for `&` at
+	// start, pipe (with anything else), or `;`. Some common `&` uses like `2>&1`
+	// should also remain unquoted.
+	const forceQuote = /^&|[|;]/.test(arg);
+
+	return quoteAndEscapeArgsForUniversalCommandLine(arg, { forceQuote });
+}
+
+/**
+ * Parse script line as if unix shell, then form preferred script line.
+ *
+ * @param scriptLine - unparsed script line
+ * @returns preferred command line
+ */
+function getPreferredScriptLine(scriptLine: string) {
+	return parseArgs(scriptLine, { onlyDoubleQuotes: false })
+		.map(quoteAndEscapeArgsForUniversalScriptLine)
+		.join(" ");
+}
+
+/**
+ * Tests that given value is defined.
+ */
+function isDefined<T>(v: T | undefined): v is T {
+	return v !== undefined;
+}
+
 let privatePackages: Set<string>;
 
 const match = /(^|\/)package\.json/i;
@@ -375,11 +500,9 @@ export const handlers: Handler[] = [
 		name: "npm-package-metadata-and-sorting",
 		match,
 		handler: (file) => {
-			let jsonStr: string;
-			let json;
+			let json: PackageJson;
 			try {
-				jsonStr = readFile(file);
-				json = JSON.parse(jsonStr);
+				json = JSON.parse(readFile(file));
 			} catch (err) {
 				return "Error parsing JSON file: " + file;
 			}
@@ -508,7 +631,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-readmes",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -536,7 +659,7 @@ export const handlers: Handler[] = [
 			}
 		},
 		resolver: (file) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -584,7 +707,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-folder-name",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -612,7 +735,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-license",
 		match,
 		handler: (file, root) => {
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -657,7 +780,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-prettier",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -756,7 +879,7 @@ export const handlers: Handler[] = [
 		name: "npm-package-json-script-clean",
 		match,
 		handler: (file) => {
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -791,7 +914,7 @@ export const handlers: Handler[] = [
 				return;
 			}
 			const commandDep = new Map(commandPackages);
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -804,7 +927,9 @@ export const handlers: Handler[] = [
 
 			if (hasScriptsField) {
 				const commands = new Set(
-					Object.values(json.scripts as string[]).map((s) => s.split(" ")[0]),
+					Object.values(json.scripts)
+						.filter(isDefined)
+						.map((s) => s.split(" ")[0]),
 				);
 				for (const command of commands.values()) {
 					const dep = commandDep.get(command);
@@ -826,13 +951,57 @@ export const handlers: Handler[] = [
 		},
 	},
 	{
+		name: "npm-package-json-scripts-args",
+		match,
+		handler: (file) => {
+			let json: PackageJson;
+
+			try {
+				json = JSON.parse(readFile(file));
+			} catch (err) {
+				return "Error parsing JSON file: " + file;
+			}
+
+			const hasScriptsField = Object.prototype.hasOwnProperty.call(json, "scripts");
+			if (!hasScriptsField) {
+				return undefined;
+			}
+
+			const scriptsUsingInconsistentArgs = Object.entries(json.scripts)
+				.filter(([, scriptContent]) => {
+					const commandLine = scriptContent as string;
+					const preferredCommandLine = getPreferredScriptLine(commandLine);
+					return commandLine !== preferredCommandLine;
+				})
+				.map(([scriptName]) => scriptName);
+
+			return scriptsUsingInconsistentArgs.length > 0
+				? `${file} using inconsistent arguments in the following scripts:\n\t${scriptsUsingInconsistentArgs.join(
+						"\n\t",
+				  )}`
+				: undefined;
+		},
+		resolver: (file) => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			updatePackageJsonFile(path.dirname(file), (json) => {
+				Object.entries(json.scripts).forEach(([scriptName, scriptContent]) => {
+					if (scriptContent) {
+						json.scripts[scriptName] = getPreferredScriptLine(scriptContent);
+					}
+				});
+			});
+
+			return result;
+		},
+	},
+	{
 		name: "npm-package-json-test-scripts",
 		match,
 		handler: (file) => {
 			// This rules enforces that if the package have test files (in 'src/test', excluding 'src/test/types'),
 			// or mocha/jest dependencies, it should have a test scripts so that the pipeline will pick it up
 
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -882,7 +1051,7 @@ export const handlers: Handler[] = [
 			// This rule enforces that because the pipeline split running these test in different steps, each project
 			// has the split set up property (into test:mocha, test:jest and test:realsvc). Release groups that don't
 			// have splits in the pipeline is excluded in the "handlerExclusions" in the fluidBuild.config.cjs
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -928,7 +1097,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: (file) => {
 			// This rule enforces that mocha will use a config file and setup both the console, json and xml reporters.
-			let json;
+			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
 			} catch (err) {
@@ -966,7 +1135,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: (file) => {
 			// This rule enforces that jest will use a config file and setup both the default (console) and junit reporters.
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1027,7 +1196,7 @@ export const handlers: Handler[] = [
 		handler: (file) => {
 			// This rule enforces that we have a module field in the package iff we have a ESM build
 			// So that tools like webpack will pack up the right version.
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1063,7 +1232,7 @@ export const handlers: Handler[] = [
 		match,
 		handler: (file) => {
 			// This rule enforces the "clean" script will delete all the build and test output
-			let json;
+			let json: PackageJson;
 
 			try {
 				json = JSON.parse(readFile(file));
@@ -1097,14 +1266,9 @@ export const handlers: Handler[] = [
 					.join("")}`;
 			}
 
-			const clean = scripts["clean"];
-			if (clean && clean.startsWith("rimraf ")) {
-				if (clean.includes('"')) {
-					return "'clean' script using double quotes instead of single quotes";
-				}
-
-				if (!clean.includes("'")) {
-					return "'clean' script rimraf argument should have single quotes";
+			if (cleanScript) {
+				if (cleanScript !== getPreferredScriptLine(cleanScript)) {
+					return "'clean' script should double quote the globs and only the globs";
 				}
 			}
 		},
@@ -1112,16 +1276,18 @@ export const handlers: Handler[] = [
 			const result: { resolved: boolean; message?: string } = { resolved: true };
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				const missing = missingCleanDirectories(json.scripts);
-				const clean = json.scripts["clean"] ?? "rimraf --glob";
-				if (clean.startsWith("rimraf --glob")) {
+				let clean: string = json.scripts["clean"] ?? "rimraf --glob";
+				if (!clean.startsWith("rimraf --glob")) {
 					result.resolved = false;
 					result.message =
 						"Unable to fix 'clean' script that doesn't start with 'rimraf --glob'";
-				}
-				if (missing.length === 0) {
 					return;
 				}
-				json.scripts["clean"] = `${clean} ${missing.map((name) => `'${name}'`).join(" ")}`;
+				if (missing.length > 0) {
+					clean += ` ${missing.join(" ")}`;
+				}
+				// clean up for grouping
+				json.scripts["clean"] = getPreferredScriptLine(clean);
 			});
 
 			return result;

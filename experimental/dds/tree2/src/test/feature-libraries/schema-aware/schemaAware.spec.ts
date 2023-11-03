@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { AllowedUpdateType, TreeNodeSchemaIdentifier } from "../../../core";
+import { TreeNodeSchemaIdentifier } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -35,8 +35,8 @@ import {
 	InternalTypedSchemaTypes,
 	isEditableTree,
 } from "../../../feature-libraries";
-import { createSharedTreeView } from "../../../shared-tree";
 import { leaf, SchemaBuilder } from "../../../domains";
+import { viewWithContent } from "../../utils";
 import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
@@ -465,9 +465,8 @@ describe("SchemaAware Editing", () => {
 		const schema = builder.intoSchema(
 			TreeFieldSchema.create(FieldKinds.required, [rootNodeSchema]),
 		);
-		const view = createSharedTreeView().schematize({
+		const view = viewWithContent({
 			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
 			initialTree: { children: [] },
 		});
 		const root = view.root;
@@ -478,7 +477,7 @@ describe("SchemaAware Editing", () => {
 
 		field.insertNodes(0, ["foo", "bar"]);
 		assert.deepEqual([...field], ["foo", "bar"]);
-		field.moveNodes(0, 1, 1);
+		field.moveNodes(0, 1, 2);
 		assert.deepEqual([...field], ["bar", "foo"]);
 		field.remove();
 		assert.deepEqual([...field], []);

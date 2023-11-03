@@ -423,7 +423,7 @@ describe("DefaultEditBuilder", () => {
 					],
 				},
 			});
-			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 1);
+			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 4);
 			const treeView = toJsonableTreeFromForest(forest);
 			const expected = {
 				type: jsonObject.name,
@@ -461,6 +461,34 @@ describe("DefaultEditBuilder", () => {
 						{ type: leaf.number.name, value: 2 },
 						{ type: leaf.number.name, value: 3 },
 						{ type: leaf.number.name, value: 0 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes in their own midst", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
+					],
+				},
+			});
+			builder.move({ parent: root, field: fooKey }, 1, 2, { parent: root, field: fooKey }, 2);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: leaf.number.name, value: 0 },
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
 					],
 				},
 			};
@@ -679,6 +707,123 @@ describe("DefaultEditBuilder", () => {
 				},
 			};
 			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes before an ancestor of the moved node", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+								],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root_foo0, field: fooKey },
+				1,
+				3,
+				{ parent: root, field: fooKey },
+				0,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: leaf.number.name, value: 0 }],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes after an ancestor of the moved node", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [
+									{ type: leaf.number.name, value: 0 },
+									{ type: leaf.number.name, value: 1 },
+									{ type: leaf.number.name, value: 2 },
+									{ type: leaf.number.name, value: 3 },
+								],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root_foo0, field: fooKey },
+				1,
+				3,
+				{ parent: root, field: fooKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+							fields: {
+								foo: [{ type: leaf.number.name, value: 0 }],
+							},
+						},
+						{ type: leaf.number.name, value: 1 },
+						{ type: leaf.number.name, value: 2 },
+						{ type: leaf.number.name, value: 3 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Errors when attempting to move a node under itself", () => {
+			const statingState = {
+				type: jsonObject.name,
+				fields: {
+					foo: [
+						{
+							type: jsonObject.name,
+						},
+					],
+				},
+			};
+			const { builder, forest } = initializeEditableForest(statingState);
+			assert.throws(() =>
+				builder.move(
+					{ parent: root, field: fooKey },
+					0,
+					1,
+					{ parent: root_foo0, field: fooKey },
+					0,
+				),
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			assert.deepEqual(treeView, [statingState]);
 		});
 
 		it("Can move nodes across deep subtrees of different fields", () => {

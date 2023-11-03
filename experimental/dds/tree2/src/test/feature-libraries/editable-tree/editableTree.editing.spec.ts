@@ -331,7 +331,7 @@ describe("editable-tree: editing", () => {
 			assert.deepEqual([...field_0], ["foo", "bar"]);
 
 			// move node
-			field_0.moveNodes(0, 1, 1);
+			field_0.moveNodes(0, 1, 2);
 
 			// check that node was moved from field_0
 			assert.deepEqual([...field_0], ["bar", "foo"]);
@@ -438,7 +438,7 @@ describe("editable-tree: editing", () => {
 
 			const firstNodeBeforeMove = field[0];
 			// move using `moveNodes()`
-			field.moveNodes(0, 1, 1);
+			field.moveNodes(0, 1, 2);
 			const secondNodeAfterMove = field[1];
 			assert.equal(firstNodeBeforeMove, secondNodeAfterMove);
 			assert.deepEqual([...field], ["b", "a", "c"]);

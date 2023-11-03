@@ -107,8 +107,10 @@ export interface UntypedTree<TContext = UntypedTreeContext> extends UntypedTreeC
  * getField should be made schema aware and moved to `UntypedTree`.
  * @alpha
  */
-export interface UntypedTreeCore<TContext = UntypedTreeContext, TField = UntypedField<TContext>>
-	extends Iterable<TField> {
+export interface UntypedTreeCore<
+	out TContext = UntypedTreeContext,
+	out TField = UntypedField<TContext>,
+> extends Iterable<TField> {
 	/**
 	 * The type of the node.
 	 * If this node is well-formed, it must follow this schema.

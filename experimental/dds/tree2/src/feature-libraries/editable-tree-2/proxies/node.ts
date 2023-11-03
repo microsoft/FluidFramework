@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "../../../util";
-import { TreeNodeSchema } from "../../typed-schema";
+import { TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
-import { TreeNode, TreeStatus } from "../editableTreeTypes";
-import { getProxyForNode } from "./proxies";
-import { ProxyNode, SharedTreeNode, getTreeNode } from "./types";
+import { TreeStatus } from "../editableTreeTypes";
+import { getOrCreateNodeProxy } from "./proxies";
+import { getEditNode, tryGetEditNode } from "./editNode";
+import { ProxyNode, SharedTreeNode } from "./types";
 
 /**
  * Provides various functions for analyzing {@link SharedTreeNode}s.
@@ -22,7 +22,7 @@ export interface NodeApi {
 	/**
 	 * The schema information for this node.
 	 */
-	schema: (node: SharedTreeNode) => TreeNodeSchema;
+	readonly schema: (node: SharedTreeNode) => TreeNodeSchema;
 	/**
 	 * Narrow the type of the given value if it satisfies the given schema.
 	 * @example
@@ -32,20 +32,27 @@ export interface NodeApi {
 	 * }
 	 * ```
 	 */
-	is: <TSchema extends TreeNodeSchema>(
+	readonly is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
 	) => value is ProxyNode<TSchema>;
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 */
-	parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
+	readonly parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
+	/**
+	 * The key of the given node under its parent.
+	 * @remarks
+	 * If `node` is an element in a {@link SharedTreeList}, this returns the index of `node` in the list (a `number`).
+	 * Otherwise, this returns the key of the field that it is under (a `string`).
+	 */
+	readonly key: (node: SharedTreeNode) => string | number;
 	/**
 	 * Register an event listener on the given node.
 	 * @returns A callback function which will deregister the event.
 	 * This callback should be called only once.
 	 */
-	on: <K extends keyof EditableTreeEvents>(
+	readonly on: <K extends keyof EditableTreeEvents>(
 		node: SharedTreeNode,
 		eventName: K,
 		listener: EditableTreeEvents[K],
@@ -53,43 +60,53 @@ export interface NodeApi {
 	/**
 	 * Returns the {@link TreeStatus} of the given node.
 	 */
-	status: (node: SharedTreeNode) => TreeStatus;
+	readonly status: (node: SharedTreeNode) => TreeStatus;
 }
 
 /**
  * The `node` object holds various functions for analyzing {@link SharedTreeNode}s.
  * @alpha
  */
-export const nodeAPi: NodeApi = {
-	schema: (node: SharedTreeNode): TreeNodeSchema => {
-		return assertTreeNode(node).schema;
+export const nodeApi: NodeApi = {
+	schema: (node: SharedTreeNode) => {
+		return getEditNode(node).schema;
 	},
 	is: <TSchema extends TreeNodeSchema>(
 		value: unknown,
 		schema: TSchema,
 	): value is ProxyNode<TSchema> => {
-		return getTreeNode(value)?.is(schema) ?? false;
+		return tryGetEditNode(value)?.is(schema) ?? false;
 	},
-	parent: (node) => {
-		const treeNode = assertTreeNode(node).parentField.parent.parent;
-		if (treeNode !== undefined) {
-			return getProxyForNode(treeNode as any); // TODO: why does this get weirdly narrowed without the `any`?
+	parent: (node: SharedTreeNode) => {
+		const editNode = getEditNode(node).parentField.parent.parent;
+		if (editNode !== undefined) {
+			return getOrCreateNodeProxy(editNode);
 		}
 
 		return undefined;
+	},
+	key: (node: SharedTreeNode) => {
+		const editNode = getEditNode(node);
+		const parent = nodeApi.parent(node);
+		if (parent !== undefined) {
+			const parentSchema = nodeApi.schema(parent);
+			if (schemaIsFieldNode(parentSchema)) {
+				// The parent of `node` is a list
+				return editNode.parentField.index;
+			}
+		}
+
+		// The parent of `node` is an object, a map, or undefined (and therefore `node` is a root/detached node).
+		return editNode.parentField.parent.key;
 	},
 	on: <K extends keyof EditableTreeEvents>(
 		node: SharedTreeNode,
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	) => {
-		return assertTreeNode(node).on(eventName, listener);
+		return getEditNode(node).on(eventName, listener);
 	},
 	status: (node: SharedTreeNode) => {
-		return assertTreeNode(node).treeStatus();
+		return getEditNode(node).treeStatus();
 	},
 };
-
-function assertTreeNode(node: SharedTreeNode): TreeNode {
-	return getTreeNode(node) ?? fail("Expected a SharedTreeNode");
-}

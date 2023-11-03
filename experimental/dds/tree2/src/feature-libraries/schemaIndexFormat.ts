@@ -40,7 +40,7 @@ const NamedFieldSchemaFormat = Type.Composite(
 	noAdditionalProps,
 );
 
-const TreeSchemaFormat = Type.Object(
+const TreeNodeSchemaFormat = Type.Object(
 	{
 		name: TreeSchemaIdentifierSchema,
 		objectNodeFields: Type.Array(NamedFieldSchemaFormat),
@@ -63,7 +63,7 @@ const TreeSchemaFormat = Type.Object(
 export const Format = Type.Object(
 	{
 		version: Type.Literal(version),
-		treeSchema: Type.Array(TreeSchemaFormat),
+		nodeSchema: Type.Array(TreeNodeSchemaFormat),
 		rootFieldSchema: FieldSchemaFormat,
 	},
 	noAdditionalProps,
@@ -71,7 +71,7 @@ export const Format = Type.Object(
 
 export type Format = Static<typeof Format>;
 type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
-type TreeSchemaFormat = Static<typeof TreeSchemaFormat>;
+type TreeNodeSchemaFormat = Static<typeof TreeNodeSchemaFormat>;
 type NamedFieldSchemaFormat = Static<typeof NamedFieldSchemaFormat>;
 
 const Versioned = Type.Object({
@@ -79,16 +79,16 @@ const Versioned = Type.Object({
 });
 type Versioned = Static<typeof Versioned>;
 
-function encodeRepo(repo: TreeStoredSchema): Format {
-	const treeSchema: TreeSchemaFormat[] = [];
+export function encodeRepo(repo: TreeStoredSchema): Format {
+	const treeNodeSchema: TreeNodeSchemaFormat[] = [];
 	const rootFieldSchema = encodeField(repo.rootFieldSchema);
-	for (const [name, schema] of repo.treeSchema) {
-		treeSchema.push(encodeTree(name, schema));
+	for (const [name, schema] of repo.nodeSchema) {
+		treeNodeSchema.push(encodeTree(name, schema));
 	}
-	treeSchema.sort(compareNamed);
+	treeNodeSchema.sort(compareNamed);
 	return {
 		version,
-		treeSchema,
+		nodeSchema: treeNodeSchema,
 		rootFieldSchema,
 	};
 }
@@ -106,8 +106,8 @@ function compareNamed(a: Named<string>, b: Named<string>) {
 function encodeTree(
 	name: TreeNodeSchemaIdentifier,
 	schema: TreeNodeStoredSchema,
-): TreeSchemaFormat {
-	const out: TreeSchemaFormat = {
+): TreeNodeSchemaFormat {
+	const out: TreeNodeSchemaFormat = {
 		name,
 		mapFields: schema.mapFields === undefined ? undefined : encodeField(schema.mapFields),
 		objectNodeFields: [...schema.objectNodeFields]
@@ -136,13 +136,13 @@ function encodeNamedField<T>(name: T, schema: TreeFieldStoredSchema): FieldSchem
 }
 
 function decode(f: Format): TreeStoredSchema {
-	const treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
-	for (const tree of f.treeSchema) {
-		treeSchema.set(brand(tree.name), decodeTree(tree));
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
+	for (const tree of f.nodeSchema) {
+		nodeSchema.set(brand(tree.name), decodeTree(tree));
 	}
 	return {
 		rootFieldSchema: decodeField(f.rootFieldSchema),
-		treeSchema,
+		nodeSchema,
 	};
 }
 
@@ -155,7 +155,7 @@ function decodeField(schema: FieldSchemaFormat): TreeFieldStoredSchema {
 	return out;
 }
 
-function decodeTree(schema: TreeSchemaFormat): TreeNodeStoredSchema {
+function decodeTree(schema: TreeNodeSchemaFormat): TreeNodeStoredSchema {
 	const out: TreeNodeStoredSchema = {
 		mapFields: schema.mapFields === undefined ? undefined : decodeField(schema.mapFields),
 		objectNodeFields: new Map(

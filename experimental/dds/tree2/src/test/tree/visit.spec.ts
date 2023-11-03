@@ -766,20 +766,20 @@ describe("visit", () => {
 			["enterField", rootKey],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["detach", { start: 0, end: 1 }, field1], // field1: moveId2
+			["detach", { start: 0, end: 1 }, field0], // field0: moveId2
 			["exitField", fooKey],
 			["exitNode", 0],
-			["detach", { start: 0, end: 1 }, field0], // field0: moveId1
+			["detach", { start: 0, end: 1 }, field1], // field1: moveId1
 			["exitField", rootKey],
-			["enterField", field0],
+			["enterField", field1],
 			["detach", { start: 0, end: 1 }, field2], // field2: detachId
-			["exitField", field0],
+			["exitField", field1],
 			["enterField", rootKey],
 			["exitField", rootKey],
 			["enterField", field2],
 			["enterNode", 0],
 			["enterField", fooKey],
-			["attach", field1, 1, 0],
+			["attach", field0, 1, 0],
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field2],
@@ -809,46 +809,175 @@ describe("visit", () => {
 		testTreeVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
 	});
-	describe("update detached node", () => {
-		for (const flip of [false, true]) {
-			it(`rename order flipped: ${flip}`, () => {
-				const index = makeDetachedFieldIndex("");
-				const node1 = { minor: 1 };
-				index.createEntry(node1);
-				const buildId = { minor: 2 };
-				const detachId = { minor: 42 };
-				const renameOldNode: Delta.DetachedNodeRename = {
-					count: 1,
-					oldId: node1,
-					newId: detachId,
-				};
-				const renameNewNode: Delta.DetachedNodeRename = {
-					count: 1,
-					oldId: buildId,
-					newId: node1,
-				};
-				const delta = {
-					build: [{ id: buildId, trees: [content] }],
-					rename: flip ? [renameNewNode, renameOldNode] : [renameOldNode, renameNewNode],
-				};
-				const expected: VisitScript = [
-					["enterField", rootKey],
-					["create", [content], field1], // field1: buildId
-					["exitField", rootKey],
-					["enterField", field0], // field0: node1
-					["detach", { start: 0, end: 1 }, field2], // field2: detachId
-					["exitField", field0],
-					["enterField", field1],
-					["detach", { start: 0, end: 1 }, field3], // field3: node1
-					["exitField", field1],
-					["enterField", rootKey],
-					["exitField", rootKey],
-				];
-				testTreeVisit(delta, expected, index);
-				assert.deepEqual(Array.from(index.entries()), [
-					{ id: detachId, root: 2 },
-					{ id: node1, root: 3 },
-				]);
+	it("update detached node", () => {
+		const index = makeDetachedFieldIndex("");
+		const node1 = { minor: 1 };
+		index.createEntry(node1);
+		const buildId = { minor: 2 };
+		const detachId = { minor: 42 };
+		const renameOldNode: Delta.DetachedNodeRename = {
+			count: 1,
+			oldId: node1,
+			newId: detachId,
+		};
+		const renameNewNode: Delta.DetachedNodeRename = {
+			count: 1,
+			oldId: buildId,
+			newId: node1,
+		};
+		const delta = {
+			build: [{ id: buildId, trees: [content] }],
+			rename: [renameOldNode, renameNewNode],
+		};
+		const expected: VisitScript = [
+			["enterField", rootKey],
+			["create", [content], field1], // field1: buildId
+			["exitField", rootKey],
+			["enterField", field0], // field0: node1
+			["detach", { start: 0, end: 1 }, field2], // field2: detachId
+			["exitField", field0],
+			["enterField", field1],
+			["detach", { start: 0, end: 1 }, field3], // field3: node1
+			["exitField", field1],
+			["enterField", rootKey],
+			["exitField", rootKey],
+		];
+		testTreeVisit(delta, expected, index);
+		assert.deepEqual(Array.from(index.entries()), [
+			{ id: detachId, root: 2 },
+			{ id: node1, root: 3 },
+		]);
+	});
+	describe("rename chains", () => {
+		const pointA = { minor: 1 };
+		for (const cycle of [false, true]) {
+			describe(cycle ? "cyclic" : "acyclic", () => {
+				const end = cycle ? pointA : { minor: 42 };
+				describe("1-step", () => {
+					it("Rename ordering: 1/1", () => {
+						const index = makeDetachedFieldIndex("");
+						index.createEntry(pointA);
+						const rename: Delta.DetachedNodeRename = {
+							count: 1,
+							oldId: pointA,
+							newId: end,
+						};
+						const delta = {
+							rename: [rename],
+						};
+						const expected: VisitScript = cycle
+							? [
+									["enterField", rootKey],
+									["exitField", rootKey],
+									["enterField", rootKey],
+									["exitField", rootKey],
+							  ]
+							: [
+									["enterField", rootKey],
+									["exitField", rootKey],
+									["enterField", field0],
+									["detach", { start: 0, end: 1 }, field1],
+									["exitField", field0],
+									["enterField", rootKey],
+									["exitField", rootKey],
+							  ];
+						testTreeVisit(delta, expected, index);
+						assert.deepEqual(Array.from(index.entries()), [
+							{ id: end, root: cycle ? 0 : 1 },
+						]);
+					});
+				});
+				describe("2-step", () => {
+					for (let ordering = 1; ordering <= 2; ordering++) {
+						it(`Rename ordering: ${ordering}/2`, () => {
+							const index = makeDetachedFieldIndex("");
+							index.createEntry(pointA);
+							const pointB = { minor: 2 };
+							const rename1: Delta.DetachedNodeRename = {
+								count: 1,
+								oldId: pointA,
+								newId: pointB,
+							};
+							const rename2: Delta.DetachedNodeRename = {
+								count: 1,
+								oldId: pointB,
+								newId: cycle ? pointA : end,
+							};
+							const delta = {
+								rename: [
+									[rename1, rename2],
+									[rename2, rename1],
+								][ordering - 1],
+							};
+							const expected: VisitScript = [
+								["enterField", rootKey],
+								["exitField", rootKey],
+								["enterField", field0],
+								["detach", { start: 0, end: 1 }, field1],
+								["exitField", field0],
+								["enterField", field1],
+								["detach", { start: 0, end: 1 }, field2],
+								["exitField", field1],
+								["enterField", rootKey],
+								["exitField", rootKey],
+							];
+							testTreeVisit(delta, expected, index);
+							assert.deepEqual(Array.from(index.entries()), [{ id: end, root: 2 }]);
+						});
+					}
+				});
+				describe("3-step", () => {
+					for (let ordering = 1; ordering <= 6; ordering++) {
+						it(`Rename ordering: ${ordering}/6`, () => {
+							const pointB = { minor: 2 };
+							const pointC = { minor: 3 };
+							const ab: Delta.DetachedNodeRename = {
+								count: 1,
+								oldId: pointA,
+								newId: pointB,
+							};
+							const bc: Delta.DetachedNodeRename = {
+								count: 1,
+								oldId: pointB,
+								newId: pointC,
+							};
+							const cd: Delta.DetachedNodeRename = {
+								count: 1,
+								oldId: pointC,
+								newId: end,
+							};
+							const delta = {
+								rename: [
+									[ab, bc, cd],
+									[ab, cd, bc],
+									[bc, ab, cd],
+									[bc, cd, ab],
+									[cd, ab, bc],
+									[cd, bc, ab],
+								][ordering - 1],
+							};
+							const expected: VisitScript = [
+								["enterField", rootKey],
+								["exitField", rootKey],
+								["enterField", field0],
+								["detach", { start: 0, end: 1 }, field1],
+								["exitField", field0],
+								["enterField", field1],
+								["detach", { start: 0, end: 1 }, field2],
+								["exitField", field1],
+								["enterField", field2],
+								["detach", { start: 0, end: 1 }, field3],
+								["exitField", field2],
+								["enterField", rootKey],
+								["exitField", rootKey],
+							];
+							const index = makeDetachedFieldIndex("");
+							index.createEntry(pointA);
+							testTreeVisit(delta, expected, index);
+							assert.deepEqual(Array.from(index.entries()), [{ id: end, root: 3 }]);
+						});
+					}
+				});
 			});
 		}
 	});

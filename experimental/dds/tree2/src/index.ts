@@ -40,7 +40,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	fieldSchema,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -104,9 +103,11 @@ export {
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
-	RangeEntry,
+	RangeQueryResult,
 	Named,
 	oneFromSet,
+	disposeSymbol,
+	IDisposable,
 } from "./util";
 
 export {
@@ -289,6 +290,8 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	treeSchemaFromStoredSchema,
+	encodeTreeSchema,
 } from "./feature-libraries";
 
 export {
@@ -309,6 +312,8 @@ export {
 	TypedTreeOptions,
 	TypedTreeChannel,
 	SharedTreeContentSnapshot,
+	ISharedTreeView2,
+	TypedTreeView,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
