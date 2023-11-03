@@ -276,6 +276,8 @@ export const makeEditGenerator = (
 			}
 		}
 		const moveIndex = state.random.pick(validMoveIndices);
+		const node = field.at(start);
+		assert(node !== undefined, "Node should be defined at chosen index");
 
 		return {
 			type: "sequence",
@@ -283,7 +285,7 @@ export const makeEditGenerator = (
 				type: "move",
 				dstIndex: moveIndex,
 				count,
-				firstNode: downPathFromNode(field.at(start)),
+				firstNode: downPathFromNode(node),
 			},
 		};
 	};
