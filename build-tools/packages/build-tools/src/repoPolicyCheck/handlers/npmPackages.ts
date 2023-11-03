@@ -1156,7 +1156,11 @@ export const handlers: Handler[] = [
 			}
 
 			const packageDir = path.dirname(file);
-			const jestFileName = ["jest.config.js", "jest.config.cjs"].find((name) =>
+			// From https://jestjs.io/docs/configuration
+			const jestConfigFileNames = ["js", "ts", "mjs", "cjs", "json"].map(
+				(extension) => `jest.config.${extension}`,
+			);
+			const jestFileName = jestConfigFileNames.find((name) =>
 				fs.existsSync(path.join(packageDir, name)),
 			);
 			if (jestFileName === undefined) {
