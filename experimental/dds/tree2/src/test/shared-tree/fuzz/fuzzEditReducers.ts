@@ -73,6 +73,10 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 	}
 }
 
+/**
+ * Assumes tree is using the fuzzSchema.
+ * TODO: Maybe take in a schema aware strongly typed Tree node or field.
+ */
 export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): void {
 	switch (fieldEdit.change.type) {
 		case "sequence":

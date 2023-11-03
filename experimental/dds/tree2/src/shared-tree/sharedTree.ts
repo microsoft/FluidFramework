@@ -14,6 +14,8 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { ISharedObject } from "@fluidframework/shared-object-base";
 import { ICodecOptions, noopValidator } from "../codec";
 import {
+	Compatibility,
+	FieldKey,
 	InMemoryStoredSchemaRepository,
 	JsonableTree,
 	TreeStoredSchema,
@@ -36,24 +38,23 @@ import {
 	makeTreeChunker,
 	DetachedFieldIndexSummarizer,
 	createNodeKeyManager,
-	nodeKeyFieldKey,
-	TypedField,
+	nodeKeyFieldKey as defailtNodeKeyFieldKey,
 	jsonableTreeFromFieldCursor,
+	TreeSchema,
+	ViewSchema,
+	NodeKeyManager,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand } from "../util";
+import { JsonCompatibleReadOnly, brand, fail } from "../util";
 import { type TypedTreeChannel } from "./typedTree";
 import {
 	InitializeAndSchematizeConfiguration,
+	afterSchemaChanges,
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
-import {
-	ISharedTreeView,
-	SharedTreeView,
-	ViewEvents,
-	createSharedTreeView,
-} from "./sharedTreeView";
+import { SharedTreeView, ViewEvents, createSharedTreeView } from "./sharedTreeView";
+import { ISharedTreeView2, SharedTreeView2 } from "./sharedTreeView2";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -85,14 +86,6 @@ export interface SharedTreeContentSnapshot {
  */
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	/**
-	 * Get view without schematizing.
-	 *
-	 * @deprecated This API will be removed as part of making views use view schema.
-	 */
-	// TODO: migrate all usages of this to alternatives or avoid using ISharedTree.
-	readonly view: ISharedTreeView;
-
-	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
 	 * This is only intended for use in testing and exceptional code paths: it is not performant.
@@ -101,35 +94,30 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
 
-	/**
-	 * Takes in a tree and returns a view of it that conforms to the view schema.
-	 * The returned view referees to and can edit the provided one: it is not a fork of it.
-	 * Updates the stored schema in the tree to match the provided one if requested by config and compatible.
-	 *
-	 * If the tree is uninitialized (has no nodes or schema at all),
-	 * it is initialized to the config's initial tree and the provided schema are stored.
-	 * This is done even if `AllowedUpdateType.None`.
-	 *
-	 * @remarks
-	 * Doing initialization here, regardless of `AllowedUpdateType`, allows a small API that is hard to use incorrectly.
-	 * Other approach tend to have leave easy to make mistakes.
-	 * For example, having a separate initialization function means apps can forget to call it, making an app that can only open existing document,
-	 * or call it unconditionally leaving an app that can only create new documents.
-	 * It also would require the schema to be passed into to separate places and could cause issues if they didn't match.
-	 * Since the initialization function couldn't return a typed tree, the type checking wouldn't help catch that.
-	 * Also, if an app manages to create a document, but the initialization fails to get persisted, an app that only calls the initialization function
-	 * on the create code-path (for example how a schematized factory might do it),
-	 * would leave the document in an unusable state which could not be repaired when it is reopened (by the same or other clients).
-	 * Additionally, once out of schema content adapters are properly supported (with lazy document updates),
-	 * this initialization could become just another out of schema content adapter: at tha point it clearly belong here in schematize.
-	 *
-	 * TODO:
-	 * - Implement schema-aware API for return type.
-	 * - Support adapters for handling out of schema data.
-	 */
-	schematizeView<TRoot extends TreeFieldSchema>(
+	// Overrides less specific schematize from base
+	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView;
+	): ISharedTreeView2<TRoot>;
+
+	/**
+	 * Like {@link ISharedTree.schematize}, but will never modify the document.
+	 *
+	 * @param schema - The view schema to use.
+	 * @param onSchemaIncompatible - A callback.
+	 * Invoked when the returned ISharedTreeView becomes invalid to use due to a change to the stored schema which makes it incompatible with the view schema.
+	 * Called at most once.
+	 * @returns a view compatible with the provided schema, or undefined if the stored schema is not compatible with the provided view schema.
+	 * If this becomes invalid to use due to a change in the stored schema, onSchemaIncompatible will be invoked.
+	 *
+	 * @privateRemarks
+	 * TODO:
+	 * Once views actually have a view schema, onSchemaIncompatible can become an event on the view (which ends its lifetime),
+	 * instead of a separate callback.
+	 */
+	requireSchema<TRoot extends TreeFieldSchema>(
+		schema: TreeSchema<TRoot>,
+		onSchemaIncompatible: () => void,
+	): ISharedTreeView2<TRoot> | undefined;
 }
 
 /**
@@ -188,6 +176,44 @@ export class SharedTree
 		});
 	}
 
+	public requireSchema<TRoot extends TreeFieldSchema>(
+		schema: TreeSchema<TRoot>,
+		onSchemaIncompatible: () => void,
+		nodeKeyManager?: NodeKeyManager,
+		nodeKeyFieldKey?: FieldKey,
+	): SharedTreeView2<TRoot> | undefined {
+		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
+		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
+		if (
+			compatibility.write !== Compatibility.Compatible ||
+			compatibility.read !== Compatibility.Compatible
+		) {
+			return undefined;
+		}
+
+		const onSchemaChange = () => {
+			const compatibilityInner = viewSchema.checkCompatibility(this.storedSchema);
+			if (
+				compatibilityInner.write !== Compatibility.Compatible ||
+				compatibilityInner.read !== Compatibility.Compatible
+			) {
+				onSchemaIncompatible();
+				return false;
+			} else {
+				return true;
+			}
+		};
+
+		afterSchemaChanges(this._events, this.storedSchema, onSchemaChange);
+
+		return new SharedTreeView2(
+			this.view,
+			schema,
+			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
+			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
+		);
+	}
+
 	public contentSnapshot(): SharedTreeContentSnapshot {
 		const cursor = this.view.forest.allocateCursor();
 		try {
@@ -201,9 +227,11 @@ export class SharedTree
 		}
 	}
 
-	public schematizeView<TRoot extends TreeFieldSchema>(
+	public schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): SharedTreeView {
+		nodeKeyManager?: NodeKeyManager,
+		nodeKeyFieldKey?: FieldKey,
+	): SharedTreeView2<TRoot> {
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.
 		// This will improve support for readonly documents, cross version collaboration and attribution.
@@ -219,15 +247,14 @@ export class SharedTree
 
 		schematize(this.view.events, this.storedSchema, config);
 
-		return this.view;
-	}
-
-	public schematize<TRoot extends TreeFieldSchema>(
-		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): TypedField<TRoot> {
-		const nodeKeyManager = createNodeKeyManager(this.runtime.idCompressor);
-		const view = this.schematizeView(config);
-		return view.editableTree2(config.schema, nodeKeyManager, brand(nodeKeyFieldKey));
+		return (
+			this.requireSchema(
+				config.schema,
+				() => fail("schema incompatible"),
+				nodeKeyManager,
+				nodeKeyFieldKey,
+			) ?? fail("Schematize failed")
+		);
 	}
 
 	/**
