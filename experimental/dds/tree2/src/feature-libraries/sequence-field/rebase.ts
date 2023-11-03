@@ -176,7 +176,7 @@ function rebaseMarkList<TNodeChange>(
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
-			handleLineage(rebasedMark, lineageRecipients, detachBlocks, metadata);
+			handleLineage(rebasedMark.cellId, lineageRecipients, detachBlocks, metadata);
 		}
 		rebasedMarks.push(rebasedMark);
 		updateLineageState(lineageRecipients, detachBlocks, baseMark, baseRevision, metadata);
@@ -714,7 +714,7 @@ type LineageRecipientList = (LineageRecipient | LineageGate)[];
 
 interface LineageRecipient {
 	readonly type: "Recipient";
-	readonly recipient: HasLineage;
+	readonly recipient: CellId;
 }
 
 interface LineageGate {
@@ -723,30 +723,34 @@ interface LineageGate {
 	readonly lastExcludedRevisionIndex: number;
 }
 
-function handleLineage<T>(
-	rebasedMark: Mark<T>,
+function handleLineage(
+	cellId: CellId,
 	lineageRecipients: LineageRecipientList,
 	detachBlocks: Map<RevisionTag, IdRange[]>,
 	metadata: RevisionMetadataSource,
 ) {
-	const recipient = getLineageHolder(rebasedMark);
-
 	for (const revision of metadata.getIntentions()) {
-		tryRemoveLineageEvents(recipient, revision);
+		tryRemoveLineageEvents(cellId, revision);
 	}
 
-	const cellRevision = getInputCellId(rebasedMark, undefined, undefined)?.revision;
-	const index = cellRevision !== undefined ? metadata.getIndex(cellRevision) : undefined;
-
+	const revisionIndex = getRevisionIndex(metadata, cellId.revision);
 	for (const [revision, detachBlock] of detachBlocks.entries()) {
-		if (index === undefined || index < getKnownRevisionIndex(revision, metadata)) {
+		if (revisionIndex < getKnownRevisionIndex(revision, metadata)) {
 			for (const entry of detachBlock) {
-				addLineageEntry(recipient, revision, entry.id, entry.count, entry.count);
+				addLineageEntry(cellId, revision, entry.id, entry.count, entry.count);
 			}
 		}
 	}
 
-	lineageRecipients.push({ type: "Recipient", recipient });
+	lineageRecipients.push({ type: "Recipient", recipient: cellId });
+}
+
+function getRevisionIndex(
+	metadata: RevisionMetadataSource,
+	revision: RevisionTag | undefined,
+): number {
+	const index = revision !== undefined ? metadata.getIndex(revision) : undefined;
+	return index ?? -Infinity;
 }
 
 function updateLineageState(
@@ -855,7 +859,9 @@ function addLineageToRecipients(
 				}
 				break;
 			case "Recipient":
-				addLineageEntry(entry.recipient, revision, id, count, 0);
+				if (getRevisionIndex(metadata, entry.recipient.revision) < revisionIndex) {
+					addLineageEntry(entry.recipient, revision, id, count, 0);
+				}
 				break;
 			default:
 				unreachableCase(type);
@@ -926,11 +932,6 @@ function addIdRange(lineageEntries: IdRange[], range: IdRange): void {
 	}
 
 	lineageEntries.push(range);
-}
-
-function getLineageHolder(mark: Mark<unknown>): HasLineage {
-	assert(mark.cellId !== undefined, 0x723 /* Attached cells cannot have lineage */);
-	return mark.cellId;
 }
 
 function setMarkAdjacentCells(mark: Mark<unknown>, adjacentCells: IdRange[]): void {
