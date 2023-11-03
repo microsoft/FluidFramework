@@ -253,7 +253,7 @@ export type ObjectFields<
  * @alpha
  */
 export interface SharedTreeMap<TSchema extends MapSchema>
-	extends ReadonlyMap<string, ProxyField<TSchema["mapFields"]>> {
+	extends ReadonlyMap<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">> {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *

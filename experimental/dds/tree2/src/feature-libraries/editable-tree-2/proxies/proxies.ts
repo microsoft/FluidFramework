@@ -606,7 +606,7 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<SharedTreeMap<TSchema>>(
-		new Map<string, ProxyField<TSchema["mapFields"]>>(),
+		new Map<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
