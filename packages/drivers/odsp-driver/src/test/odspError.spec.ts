@@ -43,7 +43,7 @@ describe("Odsp Error", () => {
 
 	/**
 	 * Checks if the input is an {@link IThrottlingWarning}.
-	 * */
+	 */
 	function isIThrottlingWarning(input: any): input is IThrottlingWarning {
 		return (
 			input.errorType === FluidErrorTypes.throttlingError &&
