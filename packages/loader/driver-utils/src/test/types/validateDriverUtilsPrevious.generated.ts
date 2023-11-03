@@ -552,6 +552,30 @@ use_old_ClassDeclaration_RetryableError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SummaryCompressionAlgorithm": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_SummaryCompressionAlgorithm():
+    TypeOnly<old.SummaryCompressionAlgorithm>;
+declare function use_current_EnumDeclaration_SummaryCompressionAlgorithm(
+    use: TypeOnly<current.SummaryCompressionAlgorithm>);
+use_current_EnumDeclaration_SummaryCompressionAlgorithm(
+    get_old_EnumDeclaration_SummaryCompressionAlgorithm());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SummaryCompressionAlgorithm": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_SummaryCompressionAlgorithm():
+    TypeOnly<current.SummaryCompressionAlgorithm>;
+declare function use_old_EnumDeclaration_SummaryCompressionAlgorithm(
+    use: TypeOnly<old.SummaryCompressionAlgorithm>);
+use_old_EnumDeclaration_SummaryCompressionAlgorithm(
+    get_current_EnumDeclaration_SummaryCompressionAlgorithm());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "ClassDeclaration_ThrottlingError": {"forwardCompat": false}
 */
 declare function get_old_ClassDeclaration_ThrottlingError():

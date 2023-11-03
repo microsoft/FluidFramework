@@ -219,12 +219,13 @@ export type RemovedTreesFromChild = (child: NodeChangeset) => Iterable<Delta.Det
  * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
  * @alpha
  */
-export type RevisionIndexer = (tag: RevisionTag) => number;
+export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 
 /**
  * @alpha
  */
 export interface RevisionMetadataSource {
+	readonly getIntentions: () => RevisionTag[];
 	readonly getIndex: RevisionIndexer;
 	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 }

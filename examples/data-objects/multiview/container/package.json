@@ -41,6 +41,7 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-example/multiview-constellation-model": "workspace:~",
 		"@fluid-example/multiview-constellation-view": "workspace:~",
 		"@fluid-example/multiview-coordinate-interface": "workspace:~",
@@ -51,6 +52,7 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/view-adapters": "workspace:~",
