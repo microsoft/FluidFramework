@@ -424,6 +424,9 @@ export class TreeFieldSchema<
 
 	/**
 	 * If exactly one type of child is allowed in this field, it is provided here.
+	 * @remarks
+	 * Some code paths (like unboxing and compressed tree encoding) special case schema with exactly one allowed type.
+	 * This field allows for simple and optimized handling of this case.
 	 */
 	public get monomorphicChildType(): TreeNodeSchema | undefined {
 		return this.lazyTypes.value.monomorphicChildType;
