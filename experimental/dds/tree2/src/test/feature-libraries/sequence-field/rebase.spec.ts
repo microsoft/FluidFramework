@@ -672,6 +672,29 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	// TODO: Enable this once BUG 6155 is fixed
+	it.skip("delete ↷ [move, delete] (reverse move direction)", () => {
+		const moveAndDelete = [
+			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			{ count: 1 },
+			Mark.moveOut(1, brand(0)),
+		];
+
+		const del = Change.delete(1, 1);
+		const rebased = rebase(del, moveAndDelete);
+		const expected = [
+			Mark.delete(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells: [{ id: brand(1), count: 1 }],
+				},
+			}),
+		];
+
+		assert.deepEqual(rebased, expected);
+	});
+
 	it("revive ↷ [revive, move]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveAndMove = [
