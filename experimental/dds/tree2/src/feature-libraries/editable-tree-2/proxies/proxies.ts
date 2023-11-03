@@ -34,7 +34,7 @@ import {
 import { LazySequence } from "../lazyField";
 import { EmptyKey, FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
-import { ContextuallyTypedNodeData, typeNameSymbol } from "../../contextuallyTyped";
+import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../../contextuallyTyped";
 import { createRawObjectNode, extractRawNodeContent } from "../rawObjectNode";
 import {
 	ProxyField,
@@ -210,13 +210,17 @@ const getSequenceField = <TTypes extends AllowedTypes>(
 // typed data prior to forwarding to 'LazySequence.insert*()'.
 function contextualizeInsertedListContent(
 	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
-): ExtractedFactoryContent<Iterable<ContextuallyTypedNodeData>> {
+	insertedAtIndex: number,
+): ExtractedFactoryContent<ContextuallyTypedNodeData[]> {
 	if (typeof iterable === "string") {
 		throw new TypeError(
 			"Attempted to directly insert a string as iterable list content. Wrap the input string 's' in an array ('[s]') to insert it as a single item or, supply the iterator of the string directly via 's[Symbol.iterator]()' if intending to insert each Unicode code point as a separate item.",
 		);
 	}
-	return extractFactoryContent(Array.isArray(iterable) ? iterable : Array.from(iterable));
+	return extractContentArray(
+		(Array.isArray(iterable) ? iterable : Array.from(iterable)) as ContextuallyTypedNodeData[],
+		insertedAtIndex,
+	);
 }
 
 // #region Create dispatch map for lists
@@ -247,7 +251,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			const { content, hydrateProxies } = contextualizeInsertedListContent(value);
+			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
 			getSequenceField(this).insertAt(index, content);
 			hydrateProxies?.(getEditNode(this));
 		},
@@ -257,7 +261,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			const { content, hydrateProxies } = contextualizeInsertedListContent(value);
+			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
 			getSequenceField(this).insertAtStart(content);
 			hydrateProxies?.(getEditNode(this));
 		},
@@ -267,7 +271,10 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			const { content, hydrateProxies } = contextualizeInsertedListContent(value);
+			const { content, hydrateProxies } = contextualizeInsertedListContent(
+				value,
+				this.length,
+			);
 			getSequenceField(this).insertAtEnd(content);
 			hydrateProxies?.(getEditNode(this));
 		},
@@ -708,15 +715,17 @@ interface ExtractedFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaScrip
 export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaScript">>(
 	content: T,
 ): ExtractedFactoryContent<T> {
-	if (Array.isArray(content)) {
-		return extractContentArray(content);
+	if (isFluidHandle(content)) {
+		return { content, hydrateProxies: undefined };
+	} else if (Array.isArray(content)) {
+		return extractContentArray(content, 0);
 	} else if (content instanceof Map) {
 		return extractContentMap(content);
 	} else if (content !== null && typeof content === "object") {
 		return extractContentObject(content);
 	} else {
 		return {
-			content, // `content` is a primitive, fluid handle, or `undefined`
+			content, // `content` is a primitive or `undefined`
 			hydrateProxies: undefined,
 		};
 	}
@@ -724,6 +733,7 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 
 function extractContentArray<T extends ProxyNode<TreeNodeSchema, "javaScript">[]>(
 	input: T,
+	insertedAtIndex: number,
 ): ExtractedFactoryContent<T> {
 	const output = [] as unknown as T;
 	const hydrators: [index: number, hydrate: (editNode: TreeNode) => void][] = [];
@@ -739,7 +749,9 @@ function extractContentArray<T extends ProxyNode<TreeNodeSchema, "javaScript">[]
 		hydrateProxies: (editNode: TreeNode) => {
 			assert(schemaIsFieldNode(editNode.schema), "Expected field node when hydrating list");
 			hydrators.forEach(([i, hydrate]) =>
-				hydrate(getListChildNode(editNode as FieldNode<FieldNodeSchema>, i)),
+				hydrate(
+					getListChildNode(editNode as FieldNode<FieldNodeSchema>, insertedAtIndex + i),
+				),
 			);
 		},
 	};
