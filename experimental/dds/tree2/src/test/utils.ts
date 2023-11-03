@@ -43,6 +43,8 @@ import {
 	ISharedTreeBranchView,
 	runSynchronous,
 	SharedTreeContentSnapshot,
+	ISharedTreeView2,
+	SharedTreeView2,
 } from "../shared-tree";
 import {
 	Any,
@@ -64,6 +66,7 @@ import {
 	singleTextCursor,
 	TypedField,
 	jsonableTreeFromForest,
+	nodeKeyFieldKey as defailtNodeKeyFieldKey,
 } from "../feature-libraries";
 import {
 	Delta,
@@ -592,13 +595,29 @@ export function viewWithContent(
 		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
 	},
 ): ISharedTreeView {
+	return view2WithContent(content, args).branch;
+}
+
+export function view2WithContent<TRoot extends TreeFieldSchema>(
+	content: TreeContent<TRoot>,
+	args?: {
+		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+		nodeKeyManager?: NodeKeyManager;
+		nodeKeyFieldKey?: FieldKey;
+	},
+): ISharedTreeView2<TRoot> {
 	const forest = forestWithContent(content);
 	const view = createSharedTreeView({
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
-	return view;
+	return new SharedTreeView2(
+		view,
+		content.schema,
+		args?.nodeKeyManager ?? createMockNodeKeyManager(),
+		args?.nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
+	);
 }
 
 export function forestWithContent(content: TreeContent): IEditableForest {
@@ -636,11 +655,14 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 	);
 }
 
-const jsonSequenceRootField = SchemaBuilder.sequence(jsonRoot);
 export const jsonSequenceRootSchema = new SchemaBuilder({
 	scope: "JsonSequenceRoot",
 	libraries: [jsonSchema],
-}).intoSchema(jsonSequenceRootField);
+}).intoSchema(SchemaBuilder.sequence(jsonRoot));
+
+export const stringSequenceRootSchema = new SchemaBuilder({
+	scope: "StringSequenceRoot",
+}).intoSchema(SchemaBuilder.sequence(leaf.string));
 
 export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
 	schema: jsonSequenceRootSchema,

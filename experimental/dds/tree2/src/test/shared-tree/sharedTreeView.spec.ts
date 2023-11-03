@@ -2,14 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { strict as assert } from "assert";
-import { Any, on } from "../../feature-libraries";
+import { strict as assert, fail } from "assert";
 import { runSynchronous } from "../../shared-tree";
 import { leaf, SchemaBuilder } from "../../domains";
 import {
 	createTestUndoRedoStacks,
 	jsonSequenceRootSchema,
 	toJsonableTree,
+	view2WithContent,
 	viewWithContent,
 } from "../utils";
 
@@ -30,23 +30,22 @@ describe("sharedTreeView", () => {
 		const rootTreeNodeSchema = builder.object("root", {
 			x: builder.number,
 		});
-		const schema = builder.intoSchema(builder.optional(Any));
+		const schema = builder.intoSchema(builder.optional(rootTreeNodeSchema));
 
 		it("triggers events for local and subtree changes", () => {
-			const view = viewWithContent({
+			const view = view2WithContent({
 				schema,
 				initialTree: {
 					x: 24,
 				},
 			});
-			const rootNode = view.context.root.getNode(0);
-			const root = view.root as unknown as { x: number };
+			const root = view.editableTree.content ?? fail("missing root");
 			const log: string[] = [];
-			const unsubscribe = rootNode[on]("changing", () => log.push("change"));
-			const unsubscribeSubtree = rootNode[on]("subtreeChanging", () => {
+			const unsubscribe = root.on("changing", () => log.push("change"));
+			const unsubscribeSubtree = root.on("subtreeChanging", () => {
 				log.push("subtree");
 			});
-			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
+			const unsubscribeAfter = view.branch.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root.x = 5;
 			log.push("editStart");
@@ -75,22 +74,21 @@ describe("sharedTreeView", () => {
 		});
 
 		it("propagates path args for local and subtree changes", () => {
-			const view = viewWithContent({
+			const view = view2WithContent({
 				schema,
 				initialTree: {
 					x: 24,
 				},
 			});
-			const rootNode = view.context.root.getNode(0);
-			const root = view.root as unknown as { x: number };
+			const root = view.editableTree.content ?? fail("missing root");
 			const log: string[] = [];
-			const unsubscribe = rootNode[on]("changing", (upPath) =>
+			const unsubscribe = root.on("changing", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
 			);
-			const unsubscribeSubtree = rootNode[on]("subtreeChanging", (upPath) => {
+			const unsubscribeSubtree = root.on("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
-			const unsubscribeAfter = view.events.on("afterBatch", () => log.push("after"));
+			const unsubscribeAfter = view.branch.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root.x = 5;
 			log.push("editStart");

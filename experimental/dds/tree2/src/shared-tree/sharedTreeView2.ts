@@ -31,7 +31,7 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
 	extends IDisposable,
 		TypedTreeView<TRoot> {
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
+	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView2.editableTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.

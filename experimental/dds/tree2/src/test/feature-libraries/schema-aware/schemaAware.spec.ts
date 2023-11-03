@@ -7,7 +7,6 @@
 // Since "type" and "interface" type check slightly different, this file needs to create types when the linter recommends interfaces.
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 
-import { strict as assert } from "assert";
 import {
 	ApiMode,
 	AllowedTypesToTypedTrees,
@@ -17,7 +16,6 @@ import {
 	TypeArrayToTypedTreeArray,
 	TypedFields,
 	UnbrandedName,
-	downCast,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
@@ -33,10 +31,8 @@ import {
 	TreeFieldSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
-	isEditableTree,
 } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
-import { viewWithContent } from "../../utils";
 import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
@@ -455,31 +451,3 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		}
 	}
 }
-
-describe("SchemaAware Editing", () => {
-	it("Use a sequence field", () => {
-		const builder = new SchemaBuilder({ scope: "SchemaAware" });
-		const rootNodeSchema = builder.object("Test", {
-			children: SchemaBuilder.sequence(leaf.string),
-		});
-		const schema = builder.intoSchema(
-			TreeFieldSchema.create(FieldKinds.required, [rootNodeSchema]),
-		);
-		const view = viewWithContent({
-			schema,
-			initialTree: { children: [] },
-		});
-		const root = view.root;
-		assert(isEditableTree(root));
-		assert(downCast(rootNodeSchema, root));
-		const field = root.children;
-		assert.deepEqual([...field], []);
-
-		field.insertNodes(0, ["foo", "bar"]);
-		assert.deepEqual([...field], ["foo", "bar"]);
-		field.moveNodes(0, 1, 2);
-		assert.deepEqual([...field], ["bar", "foo"]);
-		field.remove();
-		assert.deepEqual([...field], []);
-	});
-});
