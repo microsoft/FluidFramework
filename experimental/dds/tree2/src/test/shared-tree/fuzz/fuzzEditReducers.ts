@@ -115,6 +115,17 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 			field.removeRange(index, change.count);
 			break;
 		}
+		case "move": {
+			const firstNode = navigateToNode(tree, change.firstNode);
+			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
+			const { parent: field, index } = firstNode.parentField;
+			assert(
+				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
+				"Defined down-path should point to a valid parent",
+			);
+			field.moveRangeToIndex(change.dstIndex, index, change.count);
+			break;
+		}
 		default:
 			fail("Invalid edit.");
 	}
