@@ -123,10 +123,7 @@ describe("Odsp Error", () => {
 			code: 400,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (
-			networkError.errorType !== OdspErrorTypes.genericNetworkError ||
-			!isIGenericNetworkError(networkError)
-		) {
+		if (!isIGenericNetworkError(networkError)) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
@@ -158,9 +155,7 @@ describe("Odsp Error", () => {
 			},
 		};
 		const networkError = errorObjectFromSocketError(socketError, "error");
-		if (
-			!isIGenericNetworkError(networkError)
-		) {
+		if (!isIGenericNetworkError(networkError)) {
 			assert.fail("networkError should be a genericNetworkError");
 		} else {
 			assert(
@@ -189,9 +184,7 @@ describe("Odsp Error", () => {
 			retryAfter: 10,
 		};
 		const networkError = errorObjectFromSocketError(socketError, "handler");
-		if (
-			!isIThrottlingWarning(networkError)
-		) {
+		if (!isIThrottlingWarning(networkError)) {
 			assert.fail("networkError should be a throttlingError");
 		} else {
 			console.log(networkError);
