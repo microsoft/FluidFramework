@@ -184,9 +184,10 @@ describe("SharedTreeList", () => {
 			numbers: _.list(_.number),
 			strings: _.list(_.string),
 			booleans: _.list(_.boolean),
+			poly: _.list([_.number, _.string, _.boolean]),
 		});
 		const schema = _.intoSchema(obj);
-		const initialTree = { numbers: [], strings: [], booleans: [] };
+		const initialTree = { numbers: [], strings: [], booleans: [], poly: [] };
 		itWithRoot("numbers", schema, initialTree, (root) => {
 			root.numbers.insertAtStart([0]);
 			root.numbers.insertAt(1, [1]);
@@ -203,62 +204,51 @@ describe("SharedTreeList", () => {
 
 			const string: string = "hello";
 			const stringLiteral: "hello" = "hello" as const;
-			const iterableOrString: Iterable<string> | string = "hello";
-			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtStart(string);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtStart(stringLiteral);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
-				root.strings.insertAtStart(iterableOrString);
-			});
-			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
-				root.strings.insertAtStart(iterableOrLiteral);
-			});
-			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAt(0, string);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAt(0, stringLiteral);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
-				root.strings.insertAt(0, iterableOrString);
-			});
-			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
-				root.strings.insertAt(0, iterableOrLiteral);
-			});
-			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtEnd(string);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtEnd(stringLiteral);
 			});
+
+			const iterableOrString: Iterable<string> | string = "hello";
+			const iterableOrLiteral: Iterable<string> | "hello" = "hello";
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
+				root.strings.insertAtStart(iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAtStart(iterableOrLiteral);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, iterableOrString);
+			});
+			assert.throws(() => {
+				root.strings.insertAt(0, iterableOrLiteral);
+			});
+			assert.throws(() => {
 				root.strings.insertAtEnd(iterableOrString);
 			});
 			assert.throws(() => {
-				// @ts-expect-error Inserted content should not be a string
 				root.strings.insertAtEnd(iterableOrLiteral);
 			});
 
-			const de = "de"[Symbol.iterator]();
+			const de: Iterable<string> = "de"[Symbol.iterator]();
 			root.strings.insertAtStart(de);
-			const fg = "fg"[Symbol.iterator]();
+			const fg: Iterable<string> = "fg"[Symbol.iterator]();
 			root.strings.insertAt(3, fg);
-			const hi = "hi"[Symbol.iterator]();
+			const hi: Iterable<string> = "hi"[Symbol.iterator]();
 			root.strings.insertAtEnd(hi);
 			assert.deepEqual(root.strings, ["d", "e", "a", "f", "g", "b", "c", "h", "i"]);
 		});
@@ -268,6 +258,16 @@ describe("SharedTreeList", () => {
 			root.booleans.insertAt(1, [false]);
 			root.booleans.insertAtEnd([true]);
 			assert.deepEqual(root.booleans, [true, false, true]);
+		});
+
+		itWithRoot("of multiple possible types", schema, initialTree, (root) => {
+			const allowsStrings: typeof root.numbers | typeof root.poly = root.poly;
+			allowsStrings.insertAtStart([42]);
+			const allowsStsrings: typeof root.strings | typeof root.poly = root.poly;
+			allowsStsrings.insertAt(1, ["s"]);
+			const allowsBooleans: typeof root.booleans | typeof root.poly = root.poly;
+			allowsBooleans.insertAtEnd([true]);
+			assert.deepEqual(root.poly, [42, "s", true]);
 		});
 	});
 
@@ -600,5 +600,35 @@ describe("SharedTreeMap", () => {
 		assert.equal(root.map.has("foo"), true);
 		assert.equal(root.map.has("bar"), true);
 		assert.equal(root.map.has("baz"), false);
+	});
+
+	itWithRoot("set", schema, initialTree, (root) => {
+		// Insert new value
+		root.map.set("baz", "42");
+		assert.equal(root.map.size, 3);
+		assert(root.map.has("baz"));
+		assert.equal(root.map.get("baz"), "42");
+
+		// Override existing value
+		root.map.set("baz", "37");
+		assert.equal(root.map.size, 3);
+		assert(root.map.has("baz"));
+		assert.equal(root.map.get("baz"), "37");
+
+		// "Un-set" existing value
+		root.map.set("baz", undefined);
+		assert.equal(root.map.size, 2);
+		assert(!root.map.has("baz"));
+	});
+
+	itWithRoot("delete", schema, initialTree, (root) => {
+		// Delete existing value
+		root.map.delete("bar");
+		assert.equal(root.map.size, 1);
+		assert(!root.map.has("bar"));
+
+		// Delete non-present value
+		root.map.delete("baz");
+		assert.equal(root.map.size, 1);
 	});
 });

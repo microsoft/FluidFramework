@@ -7,21 +7,16 @@ import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-exa
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
+import type { IInventoryListAppModel } from "../modelInterfaces";
 import { InventoryListAppModel } from "./appModel";
-import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList";
-import { NewTreeInventoryListFactory } from "./newTreeInventoryList";
+import { InventoryList, InventoryListFactory } from "./inventoryList";
 
-export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
-export const newTreeInventoryListId = "new-tree-inventory-list";
+export const inventoryListId = "inventory-list";
 
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	public constructor() {
 		super(
-			new Map([
-				LegacyTreeInventoryListFactory.registryEntry,
-				NewTreeInventoryListFactory.registryEntry,
-			]), // registryEntries
+			new Map([InventoryListFactory.registryEntry]), // registryEntries
 		);
 	}
 
@@ -29,39 +24,15 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const legacyTreeInventoryList = await runtime.createDataStore(
-			LegacyTreeInventoryListFactory.type,
-		);
-		await legacyTreeInventoryList.trySetAlias(legacyTreeInventoryListId);
-		const newTreeInventoryList = await runtime.createDataStore(
-			NewTreeInventoryListFactory.type,
-		);
-		await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
+		const inventoryList = await runtime.createDataStore(InventoryListFactory.type);
+		await inventoryList.trySetAlias(inventoryListId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const legacyTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
-			runtime,
-			legacyTreeInventoryListId,
-		);
-		const newTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
-			runtime,
-			newTreeInventoryListId,
-		);
-		return new InventoryListAppModel(
-			legacyTreeInventoryList,
-			newTreeInventoryList,
-			this.triggerMigration,
-		);
+		const inventoryList = await getDataStoreEntryPoint<InventoryList>(runtime, inventoryListId);
+		return new InventoryListAppModel(inventoryList);
 	}
-
-	// This might normally be kicked off by some heuristic or network trigger to decide when to do the migration.  For this
-	// demo we'll just trigger it with a debug button though.
-	private readonly triggerMigration = () => {
-		// TODO: implement
-		console.log("Migration triggered!");
-	};
 }
