@@ -259,8 +259,14 @@ export interface SharedTreeMap<TSchema extends MapSchema>
 	 *
 	 * @param key - The key of the element to add to the map.
 	 * @param value - The value of the element to add to the map.
+	 *
+	 * @remarks
+	 * Setting the value at a key to `undefined` is equivalent to calling {@link SharedTreeMap.delete} with that key.
 	 */
-	set(key: string, value: ProxyNodeUnion<AllowedTypes, "javaScript">): void;
+	set(
+		key: string,
+		value: ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty"> | undefined,
+	): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.

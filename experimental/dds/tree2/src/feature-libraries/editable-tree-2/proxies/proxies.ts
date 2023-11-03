@@ -16,10 +16,12 @@ import {
 	schemaIsObjectNode,
 	MapSchema,
 	FieldNodeSchema,
+	MapFieldSchema,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
 	FieldNode,
+	FlexibleFieldContent,
 	MapNode,
 	ObjectNode,
 	OptionalField,
@@ -575,7 +577,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
 			const node = getEditNode(this);
-			node.set(key, extractFactoryContent(value as any));
+			node.set(key, extractFactoryContent(value as FlexibleFieldContent<MapFieldSchema>));
 			return this;
 		},
 	},

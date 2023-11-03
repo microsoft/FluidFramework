@@ -2025,7 +2025,7 @@ export interface SharedTreeList<TTypes extends AllowedTypes, API extends "javaSc
 // @alpha
 export interface SharedTreeMap<TSchema extends MapSchema> extends ReadonlyMap<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">> {
     delete(key: string): void;
-    set(key: string, value: ProxyNodeUnion<AllowedTypes, "javaScript">): void;
+    set(key: string, value: ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty"> | undefined): void;
 }
 
 // @alpha
