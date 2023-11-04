@@ -611,9 +611,8 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 	},
 	values: {
 		*value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
-			const node = getEditNode(this);
-			for (const key of node.keys()) {
-				yield getProxyForField(node.getBoxed(key));
+			for (const [, value] of this.entries()) {
+				yield value;
 			}
 		},
 	},
