@@ -132,10 +132,11 @@ export type FluidSerializableReadOnly =
 	| { readonly [P in string]?: FluidSerializableReadOnly };
 
 // TODO: replace test in FluidSerializer.encodeValue with this.
-export function isFluidHandle(value: undefined | FluidSerializableReadOnly): value is IFluidHandle {
-	if (typeof value !== "object" || value === null) {
+export function isFluidHandle(value: unknown): value is IFluidHandle {
+	if (typeof value !== "object" || value === null || !("IFluidHandle" in value)) {
 		return false;
 	}
+
 	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
 	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
 	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
@@ -144,10 +145,10 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
 	// do an extra test.
 	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
 	const getMember = (value as Partial<IFluidHandle>).get;
-	assert(
-		(typeof getMember === "function") === isHandle,
-		0x76e /* Fluid handle detection via get method should match detection via IFluidHandle field */,
-	);
+	if (typeof getMember !== "function") {
+		return false;
+	}
+
 	return isHandle;
 }
 
@@ -395,7 +396,7 @@ function shallowCompatibilityTest(
 	);
 	const schema =
 		schemaData.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
-	if (isPrimitiveValue(data) || data === null) {
+	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
 		return allowsValue(schema.leafValue, data);
 	}
 	// TODO: once this is using view schema, replace with schemaIsLeaf
@@ -534,7 +535,7 @@ export function applyTypesFromContext(
 	const schema =
 		context.schema.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
 
-	if (isPrimitiveValue(data) || data === null) {
+	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
 		assert(
 			allowsValue(schema.leafValue, data),
 			0x4d3 /* unsupported schema for provided primitive */,

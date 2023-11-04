@@ -51,6 +51,15 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"TypeAliasDeclaration_IdCreationRangeWithStashedState": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }

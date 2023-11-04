@@ -31,7 +31,7 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type ISharedTreeView,
+	type ISharedTreeView2,
 } from "@fluid-experimental/tree2";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
@@ -121,8 +121,8 @@ const quantityType = builder.object("quantityObj", {
 });
 const schema = builder.intoSchema(quantityType);
 
-function getNewTreeView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootFieldSchema> {
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
@@ -175,7 +175,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree.schematizeView({
+			newTree.schematize({
 				initialTree: {
 					quantity,
 				},
@@ -256,8 +256,8 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		const newTree2 = shim2.currentTree as ISharedTree;
 		const view1 = getNewTreeView(newTree1);
 		const view2 = getNewTreeView(newTree2);
-		const node1 = view1.root2(schema);
-		const node2 = view2.root2(schema);
+		const node1 = view1.root;
+		const node2 = view2.root;
 		assert.equal(node1.quantity, node2.quantity, "expected to migrate to the same value");
 		assert.equal(node1.quantity, originalValue, "expected no values to be updated");
 
@@ -321,8 +321,8 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		const newTree2 = shim2.currentTree;
 		const view1 = getNewTreeView(newTree1);
 		const view2 = getNewTreeView(newTree2);
-		const node1 = view1.root2(schema);
-		const node2 = view2.root2(schema);
+		const node1 = view1.root;
+		const node2 = view2.root;
 		assert.equal(node1.quantity, originalValue, "Node1 should be the original value");
 		assert.equal(node2.quantity, originalValue, "Node2 should have loaded the original value");
 

@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { benchmark, BenchmarkTimer, BenchmarkType } from "@fluid-tools/benchmark";
+import {
+	benchmark,
+	BenchmarkTimer,
+	BenchmarkType,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 import {
 	jsonableTreeFromCursor,
 	cursorForTypedData,
@@ -357,7 +362,7 @@ describe("SharedTree benchmarks", () => {
 		const commitCounts = [1, 10, 20];
 		const nbPeers = 5;
 		for (const nbCommits of commitCounts) {
-			benchmark({
+			const test = benchmark({
 				type: BenchmarkType.Measurement,
 				title: `for ${nbCommits} commits per peer for ${nbPeers} peers`,
 				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
@@ -385,7 +390,11 @@ describe("SharedTree benchmarks", () => {
 				},
 				// Force batch size of 1
 				minBatchDurationSeconds: 0,
-			}).timeout(5000);
+			});
+
+			if (!isInPerformanceTestingMode) {
+				test.timeout(5000);
+			}
 		}
 	});
 });

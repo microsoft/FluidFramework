@@ -559,9 +559,15 @@ export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? n
 export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField {
 	/**
 	 * Gets a node of this field by its index with unboxing.
-	 * Note that a node must exist at the given index.
+	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
+	 *
+	 * @returns The element in the sequence matching the given index. Always returns undefined if index \< -sequence.length
+	 * or index \>= array.length.
+	 *
+	 * @remarks
+	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
 	 */
-	at(index: number): UnboxNodeUnion<TTypes>;
+	at(index: number): UnboxNodeUnion<TTypes> | undefined;
 
 	/**
 	 * Gets a boxed node of this field by its index.

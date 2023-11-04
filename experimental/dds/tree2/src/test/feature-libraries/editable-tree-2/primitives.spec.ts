@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { leaf, SchemaBuilder } from "../../../domains";
-import { createTreeView, pretty } from "./utils";
+import { createTreeView2, pretty } from "./utils";
 
 const _ = new SchemaBuilder({ scope: "test", libraries: [leaf.library] });
 const schema = _.intoSchema(_.optional(leaf.all));
@@ -44,9 +44,9 @@ const testCases = [
 describe("Primitives", () => {
 	describe("satisfy 'deepEquals'", () => {
 		for (const testCase of testCases) {
-			const view = createTreeView(schema, testCase);
+			const view = createTreeView2(schema, testCase);
 			const real = testCase;
-			const proxy = view.root2(schema);
+			const proxy = view.root;
 
 			it(`deepEquals(${pretty(proxy)}, ${pretty(real)})`, () => {
 				assert.deepEqual(proxy, real, "Proxy must satisfy 'deepEquals'.");
