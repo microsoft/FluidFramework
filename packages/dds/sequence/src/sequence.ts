@@ -313,7 +313,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 *
 	 */
 	public annotateRange(start: number, end: number, props: PropertySet): void {
-		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props, combiningOp));
+		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
 	}
 
 	public getPropertiesAtPosition(pos: number) {
