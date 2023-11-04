@@ -199,21 +199,21 @@ describe("SharedTreeObject factories", () => {
 		// This schema is meant to be a large tree which has all the various combinations of types.
 		// E.g. "objects with lists", "lists of maps", "maps of lists", "lists of lists", etc.
 		const comboSchemaBuilder = new SchemaBuilder({ scope: "combo" });
-		const comboObject = comboSchemaBuilder.object("Object", {
-			primitive: comboSchemaBuilder.null,
+		const comboLeaf = comboSchemaBuilder.object("Leaf", {
+			id: comboSchemaBuilder.number,
 		});
 		const comboChild = comboSchemaBuilder.object("Child", {
-			primitive: comboSchemaBuilder.null,
-			object: comboObject,
-			objectList: comboSchemaBuilder.list(comboObject),
-			objectMap: comboSchemaBuilder.map(comboObject),
-			listList: comboSchemaBuilder.list(comboSchemaBuilder.list(comboObject)),
-			listMap: comboSchemaBuilder.map(comboSchemaBuilder.list(comboObject)),
-			mapList: comboSchemaBuilder.list(comboSchemaBuilder.map(comboObject)),
-			mapMap: comboSchemaBuilder.map(comboSchemaBuilder.map(comboObject)),
+			id: comboSchemaBuilder.number,
+			object: comboLeaf,
+			objectList: comboSchemaBuilder.list(comboLeaf),
+			objectMap: comboSchemaBuilder.map(comboLeaf),
+			listList: comboSchemaBuilder.list(comboSchemaBuilder.list(comboLeaf)),
+			listMap: comboSchemaBuilder.map(comboSchemaBuilder.list(comboLeaf)),
+			mapList: comboSchemaBuilder.list(comboSchemaBuilder.map(comboLeaf)),
+			mapMap: comboSchemaBuilder.map(comboSchemaBuilder.map(comboLeaf)),
 		});
 		const comboParent = comboSchemaBuilder.object("Parent", {
-			primitive: comboSchemaBuilder.null,
+			id: comboSchemaBuilder.number,
 			object: comboChild,
 			objectList: comboSchemaBuilder.list(comboChild),
 			objectMap: comboSchemaBuilder.map(comboChild),
@@ -222,161 +222,188 @@ describe("SharedTreeObject factories", () => {
 			mapList: comboSchemaBuilder.list(comboSchemaBuilder.map(comboChild)),
 			mapMap: comboSchemaBuilder.map(comboSchemaBuilder.map(comboChild)),
 		});
-		const deepSchema = comboSchemaBuilder.intoSchema(
+		const comboSchema = comboSchemaBuilder.intoSchema(
 			// TODO: This extra root won't be necessary once the true root of the tree is settable
 			comboSchemaBuilder.object("root", { root: comboSchemaBuilder.optional(comboParent) }),
 		);
 
 		type ComboParent = ProxyNode<typeof comboParent>;
 		type ComboChild = ProxyNode<typeof comboChild>;
-		type ComboObject = ProxyNode<typeof comboObject>;
+		type ComboLeaf = ProxyNode<typeof comboLeaf>;
+		type ComboObject = ComboParent | ComboChild | ComboLeaf;
 
-		/** Iterates through all the SharedTreeObjects in the combo tree */
-		function* walkObjectTree(
-			object: ComboParent | ComboChild | ComboObject,
-		): IterableIterator<ComboParent | ComboChild | ComboObject> {
+		/** Iterates through all the objects in the combo tree */
+		function* walkComboObjectTree(object: ComboObject): IterableIterator<ComboObject> {
 			yield object;
 			if ("object" in object) {
-				yield* walkObjectTree(object.object);
+				yield* walkComboObjectTree(object.object);
 				for (const item of object.objectList) {
-					yield* walkObjectTree(item);
+					yield* walkComboObjectTree(item);
 				}
 				for (const value of object.objectMap.values()) {
-					yield* walkObjectTree(TODO(value));
+					yield* walkComboObjectTree(value);
 				}
 				for (const list of object.listList) {
 					for (const item of list) {
-						yield* walkObjectTree(item);
+						yield* walkComboObjectTree(item);
 					}
 				}
 				for (const list of object.listMap.values()) {
-					for (const item of TODO(list)) {
-						yield* walkObjectTree(item);
+					for (const item of list) {
+						yield* walkComboObjectTree(item);
 					}
 				}
 				for (const map of object.mapList) {
 					for (const item of map.values()) {
-						yield* walkObjectTree(TODO(item));
+						yield* walkComboObjectTree(item);
 					}
 				}
 				for (const map of object.mapMap.values()) {
-					for (const item of TODO(map).values()) {
-						yield* walkObjectTree(TODO(item));
+					for (const item of map.values()) {
+						yield* walkComboObjectTree(item);
 					}
 				}
 			}
 		}
 
-		function createComboParent(): ComboParent {
-			return comboParent.create({
-				primitive: null,
-				object: createComboChild(),
-				objectList: [createComboChild(), createComboChild()],
-				objectMap: new Map([
-					["A", createComboChild()],
-					["B", createComboChild()],
-				]),
-				listList: [
-					[createComboChild(), createComboChild()],
-					[createComboChild(), createComboChild()],
-				],
-				listMap: new Map([
-					["A", [createComboChild(), createComboChild()]],
-					["B", [createComboChild(), createComboChild()]],
-				]),
-				mapList: [
-					new Map([
-						["A", createComboChild()],
-						["B", createComboChild()],
+		/**
+		 * Builds trees of {@link ComboObject}s.
+		 * Records all built objects and assigns each a unique ID.
+		 */
+		class ComboBuilder {
+			private readonly objects: ComboObject[] = [];
+			private nextId = 0;
+
+			public get builtObjects(): readonly ComboObject[] {
+				return this.objects;
+			}
+
+			public createComboTree(): ComboParent {
+				return this.createComboParent();
+			}
+
+			private createComboParent(): ComboParent {
+				const object = comboParent.create({
+					id: this.nextId++,
+					object: this.createComboChild(),
+					objectList: [this.createComboChild(), this.createComboChild()],
+					objectMap: new Map([
+						["A", this.createComboChild()],
+						["B", this.createComboChild()],
 					]),
-					new Map([
-						["A", createComboChild()],
-						["B", createComboChild()],
+					listList: [
+						[this.createComboChild(), this.createComboChild()],
+						[this.createComboChild(), this.createComboChild()],
+					],
+					listMap: new Map([
+						["A", [this.createComboChild(), this.createComboChild()]],
+						["B", [this.createComboChild(), this.createComboChild()]],
 					]),
-				],
-				mapMap: new Map([
-					[
-						"A",
+					mapList: [
 						new Map([
-							["A", createComboChild()],
-							["B", createComboChild()],
+							["A", this.createComboChild()],
+							["B", this.createComboChild()],
+						]),
+						new Map([
+							["A", this.createComboChild()],
+							["B", this.createComboChild()],
 						]),
 					],
-					[
-						"B",
-						new Map([
-							["A", createComboChild()],
-							["B", createComboChild()],
-						]),
-					],
-				]),
-			});
-		}
-
-		function createComboChild(): ComboChild {
-			return comboChild.create({
-				primitive: null,
-				object: createComboObject(),
-				objectList: [createComboObject(), createComboObject()],
-				objectMap: new Map([
-					["A", createComboObject()],
-					["B", createComboObject()],
-				]),
-				listList: [
-					[createComboObject(), createComboObject()],
-					[createComboObject(), createComboObject()],
-				],
-				listMap: new Map([
-					["A", [createComboObject(), createComboObject()]],
-					["B", [createComboObject(), createComboObject()]],
-				]),
-				mapList: [
-					new Map([
-						["A", createComboObject()],
-						["B", createComboObject()],
+					mapMap: new Map([
+						[
+							"A",
+							new Map([
+								["A", this.createComboChild()],
+								["B", this.createComboChild()],
+							]),
+						],
+						[
+							"B",
+							new Map([
+								["A", this.createComboChild()],
+								["B", this.createComboChild()],
+							]),
+						],
 					]),
-					new Map([
-						["A", createComboObject()],
-						["B", createComboObject()],
+				});
+				this.objects.push(object);
+				return object;
+			}
+
+			private createComboChild(): ComboChild {
+				const object = comboChild.create({
+					id: this.nextId++,
+					object: this.createComboLeaf(),
+					objectList: [this.createComboLeaf(), this.createComboLeaf()],
+					objectMap: new Map([
+						["A", this.createComboLeaf()],
+						["B", this.createComboLeaf()],
 					]),
-				],
-				mapMap: new Map([
-					[
-						"A",
+					listList: [
+						[this.createComboLeaf(), this.createComboLeaf()],
+						[this.createComboLeaf(), this.createComboLeaf()],
+					],
+					listMap: new Map([
+						["A", [this.createComboLeaf(), this.createComboLeaf()]],
+						["B", [this.createComboLeaf(), this.createComboLeaf()]],
+					]),
+					mapList: [
 						new Map([
-							["A", createComboObject()],
-							["B", createComboObject()],
+							["A", this.createComboLeaf()],
+							["B", this.createComboLeaf()],
+						]),
+						new Map([
+							["A", this.createComboLeaf()],
+							["B", this.createComboLeaf()],
 						]),
 					],
-					[
-						"B",
-						new Map([
-							["A", createComboObject()],
-							["B", createComboObject()],
-						]),
-					],
-				]),
-			});
+					mapMap: new Map([
+						[
+							"A",
+							new Map([
+								["A", this.createComboLeaf()],
+								["B", this.createComboLeaf()],
+							]),
+						],
+						[
+							"B",
+							new Map([
+								["A", this.createComboLeaf()],
+								["B", this.createComboLeaf()],
+							]),
+						],
+					]),
+				});
+				this.objects.push(object);
+				return object;
+			}
+
+			private createComboLeaf(): ComboLeaf {
+				const object = comboLeaf.create({ id: this.nextId++ });
+				this.objects.push(object);
+				return object;
+			}
 		}
 
-		function createComboObject() {
-			return comboObject.create({ primitive: null });
+		// This test checks that every proxy in the combo tree gets hydrated after insertion
+		const view = createTreeView2(comboSchema, { root: undefined });
+		const comboBuilder = new ComboBuilder();
+		const insertTree = comboBuilder.createComboTree();
+		const objectsFromInsert = [...comboBuilder.builtObjects];
+		for (const o of objectsFromInsert) {
+			assert.throws(() => o.id); // Reading a proxy before insertion should fail
 		}
-
-		function TODO<T>(t: T | undefined): T {
-			return t as T;
-		}
-
-		const view = createTreeView2(deepSchema, { root: undefined });
-		const insertTree = createComboParent();
 		view.root.root = insertTree;
-		const objectsFromInsert = [...walkObjectTree(insertTree)];
-		const objectsFromRoot = [...walkObjectTree(view.root.root)];
+		// Sort the proxies that were inserted by ID, then walk the proxies in the tre and sort those as well.
+		objectsFromInsert.sort((a, b) => a.id - b.id);
+		const objectsFromRoot = [...walkComboObjectTree(view.root.root)].sort(
+			(a, b) => a.id - b.id,
+		);
+		// The proxies that were inserted and the proxies in the tree should be the same objects.
 		assert.equal(objectsFromInsert.length, objectsFromRoot.length);
 		for (let i = 0; i < objectsFromInsert.length; i++) {
-			// The proxies that were inserted and the proxies in the tree are the same object and both can be read
+			assert.equal(objectsFromInsert[i].id, objectsFromRoot[i].id);
 			assert.equal(objectsFromInsert[i], objectsFromRoot[i]);
-			assert.equal(objectsFromInsert[i].primitive, objectsFromRoot[i].primitive);
 		}
 	});
 });

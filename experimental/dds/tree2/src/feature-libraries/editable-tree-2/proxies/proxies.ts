@@ -553,8 +553,7 @@ function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> 
 const mapStaticDispatchMap: PropertyDescriptorMap = {
 	[Symbol.iterator]: {
 		value(this: SharedTreeMap<MapSchema>) {
-			const node = getEditNode(this);
-			return node[Symbol.iterator]();
+			return this.entries();
 		},
 	},
 	delete: {
@@ -564,9 +563,11 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	entries: {
-		value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
+		*value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
 			const node = getEditNode(this);
-			return node.entries();
+			for (const key of node.keys()) {
+				yield [key, getProxyForField(node.getBoxed(key))];
+			}
 		},
 	},
 	get: {
@@ -609,9 +610,11 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	values: {
-		value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
+		*value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
 			const node = getEditNode(this);
-			return node.values();
+			for (const key of node.keys()) {
+				yield getProxyForField(node.getBoxed(key));
+			}
 		},
 	},
 	// TODO: add `clear` once we have established merge semantics for it.
