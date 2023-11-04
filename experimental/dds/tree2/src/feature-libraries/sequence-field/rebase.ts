@@ -786,7 +786,7 @@ function getAttachRevisionIndex(
 	}
 
 	if (markFillsCells(baseMark)) {
-		assert(isAttach(baseMark), "Onl attach marks can fill cells");
+		assert(isAttach(baseMark), "Only attach marks can fill cells");
 		return getKnownRevisionIndex(
 			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
 			metadata,
