@@ -312,11 +312,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param props - The properties to annotate the range with
 	 *
 	 */
-	public annotateRange(
-		start: number,
-		end: number,
-		props: PropertySet,
-	): void {
+	public annotateRange(start: number, end: number, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props, combiningOp));
 	}
 
