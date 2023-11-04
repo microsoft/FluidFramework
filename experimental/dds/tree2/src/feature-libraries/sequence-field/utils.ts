@@ -68,8 +68,7 @@ export function isNewAttachEffect(
 		(isAttach(effect) &&
 			cellId !== undefined &&
 			(effect.revision ?? revision) === (cellId.revision ?? revision)) ||
-		(isTransientEffect(effect) &&
-			isNewAttachEffect(effect.attach, cellId, effect.revision ?? revision))
+		(isTransientEffect(effect) && isNewAttachEffect(effect.attach, cellId, revision))
 	);
 }
 
@@ -141,7 +140,7 @@ export function getInputCellId(
 
 	let markRevision: RevisionTag | undefined;
 	if (isTransientEffect(mark)) {
-		markRevision = mark.attach.revision ?? mark.revision;
+		markRevision = mark.attach.revision;
 	} else {
 		assert(isAttach(mark), "Only attach marks should have undefined revision in cell ID");
 		markRevision = mark.revision;
@@ -164,7 +163,7 @@ export function getOutputCellId(
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isTransientEffect(mark)) {
-		return getDetachCellId(mark.detach, mark.revision ?? revision, metadata);
+		return getDetachCellId(mark.detach, revision, metadata);
 	}
 
 	return getInputCellId(mark, revision, metadata);
@@ -197,19 +196,23 @@ function getOverrideCellId(mark: Detach): CellId | undefined {
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
-	const clone = { ...mark };
-	if (clone.type === "Transient") {
-		clone.attach = { ...clone.attach };
-		clone.detach = { ...clone.detach };
-		if (clone.attach.type === "Insert" && clone.attach.content !== undefined) {
-			clone.attach.content = [...clone.attach.content];
-		}
+	const clone: TMark = { ...cloneMarkEffect(mark), count: mark.count };
+
+	if (mark.cellId !== undefined) {
+		clone.cellId = cloneCellId(mark.cellId);
 	}
+	return clone;
+}
+
+export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
+	const clone = { ...effect };
+	if (clone.type === "Transient") {
+		clone.attach = cloneMarkEffect(clone.attach);
+		clone.detach = cloneMarkEffect(clone.detach);
+	}
+
 	if (clone.type === "Insert" && clone.content !== undefined) {
 		clone.content = [...clone.content];
-	}
-	if (clone.cellId !== undefined) {
-		clone.cellId = cloneCellId(clone.cellId);
 	}
 	return clone;
 }
@@ -1104,17 +1107,31 @@ export function withRevision<TMark extends Mark<unknown>>(
 	mark: TMark,
 	revision: RevisionTag | undefined,
 ): TMark {
-	if (revision === undefined) {
-		return mark;
-	}
-
-	if (isNoopMark(mark)) {
-		return mark;
-	}
-
 	const cloned = cloneMark(mark);
-	(cloned as Exclude<Mark<unknown>, CellMark<NoopMark, unknown>>).revision = revision;
+	addRevision(cloned, revision);
 	return cloned;
+}
+
+export function addRevision(effect: MarkEffect, revision: RevisionTag | undefined): void {
+	if (revision === undefined) {
+		return;
+	}
+
+	if (effect.type === NoopMarkType) {
+		return;
+	}
+
+	if (effect.type === "Transient") {
+		addRevision(effect.attach, revision);
+		addRevision(effect.detach, revision);
+		return;
+	}
+
+	assert(
+		effect.revision === undefined || effect.revision === revision,
+		"Should not overwrite mark revision",
+	);
+	effect.revision = revision;
 }
 
 export function getMarkMoveId(mark: Mark<unknown>): MoveId | undefined {
