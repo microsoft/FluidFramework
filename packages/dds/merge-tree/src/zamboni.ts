@@ -32,7 +32,7 @@ export function zamboniSegments(
 	}
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
-		let segmentToScour = mergeTree.segmentsToScour.peek();
+		let segmentToScour = mergeTree.segmentsToScour.peek().value;
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}

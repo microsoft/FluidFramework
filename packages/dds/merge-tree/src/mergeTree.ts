@@ -6,10 +6,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-bitwise */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, Heap, IComparer } from "@fluidframework/core-utils";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils";
 import { IAttributionCollectionSerializer } from "./attributionCollection";
-import { Comparer, Heap, DoublyLinkedList, ListNode } from "./collections";
+import { DoublyLinkedList, ListNode } from "./collections";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -87,7 +87,7 @@ import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment";
  */
 export type ISegmentLeaf = ISegment & IMergeLeaf;
 
-const minListenerComparer: Comparer<MinListener> = {
+const minListenerComparer: IComparer<MinListener> = {
 	min: {
 		minRequired: Number.MIN_VALUE,
 		onMinGE: () => {
@@ -113,7 +113,7 @@ function nodeTotalLength(mergeTree: MergeTree, node: IMergeNode): number | undef
 	return mergeTree.localNetLength(node);
 }
 
-const LRUSegmentComparer: Comparer<LRUSegment> = {
+const LRUSegmentComparer: IComparer<LRUSegment> = {
 	min: { maxSeq: -2 },
 	compare: (a, b) => a.maxSeq - b.maxSeq,
 };
@@ -422,7 +422,7 @@ export class MergeTree {
 
 	public readonly pendingSegments = new DoublyLinkedList<SegmentGroup>();
 
-	public readonly segmentsToScour = new Heap<LRUSegment>([], LRUSegmentComparer);
+	public readonly segmentsToScour = new Heap<LRUSegment>(LRUSegmentComparer);
 
 	public readonly attributionPolicy: AttributionPolicy | undefined;
 
@@ -999,7 +999,7 @@ export class MergeTree {
 	}
 
 	public addMinSeqListener(minRequired: number, onMinGE: (minSeq: number) => void) {
-		this.minSeqListeners ??= new Heap<MinListener>([], minListenerComparer);
+		this.minSeqListeners ??= new Heap<MinListener>(minListenerComparer);
 		this.minSeqListeners.add({ minRequired, onMinGE });
 	}
 
@@ -1007,7 +1007,7 @@ export class MergeTree {
 		if (this.minSeqListeners) {
 			while (
 				this.minSeqListeners.count() > 0 &&
-				this.minSeqListeners.peek().minRequired <= this.collabWindow.minSeq
+				this.minSeqListeners.peek().value.minRequired <= this.collabWindow.minSeq
 			) {
 				const minListener = this.minSeqListeners.get()!;
 				minListener.onMinGE(this.collabWindow.minSeq);
