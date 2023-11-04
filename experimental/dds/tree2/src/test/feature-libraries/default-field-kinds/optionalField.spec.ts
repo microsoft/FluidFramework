@@ -485,10 +485,6 @@ describe("optionalField", () => {
 			mintRevisionTag(),
 		);
 		const clear = tagChange(optionalFieldEditor.clear(false, brand(1)), mintRevisionTag());
-		const replace = tagChange(
-			optionalFieldEditor.set(testTreeCursor(""), false, brand(1), brand(2)),
-			mintRevisionTag(),
-		);
 		const hasChildChanges = tagChange(
 			optionalFieldEditor.buildChildChange(0, nodeChange1),
 			mintRevisionTag(),
