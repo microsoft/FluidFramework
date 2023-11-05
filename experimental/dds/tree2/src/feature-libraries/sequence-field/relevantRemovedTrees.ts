@@ -7,7 +7,7 @@ import { Delta, offsetDetachId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { Changeset } from "./format";
 import { isMoveMark } from "./moveEffectTable";
-import { isDetach, isInsert, isNewAttach, isReattach } from "./utils";
+import { isDetach, isInsert, isNewAttach, isReattachEffect, isTransientEffect } from "./utils";
 
 export type RemovedTreesFromTChild<TChild> = (child: TChild) => Iterable<Delta.DetachedNodeId>;
 
@@ -18,7 +18,8 @@ export function* relevantRemovedTrees<TChild>(
 	for (const mark of changeset) {
 		if (mark.cellId !== undefined) {
 			let includeNodesFromMark = false;
-			if (isInsert(mark) && isReattach(mark)) {
+			const effect = isTransientEffect(mark) ? mark.attach : mark;
+			if (isInsert(effect) && isReattachEffect(effect, mark.cellId)) {
 				// This tree is being restored.
 				includeNodesFromMark = true;
 			} else if (isDetach(mark)) {
