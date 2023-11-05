@@ -33,6 +33,11 @@ export function* relevantRemovedTrees<TChild>(
 			}
 			if (mark.type !== "MoveIn" && !isNewAttach(mark) && mark.changes !== undefined) {
 				// This removed tree is being edited.
+				// Note: there is a possibility that the child changes only affect a distant descendant
+				// which may have been removed from this (removed) subtree. In such a case, this tree is not truly
+				// relevant, but including it is the conservative thing to do.
+				// In the future, we may represent changes to removed trees using the ID of the lowest removed
+				// ancestor, which would allow us to avoid including such trees when they truly are not needed.
 				includeNodesFromMark = true;
 			}
 			if (includeNodesFromMark) {
