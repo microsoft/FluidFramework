@@ -12,6 +12,7 @@ import {
 	IMergeBlock,
 	IMergeNode,
 	ISegment,
+	Marker,
 	MaxNodesInBlock,
 	seqLTE,
 	toRemovalInfo,
@@ -155,6 +156,10 @@ function scourNode(node: IMergeBlock, holdNodes: IMergeNode[], mergeTree: MergeT
 				);
 
 				segment.parent = undefined;
+
+				if (Marker.is(segment)) {
+					mergeTree.unlinkMarker(segment);
+				}
 			} else {
 				holdNodes.push(segment);
 			}

@@ -542,41 +542,47 @@ export abstract class BaseSegment extends MergeNode implements ISegment {
 	}
 
 	public splitAt(pos: number): ISegment | undefined {
-		if (pos > 0) {
-			const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
-			if (leafSegment) {
-				this.copyPropertiesTo(leafSegment);
-				// eslint-disable-next-line @typescript-eslint/no-this-alias
-				const thisAsMergeSegment: IMergeLeaf = this;
-				leafSegment.parent = thisAsMergeSegment.parent;
-
-				// Give the leaf a temporary yet valid ordinal.
-				// when this segment is put in the tree, it will get its real ordinal,
-				// but this ordinal meets all the necessary invariants for now.
-				leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
-
-				leafSegment.removedClientIds = this.removedClientIds?.slice();
-				leafSegment.removedSeq = this.removedSeq;
-				leafSegment.localRemovedSeq = this.localRemovedSeq;
-				leafSegment.seq = this.seq;
-				leafSegment.localSeq = this.localSeq;
-				leafSegment.clientId = this.clientId;
-				leafSegment.movedClientIds = this.movedClientIds?.slice();
-				leafSegment.movedSeq = this.movedSeq;
-				leafSegment.movedSeqs = this.movedSeqs?.slice();
-				leafSegment.localMovedSeq = this.localMovedSeq;
-				leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
-				this.segmentGroups.copyTo(leafSegment);
-				this.trackingCollection.copyTo(leafSegment);
-				if (this.localRefs) {
-					this.localRefs.split(pos, leafSegment);
-				}
-				if (this.attribution) {
-					leafSegment.attribution = this.attribution.splitAt(pos);
-				}
-			}
-			return leafSegment;
+		if (pos <= 0) {
+			return undefined;
 		}
+
+		const leafSegment: IMergeLeaf | undefined = this.createSplitSegmentAt(pos);
+
+		if (!leafSegment) {
+			return undefined;
+		}
+
+		this.copyPropertiesTo(leafSegment);
+		// eslint-disable-next-line @typescript-eslint/no-this-alias
+		const thisAsMergeSegment: IMergeLeaf = this;
+		leafSegment.parent = thisAsMergeSegment.parent;
+
+		// Give the leaf a temporary yet valid ordinal.
+		// when this segment is put in the tree, it will get its real ordinal,
+		// but this ordinal meets all the necessary invariants for now.
+		leafSegment.ordinal = this.ordinal + String.fromCharCode(0);
+
+		leafSegment.removedClientIds = this.removedClientIds?.slice();
+		leafSegment.removedSeq = this.removedSeq;
+		leafSegment.localRemovedSeq = this.localRemovedSeq;
+		leafSegment.seq = this.seq;
+		leafSegment.localSeq = this.localSeq;
+		leafSegment.clientId = this.clientId;
+		leafSegment.movedClientIds = this.movedClientIds?.slice();
+		leafSegment.movedSeq = this.movedSeq;
+		leafSegment.movedSeqs = this.movedSeqs?.slice();
+		leafSegment.localMovedSeq = this.localMovedSeq;
+		leafSegment.wasMovedOnInsert = this.wasMovedOnInsert;
+		this.segmentGroups.copyTo(leafSegment);
+		this.trackingCollection.copyTo(leafSegment);
+		if (this.localRefs) {
+			this.localRefs.split(pos, leafSegment);
+		}
+		if (this.attribution) {
+			leafSegment.attribution = this.attribution.splitAt(pos);
+		}
+
+		return leafSegment;
 	}
 
 	private copyPropertiesTo(other: ISegment) {
@@ -625,7 +631,7 @@ export interface IJSONMarkerSegment extends IJSONSegment {
 	marker: IMarkerDef;
 }
 
-export class Marker extends BaseSegment implements ReferencePosition {
+export class Marker extends BaseSegment implements ReferencePosition, ISegment {
 	public static readonly type = "Marker";
 	public static is(segment: ISegment): segment is Marker {
 		return segment.type === Marker.type;
