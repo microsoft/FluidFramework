@@ -29,6 +29,7 @@ export interface FieldChangeHandler<
 	): Delta.FieldChanges;
 	/**
 	 * Returns the set of removed trees that should be in memory for the given change to be applied.
+	 * A removed tree is relevant if it is being restored being edited (or both).
 	 *
 	 * Implementations are allowed to be conservative by returning more trees than strictly necessary
 	 * (though they should try to avoid doing so for the sake of performance).
