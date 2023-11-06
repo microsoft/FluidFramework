@@ -169,12 +169,12 @@ export class AlfredRunner implements IRunner {
 
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
-			Lumberjack.info("AlfredRunner.stop already called, returning early.");
+			Lumberjack.info("AlfredRunner.stop already called, returning early.", { caller });
 			return;
 		}
 
 		this.stopped = true;
-		Lumberjack.info("AlfredRunner.stop starting.");
+		Lumberjack.info("AlfredRunner.stop starting.", { caller });
 
 		const runnerServerCloseTimeoutMs =
 			this.config.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
