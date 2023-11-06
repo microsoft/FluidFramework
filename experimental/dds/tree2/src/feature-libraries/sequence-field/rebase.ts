@@ -716,8 +716,14 @@ type CellBlockList = CellBlock[];
 
 interface CellBlock {
 	readonly cellId: CellId | undefined;
-	readonly firstAttachedIndex: number;
-	readonly lastAttachedIndex: number;
+
+	// The index of the oldest revision where this cell is full in its output context.
+	// May be -Infinity if the cell has been full for all revisions in the base changeset,
+	// or +Infinity if the cell has been empty for all revisions in the base changeset.
+	readonly firstAttachedRevisionIndex: number;
+
+	// The index of the newest revision where this cell is full in its output context.
+	readonly lastAttachedRevisionIndex: number;
 }
 
 function handleLineage(
@@ -766,8 +772,8 @@ function updateLineageState(
 
 	cellBlocks.push({
 		cellId: rebasedMark.cellId,
-		firstAttachedIndex: attachRevisionIndex,
-		lastAttachedIndex: detachRevisionIndex - 1,
+		firstAttachedRevisionIndex: attachRevisionIndex,
+		lastAttachedRevisionIndex: detachRevisionIndex - 1,
 	});
 }
 
@@ -841,7 +847,10 @@ function addLineageToRecipients(
 	const revisionIndex = getKnownRevisionIndex(revision, metadata);
 	for (let i = cellBlocks.length - 1; i >= 0; i--) {
 		const entry = cellBlocks[i];
-		if (entry.firstAttachedIndex <= revisionIndex && revisionIndex <= entry.lastAttachedIndex) {
+		if (
+			entry.firstAttachedRevisionIndex <= revisionIndex &&
+			revisionIndex <= entry.lastAttachedRevisionIndex
+		) {
 			// These cells were full in this revision, so cells earlier in the sequence
 			// do not need to know about this lineage event.
 			return;
