@@ -61,80 +61,92 @@ function isInverse(
 }
 
 class ChildChangeMap<T> implements IChildChangeMap<T> {
-	private readonly nestedMapData = new SizedNestedMap<
-		ChangesetLocalId | Exclude<ContentId, ChangeAtomId>,
+	// TODO: this doesn't need to be sized. we just need isEmpty pretty sure.
+	private readonly beforeMap = new SizedNestedMap<
+		ChangesetLocalId | "this",
 		RevisionTag | undefined,
 		T
 	>();
-	public set(id: ContentId, childChange: T): void {
-		if (typeof id === "string") {
-			this.nestedMapData.set(id, undefined, childChange);
+	private readonly afterMap = new SizedNestedMap<
+		ChangesetLocalId | "this",
+		RevisionTag | undefined,
+		T
+	>();
+
+	private getMap(
+		type: "before" | "after",
+	): SizedNestedMap<ChangesetLocalId | "this", RevisionTag | undefined, T> {
+		return type === "before" ? this.beforeMap : this.afterMap;
+	}
+
+	public set({ id, type }: ContentId, childChange: T): void {
+		const map = this.getMap(type);
+		if (id === "this") {
+			map.set(id, undefined, childChange);
 		} else {
-			this.nestedMapData.set(id.localId, id.revision, childChange);
+			map.set(id.localId, id.revision, childChange);
 		}
 	}
 
-	public get(id: ContentId): T | undefined {
-		return typeof id === "string"
-			? this.nestedMapData.tryGet(id, undefined)
-			: this.nestedMapData.tryGet(id.localId, id.revision);
+	public get({ id, type }: ContentId): T | undefined {
+		const map = this.getMap(type);
+		return id === "this" ? map.tryGet(id, undefined) : map.tryGet(id.localId, id.revision);
 	}
 
 	public has(id: ContentId): boolean {
 		return this.get(id) !== undefined;
 	}
 
-	public delete(id: ContentId): boolean {
-		return typeof id === "string"
-			? this.nestedMapData.delete(id, undefined)
-			: this.nestedMapData.delete(id.localId, id.revision);
+	public delete({ type, id }: ContentId): boolean {
+		const map = this.getMap(type);
+		return id === "this" ? map.delete(id, undefined) : map.delete(id.localId, id.revision);
 	}
 
-	public keys(): Iterable<ContentId> {
-		const changeIds: ContentId[] = [];
-		for (const [localId, nestedMap] of this.nestedMapData) {
-			if (typeof localId === "string") {
-				changeIds.push(localId);
+	public *keys(): Iterable<ContentId> {
+		for (const [localId, nestedMap] of this.beforeMap) {
+			if (localId === "this") {
+				yield { type: "before", id: localId };
 			} else {
 				for (const [revisionTag, _] of nestedMap) {
-					changeIds.push(
+					const id =
 						revisionTag === undefined
 							? { localId }
-							: { localId, revision: revisionTag },
-					);
+							: { localId, revision: revisionTag };
+					yield { type: "before", id };
 				}
 			}
 		}
 
-		return changeIds;
-	}
-	public values(): Iterable<T> {
-		return this.nestedMapData.values();
-	}
-	public entries(): Iterable<[ContentId, T]> {
-		const entries: [ContentId, T][] = [];
-		for (const changeId of this.keys()) {
-			if (typeof changeId === "string") {
-				const entry = this.nestedMapData.tryGet(changeId, undefined);
-				assert(
-					entry !== undefined,
-					0x770 /* Entry should not be undefined when iterating keys. */,
-				);
-				entries.push([changeId, entry]);
+		for (const [localId, nestedMap] of this.afterMap) {
+			if (localId === "this") {
+				yield { type: "after", id: localId };
 			} else {
-				const entry = this.nestedMapData.tryGet(changeId.localId, changeId.revision);
-				assert(
-					entry !== undefined,
-					0x771 /* Entry should not be undefined when iterating keys. */,
-				);
-				entries.push([changeId, entry]);
+				for (const [revisionTag, _] of nestedMap) {
+					const id =
+						revisionTag === undefined
+							? { localId }
+							: { localId, revision: revisionTag };
+					yield { type: "after", id };
+				}
 			}
 		}
-
-		return entries;
+	}
+	public *values(): Iterable<T> {
+		yield* this.beforeMap.values();
+		yield* this.afterMap.values();
+	}
+	public *entries(): Iterable<[ContentId, T]> {
+		for (const changeId of this.keys()) {
+			const value = this.get(changeId);
+			assert(
+				value !== undefined,
+				0x770 /* Entry should not be undefined when iterating keys. */,
+			);
+			yield [changeId, value];
+		}
 	}
 	public get size(): number {
-		return this.nestedMapData.size;
+		return this.beforeMap.size + this.afterMap.size;
 	}
 }
 
@@ -146,6 +158,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
+		if (changes.length === 1) {
+			return changes[0].change;
+		}
 		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
 		const addChildChange = (id: ContentId, ...changeList: TaggedChange<NodeChangeset>[]) => {
 			const existingChanges = perChildChanges.get(id);
@@ -165,72 +180,63 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		};
 
-		// Maps revisions that we might see in the future which resurrect a node to the childId that we're
-		// currently storing childChanges to that node under.
-		// const pendingRessurectRevisions = new ChildChangeMap<ChangeId>();
-
-		let currentActiveFieldChange: Mutable<OptionalFieldChange> | undefined;
-		// Child changes are keyed on the ChangeAtomId of the first field change that deleted the node they affect.
-		// However, since the node they affect can be revived by a later field change in the composition, we need to
-		// track whether changes to the 'active' node in the field should be keyed on a ChangeAtomId that refers to
-		// a previous deletion of that node, or whether it's currently 'unallocated' and should be keyed on whatever
-		// first deletes it.
-		// NOTE: This is the id of the change that *deletes* the currently active node, not the id of the change that inserts it.
-		let currentActiveNodeId: ChangeAtomId | "firstToDelete" = "firstToDelete";
-		let currentActiveFieldChangeId: ChangeAtomId | "start" | "end" = "start";
 		const cumulativeFieldChanges: OptionalFieldChange[] = [];
-		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
-		let index = 0;
+
+		// TODO: would be great to not use this. maybe changes[0].revision ?? changes[0]?.change.fieldChanges[0]?.revision ?? fail()
+		let currentActiveContentId: ContentId = { type: "before", id: "this" };
 		for (const { change, revision } of changes) {
-			if (change.contentId !== "start") {
-				currentActiveFieldChangeId = change.contentId;
-			}
-			const firstFieldChangeAtomId =
-				change.fieldChanges[0] !== undefined
-					? {
-							revision: revision ?? change.fieldChanges[0].revision,
-							localId: change.fieldChanges[0].id,
-					  }
-					: undefined;
+			// const firstFieldChangeAtomId =
+			// 	change.fieldChanges[0] !== undefined
+			// 		? {
+			// 				revision: revision ?? change.fieldChanges[0].revision,
+			// 				localId: change.fieldChanges[0].id,
+			// 		  }
+			// 		: undefined;
 			const { childChanges, fieldChanges } = change;
-
-			// TODO: This needs to be a cursor that advances as we scan through `change`'s field changes.
-			// Maybe not actually...
-			if (childChanges !== undefined) {
-				for (const [childId, childChange] of childChanges) {
-					const taggedChildChange = tagChange(childChange, revision);
-					if (
-						childId === "start" ||
-						(typeof childId === "object" &&
-							firstFieldChangeAtomId !== undefined &&
-							areEqualChangeAtomIds(childId, firstFieldChangeAtomId))
-					) {
-						// childChange refers to the node that existed at the start of `change`,
-						// Thus in the composition, it should be referred to by whatever deletes that node in the future, which is what
-						// currentChildNodeChanges tracks
-						currentChildNodeChanges.push(taggedChildChange);
-					} else if (childId === "end") {
-						// pass--handle this at the end.
-					} else {
-						addChildChange(childId, taggedChildChange);
-					}
-				}
-			}
-
 			if (fieldChanges.length > 0) {
+				// Process field changes first: this may rename ContentIds for current child changes.
 				for (const fieldChange of fieldChanges) {
+					// Key idea: assume child content ids that we're going to process are already normalized.
+					// So they should never refer to rollback revisions
 					const fieldChangeInfo = revisionMetadata.tryGetInfo(
 						revision ?? fieldChange.revision,
-					);
-					// TODO: wasEmpty computation is odd here.
-					currentActiveFieldChange = {
+					) ?? {
+						revision:
+							revision ??
+							fieldChange.revision ??
+							fail("Expected *something* to have a revision"),
+					};
+
+					const isRollback = fieldChangeInfo.rollbackOf !== undefined;
+					const intention = fieldChangeInfo.rollbackOf ?? fieldChangeInfo.revision;
+					const changeAtomId: ChangeAtomId = {
+						localId: fieldChange.id,
+						revision: intention,
+					};
+					rename(currentActiveContentId, {
+						type: isRollback ? "after" : "before",
+						id: changeAtomId,
+					});
+
+					currentActiveContentId = {
+						type: isRollback ? "before" : "after",
+						id: changeAtomId,
+					};
+					// TODO: wasEmpty computation is odd here, allegedly
+					const activeFieldChange: Mutable<OptionalFieldChange> = {
 						id: fieldChange.id,
 						revision: fieldChangeInfo?.revision,
 						wasEmpty: fieldChange.wasEmpty,
 					};
-
 					if (fieldChange.newContent !== undefined) {
-						currentActiveFieldChange.newContent = { ...fieldChange.newContent };
+						activeFieldChange.newContent = { ...fieldChange.newContent };
+						if ("revert" in fieldChange.newContent) {
+							// We're restoring a node which previously existed. Recover any child changes to that node.
+							rename(
+								{ type: "before", id: fieldChange.newContent.revert },
+								currentActiveContentId,
+							);
+						}
 					}
 
 					let hasMatchingPriorInverse = false;
@@ -249,191 +255,302 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					const priorInverse = cumulativeFieldChanges[priorInverseIndex];
 					hasMatchingPriorInverse = priorInverse !== undefined;
 
-					// if (fieldChange.newContent !== undefined) {
-					// 	if (hasMatchingPriorInverse) {
-					// 		currentActiveFieldChange = undefined;
-					// 	} else {
-					// 		currentActiveFieldChange.newContent = {
-					// 			...change.fieldChange.newContent,
-					// 		};
-					// 	}
-					// } else {
-					// 	if (hasMatchingPriorInverse) {
-					// 		currentActiveFieldChange = undefined;
-					// 	} else {
-					// 		delete currentActiveFieldChange.newContent;
-					// 	}
-					// }
-
-					// Node was changed by this revision: flush the current changes
-					if (
-						currentChildNodeChanges.length > 0 &&
-						// TODO: review
-						change.contentId !== "start"
-					) {
-						const id: ChangeAtomId =
-							currentActiveNodeId === "firstToDelete"
-								? {
-										revision: revision ?? fieldChange.revision,
-										localId: fieldChange.id,
-								  }
-								: currentActiveNodeId;
-						addChildChange(id, ...currentChildNodeChanges);
-						currentChildNodeChanges = [];
-						// assert(firstFieldChangeAtomId !== undefined, "expected first field change");
-						// addChildChange(firstFieldChangeAtomId, ...currentChildNodeChanges);
-					}
-
-					// if (priorInverse !== undefined) {
-					// 	let maybeExisting = perChildChanges.get({
-					// 		revision:
-					// 			priorInverse.revision ??
-					// 			// priorInverse?.change.fieldChange?.revision ??
-					// 			fail("No revision associated with prior inverse"),
-					// 		localId: priorInverse.id,
-					// 	});
-					// 	if (maybeExisting === undefined) {
-					// 		currentChildNodeChanges = [];
-					// 		pendingCurrentChildNodeFlush = true;
-					// 	} else {
-					// 		currentChildNodeChanges = maybeExisting;
-					// 		pendingCurrentChildNodeFlush = false;
-					// 	}
-					// } else {
-					// 	currentChildNodeChanges = [];
-					// 	pendingCurrentChildNodeFlush = true;
-					// }
-
 					if (hasMatchingPriorInverse) {
 						// Don't need to add this to the set of field changes, as it has instead cancelled out a prior change.
 						//
 						cumulativeFieldChanges.splice(priorInverseIndex, 1);
-						if (priorInverseIndex > 0) {
-							const activeNode = cumulativeFieldChanges[priorInverseIndex - 1];
-							currentActiveFieldChangeId = {
-								revision: activeNode.revision,
-								localId: activeNode.id,
-							};
-						} else {
-							currentActiveFieldChangeId = "start";
-						}
-
-						// Update changes
-						// TODO: Conceptualizing as a 'rename to self' and flushing as 'renaming self to id of deletion'
-						// seems conceptually cleaner here.
-						const renamedChanges = perChildChanges.get({
-							revision:
-								priorInverse.revision ??
-								fail("prior inverse should have been tagged with revision"),
-							localId: priorInverse.id,
-						});
-						if (renamedChanges !== undefined) {
-							currentChildNodeChanges.push(...renamedChanges);
-							perChildChanges.delete({
-								revision:
-									priorInverse.revision ??
-									fail("prior inverse should have been tagged with revision"),
-								localId: priorInverse.id,
-							});
-						}
-						// rename(
-						// 	{
-						// 		revision:
-						// 			priorInverse.revision ??
-						// 			fail("prior inverse should have been tagged with revision"),
-						// 		localId: priorInverse.id,
-						// 	},
-						// 	{ revision: fieldChange.revision ?? revision, localId: fieldChange.id },
-						// );
 					} else {
-						cumulativeFieldChanges.push(currentActiveFieldChange);
-						// currentActiveFieldChangeId = {
-						// 	revision: currentActiveFieldChange.revision,
-						// 	localId: currentActiveFieldChange.id,
-						// };
+						cumulativeFieldChanges.push(activeFieldChange);
 					}
-
-					if (hasMatchingPriorInverse) {
-						// Active node should be whatever existed immediately before the prior inverse, hence it was removed by the prior inverse.
-						currentActiveNodeId = {
-							revision:
-								priorInverse.revision ??
-								// priorInverse?.change.fieldChange?.revision ??
-								fail("No revision associated with prior inverse"),
-							localId: priorInverse.id,
-						};
-
-						// There's a matching prior inverse, but this is also an undo. so check both ...? lol
-						if (
-							fieldChange.newContent !== undefined &&
-							"revert" in fieldChange.newContent
-						) {
-							const renamedChanges = perChildChanges.get(
-								fieldChange.newContent.revert,
-							);
-							if (renamedChanges !== undefined) {
-								currentChildNodeChanges.push(...renamedChanges);
-								perChildChanges.delete(fieldChange.newContent.revert);
-							}
-						}
-					} else if (
-						fieldChange.newContent !== undefined &&
-						"revert" in fieldChange.newContent
-					) {
-						// We're restoring a node which previously existed.
-						// This is the ChangeAtomId for the revision which deleted the node we now recover.
-						currentActiveNodeId = "firstToDelete"; // fieldChange.newContent.revert;
-
-						const renamedChanges = perChildChanges.get(fieldChange.newContent.revert);
-						if (renamedChanges !== undefined) {
-							currentChildNodeChanges.push(...renamedChanges);
-							perChildChanges.delete(fieldChange.newContent.revert);
-						}
-					} else {
-						currentActiveNodeId = "firstToDelete";
-					}
-
-					// if (fieldChange.newContent?.changes !== undefined) {
-					// 	currentChildNodeChanges.push(
-					// 		tagChange(fieldChange.newContent.changes, fieldChangeInfo?.revision),
-					// 	);
-					// 	assert(
-					// 		currentActiveFieldChange.newContent !== undefined,
-					// 		"Exepcted active content to be undefined",
-					// 	);
-					// 	delete currentActiveFieldChange.newContent.changes;
-					// }
 				}
+
+				if (
+					!areEqualContentIds(change.contentId, { type: "before", id: "this" }) &&
+					change.fieldChanges.length > 0
+				) {
+					rename(currentActiveContentId, change.contentId);
+					currentActiveContentId = change.contentId;
+				}
+			} else {
+				currentActiveContentId = { type: "after", id: "this" };
 			}
-			index++;
 
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
-					if (childId === "end") {
-						const taggedChildChange = tagChange(childChange, revision);
-						currentChildNodeChanges.push(taggedChildChange);
-					}
+					// const id = revision !== undefined && childId.id === 'this' ? { id: }
+					addChildChange(childId, tagChange(childChange, revision));
 				}
 			}
 		}
 
-		if (currentChildNodeChanges.length > 0) {
-			addChildChange("end", ...currentChildNodeChanges);
-			// if (currentActiveFieldChangeId !== "start" && currentActiveFieldChange !== undefined) {
-			// 	// TODO: Seems like currentActiveFieldChange might be wrong if we've ended in partial application of inverses... ?
-			// 	assert(
-			// 		currentActiveFieldChange.newContent !== undefined,
-			// 		0x772 /* after node must be defined to receive changes */,
-			// 	);
-			// 	currentActiveFieldChange.newContent.changes = composeChild(currentChildNodeChanges);
-			// } else {
-			// 	addChildChange("self", ...currentChildNodeChanges);
-			// }
-		}
+		// // Maps revisions that we might see in the future which resurrect a node to the childId that we're
+		// // currently storing childChanges to that node under.
+		// // const pendingRessurectRevisions = new ChildChangeMap<ChangeId>();
+
+		// let currentActiveFieldChange: Mutable<OptionalFieldChange> | undefined;
+		// // Child changes are keyed on the ChangeAtomId of the first field change that deleted the node they affect.
+		// // However, since the node they affect can be revived by a later field change in the composition, we need to
+		// // track whether changes to the 'active' node in the field should be keyed on a ChangeAtomId that refers to
+		// // a previous deletion of that node, or whether it's currently 'unallocated' and should be keyed on whatever
+		// // first deletes it.
+		// // NOTE: This is the id of the change that *deletes* the currently active node, not the id of the change that inserts it.
+		// let currentActiveNodeId: ChangeAtomId | "firstToDelete" = "firstToDelete";
+		// let currentActiveFieldChangeId: ChangeAtomId | "start" | "end" = "start";
+		// let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
+		// let index = 0;
+		// for (const { change, revision } of changes) {
+		// 	if (change.contentId !== "start") {
+		// 		currentActiveFieldChangeId = change.contentId;
+		// 	}
+		// 	const firstFieldChangeAtomId =
+		// 		change.fieldChanges[0] !== undefined
+		// 			? {
+		// 					revision: revision ?? change.fieldChanges[0].revision,
+		// 					localId: change.fieldChanges[0].id,
+		// 			  }
+		// 			: undefined;
+		// 	const { childChanges, fieldChanges } = change;
+
+		// 	// TODO: This needs to be a cursor that advances as we scan through `change`'s field changes.
+		// 	// Maybe not actually...
+		// 	if (childChanges !== undefined) {
+		// 		for (const [childId, childChange] of childChanges) {
+		// 			const taggedChildChange = tagChange(childChange, revision);
+		// 			if (
+		// 				childId === "start" ||
+		// 				(typeof childId === "object" &&
+		// 					firstFieldChangeAtomId !== undefined &&
+		// 					areEqualChangeAtomIds(childId, firstFieldChangeAtomId))
+		// 			) {
+		// 				// childChange refers to the node that existed at the start of `change`,
+		// 				// Thus in the composition, it should be referred to by whatever deletes that node in the future, which is what
+		// 				// currentChildNodeChanges tracks
+		// 				currentChildNodeChanges.push(taggedChildChange);
+		// 			} else if (childId === "end") {
+		// 				// pass--handle this at the end.
+		// 			} else {
+		// 				addChildChange(childId, taggedChildChange);
+		// 			}
+		// 		}
+		// 	}
+
+		// 	if (fieldChanges.length > 0) {
+		// 		for (const fieldChange of fieldChanges) {
+		// 			const fieldChangeInfo = revisionMetadata.tryGetInfo(
+		// 				revision ?? fieldChange.revision,
+		// 			);
+		// 			// TODO: wasEmpty computation is odd here.
+		// 			currentActiveFieldChange = {
+		// 				id: fieldChange.id,
+		// 				revision: fieldChangeInfo?.revision,
+		// 				wasEmpty: fieldChange.wasEmpty,
+		// 			};
+
+		// 			if (fieldChange.newContent !== undefined) {
+		// 				currentActiveFieldChange.newContent = { ...fieldChange.newContent };
+		// 			}
+
+		// 			let hasMatchingPriorInverse = false;
+		// 			const priorInverseIndex = cumulativeFieldChanges.findIndex((c) => {
+		// 				assert(
+		// 					c.revision !== undefined,
+		// 					"Expected revision to be set on composed field change component",
+		// 				);
+		// 				// Note: previous code looked directly on `changes`, which required a nested array check here.
+		// 				// This approach seems conceptually nicer.
+		// 				// return c.change.fieldChanges.some((fc) =>
+		// 				// 	isInverse(revisionMetadata.tryGetInfo(fc.revision), fieldChangeInfo),
+		// 				// );
+		// 				return isInverse(revisionMetadata.tryGetInfo(c.revision), fieldChangeInfo);
+		// 			});
+		// 			const priorInverse = cumulativeFieldChanges[priorInverseIndex];
+		// 			hasMatchingPriorInverse = priorInverse !== undefined;
+
+		// 			// if (fieldChange.newContent !== undefined) {
+		// 			// 	if (hasMatchingPriorInverse) {
+		// 			// 		currentActiveFieldChange = undefined;
+		// 			// 	} else {
+		// 			// 		currentActiveFieldChange.newContent = {
+		// 			// 			...change.fieldChange.newContent,
+		// 			// 		};
+		// 			// 	}
+		// 			// } else {
+		// 			// 	if (hasMatchingPriorInverse) {
+		// 			// 		currentActiveFieldChange = undefined;
+		// 			// 	} else {
+		// 			// 		delete currentActiveFieldChange.newContent;
+		// 			// 	}
+		// 			// }
+
+		// 			// Node was changed by this revision: flush the current changes
+		// 			if (
+		// 				currentChildNodeChanges.length > 0 &&
+		// 				// TODO: review
+		// 				change.contentId !== "start"
+		// 			) {
+		// 				const id: ChangeAtomId =
+		// 					currentActiveNodeId === "firstToDelete"
+		// 						? {
+		// 								revision: revision ?? fieldChange.revision,
+		// 								localId: fieldChange.id,
+		// 						  }
+		// 						: currentActiveNodeId;
+		// 				addChildChange(id, ...currentChildNodeChanges);
+		// 				currentChildNodeChanges = [];
+		// 				// assert(firstFieldChangeAtomId !== undefined, "expected first field change");
+		// 				// addChildChange(firstFieldChangeAtomId, ...currentChildNodeChanges);
+		// 			}
+
+		// 			// if (priorInverse !== undefined) {
+		// 			// 	let maybeExisting = perChildChanges.get({
+		// 			// 		revision:
+		// 			// 			priorInverse.revision ??
+		// 			// 			// priorInverse?.change.fieldChange?.revision ??
+		// 			// 			fail("No revision associated with prior inverse"),
+		// 			// 		localId: priorInverse.id,
+		// 			// 	});
+		// 			// 	if (maybeExisting === undefined) {
+		// 			// 		currentChildNodeChanges = [];
+		// 			// 		pendingCurrentChildNodeFlush = true;
+		// 			// 	} else {
+		// 			// 		currentChildNodeChanges = maybeExisting;
+		// 			// 		pendingCurrentChildNodeFlush = false;
+		// 			// 	}
+		// 			// } else {
+		// 			// 	currentChildNodeChanges = [];
+		// 			// 	pendingCurrentChildNodeFlush = true;
+		// 			// }
+
+		// 			if (hasMatchingPriorInverse) {
+		// 				// Don't need to add this to the set of field changes, as it has instead cancelled out a prior change.
+		// 				//
+		// 				cumulativeFieldChanges.splice(priorInverseIndex, 1);
+		// 				if (priorInverseIndex > 0) {
+		// 					const activeNode = cumulativeFieldChanges[priorInverseIndex - 1];
+		// 					currentActiveFieldChangeId = {
+		// 						revision: activeNode.revision,
+		// 						localId: activeNode.id,
+		// 					};
+		// 				} else {
+		// 					currentActiveFieldChangeId = "start";
+		// 				}
+
+		// 				// Update changes
+		// 				// TODO: Conceptualizing as a 'rename to self' and flushing as 'renaming self to id of deletion'
+		// 				// seems conceptually cleaner here.
+		// 				const renamedChanges = perChildChanges.get({
+		// 					revision:
+		// 						priorInverse.revision ??
+		// 						fail("prior inverse should have been tagged with revision"),
+		// 					localId: priorInverse.id,
+		// 				});
+		// 				if (renamedChanges !== undefined) {
+		// 					currentChildNodeChanges.push(...renamedChanges);
+		// 					perChildChanges.delete({
+		// 						revision:
+		// 							priorInverse.revision ??
+		// 							fail("prior inverse should have been tagged with revision"),
+		// 						localId: priorInverse.id,
+		// 					});
+		// 				}
+		// 				// rename(
+		// 				// 	{
+		// 				// 		revision:
+		// 				// 			priorInverse.revision ??
+		// 				// 			fail("prior inverse should have been tagged with revision"),
+		// 				// 		localId: priorInverse.id,
+		// 				// 	},
+		// 				// 	{ revision: fieldChange.revision ?? revision, localId: fieldChange.id },
+		// 				// );
+		// 			} else {
+		// 				cumulativeFieldChanges.push(currentActiveFieldChange);
+		// 				// currentActiveFieldChangeId = {
+		// 				// 	revision: currentActiveFieldChange.revision,
+		// 				// 	localId: currentActiveFieldChange.id,
+		// 				// };
+		// 			}
+
+		// 			if (hasMatchingPriorInverse) {
+		// 				// Active node should be whatever existed immediately before the prior inverse, hence it was removed by the prior inverse.
+		// 				currentActiveNodeId = {
+		// 					revision:
+		// 						priorInverse.revision ??
+		// 						// priorInverse?.change.fieldChange?.revision ??
+		// 						fail("No revision associated with prior inverse"),
+		// 					localId: priorInverse.id,
+		// 				};
+
+		// 				// There's a matching prior inverse, but this is also an undo. so check both ...? lol
+		// 				if (
+		// 					fieldChange.newContent !== undefined &&
+		// 					"revert" in fieldChange.newContent
+		// 				) {
+		// 					const renamedChanges = perChildChanges.get(
+		// 						fieldChange.newContent.revert,
+		// 					);
+		// 					if (renamedChanges !== undefined) {
+		// 						currentChildNodeChanges.push(...renamedChanges);
+		// 						perChildChanges.delete(fieldChange.newContent.revert);
+		// 					}
+		// 				}
+		// 			} else if (
+		// 				fieldChange.newContent !== undefined &&
+		// 				"revert" in fieldChange.newContent
+		// 			) {
+		// 				// We're restoring a node which previously existed.
+		// 				// This is the ChangeAtomId for the revision which deleted the node we now recover.
+		// 				currentActiveNodeId = "firstToDelete"; // fieldChange.newContent.revert;
+
+		// 				const renamedChanges = perChildChanges.get(fieldChange.newContent.revert);
+		// 				if (renamedChanges !== undefined) {
+		// 					currentChildNodeChanges.push(...renamedChanges);
+		// 					perChildChanges.delete(fieldChange.newContent.revert);
+		// 				}
+		// 			} else {
+		// 				currentActiveNodeId = "firstToDelete";
+		// 			}
+
+		// 			// if (fieldChange.newContent?.changes !== undefined) {
+		// 			// 	currentChildNodeChanges.push(
+		// 			// 		tagChange(fieldChange.newContent.changes, fieldChangeInfo?.revision),
+		// 			// 	);
+		// 			// 	assert(
+		// 			// 		currentActiveFieldChange.newContent !== undefined,
+		// 			// 		"Exepcted active content to be undefined",
+		// 			// 	);
+		// 			// 	delete currentActiveFieldChange.newContent.changes;
+		// 			// }
+		// 		}
+		// 	}
+		// 	index++;
+
+		// 	if (childChanges !== undefined) {
+		// 		for (const [childId, childChange] of childChanges) {
+		// 			if (childId === "end") {
+		// 				const taggedChildChange = tagChange(childChange, revision);
+		// 				currentChildNodeChanges.push(taggedChildChange);
+		// 			}
+		// 		}
+		// 	}
+		// }
+
+		// if (currentChildNodeChanges.length > 0) {
+		// 	addChildChange("end", ...currentChildNodeChanges);
+		// 	// if (currentActiveFieldChangeId !== "start" && currentActiveFieldChange !== undefined) {
+		// 	// 	// TODO: Seems like currentActiveFieldChange might be wrong if we've ended in partial application of inverses... ?
+		// 	// 	assert(
+		// 	// 		currentActiveFieldChange.newContent !== undefined,
+		// 	// 		0x772 /* after node must be defined to receive changes */,
+		// 	// 	);
+		// 	// 	currentActiveFieldChange.newContent.changes = composeChild(currentChildNodeChanges);
+		// 	// } else {
+		// 	// 	addChildChange("self", ...currentChildNodeChanges);
+		// 	// }
+		// }
 
 		const composed: OptionalChangeset = {
 			fieldChanges: cumulativeFieldChanges,
-			contentId: currentActiveFieldChangeId,
+			contentId: currentActiveContentId,
 		};
 
 		if (perChildChanges.size > 0) {
@@ -455,20 +572,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		assert(change.fieldChanges.length < 2, "Only single field changes support inversion");
 		const inverseChildChanges = new ChildChangeMap<NodeChangeset>();
 		if (change.childChanges !== undefined) {
-			for (const [id, childChange] of change.childChanges) {
-				if (id === "start" && change.fieldChanges.length > 0) {
-					inverseChildChanges.set("end", invertChild(childChange, 0));
-					// originalChildChanges = invertChild(childChange, 0);
-				} else if (id === "end" && change.fieldChanges.length > 0) {
-					inverseChildChanges.set("start", invertChild(childChange, 0));
-					// selfChanges = invertChild(childChange, 0);
-				} else {
-					inverseChildChanges.set(
-						// This makes assumptions about how sandwich rebasing works
-						id,
-						invertChild(childChange, 0),
-					);
-				}
+			for (const [{ type, id }, childChange] of change.childChanges) {
+				const inverseType =
+					change.fieldChanges.length === 0
+						? "after"
+						: type === "after"
+						? "before"
+						: "after";
+				inverseChildChanges.set({ type: inverseType, id }, invertChild(childChange, 0));
 			}
 		}
 
@@ -479,7 +590,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					: undefined,
 			fieldChanges: [],
 			// TODO: This also makes assumptions about not inverting compositions
-			contentId: change.fieldChanges.length > 0 ? "end" : "start",
+			// TODO: this is a bit weird.
+			contentId: { id: "this", type: change.fieldChanges.length > 0 ? "after" : "before" },
 		};
 
 		const { fieldChanges } = change;
@@ -524,16 +636,18 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		// Since multiple ContentIds may refer to the same node, we always update rebased changes to refer
 		// to the most recent reincarnation of that node with respect to the order of fieldChanges being rebased over.
 		const redirectTable = new ChildChangeMap<ContentId>();
-		const removerToAdder = new ChildChangeMap<ContentId>();
 
 		if (over.fieldChanges.length > 0) {
-			redirectTable.set("end", "end");
+			// redirectTable.set("end", "end");
 			const lastFieldChange = over.fieldChanges[over.fieldChanges.length - 1];
 			if (
 				lastFieldChange.newContent !== undefined &&
 				"revert" in lastFieldChange.newContent
 			) {
-				redirectTable.set(lastFieldChange.newContent.revert, "end");
+				redirectTable.set(
+					{ type: "before", id: lastFieldChange.newContent.revert },
+					{ type: "after", id: "this" },
+				);
 			}
 
 			for (let i = over.fieldChanges.length - 2; i >= 0; i--) {
@@ -541,8 +655,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				let fieldChange2 = over.fieldChanges[i + 1];
 
 				const removerContentId: ContentId = {
-					revision: fieldChange2.revision ?? overTagged.revision,
-					localId: fieldChange2.id,
+					type: "before",
+					id: {
+						revision: fieldChange2.revision ?? overTagged.revision,
+						localId: fieldChange2.id,
+					},
 				};
 				redirectTable.set(
 					removerContentId,
@@ -551,7 +668,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (fieldChange1.newContent !== undefined && "revert" in fieldChange1.newContent) {
 					// fieldChange1 revives a node that existed at some point in the past. Unify this ContentId with fieldChange2.
 					redirectTable.set(
-						fieldChange1.newContent.revert,
+						{ type: "before", id: fieldChange1.newContent.revert },
 						redirectTable.get(removerContentId) ?? removerContentId,
 					);
 				}
@@ -559,81 +676,38 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			const firstFieldChange = over.fieldChanges[0];
 			const firstRemoverContentId: ContentId = {
-				revision: firstFieldChange.revision ?? overTagged.revision,
-				localId: firstFieldChange.id,
+				type: "before",
+				id: {
+					revision: firstFieldChange.revision ?? overTagged.revision,
+					localId: firstFieldChange.id,
+				},
 			};
 			redirectTable.set(
 				firstRemoverContentId,
 				redirectTable.get(firstRemoverContentId) ?? firstRemoverContentId,
 			);
 			redirectTable.set(
-				"start",
+				{ type: "before", id: "this" },
 				redirectTable.get(firstRemoverContentId) ?? firstRemoverContentId,
 			);
+			// Note this makes assumptions we're not rebasing compositions, as otherwise there could be transient field changes.
+			if (change.fieldChanges.length === 0) {
+				redirectTable.set(
+					{ type: "after", id: "this" },
+					redirectTable.get(firstRemoverContentId) ?? firstRemoverContentId,
+				);
+			} else {
+				redirectTable.set({ type: "after", id: "this" }, firstRemoverContentId);
+			}
 		} else {
-			redirectTable.set("end", "end");
-			redirectTable.set("start", "end");
+			// redirectTable.set("end", "end");
+			// redirectTable.set("start", "end");
 		}
-
-		// const redirectTable = new ChildChangeMap<ContentId>();
-		// {
-		// 	let currentNode: ContentId = "start";
-		// 	// todo: obvious kludge here
-		// 	let fakeIds = 0;
-		// 	for (const fieldChange of over.fieldChanges) {
-		// 		const remover: ContentId = {
-		// 			revision: fieldChange.revision ?? overTagged.revision,
-		// 			localId: fieldChange.id,
-		// 		};
-		// 		redirectTable.set(currentNode, remover);
-		// 		removerToAdder.set(remover, currentNode);
-		// 		if (fieldChange.newContent !== undefined) {
-		// 			if ("revert" in fieldChange.newContent) {
-		// 				// Two options here: either revert via undo brings back the node which existed
-		// 				// in the start context of the change it's undoing, OR it only does so if no
-		// 				// intermediate field changes have happened.
-		// 				// For now, assume the first.
-
-		// 				// TODO: I think it's valid to just use 'remover' here as the fallback
-		// 				const restoredNode: ContentId = removerToAdder.get(
-		// 					fieldChange.newContent.revert,
-		// 				) ?? {
-		// 					revision: brand("made-up") as any,
-		// 					localId: brand(fakeIds++),
-		// 				};
-		// 				// adderToRemover.set(currentNode, restoredNode);
-		// 				// removerToAdder.set(restoredNode, currentNode);
-
-		// 				// TODO: Feels like we're missing a 'set' here.
-		// 				currentNode = restoredNode;
-		// 			} else {
-		// 				// this field change is a standard set.
-		// 				// adderToRemover.set(currentNode, remover);
-		// 				// removerToAdder.set(remover, currentNode);
-		// 				currentNode = remover;
-		// 			}
-		// 		} else {
-		// 			// this field change is a delete.
-		// 			// adderToRemover.set(currentNode, remover);
-		// 			// removerToAdder.set(remover, currentNode);
-		// 			currentNode = remover;
-		// 		}
-		// 	}
-		// 	// currentNode is now the content id for whatever exists at the end of the over changeset.
-		// 	redirectTable.set(currentNode, change.fieldChanges.length > 0 ? "start" : "end");
-		// }
-
-		// if (change.fieldChanges.length === 0 && over.fieldChanges.length > 0) {
-		// 	const maybeStartRedirect = redirectTable.get("start");
-		// 	if (maybeStartRedirect !== undefined) {
-		// 		redirectTable.set("end", maybeStartRedirect);
-		// 	}
-		// }
 
 		// Note: rebasing *over* composed changes is a near-term goal. Rebasing composed changes is not.
 		// Generally, we only care about the first or last field change that we're rebasing over.
 		let firstOverFieldChange = over.fieldChanges[0];
-		const selfRemover = redirectTable.get("start");
+		const selfRemover = redirectTable.get({ type: "before", id: "this" })?.id;
 		if (selfRemover !== undefined && typeof selfRemover !== "string") {
 			firstOverFieldChange =
 				over.fieldChanges.find(
@@ -642,17 +716,23 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						change.id === selfRemover.localId,
 				) ?? firstOverFieldChange;
 		}
-		const finalOverFieldChange =
-			over.contentId === "end"
-				? over.fieldChanges[over.fieldChanges.length - 1]
-				: over.contentId === "start"
-				? undefined
-				: over.fieldChanges.find((change) => {
-						return (
-							change.revision === (over.contentId as ChangeAtomId).revision &&
-							change.id === (over.contentId as ChangeAtomId).localId
-						);
-				  });
+		const finalOverFieldChange = areEqualContentIds(over.contentId, {
+			type: "after",
+			id: "this",
+		})
+			? over.fieldChanges[over.fieldChanges.length - 1]
+			: areEqualContentIds(over.contentId, {
+					type: "before",
+					id: "this",
+			  })
+			? undefined
+			: over.fieldChanges.find((change) => {
+					assert(over.contentId.type === "before", "TODO normalization here sucks");
+					return (
+						change.revision === (over.contentId.id as ChangeAtomId).revision &&
+						change.id === (over.contentId.id as ChangeAtomId).localId
+					);
+			  });
 		// assert(
 		// 	over.fieldChanges.length === 0 || finalOverFieldChange !== undefined,
 		// 	"Expected some field change to be active",
@@ -669,8 +749,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			// If we're rebasing over a fieldChange, track ChangeAtomId_s for cases where a previously existing
 			// node was restored. In that case, when we construct our child id changes, they may apply to 'self' rather than
 			// the pre-existing childId.
-			let restoredRollbackChangeId: ChangeAtomId | undefined;
-			let restoredUndoChangeId: ChangeAtomId | undefined;
+			let restoredRollbackChangeId: ContentId | undefined;
+			let restoredUndoChangeId: ContentId | undefined;
 			if (finalOverFieldChange !== undefined) {
 				const overIntention = getIntention(
 					finalOverFieldChange.revision ?? overTagged.revision,
@@ -680,23 +760,27 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (finalOverFieldChange.newContent !== undefined) {
 					const overContent = finalOverFieldChange.newContent;
 					restoredRollbackChangeId = {
-						revision: overIntention,
-						localId: finalOverFieldChange.id,
+						type: "before",
+						id: {
+							revision: overIntention,
+							localId: finalOverFieldChange.id,
+						},
 					};
 					if ("revert" in overContent) {
-						restoredUndoChangeId = overContent.revert;
+						restoredUndoChangeId = { type: "before", id: overContent.revert };
 					}
 				}
 			}
 
 			for (const [id, childChange] of change.childChanges) {
-				if (typeof id === "string") {
+				if (id.id === "this") {
 					// Rationale: when rebasing over a composition, changes to "self" should be rebased over the aggregate changes
 					// to the first removal. This assumes the list is ordered, which needs review.
 					// const overChildChange = overChildChanges.get(id) ?? over.childChanges?.[0][1];
 					const overChildChange = overChildChanges.get(
 						// this should be equivalent to just "start" lol
-						redirectTable.get(id === "end" ? "start" : id) ?? id,
+						// redirectTable.get(id === "end" ? "start" : id) ?? id,
+						redirectTable.get({ id: id.id, type: "before" }) ?? id,
 						// firstOverFieldChange !== undefined
 						// 	? {
 						// 			revision: firstOverFieldChange.revision ?? overTagged.revision,
@@ -709,9 +793,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						// TODO: Logic here seems wonky/wrong. The idea behind it is solid (comment inside the block), but implementation doesn't seem to quite track.
 						(restoredUndoChangeId !== undefined &&
 							firstOverFieldChange !== undefined &&
-							areEqualChangeAtomIds(restoredUndoChangeId, {
-								revision: firstOverFieldChange.revision,
-								localId: firstOverFieldChange.id,
+							areEqualContentIds(restoredUndoChangeId, {
+								type: "before",
+								id: {
+									revision: firstOverFieldChange.revision,
+									localId: firstOverFieldChange.id,
+								},
 							}))
 					) {
 						// `over` never removed the node childChange refers to, or it is a composed change
@@ -732,30 +819,42 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							NodeExistenceState.Dead,
 						);
 						if (rebasedChild !== undefined) {
+							const intention = getIntention(
+								firstOverFieldChange?.revision ?? overTagged.revision,
+								revisionMetadata,
+							);
+							const isRollback =
+								intention !==
+								(firstOverFieldChange?.revision ?? overTagged.revision);
 							perChildChanges.set(
-								redirectTable.get(id === "end" ? "start" : id) ?? id,
-								// {
-								// 	// TODO: Document this choice. This isn't really the revision that deleted the node, but
-								// 	// the one that puts it back such that if we later ressurect it, the child changes will
-								// 	// apply to it... this matches what the previous code/format did, but it's not well-documented
-								// 	// why it's the right choice.
-								// 	// See the "can rebase a node replacement and a dependent edit to the new node" test case.
-								// 	// This might be making assumptions on sandwich rebasing a la rollback tags (which could be
-								// 	// an obstacle for postbase)
-								// 	revision: getIntention(
-								// 		firstOverFieldChange?.revision ?? overTagged.revision,
-								// 		revisionMetadata,
-								// 	),
-								// 	localId: firstOverFieldChange.id,
-								// },
+								// redirectTable.get(id === "end" ? "start" : id) ?? id,
+								{
+									// TODO TODO: Comment below is now less true, needs update.
+									// TODO: Document this choice. This isn't really the revision that deleted the node, but
+									// the one that puts it back such that if we later ressurect it, the child changes will
+									// apply to it... this matches what the previous code/format did, but it's not well-documented
+									// why it's the right choice.
+									// See the "can rebase a node replacement and a dependent edit to the new node" test case.
+									// This might be making assumptions on sandwich rebasing a la rollback tags (which could be
+									// an obstacle for postbase)
+									type: isRollback ? "after" : "before",
+
+									id: {
+										revision: intention,
+										localId: firstOverFieldChange.id,
+									},
+								},
 								rebasedChild,
 							);
 						}
 					}
 				} else {
-					const restoredRollbackTestId = {
-						revision: getIntention(id.revision, revisionMetadata),
-						localId: id.localId,
+					const restoredRollbackTestId: ContentId = {
+						type: "before",
+						id: {
+							revision: getIntention(id.id.revision, revisionMetadata),
+							localId: id.id.localId,
+						},
 					};
 					if (
 						(restoredRollbackChangeId !== undefined &&
@@ -764,14 +863,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 							areEqualContentIds(id, restoredUndoChangeId))
 					) {
 						// childChange refers to changes to node being revived by `over`.
-						const overChange = overChildChanges.get("end"); // finalOverFieldChange?.newContent?.changes;
+						const overChange = overChildChanges.get({ type: "after", id: "this" }); // finalOverFieldChange?.newContent?.changes;
 						const rebasedChild = rebaseChild(
 							childChange,
 							overChange,
 							NodeExistenceState.Alive,
 						);
 						if (rebasedChild !== undefined) {
-							perChildChanges.set("end", rebasedChild);
+							perChildChanges.set({ type: "after", id: "this" }, rebasedChild);
 						}
 					} else {
 						// childChange refers to changes to node removed by some past revision. Rebase over any changes that
@@ -881,20 +980,20 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 				wasEmpty,
 			},
 		],
-		contentId: "end",
+		contentId: { id: "this", type: "after" },
 	}),
 
 	clear: (wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset => ({
 		fieldChanges: [{ id, wasEmpty }],
-		contentId: "end",
+		contentId: { id: "this", type: "after" },
 	}),
 
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
 		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
 		return {
 			fieldChanges: [],
-			childChanges: [["end", childChange]],
-			contentId: "start",
+			childChanges: [[{ id: "this", type: "after" }, childChange]],
+			contentId: { id: "this", type: "after" },
 		};
 	},
 };
@@ -916,8 +1015,11 @@ export function optionalFieldIntoDelta(
 	const [_, childChange] =
 		change.childChanges?.find(
 			([changeId]) =>
-				changeId === "start" || (changeId === "end" && change.fieldChanges.length === 0),
-			// changeId === "end" || (changeId === "start" && change.fieldChanges.length === 0),
+				areEqualContentIds(changeId, { id: "this", type: "after" }) ||
+				// TODO: review if this second clause is necessary
+				(areEqualContentIds(changeId, { id: "this", type: "before" }) &&
+					change.fieldChanges.length === 0),
+			// changeId === "start" || (changeId === "end" && change.fieldChanges.length === 0),
 		) ?? [];
 	if (childChange === undefined && change.fieldChanges.length === 0) {
 		return delta;
@@ -930,7 +1032,10 @@ export function optionalFieldIntoDelta(
 		mark.fields = deltaFromChild(childChange);
 	}
 
-	if (change.fieldChanges.length === 0 || change.contentId === "start") {
+	if (
+		change.fieldChanges.length === 0 ||
+		areEqualContentIds(change.contentId, { id: "this", type: "before" })
+	) {
 		return delta;
 	}
 
@@ -964,7 +1069,9 @@ export function optionalFieldIntoDelta(
 			};
 			mark.attach = restoreId;
 		}
-		const childChanges = change.childChanges?.find(([id]) => id === "end")?.[1];
+		const childChanges = change.childChanges?.find(([id]) =>
+			areEqualContentIds(id, { type: "after", id: "this" }),
+		)?.[1];
 		// TODO: why is this global?
 		if (childChanges !== undefined) {
 			const fields = deltaFromChild(childChanges);
@@ -984,12 +1091,17 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 		change.childChanges === undefined && change.fieldChanges.length === 0,
 };
 
+// Note: assumes normalization! Two content ids might be semantically equivalent (e.g. 'after fieldChange 1' and 'before fieldChange 2'), but won't be counted as equal here.
 function areEqualContentIds(a: ContentId, b: ContentId): boolean {
-	if (typeof a === "string" || typeof b === "string") {
-		return a === b;
+	if (a.type !== b.type) {
+		return false;
 	}
 
-	return areEqualChangeAtomIds(a, b);
+	if (typeof a.id === "string" || typeof b.id === "string") {
+		return a.id === b.id;
+	}
+
+	return areEqualChangeAtomIds(a.id, b.id);
 }
 
 // Ideas:

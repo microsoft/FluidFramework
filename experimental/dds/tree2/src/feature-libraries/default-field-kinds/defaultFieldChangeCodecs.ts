@@ -41,7 +41,7 @@ function makeOptionalFieldCodec(
 
 			if (change.childChanges !== undefined) {
 				encoded.childChanges = change.childChanges.map(([id, childChange]) => [
-					id,
+					id.id,
 					childCodec.encode(childChange),
 				]);
 			}
@@ -52,7 +52,7 @@ function makeOptionalFieldCodec(
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
 			const decoded: Mutable<OptionalChangeset> = {
 				fieldChanges: [],
-				contentId: "end",
+				contentId: { id: "this", type: "after" },
 			};
 			if (encoded.fieldChange !== undefined) {
 				const decodedFieldChange: Mutable<OptionalFieldChange> = {
@@ -72,7 +72,7 @@ function makeOptionalFieldCodec(
 
 			if (encoded.childChanges !== undefined) {
 				decoded.childChanges = encoded.childChanges.map(([id, childChange]) => [
-					id,
+					{ id, type: "after" },
 					childCodec.decode(childChange),
 				]);
 			}

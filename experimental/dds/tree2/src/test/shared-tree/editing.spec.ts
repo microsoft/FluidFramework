@@ -41,7 +41,7 @@ const rootNode: UpPath = {
 	parentIndex: 0,
 };
 
-describe.only("Editing", () => {
+describe("Editing", () => {
 	describe("Sequence Field", () => {
 		it("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
@@ -1724,85 +1724,6 @@ describe.only("Editing", () => {
 	});
 
 	describe("Optional Field", () => {
-		/**
-		 * [
-    {
-        "type": "synchronize"
-    },
-    {
-        "type": "edit",
-        "contents": {
-            "type": "fieldEdit",
-            "change": {
-                "type": "optional",
-                "edit": {
-                    "type": "set",
-                    "key": "rootFieldKey",
-                    "value": {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 1510065716437105
-                    }
-                }
-            }
-        },
-        "clientId": "C"
-    },
-    {
-        "type": "edit",
-        "contents": {
-            "type": "fieldEdit",
-            "change": {
-                "type": "optional",
-                "edit": {
-                    "type": "set",
-                    "key": "rootFieldKey",
-                    "value": {
-                        "type": "tree2fuzz.node",
-                        "fields": {
-                            "requiredChild": [
-                                {
-                                    "type": "com.fluidframework.leaf.number",
-                                    "value": 6033343467622415
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "clientId": "B"
-    },
-    {
-        "type": "edit",
-        "contents": {
-            "type": "fieldEdit",
-            "change": {
-                "type": "required",
-                "edit": {
-                    "type": "set",
-                    "parent": [],
-                    "key": "requiredChild",
-                    "value": {
-                        "type": "tree2fuzz.node",
-                        "fields": {
-                            "requiredChild": [
-                                {
-                                    "type": "com.fluidframework.leaf.number",
-                                    "value": -7735028191681597
-                                }
-                            ]
-                        }
-                    }
-                }
-            }
-        },
-        "clientId": "B"
-    },
-    {
-        "type": "synchronize"
-    }
-]
-		 */
 		// minimization of seed 14 top-level fuzz test.
 		// relates to compose associativity.
 		it("can rebase TODO naming", () => {

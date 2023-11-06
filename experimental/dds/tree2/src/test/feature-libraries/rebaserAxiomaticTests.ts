@@ -90,7 +90,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
 	const numberOfEditsToRebaseOver = 3;
 	const numberOfEditsToRebase = 2; //numberOfEditsToRebaseOver;
-	const numberOfEditsToVerifyAssociativity = 3;
+	const numberOfEditsToVerifyAssociativity = 5;
 
 	describe("Rebase over compose", () => {
 		for (const initialState of initialStates) {
@@ -115,42 +115,15 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 						// if (
 						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["SetB,0","SetA,1","ChildChange90"]'
+						// 	'Rebase ChildChange1 over compose ["SetB,0","ChildChange79","ChildChange80"]'
 						// ) {
 						// 	continue;
 						// }
+						// continue;
 
 						// if (
 						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["Delete","Undo:Delete","ChildChange44"]'
-						// ) {
-						// 	continue;
-						// }
-
-						// if (
-						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["ChildChange1","SetA,1","Undo:SetA,1"]'
-						// ) {
-						// 	continue;
-						// }
-
-						// if (
-						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","Undo:Undo:SetB,0","Undo:Undo:Undo:SetB,0"]'
-						// ) {
-						// 	continue;
-						// }
-
-						// if (
-						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["SetB,0","SetA,1","ChildChange90"]'
-						// ) {
-						// 	continue;
-						// }
-
-						// if (
-						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","ChildChange102"]'
+						// 	'Rebase ChildChange1 over compose ["ChildChange1","SetB,1","SetB,2"]'
 						// ) {
 						// 	continue;
 						// }
@@ -316,6 +289,21 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					)}`;
 
 					// if (title !== 'for ["SetA,0","ChildChange2","Delete"]') {
+					// 	continue;
+					// }
+
+					// if (title !== 'for ["ChildChange1","SetB,1","ChildChange19"]') {
+					// 	continue;
+					// }
+
+					// if (
+					// 	title !==
+					// 	'for ["SetB,0","Undo:SetB,0","SetB,2","Undo:SetB,2","ChildChange2227"]'
+					// ) {
+					// 	continue;
+					// }
+
+					// if (title !== 'for ["ChildChange1","SetB,1","Undo:SetB,1","SetB,3"]') {
 					// 	continue;
 					// }
 

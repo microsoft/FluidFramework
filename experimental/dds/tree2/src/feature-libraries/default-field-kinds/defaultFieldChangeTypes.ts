@@ -63,19 +63,30 @@ export interface OptionalFieldChange {
  */
 
 /**
+ * TODO: update this whole doc.
  * Id which identifies a piece of content within an optional field.
  * If "start", represents the node occupying the field in the input context of the change
  * If "end", represents the node occupying the field in the output context of the change
  * Otherwise, a ChangeAtomId which identifies the node *removed* by that change.
  *
  * Note that for a given changeset, multiple ids may correspond to the same piece of content.
+ * For example, if an optional field has two edits "set A" and "set B", the node A can be referred to by either { type: "before", id: <revision of 'set B'> } OR { type: "after", id: <revision of 'set A'> }.
+ * For a change to the child without a corresponding field change, { type: "before", id: "this" } and { type: "after", id: "this" } will both refer to the node currently occupying the field.
  * Generally, change rebaser functions should take care to normalize their output to refer to the most recent change.
  *
  * @remarks - Using a ChangeAtomId associated with the removal of some node rather than the one that inserted that node is necessary to support rebase.
  * Consider rebasing an OptionalChangeset with changes to the 'start' node over one which also has a fieldChange. This would require naming the
  * original base revision (as 'start' no longer semantically refers to the correct place).
+ *
+ * // { type: "before", id: "this" } represents the node occupying the optional field in the input context of the change
+ * // similarly for everything else
  */
-export type ContentId = ChangeAtomId | "start" | "end";
+export type ContentId = {
+	// "this" enables referring to the input/output context of the current change, which is necessary to construct
+	// changes before tagging them with revisions.
+	id: ChangeAtomId | "this";
+	type: "before" | "after";
+};
 
 /**
  * @privateRemarks - This type is used to represent changes to an optional field.
