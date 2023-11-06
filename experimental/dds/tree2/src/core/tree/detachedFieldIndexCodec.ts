@@ -8,15 +8,15 @@ import { ICodecOptions, IJsonCodec } from "../../codec";
 import { fail, forEachInNestedMap, setInNestedMap } from "../../util";
 import { ForestRootId } from "./detachedFieldIndex";
 import { Format, Versioned, version } from "./detachedFieldIndexFormat";
-import { DetachedFieldSummaryType, Major, Minor } from "./detachedFieldIndexTypes";
+import { DetachedFieldSummaryData, Major, Minor } from "./detachedFieldIndexTypes";
 
 export function makeDetachedNodeToFieldCodec({
 	jsonValidator: validator,
-}: ICodecOptions): IJsonCodec<DetachedFieldSummaryType, string> {
+}: ICodecOptions): IJsonCodec<DetachedFieldSummaryData, string> {
 	const versionedValidator = validator.compile(Versioned);
 	const formatValidator = validator.compile(Format);
 	return {
-		encode: (data: DetachedFieldSummaryType): string => {
+		encode: (data: DetachedFieldSummaryData): string => {
 			const detachedNodeToFieldData: [Major, Minor, ForestRootId][] = [];
 			forEachInNestedMap(data.data, (root, key1, key2) => {
 				detachedNodeToFieldData.push([key1, key2, root]);
@@ -33,7 +33,7 @@ export function makeDetachedNodeToFieldCodec({
 			assert(formatValidator.check(encoded), "Encoded schema should validate");
 			return JSON.stringify(encoded);
 		},
-		decode: (data: string): DetachedFieldSummaryType => {
+		decode: (data: string): DetachedFieldSummaryData => {
 			const parsed = JSON.parse(data);
 
 			if (!versionedValidator.check(parsed)) {

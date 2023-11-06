@@ -9,7 +9,7 @@ import { ForestRootId } from "./detachedFieldIndex";
 export type Major = string | number | undefined;
 export type Minor = number;
 
-export interface DetachedFieldSummaryType {
+export interface DetachedFieldSummaryData {
 	data: NestedMap<Major, Minor, ForestRootId>;
 	maxId: ForestRootId;
 }
