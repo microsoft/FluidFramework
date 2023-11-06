@@ -36,7 +36,7 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  *
  * @remarks
  * This is covariant over ValueType.
- * This is suitable fort when ValueType is immutable (like string or number),
+ * This is suitable for when ValueType is immutable (like string or number),
  * which is the common use-case for branding.
  *
  * @sealed
