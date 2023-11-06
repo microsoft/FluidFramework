@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+
 import { EventEmitter } from "events";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
@@ -10,6 +11,8 @@ import { assert } from "@fluidframework/core-utils";
 import { Jsonable } from "@fluidframework/datastore-definitions";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
 import { IErrorEvent } from "@fluidframework/core-interfaces";
+import { CircularBuffer } from "./utils";
+
 
 // TODO:
 // add way to mark with current sequence number for ordering signals relative to ops
@@ -54,6 +57,7 @@ export interface ISignaler {
 export interface IRuntimeSignaler {
 	connected: boolean;
 	on(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
+	off(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	submitSignal(type: string, content: any): void;
 }
 
@@ -70,6 +74,8 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 	private readonly emitter = new EventEmitter();
 
 	private readonly signalerId: string | undefined;
+
+	private readonly signalStatQueue: CircularBuffer<SignalStatistics>;
 
 	constructor(
 		/**
@@ -89,6 +95,13 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 		});
 		this.signalerId = signalerId ? `#${signalerId}` : undefined;
 		this.signaler.on("signal", (message: IInboundSignalMessage, local: boolean) => {
+			const currentStats = this.signalStatQueue.getLast();
+			if (currentStats) {
+				currentStats.toClient.count++;
+				currentStats.toClient.size += JSON.stringify(message.content).length;
+				currentStats.toClient.packetCount++;
+				currentStats.toClient.packetSize += JSON.stringify(message.content).length;
+			}
 			const clientId = message.clientId;
 			// Only call listeners when the runtime is connected and if the signal has an
 			// identifiable sender clientId.  The listener is responsible for deciding how
@@ -97,6 +110,10 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 				this.emitter.emit(message.type, clientId, local, message.content);
 			}
 		});
+
+		this.signalStatQueue = new CircularBuffer<SignalStatistics>(10);
+
+		setInterval(() => this.signalStatQueue.add(new SignalStatistics()), 1000);
 	}
 
 	private getSignalerSignalName(signalName: string): string {
@@ -121,8 +138,88 @@ class InternalSignaler extends TypedEventEmitter<IErrorEvent> implements ISignal
 		const signalerSignalName = this.getSignalerSignalName(signalName);
 		if (this.signaler.connected) {
 			this.signaler.submitSignal(signalerSignalName, payload);
+
+			const currentStats = this.signalStatQueue.getLast();
+			if (currentStats) {
+				currentStats.fromClient.count++;
+				currentStats.fromClient.size += JSON.stringify(payload).length;
+				currentStats.fromClient.packetCount++;
+				currentStats.fromClient.packetSize += JSON.stringify(payload).length;
+			}
 		}
 	}
+
+	public stats(): SignalStatistics[] | undefined{
+		const currentStats = this.signalStatQueue.getLastN(this.signalStatQueue.getBufferLength());
+		if (currentStats) {
+			return currentStats;
+		}
+		return undefined;
+	}
+}
+
+
+
+class SignalStatistics {
+	/**
+	 * Length of time (milliseconds) these statistics cover
+	 */
+	public timespan: number;
+
+	/**
+	 * Statistics for signals sent by client
+	 */
+	public fromClient: ISignalTransmissionData;
+
+	/**
+	 * Statistics for signals sent to client
+	 */
+	public toClient: ISignalTransmissionData;
+
+	constructor() {
+		this.timespan = 0;
+		this.fromClient = {
+			count: 0,
+			size: 0,
+			packetCount: 0,
+			packetSize: 0,
+		};
+		this.toClient = {
+			count: 0,
+			size: 0,
+			packetCount: 0,
+			packetSize: 0,
+		};
+
+		setInterval(() => this.timespan < 1000 ? this.timespan += 1 : null, 1);
+	}
+}
+
+
+/**
+* Data for signals transmitted between clients
+*/
+export interface ISignalTransmissionData {
+	/**
+	 * Count of signals
+	 */
+	count: number;
+
+	/**
+	 * Approximation of cumulative signal payloads in bytes
+	 */
+	size: number;
+
+	/**
+	 * Count of packets used for signals 
+	 */
+	packetCount: number;
+
+	/**
+	 * Approximation of cumulative signal payloads in bytes
+	 */
+	packetSize: number;
+
 }
 
 /**
@@ -134,6 +231,7 @@ export class Signaler
 	implements EventEmitter, ISignaler
 {
 	private _signaler: InternalSignaler | undefined;
+
 	private get signaler(): InternalSignaler {
 		assert(this._signaler !== undefined, 0x24b /* "internal signaler should be defined" */);
 		return this._signaler;
@@ -164,5 +262,9 @@ export class Signaler
 
 	public submitSignal(signalName: string, payload?: Jsonable) {
 		this.signaler.submitSignal(signalName, payload);
+	}
+
+	public stats(): SignalStatistics[] | undefined {
+		return this.signaler.stats();
 	}
 }
