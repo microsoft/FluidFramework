@@ -796,10 +796,7 @@ function getAttachRevisionIndex(
 
 	if (isTransientEffect(baseMark)) {
 		return getKnownRevisionIndex(
-			baseMark.attach.revision ??
-				baseMark.revision ??
-				baseRevision ??
-				fail("Mark must have revision"),
+			baseMark.attach.revision ?? baseRevision ?? fail("Mark must have revision"),
 			metadata,
 		);
 	}
@@ -826,10 +823,7 @@ function getDetachRevisionIndex(
 
 	if (isTransientEffect(baseMark)) {
 		return getKnownRevisionIndex(
-			baseMark.detach.revision ??
-				baseMark.revision ??
-				baseRevision ??
-				fail("Mark must have revision"),
+			baseMark.detach.revision ?? baseRevision ?? fail("Mark must have revision"),
 			metadata,
 		);
 	}
