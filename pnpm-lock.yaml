@@ -9,8 +9,6 @@ overrides:
   simplemde>codemirror: ^5.65.11
   simplemde>marked: ^4.3.0
   '@oclif/core': ~2.4.0
-  '@fluidframework/eslint-config-fluid': ~3.1.0
-  eslint-plugin-import: npm:eslint-plugin-i@~2.29.0
 
 patchedDependencies:
   engine.io-client@6.5.2:
@@ -29,7 +27,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/test-tools': ^1.0.195075
       '@microsoft/api-documenter': ^7.21.6
       '@microsoft/api-extractor': ^7.37.0
@@ -91,7 +89,7 @@ importers:
       '@fluidframework/counter': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -159,7 +157,7 @@ importers:
     specifiers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@microsoft/api-extractor': ^7.37.0
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -190,7 +188,7 @@ importers:
       '@fluidframework/azure-service-utils-previous': npm:@fluidframework/azure-service-utils@2.0.0-internal.7.2.0
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@microsoft/api-extractor': ^7.37.0
       '@types/jsrsasign': ^8.0.8
@@ -227,7 +225,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
@@ -326,7 +324,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
@@ -406,7 +404,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/counter': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
@@ -489,7 +487,7 @@ importers:
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -566,7 +564,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -656,7 +654,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -748,7 +746,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -867,7 +865,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -947,7 +945,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/task-manager': workspace:~
@@ -1037,7 +1035,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -1144,7 +1142,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -1218,7 +1216,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -1288,7 +1286,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -1368,7 +1366,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -1447,7 +1445,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -1519,7 +1517,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -1592,7 +1590,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -1688,7 +1686,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/ink': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -1766,7 +1764,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/counter': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/task-manager': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -1845,7 +1843,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -1920,7 +1918,7 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@fluidframework/view-interfaces': workspace:~
@@ -1992,7 +1990,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -2062,7 +2060,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -2131,7 +2129,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -2194,7 +2192,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -2275,7 +2273,7 @@ importers:
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -2362,7 +2360,7 @@ importers:
       '@fluidframework/aqueduct': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -2421,7 +2419,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@types/expect-puppeteer': 2.2.1
       '@types/node': ^16.18.38
       '@types/puppeteer': 1.3.0
@@ -2464,7 +2462,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -2533,7 +2531,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -2602,7 +2600,7 @@ importers:
       '@fluid-tools/webpack-fluid-loader': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
       '@types/jest': 29.5.3
@@ -2679,7 +2677,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -2903,7 +2901,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -2981,7 +2979,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -2998,8 +2996,6 @@ importers:
       cross-env: ^7.0.3
       debug: ^4.3.4
       eslint: ~8.50.0
-      eslint-import-resolver-typescript: ^3.6.1
-      eslint-plugin-import: npm:eslint-plugin-i@~2.29.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -3035,8 +3031,6 @@ importers:
       c8: 7.14.0
       cross-env: 7.0.3
       eslint: 8.50.0
-      eslint-import-resolver-typescript: 3.6.1_dc6gzdt3huv6pdem4iqhx6vdye
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_rdoeqvzpa2jmvnyuviohvk2bau
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -3055,7 +3049,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/matrix': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -3122,7 +3116,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -3214,7 +3208,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/data-object-base': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -3235,8 +3229,6 @@ importers:
       css-loader: ^1.0.0
       debug: ^4.3.4
       eslint: ~8.50.0
-      eslint-import-resolver-typescript: ^3.6.1
-      eslint-plugin-import: npm:eslint-plugin-i@~2.29.0
       esm-loader-css: ^1.0.4
       events: ^3.1.0
       file-loader: ^3.0.1
@@ -3297,8 +3289,6 @@ importers:
       cross-env: 7.0.3
       css-loader: 1.0.1_webpack@5.88.2
       eslint: 8.50.0
-      eslint-import-resolver-typescript: 3.6.1_dc6gzdt3huv6pdem4iqhx6vdye
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_rdoeqvzpa2jmvnyuviohvk2bau
       esm-loader-css: 1.0.5
       file-loader: 3.0.1_webpack@5.88.2
       html-loader: 3.1.2_webpack@5.88.2
@@ -3338,7 +3328,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -3483,7 +3473,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/odsp-driver': workspace:~
@@ -3550,7 +3540,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/register-collection': workspace:~
@@ -3622,7 +3612,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/counter': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -3712,7 +3702,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -3833,7 +3823,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -3955,7 +3945,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/routerlicious-driver': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -4062,7 +4052,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
@@ -4147,7 +4137,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -4222,7 +4212,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/test-tools': ^1.0.195075
       '@types/expect-puppeteer': 2.2.1
@@ -4738,7 +4728,7 @@ importers:
     specifiers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@microsoft/api-extractor': ^7.37.0
       '@types/chai': ^4.0.0
@@ -4822,7 +4812,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -5116,7 +5106,7 @@ importers:
       '@fluid-experimental/property-properties': workspace:~
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@types/jest': 29.5.3
       '@types/node': ^16.18.38
       babel-loader: ^8.0.5
@@ -5391,7 +5381,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -5459,7 +5449,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -5519,7 +5509,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/shared-object-base': workspace:~
@@ -5579,7 +5569,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -5645,7 +5635,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -5746,7 +5736,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -5843,7 +5833,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -5885,7 +5875,7 @@ importers:
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-utils': workspace:~
@@ -5925,7 +5915,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/cell': workspace:~
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/sequence': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -5964,7 +5954,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -6016,7 +6006,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@microsoft/api-extractor': ^7.37.0
       '@types/base64-js': ^1.3.0
@@ -6108,7 +6098,7 @@ importers:
       '@fluidframework/container-definitions-previous': npm:@fluidframework/container-definitions@2.0.0-internal.7.2.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@microsoft/api-extractor': ^7.37.0
       '@types/events': ^3.0.0
@@ -6143,7 +6133,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces-previous': npm:@fluidframework/core-interfaces@2.0.0-internal.7.2.0
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@microsoft/api-extractor': ^7.37.0
       '@types/node': ^16.18.38
       eslint: ~8.50.0
@@ -6169,7 +6159,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@microsoft/api-extractor': ^7.37.0
       '@types/mocha': ^9.1.1
@@ -6218,7 +6208,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions-previous': npm:@fluidframework/driver-definitions@2.0.0-internal.7.2.0
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@microsoft/api-extractor': ^7.37.0
       eslint: ~8.50.0
@@ -6251,7 +6241,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -6311,7 +6301,7 @@ importers:
       '@fluidframework/counter-previous': npm:@fluidframework/counter@2.0.0-internal.7.2.0
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -6368,7 +6358,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/ink-previous': npm:@fluidframework/ink@2.0.0-internal.7.2.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -6430,7 +6420,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map-previous': npm:@fluidframework/map@2.0.0-internal.7.2.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -6504,7 +6494,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/matrix-previous': npm:@fluidframework/matrix@2.0.0-internal.7.2.0
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -6592,7 +6582,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/merge-tree-previous': npm:@fluidframework/merge-tree@2.0.0-internal.7.2.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -6670,7 +6660,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -6739,7 +6729,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/ordered-collection-previous': npm:@fluidframework/ordered-collection@2.0.0-internal.7.2.0
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -6803,7 +6793,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -6868,7 +6858,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/register-collection-previous': npm:@fluidframework/register-collection@2.0.0-internal.7.2.0
@@ -6932,7 +6922,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -7013,7 +7003,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -7084,7 +7074,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -7150,7 +7140,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -7217,7 +7207,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
@@ -7272,7 +7262,7 @@ importers:
       '@fluidframework/debugger-previous': npm:@fluidframework/debugger@2.0.0-internal.7.2.0
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/replay-driver': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -7313,7 +7303,7 @@ importers:
       '@fluidframework/driver-base-previous': npm:@fluidframework/driver-base@2.0.0-internal.7.2.0
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/telemetry-utils': workspace:~
@@ -7369,7 +7359,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-web-cache-previous': npm:@fluidframework/driver-web-cache@2.0.0-internal.7.2.0
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/odsp-driver-definitions': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -7414,7 +7404,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/file-driver-previous': npm:@fluidframework/file-driver@2.0.0-internal.7.2.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/replay-driver': workspace:~
@@ -7455,7 +7445,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -7507,7 +7497,7 @@ importers:
       '@fluidframework/driver-base': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/local-driver-previous': npm:@fluidframework/local-driver@2.0.0-internal.7.2.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-base': ^2.0.1
@@ -7592,7 +7582,7 @@ importers:
       '@fluidframework/driver-base': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -7666,7 +7656,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/odsp-driver-definitions-previous': npm:@fluidframework/odsp-driver-definitions@2.0.0-internal.7.2.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@microsoft/api-extractor': ^7.37.0
@@ -7698,7 +7688,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -7748,7 +7738,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/replay-driver-previous': npm:@fluidframework/replay-driver@2.0.0-internal.7.2.0
       '@fluidframework/telemetry-utils': workspace:~
@@ -7794,7 +7784,7 @@ importers:
       '@fluidframework/driver-base': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/gitresources': ^2.0.1
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-base': ^2.0.1
@@ -7880,7 +7870,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/routerlicious-urlresolver-previous': npm:@fluidframework/routerlicious-urlresolver@2.0.0-internal.7.2.0
@@ -7935,7 +7925,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/routerlicious-driver': workspace:~
@@ -7994,7 +7984,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/register-collection': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
@@ -8047,7 +8037,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/request-handler': workspace:~
@@ -8122,7 +8112,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -8246,7 +8236,7 @@ importers:
       '@fluidframework/data-object-base-previous': npm:@fluidframework/data-object-base@2.0.0-internal.7.2.0
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/request-handler': workspace:~
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/runtime-utils': workspace:~
@@ -8290,7 +8280,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/dds-interceptions-previous': npm:@fluidframework/dds-interceptions@2.0.0-internal.7.2.0
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/merge-tree': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -8350,7 +8340,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -8391,7 +8381,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static-previous': npm:@fluidframework/fluid-static@2.0.0-internal.7.2.0
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -8458,7 +8448,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -8497,7 +8487,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/request-handler-previous': npm:@fluidframework/request-handler@2.0.0-internal.7.2.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -8556,7 +8546,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/synthesize-previous': npm:@fluidframework/synthesize@2.0.0-internal.7.2.0
       '@microsoft/api-extractor': ^7.37.0
@@ -8611,7 +8601,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -8671,7 +8661,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/merge-tree': workspace:~
@@ -8733,7 +8723,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/view-adapters-previous': npm:@fluidframework/view-adapters@2.0.0-internal.7.2.0
       '@fluidframework/view-interfaces': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -8770,7 +8760,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/view-interfaces-previous': npm:@fluidframework/view-interfaces@2.0.0-internal.7.2.0
       '@microsoft/api-extractor': ^7.37.0
       '@types/react': ^17.0.44
@@ -8808,7 +8798,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-base': ^2.0.1
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -8890,7 +8880,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils-previous': npm:@fluidframework/driver-utils@2.0.0-internal.7.2.0
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/gitresources': ^2.0.1
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-base': ^2.0.1
@@ -8959,7 +8949,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/location-redirection-utils-previous': npm:@fluidframework/location-redirection-utils@2.0.0-internal.7.2.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
@@ -9013,7 +9003,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       eslint: ~8.50.0
       prettier: ~3.0.3
@@ -9051,7 +9041,7 @@ importers:
       '@fluidframework/datastore': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -9135,7 +9125,7 @@ importers:
       '@fluidframework/container-runtime-definitions-previous': npm:@fluidframework/container-runtime-definitions@2.0.0-internal.7.2.0
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -9174,7 +9164,7 @@ importers:
       '@fluidframework/datastore-previous': npm:@fluidframework/datastore@2.0.0-internal.7.2.0
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -9242,7 +9232,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions-previous': npm:@fluidframework/datastore-definitions@2.0.0-internal.7.2.0
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -9275,7 +9265,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions-previous': npm:@fluidframework/runtime-definitions@2.0.0-internal.7.2.0
       '@microsoft/api-extractor': ^7.37.0
@@ -9314,7 +9304,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
@@ -9381,7 +9371,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/routerlicious-driver': workspace:~
@@ -9457,7 +9447,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/sequence': workspace:~
@@ -9532,7 +9522,7 @@ importers:
       '@fluidframework/driver-base': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/ink': workspace:~
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/map': workspace:~
@@ -9639,7 +9629,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup-previous': npm:@fluidframework/mocha-test-setup@2.0.0-internal.7.2.0
       '@fluidframework/test-driver-definitions': workspace:~
       '@microsoft/api-extractor': ^7.37.0
@@ -9685,7 +9675,7 @@ importers:
       '@fluidframework/counter': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/file-driver': workspace:~
       '@fluidframework/ink': workspace:~
       '@fluidframework/local-driver': workspace:~
@@ -9759,7 +9749,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
@@ -9806,7 +9796,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/test-driver-definitions': workspace:~
       '@types/node': ^16.18.38
       applicationinsights: ^2.1.9
@@ -9836,7 +9826,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/test-driver-definitions-previous': npm:@fluidframework/test-driver-definitions@2.0.0-internal.7.2.0
       '@microsoft/api-extractor': ^7.37.0
@@ -9872,7 +9862,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
@@ -9957,7 +9947,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/ink': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
@@ -9985,8 +9975,6 @@ importers:
       c8: ^7.7.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
-      eslint-import-resolver-typescript: ^3.6.1
-      eslint-plugin-import: npm:eslint-plugin-i@~2.29.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -10062,8 +10050,6 @@ importers:
       '@types/uuid': 9.0.5
       c8: 7.14.0
       eslint: 8.50.0
-      eslint-import-resolver-typescript: 3.6.1_dc6gzdt3huv6pdem4iqhx6vdye
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_rdoeqvzpa2jmvnyuviohvk2bau
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
@@ -10077,7 +10063,7 @@ importers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
@@ -10128,7 +10114,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -10212,7 +10198,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -10315,7 +10301,7 @@ importers:
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/ink': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
@@ -10336,8 +10322,6 @@ importers:
       c8: ^7.7.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
-      eslint-import-resolver-typescript: ^3.6.1
-      eslint-plugin-import: npm:eslint-plugin-i@~2.29.0
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -10397,8 +10381,6 @@ importers:
       c8: 7.14.0
       cross-env: 7.0.3
       eslint: 8.50.0
-      eslint-import-resolver-typescript: 3.6.1_dc6gzdt3huv6pdem4iqhx6vdye
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_rdoeqvzpa2jmvnyuviohvk2bau
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -10420,7 +10402,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
@@ -10485,7 +10467,7 @@ importers:
       '@fluidframework/container-runtime-definitions': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/sequence': workspace:~
@@ -10631,7 +10613,7 @@ importers:
       '@fluidframework/counter': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
@@ -10723,7 +10705,7 @@ importers:
       '@fluidframework/counter': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
       '@fluidframework/map': workspace:~
       '@fluidframework/matrix': workspace:~
@@ -10853,7 +10835,7 @@ importers:
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/shared-object-base': workspace:~
@@ -10986,7 +10968,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -11040,7 +11022,7 @@ importers:
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-runner-previous': npm:@fluidframework/fluid-runner@2.0.0-internal.7.2.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-driver': workspace:~
@@ -11109,7 +11091,7 @@ importers:
       '@fluidframework/datastore': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/file-driver': workspace:~
       '@fluidframework/ink': workspace:~
       '@fluidframework/map': workspace:~
@@ -11188,7 +11170,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/local-driver': workspace:~
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
@@ -11295,7 +11277,7 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils-previous': npm:@fluidframework/odsp-doclib-utils@2.0.0-internal.7.2.0
       '@fluidframework/odsp-driver-definitions': workspace:~
@@ -11354,7 +11336,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/telemetry-utils-previous': npm:@fluidframework/telemetry-utils@2.0.0-internal.7.2.0
@@ -11418,7 +11400,7 @@ importers:
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ~3.1.0
+      '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -27866,29 +27848,6 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-import-resolver-typescript/3.6.1_dc6gzdt3huv6pdem4iqhx6vdye:
-    resolution: {integrity: sha512-xgdptdoi5W3niYeuQxKmzVDTATvLYqhpwmykwsh7f6HIOStGWEIL9iqZgQDF9u9OEzrRwR8no5q2VT+bjAujTg==}
-    engines: {node: ^14.18.0 || >=16.0.0}
-    peerDependencies:
-      eslint: '*'
-      eslint-plugin-import: '*'
-    dependencies:
-      debug: 4.3.4
-      enhanced-resolve: 5.15.0
-      eslint: 8.50.0
-      eslint-module-utils: 2.8.0_rdoeqvzpa2jmvnyuviohvk2bau
-      eslint-plugin-import: /eslint-plugin-i/2.29.0_rdoeqvzpa2jmvnyuviohvk2bau
-      fast-glob: 3.3.1
-      get-tsconfig: 4.7.2
-      is-core-module: 2.13.0
-      is-glob: 4.0.3
-    transitivePeerDependencies:
-      - '@typescript-eslint/parser'
-      - eslint-import-resolver-node
-      - eslint-import-resolver-webpack
-      - supports-color
-    dev: true
-
   /eslint-import-resolver-typescript/3.6.1_ptoqaxx4zydtl73iuefwc5ceta:
     resolution: {integrity: sha512-xgdptdoi5W3niYeuQxKmzVDTATvLYqhpwmykwsh7f6HIOStGWEIL9iqZgQDF9u9OEzrRwR8no5q2VT+bjAujTg==}
     engines: {node: ^14.18.0 || >=16.0.0}
@@ -27971,63 +27930,6 @@ packages:
       - supports-color
     dev: true
 
-  /eslint-module-utils/2.8.0_rdoeqvzpa2jmvnyuviohvk2bau:
-    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: '*'
-      eslint-import-resolver-node: '*'
-      eslint-import-resolver-typescript: '*'
-      eslint-import-resolver-webpack: '*'
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-      eslint:
-        optional: true
-      eslint-import-resolver-node:
-        optional: true
-      eslint-import-resolver-typescript:
-        optional: true
-      eslint-import-resolver-webpack:
-        optional: true
-    dependencies:
-      debug: 3.2.7
-      eslint: 8.50.0
-      eslint-import-resolver-typescript: 3.6.1_dc6gzdt3huv6pdem4iqhx6vdye
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
-  /eslint-module-utils/2.8.0_zsoq32x6kwhgqj5rlrvxgb7vd4:
-    resolution: {integrity: sha512-aWajIYfsqCKRDgUfjEXNN/JlrzauMuSEy5sbd7WXbtW3EH6A6MpwEh42c7qD+MqQo9QMJ6fWLAeIJynx0g6OAw==}
-    engines: {node: '>=4'}
-    peerDependencies:
-      '@typescript-eslint/parser': '*'
-      eslint: '*'
-      eslint-import-resolver-node: '*'
-      eslint-import-resolver-typescript: '*'
-      eslint-import-resolver-webpack: '*'
-    peerDependenciesMeta:
-      '@typescript-eslint/parser':
-        optional: true
-      eslint:
-        optional: true
-      eslint-import-resolver-node:
-        optional: true
-      eslint-import-resolver-typescript:
-        optional: true
-      eslint-import-resolver-webpack:
-        optional: true
-    dependencies:
-      debug: 3.2.7
-      eslint: 8.50.0
-      eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1_dc6gzdt3huv6pdem4iqhx6vdye
-    transitivePeerDependencies:
-      - supports-color
-    dev: true
-
   /eslint-plugin-chai-expect/3.0.0_eslint@8.50.0:
     resolution: {integrity: sha512-NS0YBcToJl+BRKBSMCwRs/oHJIX67fG5Gvb4tGked+9Wnd1/PzKijd82B2QVKcSSOwRe+pp4RAJ2AULeck4eQw==}
     engines: {node: 10.* || 12.* || >= 14.*}
@@ -28097,29 +27999,6 @@ packages:
       eslint: 8.50.0
       eslint-import-resolver-node: 0.3.9
       eslint-module-utils: 2.8.0_2fdjpxztni4ct7ibb6nnscsdt4
-      get-tsconfig: 4.7.2
-      is-glob: 4.0.3
-      minimatch: 3.1.2
-      resolve: 1.22.8
-      semver: 7.5.4
-    transitivePeerDependencies:
-      - '@typescript-eslint/parser'
-      - eslint-import-resolver-typescript
-      - eslint-import-resolver-webpack
-      - supports-color
-    dev: true
-
-  /eslint-plugin-i/2.29.0_rdoeqvzpa2jmvnyuviohvk2bau:
-    resolution: {integrity: sha512-slGeTS3GQzx9267wLJnNYNO8X9EHGsc75AKIAFvnvMYEcTJKotPKL1Ru5PIGVHIVet+2DsugePWp8Oxpx8G22w==}
-    engines: {node: '>=12'}
-    peerDependencies:
-      eslint: ^7.2.0 || ^8
-    dependencies:
-      debug: 3.2.7
-      doctrine: 2.1.0
-      eslint: 8.50.0
-      eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0_zsoq32x6kwhgqj5rlrvxgb7vd4
       get-tsconfig: 4.7.2
       is-glob: 4.0.3
       minimatch: 3.1.2

@@ -155,7 +155,7 @@
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.37.0",
@@ -349,9 +349,7 @@
 			"qs": "^6.11.0",
 			"simplemde>codemirror": "^5.65.11",
 			"simplemde>marked": "^4.3.0",
-			"@oclif/core": "~2.4.0",
-			"@fluidframework/eslint-config-fluid": "~3.1.0",
-			"eslint-plugin-import": "npm:eslint-plugin-i@~2.29.0"
+			"@oclif/core": "~2.4.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
