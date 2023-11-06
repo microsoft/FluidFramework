@@ -759,7 +759,7 @@ function updateLineageState(
 	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
 	for (const revision of detachBlocks.keys()) {
 		const revisionIndex = getKnownRevisionIndex(revision, metadata);
-		if (attachRevisionIndex < revisionIndex && revisionIndex < detachRevisionIndex) {
+		if (attachRevisionIndex <= revisionIndex && revisionIndex < detachRevisionIndex) {
 			detachBlocks.delete(revision);
 		}
 	}
@@ -767,7 +767,7 @@ function updateLineageState(
 	if (-Infinity < detachRevisionIndex || attachRevisionIndex < Infinity) {
 		lineageRecipients.push({
 			type: "Gate",
-			firstExcludedRevisionIndex: attachRevisionIndex + 1,
+			firstExcludedRevisionIndex: attachRevisionIndex,
 			lastExcludedRevisionIndex: detachRevisionIndex - 1,
 		});
 	}

@@ -798,6 +798,25 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	// Tests that lineage is only added for detaches which are contiguous in the output context of the base changeset.
+	it("insert ↷ insert within delete", () => {
+		const insertAndDelete = [
+			Mark.delete(1, brand(0)),
+			Mark.insert(1, brand(1)),
+			Mark.delete(1, brand(2)),
+		];
+
+		const insert = [{ count: 1 }, Mark.insert(1, brand(0))];
+		const rebased = rebase(insert, insertAndDelete);
+		const expected = [
+			Mark.insert(1, {
+				localId: brand(0),
+				lineage: [{ revision: tag1, id: brand(0), count: 1, offset: 1 }],
+			}),
+		];
+		assert.deepEqual(rebased, expected);
+	});
+
 	describe("Over composition", () => {
 		it("insert ↷ [delete, delete]", () => {
 			const deletes: TestChangeset = shallowCompose([
