@@ -8,6 +8,6 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
-    "preserveConstEnums": true,
+		"preserveConstEnums": true,
 	},
 }
