@@ -320,9 +320,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 								]),
 							);
 
-							// TODO: Normalize lineages
-							// Sort entries
-							// Either merge as much as possible or split into single cell entries
 							const normalizedComposition =
 								withNormalizedLineage(rebasedOverComposition);
 							const normalizedIndividual = withNormalizedLineage(rebasedIndividually);
