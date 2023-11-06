@@ -14,11 +14,11 @@ import { ProxyNode, SharedTreeNode } from "./types";
  * Provides various functions for analyzing {@link SharedTreeNode}s.
  * @alpha
  * @privateRemarks
- * Inlining the typing of this interface onto the `node` object provides slightly different .d.ts generation,
+ * Inlining the typing of this interface onto the `Tree` object provides slightly different .d.ts generation,
  * which avoids typescript expanding the type of TreeNodeSchema and thus encountering
  * https://github.com/microsoft/rushstack/issues/1958.
  */
-export interface NodeApi {
+export interface TreeApi {
 	/**
 	 * The schema information for this node.
 	 */
@@ -64,10 +64,10 @@ export interface NodeApi {
 }
 
 /**
- * The `node` object holds various functions for analyzing {@link SharedTreeNode}s.
+ * The `Tree` object holds various functions for analyzing {@link SharedTreeNode}s.
  * @alpha
  */
-export const nodeApi: NodeApi = {
+export const nodeApi: TreeApi = {
 	schema: (node: SharedTreeNode) => {
 		return getEditNode(node).schema;
 	},
