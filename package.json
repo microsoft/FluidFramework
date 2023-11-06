@@ -349,7 +349,9 @@
 			"qs": "^6.11.0",
 			"simplemde>codemirror": "^5.65.11",
 			"simplemde>marked": "^4.3.0",
-			"@oclif/core": "~2.4.0"
+			"@oclif/core": "~2.4.0",
+			"@fluidframework/eslint-config-fluid": "~3.1.0",
+			"eslint-plugin-import": "npm:eslint-plugin-i@~2.29.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
@@ -365,6 +367,10 @@
 				"@types/node",
 				"fluid-framework"
 			]
+		},
+		"patchedDependencies": {
+			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
+			"engine.io-client@6.5.2": "patches/engine.io-client@6.5.2.patch"
 		}
 	}
 }
