@@ -144,6 +144,8 @@ function rebaseMarkList<TNodeChange>(
 			nodeExistenceState,
 		);
 
+		// Inverse attaches do not contribute to lineage as they are effectively reinstating
+		// an older detach which cells should already have any necessary lineage for.
 		if (
 			(markEmptiesCells(baseMark) || isTransientEffect(baseMark)) &&
 			!isInverseAttach(baseMark)
