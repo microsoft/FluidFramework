@@ -720,11 +720,13 @@ interface CellBlock {
 	readonly cellId: CellId | undefined;
 
 	// The index of the oldest revision where this cell is full in its output context.
-	// May be -Infinity if the cell has been full for all revisions in the base changeset,
-	// or +Infinity if the cell has been empty for all revisions in the base changeset.
+	// May be -Infinity if the cell was full in the input context of the base changeset,
+	// or +Infinity if the cell was empty for all revisions in the base changeset.
 	readonly firstAttachedRevisionIndex: number;
 
 	// The index of the newest revision where this cell is full in its output context.
+	// May be -Infinity if the cell was empty for all revisions in the base changeset,
+	// or +Infinity if the cell is full in the output context of the base changeset.
 	readonly lastAttachedRevisionIndex: number;
 }
 
