@@ -89,6 +89,17 @@ function createRedundantRemoveChangeset(
 	return changeset;
 }
 
+function createRedundantReviveChangeset(
+	startIndex: number,
+	count: number,
+	detachEvent: SF.CellId,
+): SF.Changeset<never> {
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
+	const mark = markList[markList.length - 1];
+	delete mark.cellId;
+	return markList;
+}
+
 function createReviveChangeset(
 	startIndex: number,
 	count: number,
@@ -96,44 +107,6 @@ function createReviveChangeset(
 	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
 	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1];
-	if (lastDetach !== undefined) {
-		mark.cellId = lastDetach;
-	}
-	return markList;
-}
-
-function createRedundantReviveChangeset(
-	startIndex: number,
-	count: number,
-	detachEvent: SF.CellId,
-	isIntention?: boolean,
-): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, isIntention);
-	const mark = markList[markList.length - 1];
-	delete mark.cellId;
-	return markList;
-}
-
-function createBlockedReviveChangeset(
-	startIndex: number,
-	count: number,
-	detachEvent: SF.CellId,
-	lastDetach: SF.CellId,
-): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1];
-	mark.cellId = lastDetach;
-	return markList;
-}
-
-function createIntentionalReviveChangeset(
-	startIndex: number,
-	count: number,
-	detachEvent: SF.CellId,
-	lastDetach?: SF.CellId,
-): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, true);
 	const mark = markList[markList.length - 1];
 
 	if (lastDetach !== undefined) {
@@ -414,9 +387,7 @@ export const ChangeMaker = {
 	delete: createDeleteChangeset,
 	redundantRemove: createRedundantRemoveChangeset,
 	revive: createReviveChangeset,
-	intentionalRevive: createIntentionalReviveChangeset,
 	redundantRevive: createRedundantReviveChangeset,
-	blockedRevive: createBlockedReviveChangeset,
 	move: createMoveChangeset,
 	return: createReturnChangeset,
 	modify: createModifyChangeset,

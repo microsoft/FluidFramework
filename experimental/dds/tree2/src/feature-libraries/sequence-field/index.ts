@@ -22,7 +22,6 @@ export {
 	ReturnFrom,
 	NoopMark,
 	LineageEvent,
-	HasReattachFields,
 	CellId,
 	HasMarkFields,
 	HasLineage,

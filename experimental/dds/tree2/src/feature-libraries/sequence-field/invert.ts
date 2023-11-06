@@ -116,7 +116,6 @@ function invertMark<TNodeChange>(
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			const markRevision = mark.revision ?? revision;
-			const inverseRevision = mark.detachIdOverride?.revision ?? markRevision;
 			if (mark.cellId === undefined) {
 				const inverse = withNodeChange(
 					{
@@ -126,7 +125,6 @@ function invertMark<TNodeChange>(
 							localId: mark.id,
 						},
 						count: mark.count,
-						inverseOf: inverseRevision,
 					},
 					invertNodeChange(mark.changes, inputIndex, invertChild),
 				);
