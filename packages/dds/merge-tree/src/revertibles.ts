@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { List } from "./collections";
+import { DoublyLinkedList } from "./collections";
 import { EndOfTreeSegment } from "./endOfTreeSegment";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback";
@@ -298,7 +296,9 @@ function revertLocalRemove(
 			(lref.properties as Partial<RemoveSegmentRefProperties>)?.referenceSpace ===
 			"mergeTreeDeltaRevertible";
 
-		const insertRef: Partial<Record<"before" | "after", List<LocalReferencePosition>>> = {};
+		const insertRef: Partial<
+			Record<"before" | "after", DoublyLinkedList<LocalReferencePosition>>
+		> = {};
 		const forward = insertSegment.ordinal < refSeg.ordinal;
 		const refHandler = (lref: LocalReferencePosition) => {
 			// once we reach it keep the original reference where it is
@@ -308,10 +308,10 @@ function revertLocalRemove(
 			}
 			if (localSlideFilter(lref)) {
 				if (forward) {
-					const before = (insertRef.before ??= new List());
+					const before = (insertRef.before ??= new DoublyLinkedList());
 					before.push(lref);
 				} else {
-					const after = (insertRef.after ??= new List());
+					const after = (insertRef.after ??= new DoublyLinkedList());
 					after.unshift(lref);
 				}
 			}

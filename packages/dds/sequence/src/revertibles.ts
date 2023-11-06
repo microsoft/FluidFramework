@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
 /* eslint-disable no-bitwise */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
@@ -118,13 +117,19 @@ export function appendDeleteIntervalToRevertibles(
 	string: SharedString,
 	interval: SequenceInterval,
 	revertibles: SharedStringRevertible[],
-) {
-	const startSeg = interval.start.getSegment() as SharedStringSegment;
+): SharedStringRevertible[] {
+	const startSeg = interval.start.getSegment() as SharedStringSegment | undefined;
+	if (!startSeg) {
+		return revertibles;
+	}
 	const startType =
 		startSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
 			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
-	const endSeg = interval.end.getSegment() as SharedStringSegment;
+	const endSeg = interval.end.getSegment() as SharedStringSegment | undefined;
+	if (!endSeg) {
+		return revertibles;
+	}
 	const endType =
 		endSeg.removedSeq !== undefined
 			? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd

@@ -13,6 +13,7 @@ import { IMergeTreeDeltaOpArgs, MergeTreeMaintenanceType } from "../mergeTreeDel
 import { matchProperties, PropertySet } from "../properties";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk";
 import { Marker, seqLTE, toRemovalInfo } from "../mergeTreeNodes";
+import { IMergeTreeOptions } from "..";
 import { TestClient } from "./testClient";
 
 function getOpString(msg: ISequencedDocumentMessage | undefined) {
@@ -54,7 +55,7 @@ export function createClientsAtInitialState<
 >(
 	opts: {
 		initialState: string;
-		options?: PropertySet;
+		options?: IMergeTreeOptions & PropertySet;
 	},
 	...clientIds: TClientName[]
 ): Record<keyof TClients, TestClient> & { all: TestClient[] } {

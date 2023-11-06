@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { Property, RedBlackTree } from "./collections";
 import { UnassignedSequenceNumber } from "./constants";
@@ -12,12 +10,14 @@ import {
 	CollaborationWindow,
 	compareNumbers,
 	IMergeBlock,
+	IMergeNode,
 	IRemovalInfo,
 	ISegment,
 	seqLTE,
 	toRemovalInfo,
 } from "./mergeTreeNodes";
 import { SortedSet } from "./sortedSet";
+import { MergeTree } from "./mergeTree";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
 	protected getKey(item: PartialSequenceLength): number {
@@ -191,6 +191,13 @@ interface LocalPartialSequenceLength extends PartialSequenceLength {
 
 export interface PartialSequenceLengthsOptions {
 	verifier?: (partialLengths: PartialSequenceLengths) => void;
+	verifyExpected?: (
+		mergeTree: MergeTree,
+		node: IMergeBlock,
+		refSeq: number,
+		clientId: number,
+		localSeq?: number,
+	) => void;
 	zamboni: boolean;
 }
 
@@ -856,7 +863,7 @@ function verifyPartialLengths(
 	partialSeqLengths: PartialSequenceLengths,
 	partialLengths: PartialSequenceLengthsSet,
 	clientPartials: boolean,
-) {
+): number {
 	if (partialLengths.size === 0) {
 		return 0;
 	}
@@ -866,7 +873,7 @@ function verifyPartialLengths(
 	let count = 0;
 
 	for (const partialLength of partialLengths.items) {
-		// Count total number of partial length
+		// Count total number of partial length entries
 		count++;
 
 		// Sequence number should be larger or equal to minseq
@@ -913,7 +920,7 @@ function verifyPartialLengths(
 				0x058 /* "Both overlapRemoveClients and clientPartials are set!" */,
 			);
 
-			// Each overlap client count as one, but the first remove to sequence was already counted.
+			// Each overlap client counts as one, but the first remove to sequence was already counted.
 			// (this aligns with the logic to omit the removing client in `addClientSeqNumberFromPartial`)
 			count += partialLength.overlapRemoveClients.size() - 1;
 		}
@@ -921,12 +928,50 @@ function verifyPartialLengths(
 	return count;
 }
 
+export function verifyExpected(
+	mergeTree: MergeTree,
+	node: IMergeBlock,
+	refSeq: number,
+	clientId: number,
+	localSeq?: number,
+) {
+	if (
+		(!mergeTree.collabWindow.collaborating || mergeTree.collabWindow.clientId === clientId) &&
+		(node.isLeaf() || localSeq === undefined)
+	) {
+		return;
+	}
+
+	const partialLen = node.partialLengths?.getPartialLength(refSeq, clientId, localSeq);
+
+	let expected = 0;
+	const nodesToVisit: IMergeNode[] = [node];
+
+	while (nodesToVisit.length > 0) {
+		const thisNode = nodesToVisit.pop();
+		if (!thisNode) {
+			continue;
+		}
+		if (thisNode.isLeaf()) {
+			expected += mergeTree["nodeLength"](thisNode, refSeq, clientId, localSeq) ?? 0;
+		} else {
+			nodesToVisit.push(...thisNode.children.slice(0, thisNode.childCount));
+		}
+	}
+
+	if (expected !== partialLen) {
+		node.partialLengths?.getPartialLength(refSeq, clientId, localSeq);
+		throw new Error(
+			`expected partial length of ${expected} but found ${partialLen}. refSeq: ${refSeq}, clientId: ${clientId}`,
+		);
+	}
+}
+
 export function verify(partialSeqLengths: PartialSequenceLengths) {
 	if (partialSeqLengths["clientSeqNumbers"]) {
-		let cliCount = 0;
 		for (const cliSeq of partialSeqLengths["clientSeqNumbers"]) {
 			if (cliSeq) {
-				cliCount += verifyPartialLengths(partialSeqLengths, cliSeq, true);
+				verifyPartialLengths(partialSeqLengths, cliSeq, true);
 			}
 		}
 
@@ -935,17 +980,8 @@ export function verify(partialSeqLengths: PartialSequenceLengths) {
 			!!partialSeqLengths["partialLengths"],
 			0x059 /* "Client view exists but flat view does not!" */,
 		);
-		const flatCount = verifyPartialLengths(
-			partialSeqLengths,
-			partialSeqLengths["partialLengths"],
-			false,
-		);
 
-		// The number of partial lengths on the client view and flat view should be the same
-		assert(
-			flatCount === cliCount,
-			0x05a /* "Mismatch between number of partial lengths on client and flat views!" */,
-		);
+		verifyPartialLengths(partialSeqLengths, partialSeqLengths["partialLengths"], false);
 	} else {
 		// If we don't have a client view, we shouldn't have the flat view either
 		assert(

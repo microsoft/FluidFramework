@@ -5,15 +5,12 @@
 
 import {
 	ICombiningOp,
-	IMergeTreeInsertMsg,
-	IMergeTreeRemoveMsg,
 	IMergeTreeTextHelper,
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
 	Marker,
 	PropertySet,
-	ReferencePosition,
 	ReferenceType,
 	refHasTileLabel,
 	TextSegment,
@@ -41,11 +38,7 @@ export interface ISharedString extends SharedSegmentSequence<SharedStringSegment
 	 * @param refType - The reference type of the marker
 	 * @param props - The properties of the marker
 	 */
-	insertMarker(
-		pos: number,
-		refType: ReferenceType,
-		props?: PropertySet,
-	): IMergeTreeInsertMsg | undefined;
+	insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void;
 
 	/**
 	 * {@inheritDoc SharedSegmentSequence.posFromRelativePos}
@@ -116,7 +109,7 @@ export class SharedString
 		relativePos1: IRelativePosition,
 		refType: ReferenceType,
 		props?: PropertySet,
-	) {
+	): void {
 		const segment = new Marker(refType);
 		if (props) {
 			segment.addProperties(props);
@@ -129,17 +122,13 @@ export class SharedString
 	/**
 	 * {@inheritDoc ISharedString.insertMarker}
 	 */
-	public insertMarker(
-		pos: number,
-		refType: ReferenceType,
-		props?: PropertySet,
-	): IMergeTreeInsertMsg | undefined {
+	public insertMarker(pos: number, refType: ReferenceType, props?: PropertySet): void {
 		const segment = new Marker(refType);
 		if (props) {
 			segment.addProperties(props);
 		}
 
-		return this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
+		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
 	/**
@@ -148,7 +137,11 @@ export class SharedString
 	 * @param text - The text to insert
 	 * @param props - The properties of text
 	 */
-	public insertTextRelative(relativePos1: IRelativePosition, text: string, props?: PropertySet) {
+	public insertTextRelative(
+		relativePos1: IRelativePosition,
+		text: string,
+		props?: PropertySet,
+	): void {
 		const segment = new TextSegment(text);
 		if (props) {
 			segment.addProperties(props);
@@ -161,7 +154,7 @@ export class SharedString
 	/**
 	 * {@inheritDoc ISharedString.insertText}
 	 */
-	public insertText(pos: number, text: string, props?: PropertySet) {
+	public insertText(pos: number, text: string, props?: PropertySet): void {
 		const segment = new TextSegment(text);
 		if (props) {
 			segment.addProperties(props);
@@ -177,7 +170,7 @@ export class SharedString
 	 * @param text - The text to replace the range with
 	 * @param props - Optional. The properties of the replacement text
 	 */
-	public replaceText(start: number, end: number, text: string, props?: PropertySet) {
+	public replaceText(start: number, end: number, text: string, props?: PropertySet): void {
 		this.replaceRange(start, end, TextSegment.make(text, props));
 	}
 
@@ -187,8 +180,8 @@ export class SharedString
 	 * @param end - The exclusive end of the range to replace
 	 * @returns the message sent.
 	 */
-	public removeText(start: number, end: number): IMergeTreeRemoveMsg {
-		return this.removeRange(start, end);
+	public removeText(start: number, end: number): void {
+		this.removeRange(start, end);
 	}
 
 	/**
@@ -215,28 +208,6 @@ export class SharedString
 	 */
 	public annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp) {
 		this.guardReentrancy(() => this.client.annotateMarker(marker, props, combiningOp));
-	}
-
-	/**
-	 * Finds the nearest reference with ReferenceType.Tile to `startPos` in the direction dictated by `tilePrecedesPos`.
-	 * Note that Markers receive `ReferenceType.Tile` by default.
-	 * @deprecated Use `searchForMarker` instead.
-	 * @param startPos - Position at which to start the search
-	 * @param clientId - clientId dictating the perspective to search from
-	 * @param tileLabel - Label of the tile to search for
-	 * @param preceding - Whether the desired tile comes before (true) or after (false) `startPos`
-	 */
-	public findTile(
-		startPos: number | undefined,
-		tileLabel: string,
-		preceding = true,
-	):
-		| {
-				tile: ReferencePosition;
-				pos: number;
-		  }
-		| undefined {
-		return this.client.findTile(startPos ?? 0, tileLabel, preceding);
 	}
 
 	/**
@@ -427,10 +398,8 @@ const gatherTextAndMarkers: ISegmentAction<ITextAndMarkerAccumulator> = (
 	} else {
 		if (placeholder && placeholder.length > 0) {
 			const placeholderText =
-				placeholder === "*"
-					? // eslint-disable-next-line @typescript-eslint/no-base-to-string
-					  `\n${segment.toString()}`
-					: placeholder.repeat(segment.cachedLength);
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
+				placeholder === "*" ? `\n${segment}` : placeholder.repeat(segment.cachedLength);
 			textSegment.text += placeholderText;
 		} else {
 			const marker = segment as Marker;

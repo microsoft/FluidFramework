@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/consistent-type-assertions */
-
 import { strict as assert } from "assert";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { LocalClientId, UnassignedSequenceNumber, UniversalSequenceNumber } from "../constants";
@@ -231,7 +229,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					assert.equal(segment.segmentGroups.size, 1);
@@ -253,7 +251,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					assert.equal(segment.segmentGroups.size, 0);
@@ -275,7 +273,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					assert.equal(segment.segmentGroups.size, 0);
@@ -326,7 +324,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					const segmentInfo = mergeTree.getContainingSegment(
@@ -349,7 +347,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					mergeTree.annotateRange(
@@ -433,7 +431,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					assert.equal(segment.properties?.propertySource, "local2");
@@ -449,7 +447,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					assert.equal(segment.properties?.propertySource, "local2");
@@ -465,7 +463,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					assert.equal(segment.properties?.propertySource, "local2");
@@ -496,7 +494,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					mergeTree.annotateRange(
@@ -631,7 +629,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					assert(segmentInfo.segment?.segmentGroups.empty);
@@ -722,7 +720,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					mergeTree.annotateRange(
@@ -775,7 +773,7 @@ describe("MergeTree", () => {
 						},
 						sequencedMessage: {
 							sequenceNumber: ++currentSequenceNumber,
-						} as ISequencedDocumentMessage,
+						} as any as ISequencedDocumentMessage,
 					});
 
 					mergeTree.annotateRange(

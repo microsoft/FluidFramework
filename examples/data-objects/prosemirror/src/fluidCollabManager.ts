@@ -7,7 +7,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-import { assert } from "@fluidframework/core-utils";
 import {
 	createGroupOp,
 	createRemoveRangeOp,
@@ -23,12 +22,7 @@ import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, Plugin, Transaction } from "prosemirror-state";
 
 import { EditorView } from "prosemirror-view";
-import {
-	IProseMirrorNode,
-	nodeTypeKey,
-	ProseMirrorTransactionBuilder,
-	sliceToGroupOps,
-} from "./fluidBridge";
+import { IProseMirrorNode, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge";
 import { schema } from "./fluidSchema";
 import { create as createSelection } from "./selection";
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
@@ -99,20 +93,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 			} else if (Marker.is(segment)) {
 				// TODO are marks applied to the structural nodes as well? Or just inner text?
 
-				const nodeType = segment.properties![nodeTypeKey];
 				switch (segment.refType) {
-					case ReferenceType.NestBegin:
-						// Create the new node, add it to the top's content, and push it on the stack
-						const newNode = { type: nodeType, content: [] };
-						top.content!.push(newNode);
-						nodeStack.push(newNode);
-						break;
-
-					case ReferenceType.NestEnd:
-						const popped = nodeStack.pop();
-						assert(popped!.type === nodeType, "NestEnd top-node type has wrong type");
-						break;
-
 					case ReferenceType.Simple:
 						// TODO consolidate the text segment and simple references
 						const nodeJson: IProseMirrorNode = {

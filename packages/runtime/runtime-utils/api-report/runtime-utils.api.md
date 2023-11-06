@@ -20,6 +20,7 @@ import { IResponse } from '@fluidframework/core-interfaces';
 import { IRuntime } from '@fluidframework/container-definitions';
 import { IRuntimeFactory } from '@fluidframework/container-definitions';
 import { ISnapshotTree } from '@fluidframework/protocol-definitions';
+import { ISnapshotTreeWithBlobContents } from '@fluidframework/container-definitions';
 import { ISummarizeResult } from '@fluidframework/runtime-definitions';
 import { ISummaryBlob } from '@fluidframework/protocol-definitions';
 import { ISummaryStats } from '@fluidframework/runtime-definitions';
@@ -44,7 +45,7 @@ export function addTreeToSummary(summary: ISummaryTreeWithStats, key: string, su
 export function calculateStats(summary: SummaryObject): ISummaryStats;
 
 // @public
-export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTree): ISummaryTreeWithStats;
+export function convertSnapshotTreeToSummaryTree(snapshot: ISnapshotTreeWithBlobContents): ISummaryTreeWithStats;
 
 // @public
 export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree;

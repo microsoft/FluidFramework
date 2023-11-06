@@ -12,6 +12,8 @@ import { ReferenceType } from "../ops";
 import { PropertySet } from "../properties";
 import { MergeTree } from "../mergeTree";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk";
+import { UnassignedSequenceNumber } from "../constants";
+import { LocalReferenceCollection } from "../localReference";
 import { loadText } from "./text";
 
 export function loadTextFromFile(filename: string, mergeTree: MergeTree, segLimit = 0) {
@@ -179,19 +181,19 @@ function getPartialLengths(
 
 	const isInserted = (segment: ISegment) =>
 		segment.seq === undefined ||
-		(segment.seq !== -1 && segment.seq <= seq) ||
+		(segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
 		(localSeq !== undefined &&
-			segment.seq === -1 &&
+			segment.seq === UnassignedSequenceNumber &&
 			segment.localSeq !== undefined &&
 			segment.localSeq <= localSeq);
 
 	const isRemoved = (segment: ISegment) =>
 		segment.removedSeq !== undefined &&
 		((localSeq !== undefined &&
-			segment.removedSeq === -1 &&
+			segment.removedSeq === UnassignedSequenceNumber &&
 			segment.localRemovedSeq !== undefined &&
 			segment.localRemovedSeq <= localSeq) ||
-			(segment.removedSeq !== -1 && segment.removedSeq <= seq));
+			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
 
 	walkAllChildSegments(mergeBlock, (segment) => {
 		if (isInserted(segment) && !isRemoved(segment)) {
@@ -245,4 +247,15 @@ export function validatePartialLengths(
 		assert.equal(partialLen, len);
 		assert.equal(actualLen, len);
 	}
+}
+
+export function validateRefCount(collection?: LocalReferenceCollection) {
+	if (!collection) {
+		return;
+	}
+
+	const expectedLength = Array.from(collection).length;
+
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	assert.equal(collection["refCount"], expectedLength);
 }

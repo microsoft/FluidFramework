@@ -16,18 +16,11 @@ export type PropertySet = MapLike<any>;
 
 // Assume these are created with Object.create(null)
 
-/**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- */
 export interface IConsensusValue {
 	seq: number;
 	value: any;
 }
 
-/**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
- */
 export function combine(
 	combiningInfo: ICombiningOp,
 	currentValue: any,
@@ -76,8 +69,7 @@ export function combine(
 }
 
 /**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
+ * @internal
  */
 export function matchProperties(a: PropertySet | undefined, b: PropertySet | undefined) {
 	if (!a && !b) {
@@ -106,10 +98,6 @@ export function matchProperties(a: PropertySet | undefined, b: PropertySet | und
 	return true;
 }
 
-/**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
- */
 export function extend<T>(
 	base: MapLike<T>,
 	extension: MapLike<T> | undefined,
@@ -134,10 +122,6 @@ export function extend<T>(
 	return base;
 }
 
-/**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
- */
 export function clone<T>(extension: MapLike<T> | undefined) {
 	if (extension === undefined) {
 		return undefined;
@@ -154,8 +138,7 @@ export function clone<T>(extension: MapLike<T> | undefined) {
 }
 
 /**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
+ * @internal
  */
 export function addProperties(
 	oldProps: PropertySet | undefined,
@@ -171,10 +154,6 @@ export function addProperties(
 	return _oldProps;
 }
 
-/**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
- */
 export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | undefined) {
 	if (extension !== undefined) {
 		// eslint-disable-next-line no-restricted-syntax
@@ -188,8 +167,7 @@ export function extendIfUndefined<T>(base: MapLike<T>, extension: MapLike<T> | u
 }
 
 /**
- * @deprecated This functionality was not intended for public export and will
- * be removed in a future release.
+ * @internal
  */
 // Create a MapLike with good performance.
 export function createMap<T>(): MapLike<T> {

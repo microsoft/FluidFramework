@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { assert } from "@fluidframework/core-utils";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {

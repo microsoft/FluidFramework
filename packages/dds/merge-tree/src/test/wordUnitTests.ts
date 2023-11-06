@@ -156,16 +156,16 @@ function measureFetch(startFile: string, withBookmarks = false) {
 	let count = 0;
 	for (let i = 0; i < reps; i++) {
 		for (let pos = 0; pos < client.getLength(); ) {
-			// let prevPG = client.findTile(pos, "pg");
+			// let prevPG = client.searchForMarker(pos, "pg", false);
 			// let caBegin: number;
 			// if (prevPG) {
-			//     caBegin = prevPG.pos;
+			// 	caBegin = client.localReferencePositionToPosition(prevPG);
 			// } else {
 			//     caBegin = 0;
 			// }
 			// curPG.pos is ca end
-			const curPG = client.findTile(pos, "pg", false)!;
-			const properties = curPG.tile.properties!;
+			const curPG = client.searchForMarker(pos, "pg", true)!;
+			const properties = curPG.properties!;
 			const curSegOff = client.getContainingSegment(pos)!;
 			const curSeg = curSegOff.segment!;
 			// Combine paragraph and direct properties
