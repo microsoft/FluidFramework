@@ -4,6 +4,9 @@
 
 ```ts
 
+import { FactoryObjectNodeSchema as FactoryObjectNodeSchema_2 } from './schemaBuilder';
+import { FactoryObjectNodeSchemaRecursive as FactoryObjectNodeSchemaRecursive_2 } from './schemaBuilder';
+import { Forbidden as Forbidden_2 } from '../default-field-kinds';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -11,10 +14,20 @@ import { IChannelServices } from '@fluidframework/datastore-definitions';
 import { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { ISharedObject } from '@fluidframework/shared-object-base';
+import { NodeKeyFieldKind as NodeKeyFieldKind_2 } from '../../feature-libraries';
+import { Optional as Optional_2 } from '../../feature-libraries';
+import { Optional as Optional_3 } from '../feature-libraries';
+import { SchemaLibrary as SchemaLibrary_2 } from '../../feature-libraries';
+import { SchemaLibrary as SchemaLibrary_3 } from '../feature-libraries';
+import { SequenceFieldKind } from '../../feature-libraries';
+import { SequenceFieldKind as SequenceFieldKind_2 } from '../feature-libraries';
 import { SessionSpaceCompressedId } from '@fluidframework/runtime-definitions';
 import { StableId } from '@fluidframework/runtime-definitions';
 import type { Static } from '@sinclair/typebox';
+import { TreeNodeSchema as TreeNodeSchema_2 } from '../../feature-libraries';
+import { TreeNodeSchema as TreeNodeSchema_3 } from '../feature-libraries';
 import type { TSchema } from '@sinclair/typebox';
+import { ValueSchema as ValueSchema_2 } from '..';
 
 // @alpha
 export interface Adapters {
@@ -918,25 +931,25 @@ export interface JsonableTree extends GenericTreeNode<JsonableTree> {
 export function jsonableTreeFromCursor(cursor: ITreeCursor): JsonableTree;
 
 // @alpha (undocumented)
-export const jsonArray: TreeNodeSchema<"com.fluidframework.json.array", {
+export const jsonArray: TreeNodeSchema_2<"com.fluidframework.json.array", {
 objectNodeFields: {
-"": TreeFieldSchema<Sequence_2, readonly [() => TreeNodeSchema<"com.fluidframework.json.object", {
-mapFields: TreeFieldSchema<Optional, readonly [any, () => TreeNodeSchema<"com.fluidframework.json.array", any>, TreeNodeSchema<"com.fluidframework.leaf.number", {
+"": TreeFieldSchema<SequenceFieldKind, readonly [() => TreeNodeSchema_2<"com.fluidframework.json.object", {
+mapFields: TreeFieldSchema<Optional_2, readonly [any, () => TreeNodeSchema_2<"com.fluidframework.json.array", any>, TreeNodeSchema_2<"com.fluidframework.leaf.number", {
 leafValue: ValueSchema.Number;
-}>, TreeNodeSchema<"com.fluidframework.leaf.boolean", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.boolean", {
 leafValue: ValueSchema.Boolean;
-}>, TreeNodeSchema<"com.fluidframework.leaf.string", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.string", {
 leafValue: ValueSchema.String;
-}>, TreeNodeSchema<"com.fluidframework.leaf.null", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.null", {
 leafValue: ValueSchema.Null;
 }>]>;
-}>, () => TreeNodeSchema<"com.fluidframework.json.array", any>, TreeNodeSchema<"com.fluidframework.leaf.number", {
+}>, () => TreeNodeSchema_2<"com.fluidframework.json.array", any>, TreeNodeSchema_2<"com.fluidframework.leaf.number", {
 leafValue: ValueSchema.Number;
-}>, TreeNodeSchema<"com.fluidframework.leaf.boolean", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.boolean", {
 leafValue: ValueSchema.Boolean;
-}>, TreeNodeSchema<"com.fluidframework.leaf.string", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.string", {
 leafValue: ValueSchema.String;
-}>, TreeNodeSchema<"com.fluidframework.leaf.null", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.null", {
 leafValue: ValueSchema.Null;
 }>]>;
 };
@@ -956,32 +969,32 @@ export type JsonCompatibleReadOnly = string | number | boolean | null | readonly
 };
 
 // @alpha (undocumented)
-export const jsonObject: TreeNodeSchema<"com.fluidframework.json.object", {
-mapFields: TreeFieldSchema<Optional, readonly [() => TreeNodeSchema<"com.fluidframework.json.object", any>, () => TreeNodeSchema<"com.fluidframework.json.array", {
+export const jsonObject: TreeNodeSchema_2<"com.fluidframework.json.object", {
+mapFields: TreeFieldSchema<Optional_2, readonly [() => TreeNodeSchema_2<"com.fluidframework.json.object", any>, () => TreeNodeSchema_2<"com.fluidframework.json.array", {
 objectNodeFields: {
-"": TreeFieldSchema<Sequence_2, readonly [() => TreeNodeSchema<"com.fluidframework.json.object", any>, any, TreeNodeSchema<"com.fluidframework.leaf.number", {
+"": TreeFieldSchema<SequenceFieldKind, readonly [() => TreeNodeSchema_2<"com.fluidframework.json.object", any>, any, TreeNodeSchema_2<"com.fluidframework.leaf.number", {
 leafValue: ValueSchema.Number;
-}>, TreeNodeSchema<"com.fluidframework.leaf.boolean", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.boolean", {
 leafValue: ValueSchema.Boolean;
-}>, TreeNodeSchema<"com.fluidframework.leaf.string", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.string", {
 leafValue: ValueSchema.String;
-}>, TreeNodeSchema<"com.fluidframework.leaf.null", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.null", {
 leafValue: ValueSchema.Null;
 }>]>;
 };
-}>, TreeNodeSchema<"com.fluidframework.leaf.number", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.number", {
 leafValue: ValueSchema.Number;
-}>, TreeNodeSchema<"com.fluidframework.leaf.boolean", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.boolean", {
 leafValue: ValueSchema.Boolean;
-}>, TreeNodeSchema<"com.fluidframework.leaf.string", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.string", {
 leafValue: ValueSchema.String;
-}>, TreeNodeSchema<"com.fluidframework.leaf.null", {
+}>, TreeNodeSchema_2<"com.fluidframework.leaf.null", {
 leafValue: ValueSchema.Null;
 }>]>;
 }>;
 
 // @alpha (undocumented)
-export const jsonSchema: SchemaLibrary;
+export const jsonSchema: SchemaLibrary_2;
 
 // @alpha
 export interface JsonValidator {
@@ -1001,40 +1014,40 @@ export interface Leaf<in out TSchema extends LeafSchema> extends TreeNode {
 
 // @alpha
 export const leaf: {
-    number: TreeNodeSchema<"com.fluidframework.leaf.number", {
+    number: TreeNodeSchema_3<"com.fluidframework.leaf.number", {
     leafValue: ValueSchema.Number;
     }>;
-    boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", {
+    boolean: TreeNodeSchema_3<"com.fluidframework.leaf.boolean", {
     leafValue: ValueSchema.Boolean;
     }>;
-    string: TreeNodeSchema<"com.fluidframework.leaf.string", {
+    string: TreeNodeSchema_3<"com.fluidframework.leaf.string", {
     leafValue: ValueSchema.String;
     }>;
-    handle: TreeNodeSchema<"com.fluidframework.leaf.handle", {
+    handle: TreeNodeSchema_3<"com.fluidframework.leaf.handle", {
     leafValue: ValueSchema.FluidHandle;
     }>;
-    null: TreeNodeSchema<"com.fluidframework.leaf.null", {
+    null: TreeNodeSchema_3<"com.fluidframework.leaf.null", {
     leafValue: ValueSchema.Null;
     }>;
-    primitives: readonly [TreeNodeSchema<"com.fluidframework.leaf.number", {
+    primitives: readonly [TreeNodeSchema_3<"com.fluidframework.leaf.number", {
     leafValue: ValueSchema.Number;
-    }>, TreeNodeSchema<"com.fluidframework.leaf.boolean", {
+    }>, TreeNodeSchema_3<"com.fluidframework.leaf.boolean", {
     leafValue: ValueSchema.Boolean;
-    }>, TreeNodeSchema<"com.fluidframework.leaf.string", {
+    }>, TreeNodeSchema_3<"com.fluidframework.leaf.string", {
     leafValue: ValueSchema.String;
     }>];
-    all: readonly [TreeNodeSchema<"com.fluidframework.leaf.handle", {
+    all: readonly [TreeNodeSchema_3<"com.fluidframework.leaf.handle", {
     leafValue: ValueSchema.FluidHandle;
-    }>, TreeNodeSchema<"com.fluidframework.leaf.null", {
+    }>, TreeNodeSchema_3<"com.fluidframework.leaf.null", {
     leafValue: ValueSchema.Null;
-    }>, TreeNodeSchema<"com.fluidframework.leaf.number", {
+    }>, TreeNodeSchema_3<"com.fluidframework.leaf.number", {
     leafValue: ValueSchema.Number;
-    }>, TreeNodeSchema<"com.fluidframework.leaf.boolean", {
+    }>, TreeNodeSchema_3<"com.fluidframework.leaf.boolean", {
     leafValue: ValueSchema.Boolean;
-    }>, TreeNodeSchema<"com.fluidframework.leaf.string", {
+    }>, TreeNodeSchema_3<"com.fluidframework.leaf.string", {
     leafValue: ValueSchema.String;
     }>];
-    library: SchemaLibrary;
+    library: SchemaLibrary_3;
 };
 
 // @alpha (undocumented)
@@ -1047,7 +1060,7 @@ interface LeafSchemaSpecification {
 }
 
 // @alpha (undocumented)
-const library: SchemaLibrary;
+const library: SchemaLibrary_3;
 
 // @alpha
 export interface LocalNodeKey extends Opaque<Brand<SessionSpaceCompressedId, "Local Node Key">> {
@@ -1182,7 +1195,7 @@ interface NodeKeyField extends TreeField {
 
 // @alpha
 export const nodeKeyField: {
-    __n_id__: TreeFieldSchema<NodeKeyFieldKind, readonly [TreeNodeSchema<"com.fluidframework.nodeKey.NodeKey", {
+    __n_id__: TreeFieldSchema<NodeKeyFieldKind_2, readonly [TreeNodeSchema_2<"com.fluidframework.nodeKey.NodeKey", {
     leafValue: ValueSchema.String;
     }>]>;
 };
@@ -1203,7 +1216,7 @@ interface NodeKeys {
 }
 
 // @alpha
-export const nodeKeySchema: SchemaLibrary;
+export const nodeKeySchema: SchemaLibrary_2;
 
 // @alpha
 export type NoListenersCallback<E extends Events<E>> = (eventName: keyof Events<E>) => void;
@@ -1399,18 +1412,18 @@ export interface RangeUpPath<TUpPath extends UpPath = UpPath> extends FieldUpPat
 export function recordDependency(dependent: ObservingDependent | undefined, dependee: Dependee): void;
 
 // @alpha (undocumented)
-const recursiveObject: FactoryObjectNodeSchemaRecursive<"Test Recursive Domain", "object", {
-readonly recursive: TreeFieldSchema<Optional, readonly [() => FactoryObjectNodeSchemaRecursive<"Test Recursive Domain", "object", any>]>;
-readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
-leafValue: import("..").ValueSchema.Number;
+const recursiveObject: FactoryObjectNodeSchemaRecursive_2<"Test Recursive Domain", "object", {
+readonly recursive: TreeFieldSchema<Optional_3, readonly [() => FactoryObjectNodeSchemaRecursive_2<"Test Recursive Domain", "object", any>]>;
+readonly number: TreeNodeSchema_3<"com.fluidframework.leaf.number", {
+leafValue: ValueSchema_2.Number;
 }>;
 }>;
 
 // @alpha (undocumented)
-const recursiveObject2: FactoryObjectNodeSchema<"Test Recursive Domain", "object2", {
-readonly recursive: TreeFieldSchema<Optional, readonly [() => FactoryObjectNodeSchema<"Test Recursive Domain", "object2", any>]>;
-readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
-leafValue: import("..").ValueSchema.Number;
+const recursiveObject2: FactoryObjectNodeSchema_2<"Test Recursive Domain", "object2", {
+readonly recursive: TreeFieldSchema<Optional_3, readonly [() => FactoryObjectNodeSchema_2<"Test Recursive Domain", "object2", any>]>;
+readonly number: TreeNodeSchema_3<"com.fluidframework.leaf.number", {
+leafValue: ValueSchema_2.Number;
 }>;
 }>;
 
@@ -1502,12 +1515,12 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     constructor(options: SchemaBuilderOptions<TScope>);
     // (undocumented)
     readonly boolean: TreeNodeSchema<"com.fluidframework.leaf.boolean", {
-        leafValue: import("..").ValueSchema.Boolean;
+        leafValue: ValueSchema_2.Boolean;
     }>;
     fixRecursiveReference<T extends AllowedTypes>(...types: T): void;
     // (undocumented)
     readonly handle: TreeNodeSchema<"com.fluidframework.leaf.handle", {
-        leafValue: import("..").ValueSchema.FluidHandle;
+        leafValue: ValueSchema_2.FluidHandle;
     }>;
     list<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchema<`${TScope}.List<${string}>`, {
         objectNodeFields: {
@@ -1527,25 +1540,25 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     }>;
     // (undocumented)
     readonly null: TreeNodeSchema<"com.fluidframework.leaf.null", {
-        leafValue: import("..").ValueSchema.Null;
+        leafValue: ValueSchema_2.Null;
     }>;
     // (undocumented)
     readonly number: TreeNodeSchema<"com.fluidframework.leaf.number", {
-        leafValue: import("..").ValueSchema.Number;
+        leafValue: ValueSchema_2.Number;
     }>;
     // (undocumented)
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): FactoryObjectNodeSchema<TScope, Name, T>;
     // (undocumented)
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): FactoryObjectNodeSchemaRecursive<TScope, Name, T>;
-    static optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Optional, NormalizeAllowedTypes<T>>;
-    readonly optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Optional, NormalizeAllowedTypes<T>>;
+    static optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Optional_3, NormalizeAllowedTypes<T>>;
+    readonly optional: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Optional_3, NormalizeAllowedTypes<T>>;
     static required: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Required_2, NormalizeAllowedTypes<T>>;
     readonly required: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Required_2, NormalizeAllowedTypes<T>>;
-    static sequence: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Sequence_2, NormalizeAllowedTypes<T>>;
-    readonly sequence: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<Sequence_2, NormalizeAllowedTypes<T>>;
+    static sequence: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<SequenceFieldKind_2, NormalizeAllowedTypes<T>>;
+    readonly sequence: <const T extends ImplicitAllowedTypes>(allowedTypes: T) => TreeFieldSchema<SequenceFieldKind_2, NormalizeAllowedTypes<T>>;
     // (undocumented)
     readonly string: TreeNodeSchema<"com.fluidframework.leaf.string", {
-        leafValue: import("..").ValueSchema.String;
+        leafValue: ValueSchema_2.String;
     }>;
 }
 
@@ -1860,7 +1873,7 @@ export class TreeFieldSchema<out TKind extends FieldKind = FieldKind, const out 
     get allowedTypeSet(): AllowedTypeSet;
     static create<TKind extends FieldKind, const Types extends AllowedTypes>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
     static createUnsafe<TKind extends FieldKind, const Types>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
-    static readonly empty: TreeFieldSchema<Forbidden, readonly []>;
+    static readonly empty: TreeFieldSchema<Forbidden_2, readonly []>;
     equals(other: TreeFieldSchema): boolean;
     // (undocumented)
     readonly kind: TKind;

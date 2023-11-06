@@ -1,7 +1,7 @@
 {
-	"extends": "./tsconfig.json",
+	"extends": ["./tsconfig.json", "../../../common/build/build-common/tsconfig.esm.json"],
 	"compilerOptions": {
 		"outDir": "./lib",
-		"module": "esnext"
+		"types": ["mocha"]
 	}
 }
