@@ -111,7 +111,6 @@ export class SharedTreeShim implements IShim {
 	}
 
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
-		assert(this.services === undefined, 0x7ee /* Already connected */);
 		this.services = services;
 		const shimServices = {
 			objectStorage: this.services.objectStorage,

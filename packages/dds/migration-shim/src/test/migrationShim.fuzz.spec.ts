@@ -28,9 +28,9 @@ import {
 import {
 	AllowedUpdateType,
 	type ISharedTree,
-	type ISharedTreeView,
 	SchemaBuilder,
 	SharedTreeFactory,
+	type ISharedTreeView2,
 } from "@fluid-experimental/tree2";
 import { MigrationShimFactory } from "../migrationShimFactory.js";
 import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
@@ -91,8 +91,9 @@ const rootType = builder.object("abc", {
 	quantity: builder.number,
 });
 const schema = builder.intoSchema(rootType);
-function getView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+const rootFieldType = schema.rootFieldSchema;
+function getView(tree: ISharedTree): ISharedTreeView2<typeof rootFieldType> {
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
@@ -103,7 +104,7 @@ function getView(tree: ISharedTree): ISharedTreeView {
 
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
 	const quantity = getQuantity(legacyTree);
-	newTree.schematizeView({
+	newTree.schematize({
 		initialTree: {
 			quantity,
 		},
@@ -126,8 +127,8 @@ function assertShimsAreEquivalent(
 	if (attributesMatch(a.attributes, newTreeFactory.attributes)) {
 		const treeA = a.currentTree as ISharedTree;
 		const treeB = b.currentTree as ISharedTree;
-		const aVal = getView(treeA).root2(schema).quantity;
-		const bVal = getView(treeB).root2(schema).quantity;
+		const aVal = getView(treeA).root.quantity;
+		const bVal = getView(treeB).root.quantity;
 		assert.equal(aVal, bVal, `New: ${a.id} and ${b.id} differ: ${aVal} vs ${bVal}`);
 	} else {
 		assert(
@@ -139,6 +140,8 @@ function assertShimsAreEquivalent(
 
 		const aVal = hasRoot(treeA) ? getQuantity(treeA) : undefined;
 		const bVal = hasRoot(treeB) ? getQuantity(treeB) : undefined;
+		console.log(treeA);
+		console.log(treeB);
 		assert.equal(aVal, bVal, `Legacy: ${a.id} and ${b.id} differ: ${aVal} vs ${bVal}`);
 	}
 }
@@ -192,7 +195,7 @@ const reducer = combineReducers<Operation, State>({
 		assert(attributesMatch(dds.attributes, newTreeFactory.attributes));
 		const shim = dds as SharedTreeShim;
 		const tree = shim.currentTree;
-		const rootNode = getView(tree).root2(schema);
+		const rootNode = getView(tree).root;
 		rootNode.quantity = operation.quantity;
 	},
 });
@@ -260,7 +263,7 @@ describe("Shim fuzz tests", () => {
 		},
 		reconnectProbability: 0,
 		// Uncomment to replay a particular seed.
-		// replay: 0,
+		replay: 1,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results/shim") },
 	});
 

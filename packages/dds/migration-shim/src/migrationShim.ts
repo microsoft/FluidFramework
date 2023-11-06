@@ -224,10 +224,6 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	}
 
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
-		assert(
-			this.services === undefined && this.preMigrationDeltaConnection === undefined,
-			0x7e9 /* Already connected */,
-		);
 		this.services = services;
 		this.preMigrationDeltaConnection = new PreMigrationDeltaConnection(
 			this.services.deltaConnection,
