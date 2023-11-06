@@ -81,7 +81,12 @@ export {
 	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
-	isSkipMark,
+	deltaForRootInitialization,
+	deltaForSet,
+	emptyFieldChanges,
+	isEmptyFieldChanges,
+	makeDetachedNodeId,
+	offsetDetachId,
 	emptyDelta,
 	AnchorSlot,
 	AnchorNode,
@@ -131,11 +136,6 @@ export {
 	TreeStoredSchema,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
-	fieldSchema,
-	TreeSchemaBuilder,
-	emptyMap,
-	emptySet,
-	treeSchema,
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
@@ -146,6 +146,7 @@ export {
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
+	areEqualChangeAtomIds,
 	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,

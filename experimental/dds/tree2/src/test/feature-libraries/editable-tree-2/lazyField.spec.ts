@@ -76,7 +76,7 @@ class TestLazyField<TTypes extends AllowedTypes> extends LazyField<
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
-		builder.struct("empty", {});
+		builder.object("empty", {});
 		const schema = builder.intoSchema(SchemaBuilder.optional(Any));
 		const forest = forestWithContent({ schema, initialTree: {} });
 		const context = getReadonlyContext(forest, schema);
@@ -131,7 +131,7 @@ describe("LazyField", () => {
 		// #region Tree and schema initialization
 
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-		const rootSchema = SchemaBuilder.optional(builder.struct("struct", {}));
+		const rootSchema = SchemaBuilder.optional(builder.object("object", {}));
 		const schema = builder.intoSchema(rootSchema);
 
 		// Note: this tree initialization is strictly to enable construction of the lazy field.
@@ -190,7 +190,7 @@ describe("LazyField", () => {
 
 	it("parent", () => {
 		const builder = new SchemaBuilder({ scope: "test", libraries: [leafDomain.library] });
-		const struct = builder.struct("struct", {
+		const struct = builder.object("object", {
 			foo: SchemaBuilder.optional(leafDomain.primitives),
 		});
 		const rootSchema = SchemaBuilder.optional(struct);
@@ -239,8 +239,8 @@ describe("LazyOptionalField", () => {
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
-		it("at", () => {
-			assert.equal(field.at(0), 42);
+		it("atIndex", () => {
+			assert.equal(field.atIndex(0), 42);
 		});
 
 		it("boxedAt", () => {
@@ -274,9 +274,9 @@ describe("LazyOptionalField", () => {
 		});
 		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
-		it("at", () => {
+		it("atIndex", () => {
 			// Invalid to request the value if there isn't one.
-			assert.throws(() => field.at(0));
+			assert.throws(() => field.atIndex(0));
 		});
 
 		it("boxedAt", () => {
@@ -315,8 +315,8 @@ describe("LazyValueField", () => {
 
 	const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
 
-	it("at", () => {
-		assert.equal(field.at(0), initialTree);
+	it("atIndex", () => {
+		assert.equal(field.atIndex(0), initialTree);
 	});
 
 	it("boxedAt", () => {
@@ -355,11 +355,21 @@ describe("LazySequence", () => {
 
 	const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
 
+	it("atIndex", () => {
+		assert.equal(sequence.length, 2);
+		assert.equal(sequence.atIndex(0), 37);
+		assert.equal(sequence.atIndex(1), 42);
+		assert.throws(() => sequence.atIndex(2));
+	});
+
 	it("at", () => {
 		assert.equal(sequence.length, 2);
 		assert.equal(sequence.at(0), 37);
 		assert.equal(sequence.at(1), 42);
-		assert.throws(() => sequence.at(2));
+		assert.equal(sequence.at(-1), 42); // Negative index > -sequence.length
+		assert.equal(sequence.at(-2), 37); // Negative index > -sequence.length
+		assert.equal(sequence.at(2), undefined); // Positive index >= sequence.length
+		assert.equal(sequence.at(-3), undefined); // Negative index < -sequence.length
 	});
 
 	it("boxedAt", () => {

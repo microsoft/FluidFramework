@@ -20,6 +20,7 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 	ChangesetLocalId,
+	isEmptyFieldChanges,
 } from "../../core";
 import {
 	brand,
@@ -718,16 +719,18 @@ export class ModularChangeFamily
 		revision: RevisionTag | undefined,
 		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.Root {
-		const delta: Map<FieldKey, Delta.MarkList> = new Map();
+		const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
 		for (const [field, fieldChange] of change) {
 			const fieldRevision = fieldChange.revision ?? revision;
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				tagChange(fieldChange.change, fieldRevision),
-				(childChange): Delta.Modify =>
+				(childChange): Delta.FieldMap =>
 					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
 				idAllocator,
 			);
-			delta.set(field, deltaField);
+			if (!isEmptyFieldChanges(deltaField)) {
+				delta.set(field, deltaField);
+			}
 		}
 		return delta;
 	}
@@ -735,16 +738,12 @@ export class ModularChangeFamily
 	private deltaFromNodeChange(
 		{ change, revision }: TaggedChange<NodeChangeset>,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.Modify {
-		const modify: Mutable<Delta.Modify> = {
-			type: Delta.MarkType.Modify,
-		};
-
+	): Delta.FieldMap {
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+			return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 		}
-
-		return modify;
+		// TODO: update the API to allow undefined to be returned here
+		return new Map();
 	}
 
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
@@ -758,15 +757,23 @@ export class ModularChangeFamily
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number => {
+	const getIndex = (revision: RevisionTag): number | undefined => {
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
-		return index;
+		return index >= 0 ? index : undefined;
 	};
-	const getInfo = (revision: RevisionTag): RevisionInfo => {
-		return revInfos[getIndex(revision)];
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = getIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
 	};
-	return { getIndex, getInfo };
+
+	const getIntentions = (): RevisionTag[] => {
+		return revInfos.map((info) => info.rollbackOf ?? info.revision);
+	};
+
+	return { getIndex, tryGetInfo, getIntentions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
@@ -880,24 +887,20 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
 
-				let dependentEntry = getFirstFromCrossFieldMap(dependentsMap, revision, id, count);
-
 				const lastChangedId = (id as number) + count - 1;
-				while (dependentEntry !== undefined) {
-					crossFieldTable.invalidatedFields.add(dependentEntry.value);
-					const lastEntryId = dependentEntry.start + dependentEntry.length - 1;
-					const numChangedIdsAfterEntry = lastChangedId - lastEntryId;
-					if (numChangedIdsAfterEntry > 0) {
-						dependentEntry = getFirstFromCrossFieldMap(
-							dependentsMap,
-							revision,
-							brand(lastEntryId + 1),
-							numChangedIdsAfterEntry,
-						);
-					} else {
-						// We have found the last entry for the changed ID range.
-						break;
+				let firstId = id;
+				while (firstId <= lastChangedId) {
+					const dependentEntry = getFirstFromCrossFieldMap(
+						dependentsMap,
+						revision,
+						firstId,
+						lastChangedId - firstId + 1,
+					);
+					if (dependentEntry.value !== undefined) {
+						crossFieldTable.invalidatedFields.add(dependentEntry.value);
 					}
+
+					firstId = brand(firstId + dependentEntry.length);
 				}
 
 				if (

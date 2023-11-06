@@ -199,7 +199,7 @@ export function shapesFromSchema(
 	policy: FullSchemaPolicy,
 ): Map<TreeNodeSchemaIdentifier, ShapeInfo> {
 	const shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
-	for (const identifier of schema.treeSchema.keys()) {
+	for (const identifier of schema.nodeSchema.keys()) {
 		tryShapeFromSchema(schema, policy, identifier, shapes);
 	}
 	return shapes;
@@ -220,12 +220,12 @@ export function tryShapeFromSchema(
 	if (cached) {
 		return cached;
 	}
-	const treeSchema = schema.treeSchema.get(type) ?? fail("missing schema");
+	const treeSchema = schema.nodeSchema.get(type) ?? fail("missing schema");
 	if (treeSchema.mapFields !== undefined) {
 		return polymorphic;
 	}
 	const fieldsArray: FieldShape[] = [];
-	for (const [key, field] of treeSchema.structFields) {
+	for (const [key, field] of treeSchema.objectNodeFields) {
 		const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
 		if (fieldShape === undefined) {
 			return polymorphic;

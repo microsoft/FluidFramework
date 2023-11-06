@@ -4,49 +4,19 @@
  */
 
 import { Assume } from "../../../util";
-import { typeNameSymbol } from "../../contextuallyTyped";
-import { StructSchema, TreeNodeSchema } from "../../typed-schema";
+import { ObjectNodeSchema, TreeNodeSchema } from "../../typed-schema";
+import { createRawObjectProxy } from "./proxies";
 import { ProxyNode, SharedTreeObject } from "./types";
-
-const factoryContent = Symbol("Node content");
-interface HasFactoryContent<T> {
-	[factoryContent]: T;
-}
-
-/**
- * Returns the content stored on an object created by a {@link SharedTreeObjectFactory}.
- */
-export function getFactoryContent<TSchema extends StructSchema>(
-	x: SharedTreeObject<TSchema>,
-): ProxyNode<TSchema> | undefined {
-	return (x as Partial<HasFactoryContent<ProxyNode<TSchema>>>)[factoryContent];
-}
 
 /**
  * Adds a factory function (`create`) to the given schema so that it satisfies the {@link SharedTreeObjectFactory} interface.
  */
-export function addFactory<TSchema extends StructSchema>(
+export function addFactory<TSchema extends ObjectNodeSchema>(
 	schema: TSchema,
 ): FactoryTreeSchema<TSchema> {
-	const create = (content: ProxyNode<TSchema, "javaScript">): SharedTreeObject<TSchema> => {
-		const node = Object.create(null);
-		// Shallow copy the content and then add the type name symbol to it.
-		// The copy is necessary so that the input `content` object can be re-used as the contents of a different typed/named node in another `create` call.
-		const namedContent = { ...content, [typeNameSymbol]: schema.name };
-		Object.defineProperty(node, factoryContent, { value: namedContent });
-		for (const [key] of schema.structFields) {
-			Object.defineProperty(node, key, {
-				// TODO: `node` could be made fully readable by recursively constructing/returning objects, maps and lists and values here.
-				get: () => factoryObjectError(),
-				set: () => factoryObjectError(),
-				enumerable: true,
-			});
-		}
-		return node as SharedTreeObject<TSchema>;
-	};
-
 	return Object.defineProperty(schema, "create", {
-		value: create,
+		value: (content: ProxyNode<TSchema, "javaScript">): SharedTreeObject<TSchema> =>
+			createRawObjectProxy(schema, content),
 		configurable: true,
 		enumerable: true,
 	}) as FactoryTreeSchema<TSchema>;
@@ -65,8 +35,8 @@ export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, 
 	 * It may not be read, mutated or queried in any way.
 	 */
 	create(
-		content: ProxyNode<Assume<TSchema, StructSchema>, "javaScript">,
-	): SharedTreeObject<Assume<TSchema, StructSchema>>;
+		content: ProxyNode<Assume<TSchema, ObjectNodeSchema>, "javaScript">,
+	): SharedTreeObject<Assume<TSchema, ObjectNodeSchema>>;
 }
 
 /**
@@ -75,10 +45,3 @@ export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, 
  */
 export type FactoryTreeSchema<TSchema extends TreeNodeSchema<string, unknown>> = TSchema &
 	SharedTreeObjectFactory<TSchema>;
-
-function factoryObjectError(): never {
-	throw new Error(factoryObjectErrorMessage);
-}
-
-export const factoryObjectErrorMessage =
-	"Newly created node must be inserted into the tree before being queried";

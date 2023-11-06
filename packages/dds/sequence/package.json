@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.0.0-internal.7.2.0",
+	"version": "2.0.0-internal.7.3.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,7 +23,7 @@
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp' 'nyc'",
+		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -39,10 +39,10 @@
 		"test:coverage": "c8 npm test",
 		"test:memory": "mocha --config src/test/memory/.mocharc.js",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.js",
-		"test:mocha": "mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.js\" -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:newsnapfiles": "node dist/test/createSnapshotFiles.js",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore 'dist/test/memory/**/*' --recursive 'dist/test/**/*.fuzz.spec.js' -r @fluidframework/mocha-test-setup",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=true mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.fuzz.spec.js\" -r @fluidframework/mocha-test-setup",
 		"testfarm": "node dist/test/testFarm.js",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
@@ -85,12 +85,12 @@
 		"@fluid-internal/stochastic-test-utils": "workspace:~",
 		"@fluid-internal/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "0.26.0-203096",
-		"@fluidframework/build-common": "^2.0.2",
-		"@fluidframework/build-tools": "0.26.0-203096",
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^3.0.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.7.1.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.0.0-internal.7.2.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/diff": "^3.5.1",
@@ -98,7 +98,6 @@
 		"@types/node": "^16.18.38",
 		"@types/random-js": "^1.0.31",
 		"c8": "^7.7.1",
-		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
 		"eslint": "~8.50.0",
@@ -120,10 +119,6 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"ClassDeclaration_SharedString": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {}
 	}
 }

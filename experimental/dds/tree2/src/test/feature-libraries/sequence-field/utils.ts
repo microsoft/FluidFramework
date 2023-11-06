@@ -5,8 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	MemoizedIdRangeAllocator,
 	RevisionInfo,
+	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	SequenceField as SF,
 } from "../../../feature-libraries";
@@ -19,7 +19,11 @@ import {
 	tagChange,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { assertMarkListEqual, deepFreeze, defaultRevisionMetadataFromChanges } from "../../utils";
+import {
+	assertFieldChangesEqual,
+	deepFreeze,
+	defaultRevisionMetadataFromChanges,
+} from "../../utils";
 import { brand, fakeIdAllocator, IdAllocator, idAllocatorFromMaxId } from "../../../util";
 import { TestChangeset } from "./testEdits";
 
@@ -84,11 +88,17 @@ function composeI<T>(
 	return composed;
 }
 
-export function rebase(change: TestChangeset, base: TaggedChange<TestChangeset>): TestChangeset {
+export function rebase(
+	change: TestChangeset,
+	base: TaggedChange<TestChangeset>,
+	revisionMetadata?: RevisionMetadataSource,
+): TestChangeset {
 	deepFreeze(change);
 	deepFreeze(base);
 
-	const metadata = defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+	const metadata =
+		revisionMetadata ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
+
 	const moveEffects = SF.newCrossFieldTable();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
 	let rebasedChange = SF.rebase(
@@ -126,6 +136,14 @@ export function rebaseTagged(
 	return currChange;
 }
 
+export function rebaseOverComposition(
+	change: TestChangeset,
+	base: TestChangeset,
+	metadata: RevisionMetadataSource,
+): TestChangeset {
+	return rebase(change, makeAnonChange(base), metadata);
+}
+
 function resetCrossFieldTable(table: SF.CrossFieldTable) {
 	table.isInvalidated = false;
 	table.srcQueries.clear();
@@ -160,16 +178,13 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 }
 
 export function checkDeltaEquality(actual: TestChangeset, expected: TestChangeset) {
-	assertMarkListEqual(toDelta(actual), toDelta(expected));
+	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.MarkList {
+export function toDelta(change: TestChangeset, revision?: RevisionTag): Delta.FieldChanges {
 	deepFreeze(change);
-	const allocator = MemoizedIdRangeAllocator.fromNextId();
-	return SF.sequenceFieldToDelta(
-		tagChange(change, revision),
-		(childChange) => TestChange.toDelta(tagChange(childChange, revision)),
-		allocator,
+	return SF.sequenceFieldToDelta(tagChange(change, revision), (childChange) =>
+		TestChange.toDelta(tagChange(childChange, revision)),
 	);
 }
 

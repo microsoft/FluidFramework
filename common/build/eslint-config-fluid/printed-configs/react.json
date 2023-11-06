@@ -1790,6 +1790,7 @@
             ".tsx",
             ".d.ts",
             ".js",
+            ".jsx",
             ".jsx"
         ],
         "import/external-module-folders": [
@@ -1800,11 +1801,22 @@
             "@typescript-eslint/parser": [
                 ".ts",
                 ".tsx",
-                ".d.ts"
+                ".d.ts",
+                ".tsx"
             ]
         },
         "import/resolver": {
             "node": {
+                "extensions": [
+                    ".ts",
+                    ".tsx",
+                    ".d.ts",
+                    ".js",
+                    ".jsx",
+                    ".jsx"
+                ]
+            },
+            "typescript": {
                 "extensions": [
                     ".ts",
                     ".tsx",

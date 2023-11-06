@@ -43,11 +43,11 @@ import {
 import { polygonTree, testData } from "./uniformChunkTestData";
 
 const builder = new SchemaBuilder({ scope: "chunkTree" });
-const empty = builder.struct("empty", {});
+const empty = builder.object("empty", {});
 const valueField = SchemaBuilder.required(leaf.number);
-const structValue = builder.struct("structValue", { x: valueField });
+const structValue = builder.object("structValue", { x: valueField });
 const optionalField = builder.optional(leaf.number);
-const structOptional = builder.struct("structOptional", { x: optionalField });
+const structOptional = builder.object("structOptional", { x: optionalField });
 const schema = builder.intoLibrary();
 
 function expectEqual(a: ShapeInfo, b: ShapeInfo): void {

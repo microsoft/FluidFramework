@@ -132,10 +132,11 @@ export type FluidSerializableReadOnly =
 	| { readonly [P in string]?: FluidSerializableReadOnly };
 
 // TODO: replace test in FluidSerializer.encodeValue with this.
-export function isFluidHandle(value: undefined | FluidSerializableReadOnly): value is IFluidHandle {
-	if (typeof value !== "object" || value === null) {
+export function isFluidHandle(value: unknown): value is IFluidHandle {
+	if (typeof value !== "object" || value === null || !("IFluidHandle" in value)) {
 		return false;
 	}
+
 	const handle = (value as Partial<IFluidHandle>).IFluidHandle;
 	// Regular Json compatible data can have fields named "IFluidHandle" (especially if field names come from user data).
 	// Separate this case from actual Fluid handles by checking for a circular reference: Json data can't have this circular reference so it is a safe way to detect IFluidHandles.
@@ -144,10 +145,10 @@ export function isFluidHandle(value: undefined | FluidSerializableReadOnly): val
 	// do an extra test.
 	// Since json compatible data shouldn't have methods, and IFluidHandle requires one, use that as a redundant check:
 	const getMember = (value as Partial<IFluidHandle>).get;
-	assert(
-		(typeof getMember === "function") === isHandle,
-		0x76e /* Fluid handle detection via get method should match detection via IFluidHandle field */,
-	);
+	if (typeof getMember !== "function") {
+		return false;
+	}
+
 	return isHandle;
 }
 
@@ -167,7 +168,7 @@ export function getPrimaryField(
 	schema: TreeNodeStoredSchema,
 ): { key: FieldKey; schema: TreeFieldStoredSchema } | undefined {
 	// TODO: have a better mechanism for this. See note on EmptyKey.
-	const field = schema.structFields.get(EmptyKey);
+	const field = schema.objectNodeFields.get(EmptyKey);
 	if (field === undefined) {
 		return undefined;
 	}
@@ -179,7 +180,7 @@ export function getFieldSchema(
 	field: FieldKey,
 	schema: TreeNodeStoredSchema,
 ): TreeFieldStoredSchema {
-	return schema.structFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
+	return schema.objectNodeFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
 }
 
 export function getFieldKind(fieldSchema: TreeFieldStoredSchema): FieldKind {
@@ -197,7 +198,7 @@ export function getAllowedTypes(
 	typeSet: TreeTypeSet,
 ): ReadonlySet<TreeNodeSchemaIdentifier> {
 	// TODO: Performance: avoid the `undefined` case being frequent, possibly with caching in the caller of `getPossibleChildTypes`.
-	return typeSet ?? new Set(schemaData.treeSchema.keys());
+	return typeSet ?? new Set(schemaData.nodeSchema.keys());
 }
 
 /**
@@ -394,8 +395,8 @@ function shallowCompatibilityTest(
 		0x6b2 /* undefined cannot be used as contextually typed data. Use ContextuallyTypedFieldData. */,
 	);
 	const schema =
-		schemaData.treeSchema.get(type) ?? fail("requested type does not exist in schema");
-	if (isPrimitiveValue(data) || data === null) {
+		schemaData.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
+	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
 		return allowsValue(schema.leafValue, data);
 	}
 	// TODO: once this is using view schema, replace with schemaIsLeaf
@@ -532,9 +533,9 @@ export function applyTypesFromContext(
 
 	const type = possibleTypes[0];
 	const schema =
-		context.schema.treeSchema.get(type) ?? fail("requested type does not exist in schema");
+		context.schema.nodeSchema.get(type) ?? fail("requested type does not exist in schema");
 
-	if (isPrimitiveValue(data) || data === null) {
+	if (isPrimitiveValue(data) || data === null || isFluidHandle(data)) {
 		assert(
 			allowsValue(schema.leafValue, data),
 			0x4d3 /* unsupported schema for provided primitive */,
@@ -552,6 +553,23 @@ export function applyTypesFromContext(
 			type,
 			fields: new Map(children.length > 0 ? [[primary.key, children]] : []),
 		};
+	} else if (data instanceof Map) {
+		const fields: Map<FieldKey, MapTree[]> = new Map();
+		for (const [key, value] of data) {
+			assert(!fields.has(key), "Keys should not be duplicated");
+			const childSchema = getFieldSchema(key, schema);
+			const children = applyFieldTypesFromContext(context, childSchema, value);
+
+			if (children.length > 0) {
+				fields.set(key, children);
+			}
+		}
+
+		return {
+			value: undefined,
+			type,
+			fields,
+		};
 	} else {
 		const fields: Map<FieldKey, MapTree[]> = new Map();
 		for (const key of fieldKeysFromData(data)) {
@@ -564,7 +582,7 @@ export function applyTypesFromContext(
 			}
 		}
 
-		for (const key of schema.structFields.keys()) {
+		for (const key of schema.objectNodeFields.keys()) {
 			if (data[key] === undefined) {
 				setFieldForKey(key, context, schema, fields);
 			}

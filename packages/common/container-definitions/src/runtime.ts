@@ -99,10 +99,10 @@ export interface IRuntime extends IDisposable {
 
 	/**
 	 * Get pending local state in a serializable format to be given back to a newly loaded container
-	 * @experimental
+	 * @alpha
 	 * {@link https://github.com/microsoft/FluidFramework/packages/tree/main/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	getPendingLocalState(props?: { notifyImminentClosure?: boolean }): unknown;
+	getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
 
 	/**
 	 * Notify runtime that container is moving to "Attaching" state
@@ -165,7 +165,7 @@ export interface IContainerContext {
 	) => number;
 	// TODO: use `unknown` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly submitSignalFn: (contents: any) => void;
+	readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
 	readonly disposeFn?: (error?: ICriticalContainerError) => void;
 	readonly closeFn: (error?: ICriticalContainerError) => void;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
@@ -249,4 +249,25 @@ export interface IRuntimeFactory extends IProvideRuntimeFactory {
 	 * @param existing - whether to instantiate for the first time or from an existing context
 	 */
 	instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
+}
+
+/**
+ * Defines list of properties expected for getPendingLocalState
+ * @alpha
+ */
+export interface IGetPendingLocalStateProps {
+	/**
+	 * Indicates the container will close after getting the pending state. Used internally
+	 * to wait for blobs to be attached to a DDS and collect generated ops before closing.
+	 */
+	readonly notifyImminentClosure: boolean;
+
+	/**
+	 * Abort signal to stop waiting for blobs to get attached to a DDS. When triggered,
+	 * only blobs attached will be collected in the pending state.
+	 * Intended to be used in the very rare scenario in which getLocalPendingState go stale due
+	 * to a blob failed to be referenced. Such a blob will be lost but the rest of the state will
+	 * be preserved and collected.
+	 */
+	readonly stopBlobAttachingSignal?: AbortSignal;
 }

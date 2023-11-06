@@ -7,7 +7,6 @@
 // Since "type" and "interface" type check slightly different, this file needs to create types when the linter recommends interfaces.
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 
-import { strict as assert } from "assert";
 import {
 	ApiMode,
 	AllowedTypesToTypedTrees,
@@ -17,11 +16,10 @@ import {
 	TypeArrayToTypedTreeArray,
 	TypedFields,
 	UnbrandedName,
-	downCast,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { AllowedUpdateType, TreeNodeSchemaIdentifier } from "../../../core";
+import { TreeNodeSchemaIdentifier } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
@@ -33,9 +31,7 @@ import {
 	TreeFieldSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
-	isEditableTree,
 } from "../../../feature-libraries";
-import { createSharedTreeView } from "../../../shared-tree";
 import { leaf, SchemaBuilder } from "../../../domains";
 import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
@@ -74,12 +70,12 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Simple object
 	{
-		const simpleObject = builder.struct("simple", {
+		const simpleObject = builder.object("simple", {
 			x: builder.required(numberSchema),
 		});
 	}
 
-	const ballSchema = builder.struct("ball", {
+	const ballSchema = builder.object("ball", {
 		// Test schema objects in as well as lazy functions
 		x: numberSchema,
 		y: [() => numberSchema],
@@ -87,7 +83,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	});
 
 	// Recursive case:
-	const boxSchema = builder.structRecursive("box", {
+	const boxSchema = builder.objectRecursive("box", {
 		children: TreeFieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
 	});
 
@@ -133,7 +129,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const b7: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1 };
 
 	{
-		type XField = (typeof ballSchema)["structFieldsObject"]["x"];
+		type XField = (typeof ballSchema)["objectNodeFieldsObject"]["x"];
 		type XMultiplicity = XField["kind"]["multiplicity"];
 		type XContent = TypedField<XField, ApiMode.Simple>;
 		type XChild = XField["allowedTypes"];
@@ -145,7 +141,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	{
 		// A concrete example for the "x" field:
-		type BallXFieldInfo = typeof ballSchema.structFieldsObject.x;
+		type BallXFieldInfo = typeof ballSchema.objectNodeFieldsObject.x;
 		type BallXFieldTypes = BallXFieldInfo["allowedTypes"];
 		type check_ = requireAssignableTo<BallXFieldTypes, readonly [typeof numberSchema]>;
 
@@ -219,7 +215,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		const bool = leaf.boolean;
 		const str = leaf.string;
 		const parentField = SchemaBuilder.required([str, bool]);
-		const parent = builder2.struct("parent", { child: parentField });
+		const parent = builder2.object("parent", { child: parentField });
 
 		type FlexBool =
 			| boolean
@@ -283,12 +279,12 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test simple recursive cases:
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwareRecursiveTest" });
-		const rec = builder2.structRecursive("rec", {
+		const rec = builder2.objectRecursive("rec", {
 			x: TreeFieldSchema.createUnsafe(optional, [() => rec]),
 		});
 
 		type RecObjectSchema = typeof rec;
-		type RecFieldSchema = typeof rec.structFieldsObject.x;
+		type RecFieldSchema = typeof rec.objectNodeFieldsObject.x;
 
 		{
 			// Recursive objects don't get this type checking automatically, so confirm it
@@ -358,7 +354,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 		// Check child handling
 		{
-			type ChildSchema = typeof boxSchema.structFieldsObject.children;
+			type ChildSchema = typeof boxSchema.objectNodeFieldsObject.children;
 			type ChildSchemaTypes = ChildSchema extends TreeFieldSchema<any, infer Types>
 				? Types
 				: never;
@@ -391,11 +387,11 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 					type BoxChildTypeFields = TypedFields<
 						ApiMode.Flexible,
-						typeof boxSchema.structFieldsObject
+						typeof boxSchema.objectNodeFieldsObject
 					>;
 
 					type BoxChildTypeField = TypedField<
-						typeof boxSchema.structFieldsObject.children,
+						typeof boxSchema.objectNodeFieldsObject.children,
 						ApiMode.Flexible
 					>;
 				}
@@ -455,32 +451,3 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		}
 	}
 }
-
-describe("SchemaAware Editing", () => {
-	it("Use a sequence field", () => {
-		const builder = new SchemaBuilder({ scope: "SchemaAware" });
-		const rootNodeSchema = builder.struct("Test", {
-			children: SchemaBuilder.sequence(leaf.string),
-		});
-		const schema = builder.intoSchema(
-			TreeFieldSchema.create(FieldKinds.required, [rootNodeSchema]),
-		);
-		const view = createSharedTreeView().schematize({
-			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: { children: [] },
-		});
-		const root = view.root;
-		assert(isEditableTree(root));
-		assert(downCast(rootNodeSchema, root));
-		const field = root.children;
-		assert.deepEqual([...field], []);
-
-		field.insertNodes(0, ["foo", "bar"]);
-		assert.deepEqual([...field], ["foo", "bar"]);
-		field.moveNodes(0, 1, 1);
-		assert.deepEqual([...field], ["bar", "foo"]);
-		field.remove();
-		assert.deepEqual([...field], []);
-	});
-});

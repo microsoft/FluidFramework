@@ -95,19 +95,19 @@ export class ViewSchema {
 		// and its impossible for an adapter to be correctly implemented if its output type is never
 		// (unless its input is also never).
 		for (const adapter of this.adapters?.tree ?? []) {
-			if (isNeverTree(this.policy, this.schema, this.schema.treeSchema.get(adapter.output))) {
+			if (isNeverTree(this.policy, this.schema, this.schema.nodeSchema.get(adapter.output))) {
 				fail("tree adapter for stored adapter.output should not be never");
 			}
 		}
 
 		const adapted = {
 			rootFieldSchema: this.adaptField(stored.rootFieldSchema),
-			treeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(),
+			nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(),
 		};
 
-		for (const [key, schema] of stored.treeSchema) {
+		for (const [key, schema] of stored.nodeSchema) {
 			const adapatedTree = this.adaptTree(schema);
-			adapted.treeSchema.set(key, adapatedTree);
+			adapted.nodeSchema.set(key, adapatedTree);
 		}
 
 		// TODO: subset these adapters to the ones that were needed/used.
@@ -133,17 +133,17 @@ export class ViewSchema {
 	}
 
 	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
-		const structFields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
-		for (const [key, schema] of original.structFields) {
+		const objectNodeFields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
+		for (const [key, schema] of original.objectNodeFields) {
 			// TODO: support missing field adapters.
-			structFields.set(key, this.adaptField(schema));
+			objectNodeFields.set(key, this.adaptField(schema));
 		}
 		// Would be nice to use ... here, but some implementations can use properties as well as have extra fields,
 		// so copying the data over manually is better.
 		return {
 			mapFields: original.mapFields,
 			leafValue: original.leafValue,
-			structFields,
+			objectNodeFields,
 		};
 	}
 }

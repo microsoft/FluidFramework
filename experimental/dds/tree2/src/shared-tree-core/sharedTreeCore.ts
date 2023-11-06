@@ -187,7 +187,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			0x350 /* Index summary element keys must be unique */,
 		);
 
-		this.messageCodec = makeMessageCodec(changeFamily.codecs.resolve(formatVersion).json);
+		this.messageCodec = makeMessageCodec(
+			changeFamily.codecs.resolve(formatVersion).json,
+			options,
+		);
 	}
 
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
@@ -257,7 +260,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit,
 			sessionId: this.editManager.localSessionId,
 		});
-		this.submitLocalMessage(message);
+		this.submitLocalMessage(this.serializer.encode(message, this.handle));
 	}
 
 	protected processCore(
@@ -265,7 +268,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const { commit, sessionId } = this.messageCodec.decode(message.contents);
+		const contents: unknown = this.serializer.decode(message.contents);
+		const { commit, sessionId } = this.messageCodec.decode(contents);
 
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },

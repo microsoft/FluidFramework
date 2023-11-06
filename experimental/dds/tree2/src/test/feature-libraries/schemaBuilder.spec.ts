@@ -35,14 +35,14 @@ describe("SchemaBuilderBase", () => {
 		it("recursive", () => {
 			const builder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
 
-			const recursiveStruct = builder.structRecursive("recursiveStruct", {
+			const recursiveStruct = builder.objectRecursive("recursiveStruct", {
 				foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 			});
 
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
@@ -57,7 +57,7 @@ describe("SchemaBuilderBase", () => {
 				typeof recursiveReference,
 				() => TreeNodeSchema
 			>;
-			const recursiveStruct = builder.struct("recursiveStruct2", {
+			const recursiveStruct = builder.object("recursiveStruct2", {
 				foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 			});
 
@@ -65,7 +65,7 @@ describe("SchemaBuilderBase", () => {
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
@@ -80,7 +80,7 @@ describe("SchemaBuilderBase", () => {
 
 			const recursiveReference = () => recursiveStruct;
 			fixRecursiveReference(recursiveReference);
-			const recursiveStruct = builder.struct("recursiveStruct2", {
+			const recursiveStruct = builder.object("recursiveStruct2", {
 				foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 			});
 
@@ -88,7 +88,7 @@ describe("SchemaBuilderBase", () => {
 			type _1 = requireTrue<
 				areSafelyAssignable<
 					typeof recursiveStruct,
-					ReturnType<(typeof recursiveStruct.structFieldsObject.foo.allowedTypes)[0]>
+					ReturnType<(typeof recursiveStruct.objectNodeFieldsObject.foo.allowedTypes)[0]>
 				>
 			>;
 		});
@@ -97,22 +97,22 @@ describe("SchemaBuilderBase", () => {
 	describe("intoSchema", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-			const empty = schemaBuilder.struct("empty", {});
+			const empty = schemaBuilder.object("empty", {});
 			const schema = schemaBuilder.intoSchema(SchemaBuilder.optional(empty));
 
-			assert.equal(schema.treeSchema.size, 1); // "empty"
-			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);
+			assert.equal(schema.nodeSchema.size, 1); // "empty"
+			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);
 		});
 	});
 
 	describe("intoLibrary", () => {
 		it("Simple", () => {
 			const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, { scope: "test" });
-			const empty = schemaBuilder.struct("empty", {});
+			const empty = schemaBuilder.object("empty", {});
 			const schema = schemaBuilder.intoLibrary();
 
-			assert.equal(schema.treeSchema.size, 1); // "empty"
-			assert.equal(schema.treeSchema.get(brand("test.empty")), empty);
+			assert.equal(schema.nodeSchema.size, 1); // "empty"
+			assert.equal(schema.nodeSchema.get(brand("test.empty")), empty);
 		});
 	});
 
@@ -120,7 +120,7 @@ describe("SchemaBuilderBase", () => {
 		assert.deepEqual(normalizeAllowedTypes(Any), [Any]);
 		assert.deepEqual(normalizeAllowedTypes([]), []);
 		assert.deepEqual(normalizeAllowedTypes([Any]), [Any]);
-		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
+		const treeSchema = TreeNodeSchema.create({ name: "test" }, "foo", {
 			leafValue: ValueSchema.String,
 		});
 		assert.deepEqual(normalizeAllowedTypes(treeSchema), [treeSchema]);
@@ -155,7 +155,7 @@ describe("SchemaBuilderBase", () => {
 			),
 		);
 
-		const treeSchema = new TreeNodeSchema({ name: "test" }, "foo", {
+		const treeSchema = TreeNodeSchema.create({ name: "test" }, "foo", {
 			leafValue: ValueSchema.String,
 		});
 

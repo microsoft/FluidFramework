@@ -16,8 +16,8 @@ export {
 	OptionalField,
 	RequiredField,
 	Sequence,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	AssignableFieldKinds,
 	TypedNode,
 	TypedNodeUnion,
@@ -37,15 +37,15 @@ export {
 	ProxyNodeUnion,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	ProxyRoot,
 	node,
+	NodeApi,
 	SharedTreeNode,
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
 	addFactory,
 } from "./proxies";
-export { createRawStruct, rawStructErrorMessage, nodeContent } from "./rawStruct";
+export { createRawObjectNode, rawObjectErrorMessage, extractRawNodeContent } from "./rawObjectNode";
 
 export {
 	visitBipartiteIterableTree,
@@ -55,7 +55,7 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation";
 
-export { getTreeContext, TreeContext } from "./context";
+export { getTreeContext, TreeContext, Context } from "./context";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalEditableTreeTypes from "./internal";

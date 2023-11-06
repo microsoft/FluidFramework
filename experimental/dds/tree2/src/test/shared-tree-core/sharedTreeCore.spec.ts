@@ -330,7 +330,7 @@ describe("SharedTreeCore", () => {
 		});
 
 		const b = new SchemaBuilder({ scope: "0x4a6 repro" });
-		const node = b.structRecursive("test node", {
+		const node = b.objectRecursive("test node", {
 			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
 		});
 		const schema = b.intoSchema(b.optional(node));
@@ -345,16 +345,16 @@ describe("SharedTreeCore", () => {
 			factory.attributes,
 		);
 
-		const config: InitializeAndSchematizeConfiguration = {
+		const config = {
 			schema,
 			initialTree: undefined,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		};
+		} satisfies InitializeAndSchematizeConfiguration;
 
-		const view1 = tree1.schematizeView(config);
-		const view2 = tree2.schematizeView(config);
-		const editable1 = view1.editableTree2(schema);
-		const editable2 = view2.editableTree2(schema);
+		const view1 = tree1.schematize(config);
+		const view2 = tree2.schematize(config);
+		const editable1 = view1.editableTree;
+		const editable2 = view2.editableTree;
 
 		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
 		editable1.content = { [typeNameSymbol]: node.name, child: undefined };

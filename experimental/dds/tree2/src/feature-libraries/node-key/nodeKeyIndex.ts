@@ -5,19 +5,19 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
-import { Struct, TreeContext, TreeField, boxedIterator } from "../editable-tree-2";
+import { ObjectNode, TreeContext, TreeField, boxedIterator } from "../editable-tree-2";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 
 /**
  * The node key index records nodes with {@link LocalNodeKey}s and allows them to be looked up by key.
  */
-export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, Struct> {
+export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, ObjectNode> {
 	// TODO: The data structure that holds the nodes can likely be optimized to better support cloning
-	private readonly nodes: Map<LocalNodeKey, Struct>;
+	private readonly nodes: Map<LocalNodeKey, ObjectNode>;
 
 	public constructor(
 		public readonly fieldKey: FieldKey,
-		keys: Iterable<[LocalNodeKey, Struct]> = [],
+		keys: Iterable<[LocalNodeKey, ObjectNode]> = [],
 	) {
 		this.nodes = new Map(keys);
 	}
@@ -27,7 +27,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, Struct> {
 	 */
 	public static hasNodeKeyTreeSchema(schema: TreeStoredSchema): boolean {
 		// TODO: make TreeStoredSchema contain ViewSchema and compare by reference to nodeKeyTreeSchema.
-		const treeSchema = schema.treeSchema.get(nodeKeyTreeIdentifier);
+		const treeSchema = schema.nodeSchema.get(nodeKeyTreeIdentifier);
 		if (treeSchema === undefined) {
 			return false;
 		}
@@ -65,15 +65,15 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, Struct> {
 	// #region ReadonlyMap interface
 	public forEach(
 		callbackfn: (
-			value: Struct,
+			value: ObjectNode,
 			key: LocalNodeKey,
-			map: ReadonlyMap<LocalNodeKey, Struct>,
+			map: ReadonlyMap<LocalNodeKey, ObjectNode>,
 		) => void,
 		thisArg?: any,
 	): void {
 		return this.nodes.forEach(callbackfn, thisArg);
 	}
-	public get(key: LocalNodeKey): Struct | undefined {
+	public get(key: LocalNodeKey): ObjectNode | undefined {
 		return this.nodes.get(key);
 	}
 	public has(key: LocalNodeKey): boolean {
@@ -82,21 +82,21 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, Struct> {
 	public get size(): number {
 		return this.nodes.size;
 	}
-	public entries(): IterableIterator<[LocalNodeKey, Struct]> {
+	public entries(): IterableIterator<[LocalNodeKey, ObjectNode]> {
 		return this.nodes.entries();
 	}
 	public keys(): IterableIterator<LocalNodeKey> {
 		return this.nodes.keys();
 	}
-	public values(): IterableIterator<Struct> {
+	public values(): IterableIterator<ObjectNode> {
 		return this.nodes.values();
 	}
-	public [Symbol.iterator](): IterableIterator<[LocalNodeKey, Struct]> {
+	public [Symbol.iterator](): IterableIterator<[LocalNodeKey, ObjectNode]> {
 		return this.nodes[Symbol.iterator]();
 	}
 	// #endregion ReadonlyMap interface
 
-	private *findKeys(node: Struct): Iterable<[key: LocalNodeKey, node: Struct]> {
+	private *findKeys(node: ObjectNode): Iterable<[key: LocalNodeKey, node: ObjectNode]> {
 		const key = node.localNodeKey;
 		if (key !== undefined) {
 			yield [key, node];
@@ -106,7 +106,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, Struct> {
 		}
 	}
 
-	private *findKeysInField(f: TreeField): Iterable<[key: LocalNodeKey, node: Struct]> {
+	private *findKeysInField(f: TreeField): Iterable<[key: LocalNodeKey, node: ObjectNode]> {
 		for (const child of f[boxedIterator]()) {
 			yield* this.findKeys(child);
 		}

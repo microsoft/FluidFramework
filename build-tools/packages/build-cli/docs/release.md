@@ -242,12 +242,12 @@ Updates which .d.ts file is referenced by the `types` field in package.json. Thi
 
 ```
 USAGE
-  $ flub release setPackageTypesField --types <value> --checkFileExists [--json] [-v | --quiet] [--concurrency <value>] [--all |
+  $ flub release setPackageTypesField --types <value> [--json] [-v | --quiet] [--checkFileExists] [--concurrency <value>] [--all |
     --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all | --releaseGroupRoot
     client|server|azure|build-tools|gitrest|historian|all] [--private] [--scope <value> | --skipScope <value>]
 
 FLAGS
-  --[no-]checkFileExists  (required) Check if the file path exists
+  --[no-]checkFileExists  Check if the file path exists
   --concurrency=<value>   [default: 25] The number of tasks to execute concurrently.
   --types=<value>         (required) Which .d.ts types to include in the published package.
 

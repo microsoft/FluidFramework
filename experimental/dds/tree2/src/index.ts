@@ -40,7 +40,6 @@ export {
 	Delta,
 	rootFieldKey,
 	rootField,
-	fieldSchema,
 	ITreeCursor,
 	CursorLocationType,
 	ITreeCursorSynchronous,
@@ -104,9 +103,11 @@ export {
 	TransactionResult,
 	BrandedKey,
 	BrandedMapSubset,
-	RangeEntry,
+	RangeQueryResult,
 	Named,
 	oneFromSet,
+	disposeSymbol,
+	IDisposable,
 } from "./util";
 
 export {
@@ -128,9 +129,7 @@ export {
 	nodeKeyField,
 	nodeKeySchema,
 	leaf,
-	testRecursiveDomain,
 	SchemaBuilder,
-	FactoryStructSchema,
 } from "./domains";
 
 export {
@@ -253,8 +252,8 @@ export {
 	OptionalField,
 	RequiredField,
 	Sequence,
-	Struct,
-	StructTyped,
+	ObjectNode,
+	ObjectNodeTyped,
 	AssignableFieldKinds,
 	TreeContext,
 	TypedField,
@@ -266,7 +265,7 @@ export {
 	FieldNodeSchema,
 	LeafSchema,
 	MapSchema,
-	StructSchema,
+	ObjectNodeSchema,
 	CheckTypesOverlap,
 	SchemaBuilderBase,
 	ImplicitFieldSchema,
@@ -283,13 +282,16 @@ export {
 	ProxyNodeUnion,
 	SharedTreeMap,
 	SharedTreeObject,
-	is,
 	node,
+	NodeApi,
 	SharedTreeNode,
 	Typed,
+	TreeEvent,
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	treeSchemaFromStoredSchema,
+	encodeTreeSchema,
 } from "./feature-libraries";
 
 export {
@@ -309,6 +311,9 @@ export {
 	TypedTreeFactory,
 	TypedTreeOptions,
 	TypedTreeChannel,
+	SharedTreeContentSnapshot,
+	ISharedTreeView2,
+	TypedTreeView,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

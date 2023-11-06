@@ -129,15 +129,21 @@ export interface TreeFieldStoredSchema {
  * @remarks
  * This mainly show up in:
  * 1. The root default field for documents.
- * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
+ * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  *
  * @alpha
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
+/**
+ * A schema for empty fields (fields which must always be empty).
+ * There are multiple ways this could be encoded, but this is the most explicit.
+ */
 export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
+	// This kind requires the field to be empty.
 	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
-	types: undefined,
+	// This type set also forces the field to be empty not not allowing any types as all.
+	types: new Set(),
 };
 
 /**
@@ -152,10 +158,10 @@ export interface TreeNodeStoredSchema {
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
 	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
-	readonly structFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+	readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
 
 	/**
-	 * Constraint for fields not mentioned in `structFields`.
+	 * Constraint for fields not mentioned in `objectNodeFields`.
 	 * If undefined, all such fields must be empty.
 	 *
 	 * Allows using using the fields as a map, with the keys being
@@ -209,5 +215,5 @@ export interface StoredSchemaCollection {
 	/**
 	 * {@inheritdoc StoredSchemaCollection}
 	 */
-	readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }

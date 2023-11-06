@@ -21,28 +21,44 @@ import {
 	ImplicitFieldSchema,
 	Required,
 	addFactory,
-	StructSchema,
+	ObjectNodeSchema,
 	FactoryTreeSchema,
+	Unenforced,
+	AllowedTypes,
 } from "../feature-libraries";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
 
 /**
- * A struct tree schema that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
+ * A {@link ObjectNodeSchema} that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
  * @privateRemarks
- * This type exists because TS is not able to correlate the two places where it is used if the body of this type is inlined.
+ * This type exists because TypeScript is not able to correlate the two places where it is used if the body of this type is inlined.
  * @alpha
  */
-export type FactoryStructSchema<
+export type FactoryObjectNodeSchema<
 	TScope extends string,
-	TName extends string | number,
-	Name extends TName,
+	Name extends number | string,
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = FactoryTreeSchema<
 	TreeNodeSchema<
 		`${TScope}.${Name}`,
-		{ structFields: { [key in keyof T]: NormalizeField<T[key], Required> } }
+		{ objectNodeFields: { [key in keyof T]: NormalizeField<T[key], Required> } }
 	>
 >;
+
+/**
+ * Same as `FactoryObjectNodeSchema` but with less type safety and works for recursive objects.
+ * Reduced type safety is a side effect of a workaround for a TypeScript limitation.
+ *
+ * See {@link Unenforced} for details.
+ *
+ * TODO: Make this work with ImplicitFieldSchema.
+ * @alpha
+ */
+export type FactoryObjectNodeSchemaRecursive<
+	TScope extends string,
+	Name extends number | string,
+	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, { objectNodeFields: T }>>;
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -78,17 +94,26 @@ export class SchemaBuilder<
 		});
 	}
 
-	public override struct<
+	public override object<
 		const Name extends TName,
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
-	>(name: Name, t: T): FactoryStructSchema<TScope, TName, Name, T> {
-		const schema = super.struct(name, t);
-		return addFactory(schema as StructSchema) as unknown as FactoryStructSchema<
+	>(name: Name, t: T): FactoryObjectNodeSchema<TScope, Name, T> {
+		const schema = super.object(name, t);
+		return addFactory(schema as ObjectNodeSchema) as unknown as FactoryObjectNodeSchema<
 			TScope,
-			TName,
 			Name,
 			T
 		>;
+	}
+
+	public override objectRecursive<
+		const Name extends TName,
+		const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
+	>(name: Name, t: T): FactoryObjectNodeSchemaRecursive<TScope, Name, T> {
+		return this.object(
+			name,
+			t as unknown as RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
+		) as unknown as FactoryObjectNodeSchemaRecursive<TScope, Name, T>;
 	}
 
 	/**
@@ -113,7 +138,7 @@ export class SchemaBuilder<
 	): TreeNodeSchema<
 		`${TScope}.List<${string}>`,
 		{
-			structFields: {
+			objectNodeFields: {
 				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
@@ -130,7 +155,7 @@ export class SchemaBuilder<
 	): TreeNodeSchema<
 		`${TScope}.${Name}`,
 		{
-			structFields: {
+			objectNodeFields: {
 				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
@@ -142,7 +167,7 @@ export class SchemaBuilder<
 	): TreeNodeSchema<
 		`${TScope}.${string}`,
 		{
-			structFields: {
+			objectNodeFields: {
 				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
@@ -158,7 +183,7 @@ export class SchemaBuilder<
 			) as TreeNodeSchema<
 				`${TScope}.${string}`,
 				{
-					structFields: {
+					objectNodeFields: {
 						[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 					};
 				}
@@ -181,13 +206,13 @@ export class SchemaBuilder<
 	): TreeNodeSchema<
 		`${TScope}.${Name}`,
 		{
-			structFields: {
+			objectNodeFields: {
 				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
 			};
 		}
 	> {
-		const schema = new TreeNodeSchema(this, this.scoped(name as TName & Name), {
-			structFields: { [""]: this.sequence(allowedTypes) },
+		const schema = TreeNodeSchema.create(this, this.scoped(name as TName & Name), {
+			objectNodeFields: { [""]: this.sequence(allowedTypes) },
 		});
 		this.addNodeSchema(schema);
 		return schema;
@@ -345,6 +370,16 @@ export class SchemaBuilder<
 	 * {@link leaf.null}
 	 */
 	public readonly null = leaf.null;
+
+	/**
+	 * Function which can be used for its compile time side-effects to tweak the evaluation order of recursive types to make them compile.
+	 * @remarks
+	 * Some related information in https://github.com/microsoft/TypeScript/issues/55758.
+	 *
+	 * Also be aware that code which relies on this (or the "recursive" SchemaBuilder methods tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
+	 * The command `TypeScript: Restart TS Server` should fix it.
+	 */
+	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }
 
 /**
@@ -366,10 +401,10 @@ export function structuralName<const T extends string>(
 	} else if (allowedTypes instanceof TreeNodeSchema) {
 		return structuralName(collectionName, [allowedTypes]);
 	} else {
-		assert(Array.isArray(allowedTypes), "Types should be an array");
+		assert(Array.isArray(allowedTypes), 0x7c7 /* Types should be an array */);
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
-			assert(t instanceof TreeNodeSchema, "invalid type provided");
+			assert(t instanceof TreeNodeSchema, 0x7c8 /* invalid type provided */);
 			// TypeScript should know `t.name` is a string (from the extends constraint on TreeNodeSchema's name), but the linter objects.
 			// @ts-expect-error: Apparently TypeScript also fails to apply this constraint for some reason and is giving any:
 			type _check = requireFalse<isAny<typeof t.name>>;
@@ -379,7 +414,7 @@ export function structuralName<const T extends string>(
 			// Therefor introducing a variable to do the same thing as `satisfies string` but such that the linter can understand:
 			const name: string = t.name;
 			// Just incase the compiler and linter really are onto something and this might sometimes not be a string, validate it:
-			assert(typeof name === "string", "Name should be a string");
+			assert(typeof name === "string", 0x7c9 /* Name should be a string */);
 			return name;
 		});
 		// Ensure name is order independent
