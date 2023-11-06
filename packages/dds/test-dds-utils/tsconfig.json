@@ -4,7 +4,7 @@
 		"../../../common/build/build-common/tsconfig.cjs.json",
 	],
 	"include": ["src/**/*"],
-	"exclude": ["src/test/**/*"],
+	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
