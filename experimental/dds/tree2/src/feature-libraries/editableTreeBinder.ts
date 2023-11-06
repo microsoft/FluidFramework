@@ -21,7 +21,7 @@ import { TreeNode } from "./editable-tree-2";
 
 // TODO:
 // Tests for this file were removed along with the old editable-tree implementation in the commit that includes this note.
-// They were a bit heavily tied to the testing patterns specific to the old editable-tree and will need significant changes toi be restored.
+// They were a bit heavily tied to the testing patterns specific to the old editable-tree and will need significant changes to be restored.
 
 /**
  * Binder events reflecting atomic data operations
