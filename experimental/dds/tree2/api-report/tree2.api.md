@@ -1072,8 +1072,6 @@ export interface ISharedTreeBranchView extends ISharedTreeView {
 // @alpha
 export interface ISharedTreeView extends AnchorLocator {
     // @deprecated
-    readonly context: EditableTreeContext;
-    // @deprecated
     editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
     readonly editor: IDefaultEditBuilder;
     readonly events: ISubscribable<ViewEvents>;
@@ -1082,11 +1080,7 @@ export interface ISharedTreeView extends AnchorLocator {
     merge(view: ISharedTreeBranchView): void;
     merge(view: ISharedTreeBranchView, disposeView: boolean): void;
     rebase(view: ISharedTreeBranchView): void;
-    // @deprecated
-    get root(): UnwrappedEditableField;
     readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    // @deprecated
-    setContent(data: NewFieldContent): void;
     readonly storedSchema: StoredSchemaRepository;
     readonly transaction: ITransaction;
 }
@@ -1096,6 +1090,7 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema> extends 
     readonly branch: ISharedTreeView;
     readonly context: TreeContext;
     readonly editableTree: TypedField<TRoot>;
+    fork(): ISharedTreeView2<TRoot>;
 }
 
 // @alpha (undocumented)

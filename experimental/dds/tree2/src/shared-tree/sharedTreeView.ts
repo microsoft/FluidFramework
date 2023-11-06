@@ -83,37 +83,6 @@ export interface ViewEvents {
  */
 export interface ISharedTreeView extends AnchorLocator {
 	/**
-	 * Gets the root field of the tree.
-	 *
-	 * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
-	 *
-	 * Currently this editable tree's fields do not update on edits,
-	 * so holding onto this root object across edits will only work if it's an unwrapped node.
-	 * TODO: Fix this issue.
-	 *
-	 * Currently any access to this view of the tree may allocate cursors and thus require
-	 * `context.prepareForEdit()` before editing can occur.
-	 *
-	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
-	 */
-	// TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
-	get root(): UnwrappedEditableField;
-
-	/**
-	 * Sets the content of the root field of the tree.
-	 *
-	 * See {@link EditableTreeContext.unwrappedRoot} on how this works.
-	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
-	 */
-	setContent(data: NewFieldContent): void;
-
-	/**
-	 * Context for controlling the EditableTree-1 nodes.
-	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
-	 */
-	readonly context: EditableTreeContext;
-
-	/**
 	 * Read and Write access for schema stored in the document.
 	 *
 	 * These APIs are temporary and will be replaced with different abstractions (View Schema based) in a different place later.

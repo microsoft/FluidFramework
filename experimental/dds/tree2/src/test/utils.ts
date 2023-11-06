@@ -67,6 +67,7 @@ import {
 	TypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defailtNodeKeyFieldKey,
+	ContextuallyTypedNodeData,
 } from "../feature-libraries";
 import {
 	Delta,
@@ -664,11 +665,21 @@ export const stringSequenceRootSchema = new SchemaBuilder({
 	scope: "StringSequenceRoot",
 }).intoSchema(SchemaBuilder.sequence(leaf.string));
 
-export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
+export const numberSequenceRootSchema = new SchemaBuilder({
+	scope: "NumberSequenceRoot",
+}).intoSchema(SchemaBuilder.sequence(leaf.number));
+
+export const emptyJsonSequenceConfig = {
 	schema: jsonSequenceRootSchema,
 	allowedSchemaModifications: AllowedUpdateType.None,
 	initialTree: [],
-};
+} satisfies InitializeAndSchematizeConfiguration;
+
+export const emptyStringSequenceConfig = {
+	schema: stringSequenceRootSchema,
+	allowedSchemaModifications: AllowedUpdateType.None,
+	initialTree: [],
+} satisfies InitializeAndSchematizeConfiguration;
 
 /**
  * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
@@ -700,16 +711,26 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
 }
 
 /**
- * Helper function to insert a jsonString at a given index of the documents root field.
+ * Helper function to insert node at a given index.
+ *
+ * TODO: delete once the JSON editing API is ready for use.
  *
  * @param tree - The tree on which to perform the insert.
  * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted node.
+ * @param value - The value of the inserted nodes.
  */
-export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
-	field.insert(index, nodes);
+export function insert(
+	tree: ISharedTreeView,
+	index: number,
+	...values: ContextuallyTypedNodeData[]
+): void {
+	const fieldEditor = tree.editor.sequenceField({ field: rootFieldKey, parent: undefined });
+	const content = normalizeNewFieldContent(
+		{ schema: jsonSequenceRootSchema },
+		jsonSequenceRootSchema.rootFieldSchema,
+		values,
+	);
+	fieldEditor.insert(index, content);
 }
 
 export function remove(tree: ISharedTreeView, index: number, count: number): void {
