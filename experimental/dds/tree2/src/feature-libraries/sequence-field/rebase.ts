@@ -12,6 +12,7 @@ import {
 	CrossFieldTarget,
 	NodeExistenceState,
 	RevisionMetadataSource,
+	getIntention,
 } from "../modular-schema";
 import {
 	isDetach,
@@ -735,13 +736,23 @@ function handleLineage(
 	detachBlocks: Map<RevisionTag, IdRange[]>,
 	metadata: RevisionMetadataSource,
 ) {
-	for (const revision of metadata.getIntentions()) {
-		tryRemoveLineageEvents(cellId, revision);
-	}
+	tryRemoveLineageEvents(
+		cellId,
+		new Set(
+			metadata
+				.getRevisions()
+				.map((r) => getIntention(r, metadata) ?? fail("Intention should be defined")),
+		),
+	);
 
-	const revisionIndex = getRevisionIndex(metadata, cellId.revision);
+	// An undefined cell revision means this cell has never been filled or emptied.
+	// It is being created by the anonymous rebasing revision.
+	// This cell should get lineage from all revisions, so we treat it as older than all of them.
+	const revisionIndex =
+		cellId.revision === undefined ? -Infinity : getRevisionIndex(metadata, cellId.revision);
+
 	for (const [revision, detachBlock] of detachBlocks.entries()) {
-		if (revisionIndex < getKnownRevisionIndex(revision, metadata)) {
+		if (revisionIndex < getRevisionIndex(metadata, revision)) {
 			for (const entry of detachBlock) {
 				addLineageEntry(cellId, revision, entry.id, entry.count, entry.count);
 			}
@@ -749,12 +760,25 @@ function handleLineage(
 	}
 }
 
-function getRevisionIndex(
-	metadata: RevisionMetadataSource,
-	revision: RevisionTag | undefined,
-): number {
-	const index = revision !== undefined ? metadata.getIndex(revision) : undefined;
-	return index ?? -Infinity;
+function getRevisionIndex(metadata: RevisionMetadataSource, revision: RevisionTag): number {
+	const index = metadata.getIndex(revision);
+	if (index !== undefined) {
+		return index;
+	}
+
+	const revisions = metadata.getRevisions();
+	const rollbackIndex = revisions.findIndex(
+		(r) => metadata.tryGetInfo(r)?.rollbackOf === revision,
+	);
+
+	if (rollbackIndex >= 0) {
+		// `revision` is not in the metadata, but we've found a rollback of it,
+		// so `revision` must come after all changes in the metadata.
+		return Infinity;
+	}
+
+	// This revision is not in the changesets being handled and must be older than them.
+	return -Infinity;
 }
 
 function updateLineageState(
@@ -768,7 +792,7 @@ function updateLineageState(
 	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark, baseRevision);
 	const detachRevisionIndex = getDetachRevisionIndex(metadata, baseMark, baseRevision);
 	for (const revision of detachBlocks.keys()) {
-		const revisionIndex = getKnownRevisionIndex(revision, metadata);
+		const revisionIndex = getRevisionIndex(metadata, revision);
 		if (attachRevisionIndex <= revisionIndex && revisionIndex < detachRevisionIndex) {
 			detachBlocks.delete(revision);
 		}
@@ -792,16 +816,16 @@ function getAttachRevisionIndex(
 
 	if (markFillsCells(baseMark)) {
 		assert(isAttach(baseMark), "Only attach marks can fill cells");
-		return getKnownRevisionIndex(
-			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
+		return getRevisionIndex(
 			metadata,
+			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
 		);
 	}
 
 	if (isTransientEffect(baseMark)) {
-		return getKnownRevisionIndex(
-			baseMark.attach.revision ?? baseRevision ?? fail("Mark must have revision"),
+		return getRevisionIndex(
 			metadata,
+			baseMark.attach.revision ?? baseRevision ?? fail("Mark must have revision"),
 		);
 	}
 
@@ -819,16 +843,16 @@ function getDetachRevisionIndex(
 
 	if (markEmptiesCells(baseMark)) {
 		assert(isDetach(baseMark), "Only detach marks can empty cells");
-		return getKnownRevisionIndex(
-			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
+		return getRevisionIndex(
 			metadata,
+			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
 		);
 	}
 
 	if (isTransientEffect(baseMark)) {
-		return getKnownRevisionIndex(
-			baseMark.detach.revision ?? baseRevision ?? fail("Mark must have revision"),
+		return getRevisionIndex(
 			metadata,
+			baseMark.detach.revision ?? baseRevision ?? fail("Mark must have revision"),
 		);
 	}
 
@@ -842,7 +866,7 @@ function addLineageToRecipients(
 	count: number,
 	metadata: RevisionMetadataSource,
 ) {
-	const revisionIndex = getKnownRevisionIndex(revision, metadata);
+	const revisionIndex = getRevisionIndex(metadata, revision);
 	for (let i = cellBlocks.length - 1; i >= 0; i--) {
 		const entry = cellBlocks[i];
 		if (
@@ -857,7 +881,8 @@ function addLineageToRecipients(
 		// We only add lineage to cells which were detached before the lineage event occurred.
 		if (
 			entry.cellId !== undefined &&
-			revisionIndex > getRevisionIndex(metadata, entry.cellId.revision)
+			(entry.cellId.revision === undefined ||
+				revisionIndex > getRevisionIndex(metadata, entry.cellId.revision))
 		) {
 			addLineageEntry(entry.cellId, revision, id, count, 0);
 		}
@@ -898,23 +923,17 @@ function addLineageEntry(
 	lineageHolder.lineage.push({ revision, id, count, offset });
 }
 
-function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionToRemove: RevisionTag) {
+function tryRemoveLineageEvents(lineageHolder: HasLineage, revisionsToRemove: Set<RevisionTag>) {
 	if (lineageHolder.lineage === undefined) {
 		return;
 	}
 
 	lineageHolder.lineage = lineageHolder.lineage.filter(
-		(event) => event.revision !== revisionToRemove,
+		(event) => !revisionsToRemove.has(event.revision),
 	);
 	if (lineageHolder.lineage.length === 0) {
 		delete lineageHolder.lineage;
 	}
-}
-
-function getKnownRevisionIndex(revision: RevisionTag, metadata: RevisionMetadataSource): number {
-	const index = metadata.getIndex(revision);
-	assert(index !== undefined, "Unknown revision");
-	return index;
 }
 
 function addIdRange(lineageEntries: IdRange[], range: IdRange): void {

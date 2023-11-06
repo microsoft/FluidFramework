@@ -759,15 +759,7 @@ export function revisionMetadataSourceFromInfo(
 ): RevisionMetadataSource {
 	const getIndex = (revision: RevisionTag): number | undefined => {
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		if (index >= 0) {
-			return index;
-		}
-
-		const inverseIndex = revInfos.findIndex((revInfo) => revInfo.rollbackOf === revision);
-		if (inverseIndex >= 0) {
-			return revInfos.length - inverseIndex - 1;
-		}
-		return undefined;
+		return index >= 0 ? index : undefined;
 	};
 	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
 		if (revision === undefined) {
@@ -777,11 +769,11 @@ export function revisionMetadataSourceFromInfo(
 		return index === undefined ? undefined : revInfos[index];
 	};
 
-	const getIntentions = (): RevisionTag[] => {
-		return revInfos.map((info) => info.rollbackOf ?? info.revision);
+	const getRevisions = (): RevisionTag[] => {
+		return revInfos.map((info) => info.revision);
 	};
 
-	return { getIndex, tryGetInfo, getIntentions };
+	return { getIndex, tryGetInfo, getRevisions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
