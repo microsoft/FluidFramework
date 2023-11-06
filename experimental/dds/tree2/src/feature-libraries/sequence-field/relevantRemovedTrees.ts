@@ -48,7 +48,7 @@ function refersToRelevantRemovedTrees<TChild>(mark: Mark<TChild>): boolean {
 				// We currently don't reassign the ID for such a tree, so it isn't relevant.
 			}
 		}
-		if (mark.type !== "MoveIn" && !isNewAttach(mark) && mark.changes !== undefined) {
+		if (!isNewAttach(mark) && mark.changes !== undefined) {
 			// This removed tree is being edited.
 			// Note: there is a possibility that the child changes only affect a distant descendant
 			// which may have been removed from this (removed) subtree. In such a case, this tree is not truly
