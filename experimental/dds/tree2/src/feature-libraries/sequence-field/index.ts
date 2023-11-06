@@ -22,7 +22,6 @@ export {
 	ReturnFrom,
 	NoopMark,
 	LineageEvent,
-	HasReattachFields,
 	CellId,
 	HasMarkFields,
 	HasLineage,
@@ -61,3 +60,5 @@ export {
 	MoveEffect,
 	PairedMarkUpdate,
 } from "./moveEffectTable";
+
+export { relevantRemovedTrees } from "./relevantRemovedTrees";
