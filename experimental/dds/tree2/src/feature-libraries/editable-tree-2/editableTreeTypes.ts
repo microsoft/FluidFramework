@@ -75,7 +75,7 @@ export interface Tree<out TSchema = unknown> {
 }
 
 /**
- * Status of the tree that a particular node in {@link EditableTree} and {@link UntypedTree} belongs to.
+ * Status of the tree that a particular node in {@link Tree} belongs to.
  * @alpha
  */
 export enum TreeStatus {

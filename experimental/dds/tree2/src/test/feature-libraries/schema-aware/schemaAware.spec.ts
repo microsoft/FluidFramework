@@ -11,7 +11,6 @@ import {
 	ApiMode,
 	AllowedTypesToTypedTrees,
 	TypedNode,
-	EditableField,
 	TypedField,
 	TypeArrayToTypedTreeArray,
 	TypedFields,
@@ -26,14 +25,12 @@ import {
 	FieldKinds,
 	typeNameSymbol,
 	ContextuallyTypedNodeDataObject,
-	UntypedTreeCore,
 	TreeNodeSchema,
 	TreeFieldSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
 } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
-import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 // Test UnbrandedName
 {
@@ -165,12 +162,8 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test terminal cases:
 	{
 		type F = TypedNode<typeof numberSchema, ApiMode.Flexible>;
-		type E = TypedNode<typeof numberSchema>;
-		type Eu = TypedNode<typeof numberSchema, ApiMode.EditableUnwrapped>;
 		type S = TypedNode<typeof numberSchema, ApiMode.Simple>;
 		type _check1 = requireTrue<areSafelyAssignable<F, FlexNumber>>;
-		type _check2 = requireAssignableTo<E, UntypedTreeCore>;
-		type _check3 = requireTrue<areSafelyAssignable<Eu, number>>;
 		type _check4 = requireTrue<areSafelyAssignable<S, number>>;
 	}
 
@@ -181,7 +174,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		size: FlexNumber | undefined;
 	}
 
-	interface EditableBall extends UntypedTreeCore {
+	interface EditableBall {
 		[typeNameSymbol]: typeof ballSchema.name;
 		x: number;
 		y: number;
@@ -199,14 +192,9 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test non recursive cases:
 	{
 		type F = TypedNode<typeof ballSchema, ApiMode.Flexible>;
-		type E = TypedNode<typeof ballSchema>;
-		type Eu = TypedNode<typeof ballSchema, ApiMode.EditableUnwrapped>;
 		type S = TypedNode<typeof ballSchema, ApiMode.Simple>;
 		type _check1 = requireTrue<areSafelyAssignable<F, FlexBall>>;
-		type _check2 = requireAssignableTo<E, SimpleBall & UntypedTreeCore>;
-		type _check3 = requireAssignableTo<Eu, SimpleBall & UntypedTreeCore>;
 		type _check4 = requireTrue<areSafelyAssignable<S, SimpleBall>>;
-		type _check5 = requireTrue<areSafelyAssignable<Eu, E>>;
 	}
 
 	// Test polymorphic cases:
@@ -265,14 +253,9 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 		{
 			type F = TypedNode<typeof parent, ApiMode.Flexible>;
-			type E = TypedNode<typeof parent>;
-			type Eu = TypedNode<typeof parent, ApiMode.EditableUnwrapped>;
 			type S = TypedNode<typeof parent, ApiMode.Simple>;
 			type _check1 = requireTrue<areSafelyAssignable<F, FlexParent>>;
-			type _check2 = requireAssignableTo<E, SimpleParent & UntypedTreeCore>;
-			type _check3 = requireAssignableTo<Eu, SimpleParent & UntypedTreeCore>;
 			type _check4 = requireTrue<areSafelyAssignable<S, SimpleParent>>;
-			type _check5 = requireTrue<areSafelyAssignable<Eu, E>>;
 		}
 	}
 
@@ -316,9 +299,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			};
 
 			type Flexible = TypedNode<typeof rec, ApiMode.Flexible>;
-			type Edit = TypedNode<typeof rec>;
 			type Simple = TypedNode<typeof rec, ApiMode.Simple>;
-			type Simple2 = SimpleNodeDataFor<typeof rec>;
 
 			// Check Simple's field type unit tests
 			{
@@ -336,15 +317,12 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			type _check1 = requireTrue<areSafelyAssignable<Flexible, ExpectedFlexible>>;
 			// type _check2 = requireTrue<areSafelyAssignable<XB, EditableParent>>;
 			type _check3 = requireTrue<areSafelyAssignable<Simple, ExpectedSimple>>;
-			type _check4 = requireTrue<areSafelyAssignable<Simple2, ExpectedSimple2>>;
 		}
 	}
 
 	// Test recursive cases:
 	{
 		type F = TypedNode<typeof boxSchema, ApiMode.Flexible>;
-		type E = TypedNode<typeof boxSchema>;
-		type Eu = TypedNode<typeof boxSchema, ApiMode.EditableUnwrapped>;
 		type S = TypedNode<typeof boxSchema, ApiMode.Simple>;
 
 		interface FlexBox {
@@ -407,11 +385,6 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		}
 
 		type _check1 = requireTrue<areSafelyAssignable<F, FlexBox>>;
-		interface NormalizedBox extends UntypedTreeCore {
-			[typeNameSymbol]: typeof boxSchema.name;
-			children: EditableField<EditableBall | NormalizedBox>;
-		}
-		type _check2 = requireAssignableTo<E, NormalizedBox>;
 
 		{
 			const child: F = {
