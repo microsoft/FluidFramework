@@ -128,7 +128,7 @@ function rebaseMarkList<TNodeChange>(
 	// Each mark with empty input cells in `currMarkList` should have a lineage event added for all adjacent detaches in the base changeset.
 	// At the time we process an attach we don't know about detaches of later nodes,
 	// so we record marks which should have their lineage updated if we encounter a detach.
-	const lineageRecipients: LineageRecipientList = [];
+	const rebasedCellBlocks: CellBlockList = [];
 
 	// For each revision, stores a list of IDs of detaches encountered in the base changeset which are adjacent to the current position.
 	const detachBlocks = new Map<RevisionTag, IdRange[]>();
@@ -157,7 +157,7 @@ function rebaseMarkList<TNodeChange>(
 			});
 
 			addLineageToRecipients(
-				lineageRecipients,
+				rebasedCellBlocks,
 				detachId.revision,
 				detachId.localId,
 				baseMark.count,
@@ -173,10 +173,17 @@ function rebaseMarkList<TNodeChange>(
 		}
 
 		if (areInputCellsEmpty(rebasedMark)) {
-			handleLineage(rebasedMark.cellId, lineageRecipients, detachBlocks, metadata);
+			handleLineage(rebasedMark.cellId, detachBlocks, metadata);
 		}
 		rebasedMarks.push(rebasedMark);
-		updateLineageState(lineageRecipients, detachBlocks, baseMark, baseRevision, metadata);
+		updateLineageState(
+			rebasedCellBlocks,
+			detachBlocks,
+			baseMark,
+			baseRevision,
+			rebasedMark,
+			metadata,
+		);
 	}
 
 	return mergeMarkList(rebasedMarks);
@@ -705,22 +712,16 @@ function getMovedMark<T>(
 	return undefined;
 }
 
-type LineageRecipientList = (LineageRecipient | LineageGate)[];
+type CellBlockList = CellBlock[];
 
-interface LineageRecipient {
-	readonly type: "Recipient";
-	readonly recipient: CellId;
-}
-
-interface LineageGate {
-	readonly type: "Gate";
-	readonly firstExcludedRevisionIndex: number;
-	readonly lastExcludedRevisionIndex: number;
+interface CellBlock {
+	readonly cellId: CellId | undefined;
+	readonly firstAttachedIndex: number;
+	readonly lastAttachedIndex: number;
 }
 
 function handleLineage(
 	cellId: CellId,
-	lineageRecipients: LineageRecipientList,
 	detachBlocks: Map<RevisionTag, IdRange[]>,
 	metadata: RevisionMetadataSource,
 ) {
@@ -736,8 +737,6 @@ function handleLineage(
 			}
 		}
 	}
-
-	lineageRecipients.push({ type: "Recipient", recipient: cellId });
 }
 
 function getRevisionIndex(
@@ -749,10 +748,11 @@ function getRevisionIndex(
 }
 
 function updateLineageState(
-	lineageRecipients: LineageRecipientList,
+	cellBlocks: CellBlockList,
 	detachBlocks: Map<RevisionTag, IdRange[]>,
 	baseMark: Mark<unknown>,
 	baseRevision: RevisionTag | undefined,
+	rebasedMark: Mark<unknown>,
 	metadata: RevisionMetadataSource,
 ) {
 	const attachRevisionIndex = getAttachRevisionIndex(metadata, baseMark, baseRevision);
@@ -764,13 +764,11 @@ function updateLineageState(
 		}
 	}
 
-	if (-Infinity < detachRevisionIndex || attachRevisionIndex < Infinity) {
-		lineageRecipients.push({
-			type: "Gate",
-			firstExcludedRevisionIndex: attachRevisionIndex,
-			lastExcludedRevisionIndex: detachRevisionIndex - 1,
-		});
-	}
+	cellBlocks.push({
+		cellId: rebasedMark.cellId,
+		firstAttachedIndex: attachRevisionIndex,
+		lastAttachedIndex: detachRevisionIndex - 1,
+	});
 }
 
 function getAttachRevisionIndex(
@@ -834,32 +832,27 @@ function getDetachRevisionIndex(
 }
 
 function addLineageToRecipients(
-	recipients: LineageRecipientList,
+	cellBlocks: CellBlockList,
 	revision: RevisionTag,
 	id: ChangesetLocalId,
 	count: number,
 	metadata: RevisionMetadataSource,
 ) {
 	const revisionIndex = getKnownRevisionIndex(revision, metadata);
-	for (let i = recipients.length - 1; i >= 0; i--) {
-		const entry = recipients[i];
-		const type = entry.type;
-		switch (type) {
-			case "Gate":
-				if (
-					entry.firstExcludedRevisionIndex <= revisionIndex &&
-					revisionIndex <= entry.lastExcludedRevisionIndex
-				) {
-					return;
-				}
-				break;
-			case "Recipient":
-				if (getRevisionIndex(metadata, entry.recipient.revision) < revisionIndex) {
-					addLineageEntry(entry.recipient, revision, id, count, 0);
-				}
-				break;
-			default:
-				unreachableCase(type);
+	for (let i = cellBlocks.length - 1; i >= 0; i--) {
+		const entry = cellBlocks[i];
+		if (entry.firstAttachedIndex <= revisionIndex && revisionIndex <= entry.lastAttachedIndex) {
+			// These cells were full in this revision, so cells earlier in the sequence
+			// do not need to know about this lineage event.
+			return;
+		}
+
+		// We only add lineage to cells which were detached before the lineage event occurred.
+		if (
+			entry.cellId !== undefined &&
+			revisionIndex > getRevisionIndex(metadata, entry.cellId.revision)
+		) {
+			addLineageEntry(entry.cellId, revision, id, count, 0);
 		}
 	}
 }
