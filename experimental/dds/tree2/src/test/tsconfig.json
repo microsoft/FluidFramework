@@ -1,21 +1,6 @@
 {
-	"extends": [
-		"../../../../../common/build/build-common/tsconfig.base.json",
-		"../../../../../common/build/build-common/tsconfig.test.json",
-	],
-	"include": ["./**/*"],
-	"references": [
-		{
-			"path": "../..",
-		},
-	],
+	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"compilerOptions": {
-		// "rootDir": "./",
-		// "outDir": "../../dist/test",
-		// "types": ["mocha", "node"],
-		// "lib": ["ES2019", "ES2018.Promise", "DOM", "DOM.Iterable"],
-		// "noUnusedLocals": false, // Need it so memory tests can declare local variables just for the sake of keeping
-		// things in memory
 		"lib": ["ES2019", "ES2018.Promise", "DOM", "DOM.Iterable"],
 		"noImplicitAny": true,
 		"noUnusedLocals": false,
@@ -23,4 +8,10 @@
 		"outDir": "../../dist/test",
 		"types": ["node", "mocha"],
 	},
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
 }
