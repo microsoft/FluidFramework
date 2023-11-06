@@ -248,10 +248,10 @@ export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
 }
 
 // @alpha @sealed
-abstract class BrandedType<ValueType, Name extends string> {
-    protected readonly _type_brand: Name;
+abstract class BrandedType<out ValueType, Name extends string> {
+    protected abstract brand(dummy: never): Name;
     // (undocumented)
-    protected _typeCheck?: Invariant<ValueType>;
+    protected _typeCheck?: Covariant<ValueType>;
 }
 
 // @alpha
