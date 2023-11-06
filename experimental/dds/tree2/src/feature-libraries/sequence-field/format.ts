@@ -316,7 +316,6 @@ export interface TransientEffect {
 }
 
 export const TransientEffect = Type.Composite([
-	HasRevisionTag,
 	Type.Object({
 		type: Type.Literal("Transient"),
 		attach: Attach,
