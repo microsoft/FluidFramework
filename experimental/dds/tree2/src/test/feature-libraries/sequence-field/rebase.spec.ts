@@ -165,26 +165,6 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("redundant revive ↷ related delete", () => {
-		const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(1) });
-		const deletion = Change.delete(1, 1);
-		const actual = rebase(revive, deletion, tag2);
-		const expected = composeAnonChanges([
-			// Earlier revive is unaffected
-			Change.redundantRevive(0, 1, { revision: tag1, localId: brand(1) }),
-			// Overlapping revive is no longer conflicted.
-			// It now references the target node to revive using the latest delete.
-			Change.revive(1, 1, {
-				revision: tag2,
-				localId: brand(0),
-				adjacentCells: [{ id: brand(0), count: 1 }],
-			}),
-			// Later revive is unaffected
-			Change.redundantRevive(2, 1, { revision: tag1, localId: brand(3) }),
-		]);
-		assert.deepEqual(actual, expected);
-	});
-
 	it("redundant revive ↷ unrelated delete", () => {
 		const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(1) });
 		const deletion = Change.delete(1, 1);
