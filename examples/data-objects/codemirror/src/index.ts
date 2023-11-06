@@ -43,7 +43,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 
 		const runtime: ContainerRuntime = await ContainerRuntime.loadRuntime({
 			context,
-			registryEntries: registry,
+			registryEntries,
 			existing,
 			containerScope: context.scope,
 			provideEntryPoint: async (
