@@ -57,7 +57,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				assert(outputId !== undefined, "Transient mark should have defined output cell ID");
 				const oldId = nodeIdFromChangeAtom(
 					isMoveDestination(mark.attach)
-						? getEndpoint(mark.attach, mark.revision ?? revision)
+						? getEndpoint(mark.attach, revision)
 						: mark.cellId,
 				);
 				if (!areEqualChangeAtomIds(mark.cellId, outputId)) {
@@ -93,7 +93,12 @@ export function sequenceFieldToDelta<TNodeChange>(
 				}
 				case "Delete": {
 					if (mark.cellId === undefined) {
-						deltaMark.detach = makeDetachedNodeId(mark.revision ?? revision, mark.id);
+						deltaMark.detach = nodeIdFromChangeAtom(
+							mark.detachIdOverride ?? {
+								revision: mark.revision ?? revision,
+								localId: mark.id,
+							},
+						);
 						local.push(deltaMark);
 					} else {
 						// Removal of already removed content is a no-op.

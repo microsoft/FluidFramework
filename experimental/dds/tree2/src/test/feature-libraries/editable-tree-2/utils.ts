@@ -13,11 +13,12 @@ import {
 	TreeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
+	SchemaAware,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
-import { AllowedUpdateType, IEditableForest } from "../../../core";
-import { ISharedTree, ISharedTreeView, TreeContent } from "../../../shared-tree";
+import { AllowedUpdateType, IEditableForest, ITreeCursorSynchronous } from "../../../core";
+import { ISharedTree, ISharedTreeView2, TreeContent } from "../../../shared-tree";
 import { TestTreeProviderLite, forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 import { SchemaBuilder } from "../../../domains";
@@ -50,11 +51,14 @@ export function createTree(): ISharedTree {
 	return tree;
 }
 
-export function createTreeView<TRoot extends TreeFieldSchema>(
+export function createTreeView2<TRoot extends TreeFieldSchema>(
 	schema: TreeSchema<TRoot>,
-	initialTree: any,
-): ISharedTreeView {
-	return createTree().schematizeView({
+	initialTree:
+		| ITreeCursorSynchronous
+		| readonly ITreeCursorSynchronous[]
+		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>,
+): ISharedTreeView2<TRoot> {
+	return createTree().schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree,
 		schema,
@@ -79,8 +83,11 @@ export function itWithRoot<TRoot extends TreeFieldSchema>(
 	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {
-		const view = createTreeView(schema, initialTree);
-		const root = view.root2(schema);
+		const view = createTreeView2(
+			schema,
+			initialTree as SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>,
+		);
+		const root = view.root;
 		fn(root);
 	});
 }
@@ -89,5 +96,14 @@ export function itWithRoot<TRoot extends TreeFieldSchema>(
  * Similar to JSON stringify, but preserves `undefined` and numbers numbers as-is at the root.
  */
 export function pretty(arg: unknown): number | undefined | string {
-	return arg === undefined ? "undefined" : typeof arg === "number" ? arg : JSON.stringify(arg);
+	if (arg === undefined) {
+		return "undefined";
+	}
+	if (typeof arg === "number") {
+		return arg;
+	}
+	if (typeof arg === "string") {
+		return `"${arg}"`;
+	}
+	return JSON.stringify(arg);
 }

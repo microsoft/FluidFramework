@@ -402,28 +402,10 @@ describe("Editing", () => {
 			expectJsonTree([tree, a, r, x], ["a", "b", "c", "r", "s", "t", "x", "y", "z"]);
 		});
 
-		// TODO: Enable once local branch repair data is supported
-		it.skip("intentional revive", () => {
-			const tree1 = makeTreeFromJson(["A", "B", "C"]);
-			const tree2 = tree1.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
-
-			remove(tree1, 1, 1);
-
-			remove(tree2, 0, 3);
-			undoStack.pop()?.revert();
-
-			tree1.merge(tree2);
-			tree2.rebaseOnto(tree1);
-
-			expectJsonTree([tree1, tree2], ["A", "B", "C"]);
-			unsubscribe();
-		});
-
 		it("intra-field move", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 
-			tree1.editor.sequenceField(rootField).move(0, 1, 1);
+			tree1.editor.sequenceField(rootField).move(0, 1, 2);
 
 			expectJsonTree(tree1, ["B", "A"]);
 		});
@@ -592,10 +574,10 @@ describe("Editing", () => {
 				parentIndex: 0,
 			};
 			const fooField = tree1.editor.sequenceField({ parent: listNode, field: brand("") });
-			fooField.move(0, 1, 1);
+			fooField.move(0, 1, 2);
 
 			const rootSequence = tree1.editor.sequenceField(rootField);
-			rootSequence.move(0, 1, 1);
+			rootSequence.move(0, 1, 2);
 
 			tree1.transaction.commit();
 
@@ -610,7 +592,7 @@ describe("Editing", () => {
 
 			const sequence = tree2.editor.sequenceField(rootField);
 			sequence.move(1, 1, 0);
-			sequence.move(2, 1, 3);
+			sequence.move(2, 1, 4);
 			tree2.transaction.commit();
 			tree.merge(tree2);
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
@@ -623,7 +605,7 @@ describe("Editing", () => {
 			tree2.transaction.start();
 
 			const sequence = tree2.editor.sequenceField(rootField);
-			sequence.move(0, 1, 1);
+			sequence.move(0, 1, 2);
 			sequence.move(3, 1, 2);
 			tree2.transaction.commit();
 			tree.merge(tree2);
@@ -1303,6 +1285,18 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
+		it("can move a node out from a field and into a field under a sibling", () => {
+			const rootNode2: UpPath = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 1,
+			};
+			const tree = makeTreeFromJson(["A", {}]);
+			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
+			const expectedState: JsonCompatible = [{ foo: "A" }];
+			expectJsonTree(tree, expectedState);
+		});
+
 		it.skip("can rebase a move over the deletion of the source parent", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.fork();
@@ -1511,7 +1505,7 @@ describe("Editing", () => {
 			unsubscribePathVisitor();
 		});
 
-		describe.skip("Exhaustive removal tests", () => {
+		describe("Exhaustive removal tests", () => {
 			// Toggle the constant below to run each scenario as a separate test.
 			// This is useful to debug a specific scenario but makes CI and the test browser slower.
 			// Note that if the numbers of nodes and peers are too high (more than 3 nodes and 3 peers),
@@ -1519,9 +1513,9 @@ describe("Editing", () => {
 			// Should be committed with the constant set to false.
 			const individualTests = false;
 			const nbNodes = 3;
-			const nbPeers = 3;
+			const nbPeers = 2;
 			const testRemoveRevive = true;
-			const testMoveReturn = true;
+			const testMoveReturn = false;
 			assert(testRemoveRevive || testMoveReturn, "No scenarios to run");
 
 			const [outerFixture, innerFixture] = individualTests
@@ -1690,7 +1684,7 @@ describe("Editing", () => {
 							default:
 								unreachableCase(step);
 						}
-						tree.merge(peer);
+						tree.merge(peer, false);
 						// We only let peers with a higher index learn of this edit.
 						// This breaks the symmetry between scenarios where the permutation of actions is the same
 						// except for which peer does which set of actions.

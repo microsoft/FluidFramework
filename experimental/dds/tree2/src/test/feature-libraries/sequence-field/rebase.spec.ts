@@ -149,91 +149,13 @@ describe("SequenceField - Rebase", () => {
 			// Earlier revive is unaffected
 			Change.redundantRevive(0, 1, { revision: tag1, localId: brand(1) }),
 			// Overlapping revive is no longer redundant
-			Change.revive(
-				1,
-				1,
-				{ revision: tag1, localId: brand(1) },
-				{
-					revision: tag2,
-					localId: brand(0),
-					adjacentCells: [{ id: brand(0), count: 1 }],
-				},
-			),
-			// Later revive is unaffected
-			Change.redundantRevive(1, 1, { revision: tag1, localId: brand(3) }),
-		]);
-		assert.deepEqual(actual, expected);
-	});
-
-	it("redundant revive ↷ unrelated delete", () => {
-		const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(1) });
-		const deletion = Change.delete(1, 1);
-		const actual = rebase(revive, deletion, tag3);
-		const expected = [
-			Mark.revive(1, undefined, { inverseOf: tag1 }),
-			Mark.revive(
-				1,
-				{ revision: tag3, localId: brand(0), adjacentCells: [{ id: brand(0), count: 1 }] },
-				{ inverseOf: tag1 },
-			),
-			Mark.revive(1, undefined, { inverseOf: tag1 }),
-		];
-		assert.deepEqual(actual, expected);
-	});
-
-	it("blocked revive ↷ revive", () => {
-		const revive1 = Change.blockedRevive(
-			0,
-			3,
-			{ revision: tag1, localId: brand(0) },
-			{ revision: tag2, localId: brand(1) },
-		);
-		const revive2 = Change.revive(0, 1, { revision: tag2, localId: brand(2) });
-		const actual = rebase(revive1, revive2, tag2);
-		const expected = [
-			Mark.revive(1, { revision: tag2, localId: brand(1) }, { inverseOf: tag1 }),
-			Mark.revive(1, undefined, { inverseOf: tag1 }),
-			Mark.revive(1, { revision: tag2, localId: brand(3) }, { inverseOf: tag1 }),
-		];
-		assert.deepEqual(actual, expected);
-	});
-
-	it("redundant intentional revive ↷ related delete", () => {
-		const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(1) }, true);
-		const deletion = Change.delete(1, 1);
-		const actual = rebase(revive, deletion, tag2);
-		const expected = composeAnonChanges([
-			// Earlier revive is unaffected
-			Change.redundantRevive(0, 1, { revision: tag1, localId: brand(1) }, true),
-			// Overlapping revive is no longer conflicted.
-			// It now references the target node to revive using the latest delete.
-			Change.intentionalRevive(1, 1, {
+			Change.revive(1, 1, {
 				revision: tag2,
 				localId: brand(0),
 				adjacentCells: [{ id: brand(0), count: 1 }],
 			}),
 			// Later revive is unaffected
-			Change.redundantRevive(2, 1, { revision: tag1, localId: brand(3) }, true),
-		]);
-		assert.deepEqual(actual, expected);
-	});
-
-	it("redundant intentional revive ↷ unrelated delete", () => {
-		const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(1) }, true);
-		const deletion = Change.delete(1, 1);
-		const actual = rebase(revive, deletion, tag3);
-		const expected = composeAnonChanges([
-			// Earlier revive is unaffected
-			Change.redundantRevive(0, 1, { revision: tag1, localId: brand(1) }, true),
-			// Overlapping revive is no longer conflicted.
-			// It now references the target node to revive using the latest delete.
-			Change.intentionalRevive(1, 1, {
-				revision: tag3,
-				localId: brand(0),
-				adjacentCells: [{ id: brand(0), count: 1 }],
-			}),
-			// Later revive gets linage
-			Change.redundantRevive(2, 1, { revision: tag1, localId: brand(3) }, true),
+			Change.redundantRevive(2, 1, { revision: tag1, localId: brand(3) }),
 		]);
 		assert.deepEqual(actual, expected);
 	});
@@ -511,14 +433,14 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("intentional revive ↷ same revive", () => {
-		const reviveA = Change.intentionalRevive(0, 3, { revision: tag1, localId: brand(1) });
+	it("revive ↷ same revive", () => {
+		const reviveA = Change.revive(0, 3, { revision: tag1, localId: brand(1) });
 		const reviveB = Change.revive(0, 1, { revision: tag1, localId: brand(2) });
 		const actual = rebase(reviveA, reviveB, tag2);
 		const expected = composeAnonChanges([
-			Change.intentionalRevive(0, 1, { revision: tag1, localId: brand(1) }),
-			Change.redundantRevive(1, 1, { revision: tag1, localId: brand(2) }, true),
-			Change.intentionalRevive(2, 1, { revision: tag1, localId: brand(3) }),
+			Change.revive(0, 1, { revision: tag1, localId: brand(1) }),
+			Change.redundantRevive(1, 1, { revision: tag1, localId: brand(2) }),
+			Change.revive(2, 1, { revision: tag1, localId: brand(3) }),
 		]);
 		assert.deepEqual(actual, expected);
 	});
@@ -579,7 +501,7 @@ describe("SequenceField - Rebase", () => {
 	it("modify ↷ move", () => {
 		const inner = TestChange.mint([0], 1);
 		const modify = Change.modify(0, inner);
-		const move = Change.move(0, 1, 3);
+		const move = Change.move(0, 1, 4);
 		const expected = Change.modify(3, inner);
 		const rebased = rebase(modify, move);
 		assert.deepEqual(rebased, expected);
@@ -595,16 +517,16 @@ describe("SequenceField - Rebase", () => {
 
 	it("move ↷ move", () => {
 		const moveA = Change.move(2, 2, 0);
-		const moveB = Change.move(2, 2, 3);
-		const expected = Change.move(0, 2, 3);
+		const moveB = Change.move(2, 2, 5);
+		const expected = Change.move(0, 2, 5);
 		const rebased = rebase(moveB, moveA);
 		assert.deepEqual(rebased, expected);
 	});
 
 	it("delete ↷ composite move", () => {
-		const move1 = Change.move(0, 1, 1, brand(0));
-		const move2 = Change.move(1, 1, 2, brand(1));
-		const move3 = Change.move(2, 1, 3, brand(2));
+		const move1 = Change.move(0, 1, 2, brand(0));
+		const move2 = Change.move(1, 1, 3, brand(1));
+		const move3 = Change.move(2, 1, 4, brand(2));
 		const move = composeAnonChanges([move1, move2, move3]);
 		const del = Change.delete(0, 1);
 		const rebased = rebase(del, move);
@@ -702,9 +624,9 @@ describe("SequenceField - Rebase", () => {
 			{ count: 1 },
 			Mark.moveIn(1, brand(1)),
 		];
-		const revive = Change.intentionalRevive(0, 1, cellId);
+		const revive = Change.revive(0, 1, cellId);
 		const rebased = rebase(revive, reviveAndMove, tag2);
-		const expected = Change.redundantRevive(1, 1, cellId, true);
+		const expected = Change.redundantRevive(1, 1, cellId);
 		assert.deepEqual(rebased, expected);
 	});
 
@@ -715,9 +637,9 @@ describe("SequenceField - Rebase", () => {
 			{ count: 1 },
 			Mark.transient(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
 		];
-		const revive = Change.intentionalRevive(0, 1, cellId);
+		const revive = Change.revive(0, 1, cellId);
 		const rebased = rebase(revive, reviveMoveDelete, tag2);
-		const expected = Change.intentionalRevive(1, 1, {
+		const expected = Change.revive(1, 1, {
 			revision: tag2,
 			localId: brand(2),
 			adjacentCells: [{ id: brand(2), count: 1 }],
@@ -766,7 +688,7 @@ describe("SequenceField - Rebase", () => {
 			Mark.moveIn(1, brand(1)),
 		];
 
-		const move = Change.move(0, 1, 1);
+		const move = Change.move(0, 1, 2);
 		const rebased = rebase(reviveAndMove, move);
 		const expected = [
 			{ count: 1 },

@@ -28,4 +28,6 @@ export {
 	SchemaConfiguration,
 } from "./schematizedTree";
 
-export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel } from "./typedTree";
+export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel, TypedTreeView } from "./typedTree";
+
+export { ISharedTreeView2, SharedTreeView2 } from "./sharedTreeView2";

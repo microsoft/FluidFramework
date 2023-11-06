@@ -28,7 +28,7 @@ import {
 import {
 	AllowedUpdateType,
 	type ISharedTree,
-	type ISharedTreeView,
+	type ISharedTreeView2,
 	SchemaBuilder,
 	SharedTreeFactory,
 	type ProxyNode,
@@ -64,8 +64,8 @@ const rootType = builder.object("abc", {
 	quantity: builder.number,
 });
 const schema = builder.intoSchema(rootType);
-function getNewTreeView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootFieldSchema> {
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
@@ -75,7 +75,7 @@ function getNewTreeView(tree: ISharedTree): ISharedTreeView {
 }
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
 	const quantity = getQuantity(legacyTree);
-	newTree.schematizeView({
+	newTree.schematize({
 		initialTree: {
 			quantity,
 		},
@@ -266,7 +266,7 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 
 		const newTree1 = shim1.currentTree as ISharedTree;
 		const view1 = getNewTreeView(newTree1);
-		const rootNode1: ProxyNode<typeof rootType> = view1.root2(schema);
+		const rootNode1: ProxyNode<typeof rootType> = view1.root;
 
 		// Summarize
 		const { summarizer } = await createSummarizerFromFactory(
@@ -286,7 +286,7 @@ describeNoCompat("MigrationShim", (getTestObjectProvider) => {
 		const shim3 = await testObj3.getShim();
 		const tree3 = shim3.currentTree as ISharedTree;
 		const view3 = getNewTreeView(tree3);
-		const rootNode3: ProxyNode<typeof rootType> = view3.root2(schema);
+		const rootNode3: ProxyNode<typeof rootType> = view3.root;
 
 		// Verify that the value loaded from the summary matches the one loaded from a different summary
 		await provider.ensureSynchronized();

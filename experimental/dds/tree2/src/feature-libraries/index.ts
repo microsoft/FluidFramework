@@ -138,6 +138,7 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
+	RemovedTreesFromChild,
 } from "./modular-schema";
 
 export {
@@ -281,6 +282,7 @@ export {
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
 	addFactory,
+	Context,
 } from "./editable-tree-2";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";

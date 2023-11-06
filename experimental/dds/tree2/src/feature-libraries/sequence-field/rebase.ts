@@ -463,7 +463,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		rebasedMark = rebaseMarkIgnoreChild(
 			rebasedMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
-			baseMark.revision ?? baseRevision,
+			baseRevision,
 			metadata,
 			moveEffects,
 			nodeExistenceState,
@@ -471,7 +471,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		rebasedMark = rebaseMarkIgnoreChild(
 			rebasedMark,
 			{ ...baseMark.detach, count: baseMark.count },
-			baseMark.revision ?? baseRevision,
+			baseRevision,
 			metadata,
 			moveEffects,
 			nodeExistenceState,
@@ -667,7 +667,7 @@ function getMovedMarkFromBaseMark<T>(
 	} else if (isTransientEffect(baseMark) && isMoveDestination(baseMark.attach)) {
 		return getMovedMark(
 			moveEffects,
-			baseMark.attach.revision ?? baseMark.revision ?? baseRevision,
+			baseMark.attach.revision ?? baseRevision,
 			baseMark.attach.id,
 			baseMark.count,
 		);
