@@ -166,7 +166,7 @@ function buildNavBar(documents) {
 				};
 			}
 
-			if ([ApiItemKind.Class, ApiItemKind.Interface, ApiItemKind.Enum].includes(kind)) {
+			if ([ApiItemKind.Class, ApiItemKind.Interface, ApiItemKind.Enum, ApiItemKind.Namespace].includes(kind)) {
 				APIMap[packageName] = APIMap[packageName] || {};
 				APIMap[packageName][kind] = APIMap[packageName][kind] || [];
 				APIMap[packageName][kind].push(displayName);
