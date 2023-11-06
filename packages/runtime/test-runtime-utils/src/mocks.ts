@@ -67,6 +67,8 @@ export class MockDeltaConnection implements IDeltaConnection {
 	) {}
 
 	public attach(handler: IDeltaHandler): void {
+		// This assert was added to mimic the behavior of the real IDeltaConnection.
+		assert(this.handler === undefined, "Delta handler already attached");
 		this.handler = handler;
 		handler.setConnectionState(this.connected);
 	}
@@ -418,7 +420,6 @@ export class MockContainerRuntimeFactory {
 		) as ISequencedDocumentMessage;
 
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
 		if (
 			this.runtimeOptions.flushMode === FlushMode.Immediate ||

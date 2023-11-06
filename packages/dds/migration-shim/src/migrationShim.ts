@@ -223,7 +223,16 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		this.newTree.connect(this.postMigrationServices);
 	}
 
+	/**
+	 * If we generate the shim services more than twice to connect, the migration delta handler will think we are
+	 * connecting the new tree delta handler when instead we are connecting the shim services to the legacy tree. This
+	 * will cause a race condition where some v1 ops are dropped during the creation of the LegacySharedTree.
+	 */
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
+		assert(
+			this.services === undefined && this.preMigrationDeltaConnection === undefined,
+			0x7e9 /* Already connected */,
+		);
 		this.services = services;
 		this.preMigrationDeltaConnection = new PreMigrationDeltaConnection(
 			this.services.deltaConnection,

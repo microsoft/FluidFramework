@@ -921,7 +921,6 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 		services,
 		factory.attributes,
 	)) as ReturnType<TChannelFactory["create"]>;
-	channel.connect(services);
 	const newClient: Client<TChannelFactory> = {
 		channel,
 		containerRuntime,

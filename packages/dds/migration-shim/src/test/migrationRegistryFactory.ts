@@ -10,11 +10,24 @@ import {
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { readAndParse } from "@fluidframework/driver-utils";
+import {
+	type TraitLabel,
+	type BuildNode,
+	type SharedTree as LegacySharedTree,
+	Change,
+	StablePlace,
+} from "@fluid-experimental/tree";
 import { type MigrationShimFactory } from "../migrationShimFactory";
 import { type SharedTreeShimFactory } from "../sharedTreeShimFactory";
 import { type MigrationShim } from "../migrationShim";
 import { type SharedTreeShim } from "../sharedTreeShim";
 const attributesBlobKey = ".attributes";
+
+/**
+ * Legacy Shared Tree Node Id
+ */
+export const someNodeId = "someNodeId" as TraitLabel;
+
 /**
  * This factory will pretend to act as a regular channelContext registry. This is for testing purposes only.
  */
@@ -52,6 +65,28 @@ export class MigrationRegistryFactory implements IChannelFactory {
 		return this.migrationFactory.load(runtime, id, services, channelAttributes);
 	}
 	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim | SharedTreeShim {
-		return this.migrationFactory.create(runtime, id);
+		const shim = this.migrationFactory.create(runtime, id);
+		const tree = shim.currentTree as LegacySharedTree;
+
+		// Create node if it does not exist
+		const quantityNode: BuildNode = {
+			definition: someNodeId,
+			traits: {
+				quantity: {
+					definition: "quantity",
+					payload: 0,
+				},
+			},
+		};
+		tree.applyEdit(
+			Change.insertTree(
+				quantityNode,
+				StablePlace.atStartOf({
+					parent: tree.currentView.root,
+					label: someNodeId,
+				}),
+			),
+		);
+		return shim;
 	}
 }

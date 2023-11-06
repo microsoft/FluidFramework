@@ -18,10 +18,8 @@ import {
 	takeAsync,
 } from "@fluid-internal/stochastic-test-utils";
 import {
-	type BuildNode,
 	Change,
 	SharedTree as LegacySharedTree,
-	StablePlace,
 	type NodeId,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
@@ -32,12 +30,14 @@ import {
 	SharedTreeFactory,
 	type ISharedTreeView2,
 } from "@fluid-experimental/tree2";
+// eslint-disable-next-line import/no-internal-modules
+import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import { MigrationShimFactory } from "../migrationShimFactory.js";
 import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
 import { type MigrationShim } from "../migrationShim.js";
 import { type SharedTreeShim } from "../sharedTreeShim.js";
 import { attributesMatch } from "../utils.js";
-import { MigrationRegistryFactory } from "./migrationRegistryFactory.js";
+import { MigrationRegistryFactory, someNodeId } from "./migrationRegistryFactory.js";
 
 interface Migrate {
 	type: "barrier";
@@ -57,9 +57,7 @@ type Operation = Migrate | V1Op | V2Op;
 
 type State = DDSFuzzTestState<MigrationRegistryFactory>;
 
-// LegacySharedTree Schema
-const someNodeId = "someNodeId" as TraitLabel;
-
+// LegacySharedTree Helper functions
 function hasRoot(tree: LegacySharedTree): boolean {
 	const rootNode = tree.currentView.getViewNode(tree.currentView.root);
 	const nodeId = rootNode.traits.get(someNodeId)?.[0];
@@ -103,6 +101,12 @@ function getView(tree: ISharedTree): ISharedTreeView2<typeof rootFieldType> {
 }
 
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
+	// Revert local edits - otherwise we will be eventually inconsistent
+	const edits = legacyTree.edits as EditLog;
+	const localEdits = [...edits.getLocalEdits()].reverse();
+	for (const edit of localEdits) {
+		legacyTree.revert(edit.id);
+	}
 	const quantity = getQuantity(legacyTree);
 	newTree.schematize({
 		initialTree: {
@@ -127,8 +131,10 @@ function assertShimsAreEquivalent(
 	if (attributesMatch(a.attributes, newTreeFactory.attributes)) {
 		const treeA = a.currentTree as ISharedTree;
 		const treeB = b.currentTree as ISharedTree;
-		const aVal = getView(treeA).root.quantity;
-		const bVal = getView(treeB).root.quantity;
+		const viewA = getView(treeA);
+		const viewB = getView(treeB);
+		const aVal = viewA.root.quantity;
+		const bVal = viewB.root.quantity;
 		assert.equal(aVal, bVal, `New: ${a.id} and ${b.id} differ: ${aVal} vs ${bVal}`);
 	} else {
 		assert(
@@ -140,8 +146,6 @@ function assertShimsAreEquivalent(
 
 		const aVal = hasRoot(treeA) ? getQuantity(treeA) : undefined;
 		const bVal = hasRoot(treeB) ? getQuantity(treeB) : undefined;
-		console.log(treeA);
-		console.log(treeB);
 		assert.equal(aVal, bVal, `Legacy: ${a.id} and ${b.id} differ: ${aVal} vs ${bVal}`);
 	}
 }
@@ -149,42 +153,17 @@ function assertShimsAreEquivalent(
 const reducer = combineReducers<Operation, State>({
 	barrier(state: State): void | State {
 		const client = state.client;
-		const dds = client.channel;
+		const dds = client.channel as MigrationShim;
 		assert(attributesMatch(dds.attributes, legacyTreeFactory.attributes));
-		const shim = dds as MigrationShim;
+		const shim = dds;
 		shim.submitMigrateOp();
 	},
 	v1(state: State, operation: V1Op): void | State {
 		const client = state.client;
 		const dds = client.channel;
 		assert(attributesMatch(dds.attributes, legacyTreeFactory.attributes));
-		const shim = dds as MigrationShim;
+		const shim = dds;
 		const tree = shim.currentTree as LegacySharedTree;
-
-		// Create node if it does not exist
-		const rootNode = tree.currentView.getViewNode(tree.currentView.root);
-		const nodeId = rootNode.traits.get(someNodeId)?.[0];
-		if (nodeId === undefined) {
-			const inventoryNode: BuildNode = {
-				definition: someNodeId,
-				traits: {
-					quantity: {
-						definition: "quantity",
-						payload: operation.quantity,
-					},
-				},
-			};
-			tree.applyEdit(
-				Change.insertTree(
-					inventoryNode,
-					StablePlace.atStartOf({
-						parent: tree.currentView.root,
-						label: someNodeId,
-					}),
-				),
-			);
-			return;
-		}
 
 		const quantityNodeId = getQuantityNodeId(tree);
 		tree.applyEdit(Change.setPayload(quantityNodeId, operation.quantity));
@@ -205,7 +184,7 @@ interface GeneratorOptions {
 }
 
 const defaultOptions: GeneratorOptions = {
-	migrateChance: 40,
+	migrateChance: 20,
 };
 
 function makeGenerator(optionsParam?: Partial<GeneratorOptions>): AsyncGenerator<Operation, State> {
@@ -262,8 +241,13 @@ describe("Shim fuzz tests", () => {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0,
+		validationStrategy: {
+			type: "partialSynchronization",
+			probability: 0.1,
+			clientProbability: 0.25,
+		},
 		// Uncomment to replay a particular seed.
-		replay: 1,
+		// replay: 0,
 		saveFailures: { directory: path.join(__dirname, "../../src/test/results/shim") },
 	});
 
