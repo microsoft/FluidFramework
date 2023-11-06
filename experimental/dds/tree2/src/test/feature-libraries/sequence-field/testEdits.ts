@@ -104,16 +104,8 @@ function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	lastDetach?: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1];
-
-	if (lastDetach !== undefined) {
-		mark.cellId = lastDetach;
-	}
-
-	return markList;
+	return SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
 }
 
 function createMoveChangeset(

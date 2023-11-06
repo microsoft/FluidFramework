@@ -149,18 +149,13 @@ describe("SequenceField - Rebase", () => {
 			// Earlier revive is unaffected
 			Change.redundantRevive(0, 1, { revision: tag1, localId: brand(1) }),
 			// Overlapping revive is no longer redundant
-			Change.revive(
-				1,
-				1,
-				{ revision: tag1, localId: brand(1) },
-				{
-					revision: tag2,
-					localId: brand(0),
-					adjacentCells: [{ id: brand(0), count: 1 }],
-				},
-			),
+			Change.revive(1, 1, {
+				revision: tag2,
+				localId: brand(0),
+				adjacentCells: [{ id: brand(0), count: 1 }],
+			}),
 			// Later revive is unaffected
-			Change.redundantRevive(1, 1, { revision: tag1, localId: brand(3) }),
+			Change.redundantRevive(2, 1, { revision: tag1, localId: brand(3) }),
 		]);
 		assert.deepEqual(actual, expected);
 	});
