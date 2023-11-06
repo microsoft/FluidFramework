@@ -19,6 +19,7 @@ import {
 	ITreeCursorSynchronous,
 	TreeStoredSchema,
 	TreeValue,
+	isCursor,
 } from "../core";
 // TODO:
 // This module currently is assuming use of default-field-kinds.
@@ -32,7 +33,6 @@ import {
 	allowedTypesToTypeSet,
 } from "./typed-schema";
 import { singleMapTreeCursor } from "./mapTreeCursor";
-import { areCursors, isPrimitive } from "./editable-tree";
 import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
 
 /**
@@ -46,6 +46,44 @@ import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./sche
  * For example guarantee which fields and nodes should be inlined, and that types will be required everywhere.
  * See {@link EditableTree} for an example of this.
  */
+
+/**
+ * Check if NewFieldContent is made of {@link ITreeCursor}s.
+ *
+ * Useful when APIs want to take in tree data in multiple formats, including cursors.
+ */
+export function areCursors(
+	data: NewFieldContent,
+): data is ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] {
+	if (isCursor(data)) {
+		return true;
+	}
+
+	if (Array.isArray(data) && data.length >= 0 && isCursor(data[0])) {
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * @returns true iff `schema` trees should default to being viewed as just their value when possible.
+ *
+ * @remarks
+ * TODO:
+ * This (like most things in this file) works with stored schema doing things that should be done with view schema.
+ * This just replicates the old editable-tree policy: this entire file should get replaced with the new factory based approach which has access to view schema to align this with how LeafSchema work.
+ * @alpha
+ */
+export function isPrimitive(schema: TreeNodeStoredSchema): boolean {
+	// TODO: use a separate `ITreeSchema` type, with metadata that determines if the type is primitive.
+	// Since the above is not done yet, use use a heuristic:
+	return (
+		schema.leafValue !== undefined &&
+		schema.objectNodeFields.size === 0 &&
+		schema.mapFields === undefined
+	);
+}
 
 /**
  * String which identifies this code.
