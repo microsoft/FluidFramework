@@ -10,14 +10,8 @@ import { BatchMessage, IBatch, OpGroupingManager } from "../../opLifecycle";
 
 describe("OpGroupingManager", () => {
 	const mockLogger = new MockLogger();
-	const createBatch = (
-		length: number,
-		messageSize: number,
-		hasReentrantOps?: boolean,
-	): IBatch => ({
-		...messagesToBatch(
-			new Array(length).fill(createMessage(generateStringOfSize(messageSize))),
-		),
+	const createBatch = (length: number, hasReentrantOps?: boolean): IBatch => ({
+		...messagesToBatch(new Array(length).fill(createMessage(generateStringOfSize(1)))),
 		hasReentrantOps,
 	});
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
@@ -47,7 +41,7 @@ describe("OpGroupingManager", () => {
 						reentrantBatchGroupingEnabled: true,
 					},
 					mockLogger,
-				).shouldGroup(createBatch(100, 1)),
+				).shouldGroup(createBatch(100)),
 				false,
 			);
 		});
@@ -61,7 +55,7 @@ describe("OpGroupingManager", () => {
 						reentrantBatchGroupingEnabled: true,
 					},
 					mockLogger,
-				).shouldGroup(createBatch(5, 1)),
+				).shouldGroup(createBatch(5)),
 				false,
 			);
 		});
@@ -75,7 +69,7 @@ describe("OpGroupingManager", () => {
 						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
-				).shouldGroup(createBatch(5, 1, true)),
+				).shouldGroup(createBatch(5, true)),
 				false,
 			);
 		});
@@ -89,7 +83,7 @@ describe("OpGroupingManager", () => {
 						reentrantBatchGroupingEnabled: true,
 					},
 					mockLogger,
-				).shouldGroup(createBatch(5, 1, true)),
+				).shouldGroup(createBatch(5, true)),
 				true,
 			);
 		});
@@ -103,7 +97,7 @@ describe("OpGroupingManager", () => {
 						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
-				).shouldGroup(createBatch(5, 1)),
+				).shouldGroup(createBatch(5)),
 				true,
 			);
 		});
