@@ -138,6 +138,7 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
+	RemovedTreesFromChild,
 } from "./modular-schema";
 
 export {

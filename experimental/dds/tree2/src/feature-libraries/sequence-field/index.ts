@@ -61,3 +61,5 @@ export {
 	MoveEffect,
 	PairedMarkUpdate,
 } from "./moveEffectTable";
+
+export { relevantRemovedTrees } from "./relevantRemovedTrees";

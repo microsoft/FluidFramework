@@ -435,4 +435,26 @@ describe("Generic FieldKind", () => {
 		assert.deepEqual(change1, [{ index: 1, nodeChange: nodeChange0To1 }]);
 		assert.deepEqual(change2, [{ index: 2, nodeChange: nodeChange0To1 }]);
 	});
+
+	it("relevantRemovedTrees", () => {
+		const actual = genericFieldKind.changeHandler.relevantRemovedTrees(
+			[
+				{
+					index: 0,
+					nodeChange: nodeChange0To1,
+				},
+				{
+					index: 2,
+					nodeChange: nodeChange1To2,
+				},
+			],
+			(child) =>
+				child === nodeChange0To1
+					? [{ minor: 42 }]
+					: child === nodeChange1To2
+					? [{ minor: 43 }]
+					: assert.fail("Unexpected child"),
+		);
+		assert.deepEqual(Array.from(actual), [{ minor: 42 }, { minor: 43 }]);
+	});
 });
