@@ -136,7 +136,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		const otherErrors: Node[] = [];
 
 		for (const sourceFile of project.getSourceFiles()) {
-			assert(this.assertionFunctions, "No assert functions are defined!");
+			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
 			for (const msg of getAssertMessageParams(sourceFile, this.assertionFunctions)) {
 				this.handleMessageNode(msg, templateErrors, otherErrors);
 			}
@@ -226,7 +226,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 	private tagAsserts(): void {
 		for (const s of newAssetFiles) {
 			s.refreshFromFileSystemSync();
-			assert(this.assertionFunctions, "No assert functions are defined!");
+			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
 			for (const msg of getAssertMessageParams(s, this.assertionFunctions)) {
 				if (isStringLiteral(msg)) {
 					const shortCode = ++maxShortCode;
