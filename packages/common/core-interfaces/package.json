@@ -13,12 +13,14 @@
 	"sideEffects": false,
 	"main": "dist/index.js",
 	"module": "lib/index.js",
-	"types": "dist/index.d.ts",
+	"types": "dist/core-interfaces-untrimmed.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build": "npm run build:compile",
@@ -53,5 +55,23 @@
 	},
 	"typeValidation": {
 		"broken": {}
+	},
+	"fluidBuild": {
+		"tasks": {
+			"api-extractor:esnext": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs"
+				]
+			},
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	}
 }
