@@ -22,7 +22,6 @@ import {
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
-	Tree,
 	TreeField,
 	TreeNode,
 	Skip,
@@ -59,7 +58,11 @@ import {
 	LazySequence,
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
+import {
+	TreeEntity,
+	boxedIterator,
+	visitIterableTree,
+} from "../../../feature-libraries/editable-tree-2";
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
@@ -549,7 +552,7 @@ function nodeToMapTree(node: TreeNode): MapTree {
 	return { fields, type: node.type, value: node.value };
 }
 
-function checkPropertyInvariants(root: Tree): void {
+function checkPropertyInvariants(root: TreeEntity): void {
 	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.

@@ -1407,19 +1407,6 @@ export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 export type NewFieldContent = ITreeCursorSynchronous | readonly ITreeCursorSynchronous[] | ContextuallyTypedFieldData;
 
 // @alpha
-export const node: NodeApi;
-
-// @alpha
-export interface NodeApi {
-    readonly is: <TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema) => value is ProxyNode<TSchema>;
-    readonly key: (node: SharedTreeNode) => string | number;
-    readonly on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => () => void;
-    readonly parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
-    readonly schema: (node: SharedTreeNode) => TreeNodeSchema;
-    readonly status: (node: SharedTreeNode) => TreeStatus;
-}
-
-// @alpha
 export interface NodeData {
     readonly type: TreeNodeSchemaIdentifier;
     value?: TreeValue;
@@ -2104,12 +2091,7 @@ export enum TransactionResult {
 }
 
 // @alpha
-export interface Tree<out TSchema = unknown> {
-    [boxedIterator](): IterableIterator<Tree>;
-    readonly context: TreeContext;
-    readonly schema: TSchema;
-    treeStatus(): TreeStatus;
-}
+export const Tree: TreeApi;
 
 // @alpha (undocumented)
 export interface TreeAdapter {
@@ -2117,6 +2099,16 @@ export interface TreeAdapter {
     readonly input: TreeNodeSchemaIdentifier;
     // (undocumented)
     readonly output: TreeNodeSchemaIdentifier;
+}
+
+// @alpha
+export interface TreeApi {
+    readonly is: <TSchema extends TreeNodeSchema>(value: unknown, schema: TSchema) => value is ProxyNode<TSchema>;
+    readonly key: (node: SharedTreeNode) => string | number;
+    readonly on: <K extends keyof EditableTreeEvents>(node: SharedTreeNode, eventName: K, listener: EditableTreeEvents[K]) => () => void;
+    readonly parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
+    readonly schema: (node: SharedTreeNode) => TreeNodeSchema;
+    readonly status: (node: SharedTreeNode) => TreeStatus;
 }
 
 // @alpha
@@ -2139,12 +2131,20 @@ export interface TreeDataContext {
 }
 
 // @alpha
+export interface TreeEntity<out TSchema = unknown> {
+    [boxedIterator](): IterableIterator<TreeEntity>;
+    readonly context: TreeContext;
+    readonly schema: TSchema;
+    treeStatus(): TreeStatus;
+}
+
+// @alpha
 export interface TreeEvent {
     readonly target: TreeNode;
 }
 
 // @alpha
-export interface TreeField extends Tree<TreeFieldSchema> {
+export interface TreeField extends TreeEntity<TreeFieldSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<TreeNode>;
     is<TSchema extends TreeFieldSchema>(schema: TSchema): this is TypedField<TSchema>;
@@ -2193,7 +2193,7 @@ export const enum TreeNavigationResult {
 }
 
 // @alpha
-export interface TreeNode extends Tree<TreeNodeSchema> {
+export interface TreeNode extends TreeEntity<TreeNodeSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<TreeField>;
     is<TSchema extends TreeNodeSchema>(schema: TSchema): this is TypedNode<TSchema>;

@@ -45,7 +45,7 @@ export const boxedIterator = Symbol();
  *
  * @alpha
  */
-export interface Tree<out TSchema = unknown> {
+export interface TreeEntity<out TSchema = unknown> {
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -71,7 +71,7 @@ export interface Tree<out TSchema = unknown> {
 	 * @remarks
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
-	[boxedIterator](): IterableIterator<Tree>;
+	[boxedIterator](): IterableIterator<TreeEntity>;
 }
 
 /**
@@ -113,7 +113,7 @@ export enum TreeStatus {
  *
  * @alpha
  */
-export interface TreeNode extends Tree<TreeNodeSchema> {
+export interface TreeNode extends TreeEntity<TreeNodeSchema> {
 	/**
 	 * Value stored on this node.
 	 */
@@ -153,7 +153,7 @@ export interface TreeNode extends Tree<TreeNodeSchema> {
 }
 
 /**
- * A collaboratively editable collection of nodes within a {@link Tree}.
+ * A collaboratively editable collection of nodes within a {@link TreeEntity}.
  *
  * Fields are inherently part of their parent, and thus cannot be moved.
  * Instead their content can be moved, deleted or created.
@@ -164,7 +164,7 @@ export interface TreeNode extends Tree<TreeNodeSchema> {
  * Fields are used wherever an editable collection of nodes is required.
  * This is required in two places:
  * 1. To hold the children of non-leaf {@link TreeNode}s.
- * 2. As the root of a {@link Tree}.
+ * 2. As the root of a {@link TreeEntity}.
  *
  * Down-casting (via {@link TreeField.is}) is required to access Schema-Aware APIs, including editing.
  * All content in the tree is accessible without down-casting, but if the schema is known,
@@ -172,7 +172,7 @@ export interface TreeNode extends Tree<TreeNodeSchema> {
  *
  * @alpha
  */
-export interface TreeField extends Tree<TreeFieldSchema> {
+export interface TreeField extends TreeEntity<TreeFieldSchema> {
 	/**
 	 * The `FieldKey` this field is under.
 	 * Defines what part of its parent this field makes up.
@@ -877,7 +877,7 @@ export type FixedSizeTypeArrayToTypedTree<T extends readonly TreeNodeSchema[]> =
 ][_InlineTrick];
 
 /**
- * Schema aware specialization of {@link Tree}.
+ * Schema aware specialization of {@link TreeEntity}.
  * @alpha
  */
 export type Typed<TSchema extends TreeFieldSchema | TreeNodeSchema> = TSchema extends TreeNodeSchema
