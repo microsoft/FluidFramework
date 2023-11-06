@@ -185,7 +185,6 @@ describe("Outbox", () => {
 		enableChunking?: boolean;
 		disablePartialFlush?: boolean;
 		chunkSizeInBytes?: number;
-		enableGroupedBatching?: boolean;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -205,10 +204,16 @@ describe("Outbox", () => {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
 				disablePartialFlush: params.disablePartialFlush ?? false,
-				enableGroupedBatching: params.enableGroupedBatching ?? false,
 			},
 			logger: mockLogger,
-			groupingManager: new OpGroupingManager(false),
+			groupingManager: new OpGroupingManager(
+				{
+					groupedBatchingEnabled: false,
+					opCountThreshold: Infinity,
+					reentrantBatchGroupingEnabled: false,
+				},
+				mockLogger,
+			),
 			getCurrentSequenceNumbers: () => currentSeqNumbers,
 			reSubmit: (message: IPendingBatchMessage) => {},
 			opReentrancy: () => false,
