@@ -322,6 +322,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 
 							const normalizedComposition =
 								withNormalizedLineage(rebasedOverComposition);
+
 							const normalizedIndividual = withNormalizedLineage(rebasedIndividually);
 							assert.deepEqual(normalizedComposition, normalizedIndividual);
 						});
@@ -411,9 +412,4 @@ describe("SequenceField - Composed sandwich rebasing", () => {
 		const insertB2 = rebaseTagged(insertB, makeAnonChange(sandwich));
 		assert.deepEqual(insertB2.change, insertB.change);
 	});
-
-	// it("Insert ↷ nested deletes", () => {
-	// 	const del1 = tagChange(Change.delete())
-	// 	const insert = tagChange(Change.insert(3, 1), tag3);
-	// });
 });
