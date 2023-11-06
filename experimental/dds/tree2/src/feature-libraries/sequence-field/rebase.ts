@@ -144,9 +144,6 @@ function rebaseMarkList<TNodeChange>(
 			nodeExistenceState,
 		);
 
-		// Note that we first add lineage for `baseMark` to `lineageRecipients`, then handle adding lineage to `rebasedMark`,
-		// then add `baseMark` to `lineageEntries` so that `rebasedMark` does not get an entry for `baseMark`.
-		// `rebasedMark` should already have a detach event for `baseMark`.
 		if (
 			(markEmptiesCells(baseMark) || isTransientEffect(baseMark)) &&
 			!isInverseAttach(baseMark)
