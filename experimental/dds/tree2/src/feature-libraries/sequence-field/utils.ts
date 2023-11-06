@@ -43,7 +43,7 @@ import {
 	MarkEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
-import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
+import { isMoveDestination, isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
 	EmptyInputCellMark,
 	DetachedCellMark,
@@ -92,29 +92,11 @@ export function isActiveReattach<T>(
 	mark: Mark<T>,
 ): mark is CellMark<Insert, T> & { conflictsWith?: undefined } {
 	// No need to check Reattach.lastDeletedBy because it can only be set if the mark is conflicted
-	return (
-		isAttach(mark) &&
-		isReattachEffect(mark, mark.cellId) &&
-		!isReattachConflicted(mark, mark.cellId)
-	);
-}
-
-// TODO: Name is misleading
-export function isReattachConflicted(attach: Attach, cellId: CellId | undefined): boolean {
-	return cellId === undefined || isRevertOnlyReattachPreempted(attach, cellId);
-}
-
-/**
- * @returns true iff `mark` is a revert-only inverse that cannot be applied because the target cell was concurrently
- * populated (and possibly emptied) by unrelated changes. Here, "unrelated" specifically means they are not an
- * undo/redo pair of the change this this mark is the inverse of.
- */
-function isRevertOnlyReattachPreempted(attach: Attach, cellId: CellId | undefined): boolean {
-	return attach.inverseOf !== undefined && attach.inverseOf !== cellId?.revision;
+	return isAttach(mark) && isReattachEffect(mark, mark.cellId) && mark.cellId !== undefined;
 }
 
 export function isReturnMuted(mark: CellMark<MoveIn, unknown>): boolean {
-	return mark.isSrcConflicted ?? isReattachConflicted(mark, mark.cellId);
+	return mark.isSrcConflicted ?? mark.cellId === undefined;
 }
 
 export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): boolean {
@@ -306,9 +288,7 @@ export function getEffectiveNodeChanges<TNodeChange>(
 				// So long as the input cell is populated, the nested changes are still effective
 				// (even if the revive is preempted) because the nested changes can only target the node in the populated
 				// cell.
-				return areInputCellsEmpty(mark) && isRevertOnlyReattachPreempted(mark, mark.cellId)
-					? undefined
-					: changes;
+				return areInputCellsEmpty(mark) && !isActiveReattach(mark) ? undefined : changes;
 			}
 		case "Transient":
 			// TODO: Check if attach is active
@@ -360,19 +340,13 @@ export function isMuted(mark: Mark<unknown>): boolean {
 		case "ReturnFrom":
 			return mark.cellId !== undefined || (mark.isDstConflicted ?? false);
 		case "MoveIn":
-			return (
-				(mark.isSrcConflicted ?? false) ||
-				(isReattach(mark) && isReattachConflicted(mark, mark.cellId))
-			);
+			return (mark.isSrcConflicted ?? false) || mark.cellId === undefined;
 		case "Insert":
-			return (
-				mark.cellId === undefined ||
-				(isReattach(mark) && isReattachConflicted(mark, mark.cellId))
-			);
+			return mark.cellId === undefined;
 		case "Transient":
 			return (
-				isReattachEffect(mark.attach, mark.cellId) &&
-				isReattachConflicted(mark.attach, mark.cellId)
+				mark.cellId === undefined ||
+				(isMoveDestination(mark.attach) && (mark.attach.isSrcConflicted ?? false))
 			);
 		default:
 			unreachableCase(type);
@@ -533,7 +507,6 @@ function tryMergeEffects(
 		case "MoveIn": {
 			const lhsMoveIn = lhs as MoveIn;
 			if (
-				lhsMoveIn.inverseOf === rhs.inverseOf &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsMoveIn.id as number) + lhsCount === rhs.id &&
 				areMergeableChangeAtoms(lhsMoveIn.finalEndpoint, lhsCount, rhs.finalEndpoint)
@@ -562,16 +535,13 @@ function tryMergeEffects(
 		}
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
-			if (lhsInsert.inverseOf === rhs.inverseOf) {
-				if (rhs.content === undefined) {
-					assert(lhsInsert.content === undefined, "Insert content type mismatch");
-					return lhsInsert;
-				} else {
-					assert(lhsInsert.content !== undefined, "Insert content type mismatch");
-					return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
-				}
+			if (rhs.content === undefined) {
+				assert(lhsInsert.content === undefined, "Insert content type mismatch");
+				return lhsInsert;
+			} else {
+				assert(lhsInsert.content !== undefined, "Insert content type mismatch");
+				return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
 			}
-			break;
 		}
 		case "Placeholder":
 			break;

@@ -342,36 +342,6 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		assert.deepEqual(withoutLineage(insertB4.change), Change.insert(3, 1));
 	});
 
-	it("[Delete ABC, Revive ABC] ↷ Delete B", () => {
-		const delB = tagChange(Change.delete(1, 1), tag1);
-		const delABC = tagChange(Change.delete(0, 3), tag2);
-		const revABC = tagChange(Change.revive(0, 3, { revision: tag2, localId: id0 }), tag4);
-		const delABC2 = rebaseTagged(delABC, delB);
-		const invDelABC = tagRollbackInverse(invert(delABC), tag3, delABC2.revision);
-		const revABC2 = rebaseTagged(revABC, invDelABC);
-		const revABC3 = rebaseTagged(revABC2, delB);
-		const revABC4 = rebaseTagged(revABC3, delABC2);
-		// The rebased versions of the local edits should still cancel-out
-		const actual = compose([delABC2, revABC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, emptyFieldChanges);
-	});
-
-	it("[Move ABC, Return ABC] ↷ Delete B", () => {
-		const delB = tagChange(Change.delete(1, 1), tag1);
-		const movABC = tagChange(Change.move(0, 3, 4), tag2);
-		const retABC = tagChange(Change.return(1, 3, 0, { revision: tag2, localId: id0 }), tag4);
-		const movABC2 = rebaseTagged(movABC, delB);
-		const invMovABC = invert(movABC);
-		const retABC2 = rebaseTagged(retABC, tagRollbackInverse(invMovABC, tag3, movABC2.revision));
-		const retABC3 = rebaseTagged(retABC2, delB);
-		const retABC4 = rebaseTagged(retABC3, movABC2);
-		// The rebased versions of the local edits should still cancel-out
-		const actual = compose([movABC2, retABC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, emptyFieldChanges);
-	});
-
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
 		const addB = tagChange(Change.insert(1, 1), tag1);
 		const delAC = tagChange(Change.delete(0, 2), tag2);
