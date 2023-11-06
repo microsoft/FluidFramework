@@ -253,14 +253,14 @@ function invertMark<TNodeChange>(
 			const attachInverses = invertMark(
 				attach,
 				inputIndex,
-				mark.revision ?? revision,
+				revision,
 				invertChild,
 				crossFieldManager,
 			);
 			const detachInverses = invertMark(
 				detach,
 				inputIndex,
-				mark.revision ?? revision,
+				revision,
 				invertChild,
 				crossFieldManager,
 			);

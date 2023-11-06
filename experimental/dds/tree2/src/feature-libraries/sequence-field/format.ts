@@ -309,20 +309,17 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
 	type: "Placeholder";
 }
 
-export interface TransientEffect extends HasRevisionTag {
+export interface TransientEffect {
 	type: "Transient";
 	attach: Attach;
 	detach: Detach;
 }
 
-export const TransientEffect = Type.Composite([
-	HasRevisionTag,
-	Type.Object({
-		type: Type.Literal("Transient"),
-		attach: Attach,
-		detach: Detach,
-	}),
-]);
+export const TransientEffect = Type.Object({
+	type: Type.Literal("Transient"),
+	attach: Attach,
+	detach: Detach,
+});
 
 export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect;
 export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);
