@@ -58,6 +58,18 @@ function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootF
 	});
 }
 
+function getSchemaCompatibleView(
+	tree: ISharedTree,
+): ISharedTreeView2<typeof schema.rootFieldSchema> {
+	return tree.schematize({
+		initialTree: {
+			quantity: 0,
+		},
+		allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
+		schema,
+	});
+}
+
 describeNoCompat("SharedTree Repeat bug", (getTestObjectProvider) => {
 	// Registry
 	const sharedTreeFactory = new SharedTreeFactory({
@@ -89,6 +101,7 @@ describeNoCompat("SharedTree Repeat bug", (getTestObjectProvider) => {
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const tree1 = testObj1.createTree(sharedTreeFactory.type);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		getNewTreeView(tree1).root;
 		assert.throws(
 			() => getNewTreeView(tree1).root,
@@ -104,10 +117,28 @@ describeNoCompat("SharedTree Repeat bug", (getTestObjectProvider) => {
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const tree1 = testObj1.createTree(sharedTreeFactory.type);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		getNewTreeView(tree1).root;
 		await provider.ensureSynchronized();
 		assert.throws(
 			() => getNewTreeView(tree1).root,
+			(error: Error) => {
+				return error.message === "0x782";
+			},
+			"Expected assert 0x782",
+		);
+	});
+
+	it("Double schematize.root with provider.ensureSynchronized", async () => {
+		// Setup containers
+		const container1 = await provider.createContainer(runtimeFactory);
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
+		const tree1 = testObj1.createTree(sharedTreeFactory.type);
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		getSchemaCompatibleView(tree1).root;
+		await provider.ensureSynchronized();
+		assert.throws(
+			() => getSchemaCompatibleView(tree1).root,
 			(error: Error) => {
 				return error.message === "0x782";
 			},
