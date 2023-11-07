@@ -160,7 +160,7 @@ export function OpLatencyView(): React.ReactElement {
 					{`\nIMPORTANT: This flag is only intended for local development with Devtools and should not be enabled in production scenarios.`}
 				</Body1>
 			) : (
-				<div className={styles.mainContainer} data-testid="test-op-latency-view">
+				<div className={styles.mainContainer}>
 					<DynamicComposedChart
 						margin={{
 							top: 15,

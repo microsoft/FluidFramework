@@ -21,7 +21,8 @@ import { MockMessageRelay } from "./MockMessageRelay";
 }));
 
 describe("OpLatencyView component tests", () => {
-	it("Renders as expected", async (): Promise<void> => {
+	it("Renders as expected when unsampled telemetry is enabled in localStorage", async (): Promise<void> => {
+		window.localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");
 		render(
 			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
 				<OpLatencyView />
@@ -48,6 +49,27 @@ describe("OpLatencyView component tests", () => {
 
 		// Confirm helper text header exists
 		const aboutHeader = await screen.findByText("About");
+		expect(aboutHeader).not.toBeNull();
+		expect(aboutHeader).toBeDefined();
+	});
+
+	it("Renders as expected when unsampled telemetry is disabled in localStorage", async (): Promise<void> => {
+		window.localStorage.setItem("Fluid.Telemetry.DisableSampling", "false");
+		render(
+			<MessageRelayContext.Provider value={new MockMessageRelay(() => undefined)}>
+				<OpLatencyView />
+			</MessageRelayContext.Provider>,
+		);
+
+		// Check that graph title exists as a header component
+		const opLatencyHeaderElement = await screen.findByText("Op Latency");
+		expect(opLatencyHeaderElement).not.toBeNull();
+		expect(opLatencyHeaderElement).toBeDefined();
+
+		// Confirm helper text header exists
+		const aboutHeader = await screen.findByText(
+			`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`,
+		);
 		expect(aboutHeader).not.toBeNull();
 		expect(aboutHeader).toBeDefined();
 	});
