@@ -226,7 +226,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	describe("Using tombstone data stores not allowed (per config)", () => {
 		beforeEach(() => {
 			// Allow Loading but not Usage
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
+			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		});
 
@@ -416,7 +416,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		beforeEach(() => {
 			// Allow Usage but not Loading
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
+			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = true;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 		});
 
@@ -834,7 +834,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
+			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
@@ -843,7 +843,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			// The datastore should be tombstoned now
 			const { summaryVersion } = await summarize(summarizer);
 			const container = await loadContainer(summaryVersion);
-			// Requesting the tombstoned data store should succeed since ThrowOnTombstoneLoad is not enabled.
+			// Requesting the tombstoned data store should succeed since ThrowOnTombstoneLoadOverride is not enabled.
 			// Logs a tombstone and sweep ready error
 			let dataObject: ITestDataObject;
 			await assert.doesNotReject(async () => {
@@ -893,7 +893,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		beforeEach(() => {
 			// This is not the typical configuration we expect (usage may be allowed), but keeping it more strict for the tests
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
+			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = true;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		});
 
