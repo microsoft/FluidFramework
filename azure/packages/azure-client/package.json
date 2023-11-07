@@ -33,9 +33,10 @@
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"ci:build:docs": "fluid-build . --task api",
+		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
@@ -105,6 +106,14 @@
 				],
 				"script": false
 			}
+		},
+		"ci:build:docs": {
+			"dependsOn": [
+				"...",
+				"api-extractor:commonjs",
+				"api-extractor:esnext"
+			],
+			"script": false
 		}
 	},
 	"typeValidation": {
