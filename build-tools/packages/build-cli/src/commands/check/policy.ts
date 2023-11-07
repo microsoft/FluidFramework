@@ -341,7 +341,7 @@ async function runWithPerf<T>(
 	let dur = actionMap.get(name) ?? 0;
 
 	const start = Date.now();
-	const result = run();
+	const result = await run();
 	dur += Date.now() - start;
 
 	actionMap.set(name, dur);
