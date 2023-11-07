@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { Constants } from "./constants";
 export { readSummary } from "./readWholeSummary";
 export {
 	ISummaryWriteOptions,

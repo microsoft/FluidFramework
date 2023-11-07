@@ -12,6 +12,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IRepositoryManager } from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
 import {
+	Constants,
 	ISummaryWriteOptions,
 	IWriteSummaryInfo,
 	isChannelSummary,
@@ -25,6 +26,9 @@ const DefaultSummaryWriteOptions: ISummaryWriteOptions = {
 	enableLowIoWrite: false,
 	optimizeForInitialSummary: false,
 };
+
+export { isChannelSummary, isContainerSummary } from "./wholeSummary";
+export const latestSummarySha = Constants.LatestSummarySha;
 
 /**
  * Handles reading/writing summaries from/to storage when the client expects or sends summary information in

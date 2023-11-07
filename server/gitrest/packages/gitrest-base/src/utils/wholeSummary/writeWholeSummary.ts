@@ -362,8 +362,7 @@ async function computeInMemoryFullGitTree(
 			const fullTree = await buildFullGitTreeFromGitTree(
 				missingTree,
 				options.repoManager,
-				// Using this blobCache might not be helpful in the majority of cases, but it won't hurt.
-				writeSummaryTreeOptions.blobCache /* blobCache */,
+				{} /* blobCache */,
 				false /* parseInnerFullGitTrees */,
 				true /* retrieveBlobs */,
 			);
