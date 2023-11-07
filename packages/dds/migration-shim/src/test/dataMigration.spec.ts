@@ -32,7 +32,7 @@ import {
 	SchemaBuilder,
 	SharedTreeFactory,
 	type Typed,
-	type ISharedTreeView2,
+	type ITreeView,
 	disposeSymbol,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
@@ -109,7 +109,7 @@ const inventorySchema = builder.object("abcInventory", {
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
-function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof inventoryFieldSchema> {
+function getNewTreeView(tree: ISharedTree): ITreeView<typeof inventoryFieldSchema> {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,

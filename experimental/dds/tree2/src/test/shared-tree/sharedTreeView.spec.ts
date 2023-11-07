@@ -46,7 +46,7 @@ describe("sharedTreeView", () => {
 			const unsubscribeSubtree = root.on("subtreeChanging", () => {
 				log.push("subtree");
 			});
-			const unsubscribeAfter = view.branch.events.on("afterBatch", () => log.push("after"));
+			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root.x = 5;
 			log.push("editStart");
@@ -89,7 +89,7 @@ describe("sharedTreeView", () => {
 			const unsubscribeSubtree = root.on("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
-			const unsubscribeAfter = view.branch.events.on("afterBatch", () => log.push("after"));
+			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root.x = 5;
 			log.push("editStart");
@@ -378,9 +378,9 @@ describe("sharedTreeView", () => {
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).branch;
+			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).branch;
+			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const baseView = tree1.fork();
 			const view = baseView.fork();
@@ -398,7 +398,7 @@ describe("sharedTreeView", () => {
 
 		it("do not squash commits", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).branch;
+			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -626,7 +626,7 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(provider.trees[0].schematize(config).branch);
+		fn(provider.trees[0].schematize(config).checkout);
 	});
 
 	it(`${title} (reference view)`, () => {
@@ -635,7 +635,7 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematize(config).branch.fork());
+		fn(provider.trees[0].schematize(config).checkout.fork());
 	});
 
 	it(`${title} (reference forked view)`, () => {

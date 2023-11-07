@@ -58,7 +58,7 @@ import {
 	schematize,
 } from "./schematizedTree";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./sharedTreeView";
-import { ISharedTreeView2, SharedTreeView2 } from "./sharedTreeView2";
+import { ITreeView, TreeView } from "./sharedTreeView2";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -101,7 +101,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	// Overrides less specific schematize from base
 	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView2<TRoot>;
+	): ITreeView<TRoot>;
 
 	/**
 	 * Like {@link ISharedTree.schematize}, but will never modify the document.
@@ -121,7 +121,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	requireSchema<TRoot extends TreeFieldSchema>(
 		schema: TreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
-	): ISharedTreeView2<TRoot> | undefined;
+	): ITreeView<TRoot> | undefined;
 }
 
 /**
@@ -195,7 +195,7 @@ export class SharedTree
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): SharedTreeView2<TRoot> | undefined {
+	): TreeView<TRoot> | undefined {
 		assert(this.hasView2 === false, "Cannot create second view from tree.");
 
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
@@ -208,7 +208,7 @@ export class SharedTree
 		}
 
 		this.hasView2 = true;
-		const view2 = new SharedTreeView2(
+		const view2 = new TreeView(
 			this.view,
 			schema,
 			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
@@ -253,7 +253,7 @@ export class SharedTree
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): SharedTreeView2<TRoot> {
+	): TreeView<TRoot> {
 		assert(this.hasView2 === false, "Cannot create second view from tree.");
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.

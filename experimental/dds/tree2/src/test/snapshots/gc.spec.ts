@@ -10,7 +10,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedTree, ISharedTreeView2, SharedTree, SharedTreeFactory } from "../../shared-tree";
+import { ISharedTree, ITreeView, SharedTree, SharedTreeFactory } from "../../shared-tree";
 import { typeboxValidator } from "../../external-utilities";
 import { SchemaBuilder } from "../../domains";
 import { AllowedUpdateType } from "../../core";
@@ -28,7 +28,7 @@ const someType = builder.object("foo", {
 
 const schema = builder.intoSchema(SchemaBuilder.required(someType));
 
-function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootFieldSchema> {
+function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
 	return tree.schematize({
 		initialTree: {
 			handles: [],

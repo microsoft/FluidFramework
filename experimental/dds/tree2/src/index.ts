@@ -252,7 +252,7 @@ export {
 	TypedTreeOptions,
 	TypedTreeChannel,
 	SharedTreeContentSnapshot,
-	ISharedTreeView2,
+	ITreeView,
 	TypedTreeView,
 	ISharedTreeBranchView2,
 } from "./shared-tree";

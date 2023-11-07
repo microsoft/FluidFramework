@@ -28,7 +28,7 @@ import {
 import {
 	AllowedUpdateType,
 	type ISharedTree,
-	type ISharedTreeView2,
+	type ITreeView,
 	SchemaBuilder,
 	SharedTreeFactory,
 	type ProxyNode,
@@ -65,7 +65,7 @@ const rootType = builder.object("abc", {
 	quantity: builder.number,
 });
 const schema = builder.intoSchema(rootType);
-function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootFieldSchema> {
+function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,

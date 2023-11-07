@@ -45,7 +45,7 @@ function generateCompleteTree(
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema: testSchema,
 		initialTree: [],
-	}).branch;
+	}).checkout;
 	generateTreeRecursively(view, undefined, fields, height, nodesPerField, { value: 1 });
 	return tree;
 }
@@ -171,7 +171,7 @@ export function generateTestTrees() {
 				const provider = new TestTreeProviderLite(2);
 				const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
 				provider.processMessages();
-				const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).branch;
+				const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).checkout;
 				provider.processMessages();
 
 				// Insert node
@@ -199,11 +199,11 @@ export function generateTestTrees() {
 						initialTree: [0, 1, 2, 3],
 						allowedSchemaModifications: AllowedUpdateType.None,
 					};
-					const tree1 = provider.trees[0].schematize(config).branch;
+					const tree1 = provider.trees[0].schematize(config).checkout;
 					provider.processMessages();
-					const tree2 = provider.trees[1].schematize(config).branch;
-					const tree3 = provider.trees[2].schematize(config).branch;
-					const tree4 = provider.trees[3].schematize(config).branch;
+					const tree2 = provider.trees[1].schematize(config).checkout;
+					const tree3 = provider.trees[2].schematize(config).checkout;
+					const tree4 = provider.trees[3].schematize(config).checkout;
 					provider.processMessages();
 					remove(tree1, index, 1);
 					remove(tree2, index, 1);
@@ -225,7 +225,7 @@ export function generateTestTrees() {
 					allowedSchemaModifications: AllowedUpdateType.None,
 					schema: jsonSequenceRootSchema,
 					initialTree: [],
-				}).branch;
+				}).checkout;
 
 				const tree2 = tree1.fork();
 				insert(tree1, 0, "y");
@@ -282,7 +282,7 @@ export function generateTestTrees() {
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
 				);
-				const view = tree.schematize(config).branch;
+				const view = tree.schematize(config).checkout;
 
 				const field = view.editor.optionalField({
 					parent: undefined,
@@ -314,7 +314,7 @@ export function generateTestTrees() {
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
 				);
-				const view = tree.schematize(config).branch;
+				const view = tree.schematize(config).checkout;
 				view.transaction.start();
 				// We must make this shallow change to the sequence field as part of the same transaction as the
 				// nested change. Otherwise, the nested change will be represented using the generic field kind.

@@ -40,11 +40,11 @@ import {
 	createTreeCheckout,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
-	ISharedTreeBranchView,
+	ITreeViewFork,
 	runSynchronous,
 	SharedTreeContentSnapshot,
-	ISharedTreeView2,
-	SharedTreeView2,
+	ITreeView,
+	TreeView,
 } from "../shared-tree";
 import {
 	Any,
@@ -598,7 +598,7 @@ export function viewWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): ITreeCheckout {
-	return view2WithContent(content, args).branch;
+	return view2WithContent(content, args).checkout;
 }
 
 export function view2WithContent<TRoot extends TreeFieldSchema>(
@@ -610,14 +610,14 @@ export function view2WithContent<TRoot extends TreeFieldSchema>(
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 	},
-): ISharedTreeView2<TRoot> {
+): ITreeView<TRoot> {
 	const forest = forestWithContent(content);
 	const view = createTreeCheckout({
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
-	return new SharedTreeView2(
+	return new TreeView(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
@@ -655,7 +655,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new SharedTreeView2(
+	const view = new TreeView(
 		branch,
 		content.schema,
 		manager,
@@ -961,7 +961,7 @@ export function announceTestDelta(
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
-export function createTestUndoRedoStacks(view: ISharedTreeBranchView | ITreeCheckout): {
+export function createTestUndoRedoStacks(view: ITreeViewFork | ITreeCheckout): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;

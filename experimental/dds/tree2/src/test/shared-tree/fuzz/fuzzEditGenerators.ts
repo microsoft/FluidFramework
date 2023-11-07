@@ -15,7 +15,7 @@ import { Client, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
 	ISharedTree,
 	ITreeCheckout,
-	ISharedTreeView2,
+	ITreeView,
 	SharedTreeFactory,
 	TreeContent,
 } from "../../../shared-tree";
@@ -43,14 +43,14 @@ import { FuzzNode, fuzzNode, fuzzSchema, fuzzViewFromTree } from "./fuzzUtils";
 
 export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 	// Schematized view of clients. Created lazily by viewFromState.
-	view2?: Map<ISharedTree, ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>>;
+	view2?: Map<ISharedTree, ITreeView<typeof fuzzSchema.rootFieldSchema>>;
 }
 
 export function viewFromState(
 	state: FuzzTestState,
 	client: Client<SharedTreeFactory> = state.client,
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
-): ISharedTreeView2<typeof fuzzSchema.rootFieldSchema> {
+): ITreeView<typeof fuzzSchema.rootFieldSchema> {
 	state.view2 ??= new Map();
 	return getOrCreate(state.view2, client.channel, (tree) =>
 		tree.schematize({
@@ -606,7 +606,7 @@ function selectField(
 }
 
 function trySelectTreeField(
-	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
@@ -652,7 +652,7 @@ function trySelectTreeField(
 }
 
 function selectTreeField(
-	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,

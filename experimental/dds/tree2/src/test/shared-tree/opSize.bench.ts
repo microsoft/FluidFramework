@@ -61,7 +61,7 @@ function initializeTestTree(
 		allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 		initialTree: [writeCursor],
 		schema: fullSchemaData,
-	}).branch;
+	}).checkout;
 }
 
 function utf8Length(data: JsonCompatibleReadOnly): number {
