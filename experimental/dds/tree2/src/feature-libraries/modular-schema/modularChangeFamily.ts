@@ -769,11 +769,11 @@ export function revisionMetadataSourceFromInfo(
 		return index === undefined ? undefined : revInfos[index];
 	};
 
-	const getIntentions = (): RevisionTag[] => {
-		return revInfos.map((info) => info.rollbackOf ?? info.revision);
+	const getRevisions = (): RevisionTag[] => {
+		return revInfos.map((info) => info.revision);
 	};
 
-	return { getIndex, tryGetInfo, getIntentions };
+	return { getIndex, tryGetInfo, getRevisions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {

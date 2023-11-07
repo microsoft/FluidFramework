@@ -57,7 +57,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 				assert(outputId !== undefined, "Transient mark should have defined output cell ID");
 				const oldId = nodeIdFromChangeAtom(
 					isMoveDestination(mark.attach)
-						? getEndpoint(mark.attach, mark.revision ?? revision)
+						? getEndpoint(mark.attach, revision)
 						: mark.cellId,
 				);
 				if (!areEqualChangeAtomIds(mark.cellId, outputId)) {

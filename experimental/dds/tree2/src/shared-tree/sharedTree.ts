@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, noopValidator } from "../codec";
 import {
 	Compatibility,
@@ -21,6 +22,7 @@ import {
 	TreeStoredSchema,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
+	rootFieldKey,
 	schemaDataIsEmpty,
 } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
@@ -43,9 +45,11 @@ import {
 	TreeSchema,
 	ViewSchema,
 	NodeKeyManager,
+	FieldKinds,
+	normalizeNewFieldContent,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand, fail } from "../util";
+import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import { type TypedTreeChannel } from "./typedTree";
 import {
 	InitializeAndSchematizeConfiguration,
@@ -53,8 +57,8 @@ import {
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
-import { SharedTreeView, ViewEvents, createSharedTreeView } from "./sharedTreeView";
-import { ISharedTreeView2, SharedTreeView2 } from "./sharedTreeView2";
+import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./sharedTreeView";
+import { ITreeView, TreeView } from "./sharedTreeView2";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -97,7 +101,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	// Overrides less specific schematize from base
 	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView2<TRoot>;
+	): ITreeView<TRoot>;
 
 	/**
 	 * Like {@link ISharedTree.schematize}, but will never modify the document.
@@ -117,7 +121,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	requireSchema<TRoot extends TreeFieldSchema>(
 		schema: TreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
-	): ISharedTreeView2<TRoot> | undefined;
+	): ITreeView<TRoot> | undefined;
 }
 
 /**
@@ -129,11 +133,21 @@ export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
-	private readonly _events: ISubscribable<ViewEvents> &
-		IEmitter<ViewEvents> &
-		HasListeners<ViewEvents>;
-	public readonly view: SharedTreeView;
+	private readonly _events: ISubscribable<CheckoutEvents> &
+		IEmitter<CheckoutEvents> &
+		HasListeners<CheckoutEvents>;
+	public readonly view: TreeCheckout;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
+
+	/**
+	 * Creating multiple editable tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
+	 * This flag is used to detect if one already exists for the main branch and error if creating a second.
+	 * THis should catch most accidental violations of this restriction but there are still ways to create two conflicting contexts (for example calling constructing one manually).
+	 *
+	 * TODO:
+	 * 1. API docs need to reflect this limitation or the limitation has to be removed.
+	 */
+	private hasView2 = false;
 
 	public constructor(
 		id: string,
@@ -148,7 +162,7 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedTrees = makeDetachedFieldIndex("repair");
+		const removedTrees = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
@@ -163,8 +177,8 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this._events = createEmitter<ViewEvents>();
-		this.view = createSharedTreeView({
+		this._events = createEmitter<CheckoutEvents>();
+		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.
@@ -181,7 +195,9 @@ export class SharedTree
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): SharedTreeView2<TRoot> | undefined {
+	): TreeView<TRoot> | undefined {
+		assert(this.hasView2 === false, "Cannot create second view from tree.");
+
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
 		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
 		if (
@@ -191,12 +207,24 @@ export class SharedTree
 			return undefined;
 		}
 
+		this.hasView2 = true;
+		const view2 = new TreeView(
+			this.view,
+			schema,
+			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
+			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
+			() => {
+				assert(this.hasView2, "unexpected dispose");
+				this.hasView2 = false;
+			},
+		);
 		const onSchemaChange = () => {
 			const compatibilityInner = viewSchema.checkCompatibility(this.storedSchema);
 			if (
 				compatibilityInner.write !== Compatibility.Compatible ||
 				compatibilityInner.read !== Compatibility.Compatible
 			) {
+				view2[disposeSymbol]();
 				onSchemaIncompatible();
 				return false;
 			} else {
@@ -205,13 +233,7 @@ export class SharedTree
 		};
 
 		afterSchemaChanges(this._events, this.storedSchema, onSchemaChange);
-
-		return new SharedTreeView2(
-			this.view,
-			schema,
-			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
-			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
-		);
+		return view2;
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {
@@ -231,7 +253,8 @@ export class SharedTree
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): SharedTreeView2<TRoot> {
+	): TreeView<TRoot> {
+		assert(this.hasView2 === false, "Cannot create second view from tree.");
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.
 		// This will improve support for readonly documents, cross version collaboration and attribution.
@@ -239,9 +262,34 @@ export class SharedTree
 		// Check for empty.
 		if (this.view.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
 			this.view.transaction.start();
-			initializeContent(this.storedSchema, config.schema, () =>
-				this.view.setContent(config.initialTree),
-			);
+			initializeContent(this.storedSchema, config.schema, () => {
+				const field = { field: rootFieldKey, parent: undefined };
+				const content = normalizeNewFieldContent(
+					{ schema: this.storedSchema },
+					this.storedSchema.rootFieldSchema,
+					config.initialTree,
+				);
+				switch (this.storedSchema.rootFieldSchema.kind.identifier) {
+					case FieldKinds.optional.identifier: {
+						const fieldEditor = this.editor.optionalField(field);
+						assert(
+							content.length <= 1,
+							"optional field content should normalize at most one item",
+						);
+						fieldEditor.set(content.length === 0 ? undefined : content[0], true);
+						break;
+					}
+					case FieldKinds.sequence.identifier: {
+						const fieldEditor = this.editor.sequenceField(field);
+						// TODO: should do an idempotent edit here.
+						fieldEditor.insert(0, content);
+						break;
+					}
+					default: {
+						fail("unexpected root field kind during initialize");
+					}
+				}
+			});
 			this.view.transaction.commit();
 		}
 

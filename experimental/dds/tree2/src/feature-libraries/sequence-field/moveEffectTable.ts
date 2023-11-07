@@ -310,7 +310,7 @@ export function applyMoveEffectsToMark<T>(
 				// Move effects should not be applied to intermediate move locations.
 				return [mark];
 			}
-			const attachRevision = mark.attach.revision ?? mark.revision ?? revision;
+			const attachRevision = mark.attach.revision ?? revision;
 			const effect = getMoveEffect(
 				effects,
 				CrossFieldTarget.Destination,
@@ -361,7 +361,7 @@ export function applyMoveEffectsToMark<T>(
 		}
 
 		if (isMoveSource(mark.detach)) {
-			const detachRevision = mark.detach.revision ?? mark.revision ?? revision;
+			const detachRevision = mark.detach.revision ?? revision;
 			const effect = getMoveEffect(
 				effects,
 				CrossFieldTarget.Source,

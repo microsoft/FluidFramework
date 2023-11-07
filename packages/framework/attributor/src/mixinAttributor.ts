@@ -112,8 +112,46 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 			runtimeOptions: IContainerRuntimeOptions | undefined = {},
 			containerScope: FluidObject | undefined = context.scope,
 			existing?: boolean | undefined,
-			ctor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
+			containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
 		): Promise<ContainerRuntime> {
+			return this.loadRuntime({
+				context,
+				registryEntries,
+				existing: existing ?? false,
+				requestHandler,
+				runtimeOptions,
+				containerScope,
+				containerRuntimeCtor,
+				provideEntryPoint: async () => {
+					throw new UsageError(
+						"ContainerRuntime.load is deprecated and should no longer be used",
+					);
+				},
+			});
+		}
+
+		public static async loadRuntime(params: {
+			context: IContainerContext;
+			registryEntries: NamedFluidDataStoreRegistryEntries;
+			existing: boolean;
+			runtimeOptions?: IContainerRuntimeOptions;
+			containerScope?: FluidObject;
+			containerRuntimeCtor?: typeof ContainerRuntime;
+			/** @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		}): Promise<ContainerRuntime> {
+			const {
+				context,
+				registryEntries,
+				existing,
+				requestHandler,
+				provideEntryPoint,
+				runtimeOptions,
+				containerScope,
+				containerRuntimeCtor = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
+			} = params;
+
 			const runtimeAttributor = (
 				containerScope as FluidObject<IProvideRuntimeAttributor> | undefined
 			)?.IRuntimeAttributor;
@@ -142,15 +180,16 @@ export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime
 				(context.options.attribution ??= {}).track = true;
 			}
 
-			const runtime = (await Base.load(
+			const runtime = (await Base.loadRuntime({
 				context,
 				registryEntries,
 				requestHandler,
+				provideEntryPoint,
 				runtimeOptions,
 				containerScope,
 				existing,
-				ctor,
-			)) as ContainerRuntimeWithAttributor;
+				containerRuntimeCtor,
+			})) as ContainerRuntimeWithAttributor;
 			runtime.runtimeAttributor = runtimeAttributor as RuntimeAttributor;
 
 			const logger = createChildLogger({ logger: runtime.logger, namespace: "Attributor" });

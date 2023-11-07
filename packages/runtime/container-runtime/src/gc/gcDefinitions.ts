@@ -38,6 +38,13 @@ export const nextGCVersion: GCVersion = 4;
  * Otherwise, only enforce GC Tombstone if the passed in value matches the persisted value
  */
 export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
+
+/**
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable throwing an error when tombstone
+ * object is loaded (requested).
+ */
+export const gcThrowOnTombstoneLoadOptionName = "gcThrowOnTombstoneLoad";
+
 /**
  * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
  *
@@ -59,8 +66,9 @@ export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 /** Config key to disable the tombstone feature, i.e., tombstone information is not read / written into summary. */
 export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
-/** Config key to enable throwing an error when tombstone object is loaded (requested). */
-export const throwOnTombstoneLoadKey = "Fluid.GarbageCollection.ThrowOnTombstoneLoad";
+/** Config key to override throwing an error when tombstone object is loaded (requested). */
+export const throwOnTombstoneLoadOverrideKey =
+	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride";
 /** Config key to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops). */
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 /** Config key to enable GC version upgrade. */
