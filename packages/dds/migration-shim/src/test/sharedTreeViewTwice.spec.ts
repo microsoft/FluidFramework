@@ -90,6 +90,12 @@ describeNoCompat("SharedTree Repeat bug", (getTestObjectProvider) => {
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const tree1 = testObj1.createTree(sharedTreeFactory.type);
 		getNewTreeView(tree1).root;
-		getNewTreeView(tree1).root;
+		assert.throws(
+			() => getNewTreeView(tree1).root,
+			(error: Error) => {
+				return error.message === "0x782";
+			},
+			"Expected assert 0x782",
+		);
 	});
 });
