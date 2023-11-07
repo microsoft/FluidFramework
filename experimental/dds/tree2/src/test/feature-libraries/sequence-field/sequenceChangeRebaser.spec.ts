@@ -25,6 +25,7 @@ import {
 	rebaseOverComposition,
 	rebaseTagged,
 	toDelta,
+	withNormalizedLineage,
 	withoutLineage,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
@@ -264,34 +265,68 @@ describe("SequenceField - Rebaser Axioms", () => {
 		}
 	});
 
-	describe.skip("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
+	describe("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
 		// TODO: Support testing changesets with node changes.
 		// Currently node changes in B and C will incorrectly have the same input context, which is not correct.
 		const shallowTestChanges = testChanges.filter(
 			(change) => !["NestedChange", "MInsert"].includes(change[0]),
 		);
-		for (const [name1, makeChange1] of shallowTestChanges) {
-			for (const [name2, makeChange2] of shallowTestChanges) {
-				for (const [name3, makeChange3] of shallowTestChanges) {
-					const title = `${name1} ↷ [${name2}, ${name3}]`;
-					it(title, () => {
-						const a = tagChange(makeChange1(1, 1), tag1);
-						const b = tagChange(makeChange2(1, 1), tag2);
-						const c = tagChange(makeChange3(1, 1), tag3);
-						const a2 = rebaseTagged(a, b);
-						const rebasedIndividually = rebaseTagged(a2, c).change;
-						const bc = compose([b, c]);
-						const rebasedOverComposition = rebaseOverComposition(
-							a.change,
-							bc,
-							revisionMetadataSourceFromInfo([
-								{ revision: tag1 },
-								{ revision: tag2 },
-								{ revision: tag3 },
-							]),
-						);
-						assert.deepEqual(rebasedOverComposition, rebasedIndividually);
-					});
+
+		const changesTargetingDetached = new Set([
+			"Revive",
+			"TransientRevive",
+			"ConflictedRevive",
+			"ReturnFrom",
+			"ReturnTo",
+		]);
+
+		const lineageFreeTestChanges = shallowTestChanges.filter(
+			(change) => !changesTargetingDetached.has(change[0]),
+		);
+
+		for (const [nameA, makeChange1] of shallowTestChanges) {
+			for (const [nameB, makeChange2] of shallowTestChanges) {
+				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
+					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
+					if (
+						["MoveIn", "MoveOut", "ReturnFrom", "ReturnTo"].includes(nameB) &&
+						nameC === "Delete"
+					) {
+						it.skip(title, () => {
+							// Some of these tests fail due to BUG 6155 where if a mark in changeA is moved by changeB,
+							// we may not rebase changeA over the delete in changeC due to handling the move of changeA in the amend pass.
+						});
+					} else if (
+						changesTargetingDetached.has(nameA) &&
+						changesTargetingDetached.has(nameB)
+					) {
+						// Some of these tests are malformed as the change targeting the older cell
+						// should have lineage describing its position relative to the newer cell.
+					} else {
+						it(title, () => {
+							const a = tagChange(makeChange1(1, 1), tag1);
+							const b = tagChange(makeChange2(1, 1), tag2);
+							const c = tagChange(makeChange3(1, 1), tag3);
+							const a2 = rebaseTagged(a, b);
+							const rebasedIndividually = rebaseTagged(a2, c).change;
+							const bc = compose([b, c]);
+							const rebasedOverComposition = rebaseOverComposition(
+								a.change,
+								bc,
+								revisionMetadataSourceFromInfo([
+									{ revision: tag1 },
+									{ revision: tag2 },
+									{ revision: tag3 },
+								]),
+							);
+
+							const normalizedComposition =
+								withNormalizedLineage(rebasedOverComposition);
+
+							const normalizedIndividual = withNormalizedLineage(rebasedIndividually);
+							assert.deepEqual(normalizedComposition, normalizedIndividual);
+						});
+					}
 				}
 			}
 		}
@@ -368,8 +403,8 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	});
 });
 
-describe.skip("SequenceField - Composed sandwich rebasing", () => {
-	it("Nested inserts rebasing", () => {
+describe("SequenceField - Composed sandwich rebasing", () => {
+	it("Nested inserts ↷ []", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
 		const insertB = tagChange(Change.insert(1, 1), tag2);
 		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
