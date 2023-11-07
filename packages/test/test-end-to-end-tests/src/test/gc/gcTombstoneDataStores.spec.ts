@@ -28,7 +28,13 @@ import {
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IErrorBase, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IFluidHandle,
+	IRequest,
+	IResponse,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
@@ -81,11 +87,19 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	async function loadContainer(
 		summaryVersion: string,
 		disableTombstoneFailureViaOption: boolean = false,
+		logger?: ITelemetryBaseLogger,
 	) {
 		const config = disableTombstoneFailureViaOption
 			? testContainerConfigWithFutureMinGcOption
 			: testContainerConfig;
-		return provider.loadTestContainer(config, {
+		const config2: ITestContainerConfig = {
+			...config,
+			loaderProps: {
+				...config.loaderProps,
+				logger,
+			},
+		};
+		return provider.loadTestContainer(config2, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
@@ -214,7 +228,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	describe("Using tombstone data stores not allowed (per config)", () => {
 		beforeEach(() => {
 			// Allow Loading but not Usage
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
+			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		});
 
@@ -404,7 +418,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		beforeEach(() => {
 			// Allow Usage but not Loading
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
+			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = true;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 		});
 
@@ -527,7 +541,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					gcTombstoneEnforcementAllowed: false,
 					clientType: "interactive",
 				},
 			],
@@ -539,9 +552,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
+				const logger = new MockLogger();
 				const container = await loadContainer(
 					summaryVersion,
 					true /* disableTombstoneFailureViaOption */,
+					logger,
 				);
 
 				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
@@ -568,7 +583,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					gcTombstoneEnforcementAllowed: false,
 					clientType: "interactive",
 				},
 			],
@@ -822,7 +836,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = false;
+			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = false;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
@@ -831,7 +845,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			// The datastore should be tombstoned now
 			const { summaryVersion } = await summarize(summarizer);
 			const container = await loadContainer(summaryVersion);
-			// Requesting the tombstoned data store should succeed since ThrowOnTombstoneLoad is not enabled.
+			// Requesting the tombstoned data store should succeed since ThrowOnTombstoneLoadOverride is not enabled.
 			// Logs a tombstone and sweep ready error
 			let dataObject: ITestDataObject;
 			await assert.doesNotReject(async () => {
@@ -881,7 +895,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		beforeEach(() => {
 			// This is not the typical configuration we expect (usage may be allowed), but keeping it more strict for the tests
-			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoad"] = true;
+			settings["Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride"] = true;
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = true;
 		});
 
