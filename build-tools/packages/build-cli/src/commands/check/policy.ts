@@ -223,7 +223,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			);
 		} finally {
 			try {
-				await runPolicyCheck(commandContext, this.flags.fix);
+				await runFinalHandlers(commandContext, this.flags.fix);
 			} finally {
 				this.logStats();
 			}
@@ -231,7 +231,8 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	}
 
 	/**
-	 * Routes files to their handlers by regex testing their full paths. Synchronize the output, exit code, and resolve
+	 * Routes files to their handlers and resolvers by regex testing their full paths. If a file fails a policy that has a
+	 * resolver, the resolver will be invoked as well. Synchronizes the output, exit codes, and resolve
 	 * decision for all handlers.
 	 */
 	private routeToHandlers(file: string, commandContext: CheckPolicyCommandContext): void {
@@ -348,7 +349,11 @@ async function runWithPerf<T>(
 	return result;
 }
 
-async function runPolicyCheck(
+/**
+ * Runs all the "final" handlers. These handlers are intended to be run as the last step in policy checking, after
+ * resolvers have run.
+ */
+async function runFinalHandlers(
 	commandContext: CheckPolicyCommandContext,
 	fix: boolean,
 ): Promise<void> {
