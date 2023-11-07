@@ -21,7 +21,7 @@ describe("Bubblebench", () => {
 
 		beforeEach(async () => {
 			await page.goto(globals.PATH, { waitUntil: "load" });
-			await page.waitForFunction(() => window["fluidStarted"]);
+			await page.waitForFunction(() => (window as any).fluidStarted as unknown);
 		});
 
 		it("The page loads and displays current FPS", async () => {

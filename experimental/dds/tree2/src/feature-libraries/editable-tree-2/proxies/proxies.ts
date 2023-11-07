@@ -16,21 +16,24 @@ import {
 	schemaIsObjectNode,
 	MapSchema,
 	FieldNodeSchema,
+	MapFieldSchema,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
 	FieldNode,
+	FlexibleFieldContent,
 	MapNode,
 	ObjectNode,
 	OptionalField,
 	RequiredField,
 	TreeNode,
 	TypedField,
+	UnknownUnboxed,
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
-import { ContextuallyTypedNodeData, typeNameSymbol } from "../../contextuallyTyped";
+import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../../contextuallyTyped";
 import { createRawObjectNode, extractRawNodeContent } from "../rawObjectNode";
 import {
 	ProxyField,
@@ -220,10 +223,18 @@ function contextualizeInsertedListContent(
  */
 const listPrototypeProperties: PropertyDescriptorMap = {
 	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
-	// above because 'Array.prototype[Symbol.iterator].name' returns "values" (i.e., Symbol.iterator
-	// is an alias for the '.values()' function.)
+	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
+	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
 	[Symbol.iterator]: {
 		value: Array.prototype[Symbol.iterator],
+	},
+	at: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			index: number,
+		): UnknownUnboxed | undefined {
+			return getSequenceField(this).at(index);
+		},
 	},
 	insertAt: {
 		value(
@@ -374,9 +385,6 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 // TODO: This assumes 'Function.name' matches the property name on 'Array.prototype', which may be
 // dubious across JS engines.
 [
-	// TODO: Remove cast to any once targeting a more recent ES version.
-	(Array.prototype as any).at,
-
 	Array.prototype.concat,
 	// Array.prototype.copyWithin,
 	Array.prototype.entries,
@@ -436,7 +444,8 @@ function asIndex(key: string | symbol, length: number) {
 }
 
 function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> {
-	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
+	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
+	// the proxy target to be a plain JS array (see comments below when we instantiate the Proxy).
 	// Own properties on the dispatch object are surfaced as own properties of the proxy.
 	// (e.g., 'length', which is defined below).
 	//
@@ -568,7 +577,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
 			const node = getEditNode(this);
-			node.set(key, extractFactoryContent(value as any));
+			node.set(key, extractFactoryContent(value as FlexibleFieldContent<MapFieldSchema>));
 			return this;
 		},
 	},
@@ -599,7 +608,7 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<SharedTreeMap<TSchema>>(
-		new Map<string, ProxyField<TSchema["mapFields"]>>(),
+		new Map<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -680,6 +689,8 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 			map.set(k, extractFactoryContent(v));
 		}
 		return map as T;
+	} else if (isFluidHandle(content)) {
+		return content;
 	} else if (content !== null && typeof content === "object") {
 		const copy: Record<string, unknown> = {};
 		const editNode = tryGetEditNode(content);

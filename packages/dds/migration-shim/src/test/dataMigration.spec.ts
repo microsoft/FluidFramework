@@ -109,13 +109,13 @@ const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
 function getNewTreeView(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
-	});
+	}).branch;
 }
 
 describeNoCompat("HotSwap", (getTestObjectProvider) => {
@@ -160,7 +160,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const quantity = legacyNode.payload.quantity as number;
-			newTree.schematizeView({
+			newTree.schematize({
 				initialTree: {
 					quantity,
 				},

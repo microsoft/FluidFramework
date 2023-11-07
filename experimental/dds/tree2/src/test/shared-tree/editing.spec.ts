@@ -1523,7 +1523,7 @@ describe("Editing", () => {
 			unsubscribePathVisitor();
 		});
 
-		describe.skip("Exhaustive removal tests", () => {
+		describe("Exhaustive removal tests", () => {
 			// Toggle the constant below to run each scenario as a separate test.
 			// This is useful to debug a specific scenario but makes CI and the test browser slower.
 			// Note that if the numbers of nodes and peers are too high (more than 3 nodes and 3 peers),
@@ -1531,9 +1531,9 @@ describe("Editing", () => {
 			// Should be committed with the constant set to false.
 			const individualTests = false;
 			const nbNodes = 3;
-			const nbPeers = 3;
+			const nbPeers = 2;
 			const testRemoveRevive = true;
-			const testMoveReturn = true;
+			const testMoveReturn = false;
 			assert(testRemoveRevive || testMoveReturn, "No scenarios to run");
 
 			const [outerFixture, innerFixture] = individualTests
@@ -1702,7 +1702,7 @@ describe("Editing", () => {
 							default:
 								unreachableCase(step);
 						}
-						tree.merge(peer);
+						tree.merge(peer, false);
 						// We only let peers with a higher index learn of this edit.
 						// This breaks the symmetry between scenarios where the permutation of actions is the same
 						// except for which peer does which set of actions.

@@ -31,7 +31,7 @@ import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions";
 import { MergeTreeRevertibleDriver } from "../revertibles";
-import { ReferencePosition } from "..";
+import { IMergeTreeOptions, ReferencePosition } from "..";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 
@@ -139,7 +139,7 @@ export class TestClient extends Client {
 		new DoublyLinkedList<ISequencedDocumentMessage>();
 
 	private readonly textHelper: MergeTreeTextHelper;
-	constructor(options?: PropertySet, specToSeg = specToSegment) {
+	constructor(options?: IMergeTreeOptions & PropertySet, specToSeg = specToSegment) {
 		super(specToSeg, createChildLogger({ namespace: "fluid:testClient" }), options);
 		this.mergeTree = (this as Record<"_mergeTree", MergeTree>)._mergeTree;
 		this.textHelper = new MergeTreeTextHelper(this.mergeTree);
@@ -448,8 +448,9 @@ export class TestClient extends Client {
 			return true;
 		});
 
-		assert(
-			fasterComputedPosition === segmentPosition,
+		assert.equal(
+			fasterComputedPosition,
+			segmentPosition,
 			"Expected fast-path computation to match result from walk all segments",
 		);
 		return segmentPosition;

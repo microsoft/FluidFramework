@@ -7,7 +7,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "events";
-import { ILoader } from "@fluidframework/container-definitions";
 import {
 	createGroupOp,
 	createRemoveRangeOp,
@@ -23,10 +22,8 @@ import { addListNodes } from "prosemirror-schema-list";
 import { EditorState, Plugin, Transaction } from "prosemirror-state";
 
 import { EditorView } from "prosemirror-view";
-import { ComponentView } from "./componentView";
 import { IProseMirrorNode, ProseMirrorTransactionBuilder, sliceToGroupOps } from "./fluidBridge";
 import { schema } from "./fluidSchema";
-import { FootnoteView } from "./footnoteView";
 import { create as createSelection } from "./selection";
 export const IRichTextEditor: keyof IProvideRichTextEditor = "IRichTextEditor";
 
@@ -50,10 +47,7 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 	private state: EditorState;
 	private editorView: EditorView | undefined;
 
-	constructor(
-		private readonly text: SharedString,
-		private readonly loader: ILoader,
-	) {
+	constructor(private readonly text: SharedString) {
 		super();
 
 		this.plugin = new Plugin({
@@ -216,10 +210,6 @@ export class FluidCollabManager extends EventEmitter implements IRichTextEditor 
 
 		const editorView = new EditorView(textArea, {
 			state: this.state,
-			nodeViews: {
-				fluid: (node, view, getPos) => new ComponentView(node, view, getPos, this.loader),
-				footnote: (node, view, getPos) => new FootnoteView(node, view, getPos, this.loader),
-			},
 		});
 
 		this.editorView = editorView;

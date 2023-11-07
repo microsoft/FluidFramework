@@ -265,12 +265,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start of the range to remove
 	 * @param end - The exclusive end of the range to remove
 	 */
-	public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
-		return this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
+	public removeRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
 	/**
-	 * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+	 * @deprecated The ability to create group ops will be removed in an upcoming
+	 * release, as group ops are redundant with the native batching capabilities
+	 * of the runtime
 	 */
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
@@ -318,7 +320,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		end: number,
 		props: PropertySet,
 		combiningOp?: ICombiningOp,
-	) {
+	): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props, combiningOp));
 	}
 
@@ -407,7 +409,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		// if loading isn't complete, we need to cache
 		// local ops until loading is complete, and then
-		// they will be resent
+		// they will be present
 		if (!this.loadedDeferred.isCompleted) {
 			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
 		} else {
@@ -461,7 +463,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param refPos - The reference position to insert the segment at
 	 * @param segment - The segment to insert
 	 */
-	public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
+	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
 		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
 	}
 	/**
@@ -469,7 +471,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The position to insert the segment at
 	 * @param spec - The segment to inserts spec
 	 */
-	public insertFromSpec(pos: number, spec: IJSONSegment) {
+	public insertFromSpec(pos: number, spec: IJSONSegment): void {
 		const segment = this.segmentFromSpec(spec);
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
@@ -539,7 +541,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param end - The end of the range to replace
 	 * @param segment - The segment that will replace the range
 	 */
-	protected replaceRange(start: number, end: number, segment: ISegment) {
+	protected replaceRange(start: number, end: number, segment: ISegment): void {
 		// Insert at the max end of the range when start > end, but still remove the range later
 		const insertIndex: number = Math.max(start, end);
 
