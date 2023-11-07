@@ -84,12 +84,28 @@ describeNoCompat("SharedTree Repeat bug", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	it("Can create and retrieve tree", async () => {
+	it("Double schematize.root", async () => {
 		// Setup containers
 		const container1 = await provider.createContainer(runtimeFactory);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const tree1 = testObj1.createTree(sharedTreeFactory.type);
 		getNewTreeView(tree1).root;
+		assert.throws(
+			() => getNewTreeView(tree1).root,
+			(error: Error) => {
+				return error.message === "0x782";
+			},
+			"Expected assert 0x782",
+		);
+	});
+
+	it("Double schematize.root with provider.ensureSynchronized", async () => {
+		// Setup containers
+		const container1 = await provider.createContainer(runtimeFactory);
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
+		const tree1 = testObj1.createTree(sharedTreeFactory.type);
+		getNewTreeView(tree1).root;
+		await provider.ensureSynchronized();
 		assert.throws(
 			() => getNewTreeView(tree1).root,
 			(error: Error) => {
