@@ -4,9 +4,9 @@
  */
 import { Flags } from "@oclif/core";
 import * as fs from "node:fs";
+import * as path from "node:path";
 import { readJson } from "fs-extra";
 import { EOL as newline } from "node:os";
-import path from "node:path";
 
 import { Context, getFluidBuildConfig, Handler, policyHandlers } from "@fluidframework/build-tools";
 
@@ -218,10 +218,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		commandContext: CheckPolicyCommandContext,
 	): Promise<void> {
 		try {
-			pathsToCheck.map((line: string) => this.handleLine(line, commandContext));
+			pathsToCheck.map(async (line: string) => this.handleLine(line, commandContext));
 		} finally {
 			try {
-				runPolicyCheck(commandContext, this.flags.fix);
+				await runPolicyCheck(commandContext, this.flags.fix);
 			} finally {
 				this.logStats();
 			}
@@ -240,8 +240,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 
 		handlers
 			.filter((handler) => handler.match.test(relPath))
-			// eslint-disable-next-line unicorn/no-array-for-each
-			.forEach((handler) => {
+			.map(async (handler) => {
 				// doing exclusion per handler
 				const exclusions = handlerExclusions[handler.name];
 				if (
@@ -252,15 +251,15 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 					return;
 				}
 
-				const result = runWithPerf(handler.name, "handle", () =>
+				const result = await runWithPerf(handler.name, "handle", async () =>
 					handler.handler(relPath, gitRoot),
 				);
 				if (result !== undefined && result !== "") {
-					let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
+					let output = `${newline}file failed policy check: ${relPath}${newline}${result}`;
 					const { resolver } = handler;
 					if (this.flags.fix && resolver) {
 						output += `${newline}attempting to resolve: ${relPath}`;
-						const resolveResult = runWithPerf(handler.name, "resolve", () =>
+						const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
 							resolver(relPath, gitRoot),
 						);
 
@@ -298,7 +297,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	private handleLine(line: string, commandContext: CheckPolicyCommandContext): void {
+	private async handleLine(
+		line: string,
+		commandContext: CheckPolicyCommandContext,
+	): Promise<void> {
 		const { exclusions, gitRoot, pathRegex } = commandContext;
 
 		const filePath = path.join(gitRoot, line).trim().replace(/\\/g, "/");
@@ -323,7 +325,11 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	}
 }
 
-function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
+async function runWithPerf<T>(
+	name: string,
+	action: policyAction,
+	run: () => Promise<T>,
+): Promise<T> {
 	const actionMap = handlerPerformanceData.get(action) ?? new Map<string, number>();
 	let dur = actionMap.get(name) ?? 0;
 
@@ -336,12 +342,16 @@ function runWithPerf<T>(name: string, action: policyAction, run: () => T): T {
 	return result;
 }
 
-function runPolicyCheck(commandContext: CheckPolicyCommandContext, fix: boolean): void {
+async function runPolicyCheck(
+	commandContext: CheckPolicyCommandContext,
+	fix: boolean,
+): Promise<void> {
 	const { gitRoot, handlers } = commandContext;
 	for (const h of handlers) {
 		const { final } = h;
 		if (final) {
-			const result = runWithPerf(h.name, "final", () => final(gitRoot, fix));
+			// eslint-disable-next-line no-await-in-loop
+			const result = await runWithPerf(h.name, "final", async () => final(gitRoot, fix));
 			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 			if (result?.error) {
 				throw new Error(result.error);
