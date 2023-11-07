@@ -1712,7 +1712,7 @@ importers:
       '@fluid-example/example-utils': link:../../utils/example-utils
       '@fluidframework/aqueduct': link:../../../packages/framework/aqueduct
       '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/ink': link:../../../experimental/dds/ink
+      '@fluidframework/ink': link:../../../packages/dds/ink
       react: 17.0.2
     devDependencies:
       '@fluid-tools/webpack-fluid-loader': link:../../../packages/tools/webpack-fluid-loader
@@ -5305,63 +5305,6 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  experimental/dds/ink:
-    specifiers:
-      '@fluid-tools/build-cli': ^0.26.1
-      '@fluidframework/build-common': ^2.0.3
-      '@fluidframework/build-tools': ^0.26.1
-      '@fluidframework/core-interfaces': workspace:~
-      '@fluidframework/datastore-definitions': workspace:~
-      '@fluidframework/driver-utils': workspace:~
-      '@fluidframework/eslint-config-fluid': ^3.0.0
-      '@fluidframework/ink-previous': npm:@fluidframework/ink@2.0.0-internal.7.1.0
-      '@fluidframework/mocha-test-setup': workspace:~
-      '@fluidframework/protocol-definitions': ^3.0.0
-      '@fluidframework/runtime-definitions': workspace:~
-      '@fluidframework/shared-object-base': workspace:~
-      '@fluidframework/test-runtime-utils': workspace:~
-      '@microsoft/api-extractor': ^7.37.0
-      '@types/mocha': ^9.1.1
-      c8: ^7.7.1
-      cross-env: ^7.0.3
-      eslint: ~8.50.0
-      mocha: ^10.2.0
-      mocha-json-output-reporter: ^2.0.1
-      mocha-multi-reporters: ^1.5.1
-      moment: ^2.21.0
-      prettier: ~3.0.3
-      rimraf: ^4.4.0
-      typescript: ~5.1.6
-      uuid: ^9.0.0
-    dependencies:
-      '@fluidframework/core-interfaces': link:../../../packages/common/core-interfaces
-      '@fluidframework/datastore-definitions': link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/driver-utils': link:../../../packages/loader/driver-utils
-      '@fluidframework/protocol-definitions': 3.0.0
-      '@fluidframework/runtime-definitions': link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/shared-object-base': link:../../../packages/dds/shared-object-base
-      uuid: 9.0.1
-    devDependencies:
-      '@fluid-tools/build-cli': 0.26.2_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/build-common': 2.0.3
-      '@fluidframework/build-tools': 0.26.2
-      '@fluidframework/eslint-config-fluid': 3.0.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/ink-previous': /@fluidframework/ink/2.0.0-internal.7.1.0
-      '@fluidframework/mocha-test-setup': link:../../../packages/test/mocha-test-setup
-      '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.0
-      '@types/mocha': 9.1.1
-      c8: 7.14.0
-      cross-env: 7.0.3
-      eslint: 8.50.0
-      mocha: 10.2.0
-      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
-      mocha-multi-reporters: 1.5.1_mocha@10.2.0
-      moment: 2.29.4
-      prettier: 3.0.3
-      rimraf: 4.4.1
-      typescript: 5.1.6
-
   experimental/dds/ot/ot:
     specifiers:
       '@fluid-internal/client-utils': workspace:~
@@ -6261,6 +6204,63 @@ importers:
       '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
+      c8: 7.14.0
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      mocha: 10.2.0
+      mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
+      mocha-multi-reporters: 1.5.1_mocha@10.2.0
+      moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
+  packages/dds/ink:
+    specifiers:
+      '@fluid-tools/build-cli': ^0.26.1
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': ^0.26.1
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/datastore-definitions': workspace:~
+      '@fluidframework/driver-utils': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.0.0
+      '@fluidframework/ink-previous': npm:@fluidframework/ink@2.0.0-internal.7.1.0
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/runtime-definitions': workspace:~
+      '@fluidframework/shared-object-base': workspace:~
+      '@fluidframework/test-runtime-utils': workspace:~
+      '@microsoft/api-extractor': ^7.37.0
+      '@types/mocha': ^9.1.1
+      c8: ^7.7.1
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      mocha-json-output-reporter: ^2.0.1
+      mocha-multi-reporters: ^1.5.1
+      moment: ^2.21.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
+      '@fluidframework/driver-utils': link:../../loader/driver-utils
+      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/runtime-definitions': link:../../runtime/runtime-definitions
+      '@fluidframework/shared-object-base': link:../shared-object-base
+      uuid: 9.0.1
+    devDependencies:
+      '@fluid-tools/build-cli': 0.26.2_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.26.2
+      '@fluidframework/eslint-config-fluid': 3.0.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/ink-previous': /@fluidframework/ink/2.0.0-internal.7.1.0
+      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
+      '@microsoft/api-extractor': 7.38.0
+      '@types/mocha': 9.1.1
       c8: 7.14.0
       cross-env: 7.0.3
       eslint: 8.50.0
@@ -9448,7 +9448,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/eslint-config-fluid': 3.0.0_loebgezstcsvd2poh2d55fifke
-      '@fluidframework/ink': link:../../../experimental/dds/ink
+      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/local-driver': link:../../drivers/local-driver
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
@@ -9578,7 +9578,7 @@ importers:
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/file-driver': link:../../drivers/file-driver
-      '@fluidframework/ink': link:../../../experimental/dds/ink
+      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/local-driver': link:../../drivers/local-driver
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
@@ -9878,7 +9878,7 @@ importers:
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/ink': link:../../../experimental/dds/ink
+      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/merge-tree': link:../../dds/merge-tree
@@ -10224,7 +10224,7 @@ importers:
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/driver-utils': link:../../loader/driver-utils
-      '@fluidframework/ink': link:../../../experimental/dds/ink
+      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
@@ -11002,7 +11002,7 @@ importers:
       '@fluidframework/datastore-definitions': link:../../runtime/datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/file-driver': link:../../drivers/file-driver
-      '@fluidframework/ink': link:../../../experimental/dds/ink
+      '@fluidframework/ink': link:../../dds/ink
       '@fluidframework/map': link:../../dds/map
       '@fluidframework/matrix': link:../../dds/matrix
       '@fluidframework/ordered-collection': link:../../dds/ordered-collection
