@@ -14,7 +14,7 @@ import {
 import { Client, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import {
 	ISharedTree,
-	ISharedTreeView,
+	ITreeCheckout,
 	ISharedTreeView2,
 	SharedTreeFactory,
 	TreeContent,
@@ -662,6 +662,6 @@ function selectTreeField(
 	return result;
 }
 
-function transactionsInProgress(tree: ISharedTreeView) {
+function transactionsInProgress(tree: ITreeCheckout) {
 	return tree.transaction.inProgress();
 }

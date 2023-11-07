@@ -16,7 +16,7 @@ import {
 	Context,
 } from "../feature-libraries";
 import { IDisposable, disposeSymbol } from "../util";
-import { ISharedTreeBranchView, ISharedTreeView } from "./sharedTreeView";
+import { ITreeCheckoutFork, ITreeCheckout } from "./sharedTreeView";
 import { TypedTreeView } from "./typedTree";
 
 /**
@@ -44,7 +44,7 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
 	 * @remarks
 	 * This is a non-owning reference: disposing of this view does not impact the branch.
 	 */
-	readonly branch: ISharedTreeView;
+	readonly branch: ITreeCheckout;
 
 	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
@@ -66,7 +66,7 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
  */
 export interface ISharedTreeBranchView2<in out TRoot extends TreeFieldSchema>
 	extends ISharedTreeView2<TRoot> {
-	readonly branch: ISharedTreeBranchView;
+	readonly branch: ITreeCheckoutFork;
 }
 
 /**
@@ -74,7 +74,7 @@ export interface ISharedTreeBranchView2<in out TRoot extends TreeFieldSchema>
  */
 export class SharedTreeView2<
 	in out TRoot extends TreeFieldSchema,
-	out TBranch extends ISharedTreeView = ISharedTreeView,
+	out TBranch extends ITreeCheckout = ITreeCheckout,
 > implements ISharedTreeView2<TRoot>
 {
 	public readonly context: Context;

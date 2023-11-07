@@ -57,7 +57,7 @@ import {
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
-import { SharedTreeView, ViewEvents, createSharedTreeView } from "./sharedTreeView";
+import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./sharedTreeView";
 import { ISharedTreeView2, SharedTreeView2 } from "./sharedTreeView2";
 
 /**
@@ -133,10 +133,10 @@ export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
-	private readonly _events: ISubscribable<ViewEvents> &
-		IEmitter<ViewEvents> &
-		HasListeners<ViewEvents>;
-	public readonly view: SharedTreeView;
+	private readonly _events: ISubscribable<CheckoutEvents> &
+		IEmitter<CheckoutEvents> &
+		HasListeners<CheckoutEvents>;
+	public readonly view: TreeCheckout;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 
 	/**
@@ -177,8 +177,8 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this._events = createEmitter<ViewEvents>();
-		this.view = createSharedTreeView({
+		this._events = createEmitter<CheckoutEvents>();
+		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.

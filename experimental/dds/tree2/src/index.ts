@@ -236,13 +236,13 @@ export {
 
 export {
 	ISharedTree,
-	ISharedTreeView,
+	ITreeCheckout,
 	ITransaction,
 	runSynchronous,
 	SharedTreeFactory,
 	SharedTreeOptions,
-	ISharedTreeBranchView,
-	ViewEvents,
+	ITreeCheckoutFork,
+	CheckoutEvents,
 	SchematizeConfiguration,
 	TreeContent,
 	InitializeAndSchematizeConfiguration,

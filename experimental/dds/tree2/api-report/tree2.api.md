@@ -193,6 +193,12 @@ export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<Val
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 // @alpha
+export interface CheckoutEvents {
+    afterBatch(): void;
+    revertible(revertible: Revertible): void;
+}
+
+// @alpha
 export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
 // @alpha
@@ -813,33 +819,14 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 }
 
 // @alpha
-export interface ISharedTreeBranchView extends ISharedTreeView {
-    rebaseOnto(view: ISharedTreeView): void;
-}
-
-// @alpha
 export interface ISharedTreeBranchView2<in out TRoot extends TreeFieldSchema> extends ISharedTreeView2<TRoot> {
     // (undocumented)
-    readonly branch: ISharedTreeBranchView;
-}
-
-// @alpha
-export interface ISharedTreeView extends AnchorLocator {
-    readonly editor: IDefaultEditBuilder;
-    readonly events: ISubscribable<ViewEvents>;
-    readonly forest: IForestSubscription;
-    fork(): ISharedTreeBranchView;
-    merge(view: ISharedTreeBranchView): void;
-    merge(view: ISharedTreeBranchView, disposeView: boolean): void;
-    rebase(view: ISharedTreeBranchView): void;
-    readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-    readonly storedSchema: StoredSchemaRepository;
-    readonly transaction: ITransaction;
+    readonly branch: ITreeCheckoutFork;
 }
 
 // @alpha
 export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema> extends IDisposable, TypedTreeView<TRoot> {
-    readonly branch: ISharedTreeView;
+    readonly branch: ITreeCheckout;
     readonly context: TreeContext;
     readonly editableTree: TypedField<TRoot>;
     fork(): ISharedTreeBranchView2<TRoot>;
@@ -859,6 +846,25 @@ export interface ITransaction {
     commit(): TransactionResult.Commit;
     inProgress(): boolean;
     start(): void;
+}
+
+// @alpha
+export interface ITreeCheckout extends AnchorLocator {
+    readonly editor: IDefaultEditBuilder;
+    readonly events: ISubscribable<CheckoutEvents>;
+    readonly forest: IForestSubscription;
+    fork(): ITreeCheckoutFork;
+    merge(view: ITreeCheckoutFork): void;
+    merge(view: ITreeCheckoutFork, disposeView: boolean): void;
+    rebase(view: ITreeCheckoutFork): void;
+    readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
+    readonly storedSchema: StoredSchemaRepository;
+    readonly transaction: ITransaction;
+}
+
+// @alpha
+export interface ITreeCheckoutFork extends ITreeCheckout {
+    rebaseOnto(view: ITreeCheckout): void;
 }
 
 // @alpha
@@ -1467,7 +1473,7 @@ export const rootField: DetachedField;
 export const rootFieldKey: FieldKey;
 
 // @alpha
-export function runSynchronous(view: ISharedTreeView, transaction: (view: ISharedTreeView) => TransactionResult | void): TransactionResult;
+export function runSynchronous(view: ITreeCheckout, transaction: (view: ITreeCheckout) => TransactionResult | void): TransactionResult;
 
 declare namespace SchemaAware {
     export {
@@ -2146,12 +2152,6 @@ type ValuesOf<T> = T[keyof T];
 
 // @alpha
 export const valueSymbol: unique symbol;
-
-// @alpha
-export interface ViewEvents {
-    afterBatch(): void;
-    revertible(revertible: Revertible): void;
-}
 
 // @alpha
 type WithDefault<T, Default> = T extends undefined ? Default : unknown extends T ? Default : T;

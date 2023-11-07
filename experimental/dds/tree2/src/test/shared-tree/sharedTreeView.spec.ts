@@ -4,7 +4,7 @@
  */
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { ISharedTreeView, TreeContent } from "../../shared-tree";
+import { ITreeCheckout, TreeContent } from "../../shared-tree";
 import { leaf, SchemaBuilder } from "../../domains";
 import {
 	TestTreeProviderLite,
@@ -364,7 +364,7 @@ describe("sharedTreeView", () => {
 				nodeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
-			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
+			function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
 				return t.storedSchema.nodeSchema.size === 0 ? "schemaA" : "schemaB";
 			}
 
@@ -570,14 +570,14 @@ describe("sharedTreeView", () => {
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link getTestValue} to read the value.
  */
-function insertFirstNode(branch: ISharedTreeView, value: ContextuallyTypedNodeData): void {
+function insertFirstNode(branch: ITreeCheckout, value: ContextuallyTypedNodeData): void {
 	insert(branch, 0, value);
 }
 
 /**
  * Reads the last value added by {@link insertFirstNode} if it exists.
  */
-function getTestValue({ forest }: ISharedTreeView): TreeValue | undefined {
+function getTestValue({ forest }: ITreeCheckout): TreeValue | undefined {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (!readCursor.firstNode()) {
@@ -592,7 +592,7 @@ function getTestValue({ forest }: ISharedTreeView): TreeValue | undefined {
 /**
  * Reads all values in a tree set by {@link insertFirstNode} in the order they were added (which is the reverse of the tree order).
  */
-function getTestValues({ forest }: ISharedTreeView): Value[] {
+function getTestValues({ forest }: ITreeCheckout): Value[] {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	const values: Value[] = [];
@@ -614,7 +614,7 @@ function getTestValues({ forest }: ISharedTreeView): Value[] {
  * TODO: users of this are making schema: one has been provided that might be close, but likely isn't fully correct..
  * TODO: users of this doesn't depend on SharedTree directly and should be moved to tests of SharedTreeView.
  */
-function itView(title: string, fn: (view: ISharedTreeView) => void): void {
+function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	const content: TreeContent = {
 		schema: jsonSequenceRootSchema,
 		initialTree: [],

@@ -33,11 +33,11 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ISharedTree,
-	ISharedTreeView,
+	ITreeCheckout,
 	SharedTreeFactory,
 	TreeContent,
-	ViewEvents,
-	createSharedTreeView,
+	CheckoutEvents,
+	createTreeCheckout,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
 	ISharedTreeBranchView,
@@ -520,7 +520,7 @@ export function noRepair(): Delta.ProtoNode[] {
 	assert.fail("Unexpected request for repair data");
 }
 
-export function validateTree(tree: ISharedTreeView, expected: JsonableTree[]): void {
+export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): void {
 	const actual = toJsonableTree(tree);
 	assert.deepEqual(actual, expected);
 }
@@ -548,7 +548,7 @@ function contentToJsonableTree(content: TreeContent): JsonableTree[] {
 	).map(jsonableTreeFromCursor);
 }
 
-export function validateTreeContent(tree: ISharedTreeView, content: TreeContent): void {
+export function validateTreeContent(tree: ITreeCheckout, content: TreeContent): void {
 	assert.deepEqual(toJsonableTree(tree), contentToJsonableTree(content));
 	expectSchemaEqual(tree.storedSchema, content.schema);
 }
@@ -566,8 +566,8 @@ export function expectSchemaEqual(
 }
 
 export function validateViewConsistency(
-	treeA: ISharedTreeView,
-	treeB: ISharedTreeView,
+	treeA: ITreeCheckout,
+	treeB: ITreeCheckout,
 	idDifferentiator: string | undefined = undefined,
 ): void {
 	validateSnapshotConsistency(
@@ -593,22 +593,26 @@ export function validateSnapshotConsistency(
 export function viewWithContent(
 	content: TreeContent,
 	args?: {
-		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+		events?: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
 	},
-): ISharedTreeView {
+): ITreeCheckout {
 	return view2WithContent(content, args).branch;
 }
 
 export function view2WithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
-		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+		events?: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
 	},
 ): ISharedTreeView2<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createSharedTreeView({
+	const view = createTreeCheckout({
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
@@ -639,11 +643,13 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 	args?: {
 		nodeKeyManager?: NodeKeyManager;
 		nodeKeyFieldKey?: FieldKey;
-		events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+		events?: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>;
 	},
 ): TypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const branch = createSharedTreeView({
+	const branch = createTreeCheckout({
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
@@ -688,7 +694,7 @@ export const emptyStringSequenceConfig = {
  *
  * If the root is not an array, a single item root sequence is used.
  */
-export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ISharedTreeView {
+export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ITreeCheckout {
 	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
 	const tree = viewWithContent({
 		schema: jsonSequenceRootSchema,
@@ -697,14 +703,14 @@ export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): IShar
 	return tree;
 }
 
-export function toJsonableTree(tree: ISharedTreeView): JsonableTree[] {
+export function toJsonableTree(tree: ITreeCheckout): JsonableTree[] {
 	return jsonableTreeFromForest(tree.forest);
 }
 
 /**
  * Assumes `tree` is in the json domain and returns its content as a json compatible object.
  */
-export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
+export function toJsonTree(tree: ITreeCheckout): JsonCompatible[] {
 	const readCursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, readCursor);
 	const copy = mapCursorField(readCursor, cursorToJsonObject);
@@ -722,7 +728,7 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
  * @param value - The value of the inserted nodes.
  */
 export function insert(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	index: number,
 	...values: ContextuallyTypedNodeData[]
 ): void {
@@ -735,13 +741,13 @@ export function insert(
 	fieldEditor.insert(index, content);
 }
 
-export function remove(tree: ISharedTreeView, index: number, count: number): void {
+export function remove(tree: ITreeCheckout, index: number, count: number): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
 	field.delete(index, count);
 }
 
 export function expectJsonTree(
-	actual: ISharedTreeView | ISharedTreeView[],
+	actual: ITreeCheckout | ITreeCheckout[],
 	expected: JsonCompatible[],
 ): void {
 	const trees = Array.isArray(actual) ? actual : [actual];
@@ -756,7 +762,7 @@ export function expectJsonTree(
  */
 // TODO: replace use of this with initialize or schematize, and/or move them out of this file and use viewWithContent
 export function initializeTestTree(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	state: JsonableTree | JsonableTree[] | undefined,
 	schema: TreeStoredSchema = wrongSchema,
 ): void {
@@ -955,7 +961,7 @@ export function announceTestDelta(
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
-export function createTestUndoRedoStacks(view: ISharedTreeBranchView | ISharedTreeView): {
+export function createTestUndoRedoStacks(view: ISharedTreeBranchView | ITreeCheckout): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;

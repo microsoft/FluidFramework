@@ -7,7 +7,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand } from "../../util";
 import {
 	ISharedTree,
-	ISharedTreeView,
+	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
 	runSynchronous,
@@ -51,7 +51,7 @@ function generateCompleteTree(
 }
 
 function generateTreeRecursively(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	parent: UpPath | undefined,
 	fieldKeys: FieldKey[],
 	height: number,

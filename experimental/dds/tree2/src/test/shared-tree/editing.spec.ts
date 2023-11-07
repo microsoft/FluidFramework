@@ -27,7 +27,7 @@ import {
 	expectJsonTree,
 	createTestUndoRedoStacks,
 } from "../utils";
-import { ISharedTreeView } from "../../shared-tree";
+import { ITreeCheckout } from "../../shared-tree";
 import { singleTextCursor } from "../../feature-libraries";
 
 const rootField: FieldUpPath = {
@@ -1615,10 +1615,10 @@ describe("Editing", () => {
 				return buildScenariosWithPrefix();
 			}
 
-			const delAction = (peer: ISharedTreeView, idx: number) => remove(peer, idx, 1);
+			const delAction = (peer: ITreeCheckout, idx: number) => remove(peer, idx, 1);
 			const srcField: FieldUpPath = rootField;
 			const dstField: FieldUpPath = { parent: undefined, field: brand("dst") };
-			const moveAction = (peer: ISharedTreeView, idx: number) =>
+			const moveAction = (peer: ITreeCheckout, idx: number) =>
 				peer.editor.move(srcField, idx, 1, dstField, 0);
 
 			/**

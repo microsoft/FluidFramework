@@ -40,7 +40,7 @@ import {
 import {
 	ForestType,
 	ISharedTree,
-	ISharedTreeView,
+	ITreeCheckout,
 	ISharedTreeView2,
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
@@ -732,7 +732,7 @@ describe("SharedTree", () => {
 			assert.equal(tree2.content, 43);
 		});
 
-		function abortTransaction(branch: ISharedTreeView): void {
+		function abortTransaction(branch: ITreeCheckout): void {
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
@@ -1514,7 +1514,7 @@ function assertSchema<TRoot extends TreeFieldSchema>(
  * TODO: users of this are making schema: one has been provided that might be close, but likely isn't fully correct..
  * TODO: users of this doesn't depend on SharedTree directly and should be moved to tests of SharedTreeView.
  */
-function itView(title: string, fn: (view: ISharedTreeView) => void): void {
+function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	const content: TreeContent = {
 		schema: jsonSequenceRootSchema,
 		initialTree: [],

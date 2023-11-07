@@ -11,7 +11,7 @@ import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import {
 	ISharedTree,
-	ISharedTreeView,
+	ITreeCheckout,
 	ISharedTreeView2,
 	SharedTreeFactory,
 } from "../../../shared-tree";
@@ -221,7 +221,7 @@ function applyOptionalFieldEdit(
 	}
 }
 
-export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransactionType): void {
+export function applyTransactionEdit(tree: ITreeCheckout, contents: FuzzTransactionType): void {
 	switch (contents.fuzzType) {
 		case "transactionStart": {
 			tree.transaction.start();
