@@ -7,7 +7,7 @@ import {
 	IRandom,
 	makeRandom,
 	SpaceEfficientWordMarkovChain,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	createAlphabetFromUnicodeRange,
 	getRandomEnglishString,

@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AsyncReducer, combineReducers } from "@fluid-internal/stochastic-test-utils";
+import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { DownPath, TreeField, TreeNode, singleTextCursor } from "../../../feature-libraries";
 import { fail } from "../../../util";
