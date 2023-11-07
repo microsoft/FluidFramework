@@ -218,7 +218,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		commandContext: CheckPolicyCommandContext,
 	): Promise<void> {
 		try {
-			pathsToCheck.map(async (line: string) => this.handleLine(line, commandContext));
+			pathsToCheck.map(async (pathToCheck: string) =>
+				this.checkOrExcludeFile(pathToCheck, commandContext),
+			);
 		} finally {
 			try {
 				await runPolicyCheck(commandContext, this.flags.fix);
@@ -297,28 +299,32 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 	}
 
-	private async handleLine(
-		line: string,
+	/**
+	 * Given a string that represents a path to a file in the repo, determines if the file should be checked, and if so,
+	 * routes the file to the appropriate handlers.
+	 */
+	private async checkOrExcludeFile(
+		inputPath: string,
 		commandContext: CheckPolicyCommandContext,
 	): Promise<void> {
 		const { exclusions, gitRoot, pathRegex } = commandContext;
 
-		const filePath = path.join(gitRoot, line).trim().replace(/\\/g, "/");
+		const filePath = path.join(gitRoot, inputPath).trim().replace(/\\/g, "/");
 
-		if (!pathRegex.test(line) || !fs.existsSync(filePath)) {
+		if (!pathRegex.test(inputPath) || !fs.existsSync(filePath)) {
 			return;
 		}
 
 		this.count++;
-		if (!exclusions.every((value) => !value.test(line))) {
-			this.verbose(`Excluded all handlers: ${line}`);
+		if (!exclusions.every((value) => !value.test(inputPath))) {
+			this.verbose(`Excluded all handlers: ${inputPath}`);
 			return;
 		}
 
 		try {
 			this.routeToHandlers(filePath, commandContext);
 		} catch (error: unknown) {
-			throw new Error(`Line error: ${error}`);
+			throw new Error(`Error routing ${filePath} to handler: ${error}`);
 		}
 
 		this.processed++;
