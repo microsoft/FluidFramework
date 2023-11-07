@@ -20,7 +20,7 @@ import {
 	IGarbageCollectorConfigs,
 	disableTombstoneKey,
 	throwOnTombstoneUsageKey,
-	throwOnTombstoneLoadKey,
+	throwOnTombstoneLoadOverrideKey,
 	runSweepKey,
 	GCFeatureMatrix,
 } from "./gcDefinitions";
@@ -463,7 +463,7 @@ export function sendGCUnexpectedUsageEvent(
 	event.tombstoneFlags = JSON.stringify({
 		DisableTombstone: mc.config.getBoolean(disableTombstoneKey),
 		ThrowOnTombstoneUsage: mc.config.getBoolean(throwOnTombstoneUsageKey),
-		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadKey),
+		ThrowOnTombstoneLoad: mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
 	});
 	event.sweepFlags = JSON.stringify({
 		EnableSweepFlag: mc.config.getBoolean(runSweepKey),
