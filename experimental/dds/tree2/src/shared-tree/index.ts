@@ -19,7 +19,7 @@ export {
 	CheckoutEvents,
 	ITransaction,
 	ITreeCheckoutFork,
-} from "./sharedTreeView";
+} from "./treeCheckout";
 
 export {
 	SchematizeConfiguration,
@@ -30,4 +30,4 @@ export {
 
 export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel, TypedTreeView } from "./typedTree";
 
-export { ITreeView, TreeView, ITreeViewFork } from "./sharedTreeView2";
+export { ITreeView, TreeView, ITreeViewFork } from "./treeView";

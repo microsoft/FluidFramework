@@ -16,7 +16,7 @@ import {
 	Context,
 } from "../feature-libraries";
 import { IDisposable, disposeSymbol } from "../util";
-import { ITreeCheckoutFork, ITreeCheckout } from "./sharedTreeView";
+import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout";
 import { TypedTreeView } from "./typedTree";
 
 /**
