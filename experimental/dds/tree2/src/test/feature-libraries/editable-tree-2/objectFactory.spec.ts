@@ -263,7 +263,8 @@ describe("SharedTreeObject factories", () => {
 
 		/**
 		 * Defines the structure of a combo tree.
-		 * @example A layout of
+		 * @example
+		 * A layout of
 		 * ```json
 		 * { "root": "list", "parent": "object", "child": "map" }
 		 * ```
