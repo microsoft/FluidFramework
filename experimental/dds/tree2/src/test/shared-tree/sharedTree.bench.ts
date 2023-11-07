@@ -22,7 +22,7 @@ import {
 	view2WithContent,
 	viewWithContent,
 } from "../utils";
-import { ISharedTreeView2 } from "../../shared-tree";
+import { ITreeView } from "../../shared-tree";
 import { rootFieldKey } from "../../core";
 import {
 	deepPath,
@@ -141,7 +141,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTreeView2<typeof deepSchema.rootFieldSchema>;
+			let tree: ITreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
@@ -156,7 +156,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTreeView2<typeof wideSchema.rootFieldSchema>;
+			let tree: ITreeView<typeof wideSchema.rootFieldSchema>;
 			let expected = 0;
 			benchmark({
 				type: benchmarkType,
@@ -181,7 +181,7 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("EditableTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTreeView2<typeof deepSchema.rootFieldSchema>;
+			let tree: ITreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
@@ -196,7 +196,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTreeView2<typeof wideSchema.rootFieldSchema>;
+			let tree: ITreeView<typeof wideSchema.rootFieldSchema>;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,

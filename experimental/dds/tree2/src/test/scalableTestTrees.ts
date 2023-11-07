@@ -6,7 +6,7 @@ import { strict as assert } from "assert";
 import { FieldKinds, TreeFieldSchema, SchemaAware, typeNameSymbol } from "../feature-libraries";
 import { leaf, jsonSchema, SchemaBuilder } from "../domains";
 import { brand, requireAssignableTo } from "../util";
-import { ISharedTreeView2, TreeContent } from "../shared-tree";
+import { ITreeView, TreeContent } from "../shared-tree";
 import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
 
 /**
@@ -158,14 +158,14 @@ export function readWideTreeAsJSObject(tree: JSWideTree): { nodesCount: number; 
 	return { nodesCount: nodes.length, sum };
 }
 
-export function readWideCursorTree(tree: ISharedTreeView2<typeof wideSchema.rootFieldSchema>): {
+export function readWideCursorTree(tree: ITreeView<typeof wideSchema.rootFieldSchema>): {
 	nodesCount: number;
 	sum: number;
 } {
 	let nodesCount = 0;
 	let sum = 0;
-	const readCursor = tree.branch.forest.allocateCursor();
-	moveToDetachedField(tree.branch.forest, readCursor);
+	const readCursor = tree.checkout.forest.allocateCursor();
+	moveToDetachedField(tree.checkout.forest, readCursor);
 	assert(readCursor.firstNode());
 	readCursor.firstField();
 	for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
@@ -176,14 +176,14 @@ export function readWideCursorTree(tree: ISharedTreeView2<typeof wideSchema.root
 	return { nodesCount, sum };
 }
 
-export function readDeepCursorTree(tree: ISharedTreeView2<typeof deepSchema.rootFieldSchema>): {
+export function readDeepCursorTree(tree: ITreeView<typeof deepSchema.rootFieldSchema>): {
 	depth: number;
 	value: number;
 } {
 	let depth = 0;
 	let value = 0;
-	const readCursor = tree.branch.forest.allocateCursor();
-	moveToDetachedField(tree.branch.forest, readCursor);
+	const readCursor = tree.checkout.forest.allocateCursor();
+	moveToDetachedField(tree.checkout.forest, readCursor);
 	assert(readCursor.firstNode());
 	while (readCursor.firstField()) {
 		readCursor.firstNode();
@@ -233,7 +233,7 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideEditableTree(tree: ISharedTreeView2<typeof wideSchema.rootFieldSchema>): {
+export function readWideEditableTree(tree: ITreeView<typeof wideSchema.rootFieldSchema>): {
 	nodesCount: number;
 	sum: number;
 } {
@@ -249,7 +249,7 @@ export function readWideEditableTree(tree: ISharedTreeView2<typeof wideSchema.ro
 	return { nodesCount, sum };
 }
 
-export function readDeepEditableTree(tree: ISharedTreeView2<typeof deepSchema.rootFieldSchema>): {
+export function readDeepEditableTree(tree: ITreeView<typeof deepSchema.rootFieldSchema>): {
 	depth: number;
 	value: number;
 } {
