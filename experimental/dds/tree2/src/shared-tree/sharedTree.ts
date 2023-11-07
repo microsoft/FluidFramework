@@ -49,7 +49,7 @@ import {
 	normalizeNewFieldContent,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
-import { JsonCompatibleReadOnly, brand, fail } from "../util";
+import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import { type TypedTreeChannel } from "./typedTree";
 import {
 	InitializeAndSchematizeConfiguration,
@@ -139,6 +139,15 @@ export class SharedTree
 	public readonly view: SharedTreeView;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 
+	/**
+	 * Creating multiple editable tree contexts with a single AnchorSet does not work due to have TreeNode caching works.
+	 * This flag is used to detect and error on the easy ways to accidentally do this.
+	 *
+	 * TODO:
+	 * 1. API docs need to reflect this limitation or the limitation has to be removed.
+	 */
+	private hasView2 = false;
+
 	public constructor(
 		id: string,
 		runtime: IFluidDataStoreRuntime,
@@ -186,6 +195,8 @@ export class SharedTree
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): SharedTreeView2<TRoot> | undefined {
+		assert(this.hasView2 === false, "Cannot create second view from tree.");
+
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
 		const compatibility = viewSchema.checkCompatibility(this.storedSchema);
 		if (
@@ -195,12 +206,24 @@ export class SharedTree
 			return undefined;
 		}
 
+		this.hasView2 = true;
+		const view2 = new SharedTreeView2(
+			this.view,
+			schema,
+			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
+			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
+			() => {
+				assert(this.hasView2, "unexpected dispose");
+				this.hasView2 = false;
+			},
+		);
 		const onSchemaChange = () => {
 			const compatibilityInner = viewSchema.checkCompatibility(this.storedSchema);
 			if (
 				compatibilityInner.write !== Compatibility.Compatible ||
 				compatibilityInner.read !== Compatibility.Compatible
 			) {
+				view2[disposeSymbol]();
 				onSchemaIncompatible();
 				return false;
 			} else {
@@ -209,13 +232,7 @@ export class SharedTree
 		};
 
 		afterSchemaChanges(this._events, this.storedSchema, onSchemaChange);
-
-		return new SharedTreeView2(
-			this.view,
-			schema,
-			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
-			nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
-		);
+		return view2;
 	}
 
 	public contentSnapshot(): SharedTreeContentSnapshot {
@@ -236,6 +253,7 @@ export class SharedTree
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
 	): SharedTreeView2<TRoot> {
+		assert(this.hasView2 === false, "Cannot create second view from tree.");
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.
 		// This will improve support for readonly documents, cross version collaboration and attribution.
