@@ -947,6 +947,56 @@ describe("SharedTree", () => {
 			unsubscribe();
 		});
 
+		it("inserts of multiple nodes in a sequence field", () => {
+			const value = "42";
+			const value2 = "43";
+			const value3 = "44";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).branch;
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
+			provider.processMessages();
+			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).branch;
+			provider.processMessages();
+
+			// Insert node
+			insertFirstNode(tree1, value3);
+			insertFirstNode(tree1, value2);
+			insertFirstNode(tree1, value);
+			provider.processMessages();
+
+			// Validate insertion
+			validateRootField(tree2, [value, value2, value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			validateRootField(tree1, [value2, value3]);
+			validateRootField(tree2, [value2, value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			validateRootField(tree1, [value3]);
+			validateRootField(tree2, [value3]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			validateRootField(tree1, []);
+			validateRootField(tree2, []);
+
+			// Redo node insertion
+			redoStack.pop()?.revert();
+			provider.processMessages();
+
+			validateRootField(tree1, [value3]);
+			validateRootField(tree2, [value3]);
+			unsubscribe();
+		});
+
 		it("rebased edits", () => {
 			const provider = new TestTreeProviderLite(2);
 			const content: InitializeAndSchematizeConfiguration = {
