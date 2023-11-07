@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ISharedObject } from "@fluidframework/shared-object-base";
+import { assert } from "@fluidframework/core-utils";
 import { ICodecOptions, noopValidator } from "../codec";
 import {
 	Compatibility,
@@ -21,6 +22,7 @@ import {
 	TreeStoredSchema,
 	makeDetachedFieldIndex,
 	moveToDetachedField,
+	rootFieldKey,
 	schemaDataIsEmpty,
 } from "../core";
 import { SharedTreeCore } from "../shared-tree-core";
@@ -43,6 +45,8 @@ import {
 	TreeSchema,
 	ViewSchema,
 	NodeKeyManager,
+	FieldKinds,
+	normalizeNewFieldContent,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, fail } from "../util";
@@ -148,7 +152,7 @@ export class SharedTree
 			options.forest === ForestType.Optimized
 				? buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy))
 				: buildForest();
-		const removedTrees = makeDetachedFieldIndex("repair");
+		const removedTrees = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
 		const forestSummarizer = new ForestSummarizer(forest);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
@@ -239,9 +243,34 @@ export class SharedTree
 		// Check for empty.
 		if (this.view.forest.isEmpty && schemaDataIsEmpty(this.storedSchema)) {
 			this.view.transaction.start();
-			initializeContent(this.storedSchema, config.schema, () =>
-				this.view.setContent(config.initialTree),
-			);
+			initializeContent(this.storedSchema, config.schema, () => {
+				const field = { field: rootFieldKey, parent: undefined };
+				const content = normalizeNewFieldContent(
+					{ schema: this.storedSchema },
+					this.storedSchema.rootFieldSchema,
+					config.initialTree,
+				);
+				switch (this.storedSchema.rootFieldSchema.kind.identifier) {
+					case FieldKinds.optional.identifier: {
+						const fieldEditor = this.editor.optionalField(field);
+						assert(
+							content.length <= 1,
+							"optional field content should normalize at most one item",
+						);
+						fieldEditor.set(content.length === 0 ? undefined : content[0], true);
+						break;
+					}
+					case FieldKinds.sequence.identifier: {
+						const fieldEditor = this.editor.sequenceField(field);
+						// TODO: should do an idempotent edit here.
+						fieldEditor.insert(0, content);
+						break;
+					}
+					default: {
+						fail("unexpected root field kind during initialize");
+					}
+				}
+			});
 			this.view.transaction.commit();
 		}
 

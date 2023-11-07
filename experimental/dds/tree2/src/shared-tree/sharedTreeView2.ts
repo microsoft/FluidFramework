@@ -31,7 +31,7 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
 	extends IDisposable,
 		TypedTreeView<TRoot> {
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
+	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView2.editableTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.
@@ -50,6 +50,12 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
 	 * Get a typed view of the tree content using the editable-tree-2 API.
 	 */
 	readonly editableTree: TypedField<TRoot>;
+
+	/**
+	 * Spawn a new view which is based off of the current state of this view.
+	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
+	 */
+	fork(): ISharedTreeView2<TRoot>;
 }
 
 /**
@@ -82,5 +88,10 @@ export class SharedTreeView2<in out TRoot extends TreeFieldSchema>
 
 	public get root(): ProxyField<TRoot> {
 		return getProxyForField(this.editableTree);
+	}
+
+	public fork(): ISharedTreeView2<TRoot> {
+		const branch = this.branch.fork();
+		return new SharedTreeView2(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
 	}
 }

@@ -75,21 +75,13 @@ export const sequenceFieldEditor = {
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
 		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
 
-	revive: (
-		index: number,
-		count: number,
-		detachEvent: CellId,
-		isIntention: boolean = false,
-	): Changeset<never> => {
+	revive: (index: number, count: number, detachEvent: CellId): Changeset<never> => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
 			count,
 			cellId: detachEvent,
 		};
-		if (!isIntention) {
-			mark.inverseOf = detachEvent.revision;
-		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
 

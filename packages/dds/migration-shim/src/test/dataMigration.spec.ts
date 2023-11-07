@@ -32,7 +32,7 @@ import {
 	SchemaBuilder,
 	SharedTreeFactory,
 	type Typed,
-	type ISharedTreeView,
+	type ISharedTreeView2,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
@@ -108,14 +108,14 @@ const inventorySchema = builder.object("abcInventory", {
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
-function getNewTreeView(tree: ISharedTree): ISharedTreeView {
+function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof inventoryFieldSchema> {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
-	}).branch;
+	});
 }
 
 describeNoCompat("HotSwap", (getTestObjectProvider) => {
@@ -270,8 +270,8 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 
 		const view1 = getNewTreeView(tree1);
 		const view2 = getNewTreeView(tree2);
-		const treeNode1 = view1.root as unknown as Typed<typeof inventorySchema>;
-		const treeNode2 = view2.root as unknown as Typed<typeof inventorySchema>;
+		const treeNode1: Typed<typeof inventorySchema> = view1.editableTree.content;
+		const treeNode2: Typed<typeof inventorySchema> = view2.editableTree.content;
 
 		// Validate migrated values of the old tree match the new tree
 		const migratedValue1 = treeNode1.quantity;
