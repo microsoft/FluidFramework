@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { AsyncGenerator, takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
 	DDSFuzzTestState,

@@ -10,7 +10,7 @@ import {
 	IRandom,
 	createWeightedGenerator,
 	BaseFuzzTestState,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import { ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { brand, fail } from "../../../util";

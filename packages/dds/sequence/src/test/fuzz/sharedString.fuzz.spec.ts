@@ -7,7 +7,7 @@ import {
 	createWeightedAsyncGenerator as createWeightedGenerator,
 	AsyncGenerator as Generator,
 	takeAsync as take,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import {

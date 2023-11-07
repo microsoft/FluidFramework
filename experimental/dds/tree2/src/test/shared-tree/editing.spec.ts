@@ -1704,6 +1704,8 @@ describe("Editing", () => {
 			const startState = makeArray(nbNodes, (n) => `N${n}`);
 			const scenarios = buildScenarios();
 
+			// Increased timeout because the default in CI is 2s but this test fixture naturally takes ~1.9s and was
+			// timing out frequently
 			outerFixture("All Scenarios", () => {
 				for (const scenario of scenarios) {
 					if (testRemoveRevive) {
@@ -1713,7 +1715,7 @@ describe("Editing", () => {
 						runScenario(scenario, true);
 					}
 				}
-			});
+			}).timeout(5000);
 		});
 	});
 

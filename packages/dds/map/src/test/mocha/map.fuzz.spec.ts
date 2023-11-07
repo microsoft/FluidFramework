@@ -13,7 +13,7 @@ import {
 	AsyncGenerator,
 	Generator,
 	takeAsync,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { MapFactory } from "../../map";
 import { ISharedMap } from "../../interfaces";
