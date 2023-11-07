@@ -137,6 +137,14 @@ const generateHelpSection = (includeHeading) => {
 };
 
 /**
+ * Generats simple Markdown contents indicating that the associated package is experimental.
+ */
+const generateExperimentalPackageNotice = () => {
+	const rawContents = readTemplate("Experimental-Package-Notice-Template.md");
+	return formattedSectionText(rawContents, undefined);
+};
+
+/**
  * Gets the package.json metadata from the optionally provided file path, expressed relative
  * to the path of the document being modified.
  *
@@ -210,6 +218,8 @@ function includeTransform(content, options, config) {
  * @param {object} options - Transform options.
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
+ * @param {"TRUE" | "FALSE" | undefined} options.experimentalPackage - (optional) Whether or not to include a notice indicating that the package is experimental.
+ * Default: `FALSE`
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
@@ -238,6 +248,11 @@ function libraryPackageReadmeTransform(content, options, config) {
 	const packageName = packageMetadata.name;
 
 	const sections = [];
+
+	if (options.experimentalPackage === "TRUE") {
+		sections.push(generateExperimentalPackageNotice());
+	}
+
 	if (options.installation !== "FALSE") {
 		sections.push(
 			generateDependencyGuidelines(true),
@@ -498,6 +513,18 @@ module.exports = {
 		 * ```
 		 */
 		README_EXAMPLE_GETTING_STARTED_SECTION: readmeExampleGettingStartedSectionTransform,
+
+		/**
+		 * See {@link generateExperimentalPackageNotice}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_EXPERIMENTAL_PACKAGE_NOTICE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_EXPERIMENTAL_PACKAGE_NOTICE: generateExperimentalPackageNotice,
 
 		/**
 		 * See {@link readmeApiDocsSectionTransform}.

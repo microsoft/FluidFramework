@@ -1,7 +1,10 @@
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:packageJsonPath=./package.json&devDependency=TRUE&scripts=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:packageJsonPath=./package.json&devDependency=TRUE&scripts=TRUE&experimentalPackage=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+**Note: this package is experimental; its APIs may change without notice.**
+**It is not recommended for production scenarios.**
 
 ## Using Fluid Framework libraries
 
