@@ -156,7 +156,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		return this[cursorSymbol].getFieldLength();
 	}
 
-	public at(index: number): UnboxNodeUnion<TTypes> {
+	public atIndex(index: number): UnboxNodeUnion<TTypes> {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
@@ -238,6 +238,23 @@ export class LazySequence<TTypes extends AllowedTypes>
 		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
 	}
 
+	public at(index: number): UnboxNodeUnion<TTypes> | undefined {
+		// The logic here follows what Array.prototype.at does to handle any kind of index at runtime.
+		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at for details.
+		let finalIndex = Math.trunc(+index);
+		if (isNaN(finalIndex)) {
+			finalIndex = 0;
+		}
+		if (finalIndex < -this.length || finalIndex >= this.length) {
+			return undefined;
+		}
+		if (finalIndex < 0) {
+			finalIndex = finalIndex + this.length;
+		}
+		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
+			unboxedUnion(this.context, this.schema, cursor),
+		);
+	}
 	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
 		return this.map((x) => x);
 	}
@@ -395,7 +412,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	public get content(): UnboxNodeUnion<TTypes> {
-		return this.at(0);
+		return this.atIndex(0);
 	}
 
 	public set content(newContent: FlexibleNodeContent<TTypes>) {
@@ -432,7 +449,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 
 	public get content(): UnboxNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.at(0);
+		return this.length === 0 ? undefined : this.atIndex(0);
 	}
 
 	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {

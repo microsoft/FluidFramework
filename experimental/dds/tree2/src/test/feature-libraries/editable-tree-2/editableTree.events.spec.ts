@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { FieldKinds } from "../../../feature-libraries";
-import { ForestType, TypedTreeFactory } from "../../../shared-tree";
+import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
 
@@ -26,10 +26,9 @@ describe("beforeChange/afterChange events", () => {
 		myNumberSequence: SchemaBuilder.sequence(leaf.number),
 	});
 	const schema = builder.intoSchema(SchemaBuilder.field(FieldKinds.required, myNodeSchema));
-	const factory = new TypedTreeFactory({
+	const factory = new SharedTreeFactory({
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,
-		subtype: "test",
 	});
 
 	it("fire the expected number of times", () => {
@@ -43,7 +42,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let rootBeforeChangeCount = 0;
 		let rootAfterChangeCount = 0;
@@ -151,7 +150,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
@@ -207,7 +206,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;
@@ -280,7 +279,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let beforeHasFired = false;
 		let afterHasFired = false;
@@ -329,7 +328,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let totalListenerCalls = 0;
 
@@ -357,7 +356,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		const newNumber = 20;
 
@@ -387,7 +386,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 		let totalListenerCalls = 0;
 		const newString = "John";
 
@@ -415,7 +414,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let totalListenerCalls = 0;
 
@@ -477,7 +476,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let totalListenerCalls = 0;
 
@@ -517,7 +516,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let totalListenerCalls = 0;
 
@@ -589,7 +588,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
@@ -619,7 +618,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;

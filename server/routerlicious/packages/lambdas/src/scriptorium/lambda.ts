@@ -259,7 +259,9 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				...getLumberBaseProperties(documentId, tenantId),
 				...{ sequenceNumberRanges, insertBatchSize, scriptoriumMetricId },
 			},
-			(error) => error.code === 11000,
+			(error) =>
+				error.code === 11000 ||
+				error.message?.toString()?.indexOf("E11000 duplicate key") >= 0,
 			(error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
 			undefined /* calculateIntervalMs */,
 			undefined /* onErrorFn */,

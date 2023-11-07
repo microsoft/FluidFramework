@@ -23,7 +23,7 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check .",
 		"prettier:fix": "prettier --write .",
-		"test": "node src/index.cjs --files test/**/*.md !test/README.md"
+		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
 	},
 	"dependencies": {
 		"@fluidframework/build-common": "^2.0.1",
