@@ -18,6 +18,7 @@ import {
 	DetachedPlaceUpPath,
 	PlaceUpPath,
 	AnchorNode,
+	EmptyKey,
 } from "../../core";
 import { JsonCompatible, brand, makeArray } from "../../util";
 import {
@@ -779,6 +780,41 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree);
 
 			expectJsonTree([tree, tree2], [{}, {}]);
+			unsubscribe();
+		});
+
+		it("change, undo, childchange rebased over childchange", () => {
+			const tree = makeTreeFromJson([{ foo: ["b"] }]);
+			const tree2 = tree.fork();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
+
+			const first: UpPath = {
+				parent: undefined,
+				parentIndex: 0,
+				parentField: rootFieldKey,
+			};
+
+			const sequenceUpPath: UpPath = {
+				parent: first,
+				parentIndex: 0,
+				parentField: brand("foo"),
+			};
+
+			const sequence = tree2.editor.sequenceField(rootField);
+
+			sequence.delete(0, 1);
+			undoStack.pop()?.revert();
+			tree2.editor
+				.sequenceField({ parent: sequenceUpPath, field: EmptyKey })
+				.insert(1, singleTextCursor({ type: leaf.string.name, value: "c" }));
+
+			tree.editor
+				.sequenceField({ parent: sequenceUpPath, field: EmptyKey })
+				.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
+
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree2], [{ foo: ["a", "b", "c"] }]);
 			unsubscribe();
 		});
 

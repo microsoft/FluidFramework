@@ -105,6 +105,11 @@ export interface OptionalChangeset {
 	contentId: ContentId;
 
 	/**
+	 * If defined, the content id that is associated with the first removal in this changeset. TODO: Should be called "contentBefore" and contentId should be called "contentAfter"
+	 */
+	firstRemovalContentId?: ContentId;
+
+	/**
 	 * Changes to nodes which occupied this field prior to this changeset at some point.
 	 *
 	 * `deletedBy` refers to the revision which deleted the node (via a `fieldChange`, replacing the contents of the field
