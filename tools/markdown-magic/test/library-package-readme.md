@@ -3,8 +3,10 @@
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-**Note: this package is experimental; its APIs may change without notice.**
-**It is not recommended for production scenarios.**
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
 
 ## Using Fluid Framework libraries
 
