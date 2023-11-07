@@ -500,7 +500,6 @@ export const handlers: Handler[] = [
 		name: "npm-package-metadata-and-sorting",
 		match,
 		handler: async (file) => {
-			let jsonStr: string;
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
@@ -954,7 +953,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-json-scripts-args",
 		match,
-		handler: (file) => {
+		handler: async (file) => {
 			let json: PackageJson;
 
 			try {
