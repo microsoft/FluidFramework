@@ -16,9 +16,9 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:compile": "npm run tsc && npm run build:test",
-		"build:docs": "api-extractor run --local && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
+		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"ci:build:docs": "api-extractor run && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../_api-extractor-temp/",
+		"ci:build:docs": "api-extractor run && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
 		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",

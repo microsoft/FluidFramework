@@ -30,6 +30,7 @@ export {
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	referenceFreeFieldChangeRebaser,
+	RemovedTreesFromChild,
 	RevisionMetadataSource,
 	RevisionIndexer,
 	ToDelta,

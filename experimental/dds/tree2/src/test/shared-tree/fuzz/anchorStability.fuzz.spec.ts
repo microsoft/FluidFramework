@@ -103,7 +103,7 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			const tree = initialState.clients[0].channel.schematizeView(config);
+			const tree = initialState.clients[0].channel.schematize(config).branch;
 			tree.transaction.start();
 			// These tests are hard coded to a single client, so this is fine.
 			initialState.views = [tree];
@@ -111,13 +111,14 @@ describe("Fuzz - anchor stability", () => {
 		});
 
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
+			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
+			const views = finalState.views ?? assert.fail("views should be defined");
+
 			// aborts any transactions that may still be in progress
-			const tree = finalState.clients[0].channel.view;
+			const tree = views[0];
 			tree.transaction.abort();
 			validateTree(tree, initialTreeJson);
-			const anchors = finalState.anchors;
-			assert(anchors !== undefined, "Anchors should be defined");
-			validateAnchors(finalState.clients[0].channel.view, anchors[0], true);
+			validateAnchors(tree, anchors[0], true);
 		});
 
 		createDDSFuzzSuite(model, {
@@ -170,7 +171,7 @@ describe("Fuzz - anchor stability", () => {
 			initialState.anchors = [];
 			initialState.views = [];
 			for (const client of initialState.clients) {
-				const view = client.channel.schematizeView(config) as RevertibleSharedTreeView;
+				const view = client.channel.schematize(config).branch as RevertibleSharedTreeView;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;

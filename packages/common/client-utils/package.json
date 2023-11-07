@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.0.0-internal.7.2.0",
+	"version": "2.0.0-internal.7.3.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -40,7 +40,7 @@
 		"test": "npm run test:mocha && npm run test:jest",
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest",
-		"test:mocha": "mocha  --recursive dist/test/mocha/**/*.spec.js --exit --project test/tsconfig.json",
+		"test:mocha": "mocha  --recursive \"dist/test/mocha/**/*.spec.js\" --exit --project test/tsconfig.json",
 		"tsc": "tsc",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -79,7 +79,7 @@
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/base64-js": "^1.3.0",

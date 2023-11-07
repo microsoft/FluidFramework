@@ -229,8 +229,8 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return this.inner.rootFieldSchema;
 	}
 
-	public get treeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
-		return this.inner.treeSchema;
+	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+		return this.inner.nodeSchema;
 	}
 
 	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): TreeStoredSchema | undefined {

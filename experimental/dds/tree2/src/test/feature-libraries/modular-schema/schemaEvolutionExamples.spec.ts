@@ -55,9 +55,9 @@ class TestSchemaRepository extends InMemoryStoredSchemaRepository {
 		identifier: TreeNodeSchemaIdentifier,
 		schema: TreeNodeStoredSchema,
 	): boolean {
-		const original = this.treeSchema.get(identifier);
+		const original = this.nodeSchema.get(identifier);
 		if (allowsTreeSuperset(this.policy, this.data, original, schema)) {
-			this.data.treeSchema.set(identifier, schema);
+			this.data.nodeSchema.set(identifier, schema);
 			this.invalidateDependents();
 			return true;
 		}

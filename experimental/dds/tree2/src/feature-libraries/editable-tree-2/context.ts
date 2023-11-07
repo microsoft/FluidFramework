@@ -5,14 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	IEditableForest,
 	moveToDetachedField,
 	ForestEvents,
 	TreeFieldStoredSchema,
 	FieldKey,
+	IForestSubscription,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { DefaultEditBuilder } from "../default-field-kinds";
+import { IDefaultEditBuilder } from "../default-field-kinds";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { TreeSchema } from "../typed-schema";
@@ -66,8 +66,8 @@ export class Context implements TreeContext, IDisposable {
 	 */
 	public constructor(
 		public readonly schema: TreeSchema,
-		public readonly forest: IEditableForest,
-		public readonly editor: DefaultEditBuilder,
+		public readonly forest: IForestSubscription,
+		public readonly editor: IDefaultEditBuilder,
 		public readonly nodeKeys: NodeKeys,
 		public readonly nodeKeyFieldKey: FieldKey,
 	) {
@@ -142,8 +142,8 @@ export class Context implements TreeContext, IDisposable {
  */
 export function getTreeContext(
 	schema: TreeSchema,
-	forest: IEditableForest,
-	editor: DefaultEditBuilder,
+	forest: IForestSubscription,
+	editor: IDefaultEditBuilder,
 	nodeKeyManager: NodeKeyManager,
 	nodeKeyFieldKey: FieldKey,
 ): Context {
