@@ -34,7 +34,7 @@ import {
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { SharedMap } from "@fluidframework/map";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base";
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
