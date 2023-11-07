@@ -503,7 +503,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
-		it.skip("can rebase node deletion over cross-field move of descendant", () => {
+		it("can rebase node deletion over cross-field move of descendant", () => {
 			const tree1 = makeTreeFromJson({
 				foo: ["A"],
 			});
@@ -612,7 +612,6 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree2], ["B", "A", "D", "C"]);
 		});
 
-		// Moving a node into a concurrently deleted subtree should result in the moved node being deleted
 		it("ancestor of move destination deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
@@ -629,10 +628,13 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const sequence = tree.editor.sequenceField(rootField);
+			const { undoStack } = createTestUndoRedoStacks(tree);
 
+			const sequence = tree.editor.sequenceField(rootField);
 			// Delete destination's ancestor concurrently
 			sequence.delete(1, 1);
+
+			const deletion = undoStack.pop();
 
 			tree2.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -646,10 +648,14 @@ describe("Editing", () => {
 			tree2.rebaseOnto(tree);
 
 			expectJsonTree([tree, tree2], [{}]);
+
+			deletion?.revert();
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
 		});
 
-		// Tests that a move is aborted if the moved node has been concurrently deleted
-		it.skip("ancestor of move source deleted", () => {
+		it("ancestor of move source deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
 
@@ -665,10 +671,13 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const sequence = tree.editor.sequenceField(rootField);
+			const { undoStack } = createTestUndoRedoStacks(tree);
 
+			const sequence = tree.editor.sequenceField(rootField);
 			// Delete source's ancestor concurrently
 			sequence.delete(0, 1);
+
+			const deletion = undoStack.pop();
 
 			tree2.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -681,7 +690,12 @@ describe("Editing", () => {
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], [{}]);
+			expectJsonTree([tree, tree2], [{ bar: ["a"] }]);
+
+			deletion?.revert();
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
 		});
 
 		it("ancestor of move source deleted then revived", () => {
@@ -805,7 +819,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it.skip("delete ancestor of return source", () => {
+		it("delete ancestor of return source", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const first: UpPath = {
 				parent: undefined,
@@ -829,20 +843,30 @@ describe("Editing", () => {
 			);
 
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
+
+			const undoTree1 = createTestUndoRedoStacks(tree);
+			const undoTree2 = createTestUndoRedoStacks(tree2);
 
 			const sequence = tree.editor.sequenceField(rootField);
 
 			// Delete ancestor of "a"
 			sequence.delete(1, 1);
 			// Undo move to bar
-			undoStack.pop()?.revert();
+			undoTree2.undoStack.pop()?.revert();
 
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
 			expectJsonTree([tree, tree2], [{}]);
-			unsubscribe();
+
+			// Undo deletion of ancestor of "a"
+			undoTree1.undoStack.pop()?.revert();
+			tree2.rebaseOnto(tree);
+
+			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
+
+			undoTree1.unsubscribe();
+			undoTree2.unsubscribe();
 		});
 
 		it("delete ancestor of return destination", () => {
@@ -1297,6 +1321,7 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
+		// TODO: Enable once optional field applies nested changes to removed subtrees
 		it.skip("can rebase a move over the deletion of the source parent", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.fork();
@@ -1318,8 +1343,8 @@ describe("Editing", () => {
 				.optionalField({ parent: rootNode, field: brand("src") })
 				.set(undefined, false);
 
-			// Edits to deleted subtrees are currently ignored
-			const expectedState: JsonCompatible = [{ dst: ["C", "D"] }];
+			// Edits to deleted subtrees are applied
+			const expectedState: JsonCompatible = [{ dst: ["A", "C", "D"] }];
 
 			childBranch.rebaseOnto(tree);
 			expectJsonTree(childBranch, expectedState);
@@ -1328,7 +1353,7 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
-		it.skip("can rebase a move over the deletion of the destination parent", () => {
+		it("can rebase a move over the deletion of the destination parent", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.fork();
 
@@ -1349,8 +1374,8 @@ describe("Editing", () => {
 				.optionalField({ parent: rootNode, field: brand("dst") })
 				.set(undefined, false);
 
-			// Edits to deleted subtrees are currently ignored
-			const expectedState: JsonCompatible = [{ src: ["A", "B"] }];
+			// Edits to deleted subtrees are applied
+			const expectedState: JsonCompatible = [{ src: ["B"] }];
 
 			childBranch.rebaseOnto(tree);
 			expectJsonTree(childBranch, expectedState);
