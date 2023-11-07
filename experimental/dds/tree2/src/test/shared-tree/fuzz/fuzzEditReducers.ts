@@ -9,12 +9,7 @@ import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
 import { DownPath, TreeField, TreeNode, singleTextCursor } from "../../../feature-libraries";
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
-import {
-	ISharedTree,
-	ISharedTreeView,
-	ISharedTreeView2,
-	SharedTreeFactory,
-} from "../../../shared-tree";
+import { ISharedTree, ITreeCheckout, ITreeView, SharedTreeFactory } from "../../../shared-tree";
 import { Revertible } from "../../../core";
 import {
 	FieldEdit,
@@ -79,7 +74,7 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
 export function applyFieldEdit(
-	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
 	fieldEdit: FieldEdit,
 ): void {
 	switch (fieldEdit.change.type) {
@@ -98,7 +93,7 @@ export function applyFieldEdit(
 }
 
 function applySequenceFieldEdit(
-	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzFieldChange,
 ): void {
 	switch (change.type) {
@@ -139,7 +134,7 @@ function applySequenceFieldEdit(
 }
 
 function applyValueFieldEdit(
-	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzSet,
 ): void {
 	assert(change.parent !== undefined, "Value change should not occur at the root.");
@@ -154,7 +149,7 @@ function applyValueFieldEdit(
 }
 
 function navigateToNode(
-	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
 	path: DownPath | undefined,
 ): TreeNode | undefined {
 	const rootField = tree.editableTree;
@@ -195,7 +190,7 @@ function navigateToNode(
 }
 
 function applyOptionalFieldEdit(
-	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzSet | FuzzDelete,
 ): void {
 	switch (change.type) {
@@ -221,7 +216,7 @@ function applyOptionalFieldEdit(
 	}
 }
 
-export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransactionType): void {
+export function applyTransactionEdit(tree: ITreeCheckout, contents: FuzzTransactionType): void {
 	switch (contents.fuzzType) {
 		case "transactionStart": {
 			tree.transaction.start();
