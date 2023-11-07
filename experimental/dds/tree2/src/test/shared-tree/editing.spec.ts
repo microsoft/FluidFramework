@@ -402,24 +402,6 @@ describe("Editing", () => {
 			expectJsonTree([tree, a, r, x], ["a", "b", "c", "r", "s", "t", "x", "y", "z"]);
 		});
 
-		// TODO: Enable once local branch repair data is supported
-		it.skip("intentional revive", () => {
-			const tree1 = makeTreeFromJson(["A", "B", "C"]);
-			const tree2 = tree1.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
-
-			remove(tree1, 1, 1);
-
-			remove(tree2, 0, 3);
-			undoStack.pop()?.revert();
-
-			tree1.merge(tree2);
-			tree2.rebaseOnto(tree1);
-
-			expectJsonTree([tree1, tree2], ["A", "B", "C"]);
-			unsubscribe();
-		});
-
 		it("intra-field move", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 
@@ -1722,6 +1704,8 @@ describe("Editing", () => {
 			const startState = makeArray(nbNodes, (n) => `N${n}`);
 			const scenarios = buildScenarios();
 
+			// Increased timeout because the default in CI is 2s but this test fixture naturally takes ~1.9s and was
+			// timing out frequently
 			outerFixture("All Scenarios", () => {
 				for (const scenario of scenarios) {
 					if (testRemoveRevive) {
@@ -1731,7 +1715,7 @@ describe("Editing", () => {
 						runScenario(scenario, true);
 					}
 				}
-			});
+			}).timeout(5000);
 		});
 	});
 

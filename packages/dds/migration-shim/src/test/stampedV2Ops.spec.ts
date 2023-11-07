@@ -32,6 +32,7 @@ import {
 	SchemaBuilder,
 	SharedTreeFactory,
 	type ISharedTreeView2,
+	disposeSymbol,
 } from "@fluid-experimental/tree2";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
@@ -175,13 +176,15 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree.schematize({
-				initialTree: {
-					quantity,
-				},
-				allowedSchemaModifications: AllowedUpdateType.None,
-				schema,
-			});
+			newTree
+				.schematize({
+					initialTree: {
+						quantity,
+					},
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema,
+				})
+				[disposeSymbol]();
 		},
 	);
 

@@ -12,15 +12,9 @@ import {
 	clonePath,
 	forEachNodeInSubtree,
 	Revertible,
-	AllowedUpdateType,
 	TreeNavigationResult,
 } from "../../../core";
-import {
-	FieldKinds,
-	TreeFieldSchema,
-	ObjectNodeTyped,
-	TypedField,
-} from "../../../feature-libraries";
+import { FieldKinds, TreeFieldSchema, ObjectNodeTyped } from "../../../feature-libraries";
 import { SharedTree, ISharedTreeView, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
 import { expectEqualPaths } from "../../utils";
@@ -48,11 +42,8 @@ export type FuzzNode = ObjectNodeTyped<FuzzNodeSchema>;
 export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
 
 export function fuzzViewFromTree(tree: ISharedTree): ISharedTreeView {
-	return tree.schematize({
-		initialTree: undefined,
-		schema: fuzzSchema,
-		allowedSchemaModifications: AllowedUpdateType.None,
-	}).branch;
+	assert(tree instanceof SharedTree);
+	return tree.view;
 }
 
 export const onCreate = (tree: SharedTree) => {
@@ -103,18 +94,6 @@ export type RevertibleSharedTreeView = ISharedTreeView & {
 
 export function isRevertibleSharedTreeView(s: ISharedTreeView): s is RevertibleSharedTreeView {
 	return (s as RevertibleSharedTreeView).undoStack !== undefined;
-}
-
-// KLUDGE:AB#5677: Avoid calling editableTree2 more than once per tree as it currently crashes.
-const cachedEditableTreeSymbol = Symbol();
-export function getEditableTree(
-	tree: ISharedTreeView,
-): TypedField<typeof fuzzSchema.rootFieldSchema> {
-	if ((tree as any)[cachedEditableTreeSymbol] === undefined) {
-		(tree as any)[cachedEditableTreeSymbol] = tree.editableTree2(fuzzSchema);
-	}
-
-	return (tree as any)[cachedEditableTreeSymbol] as TypedField<typeof fuzzSchema.rootFieldSchema>;
 }
 
 export const failureDirectory = pathJoin(

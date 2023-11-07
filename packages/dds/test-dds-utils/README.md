@@ -57,7 +57,7 @@ The caller is responsible for the following:
 ## Eventual Consistency Fuzz Tests
 
 This package also provides a [generic harness](./src/ddsFuzzHarness.ts) for writing eventual consistency fuzz tests for a DDS.
-This model is written using [@fluid-internal/stochastic-test-utils](../../test/stochastic-test-utils/README.md).
+This model is written using [@fluid-private/stochastic-test-utils](../../test/stochastic-test-utils/README.md).
 See documentation on `createDDSFuzzSuite` and `DDSFuzzModel` for more details.
 
 The harness currently supports testing eventual consistency of op application using Fluid's set of [mocks](../../runtime/test-runtime-utils/README.md)

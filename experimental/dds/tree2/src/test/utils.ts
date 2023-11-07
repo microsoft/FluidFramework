@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
@@ -67,6 +67,7 @@ import {
 	TypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defailtNodeKeyFieldKey,
+	ContextuallyTypedNodeData,
 } from "../feature-libraries";
 import {
 	Delta,
@@ -642,17 +643,19 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): TypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createSharedTreeView({
+	const branch = createSharedTreeView({
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	return view.editableTree2(
+	const view = new SharedTreeView2(
+		branch,
 		content.schema,
 		manager,
 		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 	);
+	return view.editableTree;
 }
 
 export const jsonSequenceRootSchema = new SchemaBuilder({
@@ -664,11 +667,21 @@ export const stringSequenceRootSchema = new SchemaBuilder({
 	scope: "StringSequenceRoot",
 }).intoSchema(SchemaBuilder.sequence(leaf.string));
 
-export const emptyJsonSequenceConfig: InitializeAndSchematizeConfiguration = {
+export const numberSequenceRootSchema = new SchemaBuilder({
+	scope: "NumberSequenceRoot",
+}).intoSchema(SchemaBuilder.sequence(leaf.number));
+
+export const emptyJsonSequenceConfig = {
 	schema: jsonSequenceRootSchema,
 	allowedSchemaModifications: AllowedUpdateType.None,
 	initialTree: [],
-};
+} satisfies InitializeAndSchematizeConfiguration;
+
+export const emptyStringSequenceConfig = {
+	schema: stringSequenceRootSchema,
+	allowedSchemaModifications: AllowedUpdateType.None,
+	initialTree: [],
+} satisfies InitializeAndSchematizeConfiguration;
 
 /**
  * If the root is an array, this creates a sequence field at the root instead of a JSON array node.
@@ -700,16 +713,26 @@ export function toJsonTree(tree: ISharedTreeView): JsonCompatible[] {
 }
 
 /**
- * Helper function to insert a jsonString at a given index of the documents root field.
+ * Helper function to insert node at a given index.
+ *
+ * TODO: delete once the JSON editing API is ready for use.
  *
  * @param tree - The tree on which to perform the insert.
  * @param index - The index in the root field at which to insert.
- * @param value - The value of the inserted node.
+ * @param value - The value of the inserted nodes.
  */
-export function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
-	field.insert(index, nodes);
+export function insert(
+	tree: ISharedTreeView,
+	index: number,
+	...values: ContextuallyTypedNodeData[]
+): void {
+	const fieldEditor = tree.editor.sequenceField({ field: rootFieldKey, parent: undefined });
+	const content = normalizeNewFieldContent(
+		{ schema: jsonSequenceRootSchema },
+		jsonSequenceRootSchema.rootFieldSchema,
+		values,
+	);
+	fieldEditor.insert(index, content);
 }
 
 export function remove(tree: ISharedTreeView, index: number, count: number): void {
@@ -915,23 +938,6 @@ export const wrongSchema = new SchemaBuilder({
 		rejectEmpty: false,
 	},
 }).intoSchema(SchemaBuilder.sequence(Any));
-
-/**
- * Schematize config Schema which is not correct.
- * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
- * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
- * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
- *
- * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
- */
-// TODO: remove all usages of this.
-export const wrongSchemaConfig: InitializeAndSchematizeConfiguration<
-	typeof wrongSchema.rootFieldSchema
-> = {
-	schema: wrongSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
-	initialTree: [],
-};
 
 export function applyTestDelta(
 	delta: Delta.Root,

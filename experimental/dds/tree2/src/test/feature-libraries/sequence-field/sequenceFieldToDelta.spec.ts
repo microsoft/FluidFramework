@@ -460,18 +460,5 @@ describe("SequenceField - toDelta", () => {
 			};
 			assertFieldChangesEqual(actual, expected);
 		});
-
-		it("blocked revive", () => {
-			const changeset = [
-				Mark.revive(1, { revision: tag2, localId: brand(0) }, { inverseOf: tag1 }),
-				Mark.revive(
-					1,
-					{ revision: tag2, localId: brand(1) },
-					{ inverseOf: tag1, changes: childChange1 },
-				),
-			];
-			const actual = toDelta(changeset);
-			assertFieldChangesEqual(actual, {});
-		});
 	});
 });

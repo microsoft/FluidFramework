@@ -32,6 +32,7 @@ import {
 	SchemaBuilder,
 	SharedTreeFactory,
 	type ProxyNode,
+	disposeSymbol,
 } from "@fluid-experimental/tree2";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -75,13 +76,15 @@ function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootF
 }
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
 	const quantity = getQuantity(legacyTree);
-	newTree.schematize({
-		initialTree: {
-			quantity,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+	newTree
+		.schematize({
+			initialTree: {
+				quantity,
+			},
+			allowedSchemaModifications: AllowedUpdateType.None,
+			schema,
+		})
+		[disposeSymbol]();
 };
 
 // Useful for modifying the legacy tree
