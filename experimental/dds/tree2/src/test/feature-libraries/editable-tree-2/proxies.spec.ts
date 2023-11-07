@@ -188,7 +188,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(list, [{ id: "B" }]);
 			const newItem = obj.create({ id: "A" });
 			list.insertAtStart([newItem]);
-			assert.equal(newItem, list[0]);
+			assert.equal(newItem, list[0]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [newItem, { id: "B" }]);
 		});
 
@@ -196,7 +196,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(list, [{ id: "A" }]);
 			const newItem = obj.create({ id: "B" });
 			list.insertAtEnd([newItem]);
-			assert.equal(newItem, list[1]);
+			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [{ id: "A" }, newItem]);
 		});
 
@@ -204,7 +204,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(list, [{ id: "A" }, { id: "C" }]);
 			const newItem = obj.create({ id: "B" });
 			list.insertAt(1, [newItem]);
-			assert.equal(newItem, list[1]);
+			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [{ id: "A" }, newItem, { id: "C" }]);
 		});
 	});
@@ -587,8 +587,11 @@ describe("SharedTreeMap", () => {
 		scope: "test",
 	});
 
+	const object = sb.object("object", { content: sb.number });
+
 	const rootSchema = sb.object("parent", {
-		map: sb.map("map", sb.optional(sb.string)),
+		map: sb.map(sb.string),
+		objectMap: sb.map(object),
 	});
 
 	const schema = sb.intoSchema(rootSchema);
@@ -598,6 +601,7 @@ describe("SharedTreeMap", () => {
 			["foo", "Hello"],
 			["bar", "World"],
 		]),
+		objectMap: new Map(),
 	};
 
 	itWithRoot("entries", schema, initialTree, (root) => {
@@ -650,6 +654,13 @@ describe("SharedTreeMap", () => {
 		root.map.set("baz", undefined);
 		assert.equal(root.map.size, 2);
 		assert(!root.map.has("baz"));
+	});
+
+	itWithRoot("set object", schema, initialTree, (root) => {
+		const o = object.create({ content: 42 });
+		root.objectMap.set("foo", o);
+		assert.equal(root.objectMap.get("foo"), o); // Check that the inserted and read proxies are the same object
+		assert.equal(root.objectMap.get("foo")?.content, o.content);
 	});
 
 	itWithRoot("delete", schema, initialTree, (root) => {
