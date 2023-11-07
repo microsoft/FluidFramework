@@ -7130,6 +7130,7 @@ importers:
   packages/dds/task-manager:
     specifiers:
       '@fluid-internal/test-dds-utils': workspace:~
+      '@fluid-private/stochastic-test-utils': workspace:~
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
@@ -7174,6 +7175,7 @@ importers:
       events: 3.3.0
     devDependencies:
       '@fluid-internal/test-dds-utils': link:../test-dds-utils
+      '@fluid-private/stochastic-test-utils': link:../../test/stochastic-test-utils
       '@fluid-tools/build-cli': 0.26.2_bnjxas577mbdnhldblqqi36nsq
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.2_@types+node@16.18.58
