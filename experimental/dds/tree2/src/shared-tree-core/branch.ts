@@ -101,6 +101,11 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	revertible(type: Revertible): void;
 
 	/**
+	 * Fired when a revertible made on this branch is disposed.
+	 */
+	revertibleDispose(revision: RevisionTag): void;
+
+	/**
 	 * Fired when this branch forks
 	 * @param fork - the new branch that forked off of this branch
 	 */
@@ -355,6 +360,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 				this.revertibleCommits.delete(commit.revision);
 				this.revertibles.delete(revertible);
 				discarded = true;
+				this.emit("revertibleDispose", commit.revision);
 				return DiscardResult.Success;
 			},
 		};
