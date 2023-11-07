@@ -10,11 +10,7 @@ import {
 	combineReducersAsync as combineReducers,
 	AsyncReducer as Reducer,
 } from "@fluid-private/stochastic-test-utils";
-import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
-} from "@fluid-private/test-dds-utils";
+import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
 	IChannelServices,
