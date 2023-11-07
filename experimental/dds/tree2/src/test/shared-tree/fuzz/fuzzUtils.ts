@@ -10,10 +10,10 @@ import {
 	UpPath,
 	Value,
 	clonePath,
-	compareUpPaths,
 	forEachNodeInSubtree,
 	Revertible,
 	AllowedUpdateType,
+	TreeNavigationResult,
 } from "../../../core";
 import {
 	FieldKinds,
@@ -23,6 +23,7 @@ import {
 } from "../../../feature-libraries";
 import { SharedTree, ISharedTreeView, ISharedTree } from "../../../shared-tree";
 import { SchemaBuilder, leaf } from "../../../domains";
+import { expectEqualPaths } from "../../utils";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
 export const fuzzNode = builder.objectRecursive("node", {
@@ -47,32 +48,37 @@ export type FuzzNode = ObjectNodeTyped<FuzzNodeSchema>;
 export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
 
 export function fuzzViewFromTree(tree: ISharedTree): ISharedTreeView {
-	return tree.schematizeView({
+	return tree.schematize({
 		initialTree: undefined,
 		schema: fuzzSchema,
 		allowedSchemaModifications: AllowedUpdateType.None,
-	});
+	}).branch;
 }
 
 export const onCreate = (tree: SharedTree) => {
 	tree.storedSchema.update(fuzzSchema);
 };
 
+/**
+ * Asserts that each anchor in `anchors` points to a node in `view` holding the provided value.
+ * If `checkPaths` is provided, also asserts the located node has the provided path.
+ */
 export function validateAnchors(
-	tree: ISharedTreeView,
+	view: ISharedTreeView,
 	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
 	checkPaths: boolean,
 ) {
+	const cursor = view.forest.allocateCursor();
 	for (const [anchor, [path, value]] of anchors) {
-		const cursor = tree.forest.allocateCursor();
-		tree.forest.tryMoveCursorToNode(anchor, cursor);
+		const result = view.forest.tryMoveCursorToNode(anchor, cursor);
+		assert.equal(result, TreeNavigationResult.Ok);
 		assert.equal(cursor.value, value);
 		if (checkPaths) {
-			const actualPath = tree.locate(anchor);
-			assert(compareUpPaths(actualPath, path));
+			const actualPath = view.locate(anchor);
+			expectEqualPaths(actualPath, path);
 		}
-		cursor.free();
 	}
+	cursor.free();
 }
 
 export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value]> {

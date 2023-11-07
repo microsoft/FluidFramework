@@ -40,7 +40,7 @@ import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-bas
 import { waitForContainerWriteModeConnectionWrite } from "./gcTestSummaryUtils.js";
 
 /**
- * We manufacture a handle to simulate a bug where an object is unrefenced in GC's view
+ * We manufacture a handle to simulate a bug where an object is unreferenced in GC's view
  * (and reminder, interactive clients never update their GC data after loading),
  * but someone still has a handle to it.
  *
@@ -474,7 +474,10 @@ describeNoCompat("GC inactive nodes tests", (getTestObjectProvider) => {
 					} catch (error: any) {
 						const inactiveError: InactiveLoadError | undefined = error;
 						assert.equal(inactiveError?.code, 404, "Incorrect error status code");
-						assert.equal(inactiveError?.message, `Object is inactive: ${dataStoreUrl}`);
+						assert.equal(
+							inactiveError?.message,
+							`DataStore is inactive: ${dataStoreUrl}`,
+						);
 						assert.equal(
 							inactiveError?.underlyingResponseHeaders?.[InactiveResponseHeaderKey],
 							true,

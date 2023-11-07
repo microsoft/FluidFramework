@@ -23,8 +23,8 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Delete",
                                 "count": 1,
+                                "type": "Delete",
                                 "id": 1
                               }
                             ]
@@ -61,7 +61,7 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
                       "objectNodeFields": [
@@ -170,6 +170,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-000000000004",
@@ -177,7 +178,7 @@
                       1
                     ]
                   ],
-                  "id": 1
+                  "maxId": 1
                 },
                 "encoding": "utf-8"
               }

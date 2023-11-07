@@ -218,7 +218,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		itExpects(
 			"Send ops fails for tombstoned datastores in summarizing container loaded after sweep timeout",
-			[{ eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" }],
+			[
+				{
+					eventName:
+						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					callSite: "submitMessage",
+					clientType: "interactive",
+				},
+			],
 			async () => {
 				const { unreferencedId, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
@@ -249,19 +256,10 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			"Receive ops fails for tombstoned datastores in summarizing container loaded after sweep time",
 			[
 				{
-					eventName:
-						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-					error: "Context is tombstoned! Call site [process]",
-				},
-				{
-					eventName:
-						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-					error: "Context is tombstoned! Call site [process]",
-				},
-				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					error: "Context is tombstoned! Call site [process]",
 					errorType: "dataCorruptionError",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -301,7 +299,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 		itExpects(
 			"Send signals fails for tombstoned datastores in summarizing container loaded after sweep timeout",
-			[{ eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed" }],
+			[
+				{
+					eventName:
+						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					callSite: "submitSignal",
+					clientType: "interactive",
+				},
+			],
 			async () => {
 				const { unreferencedId, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
@@ -333,17 +338,21 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{
 					eventName:
 						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
+					category: "generic",
 					error: "Context is tombstoned! Call site [processSignal]",
+					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName:
 						"fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
 					error: "Context is tombstoned! Call site [processSignal]",
+					clientType: "interactive",
 				},
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					error: "Context is tombstoned! Call site [processSignal]",
 					errorType: "dataCorruptionError",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -414,19 +423,22 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			[
 				// Interactive client's request
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request,
+					clientType: "interactive",
 				},
 				// Interactive client's request w/ allowTombstone
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request_allowTombstone,
+					clientType: "interactive",
 				},
 				// Summarizer client's request
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request,
 					clientType: "noninteractive/summarizer",
 				},
@@ -454,7 +466,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				);
 				assert.equal(
 					tombstoneErrorResponse.value,
-					`DataStore was deleted: ${unreferencedId}`,
+					`DataStore was tombstoned: ${unreferencedId}`,
 					"Expected the Tombstone error message",
 				);
 				assert.equal(
@@ -507,13 +519,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		);
 
 		itExpects(
-			"Requesting tombstoned datastores succeeds for legacy document given gcTombtoneGeneration option is defined",
+			"Requesting tombstoned datastores succeeds for legacy document given gcTombstoneGeneration option is defined",
 			[
 				// Interactive client's request that succeeds
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					gcTombstoneEnforcementAllowed: false,
+					clientType: "interactive",
 				},
 			],
 			async function () {
@@ -529,14 +542,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					true /* disableTombstoneFailureViaOption */,
 				);
 
-				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombtoneGeneration passed in
+				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
 				const tombstoneSuccessResponse = await containerRuntime_resolveHandle(container, {
 					url: unreferencedId,
 				});
 				assert.equal(
 					tombstoneSuccessResponse.status,
 					200,
-					"Should be able to retrieve a tombstoned datastore given gcTombtoneGeneration",
+					"Should be able to retrieve a tombstoned datastore given gcTombstoneGeneration",
 				);
 				assert.notEqual(
 					tombstoneSuccessResponse.headers?.[TombstoneResponseHeaderKey],
@@ -547,13 +560,14 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		);
 
 		itExpects(
-			"Requesting tombstoned datastores succeeds with when gcTombtoneGeneration differs from persisted value",
+			"Requesting tombstoned datastores succeeds with when gcTombstoneGeneration differs from persisted value",
 			[
 				// Interactive client's request that succeeds
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					gcTombstoneEnforcementAllowed: false,
+					clientType: "interactive",
 				},
 			],
 			async function () {
@@ -599,14 +613,17 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			[
 				// Interactive client's handle.get
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.handleGet,
+					clientType: "interactive",
 				},
 				// Interactive client's request w/ allowTombstone
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					headers: expectedHeadersLogged.request_allowTombstone,
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -649,7 +666,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				);
 				assert.equal(
 					tombstoneError?.message,
-					`DataStore was deleted: ${unreferencedId}`,
+					`DataStore was tombstoned: /${unreferencedId}`,
 					"Incorrect message for Tombstone error from handle.get",
 				);
 				assert.equal(
@@ -683,19 +700,19 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			[
 				// When confirming it's tombstoned
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					clientType: "interactive",
 				},
 				// When reviving it
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
-					category: "generic",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 					clientType: "interactive",
 				},
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
-					category: "generic",
 					clientType: "noninteractive/summarizer",
 				},
 				{
@@ -782,7 +799,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 		"Loading/Using tombstone allowed when configured",
 		[
 			{
-				eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+				eventName:
+					"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
 				clientType: "interactive",
 			},
 			{
@@ -791,13 +809,13 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				clientType: "interactive",
 			},
 			{
-				eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-				callSite: "process",
+				eventName:
+					"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Changed",
 				clientType: "noninteractive/summarizer",
 			},
 			{
-				eventName: "fluid:telemetry:FluidDataStoreContext:GC_Tombstone_DataStore_Changed",
-				callSite: "process",
+				eventName:
+					"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Changed",
 				clientType: "interactive",
 			},
 		],
@@ -969,13 +987,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Revived",
-					category: "generic",
 					clientType: "noninteractive/summarizer",
 				},
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_Blob_Revived",
-					category: "generic",
 					clientType: "noninteractive/summarizer",
 				},
 				{
@@ -1171,7 +1187,9 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			"can mark data store from tombstone information in summary in non-summarizer container",
 			[
 				{
-					eventName: "fluid:telemetry:ContainerRuntime:GC_Tombstone_DataStore_Requested",
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					clientType: "interactive",
 				},
 			],
 			async () => {
@@ -1226,7 +1244,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 					(error: any) => {
 						const correctErrorType = error.code === 404;
 						const correctErrorMessage =
-							error.message === `DataStore was deleted: ${unreferencedId}`;
+							error.message === `DataStore was tombstoned: ${unreferencedId}`;
 						return correctErrorType && correctErrorMessage;
 					},
 					`Should not be able to retrieve a tombstoned datastore.`,

@@ -62,7 +62,7 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
                       "objectNodeFields": [
@@ -171,8 +171,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [],
-                  "id": 0
+                  "maxId": 0
                 },
                 "encoding": "utf-8"
               }

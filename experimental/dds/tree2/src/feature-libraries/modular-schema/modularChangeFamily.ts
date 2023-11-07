@@ -757,15 +757,23 @@ export class ModularChangeFamily
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number => {
+	const getIndex = (revision: RevisionTag): number | undefined => {
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
-		return index;
+		return index >= 0 ? index : undefined;
 	};
-	const getInfo = (revision: RevisionTag): RevisionInfo => {
-		return revInfos[getIndex(revision)];
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = getIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
 	};
-	return { getIndex, getInfo };
+
+	const getRevisions = (): RevisionTag[] => {
+		return revInfos.map((info) => info.revision);
+	};
+
+	return { getIndex, tryGetInfo, getRevisions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
@@ -879,24 +887,20 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
 
-				let dependentEntry = getFirstFromCrossFieldMap(dependentsMap, revision, id, count);
-
 				const lastChangedId = (id as number) + count - 1;
-				while (dependentEntry !== undefined) {
-					crossFieldTable.invalidatedFields.add(dependentEntry.value);
-					const lastEntryId = dependentEntry.start + dependentEntry.length - 1;
-					const numChangedIdsAfterEntry = lastChangedId - lastEntryId;
-					if (numChangedIdsAfterEntry > 0) {
-						dependentEntry = getFirstFromCrossFieldMap(
-							dependentsMap,
-							revision,
-							brand(lastEntryId + 1),
-							numChangedIdsAfterEntry,
-						);
-					} else {
-						// We have found the last entry for the changed ID range.
-						break;
+				let firstId = id;
+				while (firstId <= lastChangedId) {
+					const dependentEntry = getFirstFromCrossFieldMap(
+						dependentsMap,
+						revision,
+						firstId,
+						lastChangedId - firstId + 1,
+					);
+					if (dependentEntry.value !== undefined) {
+						crossFieldTable.invalidatedFields.add(dependentEntry.value);
 					}
+
+					firstId = brand(firstId + dependentEntry.length);
 				}
 
 				if (
