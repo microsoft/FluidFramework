@@ -10,6 +10,14 @@ overrides:
   simplemde>marked: ^4.3.0
   '@oclif/core': ~2.4.0
 
+patchedDependencies:
+  engine.io-client@6.5.2:
+    hash: snwofiyd7zkkjc65yzmbuvgj3i
+    path: patches/engine.io-client@6.5.2.patch
+  socket.io-client@4.7.2:
+    hash: p7f5djbjd3zgfisasebtom74n4
+    path: patches/socket.io-client@4.7.2.patch
+
 importers:
 
   .:
@@ -7348,7 +7356,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       typescript: 5.1.6
 
   packages/drivers/driver-web-cache:
@@ -7568,7 +7576,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       typescript: 5.1.6
 
   packages/drivers/odsp-driver:
@@ -7623,7 +7631,7 @@ importers:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       node-fetch: 2.7.0
-      socket.io-client: 4.7.2
+      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.26.2_bnjxas577mbdnhldblqqi36nsq
@@ -7831,7 +7839,7 @@ importers:
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       url-parse: 1.5.10
       uuid: 9.0.1
     devDependencies:
@@ -16620,7 +16628,7 @@ packages:
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.2.1
       node-fetch: 2.7.0
-      socket.io-client: 4.7.2
+      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       uuid: 9.0.1
     transitivePeerDependencies:
       - bufferutil
@@ -16761,7 +16769,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.2.1
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       url-parse: 1.5.10
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -16788,7 +16796,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.2.1
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       url-parse: 1.5.10
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -16815,7 +16823,7 @@ packages:
       '@fluidframework/telemetry-utils': 2.0.0-internal.7.2.1
       cross-fetch: 3.1.8
       json-stringify-safe: 5.0.1
-      socket.io-client: 4.7.2
+      socket.io-client: 4.7.2_p7f5djbjd3zgfisasebtom74n4
       url-parse: 1.5.10
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -27420,7 +27428,7 @@ packages:
       objectorarray: 1.0.5
     dev: true
 
-  /engine.io-client/6.5.2:
+  /engine.io-client/6.5.2_snwofiyd7zkkjc65yzmbuvgj3i:
     resolution: {integrity: sha512-CQZqbrpEYnrpGqC07a9dJDz4gePZUgTPMU3NKJPSeQOyw27Tst4Pl3FemKoFGAlHzgZmKjoRmiJvbWfhCXUlIg==}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
@@ -27432,6 +27440,7 @@ packages:
       - bufferutil
       - supports-color
       - utf-8-validate
+    patched: true
 
   /engine.io-parser/5.2.1:
     resolution: {integrity: sha512-9JktcM3u18nU9N2Lz3bWeBgxVgOKpw7yhRaoxQA3FUDZzzw+9WlA6p4G4u0RixNkg14fH7EfEc/RhpurtiROTQ==}
@@ -40179,18 +40188,19 @@ packages:
       - bufferutil
       - utf-8-validate
 
-  /socket.io-client/4.7.2:
+  /socket.io-client/4.7.2_p7f5djbjd3zgfisasebtom74n4:
     resolution: {integrity: sha512-vtA0uD4ibrYD793SOIAwlo8cj6haOeMHrGvwPxJsxH7CeIksqJ+3Zc06RvWTIFgiSqx4A3sOnTXpfAEE2Zyz6w==}
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.0
       debug: 4.3.4
-      engine.io-client: 6.5.2
+      engine.io-client: 6.5.2_snwofiyd7zkkjc65yzmbuvgj3i
       socket.io-parser: 4.2.4
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
+    patched: true
 
   /socket.io-parser/4.2.4:
     resolution: {integrity: sha512-/GbIKmo8ioc+NIWIhwdecY0ge+qVBSMdgxGygevmdHj24bsfgtCmcUUcQ5ZzcylGFHsN3k4HB4Cgkl96KVnuew==}
