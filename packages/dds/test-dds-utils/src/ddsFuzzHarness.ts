@@ -776,9 +776,13 @@ export function mixinSynchronization<
 	const reducer: Reducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
-			const connectedClients = state.clients.filter(
-				(client) => client.containerRuntime.connected,
-			);
+			const opIds = operation.clients ?? [];
+			const opClients = state.clients.filter((client) => opIds.includes(client.channel.id));
+
+			const connectedClients =
+				opClients.length > 0
+					? opClients
+					: state.clients.filter((client) => client.containerRuntime.connected);
 
 			for (const client of connectedClients) {
 				assert(
