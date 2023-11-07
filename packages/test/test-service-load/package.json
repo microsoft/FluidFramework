@@ -76,8 +76,8 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
-		"@fluid-internal/stochastic-test-utils": "workspace:~",
-		"@fluid-internal/test-drivers": "workspace:~",
+		"@fluid-private/stochastic-test-utils": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
