@@ -1,0 +1,88 @@
+{
+	"name": "@fluid-experimental/odsp-client",
+	"version": "2.0.0-internal.7.3.0",
+	"description": "",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "experimental/framework/odsp-client"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"sideEffects": false,
+	"main": "dist/index.js",
+	"module": "lib/index.js",
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"build": "fluid-build . --task build",
+		"build:compile": "fluid-build . --task compile",
+		"build:compile:min": "npm run build:compile",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp",
+		"eslint": "eslint --format stylish src",
+		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"format": "npm run prettier:fix",
+		"lint": "npm run prettier && npm run eslint",
+		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
+		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
+		"tsc": "tsc"
+	},
+	"c8": {
+		"all": true,
+		"cache-dir": "nyc/.cache",
+		"exclude": [
+			"src/test/**/*.ts",
+			"dist/test/**/*.js"
+		],
+		"exclude-after-remap": false,
+		"include": [
+			"src/**/*.ts",
+			"dist/**/*.js"
+		],
+		"report-dir": "nyc/report",
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
+		"temp-directory": "nyc/.nyc_output"
+	},
+	"dependencies": {
+		"@fluidframework/azure-client": "workspace:~",
+		"@fluidframework/common-definitions": "^1.0.0",
+		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/odsp-doclib-utils": "workspace:~",
+		"@fluidframework/odsp-driver": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
+		"@fluidframework/odsp-urlresolver": "workspace:~",
+		"@fluidframework/protocol-definitions": "^3.0.0",
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~",
+		"uuid": "^8.3.2"
+	},
+	"devDependencies": {
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@fluidframework/mocha-test-setup": "workspace:~",
+		"@microsoft/api-extractor": "^7.37.0",
+		"@types/node": "^16.18.38",
+		"eslint": "~8.50.0",
+		"prettier": "~3.0.3",
+		"rimraf": "^4.4.0",
+		"typescript": "~5.1.6"
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {}
+	}
+}
