@@ -56,12 +56,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"api-extractor:esnext": {
-				"dependsOn": [
-					"...",
-					"api-extractor:commonjs"
-				]
-			},
 			"build:docs": {
 				"dependsOn": [
 					"...",

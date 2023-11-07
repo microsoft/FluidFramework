@@ -29,7 +29,7 @@
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "api-extractor run --local --config ./api-extractor.esnext.json",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
@@ -86,6 +86,7 @@
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"@types/uuid": "^9.0.2",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"eslint-config-prettier": "~9.0.0",
@@ -106,14 +107,6 @@
 				],
 				"script": false
 			}
-		},
-		"ci:build:docs": {
-			"dependsOn": [
-				"...",
-				"api-extractor:commonjs",
-				"api-extractor:esnext"
-			],
-			"script": false
 		}
 	},
 	"typeValidation": {

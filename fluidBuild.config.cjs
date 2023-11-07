@@ -59,7 +59,7 @@ module.exports = {
 			script: false,
 		},
 		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
-		"api-extractor:esnext": [...tscDependsOn, "build:esnext"],
+		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
 		"build:readme": {
