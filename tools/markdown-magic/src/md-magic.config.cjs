@@ -137,7 +137,7 @@ const generateHelpSection = (includeHeading) => {
 };
 
 /**
- * Generats simple Markdown contents indicating that the associated package is experimental.
+ * Generates simple Markdown contents indicating that the associated package is experimental.
  */
 const generateExperimentalPackageNotice = () => {
 	const rawContents = readTemplate("Experimental-Package-Notice-Template.md");
