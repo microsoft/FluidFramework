@@ -140,8 +140,9 @@ export class SharedTree
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 
 	/**
-	 * Creating multiple editable tree contexts with a single AnchorSet does not work due to how TreeNode caching works.
-	 * This flag is used to detect and error on the easy ways to accidentally do this.
+	 * Creating multiple editable tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
+	 * This flag is used to detect if one already exists for the main branch and error if creating a second.
+	 * THis should catch most accidental violations of this restriction but there are still ways to create two conflicting contexts (for example calling constructing one manually).
 	 *
 	 * TODO:
 	 * 1. API docs need to reflect this limitation or the limitation has to be removed.
