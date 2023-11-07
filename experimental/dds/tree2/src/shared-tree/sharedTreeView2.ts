@@ -16,7 +16,7 @@ import {
 	Context,
 } from "../feature-libraries";
 import { IDisposable, disposeSymbol } from "../util";
-import { ISharedTreeView } from "./sharedTreeView";
+import { ITreeCheckoutFork, ITreeCheckout } from "./sharedTreeView";
 import { TypedTreeView } from "./typedTree";
 
 /**
@@ -27,11 +27,11 @@ import { TypedTreeView } from "./typedTree";
  * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
  * @alpha
  */
-export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
+export interface ITreeView<in out TRoot extends TreeFieldSchema>
 	extends IDisposable,
 		TypedTreeView<TRoot> {
 	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView2.editableTree}.
+	 * Context for controlling the EditableTree nodes produced from {@link ITreeView.editableTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.
@@ -44,7 +44,7 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
 	 * @remarks
 	 * This is a non-owning reference: disposing of this view does not impact the branch.
 	 */
-	readonly branch: ISharedTreeView;
+	readonly checkout: ITreeCheckout;
 
 	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
@@ -55,27 +55,40 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
 	 * Spawn a new view which is based off of the current state of this view.
 	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
-	fork(): ISharedTreeView2<TRoot>;
+	fork(): ITreeViewFork<TRoot>;
 }
 
 /**
- * Implementation of ISharedTreeView2.
+ * Branch (like in a version control system) of SharedTree.
+ *
+ * {@link ITreeView} that has forked off of the main trunk/branch.
+ * @alpha
  */
-export class SharedTreeView2<in out TRoot extends TreeFieldSchema>
-	implements ISharedTreeView2<TRoot>
+export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends ITreeView<TRoot> {
+	readonly checkout: ITreeCheckoutFork;
+}
+
+/**
+ * Implementation of ITreeView.
+ */
+export class TreeView<
+	in out TRoot extends TreeFieldSchema,
+	out TBranch extends ITreeCheckout = ITreeCheckout,
+> implements ITreeView<TRoot>
 {
 	public readonly context: Context;
 	public readonly editableTree: TypedField<TRoot>;
 	public constructor(
-		public readonly branch: ISharedTreeView,
+		public readonly checkout: TBranch,
 		public readonly schema: TreeSchema<TRoot>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
+		private readonly onDispose?: () => void,
 	) {
 		this.context = getTreeContext(
 			schema,
-			this.branch.forest,
-			this.branch.editor,
+			this.checkout.forest,
+			this.checkout.editor,
 			nodeKeyManager,
 			nodeKeyFieldKey,
 		);
@@ -84,14 +97,15 @@ export class SharedTreeView2<in out TRoot extends TreeFieldSchema>
 
 	public [disposeSymbol](): void {
 		this.context[disposeSymbol]();
+		this.onDispose?.();
 	}
 
 	public get root(): ProxyField<TRoot> {
 		return getProxyForField(this.editableTree);
 	}
 
-	public fork(): ISharedTreeView2<TRoot> {
-		const branch = this.branch.fork();
-		return new SharedTreeView2(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
+	public fork(): TreeView<TRoot, ITreeCheckoutFork> {
+		const branch = this.checkout.fork();
+		return new TreeView(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
 	}
 }

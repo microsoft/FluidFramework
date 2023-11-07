@@ -19,5 +19,3 @@ export {
 } from "./schemaAware";
 
 export { ValuesOf, TypedValueOrUndefined } from "./schemaAwareUtil";
-
-export { PrimitiveValueSchema } from "../../core";

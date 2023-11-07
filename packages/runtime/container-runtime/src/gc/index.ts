@@ -12,6 +12,7 @@ export {
 	GCNodeType,
 	gcTestModeKey,
 	gcTombstoneGenerationOptionName,
+	gcThrowOnTombstoneLoadOptionName,
 	gcSweepGenerationOptionName,
 	GCFeatureMatrix,
 	GCVersion,
@@ -32,6 +33,7 @@ export {
 	disableAttachmentBlobSweepKey,
 	disableDatastoreSweepKey,
 	UnreferencedState,
+	throwOnTombstoneLoadOverrideKey,
 } from "./gcDefinitions";
 export {
 	cloneGCData,
