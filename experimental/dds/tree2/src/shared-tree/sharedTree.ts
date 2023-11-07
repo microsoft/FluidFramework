@@ -140,7 +140,7 @@ export class SharedTree
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 
 	/**
-	 * Creating multiple editable tree contexts with a single AnchorSet does not work due to have TreeNode caching works.
+	 * Creating multiple editable tree contexts with a single AnchorSet does not work due to how TreeNode caching works.
 	 * This flag is used to detect and error on the easy ways to accidentally do this.
 	 *
 	 * TODO:
