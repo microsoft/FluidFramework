@@ -24,7 +24,7 @@ import {
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISubscribable } from "../events";
-import { CheckoutEvents } from "./sharedTreeView";
+import { CheckoutEvents } from "./treeCheckout";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
