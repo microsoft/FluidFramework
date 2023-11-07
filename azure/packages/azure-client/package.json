@@ -14,18 +14,18 @@
 	"exports": {
 		".": {
 			"import": {
-				"types": "./lib/azure-client-untrimmed.d.ts",
+				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/azure-client-untrimmed.d.ts",
+				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
 		}
 	},
 	"main": "dist/index.js",
 	"module": "lib/index.js",
-	"types": "dist/azure-client-untrimmed.d.ts",
+	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
