@@ -7,6 +7,7 @@ import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "@fluidframework/azure-client";
 import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
+import { type IUser } from "@fluidframework/protocol-definitions";
 
 /**
  * OdspConnectionConfig defines the necessary properties that will be applied to all containers
@@ -89,6 +90,18 @@ export interface OdspServiceAttributes {
 	itemId: string | undefined;
 
 	driveId: string | undefined;
+}
+
+/**
+ * @alpha
+ */
+export interface OdspUser<T = any> extends IUser {
+	/**
+	 * The user's name
+	 */
+	name: string;
+
+	email: string;
 }
 
 /**

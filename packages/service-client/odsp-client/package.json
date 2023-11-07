@@ -70,6 +70,7 @@
 		"@fluidframework/protocol-definitions": "^3.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {

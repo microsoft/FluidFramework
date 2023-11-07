@@ -9490,7 +9490,7 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  packages/services-client/odsp-client:
+  packages/service-client/odsp-client:
     specifiers:
       '@fluid-tools/build-cli': ^0.26.1
       '@fluidframework/azure-client': workspace:~
@@ -9500,6 +9500,7 @@ importers:
       '@fluidframework/container-definitions': workspace:~
       '@fluidframework/container-loader': workspace:~
       '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
       '@fluidframework/driver-definitions': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/fluid-static': workspace:~
@@ -9524,6 +9525,7 @@ importers:
       '@fluidframework/container-definitions': link:../../common/container-definitions
       '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
       '@fluidframework/fluid-static': link:../../framework/fluid-static
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
