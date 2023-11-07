@@ -65,6 +65,7 @@ export class MigrationRegistryFactory implements IChannelFactory {
 		return this.migrationFactory.load(runtime, id, services, channelAttributes);
 	}
 	public create(runtime: IFluidDataStoreRuntime, id: string): MigrationShim | SharedTreeShim {
+		this.currentFactory = this.migrationFactory;
 		const shim = this.migrationFactory.create(runtime, id);
 		const tree = shim.currentTree as LegacySharedTree;
 

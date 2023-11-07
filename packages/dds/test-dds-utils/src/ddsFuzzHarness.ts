@@ -30,10 +30,11 @@ import {
 	MockContainerRuntimeForReconnection,
 	IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils";
-import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
+import { IChannel, IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
+import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
 
 export interface Client<TChannelFactory extends IChannelFactory> {
@@ -93,6 +94,13 @@ export interface Synchronize {
 
 interface HasWorkloadName {
 	workloadName: string;
+}
+
+const attributesBlobKey = ".attributes";
+function getSummaryTreeFromChannel(channel: IChannel): ISummaryTreeWithStats {
+	const summary = channel.getAttachSummary();
+	addBlobToSummary(summary, attributesBlobKey, JSON.stringify(channel.attributes));
+	return summary;
 }
 
 function getSaveDirectory(
@@ -468,7 +476,7 @@ export function mixinNewClient<
 		if (isClientAddOp(op)) {
 			const newClient = await loadClient(
 				state.containerRuntimeFactory,
-				state.summarizerClient.channel.getAttachSummary(),
+				getSummaryTreeFromChannel(state.summarizerClient.channel),
 				model.factory,
 				op.addedClientId,
 				options,
@@ -583,7 +591,7 @@ export function mixinAttach<
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA = state.clients[0];
-			const summaryTreeWithStats = clientA.channel.getAttachSummary();
+			const summaryTreeWithStats = getSummaryTreeFromChannel(clientA.channel);
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -1006,7 +1014,7 @@ export async function runTestForSeed<
 				Array.from({ length: options.numberOfClients }, async (_, i) =>
 					loadClient(
 						containerRuntimeFactory,
-						initialClient.channel.getAttachSummary(),
+						getSummaryTreeFromChannel(initialClient.channel),
 						model.factory,
 						makeFriendlyClientId(random, i),
 						options,

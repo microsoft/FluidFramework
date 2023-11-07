@@ -28,7 +28,7 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type ISharedTreeView2,
+	type ITreeView,
 } from "@fluid-experimental/tree2";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
@@ -90,14 +90,21 @@ const rootType = builder.object("abc", {
 });
 const schema = builder.intoSchema(rootType);
 const rootFieldType = schema.rootFieldSchema;
-function getView(tree: ISharedTree): ISharedTreeView2<typeof rootFieldType> {
-	return tree.schematize({
-		initialTree: {
-			quantity: 0,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+const viewMap = new Map<ISharedTree, ITreeView<typeof rootFieldType>>();
+function getView(tree: ISharedTree): ITreeView<typeof rootFieldType> {
+	let view = viewMap.get(tree);
+	if (view === undefined) {
+		view = tree.schematize({
+			initialTree: {
+				quantity: 0,
+			},
+			allowedSchemaModifications: AllowedUpdateType.None,
+			schema,
+		});
+		viewMap.set(tree, view);
+	}
+
+	return view;
 }
 
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
@@ -108,13 +115,14 @@ const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
 		legacyTree.revert(edit.id);
 	}
 	const quantity = getQuantity(legacyTree);
-	newTree.schematize({
+	const view = newTree.schematize({
 		initialTree: {
 			quantity,
 		},
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
 	});
+	viewMap.set(newTree, view);
 };
 
 const legacyTreeFactory = LegacySharedTree.getFactory();
