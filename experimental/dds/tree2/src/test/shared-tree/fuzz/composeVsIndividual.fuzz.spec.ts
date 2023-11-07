@@ -16,7 +16,7 @@ import {
 } from "@fluid-internal/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { ISharedTreeBranchView2, ITreeView } from "../../../shared-tree";
+import { ITreeViewFork, ITreeView } from "../../../shared-tree";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
@@ -37,7 +37,7 @@ import { Operation } from "./operationTypes";
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
 	main?: ITreeView<typeof fuzzSchema.rootFieldSchema>;
-	branch?: ISharedTreeBranchView2<typeof fuzzSchema.rootFieldSchema>;
+	branch?: ITreeViewFork<typeof fuzzSchema.rootFieldSchema>;
 }
 
 const fuzzComposedVsIndividualReducer = combineReducersAsync<Operation, BranchedTreeFuzzTestState>({

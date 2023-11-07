@@ -40,7 +40,6 @@ import {
 	createTreeCheckout,
 	SharedTree,
 	InitializeAndSchematizeConfiguration,
-	ITreeViewFork,
 	runSynchronous,
 	SharedTreeContentSnapshot,
 	ITreeView,
@@ -961,7 +960,7 @@ export function announceTestDelta(
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
-export function createTestUndoRedoStacks(view: ITreeViewFork | ITreeCheckout): {
+export function createTestUndoRedoStacks(view: ITreeCheckout): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;

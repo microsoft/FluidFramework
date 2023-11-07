@@ -55,7 +55,7 @@ export interface ITreeView<in out TRoot extends TreeFieldSchema>
 	 * Spawn a new view which is based off of the current state of this view.
 	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
-	fork(): ISharedTreeBranchView2<TRoot>;
+	fork(): ITreeViewFork<TRoot>;
 }
 
 /**
@@ -64,8 +64,7 @@ export interface ITreeView<in out TRoot extends TreeFieldSchema>
  * {@link ITreeView} that has forked off of the main trunk/branch.
  * @alpha
  */
-export interface ISharedTreeBranchView2<in out TRoot extends TreeFieldSchema>
-	extends ITreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends ITreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
 }
 
@@ -105,7 +104,7 @@ export class TreeView<
 		return getProxyForField(this.editableTree);
 	}
 
-	public fork(): ISharedTreeBranchView2<TRoot> {
+	public fork(): TreeView<TRoot, ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
 		return new TreeView(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
 	}

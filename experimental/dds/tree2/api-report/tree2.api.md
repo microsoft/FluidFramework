@@ -813,23 +813,9 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 // @alpha
 export interface ISharedTree extends ISharedObject, TypedTreeChannel {
     contentSnapshot(): SharedTreeContentSnapshot;
-    requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): ISharedTreeView2<TRoot> | undefined;
+    requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): ITreeView<TRoot> | undefined;
     // (undocumented)
-    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ISharedTreeView2<TRoot>;
-}
-
-// @alpha
-export interface ISharedTreeBranchView2<in out TRoot extends TreeFieldSchema> extends ISharedTreeView2<TRoot> {
-    // (undocumented)
-    readonly branch: ITreeCheckoutFork;
-}
-
-// @alpha
-export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema> extends IDisposable, TypedTreeView<TRoot> {
-    readonly branch: ITreeCheckout;
-    readonly context: TreeContext;
-    readonly editableTree: TypedField<TRoot>;
-    fork(): ISharedTreeBranchView2<TRoot>;
+    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ITreeView<TRoot>;
 }
 
 // @alpha (undocumented)
@@ -917,6 +903,20 @@ export enum ITreeSubscriptionCursorState {
     Cleared = 1,
     Current = 0,
     Freed = 2
+}
+
+// @alpha
+export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDisposable, TypedTreeView<TRoot> {
+    readonly checkout: ITreeCheckout;
+    readonly context: TreeContext;
+    readonly editableTree: TypedField<TRoot>;
+    fork(): ITreeViewFork<TRoot>;
+}
+
+// @alpha
+export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends ITreeView<TRoot> {
+    // (undocumented)
+    readonly checkout: ITreeCheckoutFork;
 }
 
 // @alpha
