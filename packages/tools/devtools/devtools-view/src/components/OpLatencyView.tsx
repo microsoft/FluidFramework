@@ -150,6 +150,7 @@ export function OpLatencyView(): React.ReactElement {
 
 	return (
 		<div className={styles.mainContainer} data-testid="test-op-latency-view">
+			<h3>Op Latency</h3>
 			{renderInstructions ? (
 				<Body1>
 					{`Unsampled telemetry has not been enabled and is necessary for this feature to work as designed. To enable it, open the web console and set the Disable Sampling flag to true using the following command:`}
@@ -160,7 +161,6 @@ export function OpLatencyView(): React.ReactElement {
 				</Body1>
 			) : (
 				<div className={styles.mainContainer} data-testid="test-op-latency-view">
-					<h3>Op Latency</h3>
 					<DynamicComposedChart
 						margin={{
 							top: 15,
