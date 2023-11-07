@@ -15,6 +15,7 @@ const {
 	getPackageMetadata,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
+	getPackageScope,
 } = require("./utilities.cjs");
 const {
 	apiDocsLinkSectionTransform,
@@ -219,7 +220,7 @@ function includeTransform(content, options, config) {
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.experimentalPackage - (optional) Whether or not to include a notice indicating that the package is experimental.
- * Default: `FALSE`
+ * Default: Inherit from package namespace - will be included if namespace is `@fluid-experimental`.
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
@@ -249,7 +250,8 @@ function libraryPackageReadmeTransform(content, options, config) {
 
 	const sections = [];
 
-	if (options.experimentalPackage === "TRUE") {
+	const packageScope = getPackageScope(packageName);
+	if (options.experimentalPackage === "TRUE" || packageScope === `@fluid-experimental`) {
 		sections.push(generateExperimentalPackageNotice());
 	}
 

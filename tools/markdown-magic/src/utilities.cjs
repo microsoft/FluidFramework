@@ -61,13 +61,39 @@ function getPackageMetadata(packageJsonFilePath) {
  * Gets a package short-name (unscoped-name) from a scoped package name.
  *
  * @param {string} scopedPackageName - A scoped package name.
+ * @returns {object} An object containing the package's `unscopedName` and (optionally) `scope`.
  */
-function getShortPackageName(scopedPackageName) {
+function getPackageNameAndScope(scopedPackageName) {
 	const arr = scopedPackageName.split("/", 2);
 	if (arr[1]) {
-		return arr[1];
+		return {
+			scope: arr[0],
+			unscopedName: arr[1],
+		};
 	}
-	return arr[0];
+	return { unscopedName: arr[0] };
+}
+
+/**
+ * Gets a package short-name (unscoped-name) from a scoped package name.
+ *
+ * @param {string} scopedPackageName - A scoped package name.
+ * @returns {string} The unscoped package name.
+ */
+function getShortPackageName(scopedPackageName) {
+	const { unscopedName } = getPackageNameAndScope(scopedPackageName);
+	return unscopedName;
+}
+
+/**
+ * Gets a package's scope (namespace) from a scoped package name iff it includes a scope.
+ *
+ * @param {string} scopedPackageName - A scoped package name.
+ * @returns {string | undefined} The package's scope if it has one, otherwise `undefined`.
+ */
+function getPackageScope(scopedPackageName) {
+	const { scope } = getPackageNameAndScope(scopedPackageName);
+	return scope;
 }
 
 /**
@@ -120,6 +146,7 @@ module.exports = {
 	formattedGeneratedContentBody,
 	formattedEmbeddedContentBody,
 	getPackageMetadata,
+	getPackageScope,
 	getShortPackageName,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
