@@ -28,7 +28,13 @@ import {
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IErrorBase, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	IErrorBase,
+	IFluidHandle,
+	IRequest,
+	IResponse,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { IFluidDataStoreChannel } from "@fluidframework/runtime-definitions";
@@ -81,11 +87,19 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	async function loadContainer(
 		summaryVersion: string,
 		disableTombstoneFailureViaOption: boolean = false,
+		logger?: ITelemetryBaseLogger,
 	) {
 		const config = disableTombstoneFailureViaOption
 			? testContainerConfigWithFutureMinGcOption
 			: testContainerConfig;
-		return provider.loadTestContainer(config, {
+		const config2: ITestContainerConfig = {
+			...config,
+			loaderProps: {
+				...config.loaderProps,
+				logger,
+			},
+		};
+		return provider.loadTestContainer(config2, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 	}
@@ -527,7 +541,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					gcTombstoneEnforcementAllowed: false,
 					clientType: "interactive",
 				},
 			],
@@ -539,9 +552,11 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
+				const logger = new MockLogger();
 				const container = await loadContainer(
 					summaryVersion,
 					true /* disableTombstoneFailureViaOption */,
+					logger,
 				);
 
 				// This request succeeds even though the datastore is tombstoned, on account of the later gcTombstoneGeneration passed in
@@ -568,7 +583,6 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
-					gcTombstoneEnforcementAllowed: false,
 					clientType: "interactive",
 				},
 			],
