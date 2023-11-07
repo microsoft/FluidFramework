@@ -38,10 +38,7 @@ export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
 	private readonly logger;
 
-	constructor(
-		private readonly config: OpGroupingManagerConfig,
-		logger: ITelemetryBaseLogger,
-	) {
+	constructor(private readonly config: OpGroupingManagerConfig, logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpGroupingManager" });
 	}
 
