@@ -9,8 +9,11 @@ import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapSchema } from "../.
 import { TreeNode, ObjectNode, FieldNode, MapNode } from "../editableTreeTypes";
 import { SharedTreeObject, SharedTreeList, SharedTreeMap, SharedTreeNode } from "./types";
 
-/** Stores a reference to an edit node on a {@link SharedTreeNode}. */
-const editNodeSymbol = Symbol("EditNode");
+/** Associates an edit node with a target object  */
+const targetSymbol = Symbol("EditNodeTarget");
+interface HasTarget {
+	[targetSymbol]: SharedTreeNode;
+}
 
 /**
  * This is intentionally a WeakMap, rather than a private symbol (e.g. like `editNodeSymbol`).
@@ -51,8 +54,8 @@ export function tryGetEditNode(target: unknown): TreeNode | undefined {
 /**
  * Retrieves the target associated with the given edit node via {@link setEditNode}, if any.
  */
-export function tryGetEditNodeTarget(editNode: TreeNode): unknown | undefined {
-	return (editNode as { [editNodeSymbol]?: unknown })[editNodeSymbol];
+export function tryGetEditNodeTarget(editNode: TreeNode): SharedTreeNode | undefined {
+	return (editNode as Partial<HasTarget>)[targetSymbol];
 }
 
 /**
@@ -61,7 +64,8 @@ export function tryGetEditNodeTarget(editNode: TreeNode): unknown | undefined {
  * @remarks
  * This creates a 1:1 mapping between the target and tree node.
  * Either can be retrieved from the other via {@link getEditNode}/{@link tryGetEditNode} or {@link tryGetEditNodeTarget}.
- * Mapping multiple targets to tree nodes or visa versa is illegal.
+ * If the given target is already mapped to an edit node, the existing mapping will be overwritten.
+ * If the given edit node is already mapped to a different target, this function will fail.
  */
 export function setEditNode<T extends SharedTreeObject<ObjectNodeSchema>>(
 	target: T,
@@ -77,10 +81,11 @@ export function setEditNode<T extends SharedTreeMap<MapSchema>>(
 ): T;
 export function setEditNode<T extends SharedTreeNode>(target: T, editNode: TreeNode): T {
 	assert(
-		!editNodeMap.has(target) && tryGetEditNodeTarget(editNode) === undefined,
-		"Unexpected edit node mapping: mapping already established",
+		tryGetEditNodeTarget(editNode) === undefined,
+		"Cannot associate an edit node with multiple targets",
 	);
+	delete (editNodeMap.get(target) as Partial<HasTarget>)?.[targetSymbol];
 	editNodeMap.set(target, editNode);
-	Object.defineProperty(editNode, editNodeSymbol, { value: target });
+	Object.defineProperty(editNode, targetSymbol, { value: target, configurable: true });
 	return target;
 }

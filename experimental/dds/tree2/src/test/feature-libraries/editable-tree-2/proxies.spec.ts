@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { SchemaBuilder } from "../../../domains";
 import { ProxyNode, ProxyRoot, Tree, typeNameSymbol } from "../../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
@@ -19,7 +20,7 @@ describe("SharedTree proxies", () => {
 
 	const parentSchema = sb.object("parent", {
 		object: childSchema,
-		list: sb.fieldNode("list", sb.sequence(sb.number)),
+		list: sb.list(sb.number),
 		map: sb.map("map", sb.optional(sb.string)),
 	});
 
@@ -69,11 +70,13 @@ describe("SharedTreeObject", () => {
 	const parentSchema = sb.object("parent", {
 		content: sb.number,
 		child: numberChild,
+		optional: sb.optional(numberChild),
 		polyValue: [sb.number, sb.string],
 		polyChild: [numberChild, stringChild],
 		polyValueChild: [sb.number, numberChild],
-		map: sb.map("map", sb.optional(sb.string)),
+		map: sb.map("map", sb.string),
 		list: sb.list(numberChild),
+		handle: sb.handle,
 	});
 
 	const schema = sb.intoSchema(parentSchema);
@@ -81,6 +84,7 @@ describe("SharedTreeObject", () => {
 	const initialTree = {
 		content: 42,
 		child: { content: 42 },
+		optional: { content: 42 },
 		polyValue: "42",
 		polyChild: { content: "42", [typeNameSymbol]: stringChild.name },
 		polyValueChild: { content: 42 },
@@ -89,6 +93,7 @@ describe("SharedTreeObject", () => {
 			["bar", "World"],
 		]),
 		list: [{ content: 42 }, { content: 42 }],
+		handle: new MockHandle(42),
 	};
 
 	itWithRoot("can read required fields", schema, initialTree, (root) => {
@@ -148,6 +153,29 @@ describe("SharedTreeObject", () => {
 			}
 		},
 	);
+
+	itWithRoot("can read and write handles", schema, initialTree, (root) => {
+		// TODO:#6133: When itWithRoot is removed, make this properly async and check that the value of the handle is correct
+		assert.notEqual(root.handle, undefined);
+		root.handle = new MockHandle(43);
+		assert.notEqual(root.handle, undefined);
+	});
+
+	itWithRoot("can set fields", schema, initialTree, (root) => {
+		assert.equal(root.child.content, 42);
+		assert.equal(root.optional?.content, 42);
+		const newChild = numberChild.create({ content: 43 });
+		root.child = newChild;
+		assert.equal(root.child, newChild);
+		root.optional = numberChild.create(newChild);
+		assert.equal(root.optional.content, 43);
+	});
+
+	itWithRoot("can unset fields", schema, initialTree, (root) => {
+		assert.equal(root.optional?.content, 42);
+		root.optional = undefined;
+		assert.equal(root.optional, undefined);
+	});
 });
 
 describe("SharedTreeList", () => {
@@ -160,21 +188,24 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(list, [{ id: "B" }]);
 			const newItem = obj.create({ id: "A" });
 			list.insertAtStart([newItem]);
-			assert.deepEqual(list, [{ id: "A" }, { id: "B" }]);
+			assert.equal(newItem, list[0]); // Check that the inserted and read proxies are the same object
+			assert.deepEqual(list, [newItem, { id: "B" }]);
 		});
 
 		itWithRoot("insertAtEnd()", schema, [{ id: "A" }], (list) => {
 			assert.deepEqual(list, [{ id: "A" }]);
 			const newItem = obj.create({ id: "B" });
 			list.insertAtEnd([newItem]);
-			assert.deepEqual(list, [{ id: "A" }, { id: "B" }]);
+			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
+			assert.deepEqual(list, [{ id: "A" }, newItem]);
 		});
 
 		itWithRoot("insertAt()", schema, [{ id: "A" }, { id: "C" }], (list) => {
 			assert.deepEqual(list, [{ id: "A" }, { id: "C" }]);
 			const newItem = obj.create({ id: "B" });
 			list.insertAt(1, [newItem]);
-			assert.deepEqual(list, [{ id: "A" }, { id: "B" }, { id: "C" }]);
+			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
+			assert.deepEqual(list, [{ id: "A" }, newItem, { id: "C" }]);
 		});
 	});
 
@@ -556,8 +587,11 @@ describe("SharedTreeMap", () => {
 		scope: "test",
 	});
 
+	const object = sb.object("object", { content: sb.number });
+
 	const rootSchema = sb.object("parent", {
-		map: sb.map("map", sb.optional(sb.string)),
+		map: sb.map(sb.string),
+		objectMap: sb.map(object),
 	});
 
 	const schema = sb.intoSchema(rootSchema);
@@ -567,6 +601,7 @@ describe("SharedTreeMap", () => {
 			["foo", "Hello"],
 			["bar", "World"],
 		]),
+		objectMap: new Map(),
 	};
 
 	itWithRoot("entries", schema, initialTree, (root) => {
@@ -619,6 +654,13 @@ describe("SharedTreeMap", () => {
 		root.map.set("baz", undefined);
 		assert.equal(root.map.size, 2);
 		assert(!root.map.has("baz"));
+	});
+
+	itWithRoot("set object", schema, initialTree, (root) => {
+		const o = object.create({ content: 42 });
+		root.objectMap.set("foo", o);
+		assert.equal(root.objectMap.get("foo"), o); // Check that the inserted and read proxies are the same object
+		assert.equal(root.objectMap.get("foo")?.content, o.content);
 	});
 
 	itWithRoot("delete", schema, initialTree, (root) => {
