@@ -1,2 +1,2 @@
-**Note: this package is experimental; its APIs may change without notice.**
-**It is not recommended for production scenarios.**
+**IMPORTANT: This package is experimental. Its APIs may change without notice.**
+**Do not use in production scenarios.**
