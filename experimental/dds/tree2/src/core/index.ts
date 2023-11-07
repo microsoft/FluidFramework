@@ -86,6 +86,7 @@ export {
 	emptyFieldChanges,
 	isEmptyFieldChanges,
 	makeDetachedNodeId,
+	offsetDetachId,
 	emptyDelta,
 	AnchorSlot,
 	AnchorNode,

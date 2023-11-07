@@ -155,7 +155,7 @@
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.37.0",
@@ -365,6 +365,10 @@
 				"@types/node",
 				"fluid-framework"
 			]
+		},
+		"patchedDependencies": {
+			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
+			"engine.io-client@6.5.2": "patches/engine.io-client@6.5.2.patch"
 		}
 	}
 }

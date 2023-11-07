@@ -13,6 +13,7 @@ import {
 	NodeChangeInverter,
 	NodeChangeRebaser,
 	RevisionMetadataSource,
+	RemovedTreesFromChild,
 } from "./fieldChangeHandler";
 import { FieldKindWithEditor, Multiplicity } from "./fieldKind";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs";
@@ -102,6 +103,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		}
 		return { local: markList };
 	},
+	relevantRemovedTrees,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 };
 
@@ -195,4 +197,13 @@ const invalidCrossFieldManager: CrossFieldManager = {
 
 export function newGenericChangeset(): GenericChangeset {
 	return [];
+}
+
+function* relevantRemovedTrees(
+	change: GenericChangeset,
+	removedTreesFromChild: RemovedTreesFromChild,
+): Iterable<Delta.DetachedNodeId> {
+	for (const { nodeChange } of change) {
+		yield* removedTreesFromChild(nodeChange);
+	}
 }

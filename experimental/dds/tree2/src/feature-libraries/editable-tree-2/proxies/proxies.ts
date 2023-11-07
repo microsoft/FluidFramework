@@ -16,10 +16,12 @@ import {
 	schemaIsObjectNode,
 	MapSchema,
 	FieldNodeSchema,
+	MapFieldSchema,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
 	FieldNode,
+	FlexibleFieldContent,
 	MapNode,
 	ObjectNode,
 	OptionalField,
@@ -31,7 +33,7 @@ import {
 import { LazySequence } from "../lazyField";
 import { FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
-import { ContextuallyTypedNodeData, typeNameSymbol } from "../../contextuallyTyped";
+import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../../contextuallyTyped";
 import { createRawObjectNode, extractRawNodeContent } from "../rawObjectNode";
 import {
 	ProxyField,
@@ -575,7 +577,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
 			const node = getEditNode(this);
-			node.set(key, extractFactoryContent(value as any));
+			node.set(key, extractFactoryContent(value as FlexibleFieldContent<MapFieldSchema>));
 			return this;
 		},
 	},
@@ -606,7 +608,7 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<SharedTreeMap<TSchema>>(
-		new Map<string, ProxyField<TSchema["mapFields"]>>(),
+		new Map<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -687,6 +689,8 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 			map.set(k, extractFactoryContent(v));
 		}
 		return map as T;
+	} else if (isFluidHandle(content)) {
+		return content;
 	} else if (content !== null && typeof content === "object") {
 		const copy: Record<string, unknown> = {};
 		const editNode = tryGetEditNode(content);

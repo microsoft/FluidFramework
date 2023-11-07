@@ -169,19 +169,19 @@ export function generateTestTrees() {
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2);
-				const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).branch;
+				const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
 				provider.processMessages();
 				const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).branch;
 				provider.processMessages();
 
 				// Insert node
-				tree1.context.root.insertNodes(0, [value]);
+				tree1.editableTree.insertAtStart([value]);
 				provider.processMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Delete node
-				remove(tree1, 0, 1);
+				tree1.editableTree.removeAt(0);
 
 				provider.processMessages();
 
