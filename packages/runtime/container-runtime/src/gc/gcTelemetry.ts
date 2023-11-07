@@ -267,7 +267,7 @@ export class GCTelemetryTracker {
 			tombstoneFlags: {
 				DisableTombstone: this.mc.config.getBoolean(disableTombstoneKey),
 				ThrowOnTombstoneUsage: this.mc.config.getBoolean(throwOnTombstoneUsageKey),
-				ThrowOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadKey),
+				ThrowOnTombstoneLoad: this.mc.config.getBoolean(throwOnTombstoneLoadOverrideKey),
 			},
 			sweepFlags: {
 				EnableSweepFlag: this.mc.config.getBoolean(runSweepKey),

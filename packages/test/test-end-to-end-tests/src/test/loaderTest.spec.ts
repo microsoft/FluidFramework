@@ -13,7 +13,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	describeNoCompat,
 	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import {

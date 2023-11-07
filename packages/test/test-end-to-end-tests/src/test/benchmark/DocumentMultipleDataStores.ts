@@ -22,7 +22,7 @@ import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-
 import {
 	assertDocumentTypeInfo,
 	isDocumentMultipleDataStoresInfo,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,

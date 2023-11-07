@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type ITestObjectProvider,
 	createSummarizerFromFactory,
 	summarizeNow,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
 import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
@@ -31,18 +31,34 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type Typed,
-	type ITreeView,
 	disposeSymbol,
 } from "@fluid-experimental/tree2";
+// eslint-disable-next-line import/no-internal-modules
+import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
 import { LoaderHeader } from "@fluidframework/container-definitions";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { MigrationShimFactory } from "../migrationShimFactory.js";
 import { type MigrationShim } from "../migrationShim.js";
 import { SharedTreeShimFactory } from "../sharedTreeShimFactory.js";
 import { type SharedTreeShim } from "../sharedTreeShim.js";
 
 const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
+
+function updateQuantity(tree: LegacySharedTree, quantity: number): void {
+	const rootNode = tree.currentView.getViewNode(tree.currentView.root);
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const nodeId = rootNode.traits.get(legacyNodeId)![0];
+	const change: Change = Change.setPayload(nodeId, { quantity });
+	tree.applyEdit(change);
+}
+
+function getQuantity(tree: LegacySharedTree): number {
+	const rootNode = tree.currentView.getViewNode(tree.currentView.root);
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const nodeId = rootNode.traits.get(legacyNodeId)![0];
+	const legacyNode = tree.currentView.getViewNode(nodeId);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	return legacyNode.payload.quantity as number;
+}
 
 // A Test Data Object that exposes some basic functionality.
 class TestDataObject extends DataObject {
@@ -85,10 +101,8 @@ class TestDataObject extends DataObject {
 	// Makes it so we can get the tree stored as "tree"
 	public async hasInitialized(): Promise<void> {
 		// We are using runtime.getChannel here instead of fetching the handle
-		const handle: IFluidHandle<IChannel> | undefined =
-			this.root.get<IFluidHandle<IChannel>>("tree");
-		const tree = await handle?.get();
-		assert(tree !== undefined, "Tree channel should be defined");
+		// TODO: handle tests
+		const tree = await this.runtime.getChannel("tree");
 		this.channel = tree;
 	}
 
@@ -101,15 +115,13 @@ class TestDataObject extends DataObject {
 
 const builder = new SchemaBuilder({ scope: "test" });
 // For now this is the schema of the view.root
-const inventorySchema = builder.object("abcInventory", {
+const quantityType = builder.object("quantityObj", {
 	quantity: builder.number,
 });
+const schema = builder.intoSchema(quantityType);
 
-// This is some schema to be updated later
-const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
-const schema = builder.intoSchema(inventoryFieldSchema);
-
-function getNewTreeView(tree: ISharedTree): ITreeView<typeof inventoryFieldSchema> {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function getNewTreeView(tree: ISharedTree) {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,
@@ -119,7 +131,7 @@ function getNewTreeView(tree: ISharedTree): ITreeView<typeof inventoryFieldSchem
 	});
 }
 
-describeNoCompat("HotSwap", (getTestObjectProvider) => {
+describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 	// Allow us to control summaries
 	const runtimeOptions: IContainerRuntimeOptions = {
 		summaryOptions: {
@@ -155,12 +167,14 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		newSharedTreeFactory,
 		(legacyTree, newTree) => {
 			// Migration code that the customer writes
-			const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const nodeId = rootNode.traits.get(legacyNodeId)![0];
-			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-			const quantity = legacyNode.payload.quantity as number;
+			// Revert local edits - otherwise we will be eventually inconsistent
+			const edits = legacyTree.edits as EditLog;
+			const localEdits = [...edits.getLocalEdits()].reverse();
+			for (const edit of localEdits) {
+				legacyTree.revert(edit.id);
+			}
+			// migrate data
+			const quantity = getQuantity(legacyTree);
 			newTree
 				.schematize({
 					initialTree: {
@@ -192,6 +206,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 
 	const originalValue = 3;
+	const newValue = 4;
 
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
@@ -200,112 +215,41 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		const testObj = await requestFluidObject<TestDataObject>(container, "/");
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
-		// Initialize the legacy tree with some data
-		const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const nodeId = rootNode.traits.get(legacyNodeId)![0];
-		const change: Change = Change.setPayload(nodeId, { quantity: originalValue });
-		legacyTree.applyEdit(change);
+		updateQuantity(legacyTree, originalValue);
 		// make sure changes are saved.
 		await provider.ensureSynchronized();
 		container.close();
 	});
 
-	it("Can Hot Swap", async () => {
+	it("Shims can reconnect", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
 		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
 		const shim1 = testObj1.getTree<MigrationShim>();
-		// Transition the container to write mode so we send the client join op first.
-		testObj1._root.set("a", "value");
-
-		const container2 = await provider.loadContainer(runtimeFactory2);
-		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
-		const shim2 = testObj2.getTree<MigrationShim>();
-		assert(
-			shim1.currentTree.attributes.type === legacySharedTreeFactory.type,
-			"shim1.currentTree is not legacy tree",
-		);
-		assert(
-			shim2.currentTree.attributes.type === legacySharedTreeFactory.type,
-			"shim2.currentTree is not legacy tree",
-		);
-
-		await provider.ensureSynchronized();
-
-		// Get premigration sequence number
-		const preMigrationSeqNumber1 = container1.deltaManager.lastKnownSeqNumber;
-		const preMigrationSeqNumber2 = container2.deltaManager.lastKnownSeqNumber;
-
-		// Hot swap
+		const legacyTree1 = shim1.currentTree as LegacySharedTree;
+		container1.disconnect();
+		container1.connect();
+		updateQuantity(legacyTree1, 123);
 		shim1.submitMigrateOp();
 
-		// TODO: shim1.on("migrated", () => { ... });
-		// TODO: shim2.on("migrated", () => { ... });
+		// Wait for "migrated" event on both shims.
+		const promise1 = new Promise<void>((resolve) => shim1.on("migrated", () => resolve()));
 		await provider.ensureSynchronized();
+		await promise1;
 
-		// Verify that no ops were generated during migration.
-		const postMigrationSeqNumber1 = container1.deltaManager.lastKnownSeqNumber;
-		const postMigrationSeqNumber2 = container2.deltaManager.lastKnownSeqNumber;
+		const newTree1 = shim1.currentTree as ISharedTree;
+		const view1 = getNewTreeView(newTree1);
+		const node1 = view1.root;
 
-		assert(
-			preMigrationSeqNumber1 + 1 === postMigrationSeqNumber1,
-			"container1 should have migrated with only one op",
-		);
-		assert(
-			preMigrationSeqNumber2 + 1 === postMigrationSeqNumber2,
-			"container2 should have migrated with only one op",
-		);
+		container1.disconnect();
+		container1.connect();
 
-		// Verify that the trees have been swapped by checking the attributes type
-		assert(
-			shim1.currentTree.attributes.type === newSharedTreeFactory.type,
-			"should have migrated",
-		);
-		assert(
-			shim2.currentTree.attributes.type === newSharedTreeFactory.type,
-			"should have migrated",
-		);
-
-		// Get the migrated values from the new tree
-		const tree1 = shim1.currentTree as ISharedTree;
-		const tree2 = shim2.currentTree as ISharedTree;
-
-		const view1 = getNewTreeView(tree1);
-		const view2 = getNewTreeView(tree2);
-		const treeNode1: Typed<typeof inventorySchema> = view1.editableTree.content;
-		const treeNode2: Typed<typeof inventorySchema> = view2.editableTree.content;
-
-		// Validate migrated values of the old tree match the new tree
-		const migratedValue1 = treeNode1.quantity;
-		const migratedValue2 = treeNode2.quantity;
-		assert(
-			migratedValue2 === originalValue && migratedValue2 === migratedValue1,
-			`Failed to migrate values original ${originalValue} migrated 1: ${migratedValue1}, 2: ${migratedValue2}`,
-		);
-
-		// Test that we can modify/send ops with the new Shared Tree
-		treeNode1.quantity = 5;
+		// Send a v2 op and check to see that they are processed.
+		node1.quantity = newValue;
 		await provider.ensureSynchronized();
-		assert(treeNode2.quantity === treeNode1.quantity, "Failed to update the new tree via op");
-	});
+		assert.equal(node1.quantity, newValue, "expected quantity values to be updated");
+		assert(!container1.closed, "Container1 should not be closed");
 
-	it("Can Hot Swap, summarize, and load from that summary", async () => {
-		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1 = await provider.loadContainer(runtimeFactory2);
-		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
-		const shim1 = testObj1.getTree<MigrationShim>();
-
-		// Hot swap
-		shim1.submitMigrateOp();
-
-		const migrationCompletion = new Promise<void>((resolve) => {
-			shim1.on("migrated", () => resolve());
-		});
-		await migrationCompletion;
-		await provider.ensureSynchronized();
-
-		// Summarize
 		const { summarizer } = await createSummarizerFromFactory(
 			provider,
 			container1,
@@ -313,48 +257,24 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
-
-		// Load a new container
 		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
 		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
 		const shim2 = testObj2.getTree<SharedTreeShim>();
-
-		// Validate that we loaded a shared tree immediately
-		assert(
-			shim2.currentTree.attributes.type === newSharedTreeFactory.type,
-			"should have loaded migrated shim",
-		);
-
-		// Get the migrated values from the new tree
-		const tree1 = shim1.currentTree as ISharedTree;
-		const view1 = getNewTreeView(tree1);
-		const treeNode1 = view1.root as unknown as Typed<typeof inventorySchema>;
-
-		const tree2 = shim2.currentTree;
-		const view2 = getNewTreeView(tree2);
-		const treeNode2 = view2.root as unknown as Typed<typeof inventorySchema>;
-		const migratedValue2 = treeNode2.quantity;
-		assert(
-			migratedValue2 === originalValue,
-			`Failed to load from migrated snapshot values original ${originalValue} migrated snapshot value: ${migratedValue2}`,
-		);
-
-		// Test that we can modify/send ops with the new Shared Tree
-		treeNode2.quantity = 5;
+		const newTree2 = shim2.currentTree;
+		const view2 = getNewTreeView(newTree2);
+		const node2 = view2.root;
+		node2.quantity = 431;
 		await provider.ensureSynchronized();
-		assert(
-			treeNode2.quantity === treeNode1.quantity,
-			"Failed to write from MigrationShim to SharedTreeShim",
-		);
 
-		// Test that we can modify/send ops with the new Shared Tree
-		treeNode1.quantity = 6;
+		const disconnected = new Promise<void>((resolve) => container2.on("disconnected", resolve));
+		container2.disconnect();
+		await disconnected;
+		container2.connect();
+
+		node2.quantity = 432;
 		await provider.ensureSynchronized();
-		assert(
-			treeNode2.quantity === treeNode1.quantity,
-			"Failed to write from SharedTreeShim to MigrationShim",
-		);
+		assert.equal(node2.quantity, 432, "expected quantity values to be updated");
 	});
 });
