@@ -12,8 +12,8 @@ import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
-	getEffectiveNodeChanges,
 	getEndpoint,
+	getInputCellId,
 	getOutputCellId,
 	isNewAttach,
 	isTransientEffect,
@@ -33,7 +33,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 
 	for (const mark of change) {
 		const deltaMark: Mutable<Delta.Mark> = { count: mark.count };
-		const changes = getEffectiveNodeChanges(mark);
+		const changes = mark.changes;
 		if (changes !== undefined) {
 			deltaMark.fields = deltaFromChild(changes);
 			if (deltaMark.fields.size === 0) {
@@ -45,6 +45,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 			// the cell starting end ending populated means the cell content has not changed.
 			local.push(deltaMark);
 		} else if (areInputCellsEmpty(mark) && areOutputCellsEmpty(mark)) {
+			const inputCellId = getInputCellId(mark, revision, undefined);
+			assert(inputCellId !== undefined, "Transient mark should have defined input cell ID");
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
 			if (isTransientEffect(mark)) {
@@ -58,9 +60,9 @@ export function sequenceFieldToDelta<TNodeChange>(
 				const oldId = nodeIdFromChangeAtom(
 					isMoveDestination(mark.attach)
 						? getEndpoint(mark.attach, revision)
-						: mark.cellId,
+						: inputCellId,
 				);
-				if (!areEqualChangeAtomIds(mark.cellId, outputId)) {
+				if (!areEqualChangeAtomIds(inputCellId, outputId)) {
 					if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
 						build.push({
 							id: oldId,
@@ -79,6 +81,11 @@ export function sequenceFieldToDelta<TNodeChange>(
 						fields: deltaMark.fields,
 					});
 				}
+			} else if (deltaMark.fields) {
+				global.push({
+					id: nodeIdFromChangeAtom(inputCellId),
+					fields: deltaMark.fields,
+				});
 			}
 		} else {
 			const type = mark.type;

@@ -28,7 +28,7 @@ import {
 	withNormalizedLineage,
 	withoutLineage,
 } from "./utils";
-import { ChangeMaker as Change } from "./testEdits";
+import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -48,6 +48,17 @@ function generateAdjacentCells(maxId: number): SF.IdRange[] {
 
 const testChanges: [string, (index: number, maxIndex: number) => SF.Changeset<TestChange>][] = [
 	["NestedChange", (i) => Change.modify(i, TestChange.mint([], 1))],
+	[
+		"NestedChangeUnderRemovedNode",
+		(i, max) => [
+			...(i > 0 ? [{ count: i }] : []),
+			Mark.modify(TestChange.mint([], 1), {
+				revision: tag1,
+				localId: brand(i),
+				adjacentCells: generateAdjacentCells(max),
+			}),
+		],
+	],
 	[
 		"MInsert",
 		(i) =>
@@ -115,6 +126,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 					(name1.startsWith("Revive") && name2.startsWith("ReturnTo")) ||
 					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
+					(name1.endsWith("UnderRemovedNode") && name2.startsWith("Return")) ||
+					(name1.startsWith("Return") && name2.endsWith("UnderRemovedNode")) ||
 					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Return"))
 				) {
@@ -134,8 +147,9 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
 
+							const r2NoLineage = withoutLineage(r2.change);
 							// We do not expect exact equality because r2 may have accumulated some lineage.
-							assert.deepEqual(withoutLineage(r2.change), change1.change);
+							assert.deepEqual(r2NoLineage, change1.change);
 						}
 					}
 				});
@@ -158,6 +172,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Transient")) ||
 					(name1.startsWith("Return") && name2.startsWith("Transient")) ||
+					(name1.endsWith("UnderRemovedNode") && name2.startsWith("Return")) ||
+					(name1.startsWith("Return") && name2.endsWith("UnderRemovedNode")) ||
 					(name1.startsWith("Transient") && name2.startsWith("Return"))
 				) {
 					// These cases are malformed because the test changes are missing lineage to properly order the marks
@@ -200,6 +216,8 @@ describe("SequenceField - Rebaser Axioms", () => {
 				if (
 					(name1.startsWith("Revive") && name2.startsWith("ReturnTo")) ||
 					(name1.startsWith("ReturnTo") && name2.startsWith("Revive")) ||
+					(name1.endsWith("UnderRemovedNode") && name2.startsWith("Return")) ||
+					(name1.startsWith("Return") && name2.endsWith("UnderRemovedNode")) ||
 					((name1.startsWith("Transient") || name2.startsWith("Transient")) &&
 						(name1.startsWith("Return") || name2.startsWith("Return")))
 				) {
@@ -278,6 +296,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 			"ConflictedRevive",
 			"ReturnFrom",
 			"ReturnTo",
+			"NestedChangeUnderRemovedNode",
 		]);
 
 		const lineageFreeTestChanges = shallowTestChanges.filter(
@@ -287,6 +306,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [nameA, makeChange1] of shallowTestChanges) {
 			for (const [nameB, makeChange2] of shallowTestChanges) {
 				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
+					const names = [nameA, nameB, nameC];
 					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
 					if (
 						["MoveIn", "MoveOut", "ReturnFrom", "ReturnTo"].includes(nameB) &&

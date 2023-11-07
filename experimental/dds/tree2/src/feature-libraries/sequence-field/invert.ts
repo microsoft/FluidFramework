@@ -104,12 +104,7 @@ function invertMark<TNodeChange>(
 		case NoopMarkType: {
 			const inverse = { ...mark };
 			if (mark.changes !== undefined) {
-				if (mark.cellId === undefined) {
-					inverse.changes = invertChild(mark.changes, inputIndex);
-				} else {
-					// TODO: preserve modifications to the removed nodes.
-					delete inverse.changes;
-				}
+				inverse.changes = invertChild(mark.changes, inputIndex);
 			}
 			return [inverse];
 		}
@@ -130,8 +125,15 @@ function invertMark<TNodeChange>(
 				);
 				return [inverse];
 			}
-			// TODO: preserve modifications to the removed nodes.
-			return [];
+			return [
+				invertNodeChangeOrSkip(
+					mark.count,
+					mark.changes,
+					inputIndex,
+					invertChild,
+					mark.cellId,
+				),
+			];
 		}
 		case "Insert": {
 			if (isMuted(mark)) {
@@ -165,8 +167,15 @@ function invertMark<TNodeChange>(
 		case "MoveOut":
 		case "ReturnFrom": {
 			if (areInputCellsEmpty(mark)) {
-				// TODO: preserve modifications to the removed nodes.
-				return [];
+				return [
+					invertNodeChangeOrSkip(
+						mark.count,
+						mark.changes,
+						inputIndex,
+						invertChild,
+						mark.cellId,
+					),
+				];
 			}
 			if (mark.type === "ReturnFrom" && mark.isDstConflicted) {
 				// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
