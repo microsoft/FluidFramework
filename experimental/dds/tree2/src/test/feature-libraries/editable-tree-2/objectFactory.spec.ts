@@ -36,7 +36,7 @@ describe("SharedTreeObject factories", () => {
 		child: childD,
 	});
 
-	const parent = sb.object("parent", {
+	const parentA = sb.object("parent", {
 		child: childA,
 		poly: [childA, childB],
 		list: sb.list(sb.number),
@@ -45,7 +45,7 @@ describe("SharedTreeObject factories", () => {
 		grand: childC,
 	});
 
-	const schema = sb.intoSchema(parent);
+	const schema = sb.intoSchema(parentA);
 
 	const initialTree = {
 		// TODO:#5928: Remove need for typeNameSymbol by calling factory function instead
@@ -195,215 +195,179 @@ describe("SharedTreeObject factories", () => {
 		});
 	});
 
-	it("produce proxies that can be read after insertion", () => {
-		// This schema is meant to be a large tree which has all the various combinations of types.
-		// E.g. "objects with lists", "lists of maps", "maps of lists", "lists of lists", etc.
+	describe("produce proxies that can be read after insertion for trees of", () => {
+		// This suite ensures that object proxies created via `foo.create` are "hydrated" after they are inserted into the tree.
+		// After insertion, each of those proxies should be the same object as the corresponding proxy in the tree.
+
+		// This schema allows trees of all the various combinations of containers.
+		// For example, "objects with lists", "lists of maps", "maps of lists", "lists of lists", etc.
+		// It will be used below to generate test cases of the various combinations.
+		// TODO: This could be a recursive schema, but it's not because the recursive APIs are painful.
 		const comboSchemaBuilder = new SchemaBuilder({ scope: "combo" });
 		const comboLeaf = comboSchemaBuilder.object("Leaf", {
 			id: comboSchemaBuilder.number,
 		});
 		const comboChild = comboSchemaBuilder.object("Child", {
 			id: comboSchemaBuilder.number,
-			object: comboLeaf,
-			objectList: comboSchemaBuilder.list(comboLeaf),
-			objectMap: comboSchemaBuilder.map(comboLeaf),
-			listList: comboSchemaBuilder.list(comboSchemaBuilder.list(comboLeaf)),
-			listMap: comboSchemaBuilder.map(comboSchemaBuilder.list(comboLeaf)),
-			mapList: comboSchemaBuilder.list(comboSchemaBuilder.map(comboLeaf)),
-			mapMap: comboSchemaBuilder.map(comboSchemaBuilder.map(comboLeaf)),
+			content: [
+				comboLeaf,
+				comboSchemaBuilder.list(comboLeaf),
+				comboSchemaBuilder.map(comboLeaf),
+			],
 		});
 		const comboParent = comboSchemaBuilder.object("Parent", {
 			id: comboSchemaBuilder.number,
-			object: comboChild,
-			objectList: comboSchemaBuilder.list(comboChild),
-			objectMap: comboSchemaBuilder.map(comboChild),
-			listList: comboSchemaBuilder.list(comboSchemaBuilder.list(comboChild)),
-			listMap: comboSchemaBuilder.map(comboSchemaBuilder.list(comboChild)),
-			mapList: comboSchemaBuilder.list(comboSchemaBuilder.map(comboChild)),
-			mapMap: comboSchemaBuilder.map(comboSchemaBuilder.map(comboChild)),
+			content: [
+				comboChild,
+				comboSchemaBuilder.list(comboChild),
+				comboSchemaBuilder.map(comboChild),
+			],
+		});
+		const comboRoot = comboSchemaBuilder.object("Root", {
+			id: comboSchemaBuilder.number,
+			content: [
+				comboParent,
+				comboSchemaBuilder.list(comboParent),
+				comboSchemaBuilder.map(comboParent),
+			],
 		});
 		const comboSchema = comboSchemaBuilder.intoSchema(
 			// TODO: This extra root won't be necessary once the true root of the tree is settable
-			comboSchemaBuilder.object("root", { root: comboSchemaBuilder.optional(comboParent) }),
+			comboSchemaBuilder.object("root", { root: comboSchemaBuilder.optional(comboRoot) }),
 		);
 
+		type ComboRoot = ProxyNode<typeof comboRoot>;
 		type ComboParent = ProxyNode<typeof comboParent>;
 		type ComboChild = ProxyNode<typeof comboChild>;
 		type ComboLeaf = ProxyNode<typeof comboLeaf>;
-		type ComboObject = ComboParent | ComboChild | ComboLeaf;
+		type ComboObject = ComboRoot | ComboParent | ComboChild | ComboLeaf;
 
-		/** Iterates through all the objects in the combo tree */
+		/** Iterates through all the objects in a combo tree */
 		function* walkComboObjectTree(object: ComboObject): IterableIterator<ComboObject> {
 			yield object;
-			if ("object" in object) {
-				yield* walkComboObjectTree(object.object);
-				for (const item of object.objectList) {
-					yield* walkComboObjectTree(item);
-				}
-				for (const value of object.objectMap.values()) {
-					yield* walkComboObjectTree(value);
-				}
-				for (const list of object.listList) {
-					for (const item of list) {
+			if ("content" in object) {
+				const { content } = object;
+				if (content instanceof Map) {
+					for (const value of content.values()) {
+						yield* walkComboObjectTree(value);
+					}
+				} else if (Array.isArray(content)) {
+					for (const item of content) {
 						yield* walkComboObjectTree(item);
 					}
-				}
-				for (const list of object.listMap.values()) {
-					for (const item of list) {
-						yield* walkComboObjectTree(item);
-					}
-				}
-				for (const map of object.mapList) {
-					for (const item of map.values()) {
-						yield* walkComboObjectTree(item);
-					}
-				}
-				for (const map of object.mapMap.values()) {
-					for (const item of map.values()) {
-						yield* walkComboObjectTree(item);
-					}
+				} else {
+					yield* walkComboObjectTree(content as ComboObject);
 				}
 			}
 		}
 
 		/**
-		 * Builds trees of {@link ComboObject}s.
+		 * Defines the structure of a combo tree.
+		 * @example A layout of
+		 * ```json
+		 * { "root": "list", "parent": "object", "child": "map" }
+		 * ```
+		 * defines a combo tree which is a list of objects containing maps.
+		 */
+		interface ComboTreeLayout {
+			root: "object" | "list" | "map";
+			parent: "object" | "list" | "map";
+			child: "object" | "list" | "map";
+		}
+
+		/**
+		 * Builds trees of {@link ComboObject}s according to the given {@link ComboTreeLayout}.
 		 * Records all built objects and assigns each a unique ID.
 		 */
-		class ComboBuilder {
-			private readonly objects: ComboObject[] = [];
-			private nextId = 0;
+		function createComboTree(layout: ComboTreeLayout) {
+			const objects: ComboObject[] = [];
+			let nextId = 0;
 
-			public get builtObjects(): readonly ComboObject[] {
-				return this.objects;
-			}
-
-			public createComboTree(): ComboParent {
-				return this.createComboParent();
-			}
-
-			private createComboParent(): ComboParent {
-				const object = comboParent.create({
-					id: this.nextId++,
-					object: this.createComboChild(),
-					objectList: [this.createComboChild(), this.createComboChild()],
-					objectMap: new Map([
-						["A", this.createComboChild()],
-						["B", this.createComboChild()],
-					]),
-					listList: [
-						[this.createComboChild(), this.createComboChild()],
-						[this.createComboChild(), this.createComboChild()],
-					],
-					listMap: new Map([
-						["A", [this.createComboChild(), this.createComboChild()]],
-						["B", [this.createComboChild(), this.createComboChild()]],
-					]),
-					mapList: [
-						new Map([
-							["A", this.createComboChild()],
-							["B", this.createComboChild()],
-						]),
-						new Map([
-							["A", this.createComboChild()],
-							["B", this.createComboChild()],
-						]),
-					],
-					mapMap: new Map([
-						[
-							"A",
-							new Map([
-								["A", this.createComboChild()],
-								["B", this.createComboChild()],
-							]),
-						],
-						[
-							"B",
-							new Map([
-								["A", this.createComboChild()],
-								["B", this.createComboChild()],
-							]),
-						],
-					]),
+			function createComboRoot(): ComboRoot {
+				const parent = createComboParent();
+				const root = comboRoot.create({
+					id: nextId++,
+					content:
+						layout.parent === "map"
+							? new Map([["key", parent]])
+							: layout.parent === "list"
+							? [parent]
+							: parent,
 				});
-				this.objects.push(object);
-				return object;
+				objects.push(root);
+				return root;
 			}
 
-			private createComboChild(): ComboChild {
-				const object = comboChild.create({
-					id: this.nextId++,
-					object: this.createComboLeaf(),
-					objectList: [this.createComboLeaf(), this.createComboLeaf()],
-					objectMap: new Map([
-						["A", this.createComboLeaf()],
-						["B", this.createComboLeaf()],
-					]),
-					listList: [
-						[this.createComboLeaf(), this.createComboLeaf()],
-						[this.createComboLeaf(), this.createComboLeaf()],
-					],
-					listMap: new Map([
-						["A", [this.createComboLeaf(), this.createComboLeaf()]],
-						["B", [this.createComboLeaf(), this.createComboLeaf()]],
-					]),
-					mapList: [
-						new Map([
-							["A", this.createComboLeaf()],
-							["B", this.createComboLeaf()],
-						]),
-						new Map([
-							["A", this.createComboLeaf()],
-							["B", this.createComboLeaf()],
-						]),
-					],
-					mapMap: new Map([
-						[
-							"A",
-							new Map([
-								["A", this.createComboLeaf()],
-								["B", this.createComboLeaf()],
-							]),
-						],
-						[
-							"B",
-							new Map([
-								["A", this.createComboLeaf()],
-								["B", this.createComboLeaf()],
-							]),
-						],
-					]),
+			function createComboParent(): ComboParent {
+				const child = createComboChild();
+				const parent = comboParent.create({
+					id: nextId++,
+					content:
+						layout.parent === "map"
+							? new Map([["key", child]])
+							: layout.parent === "list"
+							? [child]
+							: child,
 				});
-				this.objects.push(object);
-				return object;
+				objects.push(parent);
+				return parent;
 			}
 
-			private createComboLeaf(): ComboLeaf {
-				const object = comboLeaf.create({ id: this.nextId++ });
-				this.objects.push(object);
-				return object;
+			function createComboChild(): ComboChild {
+				const leaf = createComboLeaf();
+				const child = comboChild.create({
+					id: nextId++,
+					content:
+						layout.child === "map"
+							? new Map([["key", leaf]])
+							: layout.child === "list"
+							? [leaf]
+							: leaf,
+				});
+				objects.push(child);
+				return child;
 			}
+
+			function createComboLeaf(): ComboLeaf {
+				const leaf = comboLeaf.create({ id: nextId++ });
+				objects.push(leaf);
+				return leaf;
+			}
+
+			return { tree: createComboRoot(), objects };
 		}
 
-		// This test checks that every proxy in the combo tree gets hydrated after insertion
 		const view = createTreeView2(comboSchema, { root: undefined });
-		const comboBuilder = new ComboBuilder();
-		const insertTree = comboBuilder.createComboTree();
-		const objectsFromInsert = [...comboBuilder.builtObjects];
-		for (const o of objectsFromInsert) {
-			assert.throws(() => o.id); // Reading a proxy before insertion should fail
-		}
-		view.root.root = insertTree;
-		// Sort the proxies that were inserted by ID, then walk the proxies in the tre and sort those as well.
-		objectsFromInsert.sort((a, b) => a.id - b.id);
-		const objectsFromRoot = [...walkComboObjectTree(view.root.root)].sort(
-			(a, b) => a.id - b.id,
-		);
-		// The proxies that were inserted and the proxies in the tree should be the same objects.
-		assert.equal(objectsFromInsert.length, objectsFromRoot.length);
-		for (let i = 0; i < objectsFromInsert.length; i++) {
-			assert.equal(objectsFromInsert[i].id, objectsFromRoot[i].id);
-			assert.equal(objectsFromInsert[i], objectsFromRoot[i]);
+
+		const objectTypes = ["object", "list", "map"] as const;
+		for (const root of objectTypes) {
+			for (const parent of objectTypes) {
+				for (const child of objectTypes) {
+					// Generate a test for all permutations of object, list and map
+					it(`${root} → ${parent} → ${child}`, () => {
+						const { tree, objects: rawObjects } = createComboTree({
+							root,
+							parent,
+							child,
+						});
+						for (const object of rawObjects) {
+							// Before insertion, inspecting a raw object should fail
+							assert.throws(() => object.id);
+						}
+						view.root.root = tree;
+						const treeObjects = [...walkComboObjectTree(view.root.root)];
+						assert.equal(rawObjects.length, treeObjects.length);
+						// Sort the objects we built in the same way as the objects in the tree so that we can compare them below
+						rawObjects.sort((a, b) => a.id - b.id);
+						treeObjects.sort((a, b) => a.id - b.id);
+						for (let i = 0; i < rawObjects.length; i++) {
+							assert.equal(rawObjects[i].id, treeObjects[i].id);
+							// Each raw object should be reference equal (not merely deeply equal) to the corresponding object in the tree.
+							assert.equal(rawObjects[i], treeObjects[i]);
+						}
+					});
+				}
+			}
 		}
 	});
 });

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "assert";
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { SchemaBuilder } from "../../../domains";
 import { ProxyNode, ProxyRoot, node, typeNameSymbol } from "../../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
@@ -75,6 +76,7 @@ describe("SharedTreeObject", () => {
 		polyValueChild: [sb.number, numberChild],
 		map: sb.map("map", sb.string),
 		list: sb.list(numberChild),
+		handle: sb.handle,
 	});
 
 	const schema = sb.intoSchema(parentSchema);
@@ -91,6 +93,7 @@ describe("SharedTreeObject", () => {
 			["bar", "World"],
 		]),
 		list: [{ content: 42 }, { content: 42 }],
+		handle: new MockHandle(42),
 	};
 
 	itWithRoot("can read required fields", schema, initialTree, (root) => {
@@ -150,6 +153,13 @@ describe("SharedTreeObject", () => {
 			}
 		},
 	);
+
+	itWithRoot("can read and write handles", schema, initialTree, (root) => {
+		// TODO:#6133: When itWithRoot is removed, make this properly async and check that the value of the handle is correct
+		assert.notEqual(root.handle, undefined);
+		root.handle = new MockHandle(43);
+		assert.notEqual(root.handle, undefined);
+	});
 
 	itWithRoot("can set fields", schema, initialTree, (root) => {
 		assert.equal(root.child.content, 42);

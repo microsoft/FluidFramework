@@ -157,13 +157,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
 						typedField.content = content;
-						if (hydrateProxies !== undefined) {
-							assert(
-								typedField.boxedContent !== undefined,
-								"Expected a node for inserted content",
-							);
-							hydrateProxies(typedField.boxedContent);
-						}
+						hydrateProxies(typedField.boxedContent);
 						break;
 					}
 					default:
@@ -253,7 +247,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
 			getSequenceField(this).insertAt(index, content);
-			hydrateProxies?.(getEditNode(this));
+			hydrateProxies(getEditNode(this));
 		},
 	},
 	insertAtStart: {
@@ -263,7 +257,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
 			getSequenceField(this).insertAtStart(content);
-			hydrateProxies?.(getEditNode(this));
+			hydrateProxies(getEditNode(this));
 		},
 	},
 	insertAtEnd: {
@@ -276,7 +270,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				this.length,
 			);
 			getSequenceField(this).insertAtEnd(content);
-			hydrateProxies?.(getEditNode(this));
+			hydrateProxies(getEditNode(this));
 		},
 	},
 	removeAt: {
@@ -600,7 +594,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
 			node.set(key, content);
-			hydrateProxies?.(getMapChildNode(node, key));
+			hydrateProxies(getMapChildNode(node, key));
 			return this;
 		},
 	},
@@ -678,17 +672,20 @@ export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
 	return setEditNode(proxy, editNode);
 }
 
+type ProxyHydrator = (editNode: TreeNode | undefined) => void;
+const noopHydrator: ProxyHydrator = () => {};
+
 /** The result returned by {@link extractFactoryContent} and its related helpers. */
 interface ExtractedFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaScript">> {
 	/** The content with the factory subtrees replaced. */
 	content: T;
 	/**
-	 * A function which if defined indicates that at least one factory-created object underwent replacement.
-	 * Those objects are unusable (see {@link createRawObjectProxy}).
+	 * A function which walks all factory-created object that underwent replacement/extraction.
+	 * Before hydration, those objects are unusable (see {@link createRawObjectProxy}).
 	 * However, after the content is fully inserted into the tree the `hydrateProxies` function may be invoked in order to update the contents of these objects such that they become a mirror of the content in the tree.
 	 * This must be done before any calls to {@link getOrCreateNodeProxy} so that the "edit node to proxy" mapping is correctly updated (see {@link setEditNode}).
 	 */
-	hydrateProxies: ((editNode: TreeNode) => void) | undefined;
+	hydrateProxies: ProxyHydrator;
 }
 
 /**
@@ -718,9 +715,9 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 	content: T,
 ): ExtractedFactoryContent<T> {
 	if (isFluidHandle(content)) {
-		return { content, hydrateProxies: undefined };
+		return { content, hydrateProxies: noopHydrator };
 	} else if (Array.isArray(content)) {
-		return extractContentArray(content, 0);
+		return extractContentArray(content);
 	} else if (content instanceof Map) {
 		return extractContentMap(content);
 	} else if (content !== null && typeof content === "object") {
@@ -728,27 +725,32 @@ export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaS
 	} else {
 		return {
 			content, // `content` is a primitive or `undefined`
-			hydrateProxies: undefined,
+			hydrateProxies: noopHydrator,
 		};
 	}
 }
 
+/**
+ * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing list in the tree.
+ */
 function extractContentArray<T extends ProxyNode<TreeNodeSchema, "javaScript">[]>(
 	input: T,
-	insertedAtIndex: number,
+	insertedAtIndex = 0,
 ): ExtractedFactoryContent<T> {
 	const output = [] as unknown as T;
-	const hydrators: [index: number, hydrate: (editNode: TreeNode) => void][] = [];
+	const hydrators: [index: number, hydrate: ProxyHydrator][] = [];
 	for (let i = 0; i < input.length; i++) {
 		const { content, hydrateProxies } = extractFactoryContent(input[i]);
 		output.push(content);
-		if (hydrateProxies !== undefined) {
+		// The conditional here is an optimization so that primitive items don't incur boxed reads for hydration
+		if (hydrateProxies !== noopHydrator) {
 			hydrators.push([i, hydrateProxies]);
 		}
 	}
 	return {
 		content: output,
-		hydrateProxies: (editNode: TreeNode) => {
+		hydrateProxies: (editNode: TreeNode | undefined) => {
+			assert(editNode !== undefined, "Expected edit node to be defined when hydrating list");
 			assert(schemaIsFieldNode(editNode.schema), "Expected field node when hydrating list");
 			hydrators.forEach(([i, hydrate]) =>
 				hydrate(
@@ -763,18 +765,20 @@ function extractContentMap<T extends Map<string, ProxyNode<TreeNodeSchema, "java
 	input: T,
 ): ExtractedFactoryContent<T> {
 	const output = new Map() as T;
-	const hydrators: [key: string, hydrate: (editNode: TreeNode) => void][] = [];
+	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
 	for (const [key, value] of input) {
 		const { content, hydrateProxies } = extractFactoryContent(value);
 		output.set(key, content);
-		if (hydrateProxies !== undefined) {
+		// The conditional here is an optimization so that primitive values don't incur boxed reads for hydration
+		if (hydrateProxies !== noopHydrator) {
 			hydrators.push([key, hydrateProxies]);
 		}
 	}
 	return {
 		content: output,
-		hydrateProxies: (editNode: TreeNode) => {
-			assert(schemaIsMap(editNode.schema), "Expected map node when hydrating map content");
+		hydrateProxies: (editNode: TreeNode | undefined) => {
+			assert(editNode !== undefined, "Expected edit node to be defined when hydrating map");
+			assert(schemaIsMap(editNode.schema), "Expected map node when hydrating map");
 			hydrators.forEach(([key, hydrate]) =>
 				hydrate(getMapChildNode(editNode as MapNode<MapSchema>, key)),
 			);
@@ -784,7 +788,7 @@ function extractContentMap<T extends Map<string, ProxyNode<TreeNodeSchema, "java
 
 function extractContentObject<T extends object>(input: T): ExtractedFactoryContent<T> {
 	const output: Record<string, unknown> = {};
-	const hydrators: [key: string, hydrate: (editNode: TreeNode) => void][] = [];
+	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
 	let unproxiedInput = input;
 	const rawEditNode = tryGetEditNode(input);
 	if (rawEditNode !== undefined) {
@@ -807,14 +811,16 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 	for (const [key, value] of Object.entries(unproxiedInput)) {
 		const { content, hydrateProxies } = extractFactoryContent(value);
 		output[key] = content;
-		if (hydrateProxies !== undefined) {
-			hydrators.push([key, hydrateProxies]);
-		}
+		hydrators.push([key, hydrateProxies]);
 	}
 
 	return {
 		content: output as T,
-		hydrateProxies: (editNode) => {
+		hydrateProxies: (editNode: TreeNode | undefined) => {
+			assert(
+				editNode !== undefined,
+				"Expected edit node to be defined when hydrating object",
+			);
 			setEditNode(input, editNode); // This makes the input proxy usable and updates the proxy cache
 			assert(
 				schemaIsObjectNode(editNode.schema),
@@ -836,25 +842,21 @@ function getListChildNode(listNode: FieldNode<FieldNodeSchema>, index: number): 
 	return (field as Sequence<AllowedTypes>).boxedAt(index);
 }
 
-function getMapChildNode(mapNode: MapNode<MapSchema>, key: string): TreeNode {
+function getMapChildNode(mapNode: MapNode<MapSchema>, key: string): TreeNode | undefined {
 	const field = mapNode.getBoxed(key);
 	assert(
 		field.schema.kind === FieldKinds.optional,
 		"Sequence field kind is unsupported as map values",
 	);
-	const childNode = (field as OptionalField<AllowedTypes>).boxedContent;
-	assert(childNode !== undefined, "Expected a node for inserted content");
-	return childNode;
+	return (field as OptionalField<AllowedTypes>).boxedContent;
 }
 
-function getObjectChildNode(objectNode: ObjectNode, key: string): TreeNode {
+function getObjectChildNode(objectNode: ObjectNode, key: string): TreeNode | undefined {
 	const field =
-		objectNode.tryGetField(brand(key)) ?? fail("Expected a node for inserted content");
+		objectNode.tryGetField(brand(key)) ?? fail("Expected a field for inserted content");
 	assert(
 		field.schema.kind === FieldKinds.required || field.schema.kind === FieldKinds.optional,
 		"Expected required or optional field kind",
 	);
-	const typedField = field as RequiredField<AllowedTypes> | OptionalField<AllowedTypes>;
-	assert(typedField.boxedContent !== undefined, "Expected a node for inserted content");
-	return typedField.boxedContent;
+	return (field as RequiredField<AllowedTypes> | OptionalField<AllowedTypes>).boxedContent;
 }
