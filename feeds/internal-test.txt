@@ -24,7 +24,6 @@
 @fluidframework/container-runtime-definitions
 @fluidframework/container-runtime
 @fluid-internal/test-loader-utils
-@fluidframework/location-redirection-utils
 @fluidframework/driver-utils
 @fluidframework/container-loader
 @fluidframework/view-interfaces
