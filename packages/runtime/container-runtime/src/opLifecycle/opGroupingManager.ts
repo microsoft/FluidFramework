@@ -50,11 +50,7 @@ export class OpGroupingManager {
 			return batch;
 		}
 
-		assert(
-			batch.content.length >= this.config.opCountThreshold,
-			"Expecting to always group batches with op counts larger than the threshold",
-		);
-		if (this.config.opCountThreshold >= 1000) {
+		if (batch.content.length >= 1000) {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
 				length: batch.content.length,
