@@ -56,6 +56,7 @@ export class Context implements TreeContext, IDisposable {
 	public readonly withAnchors: Set<LazyEntity> = new Set();
 
 	private readonly eventUnregister: (() => void)[];
+	private disposed = false;
 
 	/**
 	 * @param forest - the Forest
@@ -83,6 +84,7 @@ export class Context implements TreeContext, IDisposable {
 	 * Clears all cursors so editing can proceed.
 	 */
 	private prepareForEdit(): void {
+		assert(this.disposed === false, "use after dispose");
 		for (const target of this.withCursors) {
 			target[prepareForEditSymbol]();
 		}
@@ -90,6 +92,8 @@ export class Context implements TreeContext, IDisposable {
 	}
 
 	public [disposeSymbol](): void {
+		assert(this.disposed === false, "double dispose");
+		this.disposed = true;
 		this.clear();
 		for (const unregister of this.eventUnregister) {
 			unregister();
@@ -98,8 +102,9 @@ export class Context implements TreeContext, IDisposable {
 	}
 
 	/**
-	 * Release any cursors and anchors held by EditableTrees created in this context.
-	 * The EditableTrees are invalid to use after this, but the context may still be used
+	 * Release any cursors and anchors held by tree entities created in this context.
+	 * Ensures the cashed references to those entities on the Anchors are also cleared.
+	 * The tree entities are invalid to use after this, but the context may still be used
 	 * to create new trees starting from the root.
 	 */
 	public clear(): void {
@@ -111,6 +116,7 @@ export class Context implements TreeContext, IDisposable {
 	}
 
 	public get root(): TreeField {
+		assert(this.disposed === false, "use after dispose");
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
 		const field = makeField(this, this.schema.rootFieldSchema, cursor);

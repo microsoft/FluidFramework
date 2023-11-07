@@ -18,7 +18,7 @@ import {
 	boxedIterator,
 	TreeSchema,
 } from "../../feature-libraries";
-import { brand, fail, TransactionResult } from "../../util";
+import { brand, disposeSymbol, fail, TransactionResult } from "../../util";
 import {
 	SharedTreeTestFactory,
 	SummarizeType,
@@ -40,7 +40,6 @@ import {
 import {
 	ForestType,
 	ISharedTree,
-	ISharedTreeBranchView,
 	ISharedTreeView,
 	ISharedTreeView2,
 	InitializeAndSchematizeConfiguration,
@@ -505,10 +504,11 @@ describe("SharedTree", () => {
 
 	it("can summarize local edits in the attach summary", async () => {
 		const onCreate = (tree: SharedTree) => {
-			const view = tree.schematize(emptyStringSequenceConfig).editableTree;
-			view.insertAtStart(["A"]);
-			view.insertAtEnd(["C"]);
-			assert.deepEqual(view.asArray, ["A", "C"]);
+			const view = tree.schematize(emptyStringSequenceConfig);
+			view.editableTree.insertAtStart(["A"]);
+			view.editableTree.insertAtEnd(["C"]);
+			assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
+			view[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,
@@ -537,6 +537,7 @@ describe("SharedTree", () => {
 			view.editableTree.insertAt(1, ["C"]);
 			view.branch.transaction.commit();
 			assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
+			view[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,
@@ -591,7 +592,7 @@ describe("SharedTree", () => {
 
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
-		provider.trees[0].schematize(emptyStringSequenceConfig);
+		provider.trees[0].schematize(emptyStringSequenceConfig)[disposeSymbol]();
 		provider.processMessages();
 
 		const [tree1, tree2] = provider.trees.map(
@@ -631,6 +632,7 @@ describe("SharedTree", () => {
 			view.editableTree.insertAtStart(["B"]);
 			view.editableTree.insertAtStart(["A"]);
 			assert.deepEqual(view.editableTree.asArray, ["A", "B"]);
+			view[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,
@@ -1305,9 +1307,10 @@ describe("SharedTree", () => {
 			child.branch.transaction.start();
 			child.editableTree.insertAtStart(["C"]);
 			child.branch.transaction.commit();
-			// TODO: better integrate ISharedTreeView2 with BranchView concept.
-			parent.branch.merge(child.branch as ISharedTreeBranchView);
+			parent.branch.merge(child.branch);
+			child[disposeSymbol]();
 			assert.deepEqual(parent.editableTree.asArray, ["C", "B", "A"]);
+			parent[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,

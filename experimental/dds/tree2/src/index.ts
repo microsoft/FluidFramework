@@ -254,6 +254,7 @@ export {
 	SharedTreeContentSnapshot,
 	ISharedTreeView2,
 	TypedTreeView,
+	ISharedTreeBranchView2,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";
