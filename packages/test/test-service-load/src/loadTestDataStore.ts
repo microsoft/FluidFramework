@@ -4,7 +4,7 @@
  */
 
 import * as crypto from "crypto";
-import { IRandom } from "@fluid-internal/stochastic-test-utils";
+import { IRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,

@@ -30,4 +30,4 @@ export {
 
 export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel, TypedTreeView } from "./typedTree";
 
-export { ISharedTreeView2, SharedTreeView2 } from "./sharedTreeView2";
+export { ISharedTreeView2, SharedTreeView2, ISharedTreeBranchView2 } from "./sharedTreeView2";

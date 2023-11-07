@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { FieldKey } from "../../../core";
 import { brand } from "../../../util";
 

@@ -12,7 +12,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { benchmark } from "@fluid-tools/benchmark";
 
 const counterId = "counterKey";

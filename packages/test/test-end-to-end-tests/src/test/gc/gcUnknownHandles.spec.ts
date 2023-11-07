@@ -9,7 +9,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
+import { describeFullCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import {
 	IFluidHandle,
 	IFluidHandleContext,

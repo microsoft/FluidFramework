@@ -1,4 +1,4 @@
-# @fluid-internal/stochastic-test-utils
+# @fluid-private/stochastic-test-utils
 
 This package contains utilities for writing stochastic tests (sometimes called fuzz tests).
 Such tests can be useful for stress testing systems with well-defined inputs and expected invariants.

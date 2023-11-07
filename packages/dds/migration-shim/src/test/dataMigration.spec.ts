@@ -10,7 +10,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	type BuildNode,
 	Change,
@@ -33,6 +33,7 @@ import {
 	SharedTreeFactory,
 	type Typed,
 	type ISharedTreeView2,
+	disposeSymbol,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
@@ -160,13 +161,15 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			const legacyNode = legacyTree.currentView.getViewNode(nodeId);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const quantity = legacyNode.payload.quantity as number;
-			newTree.schematize({
-				initialTree: {
-					quantity,
-				},
-				allowedSchemaModifications: AllowedUpdateType.None,
-				schema,
-			});
+			newTree
+				.schematize({
+					initialTree: {
+						quantity,
+					},
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema,
+				})
+				[disposeSymbol]();
 		},
 	);
 

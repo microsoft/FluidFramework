@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { LocalServerTestDriver } from "@fluid-internal/test-drivers";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import { IContainer } from "@fluidframework/container-definitions";
 import { Loader } from "@fluidframework/container-loader";
 import {
@@ -643,17 +643,19 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 	},
 ): TypedField<TRoot> {
 	const forest = forestWithContent(content);
-	const view = createSharedTreeView({
+	const branch = createSharedTreeView({
 		...args,
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	return view.editableTree2(
+	const view = new SharedTreeView2(
+		branch,
 		content.schema,
 		manager,
 		args?.nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
 	);
+	return view.editableTree;
 }
 
 export const jsonSequenceRootSchema = new SchemaBuilder({
@@ -936,23 +938,6 @@ export const wrongSchema = new SchemaBuilder({
 		rejectEmpty: false,
 	},
 }).intoSchema(SchemaBuilder.sequence(Any));
-
-/**
- * Schematize config Schema which is not correct.
- * Use as a transitionary tool when migrating code that does not provide a schema toward one that provides a correct schema.
- * Using this allows representing an intermediate state that still has an incorrect schema, but is explicit about it.
- * This is particularly useful when modifying APIs to require schema, and a lot of code has to be updated.
- *
- * @deprecated This in invalid and only used to explicitly mark code as using the wrong schema. All usages of this should be fixed to use correct schema.
- */
-// TODO: remove all usages of this.
-export const wrongSchemaConfig: InitializeAndSchematizeConfiguration<
-	typeof wrongSchema.rootFieldSchema
-> = {
-	schema: wrongSchema,
-	allowedSchemaModifications: AllowedUpdateType.None,
-	initialTree: [],
-};
 
 export function applyTestDelta(
 	delta: Delta.Root,
