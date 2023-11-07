@@ -53,10 +53,10 @@ steps:
     customCommand: 'run layer-check'
 
 - task: Npm@1
-  displayName: npm run build:readme
+  displayName: npm run prettier:root
   inputs:
     command: 'custom'
-    customCommand: 'run build:readme'
+    customCommand: 'run prettier:root'
 
 - task: Bash@3
   displayName: Prune pnpm store
