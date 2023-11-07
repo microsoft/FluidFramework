@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockContainerRuntimeFactory,

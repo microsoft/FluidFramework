@@ -13,9 +13,9 @@ import {
 	MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
-import { AsyncGenerator, chainAsync, done, takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { AsyncGenerator, chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
-import { Counter } from "@fluid-internal/stochastic-test-utils/dist/test/utils";
+import { Counter } from "@fluid-private/stochastic-test-utils/dist/test/utils";
 import {
 	BaseOperation,
 	ChangeConnectionState,
