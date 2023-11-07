@@ -56,6 +56,7 @@ fluid-framework
 @fluidframework/merge-tree
 @fluidframework/matrix
 @fluidframework/map
+@fluidframework/ink
 @fluidframework/counter
 @fluidframework/cell
 @fluidframework/driver-definitions
@@ -72,7 +73,6 @@ fluid-framework
 @fluid-experimental/sequence-deprecated
 @fluid-experimental/sharejs-json1
 @fluid-experimental/ot
-@fluidframework/ink
 @fluid-experimental/attributable-map
 @fluid-experimental/property-shared-tree-interop
 @fluid-experimental/property-query
