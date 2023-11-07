@@ -226,7 +226,7 @@ export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
  * @alpha
  */
 export interface RevisionMetadataSource {
-	readonly getIntentions: () => RevisionTag[];
+	readonly getRevisions: () => RevisionTag[];
 	readonly getIndex: RevisionIndexer;
 	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 }
