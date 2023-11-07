@@ -46,7 +46,7 @@ import {
 	TestDataObjectType,
 	describeNoCompat,
 	itExpects,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import {
 	ConfigTypes,

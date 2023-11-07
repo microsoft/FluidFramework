@@ -16,7 +16,7 @@ import {
 	Context,
 } from "../feature-libraries";
 import { IDisposable, disposeSymbol } from "../util";
-import { ISharedTreeView } from "./sharedTreeView";
+import { ISharedTreeBranchView, ISharedTreeView } from "./sharedTreeView";
 import { TypedTreeView } from "./typedTree";
 
 /**
@@ -55,22 +55,36 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema>
 	 * Spawn a new view which is based off of the current state of this view.
 	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
-	fork(): ISharedTreeView2<TRoot>;
+	fork(): ISharedTreeBranchView2<TRoot>;
+}
+
+/**
+ * Branch (like in a version control system) of SharedTree.
+ *
+ * {@link ISharedTreeView2} that has forked off of the main trunk/branch.
+ * @alpha
+ */
+export interface ISharedTreeBranchView2<in out TRoot extends TreeFieldSchema>
+	extends ISharedTreeView2<TRoot> {
+	readonly branch: ISharedTreeBranchView;
 }
 
 /**
  * Implementation of ISharedTreeView2.
  */
-export class SharedTreeView2<in out TRoot extends TreeFieldSchema>
-	implements ISharedTreeView2<TRoot>
+export class SharedTreeView2<
+	in out TRoot extends TreeFieldSchema,
+	out TBranch extends ISharedTreeView = ISharedTreeView,
+> implements ISharedTreeView2<TRoot>
 {
 	public readonly context: Context;
 	public readonly editableTree: TypedField<TRoot>;
 	public constructor(
-		public readonly branch: ISharedTreeView,
+		public readonly branch: TBranch,
 		public readonly schema: TreeSchema<TRoot>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
+		private readonly onDispose?: () => void,
 	) {
 		this.context = getTreeContext(
 			schema,
@@ -84,13 +98,14 @@ export class SharedTreeView2<in out TRoot extends TreeFieldSchema>
 
 	public [disposeSymbol](): void {
 		this.context[disposeSymbol]();
+		this.onDispose?.();
 	}
 
 	public get root(): ProxyField<TRoot> {
 		return getProxyForField(this.editableTree);
 	}
 
-	public fork(): ISharedTreeView2<TRoot> {
+	public fork(): ISharedTreeBranchView2<TRoot> {
 		const branch = this.branch.fork();
 		return new SharedTreeView2(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
 	}
