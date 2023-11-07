@@ -156,15 +156,7 @@ module.exports = {
 		// Items should be removed from here when possible.
 		{
 			label: "Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: [
-				"react-virtualized-auto-sizer",
-				"@types/react",
-				"@types/react-dom",
-
-				// Temporarily disabled until the eslint config is updated to use 3.1.0+.
-				"@fluidframework/eslint-config-fluid",
-				"eslint-plugin-import",
-			],
+			dependencies: ["react-virtualized-auto-sizer", "@types/react", "@types/react-dom"],
 			packages: ["**"],
 			isIgnored: true,
 		},
@@ -174,8 +166,7 @@ module.exports = {
 			dependencies: [
 				"@fluidframework/build-common",
 				"@fluidframework/common-utils",
-				// Temporarily disabled until the eslint config is updated to use 3.1.0+.
-				// "@fluidframework/eslint-config-fluid",
+				"@fluidframework/eslint-config-fluid",
 				"@fluidframework/build-tools",
 				"@fluid-tools/build-cli",
 			],

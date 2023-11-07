@@ -14,8 +14,8 @@
 		"outDir": "../../dist/test",
 		"types": ["mocha", "node"],
 
-    // The sequence package uses test code from merge-tree, so we need to build types for test files, which we typically
-    // don't do.
+		// The sequence package uses test code from merge-tree, so we need to build types for test files, which we typically
+		// don't do.
 		"declaration": true,
 		"declarationMap": true,
 	},
