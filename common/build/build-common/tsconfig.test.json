@@ -6,6 +6,6 @@
 		"declaration": false,
 		"declarationMap": false,
 		"skipLibCheck": true,
-    "module": "CommonJS",
+		"module": "CommonJS",
 	},
 }

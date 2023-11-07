@@ -25,14 +25,14 @@ the Fluid Framework repo. These configs are designed to be used together using [
 multiple config
 files](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-5-0.html#supporting-multiple-configuration-files-in-extends).
 
-- tsconfig.base.json - This base config contains defaults that all packages within the repo should use as a baseline.
-- tsconfig.cjs.json - This config sets `module: Node16` and is intended for CommonJS builds. This config is intended to
-  be layered on top of the base config.
-- tsconfig.esm.json - This config sets `module: ESNext` and `moduleResolution: Node10` and is intended for ESM builds. This config
-  intended to be layered on top of the base config. This config uses Node10 module resolution because Node16 cannot be
-  used to build both CJS and ESM from a common source.
-- tsconfig.test.json - This config disables some settings that we don't want to use in test code, like `declaration` and
-  `decarationMap`. It also enables the `node` types by default.
+-   tsconfig.base.json - This base config contains defaults that all packages within the repo should use as a baseline.
+-   tsconfig.cjs.json - This config sets `module: Node16` and is intended for CommonJS builds. This config is intended to
+    be layered on top of the base config.
+-   tsconfig.esm.json - This config sets `module: ESNext` and `moduleResolution: Node10` and is intended for ESM builds. This config
+    intended to be layered on top of the base config. This config uses Node10 module resolution because Node16 cannot be
+    used to build both CJS and ESM from a common source.
+-   tsconfig.test.json - This config disables some settings that we don't want to use in test code, like `declaration` and
+    `decarationMap`. It also enables the `node` types by default.
 
 ### Legacy tsconfig
 
