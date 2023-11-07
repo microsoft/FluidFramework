@@ -6,7 +6,7 @@
 import { ITreeSubscriptionCursor, inCursorNode, EmptyKey } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { FieldKinds } from "../default-field-kinds";
-import { fail, oneFromSet } from "../../util";
+import { fail } from "../../util";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
@@ -52,13 +52,9 @@ export function unboxedUnion<TTypes extends AllowedTypes>(
 	schema: TreeFieldSchema<FieldKind, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 ): UnboxNodeUnion<TTypes> {
-	const type = oneFromSet(schema.types);
+	const type = schema.monomorphicChildType;
 	if (type !== undefined) {
-		return unboxedTree(
-			context,
-			context.schema.treeSchema.get(type) ?? fail("missing schema"),
-			cursor,
-		) as UnboxNodeUnion<TTypes>;
+		return unboxedTree(context, type, cursor) as UnboxNodeUnion<TTypes>;
 	}
 	return makeTree(context, cursor) as UnboxNodeUnion<TTypes>;
 }

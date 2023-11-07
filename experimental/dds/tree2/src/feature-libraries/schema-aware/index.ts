@@ -9,7 +9,6 @@ export {
 	TypedNode,
 	TypedField,
 	AllowedTypesToTypedTrees,
-	downCast,
 } from "./schemaAware";
 
 // Below here are things that are used by the above, but not part of the desired API surface.

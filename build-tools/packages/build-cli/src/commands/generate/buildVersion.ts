@@ -142,7 +142,7 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 				this.errorLog(
 					"This release type is not supported. Alpha/beta ***prereleases*** are allowed.",
 				);
-				this.exit();
+				this.exit(1);
 			} else if (!useTestVersion) {
 				// For prereleases, update the version string with `alphabetaTypePrefix` prefix.
 				version = `${simpleVersion}-${alphabetaTypePrefix}`;

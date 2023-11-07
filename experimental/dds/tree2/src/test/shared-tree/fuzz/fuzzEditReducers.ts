@@ -73,6 +73,10 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 	}
 }
 
+/**
+ * Assumes tree is using the fuzzSchema.
+ * TODO: Maybe take in a schema aware strongly typed Tree node or field.
+ */
 export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): void {
 	switch (fieldEdit.change.type) {
 		case "sequence":
@@ -109,6 +113,17 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 				"Defined down-path should point to a valid parent",
 			);
 			field.removeRange(index, change.count);
+			break;
+		}
+		case "move": {
+			const firstNode = navigateToNode(tree, change.firstNode);
+			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
+			const { parent: field, index } = firstNode.parentField;
+			assert(
+				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
+				"Defined down-path should point to a valid parent",
+			);
+			field.moveRangeToIndex(change.dstIndex, index, change.count);
 			break;
 		}
 		default:

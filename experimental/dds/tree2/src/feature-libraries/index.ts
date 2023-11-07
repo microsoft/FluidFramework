@@ -4,18 +4,6 @@
  */
 
 export {
-	EditableField,
-	EditableTree,
-	EditableTreeContext,
-	EditableTreeOrPrimitive,
-	getEditableTreeContext,
-	isEditableField,
-	isPrimitive,
-	isEditableTree,
-	proxyTargetSymbol,
-	UnwrappedEditableField,
-	UnwrappedEditableTree,
-	localNodeKeySymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
 	createDataBinderInvalidating,
@@ -52,9 +40,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
-	setField,
-} from "./editable-tree";
-
+} from "./editableTreeBinder";
 export {
 	typeNameSymbol,
 	valueSymbol,
@@ -138,6 +124,7 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
+	RemovedTreesFromChild,
 } from "./modular-schema";
 
 export {
@@ -221,23 +208,7 @@ export {
 	defaultSchemaPolicy,
 } from "./default-field-kinds";
 
-export {
-	TreeEvent,
-	UntypedField,
-	UntypedTree,
-	UntypedTreeContext,
-	UntypedTreeCore,
-	UnwrappedUntypedField,
-	UnwrappedUntypedTree,
-	UntypedTreeOrPrimitive,
-	typeSymbol,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
-	treeStatus,
-} from "./untypedTree";
+export { TreeEvent, EditableTreeEvents } from "./untypedTree";
 
 export {
 	AssignableFieldKinds,
@@ -257,7 +228,7 @@ export {
 	TypedField,
 	TypedNode,
 	TypedNodeUnion,
-	Tree,
+	TreeEntity,
 	TreeField,
 	TreeNode,
 	getTreeContext,
@@ -274,14 +245,17 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	ProxyRoot,
-	node,
-	NodeApi,
+	Tree,
+	TreeApi,
 	SharedTreeNode,
 	Typed,
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
 	addFactory,
+	Context,
 } from "./editable-tree-2";
+
+export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";

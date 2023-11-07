@@ -64,8 +64,9 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RevisionMetadataSource = {
+	getRevisions: () => assert.fail("Unexpected revision index query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
-	getInfo: () => assert.fail("Unexpected revision info query"),
+	tryGetInfo: () => assert.fail("Unexpected revision info query"),
 };
 
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
@@ -433,5 +434,27 @@ describe("Generic FieldKind", () => {
 		assert.deepEqual(change0, [{ index: 0, nodeChange: nodeChange0To1 }]);
 		assert.deepEqual(change1, [{ index: 1, nodeChange: nodeChange0To1 }]);
 		assert.deepEqual(change2, [{ index: 2, nodeChange: nodeChange0To1 }]);
+	});
+
+	it("relevantRemovedTrees", () => {
+		const actual = genericFieldKind.changeHandler.relevantRemovedTrees(
+			[
+				{
+					index: 0,
+					nodeChange: nodeChange0To1,
+				},
+				{
+					index: 2,
+					nodeChange: nodeChange1To2,
+				},
+			],
+			(child) =>
+				child === nodeChange0To1
+					? [{ minor: 42 }]
+					: child === nodeChange1To2
+					? [{ minor: 43 }]
+					: assert.fail("Unexpected child"),
+		);
+		assert.deepEqual(Array.from(actual), [{ minor: 42 }, { minor: 43 }]);
 	});
 });
