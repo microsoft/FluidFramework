@@ -57,8 +57,8 @@ import {
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
-import { SharedTreeView, ViewEvents, createSharedTreeView } from "./sharedTreeView";
-import { ISharedTreeView2, SharedTreeView2 } from "./sharedTreeView2";
+import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
+import { ITreeView, TreeView } from "./treeView";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -101,7 +101,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	// Overrides less specific schematize from base
 	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): ISharedTreeView2<TRoot>;
+	): ITreeView<TRoot>;
 
 	/**
 	 * Like {@link ISharedTree.schematize}, but will never modify the document.
@@ -121,7 +121,7 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	requireSchema<TRoot extends TreeFieldSchema>(
 		schema: TreeSchema<TRoot>,
 		onSchemaIncompatible: () => void,
-	): ISharedTreeView2<TRoot> | undefined;
+	): ITreeView<TRoot> | undefined;
 }
 
 /**
@@ -133,10 +133,10 @@ export class SharedTree
 	extends SharedTreeCore<DefaultEditBuilder, DefaultChangeset>
 	implements ISharedTree
 {
-	private readonly _events: ISubscribable<ViewEvents> &
-		IEmitter<ViewEvents> &
-		HasListeners<ViewEvents>;
-	public readonly view: SharedTreeView;
+	private readonly _events: ISubscribable<CheckoutEvents> &
+		IEmitter<CheckoutEvents> &
+		HasListeners<CheckoutEvents>;
+	public readonly view: TreeCheckout;
 	public readonly storedSchema: SchemaEditor<InMemoryStoredSchemaRepository>;
 
 	/**
@@ -177,8 +177,8 @@ export class SharedTree
 			telemetryContextPrefix,
 		);
 		this.storedSchema = new SchemaEditor(schema, (op) => this.submitLocalMessage(op), options);
-		this._events = createEmitter<ViewEvents>();
-		this.view = createSharedTreeView({
+		this._events = createEmitter<CheckoutEvents>();
+		this.view = createTreeCheckout({
 			branch: this.getLocalBranch(),
 			// TODO:
 			// This passes in a version of schema thats not wrapped with the editor.
@@ -195,7 +195,7 @@ export class SharedTree
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): SharedTreeView2<TRoot> | undefined {
+	): TreeView<TRoot> | undefined {
 		assert(this.hasView2 === false, "Cannot create second view from tree.");
 
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
@@ -208,7 +208,7 @@ export class SharedTree
 		}
 
 		this.hasView2 = true;
-		const view2 = new SharedTreeView2(
+		const view2 = new TreeView(
 			this.view,
 			schema,
 			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
@@ -253,7 +253,7 @@ export class SharedTree
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): SharedTreeView2<TRoot> {
+	): TreeView<TRoot> {
 		assert(this.hasView2 === false, "Cannot create second view from tree.");
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.

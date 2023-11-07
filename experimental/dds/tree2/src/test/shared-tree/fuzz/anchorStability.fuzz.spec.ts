@@ -109,7 +109,7 @@ describe("Fuzz - anchor stability", () => {
 				initialState,
 				initialState.clients[0],
 				config.initialTree,
-			).branch;
+			).checkout;
 			tree.transaction.start();
 			// These tests are hard coded to a single client, so this is fine.
 			initialState.anchors = [createAnchors(tree)];
@@ -119,7 +119,7 @@ describe("Fuzz - anchor stability", () => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 
 			// aborts any transactions that may still be in progress
-			const tree = viewFromState(finalState, finalState.clients[0]).branch;
+			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
 			tree.transaction.abort();
 			validateTree(tree, initialTreeJson);
 			validateAnchors(tree, anchors[0], true);
@@ -175,7 +175,7 @@ describe("Fuzz - anchor stability", () => {
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
 				const view = viewFromState(initialState, client, config.initialTree)
-					.branch as RevertibleSharedTreeView;
+					.checkout as RevertibleSharedTreeView;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
@@ -187,7 +187,7 @@ describe("Fuzz - anchor stability", () => {
 		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
 			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 			for (const [i, client] of finalState.clients.entries()) {
-				validateAnchors(viewFromState(finalState, client).branch, anchors[i], false);
+				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
 			}
 		});
 
