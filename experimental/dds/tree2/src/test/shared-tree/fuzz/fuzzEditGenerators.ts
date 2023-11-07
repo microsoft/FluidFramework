@@ -10,11 +10,17 @@ import {
 	IRandom,
 	createWeightedGenerator,
 	BaseFuzzTestState,
-} from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
-import { ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { brand, fail } from "../../../util";
-import { FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
+} from "@fluid-private/stochastic-test-utils";
+import { Client, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import {
+	ISharedTree,
+	ISharedTreeView,
+	ISharedTreeView2,
+	SharedTreeFactory,
+	TreeContent,
+} from "../../../shared-tree";
+import { brand, fail, getOrCreate } from "../../../util";
+import { AllowedUpdateType, FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
 import { DownPath, TreeNode, toDownPath } from "../../../feature-libraries";
 import {
 	FieldEditTypes,
@@ -33,9 +39,27 @@ import {
 	UndoOp,
 	UndoRedo,
 } from "./operationTypes";
-import { FuzzNode, fuzzNode, fuzzViewFromTree, getEditableTree } from "./fuzzUtils";
+import { FuzzNode, fuzzNode, fuzzSchema, fuzzViewFromTree } from "./fuzzUtils";
 
-export type FuzzTestState = DDSFuzzTestState<SharedTreeFactory>;
+export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
+	// Schematized view of clients. Created lazily by viewFromState.
+	view2?: Map<ISharedTree, ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>>;
+}
+
+export function viewFromState(
+	state: FuzzTestState,
+	client: Client<SharedTreeFactory> = state.client,
+	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
+): ISharedTreeView2<typeof fuzzSchema.rootFieldSchema> {
+	state.view2 ??= new Map();
+	return getOrCreate(state.view2, client.channel, (tree) =>
+		tree.schematize({
+			initialTree,
+			schema: fuzzSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}),
+	);
+}
 
 /**
  * When performing an operation, a random field must be selected. Rather than enumerate all fields of the tree, this is
@@ -150,9 +174,8 @@ export const makeEditGenerator = (
 	};
 
 	const insert = (state: FuzzTestState): FieldEditTypes => {
-		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(
-			fuzzViewFromTree(tree),
+			viewFromState(state),
 			state.random,
 			weights.fieldSelection,
 			weights.fieldSelection.filter,
@@ -197,9 +220,8 @@ export const makeEditGenerator = (
 		(weights.fieldSelection.filter?.(fieldInfo) ?? true);
 
 	const deleteContent = (state: FuzzTestState): FieldEditTypes => {
-		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(
-			fuzzViewFromTree(tree),
+			viewFromState(state),
 			state.random,
 			weights.fieldSelection,
 			deletableFieldFilter,
@@ -255,7 +277,7 @@ export const makeEditGenerator = (
 	const move = (state: FuzzTestState): FieldEditTypes => {
 		const tree = state.client.channel;
 		const fieldInfo = selectTreeField(
-			fuzzViewFromTree(tree),
+			viewFromState(state),
 			state.random,
 			weights.fieldSelection,
 			(f) => f.type === "sequence" && f.content.length > 0,
@@ -294,10 +316,10 @@ export const makeEditGenerator = (
 		[
 			insert,
 			weights.insert,
-			({ client, random }) =>
+			(state) =>
 				trySelectTreeField(
-					fuzzViewFromTree(client.channel),
-					random,
+					viewFromState(state),
+					state.random,
 					weights.fieldSelection,
 					weights.fieldSelection.filter,
 				) !== "no-valid-fields",
@@ -305,10 +327,10 @@ export const makeEditGenerator = (
 		[
 			deleteContent,
 			weights.delete,
-			({ client, random }) =>
+			(state) =>
 				trySelectTreeField(
-					fuzzViewFromTree(client.channel),
-					random,
+					viewFromState(state),
+					state.random,
 					weights.fieldSelection,
 					deletableFieldFilter,
 				) !== "no-valid-fields",
@@ -316,10 +338,10 @@ export const makeEditGenerator = (
 		[
 			move,
 			weights.move,
-			({ client, random }) =>
+			(state) =>
 				trySelectTreeField(
-					fuzzViewFromTree(client.channel),
-					random,
+					viewFromState(state),
+					state.random,
 					weights.fieldSelection,
 					(f) => f.type === "sequence" && f.content.length > 0,
 				) !== "no-valid-fields",
@@ -584,12 +606,12 @@ function selectField(
 }
 
 function trySelectTreeField(
-	tree: ISharedTreeView,
+	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,
 ): FuzzField | "no-valid-fields" {
-	const editable = getEditableTree(tree);
+	const editable = tree.editableTree;
 	const options =
 		weights.optional === 0
 			? ["recurse"]
@@ -630,7 +652,7 @@ function trySelectTreeField(
 }
 
 function selectTreeField(
-	tree: ISharedTreeView,
+	tree: ISharedTreeView2<typeof fuzzSchema.rootFieldSchema>,
 	random: IRandom,
 	weights: Omit<FieldSelectionWeights, "filter">,
 	filter: FieldFilter = () => true,

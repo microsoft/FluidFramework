@@ -16,7 +16,7 @@ import {
 	type AsyncGenerator,
 	type Generator,
 	takeAsync,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	Change,
 	SharedTree as LegacySharedTree,

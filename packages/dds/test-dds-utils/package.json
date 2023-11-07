@@ -54,7 +54,7 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
-		"@fluid-internal/stochastic-test-utils": "workspace:~",
+		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
@@ -86,7 +86,7 @@
 		"tasks": {
 			"tsc": [
 				"...",
-				"@fluid-internal/stochastic-test-utils#build:test"
+				"@fluid-private/stochastic-test-utils#build:test"
 			]
 		}
 	},

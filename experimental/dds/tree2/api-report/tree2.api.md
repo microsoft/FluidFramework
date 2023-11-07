@@ -773,8 +773,7 @@ declare namespace InternalTypes_2 {
         UntypedApi,
         EmptyObject,
         ValuesOf,
-        TypedValueOrUndefined,
-        PrimitiveValueSchema
+        TypedValueOrUndefined
     }
 }
 
@@ -819,9 +818,13 @@ export interface ISharedTreeBranchView extends ISharedTreeView {
 }
 
 // @alpha
+export interface ISharedTreeBranchView2<in out TRoot extends TreeFieldSchema> extends ISharedTreeView2<TRoot> {
+    // (undocumented)
+    readonly branch: ISharedTreeBranchView;
+}
+
+// @alpha
 export interface ISharedTreeView extends AnchorLocator {
-    // @deprecated
-    editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
     readonly editor: IDefaultEditBuilder;
     readonly events: ISubscribable<ViewEvents>;
     readonly forest: IForestSubscription;
@@ -839,7 +842,7 @@ export interface ISharedTreeView2<in out TRoot extends TreeFieldSchema> extends 
     readonly branch: ISharedTreeView;
     readonly context: TreeContext;
     readonly editableTree: TypedField<TRoot>;
-    fork(): ISharedTreeView2<TRoot>;
+    fork(): ISharedTreeBranchView2<TRoot>;
 }
 
 // @alpha (undocumented)
@@ -1147,9 +1150,6 @@ export interface NodeData {
     value?: TreeValue;
 }
 
-// @alpha @deprecated
-type NodeDataFor<Mode extends ApiMode, TSchema extends TreeNodeSchema> = TypedNode_2<TSchema, Mode>;
-
 // @alpha (undocumented)
 export interface NodeExistsConstraint {
     // (undocumented)
@@ -1343,9 +1343,6 @@ export function prefixPath(prefix: PathRootPrefix | undefined, path: UpPath | un
 export type PrimitiveValue = string | boolean | number;
 
 // @alpha
-type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
-
-// @alpha
 type ProtoNode = ITreeCursorSynchronous;
 
 // @alpha
@@ -1475,7 +1472,6 @@ export function runSynchronous(view: ISharedTreeView, transaction: (view: IShare
 declare namespace SchemaAware {
     export {
         ApiMode,
-        NodeDataFor,
         TypedNode_2 as TypedNode,
         TypedField_2 as TypedField,
         AllowedTypesToTypedTrees,

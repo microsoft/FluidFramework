@@ -8,7 +8,7 @@ import {
 	generatePairwiseOptions,
 	OptionsMatrix,
 	numberCases,
-} from "@fluid-internal/test-pairwise-generator";
+} from "@fluid-private/test-pairwise-generator";
 import {
 	CompressionAlgorithms,
 	IContainerRuntimeOptions,
