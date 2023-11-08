@@ -42,6 +42,7 @@ module.exports = {
 			dependsOn: ["^checks:fix"],
 			script: false,
 		},
+		"build:copy": [],
 		"build:copy-esm": {
 			depends: [...tscDependsOn, "build:duel"],
 		},
@@ -295,7 +296,7 @@ module.exports = {
 				["depcruise", "dependency-cruiser"],
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
-        ["duel", "@knighted/duel"],
+				["duel", "@knighted/duel"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
