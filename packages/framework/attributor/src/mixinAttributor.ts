@@ -103,33 +103,6 @@ export function createRuntimeAttributor(): IRuntimeAttributor {
  */
 export const mixinAttributor = (Base: typeof ContainerRuntime = ContainerRuntime) =>
 	class ContainerRuntimeWithAttributor extends Base {
-		public static async load(
-			context: IContainerContext,
-			registryEntries: NamedFluidDataStoreRegistryEntries,
-			requestHandler?:
-				| ((request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>)
-				| undefined,
-			runtimeOptions: IContainerRuntimeOptions | undefined = {},
-			containerScope: FluidObject | undefined = context.scope,
-			existing?: boolean | undefined,
-			containerRuntimeCtor: typeof ContainerRuntime = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
-		): Promise<ContainerRuntime> {
-			return this.loadRuntime({
-				context,
-				registryEntries,
-				existing: existing ?? false,
-				requestHandler,
-				runtimeOptions,
-				containerScope,
-				containerRuntimeCtor,
-				provideEntryPoint: async () => {
-					throw new UsageError(
-						"ContainerRuntime.load is deprecated and should no longer be used",
-					);
-				},
-			});
-		}
-
 		public static async loadRuntime(params: {
 			context: IContainerContext;
 			registryEntries: NamedFluidDataStoreRegistryEntries;

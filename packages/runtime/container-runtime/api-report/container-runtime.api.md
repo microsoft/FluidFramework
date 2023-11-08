@@ -169,8 +169,6 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     // @deprecated (undocumented)
     get IFluidRouter(): this;
     get isDirty(): boolean;
-    // @deprecated (undocumented)
-    static load(context: IContainerContext, registryEntries: NamedFluidDataStoreRegistryEntries, requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>, runtimeOptions?: IContainerRuntimeOptions, containerScope?: FluidObject, existing?: boolean, containerRuntimeCtor?: typeof ContainerRuntime): Promise<ContainerRuntime>;
     static loadRuntime(params: {
         context: IContainerContext;
         registryEntries: NamedFluidDataStoreRegistryEntries;
