@@ -4,17 +4,12 @@
  */
 
 import { EventEmitter } from "events";
-// eslint-disable-next-line import/no-deprecated
-import { defaultFluidObjectRequestHandler } from "@fluidframework/aqueduct";
+import { IFluidLoadable, IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
-	IFluidLoadable,
-	IRequest,
-	IResponse,
-	IFluidHandle,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidRouter,
-} from "@fluidframework/core-interfaces";
-import { FluidObjectHandle, mixinRequestHandler } from "@fluidframework/datastore";
+	FluidDataStoreRuntime,
+	FluidObjectHandle,
+	mixinRequestHandler,
+} from "@fluidframework/datastore";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
 import { ReferenceType, reservedTileLabelsKey } from "@fluidframework/merge-tree";
 import {
@@ -23,6 +18,7 @@ import {
 } from "@fluidframework/runtime-definitions";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions";
 import { SharedString } from "@fluidframework/sequence";
+import { create404Response } from "@fluidframework/runtime-utils";
 
 import { PresenceManager } from "./presence";
 
@@ -31,24 +27,15 @@ import { PresenceManager } from "./presence";
  * It has its own implementation of IFluidLoadable and does not extend PureDataObject / DataObject. This is
  * done intentionally to serve as an example of exposing the URL and handle via IFluidLoadable.
  */
-// eslint-disable-next-line import/no-deprecated
-export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable, IFluidRouter {
-	public static async load(
-		runtime: IFluidDataStoreRuntime,
-		context: IFluidDataStoreContext,
-		existing: boolean,
-	) {
-		const collection = new CodeMirrorComponent(runtime, context);
+export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable {
+	public static async load(runtime: IFluidDataStoreRuntime, existing: boolean) {
+		const collection = new CodeMirrorComponent(runtime);
 		await collection.initialize(existing);
 
 		return collection;
 	}
 
 	public get IFluidLoadable() {
-		return this;
-	}
-	// eslint-disable-next-line import/no-deprecated
-	public get IFluidRouter() {
 		return this;
 	}
 
@@ -68,18 +55,10 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 
 	public readonly presenceManager: PresenceManager;
 
-	constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
-		/* Private */ context: IFluidDataStoreContext,
-	) {
+	constructor(private readonly runtime: IFluidDataStoreRuntime) {
 		super();
 		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
 		this.presenceManager = new PresenceManager(runtime);
-	}
-
-	public async request(request: IRequest): Promise<IResponse> {
-		// eslint-disable-next-line import/no-deprecated
-		return defaultFluidObjectRequestHandler(this, request);
 	}
 
 	private async initialize(existing: boolean) {
@@ -97,6 +76,12 @@ export class CodeMirrorComponent extends EventEmitter implements IFluidLoadable,
 		this.root = (await this.runtime.getChannel("root")) as ISharedMap;
 		this._text = await this.root.get<IFluidHandle<SharedString>>("text")?.get();
 	}
+
+	public async request(req: IRequest): Promise<IResponse> {
+		return req.url === "" || req.url === "/" || req.url.startsWith("/?")
+			? { mimeType: "fluid/object", status: 200, value: this }
+			: create404Response(req);
+	}
 }
 
 export class SmdeFactory implements IFluidDataStoreFactory {
@@ -108,12 +93,17 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 	}
 
 	public async instantiateDataStore(context: IFluidDataStoreContext, existing: boolean) {
-		const runtimeClass = mixinRequestHandler(async (request: IRequest) => {
-			const router = await routerP;
-			return router.request(request);
-		});
+		// request mixin in
+		const runtimeClass = mixinRequestHandler(
+			async (request: IRequest, runtimeArg: FluidDataStoreRuntime) => {
+				// The provideEntryPoint callback below always returns CodeMirrorComponent, so this cast is safe
+				const dataObject = (await runtimeArg.entryPoint.get()) as CodeMirrorComponent;
+				return dataObject.request?.(request);
+			},
+			FluidDataStoreRuntime,
+		);
 
-		const runtime = new runtimeClass(
+		return new runtimeClass(
 			context,
 			new Map(
 				[SharedMap.getFactory(), SharedString.getFactory()].map((factory) => [
@@ -122,9 +112,7 @@ export class SmdeFactory implements IFluidDataStoreFactory {
 				]),
 			),
 			existing,
-			async () => routerP,
+			async (runtime: IFluidDataStoreRuntime) => CodeMirrorComponent.load(runtime, existing),
 		);
-		const routerP = CodeMirrorComponent.load(runtime, context, existing);
-		return runtime;
 	}
 }

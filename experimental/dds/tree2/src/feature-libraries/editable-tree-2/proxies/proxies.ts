@@ -16,21 +16,26 @@ import {
 	schemaIsObjectNode,
 	MapSchema,
 	FieldNodeSchema,
+	MapFieldSchema,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
 	FieldNode,
+	FlexibleFieldContent,
 	MapNode,
 	ObjectNode,
 	OptionalField,
 	RequiredField,
+	Sequence,
 	TreeNode,
 	TypedField,
+	UnknownUnboxed,
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
-import { FieldKey } from "../../../core";
+import { EmptyKey, FieldKey } from "../../../core";
 import { LazyObjectNode, getBoxedField } from "../lazyTree";
-import { ContextuallyTypedNodeData } from "../../contextuallyTyped";
+import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../../contextuallyTyped";
+import { createRawObjectNode, extractRawNodeContent } from "../rawObjectNode";
 import {
 	ProxyField,
 	ProxyNode,
@@ -39,8 +44,7 @@ import {
 	SharedTreeMap,
 	SharedTreeObject,
 } from "./types";
-import { extractFactoryContent } from "./objectFactory";
-import { tryGetEditNodeTarget, setEditNode, getEditNode } from "./editNode";
+import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -145,14 +149,15 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 				const field = getBoxedField(editNode, brand(key), fieldSchema);
 
 				switch (field.schema.kind) {
-					case FieldKinds.required: {
-						(field as RequiredField<AllowedTypes>).content =
-							extractFactoryContent(value);
-						break;
-					}
+					case FieldKinds.required:
 					case FieldKinds.optional: {
-						(field as OptionalField<AllowedTypes>).content =
-							extractFactoryContent(value);
+						const typedField = field as
+							| RequiredField<AllowedTypes>
+							| OptionalField<AllowedTypes>;
+
+						const { content, hydrateProxies } = extractFactoryContent(value);
+						typedField.content = content;
+						hydrateProxies(typedField.boxedContent);
 						break;
 					}
 					default:
@@ -197,13 +202,19 @@ const getSequenceField = <TTypes extends AllowedTypes>(
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
-function itemsAsContextuallyTyped(
+function contextualizeInsertedListContent(
 	iterable: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
-): Iterable<ContextuallyTypedNodeData> {
-	// If the iterable is not already an array, copy it into an array to use '.map()' below.
-	return Array.isArray(iterable)
-		? iterable.map((item) => extractFactoryContent(item) as ContextuallyTypedNodeData)
-		: Array.from(iterable, (item) => extractFactoryContent(item) as ContextuallyTypedNodeData);
+	insertedAtIndex: number,
+): ExtractedFactoryContent<ContextuallyTypedNodeData[]> {
+	if (typeof iterable === "string") {
+		throw new TypeError(
+			"Attempted to directly insert a string as iterable list content. Wrap the input string 's' in an array ('[s]') to insert it as a single item or, supply the iterator of the string directly via 's[Symbol.iterator]()' if intending to insert each Unicode code point as a separate item.",
+		);
+	}
+	return extractContentArray(
+		(Array.isArray(iterable) ? iterable : Array.from(iterable)) as ContextuallyTypedNodeData[],
+		insertedAtIndex,
+	);
 }
 
 // #region Create dispatch map for lists
@@ -215,10 +226,18 @@ function itemsAsContextuallyTyped(
  */
 const listPrototypeProperties: PropertyDescriptorMap = {
 	// We manually add [Symbol.iterator] to the dispatch map rather than use '[fn.name] = fn' as
-	// above because 'Array.prototype[Symbol.iterator].name' returns "values" (i.e., Symbol.iterator
-	// is an alias for the '.values()' function.)
+	// below when adding 'Array.prototype.*' properties to this map because 'Array.prototype[Symbol.iterator].name'
+	// returns "values" (i.e., Symbol.iterator is an alias for the '.values()' function.)
 	[Symbol.iterator]: {
 		value: Array.prototype[Symbol.iterator],
+	},
+	at: {
+		value(
+			this: SharedTreeList<AllowedTypes, "javaScript">,
+			index: number,
+		): UnknownUnboxed | undefined {
+			return getSequenceField(this).at(index);
+		},
 	},
 	insertAt: {
 		value(
@@ -226,7 +245,9 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAt(index, itemsAsContextuallyTyped(value));
+			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
+			getSequenceField(this).insertAt(index, content);
+			hydrateProxies(getEditNode(this));
 		},
 	},
 	insertAtStart: {
@@ -234,7 +255,9 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAtStart(itemsAsContextuallyTyped(value));
+			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
+			getSequenceField(this).insertAtStart(content);
+			hydrateProxies(getEditNode(this));
 		},
 	},
 	insertAtEnd: {
@@ -242,7 +265,12 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
-			getSequenceField(this).insertAtEnd(itemsAsContextuallyTyped(value));
+			const { content, hydrateProxies } = contextualizeInsertedListContent(
+				value,
+				this.length,
+			);
+			getSequenceField(this).insertAtEnd(content);
+			hydrateProxies(getEditNode(this));
 		},
 	},
 	removeAt: {
@@ -369,9 +397,6 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 // TODO: This assumes 'Function.name' matches the property name on 'Array.prototype', which may be
 // dubious across JS engines.
 [
-	// TODO: Remove cast to any once targeting a more recent ES version.
-	(Array.prototype as any).at,
-
 	Array.prototype.concat,
 	// Array.prototype.copyWithin,
 	Array.prototype.entries,
@@ -431,7 +456,8 @@ function asIndex(key: string | symbol, length: number) {
 }
 
 function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> {
-	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
+	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
+	// the proxy target to be a plain JS array (see comments below when we instantiate the Proxy).
 	// Own properties on the dispatch object are surfaced as own properties of the proxy.
 	// (e.g., 'length', which is defined below).
 	//
@@ -521,14 +547,21 @@ function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> 
 const mapStaticDispatchMap: PropertyDescriptorMap = {
 	[Symbol.iterator]: {
 		value(this: SharedTreeMap<MapSchema>) {
+			return this.entries();
+		},
+	},
+	delete: {
+		value(this: SharedTreeMap<MapSchema>, key: string): void {
 			const node = getEditNode(this);
-			return node[Symbol.iterator]();
+			node.delete(key);
 		},
 	},
 	entries: {
-		value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
+		*value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
 			const node = getEditNode(this);
-			return node.entries();
+			for (const key of node.keys()) {
+				yield [key, getProxyForField(node.getBoxed(key))];
+			}
 		},
 	},
 	get: {
@@ -550,18 +583,34 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			return node.keys();
 		},
 	},
+	set: {
+		value(
+			this: SharedTreeMap<MapSchema>,
+			key: string,
+			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
+		): SharedTreeMap<MapSchema> {
+			const node = getEditNode(this);
+			const { content, hydrateProxies } = extractFactoryContent(
+				value as FlexibleFieldContent<MapFieldSchema>,
+			);
+			node.set(key, content);
+			hydrateProxies(getMapChildNode(node, key));
+			return this;
+		},
+	},
 	size: {
 		get(this: SharedTreeMap<MapSchema>) {
 			return getEditNode(this).size;
 		},
 	},
 	values: {
-		value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
-			const node = getEditNode(this);
-			return node.values();
+		*value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
+			for (const [, value] of this.entries()) {
+				yield value;
+			}
 		},
 	},
-	// TODO: clear, delete, set. Will require mutation APIs to be added to MapNode.
+	// TODO: add `clear` once we have established merge semantics for it.
 };
 
 const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
@@ -577,7 +626,7 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<SharedTreeMap<TSchema>>(
-		new Map<string, ProxyField<TSchema["mapFields"]>>(),
+		new Map<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -600,4 +649,214 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 		},
 	);
 	return proxy;
+}
+
+/**
+ * Create a proxy to a {@link SharedTreeObject} that is backed by a raw object node (see {@link createRawObjectNode}).
+ * @param schema - the schema of the object node
+ * @param content - the content to be stored in the raw node.
+ * A copy of content is stored, the input `content` is not modified and can be safely reused in another call to {@link createRawObjectProxy}.
+ * @remarks
+ * Because this proxy is backed by a raw node, it has the same limitations as the node created by {@link createRawObjectNode}.
+ * Most if its properties and methods will error if read/called.
+ */
+export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
+	schema: TSchema,
+	content: ProxyNode<TSchema, "javaScript">,
+): SharedTreeObject<TSchema> {
+	// Shallow copy the content and then add the type name symbol to it.
+	const contentCopy = { ...content };
+	Object.defineProperty(contentCopy, typeNameSymbol, { value: schema.name });
+	const proxy = createObjectProxy(schema);
+	const editNode = createRawObjectNode(schema, contentCopy);
+	return setEditNode(proxy, editNode);
+}
+
+type ProxyHydrator = (editNode: TreeNode | undefined) => void;
+const noopHydrator: ProxyHydrator = () => {};
+
+/** The result returned by {@link extractFactoryContent} and its related helpers. */
+interface ExtractedFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaScript">> {
+	/** The content with the factory subtrees replaced. */
+	content: T;
+	/**
+	 * A function which walks all factory-created object that underwent replacement/extraction.
+	 * Before hydration, those objects are unusable (see {@link createRawObjectProxy}).
+	 * However, after the content is fully inserted into the tree the `hydrateProxies` function may be invoked in order to update the contents of these objects such that they become a mirror of the content in the tree.
+	 * This must be done before any calls to {@link getOrCreateNodeProxy} so that the "edit node to proxy" mapping is correctly updated (see {@link setEditNode}).
+	 */
+	hydrateProxies: ProxyHydrator;
+}
+
+/**
+ * Given a content tree that is to be inserted into the shared tree, replace all subtrees that were created by factories
+ * (via {@link SharedTreeObjectFactory.create}) with the content that was passed to those factories.
+ * @returns the result of the content replacement and a {@link ExtractedFactoryContent.hydrateProxies} function which must be invoked if present.
+ * @remarks
+ * This functions works recursively.
+ * Factory-created objects that are nested inside of the content passed to other factory-created objects, and so on, will be in-lined.
+ * This function also adds the hidden {@link typeNameSymbol} of each object schema to the output.
+ * @example
+ * ```ts
+ * const x = foo.create({
+ *   a: 3, b: bar.create({
+ *     c: [baz.create({ d: 5 })]
+ *   })
+ * });
+ * const y = extractFactoryContent(y);
+ * y === {
+ *   [typeNameSymbol]: "foo", a: 3, b: {
+ *     [typeNameSymbol]: "bar", c: [{ [typeNameSymbol]: "baz", d: 5 }]
+ *  }
+ * }
+ * ```
+ */
+export function extractFactoryContent<T extends ProxyNode<TreeNodeSchema, "javaScript">>(
+	content: T,
+): ExtractedFactoryContent<T> {
+	if (isFluidHandle(content)) {
+		return { content, hydrateProxies: noopHydrator };
+	} else if (Array.isArray(content)) {
+		return extractContentArray(content);
+	} else if (content instanceof Map) {
+		return extractContentMap(content);
+	} else if (content !== null && typeof content === "object") {
+		return extractContentObject(content);
+	} else {
+		return {
+			content, // `content` is a primitive or `undefined`
+			hydrateProxies: noopHydrator,
+		};
+	}
+}
+
+/**
+ * @param insertedAtIndex - Supply this if the extracted array content will be inserted into an existing list in the tree.
+ */
+function extractContentArray<T extends ProxyNode<TreeNodeSchema, "javaScript">[]>(
+	input: T,
+	insertedAtIndex = 0,
+): ExtractedFactoryContent<T> {
+	const output = [] as unknown as T;
+	const hydrators: [index: number, hydrate: ProxyHydrator][] = [];
+	for (let i = 0; i < input.length; i++) {
+		const { content, hydrateProxies } = extractFactoryContent(input[i]);
+		output.push(content);
+		// The conditional here is an optimization so that primitive items don't incur boxed reads for hydration
+		if (hydrateProxies !== noopHydrator) {
+			hydrators.push([i, hydrateProxies]);
+		}
+	}
+	return {
+		content: output,
+		hydrateProxies: (editNode: TreeNode | undefined) => {
+			assert(editNode !== undefined, "Expected edit node to be defined when hydrating list");
+			assert(schemaIsFieldNode(editNode.schema), "Expected field node when hydrating list");
+			hydrators.forEach(([i, hydrate]) =>
+				hydrate(
+					getListChildNode(editNode as FieldNode<FieldNodeSchema>, insertedAtIndex + i),
+				),
+			);
+		},
+	};
+}
+
+function extractContentMap<T extends Map<string, ProxyNode<TreeNodeSchema, "javaScript">>>(
+	input: T,
+): ExtractedFactoryContent<T> {
+	const output = new Map() as T;
+	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
+	for (const [key, value] of input) {
+		const { content, hydrateProxies } = extractFactoryContent(value);
+		output.set(key, content);
+		// The conditional here is an optimization so that primitive values don't incur boxed reads for hydration
+		if (hydrateProxies !== noopHydrator) {
+			hydrators.push([key, hydrateProxies]);
+		}
+	}
+	return {
+		content: output,
+		hydrateProxies: (editNode: TreeNode | undefined) => {
+			assert(editNode !== undefined, "Expected edit node to be defined when hydrating map");
+			assert(schemaIsMap(editNode.schema), "Expected map node when hydrating map");
+			hydrators.forEach(([key, hydrate]) =>
+				hydrate(getMapChildNode(editNode as MapNode<MapSchema>, key)),
+			);
+		},
+	};
+}
+
+function extractContentObject<T extends object>(input: T): ExtractedFactoryContent<T> {
+	const output: Record<string, unknown> = {};
+	const hydrators: [key: string, hydrate: ProxyHydrator][] = [];
+	let unproxiedInput = input;
+	const rawEditNode = tryGetEditNode(input);
+	if (rawEditNode !== undefined) {
+		const factoryContent = extractRawNodeContent(rawEditNode);
+		if (factoryContent === undefined) {
+			// We were passed a proxy, but that proxy doesn't have any raw content.
+			throw new Error("Cannot insert a node that is already in the tree");
+		}
+		// `content` is a factory-created object
+		const typeName =
+			(factoryContent as { [typeNameSymbol]?: string })[typeNameSymbol] ??
+			fail("Expected schema type name to be set on factory object content");
+
+		// Copy the type name from the factory content to the output object.
+		// This ensures that all objects from factories can be checked for their nominal type if necessary.
+		Object.defineProperty(output, typeNameSymbol, { value: typeName });
+		unproxiedInput = factoryContent as T;
+	}
+
+	for (const [key, value] of Object.entries(unproxiedInput)) {
+		const { content, hydrateProxies } = extractFactoryContent(value);
+		output[key] = content;
+		hydrators.push([key, hydrateProxies]);
+	}
+
+	return {
+		content: output as T,
+		hydrateProxies: (editNode: TreeNode | undefined) => {
+			assert(
+				editNode !== undefined,
+				"Expected edit node to be defined when hydrating object",
+			);
+			setEditNode(input, editNode); // This makes the input proxy usable and updates the proxy cache
+			assert(
+				schemaIsObjectNode(editNode.schema),
+				"Expected object node when hydrating object content",
+			);
+			hydrators.forEach(([key, hydrate]) =>
+				hydrate(getObjectChildNode(editNode as ObjectNode, key)),
+			);
+		},
+	};
+}
+
+function getListChildNode(listNode: FieldNode<FieldNodeSchema>, index: number): TreeNode {
+	const field = listNode.tryGetField(EmptyKey);
+	assert(
+		field?.schema.kind === FieldKinds.sequence,
+		"Expected sequence field when hydrating list",
+	);
+	return (field as Sequence<AllowedTypes>).boxedAt(index);
+}
+
+function getMapChildNode(mapNode: MapNode<MapSchema>, key: string): TreeNode | undefined {
+	const field = mapNode.getBoxed(key);
+	assert(
+		field.schema.kind === FieldKinds.optional,
+		"Sequence field kind is unsupported as map values",
+	);
+	return (field as OptionalField<AllowedTypes>).boxedContent;
+}
+
+function getObjectChildNode(objectNode: ObjectNode, key: string): TreeNode | undefined {
+	const field =
+		objectNode.tryGetField(brand(key)) ?? fail("Expected a field for inserted content");
+	assert(
+		field.schema.kind === FieldKinds.required || field.schema.kind === FieldKinds.optional,
+		"Expected required or optional field kind",
+	);
+	return (field as RequiredField<AllowedTypes> | OptionalField<AllowedTypes>).boxedContent;
 }

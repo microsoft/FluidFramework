@@ -49,8 +49,8 @@
                                 "count": 3
                               },
                               {
-                                "type": "Delete",
                                 "count": 1,
+                                "type": "Delete",
                                 "id": 0,
                                 "cellId": {
                                   "revision": "beefbeef-beef-4000-8000-00000000002b",
@@ -82,8 +82,8 @@
                                 "count": 3
                               },
                               {
-                                "type": "Delete",
                                 "count": 1,
+                                "type": "Delete",
                                 "id": 0,
                                 "cellId": {
                                   "revision": "beefbeef-beef-4000-8000-00000000002b",
@@ -122,8 +122,8 @@
                                       "count": 3
                                     },
                                     {
-                                      "type": "Delete",
                                       "count": 1,
+                                      "type": "Delete",
                                       "id": 0
                                     }
                                   ]
@@ -152,8 +152,8 @@
                                       "count": 3
                                     },
                                     {
-                                      "type": "Delete",
                                       "count": 1,
+                                      "type": "Delete",
                                       "id": 0
                                     }
                                   ]
@@ -309,6 +309,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-00000000002b",
@@ -316,7 +317,7 @@
                       4
                     ]
                   ],
-                  "id": 4
+                  "maxId": 4
                 },
                 "encoding": "utf-8"
               }

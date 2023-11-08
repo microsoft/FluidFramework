@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-internal/test-drivers";
+import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import { IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import {
 	IContainerRuntimeBase,

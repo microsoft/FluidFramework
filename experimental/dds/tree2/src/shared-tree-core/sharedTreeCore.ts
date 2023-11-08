@@ -273,7 +273,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			},
 			this.idCompressor,
 		);
-		this.submitLocalMessage(message);
+		this.submitLocalMessage(this.serializer.encode(message, this.handle));
 	}
 
 	protected processCore(
@@ -281,7 +281,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const { commit, sessionId } = this.messageCodec.decode(message.contents, this.idCompressor);
+		const contents: unknown = this.serializer.decode(message.contents);
+		const { commit, sessionId } = this.messageCodec.decode(contents, this.idCompressor);
 
 		this.editManager.addSequencedChange(
 			{ ...commit, sessionId },

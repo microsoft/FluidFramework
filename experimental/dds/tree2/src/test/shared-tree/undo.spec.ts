@@ -5,7 +5,7 @@
 import { singleTextCursor } from "../../feature-libraries";
 import { leaf, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath } from "../../core";
-import { ISharedTreeView } from "../../shared-tree";
+import { ITreeCheckout } from "../../shared-tree";
 import { brand, JsonCompatible } from "../../util";
 import { createTestUndoRedoStacks, expectJsonTree, makeTreeFromJson } from "../utils";
 
@@ -22,7 +22,7 @@ const rootField = {
 
 const testCases: {
 	name: string;
-	edit: (undoRedoBranch: ISharedTreeView, otherBranch: ISharedTreeView) => void;
+	edit: (undoRedoBranch: ITreeCheckout, otherBranch: ITreeCheckout) => void;
 	undoCount?: number;
 	initialState: JsonCompatible[];
 	editedState: JsonCompatible[];
@@ -101,7 +101,7 @@ const testCases: {
 		name: "the move of a node",
 		edit: (actedOn) => {
 			const field = actedOn.editor.sequenceField(rootField);
-			field.move(0, 2, 2);
+			field.move(0, 2, 4);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["C", "D", "A", "B"],
@@ -114,7 +114,7 @@ const testCases: {
 				parent: undefined,
 				field: rootFieldKey,
 			});
-			field.move(1, 1, 3);
+			field.move(1, 1, 4);
 		},
 		initialState: ["A", "B", "C", "D"],
 		editedState: ["A", "x", "C", "D", "B"],
@@ -322,6 +322,42 @@ describe("Undo and redo", () => {
 		expectJsonTree(tree, ["B", "C"]);
 		unsubscribe();
 	});
+
+	it("can undo and redo an insert multiple times", () => {
+		const tree = makeTreeFromJson(["A", "B"]);
+
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+		tree.editor.sequenceField(rootField).insert(2, singleJsonCursor("C"));
+
+		expectJsonTree(tree, ["A", "B", "C"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B", "C"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B", "C"]);
+		unsubscribe();
+	});
+
+	it("can undo and redo a move multiple times", () => {
+		const tree = makeTreeFromJson(["A", "B"]);
+
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+		tree.editor.sequenceField(rootField).move(1, 1, 0);
+
+		expectJsonTree(tree, ["B", "A"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["B", "A"]);
+		undoStack.pop()?.revert();
+		expectJsonTree(tree, ["A", "B"]);
+		redoStack.pop()?.revert();
+		expectJsonTree(tree, ["B", "A"]);
+		unsubscribe();
+	});
 });
 
 // TODO: Dedupe with the helpers in editing.spec.ts
@@ -333,13 +369,13 @@ describe("Undo and redo", () => {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
+function insert(tree: ITreeCheckout, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField(rootField);
 	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 
-function remove(tree: ISharedTreeView, index: number, count: number): void {
+function remove(tree: ITreeCheckout, index: number, count: number): void {
 	const field = tree.editor.sequenceField(rootField);
 	field.delete(index, count);
 }

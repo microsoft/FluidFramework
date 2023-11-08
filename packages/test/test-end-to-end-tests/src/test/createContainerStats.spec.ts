@@ -21,7 +21,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 
 describeNoCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 	const {
