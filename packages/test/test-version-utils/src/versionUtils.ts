@@ -313,8 +313,8 @@ export function getRequestedVersion(
 	if (adjustPublicMajor === false && (scheme === "internal" || scheme === "internalPrerelease")) {
 		const [publicVersion, internalVersion /* prereleaseIdentifier */] = fromInternalScheme(
 			baseVersion,
-			true,
-			true,
+			/** allowPrereleases */ true,
+			/** allowAnyPrereleaseId */ true,
 		);
 
 		const internalSchemeRange = internalSchema(
