@@ -97,7 +97,7 @@ export class CompressorFactory {
 		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
 		const compressor = IdCompressor.create(sessionId, logger);
-		compressor.clusterCapacity = clusterCapacity;
+		compressor.nextRequestedClusterSizeOverride = clusterCapacity;
 		return compressor;
 	}
 }
@@ -129,6 +129,7 @@ export function buildHugeCompressor(
 			ids: {
 				firstGenCount: Math.floor(i / numSessions) * capacity + 1,
 				count: capacity,
+				requestedClusterSize: capacity,
 			},
 		});
 	}
@@ -330,6 +331,8 @@ export class IdCompressorTestNetwork {
 				ids: {
 					firstGenCount: 1,
 					count: numIds,
+					requestedClusterSize: this.getCompressor(Client.Client1)
+						.nextRequestedClusterSizeOverride,
 				},
 			};
 			const opSpaceIds: OpSpaceCompressedId[] = [];
@@ -380,7 +383,7 @@ export class IdCompressorTestNetwork {
 			for (let i = this.clientProgress.get(clientTo); i < opIndexBound; i++) {
 				const operation = this.serverOperations[i];
 				if (typeof operation === "number") {
-					compressorTo.clusterCapacity = operation;
+					compressorTo.nextRequestedClusterSizeOverride = operation;
 				} else {
 					const [range, opSpaceIds, clientFrom, sessionIdFrom] = operation;
 					compressorTo.finalizeCreationRange(range);

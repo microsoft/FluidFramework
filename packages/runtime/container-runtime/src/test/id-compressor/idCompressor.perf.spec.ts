@@ -14,7 +14,6 @@ import {
 	SessionSpaceCompressedId,
 	SessionId,
 	StableId,
-	initialClusterCapacity,
 } from "@fluidframework/runtime-definitions";
 import { take } from "@fluid-private/stochastic-test-utils";
 import { IdCompressor, createSessionId } from "../../id-compressor";
@@ -28,6 +27,8 @@ import {
 	performFuzzActions,
 	sessionIds,
 } from "./idCompressorTestUtilities";
+
+const initialClusterCapacity = 512;
 
 describe("IdCompressor Perf", () => {
 	const type = BenchmarkType.Measurement;
@@ -151,6 +152,7 @@ describe("IdCompressor Perf", () => {
 					ids: {
 						firstGenCount,
 						count: numIds,
+						requestedClusterSize: initialClusterCapacity,
 					},
 				};
 
@@ -224,8 +226,14 @@ describe("IdCompressor Perf", () => {
 				const network = setupCompressors(initialClusterCapacity, false, true);
 				// Ensure the local session has several different clusters
 				for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
-					network.allocateAndSendIds(localClient, perfCompressor.clusterCapacity);
-					network.allocateAndSendIds(remoteClient, perfCompressor.clusterCapacity * 2);
+					network.allocateAndSendIds(
+						localClient,
+						perfCompressor.nextRequestedClusterSizeOverride,
+					);
+					network.allocateAndSendIds(
+						remoteClient,
+						perfCompressor.nextRequestedClusterSizeOverride * 2,
+					);
 					network.deliverOperations(DestinationClient.All);
 				}
 				const client = isLocalOriginator ? localClient : remoteClient;
@@ -243,11 +251,11 @@ describe("IdCompressor Perf", () => {
 		type,
 		title: `normalize an unacked local ID from the local session to op space`,
 		before: () => {
-			const network = setupCompressors(initialClusterCapacity, true, false);
+			const network = setupCompressors(15, true, false);
 			// Ensure no eager finals
 			network.allocateAndSendIds(
 				localClient,
-				network.getCompressor(localClient).clusterCapacity * 2 + 1,
+				network.getCompressor(localClient).nextRequestedClusterSizeOverride * 2 + 1,
 			);
 			unackedLocalId = getIdMadeBy(localClient, false, network);
 			assert(
