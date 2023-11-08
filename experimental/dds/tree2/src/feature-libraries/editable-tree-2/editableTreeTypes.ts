@@ -534,6 +534,8 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> =
 /**
  * Strongly typed tree literals for inserting a subsequence of nodes.
  *
+ * Used to insert a batch of 0 or more nodes into some location in a {@link Sequence}.
+ *
  * If a cursor is provided, it must be in Fields mode.
  * @alpha
  */
