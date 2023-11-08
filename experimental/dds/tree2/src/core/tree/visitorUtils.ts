@@ -5,13 +5,21 @@
 
 import { IdAllocator, idAllocatorFromMaxId } from "../../util";
 import { FieldKey } from "../schema-stored";
+import { ICodecOptions } from "../../codec";
 import * as Delta from "./delta";
 import { PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
 import { DeltaVisitor, visitDelta } from "./visitDelta";
 
-export function makeDetachedFieldIndex(prefix: string = "Temp"): DetachedFieldIndex {
-	return new DetachedFieldIndex(prefix, idAllocatorFromMaxId() as IdAllocator<ForestRootId>);
+export function makeDetachedFieldIndex(
+	prefix: string = "Temp",
+	options?: ICodecOptions,
+): DetachedFieldIndex {
+	return new DetachedFieldIndex(
+		prefix,
+		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
+		options,
+	);
 }
 
 export function applyDelta(

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
-import { ProxyNode, ProxyRoot, node, typeNameSymbol } from "../../../feature-libraries";
+import { ProxyNode, ProxyRoot, Tree, typeNameSymbol } from "../../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
 
 describe("SharedTree proxies", () => {
@@ -123,7 +123,7 @@ describe("SharedTreeObject", () => {
 	});
 
 	itWithRoot("can narrow polymorphic struct fields", schema, initialTree, (root) => {
-		if (node.is(root.polyChild, numberChild)) {
+		if (Tree.is(root.polyChild, numberChild)) {
 			assert.equal(root.polyChild.content, 42);
 		} else {
 			assert.equal(root.polyChild.content, "42");
@@ -135,7 +135,7 @@ describe("SharedTreeObject", () => {
 		schema,
 		initialTree,
 		(root) => {
-			if (node.is(root.polyValueChild, numberChild)) {
+			if (Tree.is(root.polyValueChild, numberChild)) {
 				assert.equal(root.polyValueChild.content, 42);
 			} else {
 				assert.equal(root.polyValueChild, 42);
