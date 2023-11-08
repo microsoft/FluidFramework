@@ -1,4 +1,4 @@
-# @fluid-experimental/tree
+# @fluid-experimental/tree2
 
 <!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
 
