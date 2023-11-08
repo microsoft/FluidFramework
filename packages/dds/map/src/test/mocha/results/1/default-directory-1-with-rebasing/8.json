@@ -1,0 +1,472 @@
+[
+	{
+		"type": "attach"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "rebase",
+		"clientId": "A"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "B"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "A"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "C"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "B"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "A"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "C"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "C"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "C"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "C"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/dir2",
+		"clientId": "C"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "C"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "C"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "B"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/dir1",
+		"clientId": "A"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir1",
+		"path": "/dir1",
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/dir2",
+		"clientId": "C"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "C"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "A"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "A"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "B"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "B"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/dir1",
+		"clientId": "B"
+	},
+	{
+		"type": "rebase",
+		"clientId": "A"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "C"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "C"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir2",
+		"path": "/dir1",
+		"clientId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "C"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "A"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "C"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "C"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "B"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "B"
+	},
+	{
+		"type": "rebase",
+		"clientId": "C"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "B"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "A"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir1",
+		"path": "/",
+		"clientId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "createSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "deleteSubDirectory",
+		"name": "dir2",
+		"path": "/",
+		"clientId": "A"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "A"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "B"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": false,
+		"clientId": "B"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "synchronize"
+	},
+	{
+		"type": "changeConnectionState",
+		"connected": true,
+		"clientId": "C"
+	},
+	{
+		"type": "synchronize"
+	}
+]
