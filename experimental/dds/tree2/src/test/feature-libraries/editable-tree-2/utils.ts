@@ -46,7 +46,7 @@ export function getReadonlyContext(forest: IEditableForest, schema: TreeSchema):
 /**
  * Creates a context and its backing forest from the provided `content`.
  *
- * For creating mutable views use {@link viewWithContent}, but prefer this when possible as its has fewer dependencies and simpler setup.
+ * For creating mutable views use {@link viewWithContent}, but prefer this when possible as it has fewer dependencies and simpler setup.
  *
  * @returns The created context.
  */
@@ -98,7 +98,7 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * @deprecated Writing a normal `it` test. Doing so allows:
+ * @deprecated Write a normal `it` test. Doing so allows:
  * 1. Selecting between viewWithContent and {@link readonlyTreeWithContent} or some other setup.
  * 2. Navigate to test source and similar tools and IDE integration to work.
  * 3. Use of `it.only` and `it.skip`.
