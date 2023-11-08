@@ -45,6 +45,9 @@ export interface CursorWithNode<TNode> extends ITreeCursorSynchronous {
  *
  * @returns an {@link ITreeCursorSynchronous} for a single root.
  * @alpha
+ *
+ * @privateRemarks
+ * A version of this API which produces field cursors should be provided.
  */
 export function singleStackTreeCursor<TNode>(
 	root: TNode,
@@ -95,8 +98,13 @@ export abstract class SynchronousCursor {
  *
  * As this is a generic implementation, it's ability to optimize is limited.
  *
+ * @privateRemarks
  * Note that TNode can be `null` (and we should support `undefined` as well),
  * so be careful using types like `TNode | undefined` and expressions like `TNode ??`.
+ *
+ * TODO:
+ * 1. Unit tests for this.
+ * 2. Support for cursors which are field cursors at the root.
  */
 class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNode> {
 	public readonly [CursorMarker] = true;
