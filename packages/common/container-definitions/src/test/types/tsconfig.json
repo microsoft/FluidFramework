@@ -1,19 +1,18 @@
 {
-    "extends": "@fluidframework/build-common/ts-common-config.json",
-    "compilerOptions": {
-        "rootDir": "./",
-        "outDir": "../../../dist/test/types",
-        "declaration": false,
-        "declarationMap": false,
-        "skipLibCheck": true,
-        "noEmit": true,
-    },
-    "include": [
-        "./**/*"
-    ],
-    "references": [
-        {
-            "path": "../../.."
-        }
-    ]
+	"extends": [
+		"../../../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../../../common/build/build-common/tsconfig.test.json",
+	],
+	"include": ["./**/*"],
+	"references": [
+		{
+			"path": "../../..",
+		},
+	],
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../../dist/test/types",
+		"noEmit": true,
+		"types": [],
+	},
 }
