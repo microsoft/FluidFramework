@@ -11,7 +11,7 @@ import {
 	createWeightedGenerator,
 	BaseFuzzTestState,
 } from "@fluid-private/stochastic-test-utils";
-import { Client, DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
+import { Client, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	ISharedTree,
 	ITreeCheckout,
