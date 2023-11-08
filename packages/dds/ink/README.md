@@ -2,7 +2,7 @@
 
 Contains a [Distributed Data Structure](https://fluidframework.com/docs/build/dds/) (DDS) for representing digital ink strokes.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&experimentalPackage=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&packageScopeNotice=EXPERIMENTAL) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
