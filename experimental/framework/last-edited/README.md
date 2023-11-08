@@ -1,6 +1,6 @@
 # @fluid-experimental/last-edited
 
-<!-- AUTO-GENERATED-CONTENT:START (README_EXPERIMENTAL_PACKAGE_NOTICE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
 
 **IMPORTANT: This package is experimental.**
 **Its APIs may change without notice.**
