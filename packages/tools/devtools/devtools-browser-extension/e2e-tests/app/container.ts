@@ -7,7 +7,6 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { IContainer } from "@fluidframework/container-definitions";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 
 export interface ICollaborativeTextAppModel {
@@ -47,11 +46,15 @@ export class CollaborativeTextContainerRuntimeFactory extends ModelContainerRunt
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const collaborativeText = await requestFluidObject<CollaborativeText>(
-			await runtime.getRootDataStore(collaborativeTextId),
-			"",
-		);
-		return new CollaborativeTextAppModel(collaborativeText, container, runtime);
+		const entryPointHandle = (await runtime.getAliasedDataStoreEntryPoint(
+			collaborativeTextId,
+		)) as IFluidHandle<CollaborativeText> | undefined;
+
+		if (entryPointHandle === undefined) {
+			throw new Error(`Default dataStore [${collaborativeTextId}] must exist`);
+		}
+
+		return new CollaborativeTextAppModel(await entryPointHandle.get(), container, runtime);
 	}
 }
 

@@ -10,7 +10,7 @@ import {
 	summarizeNow,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -28,10 +28,11 @@ import {
 import {
 	AllowedUpdateType,
 	type ISharedTree,
-	type ISharedTreeView2,
+	type ITreeView,
 	SchemaBuilder,
 	SharedTreeFactory,
 	type ProxyNode,
+	disposeSymbol,
 } from "@fluid-experimental/tree2";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -64,7 +65,7 @@ const rootType = builder.object("abc", {
 	quantity: builder.number,
 });
 const schema = builder.intoSchema(rootType);
-function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootFieldSchema> {
+function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,
@@ -75,13 +76,15 @@ function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootF
 }
 const migrate = (legacyTree: LegacySharedTree, newTree: ISharedTree): void => {
 	const quantity = getQuantity(legacyTree);
-	newTree.schematize({
-		initialTree: {
-			quantity,
-		},
-		allowedSchemaModifications: AllowedUpdateType.None,
-		schema,
-	});
+	newTree
+		.schematize({
+			initialTree: {
+				quantity,
+			},
+			allowedSchemaModifications: AllowedUpdateType.None,
+			schema,
+		})
+		[disposeSymbol]();
 };
 
 // Useful for modifying the legacy tree

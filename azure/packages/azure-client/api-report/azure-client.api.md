@@ -29,16 +29,16 @@ export class AzureAudience extends ServiceAudience<AzureMember> implements IAzur
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    copyContainer(id: string, containerSchema: ContainerSchema, version?: AzureContainerVersion): Promise<{
-        container: IFluidContainer;
+    copyContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version?: AzureContainerVersion): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    createContainer(containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    getContainer(id: string, containerSchema: ContainerSchema): Promise<{
-        container: IFluidContainer;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema): Promise<{
+        container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;

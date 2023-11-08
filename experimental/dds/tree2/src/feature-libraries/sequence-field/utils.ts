@@ -43,7 +43,7 @@ import {
 	MarkEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
-import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
+import { isMoveDestination, isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
 	EmptyInputCellMark,
 	DetachedCellMark,
@@ -68,8 +68,7 @@ export function isNewAttachEffect(
 		(isAttach(effect) &&
 			cellId !== undefined &&
 			(effect.revision ?? revision) === (cellId.revision ?? revision)) ||
-		(isTransientEffect(effect) &&
-			isNewAttachEffect(effect.attach, cellId, effect.revision ?? revision))
+		(isTransientEffect(effect) && isNewAttachEffect(effect.attach, cellId, revision))
 	);
 }
 
@@ -93,29 +92,11 @@ export function isActiveReattach<T>(
 	mark: Mark<T>,
 ): mark is CellMark<Insert, T> & { conflictsWith?: undefined } {
 	// No need to check Reattach.lastDeletedBy because it can only be set if the mark is conflicted
-	return (
-		isAttach(mark) &&
-		isReattachEffect(mark, mark.cellId) &&
-		!isReattachConflicted(mark, mark.cellId)
-	);
-}
-
-// TODO: Name is misleading
-export function isReattachConflicted(attach: Attach, cellId: CellId | undefined): boolean {
-	return cellId === undefined || isRevertOnlyReattachPreempted(attach, cellId);
-}
-
-/**
- * @returns true iff `mark` is a revert-only inverse that cannot be applied because the target cell was concurrently
- * populated (and possibly emptied) by unrelated changes. Here, "unrelated" specifically means they are not an
- * undo/redo pair of the change this this mark is the inverse of.
- */
-function isRevertOnlyReattachPreempted(attach: Attach, cellId: CellId | undefined): boolean {
-	return attach.inverseOf !== undefined && attach.inverseOf !== cellId?.revision;
+	return isAttach(mark) && isReattachEffect(mark, mark.cellId) && mark.cellId !== undefined;
 }
 
 export function isReturnMuted(mark: CellMark<MoveIn, unknown>): boolean {
-	return mark.isSrcConflicted ?? isReattachConflicted(mark, mark.cellId);
+	return mark.isSrcConflicted ?? mark.cellId === undefined;
 }
 
 export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): boolean {
@@ -141,7 +122,7 @@ export function getInputCellId(
 
 	let markRevision: RevisionTag | undefined;
 	if (isTransientEffect(mark)) {
-		markRevision = mark.attach.revision ?? mark.revision;
+		markRevision = mark.attach.revision;
 	} else {
 		assert(isAttach(mark), "Only attach marks should have undefined revision in cell ID");
 		markRevision = mark.revision;
@@ -164,7 +145,7 @@ export function getOutputCellId(
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isTransientEffect(mark)) {
-		return getDetachCellId(mark.detach, mark.revision ?? revision, metadata);
+		return getDetachCellId(mark.detach, revision, metadata);
 	}
 
 	return getInputCellId(mark, revision, metadata);
@@ -197,19 +178,23 @@ function getOverrideCellId(mark: Detach): CellId | undefined {
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
-	const clone = { ...mark };
-	if (clone.type === "Transient") {
-		clone.attach = { ...clone.attach };
-		clone.detach = { ...clone.detach };
-		if (clone.attach.type === "Insert" && clone.attach.content !== undefined) {
-			clone.attach.content = [...clone.attach.content];
-		}
+	const clone: TMark = { ...cloneMarkEffect(mark), count: mark.count };
+
+	if (mark.cellId !== undefined) {
+		clone.cellId = cloneCellId(mark.cellId);
 	}
+	return clone;
+}
+
+export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
+	const clone = { ...effect };
+	if (clone.type === "Transient") {
+		clone.attach = cloneMarkEffect(clone.attach);
+		clone.detach = cloneMarkEffect(clone.detach);
+	}
+
 	if (clone.type === "Insert" && clone.content !== undefined) {
 		clone.content = [...clone.content];
-	}
-	if (clone.cellId !== undefined) {
-		clone.cellId = cloneCellId(clone.cellId);
 	}
 	return clone;
 }
@@ -283,44 +268,6 @@ export function isTransientEffect(effect: MarkEffect): effect is TransientEffect
 	return effect.type === "Transient";
 }
 
-/**
- * @returns The nested changes from `mark` if they apply to the content the mark refers to.
- */
-export function getEffectiveNodeChanges<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): TNodeChange | undefined {
-	const changes = mark.changes;
-	if (changes === undefined) {
-		return undefined;
-	}
-	const type = mark.type;
-	assert(type !== "MoveIn", 0x7dd /* MoveIn marks should not have changes */);
-	switch (type) {
-		case "Insert":
-			if (isNewAttach(mark)) {
-				return changes;
-			} else {
-				// So long as the input cell is populated, the nested changes are still effective
-				// (even if the revive is preempted) because the nested changes can only target the node in the populated
-				// cell.
-				return areInputCellsEmpty(mark) && isRevertOnlyReattachPreempted(mark, mark.cellId)
-					? undefined
-					: changes;
-			}
-		case "Transient":
-			// TODO: Check if attach is active
-			return changes;
-		case NoopMarkType:
-		case "Placeholder":
-		case "Delete":
-		case "MoveOut":
-		case "ReturnFrom":
-			return areInputCellsEmpty(mark) ? undefined : changes;
-		default:
-			unreachableCase(type);
-	}
-}
-
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
 	return mark.cellId !== undefined;
 }
@@ -357,19 +304,13 @@ export function isMuted(mark: Mark<unknown>): boolean {
 		case "ReturnFrom":
 			return mark.cellId !== undefined || (mark.isDstConflicted ?? false);
 		case "MoveIn":
-			return (
-				(mark.isSrcConflicted ?? false) ||
-				(isReattach(mark) && isReattachConflicted(mark, mark.cellId))
-			);
+			return (mark.isSrcConflicted ?? false) || mark.cellId === undefined;
 		case "Insert":
-			return (
-				mark.cellId === undefined ||
-				(isReattach(mark) && isReattachConflicted(mark, mark.cellId))
-			);
+			return mark.cellId === undefined;
 		case "Transient":
 			return (
-				isReattachEffect(mark.attach, mark.cellId) &&
-				isReattachConflicted(mark.attach, mark.cellId)
+				mark.cellId === undefined ||
+				(isMoveDestination(mark.attach) && (mark.attach.isSrcConflicted ?? false))
 			);
 		default:
 			unreachableCase(type);
@@ -530,7 +471,6 @@ function tryMergeEffects(
 		case "MoveIn": {
 			const lhsMoveIn = lhs as MoveIn;
 			if (
-				lhsMoveIn.inverseOf === rhs.inverseOf &&
 				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsMoveIn.id as number) + lhsCount === rhs.id &&
 				areMergeableChangeAtoms(lhsMoveIn.finalEndpoint, lhsCount, rhs.finalEndpoint)
@@ -559,16 +499,13 @@ function tryMergeEffects(
 		}
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
-			if (lhsInsert.inverseOf === rhs.inverseOf) {
-				if (rhs.content === undefined) {
-					assert(lhsInsert.content === undefined, "Insert content type mismatch");
-					return lhsInsert;
-				} else {
-					assert(lhsInsert.content !== undefined, "Insert content type mismatch");
-					return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
-				}
+			if (rhs.content === undefined) {
+				assert(lhsInsert.content === undefined, "Insert content type mismatch");
+				return lhsInsert;
+			} else {
+				assert(lhsInsert.content !== undefined, "Insert content type mismatch");
+				return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
 			}
-			break;
 		}
 		case "Placeholder":
 			break;
@@ -1104,17 +1041,31 @@ export function withRevision<TMark extends Mark<unknown>>(
 	mark: TMark,
 	revision: RevisionTag | undefined,
 ): TMark {
-	if (revision === undefined) {
-		return mark;
-	}
-
-	if (isNoopMark(mark)) {
-		return mark;
-	}
-
 	const cloned = cloneMark(mark);
-	(cloned as Exclude<Mark<unknown>, CellMark<NoopMark, unknown>>).revision = revision;
+	addRevision(cloned, revision);
 	return cloned;
+}
+
+export function addRevision(effect: MarkEffect, revision: RevisionTag | undefined): void {
+	if (revision === undefined) {
+		return;
+	}
+
+	if (effect.type === NoopMarkType) {
+		return;
+	}
+
+	if (effect.type === "Transient") {
+		addRevision(effect.attach, revision);
+		addRevision(effect.detach, revision);
+		return;
+	}
+
+	assert(
+		effect.revision === undefined || effect.revision === revision,
+		"Should not overwrite mark revision",
+	);
+	effect.revision = revision;
 }
 
 export function getMarkMoveId(mark: Mark<unknown>): MoveId | undefined {

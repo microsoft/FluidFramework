@@ -13,13 +13,13 @@ export {
 } from "./sharedTree";
 
 export {
-	createSharedTreeView,
-	ISharedTreeView,
+	createTreeCheckout,
+	ITreeCheckout,
 	runSynchronous,
-	ViewEvents,
+	CheckoutEvents,
 	ITransaction,
-	ISharedTreeBranchView,
-} from "./sharedTreeView";
+	ITreeCheckoutFork,
+} from "./treeCheckout";
 
 export {
 	SchematizeConfiguration,
@@ -30,4 +30,4 @@ export {
 
 export { TypedTreeFactory, TypedTreeOptions, TypedTreeChannel, TypedTreeView } from "./typedTree";
 
-export { ISharedTreeView2 } from "./sharedTreeView2";
+export { ITreeView, TreeView, ITreeViewFork } from "./treeView";

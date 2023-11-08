@@ -16,7 +16,6 @@ export {
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeStoredSchema,
-	PrimitiveValueSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,

@@ -49,23 +49,6 @@ describe("FluidDataStoreRuntime Tests", () => {
 		};
 	});
 
-	it("FluidDataStoreRuntime.load rejects ids with forward slashes", () => {
-		const invalidId = "beforeSlash/afterSlash";
-		dataStoreContext = new MockFluidDataStoreContext(invalidId);
-		const codeBlock = () =>
-			FluidDataStoreRuntime.load(
-				dataStoreContext,
-				sharedObjectRegistry,
-				/* existing */ false,
-			);
-		assert.throws(codeBlock, (e: Error) =>
-			validateAssertionError(
-				e,
-				"Id cannot contain slashes. DataStoreContext should have validated this.",
-			),
-		);
-	});
-
 	it("constructor rejects ids with forward slashes", () => {
 		const invalidId = "beforeSlash/afterSlash";
 		dataStoreContext = new MockFluidDataStoreContext(invalidId);

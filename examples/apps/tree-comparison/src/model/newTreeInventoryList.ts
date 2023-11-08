@@ -7,7 +7,7 @@ import {
 	AllowedUpdateType,
 	ForestType,
 	ISharedTree,
-	node,
+	Tree,
 	ProxyNode,
 	SchemaBuilder,
 	SharedTreeFactory,
@@ -79,8 +79,8 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 		super();
 		// Note that this is not a normal Node EventEmitter and functions differently.  There is no "off" method,
 		// but instead "on" returns a callback to unregister the event.  AB#5973
-		// node.on() is the way to register events on the inventory item (the first argument).  AB#6051
-		this._unregisterChangingEvent = node.on(this._inventoryItemNode, "changing", () => {
+		// Tree.on() is the way to register events on the inventory item (the first argument).  AB#6051
+		this._unregisterChangingEvent = Tree.on(this._inventoryItemNode, "changing", () => {
 			this.emit("quantityChanged");
 		});
 	}
@@ -180,8 +180,8 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		// Since "afterChange" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
 		// to find what changed.  We'll intentionally ignore the quantity changes here, which are instead handled by
 		// "changing" listeners on each individual item node.
-		// node.on() is the way to register events on the list (the first argument).  AB#6051
-		node.on(this.inventoryItemList, "afterChange", () => {
+		// Tree.on() is the way to register events on the list (the first argument).  AB#6051
+		Tree.on(this.inventoryItemList, "afterChange", () => {
 			for (const inventoryItemNode of this.inventoryItemList) {
 				// If we're not currently tracking some item in the tree, then it must have been
 				// added in this change.

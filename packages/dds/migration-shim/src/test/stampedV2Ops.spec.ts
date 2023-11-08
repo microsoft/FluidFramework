@@ -10,7 +10,7 @@ import {
 	summarizeNow,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	type BuildNode,
 	Change,
@@ -31,7 +31,8 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type ISharedTreeView2,
+	type ITreeView,
+	disposeSymbol,
 } from "@fluid-experimental/tree2";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
@@ -121,7 +122,7 @@ const quantityType = builder.object("quantityObj", {
 });
 const schema = builder.intoSchema(quantityType);
 
-function getNewTreeView(tree: ISharedTree): ISharedTreeView2<typeof schema.rootFieldSchema> {
+function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
 	return tree.schematize({
 		initialTree: {
 			quantity: 0,
@@ -175,13 +176,15 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 			}
 			// migrate data
 			const quantity = getQuantity(legacyTree);
-			newTree.schematize({
-				initialTree: {
-					quantity,
-				},
-				allowedSchemaModifications: AllowedUpdateType.None,
-				schema,
-			});
+			newTree
+				.schematize({
+					initialTree: {
+						quantity,
+					},
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema,
+				})
+				[disposeSymbol]();
 		},
 	);
 
