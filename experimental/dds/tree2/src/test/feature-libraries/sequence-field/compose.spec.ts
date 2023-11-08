@@ -77,6 +77,58 @@ describe("SequenceField - Compose", () => {
 		assert.deepEqual(actual, cases.no_change);
 	});
 
+	it("calls composeChild", () => {
+		const changes = TestChange.mint([], 1);
+		// A changeset with every type of mark, each with nested changes
+		// (aside from move-in/return-to marks)
+		const edit = [
+			Mark.modify(changes),
+			Mark.modify(changes, { revision: tag1, localId: brand(0) }),
+			Mark.delete(1, { localId: brand(0) }, { changes }),
+			Mark.delete(
+				1,
+				{ localId: brand(1) },
+				{ changes, cellId: { revision: tag1, localId: brand(0) } },
+			),
+			Mark.insert(1, { localId: brand(2) }, { changes }),
+			Mark.revive(1, undefined, { changes }),
+			Mark.revive(1, { revision: tag1, localId: brand(1) }, { changes }),
+			Mark.moveOut(1, { localId: brand(2) }, { changes }),
+			Mark.moveIn(1, { localId: brand(2) }),
+			Mark.moveOut(
+				1,
+				{ localId: brand(3) },
+				{ changes, cellId: { revision: tag1, localId: brand(2) } },
+			),
+			Mark.moveIn(1, { localId: brand(3) }, { isSrcConflicted: true }),
+			Mark.returnFrom(1, { localId: brand(4) }, { changes }),
+			Mark.returnTo(1, { localId: brand(4) }, { revision: tag1, localId: brand(3) }),
+			Mark.returnFrom(
+				1,
+				{ localId: brand(5) },
+				{ changes, cellId: { revision: tag1, localId: brand(4) } },
+			),
+			Mark.returnTo(
+				1,
+				{ localId: brand(5) },
+				{ revision: tag1, localId: brand(5) },
+				{ isSrcConflicted: true },
+			),
+			Mark.transient(
+				Mark.insert(1, { localId: brand(6) }),
+				Mark.delete(1, { localId: brand(0) }),
+				{ changes },
+			),
+		];
+		let callCount = 0;
+		compose([tagChange(edit, tag2)], undefined, (c) => {
+			assert.equal(c[0].change, changes);
+			callCount += 1;
+			return changes;
+		});
+		assert.equal(callCount, 12);
+	});
+
 	it("delete ○ revive => Noop", () => {
 		const deletion = tagChange(Change.delete(0, 1), tag1);
 		const insertion = tagRollbackInverse(

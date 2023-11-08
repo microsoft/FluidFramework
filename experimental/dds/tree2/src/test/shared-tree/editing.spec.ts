@@ -503,7 +503,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
-		it.skip("can rebase node deletion over cross-field move of descendant", () => {
+		it("can rebase node deletion over cross-field move of descendant", () => {
 			const tree1 = makeTreeFromJson({
 				foo: ["A"],
 			});
@@ -805,7 +805,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it.skip("delete ancestor of return source", () => {
+		it("delete ancestor of return source", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const first: UpPath = {
 				parent: undefined,
@@ -1344,7 +1344,7 @@ describe("Editing", () => {
 				0,
 			);
 
-			// Deletes parent node of the src field
+			// Deletes parent node of the dst field
 			tree.editor
 				.optionalField({ parent: rootNode, field: brand("dst") })
 				.set(undefined, false);
@@ -2359,5 +2359,62 @@ describe("Editing", () => {
 		restoreRoot.rebaseOnto(tree);
 		expectJsonTree(restoreRoot, [{}]);
 		unsubscribe();
+	});
+
+	describe("Can abort transactions", () => {
+		function getInnerSequenceFieldPath(outer: FieldUpPath): FieldUpPath {
+			return {
+				parent: { parent: outer.parent, parentField: outer.field, parentIndex: 0 },
+				field: brand(""),
+			};
+		}
+		const initialState = { foo: [0, 1, 2] };
+		function abortTransaction(branch: ITreeCheckout): void {
+			branch.transaction.start();
+			const rootSequence = branch.editor.sequenceField(rootField);
+			const root0Path = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+			const root1Path = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 1,
+			};
+			const foo0 = branch.editor.sequenceField(
+				getInnerSequenceFieldPath({ parent: root0Path, field: brand("foo") }),
+			);
+			const foo1 = branch.editor.sequenceField(
+				getInnerSequenceFieldPath({ parent: root1Path, field: brand("foo") }),
+			);
+			foo0.delete(1, 1);
+			foo0.insert(1, singleTextCursor({ type: brand("Number"), value: 41 }));
+			foo0.delete(2, 1);
+			foo0.insert(2, singleTextCursor({ type: brand("Number"), value: 42 }));
+			foo0.delete(0, 1);
+			rootSequence.insert(0, singleTextCursor({ type: brand("Test") }));
+			foo1.delete(0, 1);
+			foo1.insert(0, singleTextCursor({ type: brand("Number"), value: "RootValue2" }));
+			foo1.insert(0, singleTextCursor({ type: brand("Test") }));
+			foo1.delete(1, 1);
+			foo1.insert(1, singleTextCursor({ type: brand("Number"), value: 82 }));
+
+			// Aborting the transaction should restore the forest
+			branch.transaction.abort();
+
+			expectJsonTree(branch, [initialState]);
+		}
+
+		it("on the main branch", () => {
+			const tree = makeTreeFromJson(initialState);
+			abortTransaction(tree);
+		});
+
+		it("on a child branch", () => {
+			const tree = makeTreeFromJson(initialState);
+			const child = tree.fork();
+			abortTransaction(child);
+		});
 	});
 });
