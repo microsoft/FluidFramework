@@ -57,8 +57,8 @@ import {
 	initializeContent,
 	schematize,
 } from "./schematizedTree";
-import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./sharedTreeView";
-import { ITreeView, TreeView } from "./sharedTreeView2";
+import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
+import { ITreeView, TreeView } from "./treeView";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.

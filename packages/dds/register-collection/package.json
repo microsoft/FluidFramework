@@ -70,7 +70,7 @@
 		"@fluidframework/shared-object-base": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-internal/test-dds-utils": "workspace:~",
+		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
