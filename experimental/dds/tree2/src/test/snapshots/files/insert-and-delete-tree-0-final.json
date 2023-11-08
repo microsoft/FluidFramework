@@ -180,6 +180,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-000000000004",
@@ -187,7 +188,7 @@
                       1
                     ]
                   ],
-                  "id": 1
+                  "maxId": 1
                 },
                 "encoding": "utf-8"
               }

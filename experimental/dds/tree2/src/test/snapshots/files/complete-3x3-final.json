@@ -4444,8 +4444,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [],
-                  "id": 89
+                  "maxId": 89
                 },
                 "encoding": "utf-8"
               }

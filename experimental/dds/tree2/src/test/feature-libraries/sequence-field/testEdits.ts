@@ -14,7 +14,7 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
+import { composeAnonChanges } from "./utils";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();
@@ -41,7 +41,7 @@ export const cases: {
 	]),
 	delete: createDeleteChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
-	move: createMoveChangeset(1, 2, 2),
+	move: createMoveChangeset(1, 2, 4),
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
 	transient_insert: [
 		{ count: 1 },
@@ -89,58 +89,23 @@ function createRedundantRemoveChangeset(
 	return changeset;
 }
 
-function createReviveChangeset(
-	startIndex: number,
-	count: number,
-	detachEvent: SF.CellId,
-	lastDetach?: SF.CellId,
-): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1];
-	if (lastDetach !== undefined) {
-		mark.cellId = lastDetach;
-	}
-	return markList;
-}
-
 function createRedundantReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	isIntention?: boolean,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, isIntention);
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
 	const mark = markList[markList.length - 1];
 	delete mark.cellId;
 	return markList;
 }
 
-function createBlockedReviveChangeset(
+function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	lastDetach: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1];
-	mark.cellId = lastDetach;
-	return markList;
-}
-
-function createIntentionalReviveChangeset(
-	startIndex: number,
-	count: number,
-	detachEvent: SF.CellId,
-	lastDetach?: SF.CellId,
-): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, true);
-	const mark = markList[markList.length - 1];
-
-	if (lastDetach !== undefined) {
-		mark.cellId = lastDetach;
-	}
-
-	return markList;
+	return SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
 }
 
 function createMoveChangeset(
@@ -149,9 +114,7 @@ function createMoveChangeset(
 	destIndex: number,
 	id: ChangesetLocalId = brand(0),
 ): SF.Changeset<never> {
-	return composeAnonChangesShallow(
-		SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id),
-	);
+	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id);
 }
 
 function createReturnChangeset(
@@ -416,9 +379,7 @@ export const ChangeMaker = {
 	delete: createDeleteChangeset,
 	redundantRemove: createRedundantRemoveChangeset,
 	revive: createReviveChangeset,
-	intentionalRevive: createIntentionalReviveChangeset,
 	redundantRevive: createRedundantReviveChangeset,
-	blockedRevive: createBlockedReviveChangeset,
 	move: createMoveChangeset,
 	return: createReturnChangeset,
 	modify: createModifyChangeset,

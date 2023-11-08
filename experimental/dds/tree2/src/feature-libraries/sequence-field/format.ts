@@ -149,19 +149,6 @@ export const HasMarkFields = <TNodeChange extends TSchema>(tNodeChange: TNodeCha
 		count: CellCount,
 	});
 
-export interface HasReattachFields {
-	/**
-	 * The revision this mark is inverting a detach from.
-	 * If defined this mark is a revert-only inverse,
-	 * meaning that it will only reattach nodes if those nodes were last detached by `inverseOf`.
-	 * If `inverseOf` is undefined, this mark will reattach nodes regardless of when they were last detached.
-	 */
-	inverseOf?: RevisionTag;
-}
-export const HasReattachFields = Type.Object({
-	inverseOf: Type.Optional(RevisionTagSchema),
-});
-
 export interface NoopMark {
 	/**
 	 * Declared for consistency with other marks.
@@ -180,7 +167,7 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-export interface Insert extends HasRevisionTag, HasReattachFields {
+export interface Insert extends HasRevisionTag {
 	type: "Insert";
 	/**
 	 * The content to insert. Only populated for new attaches.
@@ -190,7 +177,6 @@ export interface Insert extends HasRevisionTag, HasReattachFields {
 export const Insert = Type.Composite(
 	[
 		HasRevisionTag,
-		HasReattachFields,
 		Type.Object({
 			type: Type.Literal("Insert"),
 			content: Type.Array(ProtoNode),
@@ -211,7 +197,7 @@ export const HasMoveFields = Type.Composite([
 	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
 ]);
 
-export interface MoveIn extends HasMoveFields, HasReattachFields {
+export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 	/**
 	 * When true, the corresponding MoveOut has a conflict.
@@ -223,7 +209,6 @@ export interface MoveIn extends HasMoveFields, HasReattachFields {
 export const MoveIn = Type.Composite(
 	[
 		HasMoveFields,
-		HasReattachFields,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
 			isSrcConflicted: OptionalTrue,
@@ -309,20 +294,17 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
 	type: "Placeholder";
 }
 
-export interface TransientEffect extends HasRevisionTag {
+export interface TransientEffect {
 	type: "Transient";
 	attach: Attach;
 	detach: Detach;
 }
 
-export const TransientEffect = Type.Composite([
-	HasRevisionTag,
-	Type.Object({
-		type: Type.Literal("Transient"),
-		attach: Attach,
-		detach: Detach,
-	}),
-]);
+export const TransientEffect = Type.Object({
+	type: Type.Literal("Transient"),
+	attach: Attach,
+	detach: Detach,
+});
 
 export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect;
 export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);

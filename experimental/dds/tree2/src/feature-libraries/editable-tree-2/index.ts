@@ -6,7 +6,7 @@
 export {
 	TreeField,
 	TreeNode,
-	Tree,
+	TreeEntity,
 	TypedField,
 	FieldNode,
 	FlexibleFieldContent,
@@ -38,8 +38,8 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	ProxyRoot,
-	node,
-	NodeApi,
+	Tree,
+	TreeApi,
 	SharedTreeNode,
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
@@ -55,7 +55,7 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation";
 
-export { getTreeContext, TreeContext } from "./context";
+export { getTreeContext, TreeContext, Context } from "./context";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalEditableTreeTypes from "./internal";

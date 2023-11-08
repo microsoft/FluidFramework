@@ -74,6 +74,15 @@ describe("SequenceField - toDelta", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("child change under removed node", () => {
+		const modify = [Mark.modify(childChange1, { revision: tag, localId: brand(42) })];
+		const actual = toDelta(modify, tag);
+		const expected: Delta.FieldChanges = {
+			global: [{ id: detachId, fields: childChange1Delta }],
+		};
+		assertFieldChangesEqual(actual, expected);
+	});
+
 	it("empty child change", () => {
 		const actual = toDelta(Change.modify(0, TestChange.emptyChange));
 		assert.deepEqual(actual, emptyFieldChanges);
@@ -133,12 +142,28 @@ describe("SequenceField - toDelta", () => {
 	});
 
 	it("delete", () => {
-		const changeset = Change.delete(0, 10, brand(42));
+		const changeset = [Mark.delete(10, brand(42))];
 		const expected: Delta.FieldChanges = {
 			local: [
 				{
 					count: 10,
 					detach: detachId,
+				},
+			],
+		};
+		const actual = toDelta(changeset, tag);
+		assert.deepStrictEqual(actual, expected);
+	});
+
+	it("delete with override", () => {
+		const changeset = [
+			Mark.delete(10, brand(42), { detachIdOverride: { revision: tag2, localId: brand(1) } }),
+		];
+		const expected: Delta.FieldChanges = {
+			local: [
+				{
+					count: 10,
+					detach: { major: tag2, minor: 1 },
 				},
 			],
 		};
@@ -410,16 +435,24 @@ describe("SequenceField - toDelta", () => {
 
 		it("delete", () => {
 			const deletion = [Mark.onEmptyCell(cellId, Mark.delete(2, brand(0)))];
-
 			const actual = toDelta(deletion);
 			assertFieldChangesEqual(actual, {});
 		});
 
-		it("modify", () => {
-			const modify = [Mark.modify(childChange1, cellId)];
-
-			const actual = toDelta(modify);
-			assertFieldChangesEqual(actual, {});
+		it("modify and delete", () => {
+			const deletion = [
+				Mark.onEmptyCell(cellId, Mark.delete(2, brand(0), { changes: childChange1 })),
+			];
+			const actual = toDelta(deletion, tag);
+			const expected: Delta.FieldChanges = {
+				global: [
+					{
+						id: { major: cellId.revision, minor: cellId.localId },
+						fields: childChange1Delta,
+					},
+				],
+			};
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("move", () => {
@@ -443,19 +476,6 @@ describe("SequenceField - toDelta", () => {
 				local: [{ count: 1 }, { count: 1, fields: childChange1Delta }],
 			};
 			assertFieldChangesEqual(actual, expected);
-		});
-
-		it("blocked revive", () => {
-			const changeset = [
-				Mark.revive(1, { revision: tag2, localId: brand(0) }, { inverseOf: tag1 }),
-				Mark.revive(
-					1,
-					{ revision: tag2, localId: brand(1) },
-					{ inverseOf: tag1, changes: childChange1 },
-				),
-			];
-			const actual = toDelta(changeset);
-			assertFieldChangesEqual(actual, {});
 		});
 	});
 });
