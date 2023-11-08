@@ -118,11 +118,7 @@ SharedTree provides [TreeView](./src/TreeView.ts)s which are immutable snapshots
 The `currentView` property on SharedTree is the easiest way to get the view of the latest revision.
 
 ```typescript
-function getChildrenUnderTrait(
-	sharedTree: SharedTree,
-	parentId: NodeId,
-	traitLabel: TraitLabel,
-): TreeViewNode[] {
+function getChildrenUnderTrait(sharedTree: SharedTree, parentId: NodeId, traitLabel: TraitLabel): TreeViewNode[] {
 	// Get the most up-to-date view of the tree at this moment.
 	const view = sharedTree.currentView;
 	// Get the IDs of children in some trait with `getTrait`:
@@ -176,7 +172,7 @@ Once an edit is acknowledged by the Fluid service (and thus it has a sequence nu
 Say we wanted to delete the `fooNode` we inserted above. There are 4 ways we could specify the `StableRange` to delete which are all equivalent in the absence of concurrent editing:
 
 ```typescript
-const trait = { parent: initialTree, label: "foo" };
+const trait = { parent: initialTree, label: 'foo' };
 const stableRange1 = StableRange.from(StablePlace.atStartOf(trait)).to(StablePlace.atEndOf(trait));
 const stableRange2 = StableRange.from(StablePlace.atStartOf(trait)).to(StablePlace.after(fooNode));
 const stableRange3 = StableRange.from(StablePlace.before(fooNode)).to(StablePlace.atEndOf(trait));
@@ -225,9 +221,7 @@ A [Checkout](./src/Checkout.ts) is similar to a `Transaction` in that it applies
     ```typescript
     const checkout = new EagerCheckout(sharedTree);
     checkout.openEdit();
-    checkout.applyChanges(
-    	Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: "foo" })),
-    );
+    checkout.applyChanges(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
     checkout.applyChanges(Change.move(barNode, StablePlace.after(fooNode.identifier)));
     checkout.closeEdit(); // This submits the changes to the tree in an edit
     checkout.openEdit();
@@ -242,9 +236,7 @@ A [Checkout](./src/Checkout.ts) is similar to a `Transaction` in that it applies
     ```typescript
     const checkout = new EagerCheckout(sharedTree);
     checkout.openEdit();
-    checkout.applyChanges(
-    	Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: "foo" })),
-    );
+    checkout.applyChanges(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: 'foo' })));
     // ... Edits are applied to the tree (e.g. by other clients)
     checkout.rebaseCurrentEdit(); // Rebases the current changes in this edit to the SharedTree's current view.
     checkout.applyChanges(Change.move(barNode, StablePlace.after(fooNode.identifier)));
