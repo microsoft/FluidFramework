@@ -9,354 +9,394 @@
 
 <!-- AUTO-GENERATED-CONTENT:END -->
 
-A [Fluid](https://fluidframework.com/) SharedObject Tree with:
+For a high-level overview of the goals of this project, see the [roadmap](docs/roadmap.md).
 
--   Transactional editing and snapshot isolation
--   Strong node identities
--   High quality automatic merge resolution
--   A flexible operation set that includes Move
--   History inspection, manipulation and metadata
+## Status
 
-Revisions of the tree (see [EditLog](./src/EditLog.ts) and [TreeView](./src/TreeView.ts)) are created from sequences of Edits.
+Notable consideration that early adopters should be wary of:
 
-Semantically, the current state of the tree is defined as:
+-   The persisted format is not stable and long term support for persisted format is not yet in effect.
+    This means clients running more recent versions of SharedTree may find themselves unable to load old document or may corrupt them when editing.
+    Current estimate for LTS is April 2024.
+-   SharedTree currently has unbounded memory growth:
+    -   Removed content is retained forever.
+    -   Accessing an `EditableField` object (from its parent, e.g., with `getField`) in a loop will leak unbounded memory.
+-   All changes are atomized by the `visitDelta` function. This means that, when inserting/removing/moving 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Change notification consumers that are downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
 
-The [initial tree](./src/InitialTree.ts), modified by all edits in order.
+<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
-The order of the edits is:
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
-1. All acknowledged edits, in the order agreed upon by Fluid's consensus.
-2. All local edits (not acknowledged by Fluid yet), in the order they were applied.
+## Using Fluid Framework libraries
 
-**Important: this DDS is no longer in active development, and a non-experimental, officially supported SharedTree is in active development by the Fluid team that will expand on its rich feature set.**
+When taking a dependency on a Fluid Framework library, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
 
-# Getting Started
+Note that when depending on a library version of the form `2.0.0-internal.x.y.z`, called the Fluid internal version scheme,
+you must use a `>= <` dependency range (such as `>=2.0.0-internal.x.y.z <2.0.0-internal.w.0.0` where `w` is `x+1`).
+Standard `^` and `~` ranges will not work as expected.
+See the [@fluid-tools/version-tools](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/version-tools/README.md)
+package for more information including tools to convert between version schemes.
 
-## Tree Abstraction
+<!-- prettier-ignore-end -->
 
-The tree abstraction used for `SharedTree` is composed of nodes with four main attributes: a _definition_, an _identity_, zero or more _traits_, and an optional _payload_ to contain arbitrary serializable data.
+<!-- AUTO-GENERATED-CONTENT:END -->
 
-### Definition
+## Motivation
 
-The definition of a node conveys the node's semantic meaning. It is typically used to associate the node with metadata such as a schema for what this tree represents.
+There are a lot of different factors motivating the creation of this Tree DDS.
+A wide variety of possible consumers (across several companies) have overlapping feature requirements
+which seem like they can best be met by collaborating on a single feature rich tree implementation powered by Fluid.
+The current feature focus is on:
 
-### Identifier
+-   Semantics:
+    -   High quality semantic merges, including moves of parts of sequences (called "slice moves").
+    -   Transactionality.
+    -   Support schema in a semantically robust way.
+-   Scalability:
+    -   Support for partial views: allow efficiently viewing and editing parts of larger datasets without downloading the whole thing.
+    -   Ability to easily (sharing code with client) spin up optional services to improve scalability further (ex: server side summaries, indexing, permissions etc.)
+    -   Efficient data encodings.
+-   Expressiveness:
+    -   Efficient support for moves, including moves of large sections of large sequences, and large subtrees.
+    -   Support history operations (ex: undo and redo).
+    -   Flexible schema system that has design patterns for making schema changes over time.
+-   Workflows:
+    -   Good support for offline.
+    -   Optional support for branching and history.
+-   Extensibility: It must be practical to accommodate future users with needs beyond what we can afford to support in the initial version. This includes needs like:
+    -   New field kinds to allow data-modeling with more specific merge semantics (ex: adding support for special collections like sets, or sorted sequences)
+    -   New services (ex: to support permissions, server side indexing etc.)
 
-A node's identifier is a unique key associated with that node. The identifier can be used to retrieve a node from the current view of a SharedTree, and provides a way to refer to existing nodes when performing edits to the tree.
+## What's missing from existing DDSes?
 
-### Traits
+`directory` and `map` can not provide merge resolution that guarantees well-formedness of trees while supporting the desired editing APIs (like subsequence move),
+and are missing (and cannot be practically extended to have) efficient ways to handle large data or schema.
 
-Traits are sequences of child nodes underneath a parent node. Each trait is identified by a label and may contain one or more children. Organizing a node's children underneath traits (rather than in a single freeform list, as many trees do) allows more intuitive construction of documents.
+`sequence` does not capture the hierarchy or schema, and also does not handle partial views.
+Additionally its actual merge resolution leaves some things to be desired in some cases which `tree` aims to improve on.
 
-```typescript
-// A parent node with three traits, labelled "name", "employees" and "products"
-{
-	definition: 'Company',
-	identifier: 42,
-	traits: {
-		name: [{...}] // Traits may contain just one child node...
-		employees: [{...}, {...}, {...}], // ...or many children
-		products: [{...}, {...}]
-	}
-}
+`experimental/tree` does not have a built in schema system reducing the data available to make semantically high quality merges.
+It also does merge resolution in a way that requires having the whole tree in memory due to it being based entirely on node identifiers
+(including constraints within transactions that can't be verified without reading large parts of the tree).
+
+`experimental/PropertyDDS` currently does not have as high quality merge logic as desired, currently not even supporting efficient moves.
+Much of what is desired is theoretically possible as additional feature work on `PropertyDDS`,
+but it was decided that it makes more sense to build up this more featureful DDS from scratch leveraging the learnings from `PropertyDDS` and `experimental/tree`.
+
+## Why not a tree made out of existing DDS implementations and how this relates to the Fluid Framework itself?
+
+Currently existing DDS implementations can not support cross DDS transactions.
+For example, moving part of a sequence from one sequence DDS to another cannot be done transactionally, meaning if the source of the move conflicts, the destination half can't be updated or aborted if it's in a different DDS.
+Cross DDS moves also currently can't be as efficient as moves within a single DDS, and there isn't a good way to do cross DDS history or branching without major framework changes.
+There are also some significant per DDS performance and storage costs that make this approach much more costly than using a single DDS.
+
+One way to think about this new tree DDS is to try and mix some of the Fluid-Framework features (like the ability to view a subset of the data) with features from DDSes (ex: lower overhead per item, efficient moves of sub-sequences, transactions).
+If this effort is successful, it might reveal some improved abstractions for modularizing hierarchical collaborative data-structures (perhaps "field kinds"),
+which could make their way back into the framework, enabling some features specific to this tree (ex: history, branching, transactional moves, reduced overhead) to be framework features instead.
+
+From this perspective, this tree serves as a proof of concept for abstractions and features which could benefit the framework, but are easier to implement within a DDS initially.
+This tree serves to get these feature into the hands of users much faster than could be done at the framework level.
+
+## Recommended Developer Workflow
+
+This package can be developed using any of the [regular workflows for working on Fluid Framework](../../../README.md) and/or its Client release group of packages, but for work only touching the tree package, there is an optional workflow that might be more ergonomic:
+
+-   Open the [.vscode/Tree.code-workspace](.vscode/Tree.code-workspace) in VS Code.
+    This will recommend a test runner extension, which should be installed.
+-   Build the Client release group as normal (for example: `pnpm i && npm run build:fast` in the repository root).
+-   After editing the tree project, run `npm run build` in its directory.
+-   Run tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
+    both of these are provided by the mocha testing extension thats recommended by the workspace.
+    Note that this does not build the tests, so always be sure to build first.
+
+This package uses [`good-fences`](https://github.com/smikula/good-fences) to manage intra-package dependencies in `fence.json` files.
+If modifying such dependencies, learn how `good-fences` works, and review (and update if needed) the "Architecture" section below.
+
+## Architecture
+
+This section covers the internal structure of the Tree DDS.
+In this section the user of this package is called "the application".
+"The application" is full of "application code", meaning code which can be specific to particular schema and use-cases.
+This typically means the client side "business logic" or "view" part of some graphical web application, but it could also mean something headless like a service.
+
+### Ownership and Lifetimes
+
+This diagram shows the ownership hierarchy during a transaction with solid arrows, and some important references with dashed arrows:
+
+```mermaid
+graph TD;
+    subgraph "Persisted Data"
+        store["Data Store"]-->doc["Persisted Summaries"]
+    end
+    container["Fluid Container"]-->shared-tree
+    subgraph "@fluid-experimental/tree2"
+        shared-tree--"extends"-->shared-tree-core
+        shared-tree-core-."reads".->doc
+        shared-tree-core-->EditManager-->X["collab window & branches"]
+        shared-tree-core-->Indexes-->ForestIndex
+        shared-tree-->view["SharedTreeView"]
+        transaction-."updates".->view
+        transaction-->EditBuilder
+        view-."reads".->ForestIndex
+        view-->transaction
+    end
 ```
 
-### Payload
+`tree` is a DDS, and therefore it stores its persisted data in a Fluid Container, and is also owned by that same container.
+When nothing in that container references the DDS anymore, it may get garbage collected by the Fluid GC.
 
-The payload of a node is a bag of arbitrary state with only one requirement: it must be JSON-serializable. Payloads allow the tree to store data that can't be efficiently encoded by nodes themselves (for example, strings or numbers)
+The tree DDS itself, or more specifically [`shared-tree-core`](./src/shared-tree-core/README.md) is composed of a collection of indexes (just like a database) which contribute data which get persisted as part of the summary in the container.
+`shared-tree-core` owns these databases, and is responsible for populating them from summaries and updating them when summarizing.
 
-## Example Tree
+See [indexes and branches](./docs/indexes%20and%20branches.md) for details on how this works with branches.
 
-Consider a document which consists of the point (4, 9) in 2-dimensional space. One way this document could be encoded into the tree format expected by a `SharedTree` might look like this:
+When applications want access to the `tree`'s data, they do so through an [`ISharedTreeView`](./src/shared-tree/sharedTreeView.ts) which abstracts the indexes into nice application facing APIs.
+Views may also have state from the application, including:
 
-```typescript
-// These definitions conceptually refer to *all* points/numbers in existence.
-const pointDefinition = '3781c3b1-41e6-43c5-9ffd-13916071d4dc';
-const numberDefinition = '3e5a1652-983f-4533-bb59-130ac8f3714e';
+-   [`view-schema`](./src/core/schema-view/README.md)
+-   adapters for out-of-schema data
+-   request or hints for what subsets of the tree to keep in memory
+-   pending transactions
+-   registrations for application callbacks / events.
 
-// These identifiers refer to *the particular* point/number nodes in the tree below.
-const pointIdentifier = 100;
-const xIdentifier = 101;
-const yIdentifier = 102;
+[`shared-tree`](./src/shared-tree/) provides a default view which it owns, but applications can create more if desired, which they will own.
+Since views subscribe to events from `shared-tree`, explicitly disposing any additionally created ones is required to avoid leaks.
 
-const pointDocument: Node = {
-	definition: pointDefinition
-	identifier: pointIdentifier,
-	traits: {
-		x: {
-			definition: numberDefinition,
-			identifier: xIdentifier,
-			payload: 4
-		},
-		y: {
-			definition: numberDefinition,
-			identifier: yIdentifier,
-			payload: 9
-		}
-	}
-};
+[transactions](./src/core/transaction/README.md) are created by `ISharedTreeView`s and are currently synchronous.
+Support for asynchronous transactions, with the application managing the lifetime and ensuring it does not exceed the lifetime of the view,
+could be added in the future.
+
+### Data Flow
+
+#### Viewing
+
+```mermaid
+flowchart LR;
+    doc["Persisted Summaries"]--"Summary+Trailing ops"-->shared-tree-core
+    subgraph "@fluid-experimental/tree2"
+        shared-tree--"configures"-->shared-tree-core
+        shared-tree-core--"Summary"-->Indexes--"Summary"-->ForestIndex;
+        ForestIndex--"Exposed by"-->ISharedTreeView
+    end
+    ISharedTreeView--"viewed by"-->app
 ```
 
-Note that this example isn't meant to be taken verbatim as valid code -- it cheats a bit with payload representation for the sake of simplicity, and isn't validly constructing the node's identifiers. It is, however, truthful to tree structure.
+[`shared-tree`](./src/shared-tree/) configures [`shared-tree-core`](./src/shared-tree-core/README.md) with a set of indexes.
+`shared-tree-core` downloads the summary data from the Fluid Container, feeding the summary data (and any future edits) into the indexes.
+`shared-tree` then constructs the default view.
+The application using the `shared-tree` can get the view from which it can read data (which the view internally gets from the indexes).
+For any given part of the application this will typically follow one of two patterns:
 
-## Creating a SharedTree
+-   read the tree data as needed to create the view.
+    Register invalidation call backs for when the observed parts of the tree change.
+    When invalidated, reconstruct the invalidated parts of the view by rereading the tree.
+-   read the tree data as needed to create the view.
+    Register delta callbacks for when the observed parts of the tree change.
+    When a delta is received, update the view in place according to the delta.
 
-SharedTree follows typical [Fluid DDS conventions](https://fluidframework.com/docs/) and can be constructed with a Fluid runtime instance:
+TODO: Eventually these two approaches should be able to be mixed and matched for different parts of the application as desired, receiving scoped deltas.
+For now deltas are global.
 
-```typescript
-const tree = SharedTree.create(runtime);
+Note that the first pattern is implemented using the second.
+It works by storing the tree data in a [`forest`](./src/core/forest/README.md) which updates itself using deltas.
+When an application chooses to use the second pattern,
+it can be thought of as opting into a specialized application (or domain) specific tree representation.
+From that perspective the first pattern amounts to using the platform-provided general purpose tree representation:
+this should usually be easier, but may incur some performance overhead in specific cases.
+
+When views want to hold onto part of the tree (for the first pattern),
+they do so with "anchors" which have well defined behavior across edits.
+
+TODO: Note that as some point the application will want their [`view-schema`](./src/core/schema-view/README.md) applied to the tree from the view.
+The system for doing this is called "schematize" and is currently not implemented.
+When it is more designed, some details for how it works belong in this section (as well as the section below).
+
+### Editing
+
+Edit related data flow with solid arrows.
+Key view related updates made in response with dotted arrows.
+
+This shows editing during a transaction:
+
+```mermaid
+flowchart RL
+    subgraph "@fluid-experimental/tree2"
+        transaction--"collects edits in"-->EditBuilder
+        EditBuilder--"updates anchors"-->AnchorSet
+        EditBuilder--"deltas for edits"-->transaction
+        transaction--"applies deltas to"-->forest["ISharedTreeView's forest"]
+    end
+    command["App's command callback"]
+    command--"Edits"-->transaction
+    forest-."invalidation".->command
 ```
 
-Upon creation, the tree will contain a single node: the [initialTree](./src/InitialTree.ts). All SharedTrees begin with this initial node as their root node, which cannot be deleted or moved. It provides an anchor for new nodes to be inserted underneath it.
+The application can use their view to locate places they want to edit.
+The application passes a "command" to the view which create a transaction that runs the command.
+This "command" can interactively edit the tree.
+Internally the transaction implements these edits by creating changes.
+Each change is processed in two ways:
 
-## Reading
+-   the change is converted to a delta which is applied to the forest and any existing anchors allowing the application to read the updated tree afterwards.
+-   the changes applied to the `EditBuilder` are accumulated and used to create/encode the actual edit to send to Fluid.
 
-SharedTree provides [TreeView](./src/TreeView.ts)s which are immutable snapshots of the tree at a given revision. These views can be generated for the current (i.e. the most up-to-date after applying all known edits) state of the tree, or can be created for the state of the tree after a specific revision in the tree's history of edits.
+Once the command ends, the transaction is rolled back leaving the forest in a clean state.
+Then if the command did not error, a `changeset` is created from the changes applied to the `EditBuilder`, which is encoded into a Fluid Op.
+The view then rebases the op if any Ops came in while the transaction was pending (only possible for async transactions or if the view was behind due to it being async for some reason).
+Finally the view sends the op to `shared-tree-core` which submits it to Fluid.
+This submission results in the op becoming a local op, which `shared-tree-core` creates a delta for.
+This delta goes to the indexes, resulting in the ForestIndex and thus views getting updated,
+as well as anything else subscribing to deltas.
 
-### Reading the current state of the tree
+This shows completion of a transaction.
+Not shown are the rollback or changes to forest (and the resulting invalidation) and AnchorSet,
+then the updating of them with the final version of the edit.
+In the common case this can be skipped (since they cancel out).
+Also not shown is the (also usually unneeded) step of rebasing the changeset before storing it and sending it to the service.
 
-The `currentView` property on SharedTree is the easiest way to get the view of the latest revision.
-
-```typescript
-function getChildrenUnderTrait(
-	sharedTree: SharedTree,
-	parentId: NodeId,
-	traitLabel: TraitLabel,
-): TreeViewNode[] {
-	// Get the most up-to-date view of the tree at this moment.
-	const view = sharedTree.currentView;
-	// Get the IDs of children in some trait with `getTrait`:
-	const childIds = view.getTrait({ label: traitLabel, parent: parentId });
-	// Get the node for a given ID with `getViewNode`:
-	return childIds.map((id) => view.getViewNode(id));
-}
+```mermaid
+flowchart LR
+    command["App's command callback"]--"commit"-->transaction
+    subgraph "@fluid-experimental/tree2"
+        transaction--"build"-->EditBuilder
+        EditBuilder--"changeset"-->transaction
+        transaction--"changeset (from builder)"-->core["shared-tree-core"]
+        core--"changeset"-->EditManager--"changeset"-->local["Local Branch"]
+    end
+    core--"Op"-->service["Fluid ordering service (Kafka)"]
+    service--"Sequenced Op"-->clients["All clients"]
+    service--"Sequenced Op"-->log["Op Log"]
 ```
 
-> Note that `view` will never change, even if the shared tree applies or receives more edits. If you want the updated view after additional edits happen, you must call `sharedTree.currentView` again.
+When the op gets sequenced, `shared-tree-core` receives it back from the ordering service,
+rebases it as needed, and sends another delta to the indexes.
 
-### Reading an arbitrary revision of the tree
-
-If you want to inspect the tree at some state prior to the current view, SharedTree provides a [LogViewer](./src/LogViewer.ts) to obtain views at a specific revision.
-
-```typescript
-function getViewAfterEdit(sharedTree: SharedTree, editId: EditId): TreeView {
-	// First, find which revision corresponds to a given edit
-	const revision = sharedTree.edits.getIndexOfId(editId);
-	// Then, ask the logViewer to create a view at that specific revision
-	return sharedTree.logViewer.getRevisionViewInSession(revision);
-}
+```mermaid
+graph LR;
+    service["Fluid Service"]--"Sequenced Op"-->core["shared-tree-core"]
+    subgraph "@fluid-experimental/tree2"
+        core--"changeset"-->EditManager
+        EditManager--"add changeset"-->remote["remote branch"]
+        remote--"rebase into"-->main[main branch]
+        main--"rebase over new changeset"-->local["Local Branch"]
+        main--"sequenced changeset"-->Indexes
+        local--"delta"-->Indexes
+        Indexes--"delta"-->ForestIndex
+    end
+    ForestIndex--"invalidates"-->app
+    Indexes--"delta (for apps that want deltas)"-->app
 ```
 
-### Listening to changes to the tree
+### Dependencies
 
-SharedTree exposes an `EditCommitted` event which fires whenever local or remote edits are applied to the tree. Beware! This API has a severe pitfall. It is not guaranteed that the edit provided by `EditCommitted` is the most recent edit in the tree's edit log. This is because local edits are always considered to be most recent in the log, but there might be remote edits from other clients which are _sequenced before_ but _discovered after_ the local edits. Therefore, code which is using the `EditId` of the edit provided by `EditCommitted` to query the `LogViewer` requires very careful attention and is prone to bugs.
+`@fluid-experimental/tree2` depends on the Fluid runtime (various packages in `@fluidframework/*`)
+and will be depended on directly by application using it (though at that time it will be moved out of `@fluid-experimental`).
+`@fluid-experimental/tree2` is also complex,
+so its implementation is broken up into several parts which have carefully controlled dependencies to help ensure the codebase is maintainable.
+The goal of this internal structuring is to make evolution and maintenance easy.
+Some of the principles used to guide this are:
 
-You are _strongly_ encouraged to use a `Checkout` instead which provides a cleaner and safer API for listening to changes to the tree. See "Use a Checkout" below for more information.
+-   Avoid cyclic dependencies:
 
-## Editing
+    Cyclic dependencies can make it hard to learn a codebase incrementally, as well as make it hard to update or replace parts of the codebase incrementally.
+    Additionally they can cause runtime issues with initialization.
 
-For simple edits (ones in which transactionality isn't important), `SharedTree` provides convenient, imperative APIs along the following lines:
+-   Minimize coupling:
 
-```typescript
-const view = sharedTree.currentView;
-sharedTree.applyEdit(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: view.root, label: 'foo' }));
-sharedTree.applyEdit(Change.move(barNode, StablePlace.after(fooNode.identifier)));
+    Reducing the number and complexity of edges in the dependency graph.
+    This often involves approaches like making a component generic instead of depending on a concrete type directly,
+    or combining related components that have a lot of coupling.
+
+-   Reducing transitive dependencies:
+
+    Try to keep the total number of dependencies of a given component small when possible.
+    This applies both at the module level, but also for the actual object defined by those modules.
+    One particular kind of dependency we make a particular effort to avoid are dependencies on stateful systems from code that has complex conditional logic.
+    One example of this is in [rebase](./src/core/rebase/README.md) where we ensured that the stateful system, `Rebaser` is not depended on by the actual change specific rebase policy.
+    Instead the actual replace policy logic for changes is behind the `ChangeRebaser` interface, which does not depend on `Rebaser` and exposes the policy as pure functions (and thus is stateless).
+    This is important for testability, since complex conditional logic (like `ChangeRebaser` implementations) require extensive unit testing,
+    which is very difficult (and often slow) for stateful systems and systems with lots of dependencies.
+    If we instead took the pattern of putting the change rebasing policy in `Rebaser` subclasses,
+    this would violate this guiding principle and result in much harder to isolate and test policy logic.
+
+    Another aspect of reducing transitive dependencies is reducing the required dependencies for particular scenarios.
+    This means factoring out code that is not always required (such as support for extra features and optimizations) such that they can be omitted when not needed.
+    `shared-tree-core` is an excellent example of this: it can be run with no indexes, and trivial a change family allowing it to have very few required dependencies.
+    This often takes the form of either depending on interfaces (which can have their implementation swapped out or mocked), like [`ChangeFamily`](./src/change-family/README.md), or collection functionality in a registry, like we do for `FieldKinds` and `shared-tree-core`'s indexes.
+    Dependency injection is one example of a useful pattern for reducing transitive dependencies.
+    In addition to simplifying reasoning about the system (less total to think about for a given scenario) and simplifying testing,
+    this approach also makes the lifecycle for new features easier to manage, since they can be fully implemented and tested without having to modify code outside of themselves.
+    This makes pre-releases, stabilization and eventual deprecation of these features much easier, and even makes publishing them from separate packages possible if it ends up needing an even more separated lifecycle.
+
+    Additionally, this architectural approach can lead to smaller applications by not pulling in unneeded functionality.
+
+These approaches have led to a dependency structure that looks roughly like the diagram below.
+A more exact structure can be observed from the `fence.json` files which are enforced via [good-fences](https://www.npmjs.com/package/good-fences).
+In this diagram, some dependency arrows for dependencies which are already included transitively are omitted.
+
+```mermaid
+flowchart
+    direction TB
+    subgraph package ["@fluid-experimental/tree2"]
+        direction TB
+        subgraph core ["core libraries"]
+            direction TB
+            schema-view
+            forest-->schema-stored
+            rebase-->tree
+            schema-stored-->dependency-tracking
+            schema-view-->schema-stored
+            dependency-tracking
+            forest-->tree
+            revertible-->rebase
+        end
+        core-->events-->util
+        core-->id-compressor-->util
+        core-->codec-->util
+        feature-->shared-tree-core
+        shared-tree-core-->core
+        shared-tree-->feature
+        external-utilities-->feature
+        subgraph feature ["feature-libraries"]
+            direction TB
+            schema-aware-->defaultSchema
+            schema-aware-->contextuallyTyped
+            editable-tree-->contextuallyTyped
+            editable-tree-->node-key
+            defaultRebaser
+            contextuallyTyped-->defaultFieldKinds
+            defaultSchema-->defaultFieldKinds-->modular-schema
+            forestIndex-->treeTextCursor
+            modular-schema
+            node-key-->modular-schema
+            node-key-->defaultFieldKinds
+            object-forest-->mapTreeCursor-->treeCursorUtils
+            chunked-forest-->treeCursorUtils
+            schemaIndex
+            sequence-change-family-->treeTextCursor
+        end
+        subgraph domains
+            JSON
+        end
+        domains-->feature
+    end
+    package-->runtime["Fluid runtime"]
 ```
 
-This would insert `fooNode` at the start of the "foo" trait underneath the root node, and move `barNode` from wherever it is in the tree to after the `foodNode` in the "foo" trait.
-Each operation would be performed in its own `Edit`, which is `SharedTree`'s transactional atom (one revision corresponds to one edit).
+# Open Design Questions
 
-An `Edit` is the basic unit of transactionality in `SharedTree`. It specifies how to modify a document via a sequence of changes (see [ChangeTypes](./src/ChangeTypes.ts)). Each edit, when applied to a version of the document (a TreeView), produces a new version of the document.
+The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
+Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
 
-Once an edit is acknowledged by the Fluid service (and thus it has a sequence number, and will be included in summaries), the version of the document it applies to is fixed: it will not be applied to any revision other than the one produced by its preceding edit. There may be operations that will create new edits based on existing ones and apply them in a different context (e.g. undo), but these are logically considered new edits.
+## How should specialized sub-tree handling compose?
 
-"Move" and "delete" operations have the added complexity of needing to specify locations (`StableRange`s) within the `SharedTree` which should be moved (or deleted, respectively). A `StableRange` consists of a start `StablePlace` and an end `StablePlace`.
-`StablePlace`s are not nodes, but instead places where nodes could be inserted. Each place consists of an "anchor," which is either a trait or another node.
+Applications should have a domain model that can mix editable tree nodes with custom implementations as needed.
+Custom implementations should probably be able to be projections of editable trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
+This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
+This might also be the layer at which we hook up schematize.
+Alternatively, it might be an explicitly two-phase setup (schematize then normalize), but we might share logic between the two and have non-copying bypasses.
 
-Say we wanted to delete the `fooNode` we inserted above. There are 4 ways we could specify the `StableRange` to delete which are all equivalent in the absence of concurrent editing:
-
-```typescript
-const trait = { parent: initialTree, label: "foo" };
-const stableRange1 = StableRange.from(StablePlace.atStartOf(trait)).to(StablePlace.atEndOf(trait));
-const stableRange2 = StableRange.from(StablePlace.atStartOf(trait)).to(StablePlace.after(fooNode));
-const stableRange3 = StableRange.from(StablePlace.before(fooNode)).to(StablePlace.atEndOf(trait));
-const stableRange4 = StableRange.from(StablePlace.before(fooNode)).to(StablePlace.after(fooNode));
-```
-
-Once concurrent edits are considered, the different ways to anchor this `StableRange` may impact whether or not this edit conflicts with others.
-
-Also note that there are some more convenient shorthands for several of these specifications. See `StableRange` documentation for more information.
-
-### Change Atomicity
-
-One or both of the above calls to `tree.applyEdit ` could fail to apply. It may be desirable to group changes to the tree such that all the changes are successful and apply at once, or in the case that any of them fail, none of them apply. There are three approaches available to accomplish this.
-
-#### Apply all changes together
-
-The two edits above can simply have their changes concatenated into a single edit.
-
-```typescript
-sharedTree.applyEdit([
-	...Change.insertTree(fooNode, StablePlace.atStartOf({ parent: view.root, label: 'foo' }),
-	...Change.move(barNode, StablePlace.after(fooNode.identifier))
-]);
-```
-
-#### Use a Transaction
-
-The above approach is only possible once all the changes are known. A client may instead wish to build up a sequence of changes over time and observe their affects on the view, but wait until later to submit them in an edit. A [Transaction](./src/Transaction.ts) is a lightweight tool to accomplish this.
-
-```typescript
-const transaction = new Transaction(sharedTree);
-transaction.apply(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: view.root, label: 'foo' }));
-const viewAfterFirstEdit = transaction.currentView; // This is the view after applying the above change. It is not the current view of the SharedTree (which has not had the above change applied).
-transaction.apply(Change.move(barNode, StablePlace.after(fooNode.identifier)));
-transaction.closeAndCommit(); // If all changes were successful, this will apply them together as a single edit to the SharedTree. The transaction is now "closed" and any future changes will be ignored.
-```
-
-> If any changes applied to a transaction fail, the transaction will automatically close.
-
-#### Use a Checkout
-
-A [Checkout](./src/Checkout.ts) is similar to a `Transaction` in that it applies changes over time, but it has some additional features:
-
--   Multiple edits can be submitted over the lifetime of a single `Checkout`.
-
-    ```typescript
-    const checkout = new EagerCheckout(sharedTree);
-    checkout.openEdit();
-    checkout.applyChanges(
-    	Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: "foo" })),
-    );
-    checkout.applyChanges(Change.move(barNode, StablePlace.after(fooNode.identifier)));
-    checkout.closeEdit(); // This submits the changes to the tree in an edit
-    checkout.openEdit();
-    checkout.applyChanges(Change.delete(barNode.identifier));
-    checkout.closeEdit(); // This submits another edit to the tree
-    ```
-
-    > If a change failed to apply, `closeEdit` will throw an error. Detect this case by checking `getEditStatus` and calling `abortEdit` instead.
-
--   Checkouts can rebase an edit in progress.
-
-    ```typescript
-    const checkout = new EagerCheckout(sharedTree);
-    checkout.openEdit();
-    checkout.applyChanges(
-    	Change.insertTree(fooNode, StablePlace.atStartOf({ parent: initialTree, label: "foo" })),
-    );
-    // ... Edits are applied to the tree (e.g. by other clients)
-    checkout.rebaseCurrentEdit(); // Rebases the current changes in this edit to the SharedTree's current view.
-    checkout.applyChanges(Change.move(barNode, StablePlace.after(fooNode.identifier)));
-    checkout.closeEdit(); // This submits the changes to the tree in an edit
-    ```
-
--   Checkout implementations can choose how often they synchronize their view with the underlying `SharedTree` when not in an edit (i.e. snapshot isolated). If you want to synchronize as frequently as possible (this is likely), use `EagerCheckout`. If you prefer to control the cadence for synchronization, `LazyCheckout` can manage this through `Checkout.waitForPendingUpdates`. Clients may implement their own checkout if a more complicated policy is desirable.
-
--   Checkouts provide the `viewChange` event: a convenient API for observing changes to the Checkout's `currentView`. Clients are expected to subscribe to the `viewChange` event and update their application accordingly whenever a `viewChange` happens. This is almost always desirable over the lower-level `SharedTree.EditCommitted` event because it lets app authors respond directly to changes to the content of the tree, rather than needing to be aware of the underlying edits that caused the changes. For most applications, the `viewChange` event "just works", because it follows special rules regarding when to fire. `viewChange` is fired under the following circumstances:
-
-    -   If there is **not** an ongoing edit for this checkout (i.e. not between `openEdit()` and `closeEdit()`), `viewChange` is fired...
-        -   when an edit is applied directly to the _Checkout_ by the local client
-        -   by `EagerCheckout` when an edit is applied to the _SharedTree_ by the local or a remote client
-        -   by `LazyCheckout` when `waitForPendingUpdates()` is called and there are outstanding edits to the tree from the local or a remote client
-    -   If there **is** an ongoing edit for this checkout, `viewChange` is fired...
-        -   when a change is applied to the ongoing edit in the checkout
-        -   when the ongoing edit is rebased via `rebaseCurrentEdit()`
-
-    This policy may seem complicated at first glance, but in practice it provides a natural flow. Checkouts always notify listeners of changes that are applied directly to the checkout itself, but changes from outside the checkout (e.g. from a remote client) are buffered according to the checkout's policy. `EagerCheckout` doesn't buffer them at all and fires a change event right away, whereas `LazyCheckout` avoids firing a change event until asked (via `waitForPendingUpdates()`). Note that every kind of checkout provides [snapshot isolation](https://en.wikipedia.org/wiki/Snapshot_isolation), meaning that while the checkout is in the middle of an edit (i.e. between `openEdit()` and `closeEdit()`) it will not fire an event for changes coming from outside of the Checkout. This is desirable because it prevents the view from changing "out from under" the current edit that is being built.
-
-    The `viewChange` event also provides the previous view as well as the new view, which allows clients to generate a delta of the two views if they desire:
-
-    ```typescript
-    const checkout = new EagerCheckout(sharedTree);
-    checkout.on('viewChange', (before: TreeView, after: TreeView) => {
-    	// Use the delta object as a convenient way to see which nodes were added, deleted, or changed between views
-    	const delta = before.delta(after);
-    }));
-
-    ```
-
-## Conflicts
-
-Due to the collaborative and distributed nature of SharedTree,
-Edits may be constructed based on a version of the tree that differs from the one they end up getting applied to.
-The Change API is designed to allow capturing a lot of the actual intention of edits in the Change.
-For example, an Insert between A and B can be anchored after A or before B.
-If it is really intended to be between A and B, a Constraint can be included that requires A and B are still next to each-other or the edit will conflict.
-It is also possible to replace the contents between A and B with the inserted content.
-This flexibility allows the majority of edits to be encoded in a way where their intention will be applied correctly when reordered,
-and in the rare cases where this can not be done, they will conflict instead of being applied in a non-intention preserving way:
-SharedTree generally follows this policy that it is better to fail to apply a change than to apply it in a way that violates user expectation or intention.
-
-When a change fails to apply, or a constraint indicates that it applied, but may not have been ideal, it is called conflicted. Currently, if a change fails to apply due to a conflict, it is dropped.
-
-### Constraints
-
-> Constraints are mostly unsupported at this time. They will be supported in the upcoming SharedTree v2 implementation.
-
-A `Constraint` can be added to an Edit's list of changes which can be used to detect cases where an Edit could still apply (not-conflict) but may lose its original semantics due to reordering.
-
-For example, two edits could be made concurrently: one that sorts a list alphabetically and one that adds an item to the list.
-Depending on how the sorting structures its changes and exactly where the insert occurred, the sort may or may not conflict if the insert gets acknowledged first.
-In some domains, it would be desired that this conflicts.
-In such domains, a Constraint could be added that would require the list to contain the same set of items as when the sort edit was created for it to apply correctly.
-The Constraint can specify what should happen if violated: see `ConstraintEffect` in [persisted-types](./src/persisted-types/0.0.2.ts) for details.
-
-Note that these constraints apply to more than just the case of edits that were made concurrently:
-edits to history also use conflicts (and thus constraints) to prevent historical edits from being re-contextualized in ways that break their semantics.
-In the above example, this could occur when a user undoes deleting an item from the list after it was sorted.
-If the sort has a constraint that the list contains the expected items, the undo will violate that constraint
-(making it not commute with the sort, even if the list was already mostly or fully sorted).
-This gives the application the opportunity to resolve the constraint violation by reapplying the sort on the updated list when performing the undo,
-and thus maintain the expected behavior that the new item (whose delete was undone) will show up sorted correctly.
-See the "Editing History" section below for details on how this works.
-
-### Change Rejection
-
-In scenarios where concurrent changes occur, it is possible that the order in which the Fluid service acknowledges these changes causes a change to become invalid.
-Edits are transactional so any invalid change in an edit will cause the entire edit to be invalid.
-
-However, no combination of changes will cause the client to crash.
-Changes go through validation before they are applied and invalid changes are currently dropped.
-
-#### Change Rejection Example
-
-Assuming a tree with a single node, A, a client creates an edit, 1, that inserts a node after node A.
-At the same time another client creates an edit, 2, that deletes node A.
-If the Fluid service sequences edit 2 before edit 1, edit will then becomes invalid because its anchor has been deleted.
-In this situation, edit 1 is dropped.
-
-#### Possible Change/Edit Results
-
-|                  |                                                                                                                                                                                                 |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Applied          | The edit or change was applied.                                                                                                                                                                 |
-| Invalid Change   | A well-formed (not malformed) change which cannot be applied given the current tree and detached state.                                                                                         |
-| Invalid Edit     | A well-formed edit which cannot be applied to the current tree.                                                                                                                                 |
-| Malformed Change | A change which can not possibly be applied to any tree without error. For example, a StablePlace with no sibling and also no trait.                                                             |
-| Malformed Edit   | An edit which contains one or more malformed changes, or an edit with a sequence of changes that could not possibly be applied sequentially without error. (e.g. parent a detached node twice). |
-
-# Undo/Redo
-
-Undo in a collaborative context is complex since the change being undone may not be the most recent change.
-This means undo and redo really need to be treated as arbitrary history edits, adding and removing changes as specific points in the past, and reconciling the impact of that with the edits after it. Both `SharedTree` and `Checkout` expose `revert` as a method to revert arbitrary edits.
-
-```typescript
-const editId = sharedTree.applyEdit(Change.insertTree(fooNode, StablePlace.atStartOf({ parent: view.root, label: 'foo' }));
-const undoEditId = sharedTree.revert(editId); // Undoes the insert
-const redoEditId = sharedTree.revert(undoEditId); // Redoes the insert
-```
-
-## Summaries
-
-### History
-
-A `SharedTree` can optionally preserve its "history", i.e. all edits that were sequenced over time. This has storage and performance overhead, and is disabled by default. An instance of a SharedTree object will always contain all edits that were created/received during its lifetime, thus enabling undo, redo and history traversal of those edits.
-
-> Currently, `SharedTree` documents created with history enabled can never have their history removed.
-
-### History Virtualization
-
-The summaries generated by SharedTree include the current view and edit history. However, new clients that load the summary can be used with the current view alone. This allows the history to be virtualized to decrease load time of clients for large edit histories.
-
-Edits are virtualized and downloaded on-demand via async APIs. The usage of edit history is rare outside of history-related operations and therefore, it is not expected that clients will be frequently downloading edit history. Devirtualized edits are also cached and periodically evicted from memory, however, edits added to the history during the current session are never evicted.
+How all this relates to [dependency-tracking](./src/core/dependency-tracking/README.md) is to be determined.
