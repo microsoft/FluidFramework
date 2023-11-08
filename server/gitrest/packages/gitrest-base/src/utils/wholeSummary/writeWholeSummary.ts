@@ -176,7 +176,7 @@ async function getShaFromTreeHandleEntry(
 	const gitTree: IFullGitTree = await buildFullGitTreeFromGitTree(
 		parentTree,
 		options.repoManager,
-		{} /* blobCache */,
+		options.blobCache /* blobCache */,
 		// Parse inner git tree blobs so that we can properly reference blob shas in new summary.
 		true /* parseInnerFullGitTrees */,
 		// We only need shas here, so don't waste resources retrieving blobs that are not included in fullGitTrees.
@@ -320,8 +320,15 @@ async function computeInMemoryFullGitTree(
 	options: IWholeSummaryOptions,
 ): Promise<IFullGitTree> {
 	const inMemoryWriteSummaryTreeOptions: IWriteSummaryTreeOptions = {
-		...writeSummaryTreeOptions,
 		repoManager: inMemoryRepoManager,
+		enableLowIoWrite: writeSummaryTreeOptions.enableLowIoWrite,
+		precomputeFullTree: writeSummaryTreeOptions.precomputeFullTree,
+		currentPath: writeSummaryTreeOptions.currentPath,
+		// Use blank caches caches for in-memory repo manager. Otherwise, we will be referencing
+		// blobs in storage that are not in-memory.
+		entryHandleToObjectShaCache: new Map<string, string>(),
+		blobCache: {},
+		treeCache: {},
 	};
 	if (documentRef) {
 		// Update in-memory repo manager with previous summary for handle references.
@@ -361,8 +368,8 @@ async function computeInMemoryFullGitTree(
 			);
 			const fullTree = await buildFullGitTreeFromGitTree(
 				missingTree,
-				options.repoManager,
-				{} /* blobCache */,
+				writeSummaryTreeOptions.repoManager,
+				writeSummaryTreeOptions.blobCache /* blobCache */,
 				false /* parseInnerFullGitTrees */,
 				true /* retrieveBlobs */,
 			);
