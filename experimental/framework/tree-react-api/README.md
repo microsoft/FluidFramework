@@ -1,5 +1,14 @@
 # @fluid-experimental/tree-react-api
 
+<!-- AUTO-GENERATED-CONTENT:START (README_EXPERIMENTAL_PACKAGE_NOTICE) -->
+
+**IMPORTANT: This package is experimental.**
+**Its APIs may change without notice.**
+
+**Do not use in production scenarios.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 Intended for internally sharing/promoting best-practice implementations of Fluid agnostic utility functions across packages in the client repo.
 
 Use outside of the Fluid Framework client repo is not supported or recommended.
