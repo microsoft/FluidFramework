@@ -60,7 +60,6 @@ function migrate(legacyTree: LegacySharedTree, newTree: ISharedTree) {
 			}),
 		},
 	};
-	console.log(initialTree);
 	NewTreeInventoryListController.initializeTree(newTree, initialTree);
 }
 
