@@ -65,7 +65,7 @@ import {
 	singleTextCursor,
 	TypedField,
 	jsonableTreeFromForest,
-	nodeKeyFieldKey as defailtNodeKeyFieldKey,
+	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
 } from "../feature-libraries";
 import {
@@ -589,7 +589,7 @@ export function validateSnapshotConsistency(
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);
 }
 
-export function viewWithContent(
+export function checkoutWithContent(
 	content: TreeContent,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -597,10 +597,10 @@ export function viewWithContent(
 			HasListeners<CheckoutEvents>;
 	},
 ): ITreeCheckout {
-	return view2WithContent(content, args).checkout;
+	return viewWithContent(content, args).checkout;
 }
 
-export function view2WithContent<TRoot extends TreeFieldSchema>(
+export function viewWithContent<TRoot extends TreeFieldSchema>(
 	content: TreeContent<TRoot>,
 	args?: {
 		events?: ISubscribable<CheckoutEvents> &
@@ -620,7 +620,7 @@ export function view2WithContent<TRoot extends TreeFieldSchema>(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
-		args?.nodeKeyFieldKey ?? brand(defailtNodeKeyFieldKey),
+		args?.nodeKeyFieldKey ?? brand(defaultNodeKeyFieldKey),
 	);
 }
 
@@ -695,7 +695,7 @@ export const emptyStringSequenceConfig = {
  */
 export function makeTreeFromJson(json: JsonCompatible[] | JsonCompatible): ITreeCheckout {
 	const cursors = (Array.isArray(json) ? json : [json]).map(singleJsonCursor);
-	const tree = viewWithContent({
+	const tree = checkoutWithContent({
 		schema: jsonSequenceRootSchema,
 		initialTree: cursors,
 	});

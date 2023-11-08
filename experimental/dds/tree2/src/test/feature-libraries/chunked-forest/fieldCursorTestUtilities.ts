@@ -19,6 +19,9 @@ import { checkFieldTraversal } from "../../cursorTestSuite";
 /**
  * Note that returned cursor is not at the root of its tree, so its path may be unexpected.
  * It is placed under index 0 of the EmptyKey field.
+ *
+ * TODO:
+ * treeCursorUtils should support creating field cursors not just "singleTextCursor", and that logic should replace this function.
  */
 export function fieldCursorFromJsonableTrees(trees: JsonableTree[]): ITreeCursorSynchronous {
 	const fullTree: JsonableTree = { type: jsonArray.name, fields: { [EmptyKey]: trees } };

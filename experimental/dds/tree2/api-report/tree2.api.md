@@ -552,10 +552,13 @@ type FlattenKeys<T> = [{
 }][_InlineTrick];
 
 // @alpha
-export type FlexibleFieldContent<TSchema extends TreeFieldSchema> = SchemaAware.TypedField<TSchema, SchemaAware.ApiMode.Flexible>;
+export type FlexibleFieldContent<TSchema extends TreeFieldSchema> = SchemaAware.TypedField<TSchema, SchemaAware.ApiMode.Flexible> | ITreeCursorSynchronous;
 
 // @alpha
-export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>;
+export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes> | ITreeCursorSynchronous;
+
+// @alpha
+type FlexibleNodeSubSequence<TTypes extends AllowedTypes> = Iterable<SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>> | ITreeCursorSynchronous;
 
 // @alpha
 type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> = [
@@ -699,6 +702,7 @@ declare namespace InternalEditableTreeTypes {
         UnknownUnboxed,
         FixedSizeTypeArrayToTypedTree,
         TypedNodeUnionHelper,
+        FlexibleNodeSubSequence,
         NodeKeys
     }
 }
@@ -1288,7 +1292,7 @@ interface Optional extends FieldKind<"Optional", Multiplicity.Optional> {
 }
 
 // @alpha
-export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
+export interface OptionalField<in out TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent?: TypedNodeUnion<TTypes>;
     // (undocumented)
@@ -1412,7 +1416,7 @@ interface Required_2 extends FieldKind<"Value", Multiplicity.Single> {
 }
 
 // @alpha
-export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
+export interface RequiredField<in out TTypes extends AllowedTypes> extends TreeField {
     // (undocumented)
     readonly boxedContent: TypedNodeUnion<TTypes>;
     // (undocumented)
@@ -1646,9 +1650,9 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
     readonly asArray: readonly UnboxNodeUnion<TTypes>[];
     at(index: number): UnboxNodeUnion<TTypes> | undefined;
     boxedAt(index: number): TypedNodeUnion<TTypes>;
-    insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
-    insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
-    insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+    insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void;
+    insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void;
+    insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void;
     // (undocumented)
     readonly length: number;
     map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];

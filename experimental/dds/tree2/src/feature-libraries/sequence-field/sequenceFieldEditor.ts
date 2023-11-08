@@ -26,6 +26,11 @@ import { splitMark } from "./utils";
 import { MoveDestination } from "./helperTypes";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
+	/**
+	 * @param cursor - cursors in Nodes mode.
+	 * @privateRemarks
+	 * TODO: this should take a single cursor in fields mode.
+	 */
 	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
 	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
 	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
@@ -146,7 +151,7 @@ export const sequenceFieldEditor = {
 
 		return moveMarksToMarkList(sourceIndex, count, destIndex, returnFrom, returnTo);
 	},
-};
+} satisfies SequenceFieldEditor;
 
 function moveMarksToMarkList(
 	sourceIndex: number,

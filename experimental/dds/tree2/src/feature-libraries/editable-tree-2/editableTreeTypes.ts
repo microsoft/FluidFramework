@@ -4,7 +4,7 @@
  */
 
 import * as SchemaAware from "../schema-aware";
-import { FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
+import { FieldKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, FlattenKeys, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
 import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
@@ -513,21 +513,33 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 
 /**
  * Strongly typed tree literals for inserting as the content of a field.
+ *
+ * If a cursor is provided, it must be in Fields mode.
  * @alpha
  */
-export type FlexibleFieldContent<TSchema extends TreeFieldSchema> = SchemaAware.TypedField<
-	TSchema,
-	SchemaAware.ApiMode.Flexible
->;
+export type FlexibleFieldContent<TSchema extends TreeFieldSchema> =
+	| SchemaAware.TypedField<TSchema, SchemaAware.ApiMode.Flexible>
+	| ITreeCursorSynchronous;
 
 /**
  * Strongly typed tree literals for inserting as a node.
+ *
+ * If a cursor is provided, it must be in Nodes mode.
  * @alpha
  */
-export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.AllowedTypesToTypedTrees<
-	SchemaAware.ApiMode.Flexible,
-	TTypes
->;
+export type FlexibleNodeContent<TTypes extends AllowedTypes> =
+	| SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>
+	| ITreeCursorSynchronous;
+
+/**
+ * Strongly typed tree literals for inserting a subsequence of nodes.
+ *
+ * If a cursor is provided, it must be in Fields mode.
+ * @alpha
+ */
+export type FlexibleNodeSubSequence<TTypes extends AllowedTypes> =
+	| Iterable<SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>>
+	| ITreeCursorSynchronous;
 
 /**
  * Type to ensures two types overlap in at least one way.
@@ -595,19 +607,19 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
-	insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -755,11 +767,9 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
- * @privateRemarks
- * TODO: Finish renaming from ValueField to RequiredField
  * @alpha
  */
-export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
+export interface RequiredField<in out TTypes extends AllowedTypes> extends TreeField {
 	get content(): UnboxNodeUnion<TTypes>;
 	set content(content: FlexibleNodeContent<TTypes>);
 
@@ -780,7 +790,7 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
  * Maybe link editor?
  * @alpha
  */
-export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
+export interface OptionalField<in out TTypes extends AllowedTypes> extends TreeField {
 	get content(): UnboxNodeUnion<TTypes> | undefined;
 	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
 
