@@ -67,10 +67,10 @@ describe("OpLatencyView component tests", () => {
 		expect(opLatencyHeaderElement).toBeDefined();
 
 		// Confirm helper text header exists
-		const aboutHeader = await screen.findByText(
+		const instructionsText = await screen.findByText(
 			`localStorage.setItem("Fluid.Telemetry.DisableSampling", "true");`,
 		);
-		expect(aboutHeader).not.toBeNull();
-		expect(aboutHeader).toBeDefined();
+		expect(instructionsText).not.toBeNull();
+		expect(instructionsText).toBeDefined();
 	});
 });

@@ -382,7 +382,7 @@ export class FluidDevtools implements IFluidDevtools {
 		return {
 			telemetry: this.logger !== undefined,
 			// Most work completed, but not ready to completely enable.
-			opLatencyTelemetry: false,
+			opLatencyTelemetry: true,
 		};
 	}
 }
