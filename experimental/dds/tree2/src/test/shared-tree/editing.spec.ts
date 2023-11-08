@@ -294,6 +294,34 @@ describe("Editing", () => {
 			expectJsonTree([addW, delY], ["w", "x"]);
 		});
 
+		it("can edit a concurrently removed tree", () => {
+			const fooList: UpPath = { parent: rootNode, parentField: brand("foo"), parentIndex: 0 };
+			const tree1 = makeTreeFromJson({ foo: ["A", "B", "C"] });
+			const tree2 = tree1.fork();
+
+			const { undoStack } = createTestUndoRedoStacks(tree1);
+			remove(tree1, 0, 1);
+			const removal = undoStack.pop();
+
+			const listEditor = tree2.editor.sequenceField({ parent: fooList, field: brand("") });
+			listEditor.move(2, 1, 1);
+			listEditor.insert(3, singleTextCursor({ type: leaf.string.name, value: "D" }));
+			listEditor.delete(0, 1);
+			expectJsonTree(tree2, [{ foo: ["C", "B", "D"] }]);
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], []);
+
+			removal?.revert();
+
+			tree1.merge(tree2, false);
+			tree2.rebaseOnto(tree1);
+
+			expectJsonTree([tree1, tree2], [{ foo: ["C", "B", "D"] }]);
+		});
+
 		it("inserts that concurrently target the same insertion point do not interleave their contents", () => {
 			const tree = makeTreeFromJson([]);
 			const abc = tree.fork();

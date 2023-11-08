@@ -192,8 +192,7 @@ describe("SequenceField - Rebaser Axioms", () => {
 							const inv = tagChange(invert(change2), tag6);
 							const r1 = rebaseTagged(change1, change2);
 							const r2 = rebaseTagged(r1, inv);
-							const r2WithoutLineage = withoutLineage(r2.change);
-							assert.deepEqual(r2WithoutLineage, change1.change);
+							assert.deepEqual(withoutLineage(r2.change), change1.change);
 						}
 					}
 				});
@@ -306,7 +305,6 @@ describe("SequenceField - Rebaser Axioms", () => {
 		for (const [nameA, makeChange1] of shallowTestChanges) {
 			for (const [nameB, makeChange2] of shallowTestChanges) {
 				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
-					const names = [nameA, nameB, nameC];
 					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
 					if (
 						["MoveIn", "MoveOut", "ReturnFrom", "ReturnTo"].includes(nameB) &&
