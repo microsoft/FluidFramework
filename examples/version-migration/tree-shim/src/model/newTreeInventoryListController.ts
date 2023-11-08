@@ -11,6 +11,7 @@ import {
 	Tree,
 	ProxyNode,
 	SchemaBuilder,
+	disposeSymbol,
 } from "@fluid-experimental/tree2";
 
 import { TypedEmitter } from "tiny-typed-emitter";
@@ -84,9 +85,10 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 
 export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
-	public static initializeTree(tree: ISharedTree): void {
-		tree.schematize({
-			initialTree: {
+	// TODO: initial tree type
+	public static initializeTree(tree: ISharedTree, initialTree?: any): void {
+		const view = tree.schematize({
+			initialTree: initialTree ?? {
 				inventoryItemList: {
 					// TODO: The list type unfortunately needs this "" key for now, but it's supposed to go away soon.
 					"": [
@@ -106,6 +108,10 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 			allowedSchemaModifications: AllowedUpdateType.None,
 			schema,
 		});
+
+		if (initialTree !== undefined) {
+			view[disposeSymbol]();
+		}
 	}
 
 	private readonly _inventoryItemList: InventoryItemList;
