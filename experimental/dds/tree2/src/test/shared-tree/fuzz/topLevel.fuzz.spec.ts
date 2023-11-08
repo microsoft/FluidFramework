@@ -8,7 +8,7 @@ import {
 	createDDSFuzzSuite,
 	DDSFuzzTestState,
 	DDSFuzzSuiteOptions,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 import { SharedTreeTestFactory, validateTreeConsistency } from "../../utils";
 import { makeOpGenerator, EditGeneratorOpWeights } from "./fuzzEditGenerators";

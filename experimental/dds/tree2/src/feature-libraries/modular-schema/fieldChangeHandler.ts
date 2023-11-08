@@ -171,10 +171,7 @@ export type ToDelta = (child: NodeChangeset) => Delta.FieldMap;
 /**
  * @alpha
  */
-export type NodeChangeInverter = (
-	change: NodeChangeset,
-	index: number | undefined,
-) => NodeChangeset;
+export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 /**
  * @alpha
