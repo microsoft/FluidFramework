@@ -11,13 +11,14 @@ import {
 	AllowedTypes,
 	TreeFieldSchema,
 	TreeNodeSchema,
-	schemaIsFieldNode,
-	schemaIsLeaf,
+	FieldNodeSchema,
+	LeafNodeSchema,
 } from "../typed-schema";
 import { Context } from "./context";
 import { UnboxField, UnboxNode, UnboxNodeUnion } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import { makeField } from "./lazyField";
+import {} from "../typed-schema/typedTreeSchema";
 
 /**
  * See {@link UnboxNode} for documentation on what unwrapping this performs.
@@ -27,16 +28,12 @@ export function unboxedTree<TSchema extends TreeNodeSchema>(
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 ): UnboxNode<TSchema> {
-	if (schemaIsLeaf(schema)) {
+	if (schema instanceof LeafNodeSchema) {
 		return cursor.value as UnboxNode<TSchema>;
 	}
-	if (schemaIsFieldNode(schema)) {
+	if (schema instanceof FieldNodeSchema) {
 		cursor.enterField(EmptyKey);
-		const primaryField = makeField(
-			context,
-			schema.objectNodeFields.get(EmptyKey) ?? fail("invalid schema"),
-			cursor,
-		);
+		const primaryField = makeField(context, schema.info, cursor);
 		cursor.exitField();
 		return primaryField as UnboxNode<TSchema>;
 	}

@@ -16,6 +16,7 @@ import {
 	TaggedChange,
 	compareFieldUpPaths,
 	topDownPath,
+	ChangesetLocalId,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -258,7 +259,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					sequence.identifier,
 					change,
-					brand((firstId as number) + length - 1),
+					brand<ChangesetLocalId>((firstId as number) + length - 1),
 				);
 			},
 			delete: (index: number, count: number): void => {

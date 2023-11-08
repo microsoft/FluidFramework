@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { LeafSchema, NewFieldContent, TreeSchema } from "../../../feature-libraries";
+import { LeafNodeSchema, NewFieldContent, TreeSchema } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
 import { TreeValue } from "../../../core";
 import { createTreeView2, itWithRoot, makeSchema, pretty } from "./utils";
@@ -324,8 +324,8 @@ describe("Object-like", () => {
 
 	describe("supports setting", () => {
 		describe("primitives", () => {
-			function check<const TSchema extends LeafSchema>(
-				schema: LeafSchema,
+			function check<const TSchema extends LeafNodeSchema>(
+				schema: LeafNodeSchema,
 				before: TreeValue<TSchema["leafValue"]>,
 				after: TreeValue<TSchema["leafValue"]>,
 			) {

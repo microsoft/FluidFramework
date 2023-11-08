@@ -134,7 +134,7 @@ export function extractFromOpaque<TOpaque extends BrandedType<any, string>>(
  * Only do this when specifically allowed by the requirements of the type being converted to.
  * @alpha
  */
-export function brand<T extends Brand<any, string>>(
+export function brand<T extends Brand<unknown, string>>(
 	value: T extends BrandedType<infer ValueType, string> ? ValueType : never,
 ): T {
 	return value as T;

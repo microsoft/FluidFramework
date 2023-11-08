@@ -139,13 +139,9 @@ export {
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-	schemaIsMap,
-	schemaIsObjectNode,
 	bannedFieldNames,
 	fieldApiPrefixes,
 	validateObjectNodeFieldName,
@@ -154,6 +150,7 @@ export {
 	markEager,
 	MapFieldSchema,
 	SchemaCollection,
+	TreeNodeSchemaBase,
 } from "./typed-schema";
 
 export {
