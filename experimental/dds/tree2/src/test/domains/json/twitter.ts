@@ -7,7 +7,7 @@ import {
 	IRandom,
 	makeRandom,
 	SpaceEfficientWordMarkovChain,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import { SchemaBuilder } from "../../../domains";
 import { Any, ProxyNode } from "../../../feature-libraries";
 import {
@@ -104,22 +104,30 @@ const twitterMediaEntity = _.object("Status.Entities.Media", {
 		large: _.object("Status.Entities.Media.Sizes.Large", {
 			w: _.number,
 			h: _.number,
-			resize: _.string, // TODO: Enum support?  (was: "fit" | "crop")
+			// TODO: Enum support?  (was: "fit" | "crop")
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/6213
+			resize: _.string,
 		}),
 		medium: _.object("Status.Entities.Media.Sizes.Medium", {
 			w: _.number,
 			h: _.number,
-			resize: _.string, // TODO: Enum support?  (was: "fit" | "crop")
+			// TODO: Enum support?  (was: "fit" | "crop")
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/6213
+			resize: _.string,
 		}),
 		thumb: _.object("Status.Entities.Media.Sizes.Thumb", {
 			w: _.number,
 			h: _.number,
-			resize: _.string, // TODO: Enum support?  (was: "fit" | "crop")
+			// TODO: Enum support?  (was: "fit" | "crop")
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/6213
+			resize: _.string,
 		}),
 		small: _.object("Status.Entities.Media.Sizes.Small", {
 			w: _.number,
 			h: _.number,
-			resize: _.string, // TODO: Enum support?  (was: "fit" | "crop")
+			// TODO: Enum support?  (was: "fit" | "crop")
+			// https://dev.azure.com/fluidframework/internal/_workitems/edit/6213
+			resize: _.string,
 		}),
 	}),
 	source_status_id: _.optional(_.number),
@@ -155,7 +163,7 @@ const twitterStatus = _.object("Status", {
 				indices: _.list(_.number),
 			}),
 		),
-		// TODO: 'symbols' was 'unknown'. What is the appropriate conversion?
+		// TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/6214
 		symbols: _.list(_.boolean), // could not find a populated value from source json
 		urls: _.list(
 			_.object("Status.Entities.Url", {
@@ -179,8 +187,8 @@ const twitterStatus = _.object("Status", {
 	favorited: _.boolean,
 	retweeted: _.boolean,
 	lang: _.string,
-	// TODO: was Omit<TwitterStatus, "retweeted_status">;
-	// TODO: optional() won't accept a lazy/recursive item.
+	// TODO: _.objectRecursive(.., { retweeted_status: _optional(() => twitterStatus) }
+	// https://dev.azure.com/fluidframework/internal/_workitems/edit/6215
 	retweeted_status: _.optional(Any),
 	possibly_sensitive: _.optional(_.boolean),
 	in_reply_to_status_id: [_.number, _.null],
@@ -205,6 +213,7 @@ export const twitter = _.object("Twitter", {
 
 // TODO: Error: Object node field "type" of "json.twitter.Status.Entities.Media" schema from library
 // "json.twitter" uses "type" one of the banned field names
+// https://dev.azure.com/fluidframework/internal/_workitems/edit/6057
 // export const twitterSchema = _.intoSchema(twitter);
 
 /**
@@ -232,7 +241,7 @@ export function generateTwitterJsonByByteSize(
 	);
 	const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
 	const twitterJson: Twitter = {
-		statuses: [] as any, // TODO: any[] does satisfy SharedTreeList
+		statuses: [] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
 		search_metadata: {
 			completed_in: 0.087,
 			max_id: 505874924095815700,
@@ -259,7 +268,8 @@ export function generateTwitterJsonByByteSize(
 		if (!allowOversize && currentJsonSizeInBytes + nextStatusSizeInBytes > sizeInBytes) {
 			break;
 		}
-		// TODO: 'push()' is a painful omission from SharedTreeList<T>.
+		// TODO: Misalignment between SharedListNode<T> and Array<T> is painful.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6212/
 		(twitterJson.statuses as unknown as TwitterStatus[]).push(status);
 		currentJsonSizeInBytes += nextStatusSizeInBytes;
 	}
@@ -287,7 +297,7 @@ export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1) 
 	);
 	const basicJapaneseAlphabetString = getBasicJapaneseAlphabetString();
 	const twitterJson: Twitter = {
-		statuses: [] as any, // TODO: any[] does satisfy SharedTreeList
+		statuses: [] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
 		search_metadata: {
 			completed_in: 0.087,
 			max_id: 505874924095815700,
@@ -302,7 +312,8 @@ export function generateTwitterJsonByNumStatuses(numStatuses: number, seed = 1) 
 	};
 
 	for (let i = 0; i < numStatuses; i++) {
-		// TODO: 'push' is a painful omission from SharedTreeList<T>.
+		// TODO: Misalignment between SharedListNode<T> and Array<T> is painful.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6212/
 		(twitterJson.statuses as unknown as TwitterStatus[]).push(
 			generateTwitterStatus(
 				"standard",
@@ -374,10 +385,10 @@ function generateTwitterStatus(
 		retweet_count: retweetCount,
 		favorite_count: favoriteCount,
 		entities: {
-			hashtags: [] as any, // TODO: any[] does satisfy SharedTreeList
-			symbols: [] as any, // TODO: any[] does satisfy SharedTreeList
-			urls: [] as any, // TODO: any[] does satisfy SharedTreeList
-			user_mentions: [] as any, // TODO: any[] does satisfy SharedTreeList
+			hashtags: [] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
+			symbols: [] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
+			urls: [] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
+			user_mentions: [] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
 		},
 		favorited: retweetCount > 0 ? true : false,
 		retweeted: favoriteCount > 0 ? true : false,
@@ -444,7 +455,7 @@ function generateTwitterStatus(
 			indices: [
 				Math.floor(random.integer(0, 199)),
 				Math.floor(random.integer(0, 199)),
-			] as any, // TODO: any[] does satisfy SharedTreeList
+			] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
 			media_url: "http://pbs.twimg.com/media/BwU6g-dCcAALxAW.png",
 			media_url_https: "https://pbs.twimg.com/media/BwU6g-dCcAALxAW.png",
 			url: "http://t.co/okrAoxSbt0",
@@ -507,7 +518,7 @@ function generateTwitterUser(
 		entities: {
 			// This always appears on a user, even if its empty.
 			description: {
-				urls: [] as any, // TODO: any[] does satisfy SharedTreeList
+				urls: [] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
 			},
 		},
 		protected: false,
