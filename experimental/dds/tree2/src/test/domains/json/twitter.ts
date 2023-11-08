@@ -163,7 +163,8 @@ const twitterStatus = _.object("Status", {
 				indices: _.list(_.number),
 			}),
 		),
-		// TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/6214
+		// TODO: Was 'unknown[]'
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6214
 		symbols: _.list(_.boolean), // could not find a populated value from source json
 		urls: _.list(
 			_.object("Status.Entities.Url", {
