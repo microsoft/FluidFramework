@@ -89,8 +89,5 @@ curl -H "Content-Type: application/json" -X POST -d '{"tag": "v1.0", "message": 
 curl --verbose localhost:3000/repos/prague/test/git/tags/2f208d6d4c5698feada2b5dad3886a0ceff4f80b
 ```
 
-## Trademark
-
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
-or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->

@@ -69,8 +69,6 @@ import { deleteFluidCacheIndexDbInstance } from "@fluidframework/driver-web-cach
 deleteFluidCacheIndexDbInstance().catch(() => {});
 ```
 
-## Trademark
-
 <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->

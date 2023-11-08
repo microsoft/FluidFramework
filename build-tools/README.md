@@ -22,8 +22,5 @@ functionality you need from this package.
 This package contains APIs and a CLI for working with semantic versioning version strings and ranges, especially those
 using [Fluid-specific version schemes.](./packages/version-tools/README.md#version-schemes)
 
-## Trademark
-
-This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services. Use of these trademarks
-or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:END -->
