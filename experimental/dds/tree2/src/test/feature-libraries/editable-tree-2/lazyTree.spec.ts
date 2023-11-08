@@ -38,6 +38,7 @@ import {
 	DefaultEditBuilder,
 	DefaultChangeFamily,
 	DefaultChangeset,
+	singleTextCursor,
 } from "../../../feature-libraries";
 import {
 	Anchor,
@@ -67,7 +68,7 @@ import { Context, getTreeContext } from "../../../feature-libraries/editable-tre
 import { TreeContent } from "../../../shared-tree";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { forestWithContent } from "../../utils";
+import { forestWithContent, viewWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -404,13 +405,30 @@ describe("LazyMap", () => {
 	});
 
 	it("set", () => {
-		assert.equal(editCallCount, 0);
+		const view = viewWithContent({ schema, initialTree: {} });
+		const mapNode = view.editableTree.content;
+		assert(mapNode.is(mapNodeSchema));
 
-		node.set(brand("baz"), "First edit");
-		assert.equal(editCallCount, 1);
+		mapNode.set("baz", "First edit");
+		mapNode.set("foo", "Second edit");
+		assert.equal(mapNode.get("baz"), "First edit");
+		assert.equal(mapNode.get("foo"), "Second edit");
 
-		node.set(brand("foo"), "Second edit");
-		assert.equal(editCallCount, 2);
+		mapNode.set("foo", singleTextCursor({ type: leafDomain.string.name, value: "X" }));
+		assert.equal(mapNode.get("foo"), "X");
+		mapNode.set("foo", undefined);
+		assert.equal(mapNode.get("foo"), undefined);
+		assert.equal(mapNode.has("foo"), false);
+	});
+
+	it("getBoxed empty", () => {
+		const view = viewWithContent({ schema, initialTree: {} });
+		const mapNode = view.editableTree.content;
+		assert(mapNode.is(mapNodeSchema));
+
+		const empty = mapNode.getBoxed("foo");
+		assert.equal(empty.parent, mapNode);
+		assert.equal(empty.key, "foo");
 	});
 
 	it("delete", () => {
