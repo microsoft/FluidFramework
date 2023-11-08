@@ -28,6 +28,7 @@
 	"dependencies": {
 		"@fluidframework/build-common": "^2.0.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
+		"@rushstack/node-core-library": "^3.55.2",
 		"@tylerbu/markdown-magic": "^2.4.0-tylerbu-1",
 		"chalk": "^2.4.2",
 		"markdown-magic-package-scripts": "^1.2.1",

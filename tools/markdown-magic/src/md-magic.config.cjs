@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+const { PackageName } = require("@rushstack/node-core-library");
 const fs = require("fs");
 const pathLib = require("path");
 const scripts = require("markdown-magic-package-scripts");
@@ -15,7 +16,6 @@ const {
 	getPackageMetadata,
 	resolveRelativePackageJsonPath,
 	resolveRelativePath,
-	getPackageScope,
 } = require("./utilities.cjs");
 const {
 	apiDocsLinkSectionTransform,
@@ -250,7 +250,7 @@ function libraryPackageReadmeTransform(content, options, config) {
 
 	const sections = [];
 
-	const packageScope = getPackageScope(packageName);
+	const packageScope = PackageName.getScope(packageName);
 	if (options.experimentalPackage === "TRUE" || packageScope === `@fluid-experimental`) {
 		sections.push(generateExperimentalPackageNotice());
 	}
