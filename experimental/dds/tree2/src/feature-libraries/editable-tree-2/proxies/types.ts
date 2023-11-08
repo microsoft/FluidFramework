@@ -43,36 +43,20 @@ export interface SharedTreeList<
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
-	 * @privateRemarks
-	 * We explicitly prevent the user from passing "strings" in.
-	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAt<T extends Iterable<ProxyNodeUnion<TTypes>>>(
-		index: number,
-		value: T extends string ? never : T,
-	): void;
+	insertAt(index: number, value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the list.
 	 * @param value - The content to insert.
-	 * @privateRemarks
-	 * We explicitly prevent the user from passing "strings" in.
-	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtStart<T extends Iterable<ProxyNodeUnion<TTypes>>>(
-		value: T extends string ? never : T,
-	): void;
+	insertAtStart(value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the list.
 	 * @param value - The content to insert.
-	 * @privateRemarks
-	 * We explicitly prevent the user from passing "strings" in.
-	 * It's technically permitted since strings are iterables of strings, but it's too easy for a user to mistakenly pass `myString` instead of `[myString]`.
 	 */
-	insertAtEnd<T extends Iterable<ProxyNodeUnion<TTypes>>>(
-		value: T extends string ? never : T,
-	): void;
+	insertAtEnd(value: Iterable<ProxyNodeUnion<TTypes, "javaScript">>): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -268,10 +252,38 @@ export type ObjectFields<
  *
  * @alpha
  */
-export type SharedTreeMap<TSchema extends MapSchema> = Omit<
-	Map<string, ProxyField<TSchema["mapFields"]>>,
-	"clear"
->;
+export interface SharedTreeMap<TSchema extends MapSchema>
+	extends ReadonlyMap<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">> {
+	/**
+	 * Adds or updates an entry in the map with a specified `key` and a `value`.
+	 *
+	 * @param key - The key of the element to add to the map.
+	 * @param value - The value of the element to add to the map.
+	 *
+	 * @remarks
+	 * Setting the value at a key to `undefined` is equivalent to calling {@link SharedTreeMap.delete} with that key.
+	 */
+	set(
+		key: string,
+		value: ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty"> | undefined,
+	): void;
+
+	/**
+	 * Removes the specified element from this map by its `key`.
+	 *
+	 * @remarks
+	 * Note: unlike JavaScript's Map API, this method does not return a flag indicating whether or not the value was
+	 * deleted.
+	 *
+	 * @privateRemarks
+	 * Regarding the choice to not return a boolean: Since this data structure is distributed in nature, it isn't
+	 * possible to tell whether or not the item was deleted as a result of this method call. Returning a "best guess"
+	 * is more likely to create issues / promote bad usage patterns than offer useful information.
+	 *
+	 * @param key - The key of the element to remove from the map.
+	 */
+	delete(key: string): void;
+}
 
 /**
  * Given a field's schema, return the corresponding object in the proxy-based API.

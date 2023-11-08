@@ -1032,26 +1032,14 @@ use_old_InterfaceDeclaration_IdCreationRange(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IdCreationRangeWithStashedState": {"forwardCompat": false}
+* "RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {"forwardCompat": false}
 */
-declare function get_old_TypeAliasDeclaration_IdCreationRangeWithStashedState():
-    TypeOnly<old.IdCreationRangeWithStashedState>;
-declare function use_current_TypeAliasDeclaration_IdCreationRangeWithStashedState(
-    use: TypeOnly<current.IdCreationRangeWithStashedState>);
-use_current_TypeAliasDeclaration_IdCreationRangeWithStashedState(
-    get_old_TypeAliasDeclaration_IdCreationRangeWithStashedState());
 
 /*
 * Validate back compat by using current type in place of old type
 * If breaking change required, add in package.json under typeValidation.broken:
-* "TypeAliasDeclaration_IdCreationRangeWithStashedState": {"backCompat": false}
+* "RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {"backCompat": false}
 */
-declare function get_current_TypeAliasDeclaration_IdCreationRangeWithStashedState():
-    TypeOnly<current.IdCreationRangeWithStashedState>;
-declare function use_old_TypeAliasDeclaration_IdCreationRangeWithStashedState(
-    use: TypeOnly<old.IdCreationRangeWithStashedState>);
-use_old_TypeAliasDeclaration_IdCreationRangeWithStashedState(
-    get_current_TypeAliasDeclaration_IdCreationRangeWithStashedState());
 
 /*
 * Validate forward compat by using old type in place of current type

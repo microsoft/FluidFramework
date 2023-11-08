@@ -26,7 +26,7 @@ import {
 	ExpectedEvents,
 	ITestDataObject,
 	itExpects,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { v4 as uuid } from "uuid";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {

@@ -27,7 +27,7 @@ import {
 	expectJsonTree,
 	createTestUndoRedoStacks,
 } from "../utils";
-import { ISharedTreeView } from "../../shared-tree";
+import { ITreeCheckout } from "../../shared-tree";
 import { singleTextCursor } from "../../feature-libraries";
 
 const rootField: FieldUpPath = {
@@ -402,24 +402,6 @@ describe("Editing", () => {
 			expectJsonTree([tree, a, r, x], ["a", "b", "c", "r", "s", "t", "x", "y", "z"]);
 		});
 
-		// TODO: Enable once local branch repair data is supported
-		it.skip("intentional revive", () => {
-			const tree1 = makeTreeFromJson(["A", "B", "C"]);
-			const tree2 = tree1.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
-
-			remove(tree1, 1, 1);
-
-			remove(tree2, 0, 3);
-			undoStack.pop()?.revert();
-
-			tree1.merge(tree2);
-			tree2.rebaseOnto(tree1);
-
-			expectJsonTree([tree1, tree2], ["A", "B", "C"]);
-			unsubscribe();
-		});
-
 		it("intra-field move", () => {
 			const tree1 = makeTreeFromJson(["A", "B"]);
 
@@ -521,7 +503,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
-		it.skip("can rebase node deletion over cross-field move of descendant", () => {
+		it("can rebase node deletion over cross-field move of descendant", () => {
 			const tree1 = makeTreeFromJson({
 				foo: ["A"],
 			});
@@ -823,7 +805,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it.skip("delete ancestor of return source", () => {
+		it("delete ancestor of return source", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const first: UpPath = {
 				parent: undefined,
@@ -1362,7 +1344,7 @@ describe("Editing", () => {
 				0,
 			);
 
-			// Deletes parent node of the src field
+			// Deletes parent node of the dst field
 			tree.editor
 				.optionalField({ parent: rootNode, field: brand("dst") })
 				.set(undefined, false);
@@ -1523,7 +1505,7 @@ describe("Editing", () => {
 			unsubscribePathVisitor();
 		});
 
-		describe.skip("Exhaustive removal tests", () => {
+		describe("Exhaustive removal tests", () => {
 			// Toggle the constant below to run each scenario as a separate test.
 			// This is useful to debug a specific scenario but makes CI and the test browser slower.
 			// Note that if the numbers of nodes and peers are too high (more than 3 nodes and 3 peers),
@@ -1531,9 +1513,9 @@ describe("Editing", () => {
 			// Should be committed with the constant set to false.
 			const individualTests = false;
 			const nbNodes = 3;
-			const nbPeers = 3;
+			const nbPeers = 2;
 			const testRemoveRevive = true;
-			const testMoveReturn = true;
+			const testMoveReturn = false;
 			assert(testRemoveRevive || testMoveReturn, "No scenarios to run");
 
 			const [outerFixture, innerFixture] = individualTests
@@ -1633,10 +1615,10 @@ describe("Editing", () => {
 				return buildScenariosWithPrefix();
 			}
 
-			const delAction = (peer: ISharedTreeView, idx: number) => remove(peer, idx, 1);
+			const delAction = (peer: ITreeCheckout, idx: number) => remove(peer, idx, 1);
 			const srcField: FieldUpPath = rootField;
 			const dstField: FieldUpPath = { parent: undefined, field: brand("dst") };
-			const moveAction = (peer: ISharedTreeView, idx: number) =>
+			const moveAction = (peer: ITreeCheckout, idx: number) =>
 				peer.editor.move(srcField, idx, 1, dstField, 0);
 
 			/**
@@ -1702,7 +1684,7 @@ describe("Editing", () => {
 							default:
 								unreachableCase(step);
 						}
-						tree.merge(peer);
+						tree.merge(peer, false);
 						// We only let peers with a higher index learn of this edit.
 						// This breaks the symmetry between scenarios where the permutation of actions is the same
 						// except for which peer does which set of actions.
@@ -1722,6 +1704,8 @@ describe("Editing", () => {
 			const startState = makeArray(nbNodes, (n) => `N${n}`);
 			const scenarios = buildScenarios();
 
+			// Increased timeout because the default in CI is 2s but this test fixture naturally takes ~1.9s and was
+			// timing out frequently
 			outerFixture("All Scenarios", () => {
 				for (const scenario of scenarios) {
 					if (testRemoveRevive) {
@@ -1731,7 +1715,7 @@ describe("Editing", () => {
 						runScenario(scenario, true);
 					}
 				}
-			});
+			}).timeout(5000);
 		});
 	});
 
@@ -2375,5 +2359,62 @@ describe("Editing", () => {
 		restoreRoot.rebaseOnto(tree);
 		expectJsonTree(restoreRoot, [{}]);
 		unsubscribe();
+	});
+
+	describe("Can abort transactions", () => {
+		function getInnerSequenceFieldPath(outer: FieldUpPath): FieldUpPath {
+			return {
+				parent: { parent: outer.parent, parentField: outer.field, parentIndex: 0 },
+				field: brand(""),
+			};
+		}
+		const initialState = { foo: [0, 1, 2] };
+		function abortTransaction(branch: ITreeCheckout): void {
+			branch.transaction.start();
+			const rootSequence = branch.editor.sequenceField(rootField);
+			const root0Path = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 0,
+			};
+			const root1Path = {
+				parent: undefined,
+				parentField: rootFieldKey,
+				parentIndex: 1,
+			};
+			const foo0 = branch.editor.sequenceField(
+				getInnerSequenceFieldPath({ parent: root0Path, field: brand("foo") }),
+			);
+			const foo1 = branch.editor.sequenceField(
+				getInnerSequenceFieldPath({ parent: root1Path, field: brand("foo") }),
+			);
+			foo0.delete(1, 1);
+			foo0.insert(1, singleTextCursor({ type: brand("Number"), value: 41 }));
+			foo0.delete(2, 1);
+			foo0.insert(2, singleTextCursor({ type: brand("Number"), value: 42 }));
+			foo0.delete(0, 1);
+			rootSequence.insert(0, singleTextCursor({ type: brand("Test") }));
+			foo1.delete(0, 1);
+			foo1.insert(0, singleTextCursor({ type: brand("Number"), value: "RootValue2" }));
+			foo1.insert(0, singleTextCursor({ type: brand("Test") }));
+			foo1.delete(1, 1);
+			foo1.insert(1, singleTextCursor({ type: brand("Number"), value: 82 }));
+
+			// Aborting the transaction should restore the forest
+			branch.transaction.abort();
+
+			expectJsonTree(branch, [initialState]);
+		}
+
+		it("on the main branch", () => {
+			const tree = makeTreeFromJson(initialState);
+			abortTransaction(tree);
+		});
+
+		it("on a child branch", () => {
+			const tree = makeTreeFromJson(initialState);
+			const child = tree.fork();
+			abortTransaction(child);
+		});
 	});
 });

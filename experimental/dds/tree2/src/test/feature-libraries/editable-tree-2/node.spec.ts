@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { rootFieldKey } from "../../../core";
-import { ProxyRoot, SharedTreeNode, node, TreeStatus, Any } from "../../../feature-libraries";
+import { ProxyRoot, SharedTreeNode, Tree, TreeStatus, Any } from "../../../feature-libraries";
 import { SchemaBuilder } from "../../../domains";
 import { itWithRoot } from "./utils";
 
@@ -24,26 +24,26 @@ describe("node API", () => {
 
 	describe("schema", () => {
 		itWithRoot("object", treeSchema, initialTree, (root) => {
-			assert.equal(node.schema(root.object), object);
+			assert.equal(Tree.schema(root.object), object);
 		});
 		itWithRoot("list", treeSchema, initialTree, (root) => {
-			assert.equal(node.schema(root.list), list);
+			assert.equal(Tree.schema(root.list), list);
 		});
 	});
 
 	describe("is", () => {
 		itWithRoot("object", treeSchema, initialTree, (root) => {
-			assert.equal(node.is(root.object, object), true);
-			assert.equal(node.is(root.object, list), false);
+			assert.equal(Tree.is(root.object, object), true);
+			assert.equal(Tree.is(root.object, list), false);
 			assert.throws(() =>
-				node.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
+				Tree.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
 			);
 		});
 		itWithRoot("list", treeSchema, initialTree, (root) => {
-			assert.equal(node.is(root.list, list), true);
-			assert.equal(node.is(root.list, object), false);
+			assert.equal(Tree.is(root.list, list), true);
+			assert.equal(Tree.is(root.list, object), false);
 			assert.throws(() =>
-				node.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
+				Tree.is(root.object, new SchemaBuilder({ scope: "never" }).list(Any)),
 			);
 		});
 	});
@@ -51,16 +51,16 @@ describe("node API", () => {
 	describe("parent", () => {
 		itWithRoot("object", treeSchema, initialTree, (root) => {
 			const child = root.object;
-			const p = node.parent(child);
-			assert.equal(node.parent(root.object), root);
+			const p = Tree.parent(child);
+			assert.equal(Tree.parent(root.object), root);
 		});
 
 		itWithRoot("list", treeSchema, initialTree, (root) => {
-			assert.equal(node.parent(root.list), root);
+			assert.equal(Tree.parent(root.list), root);
 		});
 
 		itWithRoot("root", treeSchema, initialTree, (root) => {
-			assert.equal(node.parent(root), undefined);
+			assert.equal(Tree.parent(root), undefined);
 		});
 	});
 
@@ -68,19 +68,19 @@ describe("node API", () => {
 		itWithRoot("object", treeSchema, initialTree, (root) => {
 			for (const key of Object.keys(root) as Iterable<keyof typeof root>) {
 				const child = root[key];
-				assert.equal(node.key(child), key);
+				assert.equal(Tree.key(child), key);
 			}
 		});
 
 		itWithRoot("list", treeSchema, initialTree, (root) => {
 			for (let key = 0; key < root.list.length; key += 1) {
 				const child = root.list[key];
-				assert.equal(node.key(child), key);
+				assert.equal(Tree.key(child), key);
 			}
 		});
 
 		itWithRoot("root", treeSchema, initialTree, (root) => {
-			assert.equal(node.key(root), rootFieldKey);
+			assert.equal(Tree.key(root), rootFieldKey);
 		});
 	});
 
@@ -88,18 +88,18 @@ describe("node API", () => {
 		itWithRoot("object", treeSchema, initialTree, (root) => {
 			const o = root.object;
 			assert(o !== undefined);
-			assert.equal(node.status(o), TreeStatus.InDocument);
+			assert.equal(Tree.status(o), TreeStatus.InDocument);
 			root.object = object.create({ content: 43 });
-			assert.equal(node.status(o), TreeStatus.Removed);
+			assert.equal(Tree.status(o), TreeStatus.Removed);
 		});
 
 		// TODO: Enable a test like this when lists are directly settable
 		// itWithRoot("list", treeSchema, initialTree, (root) => {
 		// 	const l = root.list;
 		// 	assert(l !== undefined);
-		// 	assert.equal(node.status(l), TreeStatus.InDocument);
+		// 	assert.equal(Tree.status(l), TreeStatus.InDocument);
 		// 	root.list = [];
-		// 	assert.equal(node.status(l), TreeStatus.Removed);
+		// 	assert.equal(Tree.status(l), TreeStatus.Removed);
 		// });
 	});
 
@@ -112,7 +112,7 @@ describe("node API", () => {
 				(root) => {
 					const log: any[][] = [];
 
-					node.on(root as SharedTreeNode, "afterChange", (...args: any[]) => {
+					Tree.on(root as SharedTreeNode, "afterChange", (...args: any[]) => {
 						log.push(args);
 					});
 
@@ -133,7 +133,7 @@ describe("node API", () => {
 				(root) => {
 					const log: any[][] = [];
 
-					const unsubscribe = node.on(
+					const unsubscribe = Tree.on(
 						root as SharedTreeNode,
 						"afterChange",
 						(...args: any[]) => {

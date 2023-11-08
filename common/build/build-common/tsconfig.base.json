@@ -1,0 +1,19 @@
+{
+	"compilerOptions": {
+		"composite": true,
+		"declaration": true,
+		"declarationMap": true,
+		"esModuleInterop": true,
+		"incremental": true,
+		"inlineSources": true,
+		"jsx": "react",
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"noImplicitAny": false,
+		"noUnusedLocals": true,
+		"pretty": true,
+		"sourceMap": true,
+		"strict": true,
+		"target": "ES2020",
+		"types": [],
+	},
+}
