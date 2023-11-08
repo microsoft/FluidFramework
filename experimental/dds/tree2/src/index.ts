@@ -236,13 +236,13 @@ export {
 
 export {
 	ISharedTree,
-	ISharedTreeView,
+	ITreeCheckout,
 	ITransaction,
 	runSynchronous,
 	SharedTreeFactory,
 	SharedTreeOptions,
-	ISharedTreeBranchView,
-	ViewEvents,
+	ITreeCheckoutFork,
+	CheckoutEvents,
 	SchematizeConfiguration,
 	TreeContent,
 	InitializeAndSchematizeConfiguration,
@@ -252,8 +252,9 @@ export {
 	TypedTreeOptions,
 	TypedTreeChannel,
 	SharedTreeContentSnapshot,
-	ISharedTreeView2,
+	ITreeView,
 	TypedTreeView,
+	ITreeViewFork,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

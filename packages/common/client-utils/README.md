@@ -3,7 +3,12 @@
 This package is intended for sharing and promoting utility functions across packages in the Fluid Framework repo,
 primarily within the client release group.
 
-Use outside of the Fluid Framework repo is not supported or recommended.
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**IMPORTANT: This package is intended strictly as an implementation detail of the Fluid Framework and is not intended for public consumption.**
+**We make no stability guarantees regarding its APIs.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Adding code to this package
 

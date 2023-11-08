@@ -77,8 +77,8 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-internal/test-pairwise-generator": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
+		"@fluid-private/test-pairwise-generator": "workspace:~",
 		"@fluid-tools/benchmark": "^0.48.0",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
