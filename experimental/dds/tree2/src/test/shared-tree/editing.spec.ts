@@ -818,6 +818,43 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
+		// it.only("childchange rebase over change, undo, childchange", () => {
+		// 	const tree = makeTreeFromJson([{ foo: ["b"] }]);
+		// 	const tree2 = tree.fork();
+		// 	const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+
+		// 	const first: UpPath = {
+		// 		parent: undefined,
+		// 		parentIndex: 0,
+		// 		parentField: rootFieldKey,
+		// 	};
+
+		// 	const sequenceUpPath: UpPath = {
+		// 		parent: first,
+		// 		parentIndex: 0,
+		// 		parentField: brand("foo"),
+		// 	};
+
+		// 	const sequence = tree.editor.sequenceField(rootField);
+
+		// 	sequence.delete(0, 1);
+		// 	undoStack.pop()?.revert();
+		// 	redoStack.pop()?.revert();
+		// 	undoStack.pop()?.revert();
+		// 	tree.editor
+		// 		.sequenceField({ parent: sequenceUpPath, field: EmptyKey })
+		// 		.insert(1, singleTextCursor({ type: leaf.string.name, value: "c" }));
+
+		// 	tree2.editor
+		// 		.sequenceField({ parent: sequenceUpPath, field: EmptyKey })
+		// 		.insert(0, singleTextCursor({ type: leaf.string.name, value: "a" }));
+
+		// 	tree2.rebaseOnto(tree);
+
+		// 	expectJsonTree([tree2], [{ foo: ["a", "b", "c"] }]);
+		// 	unsubscribe();
+		// });
+
 		it("node being concurrently moved and revived with source ancestor deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();

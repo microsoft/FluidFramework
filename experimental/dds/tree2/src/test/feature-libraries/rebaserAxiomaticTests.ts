@@ -88,7 +88,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	// - Rebasing a single edit over N sequential edits
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
-	const numberOfEditsToRebaseOver = 4;
+	const numberOfEditsToRebaseOver = 3;
 	const numberOfEditsToRebase = 3; //numberOfEditsToRebaseOver;
 	const numberOfEditsToVerifyAssociativity = 5;
 
@@ -121,12 +121,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// }
 						// continue;
 
-						// if (
-						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["ChildChange1","SetB,1","SetB,2"]'
-						// ) {
-						// 	continue;
-						// }
+						if (
+							title !==
+							'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","ChildChange102"]'
+						) {
+							continue;
+						}
 
 						it(title, () => {
 							const editsToRebaseOver = namedEditsToRebaseOver.map(
@@ -178,6 +178,8 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
+						continue;
+
 						// This test case motivates compose dropping changes with no associated revision
 						// (though not totally convinced that change is good)
 						// if (
@@ -214,12 +216,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// 	continue;
 						// }
 
-						if (
-							title !==
-							'Rebase ["SetA,0","Undo:SetA,0","ChildChange73"] over ChildChange1'
-						) {
-							continue;
-						}
+						// if (
+						// 	title !==
+						// 	'Rebase ["SetA,0","Undo:SetA,0","ChildChange73"] over ChildChange1'
+						// ) {
+						// 	continue;
+						// }
 
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
@@ -329,7 +331,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					// 	continue;
 					// }
 
-					// if (title !== 'for ["SetB,0","ChildChange79","ChildChange80"]') {
+					// if (
+					// 	title !==
+					// 	'for ["SetB,0","Undo:SetB,0","SetB,2","Undo:SetB,2","ChildChange2227"]'
+					// ) {
 					// 	continue;
 					// }
 

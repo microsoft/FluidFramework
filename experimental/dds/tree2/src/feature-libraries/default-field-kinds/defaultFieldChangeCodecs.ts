@@ -52,12 +52,14 @@ function makeOptionalFieldCodec(
 		decode: (encoded: EncodedOptionalChangeset<TAnySchema>) => {
 			const decoded: Mutable<OptionalChangeset> = {
 				fieldChanges: [],
-				contentId: { id: "this", type: "after" },
+				// contentId: { id: "this", type: "after" },
 			};
 			if (encoded.fieldChange !== undefined) {
 				const decodedFieldChange: Mutable<OptionalFieldChange> = {
 					id: encoded.fieldChange.id,
 					wasEmpty: encoded.fieldChange.wasEmpty,
+					inserted: { type: "after", id: "this" },
+					removed: { type: "before", id: "this" },
 				};
 				if (encoded.fieldChange.revision !== undefined) {
 					decodedFieldChange.revision = encoded.fieldChange.revision;

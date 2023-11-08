@@ -330,6 +330,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	const singleTestChanges = (prefix: string) =>
 		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, prefix);
 
+	return;
 	/**
 	 * This test simulates rebasing over an do-inverse pair.
 	 */

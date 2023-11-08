@@ -40,6 +40,17 @@ export interface OptionalFieldChange {
 	 */
 	newContent?: NodeUpdate;
 
+	removed: ContentId;
+
+	// /**
+	//  * When defined, signifies ContentId which overrides the id of the node occupying this field after the change.
+	//  * This is used for restored nodes, either via undo or
+	//  *
+	//  *
+	//  * When undefined, the node occupying this field is implicitly identified via its subsequent removal.
+	//  */
+	inserted: ContentId;
+
 	// TODO: This is no longer necessary for each change within array of field changes.
 	// Maybe should be moved to OptionalChangeset.
 	/**
@@ -102,12 +113,14 @@ export interface OptionalChangeset {
 	 */
 	fieldChanges: OptionalFieldChange[];
 
-	contentId: ContentId;
+	// contentId: ContentId;
 
-	/**
-	 * If defined, the content id that is associated with the first removal in this changeset. TODO: Should be called "contentBefore" and contentId should be called "contentAfter"
-	 */
-	firstRemovalContentId?: ContentId;
+	// /**
+	//  * If defined, the content id that is associated with the input context of this change.
+	//  *
+	//  * When left undefined, input context matches 'before fieldChanges[0]', or the same as `contentId` if there are no field changes.
+	//  */
+	// inputContentId?: ContentId;
 
 	/**
 	 * Changes to nodes which occupied this field prior to this changeset at some point.
