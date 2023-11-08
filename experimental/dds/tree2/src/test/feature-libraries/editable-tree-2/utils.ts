@@ -6,23 +6,24 @@
 import { strict as assert } from "assert";
 import {
 	DefaultEditBuilder,
-	FieldSchema,
+	TreeFieldSchema,
 	ImplicitFieldSchema,
 	ProxyField,
 	ProxyRoot,
-	DocumentSchema,
+	TreeSchema,
 	createMockNodeKeyManager,
 	nodeKeyFieldKey,
+	SchemaAware,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
-import { AllowedUpdateType, IEditableForest } from "../../../core";
-import { ISharedTree, ISharedTreeView, TreeContent } from "../../../shared-tree";
+import { AllowedUpdateType, IEditableForest, ITreeCursorSynchronous } from "../../../core";
+import { ISharedTree, ISharedTreeView2, TreeContent } from "../../../shared-tree";
 import { TestTreeProviderLite, forestWithContent } from "../../utils";
 import { brand } from "../../../util";
 import { SchemaBuilder } from "../../../domains";
 
-export function getReadonlyContext(forest: IEditableForest, schema: DocumentSchema): Context {
+export function getReadonlyContext(forest: IEditableForest, schema: TreeSchema): Context {
 	// This will error if someone tries to call mutation methods on it
 	const dummyEditor = {} as unknown as DefaultEditBuilder;
 	return getTreeContext(
@@ -50,10 +51,13 @@ export function createTree(): ISharedTree {
 	return tree;
 }
 
-export function createTreeView<TRoot extends FieldSchema>(
-	schema: DocumentSchema<TRoot>,
-	initialTree: any,
-): ISharedTreeView {
+export function createTreeView2<TRoot extends TreeFieldSchema>(
+	schema: TreeSchema<TRoot>,
+	initialTree:
+		| ITreeCursorSynchronous
+		| readonly ITreeCursorSynchronous[]
+		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>,
+): ISharedTreeView2<TRoot> {
 	return createTree().schematize({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		initialTree,
@@ -69,18 +73,21 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 		scope: `test.schema.${Math.random().toString(36).slice(2)}`,
 	});
 	const root = fn(builder);
-	return builder.toDocumentSchema(root);
+	return builder.intoSchema(root);
 }
 
-export function itWithRoot<TRoot extends FieldSchema>(
+export function itWithRoot<TRoot extends TreeFieldSchema>(
 	title: string,
-	schema: DocumentSchema<TRoot>,
-	initialTree: ProxyRoot<DocumentSchema<TRoot>, "javaScript">,
+	schema: TreeSchema<TRoot>,
+	initialTree: ProxyRoot<TreeSchema<TRoot>, "javaScript">,
 	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {
-		const view = createTreeView(schema, initialTree);
-		const root = view.root2(schema);
+		const view = createTreeView2(
+			schema,
+			initialTree as SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>,
+		);
+		const root = view.root;
 		fn(root);
 	});
 }
@@ -89,5 +96,14 @@ export function itWithRoot<TRoot extends FieldSchema>(
  * Similar to JSON stringify, but preserves `undefined` and numbers numbers as-is at the root.
  */
 export function pretty(arg: unknown): number | undefined | string {
-	return arg === undefined ? "undefined" : typeof arg === "number" ? arg : JSON.stringify(arg);
+	if (arg === undefined) {
+		return "undefined";
+	}
+	if (typeof arg === "number") {
+		return arg;
+	}
+	if (typeof arg === "string") {
+		return `"${arg}"`;
+	}
+	return JSON.stringify(arg);
 }

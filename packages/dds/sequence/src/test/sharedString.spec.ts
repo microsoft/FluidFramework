@@ -710,6 +710,43 @@ describe("SharedString", () => {
 			assert.equal(sharedString2.getText(), "hello friend");
 		});
 
+		it("insert in middle of multibyte character", async () => {
+			let base = "🎉";
+
+			sharedString.insertText(0, "🎉");
+
+			assert.equal(sharedString.getText(), base);
+			assert.equal(sharedString.getLength(), base.length);
+
+			containerRuntimeFactory.processAllMessages();
+
+			base = `${base.slice(0, 1)}a${base.slice(1)}`;
+			sharedString.insertText(1, "a");
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(sharedString.getText(), base); // not 🎉a
+			assert.equal(sharedString.getLength(), base.length);
+		});
+
+		it("insert in middle of surrogate pair", async () => {
+			let base = "👨🏻‍🦱";
+			sharedString.insertText(0, "👨🏻‍🦱");
+
+			assert.equal(sharedString.getText(), base);
+			assert.equal(sharedString.getLength(), base.length);
+
+			containerRuntimeFactory.processAllMessages();
+
+			base = `${base.slice(0, 2)}a${base.slice(2)}`;
+			sharedString.insertText(2, "a");
+
+			containerRuntimeFactory.processAllMessages();
+
+			assert.equal(sharedString.getText(), base); // not 👨🏻‍🦱a
+			assert.equal(sharedString.getLength(), base.length);
+		});
+
 		it("can store ops in disconnected state and resend them on reconnection", async () => {
 			// Disconnect the first SharedString.
 			containerRuntime1.connected = false;

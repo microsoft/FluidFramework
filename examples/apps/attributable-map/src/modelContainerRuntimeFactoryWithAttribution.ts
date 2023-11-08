@@ -12,14 +12,8 @@ import {
 import { IContainerRuntimeOptions, ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions";
-import {
-	mixinAttributor,
-	createRuntimeAttributor,
-	IProvideRuntimeAttributor,
-} from "@fluid-experimental/attributor";
-import { FluidObject } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import { makeModelRequestHandler } from "@fluid-example/example-utils";
+import { mixinAttributor, createRuntimeAttributor } from "@fluid-experimental/attributor";
+import { IModelContainerRuntimeEntryPoint } from "@fluid-example/example-utils";
 
 const containerRuntimeWithAttribution = mixinAttributor(ContainerRuntime);
 
@@ -47,21 +41,17 @@ export abstract class ModelContainerRuntimeFactoryWithAttribution<ModelType>
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IRuntime> {
-		const attributor = createRuntimeAttributor();
-		const containerScope: FluidObject<IProvideRuntimeAttributor> = {
-			IRuntimeAttributor: attributor,
-		};
-
 		const runtime = await containerRuntimeWithAttribution.loadRuntime({
 			context,
 			registryEntries: this.registryEntries,
-			// eslint-disable-next-line import/no-deprecated
-			requestHandler: makeModelRequestHandler(this.createModel.bind(this)),
-			provideEntryPoint: () => {
-				throw new Error("TODO: AB#4990");
-			},
+			provideEntryPoint: async (
+				containerRuntime: IContainerRuntime,
+			): Promise<IModelContainerRuntimeEntryPoint<ModelType>> => ({
+				getModel: async (container: IContainer) =>
+					this.createModel(containerRuntime, container),
+			}),
 			runtimeOptions: this.runtimeOptions,
-			containerScope, // scope
+			containerScope: { IRuntimeAttributor: createRuntimeAttributor() },
 			existing,
 		});
 

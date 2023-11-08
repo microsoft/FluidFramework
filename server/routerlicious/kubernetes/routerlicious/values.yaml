@@ -57,7 +57,7 @@ storage:
 
 checkpoints:
   localCheckpointEnabled: false
-  checkpointsTTLInSeconds: 864000
+  checkpointsTTLInSeconds: -1
   kafkaCheckpointOnReprocessingOp: false
 
 session:
@@ -129,9 +129,6 @@ mongodb:
   softDeletionEnabled: false
   permanentDeletionEnabled: false
   deletionIntervalMs: 3600000
-
-rabbitmq:
-  connectionString: ""
 
 redis:
   url: redis_url

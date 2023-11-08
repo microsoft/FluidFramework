@@ -26,6 +26,7 @@ import {
 	DeltaVisitor,
 	PlaceIndex,
 	Range,
+	ITreeCursorSynchronous,
 } from "../../core";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -122,8 +123,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			},
 			destroy(detachedField: FieldKey, count: number): void {
 				this.forest.invalidateDependents();
-				const parent = this.getParent();
-				parent.mutableChunk.fields.delete(detachedField);
+				this.forest.roots.fields.delete(detachedField);
 			},
 			create(content: Delta.ProtoNodes, destination: FieldKey): void {
 				this.forest.invalidateDependents();
@@ -321,10 +321,7 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 		return TreeNavigationResult.Ok;
 	}
 
-	public moveCursorToPath(
-		destination: UpPath | undefined,
-		cursorToMove: ITreeSubscriptionCursor,
-	): void {
+	public moveCursorToPath(destination: UpPath, cursorToMove: ITreeSubscriptionCursor): void {
 		assert(
 			cursorToMove instanceof Cursor,
 			0x53c /* ChunkedForest must only be given its own Cursor type */,
@@ -357,6 +354,12 @@ class ChunkedForest extends SimpleDependee implements IEditableForest {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			cursorToMove.enterNode(indexStack.pop()!);
 		}
+	}
+
+	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		const rootCursor = this.roots.cursor();
+		rootCursor.enterNode(0);
+		return rootCursor;
 	}
 }
 
@@ -445,6 +448,6 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildChunkedForest(chunker: IChunker, anchors?: AnchorSet): IEditableForest {
+export function buildChunkedForest(chunker: IChunker, anchors?: AnchorSet): ChunkedForest {
 	return new ChunkedForest(makeRoot(), chunker.schema, chunker, anchors);
 }

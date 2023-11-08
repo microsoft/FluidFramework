@@ -5,14 +5,15 @@
 
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { JsonCompatibleReadOnly } from "../util";
-import { IJsonCodec, withSchemaValidation } from "../codec";
+import { ICodecOptions, IJsonCodec, withSchemaValidation } from "../codec";
 import { DecodedMessage } from "./messageTypes";
 import { Message } from "./messageFormat";
 
 export function makeMessageCodec<TChangeset>(
 	changesetCodec: IJsonCodec<TChangeset>,
-): IJsonCodec<DecodedMessage<TChangeset>, unknown> {
-	return withSchemaValidation<DecodedMessage<TChangeset>, TAnySchema, unknown>(
+	options: ICodecOptions,
+): IJsonCodec<DecodedMessage<TChangeset>> {
+	return withSchemaValidation<DecodedMessage<TChangeset>, TAnySchema>(
 		Message(changesetCodec.encodedSchema ?? Type.Any()),
 		{
 			encode: ({ commit, sessionId }: DecodedMessage<TChangeset>) => {
@@ -34,5 +35,6 @@ export function makeMessageCodec<TChangeset>(
 				};
 			},
 		},
+		options.jsonValidator,
 	);
 }

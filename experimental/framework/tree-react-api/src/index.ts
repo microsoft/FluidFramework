@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { useTree, useSubtree, useTreeContext } from "./useTree";
+export { useSubtree, useTreeContext } from "./useTree";

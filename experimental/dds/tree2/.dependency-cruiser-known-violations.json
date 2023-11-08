@@ -1,0 +1,222 @@
+[
+	{
+		"type": "cycle",
+		"from": "src/domains/index.ts",
+		"to": "src/domains/schemaBuilder.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": ["src/domains/schemaBuilder.ts", "src/domains/index.ts"]
+	},
+	{
+		"type": "cycle",
+		"from": "src/domains/index.ts",
+		"to": "src/domains/testRecursiveDomain.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/domains/testRecursiveDomain.ts",
+			"src/domains/schemaBuilder.ts",
+			"src/domains/index.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/context.ts",
+		"to": "src/feature-libraries/editable-tree-2/lazyField.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/lazyField.ts",
+			"src/feature-libraries/node-key/index.ts",
+			"src/feature-libraries/node-key/nodeKeyIndex.ts",
+			"src/feature-libraries/editable-tree-2/index.ts",
+			"src/feature-libraries/editable-tree-2/context.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/context.ts",
+		"to": "src/feature-libraries/node-key/index.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/node-key/index.ts",
+			"src/feature-libraries/node-key/nodeKeyIndex.ts",
+			"src/feature-libraries/editable-tree-2/index.ts",
+			"src/feature-libraries/editable-tree-2/context.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/index.ts",
+		"to": "src/feature-libraries/editable-tree-2/proxies/index.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/proxies/index.ts",
+			"src/feature-libraries/editable-tree-2/proxies/node.ts",
+			"src/feature-libraries/editable-tree-2/proxies/proxies.ts",
+			"src/feature-libraries/editable-tree-2/lazyTree.ts",
+			"src/feature-libraries/editable-tree-2/lazyField.ts",
+			"src/feature-libraries/node-key/index.ts",
+			"src/feature-libraries/node-key/nodeKeyIndex.ts",
+			"src/feature-libraries/editable-tree-2/index.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/lazyField.ts",
+		"to": "src/feature-libraries/editable-tree-2/lazyTree.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/lazyTree.ts",
+			"src/feature-libraries/editable-tree-2/lazyField.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/lazyField.ts",
+		"to": "src/feature-libraries/editable-tree-2/unboxed.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/unboxed.ts",
+			"src/feature-libraries/editable-tree-2/lazyField.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/lazyField.ts",
+		"to": "src/feature-libraries/editable-tree-2/utilities.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/utilities.ts",
+			"src/feature-libraries/editable-tree-2/index.ts",
+			"src/feature-libraries/editable-tree-2/context.ts",
+			"src/feature-libraries/editable-tree-2/lazyField.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/lazyTree.ts",
+		"to": "src/feature-libraries/editable-tree-2/unboxed.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/unboxed.ts",
+			"src/feature-libraries/editable-tree-2/lazyTree.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/lazyTree.ts",
+		"to": "src/feature-libraries/editable-tree-2/utilities.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/utilities.ts",
+			"src/feature-libraries/editable-tree-2/index.ts",
+			"src/feature-libraries/editable-tree-2/context.ts",
+			"src/feature-libraries/editable-tree-2/lazyField.ts",
+			"src/feature-libraries/editable-tree-2/lazyTree.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/proxies/index.ts",
+		"to": "src/feature-libraries/editable-tree-2/proxies/objectFactory.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/proxies/objectFactory.ts",
+			"src/feature-libraries/editable-tree-2/proxies/proxies.ts",
+			"src/feature-libraries/editable-tree-2/lazyTree.ts",
+			"src/feature-libraries/editable-tree-2/lazyField.ts",
+			"src/feature-libraries/node-key/index.ts",
+			"src/feature-libraries/node-key/nodeKeyIndex.ts",
+			"src/feature-libraries/editable-tree-2/index.ts",
+			"src/feature-libraries/editable-tree-2/proxies/index.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/editable-tree-2/proxies/index.ts",
+		"to": "src/feature-libraries/editable-tree-2/proxies/proxies.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/editable-tree-2/proxies/proxies.ts",
+			"src/feature-libraries/editable-tree-2/lazyTree.ts",
+			"src/feature-libraries/editable-tree-2/lazyField.ts",
+			"src/feature-libraries/node-key/index.ts",
+			"src/feature-libraries/node-key/nodeKeyIndex.ts",
+			"src/feature-libraries/editable-tree-2/index.ts",
+			"src/feature-libraries/editable-tree-2/proxies/index.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/modular-schema/comparison.ts",
+		"to": "src/feature-libraries/modular-schema/fieldKind.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/modular-schema/fieldKind.ts",
+			"src/feature-libraries/modular-schema/comparison.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/sequence-field/markListFactory.ts",
+		"to": "src/feature-libraries/sequence-field/utils.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/sequence-field/utils.ts",
+			"src/feature-libraries/sequence-field/markListFactory.ts"
+		]
+	},
+	{
+		"type": "cycle",
+		"from": "src/feature-libraries/sequence-field/moveEffectTable.ts",
+		"to": "src/feature-libraries/sequence-field/utils.ts",
+		"rule": {
+			"severity": "error",
+			"name": "no-circular"
+		},
+		"cycle": [
+			"src/feature-libraries/sequence-field/utils.ts",
+			"src/feature-libraries/sequence-field/moveEffectTable.ts"
+		]
+	}
+]

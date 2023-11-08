@@ -3,26 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
+import { ModelContainerRuntimeFactory, getDataStoreEntryPoint } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
-// eslint-disable-next-line import/no-deprecated
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces";
 import { InventoryListAppModel } from "./appModel";
 import { LegacyTreeInventoryListFactory } from "./legacyTreeInventoryList";
-import { TreeInventoryListFactory } from "./treeInventoryList";
+import { NewTreeInventoryListFactory } from "./newTreeInventoryList";
 
 export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
-export const treeInventoryListId = "tree-inventory-list";
+export const newTreeInventoryListId = "new-tree-inventory-list";
 
 export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
 	public constructor() {
 		super(
 			new Map([
 				LegacyTreeInventoryListFactory.registryEntry,
-				TreeInventoryListFactory.registryEntry,
+				NewTreeInventoryListFactory.registryEntry,
 			]), // registryEntries
 		);
 	}
@@ -35,24 +33,24 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 			LegacyTreeInventoryListFactory.type,
 		);
 		await legacyTreeInventoryList.trySetAlias(legacyTreeInventoryListId);
-		const treeInventoryList = await runtime.createDataStore(TreeInventoryListFactory.type);
-		await treeInventoryList.trySetAlias(treeInventoryListId);
+		const newTreeInventoryList = await runtime.createDataStore(
+			NewTreeInventoryListFactory.type,
+		);
+		await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
 	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		// eslint-disable-next-line import/no-deprecated
-		const legacyTreeInventoryList = await requestFluidObject<IInventoryList>(
-			await runtime.getRootDataStore(legacyTreeInventoryListId),
-			"",
+		const legacyTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
+			runtime,
+			legacyTreeInventoryListId,
 		);
-		// eslint-disable-next-line import/no-deprecated
-		const treeInventoryList = await requestFluidObject<IInventoryList>(
-			await runtime.getRootDataStore(treeInventoryListId),
-			"",
+		const newTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
+			runtime,
+			newTreeInventoryListId,
 		);
-		return new InventoryListAppModel(legacyTreeInventoryList, treeInventoryList);
+		return new InventoryListAppModel(legacyTreeInventoryList, newTreeInventoryList);
 	}
 }

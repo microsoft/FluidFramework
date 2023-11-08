@@ -145,30 +145,30 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.leaf.boolean",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 2
                     },
                     {
                       "name": "com.fluidframework.leaf.handle",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 3
                     },
                     {
                       "name": "com.fluidframework.leaf.null",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 4
                     },
                     {
                       "name": "com.fluidframework.leaf.number",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 0
                     },
                     {
                       "name": "com.fluidframework.leaf.string",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 1
                     }
                   ],
@@ -243,8 +243,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[]",
-                  "id": 2
+                  "version": 1,
+                  "data": [],
+                  "maxId": 2
                 },
                 "encoding": "utf-8"
               }

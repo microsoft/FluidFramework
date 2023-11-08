@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 /* eslint-disable no-bitwise */
 
 import {
@@ -16,6 +17,7 @@ import { SequencePlace, Side } from "../intervalCollection";
 
 /**
  * Basic interval abstraction
+ * @public
  */
 export interface IInterval {
 	/**
@@ -80,6 +82,9 @@ export const IntervalOpType = {
 	POSITION_REMOVE: "positionRemove",
 } as const;
 
+/**
+ * @public
+ */
 export enum IntervalType {
 	Simple = 0x0,
 
@@ -128,6 +133,9 @@ export interface ISerializedInterval {
 	properties?: PropertySet;
 }
 
+/**
+ * @public
+ */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
@@ -190,6 +198,7 @@ export type CompressedSerializedInterval =
 /**
  * @sealed
  * @deprecated The methods within have substitutions
+ * @public
  */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	/**

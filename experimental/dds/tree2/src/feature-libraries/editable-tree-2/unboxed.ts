@@ -6,11 +6,11 @@
 import { ITreeSubscriptionCursor, inCursorNode, EmptyKey } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { FieldKinds } from "../default-field-kinds";
-import { fail, oneFromSet } from "../../util";
+import { fail } from "../../util";
 import {
 	AllowedTypes,
-	FieldSchema,
-	TreeSchema,
+	TreeFieldSchema,
+	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 } from "../typed-schema";
@@ -22,7 +22,7 @@ import { makeField } from "./lazyField";
 /**
  * See {@link UnboxNode} for documentation on what unwrapping this performs.
  */
-export function unboxedTree<TSchema extends TreeSchema>(
+export function unboxedTree<TSchema extends TreeNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
@@ -34,7 +34,7 @@ export function unboxedTree<TSchema extends TreeSchema>(
 		cursor.enterField(EmptyKey);
 		const primaryField = makeField(
 			context,
-			schema.structFields.get(EmptyKey) ?? fail("invalid schema"),
+			schema.objectNodeFields.get(EmptyKey) ?? fail("invalid schema"),
 			cursor,
 		);
 		cursor.exitField();
@@ -49,26 +49,22 @@ export function unboxedTree<TSchema extends TreeSchema>(
  */
 export function unboxedUnion<TTypes extends AllowedTypes>(
 	context: Context,
-	schema: FieldSchema<FieldKind, TTypes>,
+	schema: TreeFieldSchema<FieldKind, TTypes>,
 	cursor: ITreeSubscriptionCursor,
 ): UnboxNodeUnion<TTypes> {
-	const type = oneFromSet(schema.types);
+	const type = schema.monomorphicChildType;
 	if (type !== undefined) {
-		return unboxedTree(
-			context,
-			context.schema.treeSchema.get(type) ?? fail("missing schema"),
-			cursor,
-		) as UnboxNodeUnion<TTypes>;
+		return unboxedTree(context, type, cursor) as UnboxNodeUnion<TTypes>;
 	}
 	return makeTree(context, cursor) as UnboxNodeUnion<TTypes>;
 }
 
 /**
  * @param context - the common context of the field.
- * @param schema - the FieldStoredSchema of the field.
+ * @param schema - the TreeFieldStoredSchema of the field.
  * @param cursor - the cursor, which must point to the field being proxified.
  */
-export function unboxedField<TSchema extends FieldSchema>(
+export function unboxedField<TSchema extends TreeFieldSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,

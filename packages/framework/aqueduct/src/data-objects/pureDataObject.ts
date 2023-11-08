@@ -27,6 +27,7 @@ import { DataObjectTypes, IDataObjectProps } from "./types";
  * you are creating another base data store class
  *
  * @typeParam I - The optional input types used to strongly type the data object
+ * @public
  */
 export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes>
 	extends TypedEventEmitter<I["Events"] & IEvent>

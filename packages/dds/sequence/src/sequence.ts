@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { assert, Deferred } from "@fluidframework/core-utils";
 import { bufferToString } from "@fluid-internal/client-utils";
 import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils";
@@ -29,7 +30,6 @@ import {
 	ISegment,
 	ISegmentAction,
 	LocalReferencePosition,
-	// eslint-disable-next-line import/no-deprecated
 	matchProperties,
 	MergeTreeDeltaType,
 	PropertySet,
@@ -96,6 +96,7 @@ const contentPath = "content";
  * - `event` - Various information on the segments that were modified.
  *
  * - `target` - The sequence itself.
+ * @public
  */
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
@@ -112,6 +113,9 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	);
 }
 
+/**
+ * @public
+ */
 export abstract class SharedSegmentSequence<T extends ISegment>
 	extends SharedObject<ISharedSegmentSequenceEvents>
 	implements ISharedIntervalCollection<SequenceInterval>, MergeTreeRevertibleDriver
@@ -148,7 +152,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 					if (
 						lastAnnotate &&
 						lastAnnotate.pos2 === r.position &&
-						// eslint-disable-next-line import/no-deprecated
 						matchProperties(lastAnnotate.props, props)
 					) {
 						lastAnnotate.pos2 += r.segment.cachedLength;
@@ -262,12 +265,14 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The inclusive start of the range to remove
 	 * @param end - The exclusive end of the range to remove
 	 */
-	public removeRange(start: number, end: number): IMergeTreeRemoveMsg {
-		return this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
+	public removeRange(start: number, end: number): void {
+		this.guardReentrancy(() => this.client.removeRangeLocal(start, end));
 	}
 
 	/**
-	 * @deprecated - The ability to create group ops will be removed in an upcoming release, as group ops are redundant with the native batching capabilities of the runtime
+	 * @deprecated The ability to create group ops will be removed in an upcoming
+	 * release, as group ops are redundant with the native batching capabilities
+	 * of the runtime
 	 */
 	public groupOperation(groupOp: IMergeTreeGroupMsg) {
 		this.guardReentrancy(() => this.client.localTransaction(groupOp));
@@ -315,7 +320,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		end: number,
 		props: PropertySet,
 		combiningOp?: ICombiningOp,
-	) {
+	): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props, combiningOp));
 	}
 
@@ -393,10 +398,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		);
 	}
 
-	/**
-	 * @deprecated - This method will no longer be public in an upcoming release as it is not safe to use outside of this class
-	 */
-	public submitSequenceMessage(message: IMergeTreeOp) {
+	private submitSequenceMessage(message: IMergeTreeOp) {
 		if (!this.isAttached()) {
 			return;
 		}
@@ -407,7 +409,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		// if loading isn't complete, we need to cache
 		// local ops until loading is complete, and then
-		// they will be resent
+		// they will be present
 		if (!this.loadedDeferred.isCompleted) {
 			this.loadedDeferredOutgoingOps.push(metadata ? [translated, metadata] : translated);
 		} else {
@@ -461,7 +463,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param refPos - The reference position to insert the segment at
 	 * @param segment - The segment to insert
 	 */
-	public insertAtReferencePosition(pos: ReferencePosition, segment: T) {
+	public insertAtReferencePosition(pos: ReferencePosition, segment: T): void {
 		this.guardReentrancy(() => this.client.insertAtReferencePositionLocal(pos, segment));
 	}
 	/**
@@ -469,7 +471,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param start - The position to insert the segment at
 	 * @param spec - The segment to inserts spec
 	 */
-	public insertFromSpec(pos: number, spec: IJSONSegment) {
+	public insertFromSpec(pos: number, spec: IJSONSegment): void {
 		const segment = this.segmentFromSpec(spec);
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
@@ -539,7 +541,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * @param end - The end of the range to replace
 	 * @param segment - The segment that will replace the range
 	 */
-	protected replaceRange(start: number, end: number, segment: ISegment) {
+	protected replaceRange(start: number, end: number, segment: ISegment): void {
 		// Insert at the max end of the range when start > end, but still remove the range later
 		const insertIndex: number = Math.max(start, end);
 
@@ -614,7 +616,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 							m.minimumSequenceNumber < collabWindow.minSeq ||
 							m.referenceSequenceNumber < collabWindow.minSeq ||
 							m.sequenceNumber <= collabWindow.minSeq ||
-							m.sequenceNumber <= collabWindow.currentSeq
+							// sequenceNumber could be the same if messages are part of a grouped batch
+							m.sequenceNumber < collabWindow.currentSeq
 						) {
 							throw new Error(
 								`Invalid catchup operations in snapshot: ${JSON.stringify({

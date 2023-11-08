@@ -5,17 +5,17 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	IEditableForest,
 	moveToDetachedField,
 	ForestEvents,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKey,
+	IForestSubscription,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { DefaultEditBuilder } from "../default-field-kinds";
+import { IDefaultEditBuilder } from "../default-field-kinds";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
-import { DocumentSchema } from "../typed-schema";
+import { TreeSchema } from "../typed-schema";
 import { disposeSymbol, IDisposable } from "../../util";
 import { TreeField } from "./editableTreeTypes";
 import { makeField } from "./lazyField";
@@ -37,7 +37,7 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
 	 * Schema used within this context.
 	 * All data must conform to these schema.
 	 */
-	readonly schema: DocumentSchema;
+	readonly schema: TreeSchema;
 
 	// TODO: Add more members:
 	// - transaction APIs
@@ -65,9 +65,9 @@ export class Context implements TreeContext, IDisposable {
 	 * If present, clients may query the {@link LocalNodeKey} of a node directly via the {@link localNodeKeySymbol}.
 	 */
 	public constructor(
-		public readonly schema: DocumentSchema,
-		public readonly forest: IEditableForest,
-		public readonly editor: DefaultEditBuilder,
+		public readonly schema: TreeSchema,
+		public readonly forest: IForestSubscription,
+		public readonly editor: IDefaultEditBuilder,
 		public readonly nodeKeys: NodeKeys,
 		public readonly nodeKeyFieldKey: FieldKey,
 	) {
@@ -126,7 +126,7 @@ export class Context implements TreeContext, IDisposable {
 	 * FieldSource used to get a FieldGenerator to populate required fields during procedural contextual data generation.
 	 */
 	// TODO: Use this to automatically provide node keys where required.
-	public fieldSource?(key: FieldKey, schema: FieldStoredSchema): undefined | FieldGenerator;
+	public fieldSource?(key: FieldKey, schema: TreeFieldStoredSchema): undefined | FieldGenerator;
 }
 
 /**
@@ -141,9 +141,9 @@ export class Context implements TreeContext, IDisposable {
  * This is necessary for supporting using this tree across edits to the forest, and not leaking memory.
  */
 export function getTreeContext(
-	schema: DocumentSchema,
-	forest: IEditableForest,
-	editor: DefaultEditBuilder,
+	schema: TreeSchema,
+	forest: IForestSubscription,
+	editor: IDefaultEditBuilder,
 	nodeKeyManager: NodeKeyManager,
 	nodeKeyFieldKey: FieldKey,
 ): Context {

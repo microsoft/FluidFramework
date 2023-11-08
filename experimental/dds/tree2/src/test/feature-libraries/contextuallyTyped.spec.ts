@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { MockHandle, validateAssertionError } from "@fluidframework/test-runtime-utils";
+import { MockHandle } from "@fluidframework/test-runtime-utils";
 import { EmptyKey, MapTree, ValueSchema } from "../../core";
 
 import {
@@ -17,7 +17,7 @@ import {
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../feature-libraries/contextuallyTyped";
-import { FieldKinds, FieldSchema, jsonableTreeFromCursor } from "../../feature-libraries";
+import { FieldKinds, TreeFieldSchema, jsonableTreeFromCursor } from "../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../domains";
 
 describe("ContextuallyTyped", () => {
@@ -41,17 +41,15 @@ describe("ContextuallyTyped", () => {
 		assert(!isFluidHandle(undefined));
 		assert(!isFluidHandle(null));
 		assert(!isFluidHandle([]));
+		assert(!isFluidHandle({ get: () => {} }));
+		assert(!isFluidHandle({ IFluidHandle: 5, get: () => {} }));
 		assert(isFluidHandle(new MockHandle(5)));
 		assert(!isFluidHandle({ IFluidHandle: 5 }));
 		assert(!isFluidHandle({ IFluidHandle: {} }));
 		const loopy = { IFluidHandle: {} };
 		loopy.IFluidHandle = loopy;
 		// isFluidHandle has extra logic to check the handle is valid if it passed the detection via cyclic ref.
-		// Thus this case asserts:
-		assert.throws(
-			() => isFluidHandle(loopy),
-			(e: Error) => validateAssertionError(e, /IFluidHandle/),
-		);
+		assert(!isFluidHandle(loopy));
 	});
 
 	it("allowsValue", () => {
@@ -105,8 +103,8 @@ describe("ContextuallyTyped", () => {
 			libraries: [leaf.library],
 		});
 		const numberSequence = SchemaBuilder.sequence(leaf.number);
-		const numbersObject = builder.struct("numbers", { numbers: numberSequence });
-		const schema = builder.toDocumentSchema(numberSequence);
+		const numbersObject = builder.object("numbers", { numbers: numberSequence });
+		const schema = builder.intoSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([numbersObject.name]), {
 			numbers: [],
 		});
@@ -120,8 +118,8 @@ describe("ContextuallyTyped", () => {
 			libraries: [leaf.library],
 		});
 		const numberSequence = SchemaBuilder.sequence(leaf.number);
-		const primaryObject = builder.struct("numbers", { [EmptyKey]: numberSequence });
-		const schema = builder.toDocumentSchema(numberSequence);
+		const primaryObject = builder.object("numbers", { [EmptyKey]: numberSequence });
+		const schema = builder.intoSchema(numberSequence);
 		const mapTree = applyTypesFromContext({ schema }, new Set([primaryObject.name]), []);
 		const expected: MapTree = { fields: new Map(), type: primaryObject.name, value: undefined };
 		assert.deepEqual(mapTree, expected);
@@ -133,11 +131,11 @@ describe("ContextuallyTyped", () => {
 				scope: "cursorFromContextualData",
 				libraries: [leaf.library],
 			});
-			const nodeSchema = builder.struct("node", {
+			const nodeSchema = builder.object("node", {
 				foo: leaf.string,
 			});
 
-			const nodeSchemaData = builder.toDocumentSchema(builder.optional(nodeSchema));
+			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));
 			const contextualData: ContextuallyTypedNodeDataObject = {};
 
 			const generatedField = [
@@ -167,12 +165,12 @@ describe("ContextuallyTyped", () => {
 				libraries: [leaf.library],
 			});
 
-			const nodeSchema = builder.structRecursive("node", {
+			const nodeSchema = builder.objectRecursive("node", {
 				foo: builder.required(leaf.string),
-				child: FieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
+				child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => nodeSchema]),
 			});
 
-			const nodeSchemaData = builder.toDocumentSchema(builder.optional(nodeSchema));
+			const nodeSchemaData = builder.intoSchema(builder.optional(nodeSchema));
 			const contextualData: ContextuallyTypedNodeDataObject = { child: {} };
 
 			const generatedField = [

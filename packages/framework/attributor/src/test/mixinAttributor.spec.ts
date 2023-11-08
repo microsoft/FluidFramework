@@ -92,9 +92,7 @@ describe("mixinAttributor", () => {
 			context,
 			registryEntries: [],
 			containerScope: getScope(),
-			provideEntryPoint: async () => ({
-				myProp: "myValue",
-			}),
+			provideEntryPoint: async () => ({}),
 			existing: false,
 		});
 
@@ -125,9 +123,7 @@ describe("mixinAttributor", () => {
 			context,
 			registryEntries: [],
 			containerScope: getScope(),
-			provideEntryPoint: async () => ({
-				myProp: "myValue",
-			}),
+			provideEntryPoint: async () => ({}),
 			existing: false,
 		});
 
@@ -207,9 +203,7 @@ describe("mixinAttributor", () => {
 			context,
 			registryEntries: [],
 			containerScope: getScope(),
-			provideEntryPoint: async () => ({
-				myProp: "myValue",
-			}),
+			provideEntryPoint: async () => ({}),
 			existing: false,
 		});
 
@@ -267,9 +261,7 @@ describe("mixinAttributor", () => {
 					context,
 					registryEntries: [],
 					containerScope: getScope(),
-					provideEntryPoint: async () => ({
-						myProp: "myValue",
-					}),
+					provideEntryPoint: async () => ({}),
 					existing: false,
 				});
 

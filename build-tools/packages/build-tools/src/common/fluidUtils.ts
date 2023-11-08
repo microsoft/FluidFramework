@@ -24,7 +24,7 @@ async function isFluidRootPackage(dir: string) {
 	}
 
 	const parsed = await readJson(filename);
-	if (parsed.name === "root" && parsed.private === true) {
+	if (parsed.private === true) {
 		return true;
 	}
 	traceInit(`InferRoot: package.json not matched`);

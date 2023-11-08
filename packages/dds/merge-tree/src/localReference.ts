@@ -5,12 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { UsageError } from "@fluidframework/telemetry-utils";
-import { List, ListNode, walkList } from "./collections";
+import { DoublyLinkedList, ListNode, walkList } from "./collections";
 import { ISegment } from "./mergeTreeNodes";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking";
 import { ICombiningOp, ReferenceType } from "./ops";
 import { addProperties, PropertySet } from "./properties";
-import { refHasTileLabels, ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
+import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions";
 
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide
@@ -150,9 +150,9 @@ export function createDetachedLocalReferencePosition(
 }
 
 interface IRefsAtOffset {
-	before?: List<LocalReference>;
-	at?: List<LocalReference>;
-	after?: List<LocalReference>;
+	before?: DoublyLinkedList<LocalReference>;
+	at?: DoublyLinkedList<LocalReference>;
+	after?: DoublyLinkedList<LocalReference>;
 }
 
 function assertLocalReferences(lref: any): asserts lref is LocalReference {
@@ -224,14 +224,6 @@ export class LocalReferenceCollection {
 		validateRefCount?.(seg2.localRefs);
 	}
 
-	/**
-	 * The number of references whose reference type is one of the hierarchical
-	 * reference types, currently only {@link ReferenceType.Tile}.
-	 *
-	 * @remarks This field should only be accessed by mergeTree.
-	 * @internal
-	 */
-	public hierRefCount: number = 0;
 	private readonly refsByOffset: (IRefsAtOffset | undefined)[];
 	private refCount: number = 0;
 
@@ -333,15 +325,12 @@ export class LocalReferenceCollection {
 			lref.link(this.segment, offset, undefined);
 		} else {
 			const refsAtOffset = (this.refsByOffset[offset] = this.refsByOffset[offset] ?? {
-				at: new List(),
+				at: new DoublyLinkedList(),
 			});
-			const atRefs = (refsAtOffset.at = refsAtOffset.at ?? new List());
+			const atRefs = (refsAtOffset.at = refsAtOffset.at ?? new DoublyLinkedList());
 
 			lref.link(this.segment, offset, atRefs.push(lref).last);
 
-			if (refHasTileLabels(lref)) {
-				this.hierRefCount++;
-			}
 			this.refCount++;
 		}
 		validateRefCount?.(this);
@@ -360,9 +349,6 @@ export class LocalReferenceCollection {
 
 			lref.link(undefined, 0, undefined);
 
-			if (refHasTileLabels(lref)) {
-				this.hierRefCount--;
-			}
 			this.refCount--;
 			validateRefCount?.(this);
 			return lref;
@@ -385,9 +371,7 @@ export class LocalReferenceCollection {
 		if (!other || other.empty) {
 			return;
 		}
-		this.hierRefCount += other.hierRefCount;
 		this.refCount += other.refCount;
-		other.hierRefCount = 0;
 		other.refCount = 0;
 		for (const lref of other) {
 			assertLocalReferences(lref);
@@ -427,11 +411,9 @@ export class LocalReferenceCollection {
 		const offset = lref.getOffset();
 		const refsAtOffset = this.refsByOffset[offset];
 		if (
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
-			refsAtOffset?.before?.includes(listNode) ||
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when the first clause returns false.
-			refsAtOffset?.at?.includes(listNode) ||
-			refsAtOffset?.after?.includes(listNode)
+			!!refsAtOffset?.before?.includes(listNode) ||
+			!!refsAtOffset?.at?.includes(listNode) ||
+			!!refsAtOffset?.after?.includes(listNode)
 		) {
 			return true;
 		}
@@ -461,10 +443,6 @@ export class LocalReferenceCollection {
 			for (const lref of localRefs) {
 				assertLocalReferences(lref);
 				lref.link(splitSeg, lref.getOffset() - offset, lref.getListNode());
-				if (refHasTileLabels(lref)) {
-					this.hierRefCount--;
-					localRefs.hierRefCount++;
-				}
 				this.refCount--;
 				localRefs.refCount++;
 			}
@@ -480,7 +458,7 @@ export class LocalReferenceCollection {
 	 * @internal
 	 */
 	public addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]) {
-		const beforeRefs = this.refsByOffset[0]?.before ?? new List();
+		const beforeRefs = this.refsByOffset[0]?.before ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[0]?.before === undefined) {
 			const refsAtOffset = (this.refsByOffset[0] ??= { before: beforeRefs });
@@ -500,9 +478,6 @@ export class LocalReferenceCollection {
 							? beforeRefs.unshift(lref)?.first
 							: beforeRefs.insertAfter(precedingRef, lref)?.first;
 					lref.link(this.segment, 0, precedingRef);
-					if (refHasTileLabels(lref)) {
-						this.hierRefCount++;
-					}
 					this.refCount++;
 					lref.callbacks?.afterSlide?.(lref);
 				} else {
@@ -518,7 +493,7 @@ export class LocalReferenceCollection {
 	 */
 	public addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]) {
 		const lastOffset = this.segment.cachedLength - 1;
-		const afterRefs = this.refsByOffset[lastOffset]?.after ?? new List();
+		const afterRefs = this.refsByOffset[lastOffset]?.after ?? new DoublyLinkedList();
 
 		if (this.refsByOffset[lastOffset]?.after === undefined) {
 			const refsAtOffset = (this.refsByOffset[lastOffset] ??= { after: afterRefs });
@@ -534,9 +509,6 @@ export class LocalReferenceCollection {
 					lref.callbacks?.beforeSlide?.(lref);
 					afterRefs.push(lref);
 					lref.link(this.segment, lastOffset, afterRefs.last);
-					if (refHasTileLabels(lref)) {
-						this.hierRefCount++;
-					}
 					this.refCount++;
 					lref.callbacks?.afterSlide?.(lref);
 				} else {
@@ -577,7 +549,8 @@ export class LocalReferenceCollection {
 		}
 		let offset = start?.getOffset() ?? (forward ? 0 : this.segment.cachedLength - 1);
 
-		const offsetPositions: List<IRefsAtOffset[keyof IRefsAtOffset]> = new List();
+		const offsetPositions: DoublyLinkedList<IRefsAtOffset[keyof IRefsAtOffset]> =
+			new DoublyLinkedList();
 		offsetPositions.push(
 			this.refsByOffset[offset]?.before,
 			this.refsByOffset[offset]?.at,
@@ -599,7 +572,7 @@ export class LocalReferenceCollection {
 			}
 		}
 
-		const listWalker = (pos: List<LocalReference>) => {
+		const listWalker = (pos: DoublyLinkedList<LocalReference>) => {
 			return walkList(
 				pos,
 				(node) => visitor(node.data),

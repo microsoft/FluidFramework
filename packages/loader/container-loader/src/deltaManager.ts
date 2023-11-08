@@ -301,8 +301,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return message.clientSequenceNumber;
 	}
 
-	public submitSignal(content: any) {
-		return this.connectionManager.submitSignal(content);
+	public submitSignal(content: any, targetClientId?: string) {
+		return this.connectionManager.submitSignal(content, targetClientId);
 	}
 
 	public flush() {

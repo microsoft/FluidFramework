@@ -3,53 +3,58 @@
  * Licensed under the MIT License.
  */
 
-import { combineReducersAsync } from "@fluid-internal/stochastic-test-utils";
+import { strict as assert } from "assert";
+import { AsyncReducer, combineReducers } from "@fluid-internal/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
-import { singleTextCursor } from "../../../feature-libraries";
-import { brand, fail } from "../../../util";
+import { DownPath, TreeField, TreeNode, singleTextCursor } from "../../../feature-libraries";
+import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
-import { FieldUpPath } from "../../../core";
+import { Revertible } from "../../../core";
 import {
 	FieldEdit,
 	FuzzDelete,
 	FuzzFieldChange,
+	FuzzSet,
 	FuzzTransactionType,
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
+import {
+	fuzzNode,
+	fuzzViewFromTree,
+	getEditableTree,
+	isRevertibleSharedTreeView,
+} from "./fuzzUtils";
 
-export const fuzzReducer = combineReducersAsync<Operation, DDSFuzzTestState<SharedTreeFactory>>({
-	edit: async (state, operation) => {
+const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
+	edit: (state, operation) => {
 		const { contents } = operation;
 		switch (contents.type) {
 			case "fieldEdit": {
-				const tree = state.client.channel;
-				applyFieldEdit(tree.view, contents);
+				applyFieldEdit(fuzzViewFromTree(state.client.channel), contents);
 				break;
 			}
 			default:
 				break;
 		}
-		return state;
 	},
-	transaction: async (state, operation) => {
-		const { contents } = operation;
-		const tree = state.client.channel;
-		applyTransactionEdit(tree.view, contents);
-		return state;
+	transaction: (state, operation) => {
+		applyTransactionEdit(fuzzViewFromTree(state.client.channel), operation.contents);
 	},
-	undoRedo: async (state, operation) => {
-		const { contents } = operation;
-		const tree = state.client.channel;
-		applyUndoRedoEdit(tree.view, contents);
-		return state;
+	undoRedo: (state, operation) => {
+		const view = fuzzViewFromTree(state.client.channel);
+		assert(isRevertibleSharedTreeView(view));
+		applyUndoRedoEdit(view.undoStack, view.redoStack, operation.contents);
 	},
-	synchronizeTrees: async (state) => {
+	synchronizeTrees: (state) => {
 		applySynchronizationOp(state);
-		return state;
 	},
 });
+export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<SharedTreeFactory>> = async (
+	state,
+	operation,
+) => syncFuzzReducer(state, operation);
 
 export function checkTreesAreSynchronized(trees: readonly ISharedTree[]) {
 	for (const tree of trees) {
@@ -68,12 +73,16 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
 	}
 }
 
+/**
+ * Assumes tree is using the fuzzSchema.
+ * TODO: Maybe take in a schema aware strongly typed Tree node or field.
+ */
 export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): void {
 	switch (fieldEdit.change.type) {
 		case "sequence":
 			applySequenceFieldEdit(tree, fieldEdit.change.edit);
 			break;
-		case "value":
+		case "required":
 			applyValueFieldEdit(tree, fieldEdit.change.edit);
 			break;
 		case "optional":
@@ -87,19 +96,34 @@ export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): voi
 function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange): void {
 	switch (change.type) {
 		case "insert": {
-			const field = tree.editor.sequenceField({ parent: change.parent, field: change.field });
-			field.insert(
-				change.index,
-				singleTextCursor({ type: brand("Test"), value: change.value }),
-			);
+			assert(change.parent !== undefined, "Sequence change should not occur at the root.");
+
+			const parent = navigateToNode(tree, change.parent);
+			assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
+			const field = parent.boxedSequenceChildren;
+			field.insertAt(change.index, [singleTextCursor(change.value) as any]);
 			break;
 		}
 		case "delete": {
-			const field = tree.editor.sequenceField({
-				parent: change.firstNode?.parent,
-				field: change.firstNode?.parentField,
-			});
-			field.delete(change.firstNode?.parentIndex, change.count);
+			const firstNode = navigateToNode(tree, change.firstNode);
+			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
+			const { parent: field, index } = firstNode.parentField;
+			assert(
+				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
+				"Defined down-path should point to a valid parent",
+			);
+			field.removeRange(index, change.count);
+			break;
+		}
+		case "move": {
+			const firstNode = navigateToNode(tree, change.firstNode);
+			assert(firstNode !== undefined, "Down-path should point to a valid firstNode");
+			const { parent: field, index } = firstNode.parentField;
+			assert(
+				field?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren),
+				"Defined down-path should point to a valid parent",
+			);
+			field.moveRangeToIndex(change.dstIndex, index, change.count);
 			break;
 		}
 		default:
@@ -107,33 +131,73 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 	}
 }
 
-function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzDelete): void {
-	const fieldPath: FieldUpPath = {
-		parent: change.firstNode?.parent,
-		field: change.firstNode?.parentField,
-	};
-	const field = tree.editor.sequenceField(fieldPath);
-	field.delete(change.firstNode?.parentIndex, change.count);
+function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzSet): void {
+	assert(change.parent !== undefined, "Value change should not occur at the root.");
+	const parent = navigateToNode(tree, change.parent);
+	assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
+	const field = parent.tryGetField(change.key);
+	assert(
+		field?.is(fuzzNode.objectNodeFieldsObject.requiredChild),
+		"Parent of Value change should have an optional field to modify",
+	);
+	field.content = singleTextCursor(change.value) as any;
 }
 
-function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange): void {
+function navigateToNode(tree: ISharedTreeView, path: DownPath | undefined): TreeNode | undefined {
+	const rootField = getEditableTree(tree);
+	if (path === undefined) {
+		return undefined;
+	}
+
+	const finalLocation = path.reduce<{
+		field: TreeField;
+		containedNode: TreeNode | undefined;
+	}>(
+		({ containedNode }, nextStep) => {
+			const childField = containedNode?.tryGetField(nextStep.field);
+			// Checking "=== true" causes tsc to fail to typecheck, as it is no longer able to narrow according
+			// to the .is typeguard.
+			/* eslint-disable @typescript-eslint/strict-boolean-expressions */
+			if (childField?.is(fuzzNode.objectNodeFieldsObject.sequenceChildren)) {
+				assert(nextStep.index !== undefined);
+				return {
+					field: childField,
+					containedNode: childField.at(nextStep.index),
+				};
+			} else if (
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
+				childField?.is(fuzzNode.objectNodeFieldsObject.optionalChild) ||
+				childField?.is(fuzzNode.objectNodeFieldsObject.requiredChild)
+			) {
+				return { field: childField, containedNode: childField.content };
+			}
+			/* eslint-enable @typescript-eslint/strict-boolean-expressions */
+
+			fail(`Unexpected field type: ${childField?.key}`);
+		},
+		{ field: rootField, containedNode: rootField.content },
+	);
+
+	return finalLocation.containedNode;
+}
+
+function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDelete): void {
 	switch (change.type) {
-		case "insert": {
-			const fieldPath: FieldUpPath = {
-				parent: change.parent,
-				field: change.field,
-			};
-			const field = tree.editor.optionalField(fieldPath);
-			field.set(singleTextCursor({ type: brand("Test"), value: change.value }), false);
+		case "set": {
+			const rootField = getEditableTree(tree);
+			if (change.parent === undefined) {
+				rootField.content = singleTextCursor(change.value) as any;
+			} else {
+				const parent = navigateToNode(tree, change.parent);
+				assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
+				parent.boxedOptionalChild.content = singleTextCursor(change.value) as any;
+			}
 			break;
 		}
 		case "delete": {
-			const fieldPath: FieldUpPath = {
-				parent: change.firstNode?.parent,
-				field: change.firstNode?.parentField,
-			};
-			const field = tree.editor.optionalField(fieldPath);
-			field.set(undefined, true);
+			const field = navigateToNode(tree, change.firstNode)?.parentField.parent;
+			assert(field?.is(fuzzNode.objectNodeFieldsObject.optionalChild));
+			field.content = undefined;
 			break;
 		}
 		default:
@@ -160,14 +224,18 @@ export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransa
 	}
 }
 
-export function applyUndoRedoEdit(tree: ISharedTreeView, contents: FuzzUndoRedoType): void {
+export function applyUndoRedoEdit(
+	undoStack: Revertible[],
+	redoStack: Revertible[],
+	contents: FuzzUndoRedoType,
+): void {
 	switch (contents.type) {
 		case "undo": {
-			tree.undo();
+			undoStack.pop()?.revert();
 			break;
 		}
 		case "redo": {
-			tree.redo();
+			redoStack.pop()?.revert();
 			break;
 		}
 		default:

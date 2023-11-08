@@ -5,10 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKindIdentifier,
-	fieldSchema,
-	SchemaData,
+	TreeStoredSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
 } from "../../core";
@@ -88,7 +87,7 @@ export class FieldKindWithEditor<
 		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
 		private readonly allowsTreeSupersetOf: (
 			originalTypes: TreeTypeSet,
-			superset: FieldStoredSchema,
+			superset: TreeFieldStoredSchema,
 		) => boolean,
 		public readonly handlesEditsFrom: ReadonlySet<FieldKindIdentifier>,
 	) {
@@ -101,11 +100,16 @@ export class FieldKindWithEditor<
 	 */
 	public allowsFieldSuperset(
 		policy: FullSchemaPolicy,
-		originalData: SchemaData,
+		originalData: TreeStoredSchema,
 		originalTypes: TreeTypeSet,
-		superset: FieldStoredSchema,
+		superset: TreeFieldStoredSchema,
 	): boolean {
-		if (isNeverField(policy, originalData, fieldSchema(this, originalTypes))) {
+		if (
+			isNeverField(policy, originalData, {
+				kind: this,
+				types: originalTypes,
+			})
+		) {
 			return true;
 		}
 		if (isNeverField(policy, originalData, superset)) {

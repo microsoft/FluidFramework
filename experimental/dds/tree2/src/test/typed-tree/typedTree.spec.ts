@@ -4,27 +4,27 @@
  */
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { ForestType } from "../../shared-tree";
+import { ForestType, TypedTreeFactory } from "../../shared-tree";
 import { AllowedUpdateType } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
-import { TypedTreeFactory } from "../../typed-tree";
-import { leaf, SchemaBuilder } from "../../domains";
+import { SchemaBuilder } from "../../domains";
 
 describe("TypedTree", () => {
-	it("editable-tree-2-end-to-end", () => {
+	it("typed-tree end to end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e" });
-		const schema = builder.toDocumentSchema(leaf.number);
+		const Node = builder.object("Node", { item: builder.number });
+		const schema = builder.intoSchema(Node);
 		const factory = new TypedTreeFactory({
 			jsonValidator: typeboxValidator,
 			forest: ForestType.Reference,
 			subtype: "test",
 		});
-		const root = factory.create(new MockFluidDataStoreRuntime(), "the tree").schematize({
+		const view = factory.create(new MockFluidDataStoreRuntime(), "the tree").schematize({
 			allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
-			initialTree: 1,
+			initialTree: { item: 1 },
 			schema,
 		});
-		root.content += 1;
-		assert.equal(root.content, 2);
+		view.root.item += 1;
+		assert.equal(view.root.item, 2);
 	});
 });
