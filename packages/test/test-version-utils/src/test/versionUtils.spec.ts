@@ -16,7 +16,7 @@ import { getRequestedVersion, versionHasMovedSparsedMatrix } from "../versionUti
  * public or internal version is adjusted by the `requested` value. This parameter has no effect if `requested` is a
  * string value or if `baseVersion` is not a Fluid internal version.
  * @param expectedVersion - The version that we expect to be returned from `getRequestedVersion()`.
- * 
+ *
  */
 const checkRequestedVersionSatisfies = (
 	baseVersion,
@@ -191,7 +191,7 @@ describe("versionUtils", () => {
 				"2.0.0-internal.6.2.0",
 				-3,
 				adjustPublicMajor,
-				"^2.0.0-internal.3.0.0",
+				"^2.0.0-internal.3.0.0-0",
 			);
 		});
 
@@ -228,7 +228,7 @@ describe("versionUtils", () => {
 		it("bumping public releases (minor)", () => {
 			const adjustPublicMajor = false;
 
-			checkRequestedVersionSatisfies("0.59.1000", -1, adjustPublicMajor, "^0.58.0");
+			checkRequestedVersionSatisfies("0.59.1000", -1, adjustPublicMajor, "^0.58.0-0");
 			checkRequestedVersionSatisfies("0.59.2000", -1, adjustPublicMajor, "^0.58.0");
 			checkRequestedVersionSatisfies("0.59.2000", -1, adjustPublicMajor, "^0.58.0");
 		});
@@ -239,7 +239,7 @@ describe("versionUtils", () => {
 			checkRequestedVersionSatisfies("0.59.1001", -1, adjustPublicMajor, "^0.58.0");
 			checkRequestedVersionSatisfies("0.59.1002", -1, adjustPublicMajor, "^0.58.0");
 			checkRequestedVersionSatisfies("1.1.0", -1, adjustPublicMajor, "^0.59.0");
-			checkRequestedVersionSatisfies("2.4.5", -1, adjustPublicMajor, "^1.0.0");
+			checkRequestedVersionSatisfies("2.4.5", -1, adjustPublicMajor, "^1.0.0-0");
 		});
 
 		it("bumping down public releases (prerelease/dev)", () => {
