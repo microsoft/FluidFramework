@@ -3,6 +3,6 @@
 "@fluidframework/container-runtime": major
 ---
 
-Remove `ContainerRuntime.load(...)`
+Removed `ContainerRuntime.load(...)`
 
 The static method `ContainerRuntime.load(...)` has been removed. Please migrate all usage of this method to `ContainerRuntime.loadRuntime(...)`.
