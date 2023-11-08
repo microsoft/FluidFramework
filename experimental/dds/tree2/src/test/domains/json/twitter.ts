@@ -420,14 +420,16 @@ function generateTwitterStatus(
 	}
 
 	if (shouldAddHashtagEntity) {
-		// TODO: 'push' is a painful omission from SharedTreeList<T>.
+		// TODO: Misalignment between SharedListNode<T> and Array<T> is painful.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6212/
 		(status.entities.hashtags as unknown as any[]).push({
 			text: random.string(random.integer(2, 30), alphabet),
 			indices: [Math.floor(random.integer(0, 199)), Math.floor(random.integer(0, 199))],
 		});
 	}
 	if (shouldAddUrlEntity) {
-		// TODO: 'push' is a painful omission from SharedTreeList<T>.
+		// TODO: Misalignment between SharedListNode<T> and Array<T> is painful.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6212/
 		(status.entities.urls as unknown as any[]).push({
 			url: "http://t.co/ZkU4TZCGPG",
 			expanded_url: "http://www.tepco.co.jp/nu/fukushima-np/review/images/review1_01.gif",
@@ -490,7 +492,7 @@ function generateTwitterStatus(
 			mediaEntity.source_status_id_str = getRandomNumberString(random, 18, 18);
 			mediaEntity.source_status_id = Number(mediaEntity.source_status_id_str);
 		}
-		status.entities.media = [mediaEntity] as any; // TODO: any[] does satisfy SharedTreeList
+		status.entities.media = [mediaEntity] as any; // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
 	}
 
 	// Now that 'status' is fully constructed, cast from Partial<TwitterStatus> to a full TwitterStatus.
@@ -563,12 +565,14 @@ function generateTwitterUser(
 					url: "http://t.co/V4oyL0xtZk",
 					expanded_url: "http://astore.amazon.co.jp/furniturewood-22",
 					display_url: "astore.amazon.co.jp/furniturewood-…",
-					indices: [random.integer(0, 199), random.integer(0, 199)] as any,
+					indices: [random.integer(0, 199), random.integer(0, 199)] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
 				},
-			] as any,
+			] as any, // TODO - remove cast: https://dev.azure.com/fluidframework/internal/_workitems/edit/6211/
 		};
 	}
 	if (shouldAddDescriptionUrlsEntity) {
+		// TODO: Misalignment between SharedListNode<T> and Array<T> is painful.
+		// https://dev.azure.com/fluidframework/internal/_workitems/edit/6212/
 		(user.entities.description.urls as unknown as any[]).push({
 			url: "http://t.co/8E91tqoeKX",
 			expanded_url: "http://ameblo.jp/2no38mae/",
