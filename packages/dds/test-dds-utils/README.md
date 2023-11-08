@@ -1,4 +1,4 @@
-# @fluid-internal/test-dds-utils
+# @fluid-private/test-dds-utils
 
 Utilities for writing unit tests for DDS in Fluid Framework.
 

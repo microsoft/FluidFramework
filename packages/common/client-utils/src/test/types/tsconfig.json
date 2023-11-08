@@ -4,10 +4,7 @@
 		"../../../../../../common/build/build-common/tsconfig.test.json",
 	],
 	"include": ["./**/*"],
-    "exclude": [
-        "dist",
-        "node_modules"
-    ],
+	"exclude": ["dist", "node_modules"],
 	"references": [
 		{
 			"path": "../../..",
@@ -15,7 +12,7 @@
 	],
 	"compilerOptions": {
 		"rootDir": "./",
-    "outDir": "../../../dist/test/types",
+		"outDir": "../../../dist/test/types",
 		"types": [],
 	},
 }
