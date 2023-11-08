@@ -272,8 +272,8 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
  * the next or previous major versions by providing positive/negative integers in the `requested` parameter.
  *
  * @param baseVersion - The base version to move from (eg. "0.60.0")
- * @param requested - If the value is a number, the baseVersion will be adjusted up (for positive values) or down (for
- * negative values). If the value is a string then it will be returned as-is.
+ * @param requested - If the value is a negative number, the baseVersion will be adjusted down.
+ * If the value is a string then it will be returned as-is. Throws on positive number.
  * @param adjustPublicMajor - If `baseVersion` is a Fluid internal version, then this boolean controls whether the
  * public or internal version is adjusted by the `requested` value. This parameter has no effect if `requested` is a
  * string value or if `baseVersion` is not a Fluid internal version.
@@ -292,18 +292,25 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
  * const newVersion = getRequestedVersion("2.3.5", -2); // "^0.59.0"
  * ```
  */
-export function getRequestedVersion(baseVersion: string, requested?: number | string): string {
+export function getRequestedVersion(
+	baseVersion: string,
+	requested?: number | string,
+	adjustPublicMajor: boolean = false,
+): string {
 	if (requested === undefined || requested === 0) {
 		return baseVersion;
 	}
 	if (typeof requested === "string") {
 		return requested;
 	}
+	if (requested > 0) {
+		throw new Error("Only negative values are supported for `requested` param.");
+	}
 
 	const scheme = detectVersionScheme(baseVersion);
 
 	// if the baseVersion passed is an internal version
-	if (scheme === "internal" || scheme === "internalPrerelease") {
+	if (adjustPublicMajor === false && (scheme === "internal" || scheme === "internalPrerelease")) {
 		const [publicVersion, internalVersion /* prereleaseIdentifier */] = fromInternalScheme(
 			baseVersion,
 			true,
