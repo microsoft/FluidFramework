@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "build:genver"];
+const tscDependsOn = ["^tsc", "^api", "build:genver"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -11,7 +11,7 @@ const tscDependsOn = ["^tsc", "build:genver"];
 module.exports = {
 	tasks: {
 		"ci:build": {
-			dependsOn: ["compile", "eslint", "ci:build:docs"],
+			dependsOn: ["compile", "eslint", "ci:build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"full": {
@@ -19,11 +19,11 @@ module.exports = {
 			script: false,
 		},
 		"build": {
-			dependsOn: ["compile", "lint", "build:docs"],
+			dependsOn: ["compile", "lint", "build:docs", "build:manifest", "build:readme"],
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:copy", "build:test"],
+			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -34,18 +34,47 @@ module.exports = {
 			dependsOn: ["prettier", "eslint", "good-fences", "depcruise"],
 			script: false,
 		},
+		"checks": {
+			dependsOn: ["prettier"],
+			script: false,
+		},
+		"checks:fix": {
+			dependsOn: ["^checks:fix"],
+			script: false,
+		},
 		"build:copy": [],
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
 		"build:esnext": tscDependsOn,
-		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
+		"build:test": [
+			...tscDependsOn,
+			"typetests:gen",
+			"tsc",
+			"api-extractor:commonjs",
+			"api-extractor:esnext",
+		],
+		"api": {
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			script: false,
+		},
+		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
+		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
+		"build:readme": {
+			dependsOn: ["build:manifest"],
+			script: true,
+		},
+		"build:manifest": {
+			dependsOn: ["tsc"],
+			script: true,
+		},
 		"depcruise": [],
 		"eslint": [...tscDependsOn, "commonjs"],
 		"good-fences": [],
 		"prettier": [],
+		"prettier:fix": [],
 		"webpack": ["^tsc", "^build:esnext"],
 		"webpack:profile": ["^tsc", "^build:esnext"],
 		"clean": {
@@ -76,7 +105,7 @@ module.exports = {
 		},
 		"build-tools": {
 			directory: "build-tools",
-			defaultInterdependencyRange: "workspace:*",
+			defaultInterdependencyRange: "workspace:~",
 		},
 		"server": {
 			directory: "server/routerlicious",
@@ -104,32 +133,45 @@ module.exports = {
 			"tools/changelog-generator-wrapper",
 			"tools/getkeys",
 			"tools/test-tools",
-			"server/tinylicious",
 		],
 	},
 
 	// `flub check policy` config. It applies to the whole repo.
 	policy: {
 		exclusions: [
-			"build-tools/packages/build-tools/src/test/data/",
 			"docs/layouts/",
 			"docs/themes/thxvscode/assets/",
 			"docs/themes/thxvscode/layouts/",
 			"docs/themes/thxvscode/static/assets/",
 			"docs/tutorials/.*\\.tsx?",
-			"azure/packages/azure-local-service/src/index.ts",
-			"experimental/PropertyDDS/packages/property-query/test/get_config.js",
-			"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
 			"server/gitrest/package.json",
 			"server/historian/package.json",
-			"tools/markdown-magic/test",
-			"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			"tools/markdown-magic/test/package.json",
 		],
 		// Exclusion per handler
 		handlerExclusions: {
+			"extraneous-lockfiles": [
+				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
+			],
+			"js-ts-copyright-file-header": [
+				// These files all require a node shebang at the top of the file.
+				"azure/packages/azure-local-service/src/index.ts",
+				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
+				"experimental/PropertyDDS/services/property-query-service/test/get_config.js",
+			],
+			"package-lockfiles-npm-version": [
+				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
+			],
+			"npm-package-json-scripts-args": [
+				// server/routerlicious and server/routerlicious/packages/routerlicious use
+				// linux only scripts that would require extra logic to validate properly.
+				// Ideally no packages would use OS specific scripts.
+				"^server/routerlicious/package.json",
+				"^server/routerlicious/packages/routerlicious/package.json",
 			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
@@ -139,9 +181,9 @@ module.exports = {
 			],
 			"npm-package-json-script-mocha-config": [
 				// these doesn't use mocha config for reporters yet.
-				"server/",
-				"build-tools/",
-				"common/lib/common-utils/package.json",
+				"^server/",
+				"^build-tools/",
+				"^common/lib/common-utils/package.json",
 			],
 			"npm-package-json-test-scripts": [
 				"common/build/eslint-config-fluid/package.json",
@@ -153,12 +195,14 @@ module.exports = {
 				"tools/",
 				"package.json",
 				"packages/test/test-service-load/package.json",
+				"packages/tools/devtools/devtools-browser-extension/package.json",
+				"packages/tools/devtools/devtools-view/package.json",
 			],
 			"npm-package-json-clean-script": [
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
-				"tools/markdown-magic",
+				"^tools/markdown-magic",
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
-				"tools/getkeys",
+				"^tools/getkeys",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
@@ -172,6 +216,28 @@ module.exports = {
 				"^server/",
 				"^tools/",
 			],
+			"npm-package-json-clean-script": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"tools/getkeys/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			"npm-strange-package-name": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
+			],
+			"npm-package-readmes": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
+			],
+			"npm-package-folder-name": [
+				"server/gitrest/package.json",
+				"server/historian/package.json",
+				"package.json",
+			],
+			"npm-package-json-script-dep": ["^build-tools/"],
 		},
 		packageNames: {
 			// The allowed package scopes for the repo.
@@ -188,12 +254,7 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
-				npm: [
-					"@fluidframework",
-					"fluid-framework",
-					"tinylicious",
-					"@fluid-internal/client-utils",
-				],
+				npm: ["@fluidframework", "fluid-framework", "@fluid-internal/client-utils"],
 				// A list of packages published to our internal-build feed. Note that packages published
 				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
@@ -231,6 +292,7 @@ module.exports = {
 				["fluid-build", "@fluidframework/build-tools"],
 				["depcruise", "dependency-cruiser"],
 				["copyfiles", "copyfiles"],
+				["oclif", "oclif"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work
@@ -249,7 +311,6 @@ module.exports = {
 			"@fluidframework/protocol-definitions",
 			"@fluidframework/test-tools",
 			"fluidframework-docs",
-			"tinylicious",
 		],
 		fluidBuildTasks: {
 			tsc: {

@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 
 import { FieldKinds } from "../../../feature-libraries";
-import { ForestType, TypedTreeFactory } from "../../../shared-tree";
+import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
 
@@ -26,10 +26,9 @@ describe("beforeChange/afterChange events", () => {
 		myNumberSequence: SchemaBuilder.sequence(leaf.number),
 	});
 	const schema = builder.intoSchema(SchemaBuilder.field(FieldKinds.required, myNodeSchema));
-	const factory = new TypedTreeFactory({
+	const factory = new SharedTreeFactory({
 		jsonValidator: typeboxValidator,
 		forest: ForestType.Reference,
-		subtype: "test",
 	});
 
 	it("fire the expected number of times", () => {
@@ -43,7 +42,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let rootBeforeChangeCount = 0;
 		let rootAfterChangeCount = 0;
@@ -134,7 +133,7 @@ describe("beforeChange/afterChange events", () => {
 		// Move nodes in a sequence field - myNumberSequence; should fire events on the root node
 		// NOTE: events will fire for each node individually. Also this is a special case where the events are fired twice:
 		// once when detaching the nodes from the source location, and again when attaching them at the target location.
-		root.myNumberSequence.moveToEnd(0, 2);
+		root.myNumberSequence.moveRangeToEnd(0, 2);
 
 		assert.strictEqual(rootBeforeChangeCount, 17);
 		assert.strictEqual(rootAfterChangeCount, 17);
@@ -151,7 +150,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
@@ -182,7 +181,7 @@ describe("beforeChange/afterChange events", () => {
 		// NOTE: events will fire for each moved node (so 2 time)
 		// NOTE: this is a special case where the beforeChange/afterChange events are fired twice for each node: once when
 		// detaching it from the source location, and again when attaching it at the target location.
-		root.myNumberSequence.moveToEnd(0, 2);
+		root.myNumberSequence.moveRangeToEnd(0, 2);
 		// Other miscellaneous updates
 		root.child.myInnerString = "new string in child";
 		// TODO: update to `root.child = <something>;` once assignment to struct nodes is implemented in EditableTree2
@@ -207,7 +206,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;
@@ -250,7 +249,7 @@ describe("beforeChange/afterChange events", () => {
 		// NOTE: events will fire for each moved node (so 2 time)
 		// NOTE: this is a special case where the beforeChange/afterChange events are fired twice for each node: once when
 		// detaching it from the source location, and again when attaching it at the target location.
-		root.myNumberSequence.moveToEnd(0, 2);
+		root.myNumberSequence.moveRangeToEnd(0, 2);
 
 		// Make sure the listeners fired (otherwise assertions might not have executed)
 		assert.strictEqual(rootBeforeCounter, 14);
@@ -280,7 +279,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let beforeHasFired = false;
 		let afterHasFired = false;
@@ -329,7 +328,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let totalListenerCalls = 0;
 
@@ -357,7 +356,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		const newNumber = 20;
 
@@ -387,7 +386,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 		let totalListenerCalls = 0;
 		const newString = "John";
 
@@ -415,7 +414,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let totalListenerCalls = 0;
 
@@ -477,7 +476,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let totalListenerCalls = 0;
 
@@ -517,7 +516,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let totalListenerCalls = 0;
 
@@ -574,7 +573,7 @@ describe("beforeChange/afterChange events", () => {
 			}
 		});
 
-		root.myNumberSequence.moveToEnd(0, 2);
+		root.myNumberSequence.moveRangeToEnd(0, 2);
 		assert.strictEqual(totalListenerCalls, 8); // 2 moved nodes * 2 events each * 2 times fired (detach + attach)
 	});
 
@@ -589,7 +588,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let beforeCounter = 0;
 		let afterCounter = 0;
@@ -619,7 +618,7 @@ describe("beforeChange/afterChange events", () => {
 			},
 			schema,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		}).content;
+		}).editableTree.content;
 
 		let rootBeforeCounter = 0;
 		let rootAfterCounter = 0;

@@ -10,7 +10,7 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { TreeFieldSchema, TypedField } from "../feature-libraries";
+import { ProxyField, TreeFieldSchema } from "../feature-libraries";
 import { SharedTree, SharedTreeOptions } from "./sharedTree";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
 
@@ -68,7 +68,24 @@ export interface TypedTreeChannel extends IChannel {
 	 */
 	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): TypedField<TRoot>;
+	): TypedTreeView<TRoot>;
+}
+
+/**
+ * An editable view of a (version control style) branch of a shared tree.
+ * @privateRemarks
+ * TODO:
+ * 1. Once ISharedTreeView is renamed this can become ISharedTreeView.
+ * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
+ * @alpha
+ */
+export interface TypedTreeView<in out TRoot extends TreeFieldSchema> {
+	/**
+	 * The current root of the tree.
+	 */
+	readonly root: ProxyField<TRoot>;
+
+	// TODO: root setter.
 }
 
 /**

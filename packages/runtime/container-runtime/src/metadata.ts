@@ -17,3 +17,10 @@ export interface IBlobMetadata {
 	blobId?: string;
 	localId?: string;
 }
+
+/**
+ * The IdCompressor needs to know if this is a replayed savedOp as those need to be skipped in stashed ops scenarios.
+ */
+export interface IIdAllocationMetadata {
+	savedOp?: boolean;
+}
