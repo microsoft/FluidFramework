@@ -164,6 +164,27 @@ const generatePrivatePackageNotice = () => {
 };
 
 /**
+ * Generates simple Markdown contents indicating implications of the specified kind of package scope.
+ *
+ * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE"} kind - Scope kind to switch on.
+ * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
+ * INTERNAL: See templates/Internal-Package-Notice-Template.md.
+ * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ */
+const generatePackageScopeNotice = (kind) => {
+	switch (kind) {
+		case "EXPERIMENTAL":
+			return generateExperimentalPackageNotice();
+		case "INTERNAL":
+			return generateInternalPackageNotice();
+		case "PRIVATE":
+			return generatePrivatePackageNotice();
+		default:
+			throw new Error(`Unrecognized package scope kind: ${kind}`);
+	}
+};
+
+/**
  * Gets the package.json metadata from the optionally provided file path, expressed relative
  * to the path of the document being modified.
  *
@@ -237,11 +258,11 @@ function includeTransform(content, options, config) {
  * @param {object} options - Transform options.
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
- * @param {"TRUE" | "FALSE" | undefined} options.experimentalPackage - (optional) Whether or not to include a notice indicating that the package is experimental.
- * @param {"TRUE" | "FALSE" | undefined} options.internalPackage - (optional) Whether or not to include a notice indicating that the package is internal.
- * Default: Inherit from package namespace - will be included if namespace is `@fluid-internal`.
- * @param {"TRUE" | "FALSE" | undefined} options.privatePackage - (optional) Whether or not to include a notice indicating that the package is private.
- * Default: Inherit from package namespace - will be included if namespace is `@fluid-private`.
+ * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} options.packageScopeNotice - (optional) Kind of package scope (namespace) notice to add.
+ * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
+ * INTERNAL: See templates/Internal-Package-Notice-Template.md.
+ * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
@@ -271,15 +292,18 @@ function libraryPackageReadmeTransform(content, options, config) {
 
 	const sections = [];
 
-	const packageScope = PackageName.getScope(packageName);
-	if (options.experimentalPackage === "TRUE" || packageScope === `@fluid-experimental`) {
-		sections.push(generateExperimentalPackageNotice());
-	}
-	if (options.internalPackage === "TRUE" || packageScope === `@fluid-internal`) {
-		sections.push(generateInternalPackageNotice());
-	}
-	if (options.privatePackage === "TRUE" || packageScope === `@fluid-private`) {
-		sections.push(generatePrivatePackageNotice());
+	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
+	if (options.packageScopeNotice === undefined) {
+		const packageScope = PackageName.getScope(packageName);
+		if (packageScope === `@fluid-experimental`) {
+			sections.push(generateExperimentalPackageNotice());
+		} else if (packageScope === `@fluid-internal`) {
+			sections.push(generateInternalPackageNotice());
+		} else if (packageScope === `@fluid-private`) {
+			sections.push(generatePrivatePackageNotice());
+		}
+	} else {
+		sections.push(generatePackageScopeNotice(options.packageScopeNotice));
 	}
 
 	if (options.installation !== "FALSE") {
