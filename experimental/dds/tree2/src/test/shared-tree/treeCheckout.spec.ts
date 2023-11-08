@@ -4,7 +4,7 @@
  */
 import { strict as assert, fail } from "assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
-import { ISharedTreeView, TreeContent } from "../../shared-tree";
+import { ITreeCheckout, TreeContent } from "../../shared-tree";
 import { leaf, SchemaBuilder } from "../../domains";
 import {
 	TestTreeProviderLite,
@@ -12,8 +12,8 @@ import {
 	emptyJsonSequenceConfig,
 	insert,
 	jsonSequenceRootSchema,
-	view2WithContent,
 	viewWithContent,
+	checkoutWithContent,
 } from "../utils";
 import {
 	AllowedUpdateType,
@@ -34,7 +34,7 @@ describe("sharedTreeView", () => {
 		const schema = builder.intoSchema(builder.optional(rootTreeNodeSchema));
 
 		it("triggers events for local and subtree changes", () => {
-			const view = view2WithContent({
+			const view = viewWithContent({
 				schema,
 				initialTree: {
 					x: 24,
@@ -46,7 +46,7 @@ describe("sharedTreeView", () => {
 			const unsubscribeSubtree = root.on("subtreeChanging", () => {
 				log.push("subtree");
 			});
-			const unsubscribeAfter = view.branch.events.on("afterBatch", () => log.push("after"));
+			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root.x = 5;
 			log.push("editStart");
@@ -75,7 +75,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("propagates path args for local and subtree changes", () => {
-			const view = view2WithContent({
+			const view = viewWithContent({
 				schema,
 				initialTree: {
 					x: 24,
@@ -89,7 +89,7 @@ describe("sharedTreeView", () => {
 			const unsubscribeSubtree = root.on("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
-			const unsubscribeAfter = view.branch.events.on("afterBatch", () => log.push("after"));
+			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
 			log.push("editStart");
 			root.x = 5;
 			log.push("editStart");
@@ -119,7 +119,7 @@ describe("sharedTreeView", () => {
 
 		// TODO: unskip once forking revertibles is supported
 		it.skip("triggers a revertible event for a changes merged into the local branch", () => {
-			const tree1 = viewWithContent({
+			const tree1 = checkoutWithContent({
 				schema: jsonSequenceRootSchema,
 				initialTree: [],
 			});
@@ -364,7 +364,7 @@ describe("sharedTreeView", () => {
 				nodeSchema: new Map([[leaf.number.name, leaf.number]]),
 				rootFieldSchema: storedEmptyFieldSchema,
 			};
-			function getSchema(t: ISharedTreeView): "schemaA" | "schemaB" {
+			function getSchema(t: ITreeCheckout): "schemaA" | "schemaB" {
 				return t.storedSchema.nodeSchema.size === 0 ? "schemaA" : "schemaB";
 			}
 
@@ -378,9 +378,9 @@ describe("sharedTreeView", () => {
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).branch;
+			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).branch;
+			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const baseView = tree1.fork();
 			const view = baseView.fork();
@@ -398,7 +398,7 @@ describe("sharedTreeView", () => {
 
 		it("do not squash commits", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).branch;
+			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -570,14 +570,14 @@ describe("sharedTreeView", () => {
  * Inserts a single node under the root of the tree with the given value.
  * Use {@link getTestValue} to read the value.
  */
-function insertFirstNode(branch: ISharedTreeView, value: ContextuallyTypedNodeData): void {
+function insertFirstNode(branch: ITreeCheckout, value: ContextuallyTypedNodeData): void {
 	insert(branch, 0, value);
 }
 
 /**
  * Reads the last value added by {@link insertFirstNode} if it exists.
  */
-function getTestValue({ forest }: ISharedTreeView): TreeValue | undefined {
+function getTestValue({ forest }: ITreeCheckout): TreeValue | undefined {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	if (!readCursor.firstNode()) {
@@ -592,7 +592,7 @@ function getTestValue({ forest }: ISharedTreeView): TreeValue | undefined {
 /**
  * Reads all values in a tree set by {@link insertFirstNode} in the order they were added (which is the reverse of the tree order).
  */
-function getTestValues({ forest }: ISharedTreeView): Value[] {
+function getTestValues({ forest }: ITreeCheckout): Value[] {
 	const readCursor = forest.allocateCursor();
 	moveToDetachedField(forest, readCursor);
 	const values: Value[] = [];
@@ -614,7 +614,7 @@ function getTestValues({ forest }: ISharedTreeView): Value[] {
  * TODO: users of this are making schema: one has been provided that might be close, but likely isn't fully correct..
  * TODO: users of this doesn't depend on SharedTree directly and should be moved to tests of SharedTreeView.
  */
-function itView(title: string, fn: (view: ISharedTreeView) => void): void {
+function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	const content: TreeContent = {
 		schema: jsonSequenceRootSchema,
 		initialTree: [],
@@ -626,19 +626,19 @@ function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(provider.trees[0].schematize(config).branch);
+		fn(provider.trees[0].schematize(config).checkout);
 	});
 
 	it(`${title} (reference view)`, () => {
-		fn(viewWithContent(content));
+		fn(checkoutWithContent(content));
 	});
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematize(config).branch.fork());
+		fn(provider.trees[0].schematize(config).checkout.fork());
 	});
 
 	it(`${title} (reference forked view)`, () => {
-		fn(viewWithContent(content).fork());
+		fn(checkoutWithContent(content).fork());
 	});
 }

@@ -15,7 +15,7 @@ import {
 	waitForContainerConnection,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;

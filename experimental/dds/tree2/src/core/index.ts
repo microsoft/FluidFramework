@@ -126,7 +126,6 @@ export {
 	TreeSchemaIdentifierSchema,
 	TreeFieldStoredSchema,
 	ValueSchema,
-	PrimitiveValueSchema,
 	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
