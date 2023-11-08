@@ -299,33 +299,20 @@ export class ModularChangeFamily
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
 
-		const invertedFields = this.invertFieldMap(
+		let invertedFields = this.invertFieldMap(
 			tagChange(change.change.fieldChanges, change.revision),
 			genId,
 			crossFieldTable,
 		);
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
-			const fieldsToUpdate = crossFieldTable.invalidatedFields;
 			crossFieldTable.invalidatedFields = new Set();
-			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
-				const amendedChange = getChangeHandler(
-					this.fieldKinds,
-					fieldChange.fieldKind,
-				).rebaser.amendInvert(
-					fieldChange.change,
-					originalRevision,
-					genId,
-					newCrossFieldManager(crossFieldTable),
-				);
-				fieldChange.change = brand(amendedChange);
-			}
+			invertedFields = this.invertFieldMap(
+				tagChange(change.change.fieldChanges, change.revision),
+				genId,
+				crossFieldTable,
+			);
 		}
-
-		assert(
-			crossFieldTable.invalidatedFields.size === 0,
-			0x59c /* Should not need more than one amend pass. */,
-		);
 
 		const revInfo = change.change.revisions;
 		return makeModularChangeset(
@@ -417,14 +404,14 @@ export class ModularChangeFamily
 			baseMapToParentField: new Map(),
 		};
 
-		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
+		let constraintState = newConstraintState(change.constraintViolationCount ?? 0);
 		const revInfos: RevisionInfo[] = [];
 		revInfos.push(...revisionInfoFromTaggedChange(over));
 		if (change.revisions !== undefined) {
 			revInfos.push(...change.revisions);
 		}
 		const revisionMetadata: RevisionMetadataSource = revisionMetadataSourceFromInfo(revInfos);
-		const rebasedFields = this.rebaseFieldMap(
+		let rebasedFields = this.rebaseFieldMap(
 			change.fieldChanges,
 			tagChange(over.change.fieldChanges, over.revision),
 			genId,
@@ -434,46 +421,26 @@ export class ModularChangeFamily
 			constraintState,
 		);
 
-		const rebasedChangeset = makeModularChangeset(
+		if (crossFieldTable.invalidatedFields.size > 0) {
+			crossFieldTable.invalidatedFields.clear();
+			constraintState = newConstraintState(change.constraintViolationCount ?? 0);
+			rebasedFields = this.rebaseFieldMap(
+				change.fieldChanges,
+				tagChange(over.change.fieldChanges, over.revision),
+				genId,
+				crossFieldTable,
+				() => true,
+				revisionMetadata,
+				constraintState,
+			);
+		}
+
+		return makeModularChangeset(
 			rebasedFields,
 			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
 		);
-		crossFieldTable.baseMapToRebased.set(over.change.fieldChanges, rebasedChangeset);
-
-		const constraintViolations = constraintState.violationCount;
-
-		crossFieldTable.invalidatedFields.clear();
-		const amendedFields = this.rebaseFieldMap(
-			rebasedChangeset.fieldChanges,
-			tagChange(over.change.fieldChanges, over.revision),
-			genId,
-			crossFieldTable,
-			() => true,
-			revisionMetadata,
-			constraintState,
-			true,
-		);
-
-		// assert(
-		// 	crossFieldTable.invalidatedFields.size === 0,
-		// 	0x59f /* Should not need more than one amend pass. */,
-		// );
-
-		assert(
-			constraintState.violationCount === constraintViolations,
-			0x5b4 /* Should not change constraint violation count during amend pass */,
-		);
-
-		const amendedChangeset = makeModularChangeset(
-			amendedFields,
-			idState.maxId,
-			change.revisions,
-			constraintState.violationCount,
-		);
-
-		return amendedChangeset;
 	}
 
 	private rebaseFieldMap(
@@ -484,7 +451,6 @@ export class ModularChangeFamily
 		fieldFilter: (baseChange: FieldChange, newChange: FieldChange | undefined) => boolean,
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
-		amend: boolean = false,
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
 	): FieldChangeMap {
 		const rebasedFields: FieldChangeMap = new Map();
@@ -523,26 +489,16 @@ export class ModularChangeFamily
 					revisionMetadata,
 					constraintState,
 					stateChange,
-					amend,
 				);
 
-			const rebasedField = !amend
-				? fieldKind.changeHandler.rebaser.rebase(
-						fieldChangeset,
-						taggedBaseChange,
-						rebaseChild,
-						genId,
-						manager,
-						revisionMetadata,
-				  )
-				: fieldKind.changeHandler.rebaser.amendRebase(
-						fieldChangeset,
-						taggedBaseChange,
-						rebaseChild,
-						genId,
-						manager,
-						revisionMetadata,
-				  );
+			const rebasedField = fieldKind.changeHandler.rebaser.rebase(
+				fieldChangeset,
+				taggedBaseChange,
+				rebaseChild,
+				genId,
+				manager,
+				revisionMetadata,
+			);
 
 			if (!fieldKind.changeHandler.isEmpty(rebasedField)) {
 				const rebasedFieldChange: FieldChange = {
@@ -622,7 +578,6 @@ export class ModularChangeFamily
 		revisionMetadata: RevisionMetadataSource,
 		constraintState: ConstraintState,
 		existenceState: NodeExistenceState = NodeExistenceState.Alive,
-		amend: boolean = false,
 	): NodeChangeset | undefined {
 		if (change === undefined && over.change?.fieldChanges === undefined) {
 			return undefined;
@@ -648,7 +603,6 @@ export class ModularChangeFamily
 			fieldFilter,
 			revisionMetadata,
 			constraintState,
-			amend,
 			existenceState,
 		);
 
@@ -663,7 +617,7 @@ export class ModularChangeFamily
 		}
 
 		// If there's a node exists constraint and we deleted or revived the node, update constraint state
-		if (!amend && rebasedChange.nodeExistsConstraint !== undefined) {
+		if (rebasedChange.nodeExistsConstraint !== undefined) {
 			const violatedAfter = existenceState === NodeExistenceState.Dead;
 
 			if (rebasedChange.nodeExistsConstraint.violated !== violatedAfter) {

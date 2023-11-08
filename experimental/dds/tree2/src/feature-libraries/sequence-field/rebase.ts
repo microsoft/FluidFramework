@@ -5,7 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { StableId } from "@fluidframework/runtime-definitions";
-import { IdAllocator, fail, fakeIdAllocator, getOrAddEmptyToMap } from "../../util";
+import { IdAllocator, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { ChangeAtomId, ChangesetLocalId, RevisionTag, TaggedChange } from "../../core";
 import {
 	CrossFieldManager,
@@ -50,7 +50,6 @@ import {
 	MarkEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
-import { ComposeQueue } from "./compose";
 import {
 	getMoveEffect,
 	setMoveEffect,
@@ -242,7 +241,7 @@ class RebaseQueue<T> {
 		private readonly moveEffects: MoveEffectTable<T>,
 	) {
 		this.baseMarks = new MarkQueue(baseMarks, baseRevision, moveEffects, false, genId);
-		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, true, genId);
+		this.newMarks = new MarkQueue(newMarks, undefined, moveEffects, false, genId);
 	}
 
 	public isEmpty(): boolean {
@@ -521,10 +520,31 @@ function sendMarkToDest<T>(
 		count,
 		false,
 	);
-	assert(effect.length === count, 0x6f1 /* Expected effect to cover entire mark */);
-	const newEffect =
-		effect.value !== undefined ? { ...effect.value, movedMark: mark } : { movedMark: mark };
-	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count, newEffect);
+	if (effect.length < count) {
+		const [mark1, mark2] = splitMark(mark, effect.length);
+		const newEffect =
+			effect.value !== undefined
+				? { ...effect.value, movedMark: mark1 }
+				: { movedMark: mark1 };
+		setMoveEffect(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			revision,
+			id,
+			effect.length,
+			newEffect,
+		);
+		sendMarkToDest(
+			mark2,
+			moveEffects,
+			{ revision, localId: brand(id + effect.length) },
+			count - effect.length,
+		);
+	} else {
+		const newEffect =
+			effect.value !== undefined ? { ...effect.value, movedMark: mark } : { movedMark: mark };
+		setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count, newEffect);
+	}
 }
 
 // It is expected that the range from `id` to `id + count - 1` has the same move effect.
@@ -581,78 +601,6 @@ function withCellId<TMark extends Mark<unknown>>(mark: TMark, cellId: CellId | u
 		delete newMark.cellId;
 	}
 	return newMark;
-}
-
-export function amendRebase<TNodeChange>(
-	rebasedMarks: MarkList<TNodeChange>,
-	baseMarks: TaggedChange<MarkList<TNodeChange>>,
-	rebaseChild: NodeChangeRebaser<TNodeChange>,
-	genId: IdAllocator,
-	crossFieldManager: CrossFieldManager,
-	revisionMetadata: RevisionMetadataSource,
-): Changeset<TNodeChange> {
-	return amendRebaseI(
-		baseMarks.revision,
-		baseMarks.change,
-		rebasedMarks,
-		rebaseChild,
-		crossFieldManager as MoveEffectTable<TNodeChange>,
-		revisionMetadata,
-	);
-}
-
-function amendRebaseI<TNodeChange>(
-	baseRevision: RevisionTag | undefined,
-	baseMarks: MarkList<TNodeChange>,
-	rebasedMarks: MarkList<TNodeChange>,
-	rebaseChild: NodeChangeRebaser<TNodeChange>,
-	moveEffects: CrossFieldManager<MoveEffect<TNodeChange>>,
-	revisionMetadata: RevisionMetadataSource,
-): Changeset<TNodeChange> {
-	// Is it correct to use ComposeQueue here?
-	// If we used a special AmendRebaseQueue, we could ignore any base marks which don't have associated move-ins
-	const queue = new ComposeQueue<TNodeChange>(
-		baseRevision,
-		baseMarks,
-		undefined,
-		rebasedMarks,
-		// Should not generate new IDs when applying move effects
-		fakeIdAllocator,
-		moveEffects,
-		revisionMetadata,
-	);
-	const factory = new MarkListFactory<TNodeChange>();
-
-	while (!queue.isEmpty()) {
-		const { baseMark, newMark } = queue.pop();
-
-		if (baseMark === undefined) {
-			assert(
-				newMark !== undefined,
-				0x70c /* Non-empty RebaseQueue should not provide two empty marks */,
-			);
-			factory.push(withNodeChange(newMark, rebaseChild(newMark.changes, undefined)));
-			continue;
-		}
-
-		const movedMark = getMovedMarkFromBaseMark(moveEffects, baseMark, baseRevision);
-		if (movedMark !== undefined) {
-			assert(
-				newMark === undefined ||
-					(newMark.type === NoopMarkType && newMark.changes === undefined),
-				"A new mark should not be moved to the location of an existing new mark",
-			);
-			factory.push(rebaseNodeChange(cloneMark(movedMark), baseMark, rebaseChild));
-			continue;
-		}
-
-		if (newMark !== undefined) {
-			const rebasedMark = rebaseNodeChange(cloneMark(newMark), baseMark, rebaseChild);
-			factory.push(rebasedMark);
-		}
-	}
-
-	return factory.list;
 }
 
 function getMovedMarkFromBaseMark<T>(

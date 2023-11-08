@@ -305,8 +305,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return inverse;
 	},
 
-	amendInvert: () => fail("Not implemented"),
-
 	rebase: (
 		change: OptionalChangeset,
 		overTagged: TaggedChange<OptionalChangeset>,
@@ -443,31 +441,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		return rebased;
-	},
-
-	amendRebase: (
-		change: OptionalChangeset,
-		overTagged: TaggedChange<OptionalChangeset>,
-		rebaseChild: NodeChangeRebaser,
-	) => {
-		const amended = { ...change };
-		if (change.childChanges !== undefined) {
-			const overChildChanges = new ChildChangeMap<NodeChangeset>();
-			for (const [id, overChange] of overTagged?.change.childChanges ?? []) {
-				overChildChanges.set(id, overChange);
-			}
-
-			const childChanges: typeof change.childChanges = [];
-			for (const [id, childChange] of change.childChanges) {
-				const rebasedChange = rebaseChild(childChange, overChildChanges.get(id));
-				if (rebasedChange !== undefined) {
-					childChanges.push([id, rebasedChange]);
-				}
-			}
-
-			amended.childChanges = childChanges;
-		}
-		return amended;
 	},
 };
 

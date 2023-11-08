@@ -293,8 +293,9 @@ describe("SequenceField - Rebaser Axioms", () => {
 						nameC === "Delete"
 					) {
 						it.skip(title, () => {
-							// Some of these tests fail due to BUG 6155 where if a mark in changeA is moved by changeB,
-							// we may not rebase changeA over the delete in changeC due to handling the move of changeA in the amend pass.
+							// Some of these tests fail due to BUG 6202 where if a mark in changeA is moved and deleted by changeB,
+							// we may not discover the delete until the second rebase pass,
+							// and we may not be able to update changeA's move destination in the second pass.
 						});
 					} else if (
 						changesTargetingDetached.has(nameA) &&

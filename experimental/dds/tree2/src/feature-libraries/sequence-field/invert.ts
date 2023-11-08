@@ -57,19 +57,6 @@ export function invert<TNodeChange>(
 	);
 }
 
-export function amendInvert<TNodeChange>(
-	invertedChange: Changeset<TNodeChange>,
-	originalRevision: RevisionTag | undefined,
-	genId: IdAllocator,
-	crossFieldManager: CrossFieldManager,
-): Changeset<TNodeChange> {
-	return amendMarkList(
-		invertedChange,
-		originalRevision,
-		crossFieldManager as CrossFieldManager<TNodeChange>,
-	);
-}
-
 function invertMarkList<TNodeChange>(
 	markList: MarkList<TNodeChange>,
 	revision: RevisionTag | undefined,
@@ -295,24 +282,6 @@ function invertMark<TNodeChange>(
 		default:
 			unreachableCase(type);
 	}
-}
-
-function amendMarkList<TNodeChange>(
-	marks: MarkList<TNodeChange>,
-	revision: RevisionTag | undefined,
-	crossFieldManager: CrossFieldManager<TNodeChange>,
-): MarkList<TNodeChange> {
-	const factory = new MarkListFactory<TNodeChange>();
-
-	for (const mark of marks) {
-		if (mark.type === "MoveOut" || mark.type === "ReturnFrom") {
-			factory.push(...applyMovedChanges(mark, revision, crossFieldManager));
-		} else {
-			factory.push(mark);
-		}
-	}
-
-	return factory.list;
 }
 
 function applyMovedChanges<TNodeChange>(

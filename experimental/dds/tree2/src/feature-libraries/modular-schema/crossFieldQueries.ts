@@ -72,7 +72,7 @@ export interface CrossFieldManager<T = unknown> {
 	/**
 	 * If there is no data for this key, sets the value to `newValue`, then returns the data for this key.
 	 * If `invalidateDependents` is true, all fields which took a dependency on this key will be considered invalidated
-	 * and will be given a chance to address the new data in `amendRebase`, `amendInvert`, or `amendCompose` as appropriate.
+	 * and will be given a chance to address the new data in `amendInvert`, `amendCompose`, or a second pass of `rebase` as appropriate.
 	 */
 	set(
 		target: CrossFieldTarget,

@@ -89,16 +89,6 @@ export interface FieldChangeRebaser<TChangeset> {
 	): TChangeset;
 
 	/**
-	 * Amend `invertedChange` with respect to new data in `crossFieldManager`.
-	 */
-	amendInvert(
-		invertedChange: TChangeset,
-		originalRevision: RevisionTag | undefined,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-	): TChangeset;
-
-	/**
 	 * Rebase `change` over `over`.
 	 * See `ChangeRebaser` for details.
 	 */
@@ -110,18 +100,6 @@ export interface FieldChangeRebaser<TChangeset> {
 		crossFieldManager: CrossFieldManager,
 		revisionMetadata: RevisionMetadataSource,
 		existenceState?: NodeExistenceState,
-	): TChangeset;
-
-	/**
-	 * Amend `rebasedChange` with respect to new data in `crossFieldManager`.
-	 */
-	amendRebase(
-		rebasedChange: TChangeset,
-		over: TaggedChange<TChangeset>,
-		rebaseChild: NodeChangeRebaser,
-		genId: IdAllocator,
-		crossFieldManager: CrossFieldManager,
-		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 }
 
@@ -149,8 +127,6 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	return {
 		...data,
 		amendCompose: () => fail("Not implemented"),
-		amendInvert: () => fail("Not implemented"),
-		amendRebase: (change) => change,
 	};
 }
 

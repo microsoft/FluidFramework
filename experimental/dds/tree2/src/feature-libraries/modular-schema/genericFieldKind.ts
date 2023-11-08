@@ -76,9 +76,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				}),
 			);
 		},
-		amendInvert: () => fail("Not implemented"),
 		rebase: rebaseGenericChange,
-		amendRebase: rebaseGenericChange,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
