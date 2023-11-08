@@ -369,11 +369,10 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 			defaultTestCount: 200,
 			// The seeds below fail only when rebaseProbability is non-zero ADO:6044
 			skip: [
-				4, 6, 8, 19, 48, 82, 83, 87, 94, 95, 110, 118, 123, 138, 154, 159, 180, 181, 190,
-				195,
+				4, 6, 19, 48, 82, 83, 87, 94, 95, 110, 118, 123, 138, 154, 159, 180, 181, 190, 195,
 			],
 			// Uncomment this line to replay a specific seed from its failure file:
-			// replay: 21,
+			replay: 8,
 			saveFailures: {
 				directory: dirPath.join(__dirname, "../../../src/test/mocha/results/1"),
 			},
