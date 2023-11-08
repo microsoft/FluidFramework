@@ -6,7 +6,7 @@ For example, they are useful for asserting eventual convergence properties of DD
 
 <!-- AUTO-GENERATED-CONTENT:START (README_PRIVATE_PACKAGE_NOTICE) -->
 
-**NOTE: This package is private to the fluid-framework repo.**
+**NOTE: This package is private to the `@microsot/fluid-framework` repository.**
 **It is not published, and therefore may only be used as a dev dependency.**
 
 <!-- AUTO-GENERATED-CONTENT:END -->
