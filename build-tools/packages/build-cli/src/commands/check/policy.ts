@@ -218,9 +218,10 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		commandContext: CheckPolicyCommandContext,
 	): Promise<void> {
 		try {
-			pathsToCheck.map(async (pathToCheck: string) =>
-				this.checkOrExcludeFile(pathToCheck, commandContext),
-			);
+			for (const pathToCheck of pathsToCheck) {
+				// eslint-disable-next-line no-await-in-loop
+				await this.checkOrExcludeFile(pathToCheck, commandContext);
+			}
 		} finally {
 			try {
 				await runFinalHandlers(commandContext, this.flags.fix);
@@ -235,55 +236,62 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 	 * resolver, the resolver will be invoked as well. Synchronizes the output, exit codes, and resolve
 	 * decision for all handlers.
 	 */
-	private routeToHandlers(file: string, commandContext: CheckPolicyCommandContext): void {
+	private async routeToHandlers(
+		file: string,
+		commandContext: CheckPolicyCommandContext,
+	): Promise<void> {
 		const { context, handlers, handlerExclusions, gitRoot } = commandContext;
 
 		// Use the repo-relative path so that regexes that specify string start (^) will match repo paths.
 		const relPath = context.repo.relativeToRepo(file);
 
-		handlers
-			.filter((handler) => handler.match.test(relPath))
-			.map(async (handler) => {
-				// doing exclusion per handler
-				const exclusions = handlerExclusions[handler.name];
-				if (
-					exclusions !== undefined &&
-					!exclusions.every((regex) => !regex.test(relPath))
-				) {
-					this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
-					return;
-				}
+		await Promise.all(
+			handlers
+				.filter((handler) => handler.match.test(relPath))
+				.map(async (handler): Promise<void> => {
+					// doing exclusion per handler
+					const exclusions = handlerExclusions[handler.name];
+					if (
+						exclusions !== undefined &&
+						!exclusions.every((regex) => !regex.test(relPath))
+					) {
+						this.verbose(`Excluded ${handler.name} handler: ${relPath}`);
+						return;
+					}
 
-				const result = await runWithPerf(handler.name, "handle", async () =>
-					handler.handler(relPath, gitRoot),
-				);
-				if (result !== undefined && result !== "") {
-					let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
-					const { resolver } = handler;
-					if (this.flags.fix && resolver) {
-						output += `${newline}attempting to resolve: ${relPath}`;
-						const resolveResult = await runWithPerf(handler.name, "resolve", async () =>
-							resolver(relPath, gitRoot),
-						);
+					const result = await runWithPerf(handler.name, "handle", async () =>
+						handler.handler(relPath, gitRoot),
+					);
+					if (result !== undefined && result !== "") {
+						let output = `${newline}file failed the "${handler.name}" policy: ${relPath}${newline}${result}`;
+						const { resolver } = handler;
+						if (this.flags.fix && resolver) {
+							output += `${newline}attempting to resolve: ${relPath}`;
+							const resolveResult = await runWithPerf(
+								handler.name,
+								"resolve",
+								async () => resolver(relPath, gitRoot),
+							);
 
-						if (resolveResult?.message !== undefined) {
-							output += newline + resolveResult.message;
-						}
+							if (resolveResult?.message !== undefined) {
+								output += newline + resolveResult.message;
+							}
 
-						if (!resolveResult.resolved) {
+							if (!resolveResult.resolved) {
+								process.exitCode = 1;
+							}
+						} else {
 							process.exitCode = 1;
 						}
-					} else {
-						process.exitCode = 1;
-					}
 
-					if (process.exitCode === 1) {
-						this.warning(output);
-					} else {
-						this.info(output);
+						if (process.exitCode === 1) {
+							this.warning(output);
+						} else {
+							this.info(output);
+						}
 					}
-				}
-			});
+				}),
+		);
 	}
 
 	private logStats(): void {
@@ -323,7 +331,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		try {
-			this.routeToHandlers(filePath, commandContext);
+			await this.routeToHandlers(filePath, commandContext);
 		} catch (error: unknown) {
 			throw new Error(`Error routing ${filePath} to handler: ${error}`);
 		}
