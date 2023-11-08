@@ -8,6 +8,10 @@ combinations and driver selection can be controlled via the `mocha` command line
 exports to get the versioned Fluid APIs.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**NOTE: This package is private to the `@microsot/fluid-framework` repository.**
+**It is not published, and therefore may only be used as a dev dependency.**
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->

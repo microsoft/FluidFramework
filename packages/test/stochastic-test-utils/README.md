@@ -5,6 +5,10 @@ Such tests can be useful for stress testing systems with well-defined inputs and
 For example, they are useful for asserting eventual convergence properties of DDSes.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**NOTE: This package is private to the `@microsot/fluid-framework` repository.**
+**It is not published, and therefore may only be used as a dev dependency.**
+
 <!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
