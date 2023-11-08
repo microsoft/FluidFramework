@@ -11,18 +11,71 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/esm/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./public": {
+			"import": {
+				"types": "./dist/esm/container-definitions-public.d.ts",
+				"default": "./dist/esm/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-definitions-public.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./beta": {
+			"import": {
+				"types": "./dist/esm/container-definitions-beta.d.ts",
+				"default": "./dist/esm/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-definitions-beta.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./alpha": {
+			"import": {
+				"types": "./dist/esm/container-definitions-alpha.d.ts",
+				"default": "./dist/esm/index.mjs"
+			},
+			"require": {
+				"types": "./dist/container-definitions-alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
+		"./internal": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/esm/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
 		"api-extractor:commonjs": "api-extractor run --local",
-		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/*-@(alpha|beta|public|untrimmed).d.ts\" dist/esm",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
+		"build:copy-esm": "mv \"dist/esm\" lib && rimraf dist/esm",
 		"build:docs": "fluid-build . --task api",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
+		"build:duel": "duel",
 		"build:test": "tsc --project ./src/test/types/tsconfig.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run",
@@ -36,7 +89,6 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
-		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
@@ -56,6 +108,7 @@
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/events": "^3.0.0",
 		"copyfiles": "^2.4.1",
+    "@knighted/duel": "^1.0.1",
 		"eslint": "~8.50.0",
 		"eslint-plugin-deprecation": "~2.0.0",
 		"prettier": "~3.0.3",

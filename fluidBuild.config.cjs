@@ -23,7 +23,7 @@ module.exports = {
 			script: false,
 		},
 		"compile": {
-			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
+			dependsOn: ["commonjs", "build:duel", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
 		"commonjs": {
@@ -42,11 +42,13 @@ module.exports = {
 			dependsOn: ["^checks:fix"],
 			script: false,
 		},
-		"build:copy": [],
+		"build:copy-esm": {
+			depends: [...tscDependsOn, "build:duel"],
+		},
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
-		"build:esnext": tscDependsOn,
+		"build:esnext": [...tscDependsOn, "build:duel"],
 		"build:test": [
 			...tscDependsOn,
 			"typetests:gen",
@@ -58,7 +60,7 @@ module.exports = {
 			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
 			script: false,
 		},
-		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
+		"api-extractor:commonjs": [...tscDependsOn, "tsc", "build:duel"],
 		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
@@ -293,6 +295,7 @@ module.exports = {
 				["depcruise", "dependency-cruiser"],
 				["copyfiles", "copyfiles"],
 				["oclif", "oclif"],
+        ["duel", "@knighted/duel"],
 			],
 		},
 		// These packages are independently versioned and released, but we use pnpm workspaces in single packages to work

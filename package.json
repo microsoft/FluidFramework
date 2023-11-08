@@ -159,6 +159,7 @@
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/test-tools": "^1.0.195075",
+		"@knighted/duel": "^1.0.1",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@octokit/core": "^4.0.5",
