@@ -185,6 +185,25 @@ const generatePackageScopeNotice = (kind) => {
 };
 
 /**
+ * Gets the appropriate scope kind for the provided package name.
+ *
+ * @param {string} packageName
+ * @returns {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} A scope kind based on the package's scope (namespace).
+ */
+const getScopeKindFromPackage = (packageName) => {
+	const packageScope = PackageName.getScope(packageName);
+	if (packageScope === `@fluid-experimental`) {
+		return "EXPERIMENTAL";
+	} else if (packageScope === `@fluid-internal`) {
+		return "INTERNAL";
+	} else if (packageScope === `@fluid-private`) {
+		return "PRIVATE";
+	} else {
+		return undefined;
+	}
+};
+
+/**
  * Gets the package.json metadata from the optionally provided file path, expressed relative
  * to the path of the document being modified.
  *
@@ -293,17 +312,9 @@ function libraryPackageReadmeTransform(content, options, config) {
 	const sections = [];
 
 	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
-	if (options.packageScopeNotice === undefined) {
-		const packageScope = PackageName.getScope(packageName);
-		if (packageScope === `@fluid-experimental`) {
-			sections.push(generateExperimentalPackageNotice());
-		} else if (packageScope === `@fluid-internal`) {
-			sections.push(generateInternalPackageNotice());
-		} else if (packageScope === `@fluid-private`) {
-			sections.push(generatePrivatePackageNotice());
-		}
-	} else {
-		sections.push(generatePackageScopeNotice(options.packageScopeNotice));
+	const scopeKind = options.packageScopeNotice ?? getScopeKindFromPackage(packageName);
+	if (scopeKind !== undefined) {
+		sections.push(generatePackageScopeNotice(scopeKind));
 	}
 
 	if (options.installation !== "FALSE") {
@@ -457,6 +468,37 @@ function readmeInstallationSectionTransform(content, options, config) {
 }
 
 /**
+ * TODO
+ *
+ * @param {object} content - The original document file contents.
+ * @param {object} options - Transform options.
+ * @param {string} options.packageJsonPath - (optional) Relative file path to the package.json file for the package.
+ * Default: "./package.json".
+ * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} scopeKind - Scope kind to switch on.
+ * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
+ * INTERNAL: See templates/Internal-Package-Notice-Template.md.
+ * PRIVATE: See templates/Private-Package-Notice-Template.md.
+ * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
+ * @param {object} config - Transform configuration.
+ * @param {string} config.originalPath - Path to the document being modified.
+ */
+function readmePackageScopeNoticeTransform(content, options, config) {
+	const { packageJsonPath, scopeKind } = options;
+
+	const packageMetadata = getPackageMetadataFromRelativePath(
+		config.originalPath,
+		packageJsonPath,
+	);
+	const packageName = packageMetadata.name;
+
+	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
+	scopeKind = scopeKind ?? getScopeKindFromPackage(packageName);
+	if (scopeKind !== undefined) {
+		sections.push(generatePackageScopeNotice(scopeKind));
+	}
+}
+
+/**
  * Generates a README section with Microsoft trademark info.
  *
  * @param {object} content - The original document file contents.
@@ -566,6 +608,18 @@ module.exports = {
 		 * ```
 		 */
 		README_EXAMPLE_GETTING_STARTED_SECTION: readmeExampleGettingStartedSectionTransform,
+
+		/**
+		 * See {@link readmePackageScopeNoticeTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE:packageJsonPath=./package.json) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_PACKAGE_SCOPE_NOTICE: readmePackageScopeNoticeTransform,
 
 		/**
 		 * See {@link generateExperimentalPackageNotice}.
