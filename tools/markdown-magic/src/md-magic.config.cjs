@@ -492,9 +492,9 @@ function readmePackageScopeNoticeTransform(content, options, config) {
 	const packageName = packageMetadata.name;
 
 	// Note: if the user specified an explicit scope, that takes precendence over the package namespace.
-	scopeKind = scopeKind ?? getScopeKindFromPackage(packageName);
-	if (scopeKind !== undefined) {
-		sections.push(generatePackageScopeNotice(scopeKind));
+	const scopeKindWithInheritance = scopeKind ?? getScopeKindFromPackage(packageName);
+	if (scopeKindWithInheritance !== undefined) {
+		sections.push(generatePackageScopeNotice(scopeKindWithInheritance));
 	}
 }
 
