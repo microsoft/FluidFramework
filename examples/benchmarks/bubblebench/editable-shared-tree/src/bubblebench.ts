@@ -6,7 +6,7 @@ import {
 	AllowedUpdateType,
 	fail,
 	ISharedTree,
-	ISharedTreeView2,
+	ITreeView,
 	SharedTreeFactory,
 } from "@fluid-experimental/tree2";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
@@ -20,7 +20,7 @@ const treeKey = "treeKey";
 export class Bubblebench extends DataObject {
 	public static readonly Name = "@fluid-example/bubblebench-sharedtree";
 
-	private view: ISharedTreeView2<typeof rootAppStateSchema> | undefined;
+	private view: ITreeView<typeof rootAppStateSchema> | undefined;
 	private _appState: AppState | undefined;
 
 	protected async initializingFirstTime() {
@@ -83,7 +83,7 @@ export class Bubblebench extends DataObject {
 	 * Get the SharedTree.
 	 * Cannot be accessed until after initialization has complected.
 	 */
-	private get tree(): ISharedTreeView2<typeof rootAppStateSchema> {
+	private get tree(): ITreeView<typeof rootAppStateSchema> {
 		return this.view ?? fail("not initialized");
 	}
 

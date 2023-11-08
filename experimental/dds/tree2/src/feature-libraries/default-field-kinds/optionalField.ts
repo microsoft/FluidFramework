@@ -262,12 +262,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (change.childChanges !== undefined) {
 			for (const [id, childChange] of change.childChanges) {
 				if (id === "self" && change.fieldChange !== undefined) {
-					originalChildChanges = invertChild(childChange, 0);
+					originalChildChanges = invertChild(childChange);
 				} else {
 					inverseChildChanges.set(
 						// This makes assumptions about how sandwich rebasing works
 						id,
-						invertChild(childChange, 0),
+						invertChild(childChange),
 					);
 				}
 			}
@@ -275,7 +275,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const selfChanges = change.fieldChange?.newContent?.changes;
 		if (selfChanges !== undefined) {
-			inverseChildChanges.set("self", invertChild(selfChanges, 0));
+			inverseChildChanges.set("self", invertChild(selfChanges));
 		}
 
 		const inverse: OptionalChangeset = {

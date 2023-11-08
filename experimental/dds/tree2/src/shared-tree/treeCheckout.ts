@@ -33,10 +33,10 @@ import { TransactionResult } from "../util";
 import { noopValidator } from "../codec";
 
 /**
- * Events for {@link ISharedTreeView}.
+ * Events for {@link ITreeCheckout}.
  * @alpha
  */
-export interface ViewEvents {
+export interface CheckoutEvents {
 	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
 	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
@@ -62,13 +62,11 @@ export interface ViewEvents {
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
  * @privateRemarks
+ * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
- * TODO:
- * This interface is the one without a View schema.
- * For clarity it should be renamed to something like "BranchCheckout"
  * @alpha
  */
-export interface ISharedTreeView extends AnchorLocator {
+export interface ITreeCheckout extends AnchorLocator {
 	/**
 	 * Read and Write access for schema stored in the document.
 	 *
@@ -108,7 +106,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Spawn a new view which is based off of the current state of this view.
 	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
-	fork(): ISharedTreeBranchView;
+	fork(): ITreeCheckoutFork;
 
 	/**
 	 * Apply all the new changes on the given view to this view.
@@ -116,7 +114,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * It is automatically disposed after the merge completes.
 	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
 	 */
-	merge(view: ISharedTreeBranchView): void;
+	merge(view: ITreeCheckoutFork): void;
 
 	/**
 	 * Apply all the new changes on the given view to this view.
@@ -124,18 +122,18 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * @param disposeView - whether or not to dispose `view` after the merge completes.
 	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
 	 */
-	merge(view: ISharedTreeBranchView, disposeView: boolean): void;
+	merge(view: ITreeCheckoutFork, disposeView: boolean): void;
 
 	/**
 	 * Rebase the given view onto this view.
 	 * @param view - a view which was created by a call to `fork()`. It is modified by this operation.
 	 */
-	rebase(view: ISharedTreeBranchView): void;
+	rebase(view: ITreeCheckoutFork): void;
 
 	/**
 	 * Events about this view.
 	 */
-	readonly events: ISubscribable<ViewEvents>;
+	readonly events: ISubscribable<CheckoutEvents>;
 
 	/**
 	 * Events about the root of the tree in this view.
@@ -144,20 +142,22 @@ export interface ISharedTreeView extends AnchorLocator {
 }
 
 /**
- * Creates a {@link SharedTreeView}.
+ * Creates a {@link TreeCheckout}.
  * @param args - an object containing optional components that will be used to build the view.
  * Any components not provided will be created by default.
  * @remarks This does not create a {@link SharedTree}, but rather a view with the minimal state
- * and functionality required to implement {@link ISharedTreeView}.
+ * and functionality required to implement {@link ITreeCheckout}.
  */
-export function createSharedTreeView(args?: {
+export function createTreeCheckout(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 	changeFamily?: DefaultChangeFamily;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
-	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	events?: ISubscribable<CheckoutEvents> &
+		IEmitter<CheckoutEvents> &
+		HasListeners<CheckoutEvents>;
 	removedTrees?: DetachedFieldIndex;
-}): SharedTreeView {
+}): TreeCheckout {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
 	const changeFamily =
@@ -175,7 +175,7 @@ export function createSharedTreeView(args?: {
 
 	const transaction = new Transaction(branch);
 
-	return new SharedTreeView(
+	return new TreeCheckout(
 		transaction,
 		branch,
 		changeFamily,
@@ -194,7 +194,7 @@ export function createSharedTreeView(args?: {
  * Transactions may nest, meaning that a transaction may be started while a transaction is already ongoing.
  *
  * To avoid updating observers of the view state with intermediate results during a transaction,
- * use {@link ISharedTreeView#fork} and {@link ISharedTreeFork#merge}.
+ * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
  * @alpha
  */
 export interface ITransaction {
@@ -246,30 +246,30 @@ class Transaction implements ITransaction {
 /**
  * Branch (like in a version control system) of SharedTree.
  *
- * {@link ISharedTreeView} that has forked off of the main trunk/branch.
+ * {@link ITreeCheckout} that has forked off of the main trunk/branch.
  * @alpha
  */
-export interface ISharedTreeBranchView extends ISharedTreeView {
+export interface ITreeCheckoutFork extends ITreeCheckout {
 	/**
 	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
 	 */
-	rebaseOnto(view: ISharedTreeView): void;
+	rebaseOnto(view: ITreeCheckout): void;
 }
 
 /**
- * An implementation of {@link ISharedTreeBranchView}.
+ * An implementation of {@link ITreeCheckoutFork}.
  */
-export class SharedTreeView implements ISharedTreeBranchView {
+export class TreeCheckout implements ITreeCheckoutFork {
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		private readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		public readonly events: ISubscribable<ViewEvents> &
-			IEmitter<ViewEvents> &
-			HasListeners<ViewEvents>,
+		public readonly events: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>,
 		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
 		branch.on("change", (event) => {
@@ -313,14 +313,14 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		return this.forest.anchors.locate(anchor);
 	}
 
-	public fork(): SharedTreeView {
+	public fork(): TreeCheckout {
 		const anchors = new AnchorSet();
 		// TODO: ensure editing this clone of the schema does the right thing.
 		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
 		const branch = this.branch.fork();
 		const transaction = new Transaction(branch);
-		return new SharedTreeView(
+		return new TreeCheckout(
 			transaction,
 			branch,
 			this.changeFamily,
@@ -331,17 +331,17 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		);
 	}
 
-	public rebase(view: SharedTreeView): void {
+	public rebase(view: TreeCheckout): void {
 		view.branch.rebaseOnto(this.branch);
 	}
 
-	public rebaseOnto(view: ISharedTreeView): void {
+	public rebaseOnto(view: ITreeCheckout): void {
 		view.rebase(this);
 	}
 
-	public merge(view: SharedTreeView): void;
-	public merge(view: SharedTreeView, disposeView: boolean): void;
-	public merge(view: SharedTreeView, disposeView = true): void {
+	public merge(view: TreeCheckout): void;
+	public merge(view: TreeCheckout, disposeView: boolean): void;
+	public merge(view: TreeCheckout, disposeView = true): void {
 		assert(
 			!this.transaction.inProgress() || disposeView,
 			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
@@ -374,8 +374,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
  * @alpha
  */
 export function runSynchronous(
-	view: ISharedTreeView,
-	transaction: (view: ISharedTreeView) => TransactionResult | void,
+	view: ITreeCheckout,
+	transaction: (view: ITreeCheckout) => TransactionResult | void,
 ): TransactionResult {
 	view.transaction.start();
 	const result = transaction(view);
