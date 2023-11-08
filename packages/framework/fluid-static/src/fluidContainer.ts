@@ -91,6 +91,8 @@ export interface IFluidContainerEvents extends IEvent {
  * Provides an entrypoint into the client side of collaborative Fluid data.
  * Provides access to the data as well as status on the collaboration session.
  *
+ * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
+ * 
  * @remarks Note: external implementations of this interface are not supported.
  */
 export interface IFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
@@ -209,6 +211,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 /**
  * Base {@link IFluidContainer} implementation.
  *
+ * @typeparam TContainerSchema - Used to determine the type of 'initialObjects'.
  * @remarks
  *
  * Note: this implementation is not complete. Consumers who rely on {@link IFluidContainer.attach}

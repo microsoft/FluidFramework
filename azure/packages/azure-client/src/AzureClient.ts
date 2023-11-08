@@ -86,6 +86,8 @@ export class AzureClient {
 
 	/**
 	 * Creates a new detached container instance in the Azure Fluid Relay.
+	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
+	 * (normally not explicitly specified.)
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
@@ -112,6 +114,8 @@ export class AzureClient {
 
 	/**
 	 * Creates new detached container out of specific version of another container.
+	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
+	 * (normally not explicitly specified.)
 	 * @param id - Unique ID of the source container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
@@ -163,6 +167,8 @@ export class AzureClient {
 
 	/**
 	 * Accesses the existing container given its unique ID in the Azure Fluid Relay.
+	 * @typeparam TContainerSchema - Used to infer the the type of 'initialObjects' in the returned container.
+	 * (normally not explicitly specified.)
 	 * @param id - Unique ID of the container in Azure Fluid Relay.
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
