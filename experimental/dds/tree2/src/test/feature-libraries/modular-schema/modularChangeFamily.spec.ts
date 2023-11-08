@@ -50,7 +50,7 @@ import { ValueChangeset, valueField } from "./basicRebasers";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
-	invert: (change, invertChild) => invertChild(change.change, 0),
+	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
 	amendCompose: () => fail("Not supported"),
 	amendInvert: () => fail("Not supported"),
@@ -71,6 +71,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
+	relevantRemovedTrees: (change, removedTreesFromChild) => removedTreesFromChild(change),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
@@ -668,11 +669,15 @@ describe("ModularChangeFamily", () => {
 			composeChild,
 			genId,
 			crossFieldManager,
-			{ getIndex, getInfo },
+			{ getIndex, tryGetInfo },
 		): RevisionTag[] => {
 			const relevantRevisions = [rev1, rev2, rev3, rev4];
-			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
-			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
 			assert.deepEqual(revsIndices, [0, 1, 2, 3]);
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
@@ -692,11 +697,15 @@ describe("ModularChangeFamily", () => {
 			rebaseChild,
 			genId,
 			crossFieldManager,
-			{ getIndex, getInfo },
+			{ getIndex, tryGetInfo },
 		): RevisionTag[] => {
 			const relevantRevisions = [rev1, rev2, rev4];
-			const revsIndices: number[] = relevantRevisions.map((c) => getIndex(c));
-			const revsInfos: RevisionInfo[] = relevantRevisions.map((c) => getInfo(c));
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
 			assert.deepEqual(revsIndices, [0, 1, 2]);
 			const expected: RevisionInfo[] = [
 				{ revision: rev1 },
@@ -784,4 +793,9 @@ describe("ModularChangeFamily", () => {
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
 	});
+
+	function ensureIndexDefined(index: number | undefined): number {
+		assert(index !== undefined, "Unexpected undefined index");
+		return index;
+	}
 });

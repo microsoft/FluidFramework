@@ -4,18 +4,6 @@
  */
 
 export {
-	EditableField,
-	EditableTree,
-	EditableTreeContext,
-	EditableTreeOrPrimitive,
-	getEditableTreeContext,
-	isEditableField,
-	isPrimitive,
-	isEditableTree,
-	proxyTargetSymbol,
-	UnwrappedEditableField,
-	UnwrappedEditableTree,
-	localNodeKeySymbol,
 	createDataBinderBuffering,
 	createDataBinderDirect,
 	createDataBinderInvalidating,
@@ -52,9 +40,7 @@ export {
 	toDownPath,
 	comparePipeline,
 	compileSyntaxTree,
-	setField,
-} from "./editable-tree";
-
+} from "./editableTreeBinder";
 export {
 	typeNameSymbol,
 	valueSymbol,
@@ -85,7 +71,7 @@ export { ForestSummarizer } from "./forestSummarizer";
 export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
-export { SchemaSummarizer, SchemaEditor } from "./schemaSummarizer";
+export { SchemaSummarizer, SchemaEditor, encodeTreeSchema } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
@@ -95,7 +81,12 @@ export {
 	prefixFieldPath,
 	CursorWithNode,
 } from "./treeCursorUtils";
-export { singleTextCursor, jsonableTreeFromCursor } from "./treeTextCursor";
+export {
+	singleTextCursor,
+	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
+	jsonableTreeFromForest,
+} from "./treeTextCursor";
 
 // Split this up into separate import and export for compatibility with API-Extractor.
 import * as SequenceField from "./sequence-field";
@@ -133,6 +124,7 @@ export {
 	NodeExistsConstraint,
 	NodeExistenceState,
 	FieldKindWithEditor,
+	RemovedTreesFromChild,
 } from "./modular-schema";
 
 export {
@@ -216,23 +208,7 @@ export {
 	defaultSchemaPolicy,
 } from "./default-field-kinds";
 
-export {
-	TreeEvent,
-	UntypedField,
-	UntypedTree,
-	UntypedTreeContext,
-	UntypedTreeCore,
-	UnwrappedUntypedField,
-	UnwrappedUntypedTree,
-	UntypedTreeOrPrimitive,
-	typeSymbol,
-	getField,
-	parentField,
-	EditableTreeEvents,
-	on,
-	contextSymbol,
-	treeStatus,
-} from "./untypedTree";
+export { TreeEvent, EditableTreeEvents } from "./untypedTree";
 
 export {
 	AssignableFieldKinds,
@@ -252,7 +228,7 @@ export {
 	TypedField,
 	TypedNode,
 	TypedNodeUnion,
-	Tree,
+	TreeEntity,
 	TreeField,
 	TreeNode,
 	getTreeContext,
@@ -269,14 +245,17 @@ export {
 	SharedTreeMap,
 	SharedTreeObject,
 	ProxyRoot,
-	node,
-	NodeApi,
+	Tree,
+	TreeApi,
 	SharedTreeNode,
 	Typed,
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
 	addFactory,
+	Context,
 } from "./editable-tree-2";
+
+export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";

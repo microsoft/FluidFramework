@@ -387,7 +387,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-eslint",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json;
 			try {
 				json = JSON.parse(readFile(file));
@@ -427,7 +427,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-tsc",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
@@ -482,7 +482,12 @@ export const handlers: Handler[] = [
 				for (const script in json.scripts) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const command = json.scripts[script]!;
-					if (command.startsWith("tsc") && !ignore.has(script)) {
+					if (
+						command.startsWith("tsc") &&
+						// tsc --watch tasks are long-running processes and don't need the standard task deps
+						!command.includes("--watch") &&
+						!ignore.has(script)
+					) {
 						try {
 							const checkDeps = getTscCommandDependencies(
 								packageDir,

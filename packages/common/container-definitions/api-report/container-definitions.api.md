@@ -204,7 +204,7 @@ export interface IContainerContext {
     // @deprecated (undocumented)
     readonly submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number;
     // (undocumented)
-    readonly submitSignalFn: (contents: any) => void;
+    readonly submitSignalFn: (contents: any, targetClientId?: string) => void;
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
     // (undocumented)
@@ -260,7 +260,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     // (undocumented)
     readonly readOnlyInfo: ReadOnlyInfo;
     readonly serviceConfiguration: IClientConfiguration | undefined;
-    submitSignal(content: any): void;
+    submitSignal(content: any, targetClientId?: string): void;
     readonly version: string;
 }
 
@@ -383,6 +383,12 @@ export interface IFluidPackageEnvironment {
 
 export { IGenericError }
 
+// @alpha
+export interface IGetPendingLocalStateProps {
+    readonly notifyImminentClosure: boolean;
+    readonly stopBlobAttachingSignal?: AbortSignal;
+}
+
 // @public
 export interface IHostLoader extends ILoader {
     createDetachedContainer(codeDetails: IFluidCodeDetails, createDetachedProps?: {
@@ -464,9 +470,8 @@ export interface IResolvedFluidCodeDetails extends IFluidCodeDetails {
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint(): Promise<FluidObject | undefined>;
-    getPendingLocalState(props?: {
-        notifyImminentClosure?: boolean;
-    }): unknown;
+    // @alpha
+    getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     // @deprecated
     notifyAttaching(snapshot: ISnapshotTreeWithBlobContents): void;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;

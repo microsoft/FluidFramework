@@ -60,14 +60,6 @@ export enum ValueSchema {
 }
 
 /**
- * {@link ValueSchema} for privative types.
- * @privateRemarks
- * TODO: remove when old editable tree API is removed.
- * @alpha
- */
-export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
-
-/**
  * Set of allowed tree types.
  * Providing multiple values here allows polymorphism, tagged union style.
  *
@@ -135,9 +127,15 @@ export interface TreeFieldStoredSchema {
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
+/**
+ * A schema for empty fields (fields which must always be empty).
+ * There are multiple ways this could be encoded, but this is the most explicit.
+ */
 export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
+	// This kind requires the field to be empty.
 	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
-	types: undefined,
+	// This type set also forces the field to be empty not not allowing any types as all.
+	types: new Set(),
 };
 
 /**
@@ -209,5 +207,5 @@ export interface StoredSchemaCollection {
 	/**
 	 * {@inheritdoc StoredSchemaCollection}
 	 */
-	readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }

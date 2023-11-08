@@ -17,7 +17,7 @@ import {
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";

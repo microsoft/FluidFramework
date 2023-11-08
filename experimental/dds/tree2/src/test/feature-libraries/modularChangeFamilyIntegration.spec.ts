@@ -245,6 +245,7 @@ describe("ModularChangeFamily integration", () => {
 				{ parent: undefined, field: fieldC },
 				0,
 			);
+
 			const [move1, move2, expected] = getChanges();
 			const composed = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
 			const actualDelta = normalizeDelta(family.intoDelta(makeAnonChange(composed)));

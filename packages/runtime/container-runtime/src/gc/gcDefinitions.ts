@@ -4,7 +4,7 @@
  */
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import { ISnapshotTree } from "@fluidframework/protocol-definitions";
 import {
 	IGarbageCollectionData,
@@ -19,6 +19,7 @@ import {
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
 } from "../summary";
+import { RuntimeHeaderData } from "../containerRuntime";
 
 /**
  * @public
@@ -37,6 +38,13 @@ export const nextGCVersion: GCVersion = 4;
  * Otherwise, only enforce GC Tombstone if the passed in value matches the persisted value
  */
 export const gcTombstoneGenerationOptionName = "gcTombstoneGeneration";
+
+/**
+ * This undocumented GC Option (on ContainerRuntime Options) allows an app to enable throwing an error when tombstone
+ * object is loaded (requested).
+ */
+export const gcThrowOnTombstoneLoadOptionName = "gcThrowOnTombstoneLoad";
+
 /**
  * This GC Option (on ContainerRuntime Options) allows an app to disable GC Sweep on old documents by incrementing this value.
  *
@@ -58,8 +66,9 @@ export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
 export const disableSweepLogKey = "Fluid.GarbageCollection.DisableSweepLog";
 /** Config key to disable the tombstone feature, i.e., tombstone information is not read / written into summary. */
 export const disableTombstoneKey = "Fluid.GarbageCollection.DisableTombstone";
-/** Config key to enable throwing an error when tombstone object is loaded (requested). */
-export const throwOnTombstoneLoadKey = "Fluid.GarbageCollection.ThrowOnTombstoneLoad";
+/** Config key to override throwing an error when tombstone object is loaded (requested). */
+export const throwOnTombstoneLoadOverrideKey =
+	"Fluid.GarbageCollection.ThrowOnTombstoneLoadOverride";
 /** Config key to enable throwing an error when tombstone object is used (e.g. outgoing or incoming ops). */
 export const throwOnTombstoneUsageKey = "Fluid.GarbageCollection.ThrowOnTombstoneUsage";
 /** Config key to enable GC version upgrade. */
@@ -212,8 +221,6 @@ export interface IGarbageCollectionRuntime {
 	getNodeType(nodePath: string): GCNodeType;
 	/** Called when the runtime should close because of an error. */
 	closeFn: (error?: ICriticalContainerError) => void;
-	/** If false, loading or using a Tombstoned object should merely log, not fail */
-	gcTombstoneEnforcementAllowed: boolean;
 }
 
 /** Defines the contract for the garbage collector. */
@@ -224,6 +231,12 @@ export interface IGarbageCollector {
 	readonly summaryStateNeedsReset: boolean;
 	/** The count of data stores whose GC state updated since the last summary. */
 	readonly updatedDSCountSinceLastSummary: number;
+	/** Tells whether tombstone feature is enabled and enforced. */
+	readonly tombstoneEnforcementAllowed: boolean;
+	/** Tells whether loading a tombstone object should fail or merely log. */
+	readonly throwOnTombstoneLoad: boolean;
+	/** Tells whether using a tombstone object should fail or merely log. */
+	readonly throwOnTombstoneUsage: boolean;
 	/** Initialize the state from the base snapshot after its creation. */
 	initializeBaseState(): Promise<void>;
 	/** Run garbage collection and update the reference / used state of the system. */
@@ -247,13 +260,17 @@ export interface IGarbageCollector {
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
 	/** Called when the latest summary of the system has been refreshed. */
 	refreshLatestSummary(result: IRefreshSummaryResult): Promise<void>;
-	/** Called when a node is updated. Used to detect and log when an inactive node is changed or loaded. */
+	/**
+	 * Called when a node with the given path is updated. If the node is inactive or tombstoned, this will log an error
+	 * or throw an error if failing on incorrect usage is configured.
+	 */
 	nodeUpdated(
 		nodePath: string,
 		reason: "Loaded" | "Changed",
 		timestampMs?: number,
 		packagePath?: readonly string[],
-		requestHeaders?: IRequestHeader,
+		request?: IRequest,
+		headerData?: RuntimeHeaderData,
 	): void;
 	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
 	addedOutboundReference(fromNodePath: string, toNodePath: string): void;
@@ -354,8 +371,6 @@ export interface IGarbageCollectorConfigs {
 	readonly sweepTimeoutMs: number | undefined;
 	/** The time after which an unreferenced node is inactive. */
 	readonly inactiveTimeoutMs: number;
-	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
-	readonly throwOnInactiveLoad: boolean | undefined;
 	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
 	readonly testMode: boolean;
 	/**
@@ -371,6 +386,14 @@ export interface IGarbageCollectorConfigs {
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 	/** The current version of GC data in the running code */
 	readonly gcVersionInEffect: GCVersion;
+	/** It is easier for users to diagnose InactiveObject usage if we throw on load, which this option enables */
+	readonly throwOnInactiveLoad: boolean | undefined;
+	/** If false, loading or using a Tombstoned object should merely log, not fail */
+	readonly tombstoneEnforcementAllowed: boolean;
+	/** If true, throw an error when a tombstone data store is retrieved */
+	readonly throwOnTombstoneLoad: boolean;
+	/** If true, throw an error when a tombstone data store is used. */
+	readonly throwOnTombstoneUsage: boolean;
 }
 
 /** The state of node that is unreferenced. */

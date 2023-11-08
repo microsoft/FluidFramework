@@ -51,6 +51,7 @@ import {
 	MockDependent,
 	applyTestDelta,
 	expectEqualFieldPaths,
+	expectEqualPaths,
 	jsonSequenceRootSchema,
 } from "./utils";
 import { testGeneralPurposeTreeCursor, testTreeSchema } from "./cursorTestSuite";
@@ -262,6 +263,37 @@ export function testForest(config: ForestTestConfiguration): void {
 			expectEqualFieldPaths(cursor.getFieldPath(), childPath);
 		});
 
+		describe("moveCursorToPath", () => {
+			it("moves cursor to specified path.", () => {
+				const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+				initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+				const cursor = forest.allocateCursor();
+				const path: UpPath = {
+					parent: undefined,
+					parentField: rootFieldKey,
+					parentIndex: 0,
+				};
+
+				forest.moveCursorToPath(path, cursor);
+				expectEqualPaths(path, cursor.getPath());
+			});
+		});
+
+		it("getCursorAboveDetachedFields", () => {
+			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
+			initializeForest(forest, [singleJsonCursor([1, 2])]);
+
+			const forestCursor = forest.allocateCursor();
+			moveToDetachedField(forest, forestCursor);
+			const expected = mapCursorField(forestCursor, jsonableTreeFromCursor);
+
+			const cursor = forest.getCursorAboveDetachedFields();
+			cursor.enterField(rootFieldKey);
+			const actual = mapCursorField(cursor, jsonableTreeFromCursor);
+			assert.deepEqual(actual, expected);
+		});
+
 		it("anchors creation and use", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
@@ -325,8 +357,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			assert(forest.anchors.isEmpty());
 		});
 
-		// Not testable until node destruction is implemented
-		it.skip("using an anchor that went away returns NotFound", () => {
+		it("using an anchor that went away returns NotFound", () => {
 			const forest = factory(new InMemoryStoredSchemaRepository(jsonDocumentSchema));
 
 			initializeForest(forest, [singleJsonCursor([1, 2])]);
@@ -340,7 +371,9 @@ export function testForest(config: ForestTestConfiguration): void {
 			cursor.clear();
 
 			const mark: Delta.Mark = { count: 1, detach: detachId };
-			const delta: Delta.Root = new Map([[rootFieldKey, { local: [mark] }]]);
+			const delta: Delta.Root = new Map([
+				[rootFieldKey, { local: [mark], destroy: [{ id: detachId, count: 1 }] }],
+			]);
 			applyTestDelta(delta, forest);
 			applyTestDelta(delta, forest.anchors);
 

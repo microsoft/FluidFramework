@@ -22,7 +22,7 @@ import {
 	AsyncReducer as Reducer,
 	SaveInfo,
 	saveOpsToFile,
-} from "@fluid-internal/stochastic-test-utils";
+} from "@fluid-private/stochastic-test-utils";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
@@ -135,11 +135,11 @@ function getSaveInfo(
  * type Operation = InsertOperation | RemoveOperation;
  * ```
  *
- * It would then typically use utilities from \@fluid-internal/stochastic-test-utils to write a generator
+ * It would then typically use utilities from \@fluid-private/stochastic-test-utils to write a generator
  * for inserting/removing content, and a reducer for interpreting the serializable operations in terms of
  * SimpleSharedString's public API.
  *
- * See \@fluid-internal/stochastic-test-utils's README for more details on this step.
+ * See \@fluid-private/stochastic-test-utils's README for more details on this step.
  *
  * Then, it could define a model like so:
  * ```typescript
@@ -834,10 +834,9 @@ export function mixinClientSelection<
 			// 2. Make it available to the subsequent reducer logic we're going to inject
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
-			const baseOp = await baseGenerator({
-				...state,
-				client,
-			});
+			const baseOp = await runInStateWithClient(state, client, async () =>
+				baseGenerator(state),
+			);
 			return baseOp === done
 				? done
 				: {
@@ -851,13 +850,37 @@ export function mixinClientSelection<
 		assert(isClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.channel.id === operation.clientId);
 		assert(client !== undefined);
-		return model.reducer({ ...state, client }, operation as TOperation);
+		await runInStateWithClient(state, client, async () =>
+			model.reducer(state, operation as TOperation),
+		);
 	};
 	return {
 		...model,
 		generatorFactory,
 		reducer,
 	};
+}
+
+/**
+ * This modifies the value of "client" while callback is running, then restores it.
+ * This is does instead of copying the state since the state object is mutable, and running callback might make changes to state (like add new members) which are lost if state is just copied.
+ *
+ * Since the callback is async, this modification to the state could be an issue if multiple runs of this function are done concurrently.
+ */
+async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFactory>, Result>(
+	state: TState,
+	client: TState["client"],
+	callback: (state: TState) => Promise<Result>,
+): Promise<Result> {
+	const oldClient = state.client;
+	state.client = client;
+	try {
+		return await callback(state);
+	} finally {
+		// This code is explicitly trying to "update" to the old value.
+		// eslint-disable-next-line require-atomic-updates
+		state.client = oldClient;
+	}
 }
 
 function makeUnreachableCodePathProxy<T extends object>(name: string): T {
@@ -1035,10 +1058,16 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 			if (!shouldMinimize) {
 				throw error;
 			}
-
-			const operations = JSON.parse(
-				readFileSync(saveInfo.filepath).toString(),
-			) as TOperation[];
+			let file: Buffer;
+			try {
+				file = readFileSync(saveInfo.filepath);
+			} catch {
+				// File could not be read and likely does not exist.
+				// Test may have failed outside of the fuzz test portion (on setup or teardown).
+				// Throw original error that made test fail.
+				throw error;
+			}
+			const operations = JSON.parse(file.toString()) as TOperation[];
 			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
 
 			const minimized = await minimizer.minimize();
