@@ -622,42 +622,6 @@ module.exports = {
 		README_PACKAGE_SCOPE_NOTICE: readmePackageScopeNoticeTransform,
 
 		/**
-		 * See {@link generateExperimentalPackageNotice}.
-		 *
-		 * @example
-		 *
-		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_EXPERIMENTAL_PACKAGE_NOTICE) -->
-		 * <!-- AUTO-GENERATED-CONTENT:END -->
-		 * ```
-		 */
-		README_EXPERIMENTAL_PACKAGE_NOTICE: generateExperimentalPackageNotice,
-
-		/**
-		 * See {@link generateInternalPackageNotice}.
-		 *
-		 * @example
-		 *
-		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_INTERNAL_PACKAGE_NOTICE) -->
-		 * <!-- AUTO-GENERATED-CONTENT:END -->
-		 * ```
-		 */
-		README_INTERNAL_PACKAGE_NOTICE: generateInternalPackageNotice,
-
-		/**
-		 * See {@link generatePrivatePackageNotice}.
-		 *
-		 * @example
-		 *
-		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_PRIVATE_PACKAGE_NOTICE) -->
-		 * <!-- AUTO-GENERATED-CONTENT:END -->
-		 * ```
-		 */
-		README_PRIVATE_PACKAGE_NOTICE: generatePrivatePackageNotice,
-
-		/**
 		 * See {@link readmeApiDocsSectionTransform}.
 		 *
 		 * @example
