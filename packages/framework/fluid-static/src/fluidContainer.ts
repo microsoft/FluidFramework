@@ -13,7 +13,7 @@ import {
 import type { ContainerSchema, IRootDataObject, LoadableObjectClass } from "./types";
 
 /**
- * Extract the type of 'initialObjects' from the given ContainerSchema type.
+ * Extract the type of 'initialObjects' from the given {@link ContainerSchema} type.
  */
 export type InitialObjects<T extends ContainerSchema> = {
 	// Construct a LoadableObjectRecord type by enumerating the keys of
