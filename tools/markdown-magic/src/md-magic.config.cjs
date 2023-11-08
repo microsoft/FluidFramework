@@ -275,10 +275,10 @@ function libraryPackageReadmeTransform(content, options, config) {
 	if (options.experimentalPackage === "TRUE" || packageScope === `@fluid-experimental`) {
 		sections.push(generateExperimentalPackageNotice());
 	}
-	if (options.internal === "TRUE" || packageScope === `@fluid-internal`) {
+	if (options.internalPackage === "TRUE" || packageScope === `@fluid-internal`) {
 		sections.push(generateInternalPackageNotice());
 	}
-	if (options.private === "TRUE" || packageScope === `@fluid-private`) {
+	if (options.privatePackage === "TRUE" || packageScope === `@fluid-private`) {
 		sections.push(generatePrivatePackageNotice());
 	}
 
