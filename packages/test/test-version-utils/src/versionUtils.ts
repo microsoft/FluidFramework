@@ -284,12 +284,12 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
  *
  * @example
  * ```typescript
- * const newRange = getRequestedRange("2.3.5", -1); // "^1.0.0"
+ * const newVersion = getRequestedVersion("2.3.5", -1); // "^1.0.0"
  * ```
  *
  * @example
  * ```typescript
- * const newRange = getRequestedRange("2.3.5", -2); // "^0.59.0"
+ * const newVersion = getRequestedVersion("2.3.5", -2); // "^0.59.0"
  * ```
  */
 export function getRequestedVersion(baseVersion: string, requested?: number | string): string {
