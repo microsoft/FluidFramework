@@ -18,7 +18,7 @@ import {
 	boxedIterator,
 	TreeSchema,
 } from "../../feature-libraries";
-import { brand, fail, TransactionResult } from "../../util";
+import { brand, disposeSymbol, fail, TransactionResult } from "../../util";
 import {
 	SharedTreeTestFactory,
 	SummarizeType,
@@ -40,9 +40,8 @@ import {
 import {
 	ForestType,
 	ISharedTree,
-	ISharedTreeBranchView,
-	ISharedTreeView,
-	ISharedTreeView2,
+	ITreeCheckout,
+	ITreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
 	SharedTreeFactory,
@@ -505,10 +504,11 @@ describe("SharedTree", () => {
 
 	it("can summarize local edits in the attach summary", async () => {
 		const onCreate = (tree: SharedTree) => {
-			const view = tree.schematize(emptyStringSequenceConfig).editableTree;
-			view.insertAtStart(["A"]);
-			view.insertAtEnd(["C"]);
-			assert.deepEqual(view.asArray, ["A", "C"]);
+			const view = tree.schematize(emptyStringSequenceConfig);
+			view.editableTree.insertAtStart(["A"]);
+			view.editableTree.insertAtEnd(["C"]);
+			assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
+			view[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,
@@ -532,11 +532,12 @@ describe("SharedTree", () => {
 		const onCreate = (tree: SharedTree) => {
 			// Schematize uses a transaction as well
 			const view = tree.schematize(emptyStringSequenceConfig);
-			view.branch.transaction.start();
+			view.checkout.transaction.start();
 			view.editableTree.insertAtStart(["A"]);
 			view.editableTree.insertAt(1, ["C"]);
-			view.branch.transaction.commit();
+			view.checkout.transaction.commit();
 			assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
+			view[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,
@@ -574,7 +575,7 @@ describe("SharedTree", () => {
 		const tree1 = assertSchema(provider.trees[0], stringSequenceRootSchema);
 		assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
 		const tree2 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
-		tree1.branch.transaction.commit();
+		tree1.checkout.transaction.commit();
 		// Check that the joining tree was initialized with data from the attach summary
 		assert.deepEqual(tree2, []);
 
@@ -591,7 +592,7 @@ describe("SharedTree", () => {
 
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
-		provider.trees[0].schematize(emptyStringSequenceConfig);
+		provider.trees[0].schematize(emptyStringSequenceConfig)[disposeSymbol]();
 		provider.processMessages();
 
 		const [tree1, tree2] = provider.trees.map(
@@ -631,6 +632,7 @@ describe("SharedTree", () => {
 			view.editableTree.insertAtStart(["B"]);
 			view.editableTree.insertAtStart(["A"]);
 			assert.deepEqual(view.editableTree.asArray, ["A", "B"]);
+			view[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,
@@ -730,7 +732,7 @@ describe("SharedTree", () => {
 			assert.equal(tree2.content, 43);
 		});
 
-		function abortTransaction(branch: ISharedTreeView): void {
+		function abortTransaction(branch: ITreeCheckout): void {
 			const initialState: JsonableTree = {
 				type: brand("Node"),
 				fields: {
@@ -943,7 +945,7 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematize(emptyStringSequenceConfig);
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1.branch);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1.checkout);
 			provider.processMessages();
 			const tree2 = provider.trees[1].schematize(emptyStringSequenceConfig);
 			provider.processMessages();
@@ -984,7 +986,7 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1.branch);
+			} = createTestUndoRedoStacks(tree1.checkout);
 
 			provider.processMessages();
 			const tree2 =
@@ -994,10 +996,10 @@ describe("SharedTree", () => {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2.branch);
+			} = createTestUndoRedoStacks(tree2.checkout);
 
 			// Validate insertion
-			validateTreeContent(tree2.branch, content);
+			validateTreeContent(tree2.checkout, content);
 
 			const root1 = tree1.editableTree;
 			const root2 = tree2.editableTree;
@@ -1019,8 +1021,8 @@ describe("SharedTree", () => {
 			assert.deepEqual(root2.asArray, ["A", "x", "B", "C", "D"]);
 
 			provider.processMessages();
-			validateTreeContent(tree1.branch, content);
-			validateTreeContent(tree2.branch, content);
+			validateTreeContent(tree1.checkout, content);
+			validateTreeContent(tree2.checkout, content);
 
 			// Insert additional node at the beginning to require rebasing
 			root1.insertAt(0, ["0"]);
@@ -1061,12 +1063,12 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1.branch);
+			} = createTestUndoRedoStacks(tree1.checkout);
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2.branch);
+			} = createTestUndoRedoStacks(tree2.checkout);
 
 			// Insert node
 			tree1.editableTree.insertAtStart([value]);
@@ -1116,13 +1118,13 @@ describe("SharedTree", () => {
 				) ?? fail("invalid schema");
 
 			// Validate initialization
-			validateViewConsistency(tree1.branch, tree2.branch);
+			validateViewConsistency(tree1.checkout, tree2.checkout);
 
 			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
-				tree1.branch,
+				tree1.checkout,
 			);
 			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
-				tree2.branch,
+				tree2.checkout,
 			);
 
 			const root1 = tree1.editableTree;
@@ -1240,11 +1242,11 @@ describe("SharedTree", () => {
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
 		tree2.on("op", () => (opsReceived += 1));
-		tree1.branch.transaction.start();
+		tree1.checkout.transaction.start();
 		tree1.editableTree.insertAtStart(["x"]);
 		provider.processMessages();
 		assert.equal(opsReceived, 0);
-		tree1.branch.transaction.commit();
+		tree1.checkout.transaction.commit();
 		provider.processMessages();
 		assert.equal(opsReceived, 1);
 		assert.deepEqual(assertSchema(tree2, stringSequenceRootSchema).editableTree.asArray, ["x"]);
@@ -1257,10 +1259,10 @@ describe("SharedTree", () => {
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
 		tree2.on("op", () => (opsReceived += 1));
-		tree1.branch.transaction.start();
+		tree1.checkout.transaction.start();
 		tree1.editableTree.insertAtStart(["B"]);
 		tree1.editableTree.insertAtStart(["A"]);
-		tree1.branch.transaction.commit();
+		tree1.checkout.transaction.commit();
 		provider.processMessages();
 		assert.equal(opsReceived, 1);
 		assert.deepEqual(assertSchema(tree2, stringSequenceRootSchema).editableTree.asArray, [
@@ -1276,16 +1278,16 @@ describe("SharedTree", () => {
 		const tree2 = provider.trees[1];
 		let opsReceived = 0;
 		tree2.on("op", () => (opsReceived += 1));
-		tree1.branch.transaction.start();
-		tree1.branch.transaction.start();
+		tree1.checkout.transaction.start();
+		tree1.checkout.transaction.start();
 		tree1.editableTree.insertAtStart("A");
-		tree1.branch.transaction.commit();
+		tree1.checkout.transaction.commit();
 		provider.processMessages();
 		assert.equal(opsReceived, 0);
 		const view2 = assertSchema(tree2, stringSequenceRootSchema).editableTree;
 		assert.deepEqual(view2.asArray, []);
 		tree1.editableTree.insertAtEnd(["B"]);
-		tree1.branch.transaction.commit();
+		tree1.checkout.transaction.commit();
 		provider.processMessages();
 		assert.equal(opsReceived, 1);
 		assert.deepEqual(view2.asArray, ["A", "B"]);
@@ -1298,16 +1300,17 @@ describe("SharedTree", () => {
 				schema: stringSequenceRootSchema,
 				allowedSchemaModifications: AllowedUpdateType.None,
 			});
-			parent.branch.transaction.start();
+			parent.checkout.transaction.start();
 			parent.editableTree.insertAtStart(["B"]);
-			parent.branch.transaction.commit();
+			parent.checkout.transaction.commit();
 			const child = parent.fork();
-			child.branch.transaction.start();
+			child.checkout.transaction.start();
 			child.editableTree.insertAtStart(["C"]);
-			child.branch.transaction.commit();
-			// TODO: better integrate ISharedTreeView2 with BranchView concept.
-			parent.branch.merge(child.branch as ISharedTreeBranchView);
+			child.checkout.transaction.commit();
+			parent.checkout.merge(child.checkout);
+			child[disposeSymbol]();
 			assert.deepEqual(parent.editableTree.asArray, ["C", "B", "A"]);
+			parent[disposeSymbol]();
 		};
 		const provider = await TestTreeProvider.create(
 			1,
@@ -1499,7 +1502,7 @@ describe("SharedTree", () => {
 function assertSchema<TRoot extends TreeFieldSchema>(
 	tree: ISharedTree,
 	schema: TreeSchema<TRoot>,
-): ISharedTreeView2<TRoot> {
+): ITreeView<TRoot> {
 	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
 }
 
@@ -1511,7 +1514,7 @@ function assertSchema<TRoot extends TreeFieldSchema>(
  * TODO: users of this are making schema: one has been provided that might be close, but likely isn't fully correct..
  * TODO: users of this doesn't depend on SharedTree directly and should be moved to tests of SharedTreeView.
  */
-function itView(title: string, fn: (view: ISharedTreeView) => void): void {
+function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	const content: TreeContent = {
 		schema: jsonSequenceRootSchema,
 		initialTree: [],
@@ -1523,7 +1526,7 @@ function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(provider.trees[0].schematize(config).branch);
+		fn(provider.trees[0].schematize(config).checkout);
 	});
 
 	it(`${title} (reference view)`, () => {
@@ -1532,7 +1535,7 @@ function itView(title: string, fn: (view: ISharedTreeView) => void): void {
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematize(config).branch.fork());
+		fn(provider.trees[0].schematize(config).checkout.fork());
 	});
 
 	it(`${title} (reference forked view)`, () => {

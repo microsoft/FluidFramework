@@ -140,7 +140,7 @@
 			"Test-Utils": {
 				"dev": true,
 				"packages": [
-					"@fluid-internal/stochastic-test-utils",
+					"@fluid-private/stochastic-test-utils",
 					"@fluid-internal/test-dds-utils",
 					"@fluidframework/local-driver",
 					"@fluidframework/test-runtime-utils",

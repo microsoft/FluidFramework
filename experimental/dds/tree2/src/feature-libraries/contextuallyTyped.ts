@@ -453,6 +453,9 @@ function shallowCompatibilityTest(
 			getFieldKind(primary.schema).multiplicity === Multiplicity.Sequence
 		);
 	}
+	if (data instanceof Map) {
+		return schema.mapFields !== undefined;
+	}
 	if (data[typeNameSymbol] !== undefined) {
 		return data[typeNameSymbol] === type;
 	}

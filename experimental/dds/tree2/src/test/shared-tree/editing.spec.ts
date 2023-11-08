@@ -27,7 +27,7 @@ import {
 	expectJsonTree,
 	createTestUndoRedoStacks,
 } from "../utils";
-import { ISharedTreeView } from "../../shared-tree";
+import { ITreeCheckout } from "../../shared-tree";
 import { singleTextCursor } from "../../feature-libraries";
 
 const rootField: FieldUpPath = {
@@ -1369,7 +1369,7 @@ describe("Editing", () => {
 				0,
 			);
 
-			// Deletes parent node of the src field
+			// Deletes parent node of the dst field
 			tree.editor
 				.optionalField({ parent: rootNode, field: brand("dst") })
 				.set(undefined, false);
@@ -1640,10 +1640,10 @@ describe("Editing", () => {
 				return buildScenariosWithPrefix();
 			}
 
-			const delAction = (peer: ISharedTreeView, idx: number) => remove(peer, idx, 1);
+			const delAction = (peer: ITreeCheckout, idx: number) => remove(peer, idx, 1);
 			const srcField: FieldUpPath = rootField;
 			const dstField: FieldUpPath = { parent: undefined, field: brand("dst") };
-			const moveAction = (peer: ISharedTreeView, idx: number) =>
+			const moveAction = (peer: ITreeCheckout, idx: number) =>
 				peer.editor.move(srcField, idx, 1, dstField, 0);
 
 			/**
@@ -1729,6 +1729,8 @@ describe("Editing", () => {
 			const startState = makeArray(nbNodes, (n) => `N${n}`);
 			const scenarios = buildScenarios();
 
+			// Increased timeout because the default in CI is 2s but this test fixture naturally takes ~1.9s and was
+			// timing out frequently
 			outerFixture("All Scenarios", () => {
 				for (const scenario of scenarios) {
 					if (testRemoveRevive) {
@@ -1738,7 +1740,7 @@ describe("Editing", () => {
 						runScenario(scenario, true);
 					}
 				}
-			});
+			}).timeout(5000);
 		});
 	});
 
