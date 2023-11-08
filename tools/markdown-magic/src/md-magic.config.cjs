@@ -146,6 +146,24 @@ const generateExperimentalPackageNotice = () => {
 };
 
 /**
+ * Generates simple Markdown contents indicating that the associated package is internal to the fluid-framework
+ * (published, but not intended for external consumption).
+ */
+const generateInternalPackageNotice = () => {
+	const rawContents = readTemplate("Internal-Package-Notice-Template.md");
+	return formattedSectionText(rawContents, undefined);
+};
+
+/**
+ * Generates simple Markdown contents indicating that the associated package is private to the fluid-framework
+ * (unpublished - used only within the repo).
+ */
+const generatePrivatePackageNotice = () => {
+	const rawContents = readTemplate("Private-Package-Notice-Template.md");
+	return formattedSectionText(rawContents, undefined);
+};
+
+/**
  * Gets the package.json metadata from the optionally provided file path, expressed relative
  * to the path of the document being modified.
  *
@@ -220,7 +238,10 @@ function includeTransform(content, options, config) {
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
  * @param {"TRUE" | "FALSE" | undefined} options.experimentalPackage - (optional) Whether or not to include a notice indicating that the package is experimental.
- * Default: Inherit from package namespace - will be included if namespace is `@fluid-experimental`.
+ * @param {"TRUE" | "FALSE" | undefined} options.internalPackage - (optional) Whether or not to include a notice indicating that the package is internal.
+ * Default: Inherit from package namespace - will be included if namespace is `@fluid-internal`.
+ * @param {"TRUE" | "FALSE" | undefined} options.privatePackage - (optional) Whether or not to include a notice indicating that the package is private.
+ * Default: Inherit from package namespace - will be included if namespace is `@fluid-private`.
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
  * Default: `TRUE`.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
@@ -253,6 +274,12 @@ function libraryPackageReadmeTransform(content, options, config) {
 	const packageScope = PackageName.getScope(packageName);
 	if (options.experimentalPackage === "TRUE" || packageScope === `@fluid-experimental`) {
 		sections.push(generateExperimentalPackageNotice());
+	}
+	if (options.internal === "TRUE" || packageScope === `@fluid-internal`) {
+		sections.push(generateInternalPackageNotice());
+	}
+	if (options.private === "TRUE" || packageScope === `@fluid-private`) {
+		sections.push(generatePrivatePackageNotice());
 	}
 
 	if (options.installation !== "FALSE") {
@@ -527,6 +554,30 @@ module.exports = {
 		 * ```
 		 */
 		README_EXPERIMENTAL_PACKAGE_NOTICE: generateExperimentalPackageNotice,
+
+		/**
+		 * See {@link generateInternalPackageNotice}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_INTERNAL_PACKAGE_NOTICE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_INTERNAL_PACKAGE_NOTICE: generateInternalPackageNotice,
+
+		/**
+		 * See {@link generatePrivatePackageNotice}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_PRIVATE_PACKAGE_NOTICE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:END -->
+		 * ```
+		 */
+		README_PRIVATE_PACKAGE_NOTICE: generatePrivatePackageNotice,
 
 		/**
 		 * See {@link readmeApiDocsSectionTransform}.
