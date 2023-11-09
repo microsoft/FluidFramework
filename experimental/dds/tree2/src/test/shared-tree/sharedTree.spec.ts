@@ -8,7 +8,7 @@ import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/te
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import {
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	makeSchemaCodec,
 	jsonableTreeFromCursor,
 	Any,
@@ -217,7 +217,7 @@ describe("SharedTree", () => {
 			field: rootFieldKey,
 		});
 		field.set(
-			singleTextCursor({ type: leaf.handle.name, value: provider.trees[0].handle }),
+			cursorForJsonableTreeNode({ type: leaf.handle.name, value: provider.trees[0].handle }),
 			true,
 		);
 	});
@@ -1134,7 +1134,7 @@ describe("SharedTree", () => {
 				});
 				field.insert(
 					1,
-					singleTextCursor({ type: brand("Test"), value: -9007199254740991 }),
+					cursorForJsonableTreeNode({ type: brand("Test"), value: -9007199254740991 }),
 				);
 				return TransactionResult.Abort;
 			});

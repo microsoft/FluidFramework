@@ -62,7 +62,7 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	TypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
@@ -777,7 +777,7 @@ export function initializeTestTree(
 
 		// Apply an edit to the tree which inserts a node with a value
 		runSynchronous(tree, () => {
-			const writeCursors = state.map(singleTextCursor);
+			const writeCursors = state.map(cursorForJsonableTreeNode);
 			const field = tree.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKey,

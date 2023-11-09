@@ -21,7 +21,7 @@ import {
 	PrimitiveValue,
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
-	singleMapTreeCursor,
+	cursorForMapTreeNode,
 	TreeField,
 	TreeNode,
 	Skip,
@@ -38,7 +38,7 @@ import {
 	DefaultEditBuilder,
 	DefaultChangeFamily,
 	DefaultChangeset,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
 import {
 	Anchor,
@@ -269,7 +269,7 @@ describe("LazyTree", () => {
 
 						const mapTree = fieldToMapTree(context.root);
 						const jsonable = mapTree
-							.map(singleMapTreeCursor)
+							.map(cursorForMapTreeNode)
 							.map(jsonableTreeFromCursor);
 
 						const expected = testTree.treeFactory();
@@ -414,7 +414,7 @@ describe("LazyMap", () => {
 		assert.equal(mapNode.get("baz"), "First edit");
 		assert.equal(mapNode.get("foo"), "Second edit");
 
-		mapNode.set("foo", singleTextCursor({ type: leafDomain.string.name, value: "X" }));
+		mapNode.set("foo", cursorForJsonableTreeNode({ type: leafDomain.string.name, value: "X" }));
 		assert.equal(mapNode.get("foo"), "X");
 		mapNode.set("foo", undefined);
 		assert.equal(mapNode.get("foo"), undefined);

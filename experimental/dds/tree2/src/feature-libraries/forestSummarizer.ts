@@ -24,7 +24,7 @@ import {
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { idAllocatorFromMaxId } from "../util";
-import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
+import { jsonableTreeFromCursor, cursorForJsonableTreeNode } from "./treeTextCursor";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -99,7 +99,7 @@ export class ForestSummarizer implements Summarizable {
 				return [
 					fieldKey,
 					{
-						build: [{ id: buildId, trees: content.map(singleTextCursor) }],
+						build: [{ id: buildId, trees: content.map(cursorForJsonableTreeNode) }],
 						local: [{ count: content.length, attach: buildId }],
 					},
 				];
