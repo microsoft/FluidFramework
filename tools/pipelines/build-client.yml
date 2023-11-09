@@ -1,51 +1,39 @@
-# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-# Licensed under the MIT License.
-
-# build-client pipeline
-
+# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
+# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
 name: $(Build.BuildId)
-
 parameters:
 - name: releaseBuildOverride
   displayName: Release Build (default = not released)
   type: string
   default: none
   values:
-    - none
-    - prerelease
-    - release
-# Parameter for modifying the 'types' field in the package.json.
-# If the value `none` is provided, the 'types' field in package.json will remain unchanged.
+  - none
+  - prerelease
+  - release
 - name: packageTypesOverride
   displayName: Change package types (default = none)
   type: string
   default: none
   values:
-    - none
-    - alpha
-    - beta
-    # 'public' and 'untrimmed' options have not been fully developed yet
-    # - public
-    # - untrimmed
+  - none
+  - alpha
+  - beta
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
   default: default
   values:
-    - default
-    - skip
-    - force
+  - default
+  - skip
+  - force
 - name: interdependencyRange
   displayName: Range to use for interdependencies (only affects releases) (default = ~)
   type: string
   default: "~"
-  # The " " value (a space) is a hacky workaround. ADO doesn't support empty string, but we ultimately use this value as
-  # an environment variable in a bash script (the 'update package versions' step), where it gets coerced back to the
-  # empty string.
   values:
-    - "^"
-    - "~"
-    - " "
+  - "^"
+  - "~"
+  - " "
 - name: buildToolsVersionToInstall
   displayName: Fluid build tools version (default = installs version in repo)
   type: string
@@ -55,7 +43,6 @@ parameters:
   type: object
   default:
   - fluid-framework
-
 trigger:
   branches:
     include:
@@ -86,7 +73,6 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-
 pr:
   branches:
     include:
@@ -115,9 +101,8 @@ pr:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
     - scripts/*
-
 extends:
-  template: templates/build-npm-package.yml
+  template: /tools/pipelines/templates/build-npm-package.yml@self
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
@@ -168,14 +153,12 @@ extends:
         script: |
           echo Generating .env
           echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
-
     - task: Npm@1
       displayName: Build devtools
       inputs:
         command: 'custom'
         workingDir: ./packages/tools/devtools/devtools-browser-extension/
         customCommand: 'run webpack'
-
     - task: PublishPipelineArtifact@1
       displayName: Publish Artifact - Devtools Browser Extension
       inputs:
