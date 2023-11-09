@@ -11,6 +11,8 @@ import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ITreeCheckout, ITreeView, SharedTreeFactory } from "../../../shared-tree";
 import { Revertible } from "../../../core";
+// eslint-disable-next-line import/no-internal-modules
+import { fieldCursorFromJsonableTrees } from "../../feature-libraries/chunked-forest/fieldCursorTestUtilities";
 import {
 	FieldEdit,
 	FuzzDelete,
@@ -103,7 +105,7 @@ function applySequenceFieldEdit(
 			const parent = navigateToNode(tree, change.parent);
 			assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceChildren;
-			field.insertAt(change.index, [singleTextCursor(change.value) as any]);
+			field.insertAt(change.index, fieldCursorFromJsonableTrees([change.value]));
 			break;
 		}
 		case "delete": {
