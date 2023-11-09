@@ -172,7 +172,7 @@ describe("Fuzz - anchor stability", () => {
 			initialState.views = [];
 			for (const client of initialState.clients) {
 				const view = client.channel.schematize(config).branch as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;

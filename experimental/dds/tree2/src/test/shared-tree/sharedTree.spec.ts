@@ -426,7 +426,7 @@ describe("SharedTree", () => {
 		};
 		initializeTestTree(summarizingTree.view, initialState);
 
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view);
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(summarizingTree.view.events);
 
 		const fooField: FieldKey = brand("foo");
 		runSynchronous(summarizingTree.view, () => {
@@ -919,7 +919,7 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).branch;
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
 			provider.processMessages();
 			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).branch;
 			provider.processMessages();
@@ -953,7 +953,7 @@ describe("SharedTree", () => {
 			const value3 = "44";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).branch;
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
 			provider.processMessages();
 			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).branch;
 			provider.processMessages();
@@ -1010,12 +1010,12 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1);
+			} = createTestUndoRedoStacks(tree1.events);
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2);
+			} = createTestUndoRedoStacks(tree2.events);
 			provider.processMessages();
 
 			// Validate insertion
@@ -1081,12 +1081,12 @@ describe("SharedTree", () => {
 				undoStack: undoStack1,
 				redoStack: redoStack1,
 				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1);
+			} = createTestUndoRedoStacks(tree1.events);
 			const {
 				undoStack: undoStack2,
 				redoStack: redoStack2,
 				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2);
+			} = createTestUndoRedoStacks(tree2.events);
 
 			// Insert node
 			insertFirstNode(tree1, "42");
@@ -1136,10 +1136,12 @@ describe("SharedTree", () => {
 			// Validate initialization
 			validateViewConsistency(tree1, tree2);
 
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-				createTestUndoRedoStacks(tree1);
-			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-				createTestUndoRedoStacks(tree2);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.events,
+			);
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				tree2.events,
+			);
 
 			// Insert a node on tree 2
 			insert(tree2, 4, "z");
@@ -1408,7 +1410,7 @@ describe("SharedTree", () => {
 		});
 
 		itView("update anchors after undoing", (view) => {
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			insertFirstNode(view, "A");
 			let cursor = view.forest.allocateCursor();
 			moveToDetachedField(view.forest, cursor);

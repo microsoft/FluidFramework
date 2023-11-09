@@ -406,7 +406,7 @@ describe("Editing", () => {
 		it.skip("intentional revive", () => {
 			const tree1 = makeTreeFromJson(["A", "B", "C"]);
 			const tree2 = tree1.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
 
 			remove(tree1, 1, 1);
 
@@ -705,7 +705,7 @@ describe("Editing", () => {
 		it("ancestor of move source deleted then revived", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 			const first: UpPath = {
 				parent: undefined,
@@ -744,7 +744,7 @@ describe("Editing", () => {
 		it("node being concurrently moved and deleted with source ancestor revived", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 			const first: UpPath = {
 				parent: undefined,
@@ -785,7 +785,7 @@ describe("Editing", () => {
 		it.skip("node being concurrently moved and revived with source ancestor deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 			const first: UpPath = {
 				parent: undefined,
@@ -847,7 +847,7 @@ describe("Editing", () => {
 			);
 
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
 
 			const sequence = tree.editor.sequenceField(rootField);
 
@@ -877,7 +877,7 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			// Move to bar: [{}, { bar: ["a"] }}]
 			tree.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -1456,7 +1456,7 @@ describe("Editing", () => {
 			tree.editor.sequenceField(rootField).delete(0, 1);
 
 			const tree3 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3.events);
 			undoStack.pop()?.revert(); // Restores "43"
 
 			tree.merge(tree3, false);
@@ -1675,7 +1675,9 @@ describe("Editing", () => {
 
 					const tree = makeTreeFromJson(startState);
 					const peers = makeArray(nbPeers, () => tree.fork());
-					const peerUndoStacks = peers.map((peer) => createTestUndoRedoStacks(peer));
+					const peerUndoStacks = peers.map((peer) =>
+						createTestUndoRedoStacks(peer.events),
+					);
 					for (const step of scenario) {
 						const iPeer = step.peer;
 						const peer = peers[iPeer];
@@ -1777,7 +1779,7 @@ describe("Editing", () => {
 		it.skip("can rebase a node edit over the node being replaced and restored", () => {
 			const tree1 = makeTreeFromJson([{ foo: "40" }]);
 			const tree2 = tree1.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
 
 			tree1.editor.optionalField(rootField).set(singleJsonCursor({ foo: "41" }), false);
 
@@ -1809,7 +1811,7 @@ describe("Editing", () => {
 
 		it("can replace and restore a node", () => {
 			const tree1 = makeTreeFromJson(["42"]);
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1.events);
 
 			tree1.editor.optionalField(rootField).set(singleJsonCursor("43"), false);
 
@@ -1846,7 +1848,7 @@ describe("Editing", () => {
 		it.skip("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {
 			const tree = makeTreeFromJson(["42"]);
 			const tree2 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
 
 			tree.editor.optionalField(rootField).set(singleJsonCursor("43"), false);
 
@@ -1872,7 +1874,7 @@ describe("Editing", () => {
 			tree.editor.optionalField(rootField).set(singleJsonCursor("44"), false);
 
 			const tree3 = tree.fork();
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree3.events);
 			undoStack.pop()?.revert(); // Restores "43"
 
 			tree.editor.optionalField(rootField).set(singleJsonCursor("45"), false);
@@ -1944,7 +1946,7 @@ describe("Editing", () => {
 		describe("Node existence constraint", () => {
 			it("handles ancestor revive", () => {
 				const tree = makeTreeFromJson([]);
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
 				const rootSequence = tree.editor.sequenceField(rootField);
 				rootSequence.insert(0, singleTextCursor({ type: jsonObject.name }));
@@ -2046,7 +2048,7 @@ describe("Editing", () => {
 
 			it("revived sequence field node exists constraint", () => {
 				const tree = makeTreeFromJson([]);
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 				const bPath = {
 					parent: undefined,
 					parentField: rootFieldKey,
@@ -2107,7 +2109,7 @@ describe("Editing", () => {
 
 			it.skip("revived optional field node exists constraint", () => {
 				const tree = makeTreeFromJson([]);
-				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 				const rootSequence = tree.editor.sequenceField(rootField);
 				rootSequence.insert(0, singleTextCursor({ type: jsonObject.name }));
 
@@ -2357,7 +2359,7 @@ describe("Editing", () => {
 
 		// Fork the tree so we can undo the removal of the root without undoing later changes
 		const restoreRoot = tree.fork();
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(restoreRoot);
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(restoreRoot.events);
 		undoStack.pop()?.revert();
 
 		// Get access to the removed node

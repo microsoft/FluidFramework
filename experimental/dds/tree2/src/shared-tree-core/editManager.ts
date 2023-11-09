@@ -248,14 +248,14 @@ export class EditManager<
 	}
 
 	/**
-	 * Returns the sequence id of the oldest revertible commit on this branch
+	 * Returns the sequence id of the oldest sequenced revertible commit on this branch.
 	 *
 	 * TODO: may be more performant to maintain the oldest revertible on the branches themselves
 	 * this should be tested and revisited once branches are supported
 	 */
 	private getOldestRevertibleSequenceId(
 		branch: SharedTreeBranch<TEditor, TChangeset>,
-	): SequenceId {
+	): SequenceId | undefined {
 		let oldest: SequenceId | undefined;
 		for (const revision of branch.revertibleCommits()) {
 			if (oldest === undefined) {
@@ -268,7 +268,6 @@ export class EditManager<
 			}
 		}
 
-		assert(oldest !== undefined, "there should be a revertible on the branch");
 		return oldest;
 	}
 
@@ -284,9 +283,7 @@ export class EditManager<
 				const { sequenceId: id } = metadata;
 				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
 				if (id === this.oldestRevertibleSequenceId) {
-					this.oldestRevertibleSequenceId = branch.hasRevertibleCommits()
-						? this.getOldestRevertibleSequenceId(branch)
-						: undefined;
+					this.oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId(branch);
 				}
 			}
 		};

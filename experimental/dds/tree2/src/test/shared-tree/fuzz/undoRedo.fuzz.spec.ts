@@ -77,7 +77,7 @@ describe("Fuzz - undo/redo", () => {
 			initialState.views = [];
 			for (const client of initialState.clients) {
 				const view = fuzzViewFromTree(client.channel) as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
@@ -165,7 +165,7 @@ describe("Fuzz - undo/redo", () => {
 			// creates an initial anchor for each tree
 			for (const client of initialState.clients) {
 				const view = fuzzViewFromTree(client.channel) as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
@@ -256,7 +256,7 @@ describe("Fuzz - undo/redo", () => {
 			// set up undo and redo stacks for each client
 			for (const client of initialState.clients) {
 				const view = fuzzViewFromTree(client.channel) as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
