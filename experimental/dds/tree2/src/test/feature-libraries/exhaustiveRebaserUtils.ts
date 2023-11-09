@@ -129,11 +129,6 @@ function* depthFirstWalk<TContent, TChangeset>(
 	}
 }
 
-function makeIntentionMinter(): () => number {
-	let intent = 1;
-	return () => intent++;
-}
-
 /**
  * Generates all possible sequences of edits of a fixed length.
  * Revision tags will be prefixed with the provided `tagPrefix`.
@@ -143,13 +138,16 @@ export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
 	numberOfEdits: number,
 	tagPrefix: string,
+	initialId = 0,
 ): Iterable<NamedChangeset<TChangeset>[]> {
+	let intent = initialId;
+	const mintIntention = () => intent++;
 	for (const state of depthFirstWalk(
 		initialState,
 		generateChildStates,
 		numberOfEdits,
 		(intention: number) => `${tagPrefix}${intention}` as RevisionTag,
-		makeIntentionMinter(),
+		mintIntention,
 	)) {
 		const edits: NamedChangeset<TChangeset>[] = [];
 		for (

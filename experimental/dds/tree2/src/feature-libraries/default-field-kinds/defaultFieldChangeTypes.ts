@@ -105,7 +105,10 @@ export type ContentId = ChangeAtomId | "self";
  */
 export interface OptionalChangeset {
 	build: { set: JsonableTree; id: ChangeAtomId }[];
-	moves: [src: ContentId, dst: ContentId][];
+	moves: [src: ContentId, dst: ContentId, kind: "nodeTargeting" | "cellTargeting"][];
 
 	childChanges: [register: ContentId, childChange: NodeChangeset][];
+
+	// TODO: This should probably live in test code instead. It's unnecessary for production codepath, but makes equivalence assertions easier.
+	reservedDetachId?: ContentId;
 }

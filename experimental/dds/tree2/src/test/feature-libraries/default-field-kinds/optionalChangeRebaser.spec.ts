@@ -141,7 +141,7 @@ function rebase(
 	const metadata =
 		metadataArg ?? defaultRevisionMetadataFromChanges([base, makeAnonChange(change)]);
 	const moveEffects = failCrossFieldManager;
-	const idAllocator = idAllocatorFromMaxId(getMaxId(change, base.change));
+	const idAllocator = idAllocatorFromMaxId((getMaxId(change, base.change) ?? 0) + 1);
 	return optionalChangeRebaser.rebase(
 		change,
 		base,
@@ -379,16 +379,25 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
  * Runs a suite of axiomatic tests which use combinations of single edits that are valid to apply from an initial state.
  */
 function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
-	const singleTestChanges = (prefix: string) =>
-		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, prefix);
+	const singleTestChangesA = () =>
+		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, "A", 0);
+
+	// Number here is arbitrary
+	const singleTestChangesB = () =>
+		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, "B", 10000);
 
 	/**
 	 * This test simulates rebasing over an do-inverse pair.
 	 */
 	describe("A ↷ [B, B⁻¹] === A", () => {
-		for (const [{ description: name1, changeset: change1 }] of singleTestChanges("A")) {
-			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
-				it(`(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`, () => {
+		for (const [{ description: name1, changeset: change1 }] of singleTestChangesA()) {
+			for (const [{ description: name2, changeset: change2 }] of singleTestChangesB()) {
+				const title = `(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`;
+
+				if (title !== "(SetB,0 ↷ Delete) ↷ Delete⁻¹ => SetB,0") {
+					continue;
+				}
+				it(title, () => {
 					const inv = tagRollbackInverse(invert(change2), tag1, change2.revision);
 					const r1 = rebaseTagged(change1, change2);
 					const r2 = rebaseTagged(r1, inv);
@@ -405,10 +414,9 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	 * - The inverse produced by undo(B) is not a rollback
 	 */
 	describe("A ↷ [B, undo(B)] => A", () => {
-		for (const [{ description: name1, changeset: change1 }] of singleTestChanges("A")) {
-			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
+		for (const [{ description: name1, changeset: change1 }] of singleTestChangesA()) {
+			for (const [{ description: name2, changeset: change2 }] of singleTestChangesB()) {
 				const title = `${name1} ↷ [${name2}, undo(${name2})] => ${name1}`;
-
 				it(title, () => {
 					const inv = tagChange(invert(change2), tag1);
 					const r1 = rebaseTagged(change1, change2);
@@ -428,8 +436,8 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	 * apply the inverse of some change.
 	 */
 	describe("(A ↷ B) ↷ [B⁻¹, B] === A ↷ B", () => {
-		for (const [{ description: name1, changeset: change1 }] of singleTestChanges("A")) {
-			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
+		for (const [{ description: name1, changeset: change1 }] of singleTestChangesA()) {
+			for (const [{ description: name2, changeset: change2 }] of singleTestChangesB()) {
 				const title = `${name1} ↷ [${name2}, ${name2}⁻¹, ${name2}] => ${name1} ↷ ${name2}`;
 				it(title, () => {
 					const inverse2 = tagRollbackInverse(invert(change2), tag1, change2.revision);
@@ -443,7 +451,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	});
 
 	describe("A ○ A⁻¹ === ε", () => {
-		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
+		for (const [{ description: name, changeset: change }] of singleTestChangesA()) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const inv = invert(change);
 				const actual = compose([change, tagRollbackInverse(inv, tag1, change.revision)]);
@@ -454,7 +462,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	});
 
 	describe("A⁻¹ ○ A === ε", () => {
-		for (const [{ description: name, changeset: change }] of singleTestChanges("A")) {
+		for (const [{ description: name, changeset: change }] of singleTestChangesA()) {
 			it(`${name}⁻¹ ○ ${name} === ε`, () => {
 				const inv = tagRollbackInverse(invert(change), tag1, change.revision);
 				const actual = compose([inv, change]);

@@ -199,7 +199,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		for (const [src, dst] of current.srcToDst.entries()) {
 			// Might be valid to put this back. I took it out to not take any risks, but it wasn't the root cause at the time I took it out.
 			// if (!areEqualContentIds(src, dst)) {
-			composedMoves.push([src, dst]);
+			composedMoves.push([src, dst, "nodeTargeting"]); // TODO: Node targeting might not be good enough here.
 			// }
 		}
 		const composed: OptionalChangeset = {
@@ -219,20 +219,51 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
+		genId: IdAllocator,
 	): OptionalChangeset => {
 		const { moves, childChanges } = change;
 		const invertIdMap = new ChildChangeMap<ContentId>();
+		let originalHasAttach = false;
+		let originalHasDetach = false;
 		for (const [src, dst] of moves) {
 			invertIdMap.set(dst, src);
+			// TODO: Unclear if we need the second clauses here.
+			if (src === "self" && dst !== "self") {
+				originalHasDetach = true;
+			}
+			if (dst === "self" && src !== "self") {
+				originalHasAttach = true;
+			}
+		}
+
+		const rebasedMoves: typeof change.moves = [];
+		// let inverseAttachesContent = false;
+		for (const [src, dst, target] of moves) {
+			assert(
+				src === "self" || dst === "self",
+				"Only inverses for single-register attached sets are supported.",
+			);
+			if (dst === "self") {
+				// TODO.
+				assert(src !== "self", "when does this happen");
+				rebasedMoves.push([dst, src, target]);
+			} else {
+				rebasedMoves.push([dst, src, "nodeTargeting"]);
+				// inverseAttachesContent = true;
+			}
 		}
 		const inverted: OptionalChangeset = {
 			build: [],
-			moves: moves !== undefined ? moves.map(([src, dst]) => [dst, src]) : [],
+			moves: rebasedMoves,
 			childChanges: childChanges.map(([id, childChange]) => [
 				invertIdMap.get(id) ?? id,
 				invertChild(childChange, 0),
 			]),
 		};
+
+		// if (originalHasDetach && !originalHasAttach) {
+		// 	inverted.moves.push(["self", { localId: brand(genId.getNextId()) }]);
+		// }
 		return inverted;
 	},
 
@@ -268,20 +299,51 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
+		let reservedDetachId: ContentId | undefined;
 		const changeDstToSrc = new ChildChangeMap<ContentId>();
-		for (const [src, dst] of moves) {
-			if (dst === "self") {
-				// This is
+		let changeAndOverSetSelf = false;
+		let changeEmptiesSelf = false;
+		for (const [src, dst, target] of moves) {
+			if (overDstToSrc.has(dst)) {
+				assert(
+					dst === "self",
+					"Rebasing over a change attempted to duplicate content in a non-self register",
+				);
+				// Over moved content into 'self', but we'd also like to populate it. In order to fill the register,
+				// we might need to include a move from 'self' to a new register.
+				changeAndOverSetSelf = true;
 			}
-			changeDstToSrc.set(dst, src);
-			// Figure out where contnet in src ended up in `overTagged`
-			const rebasedSrc = overSrcToDst.get(src) ?? src;
-			// Bad! This loses the intention of the original edit.
-			// Consider the case where we rebase a 'set' over the same 'set' followed by its inverse.
-			// SetB over [SetB, inv(SetB)].
-			// if (!areEqualContentIds(rebasedSrc, dst)) {
-			rebasedMoves.push([rebasedSrc, dst]);
-			// }
+			if (target === "cellTargeting") {
+				if (overSrcToDst.get(src) !== undefined && overDstToSrc.get(src) === undefined) {
+					// Over removed the content occupying this cell and didn't fill it with other content.
+					// This means that the cell is empty after applying 'over', so we can drop the move.
+					reservedDetachId = dst;
+				} else {
+					// Cell-targeting.
+					rebasedMoves.push([src, dst, target]);
+				}
+			} else {
+				changeDstToSrc.set(dst, src);
+				// Figure out where content in src ended up in `overTagged`
+				const rebasedSrc = overSrcToDst.get(src) ?? src;
+				// Note: we cannot drop changes which map a node to itself, as this loses the intention of the original edit
+				// (since the target kind is node targeting, it may not still map to a noop after further rebases)
+				rebasedMoves.push([rebasedSrc, dst, target]);
+			}
+
+			if (src === "self") {
+				changeEmptiesSelf = true;
+			}
+		}
+
+		// We rebased a fill from an empty state over another edit which also sets this field.
+		// We need to make sure that we also empty the field.
+		if (changeAndOverSetSelf && !changeEmptiesSelf) {
+			rebasedMoves.push([
+				"self",
+				change.reservedDetachId ?? { localId: brand(genId.getNextId()) },
+				"cellTargeting",
+			]);
 		}
 
 		const overChildChangesBySrc = new ChildChangeMap<NodeChangeset>();
@@ -304,11 +366,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		return {
+		const rebased: OptionalChangeset = {
 			build,
 			moves: rebasedMoves,
 			childChanges: rebasedChildChanges,
 		};
+		if (reservedDetachId !== undefined) {
+			rebased.reservedDetachId = reservedDetachId;
+		}
+		return rebased;
 	},
 
 	amendRebase: (
@@ -360,17 +426,17 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		build: [{ id: { localId: ids.build }, set: singleTextCursor(newContent) }],
 		moves:
 			ids.detach === undefined
-				? [[{ localId: ids.fill }, "self"]]
+				? [[{ localId: ids.fill }, "self", "nodeTargeting"]]
 				: [
-						[{ localId: ids.fill }, "self"],
-						["self", { localId: ids.detach }],
+						[{ localId: ids.fill }, "self", "nodeTargeting"],
+						["self", { localId: ids.detach }, "cellTargeting"],
 				  ],
 		childChanges: [],
 	}),
 
 	clear: (detachId: ChangesetLocalId): OptionalChangeset => ({
 		build: [],
-		moves: [["self", { localId: detachId }]],
+		moves: [["self", { localId: detachId }, "cellTargeting"]],
 		childChanges: [],
 	}),
 
