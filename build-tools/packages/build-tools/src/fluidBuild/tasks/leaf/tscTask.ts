@@ -287,7 +287,7 @@ export class TscTask extends LeafTask {
 		}
 
 		const outFile = options.options.out ? options.options.out : options.options.outFile;
-				if (outFile) {
+		if (outFile) {
 			return `${outFile}.tsbuildinfo`;
 		}
 
