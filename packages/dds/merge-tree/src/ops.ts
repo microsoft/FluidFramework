@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { PropertySet } from "./properties";
+
 /**
  * Flags enum that dictates behavior of a ReferencePosition
  */
@@ -134,3 +136,62 @@ export interface IJSONSegment {
 export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg;
 
 export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
+
+export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
+
+interface InteriorSequencePlace {
+	pos: number;
+	side: Side;
+}
+
+enum Side {
+	Before = 0,
+	After = 1,
+}
+
+/**
+ * Values are used for stashed interval ops.
+ * @alpha
+ */
+export const IntervalOpType = {
+	ADD: "add",
+	DELETE: "delete",
+	CHANGE: "change",
+	PROPERTY_CHANGED: "propertyChanged",
+	POSITION_REMOVE: "positionRemove",
+} as const;
+
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
+
+export interface IIntervalOp {
+	type: IntervalOpType;
+}
+
+export interface IIntervalAddMsg extends IIntervalOp {
+	type: typeof IntervalOpType.ADD;
+	interval: { start: SequencePlace; end: SequencePlace; props?: PropertySet };
+}
+
+export interface IIntervalRemoveMsg extends IIntervalOp {
+	type: typeof IntervalOpType.DELETE;
+	id: string;
+}
+
+export interface IIntervalChangeMsg extends IIntervalOp {
+	type: typeof IntervalOpType.CHANGE;
+	id: string;
+	start: SequencePlace;
+	end: SequencePlace;
+}
+
+export interface IIntervalChangePropertiesMsg extends IIntervalOp {
+	type: typeof IntervalOpType.PROPERTY_CHANGED;
+	id: string;
+	props: PropertySet;
+}
+
+export interface IIntervalPositionRemoveMsg extends IIntervalOp {
+	type: typeof IntervalOpType.POSITION_REMOVE;
+	start: number;
+	end: number;
+}

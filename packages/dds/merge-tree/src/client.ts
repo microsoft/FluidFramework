@@ -56,6 +56,8 @@ import {
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
+	IIntervalOp,
+	IntervalOpType,
 } from "./ops";
 import { PropertySet } from "./properties";
 import { SnapshotLegacy } from "./snapshotlegacy";
@@ -844,7 +846,8 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	// eslint-disable-next-line import/no-deprecated
 	public applyStashedOp(op: IMergeTreeGroupMsg): SegmentGroup[];
 	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[];
-	public applyStashedOp(op: IMergeTreeOp): SegmentGroup | SegmentGroup[] {
+	public applyStashedOp(op: IIntervalOp): SegmentGroup | SegmentGroup[];
+	public applyStashedOp(op: IMergeTreeOp | IIntervalOp): SegmentGroup | SegmentGroup[] {
 		let metadata: SegmentGroup | SegmentGroup[] | undefined;
 		const stashed = true;
 		switch (op.type) {
@@ -862,6 +865,16 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				break;
 			case MergeTreeDeltaType.GROUP:
 				return op.ops.map((o) => this.applyStashedOp(o));
+			case IntervalOpType.ADD:
+				break;
+			case IntervalOpType.DELETE:
+				break;
+			case IntervalOpType.CHANGE:
+				break;
+			case IntervalOpType.PROPERTY_CHANGED:
+				break;
+			case IntervalOpType.POSITION_REMOVE:
+				break;
 			default:
 				unreachableCase(op, "unrecognized op type");
 		}
