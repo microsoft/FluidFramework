@@ -33,7 +33,7 @@ import {
 	validateTreeConsistency,
 	validateTreeContent,
 	validateViewConsistency,
-	viewWithContent,
+	checkoutWithContent,
 } from "../utils";
 import {
 	ForestType,
@@ -1231,7 +1231,7 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	});
 
 	it(`${title} (reference view)`, () => {
-		fn(viewWithContent(content));
+		fn(checkoutWithContent(content));
 	});
 
 	it(`${title} (forked view)`, () => {
@@ -1240,6 +1240,6 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	});
 
 	it(`${title} (reference forked view)`, () => {
-		fn(viewWithContent(content).fork());
+		fn(checkoutWithContent(content).fork());
 	});
 }
