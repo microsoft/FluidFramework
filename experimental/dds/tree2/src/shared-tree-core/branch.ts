@@ -126,7 +126,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	public readonly editor: TEditor;
 	// set of revertibles maintained for automatic disposal
 	private readonly revertibles = new Set<Revertible>();
-	private readonly revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
+	private readonly _revertibleCommits = new Map<RevisionTag, GraphCommit<TChange>>();
 	private readonly transactions = new TransactionStack();
 	private disposed = false;
 	/**
@@ -319,13 +319,23 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return [startCommit, commits];
 	}
 
+	public hasRevertibleCommits(): boolean {
+		return this._revertibleCommits.size > 0;
+	}
+
+	public *revertibleCommits(): Iterable<RevisionTag> {
+		for (const revision of this._revertibleCommits.keys()) {
+			yield revision;
+		}
+	}
+
 	/**
 	 * Associate a revertible with a new commit of the same revision.
 	 * This is applicable when a commit is replaced by a rebase or a local commit is sequenced.
 	 */
 	public updateRevertibleCommit(commit: GraphCommit<TChange>) {
-		if (this.revertibleCommits.get(commit.revision) !== undefined) {
-			this.revertibleCommits.set(commit.revision, commit);
+		if (this._revertibleCommits.get(commit.revision) !== undefined) {
+			this._revertibleCommits.set(commit.revision, commit);
 		}
 	}
 
@@ -333,7 +343,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		commit: GraphCommit<TChange>,
 		kind: RevertibleKind,
 	): Revertible {
-		this.revertibleCommits.set(commit.revision, commit);
+		this._revertibleCommits.set(commit.revision, commit);
 		let discarded = false;
 		const revertible = {
 			kind,
@@ -357,7 +367,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 					fail("revertible has already been discarded");
 				}
 				// TODO: delete the repair data from the forest
-				this.revertibleCommits.delete(commit.revision);
+				this._revertibleCommits.delete(commit.revision);
 				this.revertibles.delete(revertible);
 				discarded = true;
 				this.emit("revertibleDispose", commit.revision);
@@ -374,7 +384,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 	): [change: TChange, newCommit: GraphCommit<TChange>] | undefined {
 		assert(!this.isTransacting(), 0x7cb /* Undo is not yet supported during transactions */);
 
-		const commit = this.revertibleCommits.get(revision);
+		const commit = this._revertibleCommits.get(revision);
 		assert(commit !== undefined, 0x7cc /* expected to find a revertible commit */);
 
 		let change = this.changeFamily.rebaser.invert(tagChange(commit.change, revision), false);
