@@ -52,7 +52,7 @@ import { CursorAdapter, stackTreeFieldCursor, stackTreeNodeCursor } from "./tree
  * @returns an {@link ITreeCursorSynchronous} in nodes mode for a single {@link JsonableTree}.
  * @remarks
  * Do not confuse this with {@link JsonableTree} with the JSON domain:
- * this takes in data in a specific format that is json compatible (except for FluidHandel values).
+ * this takes in data in a specific format that is json compatible (except for FluidHandle values).
  * That is distinct from treating arbitrary JSON data as a tree in the JSON domain.
  * @alpha
  */
