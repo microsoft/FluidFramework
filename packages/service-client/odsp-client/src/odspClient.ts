@@ -1,14 +1,7 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable import/no-extraneous-dependencies */
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	OdspDocumentServiceFactory,
@@ -35,6 +28,7 @@ import {
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions";
 import { ITokenResponse } from "@fluidframework/azure-client";
+// eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
@@ -43,7 +37,7 @@ import {
 	OdspContainerServices,
 	OdspServiceAttributes,
 } from "./interfaces";
-// import { OdspAudience } from "./OdspAudience";
+import { OdspAudience } from "./odspAudience";
 
 /**
  * @alpha
@@ -53,7 +47,6 @@ export class OdspClient {
 	private readonly urlResolver: OdspDriverUrlResolver;
 
 	public constructor(private readonly properties: OdspClientProps) {
-		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const getSharePointToken = async (options: OdspResourceTokenFetchOptions) => {
 			const tokenResponse: ITokenResponse =
 				await this.properties.connection.tokenProvider.fetchStorageToken(
@@ -65,7 +58,6 @@ export class OdspClient {
 			};
 		};
 
-		// eslint-disable-next-line unicorn/consistent-function-scoping
 		const getPushServiceToken = async (options: OdspResourceTokenFetchOptions) => {
 			const tokenResponse: ITokenResponse =
 				await this.properties.connection.tokenProvider.fetchOrdererToken(options.siteUrl);
@@ -112,6 +104,7 @@ export class OdspClient {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: sharingUrl });
 
+		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		const services = await this.getContainerServices(container);
@@ -158,6 +151,7 @@ export class OdspClient {
 			uuid(),
 		);
 
+		// eslint-disable-next-line import/no-deprecated
 		const rootDataObject = await requestFluidObject<IRootDataObject>(container, "/");
 
 		/**
@@ -199,7 +193,7 @@ export class OdspClient {
 
 		return {
 			tenantAttributes: getAttributes,
-			// audience: new OdspAudience(container),
+			audience: new OdspAudience(container),
 		};
 	}
 }

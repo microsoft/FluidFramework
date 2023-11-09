@@ -9508,17 +9508,19 @@ importers:
       '@fluidframework/odsp-doclib-utils': workspace:~
       '@fluidframework/odsp-driver': workspace:~
       '@fluidframework/odsp-driver-definitions': workspace:~
-      '@fluidframework/odsp-urlresolver': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.37.0
       '@types/node': ^16.18.38
+      c8: ^7.7.1
+      cross-env: ^7.0.3
       eslint: ~8.50.0
+      mocha: ^10.2.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
       typescript: ~5.1.6
-      uuid: ^8.3.2
+      uuid: ^9.0.0
     dependencies:
       '@fluidframework/azure-client': link:../../../azure/packages/azure-client
       '@fluidframework/common-definitions': 1.0.0
@@ -9531,11 +9533,10 @@ importers:
       '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
       '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
-      '@fluidframework/odsp-urlresolver': link:../../drivers/odsp-urlResolver
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      uuid: 8.3.2
+      uuid: 9.0.1
     devDependencies:
       '@fluid-tools/build-cli': 0.26.2_bnjxas577mbdnhldblqqi36nsq
       '@fluidframework/build-common': 2.0.3
@@ -9544,7 +9545,10 @@ importers:
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
       '@types/node': 16.18.58
+      c8: 7.14.0
+      cross-env: 7.0.3
       eslint: 8.50.0
+      mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6

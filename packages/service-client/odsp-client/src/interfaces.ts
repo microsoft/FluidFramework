@@ -1,8 +1,7 @@
 /*!
- * Copyright (c) Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
 import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
 import { ITokenProvider } from "@fluidframework/azure-client";
@@ -32,6 +31,9 @@ export interface OdspConnectionConfig {
 	 */
 	driveId: string;
 
+	/**
+	 * Folder path where Fluid containers are created
+	 */
 	path: string;
 }
 
@@ -65,6 +67,12 @@ export interface OdspClientProps {
  * @alpha
  */
 export interface OdspContainerServices {
+	/**
+	 * Retrieves tenant-specific attributes associated with the ODSP service for the current Fluid container.
+	 * This includes information such as sharing URLs, item IDs, and drive IDs.
+	 *
+	 * @returns A Promise that resolves to an object containing the ODSP service attributes.
+	 */
 	tenantAttributes: () => Promise<OdspServiceAttributes>;
 
 	/**
@@ -81,9 +89,7 @@ export interface OdspContainerServices {
  */
 export interface OdspServiceAttributes {
 	/**
-	 * Generates a new link to point to this container based on the ContainerServiceConfiguration
-	 * this container was created with. If it was shared, this will create a new share link according
-	 * to the scope defined on the config. Otherwise, it will return a direct file link.
+	 * Generates a new link to point to this container.
 	 */
 	sharingUrl: string | undefined;
 
@@ -100,8 +106,6 @@ export interface OdspUser<T = any> extends IUser {
 	 * The user's name
 	 */
 	name: string;
-
-	email: string;
 }
 
 /**
@@ -109,7 +113,6 @@ export interface OdspUser<T = any> extends IUser {
  */
 export interface OdspMember extends IMember {
 	userName: string;
-	email: string;
 }
 
 /**

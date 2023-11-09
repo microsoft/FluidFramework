@@ -19,7 +19,6 @@ export class OdspAudience extends ServiceAudience<OdspMember> implements IOdspAu
 		return {
 			userId: audienceMember.user.id,
 			userName: user.name,
-			email: user.email,
 			connections: [],
 		};
 	}

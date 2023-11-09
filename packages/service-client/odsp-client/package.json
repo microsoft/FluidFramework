@@ -1,7 +1,7 @@
 {
-	"name": "@fluidframework/odsp-client",
+	"name": "@fluid-experimental/odsp-client",
 	"version": "2.0.0-internal.7.3.0",
-	"description": "Fluid runtime test utilities",
+	"description": "A tool to enable creation and loading of Fluid containers using the ODSP service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
@@ -31,9 +31,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"tsc": "tsc"
 	},
 	"c8": {
 		"all": true,
@@ -61,17 +59,16 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"@fluidframework/odsp-driver": "workspace:~",
 		"@fluidframework/odsp-driver-definitions": "workspace:~",
-		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
-		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/core-utils": "workspace:~",
-		"uuid": "^8.3.2"
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@fluid-tools/build-cli": "^0.26.1",
@@ -81,7 +78,10 @@
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/node": "^16.18.38",
+		"c8": "^7.7.1",
+		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
+		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
