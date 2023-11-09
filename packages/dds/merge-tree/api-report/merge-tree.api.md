@@ -168,7 +168,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
     longClientId: string | undefined;
     // @alpha
     obliterateRangeLocal(start: number, end: number): IMergeTreeObliterateMsg;
-    peekPendingSegmentGroups(): SegmentGroup | SegmentGroup[] | undefined;
+    peekPendingSegmentGroups(count?: number): SegmentGroup | SegmentGroup[] | undefined;
     posFromRelativePos(relativePos: IRelativePosition): number;
     regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
     removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
