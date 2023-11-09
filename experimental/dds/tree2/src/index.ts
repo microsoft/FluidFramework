@@ -156,8 +156,8 @@ export {
 	SequenceFieldEditBuilder,
 	prefixPath,
 	prefixFieldPath,
-	singleTextCursor,
-	singleStackTreeCursor,
+	cursorForJsonableTreeNode as singleTextCursor,
+	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
 	EditableTreeEvents,
@@ -233,6 +233,7 @@ export {
 	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
+	stackTreeFieldCursor,
 } from "./feature-libraries";
 
 export {

@@ -15,9 +15,9 @@ import {
 import {
 	Any,
 	FieldKinds,
-	TreeCompressionStrategy,
 	TreeFieldSchema,
-	singleTextCursor,
+	TreeCompressionStrategy,
+	cursorForJsonableTreeNode,
 } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
@@ -80,14 +80,14 @@ function generateTreeRecursively(
 
 		for (let i = 0; i < nodesPerField; i++) {
 			if (height === 1) {
-				const writeCursor = singleTextCursor({
+				const writeCursor = cursorForJsonableTreeNode({
 					type: leaf.string.name,
 					value: currentValue.value.toString(),
 				});
 				field.insert(i, writeCursor);
 				currentValue.value++;
 			} else {
-				const writeCursor = singleTextCursor({
+				const writeCursor = cursorForJsonableTreeNode({
 					type: rootNodeSchema.name,
 				});
 				field.insert(i, writeCursor);
@@ -145,7 +145,7 @@ export function generateTestTrees() {
 
 				// Apply an edit to the tree which inserts a node with a value
 				runSynchronous(tree1, () => {
-					const writeCursors = singleTextCursor(initialState);
+					const writeCursors = cursorForJsonableTreeNode(initialState);
 					const field = tree1.editor.sequenceField({
 						parent: undefined,
 						field: rootFieldKey,
@@ -297,7 +297,10 @@ export function generateTestTrees() {
 					parent: undefined,
 					field: rootFieldKey,
 				});
-				field.set(singleTextCursor({ type: leaf.handle.name, value: tree.handle }), true);
+				field.set(
+					cursorForJsonableTreeNode({ type: leaf.handle.name, value: tree.handle }),
+					true,
+				);
 				await takeSnapshot(tree, "final");
 			},
 		},
@@ -332,7 +335,7 @@ export function generateTestTrees() {
 						parent: undefined,
 						field: rootFieldKey,
 					})
-					.insert(0, [singleTextCursor({ type: seqMapSchema.name })]);
+					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
 				// The nested change
 				view.editor
 					.sequenceField({
@@ -343,7 +346,7 @@ export function generateTestTrees() {
 						},
 						field: brand("foo"),
 					})
-					.insert(0, [singleTextCursor({ type: seqMapSchema.name })]);
+					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
 				view.transaction.commit();
 				await takeSnapshot(tree, "final");
 			},

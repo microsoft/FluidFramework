@@ -9,7 +9,13 @@ import { strict as assert } from "assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 
-import { type AllowedTypes, Any, FieldKinds, singleTextCursor } from "../../../feature-libraries";
+import {
+	type AllowedTypes,
+	Any,
+	FieldKinds,
+	cursorForJsonableTreeNode,
+	cursorForJsonableTreeField,
+} from "../../../feature-libraries";
 import { FieldAnchor, FieldKey, rootFieldKey, UpPath } from "../../../core";
 import { forestWithContent, viewWithContent } from "../../utils";
 import { leaf, leaf as leafDomain, SchemaBuilder } from "../../../domains";
@@ -20,7 +26,6 @@ import {
 	LazySequence,
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-import { fieldCursorFromJsonableTrees } from "../chunked-forest/fieldCursorTestUtilities";
 import {
 	getReadonlyContext,
 	initializeCursor,
@@ -279,7 +284,10 @@ describe("LazyOptionalField", () => {
 		assert.equal(view.editableTree.content, 6);
 		view.editableTree.content = undefined;
 		assert.equal(view.editableTree.content, undefined);
-		view.editableTree.content = singleTextCursor({ type: leaf.string.name, value: 7 });
+		view.editableTree.content = cursorForJsonableTreeNode({
+			type: leaf.string.name,
+			value: 7,
+		});
 		assert.equal(view.editableTree.content, 7);
 	});
 });
@@ -330,7 +338,7 @@ describe("LazyValueField", () => {
 		assert.equal(view.editableTree.content, "X");
 		view.editableTree.content = "Y";
 		assert.equal(view.editableTree.content, "Y");
-		const zCursor = singleTextCursor({ type: leaf.string.name, value: "Z" });
+		const zCursor = cursorForJsonableTreeNode({ type: leaf.string.name, value: "Z" });
 		view.editableTree.content = zCursor;
 		assert.equal(view.editableTree.content, "Z");
 	});
@@ -460,16 +468,16 @@ describe("LazySequence", () => {
 		it("with cursors", () => {
 			const sequence = testMutableSequence([]);
 			assert.deepEqual(sequence.asArray, []);
-			sequence.insertAt(0, fieldCursorFromJsonableTrees([]));
+			sequence.insertAt(0, cursorForJsonableTreeField([]));
 			assert.deepEqual(sequence.asArray, []);
 			sequence.insertAt(
 				0,
-				fieldCursorFromJsonableTrees([{ type: leaf.number.name, value: 10 }]),
+				cursorForJsonableTreeField([{ type: leaf.number.name, value: 10 }]),
 			);
 			assert.deepEqual(sequence.asArray, [10]);
 			sequence.insertAt(
 				0,
-				fieldCursorFromJsonableTrees([
+				cursorForJsonableTreeField([
 					{ type: leaf.number.name, value: 11 },
 					{ type: leaf.number.name, value: 12 },
 				]),

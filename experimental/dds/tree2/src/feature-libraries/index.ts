@@ -68,21 +68,23 @@ export {
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
-export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
+export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
 export { SchemaSummarizer, SchemaEditor, encodeTreeSchema } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
-	singleStackTreeCursor,
+	stackTreeNodeCursor,
 	CursorAdapter,
 	prefixPath,
 	prefixFieldPath,
 	CursorWithNode,
+	stackTreeFieldCursor,
 } from "./treeCursorUtils";
 export {
-	singleTextCursor,
+	cursorForJsonableTreeNode,
+	cursorForJsonableTreeField,
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,

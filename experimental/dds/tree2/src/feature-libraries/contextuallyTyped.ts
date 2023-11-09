@@ -32,7 +32,7 @@ import {
 	TreeNodeSchema,
 	allowedTypesToTypeSet,
 } from "./typed-schema";
-import { singleMapTreeCursor } from "./mapTreeCursor";
+import { cursorForMapTreeNode } from "./mapTreeCursor";
 import { AllowedTypesToTypedTrees, ApiMode, TypedField, TypedNode } from "./schema-aware";
 
 /**
@@ -485,7 +485,7 @@ export function cursorFromContextualData(
 	data: ContextuallyTypedNodeData,
 ): ITreeCursorSynchronous {
 	const mapTree = applyTypesFromContext(context, typeSet, data);
-	return singleMapTreeCursor(mapTree);
+	return cursorForMapTreeNode(mapTree);
 }
 
 /**
@@ -534,7 +534,7 @@ export function cursorsFromContextualData(
 	data: ContextuallyTypedNodeData | undefined,
 ): ITreeCursorSynchronous[] {
 	const mapTrees = applyFieldTypesFromContext(context, field, data);
-	return mapTrees.map(singleMapTreeCursor);
+	return mapTrees.map(cursorForMapTreeNode);
 }
 
 /**
