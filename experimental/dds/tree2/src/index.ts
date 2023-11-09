@@ -202,6 +202,7 @@ export {
 	TreeEntity,
 	TreeField,
 	TreeNode,
+	TreeNodeSchemaBase,
 	FieldNodeSchema,
 	LeafNodeSchema,
 	MapNodeSchema,
