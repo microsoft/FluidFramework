@@ -42,7 +42,7 @@ const rootNode: UpPath = {
 	parentIndex: 0,
 };
 
-describe("Editing", () => {
+describe.only("Editing", () => {
 	describe("Sequence Field", () => {
 		it("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
@@ -1923,7 +1923,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it("can rebase populating a new node over an unrelated change", () => {
+		it.only("can rebase populating a new node over an unrelated change", () => {
 			const tree1 = makeTreeFromJson({});
 			const tree2 = tree1.fork();
 

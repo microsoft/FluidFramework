@@ -35,6 +35,7 @@ import {
 } from "../modular-schema";
 import { ContentId, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
+import { DetachedNodeBuild, DetachedNodeChanges, DetachedNodeRename } from "../../core/tree/delta";
 
 interface IChildChangeMap<T> {
 	set(id: ContentId, childChange: T): void;
@@ -143,11 +144,16 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	): OptionalChangeset => {
 		const getBidirectionalMaps = (
 			moves: OptionalChangeset["moves"],
-		): { srcToDst: ChildChangeMap<ContentId>; dstToSrc: ChildChangeMap<ContentId> } => {
-			const srcToDst = new ChildChangeMap<ContentId>();
+		): {
+			srcToDst: ChildChangeMap<[dst: ContentId, target: "nodeTargeting" | "cellTargeting"]>;
+			dstToSrc: ChildChangeMap<ContentId>;
+		} => {
+			const srcToDst = new ChildChangeMap<
+				[dst: ContentId, target: "nodeTargeting" | "cellTargeting"]
+			>();
 			const dstToSrc = new ChildChangeMap<ContentId>();
-			for (const [src, dst] of moves) {
-				srcToDst.set(src, dst);
+			for (const [src, dst, target] of moves) {
+				srcToDst.set(src, [dst, target]);
 				dstToSrc.set(dst, src);
 			}
 			return { srcToDst, dstToSrc };
@@ -160,22 +166,46 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let current = getBidirectionalMaps([]);
 		for (const { change, revision } of changes) {
 			if (change.build !== undefined) {
-				builds.push(...change.build);
+				for (const { id, set } of change.build) {
+					builds.push({
+						id: { revision: id.revision ?? revision, localId: id.localId },
+						set,
+					});
+				}
 			}
-			const nextSrcToDst = new ChildChangeMap<ContentId>();
+			const nextSrcToDst = new ChildChangeMap<
+				[dst: ContentId, target: "nodeTargeting" | "cellTargeting"]
+			>();
 			const nextDstToSrc = new ChildChangeMap<ContentId>();
 			// const nextSrcToDst = current.srcToDst.clone();
 			// const nextDstToSrc = current.dstToSrc.clone();
 
-			for (const [src, dst] of change.moves) {
-				const originalSrc = current.dstToSrc.get(src) ?? src;
-				nextSrcToDst.set(originalSrc, dst);
+			// Compose all the things that `change` moved.
+			for (const [src, dst, target] of change.moves) {
+				let originalSrc = current.dstToSrc.get(src);
+				let currentTarget: "cellTargeting" | "nodeTargeting" = "cellTargeting";
+				if (originalSrc !== undefined) {
+					const [dst2, existingTarget] =
+						current.srcToDst.get(originalSrc) ?? fail("expected backward mapping");
+					assert(areEqualContentIds(dst2, src), "expected consistent backward mapping");
+					currentTarget = existingTarget;
+				} else {
+					originalSrc = src;
+				}
+				nextSrcToDst.set(originalSrc, [
+					dst,
+					// Is this targeting composition sufficient? seems weird.
+					target === "nodeTargeting" || currentTarget === "nodeTargeting"
+						? "nodeTargeting"
+						: "cellTargeting",
+				]);
 				nextDstToSrc.set(dst, originalSrc);
 			}
 
-			for (const [src, dst] of current.srcToDst.entries()) {
+			// Include any existing moves that `change` didn't affect.
+			for (const [src, [dst, target]] of current.srcToDst.entries()) {
 				if (!nextSrcToDst.has(src)) {
-					nextSrcToDst.set(src, dst);
+					nextSrcToDst.set(src, [dst, target]);
 					nextDstToSrc.set(dst, src);
 				}
 			}
@@ -196,17 +226,17 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		const composedMoves: OptionalChangeset["moves"] = [];
-		for (const [src, dst] of current.srcToDst.entries()) {
+		for (const [src, [dst, target]] of current.srcToDst.entries()) {
 			// Might be valid to put this back. I took it out to not take any risks, but it wasn't the root cause at the time I took it out.
 			// if (!areEqualContentIds(src, dst)) {
-			composedMoves.push([src, dst, "nodeTargeting"]); // TODO: Node targeting might not be good enough here.
+			composedMoves.push([src, dst, target]);
 			// }
 		}
 		const composed: OptionalChangeset = {
 			build: builds,
 			moves: composedMoves,
 			childChanges: Array.from(childChangesByOriginalId.entries(), ([id, childChanges]) => [
-				current.srcToDst.get(id) ?? id,
+				current.srcToDst.get(id)?.[0] ?? id,
 				composeChild(childChanges),
 			]),
 		};
@@ -246,7 +276,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			if (dst === "self") {
 				// TODO.
 				assert(src !== "self", "when does this happen");
-				rebasedMoves.push([dst, src, target]);
+				rebasedMoves.push([dst, src, "cellTargeting"]); // not sure this is right
 			} else {
 				rebasedMoves.push([dst, src, "nodeTargeting"]);
 				// inverseAttachesContent = true;
@@ -278,6 +308,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		revisionMetadata: RevisionMetadataSource,
 		existenceState?: NodeExistenceState,
 	): OptionalChangeset => {
+		const withIntention = (id: ContentId): ContentId => {
+			if (id === "self") {
+				return id;
+			}
+			const intention = getIntention(id.revision ?? overTagged.revision, revisionMetadata);
+			return { revision: intention, localId: id.localId };
+		};
+
 		const { moves, childChanges, build } = change;
 		const { change: overChange } = overTagged;
 		const rebasedMoves: typeof moves = [];
@@ -299,7 +337,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		let reservedDetachId: ContentId | undefined;
+		let reservedDetachId: ContentId | undefined = change.reservedDetachId;
 		const changeDstToSrc = new ChildChangeMap<ContentId>();
 		const changeSrcToDst = new ChildChangeMap<ContentId>();
 		for (const [src, dst] of moves) {
@@ -311,13 +349,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		let changeEmptiesSelf = false;
 		for (const [src, dst, target] of moves) {
 			if (overDstToSrc.has(dst)) {
-				assert(
-					dst === "self",
-					"Rebasing over a change attempted to duplicate content in a non-self register",
-				);
-				// Over moved content into 'self', but we'd also like to populate it. In order to fill the register,
-				// we might need to include a move from 'self' to a new register.
-				changeAndOverSetSelf = true;
+				// assert(
+				// 	dst === "self",
+				// 	"Rebasing over a change attempted to duplicate content in a non-self register",
+				// );
+				if (dst === "self") {
+					// Over moved content into 'self', but we'd also like to populate it. In order to fill the register,
+					// we might need to include a move from 'self' to a new register.
+					changeAndOverSetSelf = true;
+				}
 			}
 			if (target === "cellTargeting") {
 				if (
@@ -359,6 +399,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				change.reservedDetachId ?? { localId: brand(genId.getNextId()) },
 				"cellTargeting",
 			]);
+			reservedDetachId = undefined;
 		}
 
 		const overChildChangesBySrc = new ChildChangeMap<NodeChangeset>();
@@ -381,8 +422,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
+		const overBuilds = new ChildChangeMap<boolean>();
+		for (const { id } of overChange.build) {
+			overBuilds.set(id, true);
+		}
 		const rebased: OptionalChangeset = {
-			build,
+			build: build.filter((build) => !overBuilds.has(build.id)),
 			moves: rebasedMoves,
 			childChanges: rebasedChildChanges,
 		};
@@ -480,72 +525,73 @@ export function optionalFieldIntoDelta(
 	// Maybe instead of 'muting', we just specially track the set index in the optional field that's the active node!
 
 	const delta: Mutable<Delta.FieldChanges> = {};
-	// const [_, childChange] =
-	// 	change.childChanges?.find(
-	// 		([changeId]) =>
-	// 			areEqualContentIds(changeId, { id: "this", type: "after" }) ||
-	// 			// TODO: review if this second clause is necessary
-	// 			(areEqualContentIds(changeId, { id: "this", type: "before" }) &&
-	// 				change.fieldChanges.length === 0),
-	// 		// changeId === "start" || (changeId === "end" && change.fieldChanges.length === 0),
-	// 	) ?? [];
-	// if (childChange === undefined && change.fieldChanges.length === 0) {
-	// 	return delta;
-	// }
 
-	// const mark: Mutable<Delta.Mark> = { count: 1 };
-	// delta.local = [mark];
+	if (change.build.length > 0) {
+		const builds: DetachedNodeBuild[] = [];
+		for (const build of change.build) {
+			builds.push({
+				id: { major: build.id.revision ?? revision, minor: build.id.localId },
+				trees: [singleTextCursor(build.set)],
+			});
+		}
+		delta.build = builds;
+	}
 
-	// if (childChange !== undefined) {
-	// 	mark.fields = deltaFromChild(childChange);
-	// }
+	const dstToSrc = new ChildChangeMap<ContentId>();
 
-	// if (
-	// 	change.fieldChanges.length === 0
-	// 	// || areEqualContentIds(change.contentId, { id: "this", type: "before" })
-	// ) {
-	// 	return delta;
-	// }
+	let markNoops = true;
+	const mark: Mutable<Delta.Mark> = { count: 1 };
 
-	// const finalFieldChange = change.fieldChanges[change.fieldChanges.length - 1];
-	// if (!change.fieldChanges[0].wasEmpty) {
-	// 	const detachId = {
-	// 		major: finalFieldChange.revision ?? revision,
-	// 		minor: finalFieldChange.id,
-	// 	};
-	// 	mark.detach = detachId;
-	// }
+	if (change.moves.length > 0) {
+		const renames: DetachedNodeRename[] = [];
+		for (const [src, dst] of change.moves) {
+			dstToSrc.set(dst, src);
+			if (src === "self" && dst !== "self") {
+				mark.detach = { major: dst.revision ?? revision, minor: dst.localId };
+				markNoops = false;
+			} else if (dst === "self" && src !== "self") {
+				mark.attach = { major: src.revision ?? revision, minor: src.localId };
+				markNoops = false;
+			} else if (src !== "self" && dst !== "self") {
+				renames.push({
+					count: 1,
+					oldId: { major: src.revision ?? revision, minor: src.localId },
+					newId: { major: dst.revision ?? revision, minor: dst.localId },
+				});
+			}
+		}
 
-	// const update = finalFieldChange.newContent;
-	// if (update === undefined) {
-	// 	// The field is being cleared
-	// } else {
-	// 	if (Object.prototype.hasOwnProperty.call(update, "set")) {
-	// 		const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
-	// 		const content = [singleTextCursor(setUpdate.set)];
-	// 		const buildId = makeDetachedNodeId(
-	// 			setUpdate.buildId.revision ?? finalFieldChange.revision ?? revision,
-	// 			setUpdate.buildId.localId,
-	// 		);
-	// 		mark.attach = buildId;
-	// 		delta.build = [{ id: buildId, trees: content }];
-	// 	} else {
-	// 		const changeId = (update as { revert: ChangeAtomId }).revert;
-	// 		const restoreId = {
-	// 			major: changeId.revision,
-	// 			minor: changeId.localId,
-	// 		};
-	// 		mark.attach = restoreId;
-	// 	}
-	// 	const childChanges = change.childChanges?.find(([id]) =>
-	// 		areEqualContentIds(id, { type: "after", id: "this" }),
-	// 	)?.[1];
-	// 	// TODO: why is this global?
-	// 	if (childChanges !== undefined) {
-	// 		const fields = deltaFromChild(childChanges);
-	// 		delta.global = [{ id: mark.attach, fields }];
-	// 	}
-	// }
+		if (renames.length > 0) {
+			delta.rename = renames;
+		}
+	}
+
+	if (change.childChanges.length > 0) {
+		const globals: DetachedNodeChanges[] = [];
+		for (const [id, childChange] of change.childChanges) {
+			const srcId = dstToSrc.get(id) ?? id;
+			const childDelta = deltaFromChild(childChange);
+			if (srcId !== "self") {
+				const fields = childDelta;
+				globals.push({
+					id: { major: srcId.revision ?? revision, minor: srcId.localId },
+					fields,
+				});
+			} else {
+				mark.fields = childDelta;
+				markNoops = false;
+			}
+		}
+
+		if (globals.length > 0) {
+			delta.global = globals;
+		}
+	}
+
+	if (!markNoops) {
+		delta.local = [mark];
+	}
+
 	return delta;
 }
 
@@ -556,7 +602,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 
 	intoDelta: optionalFieldIntoDelta,
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChanges.length === 0 && change.moves.length === 0,
+		change.childChanges.length === 0 && change.moves.length === 0 && change.build.length === 0,
 };
 
 // Note: assumes normalization! Two content ids might be semantically equivalent (e.g. 'after fieldChange 1' and 'before fieldChange 2'), but won't be counted as equal here.

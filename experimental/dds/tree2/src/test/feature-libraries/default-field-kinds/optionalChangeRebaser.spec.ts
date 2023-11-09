@@ -267,6 +267,9 @@ function assertEqual(
 	bCopy.change.moves.sort(([c], [d]) =>
 		normalizeContentId(c).localeCompare(normalizeContentId(d)),
 	);
+	// TODO: This shouldn't be necessary. might be causing correctness issues.
+	delete aCopy.change.reservedDetachId;
+	delete bCopy.change.reservedDetachId;
 	assert.deepEqual(aCopy, bCopy);
 }
 

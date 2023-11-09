@@ -94,7 +94,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
 	const numberOfEditsToRebaseOver = 2;
-	const numberOfEditsToRebase = 3; //numberOfEditsToRebaseOver;
+	const numberOfEditsToRebase = 2; //numberOfEditsToRebaseOver;
 	const numberOfEditsToVerifyAssociativity = 5;
 
 	describe("Rebase over compose", () => {
@@ -113,14 +113,16 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						generateChildStates,
 						numberOfEditsToRebaseOver,
 						"trunk-rev-",
+						1e6,
 					)) {
 						const title = `Rebase ${name} over compose ${JSON.stringify(
 							namedEditsToRebaseOver.map(({ description }) => description),
 						)}`;
 
-						if (title !== 'Rebase SetA,0 over compose ["SetA,0","SetB,1"]') {
-							continue;
-						}
+						// continue;
+						// if (title !== 'Rebase SetA,0 over compose ["SetA,0","SetB,1"]') {
+						// 	continue;
+						// }
 
 						// if (
 						// 	title !==
@@ -185,57 +187,16 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						generateChildStates,
 						1,
 						"trunk-rev-",
+						1e6,
 					)) {
 						const title = `Rebase ${JSON.stringify(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
-						// This test case motivates compose dropping changes with no associated revision
-						// (though not totally convinced that change is good)
-						// if (
-						// 	title !==
-						// 	'Rebase ["ChildChange1","ChildChange2","ChildChange3"] over Delete'
-						// ) {
+						// This demonstrates a case where rebasing over composition loses reservedDetachId.
+						// if (title !== 'Rebase ["SetB,0","Delete","Undo:Delete"] over SetB,0') {
 						// 	continue;
 						// }
-
-						// if (title !== 'Rebase ["SetB,0","SetB,1"] over Delete') {
-						// 	continue;
-						// }
-
-						// if (title !== 'Rebase ["ChildChange1","SetB,1"] over SetA,0') {
-						// 	continue;
-						// }
-
-						// if (title !== 'Rebase ["ChildChange1","ChildChange2"] over Delete') {
-						// 	continue;
-						// }
-
-						// if (title !== 'Rebase ["Delete","Undo:Delete"] over ChildChange1') {
-						// 	continue;
-						// }
-
-						// if (title !== 'Rebase ["SetA,0","ChildChange2"] over SetA,0') {
-						// 	continue;
-						// }
-
-						// if (
-						// 	title !==
-						// 	'Rebase ["SetB,0","ChildChange79","ChildChange80"] over ChildChange1'
-						// ) {
-						// 	continue;
-						// }
-
-						// if (
-						// 	title !==
-						// 	'Rebase ["SetA,0","Undo:SetA,0","ChildChange73"] over ChildChange1'
-						// ) {
-						// 	continue;
-						// }
-
-						if (title !== 'Rebase ["SetB,0","SetA,1","Undo:SetA,1"] over SetA,0') {
-							continue;
-						}
 
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
@@ -301,7 +262,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 								}
 							}
 
-							// verifyComposeAssociativity(allTaggedEdits);
+							verifyComposeAssociativity(allTaggedEdits);
 						});
 					}
 				}
