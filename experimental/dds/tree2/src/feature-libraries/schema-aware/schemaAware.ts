@@ -186,7 +186,7 @@ export type TypedNode<TSchema extends TreeNodeSchema, Mode extends ApiMode> = Fl
 			? TypedFields<Mode, TFields>
 			: TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema>
 			? TypedFields<Mode, { "": TField }>
-			: undefined,
+			: EmptyObject,
 		TSchema extends LeafNodeSchema<string, infer TValueSchema> ? TValueSchema : undefined,
 		TSchema["name"]
 	>
