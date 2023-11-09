@@ -11,7 +11,7 @@ import {
 	ITestFluidObject,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from '@fluidframework/test-utils';
-import { LocalServerTestDriver } from '@fluid-internal/test-drivers';
+import { LocalServerTestDriver } from '@fluid-private/test-drivers';
 import { Loader } from '@fluidframework/container-loader';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { SharedTree } from '../SharedTree';
