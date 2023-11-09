@@ -232,6 +232,7 @@ export {
 	FactoryTreeSchema,
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
+	stackTreeFieldCursor,
 } from "./feature-libraries";
 
 export {

@@ -80,6 +80,7 @@ export {
 	prefixPath,
 	prefixFieldPath,
 	CursorWithNode,
+	stackTreeFieldCursor,
 } from "./treeCursorUtils";
 export {
 	cursorForJsonableTreeNode,

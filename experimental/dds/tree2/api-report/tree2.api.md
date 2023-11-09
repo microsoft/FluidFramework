@@ -1770,6 +1770,9 @@ export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
 
 // @alpha
+export function stackTreeFieldCursor<TNode>(adapter: CursorAdapter<TNode>, root: TNode, detachedField?: DetachedField): CursorWithNode<TNode>;
+
+// @alpha
 export function stackTreeNodeCursor<TNode>(adapter: CursorAdapter<TNode>, root: TNode): CursorWithNode<TNode>;
 
 // @alpha
