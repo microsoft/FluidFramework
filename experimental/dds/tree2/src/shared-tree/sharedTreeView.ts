@@ -18,7 +18,6 @@ import {
 	visitDelta,
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
-	FieldKey,
 	Revertible,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
@@ -28,17 +27,9 @@ import {
 	buildForest,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
-	NodeKeyManager,
-	TreeFieldSchema,
-	TreeSchema,
-	getTreeContext,
-	TypedField,
-	createNodeKeyManager,
-	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
-	getProxyForField,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
-import { TransactionResult, brand } from "../util";
+import { TransactionResult } from "../util";
 import { noopValidator } from "../codec";
 
 /**
@@ -150,23 +141,6 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-
-	/**
-	 * Get a typed view of the tree content using the editable-tree-2 API.
-	 *
-	 * Warning: This API is not fully tested yet and is still under development.
-	 * It will eventually replace the current editable-tree API and become the main entry point for working with SharedTree.
-	 * Access to this API is exposed here as a temporary measure to enable experimenting with the API while its being finished and evaluated.
-	 *
-	 * TODO:
-	 * ISharedTreeView should already have the view schema, and thus nor require it to be passed in.
-	 * As long as it is passed in here as a workaround, the caller must ensure that the stored schema is compatible.
-	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
-	 * using the returned tree is invalid and is likely to error or corrupt the document.
-	 *
-	 * @deprecated Use {@link ISharedTreeView2}.
-	 */
-	editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
 }
 
 /**
@@ -333,35 +307,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 
 	public get editor(): IDefaultEditBuilder {
 		return this.branch.editor;
-	}
-
-	public editableTree2<TRoot extends TreeFieldSchema>(
-		viewSchema: TreeSchema<TRoot>,
-		nodeKeyManager?: NodeKeyManager,
-		nodeKeyFieldKey?: FieldKey,
-	): TypedField<TRoot> {
-		const context = getTreeContext(
-			viewSchema,
-			this.forest,
-			this.branch.editor,
-			nodeKeyManager ?? createNodeKeyManager(),
-			nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
-		);
-		return context.root as TypedField<TRoot>;
-	}
-
-	public root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>) {
-		// TODO:
-		// this allocates and leaks a new editable tree context (when used it will add content to the AnchorSet which refers back to the context).
-		// Additionally its assumed there will be exactly one context per view and any TreeNodes cached on the AnchorSets will belong to that context.
-		// Calling this more than once would violate that assumption, but currently does not error.
-		// Therefore root2, like editableTree2 should really only be called once.
-		// However, since getProxyForField returns an object that no longer reflects the root after the root is edited (unlike the root field in editableTree2)
-		// users will need to call root2 again whenever that might have happened to get the new root.
-		// This makes it impractical to use this efficiently and correctly at the same time.
-		// This method is also undocumented which thus doesn't provide sufficient guidance to resolve this issue.
-		const rootField = this.editableTree2(viewSchema);
-		return getProxyForField(rootField);
 	}
 
 	public locate(anchor: Anchor): AnchorNode | undefined {
