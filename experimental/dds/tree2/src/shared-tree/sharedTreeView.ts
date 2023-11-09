@@ -23,15 +23,11 @@ import {
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
-	UnwrappedEditableField,
-	EditableTreeContext,
 	IDefaultEditBuilder,
 	DefaultChangeset,
 	buildForest,
 	DefaultChangeFamily,
-	getEditableTreeContext,
 	DefaultEditBuilder,
-	NewFieldContent,
 	NodeKeyManager,
 	TreeFieldSchema,
 	TreeSchema,
@@ -40,7 +36,6 @@ import {
 	createNodeKeyManager,
 	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
 	getProxyForField,
-	ProxyField,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
 import { TransactionResult, brand } from "../util";
@@ -75,39 +70,14 @@ export interface ViewEvents {
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
- * @privateRemarks Implementations of this interface must implement the {@link branchKey} property.
+ * @privateRemarks
+ * Implementations of this interface must implement the {@link branchKey} property.
+ * TODO:
+ * This interface is the one without a View schema.
+ * For clarity it should be renamed to something like "BranchCheckout"
  * @alpha
  */
 export interface ISharedTreeView extends AnchorLocator {
-	/**
-	 * Gets the root field of the tree.
-	 *
-	 * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
-	 *
-	 * Currently this editable tree's fields do not update on edits,
-	 * so holding onto this root object across edits will only work if it's an unwrapped node.
-	 * TODO: Fix this issue.
-	 *
-	 * Currently any access to this view of the tree may allocate cursors and thus require
-	 * `context.prepareForEdit()` before editing can occur.
-	 */
-	// TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
-	get root(): UnwrappedEditableField;
-
-	/**
-	 * Sets the content of the root field of the tree.
-	 *
-	 * See {@link EditableTreeContext.unwrappedRoot} on how this works.
-	 */
-	setContent(data: NewFieldContent): void;
-
-	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ISharedTreeView.root}.
-	 *
-	 * TODO: Exposing access to this should be unneeded once editing APIs are finished.
-	 */
-	readonly context: EditableTreeContext;
-
 	/**
 	 * Read and Write access for schema stored in the document.
 	 *
@@ -193,10 +163,10 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * As long as it is passed in here as a workaround, the caller must ensure that the stored schema is compatible.
 	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
 	 * using the returned tree is invalid and is likely to error or corrupt the document.
+	 *
+	 * @deprecated Use {@link ISharedTreeView2}.
 	 */
 	editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
-
-	root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): ProxyField<TRoot>;
 }
 
 /**
@@ -227,7 +197,6 @@ export function createSharedTreeView(args?: {
 			},
 			changeFamily,
 		);
-	const context = getEditableTreeContext(forest, schema, branch.editor);
 	const events = args?.events ?? createEmitter();
 
 	const transaction = new Transaction(branch);
@@ -238,7 +207,6 @@ export function createSharedTreeView(args?: {
 		changeFamily,
 		schema,
 		forest,
-		context,
 		events,
 		args?.removedTrees,
 	);
@@ -325,7 +293,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		private readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		public readonly context: EditableTreeContext,
 		public readonly events: ISubscribable<ViewEvents> &
 			IEmitter<ViewEvents> &
 			HasListeners<ViewEvents>,
@@ -407,7 +374,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
 		const branch = this.branch.fork();
-		const context = getEditableTreeContext(forest, storedSchema, branch.editor);
 		const transaction = new Transaction(branch);
 		return new SharedTreeView(
 			transaction,
@@ -415,7 +381,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 			this.changeFamily,
 			storedSchema,
 			forest,
-			context,
 			createEmitter(),
 			this.removedTrees.clone(),
 		);
@@ -443,14 +408,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		if (disposeView) {
 			view.dispose();
 		}
-	}
-
-	public get root(): UnwrappedEditableField {
-		return this.context.unwrappedRoot;
-	}
-
-	public setContent(data: NewFieldContent) {
-		this.context.setContent(data);
 	}
 
 	/**

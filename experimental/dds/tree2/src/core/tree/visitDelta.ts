@@ -8,7 +8,13 @@ import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { NodeIndex, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
-import { areDetachedNodeIdsEqual, isAttachMark, isDetachMark, isReplaceMark } from "./deltaUtil";
+import {
+	areDetachedNodeIdsEqual,
+	isAttachMark,
+	isDetachMark,
+	isReplaceMark,
+	offsetDetachId,
+} from "./deltaUtil";
 
 /**
  * Implementation notes:
@@ -328,24 +334,6 @@ function visitNode(
 		visitFieldMarks(fields, visitor, config);
 		visitor.exitNode(index);
 	}
-}
-
-function offsetDetachId(detachId: Delta.DetachedNodeId, offset: number): Delta.DetachedNodeId;
-function offsetDetachId(
-	detachId: Delta.DetachedNodeId | undefined,
-	offset: number,
-): Delta.DetachedNodeId | undefined;
-function offsetDetachId(
-	detachId: Delta.DetachedNodeId | undefined,
-	offset: number,
-): Delta.DetachedNodeId | undefined {
-	if (detachId === undefined) {
-		return undefined;
-	}
-	return {
-		...detachId,
-		minor: detachId.minor + offset,
-	};
 }
 
 /**

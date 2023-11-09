@@ -23,6 +23,9 @@ export type T1 = Brand<number, "1">;
 export type T2 = Brand<number, "2">;
 export type T3 = Brand<{ test: number }, "2">;
 
+type Intersected = T1 & T2;
+type T1Constant = Brand<4, "1">;
+
 interface O1 extends Opaque<T1> {}
 interface O2 extends Opaque<T2> {}
 interface O3 extends Opaque<T3> {}
@@ -31,8 +34,12 @@ type _check =
 	| requireTrue<areSafelyAssignable<ExtractFromOpaque<O1>, T1>>
 	| requireTrue<areSafelyAssignable<ExtractFromOpaque<O2>, T2>>
 	| requireTrue<areSafelyAssignable<ExtractFromOpaque<O3>, T3>>
+	// Check covariant ValueType
+	| requireTrue<isAssignableTo<T1Constant, T1>>
 	| requireFalse<isAssignableTo<O1, O2>>
-	| requireFalse<isAssignableTo<T1, T2>>;
+	| requireFalse<isAssignableTo<T1, T2>>
+	// Check multiple brands don't produce never.
+	| requireFalse<isAssignableTo<Intersected, never>>;
 
 const _branded: T1 = brand(0);
 const _opaque: O1 = brandOpaque<O1>(0);

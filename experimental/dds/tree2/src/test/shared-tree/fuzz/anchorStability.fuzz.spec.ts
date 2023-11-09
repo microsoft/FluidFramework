@@ -103,7 +103,7 @@ describe("Fuzz - anchor stability", () => {
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
-			const tree = initialState.clients[0].channel.schematizeView(config);
+			const tree = initialState.clients[0].channel.schematize(config).branch;
 			tree.transaction.start();
 			// These tests are hard coded to a single client, so this is fine.
 			initialState.views = [tree];
@@ -171,7 +171,7 @@ describe("Fuzz - anchor stability", () => {
 			initialState.anchors = [];
 			initialState.views = [];
 			for (const client of initialState.clients) {
-				const view = client.channel.schematizeView(config) as RevertibleSharedTreeView;
+				const view = client.channel.schematize(config).branch as RevertibleSharedTreeView;
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;

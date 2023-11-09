@@ -21,12 +21,12 @@
 		"build:full:compile": "fluid-build --task compile --task webpack",
 		"build:gendocs": "concurrently npm:build:gendocs:client npm:build:gendocs:server && cd docs && npm run build",
 		"build:gendocs:client": "fluid-build --task build:gendocs:client",
-		"build:gendocs:client:azure": "copyfiles azure/**/*.api.json ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
-		"build:gendocs:client:examples": "copyfiles examples/**/*.api.json ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
-		"build:gendocs:client:experimental": "copyfiles experimental/**/*.api.json ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
-		"build:gendocs:client:packages": "copyfiles packages/**/*.api.json ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
-		"build:gendocs:server": "concurrently npm:build:gendocs:server:*",
-		"build:gendocs:server:routerlicious": "copyfiles server/routerlicious/**/*.api.json ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
+		"build:gendocs:client:azure": "copyfiles \"azure/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
+		"build:gendocs:client:examples": "copyfiles \"examples/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
+		"build:gendocs:client:experimental": "copyfiles \"experimental/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
+		"build:gendocs:client:packages": "copyfiles \"packages/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
+		"build:gendocs:server": "concurrently \"npm:build:gendocs:server:*\"",
+		"build:gendocs:server:routerlicious": "copyfiles \"server/routerlicious/**/*.api.json\" ./_api-extractor-temp/doc-models/ -e \"**/node_modules/**\" -f -V",
 		"bundle-analysis:collect": "npm run webpack:profile && flub generate bundleStats",
 		"bundle-analysis:run": "flub run bundleStats --dangerfile build-tools/packages/build-cli/lib/lib/dangerfile.js",
 		"changeset": "flub changeset add --releaseGroup client",
@@ -78,8 +78,8 @@
 		"prettier:fix": "fluid-build --task prettier:fix",
 		"prettier:repo": "prettier --check . --ignore-path ./.prettierignore",
 		"prettier:repo:fix": "prettier --write . --ignore-path ./.prettierignore",
-		"prettier:root": "prettier --check ./*.* --ignore-path .prettierignore --ignore-unknown",
-		"prettier:root:fix": "prettier --write ./*.* --ignore-path .prettierignore --ignore-unknown",
+		"prettier:root": "prettier --check \"./*.*\" --ignore-path .prettierignore --ignore-unknown",
+		"prettier:root:fix": "prettier --write \"./*.*\" --ignore-path .prettierignore --ignore-unknown",
 		"restart": "cd server/routerlicious && npm run restart",
 		"start:docker": "docker-compose -f server/docker-compose.yml up",
 		"stop:docker": "docker-compose -f server/docker-compose.yml down",
@@ -155,7 +155,7 @@
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "^7.37.0",
@@ -365,6 +365,10 @@
 				"@types/node",
 				"fluid-framework"
 			]
+		},
+		"patchedDependencies": {
+			"socket.io-client@4.7.2": "patches/socket.io-client@4.7.2.patch",
+			"engine.io-client@6.5.2": "patches/engine.io-client@6.5.2.patch"
 		}
 	}
 }

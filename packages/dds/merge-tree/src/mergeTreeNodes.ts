@@ -365,6 +365,17 @@ export interface InsertContext {
 /**
  * @internal
  */
+export interface SegmentActions<TClientData> {
+	leaf?: ISegmentAction<TClientData>;
+	shift?: NodeAction<TClientData>;
+	contains?: NodeAction<TClientData>;
+	pre?: BlockAction<TClientData>;
+	post?: BlockAction<TClientData>;
+}
+
+/**
+ * @internal
+ */
 export interface SegmentGroup {
 	segments: ISegmentLeaf[];
 	previousProps?: PropertySet[];

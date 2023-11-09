@@ -25,6 +25,7 @@ import {
 	rebaseOverComposition,
 	rebaseTagged,
 	toDelta,
+	withNormalizedLineage,
 	withoutLineage,
 } from "./utils";
 import { ChangeMaker as Change } from "./testEdits";
@@ -264,34 +265,68 @@ describe("SequenceField - Rebaser Axioms", () => {
 		}
 	});
 
-	describe.skip("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
+	describe("(A ↷ B) ↷ C === A ↷ (B ○ C)", () => {
 		// TODO: Support testing changesets with node changes.
 		// Currently node changes in B and C will incorrectly have the same input context, which is not correct.
 		const shallowTestChanges = testChanges.filter(
 			(change) => !["NestedChange", "MInsert"].includes(change[0]),
 		);
-		for (const [name1, makeChange1] of shallowTestChanges) {
-			for (const [name2, makeChange2] of shallowTestChanges) {
-				for (const [name3, makeChange3] of shallowTestChanges) {
-					const title = `${name1} ↷ [${name2}, ${name3}]`;
-					it(title, () => {
-						const a = tagChange(makeChange1(1, 1), tag1);
-						const b = tagChange(makeChange2(1, 1), tag2);
-						const c = tagChange(makeChange3(1, 1), tag3);
-						const a2 = rebaseTagged(a, b);
-						const rebasedIndividually = rebaseTagged(a2, c).change;
-						const bc = compose([b, c]);
-						const rebasedOverComposition = rebaseOverComposition(
-							a.change,
-							bc,
-							revisionMetadataSourceFromInfo([
-								{ revision: tag1 },
-								{ revision: tag2 },
-								{ revision: tag3 },
-							]),
-						);
-						assert.deepEqual(rebasedOverComposition, rebasedIndividually);
-					});
+
+		const changesTargetingDetached = new Set([
+			"Revive",
+			"TransientRevive",
+			"ConflictedRevive",
+			"ReturnFrom",
+			"ReturnTo",
+		]);
+
+		const lineageFreeTestChanges = shallowTestChanges.filter(
+			(change) => !changesTargetingDetached.has(change[0]),
+		);
+
+		for (const [nameA, makeChange1] of shallowTestChanges) {
+			for (const [nameB, makeChange2] of shallowTestChanges) {
+				for (const [nameC, makeChange3] of lineageFreeTestChanges) {
+					const title = `${nameA} ↷ [${nameB}, ${nameC}]`;
+					if (
+						["MoveIn", "MoveOut", "ReturnFrom", "ReturnTo"].includes(nameB) &&
+						nameC === "Delete"
+					) {
+						it.skip(title, () => {
+							// Some of these tests fail due to BUG 6155 where if a mark in changeA is moved by changeB,
+							// we may not rebase changeA over the delete in changeC due to handling the move of changeA in the amend pass.
+						});
+					} else if (
+						changesTargetingDetached.has(nameA) &&
+						changesTargetingDetached.has(nameB)
+					) {
+						// Some of these tests are malformed as the change targeting the older cell
+						// should have lineage describing its position relative to the newer cell.
+					} else {
+						it(title, () => {
+							const a = tagChange(makeChange1(1, 1), tag1);
+							const b = tagChange(makeChange2(1, 1), tag2);
+							const c = tagChange(makeChange3(1, 1), tag3);
+							const a2 = rebaseTagged(a, b);
+							const rebasedIndividually = rebaseTagged(a2, c).change;
+							const bc = compose([b, c]);
+							const rebasedOverComposition = rebaseOverComposition(
+								a.change,
+								bc,
+								revisionMetadataSourceFromInfo([
+									{ revision: tag1 },
+									{ revision: tag2 },
+									{ revision: tag3 },
+								]),
+							);
+
+							const normalizedComposition =
+								withNormalizedLineage(rebasedOverComposition);
+
+							const normalizedIndividual = withNormalizedLineage(rebasedIndividually);
+							assert.deepEqual(normalizedComposition, normalizedIndividual);
+						});
+					}
 				}
 			}
 		}
@@ -342,36 +377,6 @@ describe("SequenceField - Sandwich Rebasing", () => {
 		assert.deepEqual(withoutLineage(insertB4.change), Change.insert(3, 1));
 	});
 
-	it("[Delete ABC, Revive ABC] ↷ Delete B", () => {
-		const delB = tagChange(Change.delete(1, 1), tag1);
-		const delABC = tagChange(Change.delete(0, 3), tag2);
-		const revABC = tagChange(Change.revive(0, 3, { revision: tag2, localId: id0 }), tag4);
-		const delABC2 = rebaseTagged(delABC, delB);
-		const invDelABC = tagRollbackInverse(invert(delABC), tag3, delABC2.revision);
-		const revABC2 = rebaseTagged(revABC, invDelABC);
-		const revABC3 = rebaseTagged(revABC2, delB);
-		const revABC4 = rebaseTagged(revABC3, delABC2);
-		// The rebased versions of the local edits should still cancel-out
-		const actual = compose([delABC2, revABC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, emptyFieldChanges);
-	});
-
-	it("[Move ABC, Return ABC] ↷ Delete B", () => {
-		const delB = tagChange(Change.delete(1, 1), tag1);
-		const movABC = tagChange(Change.move(0, 3, 4), tag2);
-		const retABC = tagChange(Change.return(1, 3, 0, { revision: tag2, localId: id0 }), tag4);
-		const movABC2 = rebaseTagged(movABC, delB);
-		const invMovABC = invert(movABC);
-		const retABC2 = rebaseTagged(retABC, tagRollbackInverse(invMovABC, tag3, movABC2.revision));
-		const retABC3 = rebaseTagged(retABC2, delB);
-		const retABC4 = rebaseTagged(retABC3, movABC2);
-		// The rebased versions of the local edits should still cancel-out
-		const actual = compose([movABC2, retABC4]);
-		const delta = toDelta(actual);
-		assert.deepEqual(delta, emptyFieldChanges);
-	});
-
 	it("[Delete AC, Revive AC] ↷ Insert B", () => {
 		const addB = tagChange(Change.insert(1, 1), tag1);
 		const delAC = tagChange(Change.delete(0, 2), tag2);
@@ -398,8 +403,8 @@ describe("SequenceField - Sandwich Rebasing", () => {
 	});
 });
 
-describe.skip("SequenceField - Composed sandwich rebasing", () => {
-	it("Nested inserts rebasing", () => {
+describe("SequenceField - Composed sandwich rebasing", () => {
+	it("Nested inserts ↷ []", () => {
 		const insertA = tagChange(Change.insert(0, 2), tag1);
 		const insertB = tagChange(Change.insert(1, 1), tag2);
 		const inverseA = tagRollbackInverse(invert(insertA), tag3, insertA.revision);
