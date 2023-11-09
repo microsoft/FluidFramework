@@ -23,28 +23,28 @@ function makeOptionalFieldCodec(
 	return {
 		encode: (change: OptionalChangeset) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
-			if (change.fieldChanges.length > 0) {
-				// TODO: Codec logic needs to be resolved. current impl is no good.
-				const fieldChange = change.fieldChanges[0];
+			// TODO: Codec logic needs to be resolved. current impl is no good.
+			// if (change.fieldChanges.length > 0) {
+			// 	const fieldChange = change.fieldChanges[0];
 
-				encoded.fieldChange = {
-					id: fieldChange.id,
-					wasEmpty: change.fieldChanges[0].wasEmpty,
-				};
-				if (fieldChange.revision !== undefined) {
-					encoded.fieldChange.revision = fieldChange.revision;
-				}
-				if (fieldChange.newContent !== undefined) {
-					encoded.fieldChange.newContent = nodeUpdateCodec.encode(fieldChange.newContent);
-				}
-			}
+			// 	encoded.fieldChange = {
+			// 		id: fieldChange.id,
+			// 		wasEmpty: change.fieldChanges[0].wasEmpty,
+			// 	};
+			// 	if (fieldChange.revision !== undefined) {
+			// 		encoded.fieldChange.revision = fieldChange.revision;
+			// 	}
+			// 	if (fieldChange.newContent !== undefined) {
+			// 		encoded.fieldChange.newContent = nodeUpdateCodec.encode(fieldChange.newContent);
+			// 	}
+			// }
 
-			if (change.childChanges !== undefined) {
-				encoded.childChanges = change.childChanges.map(([id, childChange]) => [
-					id.id,
-					childCodec.encode(childChange),
-				]);
-			}
+			// if (change.childChanges !== undefined) {
+			// 	encoded.childChanges = change.childChanges.map(([id, childChange]) => [
+			// 		id.id,
+			// 		childCodec.encode(childChange),
+			// 	]);
+			// }
 
 			return encoded;
 		},
@@ -53,31 +53,31 @@ function makeOptionalFieldCodec(
 			const decoded: Mutable<OptionalChangeset> = {
 				fieldChanges: [],
 				// contentId: { id: "this", type: "after" },
-			};
-			if (encoded.fieldChange !== undefined) {
-				const decodedFieldChange: Mutable<OptionalFieldChange> = {
-					id: encoded.fieldChange.id,
-					wasEmpty: encoded.fieldChange.wasEmpty,
-					inserted: { type: "after", id: "this" },
-					removed: { type: "before", id: "this" },
-				};
-				if (encoded.fieldChange.revision !== undefined) {
-					decodedFieldChange.revision = encoded.fieldChange.revision;
-				}
-				if (encoded.fieldChange.newContent !== undefined) {
-					decodedFieldChange.newContent = nodeUpdateCodec.decode(
-						encoded.fieldChange.newContent,
-					);
-				}
-				decoded.fieldChanges.push(decodedFieldChange);
-			}
+			} as any;
+			// if (encoded.fieldChange !== undefined) {
+			// 	const decodedFieldChange: Mutable<OptionalFieldChange> = {
+			// 		id: encoded.fieldChange.id,
+			// 		wasEmpty: encoded.fieldChange.wasEmpty,
+			// 		inserted: { type: "after", id: "this" },
+			// 		removed: { type: "before", id: "this" },
+			// 	};
+			// 	if (encoded.fieldChange.revision !== undefined) {
+			// 		decodedFieldChange.revision = encoded.fieldChange.revision;
+			// 	}
+			// 	if (encoded.fieldChange.newContent !== undefined) {
+			// 		decodedFieldChange.newContent = nodeUpdateCodec.decode(
+			// 			encoded.fieldChange.newContent,
+			// 		);
+			// 	}
+			// 	decoded.fieldChanges.push(decodedFieldChange);
+			// }
 
-			if (encoded.childChanges !== undefined) {
-				decoded.childChanges = encoded.childChanges.map(([id, childChange]) => [
-					{ id, type: "after" },
-					childCodec.decode(childChange),
-				]);
-			}
+			// if (encoded.childChanges !== undefined) {
+			// 	decoded.childChanges = encoded.childChanges.map(([id, childChange]) => [
+			// 		{ id, type: "after" },
+			// 		childCodec.decode(childChange),
+			// 	]);
+			// }
 
 			return decoded;
 		},

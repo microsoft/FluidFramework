@@ -92,12 +92,11 @@ export interface OptionalFieldChange {
  * // { type: "before", id: "this" } represents the node occupying the optional field in the input context of the change
  * // similarly for everything else
  */
-export type ContentId = {
-	// "this" enables referring to the input/output context of the current change, which is necessary to construct
-	// changes before tagging them with revisions.
-	id: ChangeAtomId | "this";
-	type: "before" | "after";
-};
+export type ContentId = ChangeAtomId | "self";
+
+// Fill
+// Clear
+// Set = [Fill, Clear]
 
 /**
  * @privateRemarks - This type is used to represent changes to an optional field.
@@ -105,38 +104,8 @@ export type ContentId = {
  * the format is a bit awkward. TODO: rewrite in more informative terms.
  */
 export interface OptionalChangeset {
-	/**
-	 * If length > 0, the last element specifies new content for the field. TODO: Update this doc comment to be correct.
-	 * Other elements specify intermediate states of the field
-	 * @remarks - Intermediate content should generally not need to be communicated over the wire, but is necessary at
-	 * rebase and compose time to produce correct results axiomatically.
-	 */
-	fieldChanges: OptionalFieldChange[];
+	build: { set: JsonableTree; id: ChangeAtomId }[];
+	moves: [src: ContentId, dst: ContentId][];
 
-	// contentId: ContentId;
-
-	// /**
-	//  * If defined, the content id that is associated with the input context of this change.
-	//  *
-	//  * When left undefined, input context matches 'before fieldChanges[0]', or the same as `contentId` if there are no field changes.
-	//  */
-	// inputContentId?: ContentId;
-
-	/**
-	 * Changes to nodes which occupied this field prior to this changeset at some point.
-	 *
-	 * `deletedBy` refers to the revision which deleted the node (via a `fieldChange`, replacing the contents of the field
-	 * and thus resetting any nested changes).
-	 * "self" is a sentinel value for the revision of the current changeset.
-	 * Thus, the childChange for "self" refers to:
-	 * - the node this changeset removes, if it involves a field change
-	 * - the node currently occupying this field, if it does not involve a field change
-	 *
-	 * @privateRemarks - Indexing by the revision which deleted the node rather than the one that inserted the node is necessary to support rebase.
-	 * Consider rebasing an OptionalChangeset with changes to the 'start' node over one which also has a fieldChange. This would require naming the
-	 * original base revision (as 'start' no longer semantically refers to the correct place).
-	 *
-	 * TODO: This isn't really `deletedBy` as it is so much `contentBefore`, i.e. similar semantics to how childChange worked before.
-	 */
-	childChanges?: [childId: ContentId, childChange: NodeChangeset][];
+	childChanges: [register: ContentId, childChange: NodeChangeset][];
 }

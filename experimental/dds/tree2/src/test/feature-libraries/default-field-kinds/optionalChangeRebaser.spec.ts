@@ -34,7 +34,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-field-kinds/optionalField";
 // eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+import {
+	ContentId,
+	OptionalChangeset,
+} from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 import {
 	FieldStateTree,
 	getSequentialEdits,
@@ -59,15 +62,17 @@ const tag1 = mintRevisionTag();
 const OptionalChange = {
 	set(
 		value: string,
-		wasEmpty: boolean,
-		id: ChangesetLocalId = brand(0),
-		buildId: ChangesetLocalId = brand(40),
+		ids: {
+			build: ChangesetLocalId;
+			fill: ChangesetLocalId;
+			detach?: ChangesetLocalId;
+		},
 	) {
-		return optionalFieldEditor.set(singleTextCursor({ type, value }), wasEmpty, id, buildId);
+		return optionalFieldEditor.set(singleTextCursor({ type, value }), ids);
 	},
 
-	clear(wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
-		return optionalFieldEditor.clear(wasEmpty, id);
+	clear(id: ChangesetLocalId) {
+		return optionalFieldEditor.clear(id);
 	},
 
 	buildChildChange(childChange: TestChange) {
@@ -95,9 +100,19 @@ function getMaxId(...changes: OptionalChangeset[]): ChangesetLocalId | undefined
 	};
 
 	for (const change of changes) {
-		for (const fieldChange of change.fieldChanges) {
-			ingest(fieldChange.id);
+		for (const build of change.build ?? []) {
+			ingest(build.id.localId);
 		}
+
+		for (const [src, dst] of change.moves) {
+			if (src !== "self") {
+				ingest(src.localId);
+			}
+			if (dst !== "self") {
+				ingest(dst.localId);
+			}
+		}
+
 		// Child changes do not need to be ingested for this test file, as TestChange (which is used as a child)
 		// doesn't have any `ChangesetLocalId`s.
 	}
@@ -212,7 +227,11 @@ function computeChildChangeInputContext(state: OptionalFieldTestState): number[]
 	const intentions: number[] = [];
 	let currentContent: string | undefined;
 	for (const state of states) {
-		if (state.mostRecentEdit !== undefined && currentContent === finalContent) {
+		if (
+			state.mostRecentEdit !== undefined &&
+			currentContent === finalContent &&
+			state.mostRecentEdit.changeset.change.childChanges.length > 0
+		) {
 			if (state.mostRecentEdit.changeset.change.childChanges !== undefined) {
 				intentions.push(state.mostRecentEdit.intention);
 			}
@@ -224,6 +243,33 @@ function computeChildChangeInputContext(state: OptionalFieldTestState): number[]
 	return intentions;
 }
 
+// Optional changesets may be equivalent but not evaluate to be deep-equal, as the order of moves is irrelevant.
+function assertEqual(
+	a: TaggedChange<OptionalChangeset> | undefined,
+	b: TaggedChange<OptionalChangeset> | undefined,
+): void {
+	if (a === undefined || b === undefined) {
+		assert.deepEqual(a, b);
+		return;
+	}
+	const normalizeContentId = (contentId: ContentId): string => {
+		if (typeof contentId === "string") {
+			return `s${contentId}`;
+		}
+		return `r${contentId.revision}id${contentId.localId}`;
+	};
+	// The composed rebase implementation deep-freezes.
+	const aCopy = { ...a, change: { ...a.change, moves: [...a.change.moves] } };
+	const bCopy = { ...b, change: { ...b.change, moves: [...b.change.moves] } };
+	aCopy.change.moves.sort(([c], [d]) =>
+		normalizeContentId(c).localeCompare(normalizeContentId(d)),
+	);
+	bCopy.change.moves.sort(([c], [d]) =>
+		normalizeContentId(c).localeCompare(normalizeContentId(d)),
+	);
+	assert.deepEqual(aCopy, bCopy);
+}
+
 /**
  * See {@link ChildStateGenerator}
  */
@@ -232,6 +278,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<OptionalFieldTestState> {
+	const mintId = mintIntention as () => ChangesetLocalId;
 	const edits = getSequentialEdits(state);
 	if (state.content !== undefined) {
 		const changeChildIntention = mintIntention();
@@ -258,7 +305,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: undefined,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.clear(false),
+					OptionalChange.clear(mintId()),
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
@@ -270,6 +317,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 
 	for (const value of ["A", "B"]) {
 		const setIntention = mintIntention();
+		const [build, fill] = [mintId(), mintId()];
 		// Using length of the input context guarantees set operations generated at different times also have different
 		// values, which should tend to be easier to debug.
 		// This also makes the logic to determine intentions simpler.
@@ -278,7 +326,11 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: newContents,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.set(newContents, state.content === undefined),
+					OptionalChange.set(newContents, {
+						build,
+						fill,
+						detach: state.content === undefined ? undefined : mintId(),
+					}),
 					tagFromIntention(setIntention),
 				),
 				intention: setIntention,
@@ -330,7 +382,6 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	const singleTestChanges = (prefix: string) =>
 		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, prefix);
 
-	return;
 	/**
 	 * This test simulates rebasing over an do-inverse pair.
 	 */
@@ -357,6 +408,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 		for (const [{ description: name1, changeset: change1 }] of singleTestChanges("A")) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChanges("B")) {
 				const title = `${name1} ↷ [${name2}, undo(${name2})] => ${name1}`;
+
 				it(title, () => {
 					const inv = tagChange(invert(change2), tag1);
 					const r1 = rebaseTagged(change1, change2);
@@ -426,7 +478,7 @@ describe.only("OptionalField - Rebaser Axioms", () => {
 		runExhaustiveComposeRebaseSuite(
 			[{ content: undefined }, { content: "A" }],
 			generateChildStates,
-			{ rebase, rebaseComposed, compose, invert },
+			{ rebase, rebaseComposed, compose, invert, assertEqual },
 		);
 	});
 

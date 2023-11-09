@@ -20,12 +20,17 @@ import {
 	BoundFieldChangeRebaser,
 } from "./exhaustiveRebaserUtils";
 import { fail } from "../../util";
+import {
+	ContentId,
+	OptionalChangeset,
+} from "../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 
 export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	initialStates: FieldStateTree<TContent, TChangeset>[],
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
-	{ rebase, rebaseComposed, invert, compose }: BoundFieldChangeRebaser<TChangeset>,
+	{ rebase, rebaseComposed, invert, compose, assertEqual }: BoundFieldChangeRebaser<TChangeset>,
 ) {
+	const assertDeepEqual = assertEqual ?? ((a, b) => assert.deepEqual(a, b));
 	function rebaseTagged(
 		change: TaggedChange<TChangeset>,
 		...baseChanges: TaggedChange<TChangeset>[]
@@ -77,8 +82,8 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 		}
 
 		try {
-			assert.deepEqual(leftPartialCompositions.at(-1), singlyComposed);
-			assert.deepEqual(rightPartialCompositions.at(-1), singlyComposed);
+			assertDeepEqual(leftPartialCompositions.at(-1), singlyComposed);
+			assertDeepEqual(rightPartialCompositions.at(-1), singlyComposed);
 		} catch (error) {
 			throw error;
 		}
@@ -121,12 +126,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// }
 						// continue;
 
-						if (
-							title !==
-							'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","ChildChange102"]'
-						) {
-							continue;
-						}
+						// if (
+						// 	title !==
+						// 	'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","ChildChange102"]'
+						// ) {
+						// 	continue;
+						// }
 
 						it(title, () => {
 							const editsToRebaseOver = namedEditsToRebaseOver.map(
@@ -146,7 +151,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 								...editsToRebaseOver,
 							);
 							try {
-								assert.deepEqual(rebaseWithCompose, rebaseWithoutCompose);
+								assertDeepEqual(
+									tagChange(rebaseWithCompose, undefined),
+									tagChange(rebaseWithoutCompose, undefined),
+								);
 							} catch (error) {
 								throw error;
 							}
@@ -177,8 +185,6 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						const title = `Rebase ${JSON.stringify(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
-
-						continue;
 
 						// This test case motivates compose dropping changes with no associated revision
 						// (though not totally convinced that change is good)
@@ -222,6 +228,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// ) {
 						// 	continue;
 						// }
+
+						if (title !== 'Rebase ["SetB,0","SetA,1","Undo:SetA,1"] over SetA,0') {
+							continue;
+						}
 
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
@@ -278,9 +288,9 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 
 							for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
 								try {
-									assert.deepEqual(
-										rebasedEditsWithoutCompose[i].change,
-										rebasedEditsWithCompose[i].change,
+									assertDeepEqual(
+										rebasedEditsWithoutCompose[i],
+										rebasedEditsWithCompose[i],
 									);
 								} catch (error) {
 									throw error;
@@ -327,14 +337,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 					// 	continue;
 					// }
 
-					// if (title !== 'for ["ChildChange1","Undo:ChildChange1","SetB,2"]') {
-					// 	continue;
-					// }
-
-					// if (
-					// 	title !==
-					// 	'for ["SetB,0","Undo:SetB,0","SetB,2","Undo:SetB,2","ChildChange2227"]'
-					// ) {
+					// if (title !== 'for ["Delete","SetB,1","SetB,2","Delete","Undo:Delete"]') {
 					// 	continue;
 					// }
 
@@ -344,6 +347,8 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						const edits = namedSourceEdits.map(({ changeset }) => changeset);
 						verifyComposeAssociativity(edits);
 					});
+
+					// TODO: build id should be normalized with attach id.
 				}
 			});
 		}

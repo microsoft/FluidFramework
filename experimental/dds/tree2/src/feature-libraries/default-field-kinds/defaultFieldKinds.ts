@@ -50,8 +50,11 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	 */
 	set(
 		newContent: ITreeCursor,
-		changeId: ChangesetLocalId,
-		buildId: ChangesetLocalId,
+		ids: {
+			build: ChangesetLocalId;
+			fill: ChangesetLocalId;
+			detach: ChangesetLocalId;
+		},
 	): OptionalChangeset;
 }
 
@@ -74,9 +77,12 @@ export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
 	set: (
 		newContent: ITreeCursor,
-		setId: ChangesetLocalId,
-		buildId: ChangesetLocalId,
-	): OptionalChangeset => optionalFieldEditor.set(newContent, false, setId, buildId),
+		ids: {
+			build: ChangesetLocalId;
+			fill: ChangesetLocalId;
+			detach: ChangesetLocalId;
+		},
+	): OptionalChangeset => optionalFieldEditor.set(newContent, ids),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
