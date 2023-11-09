@@ -30,6 +30,15 @@
 			"type": "node",
 		},
 		{
+			"name": "fluid-build",
+			"program": "${workspaceFolder}/build-tools/packages/build-tools/bin/fluid-build",
+			"cwd": "${workspaceFolder}/packages/common/container-definitions",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": [".", "--task", "build"],
+		},
+		{
 			"name": "flub",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",
@@ -41,14 +50,14 @@
     {
 			"name": "flub check policy",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
-			"cwd": "${workspaceFolder}/build-tools",
+			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
 			"args": ["check", "policy",],
 		},
 		{
-			"name": "flub check policy",
+			"name": "flub check policy --fix",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
