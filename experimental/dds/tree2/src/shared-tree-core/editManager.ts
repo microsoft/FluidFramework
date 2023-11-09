@@ -122,7 +122,7 @@ export class EditManager<
 
 	/**
 	 * The sequence ID corresponding to the oldest revertible commit owned by the local branch. This is used
-	 * to prevent the trunk from trimming commits after it as they're needed for undo.
+	 * to prevent the trunk from trimming this commit or commits after it as they're needed for undo.
 	 */
 	private oldestRevertibleSequenceId?: SequenceId;
 

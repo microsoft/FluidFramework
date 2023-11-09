@@ -299,7 +299,7 @@ describe("Editing", () => {
 			const tree1 = makeTreeFromJson({ foo: ["A", "B", "C"] });
 			const tree2 = tree1.fork();
 
-			const { undoStack } = createTestUndoRedoStacks(tree1);
+			const { undoStack } = createTestUndoRedoStacks(tree1.events);
 			remove(tree1, 0, 1);
 			const removal = undoStack.pop();
 
@@ -656,7 +656,7 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const { undoStack } = createTestUndoRedoStacks(tree);
+			const { undoStack } = createTestUndoRedoStacks(tree.events);
 
 			const sequence = tree.editor.sequenceField(rootField);
 			// Delete destination's ancestor concurrently
@@ -699,7 +699,7 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const { undoStack } = createTestUndoRedoStacks(tree);
+			const { undoStack } = createTestUndoRedoStacks(tree.events);
 
 			const sequence = tree.editor.sequenceField(rootField);
 			// Delete source's ancestor concurrently
