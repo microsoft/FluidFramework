@@ -26,6 +26,10 @@ import {
 	TreeFieldSchema,
 	TreeNodeSchema,
 	MapNodeSchema,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsObjectNode,
 	FieldNodeSchema,
 	LeafNodeSchema,
 	ObjectNodeSchema,
@@ -98,16 +102,16 @@ function buildSubclass(
 	anchorNode: AnchorNode,
 	anchor: Anchor,
 ): LazyTreeNode {
-	if (schema instanceof MapNodeSchema) {
+	if (schemaIsMap(schema)) {
 		return new LazyMap(context, schema, cursor, anchorNode, anchor);
 	}
-	if (schema instanceof LeafNodeSchema) {
+	if (schemaIsLeaf(schema)) {
 		return new LazyLeaf(context, schema, cursor, anchorNode, anchor);
 	}
-	if (schema instanceof FieldNodeSchema) {
+	if (schemaIsFieldNode(schema)) {
 		return new LazyFieldNode(context, schema, cursor, anchorNode, anchor);
 	}
-	if (schema instanceof ObjectNodeSchema) {
+	if (schemaIsObjectNode(schema)) {
 		return buildLazyObjectNode(context, schema, cursor, anchorNode, anchor);
 	}
 	unreachableCase(schema, "unrecognized node kind");

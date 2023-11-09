@@ -6,19 +6,17 @@
 import { ITreeSubscriptionCursor, inCursorNode, EmptyKey } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { FieldKinds } from "../default-field-kinds";
-import { fail } from "../../util";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
 	TreeNodeSchema,
-	FieldNodeSchema,
-	LeafNodeSchema,
+	schemaIsFieldNode,
+	schemaIsLeaf,
 } from "../typed-schema";
 import { Context } from "./context";
 import { UnboxField, UnboxNode, UnboxNodeUnion } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import { makeField } from "./lazyField";
-import {} from "../typed-schema/typedTreeSchema";
 
 /**
  * See {@link UnboxNode} for documentation on what unwrapping this performs.
@@ -28,10 +26,10 @@ export function unboxedTree<TSchema extends TreeNodeSchema>(
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
 ): UnboxNode<TSchema> {
-	if (schema instanceof LeafNodeSchema) {
+	if (schemaIsLeaf(schema)) {
 		return cursor.value as UnboxNode<TSchema>;
 	}
-	if (schema instanceof FieldNodeSchema) {
+	if (schemaIsFieldNode(schema)) {
 		cursor.enterField(EmptyKey);
 		const primaryField = makeField(context, schema.info, cursor);
 		cursor.exitField();

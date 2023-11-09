@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldNodeSchema, TreeNodeSchema } from "../../typed-schema";
+import { TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
 import { EditableTreeEvents } from "../../untypedTree";
 import { TreeStatus } from "../editableTreeTypes";
 import { getOrCreateNodeProxy } from "./proxies";
@@ -90,7 +90,7 @@ export const nodeApi: TreeApi = {
 		const parent = nodeApi.parent(node);
 		if (parent !== undefined) {
 			const parentSchema = nodeApi.schema(parent);
-			if (parentSchema instanceof FieldNodeSchema) {
+			if (schemaIsFieldNode(parentSchema)) {
 				// The parent of `node` is a list
 				return editNode.parentField.index;
 			}

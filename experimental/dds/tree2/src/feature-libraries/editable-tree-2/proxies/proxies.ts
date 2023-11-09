@@ -10,10 +10,13 @@ import {
 	TreeFieldSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsObjectNode,
 	MapNodeSchema,
 	FieldNodeSchema,
 	MapFieldSchema,
-	LeafNodeSchema,
 } from "../../typed-schema";
 import { FieldKinds } from "../../default-field-kinds";
 import {
@@ -91,20 +94,20 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 	}
 
 	const schema = editNode.schema;
-	if (schema instanceof LeafNodeSchema) {
+	if (schemaIsLeaf(schema)) {
 		return editNode.value as ProxyNode<TSchema>;
 	}
-	if (schema instanceof MapNodeSchema) {
+	if (schemaIsMap(schema)) {
 		return setEditNode(
 			createMapProxy(),
 			editNode as MapNode<MapNodeSchema>,
 		) as ProxyNode<TSchema>;
-	} else if (schema instanceof FieldNodeSchema) {
+	} else if (schemaIsFieldNode(schema)) {
 		return setEditNode(
 			createListProxy(),
 			editNode as FieldNode<FieldNodeSchema>,
 		) as ProxyNode<TSchema>;
-	} else if (schema instanceof ObjectNodeSchema) {
+	} else if (schemaIsObjectNode(schema)) {
 		return setEditNode(createObjectProxy(schema), editNode as ObjectNode) as ProxyNode<TSchema>;
 	} else {
 		fail("unrecognized node kind");
@@ -751,10 +754,7 @@ function extractContentArray<T extends ProxyNode<TreeNodeSchema, "javaScript">[]
 		content: output,
 		hydrateProxies: (editNode: TreeNode | undefined) => {
 			assert(editNode !== undefined, "Expected edit node to be defined when hydrating list");
-			assert(
-				editNode.schema instanceof FieldNodeSchema,
-				"Expected field node when hydrating list",
-			);
+			assert(schemaIsFieldNode(editNode.schema), "Expected field node when hydrating list");
 			hydrators.forEach(([i, hydrate]) =>
 				hydrate(
 					getListChildNode(editNode as FieldNode<FieldNodeSchema>, insertedAtIndex + i),
@@ -781,10 +781,7 @@ function extractContentMap<T extends Map<string, ProxyNode<TreeNodeSchema, "java
 		content: output,
 		hydrateProxies: (editNode: TreeNode | undefined) => {
 			assert(editNode !== undefined, "Expected edit node to be defined when hydrating map");
-			assert(
-				editNode.schema instanceof MapNodeSchema,
-				"Expected map node when hydrating map",
-			);
+			assert(schemaIsMap(editNode.schema), "Expected map node when hydrating map");
 			hydrators.forEach(([key, hydrate]) =>
 				hydrate(getMapChildNode(editNode as MapNode<MapNodeSchema>, key)),
 			);
@@ -829,7 +826,7 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 			);
 			setEditNode(input, editNode); // This makes the input proxy usable and updates the proxy cache
 			assert(
-				editNode.schema instanceof ObjectNodeSchema,
+				schemaIsObjectNode(editNode.schema),
 				"Expected object node when hydrating object content",
 			);
 			hydrators.forEach(([key, hydrate]) =>

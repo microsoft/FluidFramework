@@ -960,7 +960,7 @@ function makeModularChangeset(
 		changeset.revisions = revisions;
 	}
 	if (maxId >= 0) {
-		changeset.maxId = brand<ChangesetLocalId>(maxId);
+		changeset.maxId = brand(maxId);
 	}
 	if (constraintViolationCount !== undefined && constraintViolationCount > 0) {
 		changeset.constraintViolationCount = constraintViolationCount;

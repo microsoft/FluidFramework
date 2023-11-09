@@ -21,6 +21,10 @@ export {
 	SchemaCollection,
 	TreeNodeSchemaBase,
 	Fields,
+	schemaIsFieldNode,
+	schemaIsLeaf,
+	schemaIsMap,
+	schemaIsObjectNode,
 } from "./typedTreeSchema";
 
 export { ViewSchema } from "./view";

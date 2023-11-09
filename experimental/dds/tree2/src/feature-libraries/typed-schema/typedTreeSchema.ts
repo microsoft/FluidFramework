@@ -545,3 +545,25 @@ export interface SchemaCollection extends StoredSchemaCollection {
 	 */
 	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
 }
+
+// These schema type narrowing functions are preferred over `instanceof` due to being easier to migrate to class based schema.
+
+export function schemaIsMap(schema: TreeNodeSchema): schema is MapNodeSchema {
+	return schema instanceof MapNodeSchema;
+}
+
+export function schemaIsLeaf(schema: TreeNodeSchema): schema is LeafNodeSchema {
+	return schema instanceof LeafNodeSchema;
+}
+
+/**
+ * Checks if a {@link TreeNodeSchema} is a {@link FieldNodeSchema}.
+ * @alpha
+ */
+export function schemaIsFieldNode(schema: TreeNodeSchema): schema is FieldNodeSchema {
+	return schema instanceof FieldNodeSchema;
+}
+
+export function schemaIsObjectNode(schema: TreeNodeSchema): schema is ObjectNodeSchema {
+	return schema instanceof ObjectNodeSchema;
+}

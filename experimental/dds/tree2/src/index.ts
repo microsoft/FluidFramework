@@ -212,6 +212,7 @@ export {
 	ImplicitFieldSchema,
 	ImplicitAllowedTypes,
 	Unenforced,
+	schemaIsFieldNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
 	SharedTreeList,
