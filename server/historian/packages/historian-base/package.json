@@ -28,7 +28,7 @@
 		"start": "node dist/www.js",
 		"test": "mocha --recursive dist/test",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
-		"test:debug": "mocha inspect --recursive ./dist/test --grep 'Your test key word' --timeout 0",
+		"test:debug": "mocha inspect --recursive ./dist/test --grep \"Your test key word\" --timeout 0",
 		"tsc": "tsc"
 	},
 	"c8": {

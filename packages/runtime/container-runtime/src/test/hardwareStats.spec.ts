@@ -31,16 +31,19 @@ describe("Hardware Stats", () => {
 		mockLogger.events.filter((event) => event.eventName === "DeviceSpec");
 
 	const loadContainer = async () =>
-		ContainerRuntime.load(
-			mockContext as IContainerContext,
-			[],
-			undefined, // requestHandler
-			{
+		ContainerRuntime.loadRuntime({
+			context: mockContext as IContainerContext,
+			registryEntries: [],
+			runtimeOptions: {
 				summaryOptions: {
 					summaryConfigOverrides: { state: "disabled" },
 				},
 			},
-		);
+			provideEntryPoint: async () => ({
+				myProp: "myValue",
+			}),
+			existing: false,
+		});
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();

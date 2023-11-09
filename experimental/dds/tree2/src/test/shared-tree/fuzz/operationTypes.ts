@@ -25,7 +25,7 @@ export interface UndoRedo {
 	contents: FuzzUndoRedoType;
 }
 
-export type FuzzFieldChange = FuzzInsert | FuzzDelete;
+export type FuzzFieldChange = FuzzInsert | FuzzDelete | FuzzMove;
 
 export interface FieldEdit {
 	type: "fieldEdit";
@@ -70,7 +70,7 @@ export type FieldEditTypes = SequenceFieldEdit | RequiredFieldEdit | OptionalFie
 
 export interface SequenceFieldEdit {
 	type: "sequence";
-	edit: FuzzInsert | FuzzDelete;
+	edit: FuzzInsert | FuzzDelete | FuzzMove;
 }
 
 export interface RequiredFieldEdit {
@@ -85,6 +85,14 @@ export interface OptionalFieldEdit {
 
 export interface FuzzDelete extends NodeRangePath {
 	type: "delete";
+}
+
+export interface FuzzMove extends NodeRangePath {
+	type: "move";
+	/**
+	 * The index (pre-move) to move the sequence to.
+	 */
+	dstIndex: number;
 }
 
 export type FuzzTransactionType = TransactionStartOp | TransactionAbortOp | TransactionCommitOp;

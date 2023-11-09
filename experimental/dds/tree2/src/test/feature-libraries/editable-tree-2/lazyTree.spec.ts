@@ -22,7 +22,6 @@ import {
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	singleMapTreeCursor,
-	Tree,
 	TreeField,
 	TreeNode,
 	Skip,
@@ -39,6 +38,7 @@ import {
 	DefaultEditBuilder,
 	DefaultChangeFamily,
 	DefaultChangeset,
+	singleTextCursor,
 } from "../../../feature-libraries";
 import {
 	Anchor,
@@ -59,12 +59,16 @@ import {
 	LazySequence,
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
+import {
+	TreeEntity,
+	boxedIterator,
+	visitIterableTree,
+} from "../../../feature-libraries/editable-tree-2";
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { forestWithContent } from "../../utils";
+import { forestWithContent, viewWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -356,13 +360,34 @@ describe("LazyMap", () => {
 	const mapNodeSchema = schemaBuilder.map("mapString", SchemaBuilder.optional(leafDomain.string));
 	const schema = schemaBuilder.intoSchema(mapNodeSchema);
 
-	const { context, cursor } = initializeTreeWithContent({
+	// Count the number of times edits have been generated.
+	let editCallCount = 0;
+	beforeEach(() => {
+		editCallCount = 0;
+	});
+
+	const editBuilder = new DefaultEditBuilder(
+		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		(change: DefaultChangeset) => {
+			editCallCount++;
+		},
+	);
+	const forest = forestWithContent({
 		schema,
 		initialTree: {
 			foo: "Hello",
 			bar: "world",
 		},
 	});
+	const context = getTreeContext(
+		schema,
+		forest,
+		editBuilder,
+		createMockNodeKeyManager(),
+		brand(nodeKeyFieldKey),
+	);
+
+	const cursor = initializeCursor(context, rootFieldAnchor);
 	cursor.enterNode(0);
 
 	const { anchor, anchorNode } = createAnchors(context, cursor);
@@ -377,6 +402,45 @@ describe("LazyMap", () => {
 		assert.notEqual(node.tryGetField(brand("foo")), undefined);
 		assert.notEqual(node.tryGetField(brand("bar")), undefined);
 		assert.equal(node.tryGetField(brand("baz")), undefined);
+	});
+
+	it("set", () => {
+		const view = viewWithContent({ schema, initialTree: {} });
+		const mapNode = view.editableTree.content;
+		assert(mapNode.is(mapNodeSchema));
+
+		mapNode.set("baz", "First edit");
+		mapNode.set("foo", "Second edit");
+		assert.equal(mapNode.get("baz"), "First edit");
+		assert.equal(mapNode.get("foo"), "Second edit");
+
+		mapNode.set("foo", singleTextCursor({ type: leafDomain.string.name, value: "X" }));
+		assert.equal(mapNode.get("foo"), "X");
+		mapNode.set("foo", undefined);
+		assert.equal(mapNode.get("foo"), undefined);
+		assert.equal(mapNode.has("foo"), false);
+	});
+
+	it("getBoxed empty", () => {
+		const view = viewWithContent({ schema, initialTree: {} });
+		const mapNode = view.editableTree.content;
+		assert(mapNode.is(mapNodeSchema));
+
+		const empty = mapNode.getBoxed("foo");
+		assert.equal(empty.parent, mapNode);
+		assert.equal(empty.key, "foo");
+	});
+
+	it("delete", () => {
+		assert.equal(editCallCount, 0);
+
+		// Even though there is no value currently associated with "baz", we still need to
+		// emit a delete op, so this should generate an edit.
+		node.delete(brand("baz"));
+		assert.equal(editCallCount, 1);
+
+		node.delete(brand("foo"));
+		assert.equal(editCallCount, 2);
 	});
 });
 
@@ -439,7 +503,6 @@ describe("LazyObjectNode", () => {
 		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
 
-	// Validates that
 	it("Value assignment generates edits", () => {
 		assert.equal(editCallCount, 0);
 
@@ -507,7 +570,7 @@ function nodeToMapTree(node: TreeNode): MapTree {
 	return { fields, type: node.type, value: node.value };
 }
 
-function checkPropertyInvariants(root: Tree): void {
+function checkPropertyInvariants(root: TreeEntity): void {
 	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
@@ -561,7 +624,7 @@ function checkPropertyInvariants(root: Tree): void {
 			// TODO: more robust check for schema names
 			if (key === "type") {
 				assert(typeof child === "string");
-				assert(root.context.schema.treeSchema.has(brand(child)));
+				assert(root.context.schema.nodeSchema.has(brand(child)));
 			} else {
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
 			}

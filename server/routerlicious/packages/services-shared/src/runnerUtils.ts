@@ -17,11 +17,12 @@ export async function runnerHttpServerStop(
 	caller: string | undefined,
 	uncaughtException: any | undefined,
 ): Promise<void> {
+	const runnerMetricProperties = {
+		caller,
+		runnerServerCloseTimeoutMs,
+	};
 	try {
-		runnerMetric.setProperties({
-			caller,
-			runnerServerCloseTimeoutMs,
-		});
+		runnerMetric.setProperties(runnerMetricProperties);
 		// Close the underlying server and then resolve the runner once closed
 		await promiseTimeout(runnerServerCloseTimeoutMs, server.close());
 		if (caller === "uncaughtException") {
@@ -34,7 +35,7 @@ export async function runnerHttpServerStop(
 		if (!runnerMetric.isCompleted()) {
 			runnerMetric.success(`${runnerMetric.eventName} stopped`);
 		} else {
-			Lumberjack.info(`${runnerMetric.eventName} stopped`);
+			Lumberjack.info(`${runnerMetric.eventName} stopped`, runnerMetricProperties);
 		}
 	} catch (error) {
 		if (!runnerMetric.isCompleted()) {
@@ -42,7 +43,7 @@ export async function runnerHttpServerStop(
 		} else {
 			Lumberjack.error(
 				`${runnerMetric.eventName} encountered an error during stop`,
-				undefined,
+				runnerMetricProperties,
 				error,
 			);
 		}

@@ -19,7 +19,7 @@ import { SharedString } from "@fluidframework/sequence";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
 import { createSummarizerFromFactory, summarizeNow } from "@fluidframework/test-utils";
-import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-internal/test-version-utils";
+import { assertDocumentTypeInfo, isDocumentMatrixInfo } from "@fluid-private/test-version-utils";
 import {
 	ConfigTypes,
 	IConfigProviderBase,

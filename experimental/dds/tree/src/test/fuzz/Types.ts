@@ -5,7 +5,7 @@
 
 import type { TestObjectProvider } from '@fluidframework/test-utils';
 import type { IContainer } from '@fluidframework/container-definitions';
-import type { BaseFuzzTestState } from '@fluid-internal/stochastic-test-utils';
+import type { BaseFuzzTestState } from '@fluid-private/stochastic-test-utils';
 import type { IFluidDataStoreRuntime } from '@fluidframework/datastore-definitions';
 import type { SharedTree } from '../../SharedTree';
 import type { WriteFormat } from '../../persisted-types';

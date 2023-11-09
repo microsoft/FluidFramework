@@ -76,6 +76,5 @@ export {
 	SessionId,
 	StableId,
 	IdCreationRange,
-	IdCreationRangeWithStashedState,
 	initialClusterCapacity,
 } from "./id-compressor";
