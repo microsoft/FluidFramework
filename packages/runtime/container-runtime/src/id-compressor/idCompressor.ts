@@ -88,12 +88,12 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 	/**
 	 * Roughly equates to a minimum of 1M sessions before we start allocating 64 bit IDs.
-	 * This value must *NOT* change without careful consideration to compatibility.
 	 * Eventually, this can be adjusted dynamically to have cluster reservation policies that
 	 * optimize the number of eager finals.
-	 * Exposed only for tests to override during clear-box testing.
+	 * It is not readonly as it is accessed by tests for clear-box testing.
 	 */
-	public nextRequestedClusterSizeOverride: number = 512;
+	// eslint-disable-next-line @typescript-eslint/prefer-readonly
+	private nextRequestedClusterSize: number = 512;
 	// The number of local IDs generated since the last telemetry was sent.
 	private telemetryLocalIdCount = 0;
 	// The number of eager final IDs generated since the last telemetry was sent.
@@ -191,7 +191,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			ids: {
 				firstGenCount: this.nextRangeBaseGenCount,
 				count,
-				requestedClusterSize: this.nextRequestedClusterSizeOverride,
+				requestedClusterSize: this.nextRequestedClusterSize,
 			},
 		};
 		this.nextRangeBaseGenCount = this.localGenCount + 1;

@@ -225,11 +225,13 @@ describe("IdCompressor Perf", () => {
 				for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
 					network.allocateAndSendIds(
 						localClient,
-						perfCompressor.nextRequestedClusterSizeOverride,
+						// eslint-disable-next-line @typescript-eslint/dot-notation
+						perfCompressor["nextRequestedClusterSize"],
 					);
 					network.allocateAndSendIds(
 						remoteClient,
-						perfCompressor.nextRequestedClusterSizeOverride * 2,
+						// eslint-disable-next-line @typescript-eslint/dot-notation
+						perfCompressor["nextRequestedClusterSize"] * 2,
 					);
 					network.deliverOperations(DestinationClient.All);
 				}
@@ -252,7 +254,8 @@ describe("IdCompressor Perf", () => {
 			// Ensure no eager finals
 			network.allocateAndSendIds(
 				localClient,
-				network.getCompressor(localClient).nextRequestedClusterSizeOverride * 2 + 1,
+				// eslint-disable-next-line @typescript-eslint/dot-notation
+				network.getCompressor(localClient)["nextRequestedClusterSize"] * 2 + 1,
 			);
 			unackedLocalId = getIdMadeBy(localClient, false, network);
 			assert(

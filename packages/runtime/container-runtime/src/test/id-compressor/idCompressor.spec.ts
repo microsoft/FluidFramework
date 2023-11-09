@@ -983,7 +983,8 @@ describe("IdCompressor", () => {
 				network.allocateAndSendIds(
 					Client.Client2,
 
-					network.getCompressor(Client.Client2).nextRequestedClusterSizeOverride * 2,
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+					network.getCompressor(Client.Client2)["nextRequestedClusterSize"] * 2,
 				);
 				network.allocateAndSendIds(Client.Client3, 5);
 				expectSequencedLogsAlign(network, Client.Client1, Client.Client2);
@@ -992,7 +993,8 @@ describe("IdCompressor", () => {
 			itNetwork("can finalize a range when the current cluster is full", 5, (network) => {
 				const clusterCapacity = network.getCompressor(
 					Client.Client1,
-				).nextRequestedClusterSizeOverride;
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+				)["nextRequestedClusterSize"];
 				network.allocateAndSendIds(Client.Client1, clusterCapacity);
 				network.allocateAndSendIds(Client.Client2, clusterCapacity);
 				network.allocateAndSendIds(Client.Client1, clusterCapacity);
@@ -1002,7 +1004,8 @@ describe("IdCompressor", () => {
 			itNetwork("can finalize a range that spans multiple clusters", 5, (network) => {
 				const clusterCapacity = network.getCompressor(
 					Client.Client1,
-				).nextRequestedClusterSizeOverride;
+					// eslint-disable-next-line @typescript-eslint/dot-notation
+				)["nextRequestedClusterSize"];
 				network.allocateAndSendIds(Client.Client1, 1);
 				network.allocateAndSendIds(Client.Client2, 1);
 				network.allocateAndSendIds(Client.Client1, clusterCapacity * 3);
@@ -1082,7 +1085,8 @@ describe("IdCompressor", () => {
 				(network) => {
 					const clusterSize = network.getCompressor(
 						Client.Client1,
-					).nextRequestedClusterSizeOverride;
+						// eslint-disable-next-line @typescript-eslint/dot-notation
+					)["nextRequestedClusterSize"];
 					network.allocateAndSendIds(Client.Client1, clusterSize);
 					network.allocateAndSendIds(Client.Client2, clusterSize);
 					network.allocateAndSendIds(Client.Client3, clusterSize);

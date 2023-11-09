@@ -97,7 +97,8 @@ export class CompressorFactory {
 		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
 		const compressor = IdCompressor.create(sessionId, logger);
-		compressor.nextRequestedClusterSizeOverride = clusterCapacity;
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		compressor["nextRequestedClusterSize"] = clusterCapacity;
 		return compressor;
 	}
 }
@@ -277,7 +278,8 @@ export class IdCompressorTestNetwork {
 	 * Changes the capacity request amount for a client. It will take effect immediately.
 	 */
 	public changeCapacity(client: Client, newClusterCapacity: number): void {
-		this.compressors.get(client).nextRequestedClusterSizeOverride = newClusterCapacity;
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		this.compressors.get(client)["nextRequestedClusterSize"] = newClusterCapacity;
 	}
 
 	private addNewId(
@@ -328,8 +330,10 @@ export class IdCompressorTestNetwork {
 				ids: {
 					firstGenCount: 1,
 					count: numIds,
-					requestedClusterSize: this.getCompressor(Client.Client1)
-						.nextRequestedClusterSizeOverride,
+					requestedClusterSize: this.getCompressor(Client.Client1)[
+						// eslint-disable-next-line @typescript-eslint/dot-notation
+						"nextRequestedClusterSize"
+					],
 				},
 			};
 			const opSpaceIds: OpSpaceCompressedId[] = [];
