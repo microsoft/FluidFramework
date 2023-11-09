@@ -451,7 +451,12 @@ export const handlers: Handler[] = [
 			for (const script in json.scripts) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const command = json.scripts[script]!;
-				if ((command.startsWith("tsc ") || command === "tsc") && !ignore.has(script)) {
+				if (
+					// This clause ensures we don't match commands that are prefixed with "tsc", like "tsc-multi". The exception
+					// is when the whole command is "tsc".
+					(command.startsWith("tsc ") || command === "tsc") &&
+					!ignore.has(script)
+				) {
 					try {
 						const checkDeps = getTscCommandDependencies(
 							packageDir,
