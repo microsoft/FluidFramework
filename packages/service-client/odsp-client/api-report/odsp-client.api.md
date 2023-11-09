@@ -67,9 +67,7 @@ export interface OdspMember extends IMember {
 
 // @alpha
 export interface OdspServiceAttributes {
-    // (undocumented)
     driveId: string | undefined;
-    // (undocumented)
     itemId: string | undefined;
     sharingUrl: string | undefined;
 }

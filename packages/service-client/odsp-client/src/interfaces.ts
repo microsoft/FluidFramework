@@ -17,7 +17,7 @@ import { type IUser } from "@fluidframework/protocol-definitions";
  */
 export interface OdspConnectionConfig {
 	/**
-	 * Site url representing ODSP resource location
+	 * Site url representing ODSP resource location. It points to the specific SharePoint site where you can store and access the containers you create.
 	 */
 	siteUrl: string;
 
@@ -83,18 +83,26 @@ export interface OdspContainerServices {
 }
 
 /**
- * This interface holds attributes specific to the odsp service
- *
+ * Represents attributes specific to the ODSP service for a Fluid container.
  * @alpha
  */
 export interface OdspServiceAttributes {
 	/**
-	 * Generates a new link to point to this container.
+	 * The sharing URL for this container. It's the complete URL used as input to the `getContainer` function.
 	 */
 	sharingUrl: string | undefined;
 
+	/**
+	 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+	 * a new `itemId` is created in the user's drive, which developers can use for various operations
+	 * like updating, renaming, moving the Fluid file, changing permissions, and more.
+	 */
 	itemId: string | undefined;
 
+	/**
+	 * Get the RaaS drive ID associated with the container. This can be useful when managing multiple
+	 * RaaS drives.
+	 */
 	driveId: string | undefined;
 }
 
