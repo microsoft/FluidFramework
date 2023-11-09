@@ -9,7 +9,7 @@ import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { type IUser } from "@fluidframework/protocol-definitions";
 
 /**
- * OdspConnectionConfig defines the necessary properties that will be applied to all containers
+ * Defines the necessary properties that will be applied to all containers
  * created by an OdspClient instance. This includes callbacks for the authentication tokens
  * required for ODSP.
  *
