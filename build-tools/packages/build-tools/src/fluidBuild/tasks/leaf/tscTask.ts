@@ -416,7 +416,7 @@ export class TscTask extends LeafTask {
 export class TscMultiTask extends LeafWithDoneFileTask {
 	protected async getDoneFileContent(): Promise<string | undefined> {
 		// This implementation is a hack. It just uses the contents of the tsbuildinfo files created by the tsc-multi
-		// processes, and duplicates the content into the doneFile. It's duplicative, but seems to be the simplest way to
+		// processes, and duplicates the content into the doneFile. It's duplicative but seems to be the simplest way to
 		// get basic incremental support in fluid-build.
 		const command = this.command;
 		const doneFile = this.getPackageFileFullPath(
