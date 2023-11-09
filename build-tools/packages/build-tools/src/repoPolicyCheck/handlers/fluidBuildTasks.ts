@@ -451,7 +451,7 @@ export const handlers: Handler[] = [
 			for (const script in json.scripts) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const command = json.scripts[script]!;
-				if (command.startsWith("tsc ") && !ignore.has(script)) {
+				if ((command.startsWith("tsc ") || command === "tsc") && !ignore.has(script)) {
 					try {
 						const checkDeps = getTscCommandDependencies(
 							packageDir,
