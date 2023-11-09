@@ -75,7 +75,7 @@ export function stackTreeFieldCursor<TNode>(
 }
 
 /**
- * Provides functionality to allow a {@link stackTreeNodeCursor} to implement a cursor.
+ * Provides functionality to allow a {@link stackTreeNodeCursor} and {@link stackTreeFieldCursor} to implement cursors.
  * @alpha
  */
 export interface CursorAdapter<TNode> {
