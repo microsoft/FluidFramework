@@ -51,6 +51,7 @@ import {
 	extractMarkEffect,
 	getEndpoint,
 	areEqualCellIds,
+	addRevision,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
 
@@ -164,7 +165,7 @@ function composeMarks<TNodeChange>(
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
 
 	if (isTransientEffect(newMark)) {
-		const newDetachRevision = newMark.detach.revision ?? newMark.revision ?? newRev;
+		const newDetachRevision = newMark.detach.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
 			if (isMoveDestination(newMark.attach) && isMoveSource(newMark.detach)) {
 				assert(isMoveSource(baseMark), "Unexpected mark type");
@@ -208,12 +209,8 @@ function composeMarks<TNodeChange>(
 
 			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
 			const originalAttach = { ...baseMark.attach };
-			if (originalAttach.revision === undefined && baseMark.revision !== undefined) {
-				originalAttach.revision = baseMark.revision;
-			}
-
 			const finalDetach = { ...newMark.detach };
-			const detachRevision = finalDetach.revision ?? newMark.revision ?? newRev;
+			const detachRevision = finalDetach.revision ?? newRev;
 			if (detachRevision !== undefined) {
 				finalDetach.revision = detachRevision;
 			}
@@ -234,7 +231,6 @@ function composeMarks<TNodeChange>(
 	}
 	if (isTransientEffect(baseMark)) {
 		if (markFillsCells(newMark)) {
-			const baseAttachRevision = baseMark.attach.revision ?? baseMark.revision;
 			if (isMoveDestination(baseMark.attach) && isMoveSource(baseMark.detach)) {
 				assert(isMoveDestination(newMark), "Unexpected mark type");
 				setEndpoint(
@@ -242,7 +238,7 @@ function composeMarks<TNodeChange>(
 					CrossFieldTarget.Source,
 					getEndpoint(newMark, newRev),
 					baseMark.count,
-					{ revision: baseAttachRevision, localId: baseMark.attach.id },
+					{ revision: baseMark.attach.revision, localId: baseMark.attach.id },
 				);
 			}
 
@@ -251,7 +247,7 @@ function composeMarks<TNodeChange>(
 					{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
 					nodeChange,
 				),
-				baseAttachRevision,
+				baseMark.attach.revision,
 			);
 
 			// TODO: This assumes that the original attach was successful.
@@ -428,10 +424,6 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
 ): TMark {
-	if (isNoopMark(mark)) {
-		return mark;
-	}
-
 	const cloned = cloneMark(mark);
 	if (
 		cloned.cellId !== undefined &&
@@ -441,12 +433,8 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 		asMutable(cloned.cellId).revision = revision;
 	}
 
-	assert(!isNoopMark(cloned), 0x4de /* Cloned should be same type as input mark */);
-	if (revision !== undefined && cloned.revision === undefined) {
-		cloned.revision = revision;
-	}
-
-	if (cloned.type !== "MoveIn" && cloned.changes !== undefined) {
+	addRevision(cloned, revision);
+	if (cloned.changes !== undefined) {
 		cloned.changes = composeChild([tagChange(cloned.changes, revision)]);
 		return cloned;
 	}

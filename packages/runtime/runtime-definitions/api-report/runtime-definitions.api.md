@@ -176,11 +176,6 @@ export interface IdCreationRange {
     readonly sessionId: SessionId;
 }
 
-// @public (undocumented)
-export type IdCreationRangeWithStashedState = IdCreationRange & {
-    stashedState: SerializedIdCompressorWithOngoingSession;
-};
-
 // @public
 export interface IEnvelope {
     address: string;

@@ -253,14 +253,20 @@ export type ObjectFields<
  * @alpha
  */
 export interface SharedTreeMap<TSchema extends MapSchema>
-	extends ReadonlyMap<string, ProxyField<TSchema["mapFields"]>> {
+	extends ReadonlyMap<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">> {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *
 	 * @param key - The key of the element to add to the map.
 	 * @param value - The value of the element to add to the map.
+	 *
+	 * @remarks
+	 * Setting the value at a key to `undefined` is equivalent to calling {@link SharedTreeMap.delete} with that key.
 	 */
-	set(key: string, value: ProxyNodeUnion<AllowedTypes, "javaScript">): void;
+	set(
+		key: string,
+		value: ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty"> | undefined,
+	): void;
 
 	/**
 	 * Removes the specified element from this map by its `key`.

@@ -78,12 +78,12 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-internal/test-loader-utils": "workspace:~",
+		"@fluid-private/test-loader-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/container-loader-previous": "npm:@fluidframework/container-loader@2.0.0-internal.7.2.0",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",
 		"@types/double-ended-queue": "^2.1.0",

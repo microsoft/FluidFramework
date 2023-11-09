@@ -9,12 +9,8 @@ import {
 	AcceptanceCondition,
 	combineReducersAsync as combineReducers,
 	AsyncReducer as Reducer,
-} from "@fluid-internal/stochastic-test-utils";
-import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	DDSFuzzTestState,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/stochastic-test-utils";
+import { DDSFuzzModel, DDSFuzzSuiteOptions, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	IChannelAttributes,
 	IChannelServices,

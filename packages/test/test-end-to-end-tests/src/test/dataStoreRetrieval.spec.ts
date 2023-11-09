@@ -9,7 +9,7 @@ import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, ITestDataObject } from "@fluid-internal/test-version-utils";
+import { describeFullCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 

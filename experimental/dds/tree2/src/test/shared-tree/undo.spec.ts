@@ -5,7 +5,7 @@
 import { singleTextCursor } from "../../feature-libraries";
 import { leaf, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath } from "../../core";
-import { ISharedTreeView } from "../../shared-tree";
+import { ITreeCheckout } from "../../shared-tree";
 import { brand, JsonCompatible } from "../../util";
 import { createTestUndoRedoStacks, expectJsonTree, makeTreeFromJson } from "../utils";
 
@@ -22,7 +22,7 @@ const rootField = {
 
 const testCases: {
 	name: string;
-	edit: (undoRedoBranch: ISharedTreeView, otherBranch: ISharedTreeView) => void;
+	edit: (undoRedoBranch: ITreeCheckout, otherBranch: ITreeCheckout) => void;
 	undoCount?: number;
 	initialState: JsonCompatible[];
 	editedState: JsonCompatible[];
@@ -373,13 +373,13 @@ describe("Undo and redo", () => {
  * @param index - The index in the root field at which to insert.
  * @param value - The value of the inserted node.
  */
-function insert(tree: ISharedTreeView, index: number, ...values: string[]): void {
+function insert(tree: ITreeCheckout, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField(rootField);
 	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
 	field.insert(index, nodes);
 }
 
-function remove(tree: ISharedTreeView, index: number, count: number): void {
+function remove(tree: ITreeCheckout, index: number, count: number): void {
 	const field = tree.editor.sequenceField(rootField);
 	field.delete(index, count);
 }
