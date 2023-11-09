@@ -172,7 +172,7 @@ function tileShift(
 	return true;
 }
 
-function addTile(tile: ReferencePosition, tiles: object) {
+function addTile(tile: ReferencePosition, tiles: MapLike<ReferencePosition>) {
 	const tileLabels = refGetTileLabels(tile);
 	if (tileLabels) {
 		for (const tileLabel of tileLabels) {
@@ -181,7 +181,7 @@ function addTile(tile: ReferencePosition, tiles: object) {
 	}
 }
 
-function addTileIfNotPresent(tile: ReferencePosition, tiles: object) {
+function addTileIfNotPresent(tile: ReferencePosition, tiles: MapLike<ReferencePosition>) {
 	const tileLabels = refGetTileLabels(tile);
 	if (tileLabels) {
 		for (const tileLabel of tileLabels) {
@@ -381,7 +381,7 @@ function getSlideToSegment(
 	}
 	const result: { seg?: ISegment } = {};
 	cache?.set(segment, result);
-	const goFurtherToFindSlideToSegment = (seg) => {
+	const goFurtherToFindSlideToSegment = (seg: ISegment) => {
 		if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAcked(seg)) {
 			result.seg = seg;
 			return false;
@@ -618,7 +618,7 @@ export class MergeTree {
 		const maxChildren = MaxNodesInBlock - 1;
 
 		// Starting with the leaf segments, recursively builds the B-Tree layer by layer from the bottom up.
-		const buildMergeBlock = (nodes: IMergeNode[]) => {
+		const buildMergeBlock = (nodes: IMergeNode[]): IRootMergeBlock => {
 			const blockCount = Math.ceil(nodes.length / maxChildren); // Compute # blocks require for this level of B-Tree
 			const blocks: IMergeBlock[] = new Array(blockCount); // Pre-alloc array to collect nodes
 
@@ -647,7 +647,6 @@ export class MergeTree {
 				this.blockUpdate(block);
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return blocks.length === 1 // If there is only one block at this layer...
 				? blocks[0] // ...then we're done.  Return the root.
 				: buildMergeBlock(blocks); // ...otherwise recursively build the next layer above blocks.

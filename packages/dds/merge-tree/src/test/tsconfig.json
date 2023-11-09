@@ -5,6 +5,7 @@
 		"outDir": "../../dist/test",
 		"types": ["node", "mocha"],
 		"skipLibCheck": true,
+		"noImplicitAny": false,
 	},
 	"include": ["./**/*"],
 	"references": [
