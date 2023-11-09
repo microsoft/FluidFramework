@@ -1513,6 +1513,9 @@ export interface SchemaEvents {
 }
 
 // @alpha
+export function schemaIsFieldNode(schema: TreeNodeSchema): schema is FieldNodeSchema;
+
+// @alpha
 export interface SchemaLibrary extends SchemaCollection {
     readonly libraries: ReadonlySet<SchemaLibraryData>;
 }
@@ -1817,7 +1820,7 @@ export interface TreeNode extends TreeEntity<TreeNodeSchema> {
     readonly value?: TreeValue;
 }
 
-// @public (undocumented)
+// @alpha (undocumented)
 export type TreeNodeSchema = MapNodeSchema | LeafNodeSchema | ObjectNodeSchema | FieldNodeSchema;
 
 // @alpha

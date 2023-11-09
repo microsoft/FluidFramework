@@ -230,6 +230,9 @@ export class FieldNodeSchema<
 	}
 }
 
+/**
+ * @alpha
+ */
 export type TreeNodeSchema = MapNodeSchema | LeafNodeSchema | ObjectNodeSchema | FieldNodeSchema;
 
 /**
