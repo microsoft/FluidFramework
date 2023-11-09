@@ -264,17 +264,14 @@ function composeMarks<TNodeChange>(
 			return baseMark;
 		}
 		if (newMark.type === "MoveIn" && isReattach(newMark)) {
-			// It's possible for ReturnTo to occur after a transient, but only if muted ReturnTo.
+			// It's possible for ReturnTo to occur after a transient.
 			// Why possible: if the transient is a revive, then it's possible that the newMark comes from a client that
 			// knew about the node, and tried to move it out and return it.
-			// Why muted: until we support replacing a node within a cell, only a single specific node will ever occupy
-			// a given cell. The presence of a transient mark tells us that node just got deleted. Return marks that
-			// attempt to move a deleted node end up being muted.
-			assert(
-				newMark.isSrcConflicted ?? false,
-				0x719 /* Invalid active ReturnTo mark after transient */,
-			);
-			return baseMark;
+			// Because we don't support replacing a node within a cell, only a single specific node will ever occupy
+			// a given cell. This means the transient is attaching and detaching the same node that the ReturnTo is
+			// reattaching.
+			// The reattach subsumes the transient so we can adopt it.
+			return withRevision(withNodeChange(newMark, nodeChange), newRev);
 		}
 		// Because of the rebase sandwich, it is possible for a MoveIn mark to target an already existing cell.
 		// This occurs when a branch with a move get rebased over some other branch.

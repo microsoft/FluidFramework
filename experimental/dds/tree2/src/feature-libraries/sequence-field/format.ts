@@ -199,11 +199,6 @@ export const HasMoveFields = Type.Composite([
 
 export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
-	/**
-	 * When true, the corresponding MoveOut has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isSrcConflicted?: true;
 }
 
 export const MoveIn = Type.Composite(
@@ -211,7 +206,6 @@ export const MoveIn = Type.Composite(
 		HasMoveFields,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
-			isSrcConflicted: OptionalTrue,
 		}),
 	],
 	noAdditionalProps,
@@ -257,12 +251,6 @@ export const MoveOut = Type.Composite(
 
 export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
 	type: "ReturnFrom";
-
-	/**
-	 * When true, the corresponding ReturnTo has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isDstConflicted?: true;
 }
 export const ReturnFrom = Type.Composite(
 	[
@@ -270,7 +258,27 @@ export const ReturnFrom = Type.Composite(
 		InverseAttachFields,
 		Type.Object({
 			type: Type.Literal("ReturnFrom"),
-			isDstConflicted: OptionalTrue,
+		}),
+	],
+	noAdditionalProps,
+);
+
+/**
+ * Represents a return whose source cells happen to coincide with its destination cells.
+ * This is different from a NoopMark because this change could be rebased over a change which pulls the
+ * nodes out the cells, in which case this change would have the effect of bringing the nodes back into the cells.
+ *
+ * Note that when the cells are empty, this mark as revival semantics.
+ */
+export interface Pin extends HasMoveFields, InverseAttachFields {
+	type: "Pin";
+}
+export const Pin = Type.Composite(
+	[
+		HasMoveFields,
+		InverseAttachFields,
+		Type.Object({
+			type: Type.Literal("Pin"),
 		}),
 	],
 	noAdditionalProps,
@@ -306,8 +314,8 @@ export const TransientEffect = Type.Object({
 	detach: Detach,
 });
 
-export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect;
-export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);
+export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect | Pin;
+export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect, Pin]);
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
 export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(

@@ -150,10 +150,6 @@ function invertMark<TNodeChange>(
 				// TODO: preserve modifications to the removed nodes.
 				return [];
 			}
-			if (mark.type === "ReturnFrom" && mark.isDstConflicted) {
-				// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
-				return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild)];
-			}
 			if (mark.changes !== undefined) {
 				assert(
 					mark.count === 1,

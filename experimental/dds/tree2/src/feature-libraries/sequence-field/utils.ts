@@ -95,10 +95,6 @@ export function isActiveReattach<T>(
 	return isAttach(mark) && isReattachEffect(mark, mark.cellId) && mark.cellId !== undefined;
 }
 
-export function isReturnMuted(mark: CellMark<MoveIn, unknown>): boolean {
-	return mark.isSrcConflicted ?? mark.cellId === undefined;
-}
-
 export function areEqualCellIds(a: CellId | undefined, b: CellId | undefined): boolean {
 	if (a === undefined || b === undefined) {
 		return a === b;
@@ -316,10 +312,9 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return mark.cellId !== undefined;
 		case "Delete":
 		case "MoveOut":
+		case "ReturnFrom":
 		case "Transient":
 			return true;
-		case "ReturnFrom":
-			return mark.cellId !== undefined || !mark.isDstConflicted;
 		case "MoveIn":
 		case "Insert":
 			return mark.cellId !== undefined && isMuted(mark);
@@ -333,21 +328,20 @@ export function isMuted(mark: Mark<unknown>): boolean {
 	switch (type) {
 		case NoopMarkType:
 		case "Placeholder":
-			return false;
 		case "Delete":
-		case "MoveOut":
-			return mark.cellId !== undefined;
-		case "ReturnFrom":
-			return mark.cellId !== undefined || (mark.isDstConflicted ?? false);
-		case "MoveIn":
-			return (mark.isSrcConflicted ?? false) || mark.cellId === undefined;
-		case "Insert":
-			return mark.cellId === undefined;
 		case "Transient":
-			return (
-				mark.cellId === undefined ||
-				(isMoveDestination(mark.attach) && (mark.attach.isSrcConflicted ?? false))
-			);
+		case "MoveOut":
+			return false;
+		case "ReturnFrom":
+			return mark.isNoop ?? false;
+		case "MoveIn":
+			// MoveIn marks always target an empty cell.
+			// See ReturnFrom.isNoop for more details on why.
+			assert(mark.cellId !== undefined, "MoveIn marks should target empty cells");
+			return false;
+		case "Insert":
+			// This only occurs when a Revive is preempted by an equivalent Revive.
+			return mark.cellId === undefined;
 		default:
 			unreachableCase(type);
 	}
@@ -507,7 +501,6 @@ function tryMergeEffects(
 		case "MoveIn": {
 			const lhsMoveIn = lhs as MoveIn;
 			if (
-				lhsMoveIn.isSrcConflicted === rhs.isSrcConflicted &&
 				(lhsMoveIn.id as number) + lhsCount === rhs.id &&
 				areMergeableChangeAtoms(lhsMoveIn.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
@@ -524,9 +517,10 @@ function tryMergeEffects(
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
-			const lhsMoveOut = lhs as MoveOut;
+			const lhsMoveOut = lhs as MoveOut | ReturnFrom;
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
+				(rhs.type === "MoveOut" || rhs.isNoop === (rhs as ReturnFrom).isNoop) &&
 				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveOut;

@@ -48,6 +48,7 @@ import {
 	CellMark,
 	CellId,
 	MarkEffect,
+	ReturnFrom,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -57,9 +58,9 @@ import {
 	isMoveMark,
 	MoveEffect,
 	MoveEffectTable,
-	PairedMarkUpdate,
 	isMoveSource,
 	isMoveDestination,
+	isNoopReturn,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
@@ -386,13 +387,30 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		if (isMoveSource(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
 			if (markFollowsMoves(rebasedMark)) {
+				let markToSend: Mark<TNodeChange>;
+				let markToReturn: Mark<TNodeChange>;
+				if (isNoopReturn(rebasedMark)) {
+					// The noop return gets split into a (normal) ReturnFrom that is sent to the destination of the
+					// base move, and a ReturnTo/MoveIn that remains here.
+					markToSend = cloneMark(rebasedMark);
+					delete (markToSend as ReturnFrom).isNoop;
+					markToReturn = {
+						type: "MoveIn",
+						count: baseMark.count,
+						cellId: cloneCellId(baseCellId),
+						id: rebasedMark.id,
+					};
+				} else {
+					markToSend = rebasedMark;
+					markToReturn = { count: baseMark.count, cellId: cloneCellId(baseCellId) };
+				}
 				sendMarkToDest(
-					rebasedMark,
+					markToSend,
 					moveEffects,
 					getEndpoint(baseMark, baseRevision),
 					baseMark.count,
 				);
-				return { count: baseMark.count, cellId: cloneCellId(baseCellId) };
+				return markToReturn;
 			}
 
 			const modify = rebasedMark.changes;
@@ -412,29 +430,9 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		}
 
 		assert(
-			!isNewAttach(rebasedMark),
-			0x69d /* A new attach should not be rebased over its cell being emptied */,
+			isReattach(rebasedMark),
+			"Only reattach marks should be rebased over moves but not follow them",
 		);
-
-		if (isMoveMark(rebasedMark)) {
-			if (rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") {
-				setPairedMarkStatus(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					getEndpoint(rebasedMark, undefined),
-					rebasedMark.count,
-					PairedMarkUpdate.Deactivated,
-				);
-			} else if (isReattach(rebasedMark)) {
-				setPairedMarkStatus(
-					moveEffects,
-					CrossFieldTarget.Source,
-					getEndpoint(rebasedMark, undefined),
-					rebasedMark.count,
-					PairedMarkUpdate.Reactivated,
-				);
-			}
-		}
 
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
@@ -490,11 +488,11 @@ function markFollowsMoves(mark: Mark<unknown>): boolean {
 		case "Insert":
 		case "Delete":
 		case "MoveOut":
+		case "ReturnFrom":
 		case "Transient":
 			// TODO: Handle cases where transient attach and detach have different move-following policies.
 			return true;
 		case NoopMarkType:
-		case "ReturnFrom":
 		case "MoveIn":
 		case "Placeholder":
 			return false;
