@@ -51,10 +51,9 @@ describe("SequenceField - Invert", () => {
 	it("child changes of removed content", () => {
 		const detachEvent = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
 		const input = Change.modifyDetached(0, childChange1, detachEvent);
-		// TODO: use the line below once we apply modifications to removed content
-		// const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
 		const actual = invert(input);
-		assert.deepEqual(actual, []);
+		const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
+		assert.deepEqual(actual, expected);
 	});
 
 	it("insert => delete", () => {
@@ -274,9 +273,8 @@ describe("SequenceField - Invert", () => {
 			];
 
 			const actual = invert(input);
-			// TODO: use the line below once we apply modifications to removed content
-			// const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
-			assert.deepEqual(actual, []);
+			const expected = Change.modifyDetached(0, inverseChildChange1, cellId);
+			assert.deepEqual(actual, expected);
 		});
 
 		it("move out", () => {
@@ -287,9 +285,8 @@ describe("SequenceField - Invert", () => {
 			];
 
 			const actual = invert(input);
-			// TODO: use the line below once we apply modifications to removed content
-			// const expected = Change.modifyDetached(0, inverseChildChange1, detachEvent);
-			assert.deepEqual(actual, []);
+			const expected = Change.modifyDetached(0, inverseChildChange1, cellId);
+			assert.deepEqual(actual, expected);
 		});
 
 		it("redundant revive => skip", () => {

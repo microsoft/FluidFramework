@@ -264,42 +264,6 @@ export function isTransientEffect(effect: MarkEffect): effect is TransientEffect
 	return effect.type === "Transient";
 }
 
-/**
- * @returns The nested changes from `mark` if they apply to the content the mark refers to.
- */
-export function getEffectiveNodeChanges<TNodeChange>(
-	mark: Mark<TNodeChange>,
-): TNodeChange | undefined {
-	const changes = mark.changes;
-	if (changes === undefined) {
-		return undefined;
-	}
-	const type = mark.type;
-	assert(type !== "MoveIn", 0x7dd /* MoveIn marks should not have changes */);
-	switch (type) {
-		case "Insert":
-			if (isNewAttach(mark)) {
-				return changes;
-			} else {
-				// So long as the input cell is populated, the nested changes are still effective
-				// (even if the revive is preempted) because the nested changes can only target the node in the populated
-				// cell.
-				return areInputCellsEmpty(mark) && !isActiveReattach(mark) ? undefined : changes;
-			}
-		case "Transient":
-			// TODO: Check if attach is active
-			return changes;
-		case NoopMarkType:
-		case "Placeholder":
-		case "Delete":
-		case "MoveOut":
-		case "ReturnFrom":
-			return areInputCellsEmpty(mark) ? undefined : changes;
-		default:
-			unreachableCase(type);
-	}
-}
-
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
 	return mark.cellId !== undefined;
 }

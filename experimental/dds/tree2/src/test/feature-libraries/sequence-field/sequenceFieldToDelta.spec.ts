@@ -74,6 +74,15 @@ describe("SequenceField - toDelta", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("child change under removed node", () => {
+		const modify = [Mark.modify(childChange1, { revision: tag, localId: brand(42) })];
+		const actual = toDelta(modify, tag);
+		const expected: Delta.FieldChanges = {
+			global: [{ id: detachId, fields: childChange1Delta }],
+		};
+		assertFieldChangesEqual(actual, expected);
+	});
+
 	it("empty child change", () => {
 		const actual = toDelta(Change.modify(0, TestChange.emptyChange));
 		assert.deepEqual(actual, emptyFieldChanges);
@@ -426,16 +435,24 @@ describe("SequenceField - toDelta", () => {
 
 		it("delete", () => {
 			const deletion = [Mark.onEmptyCell(cellId, Mark.delete(2, brand(0)))];
-
 			const actual = toDelta(deletion);
 			assertFieldChangesEqual(actual, {});
 		});
 
-		it("modify", () => {
-			const modify = [Mark.modify(childChange1, cellId)];
-
-			const actual = toDelta(modify);
-			assertFieldChangesEqual(actual, {});
+		it("modify and delete", () => {
+			const deletion = [
+				Mark.onEmptyCell(cellId, Mark.delete(2, brand(0), { changes: childChange1 })),
+			];
+			const actual = toDelta(deletion, tag);
+			const expected: Delta.FieldChanges = {
+				global: [
+					{
+						id: { major: cellId.revision, minor: cellId.localId },
+						fields: childChange1Delta,
+					},
+				],
+			};
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("move", () => {
