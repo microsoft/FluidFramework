@@ -161,3 +161,10 @@ export interface NodeData {
 	 */
 	readonly type: TreeNodeSchemaIdentifier;
 }
+
+/**
+ * When creating a node which sits above the detached fields, and thus is not a real node and who's type should not matter, use this type to indicate that.
+ */
+export const aboveRootPlaceholder: TreeNodeSchemaIdentifier = brand(
+	"com.fluidframework.placeholder.aboveRoot",
+);

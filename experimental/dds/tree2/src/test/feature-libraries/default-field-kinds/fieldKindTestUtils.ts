@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKinds, NodeChangeset, singleTextCursor } from "../../../feature-libraries";
+import { FieldKinds, NodeChangeset, cursorForJsonableTreeNode } from "../../../feature-libraries";
 import { FieldKey, JsonableTree, ITreeCursorSynchronous } from "../../../core";
 import { brand } from "../../../util";
 import { leaf } from "../../../domains";
@@ -24,7 +24,7 @@ export function testTree(s: string): JsonableTree {
  */
 export function testTreeCursor(s: string): ITreeCursorSynchronous {
 	// For encoding tests to pass, cursors must be deepEqual to those produced by decode, so the tree text format must be used here.
-	return singleTextCursor(testTree(s));
+	return cursorForJsonableTreeNode(testTree(s));
 }
 
 export const fooKey: FieldKey = brand("foo");
