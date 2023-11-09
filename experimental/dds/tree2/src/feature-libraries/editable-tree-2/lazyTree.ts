@@ -21,8 +21,7 @@ import {
 	forEachField,
 	TreeValue,
 } from "../../core";
-import { capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
-import { ContextuallyTypedNodeData } from "../contextuallyTyped";
+import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
@@ -53,6 +52,7 @@ import {
 	RequiredField,
 	OptionalField,
 	FlexibleFieldContent,
+	FlexibleNodeContent,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -388,23 +388,23 @@ export class LazyMap<TSchema extends MapNodeSchema>
 		}
 	}
 
-	public has(key: FieldKey): boolean {
-		return this.tryGetField(key) !== undefined;
+	public has(key: string): boolean {
+		return this.tryGetField(brand(key)) !== undefined;
 	}
 
-	public get(key: FieldKey): UnboxField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], key, (cursor) =>
+	public get(key: string): UnboxField<TSchema["info"]> {
+		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
 			unboxedField(this.context, this.schema.info, cursor),
 		) as UnboxField<TSchema["info"]>;
 	}
 
-	public getBoxed(key: FieldKey): TypedField<TSchema["info"]> {
-		return inCursorField(this[cursorSymbol], key, (cursor) =>
+	public getBoxed(key: string): TypedField<TSchema["info"]> {
+		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
 			makeField(this.context, this.schema.info, cursor),
 		) as TypedField<TSchema["info"]>;
 	}
 
-	public set(key: FieldKey, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {
+	public set(key: string, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {
 		const field = this.getBoxed(key);
 		const fieldSchema = this.schema.info;
 
@@ -569,18 +569,18 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 	const ownPropertyMap: PropertyDescriptorMap = {};
 
 	for (const [key, fieldSchema] of schema.objectNodeFields) {
-		let setter: ((newContent: ContextuallyTypedNodeData) => void) | undefined;
+		let setter: ((newContent: FlexibleNodeContent<AllowedTypes>) => void) | undefined;
 		switch (fieldSchema.kind) {
 			case FieldKinds.optional: {
 				setter = function (
 					this: CustomStruct,
-					newContent: ContextuallyTypedNodeData,
+					newContent: FlexibleNodeContent<AllowedTypes> | undefined,
 				): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
-					) as RequiredField<AllowedTypes>;
+					) as OptionalField<AllowedTypes>;
 					field.content = newContent;
 				};
 				break;
@@ -588,13 +588,13 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 			case FieldKinds.required: {
 				setter = function (
 					this: CustomStruct,
-					newContent: ContextuallyTypedNodeData,
+					newContent: FlexibleNodeContent<AllowedTypes>,
 				): void {
 					const field = getBoxedField(
 						this,
 						key,
 						fieldSchema,
-					) as OptionalField<AllowedTypes>;
+					) as RequiredField<AllowedTypes>;
 					field.content = newContent;
 				};
 				break;

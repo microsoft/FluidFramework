@@ -246,11 +246,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		return {
 			insert: (index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void => {
 				const content = isReadonlyArray(newContent) ? newContent : [newContent];
-				if (content.length === 0) {
+				const length = content.length;
+				if (length === 0) {
 					return;
 				}
 
-				const length = Array.isArray(newContent) ? newContent.length : 1;
 				const firstId = this.modularBuilder.generateId(length);
 				const change: FieldChangeset = brand(
 					sequence.changeHandler.editor.insert(index, content, firstId),
@@ -292,7 +292,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 export interface ValueFieldEditBuilder {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
-	 * @param newContent - the new content for the field
+	 * @param newContent - the new content for the field. Must be in Nodes mode.
 	 */
 	set(newContent: ITreeCursor): void;
 }
@@ -303,7 +303,7 @@ export interface ValueFieldEditBuilder {
 export interface OptionalFieldEditBuilder {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`
-	 * @param newContent - the new content for the field
+	 * @param newContent - the new content for the field. Must be in Nodes mode.
 	 * @param wasEmpty - whether the field is empty when creating this change
 	 */
 	set(newContent: ITreeCursor | undefined, wasEmpty: boolean): void;
@@ -316,7 +316,7 @@ export interface SequenceFieldEditBuilder {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.
 	 * @param index - the index at which to insert the `newContent`.
-	 * @param newContent - the new content to be inserted in the field
+	 * @param newContent - the new content to be inserted in the field. Cursors must be in Nodes mode.
 	 */
 	insert(index: number, newContent: ITreeCursor | readonly ITreeCursor[]): void;
 

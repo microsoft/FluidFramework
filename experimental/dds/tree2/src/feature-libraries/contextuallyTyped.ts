@@ -476,6 +476,7 @@ function shallowCompatibilityTest(
  * Construct a tree from ContextuallyTypedNodeData.
  *
  * TODO: this should probably be refactored into a `try` function which either returns a Cursor or a SchemaError with a path to the error.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorFromContextualData(
@@ -488,7 +489,8 @@ export function cursorFromContextualData(
 }
 
 /**
- * Strongly typed {@link cursorFromContextualData} for a TreeNodeSchema
+ * Strongly typed {@link cursorFromContextualData} for a TreeNodeSchema.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorForTypedTreeData<T extends TreeNodeSchema>(
@@ -505,6 +507,7 @@ export function cursorForTypedTreeData<T extends TreeNodeSchema>(
 
 /**
  * Strongly typed {@link cursorFromContextualData} for AllowedTypes.
+ * @returns a cursor in Nodes mode for a single node containing the provided data.
  * @alpha
  */
 export function cursorForTypedData<T extends AllowedTypes>(
