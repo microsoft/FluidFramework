@@ -1,189 +1,159 @@
-# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
-# Licensed under the MIT License.
-
-# build-npm-package template to build NPM packages/projects
-
+# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
+# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
+# This pipeline will be extended to the M365PT template
+# If you are not using the E+D shared hosted pool with windows-2022, replace the pool section with your hosted pool, os, and image name. If you are using a Linux image, you must specify an additional windows image for SDL: https://eng.ms/docs/cloud-ai-platform/devdiv/one-engineering-system-1es/1es-docs/1es-pipeline-templates/features/sdlanalysis/overview#how-to-specify-a-windows-pool-for-the-sdl-source-analysis-stage
+# The Task 'PublishPipelineArtifact@1' has been converted to an output named 'Publish Artifact - Tinylicious Log' in the templateContext section.
+# The Task 'PublishPipelineArtifact@1' has been converted to an output named 'Publish Artifact - pack' in the templateContext section.
+# The Task 'PublishPipelineArtifact@1' has been converted to an output named 'Publish Artifact - Test Files' in the templateContext section.
+# The Task 'PublishBuildArtifacts@1' has been converted to an output named 'Publish Artifacts - bundle-analysis' in the templateContext section.
+# The Task 'PublishPipelineArtifact@1' has been converted to an output named 'Publish Artifact - _api-extractor-temp' in the templateContext section.
+# Output added to job "build" with YAML conditionals extracted using AI. Review this expression against the originating file for correctness.
+# Output added to job "build" with YAML conditionals extracted using AI. Review this expression against the originating file for correctness.
+# Output added to job "build" with YAML conditionals extracted using AI. Review this expression against the originating file for correctness.
+# Output added to job "build" with YAML conditionals extracted using AI. Review this expression against the originating file for correctness.
 parameters:
 - name: buildDirectory
   type: string
-
 - name: taskBuild
   type: string
   default: ci:build
-
 - name: taskBuildDocs
   type: boolean
   default: true
-
 - name: publishDocs
   type: boolean
   default: false
-
 - name: taskLint
   type: boolean
   default: true
-
 - name: taskLintName
   type: string
   default: lint
-
 - name: taskTest
   type: object
   default:
   - ci:test
-
-# A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
-# Used to avoid the force merge limit of 100 result files.
 - name: testResultDirs
   type: object
   default:
   - nyc
-
 - name: taskBundleAnalysis
   type: boolean
   default: false
-
 - name: taskPublishBundleSizeArtifacts
   type: boolean
   default: false
-
 - name: taskPack
   type: boolean
   default: true
-
 - name: poolCG
   type: object
   default: Small
-
 - name: poolBuild
   type: object
   default: Small
-
 - name: preCG
   type: stepList
   default: []
-
 - name: cgSubDirectory
   type: string
-  default:
-
+  default: ''
 - name: checkoutSubmodules
   type: boolean
   default: false
-
 - name: namespace
   type: boolean
   default: true
-
 - name: buildNumberInPatch
   type: string
-  default:
-
+  default: ''
 - name: nonScopedPackages
   type: object
   default: []
-
 - name: publishOverride
   type: string
-
 - name: releaseBuildOverride
   type: string
-
 - name: tagName
   type: string
-
 - name: includeInternalVersions
   type: boolean
   default: false
-
 - name: buildToolsVersionToInstall
   type: string
   default: repo
-
 - name: packageManager
   type: string
   default: npm
-
-# Parameter for modifying the 'types' field in the package.json.
-# If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
   type: string
   default: none
-
 - name: packageManagerInstallCommand
   type: string
   default: 'npm ci --unsafe-perm'
-
 - name: additionalBuildSteps
   type: stepList
   default: []
-
-# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
-# group
 - name: interdependencyRange
   type: string
   default: "^"
-
-# A list of scripts that execute checks of the release group, e.g. prettier, syncpack, etc. These will be run serially
-# in a pipeline stage separate from the build stage.
 - name: checks
   type: object
   default: []
-
 - name: telemetry
   type: boolean
   default: false
-
 variables:
-  # We use 'chalk' to colorize output, which auto-detects color support in the
-  # running terminal.  The log output shown in Azure DevOps job runs only has
-  # basic ANSI color support though, so force that in the pipeline
-  - name: FORCE_COLOR
-    value: 1
-  - template: include-vars.yml
-    parameters:
-      publishOverride: ${{ parameters.publishOverride }}
-      releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
-      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-      nonScopedPackages: ${{ parameters.nonScopedPackages }}
-  # Absolute path to the folder that contains the source code for the telemetry-generator package, which is used in a few
-  # places in the pipeline to push custom telemetry to Kusto.
-  - name: absolutePathToTelemetryGenerator
-    value:  $(Build.SourcesDirectory)/tools/telemetry-generator
-    readonly: true
-  - group: ado-feeds
-
-stages:
-  - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
-    - template: include-policy-check.yml
-      parameters:
-        buildDirectory: ${{ parameters.buildDirectory }}
-        checks: ${{ parameters.checks }}
-        # Install all dependencies, not just the root ones
-        dependencyInstallCommand: pnpm install --frozen-lockfile
-
-
-  # Install / Build / Test Stage
-  - stage: build
-    displayName: Build Stage
-    dependsOn: [] # this stage doesn't depend on preceding stage
-    jobs:
-      # Job - Build
+- name: FORCE_COLOR
+  value: 1
+- template: /tools/pipelines/templates/include-vars.yml@self
+  parameters:
+    publishOverride: ${{ parameters.publishOverride }}
+    releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+    nonScopedPackages: ${{ parameters.nonScopedPackages }}
+- name: absolutePathToTelemetryGenerator
+  value: $(Build.SourcesDirectory)/tools/telemetry-generator
+  readonly: true
+- group: ado-feeds
+resources:
+  repositories:
+  - repository: m365Pipelines
+    type: git
+    name: 1ESPipelineTemplates/M365GPT
+    ref: refs/tags/release
+extends:
+  template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
+  parameters:
+    pool:
+      name: Azure-Pipelines-1ESPT-ExDShared
+      image: windows-2022
+      os: windows
+    customBuildTags:
+    - ES365AIMigrationTooling
+    stages:
+    - ${{ if ne(convertToJson(parameters.checks), '[]') }}:
+      - template: /tools/pipelines/templates/include-policy-check.yml@self
+        parameters:
+          buildDirectory: ${{ parameters.buildDirectory }}
+          checks: ${{ parameters.checks }}
+          dependencyInstallCommand: pnpm install --frozen-lockfile
+    - stage: build
+      displayName: Build Stage
+      dependsOn: []
+      jobs:
       - job: build
         displayName: Build
-        pool: ${{ parameters.poolBuild }}
         variables:
           testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
           releaseBuildVar: $[variables.releaseBuild]
           ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
             targetBranchName: $(System.PullRequest.TargetBranch)
         steps:
-        # Setup
         - checkout: self
           clean: true
           lfs: ${{ parameters.checkoutSubmodules }}
           submodules: ${{ parameters.checkoutSubmodules }}
-
         - task: Bash@3
           displayName: Parameters
           inputs:
@@ -191,16 +161,13 @@ stages:
             workingDirectory: ${{ parameters.buildDirectory }}
             script: |
               # Show all task group conditions
-
               echo "
               Pipeline Variables:
                 releaseBuild=$(releaseBuildVar)
-
               Override Parameters:
                 publishOverride=${{ parameters.publishOverride }}
                 releaseBuildOverride=${{ parameters.releaseBuildOverride }}
                 packageTypesOverride=${{ parameters.packageTypesOverride }}
-
               Tasks Parameters:
                 BuildDir=${{ parameters.buildDirectory }}
                 Build=${{ parameters.taskBuild }}
@@ -211,16 +178,13 @@ stages:
                 BuildDoc=${{ parameters.taskBuildDocs }}
                 PublishDocs=${{ parameters.publishDocs }}
                 TestCoverage=$(testCoverage)
-
               Variables:
                 absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
                 BuildReason=$(variables['Build.Reason'])
-
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
                 packageTypesOverride='${{ parameters.packageTypesOverride }}'
-
               Computed variables:
                 shouldPublish=${{ variables.shouldPublish }}
                 componentDetection=${{ variables.componentDetection }}
@@ -228,68 +192,53 @@ stages:
                 canRelease=${{ variables.canRelease }}
                 publishNonScopedPackages=${{ variables.publishNonScopedPackages }}
                 pnpmStorePath=${{ variables.pnpmStorePath }}
-
                 release=$(release)"
-
               # Target Branch variable (PR policy related)
               if [[ ${{ variables['Build.Reason'] }} == "PullRequest" ]]; then
                 echo "TargetBranchName=$(targetBranchName)"
               fi
-
               # Error checking
               if [[ "$(release)" == "release" ]]; then
                 if [[ "${{ variables.canRelease }}" == "False" ]]; then
                   echo "##vso[task.logissue type=error]Invalid branch ${{ variables['Build.SourceBranch'] }} for release"
                   exit -1;
                 fi
-
                 if [ -f "lerna.json" ]; then
                   grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
                 else
                   grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
                 fi
-
                 if [[ $? == 0 ]]; then
                   echo "##vso[task.logissue type=error]Release shouldn't contain prerelease dependencies"
                   exit -1;
                 fi
               fi
-
               if [[ "$(release)" == "prerelease" ]]; then
                 if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
                   echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
                   exit -1;
                 fi
               fi
-
               if [[ "$(release)" != "prerelease" ]]; then
                 if [[ "${{ parameters.packageTypesOverride }}" == "alpha" || "${{ parameters.packageTypesOverride }}" == "beta" ]]; then
                   echo "##vso[task.logissue type=error]This release type is not supported. alpha/beta ***prerelease*** is allowed"
                   exit -1;
                 fi
               fi
-
               if [[ "$(release)" != "none" ]] && [[ "$(release)" != "" ]]; then
                 if [[ "${{ variables.publish }}" != "True" ]]; then
                   echo "##vso[task.logissue type=error]'$(release)'' is set but package is not published. Either the branch doesn't default to publish or it is skipped."
                   exit -1;
                 fi
               fi
-
-        - template: include-use-node-version.yml
-
-        - template: include-install.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
+        - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
             packageManager: ${{ parameters.packageManager }}
             buildDirectory: ${{ parameters.buildDirectory }}
             packageManagerInstallCommand: ${{ parameters.packageManagerInstallCommand }}
-
-        # This check is a workaround. We don't want to set versions for the build-bundle-size-artifacts pipeline because
-        # the pipeline is special - it runs a client build but doesn't publish anything. Working around this properly is
-        # challenging and would create a much bigger change. Since this is the only pipeline that sets this variable to
-        # true, we use that to determine whether to set versions.
         - ${{ if eq(parameters.taskPublishBundleSizeArtifacts, false) }}:
-          - template: include-set-package-version.yml
+          - template: /tools/pipelines/templates/include-set-package-version.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
               buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
@@ -297,32 +246,21 @@ stages:
               tagName: ${{ parameters.tagName }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
               packageTypesOverride: ${{ parameters.packageTypesOverride }}
-
-        # Build and Lint
-        - template: include-build-lint.yml
+        - template: /tools/pipelines/templates/include-build-lint.yml@self
           parameters:
             taskBuild: ${{ parameters.taskBuild }}
             taskLint: ${{ parameters.taskLint }}
             taskLintName: ${{ parameters.taskLintName }}
             buildDirectory: ${{ parameters.buildDirectory }}
-
-        # Test
         - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
-          # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
           - script: |
               echo "##vso[task.setvariable variable=startTest]true"
             displayName: Start Test
-
           - ${{ each taskTestStep in parameters.taskTest }}:
-            - template: include-test-task.yml
+            - template: /tools/pipelines/templates/include-test-task.yml@self
               parameters:
                 taskTestStep: ${{ taskTestStep }}
                 buildDirectory: ${{ parameters.buildDirectory }}
-
-          # Test - Upload coverage results
-          # Some webpacked file using externals introduce file name with quotes in them
-          # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
-          # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
           - ${{ if eq(variables['testCoverage'], true) }}:
             - task: Bash@3
               displayName: 'Check for nyc/report directory'
@@ -348,25 +286,11 @@ stages:
                 reportDirectory: ${{ parameters.buildDirectory }}/nyc/report
                 failIfCoverageEmpty: true
               condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-
-          # Publish tinylicious log for troubleshooting
-          - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
-            - task: PublishPipelineArtifact@1
-              displayName: Publish Artifact - Tinylicious Log
-              inputs:
-                targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
-                artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
-                publishLocation: 'pipeline'
-              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-              continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
-
-          # Process test result, include publishing and logging
-          - template: include-process-test-results.yml
+          - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}: []
+          - template: /tools/pipelines/templates/include-process-test-results.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
               testResultDirs: ${{ parameters.testResultDirs }}
-
-        # Pack
         - ${{ if ne(parameters.taskPack, false) }}:
           - task: Bash@3
             displayName: npm pack
@@ -379,7 +303,6 @@ stages:
               targetType: 'filePath'
               workingDirectory: ${{ parameters.buildDirectory }}
               filePath: $(Build.SourcesDirectory)/scripts/pack-packages.sh
-
           - ${{ if eq(variables.publishNonScopedPackages, true) }}:
             - ${{ each parameter in parameters.nonScopedPackages }}:
               - task: Bash@3
@@ -389,22 +312,6 @@ stages:
                   workingDirectory: ${{ parameters.buildDirectory }}
                   script: |
                     mv -t $(Build.ArtifactStagingDirectory)/pack/non-scoped/ $(Build.ArtifactStagingDirectory)/pack/scoped/${{parameter}}*.tgz
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Artifact - pack
-            inputs:
-              targetPath: '$(Build.ArtifactStagingDirectory)/pack'
-              artifactName: 'pack'
-              publishLocation: 'pipeline'
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Artifact - Test Files
-            inputs:
-              targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
-              artifactName: 'test-files'
-              publishLocation: 'pipeline'
-
-        # Collect/publish/run bundle analysis
         - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
           - task: Npm@1
             displayName: npm run bundle-analysis:collect
@@ -412,23 +319,6 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:collect'
-
-          # NOTE: this task is deliberately not updated to the newer PublishPipelineArtifact because some of our tooling
-          # does not support the newer task.
-          # See the getZipObjectFromArtifact function in @fluidframework/bundle-size-tools for details about the issue.
-          - task: PublishBuildArtifacts@1
-            displayName: Publish Artifacts - bundle-analysis
-            condition:
-              and(
-                succeeded(),
-                ne(variables['Build.Reason'], 'PullRequest'),
-                eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true)
-              )
-            inputs:
-              PathtoPublish: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
-              Artifactname: 'bundleAnalysis'
-              publishLocation: 'Container'
-
           - task: Npm@1
             displayName: run bundle size comparison
             condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
@@ -441,24 +331,21 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run bundle-analysis:run'
-
           - ${{ if and(or(eq(variables['Build.Reason'], 'IndividualCI'), eq(variables['Build.Reason'], 'BatchedCI')), eq(variables['System.TeamProject'], 'internal')) }}:
             - task: Bash@3
               displayName: 'List report.json'
               inputs:
                 targetType: 'inline'
-                workingDirectory:  ${{ parameters.buildDirectory }}
+                workingDirectory: ${{ parameters.buildDirectory }}
                 script: |
                   echo "Build Directory is ${{ parameters.buildDirectory }}";
                   BUNDLE_SIZE_TESTS_DIR="${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests";
                   echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
                   ls -la $BUNDLE_SIZE_TESTS_DIR;
-
-            - template: include-telemetry-setup.yml
+            - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
               parameters:
                 devFeedUrl: $(ado-feeds-dev)
                 officeFeedUrl: $(ado-feeds-office)
-
             - task: Bash@3
               displayName: Write bundle sizes measurements to Aria/Kusto
               inputs:
@@ -469,8 +356,6 @@ stages:
                   echo "Report Size:"
                   ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
                   node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
-
-        # Docs
         - ${{ if ne(parameters.taskBuildDocs, false) }}:
           - task: Npm@1
             displayName: npm run ci:build:docs
@@ -478,20 +363,8 @@ stages:
               command: 'custom'
               workingDir: ${{ parameters.buildDirectory }}
               customCommand: 'run ci:build:docs'
-
-        - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
-          - task: PublishPipelineArtifact@1
-            displayName: Publish Artifact - _api-extractor-temp
-            inputs:
-              targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
-              artifactName: '_api-extractor-temp'
-              publishLocation: 'pipeline'
-
+        - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}: []
         - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-          # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
-          # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
-          # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
-          # at the beginning of the CI job.
           - task: Bash@3
             displayName: Reset lockfile
             inputs:
@@ -499,8 +372,6 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 git checkout HEAD -- pnpm-lock.yaml
-
-          # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
           - task: Bash@3
             displayName: Prune pnpm store
             inputs:
@@ -508,8 +379,6 @@ stages:
               workingDirectory: ${{ parameters.buildDirectory }}
               script: |
                 pnpm store prune
-
-
         - task: Bash@3
           displayName: Check for extraneous modified files
           inputs:
@@ -521,24 +390,49 @@ stages:
                 echo "##vso[task.logissue type=error]Build should not create extraneous files"
                 exit -1;
               fi
-
-        # This additional build step is used to run step not part of the main build. In build client pipeline,
-        # this is used to inject telemetry key file and upload built devtools extension.
         - ${{ parameters.additionalBuildSteps }}
-
-      # Job - Component detection
+        templateContext:
+          outputs:
+          - ${{ if and(ne(convertToJson(parameters.taskTest), '[]'), contains(convertToJson(parameters.taskTest), 'tinylicious')) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - Tinylicious Log'
+              condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+              targetPath: '${{ parameters.buildDirectory }}/packages/test/test-end-to-end-tests/tinylicious.log'
+              artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
+              publishLocation: 'pipeline'
+          - ${{ if ne(parameters.taskPack, false) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - pack'
+              targetPath: '$(Build.ArtifactStagingDirectory)/pack'
+              artifactName: 'pack'
+              publishLocation: 'pipeline'
+          - output: pipelineArtifact
+            displayName: 'Publish Artifact - Test Files'
+            targetPath: '$(Build.ArtifactStagingDirectory)/test-files'
+            artifactName: 'test-files'
+            publishLocation: 'pipeline'
+          - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifacts - bundle-analysis'
+              condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest'), eq(${{ parameters.taskPublishBundleSizeArtifacts }}, true) )
+              targetPath: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
+              artifactname: 'bundleAnalysis'
+              publishLocation: 'Container'
+          - ${{ if or(eq(parameters.publishDocs, true), eq(parameters.taskBuildDocs, true)) }}:
+            - output: pipelineArtifact
+              displayName: 'Publish Artifact - _api-extractor-temp'
+              targetPath: '${{ parameters.buildDirectory }}/_api-extractor-temp'
+              artifactName: '_api-extractor-temp'
+              publishLocation: 'pipeline'
       - ${{ if eq(variables.componentDetection, true) }}:
         - job: CG
           displayName: Component Detection
-          pool: ${{ parameters.poolCG }}
           steps:
           - checkout: self
             clean: true
             lfs: false
             submodules: false
-
           - ${{ parameters.preCG }}
-
           - task: ComponentGovernanceComponentDetection@0
             displayName: Component Detection
             inputs:
@@ -546,46 +440,38 @@ stages:
               verbosity: Verbose
               scanType: Register
               alertWarningLevel: High
-
-  # Publish stage
-  - ${{ if eq(variables.publish, true) }}:
-    - template: include-publish-npm-package.yml
-      parameters:
-        namespace: ${{ parameters.namespace }}
-        tagName: ${{ parameters.tagName }}
-        publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
-
-  # Capture per-pipeline stage results
-  - stage: upload_run_telemetry
-    displayName: Upload pipeline run telemetry to Kusto
-    condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'), eq(${{parameters.telemetry}}, true))
-    dependsOn:
+    - ${{ if eq(variables.publish, true) }}:
+      - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
+        parameters:
+          namespace: ${{ parameters.namespace }}
+          tagName: ${{ parameters.tagName }}
+          publishNonScopedPackages: ${{ variables.publishNonScopedPackages }}
+    - stage: upload_run_telemetry
+      displayName: Upload pipeline run telemetry to Kusto
+      condition: and(succeededOrFailed(), eq(variables['Build.Reason'], 'IndividualCI'), eq(${{parameters.telemetry}}, true))
+      dependsOn:
       - build
-
-    jobs:
+      jobs:
       - job: upload_run_telemetry
         displayName: Upload pipeline run telemetry to Kusto
-        pool: Small
         variables:
         - name: pipelineTelemetryWorkdir
           value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir
-
         steps:
-        - template: include-telemetry-setup.yml
+        - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
           parameters:
             devFeedUrl: $(ado-feeds-dev)
             officeFeedUrl: $(ado-feeds-office)
             isCheckoutNeeded: true
-
         - task: Bash@3
           displayName: Retrieve buildId results
           inputs:
             targetType: 'inline'
             workingDirectory: $(absolutePathToTelemetryGenerator)
             script: |
-              echo "Creating output folder ..."
+              echo "Creating output folder "
               mkdir -p $(pipelineTelemetryWorkdir)/timingOutput
-              echo "Retrieving pipeline run timeline data ..."
+              echo "Retrieving pipeline run timeline data "
               echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
               curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > $(pipelineTelemetryWorkdir)/timingOutput/output.json
               pwd;
