@@ -11,7 +11,7 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	applyDelta,
 	Delta,
@@ -150,6 +150,6 @@ function encodeSummary(
 		case TreeCompressionStrategy.Uncompressed:
 			return uncompressedEncode(cursor);
 		default:
-			return schemaCompressedEncode(schema, policy, cursor);
+			unreachableCase(encodeType);
 	}
 }
