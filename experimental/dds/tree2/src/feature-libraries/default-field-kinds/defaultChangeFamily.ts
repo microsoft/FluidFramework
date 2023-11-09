@@ -136,7 +136,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			set: (newContent: ITreeCursor): void => {
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set(newContent, {
-						build: this.modularBuilder.generateId(),
 						fill: this.modularBuilder.generateId(),
 						detach: this.modularBuilder.generateId(),
 					}),
@@ -153,10 +152,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const optionalChange =
 					newContent === undefined
 						? optional.changeHandler.editor.clear(id)
-						: optional.changeHandler.editor.set(newContent, {
-								build: id,
+						: optional.changeHandler.editor.set(newContent, wasEmpty, {
 								fill: this.modularBuilder.generateId(),
-								detach: wasEmpty ? undefined : this.modularBuilder.generateId(),
+								detach: this.modularBuilder.generateId(),
 						  });
 				const change: FieldChangeset = brand(optionalChange);
 				this.modularBuilder.submitChange(field, optional.identifier, change);

@@ -62,13 +62,13 @@ const tag1 = mintRevisionTag();
 const OptionalChange = {
 	set(
 		value: string,
+		wasEmpty: boolean,
 		ids: {
-			build: ChangesetLocalId;
 			fill: ChangesetLocalId;
-			detach?: ChangesetLocalId;
+			detach: ChangesetLocalId;
 		},
 	) {
-		return optionalFieldEditor.set(singleTextCursor({ type, value }), ids);
+		return optionalFieldEditor.set(singleTextCursor({ type, value }), wasEmpty, ids);
 	},
 
 	clear(id: ChangesetLocalId) {
@@ -317,7 +317,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 
 	for (const value of ["A", "B"]) {
 		const setIntention = mintIntention();
-		const [build, fill] = [mintId(), mintId()];
+		const [fill, detach] = [mintId(), mintId()];
 		// Using length of the input context guarantees set operations generated at different times also have different
 		// values, which should tend to be easier to debug.
 		// This also makes the logic to determine intentions simpler.
@@ -326,10 +326,9 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: newContents,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.set(newContents, {
-						build,
+					OptionalChange.set(newContents, state.content === undefined, {
 						fill,
-						detach: state.content === undefined ? undefined : mintId(),
+						detach,
 					}),
 					tagFromIntention(setIntention),
 				),
@@ -393,10 +392,6 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 		for (const [{ description: name1, changeset: change1 }] of singleTestChangesA()) {
 			for (const [{ description: name2, changeset: change2 }] of singleTestChangesB()) {
 				const title = `(${name1} ↷ ${name2}) ↷ ${name2}⁻¹ => ${name1}`;
-
-				if (title !== "(SetB,0 ↷ Delete) ↷ Delete⁻¹ => SetB,0") {
-					continue;
-				}
 				it(title, () => {
 					const inv = tagRollbackInverse(invert(change2), tag1, change2.revision);
 					const r1 = rebaseTagged(change1, change2);

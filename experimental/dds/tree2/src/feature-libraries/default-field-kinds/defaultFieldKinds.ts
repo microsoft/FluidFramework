@@ -51,7 +51,6 @@ export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	set(
 		newContent: ITreeCursor,
 		ids: {
-			build: ChangesetLocalId;
 			fill: ChangesetLocalId;
 			detach: ChangesetLocalId;
 		},
@@ -82,7 +81,7 @@ export const valueFieldEditor: ValueFieldEditor = {
 			fill: ChangesetLocalId;
 			detach: ChangesetLocalId;
 		},
-	): OptionalChangeset => optionalFieldEditor.set(newContent, ids),
+	): OptionalChangeset => optionalFieldEditor.set(newContent, false, ids),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {

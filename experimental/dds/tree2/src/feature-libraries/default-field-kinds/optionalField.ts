@@ -301,6 +301,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let reservedDetachId: ContentId | undefined;
 		const changeDstToSrc = new ChildChangeMap<ContentId>();
+		const changeSrcToDst = new ChildChangeMap<ContentId>();
+		for (const [src, dst] of moves) {
+			changeSrcToDst.set(src, dst);
+			changeDstToSrc.set(dst, src);
+		}
+
 		let changeAndOverSetSelf = false;
 		let changeEmptiesSelf = false;
 		for (const [src, dst, target] of moves) {
@@ -314,16 +320,25 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				changeAndOverSetSelf = true;
 			}
 			if (target === "cellTargeting") {
-				if (overSrcToDst.get(src) !== undefined && overDstToSrc.get(src) === undefined) {
+				if (
+					overSrcToDst.get(src) !== undefined &&
+					overDstToSrc.get(src) === undefined &&
+					changeDstToSrc.get(src) !== undefined
+				) {
 					// Over removed the content occupying this cell and didn't fill it with other content.
-					// This means that the cell is empty after applying 'over', so we can drop the move.
+					// Additionally, this change intends to fill the cell with other content, which is the primary reason
+					// why it needed to remove existing content from the cell.
+					// Since the cell is already empty, we can drop the move.
+
+					// Note that it's important that the change intends to fill the cell with other content, as otherwise
+					// we might accidentally drop the intent to clear a cell if rebasing over a change that already has,
+					// which is a problem if we further rebase over changes that populate it again.
 					reservedDetachId = dst;
 				} else {
 					// Cell-targeting.
 					rebasedMoves.push([src, dst, target]);
 				}
 			} else {
-				changeDstToSrc.set(dst, src);
 				// Figure out where content in src ended up in `overTagged`
 				const rebasedSrc = overSrcToDst.get(src) ?? src;
 				// Note: we cannot drop changes which map a node to itself, as this loses the intention of the original edit
@@ -397,11 +412,10 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 */
 	set(
 		newContent: ITreeCursor,
+		wasEmpty: boolean,
 		ids: {
-			build: ChangesetLocalId;
 			fill: ChangesetLocalId;
-			// Should be interpreted as a set of an empty field if undefined.
-			detach?: ChangesetLocalId;
+			detach: ChangesetLocalId;
 		},
 	): OptionalChangeset;
 
@@ -416,23 +430,25 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
 		newContent: ITreeCursor,
+		wasEmpty: boolean,
 		ids: {
-			build: ChangesetLocalId;
 			fill: ChangesetLocalId;
 			// Should be interpreted as a set of an empty field if undefined.
-			detach?: ChangesetLocalId;
+			detach: ChangesetLocalId;
 		},
-	): OptionalChangeset => ({
-		build: [{ id: { localId: ids.build }, set: singleTextCursor(newContent) }],
-		moves:
-			ids.detach === undefined
-				? [[{ localId: ids.fill }, "self", "nodeTargeting"]]
-				: [
-						[{ localId: ids.fill }, "self", "nodeTargeting"],
-						["self", { localId: ids.detach }, "cellTargeting"],
-				  ],
-		childChanges: [],
-	}),
+	): OptionalChangeset => {
+		const result: OptionalChangeset = {
+			build: [{ id: { localId: ids.fill }, set: singleTextCursor(newContent) }],
+			moves: [[{ localId: ids.fill }, "self", "nodeTargeting"]],
+			childChanges: [],
+		};
+		if (wasEmpty) {
+			result.reservedDetachId = { localId: ids.detach };
+		} else {
+			result.moves.push(["self", { localId: ids.detach }, "cellTargeting"]);
+		}
+		return result;
+	},
 
 	clear: (detachId: ChangesetLocalId): OptionalChangeset => ({
 		build: [],
