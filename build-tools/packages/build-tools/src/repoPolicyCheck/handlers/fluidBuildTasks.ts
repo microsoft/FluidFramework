@@ -92,6 +92,26 @@ function findScript(json: PackageJson, command: string) {
 }
 
 /**
+ * Find the script name for the tsc-multi command in a npm package.json
+ *
+ * @param json - the package.json content to search script in
+ * @param config - the tsc-multi config to check for
+ * @returns  first script name found to match the command
+ *
+ * @remarks
+ */
+function findTscMultiScript(json: PackageJson, config: string) {
+	for (const script in json.scripts) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const scriptCommand = json.scripts[script]!;
+
+		if (scriptCommand.startsWith("tsc-multi") && scriptCommand.includes(config)) {
+			return script;
+		}
+	}
+}
+
+/**
  * By default, all `tsc*` script task will depend on "build:genver", and "^tsc",
  * So all the files that it depends on are in place.
  *
@@ -146,12 +166,9 @@ function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
 
 function findTscScript(json: PackageJson, project: string) {
 	if (project === "./tsconfig.json") {
-		return findScript(json, "tsc") || findScript(json, "tsc-multi --config tsc-multi.cjs.json");
+		return findScript(json, "tsc") || findTscMultiScript(json, "tsc-multi.cjs.json");
 	}
-	return (
-		findScript(json, `tsc --project ${project}`) ||
-		findScript(json, `tsc-multi --config ${project}`)
-	);
+	return findScript(json, `tsc --project ${project}`) || findTscMultiScript(json, project);
 }
 /**
  * Get a list of build script names that the eslint depends on, based on .eslintrc file.
