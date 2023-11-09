@@ -146,9 +146,12 @@ function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
 
 function findTscScript(json: PackageJson, project: string) {
 	if (project === "./tsconfig.json") {
-		return findScript(json, "tsc");
+		return findScript(json, "tsc") || findScript(json, "tsc-multi --config tsc-multi.cjs.json");
 	}
-	return findScript(json, `tsc --project ${project}`);
+	return (
+		findScript(json, `tsc --project ${project}`) ||
+		findScript(json, `tsc-multi --config ${project}`)
+	);
 }
 /**
  * Get a list of build script names that the eslint depends on, based on .eslintrc file.
@@ -448,7 +451,7 @@ export const handlers: Handler[] = [
 			for (const script in json.scripts) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const command = json.scripts[script]!;
-				if (command.startsWith("tsc") && !ignore.has(script)) {
+				if (command.startsWith("tsc ") && !ignore.has(script)) {
 					try {
 						const checkDeps = getTscCommandDependencies(
 							packageDir,
