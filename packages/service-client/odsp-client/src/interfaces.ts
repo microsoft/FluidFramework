@@ -69,9 +69,10 @@ export interface OdspClientProps {
 export interface OdspContainerServices {
 	/**
 	 * Retrieves tenant-specific attributes associated with the ODSP service for the current Fluid container.
-	 * This includes information such as sharing URLs, item IDs, and drive IDs.
+	 * This includes information such as sharing URL and drive IDs.
 	 *
-	 * @returns A Promise that resolves to an object containing the ODSP service attributes.
+	 * @returns A Promise that resolves after the container is attached, providing an object containing the `OdspServiceAttributes`.
+	 * If the attachment is not yet complete or encounters an error, the Promise will be rejected.
 	 */
 	tenantAttributes: () => Promise<OdspServiceAttributes>;
 
@@ -93,13 +94,6 @@ export interface OdspServiceAttributes {
 	sharingUrl: string | undefined;
 
 	/**
-	 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
-	 * a new `itemId` is created in the user's drive, which developers can use for various operations
-	 * like updating, renaming, moving the Fluid file, changing permissions, and more.
-	 */
-	itemId: string | undefined;
-
-	/**
 	 * Get the RaaS drive ID associated with the container. This can be useful when managing multiple
 	 * RaaS drives.
 	 */
@@ -107,23 +101,35 @@ export interface OdspServiceAttributes {
 }
 
 /**
+ * Since ODSP provides user names and email for all of its members, we extend the
+ * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
  * @alpha
  */
-export interface OdspUser<T = any> extends IUser {
+export interface OdspUser extends IUser {
 	/**
 	 * The user's name
 	 */
 	name: string;
+
+	/**
+	 * The user's email
+	 */
+	email: string;
 }
 
 /**
+ * Since ODSP provides user names and email for all of its members, we extend the
+ * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
+ * It will be returned for all audience members connected.
  * @alpha
  */
 export interface OdspMember extends IMember {
-	userName: string;
+	name: string;
+	email: string;
 }
 
 /**
+ * Audience object for ODSP containers
  * @alpha
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;

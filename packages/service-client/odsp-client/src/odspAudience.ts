@@ -9,16 +9,21 @@ import { type IClient } from "@fluidframework/protocol-definitions";
 import { type OdspMember, type IOdspAudience, OdspUser } from "./interfaces";
 
 /**
+ * ODSP-specific {@link @fluidframework/fluid-static#ServiceAudience} implementation.
  * @alpha
  */
 export class OdspAudience extends ServiceAudience<OdspMember> implements IOdspAudience {
 	protected createServiceMember(audienceMember: IClient): OdspMember {
 		const user = audienceMember.user as OdspUser;
-		assert(user?.name !== undefined, 'Provided user was not an "AzureUser".');
+		assert(
+			user.name !== undefined || user.email !== undefined,
+			'Provided user was not an "OdspUser".',
+		);
 
 		return {
-			userId: audienceMember.user.id,
-			userName: user.name,
+			userId: user.id,
+			name: user.name,
+			email: user.email,
 			connections: [],
 		};
 	}

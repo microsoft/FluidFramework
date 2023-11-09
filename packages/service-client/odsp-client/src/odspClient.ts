@@ -166,7 +166,12 @@ export class OdspClient {
 			if (container.resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			return resolvedUrl.url;
+			/**
+			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+			 * a new `itemId` is created in the user's drive, which developers can use for various operations
+			 * like updating, renaming, moving the Fluid file, changing permissions, and more.
+			 */
+			return resolvedUrl.itemId;
 		};
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		fluidContainer.attach = attach;
@@ -179,14 +184,13 @@ export class OdspClient {
 			if (resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			const url = await container.getAbsoluteUrl("/");
-			if (url === undefined) {
+			const sharingUrl = await container.getAbsoluteUrl("/");
+			if (sharingUrl === undefined) {
 				throw new Error("Container has no absolute url");
 			}
 
 			return {
-				sharingUrl: url,
-				itemId: resolvedUrl.itemId,
+				sharingUrl,
 				driveId: resolvedUrl.driveId,
 			};
 		};

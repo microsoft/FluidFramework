@@ -14,10 +14,10 @@ import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenProvider } from '@fluidframework/azure-client';
 import { ServiceAudience } from '@fluidframework/fluid-static';
 
-// @alpha (undocumented)
+// @alpha
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
-// @alpha (undocumented)
+// @alpha
 export class OdspAudience extends ServiceAudience<OdspMember> implements IOdspAudience {
     // (undocumented)
     protected createServiceMember(audienceMember: IClient): OdspMember;
@@ -59,16 +59,17 @@ export interface OdspContainerServices {
     tenantAttributes: () => Promise<OdspServiceAttributes>;
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface OdspMember extends IMember {
     // (undocumented)
-    userName: string;
+    email: string;
+    // (undocumented)
+    name: string;
 }
 
 // @alpha
 export interface OdspServiceAttributes {
     driveId: string | undefined;
-    itemId: string | undefined;
     sharingUrl: string | undefined;
 }
 
