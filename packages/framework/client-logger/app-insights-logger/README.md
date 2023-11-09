@@ -1,4 +1,4 @@
-# @fluid-internal/app-insights-logger
+# @fluidframework/app-insights-logger
 
 ## Overview
 
