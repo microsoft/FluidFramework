@@ -79,7 +79,7 @@ export interface OdspContainerServices {
 	 * Provides an object that can be used to get the users that are present in this Fluid session and
 	 * listeners for when the roster has any changes from users joining/leaving the session
 	 */
-	audience?: IOdspAudience;
+	audience: IOdspAudience;
 }
 
 /**

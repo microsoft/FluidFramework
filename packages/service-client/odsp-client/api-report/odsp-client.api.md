@@ -55,7 +55,7 @@ export interface OdspConnectionConfig {
 
 // @alpha
 export interface OdspContainerServices {
-    audience?: IOdspAudience;
+    audience: IOdspAudience;
     tenantAttributes: () => Promise<OdspServiceAttributes>;
 }
 

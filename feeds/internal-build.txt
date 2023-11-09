@@ -11,7 +11,7 @@
 @fluidframework/test-driver-definitions
 @fluid-internal/test-app-insights-logger
 @fluidframework/mocha-test-setup
-@fluidframework/odsp-client
+@fluid-experimental/odsp-client
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
 @fluidframework/runtime-definitions
