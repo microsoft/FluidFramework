@@ -36,11 +36,6 @@ export interface IdCreationRange {
 	readonly ids?: {
 		readonly firstGenCount: number;
 		readonly count: number;
+		readonly requestedClusterSize: number;
 	};
 }
-
-/**
- * Roughly equates to a minimum of 1M sessions before we start allocating 64 bit IDs.
- * This value must *NOT* change without careful consideration to compatibility.
- */
-export const initialClusterCapacity = 512;
