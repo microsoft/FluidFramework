@@ -25,7 +25,11 @@ import {
 	IConfigProviderBase,
 	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils";
-import { IDocumentLoaderAndSummarizer, IDocumentProps, ISummarizeResult } from "./DocumentCreator";
+import {
+	IDocumentLoaderAndSummarizer,
+	IDocumentProps,
+	ISummarizeResult,
+} from "./DocumentCreator.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
