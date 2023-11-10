@@ -40,7 +40,7 @@
 
   {{ if $conceptFound }}
     <p>
-      <a href="/docs/apis/">{{ humanize $concept | title }}</a>
+      <a href="/docs/apis/" onclick="return false;">{{ humanize $concept | title }}</a> <!-- TODO: remove onclick and create proper link to new concept readme -->
       {{ if $packageName }}
         {{ $packageLink := print "/docs/apis/" $packageName "/" }}
         &gt; <a href="{{ $packageLink }}">{{ $packageDisplayName }}</a>
