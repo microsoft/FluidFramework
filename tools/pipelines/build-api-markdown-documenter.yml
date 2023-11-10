@@ -31,6 +31,7 @@ trigger:
     - lts
   paths:
     include:
+    - .prettierignore
     - tools/api-markdown-documenter
     - tools/pipelines/build-api-markdown-documenter.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -53,6 +54,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - tools/api-markdown-documenter
     - tools/pipelines/build-api-markdown-documenter.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -61,7 +63,7 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
-    - scripts/*    
+    - scripts/*
 
 extends:
   template: templates/build-npm-package.yml
