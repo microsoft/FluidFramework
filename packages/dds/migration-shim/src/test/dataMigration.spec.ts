@@ -110,7 +110,7 @@ const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
 function getNewTreeView(tree: ISharedTree): ITreeView<typeof inventoryFieldSchema> {
-	return tree.schematize({
+	return tree.schematizeInternal({
 		initialTree: {
 			quantity: 0,
 		},
@@ -162,7 +162,7 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const quantity = legacyNode.payload.quantity as number;
 			newTree
-				.schematize({
+				.schematizeInternal({
 					initialTree: {
 						quantity,
 					},
