@@ -11,3 +11,8 @@
  */
 export type IsomorphicPerformance = Partial<Performance> &
 	Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
+
+/**
+ * @internal
+ */
+export const performance: IsomorphicPerformance = globalThis.performance;

@@ -6023,7 +6023,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/puppeteer': 1.3.0
       '@types/rewire': ^2.5.28
-      '@types/sha.js': ^2.4.0
+      '@types/sha.js': ^2.4.4
       '@types/sinon': ^7.0.13
       base64-js: ^1.5.1
       buffer: ^6.0.3
@@ -6073,7 +6073,7 @@ importers:
       '@types/node': 16.18.58
       '@types/puppeteer': 1.3.0
       '@types/rewire': 2.5.28
-      '@types/sha.js': 2.4.2
+      '@types/sha.js': 2.4.4
       '@types/sinon': 7.5.2
       c8: 7.14.0
       concurrently: 8.2.1
@@ -7604,7 +7604,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/node-fetch': ^2.5.10
-      '@types/sha.js': ^2.4.0
       '@types/sinon': ^7.0.13
       c8: ^7.7.1
       cross-env: ^7.0.3
@@ -7646,7 +7645,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       '@types/node-fetch': 2.6.6
-      '@types/sha.js': 2.4.2
       '@types/sinon': 7.5.2
       c8: 7.14.0
       cross-env: 7.0.3
@@ -22110,8 +22108,8 @@ packages:
       '@types/mime': 3.0.2
       '@types/node': 16.18.58
 
-  /@types/sha.js/2.4.2:
-    resolution: {integrity: sha512-NGwYSCPCwuZc4Mdf3M0PA9nEjLm16z17zYZTrFVnjAtPSrYN6eMkzup2jelkoe9piZdJq/WVaoTJxE+SyrJKEQ==}
+  /@types/sha.js/2.4.4:
+    resolution: {integrity: sha512-Qukd+D6S2Hm0wLVt2Vh+/eWBIoUt+wF8jWjBsG4F8EFQRwKtYvtXCPcNl2OEUQ1R+eTr3xuSaBYUyM3WD1x/Qw==}
     dependencies:
       '@types/node': 16.18.58
     dev: true
@@ -45423,12 +45421,14 @@ packages:
     dependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.1.0_loebgezstcsvd2poh2d55fifke
+      '@rushstack/node-core-library': 3.61.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 2.4.2
       markdown-magic-package-scripts: 1.2.2
       markdown-magic-template: 1.0.1
       yargs: 17.7.2
     transitivePeerDependencies:
+      - '@types/node'
       - eslint
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
