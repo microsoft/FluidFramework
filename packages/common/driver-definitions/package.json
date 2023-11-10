@@ -30,7 +30,7 @@
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esnext.json",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run",
 		"ci:test": "echo No test for this package",
