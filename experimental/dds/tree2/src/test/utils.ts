@@ -43,7 +43,7 @@ import {
 	runSynchronous,
 	SharedTreeContentSnapshot,
 	ITreeView,
-	TreeView,
+	CheckoutView,
 } from "../shared-tree";
 import {
 	Any,
@@ -616,7 +616,7 @@ export function viewWithContent<TRoot extends TreeFieldSchema>(
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
-	return new TreeView(
+	return new CheckoutView(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
@@ -654,7 +654,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new TreeView(
+	const view = new CheckoutView(
 		branch,
 		content.schema,
 		manager,

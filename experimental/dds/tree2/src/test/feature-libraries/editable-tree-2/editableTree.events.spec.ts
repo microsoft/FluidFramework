@@ -33,7 +33,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("fire the expected number of times", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -141,7 +141,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("fire in the expected order and always together", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -197,7 +197,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("event argument contains the expected node", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -270,7 +270,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("listeners can be removed successfully", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -319,7 +319,7 @@ describe("beforeChange/afterChange events", () => {
 	it("tree is in correct state when events fire - primitive node deletions", () => {
 		const initialNumber = 20;
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: initialNumber,
@@ -347,7 +347,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - primitive node additions", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -377,7 +377,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - primitive node replacements", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -405,7 +405,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - node inserts to sequence fields", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -467,7 +467,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - node removals from sequence fields", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -507,7 +507,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - node moves in sequence fields", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -579,7 +579,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("not emitted by nodes when they are replaced", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -609,7 +609,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("bubble up from the affected node to the root", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,

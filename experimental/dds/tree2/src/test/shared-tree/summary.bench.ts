@@ -123,7 +123,7 @@ describe("Summary benchmarks", () => {
 function getSummaryTree(content: TreeContent): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	tree.schematize({ ...content, allowedSchemaModifications: AllowedUpdateType.None });
+	tree.schematizeInternal({ ...content, allowedSchemaModifications: AllowedUpdateType.None });
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;

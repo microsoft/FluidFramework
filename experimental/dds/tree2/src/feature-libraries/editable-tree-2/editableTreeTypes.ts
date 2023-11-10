@@ -75,7 +75,7 @@ export interface TreeEntity<out TSchema = unknown> {
 }
 
 /**
- * Status of the tree that a particular node in {@link Tree} belongs to.
+ * Status of the tree that a particular node belongs to.
  * @alpha
  */
 export enum TreeStatus {
