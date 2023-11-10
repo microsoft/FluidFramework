@@ -18,6 +18,7 @@ export {
 	UnknownUnboxed,
 	FixedSizeTypeArrayToTypedTree,
 	TypedNodeUnionHelper,
+	FlexibleNodeSubSequence,
 } from "./editableTreeTypes";
 
 export { NodeKeys } from "./nodeKeys";

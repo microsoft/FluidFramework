@@ -7,7 +7,8 @@ import { strict as assert } from "assert";
 import { LeafSchema, NewFieldContent, TreeSchema } from "../../../feature-libraries";
 import { leaf, SchemaBuilder } from "../../../domains";
 import { TreeValue } from "../../../core";
-import { createTreeView2, itWithRoot, makeSchema, pretty } from "./utils";
+import { viewWithContent } from "../../utils";
+import { itWithRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase {
 	initialTree: object;
@@ -38,7 +39,10 @@ function testObjectLike(testCases: TestCase[]) {
 	describe("Object-like", () => {
 		describe("satisfies 'deepEquals'", () => {
 			for (const { schema, initialTree } of testCases) {
-				const view = createTreeView2(schema, initialTree as NewFieldContent);
+				const view = viewWithContent({
+					schema,
+					initialTree: initialTree as NewFieldContent,
+				});
 				const real = initialTree;
 				const proxy = view.root;
 
