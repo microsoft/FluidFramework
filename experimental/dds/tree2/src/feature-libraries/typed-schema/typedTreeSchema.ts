@@ -232,8 +232,14 @@ export class FieldNodeSchema<
 
 /**
  * @alpha
+ * @privateRemarks
+ * This could be an exhaustive union, or just the common base type.
+ * Using just the base type prevents exhaustive matching, which has both pros and cons.
+ *
+ * For now this is using just the base type since the union is causing issues with schema aware typing, likely due to it being a union and thus distributing over extends clauses.
  */
-export type TreeNodeSchema = MapNodeSchema | LeafNodeSchema | ObjectNodeSchema | FieldNodeSchema;
+export type TreeNodeSchema = TreeNodeSchemaBase;
+// export type TreeNodeSchema = MapNodeSchema | LeafNodeSchema | ObjectNodeSchema | FieldNodeSchema;
 
 /**
  * Convert FieldSchemaSpecification | undefined into TreeFieldSchema.

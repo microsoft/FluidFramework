@@ -28,7 +28,12 @@ import {
 	SummaryElementStringifier,
 } from "../../shared-tree-core";
 import { AllowedUpdateType, ChangeFamily, ChangeFamilyEditor, rootFieldKey } from "../../core";
-import { DefaultChangeset, DefaultEditBuilder, typeNameSymbol } from "../../feature-libraries";
+import {
+	DefaultChangeset,
+	DefaultEditBuilder,
+	cursorForJsonableTreeNode,
+	typeNameSymbol,
+} from "../../feature-libraries";
 import { brand } from "../../util";
 import { ISubscribable } from "../../events";
 import { SharedTreeTestFactory } from "../utils";
