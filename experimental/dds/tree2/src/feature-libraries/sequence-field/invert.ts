@@ -27,7 +27,7 @@ import {
 	getOutputCellId,
 	isAttach,
 	isDetach,
-	isMuted,
+	isImpactful,
 	isReattach,
 	splitMark,
 	withNodeChange,
@@ -92,6 +92,9 @@ function invertMark<TNodeChange>(
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
 ): Mark<TNodeChange>[] {
+	if (!isImpactful(mark)) {
+		return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, mark.cellId)];
+	}
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType: {
@@ -120,11 +123,9 @@ function invertMark<TNodeChange>(
 			}
 			return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, mark.cellId)];
 		}
+		case "Pin":
 		case "Insert": {
-			if (isMuted(mark)) {
-				return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, mark.cellId)];
-			}
-			assert(mark.cellId !== undefined, "Active inserts should target empty cells");
+			assert(mark.cellId !== undefined, "Active inserts and pins should target empty cells");
 			const deleteMark: CellMark<Delete, TNodeChange> = {
 				type: "Delete",
 				count: mark.count,
@@ -182,10 +183,6 @@ function invertMark<TNodeChange>(
 			return [invertedMark];
 		}
 		case "MoveIn": {
-			if (isMuted(mark)) {
-				return mark.cellId === undefined ? [{ count: mark.count }] : [];
-			}
-
 			const invertedMark: CellMark<ReturnFrom, TNodeChange> = {
 				type: "ReturnFrom",
 				id: mark.id,

@@ -41,6 +41,8 @@ import {
 	CellMark,
 	TransientEffect,
 	MarkEffect,
+	Pin,
+	InverseAttachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveDestination, isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -281,31 +283,42 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return true;
 		case "MoveIn":
 		case "Insert":
-			return mark.cellId !== undefined && isMuted(mark);
+		case "Pin":
+			return false;
 		default:
 			unreachableCase(type);
 	}
 }
 
-export function isMuted(mark: Mark<unknown>): boolean {
+/**
+ * @returns true, iff the given `mark` would have impact on the field when applied.
+ * Ignores the impact of nested changes.
+ */
+export function isImpactful(mark: Mark<unknown>): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
 		case "Placeholder":
+			return false;
+		case "Pin":
+			// A Pin revives the nodes if need be.
+			return mark.cellId !== undefined;
 		case "Delete":
+			// We currently don't rename the cell when a delete targets already deleted nodes.
+			// If we ever do then we'll have to consider the impact of the rename.
+			return mark.cellId === undefined;
 		case "Transient":
 		case "MoveOut":
-			return false;
 		case "ReturnFrom":
-			return mark.isNoop ?? false;
+			return true;
 		case "MoveIn":
 			// MoveIn marks always target an empty cell.
-			// See ReturnFrom.isNoop for more details on why.
+			// See doc comment on Pin for more details on why.
 			assert(mark.cellId !== undefined, "MoveIn marks should target empty cells");
-			return false;
+			return true;
 		case "Insert":
-			// This only occurs when a Revive is preempted by an equivalent Revive.
-			return mark.cellId === undefined;
+			// A Revive has no impact if the nodes are already in the document.
+			return mark.cellId !== undefined;
 		default:
 			unreachableCase(type);
 	}
@@ -380,6 +393,14 @@ function areAdjacentIdRanges(
 	secondStart: ChangesetLocalId,
 ): boolean {
 	return (firstStart as number) + firstLength === secondStart;
+}
+
+function haveMergeableIdOverrides(
+	lhs: InverseAttachFields,
+	lhsCount: number,
+	rhs: InverseAttachFields,
+): boolean {
+	return areMergeableChangeAtoms(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride);
 }
 
 function areMergeableCellIds(
@@ -484,7 +505,6 @@ function tryMergeEffects(
 			const lhsMoveOut = lhs as MoveOut | ReturnFrom;
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
-				(rhs.type === "MoveOut" || rhs.isNoop === (rhs as ReturnFrom).isNoop) &&
 				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveOut;
@@ -500,6 +520,18 @@ function tryMergeEffects(
 				assert(lhsInsert.content !== undefined, "Insert content type mismatch");
 				return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
 			}
+		}
+		case "Pin": {
+			const lhsPin = lhs as Pin;
+			if (
+				(lhsPin.id as number) + lhsCount === rhs.id &&
+				haveMergeableIdOverrides(lhsPin, lhsCount, rhs) &&
+				areMergeableChangeAtoms(lhsPin.sourceEndpoint, lhsCount, rhs.sourceEndpoint) &&
+				areMergeableChangeAtoms(lhsPin.destEndpoint, lhsCount, rhs.destEndpoint)
+			) {
+				return lhsPin;
+			}
+			break;
 		}
 		case "Placeholder":
 			break;
@@ -947,6 +979,26 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 
 			if (return2.finalEndpoint !== undefined) {
 				return2.finalEndpoint = splitDetachEvent(return2.finalEndpoint, length);
+			}
+			return [effect, effect2];
+		}
+		case "Pin": {
+			const effect2 = {
+				...effect,
+				id: (effect.id as number) + length,
+			};
+
+			const return2 = effect2 as Pin;
+
+			if (return2.detachIdOverride !== undefined) {
+				return2.detachIdOverride = splitDetachEvent(return2.detachIdOverride, length);
+			}
+
+			if (return2.sourceEndpoint !== undefined) {
+				return2.sourceEndpoint = splitDetachEvent(return2.sourceEndpoint, length);
+			}
+			if (return2.destEndpoint !== undefined) {
+				return2.destEndpoint = splitDetachEvent(return2.destEndpoint, length);
 			}
 			return [effect, effect2];
 		}

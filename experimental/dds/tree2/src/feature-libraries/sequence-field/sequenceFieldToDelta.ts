@@ -126,8 +126,12 @@ export function sequenceFieldToDelta<TNodeChange>(
 					}
 					break;
 				}
+				case "Pin":
 				case "Insert": {
-					assert(mark.cellId !== undefined, "Active insert mark must have CellId");
+					assert(
+						mark.cellId !== undefined,
+						"Active Insert and Pin marks must have CellId",
+					);
 					const buildId = nodeIdFromChangeAtom(mark.cellId);
 					deltaMark.attach = buildId;
 					if (deltaMark.fields) {
@@ -135,7 +139,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						global.push({ id: buildId, fields: deltaMark.fields });
 						delete deltaMark.fields;
 					}
-					if (isNewAttach(mark)) {
+					if (mark.type === "Insert" && isNewAttach(mark)) {
 						assert(
 							mark.content !== undefined,
 							0x7dc /* New insert must have content */,

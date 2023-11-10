@@ -173,7 +173,7 @@ function createInsertMark<TChange = never>(
 }
 
 /**
- * @param count - The content to revive.
+ * @param count - The number of nodes to revive.
  * If a number is passed, that many dummy nodes will be generated.
  * @param cellId - The first cell to revive content into.
  * If undefined, the revive targets populated cells and is therefore muted.
@@ -191,6 +191,29 @@ function createReviveMark<TChange = never>(
 	};
 	if (cellId !== undefined) {
 		mark.cellId = cellId;
+	}
+	return { ...mark, ...overrides };
+}
+
+/**
+ * @param count - The number of nodes to pin.
+ * If a number is passed, that many dummy nodes will be generated.
+ * @param overrides - Any additional properties to add to the mark.
+ * Use this to give the mark a `RevisionTag`
+ */
+function createPinMark<TChange = never>(
+	count: number,
+	markId: ChangesetLocalId | ChangeAtomId,
+	overrides?: Partial<SF.CellMark<SF.Pin, TChange>>,
+): SF.CellMark<SF.Pin, TChange> {
+	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
+	const mark: SF.CellMark<SF.Pin, TChange> = {
+		type: "Pin",
+		count,
+		id: atomId.localId,
+	};
+	if (atomId.revision !== undefined) {
+		mark.revision = atomId.revision;
 	}
 	return { ...mark, ...overrides };
 }
@@ -365,6 +388,7 @@ export const MarkMaker = {
 	onEmptyCell: overrideCellId,
 	insert: createInsertMark,
 	revive: createReviveMark,
+	pin: createPinMark,
 	delete: createDeleteMark,
 	modify: createModifyMark,
 	moveOut: createMoveOutMark,

@@ -270,8 +270,18 @@ export const ReturnFrom = Type.Composite(
  *
  * Note that when the cells are empty, this mark as revival semantics.
  */
-export interface Pin extends HasMoveFields, InverseAttachFields {
+export interface Pin extends HasMoveId, HasRevisionTag, InverseAttachFields {
 	type: "Pin";
+	/**
+	 * Used when this mark represents the beginning of a chain of moves within a changeset.
+	 * Contains the ID of the end mark of the chain.
+	 */
+	destEndpoint?: ChangeAtomId;
+	/**
+	 * Used when this mark represents the end of a chain of moves within a changeset.
+	 * Contains the ID of the start mark of the chain.
+	 */
+	sourceEndpoint?: ChangeAtomId;
 }
 export const Pin = Type.Composite(
 	[
@@ -315,7 +325,7 @@ export const TransientEffect = Type.Object({
 });
 
 export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect | Pin;
-export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect, Pin]);
+export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
 export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(

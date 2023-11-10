@@ -49,6 +49,7 @@ import {
 	CellId,
 	MarkEffect,
 	ReturnFrom,
+	MoveIn,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { ComposeQueue } from "./compose";
@@ -60,7 +61,6 @@ import {
 	MoveEffectTable,
 	isMoveSource,
 	isMoveDestination,
-	isNoopReturn,
 } from "./moveEffectTable";
 import { MarkQueue } from "./markQueue";
 import { EmptyInputCellMark } from "./helperTypes";
@@ -386,47 +386,16 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		// TODO: Should also check if this is a transient move source
 		if (isMoveSource(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
-			if (markFollowsMoves(rebasedMark)) {
-				let markToSend: Mark<TNodeChange>;
-				let markToReturn: Mark<TNodeChange>;
-				if (isNoopReturn(rebasedMark)) {
-					// The noop return gets split into a (normal) ReturnFrom that is sent to the destination of the
-					// base move, and a ReturnTo/MoveIn that remains here.
-					markToSend = cloneMark(rebasedMark);
-					delete (markToSend as ReturnFrom).isNoop;
-					markToReturn = {
-						type: "MoveIn",
-						count: baseMark.count,
-						cellId: cloneCellId(baseCellId),
-						id: rebasedMark.id,
-					};
-				} else {
-					markToSend = rebasedMark;
-					markToReturn = { count: baseMark.count, cellId: cloneCellId(baseCellId) };
-				}
+			const { remains, follows } = separateEffectsForMove(rebasedMark, baseCellId);
+			if (follows !== undefined) {
 				sendMarkToDest(
-					markToSend,
-					moveEffects,
-					getEndpoint(baseMark, baseRevision),
-					baseMark.count,
-				);
-				return markToReturn;
-			}
-
-			const modify = rebasedMark.changes;
-			if (modify !== undefined) {
-				rebasedMark = withNodeChange(rebasedMark, undefined);
-				const nestedChange: CellMark<NoopMark, TNodeChange> = {
-					count: 1,
-					changes: modify,
-				};
-				sendMarkToDest(
-					nestedChange,
+					follows,
 					moveEffects,
 					getEndpoint(baseMark, baseRevision),
 					baseMark.count,
 				);
 			}
+			return remains ?? { count: baseMark.count, cellId: cloneCellId(baseCellId) };
 		}
 
 		assert(
@@ -436,28 +405,6 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		if (isMoveMark(rebasedMark)) {
-			if (
-				(rebasedMark.type === "MoveOut" || rebasedMark.type === "ReturnFrom") &&
-				nodeExistenceState === NodeExistenceState.Alive
-			) {
-				setPairedMarkStatus(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					getEndpoint(rebasedMark, undefined),
-					rebasedMark.count,
-					PairedMarkUpdate.Reactivated,
-				);
-			} else if (isReattach(rebasedMark)) {
-				setPairedMarkStatus(
-					moveEffects,
-					CrossFieldTarget.Source,
-					getEndpoint(rebasedMark, undefined),
-					rebasedMark.count,
-					PairedMarkUpdate.Deactivated,
-				);
-			}
-		}
 		rebasedMark = withCellId(rebasedMark, undefined);
 	} else if (isTransientEffect(baseMark)) {
 		assert(baseMark.cellId !== undefined, "Transient mark should target an empty cell");
@@ -481,21 +428,60 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 	return rebasedMark;
 }
 
-function markFollowsMoves(mark: Mark<unknown>): boolean {
+/**
+ * @returns A pair of marks that represent the effects which should remain in place in the face of concurrent move,
+ * and the effects that should be sent to the move destination.
+ */
+function separateEffectsForMove<T>(
+	mark: Mark<T>,
+	baseCellId: CellId,
+): { remains?: Mark<T>; follows?: Mark<T> } {
 	assert(!isNewAttach(mark), "New attaches should not be rebased over moves");
 	const type = mark.type;
 	switch (type) {
 		case "Insert":
+		// TODO: once revives are done with returns/pins, this case should be invalid
+		// because insert will only be used for new attaches.
 		case "Delete":
 		case "MoveOut":
 		case "ReturnFrom":
 		case "Transient":
 			// TODO: Handle cases where transient attach and detach have different move-following policies.
-			return true;
-		case NoopMarkType:
+			return { follows: mark };
 		case "MoveIn":
+			return { remains: mark };
+		case NoopMarkType:
+			return mark.changes !== undefined ? { follows: mark } : {};
+		case "Pin": {
+			const follows: CellMark<ReturnFrom, T> = {
+				type: "ReturnFrom",
+				count: mark.count,
+				id: mark.id,
+				changes: mark.changes,
+			};
+			if (mark.detachIdOverride !== undefined) {
+				follows.detachIdOverride = mark.detachIdOverride;
+			}
+			if (mark.destEndpoint !== undefined) {
+				follows.finalEndpoint = mark.destEndpoint;
+			}
+			const remains: CellMark<MoveIn, T> = {
+				type: "MoveIn",
+				count: mark.count,
+				id: mark.id,
+				cellId: cloneCellId(baseCellId),
+			};
+			if (mark.sourceEndpoint !== undefined) {
+				remains.finalEndpoint = mark.sourceEndpoint;
+			}
+			if (mark.revision !== undefined) {
+				follows.revision = mark.revision;
+				remains.revision = mark.revision;
+			}
+			return { remains };
+		}
 		case "Placeholder":
-			return false;
+			fail("Placeholder marks should not be rebased");
 		default:
 			unreachableCase(type);
 	}
@@ -523,26 +509,6 @@ function sendMarkToDest<T>(
 	const newEffect =
 		effect.value !== undefined ? { ...effect.value, movedMark: mark } : { movedMark: mark };
 	setMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count, newEffect);
-}
-
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
-// TODO: Reduce the duplication between this and other MoveEffect helpers
-function setPairedMarkStatus(
-	moveEffects: MoveEffectTable<unknown>,
-	target: CrossFieldTarget,
-	{ revision, localId: id }: ChangeAtomId,
-	count: number,
-	status: PairedMarkUpdate,
-) {
-	const effect = getMoveEffect(moveEffects, target, revision, id, count, false);
-	assert(effect.length === count, 0x6f2 /* Expected effect to cover entire mark */);
-	const newEffect =
-		effect.value !== undefined
-			? { ...effect.value, pairedMarkStatus: status }
-			: { pairedMarkStatus: status };
-	setMoveEffect(moveEffects, target, revision, id, count, newEffect);
 }
 
 function rebaseNodeChange<TNodeChange>(

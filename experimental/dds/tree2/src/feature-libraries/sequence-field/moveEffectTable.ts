@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
-import { CellMark, Mark, MarkEffect, MoveId, MoveSource, ReturnFrom } from "./format";
+import { CellMark, Mark, MarkEffect, MoveId, MoveSource } from "./format";
 import { areEqualCellIds, cloneMark, isTransientEffect, splitMark } from "./utils";
 import { MoveDestination, MoveMarkEffect } from "./helperTypes";
 
@@ -103,15 +103,6 @@ export function isMoveDestination(effect: MarkEffect): effect is MoveDestination
 	switch (effect.type) {
 		case "MoveIn":
 			return true;
-		default:
-			return false;
-	}
-}
-
-export function isNoopReturn(effect: MarkEffect): effect is ReturnFrom & { isNoop: true } {
-	switch (effect.type) {
-		case "ReturnFrom":
-			return effect.isNoop ?? false;
 		default:
 			return false;
 	}
