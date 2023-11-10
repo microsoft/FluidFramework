@@ -56,6 +56,7 @@ async function renderApiDocumentation() {
 		newlineKind: "lf",
 		uriRoot: "/docs/apis",
 		includeTopLevelDocumentHeading: false, // This will be added automatically by Hugo
+		includeBreadcrumb: false,
 		createDefaultLayout: layoutContent,
 		packageFilterPolicy: (apiPackage) => {
 			// Skip `@fluid-internal` packages
@@ -132,57 +133,53 @@ async function renderApiDocumentation() {
 }
 
 /**
- * Processes, categorizes them based on API item kinds and saves metadata from documents into YAML files.
- *
- * The function creates maps from the metadata: one for API items and another for packages.
- * Results are saved to 'apiData.yaml' and 'packageData.yaml' in the 'data' directory.
- *
- * @param {Array<Object>} documents - List of documents containing metadata.
- * @param {Object} documents[].apiItem - Metadata for a document item.
- * @param {string} documents[].apiItem.displayName - Name of the API item.
- * @param {string} documents[].apiItem.kind - Kind of the API item (e.g., Class, Interface, Package).
- *
- * @returns {void}
+ * Processes documents and generates data required for the nav bar.
+ * @param {Array<Object>} documents - List of documents with apiItem.
+ * @param {ApiItem | undefined} documents.apiItem - The API item that the document is created from. Some documents may not have an apiItem.
  */
 function buildNavBar(documents) {
-	const { APIMap, packageMap } = documents.reduce(
-		({ APIMap, packageMap }, document) => {
-			if (document.apiItem === undefined) {
-				return { APIMap, packageMap };
+	const validKinds = new Set([
+		ApiItemKind.Class,
+		ApiItemKind.Interface,
+		ApiItemKind.Enum,
+		ApiItemKind.Namespace,
+	]);
+	const { allAPIs, packageMap } = documents.reduce(
+		({ allAPIs, packageMap }, { apiItem }) => {
+			if (apiItem === undefined) {
+				return { allAPIs, packageMap };
 			}
 
-			const associatedPackage = document.apiItem?.getAssociatedPackage();
+			const { displayName, kind } = apiItem;
+
+			const associatedPackage = apiItem.getAssociatedPackage();
 			const packageName =
 				associatedPackage === undefined
 					? undefined
 					: ApiItemUtilities.getUnscopedPackageName(associatedPackage);
 
-			const { displayName, kind } = document.apiItem;
-
 			if (kind === ApiItemKind.Package) {
-				return {
-					APIMap,
-					packageMap: { ...packageMap, [displayName]: packageName },
-				};
+				packageMap[displayName] = packageName;
+			} else if (validKinds.has(kind)) {
+				allAPIs[packageName] = allAPIs[packageName] || {};
+				allAPIs[packageName][kind] = allAPIs[packageName][kind] || [];
+				allAPIs[packageName][kind].push(displayName);
 			}
 
-			if ([ApiItemKind.Class, ApiItemKind.Interface, ApiItemKind.Enum, ApiItemKind.Namespace].includes(kind)) {
-				APIMap[packageName] = APIMap[packageName] || {};
-				APIMap[packageName][kind] = APIMap[packageName][kind] || [];
-				APIMap[packageName][kind].push(displayName);
-			}
-			return { APIMap, packageMap };
+			return { allAPIs, packageMap };
 		},
-		{ APIMap: {}, packageMap: {} },
+		{ allAPIs: {}, packageMap: {} },
 	);
 
-	fs.writeFileSync(path.join(__dirname, "..", "data", "apiData.yaml"), yaml.dump(APIMap), "utf8");
-	fs.writeFileSync(
-		path.join(__dirname, "..", "data", "packageData.yaml"),
-		yaml.dump(packageMap),
-		"utf8",
-	);
+	saveToFile("allAPIs.yaml", allAPIs);
+	saveToFile("packageNameToDisplay.yaml", packageMap);
+	saveToFile("displayToPackageName.yaml", invertMap(packageMap));
 }
+
+const saveToFile = (filename, data) =>
+	fs.writeFileSync(path.join(__dirname, "..", "data", filename), yaml.dump(data), "utf8");
+
+const invertMap = (obj) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [v, k]));
 
 module.exports = {
 	renderApiDocumentation,

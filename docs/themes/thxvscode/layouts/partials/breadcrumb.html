@@ -1,0 +1,54 @@
+{{ $concept := "" }}
+{{ $conceptFound := false }}
+{{ $leafSegment := "" }}
+{{ $leafNodeWithCapitalization := "" }}
+{{ $categoryCapitalized := "" }}
+{{ $leafNodeFound := false }}
+
+{{ $fullURL := trim .Page.RelPermalink "/" }}
+{{ $urlSegments := split $fullURL "/" }}
+{{ $packageName := index $urlSegments 2 }}
+{{ if $packageName }}
+  {{ $packageDisplayName := index $.Site.Data.displayToPackageName $packageName }}
+
+  {{ range $key, $value := $.Site.Data.packages }}
+    {{ if in $value $packageDisplayName }}
+      {{ $concept = $key }}
+      {{ $conceptFound = true }}
+      {{ break }}
+    {{ end }}
+  {{ end }}
+
+  {{ if gt (len $urlSegments) 3 }}
+    {{ $leafSegment = index $urlSegments 3 }}
+    {{ $leafNodeFound = true }}
+    {{ $leafParts := split $leafSegment "-" }}
+    {{ if eq (len $leafParts) 2 }}
+      {{ $leafNodeLower := index $leafParts 0 }}
+      {{ $categoryLower := index $leafParts 1 }}
+      {{ $categoryCapitalized = (title (humanize $categoryLower)) }}
+      {{ $allLeafNodes := index $.Site.Data.allAPIs $packageName }}
+      {{ $leafNodesInCategory := index $allLeafNodes $categoryCapitalized }}
+      {{ range $leafNodesInCategory }}
+        {{ if eq (lower .) $leafNodeLower }}
+          {{ $leafNodeWithCapitalization = . }}
+          {{ break }}
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+
+  {{ if $conceptFound }}
+    <p>
+      <a href="/docs/apis/">{{ humanize $concept | title }}</a>
+      {{ if $packageName }}
+        {{ $packageLink := print "/docs/apis/" $packageName "/" }}
+        &gt; <a href="{{ $packageLink }}">{{ $packageDisplayName }}</a>
+      {{ end }}
+      {{ if $leafNodeFound }}
+        {{ $itemLink := print "/docs/apis/" $packageName "/" $leafSegment }}
+        &gt; <a href="{{ $itemLink }}">{{ $leafNodeWithCapitalization }}</a>
+      {{ end }}
+    </p>
+  {{ end }}
+{{ end }}

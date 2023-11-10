@@ -65,7 +65,7 @@
         {{- end }}
     </ul>
     <hr/>
-    <ul class="nav">
+    <ul class="nav" id="secondary-nav">
         <li {{ if $in_api_section }} class="active" {{ end }}>
             <a class="docs-home" href="/docs/apis/" {{ if $in_api_section }}
                 aria-label="Current Page: API Overview" {{ end }}>API Overview</a>
@@ -76,7 +76,7 @@
 
             <li class="panel {{if $isCurrentArea}}active expanded{{else}}collapsed{{end}}">
                 <a class="area" aria-label="{{ $grouping }} drop down" href="#{{ $grouping }}-articles"
-                    data-parent="#main-nav" data-toggle="collapse">{{ $grouping | humanize | title }}</a>
+                    data-parent="#secondary-nav" data-toggle="collapse">{{ $grouping | humanize | title }}</a>
 
                 <ul id="{{ $grouping }}-articles" class="collapse {{if $isCurrentArea}}in{{end}}">
                     {{- range $names }}
@@ -101,16 +101,15 @@
                             {{- range (where $packagePages "Params.package" .) -}}
                                 {{ $targetPage = . }}
                             {{- end }}
-                            {{ $packageKey := index $.Site.Data.packageData $targetPage.Params.package }}
-                            {{ $apiDetails := index $.Site.Data.apiData $packageKey }}
+                            {{ $packageKey := index $.Site.Data.packageNameToDisplay $targetPage.Params.package }}
+                            {{ $apiDetails := index $.Site.Data.allAPIs $packageKey }}
                             {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
                             {{ $hasActiveLeaf := false }}
-
                             {{ range $category := slice "Interface" "Class" "Enum" }}
                                 {{ if isset $apiDetails $category }}
                                     {{ $currentTrimmedLink := trim $current.RelPermalink " " }}
                                     {{ $categoryLower := lower $category }}
-                                    
+
                                     {{ range $item := index $apiDetails $category }}
                                         {{ $isActiveItem := in $currentTrimmedLink (trim (print (lower $item) "-" $categoryLower "/") " ") }}
                                         {{ if $isActiveItem }} {{ $hasActiveLeaf = true }} {{ end }}
@@ -147,7 +146,6 @@
                                                     {{ range $item := index $apiDetails $category }}
                                                         {{ $itemLink := print (relURL "/docs/apis/") $packageKey "/" (lower $item) "-" $categoryLower }}
                                                         {{ $isActiveItem := in $currentTrimmedLink (trim (print (lower $item) "-" $categoryLower "/") " ") }}
-
                                                         <li class="{{ if $isActiveItem }}active expanded{{ else }}collapsed{{ end }}">
                                                             <a class="leaf-node" href="{{ $itemLink }}" {{ if $isActiveItem }}aria-label="Current Page: {{ $item }} {{ $categoryPlural }}"{{ end }}>
                                                                 {{ partial "breakOnCapitals.html" $item }}
@@ -222,8 +220,8 @@
                 </option>
             <!-- {{- end }} -->
     
-                {{ $packageKey := index $.Site.Data.packageData $targetPage.Params.package }}
-                {{ $apiDetails := index $.Site.Data.apiData $packageKey }}
+                {{ $packageKey := index $.Site.Data.packageNameToDisplay $targetPage.Params.package }}
+                {{ $apiDetails := index $.Site.Data.allAPIs $packageKey }}
                 {{ range $category := slice "Interface" "Class" "Enum" }}
                     {{ if isset $apiDetails $category }}
                         <option value="#" disabled>&nbsp;&nbsp;{{ $category }}</option>
