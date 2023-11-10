@@ -381,8 +381,9 @@ describe("editableTreeTypes", () => {
 		// Unboxed FieldNode
 		{
 			type UnboxedFieldNode = UnboxNodeUnion<[typeof basicFieldNode]>;
-			type _1 = requireTrue<areSafelyAssignable<TreeNode | undefined, UnboxedFieldNode>>;
-			// @ts-expect-error union can unbox to undefined
+			type _1 = requireTrue<
+				areSafelyAssignable<TypedNode<typeof basicFieldNode>, UnboxedFieldNode>
+			>;
 			type _2 = requireAssignableTo<UnboxedFieldNode, TreeNode>;
 		}
 		// Recursive
