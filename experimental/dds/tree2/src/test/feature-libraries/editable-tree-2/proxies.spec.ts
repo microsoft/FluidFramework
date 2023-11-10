@@ -168,7 +168,7 @@ describe("SharedTreeObject", () => {
 		root.child = newChild;
 		assert.equal(root.child, newChild);
 		root.optional = numberChild.create(newChild);
-		root.optional = numberChild.create(newChild);
+		root.optional = numberChild.create(newChild); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 		assert.equal(root.optional.content, 43);
 	});
 
@@ -189,7 +189,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(list, [{ id: "B" }]);
 			const newItem = obj.create({ id: "A" });
 			list.insertAtStart([newItem]);
-			list.insertAtStart([]);
+			list.insertAtStart([]); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 			assert.equal(newItem, list[0]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [newItem, { id: "B" }]);
 		});
@@ -198,7 +198,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(list, [{ id: "A" }]);
 			const newItem = obj.create({ id: "B" });
 			list.insertAtEnd([newItem]);
-			list.insertAtEnd([]);
+			list.insertAtEnd([]); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [{ id: "A" }, newItem]);
 		});
@@ -207,7 +207,7 @@ describe("SharedTreeList", () => {
 			assert.deepEqual(list, [{ id: "A" }, { id: "C" }]);
 			const newItem = obj.create({ id: "B" });
 			list.insertAt(1, [newItem]);
-			list.insertAt(1, []);
+			list.insertAt(1, []); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 			assert.equal(newItem, list[1]); // Check that the inserted and read proxies are the same object
 			assert.deepEqual(list, [{ id: "A" }, newItem, { id: "C" }]);
 		});
@@ -650,7 +650,7 @@ describe("SharedTreeMap", () => {
 
 		// Override existing value
 		root.map.set("baz", "37");
-		root.map.set("baz", "37");
+		root.map.set("baz", "37"); // Check that we can do a "no-op" change (a change which does not change the tree's content).
 		assert.equal(root.map.size, 3);
 		assert(root.map.has("baz"));
 		assert.equal(root.map.get("baz"), "37");

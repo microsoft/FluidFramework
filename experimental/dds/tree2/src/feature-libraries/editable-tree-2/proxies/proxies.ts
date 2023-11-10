@@ -157,11 +157,13 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| OptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
-						const offNextChange = editNode[onNextChange](() => {
-							hydrateProxies(typedField.boxedContent);
-						});
-						typedField.content = content;
-						offNextChange();
+						modifyChildren(
+							editNode,
+							() => {
+								typedField.content = content;
+							},
+							() => hydrateProxies(typedField.boxedContent),
+						);
 						break;
 					}
 					default:
@@ -250,12 +252,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
-			const editNode = getEditNode(this);
-			const offNextChange = editNode[onNextChange](() => {
-				hydrateProxies(editNode);
-			});
-			getSequenceField(this).insertAt(index, content);
-			offNextChange();
+			modifyChildren(
+				getEditNode(this),
+				() => getSequenceField(this).insertAt(index, content),
+				(listEditNode) => hydrateProxies(listEditNode),
+			);
 		},
 	},
 	insertAtStart: {
@@ -264,12 +265,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
-			const editNode = getEditNode(this);
-			const offNextChange = editNode[onNextChange](() => {
-				hydrateProxies(editNode);
-			});
-			getSequenceField(this).insertAtStart(content);
-			offNextChange();
+			modifyChildren(
+				getEditNode(this),
+				() => getSequenceField(this).insertAtStart(content),
+				(listEditNode) => hydrateProxies(listEditNode),
+			);
 		},
 	},
 	insertAtEnd: {
@@ -281,12 +281,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				value,
 				this.length,
 			);
-			const editNode = getEditNode(this);
-			const offNextChange = editNode[onNextChange](() => {
-				hydrateProxies(editNode);
-			});
-			getSequenceField(this).insertAtEnd(content);
-			offNextChange();
+			modifyChildren(
+				getEditNode(this),
+				() => getSequenceField(this).insertAtEnd(content),
+				(listEditNode) => hydrateProxies(listEditNode),
+			);
 		},
 	},
 	removeAt: {
@@ -605,15 +604,14 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			key: string,
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
-			const editNode = getEditNode(this);
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
-			const offNextChange = editNode[onNextChange](() => {
-				hydrateProxies(getMapChildNode(editNode, key));
-			});
-			editNode.set(key, content);
-			offNextChange();
+			modifyChildren(
+				getEditNode(this),
+				(mapNode) => mapNode.set(key, content),
+				(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
+			);
 			return this;
 		},
 	},
@@ -878,4 +876,21 @@ function getObjectChildNode(objectNode: ObjectNode, key: string): TreeNode | und
 		"Expected required or optional field kind",
 	);
 	return (field as RequiredField<AllowedTypes> | OptionalField<AllowedTypes>).boxedContent;
+}
+
+/**
+ * Run the given function `modify`.
+ * If the function results in any changes to the direct children of `parent`, `after` will be run immediately thereafter.
+ */
+function modifyChildren<T extends TreeNode>(
+	parent: T,
+	modify: (parent: T) => void,
+	after?: (parent: T) => void,
+): void {
+	const offNextChange = parent[onNextChange](() => after?.(parent));
+	modify(parent);
+	// `onNextChange` unsubscribes itself after firing once. However, there is no guarantee that it will fire.
+	// For example, the `modify` function may result in a no-op that doesn't trigger an edit (e.g. inserting `[]` into a list).
+	// In those cases, we must unsubscribe manually here. If `modify` was not a no-op, it does no harm to call this function anyway.
+	offNextChange();
 }

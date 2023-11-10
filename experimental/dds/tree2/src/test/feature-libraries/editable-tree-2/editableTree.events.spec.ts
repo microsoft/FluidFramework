@@ -669,21 +669,21 @@ describe("onNextChange event", () => {
 	it("fires exactly once after a change", () => {
 		const view = viewWithContent({ schema, initialTree });
 		const editNode = getEditNode(view.root);
-		let changeCount = 0;
-		editNode[onNextChange](() => (changeCount += 1));
+		let onNextChangeCount = 0;
+		editNode[onNextChange](() => (onNextChangeCount += 1));
 		assert(editNode.is(object));
 		editNode.content = 7;
-		assert.equal(changeCount, 1);
+		assert.equal(onNextChangeCount, 1);
 		editNode.content = 12;
-		assert.equal(changeCount, 1);
+		assert.equal(onNextChangeCount, 1);
 	});
 
 	it("can have at most one listener at a time", () => {
 		const view = viewWithContent({ schema, initialTree });
 		const editNode = getEditNode(view.root);
-		let changeCount = 0;
-		editNode[onNextChange](() => (changeCount += 1));
-		assert.throws(() => editNode[onNextChange](() => (changeCount += 1)));
+		let onNextChangeEventCount = 0;
+		editNode[onNextChange](() => (onNextChangeEventCount += 1));
+		assert.throws(() => editNode[onNextChange](() => (onNextChangeEventCount += 1)));
 	});
 
 	it("can be subscribed to again after throwing and catching an error", () => {
@@ -701,13 +701,13 @@ describe("onNextChange event", () => {
 		const view = viewWithContent({ schema, initialTree });
 		const editNode = getEditNode(view.root);
 		assert(editNode.is(object));
-		let changed = false;
+		let onNextChangeEventFired = false;
 		const off = editNode[onNextChange](() => {
-			changed = true;
+			onNextChangeEventFired = true;
 		});
 		off();
 		editNode.content = 7;
-		assert.equal(changed, false);
+		assert.equal(onNextChangeEventFired, false);
 	});
 
 	it("unsubscription has no effect if the event has already fired", () => {
@@ -717,12 +717,12 @@ describe("onNextChange event", () => {
 		const off = editNode[onNextChange](() => {});
 		editNode.content = 7;
 		off();
-		let changed = false;
+		let onNextChangeEventFired = false;
 		editNode[onNextChange](() => {
-			changed = true;
+			onNextChangeEventFired = true;
 		});
 		off();
 		editNode.content = 13;
-		assert.equal(changed, true);
+		assert.equal(onNextChangeEventFired, true);
 	});
 });

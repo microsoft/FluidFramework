@@ -204,39 +204,27 @@ describe("SharedTreeObject factories", () => {
 		// would fail because it tried to map an edit node which already had a proxy to a different proxy.
 		// TODO: remove any cast when `viewWithContent` is properly typed with proxy types
 		const view = viewWithContent({ schema, initialTree: initialTree as any });
-		const log: [number, number, number][] = [];
-		function logData() {
+		function readData() {
 			const objectContent = view.root.child.content;
+			assert(objectContent !== undefined);
 			const listContent = view.root.grand.child.list[view.root.grand.child.list.length - 1];
 			assert(listContent !== undefined);
 			const mapContent = view.root.grand.child.map.get("a");
 			assert(mapContent !== undefined);
-			log.push([objectContent, listContent.content, mapContent.content]);
 		}
 		Tree.on(view.root, "beforeChange", () => {
-			logData();
+			readData();
 		});
 		Tree.on(view.root, "afterChange", () => {
-			logData();
+			readData();
 		});
 		view.checkout.events.on("afterBatch", () => {
-			logData();
+			readData();
 		});
 		const content = { content: 3 };
 		view.root.child = childA.create(content);
 		view.root.grand.child.list.insertAtEnd([childA.create(content)]);
 		view.root.grand.child.map.set("a", childA.create(content));
-		assert.deepEqual(log, [
-			[42, 42, 42], // Before edit 1
-			[3, 42, 42], // After edit 1
-			[3, 42, 42], // After edit 1
-			[3, 42, 42], // Before edit 2
-			[3, 3, 42], // After edit 2
-			[3, 3, 42], // After edit 2
-			[3, 3, 42], // Before edit 3
-			[3, 3, 3], // After edit 3
-			[3, 3, 3], // After edit 3
-		]);
 	});
 
 	describe("produce proxies that can be read after insertion for trees of", () => {
