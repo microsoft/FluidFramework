@@ -1771,7 +1771,7 @@ export class TreeFieldSchema<out TKind extends FieldKind = FieldKind, const out 
     readonly allowedTypes: TTypes;
     get allowedTypeSet(): AllowedTypeSet;
     static create<TKind extends FieldKind, const Types extends AllowedTypes>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
-    static createUnsafe<TKind extends FieldKind, const Types>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
+    static createUnsafe<TKind extends FieldKind, const Types extends Unenforced<AllowedTypes>>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types>;
     static readonly empty: TreeFieldSchema<Forbidden, readonly []>;
     equals(other: TreeFieldSchema): boolean;
     // (undocumented)

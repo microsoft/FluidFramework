@@ -349,10 +349,10 @@ export class TreeFieldSchema<
 	 * `Types` here must extend `AllowedTypes`, but this cannot be enforced with an "extends" clause: see {@link Unenforced} for details.
 	 * Prefer {@link TreeFieldSchema.create} when possible.
 	 */
-	public static createUnsafe<TKind extends FieldKind, const Types>(
-		kind: TKind,
-		allowedTypes: Types,
-	): TreeFieldSchema<TKind, Types> {
+	public static createUnsafe<
+		TKind extends FieldKind,
+		const Types extends Unenforced<AllowedTypes>,
+	>(kind: TKind, allowedTypes: Types): TreeFieldSchema<TKind, Types> {
 		return new TreeFieldSchema(kind, allowedTypes);
 	}
 
