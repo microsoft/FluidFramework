@@ -17,6 +17,7 @@ import { brand } from "../../../util";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { composeAnonChanges, invert as invertChange } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
+import { CellId } from "../../../feature-libraries/sequence-field";
 
 function invert(change: TestChangeset): TestChangeset {
 	deepFreeze(change);
@@ -260,8 +261,13 @@ describe("SequenceField - Invert", () => {
 		const actual = invert(input);
 		const expected = [
 			Mark.transient(
-				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
-				Mark.delete(1, brand(1)),
+				Mark.returnTo(1, brand(0)),
+				Mark.delete(1, brand(0), {
+					detachIdOverride: { revision: tag2, localId: brand(0) },
+				}),
+				{
+					cellId: { revision: tag1, localId: brand(0) },
+				},
 			),
 			Mark.modify(inverseChildChange1),
 			Mark.returnFrom(1, brand(0)),
@@ -280,11 +286,18 @@ describe("SequenceField - Invert", () => {
 		const actual = invert(input);
 		const expected = [
 			Mark.transient(
-				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
-				Mark.delete(1, brand(1)),
+				Mark.returnTo(1, brand(0)),
+				Mark.delete(1, brand(0), {
+					detachIdOverride: { revision: tag2, localId: brand(0) },
+				}),
+				{
+					cellId: { revision: tag1, localId: brand(0) },
+				},
 			),
 			Mark.modify(inverseChildChange1),
-			Mark.returnFrom(1, brand(0)),
+			Mark.returnFrom(1, brand(0), {
+				detachIdOverride: { revision: tag2, localId: brand(1) },
+			}),
 			Mark.modify(inverseChildChange2),
 		];
 		assert.deepEqual(actual, expected);

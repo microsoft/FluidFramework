@@ -17,6 +17,8 @@ import {
 	NoopMark,
 	Delete,
 	CellMark,
+	MoveIn,
+	MarkEffect,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
@@ -132,7 +134,7 @@ function invertMark<TNodeChange>(
 				id: mark.cellId.localId,
 			};
 
-			if (isReattach(mark)) {
+			if (mark.type === "Pin" || isReattach(mark)) {
 				deleteMark.detachIdOverride = mark.cellId;
 			}
 
@@ -141,9 +143,6 @@ function invertMark<TNodeChange>(
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
-			if (areInputCellsEmpty(mark)) {
-				return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, mark.cellId)];
-			}
 			if (mark.changes !== undefined) {
 				assert(
 					mark.count === 1,
@@ -170,17 +169,27 @@ function invertMark<TNodeChange>(
 				localId: mark.id,
 			};
 
-			const invertedMark: Mark<TNodeChange> = {
+			const moveIn: MoveIn = {
 				type: "MoveIn",
 				id: mark.id,
-				count: mark.count,
-				cellId,
 			};
 
 			if (mark.finalEndpoint !== undefined) {
-				invertedMark.finalEndpoint = { localId: mark.finalEndpoint.localId };
+				moveIn.finalEndpoint = { localId: mark.finalEndpoint.localId };
 			}
-			return [invertedMark];
+			let effect: MarkEffect = moveIn;
+			if (areInputCellsEmpty(mark)) {
+				effect = {
+					type: "Transient",
+					attach: moveIn,
+					detach: {
+						type: "Delete",
+						id: mark.id,
+						detachIdOverride: mark.cellId,
+					},
+				};
+			}
+			return [{ ...effect, count: mark.count, cellId }];
 		}
 		case "MoveIn": {
 			const invertedMark: CellMark<ReturnFrom, TNodeChange> = {
