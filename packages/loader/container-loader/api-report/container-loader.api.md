@@ -22,7 +22,6 @@ import { IProtocolHandler as IProtocolHandler_2 } from '@fluidframework/protocol
 import { IProvideFluidCodeDetailsComparer } from '@fluidframework/container-definitions';
 import { IQuorumSnapshot } from '@fluidframework/protocol-base';
 import { IRequest } from '@fluidframework/core-interfaces';
-import { IRequestHeader } from '@fluidframework/core-interfaces';
 import { IResponse } from '@fluidframework/core-interfaces';
 import { ISignalMessage } from '@fluidframework/protocol-definitions';
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
@@ -135,9 +134,6 @@ export class Loader implements IHostLoader {
 
 // @public
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
-
-// @public @deprecated
-export function requestResolvedObjectFromContainer(container: IContainer, headers?: IRequestHeader): Promise<IResponse>;
 
 // @public
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;

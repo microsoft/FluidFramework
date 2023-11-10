@@ -105,6 +105,11 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"RemovedFunctionDeclaration_requestResolvedObjectFromContainer": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		}
 	}
 }
