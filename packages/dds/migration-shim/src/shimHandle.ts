@@ -4,7 +4,7 @@
  */
 
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IShim } from "./types.js";
+import { type IShim } from "./types";
 
 /**
  * ShimHandle is a special class to handle the fact that we are essentially creating a proxy for a DDS.

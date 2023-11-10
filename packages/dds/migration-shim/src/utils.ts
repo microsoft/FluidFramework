@@ -5,7 +5,7 @@
 
 import { type IChannelAttributes } from "@fluidframework/datastore-definitions";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type IStampedContents } from "./types.js";
+import { type IStampedContents } from "./types";
 
 /**
  * Checks if two channel attributes objects match.
