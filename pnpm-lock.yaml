@@ -8902,7 +8902,6 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
       uuid: ^9.0.0
@@ -8947,7 +8946,6 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
-      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/driver-utils:
@@ -35134,6 +35132,9 @@ packages:
     resolution: {integrity: sha512-dlCojsiJLV9BcL8ar03qycI0H5quM47Ei+mh14It0dTYhLAoH8B/91J0/pLDX3Wba9wTkPCbEKzNVvV8ea0WlQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
+    peerDependenciesMeta:
+      markdown-magic:
+        optional: true
     dependencies:
       findup: 0.1.5
       sort-scripts: 1.0.1
@@ -35143,6 +35144,9 @@ packages:
     resolution: {integrity: sha512-eoYa+jZHd7TIijM0xuBJWC7rEF75OgFnN0/cwNDbLsmeYCAprR5x0EvZFaHVl2deJN+ziBN3rQ9/m/TD7n4bAQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
+    peerDependenciesMeta:
+      markdown-magic:
+        optional: true
     dependencies:
       lodash.template: 4.5.0
     dev: true
