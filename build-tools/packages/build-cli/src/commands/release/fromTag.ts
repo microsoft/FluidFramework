@@ -79,6 +79,8 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 			this.error(`Release matching version '${version.version}' not found`);
 		}
 
+		const taggedVersion = versions[taggedReleaseIndex];
+
 		const prevVersionDetails = versions[taggedReleaseIndex + 1];
 		if (prevVersionDetails === undefined) {
 			this.error(`No previous release found`);
@@ -99,7 +101,7 @@ export default class FromTagCommand extends ReleaseReportBaseCommand<typeof From
 			packageOrReleaseGroup: this.releaseGroupName,
 			title: getReleaseTitle(this.releaseGroupName, version, releaseType),
 			tag,
-			date: release.latestReleasedVersion.date,
+			date: taggedVersion.date,
 			releaseType,
 			version: version.version,
 			previousVersion,

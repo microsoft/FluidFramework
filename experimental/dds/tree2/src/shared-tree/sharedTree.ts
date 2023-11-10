@@ -48,10 +48,11 @@ import {
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
+	ProxyRoot,
 } from "../feature-libraries";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
-import { type TypedTreeChannel } from "./typedTree";
+import { TreeView, type ITree } from "./simpleTree";
 import {
 	InitializeAndSchematizeConfiguration,
 	afterSchemaChanges,
@@ -59,7 +60,7 @@ import {
 	schematize,
 } from "./schematizedTree";
 import { TreeCheckout, CheckoutEvents, createTreeCheckout } from "./treeCheckout";
-import { ITreeView, TreeView } from "./treeView";
+import { ITreeView, CheckoutView } from "./treeView";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -89,7 +90,7 @@ export interface SharedTreeContentSnapshot {
  * See [the README](../../README.md) for details.
  * @alpha
  */
-export interface ISharedTree extends ISharedObject, TypedTreeChannel {
+export interface ISharedTree extends ISharedObject, ITree {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -99,13 +100,18 @@ export interface ISharedTree extends ISharedObject, TypedTreeChannel {
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
 
-	// Overrides less specific schematize from base
-	schematize<TRoot extends TreeFieldSchema>(
+	/**
+	 * Like {@link ITree.schematize}, but returns a more powerful type exposing more package internal information.
+	 * @privateRemarks
+	 * This has to avoid its name colliding with `schematize`.
+	 * TODO: Either ITree and ISharedTree should be split into separate objects, the methods should be merged or a better convention for resolving such name conflicts should be selected.
+	 */
+	schematizeInternal<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 	): ITreeView<TRoot>;
 
 	/**
-	 * Like {@link ISharedTree.schematize}, but will never modify the document.
+	 * Like {@link ISharedTree.schematizeInternal}, but will never modify the document.
 	 *
 	 * @param schema - The view schema to use.
 	 * @param onSchemaIncompatible - A callback.
@@ -201,7 +207,7 @@ export class SharedTree
 		onSchemaIncompatible: () => void,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): TreeView<TRoot> | undefined {
+	): CheckoutView<TRoot> | undefined {
 		assert(this.hasView2 === false, "Cannot create second view from tree.");
 
 		const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, schema);
@@ -214,7 +220,7 @@ export class SharedTree
 		}
 
 		this.hasView2 = true;
-		const view2 = new TreeView(
+		const view2 = new CheckoutView(
 			this.view,
 			schema,
 			nodeKeyManager ?? createNodeKeyManager(this.runtime.idCompressor),
@@ -255,11 +261,11 @@ export class SharedTree
 		}
 	}
 
-	public schematize<TRoot extends TreeFieldSchema>(
+	public schematizeInternal<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
 		nodeKeyManager?: NodeKeyManager,
 		nodeKeyFieldKey?: FieldKey,
-	): TreeView<TRoot> {
+	): CheckoutView<TRoot> {
 		assert(this.hasView2 === false, "Cannot create second view from tree.");
 		// TODO:
 		// When this becomes a more proper out of schema adapter, editing should be made lazy.
@@ -309,6 +315,20 @@ export class SharedTree
 				nodeKeyFieldKey,
 			) ?? fail("Schematize failed")
 		);
+	}
+
+	public schematize<TRoot extends TreeFieldSchema>(
+		config: InitializeAndSchematizeConfiguration<TRoot>,
+	): TreeView<ProxyRoot<TreeSchema<TRoot>>> {
+		const view = this.schematizeInternal(config);
+		const result = {
+			get root(): ProxyRoot<TreeSchema<TRoot>> {
+				return view.root;
+			},
+			events: view.checkout.events,
+			[disposeSymbol]: () => view[disposeSymbol](),
+		};
+		return result;
 	}
 
 	/**

@@ -57,7 +57,7 @@ function initializeTestTree(
 	state: JsonableTree = initialTestJsonTree,
 ): ITreeCheckout {
 	const writeCursor = cursorForJsonableTreeNode(state);
-	return tree.schematize({
+	return tree.schematizeInternal({
 		allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 		initialTree: [writeCursor],
 		schema: fullSchemaData,

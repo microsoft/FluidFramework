@@ -163,6 +163,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	public async load(services: IChannelServices): Promise<void> {
 		const shimServices =
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);
