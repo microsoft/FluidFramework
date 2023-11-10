@@ -32,24 +32,23 @@ import { internalFunction } from "./internalModule";
 `;
 
 ruleTester.run(
-	"no-restricted-tags-imports", // rule name
-	noRestrictedTagsImports, // rule code
+	"no-restricted-tags-imports",
+	noRestrictedTagsImports,
 	{
-		// checks
-		// 'valid' checks cases that should pass
+		// Checks cases that should pass
 		valid: [
 			{
 				code: validCodeWithJSDoc,
 			},
 		],
-		// 'invalid' checks cases that should not pass
+		// 'Checks cases that should not pass
 		invalid: [
 			{
 				code: invalidCodeWithJSDoc,
 				options: [
 					{
-						tags: ["internal", "alpha"], // Array of tags
-						exceptions: ["foo", "bar"], // Array of exceptions
+						tags: ["internal", "alpha"],
+						exceptions: ["foo", "bar"], 
 					},
 				],
 				errors: 1,

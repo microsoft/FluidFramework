@@ -53,6 +53,7 @@ module.exports = {
 						if (comment.type !== "Block") {
 							return;
 						}
+						// Use a JSDoc parser to parse the comments for each imported item.
 						const jsDoc = require("doctrine").parse(comment.value, { unwrap: true });
 						jsDoc.tags.forEach((tag) => {
 							console.log(tag);
