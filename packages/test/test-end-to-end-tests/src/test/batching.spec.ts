@@ -23,7 +23,7 @@ import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-private/test-version-utils";
+import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 
@@ -106,7 +106,7 @@ async function waitForCleanContainers(...dataStores: ITestFluidObject[]) {
 	);
 }
 
-describeNoCompat("Flushing ops", (getTestObjectProvider) => {
+describeFullCompat("Flushing ops", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

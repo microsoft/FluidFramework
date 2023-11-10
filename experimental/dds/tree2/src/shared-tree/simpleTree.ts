@@ -11,8 +11,11 @@ import {
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
 import { ProxyField, TreeFieldSchema } from "../feature-libraries";
+import { ISubscribable } from "../events";
+import { IDisposable } from "../util";
 import { SharedTree, SharedTreeOptions } from "./sharedTree";
 import { InitializeAndSchematizeConfiguration } from "./schematizedTree";
+import { CheckoutEvents } from "./treeCheckout";
 
 /**
  * Configuration to specialize a Tree DDS for a particular use.
@@ -32,7 +35,7 @@ export interface TypedTreeOptions extends SharedTreeOptions {
  * Channel for a Tree DDS.
  * @alpha
  */
-export interface TypedTreeChannel extends IChannel {
+export interface ITree extends IChannel {
 	/**
 	 * Returns a tree known to be compatible with the provided schema with a schema aware API based on that schema.
 	 *
@@ -68,24 +71,29 @@ export interface TypedTreeChannel extends IChannel {
 	 */
 	schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): TypedTreeView<TRoot>;
+	): TreeView<ProxyField<TRoot>>;
 }
 
 /**
  * An editable view of a (version control style) branch of a shared tree.
  * @privateRemarks
+ * This is a wrapper around ITreeView that adjusted it for the public package API.
  * TODO:
- * 1. Once ISharedTreeView is renamed this can become ISharedTreeView.
- * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
+ * Establish a naming conversion between these internal and wrapper types.
  * @alpha
  */
-export interface TypedTreeView<in out TRoot extends TreeFieldSchema> {
+export interface TreeView<in out TRoot> extends IDisposable {
 	/**
 	 * The current root of the tree.
 	 */
-	readonly root: ProxyField<TRoot>;
+	readonly root: TRoot;
 
 	// TODO: root setter.
+
+	/**
+	 * Events for the tree.
+	 */
+	readonly events: ISubscribable<CheckoutEvents>;
 }
 
 /**
@@ -111,13 +119,13 @@ export class TypedTreeFactory implements IChannelFactory {
 		id: string,
 		services: IChannelServices,
 		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<TypedTreeChannel> {
+	): Promise<ITree> {
 		const tree = new SharedTree(id, runtime, channelAttributes, this.options, "SharedTree");
 		await tree.load(services);
 		return tree;
 	}
 
-	public create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel {
+	public create(runtime: IFluidDataStoreRuntime, id: string): ITree {
 		const tree = new SharedTree(id, runtime, this.attributes, this.options, "SharedTree");
 		tree.initializeLocal();
 		return tree;

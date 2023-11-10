@@ -123,7 +123,7 @@ const quantityType = builder.object("quantityObj", {
 const schema = builder.intoSchema(quantityType);
 
 function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
-	return tree.schematize({
+	return tree.schematizeInternal({
 		initialTree: {
 			quantity: 0,
 		},
