@@ -85,7 +85,7 @@ class NewTreeInventoryItem extends TypedEmitter<IInventoryItemEvents> implements
 
 export class NewTreeInventoryListController extends EventEmitter implements IInventoryList {
 	// TODO: See note in inventoryList.ts for why this duplicative schematizeView call is here.
-	// TODO: initial tree type
+	// TODO: initial tree type - and revisit if we get separate schematize/initialize calls
 	public static initializeTree(tree: ISharedTree, initialTree?: any): void {
 		const view = tree.schematize({
 			initialTree: initialTree ?? {
@@ -109,6 +109,7 @@ export class NewTreeInventoryListController extends EventEmitter implements IInv
 			schema,
 		});
 
+		// This is required because schematizing the tree twice will result in an error
 		if (initialTree !== undefined) {
 			view[disposeSymbol]();
 		}
