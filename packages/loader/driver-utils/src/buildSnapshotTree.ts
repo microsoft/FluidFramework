@@ -86,6 +86,7 @@ function flatten(tree: ITreeEntry[], blobMap: Map<string, ArrayBufferLike>): git
  * @param blobMap - a map of blob's sha1 to content that gets filled with content from entries
  * NOTE: blobMap's validity is contingent on the returned promise's resolution
  * @returns the hierarchical tree
+ * @public
  */
 export function buildSnapshotTree(
 	entries: ITreeEntry[],

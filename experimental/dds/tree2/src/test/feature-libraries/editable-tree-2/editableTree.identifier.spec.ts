@@ -18,12 +18,12 @@ const builder = new SchemaBuilder({
 	scope: "EditableTree Node Keys",
 	libraries: [nodeKeySchema],
 });
-const childNodeSchema = builder.struct("ChildNode", {
+const childNodeSchema = builder.object("ChildNode", {
 	...nodeKeyField,
 	name: leaf.string,
 });
 
-const parentNodeSchema = builder.struct("ParentNode", {
+const parentNodeSchema = builder.object("ParentNode", {
 	...nodeKeyField,
 	children: builder.sequence(childNodeSchema),
 });
@@ -77,6 +77,9 @@ describe("editable-tree: node keys", () => {
 		const parentNode = view.content;
 		const childA = parentNode.children.at(0);
 		const childB = parentNode.children.at(1);
+		// We know how the test tree looks so these should not be undefined.
+		assert(childA !== undefined, "Tried to access node that doesn't exist (index 0)");
+		assert(childB !== undefined, "Tried to access node that doesn't exist (index 1)");
 		assert.equal(parentNode.localNodeKey, parentKey);
 		assert.equal(childA.localNodeKey, childAKey);
 		assert.equal(childB.localNodeKey, childBKey);
@@ -87,6 +90,9 @@ describe("editable-tree: node keys", () => {
 		const parentNode = view.content;
 		const childA = parentNode.children.at(0);
 		const childB = parentNode.children.at(1);
+		// We know how the test tree looks so these should not be undefined.
+		assert(childA !== undefined, "Tried to access node that doesn't exist (index 0)");
+		assert(childB !== undefined, "Tried to access node that doesn't exist (index 1)");
 		assert.equal(
 			parentNode[nodeKeyFieldKey].stableNodeKey,
 			view.context.nodeKeys.stabilize(parentKey),

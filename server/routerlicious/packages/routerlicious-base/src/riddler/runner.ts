@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import cluster from "cluster";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IRunner,
@@ -15,7 +16,6 @@ import {
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { Provider } from "nconf";
-import * as winston from "winston";
 import * as app from "./app";
 import { ITenantDocument } from "./tenantManager";
 
@@ -44,26 +44,35 @@ export class RiddlerRunner implements IRunner {
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create the HTTP server and attach alfred to it
-		const riddler = app.create(
-			this.tenantsCollection,
-			this.loggerFormat,
-			this.baseOrdererUrl,
-			this.defaultHistorianUrl,
-			this.defaultInternalHistorianUrl,
-			this.secretManager,
-			this.fetchTenantKeyMetricInterval,
-			this.riddlerStorageRequestMetricInterval,
-			this.cache,
-		);
-		riddler.set("port", this.port);
+		const usingClusterModule: boolean | undefined = this.config.get("riddler:useNodeCluster");
+		// Don't include application logic in primary thread when Node.js cluster module is enabled.
+		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
-		this.server = this.serverFactory.create(riddler);
+		if (includeAppLogic) {
+			// Create the HTTP server and attach alfred to it
+			const riddler = app.create(
+				this.tenantsCollection,
+				this.loggerFormat,
+				this.baseOrdererUrl,
+				this.defaultHistorianUrl,
+				this.defaultInternalHistorianUrl,
+				this.secretManager,
+				this.fetchTenantKeyMetricInterval,
+				this.riddlerStorageRequestMetricInterval,
+				this.cache,
+			);
+			riddler.set("port", this.port);
+
+			this.server = this.serverFactory.create(riddler);
+		} else {
+			this.server = this.serverFactory.create(null);
+		}
+
 		const httpServer = this.server.httpServer;
-
-		httpServer.listen(this.port);
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
+		// Listen on primary thread port, or allow cluster module to assign random port for worker thread.
+		httpServer.listen(this.port);
 
 		this.stopped = false;
 
@@ -73,12 +82,12 @@ export class RiddlerRunner implements IRunner {
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public async stop(caller?: string, uncaughtException?: any): Promise<void> {
 		if (this.stopped) {
-			Lumberjack.info("RiddlerRunner.stop already called, returning early.");
+			Lumberjack.info("RiddlerRunner.stop already called, returning early.", { caller });
 			return;
 		}
 
 		this.stopped = true;
-		Lumberjack.info("RiddlerRunner.stop starting.");
+		Lumberjack.info("RiddlerRunner.stop starting.", { caller });
 
 		const runnerServerCloseTimeoutMs =
 			this.config?.get("shared:runnerServerCloseTimeoutMs") ?? 30000;
@@ -130,7 +139,6 @@ export class RiddlerRunner implements IRunner {
 	private onListening() {
 		const addr = this.server.httpServer.address();
 		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
-		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}
 }

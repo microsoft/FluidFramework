@@ -9,6 +9,7 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IWebSocketTracker,
+	IServiceMessageResourceManager,
 } from "@fluidframework/server-services-core";
 import { IDocumentDeleteService } from "./services";
 
@@ -19,4 +20,5 @@ export interface IAlfredResourcesCustomizations {
 	tokenRevocationManager?: ITokenRevocationManager;
 	revokedTokenChecker?: IRevokedTokenChecker;
 	webSocketTracker?: IWebSocketTracker;
+	serviceMessageResourceManager?: IServiceMessageResourceManager;
 }

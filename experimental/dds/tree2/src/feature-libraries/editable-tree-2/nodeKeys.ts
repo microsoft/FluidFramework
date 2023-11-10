@@ -4,12 +4,12 @@
  */
 
 import { LocalNodeKey, NodeKeyIndex, NodeKeyManager, StableNodeKey } from "../node-key";
-import { Struct } from "./editableTreeTypes";
+import { ObjectNode } from "./editableTreeTypes";
 
 /**
  * A collection of utilities for managing {@link StableNodeKey}s.
  * A node key can be assigned to a node and allows that node to be easily retrieved from the tree at a later time. (see `nodeKey.map`).
- * @remarks {@link LocalNodeKey}s are put on nodes via a special field (see {@link localNodeKeySymbol}.
+ * @remarks {@link LocalNodeKey}s are put on {@link ObjectNode}s via a special field.
  * A node with a node key in its schema must always have a node key.
  * @alpha
  */
@@ -31,7 +31,7 @@ export interface NodeKeys {
 	/**
 	 * A map of all {@link LocalNodeKey}s in the document to their corresponding nodes.
 	 */
-	readonly map: ReadonlyMap<LocalNodeKey, Struct>;
+	readonly map: ReadonlyMap<LocalNodeKey, ObjectNode>;
 }
 
 export class SimpleNodeKeys implements NodeKeys {

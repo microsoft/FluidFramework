@@ -60,14 +60,6 @@ export enum ValueSchema {
 }
 
 /**
- * {@link ValueSchema} for privative types.
- * @privateRemarks
- * TODO: remove when old editable tree API is removed.
- * @alpha
- */
-export type PrimitiveValueSchema = ValueSchema.Number | ValueSchema.String | ValueSchema.Boolean;
-
-/**
  * Set of allowed tree types.
  * Providing multiple values here allows polymorphism, tagged union style.
  *
@@ -114,7 +106,7 @@ export interface FieldKindSpecifier<T = FieldKindIdentifier> {
 /**
  * @alpha
  */
-export interface FieldStoredSchema {
+export interface TreeFieldStoredSchema {
 	readonly kind: FieldKindSpecifier;
 	/**
 	 * The set of allowed child types.
@@ -129,15 +121,21 @@ export interface FieldStoredSchema {
  * @remarks
  * This mainly show up in:
  * 1. The root default field for documents.
- * 2. The schema used for out of schema fields (which thus must be empty/not exist) on a struct and leaf nodes.
+ * 2. The schema used for out of schema fields (which thus must be empty/not exist) on object and leaf nodes.
  *
  * @alpha
  */
 export const forbiddenFieldKindIdentifier = "Forbidden";
 
-export const storedEmptyFieldSchema: FieldStoredSchema = {
+/**
+ * A schema for empty fields (fields which must always be empty).
+ * There are multiple ways this could be encoded, but this is the most explicit.
+ */
+export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
+	// This kind requires the field to be empty.
 	kind: { identifier: brand(forbiddenFieldKindIdentifier) },
-	types: undefined,
+	// This type set also forces the field to be empty not not allowing any types as all.
+	types: new Set(),
 };
 
 /**
@@ -147,25 +145,25 @@ export interface TreeNodeStoredSchema {
 	/**
 	 * Schema for fields with keys scoped to this TreeNodeStoredSchema.
 	 *
-	 * This refers to the FieldStoredSchema directly
-	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> FieldStoredSchema map).
+	 * This refers to the TreeFieldStoredSchema directly
+	 * (as opposed to just supporting FieldSchemaIdentifier and having a central FieldKey -\> TreeFieldStoredSchema map).
 	 * This allows os short friendly field keys which can ergonomically used as field names in code.
 	 * It also interoperates well with mapFields being used as a map with arbitrary data as keys.
 	 */
-	readonly structFields: ReadonlyMap<FieldKey, FieldStoredSchema>;
+	readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
 
 	/**
-	 * Constraint for fields not mentioned in `structFields`.
+	 * Constraint for fields not mentioned in `objectNodeFields`.
 	 * If undefined, all such fields must be empty.
 	 *
 	 * Allows using using the fields as a map, with the keys being
-	 * FieldKeys and the values being constrained by this FieldStoredSchema.
+	 * FieldKeys and the values being constrained by this TreeFieldStoredSchema.
 	 *
 	 * Usually `FieldKind.Value` should NOT be used here
 	 * since no nodes can ever be in schema are in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
 	 */
-	readonly mapFields?: FieldStoredSchema;
+	readonly mapFields?: TreeFieldStoredSchema;
 
 	/**
 	 * There are several approaches for how to store actual data in the tree
@@ -190,11 +188,11 @@ export interface TreeNodeStoredSchema {
  * thus if needing to hand onto a specific version, make a copy.
  * @alpha
  */
-export interface SchemaData extends StoredSchemaCollection {
+export interface TreeStoredSchema extends StoredSchemaCollection {
 	/**
 	 * Schema for the root field which contains the whole tree.
 	 */
-	readonly rootFieldSchema: FieldStoredSchema;
+	readonly rootFieldSchema: TreeFieldStoredSchema;
 }
 
 /**
@@ -209,5 +207,5 @@ export interface StoredSchemaCollection {
 	/**
 	 * {@inheritdoc StoredSchemaCollection}
 	 */
-	readonly treeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
+	readonly nodeSchema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 }

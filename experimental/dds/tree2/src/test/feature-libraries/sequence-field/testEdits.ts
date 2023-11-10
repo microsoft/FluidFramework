@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SequenceField as SF,
-	chunkTree,
-	defaultChunkPolicy,
-	singleTextCursor,
-} from "../../../feature-libraries";
+import { SequenceField as SF, cursorForJsonableTreeNode } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import {
 	ChangeAtomId,
@@ -19,9 +14,7 @@ import {
 	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { TestChange } from "../../testChange";
-// eslint-disable-next-line import/no-internal-modules
-import { uncompressedEncode } from "../../../feature-libraries/chunked-forest/codec/uncompressedEncode";
-import { composeAnonChanges, composeAnonChangesShallow } from "./utils";
+import { composeAnonChanges } from "./utils";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag: RevisionTag = mintRevisionTag();
@@ -37,6 +30,7 @@ export const cases: {
 	revive: TestChangeset;
 	move: TestChangeset;
 	return: TestChangeset;
+	transient_insert: TestChangeset;
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, 1),
@@ -47,8 +41,12 @@ export const cases: {
 	]),
 	delete: createDeleteChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
-	move: createMoveChangeset(1, 2, 2),
+	move: createMoveChangeset(1, 2, 4),
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
+	transient_insert: [
+		{ count: 1 },
+		createTransientMark(createInsertMark(2, brand(1)), createDeleteMark(2, brand(2))),
+	],
 };
 
 function createInsertChangeset(
@@ -60,7 +58,7 @@ function createInsertChangeset(
 	const content = generateJsonables(size, startingValue);
 	return SF.sequenceFieldEditor.insert(
 		index,
-		content.map(singleTextCursor),
+		content.map(cursorForJsonableTreeNode),
 		id ?? brand(startingValue),
 	);
 }
@@ -87,62 +85,27 @@ function createRedundantRemoveChangeset(
 	detachEvent: ChangeAtomId,
 ): SF.Changeset<never> {
 	const changeset = createDeleteChangeset(index, size);
-	(changeset[changeset.length - 1] as SF.Delete).cellId = detachEvent;
+	changeset[changeset.length - 1].cellId = detachEvent;
 	return changeset;
-}
-
-function createReviveChangeset(
-	startIndex: number,
-	count: number,
-	detachEvent: SF.CellId,
-	lastDetach?: SF.CellId,
-): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1] as SF.Attach;
-	if (lastDetach !== undefined) {
-		mark.cellId = lastDetach;
-	}
-	return markList;
 }
 
 function createRedundantReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	isIntention?: boolean,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, isIntention);
-	const mark = markList[markList.length - 1] as SF.Attach;
+	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
+	const mark = markList[markList.length - 1];
 	delete mark.cellId;
 	return markList;
 }
 
-function createBlockedReviveChangeset(
+function createReviveChangeset(
 	startIndex: number,
 	count: number,
 	detachEvent: SF.CellId,
-	lastDetach: SF.CellId,
 ): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
-	const mark = markList[markList.length - 1] as SF.Attach;
-	mark.cellId = lastDetach;
-	return markList;
-}
-
-function createIntentionalReviveChangeset(
-	startIndex: number,
-	count: number,
-	detachEvent: SF.CellId,
-	lastDetach?: SF.CellId,
-): SF.Changeset<never> {
-	const markList = SF.sequenceFieldEditor.revive(startIndex, count, detachEvent, true);
-	const mark = markList[markList.length - 1] as SF.Attach;
-
-	if (lastDetach !== undefined) {
-		mark.cellId = lastDetach;
-	}
-
-	return markList;
+	return SF.sequenceFieldEditor.revive(startIndex, count, detachEvent);
 }
 
 function createMoveChangeset(
@@ -151,9 +114,7 @@ function createMoveChangeset(
 	destIndex: number,
 	id: ChangesetLocalId = brand(0),
 ): SF.Changeset<never> {
-	return composeAnonChangesShallow(
-		SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id),
-	);
+	return SF.sequenceFieldEditor.move(sourceIndex, count, destIndex, id);
 }
 
 function createReturnChangeset(
@@ -178,7 +139,7 @@ function createModifyDetachedChangeset<TNodeChange>(
 	detachEvent: SF.CellId,
 ): SF.Changeset<TNodeChange> {
 	const changeset = createModifyChangeset(index, change);
-	const modify = changeset[changeset.length - 1] as SF.NoopMark<TNodeChange>;
+	const modify = changeset[changeset.length - 1] as SF.CellMark<SF.NoopMark, TNodeChange>;
 	modify.cellId = detachEvent;
 	return changeset;
 }
@@ -193,8 +154,8 @@ function createModifyDetachedChangeset<TNodeChange>(
 function createInsertMark<TChange = never>(
 	countOrContent: number | JsonableTree[],
 	cellId: ChangesetLocalId | SF.CellId,
-	overrides?: Partial<SF.Insert<TChange>>,
-): SF.Insert<TChange> {
+	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
+): SF.CellMark<SF.Insert, TChange> {
 	const content = Array.isArray(countOrContent)
 		? countOrContent
 		: generateJsonables(countOrContent);
@@ -202,7 +163,7 @@ function createInsertMark<TChange = never>(
 		.map(singleTextCursor)
 		.map((cursor) => chunkTree(cursor, defaultChunkPolicy).cursor());
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
-	const mark: SF.Insert<TChange> = {
+	const mark: SF.CellMark<SF.Insert, TChange> = {
 		type: "Insert",
 		content: cursors.map(uncompressedEncode),
 		count: content.length,
@@ -225,9 +186,9 @@ function createInsertMark<TChange = never>(
 function createReviveMark<TChange = never>(
 	count: number,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.Insert<TChange>>,
-): SF.Insert<TChange> {
-	const mark: SF.Insert<TChange> = {
+	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
+): SF.CellMark<SF.Insert, TChange> {
+	const mark: SF.CellMark<SF.Insert, TChange> = {
 		type: "Insert",
 		count,
 	};
@@ -246,10 +207,10 @@ function createReviveMark<TChange = never>(
 function createDeleteMark<TChange = never>(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.Delete<TChange>>,
-): SF.Delete<TChange> {
+	overrides?: Partial<SF.CellMark<SF.Delete, TChange>>,
+): SF.CellMark<SF.Delete, TChange> {
 	const cellId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.Delete<TChange> = {
+	const mark: SF.CellMark<SF.Delete, TChange> = {
 		type: "Delete",
 		count,
 		id: cellId.localId,
@@ -269,10 +230,10 @@ function createDeleteMark<TChange = never>(
 function createMoveOutMark<TChange = never>(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.MoveOut<TChange>>,
-): SF.MoveOut<TChange> {
+	overrides?: Partial<SF.CellMark<SF.MoveOut, TChange>>,
+): SF.CellMark<SF.MoveOut, TChange> {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.MoveOut<TChange> = {
+	const mark: SF.CellMark<SF.MoveOut, TChange> = {
 		type: "MoveOut",
 		count,
 		id: atomId.localId,
@@ -292,10 +253,10 @@ function createMoveOutMark<TChange = never>(
 function createMoveInMark(
 	count: number,
 	cellId: ChangesetLocalId | SF.CellId,
-	overrides?: Partial<SF.MoveIn>,
-): SF.MoveIn {
+	overrides?: Partial<SF.CellMark<SF.MoveIn, never>>,
+): SF.CellMark<SF.MoveIn, never> {
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
-	const mark: SF.MoveIn = {
+	const mark: SF.CellMark<SF.MoveIn, never> = {
 		type: "MoveIn",
 		id: cellIdObject.localId,
 		cellId: cellIdObject,
@@ -316,10 +277,10 @@ function createMoveInMark(
 function createReturnFromMark<TChange = never>(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.ReturnFrom<TChange>>,
-): SF.ReturnFrom<TChange> {
+	overrides?: Partial<SF.CellMark<SF.ReturnFrom, TChange>>,
+): SF.CellMark<SF.ReturnFrom, TChange> {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.ReturnFrom<TChange> = {
+	const mark: SF.CellMark<SF.ReturnFrom, TChange> = {
 		type: "ReturnFrom",
 		count,
 		id: atomId.localId,
@@ -341,10 +302,10 @@ function createReturnToMark(
 	count: number,
 	markId: ChangesetLocalId | ChangeAtomId,
 	cellId?: SF.CellId,
-	overrides?: Partial<SF.MoveIn>,
-): SF.MoveIn {
+	overrides?: Partial<SF.CellMark<SF.MoveIn, never>>,
+): SF.CellMark<SF.MoveIn, never> {
 	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.MoveIn = {
+	const mark: SF.CellMark<SF.MoveIn, never> = {
 		type: "MoveIn",
 		id: atomId.localId,
 		count,
@@ -362,8 +323,11 @@ function createReturnToMark(
  * @param changes - The changes to apply to the node.
  * @param cellId - Describes the cell that the target node used to reside in. Used when the target node is removed.
  */
-function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.NoopMark<TChange> {
-	const mark: SF.NoopMark<TChange> = {
+function createModifyMark<TChange>(
+	changes: TChange,
+	cellId?: SF.CellId,
+): SF.CellMark<SF.NoopMark, TChange> {
+	const mark: SF.CellMark<SF.NoopMark, TChange> = {
 		count: 1,
 		changes,
 	};
@@ -371,6 +335,25 @@ function createModifyMark<TChange>(changes: TChange, cellId?: SF.CellId): SF.Noo
 		mark.cellId = cellId;
 	}
 	return mark;
+}
+
+function createTransientMark<TChange>(
+	attach: SF.CellMark<SF.Attach, TChange>,
+	detach: SF.CellMark<SF.Detach, TChange>,
+	overrides?: Partial<SF.CellMark<SF.TransientEffect, TChange>>,
+): SF.CellMark<SF.TransientEffect, TChange> {
+	const transient: SF.CellMark<SF.TransientEffect, TChange> = {
+		type: "Transient",
+		count: attach.count,
+		attach: SF.extractMarkEffect(attach),
+		detach: SF.extractMarkEffect(detach),
+		...overrides,
+	};
+
+	if (attach.cellId !== undefined) {
+		transient.cellId = attach.cellId;
+	}
+	return transient;
 }
 
 function overrideCellId<TMark extends SF.HasMarkFields<unknown>>(
@@ -391,6 +374,7 @@ export const MarkMaker = {
 	moveIn: createMoveInMark,
 	returnFrom: createReturnFromMark,
 	returnTo: createReturnToMark,
+	transient: createTransientMark,
 };
 
 export const ChangeMaker = {
@@ -398,9 +382,7 @@ export const ChangeMaker = {
 	delete: createDeleteChangeset,
 	redundantRemove: createRedundantRemoveChangeset,
 	revive: createReviveChangeset,
-	intentionalRevive: createIntentionalReviveChangeset,
 	redundantRevive: createRedundantReviveChangeset,
-	blockedRevive: createBlockedReviveChangeset,
 	move: createMoveChangeset,
 	return: createReturnChangeset,
 	modify: createModifyChangeset,

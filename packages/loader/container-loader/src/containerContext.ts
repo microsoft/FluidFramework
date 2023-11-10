@@ -85,7 +85,7 @@ export class ContainerContext implements IContainerContext {
 			batch: IBatchMessage[],
 			referenceSequenceNumber?: number,
 		) => number,
-		public readonly submitSignalFn: (contents: any) => void,
+		public readonly submitSignalFn: (content: any, targetClientId?: string) => void,
 		public readonly disposeFn: (error?: ICriticalContainerError) => void,
 		public readonly closeFn: (error?: ICriticalContainerError) => void,
 		public readonly updateDirtyContainerState: (dirty: boolean) => void,

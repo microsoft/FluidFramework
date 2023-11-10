@@ -4,7 +4,7 @@
  */
 
 export {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
 	TreeNodeSchemaIdentifier,
@@ -15,8 +15,7 @@ export {
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
-	SchemaData,
-	PrimitiveValueSchema,
+	TreeStoredSchema,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	StoredSchemaCollection,
@@ -28,4 +27,3 @@ export {
 	SchemaEvents,
 	cloneSchemaData,
 } from "./storedSchemaRepository";
-export { treeSchema, fieldSchema, emptyMap, emptySet, TreeSchemaBuilder } from "./builders";

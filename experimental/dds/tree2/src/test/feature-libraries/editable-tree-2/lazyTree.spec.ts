@@ -12,23 +12,22 @@ import {
 	LazyFieldNode,
 	LazyLeaf,
 	LazyMap,
-	LazyStruct,
-	LazyTree,
-	buildLazyStruct,
+	LazyObjectNode,
+	LazyTreeNode,
+	buildLazyObjectNode,
 } from "../../../feature-libraries/editable-tree-2/lazyTree";
 import {
 	Any,
 	PrimitiveValue,
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
-	singleMapTreeCursor,
-	Tree,
+	cursorForMapTreeNode,
 	TreeField,
 	TreeNode,
 	Skip,
 	bannedFieldNames,
 	fieldApiPrefixes,
-	validateStructFieldName,
+	validateObjectNodeFieldName,
 	assertAllowedValue,
 	FieldKind,
 	AllowedTypes,
@@ -39,6 +38,7 @@ import {
 	DefaultEditBuilder,
 	DefaultChangeFamily,
 	DefaultChangeset,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
 import {
 	Anchor,
@@ -59,12 +59,16 @@ import {
 	LazySequence,
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
+import {
+	TreeEntity,
+	boxedIterator,
+	visitIterableTree,
+} from "../../../feature-libraries/editable-tree-2";
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { forestWithContent } from "../../utils";
+import { forestWithContent, viewWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -110,9 +114,9 @@ function initializeTreeWithContent<Kind extends FieldKind, Types extends Allowed
 }
 
 /**
- * Test {@link LazyTree} implementation.
+ * Test {@link LazyTreeNode} implementation.
  */
-class TestLazyTree<TSchema extends TreeNodeSchema> extends LazyTree<TSchema> {}
+class TestLazyTree<TSchema extends TreeNodeSchema> extends LazyTreeNode<TSchema> {}
 
 /**
  * Creates an {@link Anchor} and an {@link AnchorNode} for the provided cursor's location.
@@ -130,7 +134,7 @@ function createAnchors(
 describe("LazyTree", () => {
 	it("property names", () => {
 		const builder = new SchemaBuilder({ scope: "lazyTree" });
-		const emptyStruct = builder.struct("empty", {});
+		const emptyStruct = builder.object("empty", {});
 		const testSchema = builder.intoSchema(SchemaBuilder.optional(emptyStruct));
 
 		const { cursor, context } = initializeTreeWithContent({
@@ -141,7 +145,7 @@ describe("LazyTree", () => {
 
 		const { anchor, anchorNode } = createAnchors(context, cursor);
 
-		const struct = buildLazyStruct(context, emptyStruct, cursor, anchorNode, anchor);
+		const struct = buildLazyObjectNode(context, emptyStruct, cursor, anchorNode, anchor);
 
 		const existingProperties = collectPropertyNames(struct);
 		const existingPropertiesExtended = new Set(existingProperties);
@@ -162,7 +166,7 @@ describe("LazyTree", () => {
 
 			const errors: string[] = [];
 			// Confirm validateStructFieldName rejects all used names:
-			validateStructFieldName(name, () => "property test", errors);
+			validateObjectNodeFieldName(name, () => "property test", errors);
 			assert(errors.length > 0, name);
 		}
 
@@ -192,7 +196,7 @@ describe("LazyTree", () => {
 			"valueString",
 			leafDomain.string,
 		);
-		const structNodeSchema = schemaBuilder.struct("struct", {});
+		const structNodeSchema = schemaBuilder.object("object", {});
 		const mapNodeAnySchema = schemaBuilder.map("mapAny", SchemaBuilder.optional(Any));
 		const mapNodeStringSchema = schemaBuilder.map(
 			"mapString",
@@ -265,7 +269,7 @@ describe("LazyTree", () => {
 
 						const mapTree = fieldToMapTree(context.root);
 						const jsonable = mapTree
-							.map(singleMapTreeCursor)
+							.map(cursorForMapTreeNode)
 							.map(jsonableTreeFromCursor);
 
 						const expected = testTree.treeFactory();
@@ -356,13 +360,34 @@ describe("LazyMap", () => {
 	const mapNodeSchema = schemaBuilder.map("mapString", SchemaBuilder.optional(leafDomain.string));
 	const schema = schemaBuilder.intoSchema(mapNodeSchema);
 
-	const { context, cursor } = initializeTreeWithContent({
+	// Count the number of times edits have been generated.
+	let editCallCount = 0;
+	beforeEach(() => {
+		editCallCount = 0;
+	});
+
+	const editBuilder = new DefaultEditBuilder(
+		new DefaultChangeFamily({ jsonValidator: noopValidator }),
+		(change: DefaultChangeset) => {
+			editCallCount++;
+		},
+	);
+	const forest = forestWithContent({
 		schema,
 		initialTree: {
 			foo: "Hello",
 			bar: "world",
 		},
 	});
+	const context = getTreeContext(
+		schema,
+		forest,
+		editBuilder,
+		createMockNodeKeyManager(),
+		brand(nodeKeyFieldKey),
+	);
+
+	const cursor = initializeCursor(context, rootFieldAnchor);
 	cursor.enterNode(0);
 
 	const { anchor, anchorNode } = createAnchors(context, cursor);
@@ -378,14 +403,53 @@ describe("LazyMap", () => {
 		assert.notEqual(node.tryGetField(brand("bar")), undefined);
 		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
+
+	it("set", () => {
+		const view = viewWithContent({ schema, initialTree: {} });
+		const mapNode = view.editableTree.content;
+		assert(mapNode.is(mapNodeSchema));
+
+		mapNode.set("baz", "First edit");
+		mapNode.set("foo", "Second edit");
+		assert.equal(mapNode.get("baz"), "First edit");
+		assert.equal(mapNode.get("foo"), "Second edit");
+
+		mapNode.set("foo", cursorForJsonableTreeNode({ type: leafDomain.string.name, value: "X" }));
+		assert.equal(mapNode.get("foo"), "X");
+		mapNode.set("foo", undefined);
+		assert.equal(mapNode.get("foo"), undefined);
+		assert.equal(mapNode.has("foo"), false);
+	});
+
+	it("getBoxed empty", () => {
+		const view = viewWithContent({ schema, initialTree: {} });
+		const mapNode = view.editableTree.content;
+		assert(mapNode.is(mapNodeSchema));
+
+		const empty = mapNode.getBoxed("foo");
+		assert.equal(empty.parent, mapNode);
+		assert.equal(empty.key, "foo");
+	});
+
+	it("delete", () => {
+		assert.equal(editCallCount, 0);
+
+		// Even though there is no value currently associated with "baz", we still need to
+		// emit a delete op, so this should generate an edit.
+		node.delete(brand("baz"));
+		assert.equal(editCallCount, 1);
+
+		node.delete(brand("foo"));
+		assert.equal(editCallCount, 2);
+	});
 });
 
-describe("LazyStruct", () => {
+describe("LazyObjectNode", () => {
 	const schemaBuilder = new SchemaBuilder({
 		scope: "test",
 		libraries: [leafDomain.library],
 	});
-	const structNodeSchema = schemaBuilder.struct("struct", {
+	const structNodeSchema = schemaBuilder.object("object", {
 		foo: SchemaBuilder.optional(leafDomain.string),
 		bar: SchemaBuilder.sequence(leafDomain.number),
 	});
@@ -422,7 +486,7 @@ describe("LazyStruct", () => {
 
 	const { anchor, anchorNode } = createAnchors(context, cursor);
 
-	const node = buildLazyStruct(context, structNodeSchema, cursor, anchorNode, anchor);
+	const node = buildLazyObjectNode(context, structNodeSchema, cursor, anchorNode, anchor);
 
 	it("boxing", () => {
 		assert.equal(node.foo, node.boxedFoo.content);
@@ -430,7 +494,7 @@ describe("LazyStruct", () => {
 	});
 
 	it("value", () => {
-		assert.equal(node.value, undefined); // Struct nodes do not have a value
+		assert.equal(node.value, undefined); // object nodes do not have a value
 	});
 
 	it("tryGetField", () => {
@@ -439,7 +503,6 @@ describe("LazyStruct", () => {
 		assert.equal(node.tryGetField(brand("baz")), undefined);
 	});
 
-	// Validates that
 	it("Value assignment generates edits", () => {
 		assert.equal(editCallCount, 0);
 
@@ -451,9 +514,9 @@ describe("LazyStruct", () => {
 	});
 });
 
-describe("buildLazyStruct", () => {
+describe("buildLazyObjectNode", () => {
 	const schemaBuilder = new SchemaBuilder({ scope: "test" });
-	const structNodeSchema = schemaBuilder.struct("struct", {
+	const objectNodeSchema = schemaBuilder.object("object", {
 		optional: SchemaBuilder.optional(leafDomain.string),
 		required: SchemaBuilder.required(leafDomain.boolean),
 		sequence: SchemaBuilder.sequence(leafDomain.number),
@@ -474,7 +537,7 @@ describe("buildLazyStruct", () => {
 
 	const { anchor, anchorNode } = createAnchors(context, cursor);
 
-	const node = buildLazyStruct(context, structNodeSchema, cursor, anchorNode, anchor);
+	const node = buildLazyObjectNode(context, objectNodeSchema, cursor, anchorNode, anchor);
 
 	it("Binds setter properties for values, but not other field kinds", () => {
 		assert(Object.getOwnPropertyDescriptor(node, "optional")?.set !== undefined);
@@ -507,7 +570,7 @@ function nodeToMapTree(node: TreeNode): MapTree {
 	return { fields, type: node.type, value: node.value };
 }
 
-function checkPropertyInvariants(root: Tree): void {
+function checkPropertyInvariants(root: TreeEntity): void {
 	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.
@@ -555,13 +618,13 @@ function checkPropertyInvariants(root: Tree): void {
 			const prototype = Object.getPrototypeOf(child);
 			if (!allowedPrototypes.has(prototype)) {
 				const prototypeInner = Object.getPrototypeOf(prototype);
-				assert(prototypeInner === LazyStruct.prototype);
+				assert(prototypeInner === LazyObjectNode.prototype);
 			}
 		} else if (isPrimitiveValue(child) || child === null) {
 			// TODO: more robust check for schema names
 			if (key === "type") {
 				assert(typeof child === "string");
-				assert(root.context.schema.treeSchema.has(brand(child)));
+				assert(root.context.schema.nodeSchema.has(brand(child)));
 			} else {
 				primitivesAndValues.set(child, (primitivesAndValues.get(child) ?? 0) + 1);
 			}

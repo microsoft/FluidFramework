@@ -7,6 +7,8 @@ import * as path from "path";
 import { globFn, readFileAsync, statAsync, toPosixPath, unquote } from "../../../common/utils";
 import { BuildPackage } from "../../buildGraph";
 import { LeafTask, LeafWithDoneFileTask, LeafWithFileStatDoneFileTask } from "./leafTask";
+import picomatch from "picomatch";
+import { readdir, stat } from "fs/promises";
 
 export class EchoTask extends LeafTask {
 	protected get isIncremental() {
@@ -222,6 +224,59 @@ export class GoodFence extends LeafWithFileStatDoneFileTask {
 		return this.inputFiles;
 	}
 	protected async getOutputFiles(): Promise<string[]> {
+		return [];
+	}
+}
+
+export class DepCruiseTask extends LeafWithFileStatDoneFileTask {
+	private inputFiles: string[] | undefined;
+	protected async getInputFiles(): Promise<string[]> {
+		if (this.inputFiles === undefined) {
+			const argv = this.command.split(" ");
+			const fileOrDir: string[] = [];
+			for (let i = 1; i < argv.length; i++) {
+				if (argv[i].startsWith("--")) {
+					i++;
+					continue;
+				}
+				fileOrDir.push(argv[i]);
+			}
+
+			const inputFiles: string[] = [];
+
+			for (const file of fileOrDir) {
+				const scan = picomatch.scan(file);
+				if (scan.isGlob) {
+					const match = picomatch(scan.glob);
+					const fullPath = path.join(this.node.pkg.directory, scan.base);
+					const files = await readdir(fullPath, { recursive: true });
+					inputFiles.push(
+						...files
+							.filter((file) => match(file))
+							.map((file) => path.join(fullPath, file)),
+					);
+				} else {
+					const fullPath = path.resolve(this.node.pkg.directory, file);
+					const info = await stat(fullPath);
+					if (info.isDirectory()) {
+						const files = await readdir(fullPath, { recursive: true });
+						inputFiles.push(...files.map((file) => path.join(fullPath, file)));
+					} else {
+						inputFiles.push(fullPath);
+					}
+				}
+			}
+			// Currently,
+			// - We don't read the config files to filter with includeOnly, exclude and doNotFollow
+			// - We don't filter out extensions that depcruise doesn't scan.
+			// So incremental detection will be conservative.
+			this.inputFiles = inputFiles;
+		}
+		return this.inputFiles;
+	}
+
+	protected async getOutputFiles(): Promise<string[]> {
+		// No output file
 		return [];
 	}
 }

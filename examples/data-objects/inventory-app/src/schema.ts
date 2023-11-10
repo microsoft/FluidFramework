@@ -3,21 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { ProxyNode, SchemaBuilder } from "@fluid-experimental/tree2";
+import {
+	AllowedUpdateType,
+	InitializeAndSchematizeConfiguration,
+	ProxyNode,
+	SchemaBuilder,
+} from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({
-	scope: "com.contoso.app.inventory",
-});
+const builder = new SchemaBuilder({ scope: "com.contoso.app.inventory" });
 
-export const part = builder.struct("Part", {
+export type Part = ProxyNode<typeof Part>;
+export const Part = builder.object("Part", {
 	name: builder.string,
 	quantity: builder.number,
 });
 
-export const inventory = builder.struct("Inventory", {
-	parts: builder.list(part),
+export type Inventory = ProxyNode<typeof Inventory>;
+export const Inventory = builder.object("Inventory", {
+	parts: builder.list(Part),
 });
 
-export const schema = builder.intoSchema(inventory);
-
-export type Inventory = ProxyNode<typeof inventory>;
+export const treeConfiguration = {
+	schema: builder.intoSchema(Inventory),
+	allowedSchemaModifications: AllowedUpdateType.None,
+	initialTree: {
+		parts: {
+			// TODO: FieldNodes should not require wrapper object
+			"": [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		},
+	},
+} satisfies InitializeAndSchematizeConfiguration;

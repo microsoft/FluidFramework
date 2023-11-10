@@ -24,6 +24,8 @@ import {
 	disableSweepLogKey,
 	UnreferencedStateTracker,
 	cloneGCData,
+	IGarbageCollectorConfigs,
+	stableGCVersion,
 } from "../../gc";
 import { pkgVersion } from "../../packageVersion";
 import { BlobManager } from "../../blobManager";
@@ -69,11 +71,29 @@ describe("GC Telemetry Tracker", () => {
 			}
 			return GCNodeType.Other;
 		};
+		const configs: IGarbageCollectorConfigs = {
+			gcEnabled: true,
+			sweepEnabled: false,
+			shouldRunGC: true,
+			shouldRunSweep: false,
+			runFullGC: false,
+			testMode: false,
+			tombstoneMode: false,
+			inactiveTimeoutMs,
+			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
+			sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined,
+			tombstoneEnforcementAllowed: false,
+			throwOnTombstoneLoad: false,
+			throwOnTombstoneUsage: false,
+			throwOnInactiveLoad: false,
+			persistedGcFeatureMatrix: undefined,
+			gcVersionInBaseSnapshot: stableGCVersion,
+			gcVersionInEffect: stableGCVersion,
+		};
 		const tracker = new GCTelemetryTracker(
 			mc,
-			{ inactiveTimeoutMs, sweepTimeoutMs: enableSweep ? sweepTimeoutMs : undefined },
+			configs,
 			isSummarizerClient,
-			false /* gcTombstoneEnforcementAllowed */,
 			{ createContainerRuntimeVersion: pkgVersion },
 			getNodeType,
 			(nodeId: string) => unreferencedNodesState.get(nodeId),
@@ -280,7 +300,8 @@ describe("GC Telemetry Tracker", () => {
 				[
 					{
 						eventName: "GarbageCollector:GC_Tombstone_DataStore_Revived",
-						...tagCodeArtifacts({ url: nodes[2] }),
+						pkg: eventPkg,
+						...tagCodeArtifacts({ id: nodes[2] }),
 					},
 				],
 				"inactive events not as expected",

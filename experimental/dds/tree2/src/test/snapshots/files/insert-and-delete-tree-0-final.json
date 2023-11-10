@@ -53,10 +53,10 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
-                      "structFields": [
+                      "objectNodeFields": [
                         {
                           "kind": "Sequence",
                           "types": [
@@ -84,31 +84,31 @@
                           "com.fluidframework.leaf.null"
                         ]
                       },
-                      "structFields": []
+                      "objectNodeFields": []
                     },
                     {
                       "name": "com.fluidframework.leaf.boolean",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 2
                     },
                     {
                       "name": "com.fluidframework.leaf.handle",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 3
                     },
                     {
                       "name": "com.fluidframework.leaf.null",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 4
                     },
                     {
                       "name": "com.fluidframework.leaf.number",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 0
                     },
                     {
                       "name": "com.fluidframework.leaf.string",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 1
                     }
                   ],
@@ -140,12 +140,30 @@
                 "content": [
                   [
                     "repair-1",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "42"
-                      }
-                    ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "42",
+                          []
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"
@@ -162,6 +180,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-000000000004",
@@ -169,7 +188,7 @@
                       1
                     ]
                   ],
-                  "id": 1
+                  "maxId": 1
                 },
                 "encoding": "utf-8"
               }

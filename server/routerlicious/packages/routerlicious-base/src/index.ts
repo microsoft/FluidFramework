@@ -14,6 +14,12 @@ export {
 	IDocumentDeleteService,
 	OrdererManager,
 } from "./alfred";
+export {
+	NexusResources,
+	NexusResourcesFactory,
+	NexusRunnerFactory,
+	INexusResourcesCustomizations,
+} from "./nexus";
 export { OrderingResourcesFactory } from "./ordering";
 export {
 	ITenantDocument,

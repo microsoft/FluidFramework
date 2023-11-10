@@ -81,7 +81,12 @@ export {
 	forEachNodeInSubtree,
 	forEachField,
 	PathRootPrefix,
-	isSkipMark,
+	deltaForRootInitialization,
+	deltaForSet,
+	emptyFieldChanges,
+	isEmptyFieldChanges,
+	makeDetachedNodeId,
+	offsetDetachId,
 	emptyDelta,
 	AnchorSlot,
 	AnchorNode,
@@ -97,6 +102,7 @@ export {
 	DetachedFieldIndex,
 	ForestRootId,
 	getDetachedFieldContainingPath,
+	aboveRootPlaceholder,
 } from "./tree";
 
 export {
@@ -119,23 +125,17 @@ export {
 	FieldKeySchema,
 	TreeNodeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ValueSchema,
-	PrimitiveValueSchema,
 	TreeNodeStoredSchema,
 	StoredSchemaRepository,
 	FieldKindIdentifier,
 	FieldKindIdentifierSchema,
 	FieldKindSpecifier,
 	TreeTypeSet,
-	SchemaData,
+	TreeStoredSchema,
 	InMemoryStoredSchemaRepository,
 	schemaDataIsEmpty,
-	fieldSchema,
-	TreeSchemaBuilder,
-	emptyMap,
-	emptySet,
-	treeSchema,
 	SchemaEvents,
 	forbiddenFieldKindIdentifier,
 	storedEmptyFieldSchema,
@@ -146,6 +146,7 @@ export {
 export { ChangeFamily, ChangeFamilyEditor, EditBuilder } from "./change-family";
 
 export {
+	areEqualChangeAtomIds,
 	assertIsRevisionTag,
 	ChangeRebaser,
 	findAncestor,
@@ -179,4 +180,4 @@ export {
 	AllowedUpdateType,
 } from "./schema-view";
 
-export { UndoRedoManager, LocalCommitSource } from "./undo";
+export { Revertible, RevertibleKind, RevertResult, DiscardResult } from "./revertible";

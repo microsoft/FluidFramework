@@ -936,6 +936,30 @@ use_old_InterfaceDeclaration_IGenericError(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGetPendingLocalStateProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IGetPendingLocalStateProps():
+    TypeOnly<old.IGetPendingLocalStateProps>;
+declare function use_current_InterfaceDeclaration_IGetPendingLocalStateProps(
+    use: TypeOnly<current.IGetPendingLocalStateProps>);
+use_current_InterfaceDeclaration_IGetPendingLocalStateProps(
+    get_old_InterfaceDeclaration_IGetPendingLocalStateProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGetPendingLocalStateProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IGetPendingLocalStateProps():
+    TypeOnly<current.IGetPendingLocalStateProps>;
+declare function use_old_InterfaceDeclaration_IGetPendingLocalStateProps(
+    use: TypeOnly<old.IGetPendingLocalStateProps>);
+use_old_InterfaceDeclaration_IGetPendingLocalStateProps(
+    get_current_InterfaceDeclaration_IGetPendingLocalStateProps());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IHostLoader": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IHostLoader():

@@ -9,6 +9,10 @@ import * as amqp from "amqplib";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
+ * and will be removed in a future release.
+ */
 class RabbitmqReceiver implements ITaskMessageReceiver {
 	private readonly events = new EventEmitter();
 	private readonly rabbitmqConnectionString: string;
@@ -66,7 +70,12 @@ class RabbitmqReceiver implements ITaskMessageReceiver {
 	}
 }
 
-// Factory to switch between different message receiver.
+/**
+ * Factory to switch between different message receiver.
+ *
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
+ * and will be removed in a future release.
+ */
 export function createMessageReceiver(
 	rabbitmqConfig: any,
 	queueName: string,

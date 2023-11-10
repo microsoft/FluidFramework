@@ -14,7 +14,13 @@ import {
 	rootFieldKey,
 } from "../../../core";
 import { SchemaBuilder, leaf as leafDomain } from "../../../domains";
-import { AllowedTypes, Any, FieldKind, FieldKinds, FieldSchema } from "../../../feature-libraries";
+import {
+	AllowedTypes,
+	Any,
+	FieldKind,
+	FieldKinds,
+	TreeFieldSchema,
+} from "../../../feature-libraries";
 import { Context } from "../../../feature-libraries/editable-tree-2/context";
 import {
 	unboxedField,
@@ -85,13 +91,13 @@ describe("unboxedField", () => {
 		});
 	});
 
-	it("Value field (struct)", () => {
+	it("Required field (object)", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
-		const structSchema = builder.structRecursive("struct", {
+		const objectSchema = builder.objectRecursive("object", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
 		});
-		const fieldSchema = SchemaBuilder.optional(structSchema);
+		const fieldSchema = SchemaBuilder.optional(objectSchema);
 		const schema = builder.intoSchema(fieldSchema);
 
 		const initialTree = {
@@ -106,12 +112,12 @@ describe("unboxedField", () => {
 
 		const unboxed = unboxedField(context, fieldSchema, cursor);
 		assert(unboxed !== undefined);
-		assert.equal(unboxed.type, "test.struct");
+		assert.equal(unboxed.type, "test.object");
 		assert.equal(unboxed.name, "Foo");
 
 		const unboxedChild = unboxed.child;
 		assert(unboxedChild !== undefined);
-		assert.equal(unboxedChild.type, "test.struct");
+		assert.equal(unboxedChild.type, "test.object");
 		assert.equal(unboxedChild.name, "Bar");
 		assert.equal(unboxedChild.child, undefined);
 	});
@@ -181,13 +187,13 @@ describe("unboxedTree", () => {
 		assert.equal(unboxed.get("bar"), "world");
 	});
 
-	it("Struct", () => {
+	it("ObjectNode", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
-		const structSchema = builder.structRecursive("struct", {
+		const objectSchema = builder.objectRecursive("object", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: FieldSchema.createUnsafe(FieldKinds.optional, [() => structSchema]),
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
 		});
-		const rootSchema = builder.optional(structSchema);
+		const rootSchema = builder.optional(objectSchema);
 		const schema = builder.intoSchema(rootSchema);
 
 		const initialTree = {
@@ -201,7 +207,7 @@ describe("unboxedTree", () => {
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree });
 		cursor.enterNode(0); // Root node field has 1 node; move into it
 
-		const unboxed = unboxedTree(context, structSchema, cursor);
+		const unboxed = unboxedTree(context, objectSchema, cursor);
 
 		assert.equal(unboxed.name, "Foo");
 		assert(unboxed.child !== undefined);

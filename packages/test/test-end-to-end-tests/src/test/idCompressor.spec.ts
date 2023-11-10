@@ -15,7 +15,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
+import { ITestDataObject, describeNoCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
 import {
 	IIdCompressor,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SaveInfo, makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { SaveInfo, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { IChannelFactory } from "@fluidframework/datastore-definitions";
 import { BaseOperation, DDSFuzzModel, DDSFuzzSuiteOptions, replayTest } from "./ddsFuzzHarness";
 
@@ -57,10 +57,11 @@ export class FuzzTestMinimizer<
 		const firstError = await this.assertFails();
 
 		if (!firstError) {
-			// throw an error here rather than silently returning the operations
-			// unchanged. a test case that doesn't fail initially indicates an
-			// error, either on the part of the user or in the fuzz test runner
-			throw new Error("test case doesn't fail.");
+			throw new Error(
+				"Attempted to minimize fuzz test, but the original case didn't fail. " +
+					"This can happen if the original test failed at operation generation time rather than as part of a reducer. " +
+					"Use the `skipMinimization` option to skip minimization in this case.",
+			);
 		}
 
 		await this.tryDeleteEachOp();

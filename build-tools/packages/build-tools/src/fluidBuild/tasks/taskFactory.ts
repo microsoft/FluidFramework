@@ -14,9 +14,10 @@ import {
 	GoodFence,
 	LesscTask,
 	TypeValidationTask,
+	DepCruiseTask,
 } from "./leaf/miscTasks";
 import { PrettierTask } from "./leaf/prettierTask";
-import { TscTask } from "./leaf/tscTask";
+import { TscMultiTask, TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
 import { GroupTask } from "./groupTask";
 import { Task } from "./task";
@@ -27,6 +28,7 @@ const executableToLeafTask: {
 	[key: string]: new (node: BuildPackage, command: string, taskName?: string) => LeafTask;
 } = {
 	"tsc": TscTask,
+	"tsc-multi": TscMultiTask,
 	"tslint": TsLintTask,
 	"eslint": EsLintTask,
 	"webpack": WebpackTask,
@@ -43,6 +45,7 @@ const executableToLeafTask: {
 	"flub check policy": FlubCheckPolicyTask,
 	"flub generate typetests": TypeValidationTask,
 	"fluid-type-test-generator": TypeValidationTask,
+	"depcruise": DepCruiseTask,
 };
 
 export class TaskFactory {
