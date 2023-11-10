@@ -47,14 +47,14 @@
 			"type": "node",
 			"args": ["release", "-g", "client", "-v", "--no-policyCheck"],
 		},
-    {
+		{
 			"name": "flub check policy",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["check", "policy",],
+			"args": ["check", "policy"],
 		},
 		{
 			"name": "flub check policy --fix",
