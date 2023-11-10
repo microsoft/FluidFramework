@@ -53,6 +53,7 @@ export interface AnchorEvents {
     afterChange(anchor: AnchorNode): void;
     afterDestroy(anchor: AnchorNode): void;
     beforeChange(anchor: AnchorNode): void;
+    childrenChanged(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanging(anchor: AnchorNode): PathVisitor | void;
     valueChanging(anchor: AnchorNode, value: Value): void;
@@ -1902,6 +1903,7 @@ export const enum TreeNavigationResult {
 export interface TreeNode extends TreeEntity<TreeNodeSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<TreeField>;
+    [onNextChange](fn: (node: TreeNode) => void): () => void;
     is<TSchema extends TreeNodeSchema>(schema: TSchema): this is TypedNode<TSchema>;
     // (undocumented)
     on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;

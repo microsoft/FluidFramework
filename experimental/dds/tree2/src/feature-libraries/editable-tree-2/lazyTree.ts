@@ -57,6 +57,7 @@ import {
 	OptionalField,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
+	onNextChange,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -133,6 +134,8 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	readonly #removeDeleteCallback: () => void;
 
 	readonly #anchorNode: AnchorNode;
+
+	#removeNextChangeCallback: (() => void) | undefined;
 
 	public constructor(
 		context: Context,
@@ -325,6 +328,27 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 			default:
 				unreachableCase(eventName);
 		}
+	}
+
+	public [onNextChange](fn: (node: TreeNode) => void): () => void {
+		assert(
+			this.#removeNextChangeCallback === undefined,
+			"Only one subscriber may listen to next tree node change at a time",
+		);
+		this.#removeNextChangeCallback = this.#anchorNode.on("childrenChanged", () => {
+			this.#removeNextChangeCallback?.();
+			this.#removeNextChangeCallback = undefined;
+			fn(this);
+		});
+		const removeNextChangeCallback = this.#removeNextChangeCallback;
+		return () => {
+			// Only reset our saved callback if it's the one we closed over in the first place.
+			// It will be different if this is being called after a subsequent registration.
+			if (this.#removeNextChangeCallback === removeNextChangeCallback) {
+				this.#removeNextChangeCallback();
+				this.#removeNextChangeCallback = undefined;
+			}
+		};
 	}
 }
 

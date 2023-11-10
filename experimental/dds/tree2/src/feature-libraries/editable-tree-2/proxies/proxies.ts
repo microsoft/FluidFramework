@@ -30,6 +30,7 @@ import {
 	TreeNode,
 	TypedField,
 	UnknownUnboxed,
+	onNextChange,
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { EmptyKey, FieldKey } from "../../../core";
@@ -156,8 +157,11 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| OptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
+						const offNextChange = editNode[onNextChange](() => {
+							hydrateProxies(typedField.boxedContent);
+						});
 						typedField.content = content;
-						hydrateProxies(typedField.boxedContent);
+						offNextChange();
 						break;
 					}
 					default:
@@ -246,8 +250,12 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
+			const editNode = getEditNode(this);
+			const offNextChange = editNode[onNextChange](() => {
+				hydrateProxies(editNode);
+			});
 			getSequenceField(this).insertAt(index, content);
-			hydrateProxies(getEditNode(this));
+			offNextChange();
 		},
 	},
 	insertAtStart: {
@@ -256,8 +264,12 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
+			const editNode = getEditNode(this);
+			const offNextChange = editNode[onNextChange](() => {
+				hydrateProxies(editNode);
+			});
 			getSequenceField(this).insertAtStart(content);
-			hydrateProxies(getEditNode(this));
+			offNextChange();
 		},
 	},
 	insertAtEnd: {
@@ -269,8 +281,12 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				value,
 				this.length,
 			);
+			const editNode = getEditNode(this);
+			const offNextChange = editNode[onNextChange](() => {
+				hydrateProxies(editNode);
+			});
 			getSequenceField(this).insertAtEnd(content);
-			hydrateProxies(getEditNode(this));
+			offNextChange();
 		},
 	},
 	removeAt: {
@@ -589,12 +605,15 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			key: string,
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
-			const node = getEditNode(this);
+			const editNode = getEditNode(this);
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
-			node.set(key, content);
-			hydrateProxies(getMapChildNode(node, key));
+			const offNextChange = editNode[onNextChange](() => {
+				hydrateProxies(getMapChildNode(editNode, key));
+			});
+			editNode.set(key, content);
+			offNextChange();
 			return this;
 		},
 	},
