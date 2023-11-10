@@ -214,7 +214,7 @@ stages:
 
               Variables:
                 absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
-                BuildReason=$(variables['Build.Reason'])
+                BuildReason=${{ variables['Build.Reason'] }}
 
               Publish Parameters:
                 nonScopedPackages=${{ join(', ', parameters.nonScopedPackages) }}
