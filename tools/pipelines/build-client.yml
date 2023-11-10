@@ -65,6 +65,7 @@ trigger:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -96,6 +97,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
