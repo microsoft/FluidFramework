@@ -47,14 +47,14 @@
 			"type": "node",
 			"args": ["release", "-g", "client", "-v", "--no-policyCheck"],
 		},
-    {
+		{
 			"name": "flub check policy",
 			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
 			"cwd": "${workspaceFolder}",
 			"request": "launch",
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
-			"args": ["check", "policy",],
+			"args": ["check", "policy"],
 		},
 		{
 			"name": "flub check policy --fix",
@@ -83,6 +83,16 @@
 			"skipFiles": ["<node_internals>/**"],
 			"type": "node",
 			"args": ["release", "report", "-g", "build-tools", "-v"],
+		},
+		{
+			// Runs the `flub release fromTag build-tools_v0.26.1` command with a debugger attached.
+			"name": "flub release fromTag build-tools_v0.26.1",
+			"program": "${workspaceFolder}/build-tools/packages/build-cli/bin/dev.js",
+			"cwd": "${workspaceFolder}",
+			"request": "launch",
+			"skipFiles": ["<node_internals>/**"],
+			"type": "node",
+			"args": ["release", "fromTag", "build-tools_v0.26.1", "--json"],
 		},
 		{
 			// Runs the `flub list --private` command with a debugger attached.
