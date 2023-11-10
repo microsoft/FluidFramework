@@ -824,7 +824,7 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 				editNode !== undefined,
 				"Expected edit node to be defined when hydrating object",
 			);
-			setEditNode(input, editNode); // This makes the input proxy usable and updates the proxy cache
+			setEditNode(input as SharedTreeObject<ObjectNodeSchema>, editNode as ObjectNode); // This makes the input proxy usable and updates the proxy cache
 			assert(
 				schemaIsObjectNode(editNode.schema),
 				"Expected object node when hydrating object content",
