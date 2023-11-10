@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type IShimDeltaHandler } from "./types.js";
-import { messageStampMatchesAttributes } from "./utils.js";
+import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
+import { attributesMatch, messageStampMatchesAttributes } from "./utils.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the SharedTreeShim distributed data structure.
@@ -66,16 +66,36 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 
 	// Resubmitting v1 ops should fail. We should not be resubmitting v1 ops.
 	public reSubmit(message: unknown, localOpMetadata: unknown): void {
+		if (this.shouldDropOp(message as IStampedContents)) {
+			return;
+		}
 		return this.handler.reSubmit(message, localOpMetadata);
 	}
 
 	// We are not capable of applying stashed v1 ops.
 	public applyStashedOp(message: unknown): unknown {
+		if (this.shouldDropOp(message as IStampedContents)) {
+			return;
+		}
 		return this.handler.applyStashedOp(message);
 	}
 
 	// We cannot rollback v1 ops.
 	public rollback?(message: unknown, localOpMetadata: unknown): void {
+		if (this.shouldDropOp(message as IStampedContents)) {
+			return;
+		}
 		return this.handler.rollback?.(message, localOpMetadata);
+	}
+
+	private shouldDropOp(message: IStampedContents): boolean {
+		if (message.fluidMigrationStamp === undefined) {
+			return true;
+		}
+
+		if (attributesMatch(message.fluidMigrationStamp, this.attributes)) {
+			return false;
+		}
+		return true;
 	}
 }

@@ -37,6 +37,7 @@ export interface IShimDeltaHandler extends IDeltaHandler {
  * An interface for interrogating ops to see if they are stamped or not so that we can choose to drop them.
  */
 export interface IStampedContents {
+	type: string;
 	fluidMigrationStamp?: IChannelAttributes;
 }
 

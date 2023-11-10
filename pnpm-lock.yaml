@@ -6665,6 +6665,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.26.1
       '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
@@ -6710,6 +6711,7 @@ importers:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.2_@types+node@16.18.58
+      '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -19624,7 +19626,7 @@ packages:
       '@previewjs/type-analyzer': 9.0.1
       assert-never: 1.2.1
       prettier: 2.8.8
-      typescript: 5.1.6
+      typescript: 5.2.2
     dev: true
 
   /@previewjs/storybook-helpers/3.0.0_@types+node@16.18.58:
@@ -19634,7 +19636,7 @@ packages:
       '@previewjs/core': 23.0.1_@types+node@16.18.58
       '@previewjs/serializable-values': 7.0.3
       '@previewjs/type-analyzer': 8.0.2
-      typescript: 5.1.6
+      typescript: 5.2.2
     transitivePeerDependencies:
       - '@swc/core'
       - '@swc/wasm'
@@ -19655,7 +19657,7 @@ packages:
       '@previewjs/vfs': 2.0.17
       assert-never: 1.2.1
       prettier: 2.8.8
-      typescript: 5.1.6
+      typescript: 5.2.2
     dev: true
 
   /@previewjs/type-analyzer/9.0.1:
@@ -23953,7 +23955,7 @@ packages:
   /axios/0.21.4_debug@4.3.4:
     resolution: {integrity: sha512-ut5vewkiu8jjGBdqpM44XxjuCjq9LAKeHVmoVfHVzy8eHgxxq8SbAVQNovDA8mVi05kP0Ea/n/UzcSHcTJQfNg==}
     dependencies:
-      follow-redirects: 1.15.3_debug@4.3.4
+      follow-redirects: 1.15.3
     transitivePeerDependencies:
       - debug
     dev: true
@@ -23991,7 +23993,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.3_debug@4.3.4
+      follow-redirects: 1.15.3
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
@@ -41915,7 +41917,7 @@ packages:
       posthtml-rename-id: 1.0.12
       posthtml-svg-mode: 1.0.3
       query-string: 4.3.4
-      traverse: 0.6.6
+      traverse: 0.6.7
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -42507,6 +42509,7 @@ packages:
 
   /traverse/0.6.6:
     resolution: {integrity: sha512-kdf4JKs8lbARxWdp7RKdNzoJBhGUcIalSYibuGyHJbmk40pOysQ0+QPvlkCOICOivDWU2IJo2rkrxyTK2AH4fw==}
+    dev: false
 
   /traverse/0.6.7:
     resolution: {integrity: sha512-/y956gpUo9ZNCb99YjxG7OaslxZWHfCHAUUfshwqOXmxUIvqLjVO581BT+gM59+QV9tFe6/CGG53tsA1Y7RSdg==}
@@ -45423,12 +45426,14 @@ packages:
     dependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.1.0_loebgezstcsvd2poh2d55fifke
+      '@rushstack/node-core-library': 3.61.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 2.4.2
       markdown-magic-package-scripts: 1.2.2
       markdown-magic-template: 1.0.1
       yargs: 17.7.2
     transitivePeerDependencies:
+      - '@types/node'
       - eslint
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack

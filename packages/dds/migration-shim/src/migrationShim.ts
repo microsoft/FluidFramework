@@ -95,6 +95,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		// TODO: consider flattening this class
 		this.migrationDeltaHandler = new MigrationShimDeltaHandler(
 			this.processMigrateOp,
+			this.submitLocalMessage,
 			this.newTreeFactory.attributes,
 		);
 		// TODO: if we need to support the creation of legacy shared trees via the migration shim, we'll need to make
@@ -137,6 +138,14 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	private newTree: ISharedTree | undefined;
 
+	private readonly submitLocalMessage = (message: IStampedContents): void => {
+		// This is a copy of submit local message from SharedObject
+		if (this.isAttached()) {
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.services!.deltaConnection.submit(message, undefined);
+		}
+	};
+
 	// Migration occurs once this op is read.
 	public submitMigrateOp(): void {
 		const migrateOp: IMigrationOp = {
@@ -145,11 +154,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 			newAttributes: this.newTreeFactory.attributes,
 		};
 
-		// This is a copy of submit local message from SharedObject
-		if (this.isAttached()) {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(migrateOp as IStampedContents, undefined);
-		}
+		this.submitLocalMessage(migrateOp);
 	}
 
 	public get currentTree(): LegacySharedTree | ISharedTree {

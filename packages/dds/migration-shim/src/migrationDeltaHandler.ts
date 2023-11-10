@@ -6,8 +6,11 @@
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { type IShimDeltaHandler } from "./types.js";
-import { messageStampMatchesAttributes as messageStampMatchesAttributes } from "./utils.js";
+import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
+import {
+	attributesMatch,
+	messageStampMatchesAttributes as messageStampMatchesAttributes,
+} from "./utils.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
@@ -27,6 +30,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 			local: boolean,
 			localOpMetadata: unknown,
 		) => boolean,
+		private readonly submitLocalMessage: (message: IStampedContents) => void,
 		private readonly attributes: IChannelAttributes,
 	) {}
 	// Introduction of invariant, we always expect an old handler.
@@ -112,19 +116,58 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	public setConnectionState(connected: boolean): void {
 		return this.treeDeltaHandler.setConnectionState(connected);
 	}
-	public reSubmit(message: unknown, localOpMetadata: unknown): void {
-		// Blow up on V1 ops or drop them if new handler
-		// Local state is potentially out of sync
+	public reSubmit(message: IStampedContents, localOpMetadata: boolean | undefined): void {
+		if (this.isBarrierOp(message) && localOpMetadata === true) {
+			return;
+		}
+
+		if (this.isUsingOldV1() && this.isBarrierOp(message) && localOpMetadata !== true) {
+			this.submitLocalMessage(message);
+			return;
+		}
+
+		if (this.shouldDropOp(message)) {
+			return;
+		}
 		return this.treeDeltaHandler.reSubmit(message, localOpMetadata);
 	}
-	public applyStashedOp(message: unknown): unknown {
-		// Blow up on V1 ops or drop them if new handler
-		// Local state is potentially out of sync
+	public applyStashedOp(message: IStampedContents): unknown {
+		if (this.isBarrierOp(message)) {
+			// Make sure we don't submit the barrier op after it has been stashed.
+			return true;
+		}
+		if (this.shouldDropOp(message)) {
+			return undefined;
+		}
 		return this.treeDeltaHandler.applyStashedOp(message);
 	}
-	public rollback?(message: unknown, localOpMetadata: unknown): void {
-		// Blow up on V1 ops or drop them if new handler
-		// Local state is potentially out of sync
+	public rollback?(message: IStampedContents, localOpMetadata: unknown): void {
+		if (this.isBarrierOp(message)) {
+			return;
+		}
+		if (this.shouldDropOp(message)) {
+			return;
+		}
 		return this.treeDeltaHandler.rollback?.(message, localOpMetadata);
+	}
+
+	private isBarrierOp(message: IStampedContents): boolean {
+		return message.type === "barrier";
+	}
+
+	private shouldDropOp(message: IStampedContents): boolean {
+		assert(!this.isPreAttachState(), "Can't process ops before attaching tree handler");
+		if (this.isUsingOldV1()) {
+			return false;
+		}
+
+		if (message.fluidMigrationStamp === undefined) {
+			return true;
+		}
+
+		if (attributesMatch(message.fluidMigrationStamp, this.attributes)) {
+			return false;
+		}
+		return true;
 	}
 }
