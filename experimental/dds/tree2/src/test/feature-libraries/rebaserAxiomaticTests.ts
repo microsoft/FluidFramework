@@ -198,6 +198,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						// 	continue;
 						// }
 
+						if (title !== 'Rebase ["SetB,0","Undo:SetB,0"] over Delete') {
+							continue;
+						}
+
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);

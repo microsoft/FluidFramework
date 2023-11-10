@@ -161,14 +161,26 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const builds: OptionalChangeset["build"] = [];
 		let childChangesByOriginalId = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
-		// TODO: Optimize this to be in-place.
-		// Additionally, doing intermediate cancellation would help with cloning if in-place proves too difficult (but that should be possible)
+		// TODO: Maybe this can be done in-place?
+		// Additionally, doing intermediate cancellation would help with cloning if in-place proves too difficult
 		let current = getBidirectionalMaps([]);
 		for (const { change, revision } of changes) {
+			const withIntention = (id: ContentId): ContentId => {
+				// return id;
+				if (id === "self") {
+					return id;
+				}
+				const intention = getIntention(id.revision ?? revision, revisionMetadata);
+				return { revision: intention, localId: id.localId };
+			};
+
 			if (change.build !== undefined) {
 				for (const { id, set } of change.build) {
 					builds.push({
-						id: { revision: id.revision ?? revision, localId: id.localId },
+						id: {
+							revision: getIntention(id.revision ?? revision, revisionMetadata),
+							localId: id.localId,
+						},
 						set,
 					});
 				}
@@ -182,36 +194,39 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 			// Compose all the things that `change` moved.
 			for (const [src, dst, target] of change.moves) {
-				let originalSrc = current.dstToSrc.get(src);
+				let originalSrc = current.dstToSrc.get(withIntention(src));
 				let currentTarget: "cellTargeting" | "nodeTargeting" = "cellTargeting";
 				if (originalSrc !== undefined) {
 					const [dst2, existingTarget] =
 						current.srcToDst.get(originalSrc) ?? fail("expected backward mapping");
-					assert(areEqualContentIds(dst2, src), "expected consistent backward mapping");
+					assert(
+						areEqualContentIds(dst2, withIntention(src)),
+						"expected consistent backward mapping",
+					);
 					currentTarget = existingTarget;
 				} else {
-					originalSrc = src;
+					originalSrc = withIntention(src);
 				}
 				nextSrcToDst.set(originalSrc, [
-					dst,
+					withIntention(dst),
 					// Is this targeting composition sufficient? seems weird.
 					target === "nodeTargeting" || currentTarget === "nodeTargeting"
 						? "nodeTargeting"
 						: "cellTargeting",
 				]);
-				nextDstToSrc.set(dst, originalSrc);
+				nextDstToSrc.set(withIntention(dst), originalSrc);
 			}
 
 			// Include any existing moves that `change` didn't affect.
 			for (const [src, [dst, target]] of current.srcToDst.entries()) {
 				if (!nextSrcToDst.has(src)) {
-					nextSrcToDst.set(src, [dst, target]);
-					nextDstToSrc.set(dst, src);
+					nextSrcToDst.set(src, [withIntention(dst), target]);
+					nextDstToSrc.set(withIntention(dst), src);
 				}
 			}
 
 			for (const [id, childChange] of change.childChanges) {
-				const originalId = nextDstToSrc.get(id) ?? id;
+				const originalId = nextDstToSrc.get(withIntention(id)) ?? id;
 				const existingChanges = childChangesByOriginalId.get(originalId);
 				const taggedChange = tagChange(childChange, revision);
 				if (existingChanges === undefined) {
@@ -255,6 +270,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const invertIdMap = new ChildChangeMap<ContentId>();
 		let originalHasAttach = false;
 		let originalHasDetach = false;
+		const withIntention = (id: ContentId): ContentId => {
+			if (id === "self") {
+				return id;
+			}
+			return { revision: id.revision ?? revision, localId: id.localId };
+		};
 		for (const [src, dst] of moves) {
 			invertIdMap.set(dst, src);
 			// TODO: Unclear if we need the second clauses here.
@@ -276,9 +297,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			if (dst === "self") {
 				// TODO.
 				assert(src !== "self", "when does this happen");
-				rebasedMoves.push([dst, src, "cellTargeting"]); // not sure this is right
+				rebasedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]); // not sure this is right
 			} else {
-				rebasedMoves.push([dst, src, "nodeTargeting"]);
+				rebasedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
 				// inverseAttachesContent = true;
 			}
 		}
@@ -286,7 +307,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			build: [],
 			moves: rebasedMoves,
 			childChanges: childChanges.map(([id, childChange]) => [
-				invertIdMap.get(id) ?? id,
+				withIntention(invertIdMap.get(id) ?? id),
 				invertChild(childChange, 0),
 			]),
 		};
@@ -323,8 +344,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const overDstToSrc = new ChildChangeMap<ContentId>();
 		const overSrcToDst = new ChildChangeMap<ContentId>();
 		for (const [src, dst] of overChange.moves) {
-			overSrcToDst.set(src, dst);
-			overDstToSrc.set(dst, src);
+			overSrcToDst.set(withIntention(src), withIntention(dst));
+			overDstToSrc.set(withIntention(dst), withIntention(src));
 		}
 
 		const renamedDsts = new ChildChangeMap<ContentId>();
@@ -333,7 +354,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 		for (const [src, dst] of overChange.moves) {
 			if (!renamedDsts.has(src)) {
-				renamedDsts.set(src, dst);
+				renamedDsts.set(src, withIntention(dst));
 			}
 		}
 
@@ -380,7 +401,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				}
 			} else {
 				// Figure out where content in src ended up in `overTagged`
-				const rebasedSrc = overSrcToDst.get(src) ?? src;
+				const movedSrc = overSrcToDst.get(src); // following withIntention can probably be removed
+				const rebasedSrc = movedSrc !== undefined ? withIntention(movedSrc) : src;
 				// Note: we cannot drop changes which map a node to itself, as this loses the intention of the original edit
 				// (since the target kind is node targeting, it may not still map to a noop after further rebases)
 				rebasedMoves.push([rebasedSrc, dst, target]);
@@ -515,15 +537,6 @@ export function optionalFieldIntoDelta(
 	{ change, revision }: TaggedChange<OptionalChangeset>,
 	deltaFromChild: ToDelta,
 ): Delta.FieldChanges {
-	// TODO: If childChanges contains evidence of changes to transient nodes, we need to figure out what to do with them
-	// (can they ever need to be created? how do we distinguish?)
-
-	// TODO: Seems like you need a concept of 'muted': what happens if we try to `intoDelta` the changeset
-	// [B^-1, A^-1, T, A] where T, A, and B are all "set"s of the optional field?
-	// The delta generated should clear the node set by B and set the contents to what A did, but if we cancel out A and A^-1, we risk losing that info.
-	// We *should* know that the contents of the set of B^-1 are correct.
-	// Maybe instead of 'muting', we just specially track the set index in the optional field that's the active node!
-
 	const delta: Mutable<Delta.FieldChanges> = {};
 
 	if (change.build.length > 0) {

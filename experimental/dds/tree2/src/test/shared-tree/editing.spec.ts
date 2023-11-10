@@ -26,6 +26,7 @@ import {
 	remove,
 	insert,
 	expectJsonTree,
+	toJsonTree,
 	createTestUndoRedoStacks,
 } from "../utils";
 import { ISharedTreeView } from "../../shared-tree";
@@ -1923,7 +1924,7 @@ describe.only("Editing", () => {
 			unsubscribe();
 		});
 
-		it.only("can rebase populating a new node over an unrelated change", () => {
+		it("can rebase populating a new node over an unrelated change", () => {
 			const tree1 = makeTreeFromJson({});
 			const tree2 = tree1.fork();
 
