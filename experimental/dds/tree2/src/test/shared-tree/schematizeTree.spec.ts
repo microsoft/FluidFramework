@@ -12,7 +12,7 @@ import {
 	defaultSchemaPolicy,
 	NewFieldContent,
 } from "../../feature-libraries";
-import { ViewEvents } from "../../shared-tree";
+import { CheckoutEvents } from "../../shared-tree";
 import {
 	AllowedUpdateType,
 	SimpleObservingDependent,
@@ -141,7 +141,7 @@ describe("schematizeTree", () => {
 			];
 			for (const [name, data] of testCases) {
 				it(name, () => {
-					const events = createEmitter<ViewEvents>();
+					const events = createEmitter<CheckoutEvents>();
 					const storedSchema = new InMemoryStoredSchemaRepository(data);
 
 					// Error if modified
@@ -157,7 +157,7 @@ describe("schematizeTree", () => {
 		});
 
 		it("upgrade works", () => {
-			const events = createEmitter<ViewEvents>();
+			const events = createEmitter<CheckoutEvents>();
 			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 
 			schematize(events, storedSchema, {
@@ -168,7 +168,7 @@ describe("schematizeTree", () => {
 		});
 
 		it("upgrade schema errors when in AllowedUpdateType.None", () => {
-			const events = createEmitter<ViewEvents>();
+			const events = createEmitter<CheckoutEvents>();
 			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 			assert.throws(() => {
 				schematize(events, storedSchema, {
@@ -179,7 +179,7 @@ describe("schematizeTree", () => {
 		});
 
 		it("incompatible upgrade errors and does not modify schema", () => {
-			const events = createEmitter<ViewEvents>();
+			const events = createEmitter<CheckoutEvents>();
 			const storedSchema = new InMemoryStoredSchemaRepository(schemaGeneralized);
 
 			let modified = false;
@@ -202,7 +202,7 @@ describe("schematizeTree", () => {
 		});
 
 		it("errors at correct time when schema changes to not be compatible with view schema", () => {
-			const events = createEmitter<ViewEvents>();
+			const events = createEmitter<CheckoutEvents>();
 			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 
 			schematize(events, storedSchema, {

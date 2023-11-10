@@ -14,11 +14,14 @@ import {
 	RangeUpPath,
 	UpPath,
 	topDownPath,
-} from "../../core";
-import { Events, ISubscribable } from "../../events";
-import { brand, getOrCreate } from "../../util";
-import { on } from "../untypedTree";
-import { EditableTree } from "./editableTreeTypes";
+} from "../core";
+import { Events, ISubscribable } from "../events";
+import { brand, getOrCreate } from "../util";
+import { TreeNode } from "./editable-tree-2";
+
+// TODO:
+// Tests for this file were removed along with the old editable-tree implementation in the commit that includes this note.
+// They were a bit heavily tied to the testing patterns specific to the old editable-tree and will need significant changes to be restored.
 
 /**
  * Binder events reflecting atomic data operations
@@ -121,7 +124,7 @@ export interface DataBinder<B extends OperationBinderEvents | InvalidationBinder
 	 * @param listener - The listener to register
 	 */
 	register<K extends keyof Events<B>>(
-		anchor: EditableTree,
+		anchor: TreeNode,
 		eventType: K,
 		eventTrees: BindPolicy[],
 		listener?: B[K],
@@ -714,16 +717,16 @@ class AbstractDataBinder<
 	O extends BinderOptions,
 > implements DataBinder<B>
 {
-	protected readonly visitors = new Map<EditableTree, V>();
+	protected readonly visitors = new Map<TreeNode, V>();
 	protected readonly visitorLocations = new Map<V, UpPath>();
 	protected readonly unregisterHandles = new Set<() => void>();
 	public constructor(
 		protected readonly options: O,
-		protected readonly visitorFactory: (anchor: EditableTree) => V,
+		protected readonly visitorFactory: (anchor: TreeNode) => V,
 	) {}
 
 	public register<K extends keyof Events<B>>(
-		anchor: EditableTree,
+		anchor: TreeNode,
 		eventType: K,
 		eventTrees: BindPolicy[],
 		listener: B[K],
@@ -732,7 +735,7 @@ class AbstractDataBinder<
 		const visitor = getOrCreate(this.visitors, anchor, () => {
 			const newVisitor = this.visitorFactory(anchor);
 			this.unregisterHandles.add(
-				anchor[on]("subtreeChanging", (upPath: UpPath) => {
+				anchor.on("subtreeChanging", (upPath: UpPath) => {
 					assert(newVisitor !== undefined, 0x6dc /* visitor expected to be defined */);
 					if (!this.visitorLocations.has(newVisitor)) {
 						this.visitorLocations.set(newVisitor, upPath);
@@ -781,7 +784,7 @@ class BufferingDataBinder<E extends Events<E>>
 	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy: keyof Events<E>;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
-		super(options, (anchor: EditableTree) => new BufferingPathVisitor(options));
+		super(options, (anchor: TreeNode) => new BufferingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
 		if (options.autoFlush) {
@@ -822,7 +825,7 @@ class DirectDataBinder<E extends Events<E>> extends AbstractDataBinder<
 	BinderOptions
 > {
 	public constructor(view: ISubscribable<E>, options: BinderOptions) {
-		super(options, (anchor: EditableTree) => new DirectPathVisitor(options));
+		super(options, (anchor: TreeNode) => new DirectPathVisitor(options));
 	}
 }
 
@@ -837,7 +840,7 @@ class InvalidateDataBinder<E extends Events<E>>
 	protected readonly view: ISubscribable<E>;
 	protected readonly autoFlushPolicy: keyof Events<E>;
 	public constructor(view: ISubscribable<E>, options: FlushableBinderOptions<E>) {
-		super(options, (anchor: EditableTree) => new InvalidatingPathVisitor(options));
+		super(options, (anchor: TreeNode) => new InvalidatingPathVisitor(options));
 		this.view = view;
 		this.autoFlushPolicy = options.autoFlushPolicy;
 		if (options.autoFlush) {

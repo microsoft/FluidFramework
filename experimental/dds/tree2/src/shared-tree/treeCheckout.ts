@@ -18,38 +18,25 @@ import {
 	visitDelta,
 	DetachedFieldIndex,
 	makeDetachedFieldIndex,
-	FieldKey,
 	Revertible,
 } from "../core";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import {
-	UnwrappedEditableField,
-	EditableTreeContext,
 	IDefaultEditBuilder,
 	DefaultChangeset,
 	buildForest,
 	DefaultChangeFamily,
-	getEditableTreeContext,
 	DefaultEditBuilder,
-	NewFieldContent,
-	NodeKeyManager,
-	TreeFieldSchema,
-	TreeSchema,
-	getTreeContext,
-	TypedField,
-	createNodeKeyManager,
-	nodeKeyFieldKey as nodeKeyFieldKeyDefault,
-	getProxyForField,
 } from "../feature-libraries";
 import { SharedTreeBranch, getChangeReplaceType } from "../shared-tree-core";
-import { TransactionResult, brand } from "../util";
+import { TransactionResult } from "../util";
 import { noopValidator } from "../codec";
 
 /**
- * Events for {@link ISharedTreeView}.
+ * Events for {@link ITreeCheckout}.
  * @alpha
  */
-export interface ViewEvents {
+export interface CheckoutEvents {
 	/**
 	 * A batch of changes has finished processing and the view is in a consistent state.
 	 * It is once again safe to access the EditableTree, Forest and AnchorSet.
@@ -75,44 +62,11 @@ export interface ViewEvents {
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
  * @privateRemarks
+ * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
- * TODO:
- * This interface is the one without a View schema.
- * For clarity it should be renamed to something like "BranchCheckout"
  * @alpha
  */
-export interface ISharedTreeView extends AnchorLocator {
-	/**
-	 * Gets the root field of the tree.
-	 *
-	 * See {@link EditableTreeContext.unwrappedRoot} on how its setter works.
-	 *
-	 * Currently this editable tree's fields do not update on edits,
-	 * so holding onto this root object across edits will only work if it's an unwrapped node.
-	 * TODO: Fix this issue.
-	 *
-	 * Currently any access to this view of the tree may allocate cursors and thus require
-	 * `context.prepareForEdit()` before editing can occur.
-	 *
-	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
-	 */
-	// TODO: either rename this or `EditableTreeContext.unwrappedRoot` to avoid name confusion.
-	get root(): UnwrappedEditableField;
-
-	/**
-	 * Sets the content of the root field of the tree.
-	 *
-	 * See {@link EditableTreeContext.unwrappedRoot} on how this works.
-	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
-	 */
-	setContent(data: NewFieldContent): void;
-
-	/**
-	 * Context for controlling the EditableTree-1 nodes.
-	 * @deprecated Use {@link ISharedTreeView2} and editable tree 2.
-	 */
-	readonly context: EditableTreeContext;
-
+export interface ITreeCheckout extends AnchorLocator {
 	/**
 	 * Read and Write access for schema stored in the document.
 	 *
@@ -152,7 +106,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * Spawn a new view which is based off of the current state of this view.
 	 * Any mutations of the new view will not apply to this view until the new view is merged back into this view via `merge()`.
 	 */
-	fork(): ISharedTreeBranchView;
+	fork(): ITreeCheckoutFork;
 
 	/**
 	 * Apply all the new changes on the given view to this view.
@@ -160,7 +114,7 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * It is automatically disposed after the merge completes.
 	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
 	 */
-	merge(view: ISharedTreeBranchView): void;
+	merge(view: ITreeCheckoutFork): void;
 
 	/**
 	 * Apply all the new changes on the given view to this view.
@@ -168,57 +122,42 @@ export interface ISharedTreeView extends AnchorLocator {
 	 * @param disposeView - whether or not to dispose `view` after the merge completes.
 	 * @remarks All ongoing transactions (if any) in `view` will be committed before the merge.
 	 */
-	merge(view: ISharedTreeBranchView, disposeView: boolean): void;
+	merge(view: ITreeCheckoutFork, disposeView: boolean): void;
 
 	/**
 	 * Rebase the given view onto this view.
 	 * @param view - a view which was created by a call to `fork()`. It is modified by this operation.
 	 */
-	rebase(view: ISharedTreeBranchView): void;
+	rebase(view: ITreeCheckoutFork): void;
 
 	/**
 	 * Events about this view.
 	 */
-	readonly events: ISubscribable<ViewEvents>;
+	readonly events: ISubscribable<CheckoutEvents>;
 
 	/**
 	 * Events about the root of the tree in this view.
 	 */
 	readonly rootEvents: ISubscribable<AnchorSetRootEvents>;
-
-	/**
-	 * Get a typed view of the tree content using the editable-tree-2 API.
-	 *
-	 * Warning: This API is not fully tested yet and is still under development.
-	 * It will eventually replace the current editable-tree API and become the main entry point for working with SharedTree.
-	 * Access to this API is exposed here as a temporary measure to enable experimenting with the API while its being finished and evaluated.
-	 *
-	 * TODO:
-	 * ISharedTreeView should already have the view schema, and thus nor require it to be passed in.
-	 * As long as it is passed in here as a workaround, the caller must ensure that the stored schema is compatible.
-	 * If the stored schema is edited and becomes incompatible (or was not originally compatible),
-	 * using the returned tree is invalid and is likely to error or corrupt the document.
-	 *
-	 * @deprecated Use {@link ISharedTreeView2}.
-	 */
-	editableTree2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>): TypedField<TRoot>;
 }
 
 /**
- * Creates a {@link SharedTreeView}.
+ * Creates a {@link TreeCheckout}.
  * @param args - an object containing optional components that will be used to build the view.
  * Any components not provided will be created by default.
  * @remarks This does not create a {@link SharedTree}, but rather a view with the minimal state
- * and functionality required to implement {@link ISharedTreeView}.
+ * and functionality required to implement {@link ITreeCheckout}.
  */
-export function createSharedTreeView(args?: {
+export function createTreeCheckout(args?: {
 	branch?: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 	changeFamily?: DefaultChangeFamily;
 	schema?: StoredSchemaRepository;
 	forest?: IEditableForest;
-	events?: ISubscribable<ViewEvents> & IEmitter<ViewEvents> & HasListeners<ViewEvents>;
+	events?: ISubscribable<CheckoutEvents> &
+		IEmitter<CheckoutEvents> &
+		HasListeners<CheckoutEvents>;
 	removedTrees?: DetachedFieldIndex;
-}): SharedTreeView {
+}): TreeCheckout {
 	const schema = args?.schema ?? new InMemoryStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest();
 	const changeFamily =
@@ -232,18 +171,16 @@ export function createSharedTreeView(args?: {
 			},
 			changeFamily,
 		);
-	const context = getEditableTreeContext(forest, schema, branch.editor);
 	const events = args?.events ?? createEmitter();
 
 	const transaction = new Transaction(branch);
 
-	return new SharedTreeView(
+	return new TreeCheckout(
 		transaction,
 		branch,
 		changeFamily,
 		schema,
 		forest,
-		context,
 		events,
 		args?.removedTrees,
 	);
@@ -257,7 +194,7 @@ export function createSharedTreeView(args?: {
  * Transactions may nest, meaning that a transaction may be started while a transaction is already ongoing.
  *
  * To avoid updating observers of the view state with intermediate results during a transaction,
- * use {@link ISharedTreeView#fork} and {@link ISharedTreeFork#merge}.
+ * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
  * @alpha
  */
 export interface ITransaction {
@@ -309,31 +246,30 @@ class Transaction implements ITransaction {
 /**
  * Branch (like in a version control system) of SharedTree.
  *
- * {@link ISharedTreeView} that has forked off of the main trunk/branch.
+ * {@link ITreeCheckout} that has forked off of the main trunk/branch.
  * @alpha
  */
-export interface ISharedTreeBranchView extends ISharedTreeView {
+export interface ITreeCheckoutFork extends ITreeCheckout {
 	/**
 	 * Rebase the changes that have been applied to this view over all the new changes in the given view.
 	 * @param view - Either the root view or a view that was created by a call to `fork()`. It is not modified by this operation.
 	 */
-	rebaseOnto(view: ISharedTreeView): void;
+	rebaseOnto(view: ITreeCheckout): void;
 }
 
 /**
- * An implementation of {@link ISharedTreeBranchView}.
+ * An implementation of {@link ITreeCheckoutFork}.
  */
-export class SharedTreeView implements ISharedTreeBranchView {
+export class TreeCheckout implements ITreeCheckoutFork {
 	public constructor(
 		public readonly transaction: ITransaction,
 		private readonly branch: SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>,
 		private readonly changeFamily: DefaultChangeFamily,
 		public readonly storedSchema: StoredSchemaRepository,
 		public readonly forest: IEditableForest,
-		public readonly context: EditableTreeContext,
-		public readonly events: ISubscribable<ViewEvents> &
-			IEmitter<ViewEvents> &
-			HasListeners<ViewEvents>,
+		public readonly events: ISubscribable<CheckoutEvents> &
+			IEmitter<CheckoutEvents> &
+			HasListeners<CheckoutEvents>,
 		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
 		branch.on("change", (event) => {
@@ -373,70 +309,39 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		return this.branch.editor;
 	}
 
-	public editableTree2<TRoot extends TreeFieldSchema>(
-		viewSchema: TreeSchema<TRoot>,
-		nodeKeyManager?: NodeKeyManager,
-		nodeKeyFieldKey?: FieldKey,
-	): TypedField<TRoot> {
-		const context = getTreeContext(
-			viewSchema,
-			this.forest,
-			this.branch.editor,
-			nodeKeyManager ?? createNodeKeyManager(),
-			nodeKeyFieldKey ?? brand(nodeKeyFieldKeyDefault),
-		);
-		return context.root as TypedField<TRoot>;
-	}
-
-	public root2<TRoot extends TreeFieldSchema>(viewSchema: TreeSchema<TRoot>) {
-		// TODO:
-		// this allocates and leaks a new editable tree context (when used it will add content to the AnchorSet which refers back to the context).
-		// Additionally its assumed there will be exactly one context per view and any TreeNodes cached on the AnchorSets will belong to that context.
-		// Calling this more than once would violate that assumption, but currently does not error.
-		// Therefore root2, like editableTree2 should really only be called once.
-		// However, since getProxyForField returns an object that no longer reflects the root after the root is edited (unlike the root field in editableTree2)
-		// users will need to call root2 again whenever that might have happened to get the new root.
-		// This makes it impractical to use this efficiently and correctly at the same time.
-		// This method is also undocumented which thus doesn't provide sufficient guidance to resolve this issue.
-		const rootField = this.editableTree2(viewSchema);
-		return getProxyForField(rootField);
-	}
-
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		return this.forest.anchors.locate(anchor);
 	}
 
-	public fork(): SharedTreeView {
+	public fork(): TreeCheckout {
 		const anchors = new AnchorSet();
 		// TODO: ensure editing this clone of the schema does the right thing.
 		const storedSchema = new InMemoryStoredSchemaRepository(this.storedSchema);
 		const forest = this.forest.clone(storedSchema, anchors);
 		const branch = this.branch.fork();
-		const context = getEditableTreeContext(forest, storedSchema, branch.editor);
 		const transaction = new Transaction(branch);
-		return new SharedTreeView(
+		return new TreeCheckout(
 			transaction,
 			branch,
 			this.changeFamily,
 			storedSchema,
 			forest,
-			context,
 			createEmitter(),
 			this.removedTrees.clone(),
 		);
 	}
 
-	public rebase(view: SharedTreeView): void {
+	public rebase(view: TreeCheckout): void {
 		view.branch.rebaseOnto(this.branch);
 	}
 
-	public rebaseOnto(view: ISharedTreeView): void {
+	public rebaseOnto(view: ITreeCheckout): void {
 		view.rebase(this);
 	}
 
-	public merge(view: SharedTreeView): void;
-	public merge(view: SharedTreeView, disposeView: boolean): void;
-	public merge(view: SharedTreeView, disposeView = true): void {
+	public merge(view: TreeCheckout): void;
+	public merge(view: TreeCheckout, disposeView: boolean): void;
+	public merge(view: TreeCheckout, disposeView = true): void {
 		assert(
 			!this.transaction.inProgress() || disposeView,
 			0x710 /* A view that is merged into an in-progress transaction must be disposed */,
@@ -448,14 +353,6 @@ export class SharedTreeView implements ISharedTreeBranchView {
 		if (disposeView) {
 			view.dispose();
 		}
-	}
-
-	public get root(): UnwrappedEditableField {
-		return this.context.unwrappedRoot;
-	}
-
-	public setContent(data: NewFieldContent) {
-		this.context.setContent(data);
 	}
 
 	/**
@@ -477,8 +374,8 @@ export class SharedTreeView implements ISharedTreeBranchView {
  * @alpha
  */
 export function runSynchronous(
-	view: ISharedTreeView,
-	transaction: (view: ISharedTreeView) => TransactionResult | void,
+	view: ITreeCheckout,
+	transaction: (view: ITreeCheckout) => TransactionResult | void,
 ): TransactionResult {
 	view.transaction.start();
 	const result = transaction(view);

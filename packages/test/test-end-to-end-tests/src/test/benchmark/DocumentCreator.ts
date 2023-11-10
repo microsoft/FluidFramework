@@ -10,7 +10,7 @@ import {
 	BenchmarkType,
 	isMemoryTest,
 	DocumentTypeInfo,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import {
 	benchmark,

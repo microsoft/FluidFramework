@@ -171,10 +171,7 @@ export type ToDelta = (child: NodeChangeset) => Delta.FieldMap;
 /**
  * @alpha
  */
-export type NodeChangeInverter = (
-	change: NodeChangeset,
-	index: number | undefined,
-) => NodeChangeset;
+export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 /**
  * @alpha
@@ -226,7 +223,7 @@ export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
  * @alpha
  */
 export interface RevisionMetadataSource {
-	readonly getIntentions: () => RevisionTag[];
+	readonly getRevisions: () => RevisionTag[];
 	readonly getIndex: RevisionIndexer;
 	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 }

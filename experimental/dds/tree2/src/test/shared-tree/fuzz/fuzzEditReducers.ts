@@ -4,12 +4,18 @@
  */
 
 import { strict as assert } from "assert";
-import { AsyncReducer, combineReducers } from "@fluid-internal/stochastic-test-utils";
-import { DDSFuzzTestState } from "@fluid-internal/test-dds-utils";
-import { DownPath, TreeField, TreeNode, singleTextCursor } from "../../../feature-libraries";
+import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
+import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import {
+	DownPath,
+	TreeField,
+	TreeNode,
+	cursorForJsonableTreeNode,
+	cursorForJsonableTreeField,
+} from "../../../feature-libraries";
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../../shared-tree";
+import { ISharedTree, ITreeCheckout, ITreeView, SharedTreeFactory } from "../../../shared-tree";
 import { Revertible } from "../../../core";
 import {
 	FieldEdit,
@@ -20,19 +26,15 @@ import {
 	FuzzUndoRedoType,
 	Operation,
 } from "./operationTypes";
-import {
-	fuzzNode,
-	fuzzViewFromTree,
-	getEditableTree,
-	isRevertibleSharedTreeView,
-} from "./fuzzUtils";
+import { fuzzNode, fuzzSchema, fuzzViewFromTree, isRevertibleSharedTreeView } from "./fuzzUtils";
+import { viewFromState } from "./fuzzEditGenerators";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
 	edit: (state, operation) => {
 		const { contents } = operation;
 		switch (contents.type) {
 			case "fieldEdit": {
-				applyFieldEdit(fuzzViewFromTree(state.client.channel), contents);
+				applyFieldEdit(viewFromState(state), contents);
 				break;
 			}
 			default:
@@ -77,7 +79,10 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
  * Assumes tree is using the fuzzSchema.
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
-export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): void {
+export function applyFieldEdit(
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	fieldEdit: FieldEdit,
+): void {
 	switch (fieldEdit.change.type) {
 		case "sequence":
 			applySequenceFieldEdit(tree, fieldEdit.change.edit);
@@ -93,7 +98,10 @@ export function applyFieldEdit(tree: ISharedTreeView, fieldEdit: FieldEdit): voi
 	}
 }
 
-function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange): void {
+function applySequenceFieldEdit(
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	change: FuzzFieldChange,
+): void {
 	switch (change.type) {
 		case "insert": {
 			assert(change.parent !== undefined, "Sequence change should not occur at the root.");
@@ -101,7 +109,7 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 			const parent = navigateToNode(tree, change.parent);
 			assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceChildren;
-			field.insertAt(change.index, [singleTextCursor(change.value) as any]);
+			field.insertAt(change.index, cursorForJsonableTreeField([change.value]));
 			break;
 		}
 		case "delete": {
@@ -131,7 +139,10 @@ function applySequenceFieldEdit(tree: ISharedTreeView, change: FuzzFieldChange):
 	}
 }
 
-function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzSet): void {
+function applyValueFieldEdit(
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	change: FuzzSet,
+): void {
 	assert(change.parent !== undefined, "Value change should not occur at the root.");
 	const parent = navigateToNode(tree, change.parent);
 	assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
@@ -140,11 +151,14 @@ function applyValueFieldEdit(tree: ISharedTreeView, change: FuzzSet): void {
 		field?.is(fuzzNode.objectNodeFieldsObject.requiredChild),
 		"Parent of Value change should have an optional field to modify",
 	);
-	field.content = singleTextCursor(change.value) as any;
+	field.content = cursorForJsonableTreeNode(change.value) as any;
 }
 
-function navigateToNode(tree: ISharedTreeView, path: DownPath | undefined): TreeNode | undefined {
-	const rootField = getEditableTree(tree);
+function navigateToNode(
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	path: DownPath | undefined,
+): TreeNode | undefined {
+	const rootField = tree.editableTree;
 	if (path === undefined) {
 		return undefined;
 	}
@@ -181,16 +195,19 @@ function navigateToNode(tree: ISharedTreeView, path: DownPath | undefined): Tree
 	return finalLocation.containedNode;
 }
 
-function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDelete): void {
+function applyOptionalFieldEdit(
+	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	change: FuzzSet | FuzzDelete,
+): void {
 	switch (change.type) {
 		case "set": {
-			const rootField = getEditableTree(tree);
+			const rootField = tree.editableTree;
 			if (change.parent === undefined) {
-				rootField.content = singleTextCursor(change.value) as any;
+				rootField.content = cursorForJsonableTreeNode(change.value) as any;
 			} else {
 				const parent = navigateToNode(tree, change.parent);
 				assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
-				parent.boxedOptionalChild.content = singleTextCursor(change.value) as any;
+				parent.boxedOptionalChild.content = cursorForJsonableTreeNode(change.value) as any;
 			}
 			break;
 		}
@@ -205,7 +222,7 @@ function applyOptionalFieldEdit(tree: ISharedTreeView, change: FuzzSet | FuzzDel
 	}
 }
 
-export function applyTransactionEdit(tree: ISharedTreeView, contents: FuzzTransactionType): void {
+export function applyTransactionEdit(tree: ITreeCheckout, contents: FuzzTransactionType): void {
 	switch (contents.fuzzType) {
 		case "transactionStart": {
 			tree.transaction.start();

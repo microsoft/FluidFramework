@@ -19,10 +19,10 @@ import {
 	insert,
 	TestTreeProviderLite,
 	toJsonableTree,
-	view2WithContent,
 	viewWithContent,
+	checkoutWithContent,
 } from "../utils";
-import { ISharedTreeView2 } from "../../shared-tree";
+import { ITreeView } from "../../shared-tree";
 import { rootFieldKey } from "../../core";
 import {
 	deepPath,
@@ -141,12 +141,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("Cursors", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTreeView2<typeof deepSchema.rootFieldSchema>;
+			let tree: ITreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with cursor: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = view2WithContent(makeDeepContent(numberOfNodes));
+					tree = viewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepCursorTree(tree);
@@ -156,7 +156,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTreeView2<typeof wideSchema.rootFieldSchema>;
+			let tree: ITreeView<typeof wideSchema.rootFieldSchema>;
 			let expected = 0;
 			benchmark({
 				type: benchmarkType,
@@ -167,7 +167,7 @@ describe("SharedTree benchmarks", () => {
 						numbers.push(index);
 						expected += index;
 					}
-					tree = view2WithContent(
+					tree = viewWithContent(
 						makeWideContentWithEndValue(numberOfNodes, numberOfNodes - 1),
 					);
 				},
@@ -181,12 +181,12 @@ describe("SharedTree benchmarks", () => {
 	});
 	describe("EditableTree bench", () => {
 		for (const [numberOfNodes, benchmarkType] of nodesCountDeep) {
-			let tree: ISharedTreeView2<typeof deepSchema.rootFieldSchema>;
+			let tree: ITreeView<typeof deepSchema.rootFieldSchema>;
 			benchmark({
 				type: benchmarkType,
 				title: `Deep Tree with Editable Tree: reads with ${numberOfNodes} nodes`,
 				before: () => {
-					tree = view2WithContent(makeDeepContent(numberOfNodes));
+					tree = viewWithContent(makeDeepContent(numberOfNodes));
 				},
 				benchmarkFn: () => {
 					const { depth, value } = readDeepEditableTree(tree);
@@ -196,7 +196,7 @@ describe("SharedTree benchmarks", () => {
 			});
 		}
 		for (const [numberOfNodes, benchmarkType] of nodesCountWide) {
-			let tree: ISharedTreeView2<typeof wideSchema.rootFieldSchema>;
+			let tree: ITreeView<typeof wideSchema.rootFieldSchema>;
 			let expected: number = 0;
 			benchmark({
 				type: benchmarkType,
@@ -207,7 +207,7 @@ describe("SharedTree benchmarks", () => {
 						numbers.push(index);
 						expected += index;
 					}
-					tree = view2WithContent({
+					tree = viewWithContent({
 						initialTree: { foo: numbers },
 						schema: wideSchema,
 					});
@@ -234,7 +234,7 @@ describe("SharedTree benchmarks", () => {
 						assert.equal(state.iterationsPerBatch, 1);
 
 						// Setup
-						const tree = viewWithContent(makeDeepContent(numberOfNodes));
+						const tree = checkoutWithContent(makeDeepContent(numberOfNodes));
 						const path = deepPath(numberOfNodes);
 
 						// Measure
@@ -280,7 +280,7 @@ describe("SharedTree benchmarks", () => {
 						for (let index = 0; index < numberOfNodes; index++) {
 							numbers.push(index);
 						}
-						const tree = viewWithContent({
+						const tree = checkoutWithContent({
 							initialTree: { foo: numbers },
 							schema: wideSchema,
 						});

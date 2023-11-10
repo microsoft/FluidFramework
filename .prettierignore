@@ -19,7 +19,7 @@ build-tools/packages/*/docs/*.md
 build-tools/packages/build-cli/README.md
 build-tools/packages/readme-command/README.md
 build-tools/packages/version-tools/README.md
-**/src/**/test/types/*
+**/src/**/test/types/*.generated.ts
 **/src/packageVersion.ts
 **/build-tools/CHANGELOG.md
 **/*.done.build.log
