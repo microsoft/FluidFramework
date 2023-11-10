@@ -323,10 +323,8 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		return this._revertibleCommits.size > 0;
 	}
 
-	public *revertibleCommits(): Iterable<RevisionTag> {
-		for (const revision of this._revertibleCommits.keys()) {
-			yield revision;
-		}
+	public revertibleCommits(): IterableIterator<RevisionTag> {
+		return this._revertibleCommits.keys();
 	}
 
 	/**
