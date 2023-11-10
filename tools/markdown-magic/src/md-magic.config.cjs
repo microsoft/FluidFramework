@@ -237,9 +237,12 @@ function libraryPackageReadmeTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	const sections = [generateDependencyGuidelines(true)];
+	const sections = [];
 	if (options.installation !== "FALSE") {
-		sections.push(generateInstallationSection(packageName, options.devDependency, true));
+		sections.push(
+			generateDependencyGuidelines(true),
+			generateInstallationSection(packageName, options.devDependency, true),
+		);
 	}
 
 	if (options.apiDocs !== "FALSE") {

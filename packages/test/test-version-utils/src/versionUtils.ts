@@ -212,16 +212,24 @@ export async function ensureInstalled(
 			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
-				exec(`npm init --yes`, options, (error, stdout, stderr) => {
+				// Added --verbose to try to troubleshoot AB#6195.
+				// We should probably remove it if when find the root cause and fix for that.
+				exec(`npm init --yes --verbose`, options, (error, stdout, stderr) => {
 					if (error) {
-						reject(new Error(`Failed to initialize install directory ${modulePath}`));
+						reject(
+							new Error(
+								`Failed to initialize install directory ${modulePath}\n${stderr}`,
+							),
+						);
 					}
 					resolve();
 				}),
 			);
 			await new Promise<void>((resolve, reject) =>
+				// Added --verbose to try to troubleshoot AB#6195.
+				// We should probably remove it when we find the root cause and fix for that.
 				exec(
-					`npm i --no-package-lock ${adjustedPackageList
+					`npm i --no-package-lock --verbose ${adjustedPackageList
 						.map((pkg) => `${pkg}@${version}`)
 						.join(" ")}`,
 					options,

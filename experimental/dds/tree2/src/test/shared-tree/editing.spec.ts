@@ -27,7 +27,7 @@ import {
 	expectJsonTree,
 	createTestUndoRedoStacks,
 } from "../utils";
-import { ISharedTreeView } from "../../shared-tree";
+import { ITreeCheckout } from "../../shared-tree";
 import { singleTextCursor } from "../../feature-libraries";
 
 const rootField: FieldUpPath = {
@@ -503,7 +503,7 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expectedState);
 		});
 
-		it.skip("can rebase node deletion over cross-field move of descendant", () => {
+		it("can rebase node deletion over cross-field move of descendant", () => {
 			const tree1 = makeTreeFromJson({
 				foo: ["A"],
 			});
@@ -805,7 +805,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it.skip("delete ancestor of return source", () => {
+		it("delete ancestor of return source", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const first: UpPath = {
 				parent: undefined,
@@ -1344,7 +1344,7 @@ describe("Editing", () => {
 				0,
 			);
 
-			// Deletes parent node of the src field
+			// Deletes parent node of the dst field
 			tree.editor
 				.optionalField({ parent: rootNode, field: brand("dst") })
 				.set(undefined, false);
@@ -1615,10 +1615,10 @@ describe("Editing", () => {
 				return buildScenariosWithPrefix();
 			}
 
-			const delAction = (peer: ISharedTreeView, idx: number) => remove(peer, idx, 1);
+			const delAction = (peer: ITreeCheckout, idx: number) => remove(peer, idx, 1);
 			const srcField: FieldUpPath = rootField;
 			const dstField: FieldUpPath = { parent: undefined, field: brand("dst") };
-			const moveAction = (peer: ISharedTreeView, idx: number) =>
+			const moveAction = (peer: ITreeCheckout, idx: number) =>
 				peer.editor.move(srcField, idx, 1, dstField, 0);
 
 			/**
