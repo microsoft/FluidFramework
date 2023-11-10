@@ -20,7 +20,7 @@ import {
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
 import {
-	describeNoCompat,
+	describeFullCompat,
 	itSkipsFailureOnSpecificDrivers,
 } from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
@@ -80,7 +80,7 @@ function assertAttributionMatches(
 	}
 }
 
-describeNoCompat("Attributor for SharedCell", (getTestObjectProvider) => {
+describeFullCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
