@@ -100,7 +100,7 @@ describe("SequenceField - Compose", () => {
 				{ localId: brand(3) },
 				{ changes, cellId: { revision: tag1, localId: brand(2) } },
 			),
-			Mark.moveIn(1, { localId: brand(3) }, { isSrcConflicted: true }),
+			Mark.moveIn(1, { localId: brand(3) }),
 			Mark.returnFrom(1, { localId: brand(4) }, { changes }),
 			Mark.returnTo(1, { localId: brand(4) }, { revision: tag1, localId: brand(3) }),
 			Mark.returnFrom(
@@ -108,12 +108,7 @@ describe("SequenceField - Compose", () => {
 				{ localId: brand(5) },
 				{ changes, cellId: { revision: tag1, localId: brand(4) } },
 			),
-			Mark.returnTo(
-				1,
-				{ localId: brand(5) },
-				{ revision: tag1, localId: brand(5) },
-				{ isSrcConflicted: true },
-			),
+			Mark.returnTo(1, { localId: brand(5) }, { revision: tag1, localId: brand(5) }),
 			Mark.transient(
 				Mark.insert(1, { localId: brand(6) }),
 				Mark.delete(1, { localId: brand(0) }),

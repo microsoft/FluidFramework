@@ -217,11 +217,11 @@ describe("SequenceField - Rebase", () => {
 
 		// Moves --E-G
 		const expected = [
-			Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
+			Mark.moveIn(1, brand(0)),
 			Mark.moveIn(1, brand(1)),
-			Mark.moveIn(1, brand(2), { isSrcConflicted: true }),
+			Mark.moveIn(1, brand(2)),
 			Mark.moveIn(1, brand(3)),
-			Mark.moveIn(1, brand(4), { isSrcConflicted: true }),
+			Mark.moveIn(1, brand(4)),
 			{ count: 2 },
 			Mark.onEmptyCell(
 				{
@@ -676,7 +676,6 @@ describe("SequenceField - Rebase", () => {
 			{ count: 1 },
 			Mark.moveIn(1, brand(1), {
 				finalEndpoint: { localId: brand(0) },
-				isSrcConflicted: true,
 			}),
 		];
 

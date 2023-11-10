@@ -457,7 +457,7 @@ describe("SequenceField - toDelta", () => {
 
 		it("move", () => {
 			const move = [
-				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
+				Mark.moveIn(1, brand(0)),
 				{ count: 1 },
 				Mark.onEmptyCell(cellId, Mark.moveOut(1, brand(0))),
 			];

@@ -150,6 +150,26 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("pin live nodes => skip", () => {
+		const input = [Mark.pin(1, brand(0), { changes: childChange1 })];
+		const expected: TestChangeset = [Mark.modify(inverseChildChange1)];
+		const actual = invert(input);
+		assert.deepEqual(actual, expected);
+	});
+
+	it("pin removed nodes => remove", () => {
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const input = [Mark.pin(1, brand(0), { cellId, changes: childChange1 })];
+		const expected: TestChangeset = [
+			Mark.delete(1, brand(0), {
+				detachIdOverride: cellId,
+				changes: inverseChildChange1,
+			}),
+		];
+		const actual = invert(input);
+		assert.deepEqual(actual, expected);
+	});
+
 	it("transient => transient", () => {
 		const transient = [
 			Mark.transient(Mark.insert(1, brand(1)), Mark.delete(1, brand(0)), {
@@ -209,7 +229,7 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(inverse, expected);
 	});
 
-	it("Move and delete => revive and move", () => {
+	it("Move and delete => revive and return", () => {
 		const moveAndDelete = [
 			Mark.moveOut(1, brand(0), { changes: childChange1 }),
 			{ count: 1 },
@@ -228,6 +248,46 @@ describe("SequenceField - Invert", () => {
 		];
 
 		assert.deepEqual(inverse, expected);
+	});
+
+	it("move removed nodes => return and delete", () => {
+		const input = [
+			Mark.onEmptyCell({ revision: tag2, localId: brand(0) }, Mark.moveOut(1, brand(0))),
+			Mark.modify(childChange1),
+			Mark.moveIn(1, brand(0)),
+			Mark.modify(childChange2),
+		];
+		const actual = invert(input);
+		const expected = [
+			Mark.transient(
+				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+				Mark.delete(1, brand(1)),
+			),
+			Mark.modify(inverseChildChange1),
+			Mark.returnFrom(1, brand(0)),
+			Mark.modify(inverseChildChange2),
+		];
+		assert.deepEqual(actual, expected);
+	});
+
+	it("return removed nodes => return and delete", () => {
+		const input = [
+			Mark.onEmptyCell({ revision: tag2, localId: brand(0) }, Mark.returnFrom(1, brand(0))),
+			Mark.modify(childChange1),
+			Mark.returnTo(1, brand(0), { revision: tag2, localId: brand(1) }),
+			Mark.modify(childChange2),
+		];
+		const actual = invert(input);
+		const expected = [
+			Mark.transient(
+				Mark.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+				Mark.delete(1, brand(1)),
+			),
+			Mark.modify(inverseChildChange1),
+			Mark.returnFrom(1, brand(0)),
+			Mark.modify(inverseChildChange2),
+		];
+		assert.deepEqual(actual, expected);
 	});
 
 	it("Move chain => return chain", () => {
@@ -277,18 +337,6 @@ describe("SequenceField - Invert", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("move out", () => {
-			const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
-			const input = [
-				Mark.onEmptyCell(cellId, Mark.moveOut(1, brand(0), { changes: childChange1 })),
-				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
-			];
-
-			const actual = invert(input);
-			const expected = Change.modifyDetached(0, inverseChildChange1, cellId);
-			assert.deepEqual(actual, expected);
-		});
-
 		it("redundant revive => skip", () => {
 			const input = composeAnonChanges([
 				Change.modify(0, childChange1),
@@ -300,77 +348,6 @@ describe("SequenceField - Invert", () => {
 				Change.modify(2, inverseChildChange2),
 			]);
 			const actual = invert(input);
-			assert.deepEqual(actual, expected);
-		});
-
-		it("return-from + redundant return-to => skip + skip", () => {
-			const input = [
-				Mark.returnFrom(1, brand(0), { isDstConflicted: true, changes: childChange1 }),
-				Mark.returnTo(1, brand(0)),
-				Mark.modify(childChange2),
-			];
-			const actual = invert(input);
-			const expected = [
-				Mark.modify(inverseChildChange1), // Inactive return-from
-				{ count: 1 }, // Inactive return-to whose cells are occupied
-				Mark.modify(inverseChildChange2),
-			];
-			assert.deepEqual(actual, expected);
-		});
-
-		it("redundant move-out + move-in => nil + nil", () => {
-			const input = [
-				Mark.onEmptyCell({ revision: tag2, localId: brand(0) }, Mark.moveOut(1, brand(0))),
-				Mark.modify(childChange1),
-				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
-				Mark.modify(childChange2),
-			];
-			const actual = invert(input);
-			const expected = composeAnonChanges([
-				Change.modify(0, inverseChildChange1),
-				Change.modify(1, inverseChildChange2),
-			]);
-			assert.deepEqual(actual, expected);
-		});
-
-		it("redundant return-from + return to => nil + nil", () => {
-			const input = [
-				Mark.onEmptyCell(
-					{ revision: tag2, localId: brand(0) },
-					Mark.returnFrom(1, brand(0)),
-				),
-				Mark.modify(childChange1),
-				Mark.returnTo(
-					1,
-					brand(0),
-					{ revision: tag2, localId: brand(0) },
-					{ isSrcConflicted: true },
-				),
-				Mark.modify(childChange2),
-			];
-			const actual = invert(input);
-			const expected = composeAnonChanges([
-				Change.modify(0, inverseChildChange1),
-				Change.modify(1, inverseChildChange2),
-			]);
-			assert.deepEqual(actual, expected);
-		});
-
-		it("redundant return-from + redundant return-to => nil + skip", () => {
-			const input = [
-				Mark.onEmptyCell(
-					{ revision: tag2, localId: brand(0) },
-					Mark.returnFrom(1, brand(0), { isDstConflicted: true }),
-				),
-				Mark.modify(childChange1),
-				Mark.returnTo(1, brand(0), undefined, { isSrcConflicted: true }),
-				Mark.modify(childChange2),
-			];
-			const actual = invert(input);
-			const expected = composeAnonChanges([
-				Change.modify(0, inverseChildChange1),
-				Change.modify(2, inverseChildChange2),
-			]);
 			assert.deepEqual(actual, expected);
 		});
 	});
