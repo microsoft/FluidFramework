@@ -5,7 +5,7 @@
 
 import {
 	AllowedUpdateType,
-	InitializeAndSchematizeConfiguration,
+	buildTreeConfiguration,
 	ProxyNode,
 	SchemaBuilder,
 } from "@fluid-experimental/tree2";
@@ -23,7 +23,7 @@ export const Inventory = builder.object("Inventory", {
 	parts: builder.list(Part),
 });
 
-export const treeConfiguration = {
+export const treeConfiguration = buildTreeConfiguration({
 	schema: builder.intoSchema(Inventory),
 	allowedSchemaModifications: AllowedUpdateType.None,
 	initialTree: {
@@ -41,4 +41,4 @@ export const treeConfiguration = {
 			],
 		},
 	},
-} satisfies InitializeAndSchematizeConfiguration;
+});

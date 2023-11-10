@@ -156,8 +156,8 @@ export {
 	SequenceFieldEditBuilder,
 	prefixPath,
 	prefixFieldPath,
-	singleTextCursor,
-	singleStackTreeCursor,
+	cursorForJsonableTreeNode as singleTextCursor,
+	stackTreeNodeCursor,
 	CursorAdapter,
 	CursorWithNode,
 	EditableTreeEvents,
@@ -231,8 +231,10 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
+	stackTreeFieldCursor,
 } from "./feature-libraries";
 
 export {
@@ -251,11 +253,12 @@ export {
 	ForestType,
 	TypedTreeFactory,
 	TypedTreeOptions,
-	TypedTreeChannel,
+	ITree,
 	SharedTreeContentSnapshot,
 	ITreeView,
-	TypedTreeView,
+	TreeView,
 	ITreeViewFork,
+	buildTreeConfiguration,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

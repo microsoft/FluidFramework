@@ -19,7 +19,7 @@ import {
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
 } from "../feature-libraries";
@@ -83,7 +83,7 @@ export function treeContentFromTestTree(test: TestTree): TreeContent {
 	return {
 		schema: test.schemaData,
 		initialTree: cursorsToFieldContent(
-			test.treeFactory().map(singleTextCursor),
+			test.treeFactory().map(cursorForJsonableTreeNode),
 			test.schemaData.rootFieldSchema,
 		),
 	};

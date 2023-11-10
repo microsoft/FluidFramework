@@ -18,7 +18,7 @@ import {
 	SharedTreeObject,
 } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { TypedNode, UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
+import { TypedNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
@@ -35,7 +35,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listAny));
 				assert.equal(listAny.name, "scope.List<Any>");
 				assert(listAny.info.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])));
-				type ListAny = UnboxNode<typeof listAny>;
+				type ListAny = TypedNode<typeof listAny>["content"];
 				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence<readonly [Any]>>>;
 
 				assert.equal(builder.list(Any), listAny);
@@ -52,9 +52,9 @@ describe("domains - SchemaBuilder", () => {
 						TreeFieldSchema.create(FieldKinds.sequence, [builder.number]),
 					),
 				);
-				type ListAny = UnboxNode<typeof listImplicit>;
+				type ListImplicit = TypedNode<typeof listImplicit>["content"];
 				type _check = requireTrue<
-					areSafelyAssignable<ListAny, Sequence<readonly [typeof builder.number]>>
+					areSafelyAssignable<ListImplicit, Sequence<readonly [typeof builder.number]>>
 				>;
 
 				assert.equal(builder.list(builder.number), listImplicit);
@@ -88,10 +88,10 @@ describe("domains - SchemaBuilder", () => {
 						]),
 					),
 				);
-				type ListAny = UnboxNode<typeof listUnion>;
+				type ListUnion = TypedNode<typeof listUnion>["content"];
 				type _check = requireTrue<
 					areSafelyAssignable<
-						ListAny,
+						ListUnion,
 						Sequence<readonly [typeof builder.number, typeof builder.boolean]>
 					>
 				>;
@@ -99,7 +99,7 @@ describe("domains - SchemaBuilder", () => {
 				type _check2 = requireTrue<
 					// @ts-expect-error Currently not order independent: ideally this would compile
 					areSafelyAssignable<
-						ListAny,
+						ListUnion,
 						Sequence<readonly [typeof builder.boolean, typeof builder.number]>
 					>
 				>;
@@ -119,9 +119,9 @@ describe("domains - SchemaBuilder", () => {
 				assert(
 					list.info.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
-				type ListAny = UnboxNode<typeof list>;
+				type List = TypedNode<typeof list>["content"];
 				type _check = requireTrue<
-					areSafelyAssignable<ListAny, Sequence<readonly [typeof builder.number]>>
+					areSafelyAssignable<List, Sequence<readonly [typeof builder.number]>>
 				>;
 
 				// Not cached for structural use

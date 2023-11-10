@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { fail, Mutable } from "../../util";
 import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { singleTextCursor } from "../treeTextCursor";
+import { cursorForJsonableTreeNode } from "../treeTextCursor";
 import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
@@ -66,7 +66,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
 						build.push({
 							id: oldId,
-							trees: mark.attach.content.map(singleTextCursor),
+							trees: mark.attach.content.map(cursorForJsonableTreeNode),
 						});
 					}
 					rename.push({
@@ -142,7 +142,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 						);
 						build.push({
 							id: buildId,
-							trees: mark.content.map(singleTextCursor),
+							trees: mark.content.map(cursorForJsonableTreeNode),
 						});
 					}
 					local.push(deltaMark);

@@ -3,18 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { ITreeSubscriptionCursor, inCursorNode, EmptyKey } from "../../core";
+import { ITreeSubscriptionCursor, inCursorNode } from "../../core";
 import { FieldKind } from "../modular-schema";
 import { FieldKinds } from "../default-field-kinds";
-import {
-	AllowedTypes,
-	TreeFieldSchema,
-	TreeNodeSchema,
-	schemaIsFieldNode,
-	schemaIsLeaf,
-} from "../typed-schema";
+import { AllowedTypes, TreeFieldSchema, TreeNodeSchema, schemaIsLeaf } from "../typed-schema";
 import { Context } from "./context";
-import { UnboxField, UnboxNode, UnboxNodeUnion } from "./editableTreeTypes";
+import { TreeNode, UnboxField, UnboxNode, UnboxNodeUnion } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import { makeField } from "./lazyField";
 
@@ -29,14 +23,8 @@ export function unboxedTree<TSchema extends TreeNodeSchema>(
 	if (schemaIsLeaf(schema)) {
 		return cursor.value as UnboxNode<TSchema>;
 	}
-	if (schemaIsFieldNode(schema)) {
-		cursor.enterField(EmptyKey);
-		const primaryField = makeField(context, schema.info, cursor);
-		cursor.exitField();
-		return primaryField as UnboxNode<TSchema>;
-	}
 
-	return makeTree(context, cursor) as UnboxNode<TSchema>;
+	return makeTree(context, cursor) as TreeNode as UnboxNode<TSchema>;
 }
 
 /**

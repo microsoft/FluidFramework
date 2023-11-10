@@ -76,7 +76,7 @@ export interface TreeEntity<out TSchema = unknown> {
 }
 
 /**
- * Status of the tree that a particular node in {@link Tree} belongs to.
+ * Status of the tree that a particular node belongs to.
  * @alpha
  */
 export enum TreeStatus {
@@ -349,9 +349,7 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
  * A {@link TreeNode} that wraps a single {@link TreeField} (which is placed under the {@link EmptyKey}).
  *
  * @remarks
- * FieldNodes unbox to their content, so in schema aware APIs which do unboxing, the FieldNode itself will be skipped over.
- * This layer of field nodes is then omitted when using schema-aware APIs which do unboxing.
- * Other than this unboxing, a FieldNode is identical to a struct node with a single field using the {@link EmptyKey}.
+ * A FieldNode is mostly identical to a struct node with a single field using the {@link EmptyKey}, but provides access to it via a field named "content".
  *
  * There are several use-cases where it makes sense to use a field node.
  * Here are a few:
@@ -378,10 +376,8 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
  * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
  *
  * @privateRemarks
- * TODO: The rule walking over the tree via enumerable own properties is lossless (see [ReadMe](./README.md) for details)
- * fails to be true for recursive field nodes with field kind optional, since the length of the chain of field nodes is lost.
- * THis could be fixed by tweaking the unboxing rules, or simply ban view schema that would have this problem (check for recursive optional field nodes).
- * Replacing the field node pattern with one where the FieldNode node exposes APIs from its field instead of unboxing could have the same issue, and same solutions.
+ * FieldNodes do not unbox to their content, so in schema aware APIs which do unboxing, the FieldNode will NOT be skipped over.
+ * This is a change from the old behavior to simplify unboxing and prevent cases where arbitrary deep chains of field nodes could unbox omitting information about the tree depth.
  * @alpha
  */
 export interface FieldNode<in out TSchema extends FieldNodeSchema> extends TreeNode {
@@ -993,7 +989,7 @@ export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
 	: TSchema extends MapNodeSchema
 	? MapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? UnboxField<TSchema["info"]>
+	? FieldNode<TSchema>
 	: TSchema extends ObjectNodeSchema
 	? ObjectNodeTyped<TSchema>
 	: UnknownUnboxed;
@@ -1002,6 +998,6 @@ export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
  * Unboxed tree type for unknown schema cases.
  * @alpha
  */
-export type UnknownUnboxed = TreeValue | TreeNode | TreeField;
+export type UnknownUnboxed = TreeValue | TreeNode;
 
 // #endregion
