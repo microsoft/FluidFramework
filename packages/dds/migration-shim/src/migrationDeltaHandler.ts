@@ -116,12 +116,8 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	public setConnectionState(connected: boolean): void {
 		return this.treeDeltaHandler.setConnectionState(connected);
 	}
-	public reSubmit(message: IStampedContents, localOpMetadata: boolean | undefined): void {
-		if (this.isBarrierOp(message) && localOpMetadata === true) {
-			return;
-		}
-
-		if (this.isUsingOldV1() && this.isBarrierOp(message) && localOpMetadata !== true) {
+	public reSubmit(message: IStampedContents, localOpMetadata: unknown): void {
+		if (this.isUsingOldV1() && this.isBarrierOp(message)) {
 			this.submitLocalMessage(message);
 			return;
 		}
@@ -132,10 +128,10 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		return this.treeDeltaHandler.reSubmit(message, localOpMetadata);
 	}
 	public applyStashedOp(message: IStampedContents): unknown {
-		if (this.isBarrierOp(message)) {
-			// Make sure we don't submit the barrier op after it has been stashed.
-			return true;
+		if (this.isUsingOldV1() && this.isBarrierOp(message)) {
+			return undefined;
 		}
+
 		if (this.shouldDropOp(message)) {
 			return undefined;
 		}
@@ -143,10 +139,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	}
 	public rollback?(message: IStampedContents, localOpMetadata: unknown): void {
 		if (this.isBarrierOp(message)) {
-			return;
-		}
-		if (this.shouldDropOp(message)) {
-			return;
+			throw new Error("MigrationShim does not support rollback of barrier ops");
 		}
 		return this.treeDeltaHandler.rollback?.(message, localOpMetadata);
 	}
@@ -157,17 +150,22 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 
 	private shouldDropOp(message: IStampedContents): boolean {
 		assert(!this.isPreAttachState(), "Can't process ops before attaching tree handler");
+		// Don't drop ops when we are in v1 state
 		if (this.isUsingOldV1()) {
 			return false;
 		}
 
+		// Drop v1 ops when in v2 state
 		if (message.fluidMigrationStamp === undefined) {
 			return true;
 		}
 
+		// Don't drop v2 ops in v2 state
 		if (attributesMatch(message.fluidMigrationStamp, this.attributes)) {
 			return false;
 		}
-		return true;
+
+		// This means the op has a migration stamp so it's v2 but the attributes don't match
+		throw new Error("Unexpected op with mismatched attributes");
 	}
 }

@@ -293,10 +293,6 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 	});
 
 	it("MigrationShim can apply stashed v1 ops to v1 state", async () => {
-		const loaderProps = {
-			options: { enableOfflineLoad: true },
-		};
-
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1: IContainerExperimental = await provider.loadContainer(
 			runtimeFactory2,
@@ -331,10 +327,6 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 	});
 
 	it("MigrationShim can apply stashed v2 ops to v2 state", async () => {
-		const loaderProps = {
-			options: { enableOfflineLoad: true },
-		};
-
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1: IContainerExperimental = await provider.loadContainer(
 			runtimeFactory2,
@@ -431,10 +423,6 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 	});
 
 	it("Shims drop stashed v1 ops to v2 state", async () => {
-		const loaderProps = {
-			options: { enableOfflineLoad: true },
-		};
-
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1: IContainerExperimental = await provider.loadContainer(
 			runtimeFactory2,
@@ -502,11 +490,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		assert(container3.closed !== true, "Container should not be closed");
 	});
 
-	it("MigrationShim drop stashed v1 migrate ops in v1 state", async () => {
-		const loaderProps = {
-			options: { enableOfflineLoad: true },
-		};
-
+	it("MigrationShim apply stashed v1 migrate ops in v1 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1: IContainerExperimental = await provider.loadContainer(
 			runtimeFactory2,
@@ -546,8 +530,11 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		const testObj3 = (await container3.getEntryPoint()) as TestDataObject;
 		const shim3 = testObj3.getTree<MigrationShim>();
 		assert(
-			shim3.currentTree.attributes.type === legacySharedTreeFactory.type,
+			shim3.currentTree.attributes.type === newSharedTreeFactory.type,
 			"Should not have migrated to new tree",
 		);
+		const tree3 = shim3.currentTree as ISharedTree;
+		const node3 = getNewTreeView(tree3).root;
+		assert(node3.quantity === 5, "expected migration to have been applied");
 	});
 });
