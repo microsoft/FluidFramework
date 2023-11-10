@@ -89,6 +89,7 @@ extends:
     packageManager: pnpm
     buildDirectory: build-tools
     tagName: build-tools
+    isReleaseGroup: true
     taskBuild: build
     taskBuildDocs: false
     tasktest:

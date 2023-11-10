@@ -109,6 +109,7 @@ extends:
     packageManagerInstallCommand: 'pnpm install --workspace-root --frozen-lockfile'
     packageManager: pnpm
     tagName: server
+    isReleaseGroup: true
     pool: Large
     pack: true
     lint: true
