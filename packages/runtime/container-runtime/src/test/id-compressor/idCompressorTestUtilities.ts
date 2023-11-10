@@ -174,15 +174,12 @@ export class IdCompressorTestNetwork {
 	/** The compressors used in this network */
 	private readonly compressors: ClientMap<IdCompressor>;
 	/** The log of operations seen by the server so far. Append-only. */
-	private readonly serverOperations: (
-		| [
-				creationRange: IdCreationRange,
-				opSpaceIds: OpSpaceCompressedId[],
-				clientFrom: OriginatingClient,
-				sessionIdFrom: SessionId,
-		  ]
-		| number
-	)[] = [];
+	private readonly serverOperations: [
+		creationRange: IdCreationRange,
+		opSpaceIds: OpSpaceCompressedId[],
+		clientFrom: OriginatingClient,
+		sessionIdFrom: SessionId,
+	][] = [];
 	/** An index into `serverOperations` for each client which represents how many operations have been delivered to that client */
 	private readonly clientProgress: ClientMap<number>;
 	/** All ids (local and sequenced) that a client has created or received, in order. */
@@ -277,10 +274,10 @@ export class IdCompressorTestNetwork {
 	}
 
 	/**
-	 * Submit a capacity change operation to the network. It will not take effect immediately but will be processed in sequence order.
+	 * Changes the capacity request amount for a client. It will take effect immediately.
 	 */
-	public enqueueCapacityChange(newClusterCapacity: number): void {
-		this.serverOperations.push(newClusterCapacity);
+	public changeCapacity(client: Client, newClusterCapacity: number): void {
+		this.compressors.get(client).nextRequestedClusterSizeOverride = newClusterCapacity;
 	}
 
 	private addNewId(
@@ -356,17 +353,17 @@ export class IdCompressorTestNetwork {
 	}
 
 	/**
-	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
+	 * Delivers all undelivered ID ranges from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: Client, opsToDeliver?: number): void;
 
 	/**
-	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
+	 * Delivers all undelivered ID ranges from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: DestinationClient): void;
 
 	/**
-	 * Delivers all undelivered ID ranges and cluster capacity changes from the server to the target clients.
+	 * Delivers all undelivered ID ranges from the server to the target clients.
 	 */
 	public deliverOperations(clientTakingDelivery: DestinationClient, opsToDeliver?: number): void {
 		let opIndexBound: number;
@@ -381,28 +378,17 @@ export class IdCompressorTestNetwork {
 		}
 		for (const [clientTo, compressorTo] of this.getTargetCompressors(clientTakingDelivery)) {
 			for (let i = this.clientProgress.get(clientTo); i < opIndexBound; i++) {
-				const operation = this.serverOperations[i];
-				if (typeof operation === "number") {
-					compressorTo.nextRequestedClusterSizeOverride = operation;
-				} else {
-					const [range, opSpaceIds, clientFrom, sessionIdFrom] = operation;
-					compressorTo.finalizeCreationRange(range);
+				const [range, opSpaceIds, clientFrom, sessionIdFrom] = this.serverOperations[i];
+				compressorTo.finalizeCreationRange(range);
 
-					const ids = range.ids;
-					if (ids !== undefined) {
-						for (const id of opSpaceIds) {
-							const sessionSpaceId = compressorTo.normalizeToSessionSpace(
-								id,
-								range.sessionId,
-							);
-							this.addNewId(
-								clientTo,
-								sessionSpaceId,
-								clientFrom,
-								sessionIdFrom,
-								true,
-							);
-						}
+				const ids = range.ids;
+				if (ids !== undefined) {
+					for (const id of opSpaceIds) {
+						const sessionSpaceId = compressorTo.normalizeToSessionSpace(
+							id,
+							range.sessionId,
+						);
+						this.addNewId(clientTo, sessionSpaceId, clientFrom, sessionIdFrom, true);
 					}
 				}
 			}
@@ -665,6 +651,7 @@ interface DeliverSomeOperations {
 
 interface ChangeCapacity {
 	type: "changeCapacity";
+	client: Client;
 	newSize: number;
 }
 
@@ -746,9 +733,10 @@ export function makeOpGenerator(
 		};
 	}
 
-	function changeCapacityGenerator({ random }: FuzzTestState): ChangeCapacity {
+	function changeCapacityGenerator({ random, activeClients }: FuzzTestState): ChangeCapacity {
 		return {
 			type: "changeCapacity",
+			client: random.pick(activeClients),
 			newSize: Math.min(
 				Math.floor(random.real(0, 1) ** 2 * maxClusterSize) + 1,
 				maxClusterSize,
@@ -849,7 +837,7 @@ export function performFuzzActions(
 				return state;
 			},
 			changeCapacity: (state, op) => {
-				network.enqueueCapacityChange(op.newSize);
+				network.changeCapacity(op.client, op.newSize);
 				return { ...state, clusterSize: op.newSize };
 			},
 			deliverSomeOperations: (state, op) => {

@@ -42,7 +42,7 @@ describe("IdCompressor Perf", () => {
 		synchronizeAtEnd: boolean,
 	): IdCompressorTestNetwork {
 		const perfNetwork = new IdCompressorTestNetwork(clusterSize);
-		const maxClusterSize = 25;
+		const maxClusterSize = clusterSize * 2;
 		const generator = take(
 			1000,
 			makeOpGenerator({
@@ -51,9 +51,6 @@ describe("IdCompressor Perf", () => {
 				outsideAllocationFraction: 0.9,
 			}),
 		);
-		if (perfNetwork.initialClusterSize > maxClusterSize) {
-			perfNetwork.enqueueCapacityChange(maxClusterSize);
-		}
 		performFuzzActions(
 			generator,
 			perfNetwork,
@@ -251,7 +248,7 @@ describe("IdCompressor Perf", () => {
 		type,
 		title: `normalize an unacked local ID from the local session to op space`,
 		before: () => {
-			const network = setupCompressors(15, true, false);
+			const network = setupCompressors(initialClusterCapacity, true, false);
 			// Ensure no eager finals
 			network.allocateAndSendIds(
 				localClient,
