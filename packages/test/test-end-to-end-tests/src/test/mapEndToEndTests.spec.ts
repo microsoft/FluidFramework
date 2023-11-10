@@ -17,7 +17,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
 
 const mapId = "mapKey";
@@ -376,7 +376,7 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
 	});
 });
 
-describeFullCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
+describeNoCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
