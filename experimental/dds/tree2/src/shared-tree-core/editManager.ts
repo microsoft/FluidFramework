@@ -102,17 +102,6 @@ export class EditManager<
 	>(undefined, sequenceIdComparator);
 
 	/**
-	 * Tracks where on the trunk all registered branches have their oldest revertible commits.
-	 *
-	 * @privateRemarks
-	 * TODO: this is not currently used and is included for documentation purposes, see `registerRevertibleBranch`
-	 */
-	private readonly revertibleBranches = new BTree<
-		SequenceId,
-		Set<SharedTreeBranch<TEditor, TChangeset>>
-	>(undefined, sequenceIdComparator);
-
-	/**
 	 * The sequence number of the newest commit on the trunk that has been received by all peers.
 	 * Defaults to {@link minimumPossibleSequenceNumber} if no commits have been received.
 	 *
@@ -216,35 +205,6 @@ export class EditManager<
 			offRebase();
 			offDispose();
 		});
-	}
-
-	/**
-	 * Makes the given branch known to the `EditManager` as a revertible branch. This ensures that the `EditManager` will
-	 * keep track of the oldest revertible sequence ID on this branch and will not trim any commits after it.
-	 *
-	 * @privateRemarks
-	 * TODO: this is not currently used and is included for documentation purposes
-	 * This will need to be properly implemented or replaced with a better alternative. Branches may hold onto revertible commits
-	 * that have been sequenced and could possibly be evicted from the trunk.
-	 */
-	private registerRevertibleBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
-		// if the branch doesn't have any revertibles,
-		if (branch.hasRevertibleCommits()) {
-			const oldest = this.getOldestRevertibleSequenceId(branch);
-			const branches = getOrCreate(this.revertibleBranches, oldest, () => new Set());
-
-			assert(!branches.has(branch), "Branch was registered more than once");
-			branches.add(branch);
-
-			branch.on("revertibleDispose", this.onRevertibleDisposed(branch));
-		} else {
-			// register a listener to the revertible event to add the first one to the b tree and then unregister the listener
-			// when this event fires, the revertible will not have been sequenced so we prob need to listen to another event
-			// maybe when the branch is rebased, mark its oldest revertible as the 'oldest sequenced revertible' if the rebase advanced past that commit
-			const unregister = branch.on("revertible", (revertible) => {
-				unregister();
-			});
-		}
 	}
 
 	/**
