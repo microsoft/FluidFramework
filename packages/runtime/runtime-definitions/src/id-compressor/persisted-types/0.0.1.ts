@@ -34,8 +34,21 @@ export type SerializedIdCompressorWithOngoingSession = SerializedIdCompressor & 
 export interface IdCreationRange {
 	readonly sessionId: SessionId;
 	readonly ids?: {
+		/**
+		 * The gen count of the first ID in the range created by `sessionId.`
+		 */
 		readonly firstGenCount: number;
+
+		/**
+		 * The number of IDs created in the range created by `sessionId.`
+		 */
 		readonly count: number;
+
+		/**
+		 * The size of the ID cluster to create if `count` overflows the existing cluster for
+		 * `sessionId`, if one exists. This request will be respected, and the size of the cluster
+		 * will be equal to overflow + `requestedClusterSize`.
+		 */
 		readonly requestedClusterSize: number;
 	};
 }
