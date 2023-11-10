@@ -235,7 +235,6 @@ export class EditManager<
 		branch: SharedTreeBranch<TEditor, TChangeset>,
 	): (revision: RevisionTag) => void {
 		return (revision: RevisionTag) => {
-			// check if this revision was the oldest for this branch
 			const metadata = this.trunkMetadata.get(revision);
 
 			// if this revision hasn't been sequenced, it won't be evicted
