@@ -57,11 +57,9 @@ stages:
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
-# The ony build workflow we have today that needs to publish packages to the dev feed is the one for
-# the client release group. That's the only one where we generate lists of packages to publish to
-# each feed so the only one that should try to publish to the dev feed. Others are fine publishing only
-# to the build feed because the dev feed upstreams it.
-- ${{ if eq(parameters.tagName, 'client') }}:
+# Only add a stage to publish packages to the dev feed for the build workflows where we create separate lists of
+# packages to publish to each feed. Others are fine publishing only to the build feed because the dev feed upstreams it.
+- ${{ if containsValue(['client', 'server', 'build-tools'], parameters.tagName) }}:
   - stage: publish_npm_internal_dev
     dependsOn: build
     displayName: Publish to internal dev feed
