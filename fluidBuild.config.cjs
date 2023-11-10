@@ -204,6 +204,7 @@ module.exports = {
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"^tools/getkeys",
 			],
+			"npm-package-json-esm": ["packages/dds/migration-shim/package.json"],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
 				// We deliberately improperly import from deep in the package tree while we migrate everything into other
