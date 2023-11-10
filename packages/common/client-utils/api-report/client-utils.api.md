@@ -4,6 +4,8 @@
 
 ```ts
 
+/// <reference types="node" />
+
 import { EventEmitter } from 'events';
 import { IDisposable } from '@fluidframework/core-interfaces';
 import { IEvent } from '@fluidframework/core-interfaces';
@@ -12,13 +14,14 @@ import { IEventTransformer } from '@fluidframework/core-interfaces';
 import { TransformedEvent } from '@fluidframework/core-interfaces';
 
 // @internal
-export class Buffer extends Uint8Array {
+class Buffer_2 extends Uint8Array {
     static from(value: unknown, encodingOrOffset?: unknown, length?: unknown): IsoBuffer;
     // (undocumented)
-    static isBuffer(obj: unknown): obj is Buffer;
+    static isBuffer(obj: unknown): obj is Buffer_2;
     // (undocumented)
     toString(encoding?: "utf8" | "utf-8" | "base64"): string;
 }
+export { Buffer_2 as Buffer }
 
 // @internal
 export const bufferToString: (blob: ArrayBufferLike, encoding: "utf8" | "utf-8" | "base64") => string;
@@ -56,10 +59,10 @@ export function gitHashFile(file: IsoBuffer): Promise<string>;
 export function hashFile(file: IsoBuffer, algorithm?: "SHA-1" | "SHA-256", hashEncoding?: "hex" | "base64"): Promise<string>;
 
 // @internal (undocumented)
-export const IsoBuffer: typeof Buffer;
+export const IsoBuffer: typeof Buffer_2;
 
 // @internal (undocumented)
-export type IsoBuffer = Buffer;
+export type IsoBuffer = Buffer_2;
 
 // @internal
 export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
