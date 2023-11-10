@@ -17,9 +17,9 @@ const validCodeWithJSDoc = `
 /**
  * @public
  */
-export function internalFunction() {}
+export function publicFunction() {}
 
-import { internalFunction } from "./internalModule";
+import { publicFunction } from "./someModule";
 `;
 
 const invalidCodeWithJSDoc = `
@@ -31,30 +31,32 @@ export function internalFunction() {}
 import { internalFunction } from "./internalModule";
 `;
 
-ruleTester.run(
-	"no-restricted-tags-imports",
-	noRestrictedTagsImports,
-	{
-		// Checks cases that should pass
-		valid: [
-			{
-				code: validCodeWithJSDoc,
-			},
-		],
-		// 'Checks cases that should not pass
-		invalid: [
-			{
-				code: invalidCodeWithJSDoc,
-				options: [
-					{
-						tags: ["internal", "alpha"],
-						exceptions: ["foo", "bar"], 
-					},
-				],
-				errors: 1,
-			},
-		],
-	},
-);
+ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
+	// Checks cases that should pass
+	valid: [
+		{
+			code: validCodeWithJSDoc,
+			options: [
+				{
+					tags: ["internal", "alpha"],
+					exceptions: ["foo", "bar"],
+				},
+			],
+		},
+	],
+	// Checks cases that should not pass
+	invalid: [
+		{
+			code: invalidCodeWithJSDoc,
+			options: [
+				{
+					tags: ["internal", "alpha"],
+					exceptions: ["foo", "bar"],
+				},
+			],
+			errors: 1,
+		},
+	],
+});
 
 console.log("All tests passed!");
