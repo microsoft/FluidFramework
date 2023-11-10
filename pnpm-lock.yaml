@@ -39,6 +39,7 @@ importers:
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
       danger: ^10.9.0
+      doctrine: ^3.0.0
       eslint: ~8.50.0
       jest: ^29.6.2
       mocha: ^10.2.0
@@ -48,6 +49,8 @@ importers:
       run-script-os: ^1.1.6
       syncpack: ^9.8.4
       typescript: ~5.1.6
+    dependencies:
+      doctrine: 3.0.0
     devDependencies:
       '@changesets/cli': 2.26.2
       '@fluid-private/changelog-generator-wrapper': file:tools/changelog-generator-wrapper
@@ -27446,7 +27449,6 @@ packages:
     engines: {node: '>=6.0.0'}
     dependencies:
       esutils: 2.0.3
-    dev: true
 
   /dom-accessibility-api/0.5.16:
     resolution: {integrity: sha512-X7BJ2yElsnOJ30pZF4uIIDfBEVgF4XEBxL9Bxhy6dnrm5hkzqmsWHGTiHqRiITNhMyFLyAiWndIJP7Z1NTteDg==}
@@ -42201,7 +42203,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.21.0
-      webpack: 5.88.2_webpack-cli@4.10.0
+      webpack: 5.88.2
 
   /terser/4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -44572,7 +44574,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: true
 
   /webpack/5.88.2_webpack-cli@4.10.0:
     resolution: {integrity: sha512-JmcgNZ1iKj+aiR0OvTYtWQqJwq37Pf683dY9bVORwVbUrDhLhdn/PlO2sHsFHPkj7sHNQF3JwaAkp49V+Sq1tQ==}
@@ -45423,12 +45424,14 @@ packages:
     dependencies:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/eslint-config-fluid': 2.1.0_loebgezstcsvd2poh2d55fifke
+      '@rushstack/node-core-library': 3.61.0
       '@tylerbu/markdown-magic': 2.4.0-tylerbu-1
       chalk: 2.4.2
       markdown-magic-package-scripts: 1.2.2
       markdown-magic-template: 1.0.1
       yargs: 17.7.2
     transitivePeerDependencies:
+      - '@types/node'
       - eslint
       - eslint-import-resolver-typescript
       - eslint-import-resolver-webpack
