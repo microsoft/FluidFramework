@@ -16,6 +16,7 @@ import {
 	Any,
 	FieldKinds,
 	TreeFieldSchema,
+	TreeCompressionStrategy,
 	cursorForJsonableTreeNode,
 } from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
@@ -31,7 +32,10 @@ import {
 import { AllowedUpdateType, FieldKey, JsonableTree, UpPath, rootFieldKey } from "../../core";
 import { leaf, SchemaBuilder } from "../../domains";
 
-const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
+});
 
 const builder = new SchemaBuilder({ scope: "test trees" });
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.sequence(Any));

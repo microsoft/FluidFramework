@@ -230,6 +230,7 @@ export {
 	SharedTreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
+	TreeCompressionStrategy,
 	treeSchemaFromStoredSchema,
 	encodeTreeSchema,
 	stackTreeFieldCursor,

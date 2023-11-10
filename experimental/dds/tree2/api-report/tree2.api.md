@@ -1744,6 +1744,8 @@ export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
+    // (undocumented)
+    summaryEncodeType?: TreeCompressionStrategy;
 }
 
 // @alpha
@@ -1818,6 +1820,12 @@ export interface TreeApi {
     readonly parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
     readonly schema: (node: SharedTreeNode) => TreeNodeSchema;
     readonly status: (node: SharedTreeNode) => TreeStatus;
+}
+
+// @alpha
+export enum TreeCompressionStrategy {
+    Compressed = 0,
+    Uncompressed = 1
 }
 
 // @alpha
