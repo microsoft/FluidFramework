@@ -1744,6 +1744,8 @@ export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, 
 // @alpha (undocumented)
 export interface SharedTreeOptions extends Partial<ICodecOptions> {
     forest?: ForestType;
+    // (undocumented)
+    summaryEncodeType?: TreeCompressionStrategy;
 }
 
 // @alpha
@@ -1764,13 +1766,16 @@ export class SimpleDependee implements Dependee {
 export function singleJsonCursor(root: JsonCompatible): ITreeCursorSynchronous;
 
 // @alpha
-export function singleStackTreeCursor<TNode>(root: TNode, adapter: CursorAdapter<TNode>): CursorWithNode<TNode>;
-
-// @alpha
 export function singleTextCursor(root: JsonableTree): ITreeCursorSynchronous;
 
 // @alpha
 export type StableNodeKey = Brand<StableId, "Stable Node Key">;
+
+// @alpha
+export function stackTreeFieldCursor<TNode>(adapter: CursorAdapter<TNode>, root: TNode, detachedField?: DetachedField): CursorWithNode<TNode>;
+
+// @alpha
+export function stackTreeNodeCursor<TNode>(adapter: CursorAdapter<TNode>, root: TNode): CursorWithNode<TNode>;
 
 // @alpha
 export interface StoredSchemaCollection {
@@ -1815,6 +1820,12 @@ export interface TreeApi {
     readonly parent: (node: SharedTreeNode) => SharedTreeNode | undefined;
     readonly schema: (node: SharedTreeNode) => TreeNodeSchema;
     readonly status: (node: SharedTreeNode) => TreeStatus;
+}
+
+// @alpha
+export enum TreeCompressionStrategy {
+    Compressed = 0,
+    Uncompressed = 1
 }
 
 // @alpha
