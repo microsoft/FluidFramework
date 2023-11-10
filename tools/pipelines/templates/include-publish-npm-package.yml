@@ -20,7 +20,7 @@ parameters:
 
 - name: isReleaseGroup
   type: boolean
-  deafult: false
+  default: false
 
 stages:
 
