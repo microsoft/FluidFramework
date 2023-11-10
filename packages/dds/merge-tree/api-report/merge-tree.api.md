@@ -634,7 +634,7 @@ export interface MapLike<T> {
 }
 
 // @public (undocumented)
-export class Marker extends BaseSegment implements ReferencePosition, ISegment {
+export class Marker extends BaseSegment implements ReferencePosition {
     constructor(refType: ReferenceType);
     // (undocumented)
     append(): void;
