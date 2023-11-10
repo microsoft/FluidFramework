@@ -1,4 +1,4 @@
-# @fluid-internal/app-insights-logger
+# @fluidframework/app-insights-logger
 
 ## Overview
 
@@ -21,7 +21,7 @@ In our case, we are sending custom metrics. [Learn more about Azure App Insights
 To get started, install the package by running the following command:
 
 ```bash
-npm i @fluid-internal/app-insights-logger
+npm i @fluidframework/app-insights-logger
 ```
 
 <!-- prettier-ignore-end -->
