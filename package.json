@@ -356,8 +356,8 @@
 			"simplemde>codemirror": "^5.65.11",
 			"simplemde>marked": "^4.3.0",
 			"@oclif/core": "~2.4.0",
-			"@fluidframework/build-tools": "0.27.0-209784",
-			"@fluid-tools/build-cli": "0.27.0-209784"
+			"@fluidframework/build-tools": "0.27.0",
+			"@fluid-tools/build-cli": "0.27.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
