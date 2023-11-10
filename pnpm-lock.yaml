@@ -6031,7 +6031,6 @@ importers:
       buffer: ^6.0.3
       c8: ^7.7.1
       concurrently: ^8.2.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -6052,7 +6051,6 @@ importers:
       sinon: ^7.4.2
       ts-jest: ^29.1.1
       ts-node: ^10.9.1
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../core-interfaces
@@ -6081,7 +6079,6 @@ importers:
       '@types/sinon': 7.5.2
       c8: 7.14.0
       concurrently: 8.2.1
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -6099,7 +6096,6 @@ importers:
       sinon: 7.5.0
       ts-jest: 29.1.1_bklqb6uhx3v54kwzu425tj6wzi
       ts-node: 10.9.1_42zgbtferic3jfsc73chue3iee
-      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/common/container-definitions:
@@ -6279,6 +6275,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -6287,6 +6284,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6309,6 +6307,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -6317,6 +6316,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/counter:
@@ -6339,6 +6339,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -6347,6 +6348,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6368,6 +6370,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -6376,6 +6379,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ink:
@@ -6396,6 +6400,7 @@ importers:
       '@microsoft/api-extractor': ^7.37.0
       '@types/mocha': ^9.1.1
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -6404,6 +6409,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -6425,6 +6431,7 @@ importers:
       '@microsoft/api-extractor': 7.38.0
       '@types/mocha': 9.1.1
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -6433,6 +6440,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/map:
@@ -6543,6 +6551,7 @@ importers:
       '@types/node': ^16.18.38
       best-random: ^1.0.0
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
@@ -6554,6 +6563,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-node: ^10.9.1
+      tsc-multi: ^1.1.0
       tslib: ^1.10.0
       typescript: ~5.1.6
       uuid: ^9.0.0
@@ -6588,6 +6598,7 @@ importers:
       '@types/node': 16.18.58
       best-random: 1.0.3
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       hotloop: 1.2.0
@@ -6598,6 +6609,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_42zgbtferic3jfsc73chue3iee
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
       uuid: 9.0.1
 
@@ -6628,6 +6640,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -6637,6 +6650,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6665,6 +6679,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -6674,6 +6689,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/migration-shim:
@@ -6704,6 +6720,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -6712,6 +6729,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
@@ -6741,6 +6759,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -6749,6 +6768,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/ordered-collection:
@@ -6773,6 +6793,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -6781,6 +6802,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -6806,6 +6828,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -6814,6 +6837,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/pact-map:
@@ -6836,6 +6860,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
@@ -6846,6 +6871,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -6868,6 +6894,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -6877,6 +6904,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/register-collection:
@@ -6901,6 +6929,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -6909,6 +6938,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6932,6 +6962,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -6940,6 +6971,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/sequence:
@@ -6970,6 +7002,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/random-js': ^1.0.31
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -6980,6 +7013,7 @@ importers:
       prettier: ~3.0.3
       random-js: ^1.0.8
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7011,6 +7045,7 @@ importers:
       '@types/node': 16.18.58
       '@types/random-js': 1.0.31
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -7021,6 +7056,7 @@ importers:
       prettier: 3.0.3
       random-js: 1.0.8
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-object-base:
@@ -7049,6 +7085,7 @@ importers:
       '@types/node': ^16.18.38
       benchmark: ^2.1.4
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -7058,6 +7095,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       ts-node: ^10.9.1
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7087,6 +7125,7 @@ importers:
       '@types/node': 16.18.58
       benchmark: 2.1.4
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -7096,6 +7135,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       ts-node: 10.9.1_42zgbtferic3jfsc73chue3iee
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-summary-block:
@@ -7119,6 +7159,7 @@ importers:
       '@types/node': ^16.18.38
       benchmark: ^2.1.4
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -7127,6 +7168,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -7149,6 +7191,7 @@ importers:
       '@types/node': 16.18.58
       benchmark: 2.1.4
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -7157,6 +7200,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/task-manager:
@@ -7183,6 +7227,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
@@ -7193,6 +7238,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -7219,6 +7265,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -7228,6 +7275,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/test-dds-utils:
@@ -7247,6 +7295,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       execa: ^5.1.1
@@ -7256,6 +7305,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -7275,6 +7325,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       execa: 5.1.1
@@ -7283,6 +7334,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/drivers/debugger:

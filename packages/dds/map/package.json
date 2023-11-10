@@ -63,8 +63,8 @@
 			}
 		}
 	},
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
