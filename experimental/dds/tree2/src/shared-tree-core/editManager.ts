@@ -328,7 +328,7 @@ export class EditManager<
 			trunkTailSequenceId = minSequenceId(trunkTailSequenceId, minimumBranchBaseSequenceId);
 		}
 
-		// TODO get the oldest revertible sequence id from all registered branches
+		// TODO get the oldest revertible sequence id from all registered branches, not just the local branch
 		if (this.oldestRevertibleSequenceId !== undefined) {
 			// use a smaller sequence number so that the oldest revertible is not trimmed
 			const sequenceIdBeforeOldestRevertible: SequenceId = {
