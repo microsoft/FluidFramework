@@ -96,19 +96,7 @@ export enum TreeStatus {
 }
 
 /**
- * Allows subscribing to the next change that affects a {@link TreeNode}'s children.
- * @returns a function which will deregister the registered event.
- * It has no effect if the event was already deregistered.
- * @remarks
- * The given function will be run the next time that the node's direct children change.
- * It will only be run once, and thereafter automatically deregistered.
- * It does not run in response to changes beneath the node's direct children.
- * This event fires after the tree has been mutated but before {@link EditableTreeEvents.afterChange}.
- * Only one subscriber may register to this event at the same time.
- * @privateRemarks
- * This event allows the proxy-based API that is built on top of the editable tree to maintain invariants
- * around "hydrating" proxies that were created with schema-provided factory functions.
- * It is not a public API and thus this symbol is not exported.
+ * {@inheritdoc TreeNode.[onNextChange]}
  */
 export const onNextChange = Symbol("onNextChange");
 
