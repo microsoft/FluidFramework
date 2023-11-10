@@ -250,7 +250,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
-			const mappedContent = cursorFromProxyTreeNode(content);
+			const mappedContent = cursorFromProxyTreeNode(content, "field");
 			sequenceField.insertAt(index, mappedContent);
 			hydrateProxies(getEditNode(this));
 		},
@@ -263,7 +263,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
-			const mappedContent = cursorFromProxyTreeNode(content);
+			const mappedContent = cursorFromProxyTreeNode(content, "field");
 			sequenceField.insertAtStart(mappedContent);
 			hydrateProxies(getEditNode(this));
 		},
@@ -279,7 +279,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				value,
 				this.length,
 			);
-			const mappedContent = cursorFromProxyTreeNode(content);
+			const mappedContent = cursorFromProxyTreeNode(content, "field");
 			sequenceField.insertAtEnd(mappedContent);
 			hydrateProxies(getEditNode(this));
 		},

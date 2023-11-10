@@ -9,8 +9,9 @@ import { leaf } from "../../../domains/leafDomain";
 import { isFluidHandle, isPrimitiveValue } from "../../contextuallyTyped";
 import {
 	type CursorAdapter,
-	stackTreeNodeCursor,
 	type CursorWithNode,
+	stackTreeNodeCursor,
+	stackTreeFieldCursor,
 } from "../../treeCursorUtils";
 import { type TreeNodeSchema } from "../../typed-schema";
 import { SharedTreeNode, type ProxyNode } from "./types";
@@ -97,8 +98,11 @@ function createAdaptor<TNode extends ProxyNode<TreeNodeSchema>>(): CursorAdapter
  * Construct a {@link CursorWithNode} from a {@link ProxyNode}.
  */
 export function cursorFromProxyTreeNode<TNode extends ProxyNode<TreeNodeSchema>>(
-	data: TNode,
+	node: TNode,
+	mode: "node" | "field" = "node",
 ): CursorWithNode<TNode> {
 	const adapter = createAdaptor<TNode>();
-	return stackTreeNodeCursor(adapter, data);
+	return mode === "node"
+		? stackTreeNodeCursor(adapter, node)
+		: stackTreeFieldCursor(adapter, node);
 }
