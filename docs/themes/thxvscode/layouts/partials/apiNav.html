@@ -121,11 +121,11 @@
                                 <a href="{{$targetPage.RelPermalink}}" 
                                    class="packages" 
                                    data-toggle="collapse" 
-                                   data-target="#leaf-docs-nav-{{ (path.Base $targetPage.RelPermalink) | urlize }}" 
+                                   data-target="#leaf-docs-nav-{{ $isCurrentPage }}" 
                                    {{ if $isCurrentPage }}aria-label="Current Page: {{ (path.Base $targetPage.RelPermalink) | humanize | title }}"{{ end }}>
                                     {{ (path.Base $targetPage.RelPermalink) | humanize | title }}
                                 </a>
-                                <ul id="leaf-docs-nav-{{ (path.Base $targetPage.RelPermalink) | urlize }}" class="leaf-docs-nav collapse {{ if $isCurrentPage }}in{{ end }}">
+                                <ul id="leaf-docs-nav-{{ $isCurrentPage }}" class="leaf-docs-nav collapse {{ if $isCurrentPage }}in{{ end }}">
                                     {{ $plurals := dict "Interface" "Interfaces" "Class" "Classes" "Enum" "Enums" }}
 
                                     {{ range $category := slice "Interface" "Class" "Enum" }}
