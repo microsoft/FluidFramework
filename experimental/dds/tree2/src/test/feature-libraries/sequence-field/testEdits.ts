@@ -31,6 +31,8 @@ export const cases: {
 	move: TestChangeset;
 	return: TestChangeset;
 	transient_insert: TestChangeset;
+	pin_live: TestChangeset;
+	pin_removed: TestChangeset;
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, 1),
@@ -47,6 +49,8 @@ export const cases: {
 		{ count: 1 },
 		createTransientMark(createInsertMark(2, brand(1)), createDeleteMark(2, brand(2))),
 	],
+	pin_live: [createPinMark(2, brand(0))],
+	pin_removed: [createPinMark(2, brand(0), { cellId: { revision: tag, localId: brand(0) } })],
 };
 
 function createInsertChangeset(

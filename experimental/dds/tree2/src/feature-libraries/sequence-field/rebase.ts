@@ -399,8 +399,8 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 		}
 
 		assert(
-			isReattach(rebasedMark),
-			"Only reattach marks should be rebased over moves but not follow them",
+			!isNewAttach(rebasedMark),
+			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
 
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
@@ -478,7 +478,7 @@ function separateEffectsForMove<T>(
 				follows.revision = mark.revision;
 				remains.revision = mark.revision;
 			}
-			return { remains };
+			return { remains, follows };
 		}
 		case "Placeholder":
 			fail("Placeholder marks should not be rebased");
@@ -779,7 +779,10 @@ function getAttachRevisionIndex(
 	}
 
 	if (markFillsCells(baseMark)) {
-		assert(isAttach(baseMark), "Only attach marks can fill cells");
+		assert(
+			isAttach(baseMark) || baseMark.type === "Pin",
+			"Only attach marks or pin marks can fill cells",
+		);
 		return getRevisionIndex(
 			metadata,
 			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),

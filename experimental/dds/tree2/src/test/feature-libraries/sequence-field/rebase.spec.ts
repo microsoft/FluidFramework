@@ -45,6 +45,15 @@ describe("SequenceField - Rebase", () => {
 		}
 	});
 
+	describe("* ↷ pin live", () => {
+		for (const [name, testCase] of Object.entries(cases)) {
+			it(`${name} ↷ pin live`, () => {
+				const actual = rebase(testCase, cases.pin_live);
+				assert.deepEqual(actual, testCase);
+			});
+		}
+	});
+
 	it("modify ↷ modify", () => {
 		const change1 = Change.modify(0, TestChange.mint([0], 1));
 		const change2 = Change.modify(0, TestChange.mint([0], 2));
@@ -143,6 +152,22 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("pin live nodes ↷ delete", () => {
+		const deletion = [Mark.delete(2, brand(0))];
+		const pin = [Mark.pin(2, brand(0))];
+		const expected = [
+			Mark.pin(2, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(0),
+					adjacentCells: [{ count: 2, id: brand(0) }],
+				},
+			}),
+		];
+		const rebased = rebase(pin, deletion);
+		assert.deepEqual(rebased, expected);
+	});
+
 	it("redundant revive ↷ related delete", () => {
 		const revive = Change.redundantRevive(0, 3, { revision: tag1, localId: brand(1) });
 		const deletion = Change.delete(1, 1);
@@ -215,13 +240,9 @@ describe("SequenceField - Rebase", () => {
 		]);
 		const actual = rebase(move, deletion, tag1);
 
-		// Moves --E-G
+		// Moves ---DEFGH--
 		const expected = [
-			Mark.moveIn(1, brand(0)),
-			Mark.moveIn(1, brand(1)),
-			Mark.moveIn(1, brand(2)),
-			Mark.moveIn(1, brand(3)),
-			Mark.moveIn(1, brand(4)),
+			Mark.moveIn(5, brand(0)),
 			{ count: 2 },
 			Mark.onEmptyCell(
 				{
@@ -367,6 +388,48 @@ describe("SequenceField - Rebase", () => {
 		const actual = rebase(insert, revive);
 		const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
 		assert.deepEqual(actual, expected);
+	});
+
+	it("pin removed nodes ↷ revive", () => {
+		const revive = [Mark.revive(1, { revision: tag1, localId: brand(0) })];
+		const pin = [
+			Mark.pin(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(0),
+				},
+			}),
+		];
+		const expected = [Mark.pin(1, brand(0))];
+		const rebased = rebase(pin, revive);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("pin removed nodes ↷ pin removed nodes", () => {
+		const pin = [
+			Mark.pin(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(0),
+				},
+			}),
+		];
+		const expected = [Mark.pin(1, brand(0))];
+		const rebased = rebase(pin, pin);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("modify ↷ pin removed nodes", () => {
+		const childChange = TestChange.mint([0], 1);
+		const cellId: ChangeAtomId = {
+			revision: tag1,
+			localId: brand(0),
+		};
+		const modify = [Mark.modify(childChange, cellId)];
+		const pin = [Mark.pin(1, brand(0), { cellId })];
+		const expected = [Mark.modify(childChange)];
+		const rebased = rebase(modify, pin);
+		assert.deepEqual(rebased, expected);
 	});
 
 	it("reviveAA ↷ reviveB => BAA", () => {
@@ -522,6 +585,22 @@ describe("SequenceField - Rebase", () => {
 		const moveB = Change.move(2, 2, 5);
 		const expected = Change.move(0, 2, 5);
 		const rebased = rebase(moveB, moveA);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("pin live nodes ↷ move", () => {
+		const move = [Mark.moveIn(2, brand(0)), { count: 2 }, Mark.moveOut(2, brand(0))];
+		const pin = [{ count: 2 }, Mark.pin(2, brand(0))];
+		const expected = [
+			Mark.returnFrom(2, brand(0)),
+			{ count: 2 },
+			Mark.returnTo(2, brand(0), {
+				revision: tag1,
+				localId: brand(0),
+				adjacentCells: [{ count: 2, id: brand(0) }],
+			}),
+		];
+		const rebased = rebase(pin, move);
 		assert.deepEqual(rebased, expected);
 	});
 

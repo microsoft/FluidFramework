@@ -133,6 +133,12 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			const array = Array.from(actual);
 			assert.deepEqual(array, []);
 		});
+		it("a live tree being pinned", () => {
+			const input: TestChangeset = [Mark.pin(1, brand(0))];
+			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
+			const array = Array.from(actual);
+			assert.deepEqual(array, []);
+		});
 	});
 	describe("does include", () => {
 		it("relevant trees from nested changes under a tree that remains in-doc", () => {
@@ -160,7 +166,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			assert.deepEqual(array, [deltaId]);
 		});
 		it("a tree being restored by pin", () => {
-			const input: TestChangeset = [Mark.pin(1, atomId)];
+			const input: TestChangeset = [Mark.pin(1, brand(0), { cellId: atomId })];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, [deltaId]);
@@ -180,7 +186,9 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			assert.deepEqual(array, [deltaId, relevantNestedTree]);
 		});
 		it("relevant trees from nested changes under a tree being restored by pin", () => {
-			const input: TestChangeset = [Mark.pin(1, atomId, { changes: childChange })];
+			const input: TestChangeset = [
+				Mark.pin(1, brand(0), { cellId: atomId, changes: childChange }),
+			];
 			const actual = SF.relevantRemovedTrees(input, oneTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, [deltaId, relevantNestedTree]);
