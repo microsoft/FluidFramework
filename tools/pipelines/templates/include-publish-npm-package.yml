@@ -59,7 +59,8 @@ stages:
 
 # Only add a stage to publish packages to the dev feed for the build workflows where we create separate lists of
 # packages to publish to each feed. Others are fine publishing only to the build feed because the dev feed upstreams it.
-- ${{ if containsValue(['client', 'server', 'build-tools'], parameters.tagName) }}:
+# Note: ADO's containsValue is documented to not work with hardcoded arrays so have to use in().
+- ${{ if in(parameters.tagName, 'client', 'server', 'build-tools') }}:
   - stage: publish_npm_internal_dev
     dependsOn: build
     displayName: Publish to internal dev feed
