@@ -87,7 +87,7 @@ export type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> 
  * @alpha
  */
 export type UnbrandedName<TName> = [
-	TName extends infer S & TreeNodeSchemaIdentifier ? S : string,
+	TName extends TreeNodeSchemaIdentifier<infer S> ? S : string,
 ][_InlineTrick];
 
 /**

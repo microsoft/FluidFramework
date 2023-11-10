@@ -31,8 +31,6 @@ import { AllowedUpdateType, ChangeFamily, ChangeFamilyEditor, rootFieldKey } fro
 import {
 	DefaultChangeset,
 	DefaultEditBuilder,
-	FieldKinds,
-	TreeFieldSchema,
 	singleTextCursor,
 	typeNameSymbol,
 } from "../../feature-libraries";
@@ -330,8 +328,12 @@ describe("SharedTreeCore", () => {
 		});
 
 		const b = new SchemaBuilder({ scope: "0x4a6 repro" });
-		const node = b.objectRecursive("test node", {
-			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => node, leaf.number]),
+
+		const recursiveReference = () => node;
+		b.fixRecursiveReference(recursiveReference);
+
+		const node = b.object("test node", {
+			child: b.optional([recursiveReference, leaf.number]),
 		});
 		const schema = b.intoSchema(b.optional(node));
 

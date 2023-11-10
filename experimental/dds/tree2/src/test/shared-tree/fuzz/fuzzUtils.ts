@@ -20,17 +20,13 @@ import { SchemaBuilder, leaf } from "../../../domains";
 import { expectEqualPaths } from "../../utils";
 
 const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
-export const fuzzNode = builder.objectRecursive("node", {
-	requiredChild: TreeFieldSchema.createUnsafe(FieldKinds.required, [
-		() => fuzzNode,
-		...leaf.primitives,
-	]),
-	optionalChild: TreeFieldSchema.createUnsafe(FieldKinds.optional, [
-		() => fuzzNode,
-		...leaf.primitives,
-	]),
-	sequenceChildren: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
-		() => fuzzNode,
+const recursiveReference = () => fuzzNode;
+builder.fixRecursiveReference(recursiveReference);
+export const fuzzNode = builder.object("node", {
+	requiredChild: [recursiveReference, ...leaf.primitives],
+	optionalChild: builder.optional([recursiveReference, ...leaf.primitives]),
+	sequenceChildren: TreeFieldSchema.create(FieldKinds.sequence, [
+		recursiveReference,
 		...leaf.primitives,
 	]),
 });

@@ -2001,7 +2001,7 @@ type Unbrand<T, B> = T extends infer S & B ? S : T;
 
 // @alpha
 type UnbrandedName<TName> = [
-TName extends infer S & TreeNodeSchemaIdentifier ? S : string
+TName extends TreeNodeSchemaIdentifier<infer S> ? S : string
 ][_InlineTrick];
 
 // @alpha

@@ -24,9 +24,12 @@ const deepBuilder = new SchemaBuilder({
 	libraries: [jsonSchema],
 });
 
+const recursiveReference = () => linkedListSchema;
+deepBuilder.fixRecursiveReference(recursiveReference);
+
 // Test data in "deep" mode: a linked list with a number at the end.
-const linkedListSchema = deepBuilder.objectRecursive("linkedList", {
-	foo: TreeFieldSchema.createUnsafe(FieldKinds.required, [() => linkedListSchema, leaf.number]),
+const linkedListSchema = deepBuilder.object("linkedList", {
+	foo: [recursiveReference, leaf.number],
 });
 
 const wideBuilder = new SchemaBuilder({

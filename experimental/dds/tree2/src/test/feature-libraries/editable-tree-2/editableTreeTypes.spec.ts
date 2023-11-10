@@ -116,12 +116,13 @@ describe("editableTreeTypes", () => {
 		sequence: SchemaBuilder.sequence(leaf.number),
 	});
 	type Mixed = TypedNode<typeof mixedStruct>;
-
-	const recursiveStruct = builder.objectRecursive("recursiveStruct", {
+	const recursiveReference = () => recursiveStruct;
+	builder.fixRecursiveReference(recursiveReference);
+	const recursiveStruct = builder.object("recursiveStruct", {
 		/**
 		 * Test Recursive Field.
 		 */
-		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
+		foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
 		/**
 		 * Data field.
 		 */
@@ -176,9 +177,9 @@ describe("editableTreeTypes", () => {
 		];
 
 		const optionalNumberField = SchemaBuilder.optional(leaf.number);
-		const mapSchema = undefined as unknown as TreeNodeSchema<
+		const mapSchema = undefined as unknown as MapNodeSchema<
 			"MapIteration",
-			{ mapFields: typeof optionalNumberField }
+			typeof optionalNumberField
 		>;
 		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
 		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];

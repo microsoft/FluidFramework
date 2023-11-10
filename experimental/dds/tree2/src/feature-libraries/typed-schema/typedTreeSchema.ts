@@ -184,7 +184,7 @@ export class ObjectNodeSchema<
 			Assume<Specification, Fields>
 		>,
 		// Allows reading fields through the normal map.
-		// Stroker typing caused Specification to no longer be covariant, so has been removed.
+		// Stricter typing caused Specification to no longer be covariant, so has been removed.
 		public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>,
 	) {
 		super(builder, name, info);

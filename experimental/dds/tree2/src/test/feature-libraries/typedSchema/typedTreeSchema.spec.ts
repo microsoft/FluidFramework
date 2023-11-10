@@ -29,8 +29,10 @@ describe("typedTreeSchema", () => {
 	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
 	// TODO: once schema kinds are separated, test object with EmptyKey.
 
-	const recursiveObject = builder.objectRecursive("recursiveObject", {
-		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
+	const recursiveReference = () => recursiveObject;
+	builder.fixRecursiveReference(recursiveReference);
+	const recursiveObject = builder.object("recursiveObject", {
+		foo: builder.optional([recursiveReference]),
 	});
 
 	it("schema is", () => {

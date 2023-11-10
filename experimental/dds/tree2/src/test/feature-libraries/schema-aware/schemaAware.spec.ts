@@ -34,7 +34,7 @@ import { leaf, SchemaBuilder } from "../../../domains";
 
 // Test UnbrandedName
 {
-	type BrandedName = "X" & TreeNodeSchemaIdentifier;
+	type BrandedName = TreeNodeSchemaIdentifier<"X">;
 	type Unbranded = UnbrandedName<BrandedName>;
 	type _check = requireTrue<areSafelyAssignable<Unbranded, "X">>;
 }
@@ -80,8 +80,10 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	});
 
 	// Recursive case:
-	const boxSchema = builder.objectRecursive("box", {
-		children: TreeFieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
+	const recursiveReference = () => boxSchema;
+	builder.fixRecursiveReference(recursiveReference);
+	const boxSchema = builder.object("box", {
+		children: TreeFieldSchema.create(sequence, [ballSchema, recursiveReference]),
 	});
 
 	{
@@ -262,8 +264,10 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	// Test simple recursive cases:
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwareRecursiveTest" });
-		const rec = builder2.objectRecursive("rec", {
-			x: TreeFieldSchema.createUnsafe(optional, [() => rec]),
+		const recursiveRecReference = () => rec;
+		builder.fixRecursiveReference(recursiveRecReference);
+		const rec = builder2.object("rec", {
+			x: TreeFieldSchema.create(optional, [recursiveRecReference]),
 		});
 
 		type RecObjectSchema = typeof rec;
