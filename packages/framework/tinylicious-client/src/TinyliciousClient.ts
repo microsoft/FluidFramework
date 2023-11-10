@@ -57,8 +57,10 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer(containerSchema: ContainerSchema): Promise<{
-		container: IFluidContainer;
+	public async createContainer<TContainerSchema extends ContainerSchema>(
+		containerSchema: TContainerSchema,
+	): Promise<{
+		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
@@ -88,7 +90,7 @@ export class TinyliciousClient {
 			return container.resolvedUrl.id;
 		};
 
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = new FluidContainer<TContainerSchema>(container, rootDataObject);
 		fluidContainer.attach = attach;
 
 		const services = this.getContainerServices(container);
@@ -101,17 +103,17 @@ export class TinyliciousClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @returns Existing container instance along with associated services.
 	 */
-	public async getContainer(
+	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
-		containerSchema: ContainerSchema,
+		containerSchema: TContainerSchema,
 	): Promise<{
-		container: IFluidContainer;
+		container: IFluidContainer<TContainerSchema>;
 		services: TinyliciousContainerServices;
 	}> {
 		const loader = this.createLoader(containerSchema);
 		const container = await loader.resolve({ url: id });
 		const rootDataObject = (await container.getEntryPoint()) as IRootDataObject;
-		const fluidContainer = new FluidContainer(container, rootDataObject);
+		const fluidContainer = new FluidContainer<TContainerSchema>(container, rootDataObject);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}

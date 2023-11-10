@@ -4,6 +4,30 @@ This package contains utilities for writing stochastic tests (sometimes called f
 Such tests can be useful for stress testing systems with well-defined inputs and expected invariants.
 For example, they are useful for asserting eventual convergence properties of DDSes.
 
+<!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE) -->
+
+**NOTE: This package is private to the `@microsot/fluid-framework` repository.**
+**It is not published, and therefore may only be used as a dev dependency.**
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:includeHeading=TRUE&devDependency=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluid-private/stochastic-test-utils -D
+```
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
 ## Model
 
 This package models a stochastic test as a series of serializable _operations_ that are applied to some _initial state_.
@@ -167,7 +191,7 @@ This package also exports a `describeFuzz` helper, which is a simple wrapper aro
 -   `FUZZ_TEST_COUNT`: Controls the `testCount` value passed to the fuzz test's `describeFuzz` block callback.
 -   `FUZZ_STRESS_RUN`: If set to a truthy value, test commands in packages with fuzz tests will only run `describeFuzz` blocks.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE&installation=FALSE&apiDocs=FALSE&help=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -190,12 +214,39 @@ This project may contain Microsoft trademarks or logos for Microsoft projects, p
 Use of these trademarks or logos must follow Microsoft’s [Trademark & Brand Guidelines](https://www.microsoft.com/trademarks).
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Help
+
+Not finding what you're looking for in this README? Check out our [GitHub
+Wiki](https://github.com/microsoft/FluidFramework/wiki) or [fluidframework.com](https://fluidframework.com/docs/).
+
+Still not finding what you're looking for? Please [file an
+issue](https://github.com/microsoft/FluidFramework/wiki/Submitting-Bugs-and-Feature-Requests).
+
+Thank you!
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
 ## Trademark
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

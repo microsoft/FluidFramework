@@ -110,7 +110,7 @@ class OpPerfTelemetry {
 
 		this.deltaLatencyLogger = createSampledLogger(logger, deltaLatencyEventSampler);
 
-		// The SampledLogger here is used get access to the isSamplingDisabled property dervied from
+		// The SampledLogger here is used get access to the isSamplingDisabled property derived from
 		// telemetry config properties. The actual sampling logic for op messages happens outside this SampledLogger
 		// due to complexity of the different asynchronus scenarios of the op message lifecycle.
 		this.opLatencyLogger = createSampledLogger(logger);

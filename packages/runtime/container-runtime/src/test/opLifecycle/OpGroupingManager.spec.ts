@@ -102,4 +102,108 @@ describe("OpGroupingManager", () => {
 			);
 		});
 	});
+
+	describe("Fakes clientSequenceNumber when ungrouping", () => {
+		it("grouped op", () => {
+			const opGroupingManager = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+				mockLogger,
+			);
+
+			const op = {
+				clientSequenceNumber: 10,
+				contents: {
+					type: OpGroupingManager.groupedBatchOp,
+					contents: [
+						{
+							contents: "1",
+						},
+						{
+							contents: "2",
+						},
+						{
+							contents: "3",
+						},
+					],
+				},
+			} as any;
+
+			const result = opGroupingManager.ungroupOp(op);
+
+			assert.deepStrictEqual(result, [
+				{
+					clientSequenceNumber: 1,
+					contents: "1",
+					compression: undefined,
+					metadata: undefined,
+				},
+				{
+					clientSequenceNumber: 2,
+					contents: "2",
+					compression: undefined,
+					metadata: undefined,
+				},
+				{
+					clientSequenceNumber: 3,
+					contents: "3",
+					compression: undefined,
+					metadata: undefined,
+				},
+			]);
+		});
+
+		it("non-grouped op with grouped batching enabled", () => {
+			const opGroupingManager = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: true,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+				mockLogger,
+			);
+
+			const op = {
+				clientSequenceNumber: 10,
+				contents: "1",
+			} as any;
+
+			const result = opGroupingManager.ungroupOp(op);
+
+			assert.deepStrictEqual(result, [
+				{
+					clientSequenceNumber: 1,
+					contents: "1",
+				},
+			]);
+		});
+
+		it("non-grouped op with grouped batching disabled", () => {
+			const opGroupingManager = new OpGroupingManager(
+				{
+					groupedBatchingEnabled: false,
+					opCountThreshold: 2,
+					reentrantBatchGroupingEnabled: true,
+				},
+				mockLogger,
+			);
+
+			const op = {
+				clientSequenceNumber: 10,
+				contents: "1",
+			} as any;
+
+			const result = opGroupingManager.ungroupOp(op);
+
+			assert.deepStrictEqual(result, [
+				{
+					clientSequenceNumber: 10,
+					contents: "1",
+				},
+			]);
+		});
+	});
 });
