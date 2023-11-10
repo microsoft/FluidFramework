@@ -12,4 +12,3 @@ export {
 	OdspMember,
 } from "./interfaces";
 export { OdspClient } from "./odspClient";
-export { OdspAudience } from "./odspAudience";

@@ -74,7 +74,7 @@ export interface OdspContainerServices {
 	 * @returns A Promise that resolves after the container is attached, providing an object containing the `OdspServiceAttributes`.
 	 * If the attachment is not yet complete or encounters an error, the Promise will be rejected.
 	 */
-	tenantAttributes: () => Promise<OdspServiceAttributes>;
+	tenantAttributes: () => Promise<OdspServiceAttributes | undefined>;
 
 	/**
 	 * Provides an object that can be used to get the users that are present in this Fluid session and
@@ -91,13 +91,13 @@ export interface OdspServiceAttributes {
 	/**
 	 * The sharing URL for this container. It's the complete URL used as input to the `getContainer` function.
 	 */
-	sharingUrl: string | undefined;
+	sharingUrl: string;
 
 	/**
 	 * Get the RaaS drive ID associated with the container. This can be useful when managing multiple
 	 * RaaS drives.
 	 */
-	driveId: string | undefined;
+	driveId: string;
 }
 
 /**

@@ -5,25 +5,17 @@
 ```ts
 
 import { ContainerSchema } from '@fluidframework/fluid-static';
-import { IClient } from '@fluidframework/protocol-definitions';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IFluidContainer } from '@fluidframework/fluid-static';
 import { IMember } from '@fluidframework/fluid-static';
 import { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenProvider } from '@fluidframework/azure-client';
-import { ServiceAudience } from '@fluidframework/fluid-static';
 
 // @alpha
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
-// @alpha
-export class OdspAudience extends ServiceAudience<OdspMember> implements IOdspAudience {
-    // (undocumented)
-    protected createServiceMember(audienceMember: IClient): OdspMember;
-}
-
-// @alpha (undocumented)
+// @alpha @sealed
 export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
@@ -56,7 +48,7 @@ export interface OdspConnectionConfig {
 // @alpha
 export interface OdspContainerServices {
     audience: IOdspAudience;
-    tenantAttributes: () => Promise<OdspServiceAttributes>;
+    tenantAttributes: () => Promise<OdspServiceAttributes | undefined>;
 }
 
 // @alpha
@@ -69,8 +61,8 @@ export interface OdspMember extends IMember {
 
 // @alpha
 export interface OdspServiceAttributes {
-    driveId: string | undefined;
-    sharingUrl: string | undefined;
+    driveId: string;
+    sharingUrl: string;
 }
 
 // (No @packageDocumentation comment for this package)
