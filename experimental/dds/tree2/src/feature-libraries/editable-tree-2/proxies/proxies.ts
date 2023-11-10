@@ -45,6 +45,7 @@ import {
 	SharedTreeObject,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
+import { cursorFromProxyTreeNode } from "./toEditTree";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -135,7 +136,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
 				return Reflect.get(target, key, proxy);
 			},
-			set(target, key, value) {
+			set(target, key, value: ProxyNodeUnion<AllowedTypes, "javaScript">) {
 				const editNode = getEditNode(proxy);
 				const fieldSchema = editNode.schema.objectNodeFields.get(key as FieldKey);
 
@@ -156,7 +157,8 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| OptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
-						typedField.content = content;
+						const mappedContent = cursorFromProxyTreeNode(content);
+						typedField.content = mappedContent;
 						hydrateProxies(typedField.boxedContent);
 						break;
 					}
@@ -245,8 +247,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			index: number,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
+			const sequenceField = getSequenceField(this);
+
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
-			getSequenceField(this).insertAt(index, content);
+			const mappedContent = cursorFromProxyTreeNode(content);
+			sequenceField.insertAt(index, mappedContent);
 			hydrateProxies(getEditNode(this));
 		},
 	},
@@ -255,8 +260,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
+			const sequenceField = getSequenceField(this);
+
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
-			getSequenceField(this).insertAtStart(content);
+			const mappedContent = cursorFromProxyTreeNode(content);
+			sequenceField.insertAtStart(mappedContent);
 			hydrateProxies(getEditNode(this));
 		},
 	},
@@ -265,11 +273,14 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			this: SharedTreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
+			const sequenceField = getSequenceField(this);
+
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
 				value,
 				this.length,
 			);
-			getSequenceField(this).insertAtEnd(content);
+			const mappedContent = cursorFromProxyTreeNode(content);
+			sequenceField.insertAtEnd(mappedContent);
 			hydrateProxies(getEditNode(this));
 		},
 	},
@@ -590,10 +601,12 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
 		): SharedTreeMap<MapSchema> {
 			const node = getEditNode(this);
+
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
-			node.set(key, content);
+			const mappedContent = cursorFromProxyTreeNode(content);
+			node.set(key, mappedContent);
 			hydrateProxies(getMapChildNode(node, key));
 			return this;
 		},

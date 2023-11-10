@@ -220,6 +220,7 @@ export interface TreeContent<TRoot extends TreeFieldSchema = TreeFieldSchema>
 	 * Default tree content to initialize the tree with iff the tree is uninitialized
 	 * (meaning it does not even have any schema set at all).
 	 */
+	// TODO: change to proxy types?
 	readonly initialTree:
 		| SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>
 		| readonly ITreeCursorSynchronous[]
