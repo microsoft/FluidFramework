@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { singleTextCursor } from "../../feature-libraries";
+import { cursorForJsonableTreeNode } from "../../feature-libraries";
 import {
 	Anchor,
 	AnchorNode,
@@ -85,7 +85,7 @@ describe("AnchorSet", () => {
 	it("can rebase over insert", () => {
 		const [anchors, anchor1, anchor2, anchor3] = setup();
 
-		const trees = [node, node].map(singleTextCursor);
+		const trees = [node, node].map(cursorForJsonableTreeNode);
 		const fieldChanges: Delta.FieldChanges = {
 			build: [{ id: buildId, trees }],
 			local: [{ count: 4 }, { count: 2, attach: buildId }],
@@ -335,7 +335,12 @@ describe("AnchorSet", () => {
 						build: [
 							{
 								id: buildId,
-								trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
+								trees: [
+									cursorForJsonableTreeNode({
+										type: leaf.string.name,
+										value: "x",
+									}),
+								],
 							},
 						],
 						local: [deleteMark, insertMark],
@@ -356,7 +361,7 @@ describe("AnchorSet", () => {
 				build: [
 					{
 						id: buildId,
-						trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
+						trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
 					},
 				],
 				local: [{ count: 5 }, insertMark],
@@ -385,7 +390,7 @@ describe("AnchorSet", () => {
 		// Insert a node at the root to set up listeners on it
 		const insertAtFoo3 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 3 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
@@ -409,7 +414,7 @@ describe("AnchorSet", () => {
 		// Test an insert delta
 		const insertAtFoo4 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 4 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
@@ -421,7 +426,7 @@ describe("AnchorSet", () => {
 		// Test a replace delta
 		const replaceAtFoo5 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 5 }, { count: 1, detach: { minor: 42 }, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
@@ -475,7 +480,7 @@ describe("AnchorSet", () => {
 		// Insert a node at the root to set up listeners on it
 		const insertAtFoo3 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 3 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
@@ -499,7 +504,7 @@ describe("AnchorSet", () => {
 		// Test an insert delta
 		const insertAtFoo4 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 4 }, { count: 1, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
@@ -509,7 +514,7 @@ describe("AnchorSet", () => {
 		// Test a replace delta
 		const replaceAtFoo5 = makeFieldDelta(
 			{
-				build: [{ id: buildId, trees: [singleTextCursor(node)] }],
+				build: [{ id: buildId, trees: [cursorForJsonableTreeNode(node)] }],
 				local: [{ count: 5 }, { count: 1, detach: { minor: 42 }, attach: buildId }],
 			},
 			makeFieldPath(fieldFoo, [rootFieldKey, 0]),
@@ -550,7 +555,7 @@ describe("AnchorSet", () => {
 				build: [
 					{
 						id: buildId,
-						trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
+						trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
 					},
 				],
 				local: [{ count: 4 }, { count: 1, attach: buildId }],
@@ -571,7 +576,7 @@ describe("AnchorSet", () => {
 				build: [
 					{
 						id: buildId,
-						trees: [singleTextCursor({ type: leaf.string.name, value: "x" })],
+						trees: [cursorForJsonableTreeNode({ type: leaf.string.name, value: "x" })],
 					},
 				],
 				local: [{ count: 5 }, replaceMark],
@@ -580,7 +585,7 @@ describe("AnchorSet", () => {
 		);
 		const log = new UnorderedTestLogger();
 		const anchors = new AnchorSet();
-		const trees = [singleTextCursor(node)];
+		const trees = [cursorForJsonableTreeNode(node)];
 		const fieldChanges: Delta.FieldChanges = {
 			build: [{ id: buildId, trees }],
 			local: [{ count: 3 }, { count: 1, attach: buildId }],

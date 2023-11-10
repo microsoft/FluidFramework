@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SessionSpaceCompressedId } from "@fluidframework/runtime-definitions";
 import { FieldKey, TreeNodeSchemaIdentifier } from "../../core";
-import { BrandedType, capitalize } from "../../util";
+import { capitalize } from "../../util";
 import { ObjectNodeSchema, TreeNodeSchema } from "../typed-schema";
 import { EditableTreeEvents } from "../untypedTree";
+import { LocalNodeKey } from "../node-key";
 import { TreeContext } from "./context";
 import {
 	ObjectNode,
@@ -119,7 +119,7 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements Objec
 		return rawObjectNodeError();
 	}
 
-	public get localNodeKey(): BrandedType<SessionSpaceCompressedId, "Local Node Key"> | undefined {
+	public get localNodeKey(): LocalNodeKey | undefined {
 		return rawObjectNodeError();
 	}
 }

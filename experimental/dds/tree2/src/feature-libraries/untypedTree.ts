@@ -31,7 +31,7 @@ export interface TreeEvent {
 }
 
 /**
- * A collection of events that can be raised by a {@link Tree}.
+ * A collection of events that can be raised by a {@link TreeNode}.
  * These events are triggered while the internal data structures are being updated.
  * Thus these events must not trigger reading of the anchorSet or forest.
  *
