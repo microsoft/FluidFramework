@@ -4,14 +4,47 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { FieldKey, MapTree, ITreeCursor, CursorLocationType, mapCursorField } from "../core";
-import { CursorAdapter, CursorWithNode, singleStackTreeCursor } from "./treeCursorUtils";
+import {
+	FieldKey,
+	MapTree,
+	ITreeCursor,
+	CursorLocationType,
+	mapCursorField,
+	DetachedField,
+	detachedFieldAsKey,
+	rootField,
+	aboveRootPlaceholder,
+} from "../core";
+import {
+	CursorAdapter,
+	CursorWithNode,
+	stackTreeFieldCursor,
+	stackTreeNodeCursor,
+} from "./treeCursorUtils";
 
 /**
- * @returns an ITreeCursorSynchronous for a single MapTree.
+ * @returns an {@link ITreeCursorSynchronous} in nodes mode for a single MapTree.
  */
-export function singleMapTreeCursor(root: MapTree): CursorWithNode<MapTree> {
-	return singleStackTreeCursor(root, adapter);
+export function cursorForMapTreeNode(root: MapTree): CursorWithNode<MapTree> {
+	return stackTreeNodeCursor(adapter, root);
+}
+
+/**
+ * @returns an {@link ITreeCursorSynchronous} in fields mode for a MapTree field.
+ */
+export function cursorForMapTreeField(
+	root: MapTree[],
+	detachedField: DetachedField = rootField,
+): CursorWithNode<MapTree> {
+	const key = detachedFieldAsKey(detachedField);
+	return stackTreeFieldCursor(
+		adapter,
+		{
+			type: aboveRootPlaceholder,
+			fields: new Map([[key, root]]),
+		},
+		detachedField,
+	);
 }
 
 const adapter: CursorAdapter<MapTree> = {

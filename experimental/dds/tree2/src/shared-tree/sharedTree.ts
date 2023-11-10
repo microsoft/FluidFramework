@@ -42,6 +42,7 @@ import {
 	createNodeKeyManager,
 	nodeKeyFieldKey as defailtNodeKeyFieldKey,
 	jsonableTreeFromFieldCursor,
+	TreeCompressionStrategy,
 	TreeSchema,
 	ViewSchema,
 	NodeKeyManager,
@@ -164,7 +165,12 @@ export class SharedTree
 				: buildForest();
 		const removedTrees = makeDetachedFieldIndex("repair", options);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options);
-		const forestSummarizer = new ForestSummarizer(forest);
+		const forestSummarizer = new ForestSummarizer(
+			forest,
+			schema,
+			defaultSchemaPolicy,
+			options.summaryEncodeType,
+		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
 		super(
@@ -354,6 +360,7 @@ export interface SharedTreeOptions extends Partial<ICodecOptions> {
 	 * The {@link ForestType} indicating which forest type should be created for the SharedTree.
 	 */
 	forest?: ForestType;
+	summaryEncodeType?: TreeCompressionStrategy;
 }
 
 /**
@@ -371,9 +378,12 @@ export enum ForestType {
 	Optimized = 1,
 }
 
+// TODO: The default summaryEncodeType is set to Uncompressed as there are many out of schema tests that break when using Compressed.
+// This should eventually be changed to use Compressed as the default tree compression strategy so production gets the compressed format.
 export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
 	jsonValidator: noopValidator,
 	forest: ForestType.Reference,
+	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
 };
 
 /**
