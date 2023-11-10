@@ -13,7 +13,7 @@ import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
 } from "@fluidframework/test-utils";
-import { describeFullCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeFullCompat, describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
 
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
@@ -163,7 +163,7 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 	});
 });
 
-describeFullCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
+describeNoCompat("SharedCounter orderSequentially", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();

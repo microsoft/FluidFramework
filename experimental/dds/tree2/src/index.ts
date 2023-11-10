@@ -252,11 +252,12 @@ export {
 	ForestType,
 	TypedTreeFactory,
 	TypedTreeOptions,
-	TypedTreeChannel,
+	ITree,
 	SharedTreeContentSnapshot,
 	ITreeView,
-	TypedTreeView,
+	TreeView,
 	ITreeViewFork,
+	buildTreeConfiguration,
 } from "./shared-tree";
 
 export type { ICodecOptions, JsonValidator, SchemaValidationFunction } from "./codec";

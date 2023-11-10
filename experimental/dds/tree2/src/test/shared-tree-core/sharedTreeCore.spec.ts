@@ -351,8 +351,8 @@ describe("SharedTreeCore", () => {
 			allowedSchemaModifications: AllowedUpdateType.None,
 		} satisfies InitializeAndSchematizeConfiguration;
 
-		const view1 = tree1.schematize(config);
-		const view2 = tree2.schematize(config);
+		const view1 = tree1.schematizeInternal(config);
+		const view2 = tree2.schematizeInternal(config);
 		const editable1 = view1.editableTree;
 		const editable2 = view2.editableTree;
 
