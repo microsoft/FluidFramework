@@ -93,11 +93,9 @@ describe("unboxedField", () => {
 
 	it("Required field (object)", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
-		const recursiveReference = () => objectSchema;
-		builder.fixRecursiveReference(recursiveReference);
-		const objectSchema = builder.object("object", {
+		const objectSchema = builder.objectRecursive("object", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
 		});
 		const fieldSchema = SchemaBuilder.optional(objectSchema);
 		const schema = builder.intoSchema(fieldSchema);
@@ -191,11 +189,9 @@ describe("unboxedTree", () => {
 
 	it("ObjectNode", () => {
 		const builder = new SchemaBuilder({ scope: "test" });
-		const recursiveReference = () => objectSchema;
-		builder.fixRecursiveReference(recursiveReference);
-		const objectSchema = builder.object("object", {
+		const objectSchema = builder.objectRecursive("object", {
 			name: SchemaBuilder.required(leafDomain.string),
-			child: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
+			child: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => objectSchema]),
 		});
 		const rootSchema = builder.optional(objectSchema);
 		const schema = builder.intoSchema(rootSchema);

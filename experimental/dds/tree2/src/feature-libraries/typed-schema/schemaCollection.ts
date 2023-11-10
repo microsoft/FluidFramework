@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils";
+import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
 import { Multiplicity } from "../modular-schema";
 import { capitalize, fail, requireAssignableTo } from "../../util";
@@ -186,7 +186,8 @@ export function validateSchemaCollection(
 				validateObjectNodeFieldName(key, description, errors);
 			}
 		} else {
-			unreachableCase(tree, "unrecognized node kind");
+			// TODO: there should be a common fallback that works for cases without a specialized implementation.
+			fail("unrecognized node kind");
 		}
 	}
 

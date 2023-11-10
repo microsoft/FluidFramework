@@ -434,7 +434,7 @@ type ExtractListItemType<List extends FlexList> = List extends FlexList<infer It
 
 // @alpha
 type FactoryObjectNodeSchema<TScope extends string, Name extends number | string, T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>> = FactoryTreeSchema<ObjectNodeSchema<`${TScope}.${Name}`, {
-    [key in keyof T]: NormalizeField_2<T[key], Required_2>;
+    [key in keyof T]: NormalizeField<T[key], Required_2>;
 }>>;
 
 // @alpha
@@ -724,7 +724,7 @@ declare namespace InternalTypedSchemaTypes {
         UnbrandList,
         ArrayToUnion,
         NormalizeObjectNodeFields,
-        NormalizeField,
+        NormalizeField_2 as NormalizeField,
         Fields,
         MapFieldSchema,
         FlexList,
@@ -758,7 +758,7 @@ declare namespace InternalTypes {
         isAny,
         RestrictiveReadonlyRecord,
         BrandedKeyContent,
-        NormalizeField_2 as NormalizeField,
+        NormalizeField,
         NormalizeAllowedTypes,
         Required_2 as Required,
         Optional,
@@ -1165,14 +1165,14 @@ type NormalizeAllowedTypes<TSchema extends ImplicitAllowedTypes> = TSchema exten
 type NormalizedFlexList<Item> = readonly Item[];
 
 // @alpha
-type NormalizeField<T extends TreeFieldSchema | undefined> = T extends TreeFieldSchema ? T : TreeFieldSchema<typeof FieldKinds.forbidden, []>;
+type NormalizeField<TSchema extends ImplicitFieldSchema, TDefault extends FieldKind> = TSchema extends TreeFieldSchema ? TSchema : TreeFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
 
 // @alpha
-type NormalizeField_2<TSchema extends ImplicitFieldSchema, TDefault extends FieldKind> = TSchema extends TreeFieldSchema ? TSchema : TreeFieldSchema<TDefault, NormalizeAllowedTypes<Assume<TSchema, ImplicitAllowedTypes>>>;
+type NormalizeField_2<T extends TreeFieldSchema | undefined> = T extends TreeFieldSchema ? T : TreeFieldSchema<typeof FieldKinds.forbidden, []>;
 
 // @alpha (undocumented)
 type NormalizeObjectNodeFields<T extends Fields> = {
-    readonly [Property in keyof T]: NormalizeField<T[Property]>;
+    readonly [Property in keyof T]: NormalizeField_2<T[Property]>;
 };
 
 // @alpha
@@ -1452,8 +1452,8 @@ export class SchemaBuilder<TScope extends string = string, TName extends string 
     readonly handle: LeafNodeSchema<"com.fluidframework.leaf.handle", import("..").ValueSchema.FluidHandle>;
     list<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(allowedTypes: T): FieldNodeSchema<`${TScope}.List<${string}>`, TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>>;
     list<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): FieldNodeSchema<`${TScope}.${Name}`, TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>>;
-    map<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(allowedTypes: T): MapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField_2<T, typeof FieldKinds.optional>>;
-    map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(name: Name, fieldSchema: T): MapNodeSchema<`${TScope}.${Name}`, NormalizeField_2<T, typeof FieldKinds.optional>>;
+    map<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(allowedTypes: T): MapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField<T, typeof FieldKinds.optional>>;
+    map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(name: Name, fieldSchema: T): MapNodeSchema<`${TScope}.${Name}`, NormalizeField<T, typeof FieldKinds.optional>>;
     // (undocumented)
     readonly null: LeafNodeSchema<"com.fluidframework.leaf.null", import("..").ValueSchema.Null>;
     // (undocumented)
@@ -1478,17 +1478,17 @@ export class SchemaBuilderBase<TScope extends string, TDefaultKind extends Field
     // (undocumented)
     protected addNodeSchema<T extends TreeNodeSchema>(schema: T): void;
     static field<Kind extends FieldKind, T extends ImplicitAllowedTypes>(kind: Kind, allowedTypes: T): TreeFieldSchema<Kind, NormalizeAllowedTypes<T>>;
-    fieldNode<Name extends TName, const T extends ImplicitFieldSchema>(name: Name, fieldSchema: T): FieldNodeSchema<`${TScope}.${Name}`, NormalizeField_2<T, TDefaultKind>>;
+    fieldNode<Name extends TName, const T extends ImplicitFieldSchema>(name: Name, fieldSchema: T): FieldNodeSchema<`${TScope}.${Name}`, NormalizeField<T, TDefaultKind>>;
     fieldNodeRecursive<Name extends TName, const T extends Unenforced<ImplicitFieldSchema>>(name: Name, t: T): FieldNodeSchema<`${TScope}.${Name}`, T>;
     static fieldRecursive<Kind extends FieldKind, T extends FlexList<Unenforced<TreeNodeSchema>>>(kind: Kind, ...allowedTypes: T): TreeFieldSchema<Kind, T>;
     intoLibrary(): SchemaLibrary;
-    intoSchema<const TSchema extends ImplicitFieldSchema>(root: TSchema): TreeSchema<NormalizeField_2<TSchema, TDefaultKind>>;
+    intoSchema<const TSchema extends ImplicitFieldSchema>(root: TSchema): TreeSchema<NormalizeField<TSchema, TDefaultKind>>;
     map<Name extends TName, const T extends MapFieldSchema>(name: Name, fieldSchema: T): MapNodeSchema<`${TScope}.${Name}`, T>;
     mapRecursive<Name extends TName, const T extends Unenforced<MapFieldSchema>>(name: Name, t: T): MapNodeSchema<`${TScope}.${Name}`, T>;
     readonly name: string;
-    protected normalizeField<TSchema extends ImplicitFieldSchema>(schema: TSchema): NormalizeField_2<TSchema, TDefaultKind>;
+    protected normalizeField<TSchema extends ImplicitFieldSchema>(schema: TSchema): NormalizeField<TSchema, TDefaultKind>;
     object<const Name extends TName, const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>(name: Name, t: T): ObjectNodeSchema<`${TScope}.${Name}`, {
-        [key in keyof T]: NormalizeField_2<T[key], TDefaultKind>;
+        [key in keyof T]: NormalizeField<T[key], TDefaultKind>;
     }>;
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>>(name: Name, t: T): ObjectNodeSchema<`${TScope}.${Name}`, T>;
     readonly scope: TScope;
@@ -1840,7 +1840,7 @@ export interface TreeNode extends TreeEntity<TreeNodeSchema> {
 }
 
 // @alpha (undocumented)
-export type TreeNodeSchema = MapNodeSchema | LeafNodeSchema | ObjectNodeSchema | FieldNodeSchema;
+export type TreeNodeSchema = TreeNodeSchemaBase;
 
 // @alpha
 export abstract class TreeNodeSchemaBase<const out Name extends string = string, const out Specification = unknown> implements TreeNodeStoredSchema {
@@ -2004,7 +2004,7 @@ type UnboxField<TSchema extends TreeFieldSchema, Emptiness extends "maybeEmpty" 
 type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? Sequence<TTypes> : Kind extends typeof FieldKinds.required ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : Kind extends typeof FieldKinds.nodeKey ? NodeKeyField : unknown;
 
 // @alpha
-type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema ? TreeValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? UnboxField<TSchema["objectNodeFieldsObject"][""]> : TSchema extends ObjectNodeSchema ? ObjectNodeTyped<TSchema> : UnknownUnboxed;
+type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema ? TreeValue<TSchema["info"]> : TSchema extends MapNodeSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? FieldNode<TSchema> : TSchema extends ObjectNodeSchema ? ObjectNodeTyped<TSchema> : UnknownUnboxed;
 
 // @alpha
 type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [

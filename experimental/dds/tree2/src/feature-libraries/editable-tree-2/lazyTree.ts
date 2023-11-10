@@ -114,7 +114,8 @@ function buildSubclass(
 	if (schemaIsObjectNode(schema)) {
 		return buildLazyObjectNode(context, schema, cursor, anchorNode, anchor);
 	}
-	unreachableCase(schema, "unrecognized node kind");
+	// TODO: there should be a common fallback that works for cases without a specialized implementation.
+	fail("unrecognized node kind");
 }
 
 /**
