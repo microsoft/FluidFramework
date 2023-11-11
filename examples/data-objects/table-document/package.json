@@ -64,7 +64,7 @@
 		"debug": "^4.3.4"
 	},
 	"devDependencies": {
-		"@fluid-internal/test-version-utils": "workspace:~",
+		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
