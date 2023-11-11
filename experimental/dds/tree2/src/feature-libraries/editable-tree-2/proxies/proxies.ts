@@ -157,7 +157,14 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| OptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
-						const mappedContent = cursorFromProxyTreeNode(content);
+						const mappedContent =
+							content === undefined
+								? undefined
+								: cursorFromProxyTreeNode(
+										content,
+										editNode.context,
+										fieldSchema.types,
+								  );
 						typedField.content = mappedContent;
 						hydrateProxies(typedField.boxedContent);
 						break;
@@ -250,7 +257,12 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
-			const mappedContent = cursorFromProxyTreeNode(content, "field");
+			const mappedContent = cursorFromProxyTreeNode(
+				content,
+				sequenceField.context,
+				sequenceField.schema.types,
+				"field",
+			);
 			sequenceField.insertAt(index, mappedContent);
 			hydrateProxies(getEditNode(this));
 		},
@@ -263,7 +275,12 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
-			const mappedContent = cursorFromProxyTreeNode(content, "field");
+			const mappedContent = cursorFromProxyTreeNode(
+				content,
+				sequenceField.context,
+				sequenceField.schema.types,
+				"field",
+			);
 			sequenceField.insertAtStart(mappedContent);
 			hydrateProxies(getEditNode(this));
 		},
@@ -279,7 +296,12 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				value,
 				this.length,
 			);
-			const mappedContent = cursorFromProxyTreeNode(content, "field");
+			const mappedContent = cursorFromProxyTreeNode(
+				content,
+				sequenceField.context,
+				sequenceField.schema.types,
+				"field",
+			);
 			sequenceField.insertAtEnd(mappedContent);
 			hydrateProxies(getEditNode(this));
 		},
@@ -605,7 +627,16 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
-			const mappedContent = cursorFromProxyTreeNode(content);
+
+			const mappedContent =
+				content === undefined
+					? undefined
+					: cursorFromProxyTreeNode(
+							content,
+							node.context,
+							node.schema.mapFields?.types ??
+								fail("Map node schema missing map schema."),
+					  );
 			node.set(key, mappedContent);
 			hydrateProxies(getMapChildNode(node, key));
 			return this;

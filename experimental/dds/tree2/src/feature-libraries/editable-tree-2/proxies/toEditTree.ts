@@ -3,10 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { type Value, type FieldKey, EmptyKey } from "../../../core";
+import { assert } from "@fluidframework/core-utils";
+import { type Value, type FieldKey, EmptyKey, TreeTypeSet } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { leaf } from "../../../domains/leafDomain";
-import { isFluidHandle, isPrimitiveValue } from "../../contextuallyTyped";
+import {
+	ContextuallyTypedNodeData,
+	TreeDataContext,
+	getPossibleTypes,
+	isFluidHandle,
+	isPrimitiveValue,
+} from "../../contextuallyTyped";
 import {
 	type CursorAdapter,
 	type CursorWithNode,
@@ -14,10 +21,12 @@ import {
 	stackTreeFieldCursor,
 } from "../../treeCursorUtils";
 import { type TreeNodeSchema } from "../../typed-schema";
-import { SharedTreeNode, type ProxyNode } from "./types";
-import { nodeApi } from "./node";
+import { type ProxyNode } from "./types";
 
-function createAdaptor<TNode extends ProxyNode<TreeNodeSchema>>(): CursorAdapter<TNode> {
+export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScript">>(
+	context: TreeDataContext,
+	typeSet: TreeTypeSet,
+): CursorAdapter<TNode> {
 	return {
 		value: (node: TNode) => {
 			return isPrimitiveValue(node) || node === null || isFluidHandle(node)
@@ -25,6 +34,9 @@ function createAdaptor<TNode extends ProxyNode<TreeNodeSchema>>(): CursorAdapter
 				: undefined;
 		},
 		type: (node: TNode) => {
+			if (node === undefined) {
+				throw new Error("undefined node");
+			}
 			if (node === null) {
 				return leaf.null.name;
 			}
@@ -40,9 +52,23 @@ function createAdaptor<TNode extends ProxyNode<TreeNodeSchema>>(): CursorAdapter
 					return leaf.string.name;
 				case "boolean":
 					return leaf.boolean.name;
-				default:
-					// Assume tree node
-					return nodeApi.schema(node as SharedTreeNode).name;
+				default: {
+					const possibleTypes = getPossibleTypes(
+						context,
+						typeSet,
+						node as ContextuallyTypedNodeData,
+					);
+
+					assert(
+						possibleTypes.length !== 0,
+						"data is incompatible with all types allowed by the schema",
+					);
+					assert(
+						possibleTypes.length === 1,
+						"data is compatible with more than one type allowed by the schema",
+					);
+					return possibleTypes[0];
+				}
 			}
 		},
 		keysFromNode: (node: TNode) => {
@@ -53,13 +79,24 @@ function createAdaptor<TNode extends ProxyNode<TreeNodeSchema>>(): CursorAdapter
 					} else if (Array.isArray(node)) {
 						return node.length === 0 ? [] : [EmptyKey];
 					} else if (node instanceof Map) {
-						return Array.from(node.keys()) as FieldKey[];
+						const unfilteredKeys = Array.from(node.keys()) as FieldKey[];
+						// Map proxies may contain entries with explicit `undefined` values.
+						// We wish to omit these from our representation.
+						// Setting a key's value to `undefined` is equivalent to removing the entry.
+						const filteredKeys = unfilteredKeys.filter((key) => node.has(key));
+						return filteredKeys;
 					} else {
 						// Assume record-like object
-						return (Object.keys(node) as FieldKey[]).filter((key) => {
-							const value = (node as Record<FieldKey, unknown>)[key];
-							return !Array.isArray(value) || value.length !== 0;
-						});
+						const objectedNode = node as Record<FieldKey, unknown>;
+
+						const unfilteredKeys = Object.keys(node) as FieldKey[];
+						// Object proxies may contain entries with explicit `undefined` values.
+						// We wish to omit these from our representation.
+						// Setting a key's value to `undefined` is equivalent to removing the key/value pair.
+						const filteredKeys = unfilteredKeys.filter(
+							(key) => objectedNode[key] !== undefined,
+						);
+						return filteredKeys;
 					}
 				default:
 					return [];
@@ -97,11 +134,13 @@ function createAdaptor<TNode extends ProxyNode<TreeNodeSchema>>(): CursorAdapter
 /**
  * Construct a {@link CursorWithNode} from a {@link ProxyNode}.
  */
-export function cursorFromProxyTreeNode<TNode extends ProxyNode<TreeNodeSchema>>(
+export function cursorFromProxyTreeNode<TNode extends ProxyNode<TreeNodeSchema, "javaScript">>(
 	node: TNode,
+	context: TreeDataContext,
+	typeSet: TreeTypeSet,
 	mode: "node" | "field" = "node",
 ): CursorWithNode<TNode> {
-	const adapter = createAdaptor<TNode>();
+	const adapter = createAdaptor<TNode>(context, typeSet);
 	return mode === "node"
 		? stackTreeNodeCursor(adapter, node)
 		: stackTreeFieldCursor(adapter, node);
