@@ -24,7 +24,7 @@
 		}
 	},
 	"main": "dist/index.cjs",
-	"module": "dist/index.mjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
