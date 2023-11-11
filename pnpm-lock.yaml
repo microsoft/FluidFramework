@@ -11319,6 +11319,7 @@ importers:
       sillyname: ^0.1.0
       source-map-loader: ^2.0.0
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
       webpack: ^5.82.0
@@ -11375,6 +11376,7 @@ importers:
       rimraf: 4.4.1
       source-map-loader: 2.0.2_webpack@5.88.2
       ts-loader: 9.5.0_wlox7xpecxj4rvkt6b6o7frtlu
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.88.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_ai6cu5vnuisb2akyozxbiaqwvu
