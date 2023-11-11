@@ -6029,6 +6029,7 @@ importers:
       buffer: ^6.0.3
       c8: ^7.7.1
       concurrently: ^8.2.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -6077,6 +6078,7 @@ importers:
       '@types/sinon': 7.5.2
       c8: 7.14.0
       concurrently: 8.2.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -35026,6 +35028,9 @@ packages:
     resolution: {integrity: sha512-dlCojsiJLV9BcL8ar03qycI0H5quM47Ei+mh14It0dTYhLAoH8B/91J0/pLDX3Wba9wTkPCbEKzNVvV8ea0WlQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
+    peerDependenciesMeta:
+      markdown-magic:
+        optional: true
     dependencies:
       findup: 0.1.5
       sort-scripts: 1.0.1
@@ -35035,6 +35040,9 @@ packages:
     resolution: {integrity: sha512-eoYa+jZHd7TIijM0xuBJWC7rEF75OgFnN0/cwNDbLsmeYCAprR5x0EvZFaHVl2deJN+ziBN3rQ9/m/TD7n4bAQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
+    peerDependenciesMeta:
+      markdown-magic:
+        optional: true
     dependencies:
       lodash.template: 4.5.0
     dev: true
