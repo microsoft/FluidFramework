@@ -25,6 +25,7 @@
                             "change": [
                               {
                                 "type": "Insert",
+                                "id": 0,
                                 "count": 1,
                                 "content": [
                                   {

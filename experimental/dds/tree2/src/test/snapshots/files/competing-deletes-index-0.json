@@ -43,9 +43,16 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
+                                "type": "Transient",
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 0,
+                                "attach": {
+                                  "type": "Insert",
+                                  "id": 0
+                                },
+                                "detach": {
+                                  "type": "Delete",
+                                  "id": 0
+                                },
                                 "cellId": {
                                   "revision": "beefbeef-beef-4000-8000-000000000007",
                                   "localId": 0,
@@ -73,11 +80,18 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
+                                "type": "Transient",
                                 "count": 1,
-                                "type": "Delete",
-                                "id": 0,
+                                "attach": {
+                                  "type": "Insert",
+                                  "id": 0
+                                },
+                                "detach": {
+                                  "type": "Delete",
+                                  "id": 0
+                                },
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-000000000007",
+                                  "revision": "beefbeef-beef-4000-8000-000000000008",
                                   "localId": 0,
                                   "adjacentCells": [
                                     {
@@ -271,7 +285,7 @@
                     ]
                   ],
                   [
-                    "repair-4",
+                    "repair-6",
                     [
                       {
                         "type": "com.fluidframework.leaf.number",
@@ -297,12 +311,12 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-000000000007",
+                      "beefbeef-beef-4000-8000-000000000009",
                       0,
-                      4
+                      6
                     ]
                   ],
-                  "maxId": 4
+                  "maxId": 6
                 },
                 "encoding": "utf-8"
               }

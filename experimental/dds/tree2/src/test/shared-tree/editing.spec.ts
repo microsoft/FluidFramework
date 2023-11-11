@@ -165,7 +165,7 @@ describe("Editing", () => {
 			const expectedState = [
 				{
 					foo: ["a"],
-					bar: ["d", "b", "e"],
+					bar: ["d", "b", "c", "e"],
 				},
 			];
 
@@ -782,14 +782,15 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const sequence = tree.editor.sequenceField(rootField);
-
 			// Delete source's ancestor concurrently
-			sequence.delete(0, 1);
+			tree.editor.sequenceField(rootField).delete(0, 1);
+			expectJsonTree(tree, [{}]);
 			// Revive source's ancestor
 			undoStack.pop()?.revert();
-			// Delete "a"
+			expectJsonTree(tree, [{ foo: ["a"] }, {}]);
+			// Delete ["a"]
 			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
+			expectJsonTree(tree, [{}, {}]);
 
 			tree2.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -802,7 +803,7 @@ describe("Editing", () => {
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], [{}, {}]);
+			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
 			unsubscribe();
 		});
 
