@@ -30,7 +30,7 @@ import {
 import { assertValidIndex, assertValidRangeIndices, brand, disposeSymbol, fail } from "../../util";
 import { AllowedTypes, TreeFieldSchema } from "../typed-schema";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
-import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
+import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -541,7 +541,7 @@ function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCurso
 	// Convert from the desired API (single field cursor) to the currently required API (array of node cursors).
 	// This is inefficient, and particularly bad if the data was efficiently chunked using uniform chunks.
 	// TODO: update editing APIs to take in field cursors not arrays of node cursors, then remove this copying conversion.
-	return mapCursorField(cursor, () => singleMapTreeCursor(mapTreeFromCursor(cursor)));
+	return mapCursorField(cursor, () => cursorForMapTreeNode(mapTreeFromCursor(cursor)));
 }
 
 /**

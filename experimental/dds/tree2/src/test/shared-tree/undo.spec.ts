@@ -2,7 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { singleTextCursor } from "../../feature-libraries";
+import { cursorForJsonableTreeNode } from "../../feature-libraries";
 import { leaf, singleJsonCursor } from "../../domains";
 import { rootFieldKey, UpPath } from "../../core";
 import { ITreeCheckout } from "../../shared-tree";
@@ -375,7 +375,9 @@ describe("Undo and redo", () => {
  */
 function insert(tree: ITreeCheckout, index: number, ...values: string[]): void {
 	const field = tree.editor.sequenceField(rootField);
-	const nodes = values.map((value) => singleTextCursor({ type: leaf.string.name, value }));
+	const nodes = values.map((value) =>
+		cursorForJsonableTreeNode({ type: leaf.string.name, value }),
+	);
 	field.insert(index, nodes);
 }
 

@@ -380,9 +380,9 @@ describe("sharedTreeView", () => {
 
 		it("submit edits to Fluid when merging into the root view", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).checkout;
+			const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig).checkout;
+			const tree2 = provider.trees[1].schematizeInternal(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const baseView = tree1.fork();
 			const view = baseView.fork();
@@ -400,7 +400,7 @@ describe("sharedTreeView", () => {
 
 		it("do not squash commits", () => {
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig).checkout;
+			const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig).checkout;
 			provider.processMessages();
 			const tree2 = provider.trees[1];
 			let opsReceived = 0;
@@ -628,7 +628,7 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	it(`${title} (root view)`, () => {
 		const provider = new TestTreeProviderLite();
 		// Test an actual SharedTree.
-		fn(provider.trees[0].schematize(config).checkout);
+		fn(provider.trees[0].schematizeInternal(config).checkout);
 	});
 
 	it(`${title} (reference view)`, () => {
@@ -637,7 +637,7 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 
 	it(`${title} (forked view)`, () => {
 		const provider = new TestTreeProviderLite();
-		fn(provider.trees[0].schematize(config).checkout.fork());
+		fn(provider.trees[0].schematizeInternal(config).checkout.fork());
 	});
 
 	it(`${title} (reference forked view)`, () => {

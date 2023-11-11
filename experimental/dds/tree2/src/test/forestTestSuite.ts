@@ -41,7 +41,7 @@ import { IdAllocator, JsonCompatible, brand, idAllocatorFromMaxId } from "../uti
 import {
 	FieldKinds,
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	isNeverField,
 	cursorForTypedTreeData,
@@ -489,7 +489,7 @@ export function testForest(config: ForestTestConfiguration): void {
 				{ type: leaf.boolean.name, value: true },
 				{ type: leaf.string.name, value: "test" },
 			];
-			initializeForest(forest, content.map(singleTextCursor));
+			initializeForest(forest, content.map(cursorForJsonableTreeNode));
 
 			const clone = forest.clone(schema, forest.anchors);
 			const mark: Delta.Mark = { count: 1, detach: detachId };
@@ -539,7 +539,7 @@ export function testForest(config: ForestTestConfiguration): void {
 									{
 										id: buildId,
 										trees: [
-											singleTextCursor({
+											cursorForJsonableTreeNode({
 												type: leaf.boolean.name,
 												value: true,
 											}),
@@ -575,7 +575,7 @@ export function testForest(config: ForestTestConfiguration): void {
 						[
 							xField,
 							deltaForSet(
-								singleTextCursor({
+								cursorForJsonableTreeNode({
 									type: leaf.boolean.name,
 									value: true,
 								}),
@@ -743,7 +743,12 @@ export function testForest(config: ForestTestConfiguration): void {
 							build: [
 								{
 									id: buildId,
-									trees: [singleTextCursor({ type: leaf.number.name, value: 3 })],
+									trees: [
+										cursorForJsonableTreeNode({
+											type: leaf.number.name,
+											value: 3,
+										}),
+									],
 								},
 							],
 							global: [
@@ -757,7 +762,7 @@ export function testForest(config: ForestTestConfiguration): void {
 													{
 														id: buildId2,
 														trees: [
-															singleTextCursor({
+															cursorForJsonableTreeNode({
 																type: leaf.number.name,
 																value: 4,
 															}),
@@ -986,7 +991,7 @@ export function testForest(config: ForestTestConfiguration): void {
 		"forest cursor",
 		(data): ITreeCursor => {
 			const forest = factory(new InMemoryStoredSchemaRepository(testTreeSchema));
-			initializeForest(forest, [singleTextCursor(data)]);
+			initializeForest(forest, [cursorForJsonableTreeNode(data)]);
 			const cursor = forest.allocateCursor();
 			moveToDetachedField(forest, cursor);
 			assert(cursor.firstNode());

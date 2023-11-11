@@ -18,6 +18,10 @@ parameters:
   type: object
   default: Small
 
+- name: isReleaseGroup
+  type: boolean
+  default: false
+
 stages:
 
 # This stage only runs for test-branch builds
@@ -57,23 +61,26 @@ stages:
       pool: ${{ parameters.pool }}
       publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
-- stage: publish_npm_internal_dev
-  dependsOn: build
-  displayName: Publish to internal dev feed
-  # This condition should match the condition for publish_npm_internal_build
-  condition: and(succeeded(), eq(variables['testBuild'], false))
-  variables:
-  - group: ado-feeds
-  jobs:
-  - template: include-publish-npm-package-deployment.yml
-    parameters:
-      namespace: ${{ parameters.namespace }}
-      feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
-      feedKind: internal-dev
-      # Environment should match the condition for publish_npm_internal_build
-      environment: package-build-feed
-      pool: ${{ parameters.pool }}
-      publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
+# Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
+# publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.
+- ${{ if eq(parameters.isReleaseGroup, true) }}:
+  - stage: publish_npm_internal_dev
+    dependsOn: build
+    displayName: Publish to internal dev feed
+    # This condition should match the condition for publish_npm_internal_build
+    condition: and(succeeded(), eq(variables['testBuild'], false))
+    variables:
+    - group: ado-feeds
+    jobs:
+    - template: include-publish-npm-package-deployment.yml
+      parameters:
+        namespace: ${{ parameters.namespace }}
+        feedUrl: $(ado-feeds-dev) # Comes from the ado-feeds variable group
+        feedKind: internal-dev
+        # Environment should match the condition for publish_npm_internal_build
+        environment: package-build-feed
+        pool: ${{ parameters.pool }}
+        publishNonScopedPackages: ${{ parameters.publishNonScopedPackages }}
 
 - stage: publish_npm_public
   dependsOn: build
