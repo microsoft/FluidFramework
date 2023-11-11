@@ -32,7 +32,6 @@ import {
 	isTransientEffect,
 	getOutputCellId,
 	getEndpoint,
-	isReattach,
 	splitMark,
 	isAttach,
 } from "./utils";
@@ -329,16 +328,48 @@ class RebaseQueue<T> {
 			0x69c /* Cannot dequeue both unless both mark queues are non-empty */,
 		);
 		const length = Math.min(newMark.count, baseMark.count);
-		assert(
-			getMovedMarkFromBaseMark(this.moveEffects, baseMark, this.baseMarks.revision) ===
-				undefined,
-			"A new mark should not be moved to the location of an existing new mark",
+		const sizedBaseMark = this.baseMarks.dequeueUpTo(length);
+		const sizedNewMark = this.newMarks.dequeueUpTo(length);
+		const movedMark = getMovedMarkFromBaseMark(
+			this.moveEffects,
+			sizedBaseMark,
+			this.baseMarks.revision,
 		);
 		return {
-			baseMark: this.baseMarks.dequeueUpTo(length),
-			newMark: this.newMarks.dequeueUpTo(length),
+			baseMark: sizedBaseMark,
+			newMark: movedMark === undefined ? sizedNewMark : fuseMarks(sizedNewMark, movedMark),
 		};
 	}
+}
+
+function fuseMarks<T>(newMark: Mark<T>, movedMark: Mark<T>): Mark<T> {
+	if (isMoveDestination(newMark) && movedMark.type === "ReturnFrom") {
+		const fusedMark: Mark<T> = {
+			type: "Pin",
+			count: newMark.count,
+			id: newMark.id,
+		};
+		if (movedMark.cellId !== undefined) {
+			fusedMark.cellId = cloneCellId(movedMark.cellId);
+		}
+		if (movedMark.revision !== undefined) {
+			fusedMark.revision = movedMark.revision;
+		}
+		if (movedMark.changes !== undefined) {
+			fusedMark.changes = movedMark.changes;
+		}
+		if (movedMark.detachIdOverride !== undefined) {
+			fusedMark.detachIdOverride = movedMark.detachIdOverride;
+		}
+		if (movedMark.finalEndpoint !== undefined) {
+			fusedMark.destEndpoint = movedMark.finalEndpoint;
+		}
+		if (newMark.finalEndpoint !== undefined) {
+			fusedMark.sourceEndpoint = newMark.finalEndpoint;
+		}
+		return fusedMark;
+	}
+	assert(false, "Unexpected combination of moved and new marks");
 }
 
 /**
@@ -600,13 +631,14 @@ function amendRebaseI<TNodeChange>(
 		}
 
 		const movedMark = getMovedMarkFromBaseMark(moveEffects, baseMark, baseRevision);
+		let fusedMark: Mark<TNodeChange>;
 		if (movedMark !== undefined) {
-			assert(
+			fusedMark =
 				newMark === undefined ||
-					(newMark.type === NoopMarkType && newMark.changes === undefined),
-				"A new mark should not be moved to the location of an existing new mark",
-			);
-			factory.push(rebaseNodeChange(cloneMark(movedMark), baseMark, rebaseChild));
+				(newMark.type === NoopMarkType && newMark.changes === undefined)
+					? cloneMark(movedMark)
+					: fuseMarks(newMark, movedMark);
+			factory.push(rebaseNodeChange(fusedMark, baseMark, rebaseChild));
 			continue;
 		}
 

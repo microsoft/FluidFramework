@@ -588,6 +588,70 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
+	it("return ↷ return (same destination, <=)", () => {
+		const cellId: ChangeAtomId = {
+			revision: tag3,
+			localId: brand(0),
+		};
+		const move = [
+			Mark.returnTo(1, brand(0), cellId),
+			{ count: 2 },
+			Mark.returnFrom(1, brand(0)),
+		];
+		const expected = [Mark.pin(1, brand(0))];
+		const rebased = rebase(move, move);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("return ↷ return (same destination, =>)", () => {
+		const cellId: ChangeAtomId = {
+			revision: tag3,
+			localId: brand(0),
+		};
+		const move = [
+			Mark.returnFrom(1, brand(0)),
+			{ count: 2 },
+			Mark.returnTo(1, brand(0), cellId),
+		];
+		const expected = [{ count: 2 }, Mark.pin(1, brand(0))];
+		const rebased = rebase(move, move);
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("return ↷ return (other destination)", () => {
+		const cellId: ChangeAtomId = {
+			revision: tag3,
+			localId: brand(0),
+		};
+		const return1 = [
+			Mark.returnTo(1, brand(0), {
+				revision: tag3,
+				localId: brand(0),
+			}),
+			{ count: 2 },
+			Mark.returnFrom(1, brand(0)),
+		];
+		const return2 = [
+			{ count: 2 },
+			Mark.returnFrom(1, brand(0)),
+			{ count: 2 },
+			Mark.returnTo(1, brand(0), {
+				revision: tag3,
+				localId: brand(42),
+			}),
+		];
+		const expected = [
+			Mark.returnFrom(1, brand(0)),
+			{ count: 4 },
+			Mark.returnTo(1, brand(0), {
+				revision: tag3,
+				localId: brand(42),
+			}),
+		];
+		const rebased = rebase(return2, return1);
+		assert.deepEqual(rebased, expected);
+	});
+
 	it("pin live nodes ↷ move", () => {
 		const move = [Mark.moveIn(2, brand(0)), { count: 2 }, Mark.moveOut(2, brand(0))];
 		const pin = [{ count: 2 }, Mark.pin(2, brand(0))];
