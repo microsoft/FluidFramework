@@ -22,9 +22,9 @@
 				"default": "./dist/index.cjs"
 			}
 		},
-    "./mocharc-common": {
-      "default": "./mocharc-common.js"
-    }
+		"./mocharc-common": {
+			"default": "./mocharc-common.js"
+		}
 	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
