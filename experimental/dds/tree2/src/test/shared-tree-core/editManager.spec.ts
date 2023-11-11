@@ -410,8 +410,7 @@ describe("EditManager", () => {
 			});
 
 			it("does not evict commits including and after the oldest revertible commit", () => {
-				const { manager, enableRevertibleTracking } = editManagerFactory({});
-				enableRevertibleTracking();
+				const { manager } = editManagerFactory({ autoDiscardRevertibles: false });
 				const { unsubscribe } = createTestUndoRedoStacks(manager.localBranch);
 
 				const commit1 = applyLocalCommit(manager, [], 1);
@@ -441,8 +440,7 @@ describe("EditManager", () => {
 			});
 
 			it("advances the oldest revertible commit when that revertible is disposed", () => {
-				const { manager, enableRevertibleTracking } = editManagerFactory({});
-				enableRevertibleTracking();
+				const { manager } = editManagerFactory({ autoDiscardRevertibles: false });
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(manager.localBranch);
 
 				const commit1 = applyLocalCommit(manager, [], 1);

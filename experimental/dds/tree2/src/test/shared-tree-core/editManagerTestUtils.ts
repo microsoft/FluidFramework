@@ -24,10 +24,10 @@ export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestCh
 export function editManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
 	sessionId?: SessionId;
+	autoDiscardRevertibles?: false;
 }): {
 	manager: TestEditManager;
 	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
-	enableRevertibleTracking: () => void;
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const manager = new EditManager<
@@ -36,12 +36,14 @@ export function editManagerFactory(options: {
 		ChangeFamily<ChangeFamilyEditor, TestChange>
 	>(family, options.sessionId ?? "0");
 
-	// by default, discard revertibles in the edit manager tests
-	const enableRevertibleTracking = manager.localBranch.on("revertible", (revertible) => {
-		revertible.discard();
-	});
+	if (options.autoDiscardRevertibles === undefined) {
+		// by default, discard revertibles in the edit manager tests
+		const enableRevertibleTracking = manager.localBranch.on("revertible", (revertible) => {
+			revertible.discard();
+		});
+	}
 
-	return { manager, family, enableRevertibleTracking };
+	return { manager, family };
 }
 
 export function rebaseLocalEditsOverTrunkEdits(
