@@ -25,7 +25,7 @@ importers:
       '@changesets/cli': ^2.26.1
       '@fluid-private/changelog-generator-wrapper': file:tools/changelog-generator-wrapper
       '@fluid-tools/build-cli': ^0.27.0
-      '@fluid-tools/markdown-magic': file:tools/markdown-magic
+      '@fluid-tools/markdown-magic': link:tools/markdown-magic
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.27.0
       '@fluidframework/eslint-config-fluid': ^3.1.0
@@ -42205,7 +42205,7 @@ packages:
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.21.0
-      webpack: 5.88.2_webpack-cli@4.10.0
+      webpack: 5.88.2
 
   /terser/4.8.1:
     resolution: {integrity: sha512-4GnLC0x667eJG0ewJTa6z/yXrbLGv80D9Ru6HIpCQmO+Q4PfEtBFi0ObSckqwL6VyQv/7ENJieXHo2ANmdQwgw==}
@@ -44576,7 +44576,6 @@ packages:
       - '@swc/core'
       - esbuild
       - uglify-js
-    dev: true
 
   /webpack/5.88.2_webpack-cli@4.10.0:
     resolution: {integrity: sha512-JmcgNZ1iKj+aiR0OvTYtWQqJwq37Pf683dY9bVORwVbUrDhLhdn/PlO2sHsFHPkj7sHNQF3JwaAkp49V+Sq1tQ==}
