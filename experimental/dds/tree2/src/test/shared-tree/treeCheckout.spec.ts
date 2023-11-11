@@ -12,8 +12,8 @@ import {
 	emptyJsonSequenceConfig,
 	insert,
 	jsonSequenceRootSchema,
-	view2WithContent,
 	viewWithContent,
+	checkoutWithContent,
 } from "../utils";
 import {
 	AllowedUpdateType,
@@ -34,7 +34,7 @@ describe("sharedTreeView", () => {
 		const schema = builder.intoSchema(builder.optional(rootTreeNodeSchema));
 
 		it("triggers events for local and subtree changes", () => {
-			const view = view2WithContent({
+			const view = viewWithContent({
 				schema,
 				initialTree: {
 					x: 24,
@@ -75,7 +75,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("propagates path args for local and subtree changes", () => {
-			const view = view2WithContent({
+			const view = viewWithContent({
 				schema,
 				initialTree: {
 					x: 24,
@@ -119,7 +119,7 @@ describe("sharedTreeView", () => {
 
 		// TODO: unskip once forking revertibles is supported
 		it.skip("triggers a revertible event for a changes merged into the local branch", () => {
-			const tree1 = viewWithContent({
+			const tree1 = checkoutWithContent({
 				schema: jsonSequenceRootSchema,
 				initialTree: [],
 			});
@@ -630,7 +630,7 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	});
 
 	it(`${title} (reference view)`, () => {
-		fn(viewWithContent(content));
+		fn(checkoutWithContent(content));
 	});
 
 	it(`${title} (forked view)`, () => {
@@ -639,6 +639,6 @@ function itView(title: string, fn: (view: ITreeCheckout) => void): void {
 	});
 
 	it(`${title} (reference forked view)`, () => {
-		fn(viewWithContent(content).fork());
+		fn(checkoutWithContent(content).fork());
 	});
 }

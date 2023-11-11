@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { leaf } from "../../domains";
-import { singleTextCursor } from "../../feature-libraries";
+import { cursorForJsonableTreeNode } from "../../feature-libraries";
 import {
 	FieldKey,
 	Delta,
@@ -81,7 +81,7 @@ const rootKey: FieldKey = brand("root");
 const fooKey: FieldKey = brand("foo");
 const barKey: FieldKey = brand("bar");
 const nodeX = { type: leaf.string.name, value: "X" };
-const content = singleTextCursor(nodeX);
+const content = cursorForJsonableTreeNode(nodeX);
 const field0: FieldKey = brand("-0");
 const field1: FieldKey = brand("-1");
 const field2: FieldKey = brand("-2");

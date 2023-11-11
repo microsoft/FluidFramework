@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { singleTextCursor } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries";
 import { makeAnonChange, FieldKey, tagChange, mintRevisionTag, deltaForSet } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
@@ -66,7 +66,7 @@ describe("TestChange", () => {
 			[
 				fooField,
 				deltaForSet(
-					singleTextCursor({
+					cursorForJsonableTreeNode({
 						type: brand("test"),
 						value: "2|3",
 					}),

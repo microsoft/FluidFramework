@@ -106,6 +106,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
       axios: ^0.26.0
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -145,6 +146,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       '@types/uuid': 9.0.5
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -194,6 +196,7 @@ importers:
       '@fluidframework/protocol-definitions': ^3.0.0
       '@microsoft/api-extractor': ^7.37.0
       '@types/jsrsasign': ^8.0.8
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
       jsrsasign: ^10.5.25
@@ -213,6 +216,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.0
       '@types/jsrsasign': 8.0.13
+      copyfiles: 2.4.1
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       prettier: 3.0.3
@@ -5987,6 +5991,7 @@ importers:
       '@fluidframework/protocol-definitions': ^3.0.0
       '@microsoft/api-extractor': ^7.37.0
       '@types/events': ^3.0.0
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       eslint-plugin-deprecation: ~2.0.0
       events: ^3.1.0
@@ -6006,6 +6011,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.0
       '@types/events': 3.0.1
+      copyfiles: 2.4.1
       eslint: 8.50.0
       eslint-plugin-deprecation: 2.0.0_loebgezstcsvd2poh2d55fifke
       prettier: 3.0.3
@@ -6021,6 +6027,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@microsoft/api-extractor': ^7.37.0
       '@types/node': ^16.18.38
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -6033,6 +6040,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
       '@types/node': 16.18.58
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1

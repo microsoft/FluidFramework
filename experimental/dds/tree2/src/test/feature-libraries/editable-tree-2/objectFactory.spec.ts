@@ -8,7 +8,8 @@ import { SchemaBuilder } from "../../../domains";
 import { ProxyNode, typeNameSymbol } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../../feature-libraries/editable-tree-2/proxies/proxies";
-import { createTreeView2, itWithRoot } from "./utils";
+import { viewWithContent } from "../../utils";
+import { itWithRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
 	const sb = new SchemaBuilder({
@@ -338,7 +339,7 @@ describe("SharedTreeObject factories", () => {
 			return { tree: createComboRoot(), objects };
 		}
 
-		const view = createTreeView2(comboSchema, { root: undefined });
+		const view = viewWithContent({ schema: comboSchema, initialTree: { root: undefined } });
 
 		const objectTypes = ["object", "list", "map"] as const;
 		for (const root of objectTypes) {

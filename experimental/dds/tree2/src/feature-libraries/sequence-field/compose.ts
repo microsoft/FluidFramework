@@ -424,10 +424,6 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	revision: RevisionTag | undefined,
 	composeChild: NodeChangeComposer<TNodeChange>,
 ): TMark {
-	if (isNoopMark(mark)) {
-		return mark;
-	}
-
 	const cloned = cloneMark(mark);
 	if (
 		cloned.cellId !== undefined &&
@@ -438,7 +434,7 @@ function composeMark<TNodeChange, TMark extends Mark<TNodeChange>>(
 	}
 
 	addRevision(cloned, revision);
-	if (cloned.type !== "MoveIn" && cloned.changes !== undefined) {
+	if (cloned.changes !== undefined) {
 		cloned.changes = composeChild([tagChange(cloned.changes, revision)]);
 		return cloned;
 	}
