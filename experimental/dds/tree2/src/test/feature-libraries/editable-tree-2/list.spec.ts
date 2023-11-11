@@ -97,10 +97,9 @@ describe("List", () => {
 			) {
 				const array = init ?? [];
 				const expected = fn(array);
-				const subject = createStringList(array);
 
 				it(`${name}(${pretty(array)}) -> ${pretty(expected)}`, () => {
-					const actual = fn(subject);
+					const actual = fn(createStringList(array));
 					assert.deepEqual(actual, expected);
 				});
 			}
@@ -146,10 +145,8 @@ describe("List", () => {
 		function test1<U>(fn: (subject: readonly string[]) => U, init?: readonly string[]) {
 			const array = init ?? [];
 			const expected = fn(array);
-			const subject = createStringList(array);
-
 			it(`${pretty(array)} -> ${pretty(expected)}`, () => {
-				const actual = fn(subject);
+				const actual = fn(createStringList(array));
 				assert.deepEqual(actual, expected);
 			});
 		}
@@ -716,7 +713,7 @@ describe("List", () => {
 	// TODO: Post-MVP
 
 	describe("implements T[]", () => {
-		describe("Setting [index: number] is disallowed (for MVP)", () => {
+		it("Setting [index: number] is disallowed (for MVP)", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
@@ -730,7 +727,7 @@ describe("List", () => {
 			});
 		});
 
-		describe("Setting .length is disallowed (for MVP)", () => {
+		it("Setting .length is disallowed (for MVP)", () => {
 			const subject = createStringList([]);
 
 			assert.throws(() => {
