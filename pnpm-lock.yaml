@@ -5767,7 +5767,6 @@ importers:
       easy-table: ^1.1.1
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
-      good-fences: ^1.1.1
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -5820,7 +5819,6 @@ importers:
       easy-table: 1.2.0
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
-      good-fences: 1.2.0
       mocha: 10.2.0
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
@@ -35026,6 +35024,9 @@ packages:
     resolution: {integrity: sha512-dlCojsiJLV9BcL8ar03qycI0H5quM47Ei+mh14It0dTYhLAoH8B/91J0/pLDX3Wba9wTkPCbEKzNVvV8ea0WlQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
+    peerDependenciesMeta:
+      markdown-magic:
+        optional: true
     dependencies:
       findup: 0.1.5
       sort-scripts: 1.0.1
@@ -35035,6 +35036,9 @@ packages:
     resolution: {integrity: sha512-eoYa+jZHd7TIijM0xuBJWC7rEF75OgFnN0/cwNDbLsmeYCAprR5x0EvZFaHVl2deJN+ziBN3rQ9/m/TD7n4bAQ==}
     peerDependencies:
       markdown-magic: '>=0.1 <=2.x'
+    peerDependenciesMeta:
+      markdown-magic:
+        optional: true
     dependencies:
       lodash.template: 4.5.0
     dev: true
