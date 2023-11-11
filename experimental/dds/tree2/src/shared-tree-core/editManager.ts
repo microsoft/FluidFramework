@@ -150,6 +150,8 @@ export class EditManager<
 		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
 		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
 
+		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed(this.localBranch));
+
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
 		// they require and therefore we monitor them explicitly.
@@ -543,15 +545,9 @@ export class EditManager<
 			this.localBranch.rebaseOnto(this.trunk);
 
 			if (this.oldestRevertibleSequenceId === undefined) {
-				if (this.localBranch.hasRevertibleCommits()) {
-					this.oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId(
-						this.localBranch,
-					);
-					this.localBranch.on(
-						"revertibleDispose",
-						this.onRevertibleDisposed(this.localBranch),
-					);
-				}
+				this.oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId(
+					this.localBranch,
+				);
 			}
 			return;
 		}

@@ -677,9 +677,9 @@ describe("SharedTree", () => {
 		});
 
 		it("inserts of multiple nodes in a sequence field", () => {
-			const value = "42";
-			const value2 = "43";
-			const value3 = "44";
+			const value = "A";
+			const value2 = "B";
+			const value3 = "C";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematize(emptyStringSequenceConfig);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
@@ -690,27 +690,28 @@ describe("SharedTree", () => {
 			provider.processMessages();
 
 			// Insert node
-			tree1.editableTree.insertAt(0, value);
-			tree1.editableTree.insertAt(1, value2);
-			tree1.editableTree.insertAt(2, value3);
+			tree1.editableTree.insertAtStart(value3);
+			tree1.editableTree.insertAtStart(value2);
+			tree1.editableTree.insertAtStart(value);
 			provider.processMessages();
 
 			// Validate insertion
+			assert.deepEqual(tree1.editableTree.asArray, [value, value2, value3]);
 			assert.deepEqual(tree2.editableTree.asArray, [value, value2, value3]);
 
 			// Undo node insertion
 			undoStack.pop()?.revert();
 			provider.processMessages();
 
-			assert.deepEqual(tree1.editableTree.asArray, [value, value2]);
-			assert.deepEqual(tree2.editableTree.asArray, [value, value2]);
+			assert.deepEqual(tree1.editableTree.asArray, [value2, value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value2, value3]);
 
 			// Undo node insertion
 			undoStack.pop()?.revert();
 			provider.processMessages();
 
-			assert.deepEqual(tree1.editableTree.asArray, [value]);
-			assert.deepEqual(tree2.editableTree.asArray, [value]);
+			assert.deepEqual(tree1.editableTree.asArray, [value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value3]);
 
 			// Undo node insertion
 			undoStack.pop()?.revert();
@@ -723,8 +724,8 @@ describe("SharedTree", () => {
 			redoStack.pop()?.revert();
 			provider.processMessages();
 
-			assert.deepEqual(tree1.editableTree.asArray, [value]);
-			assert.deepEqual(tree2.editableTree.asArray, [value]);
+			assert.deepEqual(tree1.editableTree.asArray, [value3]);
+			assert.deepEqual(tree2.editableTree.asArray, [value3]);
 			unsubscribe();
 		});
 
