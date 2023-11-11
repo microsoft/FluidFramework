@@ -227,30 +227,29 @@ describe("domains - SchemaBuilder", () => {
 		});
 
 		type _0 = requireFalse<isAny<typeof recursiveObject>>;
-		// This now crashes the compiler with RangeError: Maximum call stack size exceeded
-		// type Proxied = ProxyNode<typeof recursiveObject>;
-		// type _1 = requireFalse<isAny<Proxied>>;
+		type Proxied = ProxyNode<typeof recursiveObject>;
+		type _1 = requireFalse<isAny<Proxied>>;
 
-		// function typeTests(x: Proxied) {
-		// 	const y: number = x.number;
-		// 	const z: number | undefined = x.recursive?.recursive?.number;
-		// }
+		function typeTests(x: Proxied) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
 
-		// function typeTests2(x: TypedNode<typeof recursiveObject>) {
-		// 	const y: number = x.number;
-		// 	const z: number | undefined = x.recursive?.recursive?.number;
-		// }
+		function typeTests2(x: TypedNode<typeof recursiveObject>) {
+			const y: number = x.number;
+			const z: number | undefined = x.recursive?.recursive?.number;
+		}
 
-		// const innerContents = { recursive: undefined, number: 5 };
-		// const inner = recursiveObject.create(innerContents);
-		// const testOptional = recursiveObject.create({ number: 5 });
-		// const outer1 = recursiveObject.create({ recursive: innerContents, number: 1 });
-		// const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
+		const innerContents = { recursive: undefined, number: 5 };
+		const inner = recursiveObject.create(innerContents);
+		const testOptional = recursiveObject.create({ number: 5 });
+		const outer1 = recursiveObject.create({ recursive: innerContents, number: 1 });
+		const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
 
-		// checkCreated(inner, { number: 5, recursive: undefined });
-		// checkCreated(testOptional, { number: 5 });
-		// checkCreated(outer1, { number: 1, recursive: { number: 5, recursive: undefined } });
-		// checkCreated(outer2, { number: 1, recursive: { number: 5 } });
+		checkCreated(inner, { number: 5, recursive: undefined });
+		checkCreated(testOptional, { number: 5 });
+		checkCreated(outer1, { number: 1, recursive: { number: 5, recursive: undefined } });
+		checkCreated(outer2, { number: 1, recursive: { number: 5 } });
 	});
 
 	it("fixRecursiveReference", () => {
@@ -274,8 +273,6 @@ describe("domains - SchemaBuilder", () => {
 				>
 			>
 		>;
-
-		type Proxied = ProxyNode<typeof recursiveObject2>;
 
 		function typeTests(x: ProxyNode<typeof recursiveObject2>) {
 			const y: number = x.number;

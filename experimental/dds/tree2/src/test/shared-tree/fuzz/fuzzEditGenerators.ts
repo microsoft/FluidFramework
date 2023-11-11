@@ -52,15 +52,12 @@ export function viewFromState(
 	initialTree: TreeContent<typeof fuzzSchema.rootFieldSchema>["initialTree"] = undefined,
 ): ITreeView<typeof fuzzSchema.rootFieldSchema> {
 	state.view2 ??= new Map();
-	return getOrCreate(
-		state.view2,
-		client.channel,
-		(tree): ITreeView<typeof fuzzSchema.rootFieldSchema> =>
-			tree.schematizeInternal({
-				initialTree,
-				schema: fuzzSchema,
-				allowedSchemaModifications: AllowedUpdateType.None,
-			}),
+	return getOrCreate(state.view2, client.channel, (tree) =>
+		tree.schematizeInternal({
+			initialTree,
+			schema: fuzzSchema,
+			allowedSchemaModifications: AllowedUpdateType.None,
+		}),
 	);
 }
 

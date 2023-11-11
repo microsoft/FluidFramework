@@ -10,14 +10,14 @@ import {
 	Any,
 	FieldNodeSchema,
 	TreeFieldSchema,
-	LeafNodeSchema,
-	MapNodeSchema,
 	ObjectNodeSchema,
 	allowedTypesIsAny,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
+	LeafNodeSchema,
+	MapNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/typedTreeSchema";
 import { FieldKinds } from "../../../feature-libraries";
@@ -29,10 +29,8 @@ describe("typedTreeSchema", () => {
 	const basicFieldNode = builder.fieldNode("field", builder.optional(Any));
 	// TODO: once schema kinds are separated, test object with EmptyKey.
 
-	const recursiveReference = () => recursiveObject;
-	builder.fixRecursiveReference(recursiveReference);
-	const recursiveObject = builder.object("recursiveObject", {
-		foo: builder.optional([recursiveReference]),
+	const recursiveObject = builder.objectRecursive("recursiveObject", {
+		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveObject]),
 	});
 
 	it("schema is", () => {

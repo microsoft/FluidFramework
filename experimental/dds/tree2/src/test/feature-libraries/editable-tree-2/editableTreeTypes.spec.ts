@@ -116,13 +116,12 @@ describe("editableTreeTypes", () => {
 		sequence: SchemaBuilder.sequence(leaf.number),
 	});
 	type Mixed = TypedNode<typeof mixedStruct>;
-	const recursiveReference = () => recursiveStruct;
-	builder.fixRecursiveReference(recursiveReference);
-	const recursiveStruct = builder.object("recursiveStruct", {
+
+	const recursiveStruct = builder.objectRecursive("recursiveStruct", {
 		/**
 		 * Test Recursive Field.
 		 */
-		foo: TreeFieldSchema.create(FieldKinds.optional, [recursiveReference]),
+		foo: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveStruct]),
 		/**
 		 * Data field.
 		 */

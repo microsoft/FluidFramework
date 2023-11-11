@@ -80,10 +80,8 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	});
 
 	// Recursive case:
-	const recursiveReference = () => boxSchema;
-	builder.fixRecursiveReference(recursiveReference);
-	const boxSchema = builder.object("box", {
-		children: TreeFieldSchema.create(sequence, [ballSchema, recursiveReference]),
+	const boxSchema = builder.objectRecursive("box", {
+		children: TreeFieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
 	});
 
 	{
@@ -264,10 +262,8 @@ import { leaf, SchemaBuilder } from "../../../domains";
 	// Test simple recursive cases:
 	{
 		const builder2 = new SchemaBuilder({ scope: "SchemaAwareRecursiveTest" });
-		const recursiveRecReference = () => rec;
-		builder.fixRecursiveReference(recursiveRecReference);
-		const rec = builder2.object("rec", {
-			x: TreeFieldSchema.create(optional, [recursiveRecReference]),
+		const rec = builder2.objectRecursive("rec", {
+			x: TreeFieldSchema.createUnsafe(optional, [() => rec]),
 		});
 
 		type RecObjectSchema = typeof rec;

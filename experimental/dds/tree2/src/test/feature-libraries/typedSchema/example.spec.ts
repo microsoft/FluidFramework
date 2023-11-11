@@ -15,10 +15,8 @@ const ballSchema = builder.object("Ball", {
 });
 
 // Declare an recursive aggregate type via object fields.
-const recursiveReference = () => diagramSchema;
-builder.fixRecursiveReference(recursiveReference);
-const diagramSchema = builder.object("Diagram", {
-	children: TreeFieldSchema.create(FieldKinds.sequence, [recursiveReference, ballSchema]),
+const diagramSchema = builder.objectRecursive("Diagram", {
+	children: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [() => diagramSchema, ballSchema]),
 });
 
 const rootField = builder.optional(diagramSchema);
