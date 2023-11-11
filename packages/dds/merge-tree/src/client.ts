@@ -88,7 +88,7 @@ export interface IIntegerRange {
  * @internal
  */
 export interface IClientEvents {
-	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void);
+	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
 	(
 		event: "delta",
 		listener: (
@@ -96,7 +96,7 @@ export interface IClientEvents {
 			deltaArgs: IMergeTreeDeltaCallbackArgs,
 			target: IEventThisPlaceHolder,
 		) => void,
-	);
+	): void;
 	(
 		event: "maintenance",
 		listener: (
@@ -104,7 +104,7 @@ export interface IClientEvents {
 			deltaArgs: IMergeTreeDeltaOpArgs | undefined,
 			target: IEventThisPlaceHolder,
 		) => void,
-	);
+	): void;
 }
 
 /**

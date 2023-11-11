@@ -284,7 +284,7 @@ export interface IAttributionCollection<T> {
     // @internal (undocumented)
     splitAt(pos: number): IAttributionCollection<T>;
     // @internal
-    update(name: string | undefined, channel: IAttributionCollection<T>): any;
+    update(name: string | undefined, channel: IAttributionCollection<T>): void;
 }
 
 // @internal @sealed (undocumented)
@@ -733,11 +733,11 @@ export type MergeTreeMaintenanceType = (typeof MergeTreeMaintenanceType)[keyof t
 // @alpha (undocumented)
 export interface MergeTreeRevertibleDriver {
     // (undocumented)
-    annotateRange(start: number, end: number, props: PropertySet): any;
+    annotateRange(start: number, end: number, props: PropertySet): void;
     // (undocumented)
-    insertFromSpec(pos: number, spec: IJSONSegment): any;
+    insertFromSpec(pos: number, spec: IJSONSegment): void;
     // (undocumented)
-    removeRange(start: number, end: number): any;
+    removeRange(start: number, end: number): void;
 }
 
 // @public (undocumented)

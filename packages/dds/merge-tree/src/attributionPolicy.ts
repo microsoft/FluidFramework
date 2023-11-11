@@ -46,8 +46,10 @@ function createAttributionPolicyFromCallbacks({
 				0x557 /* cannot attach to multiple clients at once */,
 			);
 
-			const deltaSubscribed = (opArgs, deltaArgs) => delta(opArgs, deltaArgs, client);
-			const maintenanceSubscribed = (args, opArgs) => maintenance(args, opArgs, client);
+			const deltaSubscribed: AttributionCallbacks["delta"] = (opArgs, deltaArgs) =>
+				delta(opArgs, deltaArgs, client);
+			const maintenanceSubscribed: AttributionCallbacks["maintenance"] = (args, opArgs) =>
+				maintenance(args, opArgs, client);
 
 			client.on("delta", deltaSubscribed);
 			client.on("maintenance", maintenanceSubscribed);
