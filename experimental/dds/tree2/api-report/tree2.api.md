@@ -529,7 +529,7 @@ export class FieldNodeSchema<Name extends string = string, Specification extends
     // (undocumented)
     readonly mapFields: undefined;
     // (undocumented)
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
     // (undocumented)
     protected _typeCheck2?: MakeNominal;
 }
@@ -999,7 +999,7 @@ export class LeafNodeSchema<const out Name extends string = string, const out Sp
     // (undocumented)
     readonly mapFields: undefined;
     // (undocumented)
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
     // (undocumented)
     protected _typeCheck2?: MakeNominal;
 }
@@ -1049,7 +1049,7 @@ export class MapNodeSchema<const out Name extends string = string, const out Spe
     // (undocumented)
     get mapFields(): MapFieldSchema;
     // (undocumented)
-    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+    readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
     // (undocumented)
     protected _typeCheck2?: MakeNominal;
 }
@@ -1524,6 +1524,15 @@ export interface SchemaEvents {
 export function schemaIsFieldNode(schema: TreeNodeSchema): schema is FieldNodeSchema;
 
 // @alpha
+export function schemaIsLeaf(schema: TreeNodeSchema): schema is LeafNodeSchema;
+
+// @alpha
+export function schemaIsMap(schema: TreeNodeSchema): schema is MapNodeSchema;
+
+// @alpha
+export function schemaIsObjectNode(schema: TreeNodeSchema): schema is ObjectNodeSchema;
+
+// @alpha
 export interface SchemaLibrary extends SchemaCollection {
     readonly libraries: ReadonlySet<SchemaLibraryData>;
 }
@@ -1785,7 +1794,7 @@ export interface TreeField extends TreeEntity<TreeFieldSchema> {
 }
 
 // @alpha @sealed
-export class TreeFieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes> {
+export class TreeFieldSchema<out TKind extends FieldKind = FieldKind, const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes> implements TreeFieldStoredSchema {
     // (undocumented)
     readonly allowedTypes: TTypes;
     get allowedTypeSet(): AllowedTypeSet;
@@ -1858,7 +1867,7 @@ export abstract class TreeNodeSchemaBase<const out Name extends string = string,
     // (undocumented)
     readonly name: TreeNodeSchemaIdentifier<Name>;
     // (undocumented)
-    abstract readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+    abstract readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
     // (undocumented)
     protected _typeCheck?: MakeNominal;
 }

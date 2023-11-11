@@ -76,11 +76,13 @@ export abstract class TreeNodeSchemaBase<
 		public readonly name: TreeNodeSchemaIdentifier<Name>,
 		public readonly info: Specification,
 	) {}
-	public abstract readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+	public abstract getFieldSchema(field: FieldKey): TreeFieldSchema;
+
+	// These members implement TreeNodeStoredSchema, allowing view schema to be used as stored schema.
+
+	public abstract readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
 	public abstract readonly mapFields?: TreeFieldStoredSchema | undefined;
 	public abstract readonly leafValue?: ValueSchema | undefined;
-
-	public abstract getFieldSchema(field: FieldKey): TreeFieldSchema;
 }
 
 // TODO: TreeNodeSchema should be a union of the more specific schema type below, rather than containing all the info for all of them.
@@ -94,8 +96,7 @@ export class MapNodeSchema<
 	const out Name extends string = string,
 	const out Specification extends Unenforced<MapFieldSchema> = MapFieldSchema,
 > extends TreeNodeSchemaBase<Name, Specification> {
-	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema> =
-		new Map();
+	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema> = new Map();
 	public override get mapFields(): MapFieldSchema {
 		return this.info as MapFieldSchema;
 	}
@@ -122,8 +123,7 @@ export class LeafNodeSchema<
 	const out Name extends string = string,
 	const out Specification extends Unenforced<ValueSchema> = ValueSchema,
 > extends TreeNodeSchemaBase<Name, Specification> {
-	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema> =
-		new Map();
+	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema> = new Map();
 	public override readonly mapFields = undefined;
 	public override get leafValue(): ValueSchema {
 		return this.info as ValueSchema;
@@ -203,7 +203,7 @@ export class FieldNodeSchema<
 	Name extends string = string,
 	Specification extends Unenforced<TreeFieldSchema> = TreeFieldSchema,
 > extends TreeNodeSchemaBase<Name, Specification> {
-	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>;
+	public override readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldSchema>;
 	public override readonly mapFields = undefined;
 	public override readonly leafValue = undefined;
 
@@ -331,7 +331,8 @@ export type MapFieldSchema = TreeFieldSchema<
 export class TreeFieldSchema<
 	out TKind extends FieldKind = FieldKind,
 	const out TTypes extends Unenforced<AllowedTypes> = AllowedTypes,
-> {
+> implements TreeFieldStoredSchema
+{
 	/**
 	 * Schema for a field which must always be empty.
 	 */
@@ -557,10 +558,18 @@ export interface SchemaCollection extends StoredSchemaCollection {
 
 // These schema type narrowing functions are preferred over `instanceof` due to being easier to migrate to class based schema.
 
+/**
+ * Checks if a {@link TreeNodeSchema} is a {@link MapNodeSchema}.
+ * @alpha
+ */
 export function schemaIsMap(schema: TreeNodeSchema): schema is MapNodeSchema {
 	return schema instanceof MapNodeSchema;
 }
 
+/**
+ * Checks if a {@link TreeNodeSchema} is a {@link LeafNodeSchema}.
+ * @alpha
+ */
 export function schemaIsLeaf(schema: TreeNodeSchema): schema is LeafNodeSchema {
 	return schema instanceof LeafNodeSchema;
 }
@@ -573,6 +582,10 @@ export function schemaIsFieldNode(schema: TreeNodeSchema): schema is FieldNodeSc
 	return schema instanceof FieldNodeSchema;
 }
 
+/**
+ * Checks if a {@link TreeNodeSchema} is a {@link ObjectNodeSchema}.
+ * @alpha
+ */
 export function schemaIsObjectNode(schema: TreeNodeSchema): schema is ObjectNodeSchema {
 	return schema instanceof ObjectNodeSchema;
 }
