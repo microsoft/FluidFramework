@@ -19,7 +19,7 @@ import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-private/tes
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import/no-unresolved
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
 import {
 	driverSupportsBlobs,

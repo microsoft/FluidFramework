@@ -40,7 +40,7 @@ import {
 import {
 	defaultMaxAttemptsForSubmitFailures,
 	ISummarizeEventProps,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import/no-unresolved
 } from "@fluidframework/container-runtime/dist/summary/index.js";
 
 /**

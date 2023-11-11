@@ -16,7 +16,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeNoCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import/no-unresolved
 import { BlobManager } from "@fluidframework/container-runtime/dist/blobManager.js";
 import {
 	driverSupportsBlobs,

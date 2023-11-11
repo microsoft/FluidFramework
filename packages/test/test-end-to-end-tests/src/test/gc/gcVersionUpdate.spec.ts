@@ -28,7 +28,7 @@ import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	IGCMetadata,
 	IGarbageCollector,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import/no-unresolved
 } from "@fluidframework/container-runtime/dist/gc/index.js";
 
 // IContainerRuntime type that exposes garbage collector which is a private property.
