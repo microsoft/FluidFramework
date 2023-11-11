@@ -646,7 +646,9 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
-			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree1.checkout.events);
+			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+				tree1.checkout.events,
+			);
 			provider.processMessages();
 			const tree2 = provider.trees[1].schematizeInternal(emptyStringSequenceConfig);
 			provider.processMessages();
@@ -679,12 +681,12 @@ describe("SharedTree", () => {
 			const value2 = "B";
 			const value3 = "C";
 			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0].schematize(emptyStringSequenceConfig);
+			const tree1 = provider.trees[0].schematizeInternal(emptyStringSequenceConfig);
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 				tree1.checkout.events,
 			);
 			provider.processMessages();
-			const tree2 = provider.trees[1].schematize(emptyStringSequenceConfig);
+			const tree2 = provider.trees[1].schematizeInternal(emptyStringSequenceConfig);
 			provider.processMessages();
 
 			// Insert node
