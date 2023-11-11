@@ -18,7 +18,7 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	DefaultChangeFamily,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
 import { noopValidator } from "../../codec";
@@ -564,7 +564,7 @@ describe("Branches", () => {
 
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
-		const cursor = singleTextCursor({ type: brand("TestValue"), value: changeValue });
+		const cursor = cursorForJsonableTreeNode({ type: brand("TestValue"), value: changeValue });
 		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
 		return branch.getHead().revision;
 	}
