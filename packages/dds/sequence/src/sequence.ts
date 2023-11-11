@@ -54,7 +54,7 @@ import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
 import { DefaultMap, IMapOperation } from "./defaultMap";
 import { IMapMessageLocalMetadata, IValueChanged } from "./defaultMapInterfaces";
-import { SequenceInterval } from "./intervals";
+import { SequenceInterval, IntervalOpType } from "./intervals";
 import {
 	IIntervalCollection,
 	IntervalCollection,
@@ -713,8 +713,23 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
-	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(parseHandles(content, this.serializer));
+	protected applyStashedOp(content: any): SegmentGroup | SegmentGroup[] | undefined {
+		const parsedContent: IMergeTreeOp = parseHandles(content, this.serializer);
+		switch (content.type) {
+			case IntervalOpType.ADD:
+				break;
+			case IntervalOpType.DELETE:
+				break;
+			case IntervalOpType.CHANGE:
+				break;
+			case IntervalOpType.PROPERTY_CHANGED:
+				break;
+			case IntervalOpType.POSITION_REMOVE:
+				break;
+			default:
+				this.client.applyStashedOp(parsedContent);
+		}
+		return undefined;
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {

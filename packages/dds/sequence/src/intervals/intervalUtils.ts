@@ -83,6 +83,45 @@ export const IntervalOpType = {
 } as const;
 
 /**
+ * Values are used in persisted formats (ops) and revertibles.
+ * @alpha
+ */
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
+
+export interface IIntervalOp {
+	type: IntervalOpType;
+}
+
+export interface IIntervalAddMsg extends IIntervalOp {
+	type: typeof IntervalOpType.ADD;
+	interval: { start: SequencePlace; end: SequencePlace; props?: PropertySet };
+}
+
+export interface IIntervalRemoveMsg extends IIntervalOp {
+	type: typeof IntervalOpType.DELETE;
+	id: string;
+}
+
+export interface IIntervalChangeMsg extends IIntervalOp {
+	type: typeof IntervalOpType.CHANGE;
+	id: string;
+	start: SequencePlace;
+	end: SequencePlace;
+}
+
+export interface IIntervalChangePropertiesMsg extends IIntervalOp {
+	type: typeof IntervalOpType.PROPERTY_CHANGED;
+	id: string;
+	props: PropertySet;
+}
+
+export interface IIntervalPositionRemoveMsg extends IIntervalOp {
+	type: typeof IntervalOpType.POSITION_REMOVE;
+	start: number;
+	end: number;
+}
+
+/**
  * @public
  */
 export enum IntervalType {

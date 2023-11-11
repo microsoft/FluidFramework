@@ -43,6 +43,7 @@ import { PropertySet } from '@fluidframework/merge-tree';
 import { RangeStackMap } from '@fluidframework/merge-tree';
 import { ReferencePosition } from '@fluidframework/merge-tree';
 import { ReferenceType } from '@fluidframework/merge-tree';
+import { SegmentGroup } from '@fluidframework/merge-tree';
 import { Serializable } from '@fluidframework/datastore-definitions';
 import { SharedObject } from '@fluidframework/shared-object-base';
 import { SlidingPreference } from '@fluidframework/merge-tree';
@@ -263,6 +264,9 @@ export const IntervalOpType: {
     readonly PROPERTY_CHANGED: "propertyChanged";
     readonly POSITION_REMOVE: "positionRemove";
 };
+
+// @alpha
+export type IntervalOpType = (typeof IntervalOpType)[keyof typeof IntervalOpType];
 
 // @alpha
 export type IntervalRevertible = {
@@ -543,7 +547,7 @@ export abstract class SharedSegmentSequence<T extends ISegment> extends SharedOb
     constructor(dataStoreRuntime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, segmentFromSpec: (spec: IJSONSegment) => ISegment);
     annotateRange(start: number, end: number, props: PropertySet, combiningOp?: ICombiningOp): void;
     // (undocumented)
-    protected applyStashedOp(content: any): unknown;
+    protected applyStashedOp(content: any): SegmentGroup | SegmentGroup[] | undefined;
     // (undocumented)
     protected client: Client;
     createLocalReferencePosition(segment: T, offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
