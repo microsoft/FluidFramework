@@ -495,7 +495,9 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("revive ○ delete", () => {
+		// Revive ABCDE
 		const revive = Change.revive(0, 5, { revision: tag1, localId: brand(0) });
+		// Delete _B_DEF
 		const deletion = [
 			{ count: 1 },
 			Mark.delete(1, brand(0)),
@@ -512,7 +514,7 @@ describe("SequenceField - Compose", () => {
 			Mark.revive(1, { revision: tag1, localId: brand(2) }),
 			Mark.transient(
 				Mark.revive(2, { revision: tag1, localId: brand(3) }),
-				Mark.delete(1, brand(1), { revision: tag2 }),
+				Mark.delete(2, brand(1), { revision: tag2 }),
 			),
 			Mark.delete(1, brand(3), { revision: tag2 }),
 		];

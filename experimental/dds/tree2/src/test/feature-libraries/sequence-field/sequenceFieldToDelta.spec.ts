@@ -435,7 +435,7 @@ describe("SequenceField - toDelta", () => {
 		const move = [
 			Mark.moveIn(1, brand(0)),
 			{ count: 1 },
-			Mark.onEmptyCell(cellId, Mark.moveOut(1, brand(0))),
+			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(0))),
 		];
 
 		const actual = toDelta(move);
@@ -446,19 +446,37 @@ describe("SequenceField - toDelta", () => {
 		assertFieldChangesEqual(actual, expected);
 	});
 
-	describe("Muted changes", () => {
+	describe("Idempotent changes", () => {
 		it("delete", () => {
-			const deletion = [Mark.onEmptyCell(cellId, Mark.delete(2, brand(0)))];
-			const actual = toDelta(deletion);
-			assertFieldChangesEqual(actual, {});
+			const deletion = [Mark.transient(Mark.revive(1, cellId), Mark.delete(1, brand(0)))];
+			const actual = toDelta(deletion, tag);
+			const expected: Delta.FieldChanges = {
+				rename: [
+					{
+						count: 1,
+						oldId: deltaNodeId,
+						newId: { major: tag, minor: 0 },
+					},
+				],
+			};
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("modify and delete", () => {
 			const deletion = [
-				Mark.onEmptyCell(cellId, Mark.delete(2, brand(0), { changes: childChange1 })),
+				Mark.transient(Mark.revive(1, cellId), Mark.delete(1, brand(0)), {
+					changes: childChange1,
+				}),
 			];
 			const actual = toDelta(deletion, tag);
 			const expected: Delta.FieldChanges = {
+				rename: [
+					{
+						count: 1,
+						oldId: deltaNodeId,
+						newId: { major: tag, minor: 0 },
+					},
+				],
 				global: [
 					{
 						id: deltaNodeId,
