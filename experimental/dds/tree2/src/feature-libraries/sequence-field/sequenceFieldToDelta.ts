@@ -118,20 +118,16 @@ export function sequenceFieldToDelta<TNodeChange>(
 				case "ReturnFrom": {
 					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
 					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
-					if (mark.cellId === undefined) {
-						deltaMark.detach = detachId;
-						local.push(deltaMark);
-					} else {
-						// TODO: relocate content to `detachId` field
-					}
+					assert(
+						mark.cellId === undefined,
+						"Move sources must always target populated cells",
+					);
+					deltaMark.detach = detachId;
+					local.push(deltaMark);
 					break;
 				}
-				case "Pin":
 				case "Insert": {
-					assert(
-						mark.cellId !== undefined,
-						"Active Insert and Pin marks must have CellId",
-					);
+					assert(mark.cellId !== undefined, "Active Insert marks must have a CellId");
 					const buildId = nodeIdFromChangeAtom(mark.cellId);
 					deltaMark.attach = buildId;
 					if (deltaMark.fields) {

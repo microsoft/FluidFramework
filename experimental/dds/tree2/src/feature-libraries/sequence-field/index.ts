@@ -27,7 +27,6 @@ export {
 	HasLineage,
 	IdRange,
 	CellMark,
-	Pin,
 	TransientEffect,
 } from "./format";
 export {

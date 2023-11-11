@@ -34,6 +34,7 @@ import {
 	getEndpoint,
 	splitMark,
 	isAttach,
+	extractMarkEffect,
 } from "./utils";
 import {
 	Changeset,
@@ -345,7 +346,7 @@ class RebaseQueue<T> {
 function fuseMarks<T>(newMark: Mark<T>, movedMark: Mark<T>): Mark<T> {
 	if (isMoveDestination(newMark) && movedMark.type === "ReturnFrom") {
 		const fusedMark: Mark<T> = {
-			type: "Pin",
+			type: "Insert",
 			count: newMark.count,
 			id: newMark.id,
 		};
@@ -357,15 +358,6 @@ function fuseMarks<T>(newMark: Mark<T>, movedMark: Mark<T>): Mark<T> {
 		}
 		if (movedMark.changes !== undefined) {
 			fusedMark.changes = movedMark.changes;
-		}
-		if (movedMark.detachIdOverride !== undefined) {
-			fusedMark.detachIdOverride = movedMark.detachIdOverride;
-		}
-		if (movedMark.finalEndpoint !== undefined) {
-			fusedMark.destEndpoint = movedMark.finalEndpoint;
-		}
-		if (newMark.finalEndpoint !== undefined) {
-			fusedMark.sourceEndpoint = newMark.finalEndpoint;
 		}
 		return fusedMark;
 	}
@@ -409,15 +401,18 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
-	let rebasedMark = currMark;
+	let rebasedMark;
 	if (markEmptiesCells(baseMark)) {
 		assert(isDetach(baseMark), 0x70b /* Only detach marks should empty cells */);
+		assert(
+			!isNewAttach(currMark),
+			0x69d /* A new attach should not be rebased over its cell being emptied */,
+		);
 		const baseCellId = getDetachCellId(baseMark, baseRevision, metadata);
 
-		// TODO: Should also check if this is a transient move source
 		if (isMoveSource(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
-			const { remains, follows } = separateEffectsForMove(rebasedMark, baseCellId);
+			const { remains, follows } = separateEffectsForMove(currMark);
 			if (follows !== undefined) {
 				sendMarkToDest(
 					follows,
@@ -426,21 +421,32 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 					baseMark.count,
 				);
 			}
-			return remains ?? { count: baseMark.count, cellId: cloneCellId(baseCellId) };
+			rebasedMark = remains ?? { count: baseMark.count };
+		} else {
+			rebasedMark = isDetach(currMark)
+				? withNodeChange(
+						{
+							type: "Transient",
+							count: currMark.count,
+							attach: {
+								type: "Insert",
+								id: currMark.id,
+							},
+							detach: extractMarkEffect(currMark),
+						},
+						currMark.changes,
+				  )
+				: currMark;
 		}
-
-		assert(
-			!isNewAttach(rebasedMark),
-			0x69d /* A new attach should not be rebased over its cell being emptied */,
-		);
-
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {
-		rebasedMark = withCellId(rebasedMark, undefined);
+		rebasedMark = isTransientEffect(currMark)
+			? withNodeChange({ ...currMark.detach, count: currMark.count }, currMark.changes)
+			: withCellId(currMark, undefined);
 	} else if (isTransientEffect(baseMark)) {
 		assert(baseMark.cellId !== undefined, "Transient mark should target an empty cell");
 		rebasedMark = rebaseMarkIgnoreChild(
-			rebasedMark,
+			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
 			baseRevision,
 			metadata,
@@ -456,23 +462,17 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 			nodeExistenceState,
 		);
 	}
-	return rebasedMark;
+	return rebasedMark ?? currMark;
 }
 
 /**
  * @returns A pair of marks that represent the effects which should remain in place in the face of concurrent move,
  * and the effects that should be sent to the move destination.
  */
-function separateEffectsForMove<T>(
-	mark: Mark<T>,
-	baseCellId: CellId,
-): { remains?: Mark<T>; follows?: Mark<T> } {
+function separateEffectsForMove<T>(mark: Mark<T>): { remains?: Mark<T>; follows?: Mark<T> } {
 	assert(!isNewAttach(mark), "New attaches should not be rebased over moves");
 	const type = mark.type;
 	switch (type) {
-		case "Insert":
-		// TODO: once revives are done with returns/pins, this case should be invalid
-		// because insert will only be used for new attaches.
 		case "Delete":
 		case "MoveOut":
 		case "ReturnFrom":
@@ -483,28 +483,18 @@ function separateEffectsForMove<T>(
 			return { remains: mark };
 		case NoopMarkType:
 			return mark.changes !== undefined ? { follows: mark } : {};
-		case "Pin": {
+		case "Insert": {
 			const follows: CellMark<ReturnFrom, T> = {
 				type: "ReturnFrom",
 				count: mark.count,
 				id: mark.id,
 				changes: mark.changes,
 			};
-			if (mark.detachIdOverride !== undefined) {
-				follows.detachIdOverride = mark.detachIdOverride;
-			}
-			if (mark.destEndpoint !== undefined) {
-				follows.finalEndpoint = mark.destEndpoint;
-			}
 			const remains: CellMark<MoveIn, T> = {
 				type: "MoveIn",
 				count: mark.count,
 				id: mark.id,
-				cellId: cloneCellId(baseCellId),
 			};
-			if (mark.sourceEndpoint !== undefined) {
-				remains.finalEndpoint = mark.sourceEndpoint;
-			}
 			if (mark.revision !== undefined) {
 				follows.revision = mark.revision;
 				remains.revision = mark.revision;
@@ -811,10 +801,7 @@ function getAttachRevisionIndex(
 	}
 
 	if (markFillsCells(baseMark)) {
-		assert(
-			isAttach(baseMark) || baseMark.type === "Pin",
-			"Only attach marks or pin marks can fill cells",
-		);
+		assert(isAttach(baseMark), "Only attach marks can fill cells");
 		return getRevisionIndex(
 			metadata,
 			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),

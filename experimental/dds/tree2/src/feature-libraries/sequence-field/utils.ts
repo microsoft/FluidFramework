@@ -41,11 +41,10 @@ import {
 	CellMark,
 	TransientEffect,
 	MarkEffect,
-	Pin,
 	InverseAttachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
-import { isMoveDestination, isMoveMark, MoveEffectTable } from "./moveEffectTable";
+import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
 import {
 	EmptyInputCellMark,
 	DetachedCellMark,
@@ -283,7 +282,6 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 			return true;
 		case "MoveIn":
 		case "Insert":
-		case "Pin":
 			return false;
 		default:
 			unreachableCase(type);
@@ -300,9 +298,6 @@ export function isImpactful(mark: Mark<unknown>): boolean {
 		case NoopMarkType:
 		case "Placeholder":
 			return false;
-		case "Pin":
-			// A Pin revives the nodes if need be.
-			return mark.cellId !== undefined;
 		case "Delete":
 			// We currently don't rename the cell when a delete targets already deleted nodes.
 			// If we ever do then we'll have to consider the impact of the rename.
@@ -513,23 +508,14 @@ function tryMergeEffects(
 		}
 		case "Insert": {
 			const lhsInsert = lhs as Insert;
-			if (rhs.content === undefined) {
-				assert(lhsInsert.content === undefined, "Insert content type mismatch");
-				return lhsInsert;
-			} else {
-				assert(lhsInsert.content !== undefined, "Insert content type mismatch");
-				return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
-			}
-		}
-		case "Pin": {
-			const lhsPin = lhs as Pin;
-			if (
-				(lhsPin.id as number) + lhsCount === rhs.id &&
-				haveMergeableIdOverrides(lhsPin, lhsCount, rhs) &&
-				areMergeableChangeAtoms(lhsPin.sourceEndpoint, lhsCount, rhs.sourceEndpoint) &&
-				areMergeableChangeAtoms(lhsPin.destEndpoint, lhsCount, rhs.destEndpoint)
-			) {
-				return lhsPin;
+			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
+				if (rhs.content === undefined) {
+					assert(lhsInsert.content === undefined, "Insert content type mismatch");
+					return lhsInsert;
+				} else {
+					assert(lhsInsert.content !== undefined, "Insert content type mismatch");
+					return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
+				}
 			}
 			break;
 		}
@@ -927,6 +913,7 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			};
 			const effect2: TEffect = {
 				...effect,
+				id: (effect.id as number) + length,
 			};
 
 			if (effect.content !== undefined) {
@@ -979,26 +966,6 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 
 			if (return2.finalEndpoint !== undefined) {
 				return2.finalEndpoint = splitDetachEvent(return2.finalEndpoint, length);
-			}
-			return [effect, effect2];
-		}
-		case "Pin": {
-			const effect2 = {
-				...effect,
-				id: (effect.id as number) + length,
-			};
-
-			const return2 = effect2 as Pin;
-
-			if (return2.detachIdOverride !== undefined) {
-				return2.detachIdOverride = splitDetachEvent(return2.detachIdOverride, length);
-			}
-
-			if (return2.sourceEndpoint !== undefined) {
-				return2.sourceEndpoint = splitDetachEvent(return2.sourceEndpoint, length);
-			}
-			if (return2.destEndpoint !== undefined) {
-				return2.destEndpoint = splitDetachEvent(return2.destEndpoint, length);
 			}
 			return [effect, effect2];
 		}

@@ -24,7 +24,6 @@ function makeV0Codec<TNodeChange>(
 			case "Delete":
 			case "MoveOut":
 			case "ReturnFrom":
-			case "Pin":
 				return { ...(effect as JsonCompatibleReadOnly & object) };
 			case "Transient":
 				return {
@@ -48,7 +47,6 @@ function makeV0Codec<TNodeChange>(
 			case "Delete":
 			case "MoveOut":
 			case "ReturnFrom":
-			case "Pin":
 				return { ...effect };
 			case "Transient":
 				return {

@@ -43,7 +43,8 @@ const tag: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const fooField = brand<FieldKey>("foo");
-
+const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+const deltaNodeId: Delta.DetachedNodeId = { major: cellId.revision, minor: cellId.localId };
 const DUMMY_REVIVED_NODE_TYPE: TreeNodeSchemaIdentifier = brand("DummyRevivedNode");
 
 function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
@@ -430,9 +431,22 @@ describe("SequenceField - toDelta", () => {
 		});
 	});
 
-	describe("Muted changes", () => {
-		const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+	it("move removed node", () => {
+		const move = [
+			Mark.moveIn(1, brand(0)),
+			{ count: 1 },
+			Mark.onEmptyCell(cellId, Mark.moveOut(1, brand(0))),
+		];
 
+		const actual = toDelta(move);
+		const expected: Delta.FieldChanges = {
+			rename: [{ count: 1, oldId: deltaNodeId, newId: { minor: 0 } }],
+			local: [{ count: 1, attach: { minor: 0 } }],
+		};
+		assertFieldChangesEqual(actual, expected);
+	});
+
+	describe("Muted changes", () => {
 		it("delete", () => {
 			const deletion = [Mark.onEmptyCell(cellId, Mark.delete(2, brand(0)))];
 			const actual = toDelta(deletion);
@@ -447,7 +461,7 @@ describe("SequenceField - toDelta", () => {
 			const expected: Delta.FieldChanges = {
 				global: [
 					{
-						id: { major: cellId.revision, minor: cellId.localId },
+						id: deltaNodeId,
 						fields: childChange1Delta,
 					},
 				],
@@ -455,21 +469,10 @@ describe("SequenceField - toDelta", () => {
 			assertFieldChangesEqual(actual, expected);
 		});
 
-		it("move", () => {
-			const move = [
-				Mark.moveIn(1, brand(0)),
-				{ count: 1 },
-				Mark.onEmptyCell(cellId, Mark.moveOut(1, brand(0))),
-			];
-
-			const actual = toDelta(move);
-			assertFieldChangesEqual(actual, {});
-		});
-
 		it("redundant revive", () => {
 			const changeset = [
-				Mark.revive(1),
-				Mark.revive(1, undefined, { changes: childChange1 }),
+				Mark.pin(1, brand(0)),
+				Mark.pin(1, brand(1), { changes: childChange1 }),
 			];
 			const actual = toDelta(changeset, tag);
 			const expected: Delta.FieldChanges = {

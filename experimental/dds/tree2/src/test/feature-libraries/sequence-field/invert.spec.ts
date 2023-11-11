@@ -17,7 +17,6 @@ import { brand } from "../../../util";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { composeAnonChanges, invert as invertChange } from "./utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
-import { CellId } from "../../../feature-libraries/sequence-field";
 
 function invert(change: TestChangeset): TestChangeset {
 	deepFreeze(change);
@@ -76,11 +75,14 @@ describe("SequenceField - Invert", () => {
 	});
 
 	it("delete => revive", () => {
-		const input = composeAnonChanges([Change.modify(0, childChange1), Change.delete(0, 2)]);
-		const expected = composeAnonChanges([
-			Change.revive(0, 2, { revision: tag1, localId: brand(0) }),
-			Change.modify(0, inverseChildChange1),
-		]);
+		const input = [
+			Mark.delete(1, brand(0), { changes: childChange1 }),
+			Mark.delete(1, brand(1)),
+		];
+		const expected = [
+			Mark.revive(1, { revision: tag1, localId: brand(0) }, { changes: inverseChildChange1 }),
+			Mark.revive(1, { revision: tag1, localId: brand(1) }),
+		];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -96,7 +98,7 @@ describe("SequenceField - Invert", () => {
 			},
 		];
 
-		const expected = Change.revive(0, 2, cellId);
+		const expected = [Mark.revive(2, cellId, { id: brand(5) })];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});
@@ -171,7 +173,7 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("transient => transient", () => {
+	it("insert & delete => revive & delete", () => {
 		const transient = [
 			Mark.transient(Mark.insert(1, brand(1)), Mark.delete(1, brand(0)), {
 				changes: childChange1,
@@ -193,16 +195,20 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(inverse, expected);
 	});
 
-	it("Muted transient => delete", () => {
+	it("move-in & delete => revive & return-from", () => {
 		const transient = [
-			Mark.transient(Mark.revive(1, undefined), Mark.delete(1, brand(0)), {
+			Mark.transient(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(0)), {
 				changes: childChange1,
 			}),
 		];
 
 		const inverse = invert(transient);
 		const expected = [
-			Mark.revive(1, { revision: tag1, localId: brand(0) }, { changes: inverseChildChange1 }),
+			Mark.transient(
+				Mark.revive(1, { revision: tag1, localId: brand(0) }),
+				Mark.returnFrom(1, brand(1)),
+				{ changes: inverseChildChange1 },
+			),
 		];
 
 		assert.deepEqual(inverse, expected);
@@ -249,58 +255,6 @@ describe("SequenceField - Invert", () => {
 		];
 
 		assert.deepEqual(inverse, expected);
-	});
-
-	it("move removed nodes => return and delete", () => {
-		const input = [
-			Mark.onEmptyCell({ revision: tag2, localId: brand(0) }, Mark.moveOut(1, brand(0))),
-			Mark.modify(childChange1),
-			Mark.moveIn(1, brand(0)),
-			Mark.modify(childChange2),
-		];
-		const actual = invert(input);
-		const expected = [
-			Mark.transient(
-				Mark.returnTo(1, brand(0)),
-				Mark.delete(1, brand(0), {
-					detachIdOverride: { revision: tag2, localId: brand(0) },
-				}),
-				{
-					cellId: { revision: tag1, localId: brand(0) },
-				},
-			),
-			Mark.modify(inverseChildChange1),
-			Mark.returnFrom(1, brand(0)),
-			Mark.modify(inverseChildChange2),
-		];
-		assert.deepEqual(actual, expected);
-	});
-
-	it("return removed nodes => return and delete", () => {
-		const input = [
-			Mark.onEmptyCell({ revision: tag2, localId: brand(0) }, Mark.returnFrom(1, brand(0))),
-			Mark.modify(childChange1),
-			Mark.returnTo(1, brand(0), { revision: tag2, localId: brand(1) }),
-			Mark.modify(childChange2),
-		];
-		const actual = invert(input);
-		const expected = [
-			Mark.transient(
-				Mark.returnTo(1, brand(0)),
-				Mark.delete(1, brand(0), {
-					detachIdOverride: { revision: tag2, localId: brand(0) },
-				}),
-				{
-					cellId: { revision: tag1, localId: brand(0) },
-				},
-			),
-			Mark.modify(inverseChildChange1),
-			Mark.returnFrom(1, brand(0), {
-				detachIdOverride: { revision: tag2, localId: brand(1) },
-			}),
-			Mark.modify(inverseChildChange2),
-		];
-		assert.deepEqual(actual, expected);
 	});
 
 	it("Move chain => return chain", () => {

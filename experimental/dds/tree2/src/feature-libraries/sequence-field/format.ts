@@ -54,9 +54,6 @@ export const HasMoveId = Type.Object({ id: MoveId });
 
 export type NodeChangeType = NodeChangeset;
 
-// Boolean encodings can use this alternative to save space for frequently false values.
-const OptionalTrue = Type.Optional(Type.Literal(true));
-
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.
  * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
@@ -167,7 +164,7 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-export interface Insert extends HasRevisionTag {
+export interface Insert extends HasMoveId, HasRevisionTag {
 	type: "Insert";
 	/**
 	 * The content to insert. Only populated for new attaches.
@@ -176,6 +173,7 @@ export interface Insert extends HasRevisionTag {
 }
 export const Insert = Type.Composite(
 	[
+		HasMoveId,
 		HasRevisionTag,
 		Type.Object({
 			type: Type.Literal("Insert"),
@@ -263,36 +261,25 @@ export const ReturnFrom = Type.Composite(
 	noAdditionalProps,
 );
 
-/**
- * Represents a return whose source cells happen to coincide with its destination cells.
- * This is different from a NoopMark because this change could be rebased over a change which pulls the
- * nodes out the cells, in which case this change would have the effect of bringing the nodes back into the cells.
- *
- * Note that when the cells are empty, this mark as revival semantics.
- */
-export interface Pin extends HasMoveId, HasRevisionTag, InverseAttachFields {
-	type: "Pin";
-	/**
-	 * Used when this mark represents the beginning of a chain of moves within a changeset.
-	 * Contains the ID of the end mark of the chain.
-	 */
-	destEndpoint?: ChangeAtomId;
-	/**
-	 * Used when this mark represents the end of a chain of moves within a changeset.
-	 * Contains the ID of the start mark of the chain.
-	 */
-	sourceEndpoint?: ChangeAtomId;
-}
-export const Pin = Type.Composite(
-	[
-		HasMoveFields,
-		InverseAttachFields,
-		Type.Object({
-			type: Type.Literal("Pin"),
-		}),
-	],
-	noAdditionalProps,
-);
+// /**
+//  * Represents a return whose source cells happen to coincide with its destination cells.
+//  * This is different from a NoopMark because this change could be rebased over a change which pulls the
+//  * nodes out the cells, in which case this change would have the effect of bringing the nodes back into the cells.
+//  *
+//  * Note that when the cells are empty, this mark as revival semantics.
+//  */
+// export interface Pin extends HasMoveId, HasRevisionTag {
+// 	type: "Pin";
+// }
+// export const Pin = Type.Composite(
+// 	[
+// 		HasMoveFields,
+// 		Type.Object({
+// 			type: Type.Literal("Pin"),
+// 		}),
+// 	],
+// 	noAdditionalProps,
+// );
 
 export type MoveSource = MoveOut | ReturnFrom;
 export const MoveSource = Type.Union([MoveOut, ReturnFrom]);
@@ -324,7 +311,7 @@ export const TransientEffect = Type.Object({
 	detach: Detach,
 });
 
-export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect | Pin;
+export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect;
 export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;

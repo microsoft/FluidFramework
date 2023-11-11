@@ -302,86 +302,59 @@ function composeMarks<TNodeChange>(
 		}
 		return withNodeChange(baseMark, nodeChange);
 	} else if (areInputCellsEmpty(baseMark)) {
-		if (baseMark.type === "Pin") {
-			// The pin is subsumed by the new mark
-			if (
-				areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
-			) {
-				// The output and input cell IDs are the same, so this mark has no effect.
-				return withNodeChange(
-					{ count: baseMark.count, cellId: baseMark.cellId },
-					nodeChange,
-				);
-			}
-			return {
-				...withRevision(withNodeChange(newMark, nodeChange), newRev),
-				cellId: baseMark.cellId,
-			};
-		} else {
-			assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
-			assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
-			let localNodeChange = nodeChange;
+		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
+		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
+		let localNodeChange = nodeChange;
 
-			const attach = extractMarkEffect(baseMark);
-			const detach = extractMarkEffect(withRevision(newMark, newRev));
+		const attach = extractMarkEffect(baseMark);
+		const detach = extractMarkEffect(withRevision(newMark, newRev));
 
-			if (isMoveDestination(attach) && nodeChange !== undefined) {
-				setModifyAfter(
-					moveEffects,
-					getEndpoint(attach, undefined),
-					nodeChange,
-					composeChild,
-				);
+		if (isMoveDestination(attach) && nodeChange !== undefined) {
+			setModifyAfter(moveEffects, getEndpoint(attach, undefined), nodeChange, composeChild);
 
-				localNodeChange = undefined;
-			}
-
-			if (isMoveDestination(attach) && isMoveSource(detach)) {
-				const finalSource = getEndpoint(attach, undefined);
-				const finalDest = getEndpoint(detach, newRev);
-
-				setEndpoint(
-					moveEffects,
-					CrossFieldTarget.Source,
-					finalSource,
-					baseMark.count,
-					finalDest,
-				);
-
-				setEndpoint(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					finalDest,
-					baseMark.count,
-					finalSource,
-				);
-
-				// The `finalEndpoint` field of transient move effect pairs is not used,
-				// so we remove it as a normalization.
-				delete attach.finalEndpoint;
-				delete detach.finalEndpoint;
-			}
-
-			if (
-				areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
-			) {
-				// The output and input cell IDs are the same, so this mark has no effect.
-				return withNodeChange(
-					{ count: baseMark.count, cellId: baseMark.cellId },
-					nodeChange,
-				);
-			}
-			return withNodeChange(
-				{
-					type: "Transient",
-					cellId: baseMark.cellId,
-					count: baseMark.count,
-					attach,
-					detach,
-				},
-				localNodeChange,
-			);
+			localNodeChange = undefined;
 		}
+
+		if (isMoveDestination(attach) && isMoveSource(detach)) {
+			const finalSource = getEndpoint(attach, undefined);
+			const finalDest = getEndpoint(detach, newRev);
+
+			setEndpoint(
+				moveEffects,
+				CrossFieldTarget.Source,
+				finalSource,
+				baseMark.count,
+				finalDest,
+			);
+
+			setEndpoint(
+				moveEffects,
+				CrossFieldTarget.Destination,
+				finalDest,
+				baseMark.count,
+				finalSource,
+			);
+
+			// The `finalEndpoint` field of transient move effect pairs is not used,
+			// so we remove it as a normalization.
+			delete attach.finalEndpoint;
+			delete detach.finalEndpoint;
+		}
+
+		if (areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)) {
+			// The output and input cell IDs are the same, so this mark has no effect.
+			return withNodeChange({ count: baseMark.count, cellId: baseMark.cellId }, nodeChange);
+		}
+		return withNodeChange(
+			{
+				type: "Transient",
+				cellId: baseMark.cellId,
+				count: baseMark.count,
+				attach,
+				detach,
+			},
+			localNodeChange,
+		);
 	} else {
 		if (isMoveMark(baseMark) && isMoveMark(newMark)) {
 			// The marks must be inverses, since `newMark` is filling the cells which `baseMark` emptied.

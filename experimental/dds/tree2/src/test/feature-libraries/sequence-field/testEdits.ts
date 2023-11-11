@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils";
 import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import {
@@ -28,11 +29,10 @@ export const cases: {
 	modify_insert: TestChangeset;
 	delete: TestChangeset;
 	revive: TestChangeset;
+	pin: TestChangeset;
 	move: TestChangeset;
 	return: TestChangeset;
 	transient_insert: TestChangeset;
-	pin_live: TestChangeset;
-	pin_removed: TestChangeset;
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, 1),
@@ -43,14 +43,13 @@ export const cases: {
 	]),
 	delete: createDeleteChangeset(1, 3),
 	revive: createReviveChangeset(2, 2, { revision: tag, localId: brand(0) }),
+	pin: [createPinMark(4, brand(0))],
 	move: createMoveChangeset(1, 2, 4),
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
 	transient_insert: [
 		{ count: 1 },
 		createTransientMark(createInsertMark(2, brand(1)), createDeleteMark(2, brand(2))),
 	],
-	pin_live: [createPinMark(2, brand(0))],
-	pin_removed: [createPinMark(2, brand(0), { cellId: { revision: tag, localId: brand(0) } })],
 };
 
 function createInsertChangeset(
@@ -168,6 +167,7 @@ function createInsertMark<TChange = never>(
 		type: "Insert",
 		content,
 		count: content.length,
+		id: cellIdObject.localId,
 		cellId: cellIdObject,
 	};
 	if (cellIdObject.revision !== undefined) {
@@ -177,49 +177,40 @@ function createInsertMark<TChange = never>(
 }
 
 /**
+ * This overload creates a revive that targets empty cells.
+ * See `createPinMark` for a revive that targets populated cells.
  * @param count - The number of nodes to revive.
  * If a number is passed, that many dummy nodes will be generated.
  * @param cellId - The first cell to revive content into.
- * If undefined, the revive targets populated cells and is therefore muted.
+ * The mark id defaults to the local ID of this CellId.
  * @param overrides - Any additional properties to add to the mark.
  * Use this to give the mark a `RevisionTag`
  */
 function createReviveMark<TChange = never>(
 	count: number,
-	cellId?: SF.CellId,
+	cellId: SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
 ): SF.CellMark<SF.Insert, TChange> {
-	const mark: SF.CellMark<SF.Insert, TChange> = {
+	return {
 		type: "Insert",
 		count,
+		cellId,
+		id: cellId.localId,
+		...overrides,
 	};
-	if (cellId !== undefined) {
-		mark.cellId = cellId;
-	}
-	return { ...mark, ...overrides };
 }
 
-/**
- * @param count - The number of nodes to pin.
- * If a number is passed, that many dummy nodes will be generated.
- * @param overrides - Any additional properties to add to the mark.
- * Use this to give the mark a `RevisionTag`
- */
 function createPinMark<TChange = never>(
 	count: number,
-	markId: ChangesetLocalId | ChangeAtomId,
-	overrides?: Partial<SF.CellMark<SF.Pin, TChange>>,
-): SF.CellMark<SF.Pin, TChange> {
-	const atomId: ChangeAtomId = typeof markId === "object" ? markId : { localId: markId };
-	const mark: SF.CellMark<SF.Pin, TChange> = {
-		type: "Pin",
+	id: SF.MoveId,
+	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
+): SF.CellMark<SF.Insert, TChange> {
+	return {
+		type: "Insert",
 		count,
-		id: atomId.localId,
+		id,
+		...overrides,
 	};
-	if (atomId.revision !== undefined) {
-		mark.revision = atomId.revision;
-	}
-	return { ...mark, ...overrides };
 }
 
 /**
@@ -366,17 +357,21 @@ function createTransientMark<TChange>(
 	detach: SF.CellMark<SF.Detach, TChange>,
 	overrides?: Partial<SF.CellMark<SF.TransientEffect, TChange>>,
 ): SF.CellMark<SF.TransientEffect, TChange> {
+	assert(attach.count === detach.count, "Attach and detach must have the same count");
+	assert(attach.cellId !== undefined, "Transient attach should apply to an empty cell");
+	assert(detach.cellId === undefined, "Transient detach should apply to an populated cell");
+	assert(
+		attach.changes === undefined && detach.changes === undefined,
+		"Attach and detach must not carry changes",
+	);
 	const transient: SF.CellMark<SF.TransientEffect, TChange> = {
 		type: "Transient",
 		count: attach.count,
+		cellId: attach.cellId,
 		attach: SF.extractMarkEffect(attach),
 		detach: SF.extractMarkEffect(detach),
 		...overrides,
 	};
-
-	if (attach.cellId !== undefined) {
-		transient.cellId = attach.cellId;
-	}
 	return transient;
 }
 

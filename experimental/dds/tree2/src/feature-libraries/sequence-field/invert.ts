@@ -113,6 +113,7 @@ function invertMark<TNodeChange>(
 				const inverse = withNodeChange(
 					{
 						type: "Insert",
+						id: mark.id,
 						cellId: mark.detachIdOverride ?? {
 							revision: markRevision,
 							localId: mark.id,
@@ -125,7 +126,6 @@ function invertMark<TNodeChange>(
 			}
 			return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, mark.cellId)];
 		}
-		case "Pin":
 		case "Insert": {
 			assert(mark.cellId !== undefined, "Active inserts and pins should target empty cells");
 			const deleteMark: CellMark<Delete, TNodeChange> = {
@@ -134,7 +134,7 @@ function invertMark<TNodeChange>(
 				id: mark.cellId.localId,
 			};
 
-			if (mark.type === "Pin" || isReattach(mark)) {
+			if (isReattach(mark)) {
 				deleteMark.detachIdOverride = mark.cellId;
 			}
 

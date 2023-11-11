@@ -36,7 +36,7 @@ export function* relevantRemovedTrees<TChild>(
 function refersToRelevantRemovedTrees<TChild>(mark: Mark<TChild>): boolean {
 	if (mark.cellId !== undefined) {
 		const effect = isTransientEffect(mark) ? mark.attach : mark;
-		if ((isInsert(effect) && isReattachEffect(effect, mark.cellId)) || effect.type === "Pin") {
+		if (isInsert(effect) && isReattachEffect(effect, mark.cellId)) {
 			// This tree is being restored.
 			return true;
 		} else if (isDetach(mark)) {
