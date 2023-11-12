@@ -106,7 +106,8 @@ describe("OdspDocumentDeltaConnection tests", () => {
 
 	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
 		const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
-		getSocketCreationStub.returns(_response);
+		// TODO: Figure out why the typing doesn't line up here.
+		getSocketCreationStub.returns(_response as any);
 		try {
 			return await callback();
 		} finally {

@@ -1,11 +1,11 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../../../common/build/build-common/tsconfig.base.json",
+		"../../../../../common/build/build-common/tsconfig.test.json",
+	],
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../dist/test",
-		"declaration": false,
-		"declarationMap": false,
-		"skipLibCheck": true,
 		"noEmit": true,
 	},
 	"include": ["./**/*"],

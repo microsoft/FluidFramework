@@ -1,11 +1,13 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": [
+		"../../../common/build/build-common/tsconfig.base.json",
+		"../../../common/build/build-common/tsconfig.cjs.json",
+	],
+	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"types": ["node"],
-		"composite": true,
 	},
-	"include": ["src/**/*"],
 }
