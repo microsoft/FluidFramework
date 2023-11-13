@@ -17,6 +17,7 @@ import {
 	TreeStatus,
 	TypedNode,
 	boxedIterator,
+	onNextChange,
 } from "./editableTreeTypes";
 
 const nodeContent = Symbol();
@@ -106,6 +107,10 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements Objec
 		eventName: K,
 		listener: EditableTreeEvents[K],
 	): () => void {
+		return rawObjectNodeError();
+	}
+
+	public [onNextChange](): () => void {
 		return rawObjectNodeError();
 	}
 
