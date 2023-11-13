@@ -1,4 +1,0 @@
-{
-	"targets": [{ "extname": ".cjs", "module": "CommonJS", "moduleResolution": "Node10" }],
-	"projects": ["./tsconfig.json", "./src/test/tsconfig.json"]
-}

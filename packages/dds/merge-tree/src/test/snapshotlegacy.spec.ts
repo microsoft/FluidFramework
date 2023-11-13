@@ -15,7 +15,7 @@ import {
 } from "../attributionPolicy";
 import { TestSerializer } from "./testSerializer";
 import { createClientsAtInitialState } from "./testClientLogger";
-import { TestClient } from "./index";
+import { TestClient } from ".";
 
 describe("snapshot", () => {
 	it("header only", async () => {
