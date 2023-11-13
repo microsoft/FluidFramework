@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/core-utils";
 import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
 import {
 	attributesMatch,
-	messageStampMatchesAttributes as messageStampMatchesAttributes,
+	messageStampMatchesAttributes,
 } from "./utils.js";
 
 /**
