@@ -33,7 +33,7 @@ import {
 import { IChannelFactory, IChannelServices } from "@fluidframework/datastore-definitions";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
+import { MinimizationTransform } from "./minification";
 
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
@@ -1068,11 +1068,14 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 				throw error;
 			}
 			const operations = JSON.parse(file.toString()) as TOperation[];
+			/*
 			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
 
 			const minimized = await minimizer.minimize();
 
-			await saveOpsToFile(saveInfo.filepath, minimized);
+			await saveOpsToFile(saveInfo.filepath, minimized); */
+
+			await saveOpsToFile(saveInfo.filepath, operations);
 
 			throw error;
 		}
