@@ -11,6 +11,9 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
+	"types": "dist/index.d.ts",
 	"exports": {
 		".": {
 			"import": {
@@ -21,11 +24,14 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.cjs"
 			}
+		},
+		"./test": {
+			"require": {
+				"types": "./dist/test/index.d.ts",
+				"default": "./dist/test/index.cjs"
+			}
 		}
 	},
-	"main": "dist/index.cjs",
-	"module": "lib/index.mjs",
-	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
@@ -61,12 +67,12 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"dist/test/**/*.cjs"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.ts",
-			"dist/**/*.js"
+			"dist/**/*.cjs"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
