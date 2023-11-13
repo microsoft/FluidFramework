@@ -31,7 +31,7 @@ import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback";
 import { backwardExcursion, forwardExcursion, walkAllChildSegments } from "../mergeTreeNodeWalk";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions";
 import { MergeTreeRevertibleDriver } from "../revertibles";
-import { ReferencePosition } from "..";
+import { ReferencePosition } from "../index";
 import { TestSerializer } from "./testSerializer";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils";
 

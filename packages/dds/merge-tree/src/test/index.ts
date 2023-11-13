@@ -158,4 +158,4 @@ export {
 	TreeMaintenanceSequenceNumber,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
-} from "..";
+} from "../index";

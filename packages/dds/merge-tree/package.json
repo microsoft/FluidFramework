@@ -32,7 +32,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",

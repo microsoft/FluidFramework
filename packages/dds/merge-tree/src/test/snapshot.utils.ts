@@ -14,7 +14,7 @@ import { SnapshotV1 } from "../snapshotV1";
 import { IMergeTreeOptions } from "../mergeTree";
 import { createClientsAtInitialState } from "./testClientLogger";
 import { TestSerializer } from "./testSerializer";
-import { ISegment, PropertySet, TestClient } from ".";
+import { ISegment, PropertySet, TestClient } from "./index";
 
 // Reconstitutes a MergeTree client from a summary
 export async function loadSnapshot(summary: ISummaryTree, options?: IMergeTreeOptions) {
