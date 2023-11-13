@@ -25,6 +25,7 @@ import {
 import { IClient } from "@fluidframework/protocol-definitions";
 import { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces";
 import { TinyliciousAudience } from "./TinyliciousAudience";
+import { TinyliciousSignalStats } from "./TinyliciousSignalStats";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.
@@ -118,6 +119,8 @@ export class TinyliciousClient {
 	private getContainerServices(container: IContainer): TinyliciousContainerServices {
 		return {
 			audience: new TinyliciousAudience(container),
+			signalStats: new TinyliciousSignalStats(container),
+
 		};
 	}
 

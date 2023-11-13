@@ -9,6 +9,7 @@ import { IContainer } from "@fluidframework/container-definitions";
 // eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { Signaler } from "@fluid-experimental/data-objects";
+import { TinyliciousSignalStats } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
 import { MockAudience } from "./Audience";
@@ -16,12 +17,14 @@ import { MockAudience } from "./Audience";
 export interface ITrackerAppModel {
 	readonly focusTracker: FocusTracker;
 	readonly mouseTracker: MouseTracker;
+	readonly signalStats: TinyliciousSignalStats;
 }
 
 class TrackerAppModel implements ITrackerAppModel {
 	public constructor(
 		public readonly focusTracker: FocusTracker,
 		public readonly mouseTracker: MouseTracker,
+		public readonly signalStats: TinyliciousSignalStats,
 	) {}
 }
 
@@ -51,10 +54,12 @@ export class TrackerContainerRuntimeFactory extends ModelContainerRuntimeFactory
 
 		const audience = new MockAudience(container);
 
+		const signalStats = new TinyliciousSignalStats(container);
+
 		const focusTracker = new FocusTracker(container, audience, signaler);
 
 		const mouseTracker = new MouseTracker(audience, signaler);
 
-		return new TrackerAppModel(focusTracker, mouseTracker);
+		return new TrackerAppModel(focusTracker, mouseTracker, signalStats);
 	}
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-//import { Signaler } from "@fluid-experimental/data-objects";
+import { TinyliciousSignalStats } from "@fluidframework/tinylicious-client";
 import { FocusTracker } from "./FocusTracker";
 import { MouseTracker } from "./MouseTracker";
 
@@ -71,40 +71,40 @@ function getFocusPresencesString(
 }
 
 
-export function renderStats(div: HTMLDivElement) {
-	// const statsDiv = document.createElement("div");
-	// setInterval(() => {
-	// 	const stats = signaler.stats();
-	// 	statsDiv.innerHTML = stats !== undefined ? `
-  	// 		<div style="display: flex; flex-wrap: nowrap;">
-    // 		${stats.map(stat => {
-    //   			return `
-    //    			 <div style="border: 1px solid black; padding: 10px;">
-	// 			 	<p> Timespan: ${stat.timespan}</p>
-    //       			<p>From Client:</p>
-	// 				<ul style="list-style-type: none; margin: 0; padding: 0;">
-	// 					<li>Count: ${stat.fromClient.count}</li>
-	// 					<li>Size: ${stat.fromClient.size}</li>
-	// 					<li>Packet Count: ${stat.fromClient.packetCount}</li>
-	// 					<li>Packet Size: ${stat.fromClient.packetSize}</li>
-	// 				</ul>
-	// 				<p>To Client:</p>
-	// 				<ul style="list-style-type: none; margin: 0; padding: 0;">
-	// 					<li>Count: ${stat.toClient.count}</li>
-	// 					<li>Size: ${stat.toClient.size}</li>
-	// 					<li>Packet Count: ${stat.toClient.packetCount}</li>
-	// 					<li>Packet Size: ${stat.toClient.packetSize}</li>
-	// 				</ul>
-	// 			</div>
-    // 			`;
-    // 		}).join('')}
- 	// 	 </div>
-	// ` : "";
+export function renderStats(signalStats: TinyliciousSignalStats, div: HTMLDivElement) {
+	const statsDiv = document.createElement("div");
+	setInterval(() => {
+		const stats = signalStats.stats();
+		statsDiv.innerHTML = stats !== undefined ? `
+  			<div style="display: flex; flex-wrap: nowrap;">
+    		${stats.map(stat => {
+      			return `
+       			 <div style="border: 1px solid black; padding: 10px;">
+				 	<p> Timespan: ${stat.timespan}</p>
+          			<p>From Client:</p>
+					<ul style="list-style-type: none; margin: 0; padding: 0;">
+						<li>Count: ${stat.fromClient.count}</li>
+						<li>Size: ${stat.fromClient.size}</li>
+						<li>Packet Count: ${stat.fromClient.packetCount}</li>
+						<li>Packet Size: ${stat.fromClient.packetSize}</li>
+					</ul>
+					<p>To Client:</p>
+					<ul style="list-style-type: none; margin: 0; padding: 0;">
+						<li>Count: ${stat.toClient.count}</li>
+						<li>Size: ${stat.toClient.size}</li>
+						<li>Packet Count: ${stat.toClient.packetCount}</li>
+						<li>Packet Size: ${stat.toClient.packetSize}</li>
+					</ul>
+				</div>
+    			`;
+    		}).join('')}
+ 		 </div>
+	` : "";
 
-	// 	div.appendChild(statsDiv);
-	// 	console.log(stats);
+		div.appendChild(statsDiv);
+		console.log(stats);
 
-	// }, 1000);
+	}, 1000);
 };
 
 	

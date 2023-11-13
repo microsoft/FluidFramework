@@ -28,5 +28,6 @@ export {
 } from "./interfaces";
 export { TinyliciousAudience } from "./TinyliciousAudience";
 export { TinyliciousClient } from "./TinyliciousClient";
+export { TinyliciousSignalStats } from "./TinyliciousSignalStats";
 // eslint-disable-next-line import/no-default-export
 export default TinyliciousClient;
