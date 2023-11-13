@@ -39,11 +39,11 @@ A map node is a set of zero or more key-value pairs similar to a JavaScript Map 
 
 The schema for a map node cannot specify particular key names, nor can it specify a maximum or minimum number of key-value pairs.
 
-For information about creating the schema for a map node, see see [Map schema](#map-schema). For information about adding a map node to the the `SharedTree` and about reading and writing to a map node, see [Map node APIs](#map-node-apis).
+For information about creating the schema for a map node, see [Map schema](#map-schema). For information about adding a map node to the the `SharedTree` and about reading and writing to a map node, see [Map node APIs](#map-node-apis).
 
 #### List nodes
 
-A list node is an indexed sequence of values like a JavaScript array. There must be at least one child value. In principle, values can be any of the node types, but the schema that your code defines will specify what subset of those types can be the values of any given list item.
+A list node is an indexed sequence of zero or more values like a JavaScript array. In principle, values can be any of the node types, but the schema that your code defines will specify what subset of those types can be the values of any given list item.
 
 For information about creating the schema for a list node, see [List schema](#list-schema). or information about adding a list node to the the `SharedTree` and about reading and writing to a list node, see [List node APIs](#list-node-apis).
 
@@ -332,7 +332,7 @@ The total number of entries in the map node.
 
 ##### List node read APIs
 
-List nodes have all the same non-mutating read methods as the JavaScript [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) type. (For information about the differences between mutating and non-mutating methods, see [Copying methods and mutating methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#copying_methods_and_mutating_methods)). Note that methods which return an array, like `Array.map()`, return a JavaScript array, not a List, when when called on a list node.
+List nodes have all the same non-mutating read methods as the JavaScript [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array) type. (For information about the differences between mutating and non-mutating methods, see [Copying methods and mutating methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array#copying_methods_and_mutating_methods)). Note that methods which return an array, like `Array.map()`, return a JavaScript array, not a List, when called on a list node.
 
 ##### List node write APIs
 
@@ -358,7 +358,7 @@ Inserts the provided value(s) at the start of the list. This is sugar for `inser
 insertAtEnd(value: Iterable<T>) 
 ```
 
-Inserts the provided value(s) at the end of the list. This is syntactic sugar for `insertAt(Number.PositiveInfinity, …)`. 
+Inserts the provided value(s) at the end of the list. This is syntactic sugar for `insertAt(Infinity, …)`. 
 
 ###### Remove methods
 
