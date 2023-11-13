@@ -22,6 +22,15 @@ export function publicFunction() {}
 import { publicFunction } from "./someModule";
 `;
 
+const validCode2WithJSDoc = `
+/**
+ * @internal
+ */
+export function internalExceptionFunction() {}
+
+import { internalExceptionFunction } from "./foo";
+`;
+
 const invalidCodeWithJSDoc = `
 /**
  * @internal
@@ -39,7 +48,15 @@ ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 			options: [
 				{
 					tags: ["internal", "alpha"],
-					exceptions: ["foo", "bar"],
+				},
+			],
+		},
+		{
+			code: validCode2WithJSDoc,
+			options: [
+				{
+					tags: ["internal", "alpha"],
+					exceptions: ["./foo"],
 				},
 			],
 		},
@@ -51,7 +68,7 @@ ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 			options: [
 				{
 					tags: ["internal", "alpha"],
-					exceptions: ["foo", "bar"],
+					exceptions: ["./foo", "bar"],
 				},
 			],
 			errors: 1,

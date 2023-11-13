@@ -40,6 +40,7 @@ module.exports = {
 		const exceptions = new Set(options.exceptions || []);
 		return {
 			ImportDeclaration(node) {
+				console.log(node.source);
 				const isException = exceptions.has(node.source.value);
 				if (isException) {
 					return; // Skip further checks for this import
