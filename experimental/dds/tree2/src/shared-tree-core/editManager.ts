@@ -248,6 +248,7 @@ export class EditManager<
 				const { sequenceId: id } = metadata;
 				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
 				if (id === this.oldestRevertibleSequenceId) {
+					this.oldestRevertibleSequenceId = undefined;
 					this.oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId(branch);
 				}
 			}
