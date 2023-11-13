@@ -128,7 +128,7 @@ export async function createContainerAndRenderInElement(
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer = (await container.request({ url: "/" })).value;
+	const fluidContainer = (await container.getEntryPoint()) as FluidContainer;
 	if (createNewFlag) {
 		await initializeNewContainer(fluidContainer);
 		await attach?.();
