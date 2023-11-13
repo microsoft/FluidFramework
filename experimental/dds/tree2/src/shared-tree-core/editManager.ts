@@ -216,7 +216,7 @@ export class EditManager<
 	 * this should be tested and revisited once branches are supported
 	 */
 	private getOldestRevertibleSequenceId(): SequenceId | undefined {
-		if (this._oldestRevertibleSequenceId !== undefined) {
+		if (this._oldestRevertibleSequenceId === undefined) {
 			let oldest: SequenceId | undefined;
 			for (const revision of this.localBranch.revertibleCommits()) {
 				if (oldest === undefined) {
@@ -228,6 +228,7 @@ export class EditManager<
 					}
 				}
 			}
+			this._oldestRevertibleSequenceId = oldest;
 		}
 
 		return this._oldestRevertibleSequenceId;
