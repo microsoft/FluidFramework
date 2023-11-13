@@ -114,6 +114,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -154,6 +155,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
       uuid: 9.0.1
 
@@ -202,6 +204,7 @@ importers:
       jsrsasign: ^10.5.25
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -221,6 +224,7 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   azure/packages/external-controller:
@@ -265,6 +269,7 @@ importers:
       tinylicious: ^2.0.2
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
       webpack: ^5.82.0
@@ -314,6 +319,7 @@ importers:
       tinylicious: 2.0.2
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.0_wlox7xpecxj4rvkt6b6o7frtlu
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.88.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_ai6cu5vnuisb2akyozxbiaqwvu
