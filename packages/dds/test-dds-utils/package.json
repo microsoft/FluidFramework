@@ -25,7 +25,7 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"clean": "rimraf --glob dist \"*.tsbuildinfo\" \"*.build.log\" nyc",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -35,10 +35,10 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:base -- \"dist/test/**/*.spec.js\"",
+		"test:mocha": "npm run test:mocha:base -- \"dist/test/**/*.spec.cjs\"",
 		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc"
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json"
 	},
 	"c8": {
 		"all": true,
