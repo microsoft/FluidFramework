@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { type Value, type FieldKey, EmptyKey, TreeTypeSet } from "../../../core";
+import { type Value, type FieldKey, EmptyKey, TreeTypeSet, rootFieldKey } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { leaf } from "../../../domains/leafDomain";
 import {
@@ -58,7 +58,6 @@ export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScrip
 						typeSet,
 						node as ContextuallyTypedNodeData,
 					);
-
 					assert(
 						possibleTypes.length !== 0,
 						"data is incompatible with all types allowed by the schema",
@@ -82,8 +81,10 @@ export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScrip
 						const unfilteredKeys = Array.from(node.keys()) as FieldKey[];
 						// Map proxies may contain entries with explicit `undefined` values.
 						// We wish to omit these from our representation.
-						// Setting a key's value to `undefined` is equivalent to removing the entry.
-						const filteredKeys = unfilteredKeys.filter((key) => node.has(key));
+						// Setting a key's value to `undefined` is equivalent to omitting the entry.
+						const filteredKeys = unfilteredKeys.filter(
+							(key) => node.get(key) !== undefined,
+						);
 						return filteredKeys;
 					} else {
 						// Assume record-like object
@@ -92,10 +93,11 @@ export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScrip
 						const unfilteredKeys = Object.keys(node) as FieldKey[];
 						// Object proxies may contain entries with explicit `undefined` values.
 						// We wish to omit these from our representation.
-						// Setting a key's value to `undefined` is equivalent to removing the key/value pair.
-						const filteredKeys = unfilteredKeys.filter(
-							(key) => objectedNode[key] !== undefined,
-						);
+						// Setting a key's value to `undefined` is equivalent to omitting the key/value pair.
+						const filteredKeys = unfilteredKeys.filter((key) => {
+							const value = objectedNode[key];
+							return value !== undefined;
+						});
 						return filteredKeys;
 					}
 				default:
@@ -114,7 +116,8 @@ export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScrip
 			}
 
 			if (Array.isArray(node)) {
-				return key === EmptyKey ? node : [];
+				// TODO: verify this
+				return key === EmptyKey || key === rootFieldKey ? node : [];
 			}
 
 			if (node instanceof Map) {
