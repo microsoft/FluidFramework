@@ -14,7 +14,7 @@
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
-		"build": "concurrently npm:build:compile npm:lint && npm run build:docs npm:build:readme ",
+		"build": "npm:build:readme && concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build-and-test": "npm run build && npm run test",
 		"build:compile": "npm run tsc",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
