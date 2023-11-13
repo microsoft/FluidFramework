@@ -302,8 +302,9 @@ export function getLoaderApi(
 export function getContainerRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
+	adjustMajorPublic: boolean = false,
 ): typeof ContainerRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return ContainerRuntimeApi;
 	}
@@ -314,8 +315,9 @@ export function getContainerRuntimeApi(
 export function getDataRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
+	adjustMajorPublic: boolean = false,
 ): typeof DataRuntimeApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return DataRuntimeApi;
 	}
@@ -323,8 +325,12 @@ export function getDataRuntimeApi(
 	return dataRuntimeCache.get(version) ?? throwNotFound("DataRuntime", version);
 }
 
-export function getDriverApi(baseVersion: string, requested?: number | string): typeof DriverApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+export function getDriverApi(
+	baseVersion: string,
+	requested?: number | string,
+	adjustMajorPublic: boolean = false,
+): typeof DriverApi {
+	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
 
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {

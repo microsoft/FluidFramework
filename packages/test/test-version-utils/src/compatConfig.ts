@@ -207,7 +207,10 @@ export const genCrossVersionCompatConfig = (): CompatConfig[] => {
 					createWith: createVersion,
 					loadWith: loadVersion,
 					kind: CompatKind.CrossVersion,
-					compatVersion: pkgVersion,
+					// Note: `compatVersion` is used to determine what versions are needed to be installed.
+					// By setting it to `resolvedCreateVersion`, we ensure both versions will be installed, since
+					// resolvedCreateVersion will resolve to both the base and delta versions.
+					compatVersion: resolvedCreateVersion,
 				};
 			}),
 		)

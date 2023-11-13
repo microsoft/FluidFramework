@@ -174,13 +174,28 @@ export async function getCompatVersionedTestObjectProvider(
 		/** adjustMajorPublic */ true,
 	);
 
+	// TODO: Which should have adjustMajorPublic = true?
+	// If adjustMajorPublic is false/undefined, then the delta should be 0/undefined
 	const createContainerRuntimeApi = getContainerRuntimeApi(
 		createVersion.base,
-		createVersion.delta,
+		/** requested */ 0,
+		/** adjustMajorPublic */ false,
 	);
-	const loadContainerRuntimeApi = getContainerRuntimeApi(loadVersion.base, loadVersion.delta);
-	const dataRuntimeApi = getDataRuntimeApi(createVersion.base, createVersion.delta);
-	const dataRuntimeApiForLoading = getDataRuntimeApi(loadVersion.base, loadVersion.delta);
+	const loadContainerRuntimeApi = getContainerRuntimeApi(
+		loadVersion.base,
+		/** requested */ 0,
+		/** adjustMajorPublic */ false,
+	);
+	const dataRuntimeApi = getDataRuntimeApi(
+		createVersion.base,
+		/** requested */ 0,
+		/** adjustMajorPublic */ false,
+	);
+	const dataRuntimeApiForLoading = getDataRuntimeApi(
+		loadVersion.base,
+		/** requested */ 0,
+		/** adjustMajorPublic */ false,
+	);
 	if (driverConfig) {
 		driverConfig.version = createVersion.delta;
 	}
@@ -188,7 +203,7 @@ export async function getCompatVersionedTestObjectProvider(
 	const driverForCreating = await createFluidTestDriver(
 		driverConfig?.type ?? "local",
 		driverConfig?.config,
-		getDriverApi(createVersion.base, driverConfig?.version),
+		getDriverApi(createVersion.base, driverConfig?.version, /** adjustMajorPublic */ true),
 	);
 
 	const driverConfigForLoading = driverConfig;
@@ -199,7 +214,11 @@ export async function getCompatVersionedTestObjectProvider(
 	const driverForLoading = await createFluidTestDriver(
 		driverConfigForLoading?.type ?? "local",
 		driverConfigForLoading?.config,
-		getDriverApi(loadVersion.base, driverConfigForLoading?.version),
+		getDriverApi(
+			loadVersion.base,
+			driverConfigForLoading?.version,
+			/** adjustMajorPublic */ true,
+		),
 	);
 
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
