@@ -1099,7 +1099,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.equal(subDirDeletedEventData[1], "subDirName");
 	});
 
-	it.skip("Should rollback deleted subdirectory", () => {
+	it("Should rollback deleted subdirectory", () => {
 		let error: Error | undefined;
 		const subDir = sharedDir.createSubDirectory("subDirName");
 		subDir.on("undisposed", (value: IDirectory) => {
@@ -1153,7 +1153,7 @@ describeNoCompat("SharedDirectory orderSequentially", (getTestObjectProvider) =>
 		assert.equal(subDirCreatedEventData.length, 0);
 	});
 
-	it.skip("Should rollback deleted subdirectory with content", () => {
+	it("Should rollback deleted subdirectory with content", () => {
 		let error: Error | undefined;
 		const subdir = sharedDir.createSubDirectory("subDirName");
 		subdir.on("undisposed", (value: IDirectory) => {
