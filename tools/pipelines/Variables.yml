@@ -1,4 +1,4 @@
-- template: Variables.yml@self
+variables:
   - name: FORCE_COLOR
     value: 1
   - template: /tools/pipelines/templates/include-vars.yml@self
