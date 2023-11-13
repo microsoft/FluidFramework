@@ -20,7 +20,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IFluidRouter,
 	IRequest,
-	IRequestHeader,
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import {
@@ -268,33 +267,6 @@ export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | 
 	 */
 	getBlobIds(): string[];
 };
-
-/**
- * With an already-resolved container, we can request a component directly, without loading the container again
- * @param container - a resolved container
- * @returns component on the container
- * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
- */
-export async function requestResolvedObjectFromContainer(
-	container: IContainer,
-	headers?: IRequestHeader,
-): Promise<IResponse> {
-	ensureResolvedUrlDefined(container.resolvedUrl);
-	const parsedUrl = tryParseCompatibleResolvedUrl(container.resolvedUrl.url);
-
-	if (parsedUrl === undefined) {
-		throw new Error(`Invalid URL ${container.resolvedUrl.url}`);
-	}
-
-	// eslint-disable-next-line import/no-deprecated
-	const entryPoint: FluidObject<IFluidRouter> | undefined = await container.getEntryPoint?.();
-	const router = entryPoint?.IFluidRouter ?? container.IFluidRouter;
-
-	return router.request({
-		url: `${parsedUrl.path}${parsedUrl.query}`,
-		headers,
-	});
-}
 
 /**
  * Manages Fluid resource loading
