@@ -75,6 +75,7 @@ export {
 	rootFieldKey,
 	NodeData,
 	rootField,
+	aboveRootPlaceholder,
 } from "./types";
 export { DeltaVisitor, visitDelta } from "./visitDelta";
 export {

@@ -17,7 +17,6 @@ import {
 } from "../feature-libraries";
 import { IDisposable, disposeSymbol } from "../util";
 import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout";
-import { TypedTreeView } from "./typedTree";
 
 /**
  * An editable view of a (version control style) branch of a shared tree.
@@ -27,9 +26,12 @@ import { TypedTreeView } from "./typedTree";
  * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
  * @alpha
  */
-export interface ITreeView<in out TRoot extends TreeFieldSchema>
-	extends IDisposable,
-		TypedTreeView<TRoot> {
+export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
+	/**
+	 * The current root of the tree.
+	 */
+	readonly root: ProxyField<TRoot>;
+
 	/**
 	 * Context for controlling the EditableTree nodes produced from {@link ITreeView.editableTree}.
 	 *
@@ -69,17 +71,17 @@ export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends ITr
 }
 
 /**
- * Implementation of ITreeView.
+ * Implementation of ITreeView wrapping a ITreeCheckout.
  */
-export class TreeView<
+export class CheckoutView<
 	in out TRoot extends TreeFieldSchema,
-	out TBranch extends ITreeCheckout = ITreeCheckout,
+	out TCheckout extends ITreeCheckout = ITreeCheckout,
 > implements ITreeView<TRoot>
 {
 	public readonly context: Context;
 	public readonly editableTree: TypedField<TRoot>;
 	public constructor(
-		public readonly checkout: TBranch,
+		public readonly checkout: TCheckout,
 		public readonly schema: TreeSchema<TRoot>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly nodeKeyFieldKey: FieldKey,
@@ -104,8 +106,8 @@ export class TreeView<
 		return getProxyForField(this.editableTree);
 	}
 
-	public fork(): TreeView<TRoot, ITreeCheckoutFork> {
+	public fork(): CheckoutView<TRoot, ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
-		return new TreeView(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
+		return new CheckoutView(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
 	}
 }

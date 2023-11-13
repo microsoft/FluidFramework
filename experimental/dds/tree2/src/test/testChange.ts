@@ -19,7 +19,7 @@ import {
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
-import { singleTextCursor } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -175,7 +175,7 @@ function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldMap
 			[
 				brand("foo"),
 				deltaForSet(
-					singleTextCursor({
+					cursorForJsonableTreeNode({
 						type: brand("test"),
 						value: change.intentions.map(String).join("|"),
 					}),
