@@ -74,7 +74,7 @@ export interface ITraceEvent {
     readonly totalTimeElapsed: number;
 }
 
-// @internal (undocumented)
+// @internal
 const performance_2: IsomorphicPerformance;
 export { performance_2 as performance }
 
