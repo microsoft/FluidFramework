@@ -46,7 +46,7 @@ import {
 	SharedTreeObject,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
-import { cursorFromProxyTreeNode } from "./toEditTree";
+import { cursorFromProxyTreeNode } from "./proxyNodeCursor";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
