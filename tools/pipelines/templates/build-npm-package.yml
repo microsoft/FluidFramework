@@ -91,18 +91,7 @@ parameters:
     type: boolean
     default: false
 variables:
-  - name: FORCE_COLOR
-    value: 1
-  - template: /tools/pipelines/templates/include-vars.yml@self
-    parameters:
-      publishOverride: '${{ parameters.publishOverride }}'
-      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-      buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
-      nonScopedPackages: '${{ parameters.nonScopedPackages }}'
-  - name: absolutePathToTelemetryGenerator
-    value: $(Build.SourcesDirectory)/tools/telemetry-generator
-    readonly: true
-  - group: ado-feeds
+- template: Variables.yml@self
 resources:
   repositories:
     - repository: m365Pipelines

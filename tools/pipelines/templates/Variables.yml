@@ -1,0 +1,13 @@
+- template: Variables.yml@self
+  - name: FORCE_COLOR
+    value: 1
+  - template: /tools/pipelines/templates/include-vars.yml@self
+    parameters:
+      publishOverride: '${{ parameters.publishOverride }}'
+      releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
+      buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
+      nonScopedPackages: '${{ parameters.nonScopedPackages }}'
+  - name: absolutePathToTelemetryGenerator
+    value: $(Build.SourcesDirectory)/tools/telemetry-generator
+    readonly: true
+  - group: ado-feeds
