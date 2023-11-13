@@ -59,6 +59,17 @@
 			"RemovedTypeAliasDeclaration_IdCreationRangeWithStashedState": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"InterfaceDeclaration_IdCreationRange": {
+				"forwardCompat": false
+			},
+			"VariableDeclaration_initialClusterCapacity": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"RemovedVariableDeclaration_initialClusterCapacity": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}
