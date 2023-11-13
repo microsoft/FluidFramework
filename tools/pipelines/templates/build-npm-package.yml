@@ -90,8 +90,6 @@ parameters:
   - name: telemetry
     type: boolean
     default: false
-variables:
-- template: Variables.yml@self
 resources:
   repositories:
     - repository: m365Pipelines
