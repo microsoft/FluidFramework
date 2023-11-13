@@ -717,7 +717,7 @@ describe("SharedTree", () => {
 			// Undo node insertion on both trees
 			undoStack1.pop()?.revert();
 			assert.deepEqual(root1.asArray, ["A", "B", "C", "y", "D"]);
-xw
+
 			undoStack2.pop()?.revert();
 			assert.deepEqual(root2.asArray, ["A", "x", "B", "C", "D"]);
 
@@ -744,8 +744,43 @@ xw
 			unsubscribe2();
 		});
 
-		it("can concurrently restore and edit removed tree", () => {xw
-			
+		it("can concurrently restore and edit removed tree", () => {
+			const provider = new TestTreeProviderLite(2);
+			const content = {
+				schema: jsonSequenceRootSchema,
+				allowedSchemaModifications: AllowedUpdateType.None,
+				initialTree: [{ blah: { foo: 5 }, baz: [{}, { foo: 3 }] }],
+			} satisfies InitializeAndSchematizeConfiguration;
+			const tree1 = provider.trees[0].schematizeInternal(content);
+
+			const {
+				undoStack: undoStack1,
+				redoStack: redoStack1,
+				unsubscribe: unsubscribe1,
+			} = createTestUndoRedoStacks(tree1.checkout);
+
+			provider.processMessages();
+			const tree2 =
+				provider.trees[1].requireSchema(content.schema, () => fail("schema changed")) ??
+				fail("schematize failed");
+			const {
+				undoStack: undoStack2,
+				redoStack: redoStack2,
+				unsubscribe: unsubscribe2,
+			} = createTestUndoRedoStacks(tree2.checkout);
+
+			// Validate insertion
+			validateTreeContent(tree2.checkout, content);
+
+			const root1 = tree1.editableTree;
+			const root2 = tree2.editableTree;
+
+			// edit subtree
+			// process
+			// delete subtree
+			// undo on edit client
+			// process
+			// check the undo happened
 		});
 	});
 
