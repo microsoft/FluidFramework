@@ -6,7 +6,7 @@
 import { v4 as uuid } from "uuid";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { assert } from "@fluidframework/core-utils";
-// import { FlushMode } from "@fluidframework/runtime-definitions";
+import { FlushMode } from "@fluidframework/runtime-definitions";
 import {
 	IMockContainerRuntimePendingMessage,
 	MockContainerRuntime,
@@ -84,7 +84,6 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 			return super.submit(messageContent, localOpMetadata);
 		}
 
-		/*
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
 				this.addPendingMessage(messageContent, localOpMetadata, -1);
@@ -103,9 +102,9 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 			default:
 				throw new Error(`Unsupported FlushMode ${this.runtimeOptions.flushMode}`);
-		} */
+		}
 
-		this.addPendingMessage(messageContent, localOpMetadata, -1);
+		// this.addPendingMessage(messageContent, localOpMetadata, -1);
 		return -1;
 	}
 
