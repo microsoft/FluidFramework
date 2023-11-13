@@ -4,7 +4,7 @@
  */
 
 import * as SchemaAware from "../schema-aware";
-import { FieldKey, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
+import { FieldKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier, TreeValue } from "../../core";
 import { Assume, FlattenKeys, RestrictiveReadonlyRecord, _InlineTrick } from "../../util";
 import { LocalNodeKey, StableNodeKey } from "../node-key";
 import {
@@ -75,7 +75,7 @@ export interface TreeEntity<out TSchema = unknown> {
 }
 
 /**
- * Status of the tree that a particular node in {@link Tree} belongs to.
+ * Status of the tree that a particular node belongs to.
  * @alpha
  */
 export enum TreeStatus {
@@ -94,6 +94,11 @@ export enum TreeStatus {
 	 */
 	Deleted = 2,
 }
+
+/**
+ * {@inheritdoc TreeNode.[onNextChange]}
+ */
+export const onNextChange = Symbol("onNextChange");
 
 /**
  * Generic tree node API.
@@ -150,6 +155,23 @@ export interface TreeNode extends TreeEntity<TreeNodeSchema> {
 	readonly type: TreeNodeSchemaIdentifier;
 
 	[boxedIterator](): IterableIterator<TreeField>;
+
+	/**
+	 * Subscribe to the next change that affects this node's children.
+	 * @returns a function which will deregister the registered event.
+	 * It has no effect if the event was already deregistered.
+	 * @remarks
+	 * The given function will be run the next time that this node's direct children change.
+	 * It will only be run once, and thereafter automatically deregistered.
+	 * It does not run in response to changes beneath this node's direct children.
+	 * This event fires after the tree has been mutated but before {@link EditableTreeEvents.afterChange}.
+	 * Only one subscriber may register to this event at the same time.
+	 * @privateRemarks
+	 * This event allows the proxy-based API that is built on top of the editable tree to maintain invariants
+	 * around "hydrating" proxies that were created with schema-provided factory functions.
+	 * It is not a public API and thus the symbol for this property is not exported.
+	 */
+	[onNextChange](fn: (node: TreeNode) => void): () => void;
 }
 
 /**
@@ -348,9 +370,7 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
  * A {@link TreeNode} that wraps a single {@link TreeField} (which is placed under the {@link EmptyKey}).
  *
  * @remarks
- * FieldNodes unbox to their content, so in schema aware APIs which do unboxing, the FieldNode itself will be skipped over.
- * This layer of field nodes is then omitted when using schema-aware APIs which do unboxing.
- * Other than this unboxing, a FieldNode is identical to a struct node with a single field using the {@link EmptyKey}.
+ * A FieldNode is mostly identical to a struct node with a single field using the {@link EmptyKey}, but provides access to it via a field named "content".
  *
  * There are several use-cases where it makes sense to use a field node.
  * Here are a few:
@@ -377,10 +397,8 @@ export interface MapNode<in out TSchema extends MapSchema> extends TreeNode {
  * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
  *
  * @privateRemarks
- * TODO: The rule walking over the tree via enumerable own properties is lossless (see [ReadMe](./README.md) for details)
- * fails to be true for recursive field nodes with field kind optional, since the length of the chain of field nodes is lost.
- * THis could be fixed by tweaking the unboxing rules, or simply ban view schema that would have this problem (check for recursive optional field nodes).
- * Replacing the field node pattern with one where the FieldNode node exposes APIs from its field instead of unboxing could have the same issue, and same solutions.
+ * FieldNodes do not unbox to their content, so in schema aware APIs which do unboxing, the FieldNode will NOT be skipped over.
+ * This is a change from the old behavior to simplify unboxing and prevent cases where arbitrary deep chains of field nodes could unbox omitting information about the tree depth.
  * @alpha
  */
 export interface FieldNode<in out TSchema extends FieldNodeSchema> extends TreeNode {
@@ -513,21 +531,35 @@ export type AssignableFieldKinds = typeof FieldKinds.optional | typeof FieldKind
 
 /**
  * Strongly typed tree literals for inserting as the content of a field.
+ *
+ * If a cursor is provided, it must be in Fields mode.
  * @alpha
  */
-export type FlexibleFieldContent<TSchema extends TreeFieldSchema> = SchemaAware.TypedField<
-	TSchema,
-	SchemaAware.ApiMode.Flexible
->;
+export type FlexibleFieldContent<TSchema extends TreeFieldSchema> =
+	| SchemaAware.TypedField<TSchema, SchemaAware.ApiMode.Flexible>
+	| ITreeCursorSynchronous;
 
 /**
  * Strongly typed tree literals for inserting as a node.
+ *
+ * If a cursor is provided, it must be in Nodes mode.
  * @alpha
  */
-export type FlexibleNodeContent<TTypes extends AllowedTypes> = SchemaAware.AllowedTypesToTypedTrees<
-	SchemaAware.ApiMode.Flexible,
-	TTypes
->;
+export type FlexibleNodeContent<TTypes extends AllowedTypes> =
+	| SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>
+	| ITreeCursorSynchronous;
+
+/**
+ * Strongly typed tree literals for inserting a subsequence of nodes.
+ *
+ * Used to insert a batch of 0 or more nodes into some location in a {@link Sequence}.
+ *
+ * If a cursor is provided, it must be in Fields mode.
+ * @alpha
+ */
+export type FlexibleNodeSubSequence<TTypes extends AllowedTypes> =
+	| Iterable<SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, TTypes>>
+	| ITreeCursorSynchronous;
 
 /**
  * Type to ensures two types overlap in at least one way.
@@ -595,19 +627,19 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `list.length`).
 	 */
-	insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void;
 
 	/**
 	 * Inserts new item(s) at the start of the sequence.
 	 * @param value - The content to insert.
 	 */
-	insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void;
 
 	/**
 	 * Inserts new item(s) at the end of the sequence.
 	 * @param value - The content to insert.
 	 */
-	insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void;
+	insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void;
 
 	/**
 	 * Removes the item at the specified location.
@@ -755,11 +787,9 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
  *
  * @remarks
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
- * @privateRemarks
- * TODO: Finish renaming from ValueField to RequiredField
  * @alpha
  */
-export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
+export interface RequiredField<in out TTypes extends AllowedTypes> extends TreeField {
 	get content(): UnboxNodeUnion<TTypes>;
 	set content(content: FlexibleNodeContent<TTypes>);
 
@@ -780,7 +810,7 @@ export interface RequiredField<TTypes extends AllowedTypes> extends TreeField {
  * Maybe link editor?
  * @alpha
  */
-export interface OptionalField<TTypes extends AllowedTypes> extends TreeField {
+export interface OptionalField<in out TTypes extends AllowedTypes> extends TreeField {
 	get content(): UnboxNodeUnion<TTypes> | undefined;
 	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
 
@@ -979,7 +1009,7 @@ export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSche
 	: TSchema extends MapSchema
 	? MapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? UnboxField<TSchema["objectNodeFieldsObject"][""]>
+	? FieldNode<TSchema>
 	: TSchema extends ObjectNodeSchema
 	? ObjectNodeTyped<TSchema>
 	: UnknownUnboxed;
@@ -988,6 +1018,6 @@ export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSche
  * Unboxed tree type for unknown schema cases.
  * @alpha
  */
-export type UnknownUnboxed = TreeValue | TreeNode | TreeField;
+export type UnknownUnboxed = TreeValue | TreeNode;
 
 // #endregion

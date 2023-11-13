@@ -22,7 +22,7 @@ import {
 	FieldKinds,
 	NodeChangeset,
 	SequenceField as SF,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
 import { brand, makeArray } from "../../../util";
 import { TestChange } from "../../testChange";
@@ -35,8 +35,10 @@ const nodeX = { type, value: 0 };
 const nodeY = { type, value: 1 };
 const content = [nodeX];
 const content2 = [nodeX, nodeY];
-const contentCursor: ITreeCursorSynchronous = singleTextCursor(nodeX);
-const contentCursor2: ITreeCursorSynchronous[] = content2.map((node) => singleTextCursor(node));
+const contentCursor: ITreeCursorSynchronous = cursorForJsonableTreeNode(nodeX);
+const contentCursor2: ITreeCursorSynchronous[] = content2.map((node) =>
+	cursorForJsonableTreeNode(node),
+);
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
 const tag: RevisionTag = mintRevisionTag();
@@ -47,7 +49,7 @@ const fooField = brand<FieldKey>("foo");
 const DUMMY_REVIVED_NODE_TYPE: TreeNodeSchemaIdentifier = brand("DummyRevivedNode");
 
 function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
-	return makeArray(count, () => singleTextCursor({ type: DUMMY_REVIVED_NODE_TYPE }));
+	return makeArray(count, () => cursorForJsonableTreeNode({ type: DUMMY_REVIVED_NODE_TYPE }));
 }
 
 function toDeltaShallow(change: TestChangeset): Delta.FieldChanges {
@@ -270,7 +272,7 @@ describe("SequenceField - toDelta", () => {
 				{
 					id: buildId,
 					trees: [
-						singleTextCursor({
+						cursorForJsonableTreeNode({
 							type,
 							value: 0,
 						}),
@@ -320,7 +322,7 @@ describe("SequenceField - toDelta", () => {
 				{
 					id: buildId,
 					trees: [
-						singleTextCursor({
+						cursorForJsonableTreeNode({
 							type,
 							value: 0,
 						}),
