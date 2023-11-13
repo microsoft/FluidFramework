@@ -45,7 +45,7 @@ For information about creating the schema for a map node, see [Map schema](#map-
 
 A list node is an indexed sequence of zero or more values like a JavaScript array. In principle, values can be any of the node types, but the schema that your code defines will specify what subset of those types can be the values of any given list item.
 
-For information about creating the schema for a list node, see [List schema](#list-schema). or information about adding a list node to the the `SharedTree` and about reading and writing to a list node, see [List node APIs](#list-node-apis).
+For information about creating the schema for a list node, see [List schema](#list-schema). For information about adding a list node to the the `SharedTree` and about reading and writing to a list node, see [List node APIs](#list-node-apis).
 
 ## Installation
 
