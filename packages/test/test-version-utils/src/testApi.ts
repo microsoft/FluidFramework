@@ -282,8 +282,12 @@ function throwNotFound(layer: string, version: string): never {
 	throw new Error(`${layer}@${version} not found. Missing install step?`);
 }
 
-export function getLoaderApi(baseVersion: string, requested?: number | string): typeof LoaderApi {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+export function getLoaderApi(
+	baseVersion: string,
+	requested?: number | string,
+	adjustMajorPublic: boolean = false,
+): typeof LoaderApi {
+	const requestedStr = getRequestedVersion(baseVersion, requested, adjustMajorPublic);
 
 	// If the current version satisfies the range, use it.
 	if (semver.satisfies(pkgVersion, requestedStr)) {

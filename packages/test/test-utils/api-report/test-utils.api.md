@@ -139,6 +139,16 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
 // @public (undocumented)
+export interface IDocumentIdStrategy {
+    // (undocumented)
+    get(): string;
+    // (undocumented)
+    reset(): void;
+    // (undocumented)
+    update(resolvedUrl?: IResolvedUrl): void;
+}
+
+// @public (undocumented)
 export interface IOpProcessingController {
     // (undocumented)
     pauseProcessing(...containers: IContainer[]): Promise<void>;
@@ -313,7 +323,11 @@ export class TestObjectProvider implements ITestObjectProvider {
     // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
     // (undocumented)
+    protected _documentCreated: boolean;
+    // (undocumented)
     get documentId(): string;
+    // (undocumented)
+    protected readonly _documentIdStrategy: IDocumentIdStrategy;
     // (undocumented)
     get documentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)
@@ -324,6 +338,8 @@ export class TestObjectProvider implements ITestObjectProvider {
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     readonly LoaderConstructor: typeof Loader;
+    // (undocumented)
+    protected _loaderContainerTracker: LoaderContainerTracker;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     get logger(): EventAndErrorTrackingLogger;
@@ -342,6 +358,29 @@ export class TestObjectProvider implements ITestObjectProvider {
     get urlResolver(): IUrlResolver;
     // (undocumented)
     waitContainerToCatchUp(container: IContainer): Promise<boolean>;
+}
+
+// @public
+export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
+    constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, versionedCreateFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    // (undocumented)
+    createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
+    // (undocumented)
+    readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
+    // (undocumented)
+    createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>, createLoaderForLoading?: boolean): Loader;
+    // (undocumented)
+    readonly driverForCreating: ITestDriver;
+    // (undocumented)
+    readonly driverForLoading: ITestDriver;
+    // (undocumented)
+    readonly LoaderConstructorForCreating: typeof Loader;
+    // (undocumented)
+    readonly LoaderConstructorForLoading: typeof Loader;
+    // (undocumented)
+    makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
+    // (undocumented)
+    readonly versionedCreateFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
 }
 
 // @public

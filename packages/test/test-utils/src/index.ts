@@ -24,10 +24,12 @@ export {
 	DataObjectFactoryType,
 	EventAndErrorTrackingLogger,
 	getUnexpectedLogErrorException,
+	IDocumentIdStrategy,
 	IOpProcessingController,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 } from "./testObjectProvider";
 export { createSummarizer, createSummarizerFromFactory, summarizeNow } from "./TestSummaryUtils";
 export {

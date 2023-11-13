@@ -22,7 +22,12 @@ import { getRequestedVersion } from "./versionUtils.js";
  * Generate configuration combinations for a particular compat version
  * NOTE: Please update this packages README.md if the default versions and config combination changes
  */
-interface CompatConfig {
+export interface CompatVersion {
+	base: string;
+	delta: number;
+}
+
+export interface CompatConfig {
 	name: string;
 	kind: CompatKind;
 	compatVersion: number | string;
@@ -30,6 +35,8 @@ interface CompatConfig {
 	driver?: string | number;
 	containerRuntime?: string | number;
 	dataRuntime?: string | number;
+	createWith?: CompatVersion;
+	loadWith?: CompatVersion;
 }
 
 const defaultCompatVersions = {
@@ -176,6 +183,38 @@ const genFullBackCompatConfig = (): CompatConfig[] => {
 	return _configList;
 };
 
+export const genCrossVersionCompatConfig = (): CompatConfig[] => {
+	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas.map((delta) => ({
+		base: pkgVersion,
+		delta,
+	}));
+
+	return allDefaultDeltaVersions
+		.map((createVersion) =>
+			allDefaultDeltaVersions.map((loadVersion) => {
+				const resolvedCreateVersion = getRequestedVersion(
+					createVersion.base,
+					createVersion.delta,
+					/** adjustMajorPublic */ true,
+				);
+				const resolvedLoadVersion = getRequestedVersion(
+					loadVersion.base,
+					loadVersion.delta,
+					/** adjustMajorPublic */ true,
+				);
+				return {
+					name: `compat cross version - create with ${resolvedCreateVersion} + load with ${resolvedLoadVersion}`,
+					createWith: createVersion,
+					loadWith: loadVersion,
+					kind: CompatKind.CrossVersion,
+					compatVersion: pkgVersion,
+				};
+			}),
+		)
+		.reduce((a, b) => a.concat(b))
+		.filter((config) => config.createWith !== config.loadWith);
+};
+
 export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	// set it in the env for parallel workers
 	if (compatKind) {
@@ -190,30 +229,51 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	process.env.fluid__test__baseVersion = baseVersion;
 
 	let _configList: CompatConfig[] = [];
+
+	// CompatVersions is set via pipeline flags. If not set, use default scenarios.
 	if (!compatVersions || compatVersions.length === 0) {
+		// By default run currentVersionDeltas (N/N-1), LTS, and cross version compat tests
 		defaultCompatVersions.currentVersionDeltas.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
-		if (process.env.fluid__test__backCompat === "FULL") {
-			_configList.push(...genFullBackCompatConfig());
-		}
 		defaultCompatVersions.ltsVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
+
+		// TODO: no scenario for this yet, should we leave this out?
+		// Allow to be skipped if requested (on by default)
+		if (process.env.fluid__test__skipCrossVersion !== "TRUE") {
+			_configList.push(...genCrossVersionCompatConfig());
+		}
+
+		// If fluid__test__backCompat=FULL is enabled, run full back compat tests
+		if (process.env.fluid__test__backCompat === "FULL") {
+			_configList.push(...genFullBackCompatConfig());
+		}
 	} else {
 		compatVersions.forEach((value) => {
-			if (value === "LTS") {
-				defaultCompatVersions.ltsVersions.forEach((lts) => {
-					_configList.push(...genLTSConfig(lts));
-				});
-			} else if (value === "FULL") {
-				_configList.push(...genFullBackCompatConfig());
-			} else {
-				const num = parseInt(value, 10);
-				if (num.toString() === value) {
-					_configList.push(...genConfig(num));
-				} else {
-					_configList.push(...genConfig(value));
+			switch (value) {
+				case "LTS": {
+					defaultCompatVersions.ltsVersions.forEach((lts) => {
+						_configList.push(...genLTSConfig(lts));
+					});
+					break;
+				}
+				case "FULL": {
+					_configList.push(...genFullBackCompatConfig());
+					break;
+				}
+				case "CROSS_VERSION": {
+					_configList.push(...genCrossVersionCompatConfig());
+					break;
+				}
+				default: {
+					const num = parseInt(value, 10);
+					if (num.toString() === value) {
+						_configList.push(...genConfig(num));
+					} else {
+						_configList.push(...genConfig(value));
+					}
 				}
 			}
 		});

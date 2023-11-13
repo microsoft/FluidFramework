@@ -115,7 +115,7 @@ export interface ITestContainerConfig {
 
 export const createDocumentId = (): string => uuid();
 
-interface IDocumentIdStrategy {
+export interface IDocumentIdStrategy {
 	get(): string;
 	update(resolvedUrl?: IResolvedUrl): void;
 	reset(): void;
@@ -245,13 +245,13 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider implements ITestObjectProvider {
-	private _loaderContainerTracker = new LoaderContainerTracker();
+	protected _loaderContainerTracker = new LoaderContainerTracker();
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
 	private _logger: EventAndErrorTrackingLogger | undefined;
-	private readonly _documentIdStrategy: IDocumentIdStrategy;
+	protected readonly _documentIdStrategy: IDocumentIdStrategy;
 	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
-	private _documentCreated = false;
+	protected _documentCreated = false;
 
 	/**
 	 * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
@@ -481,6 +481,147 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
+	}
+}
+
+/**
+ * Extension of {@link TestObjectProvider} that uses different versions to create and load containers.
+ */
+export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
+	constructor(
+		// The TestObjectProviderWithVersionedLoad accepts loaderConstructor and driver in two versions:
+		// `LoaderConstructorForCreating` represents the loader/driver used for creating containers
+		// `LoaderConstructorForLoading` is used to load test containers
+		// This is done by overriding the loadTestContainer method while using the corresponding "ForLoading" versions of driver/loader
+		public readonly LoaderConstructorForCreating: typeof Loader,
+		public readonly LoaderConstructorForLoading: typeof Loader,
+		public readonly driverForCreating: ITestDriver,
+		public readonly driverForLoading: ITestDriver,
+		public readonly createFluidEntryPoint: (
+			testContainerConfig?: ITestContainerConfig,
+		) => fluidEntryPoint,
+		public readonly versionedCreateFluidEntryPoint: (
+			testContainerConfig?: ITestContainerConfig,
+		) => fluidEntryPoint,
+	) {
+		super(LoaderConstructorForCreating, driverForCreating, createFluidEntryPoint);
+	}
+
+	// `_forceLoadWithLoaderForCreating` is used to alternate which Loader we load with. This is to simulate when multiple
+	// clients running different versions connect to the same container at the same time.
+	// Note: This only is relevant for tests that have more than two clients connecting to a container.
+	private _forceLoadWithLoaderForCreating = false;
+
+	private createLoaderForLoading(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
+
+		// If the last container was loaded with the LoaderForLoading, we force the next to load with LoaderForCreating
+		if (this._forceLoadWithLoaderForCreating === true) {
+			return this.createLoaderForCreating(packageEntries, loaderProps);
+		}
+
+		const loader = new this.LoaderConstructorForLoading({
+			...loaderProps,
+			logger,
+			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
+			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
+			documentServiceFactory:
+				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
+		});
+
+		this._loaderContainerTracker.add(loader);
+		// Force the next container to be loaded with LoaderForCreating
+		this._forceLoadWithLoaderForCreating = true;
+		console.log("createLoaderForLoading");
+		return loader;
+	}
+
+	private createLoaderForCreating(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
+		// Ensure the next container is loaded with the LoaderForLoading
+		this._forceLoadWithLoaderForCreating = false;
+
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
+
+		const loader = new this.LoaderConstructorForCreating({
+			...loaderProps,
+			logger,
+			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
+			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
+			documentServiceFactory:
+				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
+		});
+
+		this._loaderContainerTracker.add(loader);
+		console.log("createLoaderForCreating");
+		return loader;
+	}
+
+	public createLoader(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+		createLoaderForLoading: boolean = true,
+	) {
+		return createLoaderForLoading === true
+			? this.createLoaderForLoading(packageEntries, loaderProps)
+			: this.createLoaderForCreating(packageEntries, loaderProps);
+	}
+
+	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadContainer",
+			);
+		}
+		const loader = this.createLoader(
+			[[defaultCodeDetails, entryPoint]],
+			loaderProps,
+			/** createLoaderForLoading */ false,
+		);
+		const container = await createAndAttachContainer(
+			defaultCodeDetails,
+			loader,
+			this.driver.createCreateNewRequest(this.documentId),
+		);
+		this._documentCreated = true;
+		// r11s driver will generate a new ID for the new container.
+		// update the document ID with the actual ID of the attached container.
+		this._documentIdStrategy.update(container.resolvedUrl);
+		return container;
+	}
+
+	public async makeTestContainer(
+		testContainerConfig?: ITestContainerConfig,
+	): Promise<IContainer> {
+		if (this._documentCreated) {
+			throw new Error(
+				"Only one container/document can be created. To load the container/document use loadTestContainer",
+			);
+		}
+		const loader = this.createLoader(
+			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
+			testContainerConfig?.loaderProps,
+			/** createLoaderForLoading */ false,
+		);
+		const container = await createAndAttachContainer(
+			defaultCodeDetails,
+			loader,
+			this.driver.createCreateNewRequest(this.documentId),
+		);
+		this._documentCreated = true;
+		// r11s driver will generate a new ID for the new container.
+		// update the document ID with the actual ID of the attached container.
+		this._documentIdStrategy.update(container.resolvedUrl);
+		return container;
 	}
 }
 
