@@ -84,20 +84,22 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("modify ↷ delete", () => {
-		const mods = composeAnonChanges([
-			Change.modify(0, TestChange.mint([0], 1)),
-			Change.modify(3, TestChange.mint([0], 2)),
-			Change.modify(8, TestChange.mint([0], 3)),
-		]);
-		const deletion = Change.delete(1, 3);
-		const actual = rebase(mods, deletion);
-		const expected = composeAnonChanges([
-			// Modify at an earlier index is unaffected by a delete at a later index
-			Change.modify(0, TestChange.mint([0], 1)),
-			// Modify as the same index as a delete is muted by the delete
-			// Modify at a later index moves to an earlier index due to a delete at an earlier index
-			Change.modify(5, TestChange.mint([0], 3)),
-		]);
+		const mods = [
+			Mark.modify(TestChange.mint([0], 1)),
+			{ count: 2 },
+			Mark.modify(TestChange.mint([0], 2)),
+			{ count: 2 },
+			Mark.modify(TestChange.mint([0], 3)),
+		];
+		const deletion = [{ count: 2 }, Mark.delete(3, brand(0))];
+		const actual = rebase(mods, deletion, tag1);
+		const expected = [
+			Mark.modify(TestChange.mint([0], 1)),
+			{ count: 1 },
+			Mark.modify(TestChange.mint([0], 2), { revision: tag1, localId: brand(1) }),
+			{ count: 1 },
+			Mark.modify(TestChange.mint([0], 3)),
+		];
 		checkDeltaEquality(actual, expected);
 	});
 

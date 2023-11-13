@@ -65,6 +65,7 @@ trigger:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -96,6 +97,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -129,6 +131,7 @@ extends:
     packageManager: pnpm
     buildDirectory: .
     tagName: client
+    isReleaseGroup: true
     poolBuild: NewLarge
     checkoutSubmodules: true
     taskBundleAnalysis: true
