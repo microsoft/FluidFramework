@@ -189,36 +189,24 @@ describe("SequenceField - Rebase", () => {
 		];
 		const actual = rebase(deleteA, deleteB, tag1);
 		// Deletes --dEfGh--
-		// Where lowercase letters denote nodes that need reviving first
+		// Where lowercase letters denote nodes that are already deleted
 		const cellsCD: SF.IdRange[] = [{ id: brand(0), count: 2 }];
 		const cellsF: SF.IdRange[] = [{ id: brand(2), count: 1 }];
 		const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
 		const expected = [
 			{ count: 2 },
-			Mark.transient(
-				Mark.revive(
-					1,
-					{ revision: tag1, localId: brand(1), adjacentCells: cellsCD },
-					{ id: brand(0) },
-				),
+			Mark.onEmptyCell(
+				{ revision: tag1, localId: brand(1), adjacentCells: cellsCD },
 				Mark.delete(1, brand(0)),
 			),
 			Mark.delete(1, brand(1)),
-			Mark.transient(
-				Mark.revive(
-					1,
-					{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
-					{ id: brand(2) },
-				),
+			Mark.onEmptyCell(
+				{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
 				Mark.delete(1, brand(2)),
 			),
 			Mark.delete(1, brand(3)),
-			Mark.transient(
-				Mark.revive(
-					1,
-					{ revision: tag1, localId: brand(3), adjacentCells: cellsHI },
-					{ id: brand(4) },
-				),
+			Mark.onEmptyCell(
+				{ revision: tag1, localId: brand(3), adjacentCells: cellsHI },
 				Mark.delete(1, brand(4)),
 			),
 		];
@@ -259,37 +247,33 @@ describe("SequenceField - Rebase", () => {
 		];
 		const actual = rebase(move, deletion, tag1);
 		// Moves --dEfGh--
-		// Where lowercase letters denote nodes that need reviving first
+		// Where lowercase letters denote nodes that are deleted
 		const cellsCD: SF.IdRange[] = [{ id: brand(0), count: 2 }];
 		const cellsF: SF.IdRange[] = [{ id: brand(2), count: 1 }];
 		const cellsHI: SF.IdRange[] = [{ id: brand(3), count: 2 }];
 		const expected = [
 			Mark.moveIn(5, brand(0)),
 			{ count: 2 },
-			Mark.transient(
-				Mark.revive(
-					1,
-					{ revision: tag1, localId: brand(1), adjacentCells: cellsCD },
-					{ id: brand(0) },
-				),
+			Mark.onEmptyCell(
+				{
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells: cellsCD,
+				},
 				Mark.moveOut(1, brand(0)),
 			),
 			Mark.moveOut(1, brand(1)),
-			Mark.transient(
-				Mark.revive(
-					1,
-					{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
-					{ id: brand(2) },
-				),
+			Mark.onEmptyCell(
+				{ revision: tag1, localId: brand(2), adjacentCells: cellsF },
 				Mark.moveOut(1, brand(2)),
 			),
 			Mark.moveOut(1, brand(3)),
-			Mark.transient(
-				Mark.revive(
-					1,
-					{ revision: tag1, localId: brand(3), adjacentCells: cellsHI },
-					{ id: brand(4) },
-				),
+			Mark.onEmptyCell(
+				{
+					revision: tag1,
+					localId: brand(3),
+					adjacentCells: cellsHI,
+				},
 				Mark.moveOut(1, brand(4)),
 			),
 		];
@@ -711,16 +695,12 @@ describe("SequenceField - Rebase", () => {
 		const rebased = rebase(del, moveAndDelete);
 		const expected = [
 			{ count: 1 },
-			Mark.transient(
-				Mark.revive(
-					1,
-					{
-						revision: tag1,
-						localId: brand(1),
-						adjacentCells: [{ id: brand(1), count: 1 }],
-					},
-					{ id: brand(0) },
-				),
+			Mark.onEmptyCell(
+				{
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells: [{ id: brand(1), count: 1 }],
+				},
 				Mark.delete(1, brand(0)),
 			),
 		];
@@ -793,16 +773,12 @@ describe("SequenceField - Rebase", () => {
 				adjacentCells: [{ id: brand(1), count: 1 }],
 			}),
 			{ count: 1 },
-			Mark.transient(
-				Mark.revive(
-					1,
-					{
-						revision: tag2,
-						localId: brand(2),
-						adjacentCells: [{ id: brand(2), count: 1 }],
-					},
-					{ id: brand(0) },
-				),
+			Mark.onEmptyCell(
+				{
+					revision: tag2,
+					localId: brand(2),
+					adjacentCells: [{ id: brand(2), count: 1 }],
+				},
 				Mark.returnFrom(1, brand(0)),
 			),
 		];
@@ -823,16 +799,12 @@ describe("SequenceField - Rebase", () => {
 
 		const rebased = rebase(move, del);
 		const expected = [
-			Mark.transient(
-				Mark.revive(
-					1,
-					{
-						revision: tag1,
-						localId: brand(0),
-						adjacentCells: [{ id: brand(0), count: 1 }],
-					},
-					{ id: brand(0) },
-				),
+			Mark.onEmptyCell(
+				{
+					revision: tag1,
+					localId: brand(0),
+					adjacentCells: [{ id: brand(0), count: 1 }],
+				},
 				Mark.moveOut(1, brand(0), {
 					finalEndpoint: { localId: brand(1) },
 				}),

@@ -423,20 +423,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 			}
 			rebasedMark = remains ?? { count: baseMark.count };
 		} else {
-			rebasedMark = isDetach(currMark)
-				? withNodeChange(
-						{
-							type: "Transient",
-							count: currMark.count,
-							attach: {
-								type: "Insert",
-								id: currMark.id,
-							},
-							detach: extractMarkEffect(currMark),
-						},
-						currMark.changes,
-				  )
-				: currMark;
+			rebasedMark = currMark;
 		}
 		rebasedMark = makeDetachedMark(rebasedMark, cloneCellId(baseCellId));
 	} else if (markFillsCells(baseMark)) {

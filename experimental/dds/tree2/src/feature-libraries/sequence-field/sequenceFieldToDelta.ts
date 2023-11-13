@@ -81,6 +81,14 @@ export function sequenceFieldToDelta<TNodeChange>(
 						fields: deltaMark.fields,
 					});
 				}
+			} else if (isMoveSource(mark)) {
+				// Move sources implicitly restore their content
+				const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
+				rename.push({
+					count: mark.count,
+					oldId: nodeIdFromChangeAtom(mark.cellId),
+					newId: detachId,
+				});
 			} else if (deltaMark.fields) {
 				global.push({
 					id: nodeIdFromChangeAtom(inputCellId),
@@ -110,7 +118,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					} else {
 						// Removal of already removed content is a no-op.
 						// It does not relocate the content to the detached field that would otherwise be created.
-						// TODO: pass on nested changes if any
+						local.push(deltaMark);
 					}
 					break;
 				}
@@ -118,10 +126,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 				case "ReturnFrom": {
 					// The move destination will look for the detach ID of the source, so we can ignore `finalEndpoint`.
 					const detachId = makeDetachedNodeId(mark.revision ?? revision, mark.id);
-					assert(
-						mark.cellId === undefined,
-						"Move sources must always target populated cells",
-					);
+					// The case where the cell is empty is handled above.
+					assert(mark.cellId === undefined, "Unexpected detach mark on empty cell");
 					deltaMark.detach = detachId;
 					local.push(deltaMark);
 					break;

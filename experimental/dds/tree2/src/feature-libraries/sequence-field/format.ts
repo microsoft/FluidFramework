@@ -164,6 +164,15 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
+/**
+ * Content being inserted or or restored into a cell.
+ * Always brings about the desired outcome: the content is in the targeted cells.
+ *
+ * When `content` is not defined, this mark revives the content that was last removed from the cell.
+ *
+ * Carries a `MoveId` in case it is rebased over the content being moved out, in which case this mark
+ * will transform into a pair of returns which will move the content back into this cell.
+ */
 export interface Insert extends HasMoveId, HasRevisionTag {
 	type: "Insert";
 	/**
@@ -195,6 +204,13 @@ export const HasMoveFields = Type.Composite([
 	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
 ]);
 
+/**
+ * Fills empty cells with content that is moved out from another cell.
+ * Always brings about the desired outcome: the nodes being moved are in the target cells.
+ * Note that this may not require any changes if these nodes are already in the target cells when this mark is applied.
+ *
+ * Only ever targets empty cells. It transforms into a idempotent Insert if the target cells are not empty.
+ */
 export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
 }
@@ -217,6 +233,11 @@ export const InverseAttachFields = Type.Object({
 	detachIdOverride: Type.Optional(EncodedChangeAtomId),
 });
 
+/**
+ * Removes contents from cells.
+ * Always brings about the desired outcome: the cells are empty.
+ * Note that this may not require any changes if the cells are already empty when this mark is applied.
+ */
 export interface Delete extends HasRevisionTag, InverseAttachFields {
 	type: "Delete";
 	id: ChangesetLocalId;
@@ -234,6 +255,11 @@ export const Delete = Type.Composite(
 	noAdditionalProps,
 );
 
+/**
+ * Moves content from cells to other cells.
+ *
+ * When targeting empty cells, it will restore and move the content.
+ */
 export interface MoveOut extends HasMoveFields {
 	type: "MoveOut";
 }
@@ -247,6 +273,12 @@ export const MoveOut = Type.Composite(
 	noAdditionalProps,
 );
 
+/**
+ * Moves content from cells to other cells.
+ *
+ * When targeting empty cells, it will restore and move the content.
+ * TODO: unify with `MoveOut`.
+ */
 export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
 	type: "ReturnFrom";
 }
@@ -260,26 +292,6 @@ export const ReturnFrom = Type.Composite(
 	],
 	noAdditionalProps,
 );
-
-// /**
-//  * Represents a return whose source cells happen to coincide with its destination cells.
-//  * This is different from a NoopMark because this change could be rebased over a change which pulls the
-//  * nodes out the cells, in which case this change would have the effect of bringing the nodes back into the cells.
-//  *
-//  * Note that when the cells are empty, this mark as revival semantics.
-//  */
-// export interface Pin extends HasMoveId, HasRevisionTag {
-// 	type: "Pin";
-// }
-// export const Pin = Type.Composite(
-// 	[
-// 		HasMoveFields,
-// 		Type.Object({
-// 			type: Type.Literal("Pin"),
-// 		}),
-// 	],
-// 	noAdditionalProps,
-// );
 
 export type MoveSource = MoveOut | ReturnFrom;
 export const MoveSource = Type.Union([MoveOut, ReturnFrom]);
@@ -299,6 +311,11 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
 	type: "Placeholder";
 }
 
+/**
+ * Fills then empties cells.
+ *
+ * Only ever targets empty cells.
+ */
 export interface TransientEffect {
 	type: "Transient";
 	attach: Attach;

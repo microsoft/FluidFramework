@@ -254,14 +254,20 @@ function composeMarks<TNodeChange>(
 			// We should probably treat a muted transient effect as a noop.
 			return originalAttach;
 		}
-		// Noop and Placeholder marks must be muted because the node they target has been deleted.
-		// Detach marks must be muted because the cell is empty.
-		if (newMark.type === NoopMarkType || newMark.type === "Placeholder" || isDetach(newMark)) {
+		if (newMark.type === NoopMarkType || newMark.type === "Placeholder") {
 			assert(
 				newMark.cellId !== undefined,
 				0x718 /* Invalid node-targeting mark after transient */,
 			);
-			return baseMark;
+			return withNodeChange(baseMark, nodeChange);
+		}
+		if (isDetach(newMark)) {
+			// If the transient's detach effect were a move, the newMark should be targeting its destination.
+			assert(!isMoveSource(baseMark.detach), "Unexpected detach type in transient");
+			// The latter detach supersedes the former.
+			baseMark.detach = extractMarkEffect(newMark);
+			baseMark.detach.revision = newRev;
+			return withNodeChange(baseMark, nodeChange);
 		}
 		if (newMark.type === "MoveIn" && isReattach(newMark)) {
 			// It's possible for ReturnTo to occur after a transient.
