@@ -358,6 +358,10 @@ describe("Undo and redo", () => {
 		expectJsonTree(tree, ["B", "A"]);
 		unsubscribe();
 	});
+
+	it("can concurrently restore and edit removed tree", () => {
+		
+	});
 });
 
 // TODO: Dedupe with the helpers in editing.spec.ts
