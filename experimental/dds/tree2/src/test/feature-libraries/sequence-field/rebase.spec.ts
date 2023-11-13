@@ -655,10 +655,7 @@ describe("SequenceField - Rebase", () => {
 		});
 
 		const revive = [
-			Mark.transient(
-				Mark.revive(2, { revision: tag1, localId: brand(0) }),
-				Mark.delete(2, brand(2)),
-			),
+			Mark.delete(2, brand(2), { cellId: { revision: tag1, localId: brand(0) } }),
 		];
 
 		const rebased = rebase(modify, revive, tag2);
@@ -719,18 +716,13 @@ describe("SequenceField - Rebase", () => {
 		const del = Change.delete(1, 1);
 		const rebased = rebase(del, moveAndDelete);
 		const expected = [
-			Mark.transient(
-				Mark.revive(
-					1,
-					{
-						revision: tag1,
-						localId: brand(1),
-						adjacentCells: [{ id: brand(1), count: 1 }],
-					},
-					{ id: brand(0) },
-				),
-				Mark.delete(1, brand(0)),
-			),
+			Mark.delete(1, brand(0), {
+				cellId: {
+					revision: tag1,
+					localId: brand(1),
+					adjacentCells: [{ id: brand(1), count: 1 }],
+				},
+			}),
 		];
 
 		assert.deepEqual(rebased, expected);
@@ -739,7 +731,7 @@ describe("SequenceField - Rebase", () => {
 	it("revive ↷ [revive, move]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveAndMove = [
-			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			Mark.moveOut(1, brand(1), { cellId }),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1)),
 		];
@@ -760,7 +752,7 @@ describe("SequenceField - Rebase", () => {
 	it("revive ↷ [revive, move, delete]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveMoveDelete = [
-			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			Mark.moveOut(1, brand(1), { cellId }),
 			{ count: 1 },
 			Mark.transient(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
 		];
@@ -824,7 +816,7 @@ describe("SequenceField - Rebase", () => {
 		const cellSrc: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const cellDst: ChangeAtomId = { revision: tag3, localId: brand(0) };
 		const reviveAndMove = [
-			Mark.transient(Mark.revive(1, cellSrc), Mark.returnFrom(1, brand(1))),
+			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst),
 		];
@@ -838,19 +830,19 @@ describe("SequenceField - Rebase", () => {
 		const cellDst1: ChangeAtomId = { revision: tag3, localId: brand(1) };
 		const cellDst2: ChangeAtomId = { revision: tag3, localId: brand(2) };
 		const reviveAndMove1 = [
-			Mark.transient(Mark.revive(1, cellSrc), Mark.moveOut(1, brand(1))),
+			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst1),
 		];
 		const reviveAndMove2 = [
-			Mark.transient(Mark.revive(1, cellSrc), Mark.moveOut(1, brand(1))),
+			Mark.returnFrom(1, brand(1), { cellId: cellSrc }),
 			{ count: 4 },
 			Mark.returnTo(1, brand(1), cellDst2),
 		];
 		const rebased = rebase(reviveAndMove2, reviveAndMove1);
 		const expected = [
 			{ count: 2 },
-			Mark.moveOut(1, brand(1)),
+			Mark.returnFrom(1, brand(1)),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst2),
 		];
@@ -860,12 +852,12 @@ describe("SequenceField - Rebase", () => {
 	it("[revive, move] ↷ [revive, move]", () => {
 		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 		const reviveAndMove1 = [
-			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			Mark.moveOut(1, brand(1), { cellId }),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1)),
 		];
 		const reviveAndMove2 = [
-			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(1))),
+			Mark.moveOut(1, brand(1), { cellId }),
 			{ count: 2 },
 			Mark.moveIn(1, brand(1)),
 		];

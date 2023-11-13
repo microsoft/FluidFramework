@@ -136,8 +136,7 @@ export function getOutputCellId(
 	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource | undefined,
 ): CellId | undefined {
-	if (markEmptiesCells(mark)) {
-		assert(isDetach(mark), 0x750 /* Only detaches can empty cells */);
+	if (isDetach(mark)) {
 		return getDetachCellId(mark, revision, metadata);
 	} else if (markFillsCells(mark)) {
 		return undefined;
@@ -263,6 +262,10 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 
 export function isTransientEffect(effect: MarkEffect): effect is TransientEffect {
 	return effect.type === "Transient";
+}
+
+export function isReviveAndDetach(mark: Mark<unknown>): boolean {
+	return isDetach(mark) && mark.cellId !== undefined;
 }
 
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {

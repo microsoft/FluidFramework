@@ -34,7 +34,7 @@ import {
 	getEndpoint,
 	splitMark,
 	isAttach,
-	extractMarkEffect,
+	isReviveAndDetach,
 } from "./utils";
 import {
 	Changeset,
@@ -149,7 +149,9 @@ function rebaseMarkList<TNodeChange>(
 		// Inverse attaches do not contribute to lineage as they are effectively reinstating
 		// an older detach which cells should already have any necessary lineage for.
 		if (
-			(markEmptiesCells(baseMark) || isTransientEffect(baseMark)) &&
+			(markEmptiesCells(baseMark) ||
+				isTransientEffect(baseMark) ||
+				isReviveAndDetach(baseMark)) &&
 			!isInverseAttach(baseMark)
 		) {
 			const detachId = getOutputCellId(baseMark, baseRevision, metadata);
@@ -402,8 +404,11 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
 	let rebasedMark;
-	if (markEmptiesCells(baseMark)) {
-		assert(isDetach(baseMark), 0x70b /* Only detach marks should empty cells */);
+	if (isDetach(baseMark)) {
+		if (baseMark.cellId !== undefined) {
+			// Detaches on empty cells have an implicit revive effect.
+			delete currMark.cellId;
+		}
 		assert(
 			!isNewAttach(currMark),
 			0x69d /* A new attach should not be rebased over its cell being emptied */,

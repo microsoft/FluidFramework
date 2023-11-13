@@ -127,7 +127,7 @@ function invertMark<TNodeChange>(
 			return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, mark.cellId)];
 		}
 		case "Insert": {
-			assert(mark.cellId !== undefined, "Active inserts and pins should target empty cells");
+			assert(mark.cellId !== undefined, "Active inserts should target empty cells");
 			const deleteMark: CellMark<Delete, TNodeChange> = {
 				type: "Delete",
 				count: mark.count,

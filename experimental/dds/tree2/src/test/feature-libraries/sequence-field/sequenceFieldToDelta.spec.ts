@@ -278,7 +278,7 @@ describe("SequenceField - toDelta", () => {
 					],
 				},
 			],
-			global: [{ id: buildId, fields: childChange1Delta }],
+			global: [{ id: { ...buildId, major: tag }, fields: childChange1Delta }],
 			local: [{ count: 1, attach: buildId }],
 		};
 		const actual = toDelta(changeset, tag);
@@ -431,7 +431,7 @@ describe("SequenceField - toDelta", () => {
 		});
 	});
 
-	it("move removed node", () => {
+	it("move removed node (explicit transient representation)", () => {
 		const move = [
 			Mark.moveIn(1, brand(0)),
 			{ count: 1 },
@@ -446,9 +446,24 @@ describe("SequenceField - toDelta", () => {
 		assertFieldChangesEqual(actual, expected);
 	});
 
+	it("move removed node (implicit transient representation)", () => {
+		const move = [
+			Mark.moveIn(1, brand(0)),
+			{ count: 1 },
+			Mark.moveOut(1, brand(0), { cellId }),
+		];
+
+		const actual = toDelta(move);
+		const expected: Delta.FieldChanges = {
+			rename: [{ count: 1, oldId: deltaNodeId, newId: { minor: 0 } }],
+			local: [{ count: 1, attach: { minor: 0 } }],
+		};
+		assertFieldChangesEqual(actual, expected);
+	});
+
 	describe("Idempotent changes", () => {
 		it("delete", () => {
-			const deletion = [Mark.transient(Mark.revive(1, cellId), Mark.delete(1, brand(0)))];
+			const deletion = [Mark.delete(1, brand(0), { cellId })];
 			const actual = toDelta(deletion, tag);
 			const expected: Delta.FieldChanges = {
 				rename: [
@@ -463,11 +478,7 @@ describe("SequenceField - toDelta", () => {
 		});
 
 		it("modify and delete", () => {
-			const deletion = [
-				Mark.transient(Mark.revive(1, cellId), Mark.delete(1, brand(0)), {
-					changes: childChange1,
-				}),
-			];
+			const deletion = [Mark.delete(1, brand(0), { cellId, changes: childChange1 })];
 			const actual = toDelta(deletion, tag);
 			const expected: Delta.FieldChanges = {
 				rename: [

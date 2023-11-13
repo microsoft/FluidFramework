@@ -49,16 +49,9 @@
                                 "count": 3
                               },
                               {
-                                "type": "Transient",
                                 "count": 1,
-                                "attach": {
-                                  "type": "Insert",
-                                  "id": 0
-                                },
-                                "detach": {
-                                  "type": "Delete",
-                                  "id": 0
-                                },
+                                "type": "Delete",
+                                "id": 0,
                                 "cellId": {
                                   "revision": "beefbeef-beef-4000-8000-00000000002b",
                                   "localId": 0,
@@ -89,16 +82,9 @@
                                 "count": 3
                               },
                               {
-                                "type": "Transient",
                                 "count": 1,
-                                "attach": {
-                                  "type": "Insert",
-                                  "id": 0
-                                },
-                                "detach": {
-                                  "type": "Delete",
-                                  "id": 0
-                                },
+                                "type": "Delete",
+                                "id": 0,
                                 "cellId": {
                                   "revision": "beefbeef-beef-4000-8000-00000000002c",
                                   "localId": 0,
