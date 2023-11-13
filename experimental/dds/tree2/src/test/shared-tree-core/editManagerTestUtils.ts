@@ -24,11 +24,12 @@ export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestCh
 export function editManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
 	sessionId?: SessionId;
-	autoDiscardRevertibles?: false;
+	autoDiscardRevertibles?: boolean;
 }): {
 	manager: TestEditManager;
 	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
+	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const family = testChangeFamilyFactory(options.rebaser);
 	const manager = new EditManager<
 		ChangeFamilyEditor,
@@ -36,9 +37,9 @@ export function editManagerFactory(options: {
 		ChangeFamily<ChangeFamilyEditor, TestChange>
 	>(family, options.sessionId ?? "0");
 
-	if (options.autoDiscardRevertibles === undefined) {
+	if (autoDiscardRevertibles === true) {
 		// by default, discard revertibles in the edit manager tests
-		const enableRevertibleTracking = manager.localBranch.on("revertible", (revertible) => {
+		manager.localBranch.on("revertible", (revertible) => {
 			revertible.discard();
 		});
 	}
