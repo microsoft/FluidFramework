@@ -23,6 +23,11 @@ import {
 import { type TreeNodeSchema } from "../../typed-schema";
 import { type ProxyNode } from "./types";
 
+/**
+ * Creates a {@link CursorAdaptor} capable of mapping proxy-domain trees to the editable tree domain.
+ * @param context - The {@link TreeEntity.context} of the parent node under which the tree is being inserted.
+ * @param typeSet - The types allowed under the parent node under which the tree is being inserted.
+ */
 export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScript">>(
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
@@ -136,6 +141,11 @@ export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScrip
 
 /**
  * Construct a {@link CursorWithNode} from a {@link ProxyNode}.
+ * @param node - The tree being inserted, which will be mapped to the editable tree domain via {@link createAdaptor}.
+ * @param context - The {@link TreeEntity.context} of the parent node under which the tree is being inserted.
+ * @param typeSet - The types allowed under the parent node under which the tree is being inserted.
+ * @param mode - The mode of cursor creation.
+ * Determines whether the cursor is initialized in "node" mode or "field" mode.
  */
 export function cursorFromProxyTreeNode<TNode extends ProxyNode<TreeNodeSchema, "javaScript">>(
 	node: TNode,
