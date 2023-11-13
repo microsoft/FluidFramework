@@ -19,6 +19,7 @@ import {
 	ChannelFactoryRegistry,
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 } from "@fluidframework/test-utils";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { mixinAttributor } from "@fluid-experimental/attributor";
@@ -30,6 +31,7 @@ import {
 	getDriverApi,
 	CompatApis,
 } from "./testApi.js";
+import { CompatVersion } from "./compatConfig.js";
 
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
@@ -149,5 +151,95 @@ export async function getVersionedTestObjectProvider(
 			driver: getDriverApi(baseVersion, driverConfig?.version),
 		},
 		driverConfig,
+	);
+}
+
+export async function getCompatVersionedTestObjectProvider(
+	createVersion: CompatVersion,
+	loadVersion: CompatVersion,
+	driverConfig?: {
+		type?: TestDriverTypes;
+		config?: FluidTestDriverConfig;
+		version?: string | number | undefined;
+	},
+): Promise<TestObjectProviderWithVersionedLoad> {
+	const loaderApiForCreating = getLoaderApi(
+		createVersion.base,
+		createVersion.delta,
+		/** adjustMajorPublic */ true,
+	);
+	const loaderApiForLoading = getLoaderApi(
+		loadVersion.base,
+		loadVersion.delta,
+		/** adjustMajorPublic */ true,
+	);
+
+	const createContainerRuntimeApi = getContainerRuntimeApi(
+		createVersion.base,
+		createVersion.delta,
+	);
+	const loadContainerRuntimeApi = getContainerRuntimeApi(loadVersion.base, loadVersion.delta);
+	const dataRuntimeApi = getDataRuntimeApi(createVersion.base, createVersion.delta);
+	const dataRuntimeApiForLoading = getDataRuntimeApi(loadVersion.base, loadVersion.delta);
+	if (driverConfig) {
+		driverConfig.version = createVersion.delta;
+	}
+	// const driver = getDriverApi(loadVersion.base, loadVersion.delta);
+	const driverForCreating = await createFluidTestDriver(
+		driverConfig?.type ?? "local",
+		driverConfig?.config,
+		getDriverApi(createVersion.base, driverConfig?.version),
+	);
+
+	const driverConfigForLoading = driverConfig;
+	if (driverConfigForLoading) {
+		driverConfigForLoading.version = loadVersion.delta;
+	}
+
+	const driverForLoading = await createFluidTestDriver(
+		driverConfigForLoading?.type ?? "local",
+		driverConfigForLoading?.config,
+		getDriverApi(loadVersion.base, driverConfigForLoading?.version),
+	);
+
+	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
+		runtime.IFluidHandleContext.resolveHandle(request);
+
+	const getDataStoreFactoryFn = createGetDataStoreFactoryFunction(dataRuntimeApi);
+	const getDataStoreFactoryFnForLoading =
+		createGetDataStoreFactoryFunction(dataRuntimeApiForLoading);
+
+	const createContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		const dataStoreFactory = getDataStoreFactoryFn(containerOptions);
+		const factoryCtor = createTestContainerRuntimeFactory(
+			createContainerRuntimeApi.ContainerRuntime,
+		);
+		return new factoryCtor(
+			TestDataObjectType,
+			dataStoreFactory,
+			containerOptions?.runtimeOptions,
+			[innerRequestHandler],
+		);
+	};
+	const loadContainerFactoryFn = (containerOptions?: ITestContainerConfig) => {
+		const dataStoreFactory = getDataStoreFactoryFnForLoading(containerOptions);
+		const factoryCtor = createTestContainerRuntimeFactory(
+			loadContainerRuntimeApi.ContainerRuntime,
+		);
+		return new factoryCtor(
+			TestDataObjectType,
+			dataStoreFactory,
+			containerOptions?.runtimeOptions,
+			[innerRequestHandler],
+		);
+	};
+
+	return new TestObjectProviderWithVersionedLoad(
+		loaderApiForCreating.Loader,
+		loaderApiForLoading.Loader,
+		driverForCreating,
+		driverForLoading,
+		createContainerFactoryFn,
+		loadContainerFactoryFn,
 	);
 }

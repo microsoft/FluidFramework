@@ -9,10 +9,14 @@ import {
 	ITestObjectProvider,
 	TestObjectProvider,
 } from "@fluidframework/test-utils";
+import { assert } from "@fluidframework/core-utils";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList, mochaGlobalSetup } from "./compatConfig.js";
-import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
-import { testBaseVersion } from "./baseVersion.js";
+import {
+	getVersionedTestObjectProviderFromApis,
+	getCompatVersionedTestObjectProvider,
+} from "./compatUtils.js";
+import { baseVersion, testBaseVersion } from "./baseVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -28,7 +32,11 @@ await mochaGlobalSetup();
  * Mocha Utils for test to generate the compat variants.
  */
 function createCompatSuite(
-	tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
+	tests: (
+		this: Mocha.Suite,
+		provider: (options?: ITestObjectProviderOptions) => ITestObjectProvider,
+		apis: CompatApis,
+	) => void,
 	compatFilter?: CompatKind[],
 ) {
 	return function (this: Mocha.Suite) {
@@ -41,30 +49,66 @@ function createCompatSuite(
 			describe(config.name, function () {
 				let provider: TestObjectProvider;
 				let resetAfterEach: boolean;
-				const dataRuntimeApi = getDataRuntimeApi(
-					testBaseVersion(config.dataRuntime),
-					config.dataRuntime,
-				);
-				const apis: CompatApis = {
-					containerRuntime: getContainerRuntimeApi(
-						testBaseVersion(config.containerRuntime),
-						config.containerRuntime,
-					),
-					dataRuntime: dataRuntimeApi,
-					dds: dataRuntimeApi.dds,
-					driver: getDriverApi(testBaseVersion(config.driver), config.driver),
-					loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
-				};
+				let apis: CompatApis;
+
+				// If this is cross version compat scenario, make sure we use the correct versions
+				if (config.kind === CompatKind.CrossVersion) {
+					assert(
+						config.createWith !== undefined,
+						"createWith must be defined for cross version tests",
+					);
+					const dataRuntimeApi = getDataRuntimeApi(baseVersion, config.createWith.base);
+					apis = {
+						containerRuntime: getContainerRuntimeApi(
+							baseVersion,
+							config.createWith.base,
+						),
+						dataRuntime: dataRuntimeApi,
+						dds: dataRuntimeApi.dds,
+						driver: getDriverApi(baseVersion, config.createWith.base),
+						loader: getLoaderApi(baseVersion, config.createWith.base),
+					};
+				} else {
+					const dataRuntimeApi = getDataRuntimeApi(
+						testBaseVersion(config.dataRuntime),
+						config.dataRuntime,
+					);
+					apis = {
+						containerRuntime: getContainerRuntimeApi(
+							testBaseVersion(config.containerRuntime),
+							config.containerRuntime,
+						),
+						dataRuntime: dataRuntimeApi,
+						dds: dataRuntimeApi.dds,
+						driver: getDriverApi(testBaseVersion(config.driver), config.driver),
+						loader: getLoaderApi(testBaseVersion(config.loader), config.loader),
+					};
+				}
 
 				before(async function () {
 					try {
-						provider = await getVersionedTestObjectProviderFromApis(apis, {
-							type: driver,
-							config: {
-								r11s: { r11sEndpointName },
-								odsp: { tenantIndex },
-							},
-						});
+						provider =
+							config.kind === CompatKind.CrossVersion
+								? await getCompatVersionedTestObjectProvider(
+										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+										config.createWith!,
+										// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+										config.loadWith!,
+										{
+											type: driver,
+											config: {
+												r11s: { r11sEndpointName },
+												odsp: { tenantIndex },
+											},
+										},
+								  )
+								: await getVersionedTestObjectProviderFromApis(apis, {
+										type: driver,
+										config: {
+											r11s: { r11sEndpointName },
+											odsp: { tenantIndex },
+										},
+								  });
 					} catch (error) {
 						const logger = createChildLogger({
 							logger: getTestLogger?.(),

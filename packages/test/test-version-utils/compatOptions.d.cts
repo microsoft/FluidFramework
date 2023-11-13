@@ -19,6 +19,7 @@ export const CompatKind: {
 	DataRuntime: "DataRuntime";
 	NewDataRuntime: "NewDataRuntime";
 	LoaderDriver: "LoaderDriver";
+	CrossVersion: "CrossVersion";
 };
 
 /**
