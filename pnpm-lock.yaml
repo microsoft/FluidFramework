@@ -6033,6 +6033,7 @@ importers:
       buffer: ^6.0.3
       c8: ^7.7.1
       concurrently: ^8.2.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -6081,6 +6082,7 @@ importers:
       '@types/sinon': 7.5.2
       c8: 7.14.0
       concurrently: 8.2.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -6180,6 +6182,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -6203,6 +6206,7 @@ importers:
       '@types/node': 16.18.58
       '@types/sinon': 7.5.2
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -6225,6 +6229,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@microsoft/api-extractor': ^7.37.0
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -6239,6 +6244,7 @@ importers:
       '@fluidframework/driver-definitions-previous': /@fluidframework/driver-definitions/2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.0
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
