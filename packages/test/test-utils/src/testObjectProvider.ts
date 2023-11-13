@@ -489,16 +489,13 @@ export class TestObjectProvider implements ITestObjectProvider {
  * Implements {@link ITestObjectProvider}, but uses different versions to create and load containers.
  */
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
-	protected _loaderContainerTracker = new LoaderContainerTracker();
+	private _loaderContainerTracker = new LoaderContainerTracker();
 	private _logger: EventAndErrorTrackingLogger | undefined;
-
+	private readonly _documentIdStrategy: IDocumentIdStrategy;
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
-	protected readonly _documentIdStrategy: IDocumentIdStrategy;
-
 	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
 	protected _documentCreated = false;
-
 	// `_loadCount` is used to alternate which version we load the next container with.
 	// If loadCount is even then we will load with the "create" version, and if odd we load with the "load" version.
 	// After each test we will reset loadCount to 0 to ensure we always create the first container with the create version.
@@ -508,10 +505,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	constructor(
 		public readonly LoaderConstructorForCreating: typeof Loader,
 		public readonly LoaderConstructorForLoading: typeof Loader,
-
 		public readonly driverForCreating: ITestDriver,
 		public readonly driverForLoading: ITestDriver,
-
 		public readonly createFluidEntryPointForCreating: (
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,

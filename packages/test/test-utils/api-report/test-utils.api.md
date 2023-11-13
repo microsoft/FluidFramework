@@ -380,8 +380,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     // (undocumented)
     get documentId(): string;
     // (undocumented)
-    protected readonly _documentIdStrategy: IDocumentIdStrategy;
-    // (undocumented)
     get documentServiceFactory(): IDocumentServiceFactory;
     // (undocumented)
     get driver(): ITestDriver;
@@ -397,8 +395,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     readonly LoaderConstructorForCreating: typeof Loader;
     // (undocumented)
     readonly LoaderConstructorForLoading: typeof Loader;
-    // (undocumented)
-    protected _loaderContainerTracker: LoaderContainerTracker;
     // (undocumented)
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)

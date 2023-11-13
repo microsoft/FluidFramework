@@ -163,7 +163,6 @@ export async function getCompatVersionedTestObjectProvider(
 		version?: string | number | undefined;
 	},
 ): Promise<TestObjectProviderWithVersionedLoad> {
-	// Get Loader APIs
 	const loaderApiForCreating = getLoaderApi(
 		createVersion.base,
 		createVersion.delta,
@@ -174,8 +173,6 @@ export async function getCompatVersionedTestObjectProvider(
 		loadVersion.delta,
 		/** adjustMajorPublic */ true,
 	);
-
-	// Get ContainerRuntime APIs
 	const createContainerRuntimeApi = getContainerRuntimeApi(
 		createVersion.base,
 		createVersion.delta,
@@ -186,8 +183,6 @@ export async function getCompatVersionedTestObjectProvider(
 		loadVersion.delta,
 		/** adjustMajorPublic */ true,
 	);
-
-	// Get DataRuntime APIs
 	const dataRuntimeApi = getDataRuntimeApi(
 		createVersion.base,
 		createVersion.delta,
@@ -198,8 +193,6 @@ export async function getCompatVersionedTestObjectProvider(
 		loadVersion.delta,
 		/** adjustMajorPublic */ true,
 	);
-
-	// Get Driver APIs
 	if (driverConfig) {
 		driverConfig.version = createVersion.delta;
 	}
