@@ -163,6 +163,7 @@ export async function getCompatVersionedTestObjectProvider(
 		version?: string | number | undefined;
 	},
 ): Promise<TestObjectProviderWithVersionedLoad> {
+	// Get Loader APIs
 	const loaderApiForCreating = getLoaderApi(
 		createVersion.base,
 		createVersion.delta,
@@ -174,43 +175,43 @@ export async function getCompatVersionedTestObjectProvider(
 		/** adjustMajorPublic */ true,
 	);
 
-	// TODO: Which should have adjustMajorPublic = true?
-	// If adjustMajorPublic is false/undefined, then the delta should be 0/undefined
+	// Get ContainerRuntime APIs
 	const createContainerRuntimeApi = getContainerRuntimeApi(
 		createVersion.base,
-		/** requested */ 0,
-		/** adjustMajorPublic */ false,
+		createVersion.delta,
+		/** adjustMajorPublic */ true,
 	);
 	const loadContainerRuntimeApi = getContainerRuntimeApi(
 		loadVersion.base,
-		/** requested */ 0,
-		/** adjustMajorPublic */ false,
+		loadVersion.delta,
+		/** adjustMajorPublic */ true,
 	);
+
+	// Get DataRuntime APIs
 	const dataRuntimeApi = getDataRuntimeApi(
 		createVersion.base,
-		/** requested */ 0,
-		/** adjustMajorPublic */ false,
+		createVersion.delta,
+		/** adjustMajorPublic */ true,
 	);
 	const dataRuntimeApiForLoading = getDataRuntimeApi(
 		loadVersion.base,
-		/** requested */ 0,
-		/** adjustMajorPublic */ false,
+		loadVersion.delta,
+		/** adjustMajorPublic */ true,
 	);
+
+	// Get Driver APIs
 	if (driverConfig) {
 		driverConfig.version = createVersion.delta;
 	}
-	// const driver = getDriverApi(loadVersion.base, loadVersion.delta);
 	const driverForCreating = await createFluidTestDriver(
 		driverConfig?.type ?? "local",
 		driverConfig?.config,
 		getDriverApi(createVersion.base, driverConfig?.version, /** adjustMajorPublic */ true),
 	);
-
 	const driverConfigForLoading = driverConfig;
 	if (driverConfigForLoading) {
 		driverConfigForLoading.version = loadVersion.delta;
 	}
-
 	const driverForLoading = await createFluidTestDriver(
 		driverConfigForLoading?.type ?? "local",
 		driverConfigForLoading?.config,
