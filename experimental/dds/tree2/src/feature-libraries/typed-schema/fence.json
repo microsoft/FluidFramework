@@ -1,5 +1,0 @@
-{
-	"tags": ["typed-schema"],
-	"exports": ["index"],
-	"imports": ["codec", "core", "modular-schema", "default-field-kinds", "util"]
-}
