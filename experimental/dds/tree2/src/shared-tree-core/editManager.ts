@@ -210,31 +210,25 @@ export class EditManager<
 	}
 
 	/**
-	 * Returns the sequence id of the oldest sequenced revertible commit on this branch.
+	 * Updates the sequence id of the oldest sequenced revertible commit on this branch.
 	 *
 	 * TODO: may be more performant to maintain the oldest revertible on the branches themselves
 	 * this should be tested and revisited once branches are supported
 	 */
-	private getOldestRevertibleSequenceId(
-		branch: SharedTreeBranch<TEditor, TChangeset>,
-	): SequenceId | undefined {
+	private updateOldestRevertibleSequenceId(branch: SharedTreeBranch<TEditor, TChangeset>): void {
 		if (this.oldestRevertibleSequenceId !== undefined) {
-			return this.oldestRevertibleSequenceId;
-		}
-
-		let oldest: SequenceId | undefined;
-		for (const revision of branch.revertibleCommits()) {
-			if (oldest === undefined) {
-				oldest = this.trunkMetadata.get(revision)?.sequenceId;
-			} else {
-				const current = this.trunkMetadata.get(revision)?.sequenceId;
-				if (current !== undefined) {
-					oldest = minSequenceId(oldest, current);
+			let oldest: SequenceId | undefined;
+			for (const revision of branch.revertibleCommits()) {
+				if (oldest === undefined) {
+					oldest = this.trunkMetadata.get(revision)?.sequenceId;
+				} else {
+					const current = this.trunkMetadata.get(revision)?.sequenceId;
+					if (current !== undefined) {
+						oldest = minSequenceId(oldest, current);
+					}
 				}
 			}
 		}
-
-		return oldest;
 	}
 
 	private onRevertibleDisposed(
@@ -249,7 +243,7 @@ export class EditManager<
 				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
 				if (id === this.oldestRevertibleSequenceId) {
 					this.oldestRevertibleSequenceId = undefined;
-					this.oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId(branch);
+					this.updateOldestRevertibleSequenceId(branch);
 				}
 			}
 		};
@@ -549,7 +543,7 @@ export class EditManager<
 			);
 			this.localBranch.rebaseOnto(this.trunk);
 
-			this.oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId(this.localBranch);
+			this.updateOldestRevertibleSequenceId(this.localBranch);
 			return;
 		}
 
