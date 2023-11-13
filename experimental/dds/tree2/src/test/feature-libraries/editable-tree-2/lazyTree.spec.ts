@@ -633,7 +633,6 @@ function checkPropertyInvariants(root: TreeEntity): void {
 
 	const unboxable = new Set([
 		LazyLeaf.prototype,
-		LazyFieldNode.prototype,
 		LazyValueField.prototype,
 		LazyOptionalField.prototype,
 	]);

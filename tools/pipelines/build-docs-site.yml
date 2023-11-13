@@ -17,6 +17,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - docs
     - tools/pipelines/build-docs-site.yml
     - tools/pipelines/templates/build-npm-package.yml
