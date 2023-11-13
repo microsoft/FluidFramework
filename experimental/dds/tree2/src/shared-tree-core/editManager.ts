@@ -113,7 +113,7 @@ export class EditManager<
 	 * The sequence ID corresponding to the oldest revertible commit owned by the local branch. This is used
 	 * to prevent the trunk from trimming this commit or commits after it as they're needed for undo.
 	 */
-	private oldestRevertibleSequenceId?: SequenceId;
+	private _oldestRevertibleSequenceId?: SequenceId;
 
 	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
@@ -150,7 +150,7 @@ export class EditManager<
 		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
 		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
 
-		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed(this.localBranch));
+		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed());
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -210,15 +210,15 @@ export class EditManager<
 	}
 
 	/**
-	 * Updates the sequence id of the oldest sequenced revertible commit on this branch.
+	 * Returns the sequence id of the oldest sequenced revertible commit on the local branch.
 	 *
 	 * TODO: may be more performant to maintain the oldest revertible on the branches themselves
 	 * this should be tested and revisited once branches are supported
 	 */
-	private updateOldestRevertibleSequenceId(branch: SharedTreeBranch<TEditor, TChangeset>): void {
-		if (this.oldestRevertibleSequenceId !== undefined) {
+	private getOldestRevertibleSequenceId(): SequenceId | undefined {
+		if (this._oldestRevertibleSequenceId !== undefined) {
 			let oldest: SequenceId | undefined;
-			for (const revision of branch.revertibleCommits()) {
+			for (const revision of this.localBranch.revertibleCommits()) {
 				if (oldest === undefined) {
 					oldest = this.trunkMetadata.get(revision)?.sequenceId;
 				} else {
@@ -229,11 +229,11 @@ export class EditManager<
 				}
 			}
 		}
+
+		return this._oldestRevertibleSequenceId;
 	}
 
-	private onRevertibleDisposed(
-		branch: SharedTreeBranch<TEditor, TChangeset>,
-	): (revision: RevisionTag) => void {
+	private onRevertibleDisposed(): (revision: RevisionTag) => void {
 		return (revision: RevisionTag) => {
 			const metadata = this.trunkMetadata.get(revision);
 
@@ -241,9 +241,8 @@ export class EditManager<
 			if (metadata !== undefined) {
 				const { sequenceId: id } = metadata;
 				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
-				if (id === this.oldestRevertibleSequenceId) {
-					this.oldestRevertibleSequenceId = undefined;
-					this.updateOldestRevertibleSequenceId(branch);
+				if (id === this._oldestRevertibleSequenceId) {
+					this._oldestRevertibleSequenceId = undefined;
 				}
 			}
 		};
@@ -289,10 +288,11 @@ export class EditManager<
 		}
 
 		// TODO get the oldest revertible sequence id from all registered branches, not just the local branch
-		if (this.oldestRevertibleSequenceId !== undefined) {
+		const oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId();
+		if (oldestRevertibleSequenceId !== undefined) {
 			// use a smaller sequence number so that the oldest revertible is not trimmed
 			const sequenceIdBeforeOldestRevertible: SequenceId = {
-				sequenceNumber: brand(this.oldestRevertibleSequenceId.sequenceNumber - 1),
+				sequenceNumber: brand(oldestRevertibleSequenceId.sequenceNumber - 1),
 			};
 			trunkTailSequenceId = minSequenceId(
 				trunkTailSequenceId,
@@ -542,8 +542,6 @@ export class EditManager<
 				true,
 			);
 			this.localBranch.rebaseOnto(this.trunk);
-
-			this.updateOldestRevertibleSequenceId(this.localBranch);
 			return;
 		}
 
