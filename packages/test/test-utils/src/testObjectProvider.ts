@@ -78,13 +78,14 @@ export interface ITestObjectProvider {
 	 */
 	updateDocumentId(url: IResolvedUrl | undefined): void;
 
-	logger: ITelemetryBaseLogger;
+	logger: EventAndErrorTrackingLogger | undefined;
 	documentServiceFactory: IDocumentServiceFactory;
 	urlResolver: IUrlResolver;
 	defaultCodeDetails: IFluidCodeDetails;
 	opProcessingController: IOpProcessingController;
 
 	ensureSynchronized(timeoutDuration?: number): Promise<void>;
+	resetLoaderContainerTracker(syncSummarizerClients?: boolean);
 	reset(): void;
 
 	documentId: string;
@@ -249,7 +250,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
 	private _logger: EventAndErrorTrackingLogger | undefined;
-	protected readonly _documentIdStrategy: IDocumentIdStrategy;
+	private readonly _documentIdStrategy: IDocumentIdStrategy;
 	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
 	protected _documentCreated = false;
 
@@ -485,68 +486,100 @@ export class TestObjectProvider implements ITestObjectProvider {
 }
 
 /**
- * Extension of {@link TestObjectProvider} that uses different versions to create and load containers.
+ * Implements {@link ITestObjectProvider}, but uses different versions to create and load containers.
  */
-export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
+export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
+	protected _loaderContainerTracker = new LoaderContainerTracker();
+	private _logger: EventAndErrorTrackingLogger | undefined;
+
+	private _documentServiceFactory: IDocumentServiceFactory | undefined;
+	private _urlResolver: IUrlResolver | undefined;
+	protected readonly _documentIdStrategy: IDocumentIdStrategy;
+
+	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
+	protected _documentCreated = false;
+
+	// `_loadCount` is used to alternate which version we load the next container with.
+	// If loadCount is even then we will load with the "create" version, and if odd we load with the "load" version.
+	// After each test we will reset loadCount to 0 to ensure we always create the first container with the create version.
+	// Note: This will only affect tests that load a container more than two times.
+	private _loadCount: number = 0;
+
 	constructor(
-		// The TestObjectProviderWithVersionedLoad accepts loaderConstructor and driver in two versions:
-		// `LoaderConstructorForCreating` represents the loader/driver used for creating containers
-		// `LoaderConstructorForLoading` is used to load test containers
-		// This is done by overriding the loadTestContainer method while using the corresponding "ForLoading" versions of driver/loader
 		public readonly LoaderConstructorForCreating: typeof Loader,
 		public readonly LoaderConstructorForLoading: typeof Loader,
+
 		public readonly driverForCreating: ITestDriver,
 		public readonly driverForLoading: ITestDriver,
-		public readonly createFluidEntryPoint: (
+
+		public readonly createFluidEntryPointForCreating: (
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
-		public readonly versionedCreateFluidEntryPoint: (
+		public readonly createFluidEntryPointForLoading: (
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
 	) {
-		super(LoaderConstructorForCreating, driverForCreating, createFluidEntryPoint);
+		// TODO: Which driver should we use, does it matter?
+		this._documentIdStrategy = getDocumentIdStrategy(driverForCreating.type);
 	}
 
-	// `_forceLoadWithLoaderForCreating` is used to alternate which Loader we load with. This is to simulate when multiple
-	// clients running different versions connect to the same container at the same time.
-	// Note: This only is relevant for tests that have more than two clients connecting to a container.
-	private _forceLoadWithLoaderForCreating = false;
-
-	private createLoaderForLoading(
-		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
-		loaderProps?: Partial<ILoaderProps>,
-	) {
-		const logger = createMultiSinkLogger({
-			loggers: [this.logger, loaderProps?.logger],
-		});
-
-		// If the last container was loaded with the LoaderForLoading, we force the next to load with LoaderForCreating
-		if (this._forceLoadWithLoaderForCreating === true) {
-			return this.createLoaderForCreating(packageEntries, loaderProps);
+	get logger(): EventAndErrorTrackingLogger {
+		if (this._logger === undefined) {
+			this._logger = new EventAndErrorTrackingLogger(
+				createChildLogger({
+					logger: getTestLogger?.(),
+				}),
+			);
 		}
+		return this._logger;
+	}
 
-		const loader = new this.LoaderConstructorForLoading({
-			...loaderProps,
-			logger,
-			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
-			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
-			documentServiceFactory:
-				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
-		});
+	set logger(logger: EventAndErrorTrackingLogger) {
+		this._logger = logger;
+	}
 
-		this._loaderContainerTracker.add(loader);
-		// Force the next container to be loaded with LoaderForCreating
-		this._forceLoadWithLoaderForCreating = true;
-		return loader;
+	get documentServiceFactory() {
+		if (!this._documentServiceFactory) {
+			// TODO: What are the implications of using one driver here?
+			this._documentServiceFactory = this.driverForCreating.createDocumentServiceFactory();
+		}
+		return this._documentServiceFactory;
+	}
+
+	get urlResolver() {
+		if (!this._urlResolver) {
+			// TODO: What are the implications of using one driver here?
+			this._urlResolver = this.driverForCreating.createUrlResolver();
+		}
+		return this._urlResolver;
+	}
+
+	get documentId() {
+		return this._documentIdStrategy.get();
+	}
+
+	get defaultCodeDetails() {
+		return defaultCodeDetails;
+	}
+
+	get opProcessingController(): IOpProcessingController {
+		return this._loaderContainerTracker;
+	}
+
+	get driver(): ITestDriver {
+		return this._loadCount % 2 === 0 ? this.driverForCreating : this.driverForLoading;
+	}
+
+	get createFluidEntryPoint(): (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint {
+		return this._loadCount % 2 === 0
+			? this.createFluidEntryPointForCreating
+			: this.createFluidEntryPointForLoading;
 	}
 
 	private createLoaderForCreating(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 	) {
-		// Ensure the next container is loaded with the LoaderForLoading
-		this._forceLoadWithLoaderForCreating = false;
-
 		const logger = createMultiSinkLogger({
 			loggers: [this.logger, loaderProps?.logger],
 		});
@@ -564,14 +597,35 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 		return loader;
 	}
 
+	private createLoaderForLoading(
+		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
+		loaderProps?: Partial<ILoaderProps>,
+	) {
+		const logger = createMultiSinkLogger({
+			loggers: [this.logger, loaderProps?.logger],
+		});
+
+		const loader = new this.LoaderConstructorForLoading({
+			...loaderProps,
+			logger,
+			codeLoader: loaderProps?.codeLoader ?? new LocalCodeLoader(packageEntries),
+			urlResolver: loaderProps?.urlResolver ?? this.urlResolver,
+			documentServiceFactory:
+				loaderProps?.documentServiceFactory ?? this.documentServiceFactory,
+		});
+
+		this._loaderContainerTracker.add(loader);
+		return loader;
+	}
+
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-		createLoaderForLoading: boolean = true,
 	) {
-		return createLoaderForLoading === true
-			? this.createLoaderForLoading(packageEntries, loaderProps)
-			: this.createLoaderForCreating(packageEntries, loaderProps);
+		// This will increment `_loadCount` AFTER each create call.
+		return this._loadCount++ % 2 === 0
+			? this.createLoaderForCreating(packageEntries, loaderProps)
+			: this.createLoaderForLoading(packageEntries, loaderProps);
 	}
 
 	public async createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>) {
@@ -580,21 +634,47 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 				"Only one container/document can be created. To load the container/document use loadContainer",
 			);
 		}
-		const loader = this.createLoader(
-			[[defaultCodeDetails, entryPoint]],
-			loaderProps,
-			/** createLoaderForLoading */ false,
-		);
+		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
 		const container = await createAndAttachContainer(
 			defaultCodeDetails,
 			loader,
-			this.driver.createCreateNewRequest(this.documentId),
+			this.driverForCreating.createCreateNewRequest(this.documentId),
 		);
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this._documentIdStrategy.update(container.resolvedUrl);
 		return container;
+	}
+
+	public async loadContainer(
+		entryPoint: fluidEntryPoint,
+		loaderProps?: Partial<ILoaderProps>,
+		requestHeader?: IRequestHeader,
+	): Promise<IContainer> {
+		// Keep track of which Loader we are about to use so we can pass the correct driver through
+		const driver = this._loadCount % 2 === 0 ? this.driverForCreating : this.driverForLoading;
+		const loader = this.createLoader([[defaultCodeDetails, entryPoint]], loaderProps);
+		return this.resolveContainer(loader, requestHeader, driver);
+	}
+
+	private async resolveContainer(
+		loader: ILoader,
+		headers?: IRequestHeader,
+		driver?: ITestDriver,
+	) {
+		return loader.resolve({
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			url: await driver!.createContainerUrl(this.documentId),
+			headers,
+		});
+	}
+
+	public makeTestLoader(testContainerConfig?: ITestContainerConfig) {
+		return this.createLoader(
+			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
+			testContainerConfig?.loaderProps,
+		);
 	}
 
 	public async makeTestContainer(
@@ -608,18 +688,69 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 		const loader = this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,
-			/** createLoaderForLoading */ false,
 		);
 		const container = await createAndAttachContainer(
 			defaultCodeDetails,
 			loader,
-			this.driver.createCreateNewRequest(this.documentId),
+			this.driverForCreating.createCreateNewRequest(this.documentId),
 		);
 		this._documentCreated = true;
 		// r11s driver will generate a new ID for the new container.
 		// update the document ID with the actual ID of the attached container.
 		this._documentIdStrategy.update(container.resolvedUrl);
 		return container;
+	}
+
+	public async loadTestContainer(
+		testContainerConfig?: ITestContainerConfig,
+		requestHeader?: IRequestHeader,
+	): Promise<IContainer> {
+		// Keep track of which Loader we are about to use so we can pass the correct driver through
+		const driver = this._loadCount % 2 === 0 ? this.driverForCreating : this.driverForLoading;
+		const loader = this.makeTestLoader(testContainerConfig);
+		const container = await this.resolveContainer(loader, requestHeader, driver);
+		await this.waitContainerToCatchUp(container);
+
+		return container;
+	}
+
+	public reset() {
+		this._loadCount = 0;
+		this._loaderContainerTracker.reset();
+		this._documentServiceFactory = undefined;
+		this._urlResolver = undefined;
+		this._documentIdStrategy.reset();
+		const logError = getUnexpectedLogErrorException(this._logger);
+		if (logError) {
+			throw logError;
+		}
+		this._logger = undefined;
+		this._documentCreated = false;
+	}
+
+	public async ensureSynchronized(): Promise<void> {
+		return this._loaderContainerTracker.ensureSynchronized();
+	}
+
+	public async waitContainerToCatchUp(container: IContainer) {
+		// The original waitContainerToCatchUp() from container loader uses either Container.resume()
+		// or Container.connect() as part of its implementation. However, resume() was deprecated
+		// and eventually replaced with connect(). To avoid issues during LTS compatibility testing
+		// with older container versions issues, we use resume() when connect() is unavailable.
+		if ((container as any).connect === undefined) {
+			(container as any).connect = (container as any).resume;
+		}
+
+		return waitContainerToCatchUp_original(container);
+	}
+
+	updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
+		this._documentIdStrategy.update(resolvedUrl);
+	}
+
+	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
+		this._loaderContainerTracker.reset();
+		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
 	}
 }
 

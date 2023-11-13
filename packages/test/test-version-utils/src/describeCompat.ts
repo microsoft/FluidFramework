@@ -4,11 +4,7 @@
  */
 
 import { createChildLogger } from "@fluidframework/telemetry-utils";
-import {
-	getUnexpectedLogErrorException,
-	ITestObjectProvider,
-	TestObjectProvider,
-} from "@fluidframework/test-utils";
+import { getUnexpectedLogErrorException, ITestObjectProvider } from "@fluidframework/test-utils";
 import { assert } from "@fluidframework/core-utils";
 import { CompatKind, driver, r11sEndpointName, tenantIndex } from "../compatOptions.cjs";
 import { configList, mochaGlobalSetup } from "./compatConfig.js";
@@ -47,7 +43,7 @@ function createCompatSuite(
 
 		for (const config of configs) {
 			describe(config.name, function () {
-				let provider: TestObjectProvider;
+				let provider: ITestObjectProvider;
 				let resetAfterEach: boolean;
 				let apis: CompatApis;
 

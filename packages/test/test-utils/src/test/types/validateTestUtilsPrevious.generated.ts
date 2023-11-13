@@ -199,6 +199,7 @@ declare function get_old_InterfaceDeclaration_ITestObjectProvider():
 declare function use_current_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<current.ITestObjectProvider>);
 use_current_InterfaceDeclaration_ITestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_ITestObjectProvider());
 
 /*
@@ -211,6 +212,7 @@ declare function get_current_InterfaceDeclaration_ITestObjectProvider():
 declare function use_old_InterfaceDeclaration_ITestObjectProvider(
     use: TypeOnly<old.ITestObjectProvider>);
 use_old_InterfaceDeclaration_ITestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_current_InterfaceDeclaration_ITestObjectProvider());
 
 /*
