@@ -6624,7 +6624,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -6634,7 +6633,6 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -6663,7 +6661,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -6673,7 +6670,6 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/migration-shim:
@@ -6982,7 +6978,6 @@ importers:
       '@types/node': ^16.18.38
       '@types/random-js': ^1.0.31
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -6993,7 +6988,6 @@ importers:
       prettier: ~3.0.3
       random-js: ^1.0.8
       rimraf: ^4.4.0
-      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -7025,7 +7019,6 @@ importers:
       '@types/node': 16.18.58
       '@types/random-js': 1.0.31
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -7036,7 +7029,6 @@ importers:
       prettier: 3.0.3
       random-js: 1.0.8
       rimraf: 4.4.1
-      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/dds/shared-object-base:
