@@ -717,7 +717,7 @@ describe("SharedTree", () => {
 			// Undo node insertion on both trees
 			undoStack1.pop()?.revert();
 			assert.deepEqual(root1.asArray, ["A", "B", "C", "y", "D"]);
-
+xw
 			undoStack2.pop()?.revert();
 			assert.deepEqual(root2.asArray, ["A", "x", "B", "C", "D"]);
 
@@ -742,6 +742,10 @@ describe("SharedTree", () => {
 			assert.deepEqual(tree2.editableTree.asArray, expectedAfterRedo);
 			unsubscribe1();
 			unsubscribe2();
+		});
+
+		it("can concurrently restore and edit removed tree", () => {xw
+			
 		});
 	});
 
