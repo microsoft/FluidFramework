@@ -218,6 +218,10 @@ export class EditManager<
 	private getOldestRevertibleSequenceId(
 		branch: SharedTreeBranch<TEditor, TChangeset>,
 	): SequenceId | undefined {
+		if (this.oldestRevertibleSequenceId !== undefined) {
+			return this.oldestRevertibleSequenceId;
+		}
+
 		let oldest: SequenceId | undefined;
 		for (const revision of branch.revertibleCommits()) {
 			if (oldest === undefined) {
@@ -544,11 +548,7 @@ export class EditManager<
 			);
 			this.localBranch.rebaseOnto(this.trunk);
 
-			if (this.oldestRevertibleSequenceId === undefined) {
-				this.oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId(
-					this.localBranch,
-				);
-			}
+			this.oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId(this.localBranch);
 			return;
 		}
 
