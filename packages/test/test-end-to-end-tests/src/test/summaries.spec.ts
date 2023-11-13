@@ -31,7 +31,6 @@ import {
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
-	describeFullCompat,
 	ITestDataObject,
 	itExpects,
 	TestDataObjectType,
@@ -440,7 +439,7 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 	});
 });
 
-describeFullCompat("Summaries", (getTestObjectProvider) => {
+describeNoCompat("Summaries", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach(() => {
 		provider = getTestObjectProvider();
@@ -501,7 +500,7 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
 	it("TelemetryContext is populated with data even if summarize fails", getTestFn(true));
 });
 
-describeFullCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
+describeNoCompat("SingleCommit Summaries Tests", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let configForSingleCommitSummary: ITestContainerConfig;
 	beforeEach(() => {

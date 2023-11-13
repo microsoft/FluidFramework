@@ -53,6 +53,7 @@ export interface AnchorEvents {
     afterChange(anchor: AnchorNode): void;
     afterDestroy(anchor: AnchorNode): void;
     beforeChange(anchor: AnchorNode): void;
+    childrenChanged(anchor: AnchorNode): void;
     childrenChanging(anchor: AnchorNode): void;
     subtreeChanging(anchor: AnchorNode): PathVisitor | void;
     valueChanging(anchor: AnchorNode, value: Value): void;
@@ -188,6 +189,9 @@ abstract class BrandedType<out ValueType, Name extends string> {
 
 // @alpha
 export function brandOpaque<T extends BrandedType<any, string>>(value: isAny<ValueFromBranded<T>> extends true ? never : ValueFromBranded<T>): BrandedType<ValueFromBranded<T>, NameFromBranded<T>>;
+
+// @alpha
+export function buildTreeConfiguration<T extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<T>): InitializeAndSchematizeConfiguration<T>;
 
 // @alpha
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
@@ -815,11 +819,10 @@ export function isContextuallyTypedNodeDataObject(data: ContextuallyTypedNodeDat
 export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : false;
 
 // @alpha
-export interface ISharedTree extends ISharedObject, TypedTreeChannel {
+export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
     requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): ITreeView<TRoot> | undefined;
-    // (undocumented)
-    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ITreeView<TRoot>;
+    schematizeInternal<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ITreeView<TRoot>;
 }
 
 // @alpha (undocumented)
@@ -836,6 +839,11 @@ export interface ITransaction {
     commit(): TransactionResult.Commit;
     inProgress(): boolean;
     start(): void;
+}
+
+// @alpha
+export interface ITree extends IChannel {
+    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): TreeView<ProxyField<TRoot>>;
 }
 
 // @alpha
@@ -910,11 +918,12 @@ export enum ITreeSubscriptionCursorState {
 }
 
 // @alpha
-export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDisposable, TypedTreeView<TRoot> {
+export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
     readonly checkout: ITreeCheckout;
     readonly context: TreeContext;
     readonly editableTree: TypedField<TRoot>;
     fork(): ITreeViewFork<TRoot>;
+    readonly root: ProxyField<TRoot>;
 }
 
 // @alpha
@@ -1913,6 +1922,7 @@ export const enum TreeNavigationResult {
 export interface TreeNode extends TreeEntity<TreeNodeSchema> {
     // (undocumented)
     [boxedIterator](): IterableIterator<TreeField>;
+    [onNextChange](fn: (node: TreeNode) => void): () => void;
     is<TSchema extends TreeNodeSchema>(schema: TSchema): this is TypedNode<TSchema>;
     // (undocumented)
     on<K extends keyof EditableTreeEvents>(eventName: K, listener: EditableTreeEvents[K]): () => void;
@@ -1999,6 +2009,12 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 ][_InlineTrick];
 
 // @alpha
+export interface TreeView<in out TRoot> extends IDisposable {
+    readonly events: ISubscribable<CheckoutEvents>;
+    readonly root: TRoot;
+}
+
+// @alpha
 type TypeArrayToTypedTreeArray<Mode extends ApiMode, T extends readonly TreeNodeSchema[]> = [
 T extends readonly [infer Head, ...infer Tail] ? [
 TypedNode_2<Assume<Head, TreeNodeSchema>, Mode>,
@@ -2052,19 +2068,14 @@ export type TypedNodeUnion<TTypes extends AllowedTypes> = TTypes extends Interna
 type TypedNodeUnionHelper<TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>> = InternalTypedSchemaTypes.ArrayToUnion<TypeArrayToTypedTreeArray_2<Assume<InternalTypedSchemaTypes.FlexListToNonLazyArray<TTypes>, readonly TreeNodeSchema[]>>>;
 
 // @alpha
-export interface TypedTreeChannel extends IChannel {
-    schematize<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): TypedTreeView<TRoot>;
-}
-
-// @alpha
 export class TypedTreeFactory implements IChannelFactory {
     constructor(options: TypedTreeOptions);
     // (undocumented)
     readonly attributes: IChannelAttributes;
     // (undocumented)
-    create(runtime: IFluidDataStoreRuntime, id: string): TypedTreeChannel;
+    create(runtime: IFluidDataStoreRuntime, id: string): ITree;
     // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<TypedTreeChannel>;
+    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, channelAttributes: Readonly<IChannelAttributes>): Promise<ITree>;
     // (undocumented)
     readonly type: string;
 }
@@ -2072,11 +2083,6 @@ export class TypedTreeFactory implements IChannelFactory {
 // @alpha
 export interface TypedTreeOptions extends SharedTreeOptions {
     readonly subtype: string;
-}
-
-// @alpha
-export interface TypedTreeView<in out TRoot extends TreeFieldSchema> {
-    readonly root: ProxyField<TRoot>;
 }
 
 // @alpha
@@ -2092,7 +2098,7 @@ type UnboxField<TSchema extends TreeFieldSchema, Emptiness extends "maybeEmpty" 
 type UnboxFieldInner<Kind extends FieldKind, TTypes extends AllowedTypes, Emptiness extends "maybeEmpty" | "notEmpty"> = Kind extends typeof FieldKinds.sequence ? Sequence<TTypes> : Kind extends typeof FieldKinds.required ? UnboxNodeUnion<TTypes> : Kind extends typeof FieldKinds.optional ? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined) : Kind extends typeof FieldKinds.nodeKey ? NodeKeyField : unknown;
 
 // @alpha
-type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema ? TreeValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? UnboxField<TSchema["objectNodeFieldsObject"][""]> : TSchema extends ObjectNodeSchema ? ObjectNodeTyped<TSchema> : UnknownUnboxed;
+type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafSchema ? TreeValue<TSchema["leafValue"]> : TSchema extends MapSchema ? MapNode<TSchema> : TSchema extends FieldNodeSchema ? FieldNode<TSchema> : TSchema extends ObjectNodeSchema ? ObjectNodeTyped<TSchema> : UnknownUnboxed;
 
 // @alpha
 type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
@@ -2114,7 +2120,7 @@ type UnbrandList<T extends unknown[], B> = T extends [infer Head, ...infer Tail]
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 // @alpha
-type UnknownUnboxed = TreeValue | TreeNode | TreeField;
+type UnknownUnboxed = TreeValue | TreeNode;
 
 // @alpha
 type UntypedApi<Mode extends ApiMode> = {

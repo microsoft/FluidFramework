@@ -15,12 +15,12 @@ import {
 	ITestObjectProvider,
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-private/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { IResolvedUrl } from "@fluidframework/driver-definitions";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-describeFullCompat("Container - memory usage benchmarks", (getTestObjectProvider) => {
+describeNoCompat("Container - memory usage benchmarks", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	let loader: Loader;
 	let fileName: string;

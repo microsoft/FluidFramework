@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
-import { ProxyNode, typeNameSymbol } from "../../../feature-libraries";
+import { ProxyNode, Tree, typeNameSymbol } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../../feature-libraries/editable-tree-2/proxies/proxies";
 import { viewWithContent } from "../../utils";
@@ -196,6 +196,37 @@ describe("SharedTreeObject factories", () => {
 		});
 	});
 
+	it("produce proxies that are hydrated before the tree can be read", () => {
+		// This regression test ensures that proxies can be produced by reading the tree during change events.
+		// Previously, this was not handled correctly because proxies would not be hydrated until after all change
+		// events fired. If a user read the tree during a change event and produced a proxy, that proxy would not
+		// be the same as the one that is about to be hydrated for the same underlying edit node, and thus hydration
+		// would fail because it tried to map an edit node which already had a proxy to a different proxy.
+		// TODO: remove any cast when `viewWithContent` is properly typed with proxy types
+		const view = viewWithContent({ schema, initialTree: initialTree as any });
+		function readData() {
+			const objectContent = view.root.child.content;
+			assert(objectContent !== undefined);
+			const listContent = view.root.grand.child.list[view.root.grand.child.list.length - 1];
+			assert(listContent !== undefined);
+			const mapContent = view.root.grand.child.map.get("a");
+			assert(mapContent !== undefined);
+		}
+		Tree.on(view.root, "beforeChange", () => {
+			readData();
+		});
+		Tree.on(view.root, "afterChange", () => {
+			readData();
+		});
+		view.checkout.events.on("afterBatch", () => {
+			readData();
+		});
+		const content = { content: 3 };
+		view.root.child = childA.create(content);
+		view.root.grand.child.list.insertAtEnd([childA.create(content)]);
+		view.root.grand.child.map.set("a", childA.create(content));
+	});
+
 	describe("produce proxies that can be read after insertion for trees of", () => {
 		// This suite ensures that object proxies created via `foo.create` are "hydrated" after they are inserted into the tree.
 		// After insertion, each of those proxies should be the same object as the corresponding proxy in the tree.
@@ -339,14 +370,16 @@ describe("SharedTreeObject factories", () => {
 			return { tree: createComboRoot(), objects };
 		}
 
-		const view = viewWithContent({ schema: comboSchema, initialTree: { root: undefined } });
-
 		const objectTypes = ["object", "list", "map"] as const;
 		for (const root of objectTypes) {
 			for (const parent of objectTypes) {
 				for (const child of objectTypes) {
 					// Generate a test for all permutations of object, list and map
 					it(`${root} → ${parent} → ${child}`, () => {
+						const view = viewWithContent({
+							schema: comboSchema,
+							initialTree: { root: undefined },
+						});
 						const { tree, objects: rawObjects } = createComboTree({
 							root,
 							parent,
@@ -356,17 +389,26 @@ describe("SharedTreeObject factories", () => {
 							// Before insertion, inspecting a raw object should fail
 							assert.throws(() => object.id);
 						}
-						view.root.root = tree;
-						const treeObjects = [...walkComboObjectTree(view.root.root)];
-						assert.equal(rawObjects.length, treeObjects.length);
-						// Sort the objects we built in the same way as the objects in the tree so that we can compare them below
-						rawObjects.sort((a, b) => a.id - b.id);
-						treeObjects.sort((a, b) => a.id - b.id);
-						for (let i = 0; i < rawObjects.length; i++) {
-							assert.equal(rawObjects[i].id, treeObjects[i].id);
-							// Each raw object should be reference equal (not merely deeply equal) to the corresponding object in the tree.
-							assert.equal(rawObjects[i], treeObjects[i]);
+
+						function validate(): void {
+							assert(view.root.root !== undefined);
+							const treeObjects = [...walkComboObjectTree(view.root.root)];
+							assert.equal(rawObjects.length, treeObjects.length);
+							// Sort the objects we built in the same way as the objects in the tree so that we can compare them below
+							rawObjects.sort((a, b) => a.id - b.id);
+							treeObjects.sort((a, b) => a.id - b.id);
+							for (let i = 0; i < rawObjects.length; i++) {
+								assert.equal(rawObjects[i].id, treeObjects[i].id);
+								// Each raw object should be reference equal (not merely deeply equal) to the corresponding object in the tree.
+								assert.equal(rawObjects[i], treeObjects[i]);
+							}
 						}
+
+						// Ensure that the proxies can be read during the change, as well as after
+						Tree.on(view.root, "afterChange", () => validate());
+						view.checkout.events.on("afterBatch", () => validate());
+						view.root.root = tree;
+						validate();
 					});
 				}
 			}
