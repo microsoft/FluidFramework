@@ -537,7 +537,6 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 		this._loaderContainerTracker.add(loader);
 		// Force the next container to be loaded with LoaderForCreating
 		this._forceLoadWithLoaderForCreating = true;
-		console.log("createLoaderForLoading");
 		return loader;
 	}
 
@@ -562,7 +561,6 @@ export class TestObjectProviderWithVersionedLoad extends TestObjectProvider {
 		});
 
 		this._loaderContainerTracker.add(loader);
-		console.log("createLoaderForCreating");
 		return loader;
 	}
 
