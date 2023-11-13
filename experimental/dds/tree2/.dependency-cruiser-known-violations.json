@@ -40,7 +40,7 @@
       "src/feature-libraries/editable-tree-2/proxies/index.ts",
       "src/feature-libraries/editable-tree-2/proxies/node.ts",
       "src/feature-libraries/editable-tree-2/proxies/proxies.ts",
-      "src/feature-libraries/editable-tree-2/proxies/toEditTree.ts",
+      "src/feature-libraries/editable-tree-2/proxies/proxyNodeCursor.ts",
       "src/domains/leafDomain.ts"
     ]
   },
@@ -204,32 +204,18 @@
   {
     "type": "cycle",
     "from": "src/feature-libraries/editable-tree-2/proxies/proxies.ts",
-    "to": "src/feature-libraries/editable-tree-2/proxies/toEditTree.ts",
+    "to": "src/feature-libraries/editable-tree-2/proxies/proxyNodeCursor.ts",
     "rule": {
       "severity": "error",
       "name": "no-circular"
     },
     "cycle": [
-      "src/feature-libraries/editable-tree-2/proxies/toEditTree.ts",
+      "src/feature-libraries/editable-tree-2/proxies/proxyNodeCursor.ts",
       "src/domains/leafDomain.ts",
       "src/feature-libraries/index.ts",
       "src/feature-libraries/editable-tree-2/index.ts",
       "src/feature-libraries/editable-tree-2/proxies/index.ts",
       "src/feature-libraries/editable-tree-2/proxies/proxies.ts"
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/feature-libraries/editable-tree-2/proxies/toEditTree.ts",
-    "to": "src/feature-libraries/editable-tree-2/proxies/node.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/feature-libraries/editable-tree-2/proxies/node.ts",
-      "src/feature-libraries/editable-tree-2/proxies/proxies.ts",
-      "src/feature-libraries/editable-tree-2/proxies/toEditTree.ts"
     ]
   },
   {
@@ -247,7 +233,7 @@
       "src/feature-libraries/editable-tree-2/proxies/index.ts",
       "src/feature-libraries/editable-tree-2/proxies/node.ts",
       "src/feature-libraries/editable-tree-2/proxies/proxies.ts",
-      "src/feature-libraries/editable-tree-2/proxies/toEditTree.ts",
+      "src/feature-libraries/editable-tree-2/proxies/proxyNodeCursor.ts",
       "src/domains/leafDomain.ts",
       "src/feature-libraries/index.ts"
     ]
