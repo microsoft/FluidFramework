@@ -78,7 +78,7 @@ describe("Fuzz - undo/redo", () => {
 			for (const client of initialState.clients) {
 				const view = viewFromState(initialState, client)
 					.checkout as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
@@ -168,7 +168,7 @@ describe("Fuzz - undo/redo", () => {
 			for (const client of initialState.clients) {
 				const view = viewFromState(initialState, client)
 					.checkout as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
@@ -259,7 +259,7 @@ describe("Fuzz - undo/redo", () => {
 			for (const client of initialState.clients) {
 				const view = viewFromState(initialState, client)
 					.checkout as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;

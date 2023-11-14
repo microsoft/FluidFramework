@@ -4,14 +4,14 @@
  */
 
 import { Assume } from "../../../util";
-import { ObjectNodeSchema, TreeNodeSchema } from "../../typed-schema";
+import { ObjectNodeSchema, TreeNodeSchemaBase } from "../../typed-schema";
 import { createRawObjectProxy } from "./proxies";
 import { ProxyNode, SharedTreeObject } from "./types";
 
 /**
  * Adds a factory function (`create`) to the given schema so that it satisfies the {@link SharedTreeObjectFactory} interface.
  */
-export function addFactory<TSchema extends ObjectNodeSchema>(
+export function addFactory<TSchema extends ObjectNodeSchema<string, any>>(
 	schema: TSchema,
 ): FactoryTreeSchema<TSchema> {
 	return Object.defineProperty(schema, "create", {
@@ -26,7 +26,7 @@ export function addFactory<TSchema extends ObjectNodeSchema>(
  * Creates `{@link SharedTreeObject}`s of the given schema type via a `create` method.
  * @alpha
  */
-export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, unknown>> {
+export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
 	/**
 	 * Create a {@link SharedTreeObject} that can be inserted into the tree via assignment `=`.
 	 * @param content - the data making up the {@link SharedTreeObject} to be created.
@@ -43,5 +43,5 @@ export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchema<string, 
  * A {@link TreeNodeSchema} which is also a {@link SharedTreeObjectFactory}.
  * @alpha
  */
-export type FactoryTreeSchema<TSchema extends TreeNodeSchema<string, unknown>> = TSchema &
+export type FactoryTreeSchema<TSchema extends TreeNodeSchemaBase> = TSchema &
 	SharedTreeObjectFactory<TSchema>;
