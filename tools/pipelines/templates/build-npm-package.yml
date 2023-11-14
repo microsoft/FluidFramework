@@ -430,7 +430,7 @@ extends:
                         ${{ parameters.buildDirectory
                         }}/packages/test/test-end-to-end-tests/tinylicious.log
                       artifactName: tinyliciousLog_attempt-$(System.JobAttempt)
-                      sbomBuildDropPath: ${{ parameters.buildDirectory}}/packages/test/test-end-to-end-tests
+                      sbomEnabled: false
                       publishLocation: pipeline
                 - '${{ if ne(parameters.taskPack, false) }}':
                     - output: pipelineArtifact
