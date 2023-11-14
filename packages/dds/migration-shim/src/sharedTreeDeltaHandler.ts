@@ -5,9 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
-import { type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
-import { attributesMatch, messageStampMatchesAttributes } from "./utils.js";
+import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import { type IOpContents, type IShimDeltaHandler } from "./types.js";
+import { attributesMatch } from "./utils.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the SharedTreeShim distributed data structure.
@@ -53,7 +53,13 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		// Drop v1 ops
-		if (!messageStampMatchesAttributes(message, this.attributes)) {
+		assert(this.hasTreeDeltaHandler(), "Can't process ops before attaching tree handler");
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+		if (message.type !== MessageType.Operation) {
+			return;
+		}
+		const contents = message.contents as IOpContents;
+		if (this.shouldDropOp(contents)) {
 			return;
 		}
 		return this.handler.process(message, local, localOpMetadata);
@@ -65,37 +71,49 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	}
 
 	// Resubmitting v1 ops should fail. We should not be resubmitting v1 ops.
-	public reSubmit(message: unknown, localOpMetadata: unknown): void {
-		if (this.shouldDropOp(message as IStampedContents)) {
-			return;
-		}
-		return this.handler.reSubmit(message, localOpMetadata);
+	public reSubmit(contents: unknown, localOpMetadata: unknown): void {
+		assert(
+			!this.shouldDropOp(contents as IOpContents),
+			"Should not be able to rollback v1 ops as they shouldn't have been created locally.",
+		);
+		return this.handler.reSubmit(contents, localOpMetadata);
 	}
 
 	// We are not capable of applying stashed v1 ops.
-	public applyStashedOp(message: unknown): unknown {
-		if (this.shouldDropOp(message as IStampedContents)) {
+	public applyStashedOp(contents: unknown): unknown {
+		if (this.shouldDropOp(contents as IOpContents)) {
 			return;
 		}
-		return this.handler.applyStashedOp(message);
+		return this.handler.applyStashedOp(contents);
 	}
 
-	// We cannot rollback v1 ops.
-	public rollback?(message: unknown, localOpMetadata: unknown): void {
-		if (this.shouldDropOp(message as IStampedContents)) {
-			return;
-		}
-		return this.handler.rollback?.(message, localOpMetadata);
+	/**
+	 * We cannot rollback v1 ops, we have already migrated and are in v2 state, thus we should not be able to generate.
+	 * v1 ops
+	 */
+	public rollback?(contents: unknown, localOpMetadata: unknown): void {
+		assert(
+			!this.shouldDropOp(contents as IOpContents),
+			"Should not be able to rollback v1 ops as they shouldn't have been created locally.",
+		);
+		return this.handler.rollback?.(contents, localOpMetadata);
 	}
 
-	private shouldDropOp(message: IStampedContents): boolean {
-		if (message.fluidMigrationStamp === undefined) {
+	/**
+	 * The SharedTreeShimDeltaHandler is already in a v2 state. Thus it should drop all v1 and migrate ops.
+	 * @param contents - the interrogable op contents to figure out if this is a v1 op, a migrate op, or a v2 op.
+	 * @returns whether or not the op is a v1 or migrate op and should be dropped/ignored.
+	 */
+	private shouldDropOp(contents: IOpContents): boolean {
+		if (contents.fluidMigrationStamp === undefined) {
 			return true;
 		}
 
-		if (attributesMatch(message.fluidMigrationStamp, this.attributes)) {
-			return false;
-		}
-		return true;
+		// Don't drop v2 ops in v2 state
+		assert(
+			attributesMatch(contents.fluidMigrationStamp, this.attributes),
+			"Unexpected v2 op with mismatched attributes",
+		);
+		return false;
 	}
 }

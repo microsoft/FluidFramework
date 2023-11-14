@@ -31,7 +31,7 @@ import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChanne
 import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
 import { PreMigrationDeltaConnection, StampDeltaConnection } from "./shimDeltaConnection.js";
 import { ShimHandle } from "./shimHandle.js";
-import { type IShim, type IStampedContents } from "./types.js";
+import { type IShim, type IOpContents } from "./types.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -138,7 +138,7 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	private newTree: ISharedTree | undefined;
 
-	private readonly submitLocalMessage = (message: IStampedContents): void => {
+	private readonly submitLocalMessage = (message: IOpContents): void => {
 		// This is a copy of submit local message from SharedObject
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -163,7 +163,6 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 
 	public async load(services: IChannelServices): Promise<void> {
 		const shimServices =
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);

@@ -6,11 +6,9 @@
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
-import { type IStampedContents, type IShimDeltaHandler } from "./types.js";
-import {
-	attributesMatch,
-	messageStampMatchesAttributes,
-} from "./utils.js";
+import { type IOpContents, type IShimDeltaHandler } from "./types.js";
+import { attributesMatch } from "./utils.js";
+import { type IMigrationOp } from "./migrationShim.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
@@ -30,7 +28,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 			local: boolean,
 			localOpMetadata: unknown,
 		) => boolean,
-		private readonly submitLocalMessage: (message: IStampedContents) => void,
+		private readonly submitLocalMessage: (message: IOpContents) => void,
 		private readonly attributes: IChannelAttributes,
 	) {}
 	// Introduction of invariant, we always expect an old handler.
@@ -98,15 +96,15 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		) {
 			return;
 		}
-		if (this.isUsingOldV1()) {
-			if (this.processMigrateOp(message, local, localOpMetadata)) {
-				return;
-			}
-		} else {
-			// Drop v1 ops
-			if (!messageStampMatchesAttributes(message, this.attributes)) {
-				return;
-			}
+
+		const contents = message.contents as IOpContents;
+		if (this.isInV1StateAndIsBarrierOp(contents)) {
+			this.processMigrateOp(message, local, localOpMetadata);
+			return;
+		}
+
+		if (this.shouldDropOp(contents)) {
+			return;
 		}
 		// Another thought, flatten the IShimDeltaHandler and the MigrationShim into one class
 		return this.treeDeltaHandler.process(message, local, localOpMetadata);
@@ -116,39 +114,54 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	public setConnectionState(connected: boolean): void {
 		return this.treeDeltaHandler.setConnectionState(connected);
 	}
-	public reSubmit(message: IStampedContents, localOpMetadata: unknown): void {
-		if (this.isUsingOldV1() && this.isBarrierOp(message)) {
-			this.submitLocalMessage(message);
+	public reSubmit(contents: unknown, localOpMetadata: unknown): void {
+		const opContents = contents as IOpContents;
+		if (this.isInV1StateAndIsBarrierOp(opContents)) {
+			this.submitLocalMessage(opContents);
 			return;
 		}
 
-		if (this.shouldDropOp(message)) {
+		if (this.shouldDropOp(opContents)) {
 			return;
 		}
-		return this.treeDeltaHandler.reSubmit(message, localOpMetadata);
+		return this.treeDeltaHandler.reSubmit(contents, localOpMetadata);
 	}
-	public applyStashedOp(message: IStampedContents): unknown {
-		if (this.isUsingOldV1() && this.isBarrierOp(message)) {
+
+	public applyStashedOp(contents: unknown): unknown {
+		const opContents = contents as IOpContents;
+		if (this.isInV1StateAndIsBarrierOp(opContents)) {
 			return undefined;
 		}
 
-		if (this.shouldDropOp(message)) {
+		if (this.shouldDropOp(opContents)) {
 			return undefined;
 		}
-		return this.treeDeltaHandler.applyStashedOp(message);
+		return this.treeDeltaHandler.applyStashedOp(contents);
 	}
-	public rollback?(message: IStampedContents, localOpMetadata: unknown): void {
-		if (this.isBarrierOp(message)) {
+
+	public rollback?(contents: unknown, localOpMetadata: unknown): void {
+		const opContents = contents as IOpContents;
+		if (this.isBarrierOp(opContents)) {
 			throw new Error("MigrationShim does not support rollback of barrier ops");
 		}
-		return this.treeDeltaHandler.rollback?.(message, localOpMetadata);
+		return this.treeDeltaHandler.rollback?.(contents, localOpMetadata);
 	}
 
-	private isBarrierOp(message: IStampedContents): boolean {
-		return message.type === "barrier";
+	private isBarrierOp(contents: IOpContents): contents is IMigrationOp {
+		return contents.type === "barrier";
 	}
 
-	private shouldDropOp(message: IStampedContents): boolean {
+	private isInV1StateAndIsBarrierOp(contents: IOpContents): boolean {
+		return this.isUsingOldV1() && this.isBarrierOp(contents);
+	}
+
+	/**
+	 * We should drop an op when we are v2 state and the op is a v1 op or a migrate op.
+	 *
+	 * @param contents - op contents we expect to interrogate, this could be anything
+	 * @returns whether or not we should drop the op
+	 */
+	private shouldDropOp(contents: IOpContents): boolean {
 		assert(!this.isPreAttachState(), "Can't process ops before attaching tree handler");
 		// Don't drop ops when we are in v1 state
 		if (this.isUsingOldV1()) {
@@ -156,16 +169,15 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		}
 
 		// Drop v1 ops when in v2 state
-		if (message.fluidMigrationStamp === undefined) {
+		if (contents.fluidMigrationStamp === undefined) {
 			return true;
 		}
 
 		// Don't drop v2 ops in v2 state
-		if (attributesMatch(message.fluidMigrationStamp, this.attributes)) {
-			return false;
-		}
-
-		// This means the op has a migration stamp so it's v2 but the attributes don't match
-		throw new Error("Unexpected op with mismatched attributes");
+		assert(
+			attributesMatch(contents.fluidMigrationStamp, this.attributes),
+			"Unexpected v2 op with mismatched attributes",
+		);
+		return false;
 	}
 }

@@ -35,10 +35,13 @@ export interface IShimDeltaHandler extends IDeltaHandler {
 
 /**
  * An interface for interrogating ops to see if they are stamped or not so that we can choose to drop them.
+ *
+ * Since contents could be of type `any`, and we only specifically care about whether or not the op is a migrate op or
+ * a stamped v2 op, we need to be able to interrogate the contents of the op to see if it is a migrate op or v2 op.
  */
-export interface IStampedContents {
-	type: string;
-	fluidMigrationStamp?: IChannelAttributes;
+export interface IOpContents {
+	type?: string; // If this type specifically === "barrier", then we know we are dealing with a barrier op
+	fluidMigrationStamp?: IChannelAttributes; // If this is present, then we know we are dealing with a v2 op
 }
 
 /**

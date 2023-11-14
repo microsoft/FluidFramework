@@ -4,8 +4,6 @@
  */
 
 import { type IChannelAttributes } from "@fluidframework/datastore-definitions";
-import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { type IStampedContents } from "./types.js";
 
 /**
  * Checks if two channel attributes objects match.
@@ -22,31 +20,4 @@ export function attributesMatch(
 		attributes1.packageVersion === attributes2.packageVersion &&
 		attributes1.snapshotFormatVersion === attributes2.snapshotFormatVersion
 	);
-}
-
-/**
- * This determines whether the message is stamped in the v2 format.
- *
- * @param message - the wrapped ISequenceDocumentMessage, the "op" envelope
- * @param attributes - the v2 attributes we expect to accept
- * @returns true if the message is stamped in the v2 format
- */
-export function messageStampMatchesAttributes(
-	message: ISequencedDocumentMessage,
-	attributes: IChannelAttributes,
-): boolean {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-	if (message.type !== MessageType.Operation) {
-		return false;
-	}
-	const content = message.contents as IStampedContents;
-	// Drop v1 ops
-	if (
-		content.fluidMigrationStamp === undefined ||
-		!attributesMatch(content.fluidMigrationStamp, attributes)
-	) {
-		return false;
-	}
-
-	return true;
 }
