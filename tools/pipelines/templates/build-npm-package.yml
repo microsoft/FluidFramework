@@ -100,7 +100,7 @@ extends:
   template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
-      name: NewLarge
+      name: NewLarge-linux-1ES
       os: linux
     sdl:
       arrow:
