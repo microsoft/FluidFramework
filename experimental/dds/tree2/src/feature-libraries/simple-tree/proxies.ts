@@ -20,16 +20,16 @@ import {
 } from "../typed-schema";
 import { FieldKinds } from "../default-field-kinds";
 import {
-	FieldNode,
+	FlexTreeFieldNode,
 	FlexibleFieldContent,
-	MapNode,
-	ObjectNode,
-	OptionalField,
-	RequiredField,
-	Sequence,
-	TreeNode,
-	TypedField,
-	UnknownUnboxed,
+	FlexTreeMapNode,
+	FlexTreeObjectNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
+	FlexTreeNode,
+	FlexTreeTypedField,
+	FlexTreeUnknownUnboxed,
 	onNextChange,
 } from "../flex-tree";
 import { EmptyKey, FieldKey } from "../../core";
@@ -42,7 +42,7 @@ import {
 	ProxyField,
 	ProxyNode,
 	ProxyNodeUnion,
-	SharedTreeList,
+	TreeList,
 	SharedTreeMap,
 	SharedTreeObject,
 } from "./types";
@@ -50,11 +50,13 @@ import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
-	field: TypedField<TSchema>,
+	field: FlexTreeTypedField<TSchema>,
 ): ProxyField<TSchema> {
 	switch (field.schema.kind) {
 		case FieldKinds.required: {
-			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.required>>;
+			const asValue = field as FlexTreeTypedField<
+				TreeFieldSchema<typeof FieldKinds.required>
+			>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -62,7 +64,9 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 			return getOrCreateNodeProxy(asValue.boxedContent) as ProxyField<TSchema>;
 		}
 		case FieldKinds.optional: {
-			const asValue = field as TypedField<TreeFieldSchema<typeof FieldKinds.optional>>;
+			const asValue = field as FlexTreeTypedField<
+				TreeFieldSchema<typeof FieldKinds.optional>
+			>;
 
 			// TODO: Ideally, we would return leaves without first boxing them.  However, this is not
 			//       as simple as calling '.content' since this skips the node and returns the FieldNode's
@@ -88,7 +92,7 @@ export function getProxyForField<TSchema extends TreeFieldSchema>(
 }
 
 export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
-	editNode: TreeNode,
+	editNode: FlexTreeNode,
 ): ProxyNode<TSchema> {
 	const cachedProxy = tryGetEditNodeTarget(editNode);
 	if (cachedProxy !== undefined) {
@@ -102,15 +106,18 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 	if (schemaIsMap(schema)) {
 		return setEditNode(
 			createMapProxy(),
-			editNode as MapNode<MapNodeSchema>,
+			editNode as FlexTreeMapNode<MapNodeSchema>,
 		) as ProxyNode<TSchema>;
 	} else if (schemaIsFieldNode(schema)) {
 		return setEditNode(
 			createListProxy(),
-			editNode as FieldNode<FieldNodeSchema>,
+			editNode as FlexTreeFieldNode<FieldNodeSchema>,
 		) as ProxyNode<TSchema>;
 	} else if (schemaIsObjectNode(schema)) {
-		return setEditNode(createObjectProxy(schema), editNode as ObjectNode) as ProxyNode<TSchema>;
+		return setEditNode(
+			createObjectProxy(schema),
+			editNode as FlexTreeObjectNode,
+		) as ProxyNode<TSchema>;
 	} else {
 		fail("unrecognized node kind");
 	}
@@ -157,8 +164,8 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 					case FieldKinds.required:
 					case FieldKinds.optional: {
 						const typedField = field as
-							| RequiredField<AllowedTypes>
-							| OptionalField<AllowedTypes>;
+							| FlexTreeRequiredField<AllowedTypes>
+							| FlexTreeOptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
 						modifyChildren(
@@ -207,8 +214,8 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
  * Given a list proxy, returns its underlying LazySequence field.
  */
 const getSequenceField = <TTypes extends AllowedTypes>(
-	list: SharedTreeList<AllowedTypes, "javaScript">,
-) => getEditNode(list).content as Sequence<TTypes>;
+	list: TreeList<AllowedTypes, "javaScript">,
+) => getEditNode(list).content as FlexTreeSequenceField<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
@@ -243,15 +250,15 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	at: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			index: number,
-		): UnknownUnboxed | undefined {
+		): FlexTreeUnknownUnboxed | undefined {
 			return getSequenceField(this).at(index);
 		},
 	},
 	insertAt: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			index: number,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
@@ -265,7 +272,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAtStart: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
@@ -278,7 +285,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAtEnd: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
@@ -293,24 +300,20 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	removeAt: {
-		value(this: SharedTreeList<AllowedTypes, "javaScript">, index: number): void {
+		value(this: TreeList<AllowedTypes, "javaScript">, index: number): void {
 			getSequenceField(this).removeAt(index);
 		},
 	},
 	removeRange: {
-		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
-			start?: number,
-			end?: number,
-		): void {
+		value(this: TreeList<AllowedTypes, "javaScript">, start?: number, end?: number): void {
 			getSequenceField(this).removeRange(start, end);
 		},
 	},
 	moveToStart: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			sourceIndex: number,
-			source?: SharedTreeList<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
@@ -321,9 +324,9 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveToEnd: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			sourceIndex: number,
-			source?: SharedTreeList<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
@@ -334,10 +337,10 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveToIndex: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			index: number,
 			sourceIndex: number,
-			source?: SharedTreeList<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
@@ -348,10 +351,10 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToStart: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: SharedTreeList<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToStart(
@@ -366,10 +369,10 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToEnd: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: SharedTreeList<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToEnd(
@@ -384,11 +387,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToIndex: {
 		value(
-			this: SharedTreeList<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			index: number,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: SharedTreeList<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToIndex(
@@ -474,7 +477,7 @@ function asIndex(key: string | symbol, length: number) {
 	}
 }
 
-function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> {
+function createListProxy<TTypes extends AllowedTypes>(): TreeList<TTypes> {
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
 	// the proxy target to be a plain JS array (see comments below when we instantiate the Proxy).
 	// Own properties on the dispatch object are surfaced as own properties of the proxy.
@@ -483,7 +486,7 @@ function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> 
 	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
 	const dispatch: object = Object.create(listPrototype, {
 		length: {
-			get(this: SharedTreeList<AllowedTypes, "javaScript">) {
+			get(this: TreeList<AllowedTypes, "javaScript">) {
 				return getSequenceField(this).length;
 			},
 			set() {},
@@ -495,7 +498,7 @@ function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> 
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
 	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
-	const proxy: SharedTreeList<TTypes> = new Proxy<SharedTreeList<TTypes>>([] as any, {
+	const proxy: TreeList<TTypes> = new Proxy<TreeList<TTypes>>([] as any, {
 		get: (target, key) => {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);
@@ -693,7 +696,7 @@ export function createRawObjectProxy<TSchema extends ObjectNodeSchema>(
 	return setEditNode(proxy, editNode);
 }
 
-type ProxyHydrator = (editNode: TreeNode | undefined) => void;
+type ProxyHydrator = (editNode: FlexTreeNode | undefined) => void;
 const noopHydrator: ProxyHydrator = () => {};
 
 /** The result returned by {@link extractFactoryContent} and its related helpers. */
@@ -770,12 +773,15 @@ function extractContentArray<T extends ProxyNode<TreeNodeSchema, "javaScript">[]
 	}
 	return {
 		content: output,
-		hydrateProxies: (editNode: TreeNode | undefined) => {
+		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
 			assert(editNode !== undefined, "Expected edit node to be defined when hydrating list");
 			assert(schemaIsFieldNode(editNode.schema), "Expected field node when hydrating list");
 			hydrators.forEach(([i, hydrate]) =>
 				hydrate(
-					getListChildNode(editNode as FieldNode<FieldNodeSchema>, insertedAtIndex + i),
+					getListChildNode(
+						editNode as FlexTreeFieldNode<FieldNodeSchema>,
+						insertedAtIndex + i,
+					),
 				),
 			);
 		},
@@ -797,11 +803,11 @@ function extractContentMap<T extends Map<string, ProxyNode<TreeNodeSchema, "java
 	}
 	return {
 		content: output,
-		hydrateProxies: (editNode: TreeNode | undefined) => {
+		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
 			assert(editNode !== undefined, "Expected edit node to be defined when hydrating map");
 			assert(schemaIsMap(editNode.schema), "Expected map node when hydrating map");
 			hydrators.forEach(([key, hydrate]) =>
-				hydrate(getMapChildNode(editNode as MapNode<MapNodeSchema>, key)),
+				hydrate(getMapChildNode(editNode as FlexTreeMapNode<MapNodeSchema>, key)),
 			);
 		},
 	};
@@ -837,56 +843,66 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 
 	return {
 		content: output as T,
-		hydrateProxies: (editNode: TreeNode | undefined) => {
+		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
 			assert(
 				editNode !== undefined,
 				"Expected edit node to be defined when hydrating object",
 			);
-			setEditNode(input as SharedTreeObject<ObjectNodeSchema>, editNode as ObjectNode); // This makes the input proxy usable and updates the proxy cache
+			setEditNode(
+				input as SharedTreeObject<ObjectNodeSchema>,
+				editNode as FlexTreeObjectNode,
+			); // This makes the input proxy usable and updates the proxy cache
 			assert(
 				schemaIsObjectNode(editNode.schema),
 				"Expected object node when hydrating object content",
 			);
 			hydrators.forEach(([key, hydrate]) =>
-				hydrate(getObjectChildNode(editNode as ObjectNode, key)),
+				hydrate(getObjectChildNode(editNode as FlexTreeObjectNode, key)),
 			);
 		},
 	};
 }
 
-function getListChildNode(listNode: FieldNode<FieldNodeSchema>, index: number): TreeNode {
+function getListChildNode(
+	listNode: FlexTreeFieldNode<FieldNodeSchema>,
+	index: number,
+): FlexTreeNode {
 	const field = listNode.tryGetField(EmptyKey);
 	assert(
 		field?.schema.kind === FieldKinds.sequence,
 		"Expected sequence field when hydrating list",
 	);
-	return (field as Sequence<AllowedTypes>).boxedAt(index);
+	return (field as FlexTreeSequenceField<AllowedTypes>).boxedAt(index);
 }
 
-function getMapChildNode(mapNode: MapNode<MapNodeSchema>, key: string): TreeNode | undefined {
+function getMapChildNode(
+	mapNode: FlexTreeMapNode<MapNodeSchema>,
+	key: string,
+): FlexTreeNode | undefined {
 	const field = mapNode.getBoxed(key);
 	assert(
 		field.schema.kind === FieldKinds.optional,
 		"Sequence field kind is unsupported as map values",
 	);
-	return (field as OptionalField<AllowedTypes>).boxedContent;
+	return (field as FlexTreeOptionalField<AllowedTypes>).boxedContent;
 }
 
-function getObjectChildNode(objectNode: ObjectNode, key: string): TreeNode | undefined {
+function getObjectChildNode(objectNode: FlexTreeObjectNode, key: string): FlexTreeNode | undefined {
 	const field =
 		objectNode.tryGetField(brand(key)) ?? fail("Expected a field for inserted content");
 	assert(
 		field.schema.kind === FieldKinds.required || field.schema.kind === FieldKinds.optional,
 		"Expected required or optional field kind",
 	);
-	return (field as RequiredField<AllowedTypes> | OptionalField<AllowedTypes>).boxedContent;
+	return (field as FlexTreeRequiredField<AllowedTypes> | FlexTreeOptionalField<AllowedTypes>)
+		.boxedContent;
 }
 
 /**
  * Run the given function `modify`.
  * If the function results in any changes to the direct children of `parent`, `after` will be run immediately thereafter.
  */
-function modifyChildren<T extends TreeNode>(
+function modifyChildren<T extends FlexTreeNode>(
 	parent: T,
 	modify: (parent: T) => void,
 	after?: (parent: T) => void,

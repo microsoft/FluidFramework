@@ -19,7 +19,7 @@ import {
 	StableNodeKey,
 	SchemaAware,
 	nodeKeyFieldKey,
-	TypedField,
+	FlexTreeTypedField,
 	Any,
 	createMockNodeKeyManager,
 	TreeFieldSchema,
@@ -49,7 +49,7 @@ describe("Node Key Index", () => {
 			typeof nodeSchemaData.rootFieldSchema,
 			SchemaAware.ApiMode.Simple
 		>,
-	): TypedField<typeof nodeSchemaData.rootFieldSchema> {
+	): FlexTreeTypedField<typeof nodeSchemaData.rootFieldSchema> {
 		return treeWithContent({ initialTree, schema: nodeSchemaData });
 	}
 

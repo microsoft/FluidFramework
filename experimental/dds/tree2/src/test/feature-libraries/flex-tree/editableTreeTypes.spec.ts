@@ -8,20 +8,20 @@ import { unreachableCase } from "@fluidframework/core-utils";
 import { jsonArray, jsonObject, jsonRoot, jsonSchema, leaf, SchemaBuilder } from "../../../domains";
 
 import {
-	Sequence,
-	TypedNode,
-	TreeField,
-	RequiredField,
-	TreeNode,
-	TypedNodeUnion,
-	UnboxNodeUnion,
-	MapNode,
-	TypedField,
+	FlexTreeSequenceField,
+	FlexTreeTypedNode,
+	FlexTreeField,
+	FlexTreeRequiredField,
+	FlexTreeNode,
+	FlexTreeTypedNodeUnion,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeMapNode,
+	FlexTreeTypedField,
 	boxedIterator,
-	ObjectNode,
+	FlexTreeObjectNode,
 	IsArrayOfOne,
-	UnknownUnboxed,
-	TypeArrayToTypedTreeArray,
+	FlexTreeUnknownUnboxed,
+	TypeArrayToTypedFlexTreeArray,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/editableTreeTypes";
 import {
@@ -50,7 +50,7 @@ describe("editableTreeTypes", () => {
 	/**
 	 * Example showing narrowing and exhaustive matches.
 	 */
-	function exhaustiveMatchSimple(root: TreeField): void {
+	function exhaustiveMatchSimple(root: FlexTreeField): void {
 		const schema = SchemaBuilder.required([() => leaf.number, leaf.string]);
 		assert(root.is(schema));
 		const tree = root.boxedContent;
@@ -68,7 +68,7 @@ describe("editableTreeTypes", () => {
 	 * Example showing the node kinds used in the json domain (everything except structs),
 	 * including narrowing and exhaustive matches.
 	 */
-	function jsonExample(root: TreeField): void {
+	function jsonExample(root: FlexTreeField): void {
 		// Rather than using jsonSequenceRootSchema.rootFieldSchema, recreate an equivalent schema.
 		// Doing this avoids a compile error (but not an intellisense error) on unreachableCase below.
 		// This has not be fully root caused, but it likely due to to schema d.ts files for recursive types containing `any` due to:
@@ -86,7 +86,7 @@ describe("editableTreeTypes", () => {
 			} else if (tree.is(leaf.string)) {
 				const s: string = tree.value;
 			} else if (tree.is(jsonArray)) {
-				const a: Sequence<typeof jsonRoot> = tree.content;
+				const a: FlexTreeSequenceField<typeof jsonRoot> = tree.content;
 				jsonExample(a);
 			} else if (tree.is(jsonObject)) {
 				const x = tree.get(EmptyKey);
@@ -115,7 +115,7 @@ describe("editableTreeTypes", () => {
 		optionalObject: SchemaBuilder.optional(jsonObject),
 		sequence: SchemaBuilder.sequence(leaf.number),
 	});
-	type Mixed = TypedNode<typeof mixedStruct>;
+	type Mixed = FlexTreeTypedNode<typeof mixedStruct>;
 
 	const recursiveStruct = builder.objectRecursive("recursiveStruct", {
 		/**
@@ -127,31 +127,33 @@ describe("editableTreeTypes", () => {
 		 */
 		x: SchemaBuilder.required(leaf.number),
 	});
-	type Recursive = TypedNode<typeof recursiveStruct>;
+	type Recursive = FlexTreeTypedNode<typeof recursiveStruct>;
 
 	/**
 	 * All combinations of boxed and unboxed access.
 	 */
 	function boxingExample(mixed: Mixed): void {
 		const leafNode: number = mixed.leaf;
-		const leafBoxed: TypedNode<typeof leaf.number> = mixed.boxedLeaf.boxedContent;
+		const leafBoxed: FlexTreeTypedNode<typeof leaf.number> = mixed.boxedLeaf.boxedContent;
 
 		// Current policy is to box polymorphic values so they can be checked for type with `is`.
 		// Note that this still unboxes the value field.
-		const polymorphic: TypedNode<typeof leaf.number> | TypedNode<typeof leaf.string> =
-			mixed.polymorphic;
+		const polymorphic:
+			| FlexTreeTypedNode<typeof leaf.number>
+			| FlexTreeTypedNode<typeof leaf.string> = mixed.polymorphic;
 
 		// Fully boxed, including the value field.
-		const boxedPolymorphic: RequiredField<readonly [typeof leaf.number, typeof leaf.string]> =
-			mixed.boxedPolymorphic;
+		const boxedPolymorphic: FlexTreeRequiredField<
+			readonly [typeof leaf.number, typeof leaf.string]
+		> = mixed.boxedPolymorphic;
 
 		const optionalLeaf: number | undefined = mixed.optionalLeaf;
-		const boxedOptionalLeaf: TypedNode<typeof leaf.number> | undefined =
+		const boxedOptionalLeaf: FlexTreeTypedNode<typeof leaf.number> | undefined =
 			mixed.boxedOptionalLeaf.boxedContent;
-		const sequence: Sequence<readonly [typeof leaf.number]> = mixed.sequence;
+		const sequence: FlexTreeSequenceField<readonly [typeof leaf.number]> = mixed.sequence;
 
 		const child: number | undefined = sequence.at(0);
-		const childBoxed: TypedNode<typeof leaf.number> = sequence.boxedAt(0);
+		const childBoxed: FlexTreeTypedNode<typeof leaf.number> = sequence.boxedAt(0);
 	}
 
 	function recursiveStructExample(struct: Recursive): void {
@@ -171,7 +173,7 @@ describe("editableTreeTypes", () => {
 
 	function iteratorsExample(mixed: Mixed): void {
 		const unboxedListIteration: number[] = [...mixed.sequence];
-		const boxedListIteration: TypedNode<typeof leaf.number>[] = [
+		const boxedListIteration: FlexTreeTypedNode<typeof leaf.number>[] = [
 			...mixed.sequence[boxedIterator](),
 		];
 
@@ -180,9 +182,9 @@ describe("editableTreeTypes", () => {
 			"MapIteration",
 			typeof optionalNumberField
 		>;
-		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
+		const mapNode = undefined as unknown as FlexTreeMapNode<typeof mapSchema>;
 		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
-		const boxedMapIteration: TypedField<typeof optionalNumberField>[] = [
+		const boxedMapIteration: FlexTreeTypedField<typeof optionalNumberField>[] = [
 			...mapNode[boxedIterator](),
 		];
 	}
@@ -235,8 +237,8 @@ describe("editableTreeTypes", () => {
 			type _1 = requireFalse<isAssignableTo<typeof emptyStruct1, typeof emptyStruct2>>;
 			type _2 = requireFalse<isAssignableTo<typeof emptyStruct2, typeof emptyStruct1>>;
 		}
-		type Empty1 = TypedNode<typeof emptyStruct1>;
-		type Empty2 = TypedNode<typeof emptyStruct2>;
+		type Empty1 = FlexTreeTypedNode<typeof emptyStruct1>;
+		type Empty2 = FlexTreeTypedNode<typeof emptyStruct2>;
 
 		// Schema for TypedNode which only different in name are distinguished
 		{
@@ -249,15 +251,15 @@ describe("editableTreeTypes", () => {
 	}
 
 	// Two different simple node types to compare and test with.
-	type BasicStruct = TypedNode<typeof basicStruct>;
-	type BasicFieldNode = TypedNode<typeof basicFieldNode>;
+	type BasicStruct = FlexTreeTypedNode<typeof basicStruct>;
+	type BasicFieldNode = FlexTreeTypedNode<typeof basicFieldNode>;
 	{
 		type _1 = requireFalse<isAssignableTo<BasicStruct, BasicFieldNode>>;
 		type _2 = requireFalse<isAssignableTo<BasicFieldNode, BasicStruct>>;
 	}
 
 	// Basic unit test for TreeNode.is type narrowing.
-	function nodeIs(node: TreeNode): void {
+	function nodeIs(node: FlexTreeNode): void {
 		if (node.is(basicStruct)) {
 			type _1 = requireAssignableTo<typeof node, BasicStruct>;
 		}
@@ -270,14 +272,14 @@ describe("editableTreeTypes", () => {
 	{
 		// Direct
 		{
-			type UnionBasic1 = TypeArrayToTypedTreeArray<[typeof basicStruct]>;
+			type UnionBasic1 = TypeArrayToTypedFlexTreeArray<[typeof basicStruct]>;
 			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, [BasicStruct]>>;
 		}
 
 		// Type-Erased
 		{
-			type Result = TypeArrayToTypedTreeArray<TreeNodeSchema[]>;
-			type _1 = requireTrue<areSafelyAssignable<Result, [TreeNode]>>;
+			type Result = TypeArrayToTypedFlexTreeArray<TreeNodeSchema[]>;
+			type _1 = requireTrue<areSafelyAssignable<Result, [FlexTreeNode]>>;
 		}
 	}
 
@@ -285,25 +287,25 @@ describe("editableTreeTypes", () => {
 	{
 		// Any
 		{
-			type _1 = requireTrue<areSafelyAssignable<TypedNodeUnion<[Any]>, TreeNode>>;
+			type _1 = requireTrue<areSafelyAssignable<FlexTreeTypedNodeUnion<[Any]>, FlexTreeNode>>;
 		}
 
 		// Direct
 		{
-			type UnionBasic1 = TypedNodeUnion<[typeof basicStruct]>;
+			type UnionBasic1 = FlexTreeTypedNodeUnion<[typeof basicStruct]>;
 			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, BasicStruct>>;
 		}
 		// Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<TypedNodeUnion<[() => typeof basicStruct]>, BasicStruct>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<[() => typeof basicStruct]>, BasicStruct>
 			>;
 		}
 		// Union
 		{
 			type _1 = requireTrue<
 				areSafelyAssignable<
-					TypedNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
+					FlexTreeTypedNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
 					BasicStruct | BasicFieldNode
 				>
 			>;
@@ -311,33 +313,45 @@ describe("editableTreeTypes", () => {
 		// Recursive
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<TypedNodeUnion<[typeof recursiveStruct]>, Recursive>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<[typeof recursiveStruct]>, Recursive>
 			>;
 		}
 		// Recursive Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<TypedNodeUnion<[() => typeof recursiveStruct]>, Recursive>
+				areSafelyAssignable<
+					FlexTreeTypedNodeUnion<[() => typeof recursiveStruct]>,
+					Recursive
+				>
 			>;
 		}
 		// Type-Erased
 		{
-			type _1 = requireTrue<areSafelyAssignable<TypedNodeUnion<[TreeNodeSchema]>, TreeNode>>;
+			type _1 = requireTrue<
+				areSafelyAssignable<FlexTreeTypedNodeUnion<[TreeNodeSchema]>, FlexTreeNode>
+			>;
 			type _2 = requireTrue<
-				areSafelyAssignable<TypedNodeUnion<[ObjectNodeSchema]>, ObjectNode>
+				areSafelyAssignable<FlexTreeTypedNodeUnion<[ObjectNodeSchema]>, FlexTreeObjectNode>
 			>;
 			type _3 = requireTrue<
-				areSafelyAssignable<TypedNodeUnion<[TreeNodeSchema, TreeNodeSchema]>, TreeNode>
+				areSafelyAssignable<
+					FlexTreeTypedNodeUnion<[TreeNodeSchema, TreeNodeSchema]>,
+					FlexTreeNode
+				>
 			>;
-			type _4 = requireTrue<areSafelyAssignable<TypedNodeUnion<[Any]>, TreeNode>>;
+			type _4 = requireTrue<areSafelyAssignable<FlexTreeTypedNodeUnion<[Any]>, FlexTreeNode>>;
 			type y = InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TreeNodeSchema[]>;
 
-			type _5 = requireTrue<areSafelyAssignable<TypedNodeUnion<TreeNodeSchema[]>, TreeNode>>;
-			type _6 = requireTrue<areSafelyAssignable<TypedNodeUnion<AllowedTypes>, TreeNode>>;
+			type _5 = requireTrue<
+				areSafelyAssignable<FlexTreeTypedNodeUnion<TreeNodeSchema[]>, FlexTreeNode>
+			>;
+			type _6 = requireTrue<
+				areSafelyAssignable<FlexTreeTypedNodeUnion<AllowedTypes>, FlexTreeNode>
+			>;
 
 			type TypedNodeUnion2<TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>> =
 				InternalTypedSchemaTypes.ArrayToUnion<
-					TypeArrayToTypedTreeArray<
+					TypeArrayToTypedFlexTreeArray<
 						Assume<
 							InternalTypedSchemaTypes.ConstantFlexListToNonLazyArray<TTypes>,
 							readonly TreeNodeSchema[]
@@ -347,7 +361,7 @@ describe("editableTreeTypes", () => {
 
 			type x = TypedNodeUnion2<TreeNodeSchema[]>;
 
-			type z = InternalTypedSchemaTypes.ArrayToUnion<[TreeNode]>;
+			type z = InternalTypedSchemaTypes.ArrayToUnion<[FlexTreeNode]>;
 		}
 	}
 
@@ -355,75 +369,87 @@ describe("editableTreeTypes", () => {
 	{
 		// Any
 		{
-			type _1 = requireTrue<areSafelyAssignable<UnboxNodeUnion<[Any]>, TreeNode>>;
+			type _1 = requireTrue<areSafelyAssignable<FlexTreeUnboxNodeUnion<[Any]>, FlexTreeNode>>;
 		}
 
 		// Direct
 		{
-			type UnionBasic1 = UnboxNodeUnion<[typeof basicStruct]>;
+			type UnionBasic1 = FlexTreeUnboxNodeUnion<[typeof basicStruct]>;
 			type _1 = requireTrue<areSafelyAssignable<UnionBasic1, BasicStruct>>;
 		}
 		// Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<[() => typeof basicStruct]>, BasicStruct>
+				areSafelyAssignable<FlexTreeUnboxNodeUnion<[() => typeof basicStruct]>, BasicStruct>
 			>;
 		}
 		// Union
 		{
 			type _1 = requireTrue<
 				areSafelyAssignable<
-					UnboxNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
+					FlexTreeUnboxNodeUnion<[typeof basicStruct, typeof basicFieldNode]>,
 					BasicStruct | BasicFieldNode
 				>
 			>;
 		}
 		// Unboxed FieldNode
 		{
-			type UnboxedFieldNode = UnboxNodeUnion<[typeof basicFieldNode]>;
+			type UnboxedFieldNode = FlexTreeUnboxNodeUnion<[typeof basicFieldNode]>;
 			type _1 = requireTrue<
-				areSafelyAssignable<TypedNode<typeof basicFieldNode>, UnboxedFieldNode>
+				areSafelyAssignable<FlexTreeTypedNode<typeof basicFieldNode>, UnboxedFieldNode>
 			>;
-			type _2 = requireAssignableTo<UnboxedFieldNode, TreeNode>;
+			type _2 = requireAssignableTo<UnboxedFieldNode, FlexTreeNode>;
 		}
 		// Recursive
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<[typeof recursiveStruct]>, Recursive>
+				areSafelyAssignable<FlexTreeUnboxNodeUnion<[typeof recursiveStruct]>, Recursive>
 			>;
 		}
 		// Recursive Lazy
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<[() => typeof recursiveStruct]>, Recursive>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<[() => typeof recursiveStruct]>,
+					Recursive
+				>
 			>;
 		}
 		// Type-Erased
 		{
 			type _1 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<[TreeNodeSchema]>, UnknownUnboxed>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<[TreeNodeSchema]>,
+					FlexTreeUnknownUnboxed
+				>
 			>;
 			type _2 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<[ObjectNodeSchema]>, ObjectNode>
+				areSafelyAssignable<FlexTreeUnboxNodeUnion<[ObjectNodeSchema]>, FlexTreeObjectNode>
 			>;
 			type _3 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<[TreeNodeSchema, TreeNodeSchema]>, TreeNode>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<[TreeNodeSchema, TreeNodeSchema]>,
+					FlexTreeNode
+				>
 			>;
-			type _4 = requireTrue<areSafelyAssignable<UnboxNodeUnion<[Any]>, TreeNode>>;
+			type _4 = requireTrue<areSafelyAssignable<FlexTreeUnboxNodeUnion<[Any]>, FlexTreeNode>>;
 			type _5 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<TreeNodeSchema[]>, UnknownUnboxed>
+				areSafelyAssignable<
+					FlexTreeUnboxNodeUnion<TreeNodeSchema[]>,
+					FlexTreeUnknownUnboxed
+				>
 			>;
 			type _6 = requireTrue<
-				areSafelyAssignable<UnboxNodeUnion<AllowedTypes>, UnknownUnboxed>
+				areSafelyAssignable<FlexTreeUnboxNodeUnion<AllowedTypes>, FlexTreeUnknownUnboxed>
 			>;
 		}
 
 		// Generic
 		// eslint-disable-next-line no-inner-declarations
 		function genericTest<T extends AllowedTypes>(t: T) {
-			type Unboxed = UnboxNodeUnion<T>;
+			type Unboxed = FlexTreeUnboxNodeUnion<T>;
 			// @ts-expect-error union can unbox to undefined or a sequence
-			type _1 = requireAssignableTo<Unboxed, TreeNode>;
+			type _1 = requireAssignableTo<Unboxed, FlexTreeNode>;
 		}
 	}
 
