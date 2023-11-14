@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget, RevisionMetadataSource } from "../modular-schema";
 import {
 	Changeset,
 	Mark,
@@ -22,7 +22,7 @@ import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
 	extractMarkEffect,
-	getDetachCellId,
+	getDetachOutputId,
 	getEndpoint,
 	getOutputCellId,
 	isAttach,
@@ -48,12 +48,14 @@ export function invert<TNodeChange>(
 	invertChild: NodeChangeInverter<TNodeChange>,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
+	revisionMetadata: RevisionMetadataSource,
 ): Changeset<TNodeChange> {
 	return invertMarkList(
 		change.change,
 		change.revision,
 		invertChild,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
+		revisionMetadata,
 	);
 }
 
@@ -75,11 +77,18 @@ function invertMarkList<TNodeChange>(
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
+	revisionMetadata: RevisionMetadataSource,
 ): MarkList<TNodeChange> {
 	const inverseMarkList = new MarkListFactory<TNodeChange>();
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, revision, invertChild, crossFieldManager);
+		const inverseMarks = invertMark(
+			mark,
+			revision,
+			invertChild,
+			crossFieldManager,
+			revisionMetadata,
+		);
 		inverseMarkList.push(...inverseMarks);
 	}
 
@@ -91,6 +100,7 @@ function invertMark<TNodeChange>(
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
+	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange>[] {
 	const type = mark.type;
 	switch (type) {
@@ -105,13 +115,11 @@ function invertMark<TNodeChange>(
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
 			const markRevision = mark.revision ?? revision;
 			if (mark.cellId === undefined) {
+				const outputId = getDetachOutputId(mark, markRevision, revisionMetadata);
 				const inverse = withNodeChange(
 					{
 						type: "Insert",
-						cellId: mark.detachIdOverride ?? {
-							revision: markRevision,
-							localId: mark.id,
-						},
+						cellId: outputId,
 						count: mark.count,
 					},
 					invertNodeChange(mark.changes, invertChild),
@@ -164,10 +172,10 @@ function invertMark<TNodeChange>(
 				);
 			}
 
-			const cellId = getDetachCellId(
+			const cellId = getDetachOutputId(
 				mark,
 				mark.revision ?? revision ?? fail("Revision must be defined"),
-				undefined,
+				revisionMetadata,
 			) ?? {
 				revision: mark.revision ?? revision ?? fail("Revision must be defined"),
 				localId: mark.id,
@@ -223,8 +231,20 @@ function invertMark<TNodeChange>(
 				changes: mark.changes,
 				...mark.detach,
 			};
-			const attachInverses = invertMark(attach, revision, invertChild, crossFieldManager);
-			const detachInverses = invertMark(detach, revision, invertChild, crossFieldManager);
+			const attachInverses = invertMark(
+				attach,
+				revision,
+				invertChild,
+				crossFieldManager,
+				revisionMetadata,
+			);
+			const detachInverses = invertMark(
+				detach,
+				revision,
+				invertChild,
+				crossFieldManager,
+				revisionMetadata,
+			);
 
 			if (detachInverses.length === 0) {
 				return attachInverses;
