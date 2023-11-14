@@ -297,21 +297,40 @@ export class ModularChangeFamily
 		// this function to read the updated idState.maxId after more IDs are allocated.
 		// TODO: add a getMax function to IdAllocator to make for a clearer contract.
 		const genId: IdAllocator = idAllocatorFromState(idState);
-		const crossFieldTable = newCrossFieldTable<InvertData>();
+		const crossFieldTable: InvertTable = {
+			...newCrossFieldTable<FieldChange>(),
+			originalFieldToContext: new Map(),
+		};
 
-		let invertedFields = this.invertFieldMap(
+		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.fieldChanges, change.revision),
 			genId,
 			crossFieldTable,
 		);
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
+			const fieldsToUpdate = crossFieldTable.invalidatedFields;
 			crossFieldTable.invalidatedFields = new Set();
-			invertedFields = this.invertFieldMap(
-				tagChange(change.change.fieldChanges, change.revision),
-				genId,
-				crossFieldTable,
-			);
+			for (const fieldChange of fieldsToUpdate) {
+				const originalFieldChange = fieldChange.change;
+				const context = crossFieldTable.originalFieldToContext.get(fieldChange);
+				assert(context !== undefined, "Should have context for every invalidated field");
+				const { invertedField, revision } = context;
+
+				const amendedChange = getChangeHandler(
+					this.fieldKinds,
+					fieldChange.fieldKind,
+				).rebaser.invert(
+					tagChange(originalFieldChange, revision),
+					(nodeChangeset) => nodeChangeset,
+					genId,
+					newCrossFieldManager(crossFieldTable),
+				);
+				invertedField.change = brand(amendedChange);
+			}
+
+			// TODO: See if we there's a reasonable way to assert that
+			// running a third pass would produce the same results.
 		}
 
 		const revInfo = change.change.revisions;
@@ -331,7 +350,7 @@ export class ModularChangeFamily
 	private invertFieldMap(
 		changes: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
-		crossFieldTable: CrossFieldTable<InvertData>,
+		crossFieldTable: InvertTable,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
 
@@ -360,13 +379,12 @@ export class ModularChangeFamily
 			};
 			invertedFields.set(field, invertedFieldChange);
 
-			const invertData: InvertData = {
-				fieldKey: field,
-				fieldChange: invertedFieldChange,
-				originalRevision: changes.revision,
-			};
+			crossFieldTable.originalFieldToContext.set(fieldChange, {
+				invertedField: invertedFieldChange,
+				revision,
+			});
 
-			addFieldData(manager, invertData);
+			addFieldData(manager, fieldChange);
 		}
 
 		return invertedFields;
@@ -375,7 +393,7 @@ export class ModularChangeFamily
 	private invertNodeChange(
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
-		crossFieldTable: CrossFieldTable<InvertData>,
+		crossFieldTable: InvertTable,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -749,6 +767,15 @@ interface CrossFieldTable<TFieldData> {
 	invalidatedFields: Set<TFieldData>;
 }
 
+interface InvertTable extends CrossFieldTable<FieldChange> {
+	originalFieldToContext: Map<FieldChange, InvertContext>;
+}
+
+interface InvertContext {
+	invertedField: FieldChange;
+	revision: RevisionTag | undefined;
+}
+
 interface RebaseTable extends CrossFieldTable<FieldChange> {
 	baseMapToRebased: Map<FieldChangeMap, HasFieldChanges>;
 	baseChangeToContext: Map<FieldChange, FieldChangeContext>;
@@ -782,13 +809,6 @@ function newConstraintState(violationCount: number): ConstraintState {
 	return {
 		violationCount,
 	};
-}
-
-// TODO: Move originalRevision into a separate map so that FieldChange can be correctly deduplicated by the invalidated field set.
-interface InvertData {
-	originalRevision: RevisionTag | undefined;
-	fieldKey: FieldKey;
-	fieldChange: FieldChange;
 }
 
 type ComposeData = FieldChange;

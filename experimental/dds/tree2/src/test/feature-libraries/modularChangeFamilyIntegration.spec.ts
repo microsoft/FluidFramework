@@ -254,6 +254,80 @@ describe("ModularChangeFamily integration", () => {
 		});
 	});
 
+	describe("invert", () => {
+		it("Move requiring a second pass", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.enterTransaction();
+
+			// Moves node1 to an earlier position in the field
+			editor.sequenceField(fieldAPath).move(1, 1, 0);
+			const node1Path = { parent: undefined, parentField: fieldA, parentIndex: 0 };
+			const node2Path = { parent: node1Path, parentField: fieldB, parentIndex: 0 };
+
+			// Moves node2, which is a child of node1 to an earlier position in its field
+			editor
+				.sequenceField({
+					parent: node1Path,
+					field: fieldB,
+				})
+				.move(1, 1, 0);
+
+			// Modifies node2 so that both fieldA and fieldB have changes that need to be transfered
+			// from a move source to a destination during invert.
+			editor
+				.sequenceField({
+					parent: node2Path,
+					field: fieldC,
+				})
+				.delete(0, 1);
+
+			editor.exitTransaction();
+			const [move1, move2, modify] = getChanges();
+			const moves = family.compose([
+				makeAnonChange(move1),
+				makeAnonChange(move2),
+				makeAnonChange(modify),
+			]);
+
+			const inverse = family.invert(tagChange(moves, tag1), false);
+			const fieldCExpected = [MarkMaker.revive(1, { revision: tag1, localId: brand(2) })];
+			const node2Expected = {
+				fieldChanges: new Map([
+					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
+				]),
+			};
+
+			const fieldBExpected = [
+				MarkMaker.returnFrom(1, brand(1), { changes: node2Expected }),
+				{ count: 1 },
+				MarkMaker.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
+			];
+
+			const node1Expected = {
+				fieldChanges: new Map([
+					[fieldB, { fieldKind: sequence.identifier, change: fieldBExpected }],
+				]),
+			};
+
+			const fieldAExpected = [
+				MarkMaker.returnFrom(1, brand(0), { changes: node1Expected }),
+				{ count: 1 },
+				MarkMaker.returnTo(1, brand(0), { revision: tag1, localId: brand(0) }),
+			];
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
+				]),
+			};
+
+			assert.deepEqual(inverse, expected);
+		});
+	});
+
 	describe("toDelta", () => {
 		it("works when nested changes come from different revisions", () => {
 			const change: ModularChangeset = {
