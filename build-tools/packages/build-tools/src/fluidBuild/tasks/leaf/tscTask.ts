@@ -467,9 +467,12 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 /**
  * A fluid-build task definition for tsc-multi.
  *
- * This implementation is a hack. It just uses the contents of the tsbuildinfo files created by the tsc-multi processes,
- * and duplicates the content into the doneFile. It's duplicative but seems to be the simplest way to get basic
- * incremental support in fluid-build.
+ * This implementation is a hack. It primarily uses the contents of the tsbuildinfo files created by the tsc-multi
+ * processes, and duplicates their content into the doneFile. It's duplicative but seems to be the simplest way to get
+ * basic incremental support in fluid-build.
+ *
+ * Source files are also considered for incremental purposes. However, config files outside the package (e.g. shared
+ * config files) are not considered. Thus, changes to those files will not trigger a rebuild of downstream packages.
  */
 export class TscMultiTask extends LeafWithDoneFileTask {
 	protected async getToolVersion() {
