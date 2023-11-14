@@ -121,7 +121,9 @@ extends:
         jobs:
           - job: build
             displayName: Build
-            pool: ${{ parameters.poolBuild }}
+            pool:
+              name: NewLarge
+              os: linux
             variables:
               testCoverage: '${{ ne(variables[''Build.Reason''], ''PullRequest'') }}'
               releaseBuildVar: '$[variables.releaseBuild]'
