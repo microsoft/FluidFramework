@@ -502,6 +502,10 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 					? "tsconfig.mjs.tsbuildinfo"
 					: "tsconfig.cjs.tsbuildinfo",
 			);
+			if (!existsSync(tsbuildinfo)) {
+				// No tsbuildinfo file, so we need to build
+				return undefined;
+			}
 
 			const files = [...commonFiles];
 
@@ -516,16 +520,13 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 				return { name, hash };
 			});
 
-			let buildInfo: string = "";
-
-			if (existsSync(tsbuildinfo)) {
-				buildInfo = readFileSync(tsbuildinfo).toString();
-			}
-
+			const buildInfo = readFileSync(tsbuildinfo).toString();
+			const version = await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
+			const hashes = await Promise.all(hashesP);
 			const result = JSON.stringify({
-				version: await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory),
+				version,
 				buildInfo,
-				hashes: await Promise.all(hashesP),
+				hashes,
 			});
 			return result;
 		} catch (e) {
