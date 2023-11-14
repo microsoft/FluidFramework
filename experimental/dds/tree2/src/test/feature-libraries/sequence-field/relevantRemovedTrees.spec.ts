@@ -172,9 +172,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 			assert.deepEqual(array, [deltaId]);
 		});
 		it("a tree being transiently restored", () => {
-			const input: TestChangeset = [
-				Mark.transient(Mark.revive(1, atomId), Mark.delete(1, atomId)),
-			];
+			const input: TestChangeset = [Mark.delete(1, brand(0), { cellId: atomId })];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
 			assert.deepEqual(array, [deltaId]);
@@ -235,9 +233,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("relevant trees from nested changes under a tree being transiently restored", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.revive(1, atomId), Mark.delete(1, atomId), {
-					changes: childChange,
-				}),
+				Mark.delete(1, brand(0), { cellId: atomId, changes: childChange }),
 			];
 			const actual = SF.relevantRemovedTrees(input, oneTreeDelegate);
 			const array = Array.from(actual);

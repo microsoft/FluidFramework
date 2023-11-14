@@ -315,6 +315,10 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
  * Fills then empties cells.
  *
  * Only ever targets empty cells.
+ *
+ * As a matter of normalization, only use a transient mark when the attach is a new insert or a move destination.
+ * In all other cases (the attach would be a revive), we rely on the implicit reviving semantics of the detach and
+ * represent that detach on its own (i.e., not wrapped in a transient).
  */
 export interface TransientEffect {
 	type: "Transient";

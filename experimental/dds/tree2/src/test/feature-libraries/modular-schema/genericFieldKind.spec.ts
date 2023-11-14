@@ -21,7 +21,11 @@ import {
 	deltaForSet,
 } from "../../../core";
 import { fakeIdAllocator, brand } from "../../../util";
-import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
+import {
+	EncodingTestData,
+	defaultRevisionMetadataFromChanges,
+	makeEncodingTestSuite,
+} from "../../utils";
 import { IJsonCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
 import { ValueChangeset, valueField, valueHandler } from "./basicRebasers";
@@ -85,11 +89,13 @@ const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangese
 
 const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
+	const taggedChange = makeAnonChange(valueChange);
 	const inverse = valueHandler.rebaser.invert(
-		makeAnonChange(valueChange),
+		taggedChange,
 		unexpectedDelegate,
 		fakeIdAllocator,
 		crossFieldManager,
+		defaultRevisionMetadataFromChanges([taggedChange]),
 	);
 	return nodeChangeFromValueChange(inverse);
 };
@@ -348,11 +354,13 @@ describe("Generic FieldKind", () => {
 				nodeChange: nodeChange2To1,
 			},
 		];
+		const taggedChange = makeAnonChange(forward);
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
-			makeAnonChange(forward),
+			taggedChange,
 			childInverter,
 			fakeIdAllocator,
 			crossFieldManager,
+			defaultRevisionMetadataFromChanges([taggedChange]),
 		);
 		assert.deepEqual(actual, expected);
 	});

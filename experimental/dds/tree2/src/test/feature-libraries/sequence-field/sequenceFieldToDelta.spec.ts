@@ -431,22 +431,7 @@ describe("SequenceField - toDelta", () => {
 		});
 	});
 
-	it("move removed node (explicit transient representation)", () => {
-		const move = [
-			Mark.moveIn(1, brand(0)),
-			{ count: 1 },
-			Mark.transient(Mark.revive(1, cellId), Mark.moveOut(1, brand(0))),
-		];
-
-		const actual = toDelta(move);
-		const expected: Delta.FieldChanges = {
-			rename: [{ count: 1, oldId: deltaNodeId, newId: { minor: 0 } }],
-			local: [{ count: 1, attach: { minor: 0 } }],
-		};
-		assertFieldChangesEqual(actual, expected);
-	});
-
-	it("move removed node (implicit transient representation)", () => {
+	it("move removed node", () => {
 		const move = [
 			Mark.moveIn(1, brand(0)),
 			{ count: 1 },

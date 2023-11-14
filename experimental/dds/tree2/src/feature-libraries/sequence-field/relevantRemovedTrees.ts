@@ -7,8 +7,14 @@ import { assert } from "@fluidframework/core-utils";
 import { Delta, offsetDetachId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { Changeset, Mark } from "./format";
-import { isMoveMark } from "./moveEffectTable";
-import { isDetach, isInsert, isNewAttach, isReattachEffect, isTransientEffect } from "./utils";
+import {
+	isDetach,
+	isInsert,
+	isNewAttach,
+	isReattachEffect,
+	isReviveAndDetach,
+	isTransientEffect,
+} from "./utils";
 
 export type RemovedTreesFromTChild<TChild> = (child: TChild) => Iterable<Delta.DetachedNodeId>;
 
@@ -40,12 +46,9 @@ function refersToRelevantRemovedTrees<TChild>(mark: Mark<TChild>): boolean {
 			// This tree is being restored.
 			return true;
 		} else if (isDetach(mark)) {
-			if (isMoveMark(mark)) {
-				// This removed tree is being moved.
+			if (isReviveAndDetach(mark)) {
+				// This removed tree is being restored as part of a detach.
 				return true;
-			} else {
-				// This removed tree is being deleted.
-				// We currently don't reassign the ID for such a tree, so it isn't relevant.
 			}
 		}
 		if (!isNewAttach(mark) && mark.changes !== undefined) {

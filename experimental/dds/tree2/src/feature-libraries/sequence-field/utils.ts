@@ -41,7 +41,6 @@ import {
 	CellMark,
 	TransientEffect,
 	MarkEffect,
-	InverseAttachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -58,6 +57,26 @@ export function isEmpty<T>(change: Changeset<T>): boolean {
 
 export function isNewAttach(mark: Mark<unknown>, revision?: RevisionTag): boolean {
 	return isNewAttachEffect(mark, mark.cellId, revision);
+}
+
+export function isNewInsert(
+	mark: MarkEffect,
+	cellId: CellId | undefined,
+	revision?: RevisionTag,
+): boolean {
+	return mark.type === "Insert" && isNewAttachEffect(mark, cellId, revision);
+}
+
+export function containsNewInsert(mark: Mark<unknown>, revision?: RevisionTag): boolean {
+	const type = mark.type;
+	switch (type) {
+		case "Transient":
+			return isNewInsert(mark.attach, mark.cellId, revision);
+		case "Insert":
+			return isNewInsert(mark, mark.cellId, revision);
+		default:
+			return false;
+	}
 }
 
 export function isNewAttachEffect(
@@ -92,7 +111,6 @@ export function isReattachEffect(effect: MarkEffect, cellId: CellId | undefined)
 export function isActiveReattach<T>(
 	mark: Mark<T>,
 ): mark is CellMark<Insert, T> & { conflictsWith?: undefined } {
-	// No need to check Reattach.lastDeletedBy because it can only be set if the mark is conflicted
 	return isAttach(mark) && isReattachEffect(mark, mark.cellId) && mark.cellId !== undefined;
 }
 
@@ -171,6 +189,53 @@ function getOverrideCellId(mark: Detach): CellId | undefined {
 	return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
 		? mark.detachIdOverride
 		: undefined;
+}
+
+export function normalizeTransient<TNodeChange>(
+	mark: CellMark<TransientEffect, TNodeChange>,
+	nodeChange?: TNodeChange,
+): Mark<TNodeChange> {
+	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
+		return withNodeChange(mark, nodeChange);
+	}
+	// Normalization: when the attach is a revive, we rely on the implicit reviving semantics of the
+	// detach instead of using an explicit revive effect in a transient.
+	return withNodeChange(
+		{
+			count: mark.count,
+			cellId: mark.cellId,
+			...mark.detach,
+		},
+		nodeChange ?? mark.changes,
+	);
+}
+
+export function denormalizeTransient<TNodeChange>(
+	mark: CellMark<TransientEffect | Detach, TNodeChange>,
+): CellMark<TransientEffect, TNodeChange> {
+	if (mark.type === "Transient") {
+		return mark;
+	}
+	assert(mark.cellId !== undefined, "Unable to convert non-reviving detach as transient");
+	const { cellId, count, changes, revision, ...effect } = mark;
+	const transient: CellMark<TransientEffect | Detach, TNodeChange> = {
+		type: "Transient",
+		count,
+		cellId,
+		attach: {
+			type: "Insert",
+			id: mark.id,
+		},
+		detach: effect,
+	};
+	if (changes !== undefined) {
+		transient.changes = changes;
+	}
+	if (revision !== undefined) {
+		transient.attach.revision = revision;
+		transient.detach.revision = revision;
+	}
+	return transient;
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
@@ -264,7 +329,9 @@ export function isTransientEffect(effect: MarkEffect): effect is TransientEffect
 	return effect.type === "Transient";
 }
 
-export function isReviveAndDetach(mark: Mark<unknown>): boolean {
+export function isReviveAndDetach(
+	mark: Mark<unknown>,
+): mark is CellMark<Detach, unknown> & { cellId: CellId } {
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 
@@ -295,16 +362,24 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
  * @returns true, iff the given `mark` would have impact on the field when applied.
  * Ignores the impact of nested changes.
  */
-export function isImpactful(mark: Mark<unknown>): boolean {
+export function isImpactful(
+	mark: Mark<unknown>,
+	revision: RevisionTag | undefined,
+	revisionMetadata: RevisionMetadataSource,
+): boolean {
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType:
 		case "Placeholder":
 			return false;
-		case "Delete":
-			// We currently don't rename the cell when a delete targets already deleted nodes.
-			// If we ever do then we'll have to consider the impact of the rename.
-			return mark.cellId === undefined;
+		case "Delete": {
+			if (mark.cellId === undefined) {
+				return true;
+			}
+			const outputId = getOutputCellId(mark, revision, revisionMetadata);
+			assert(outputId !== undefined, "Delete marks must have an output cell ID");
+			return !areEqualChangeAtomIds(mark.cellId, outputId);
+		}
 		case "Transient":
 		case "MoveOut":
 		case "ReturnFrom":
@@ -391,14 +466,6 @@ function areAdjacentIdRanges(
 	secondStart: ChangesetLocalId,
 ): boolean {
 	return (firstStart as number) + firstLength === secondStart;
-}
-
-function haveMergeableIdOverrides(
-	lhs: InverseAttachFields,
-	lhsCount: number,
-	rhs: InverseAttachFields,
-): boolean {
-	return areMergeableChangeAtoms(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride);
 }
 
 function areMergeableCellIds(
@@ -1036,10 +1103,11 @@ export function extractMarkEffect<TEffect extends MarkEffect>(
 	return effect as unknown as TEffect;
 }
 
-export function withNodeChange<TNodeChange>(
-	mark: Mark<TNodeChange>,
-	changes: TNodeChange | undefined,
-): Mark<TNodeChange> {
+export function withNodeChange<
+	TMark extends CellMark<TKind, TNodeChange>,
+	TKind extends MarkEffect,
+	TNodeChange,
+>(mark: TMark, changes: TNodeChange | undefined): TMark {
 	const newMark = { ...mark };
 	if (changes !== undefined) {
 		assert(

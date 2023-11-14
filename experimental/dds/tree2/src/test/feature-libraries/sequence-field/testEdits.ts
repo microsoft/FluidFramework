@@ -158,12 +158,12 @@ function createInsertMark<TChange = never>(
 	countOrContent: number | JsonableTree[],
 	cellId: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
-): SF.CellMark<SF.Insert, TChange> {
+): SF.CellMark<SF.Insert, TChange> & { content: JsonableTree[] } {
 	const content = Array.isArray(countOrContent)
 		? countOrContent
 		: generateJsonables(countOrContent);
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
-	const mark: SF.CellMark<SF.Insert, TChange> = {
+	const mark: SF.CellMark<SF.Insert, TChange> & { content: JsonableTree[] } = {
 		type: "Insert",
 		content,
 		count: content.length,
@@ -364,6 +364,9 @@ function createTransientMark<TChange>(
 		attach.changes === undefined && detach.changes === undefined,
 		"Attach and detach must not carry changes",
 	);
+	// As a matter of normalization, we only use transient marks to represent cases where the detach's
+	// implicit revival semantics would not be a sufficient representation.
+	assert(attach.type === "MoveIn" || attach.content !== undefined, "Unnecessary transient mark");
 	const transient: SF.CellMark<SF.TransientEffect, TChange> = {
 		type: "Transient",
 		count: attach.count,
