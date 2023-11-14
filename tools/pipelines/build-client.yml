@@ -158,7 +158,6 @@ extends:
     - nyc/packages
     checks:
     - checks
-
     additionalBuildSteps:
     - task: Bash@3
       displayName: Inject devtools telemetry logger token
