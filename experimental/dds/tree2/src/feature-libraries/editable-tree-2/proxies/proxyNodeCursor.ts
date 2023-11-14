@@ -133,7 +133,8 @@ export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "
 			}
 
 			if (node instanceof Map) {
-				return (node as Map<FieldKey, TNode[]>).get(key) ?? [];
+				const value = (node as Map<FieldKey, TNode>).get(key);
+				return value === undefined ? [] : [value];
 			}
 
 			if (Object.prototype.hasOwnProperty.call(node, key)) {
