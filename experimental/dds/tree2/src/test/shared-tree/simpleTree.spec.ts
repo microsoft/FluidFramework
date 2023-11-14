@@ -4,13 +4,13 @@
  */
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { ForestType, TypedTreeFactory } from "../../shared-tree";
+import { ForestType, TypedTreeFactory } from "../../shared-tree/";
 import { AllowedUpdateType } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { SchemaBuilder } from "../../domains";
 
-describe("TypedTree", () => {
-	it("typed-tree end to end", () => {
+describe("SimpleTree", () => {
+	it("simple-tree end to end", () => {
 		const builder = new SchemaBuilder({ scope: "e2e" });
 		const Node = builder.object("Node", { item: builder.number });
 		const schema = builder.intoSchema(Node);
