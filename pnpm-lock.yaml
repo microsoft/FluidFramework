@@ -31,7 +31,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/test-tools': ^1.0.195075
       '@microsoft/api-documenter': ^7.21.6
-      '@microsoft/api-extractor': ^7.37.0
+      '@microsoft/api-extractor': ^7.38.3
       '@octokit/core': ^4.0.5
       auto-changelog: ^2.4.0
       c8: ^7.7.1
@@ -58,7 +58,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-tools': 1.0.195075
       '@microsoft/api-documenter': 7.23.9
-      '@microsoft/api-extractor': 7.38.0
+      '@microsoft/api-extractor': 7.38.3
       '@octokit/core': 4.2.4
       auto-changelog: 2.4.0
       c8: 7.14.0
@@ -101,7 +101,7 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
       '@fluidframework/test-utils': workspace:~
-      '@microsoft/api-extractor': ^7.37.0
+      '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
@@ -143,7 +143,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/test-runtime-utils': link:../../../packages/runtime/test-runtime-utils
       '@fluidframework/test-utils': link:../../../packages/test/test-utils
-      '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
+      '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       '@types/uuid': 9.0.5
@@ -164,7 +164,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ^0.27.0
       '@fluidframework/eslint-config-fluid': ^3.1.0
-      '@microsoft/api-extractor': ^7.37.0
+      '@microsoft/api-extractor': ^7.38.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
       forever: ^4.0.3
@@ -179,7 +179,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.27.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.0
+      '@microsoft/api-extractor': 7.38.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       forever: 4.0.3
@@ -196,7 +196,7 @@ importers:
       '@fluidframework/build-tools': ^0.27.0
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
-      '@microsoft/api-extractor': ^7.37.0
+      '@microsoft/api-extractor': ^7.38.3
       '@types/jsrsasign': ^8.0.8
       copyfiles: ^2.4.1
       eslint: ~8.50.0
@@ -217,7 +217,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.27.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
-      '@microsoft/api-extractor': 7.38.0
+      '@microsoft/api-extractor': 7.38.3
       '@types/jsrsasign': 8.0.13
       copyfiles: 2.4.1
       eslint: 8.50.0
@@ -5473,7 +5473,7 @@ importers:
       '@fluidframework/runtime-definitions': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
-      '@microsoft/api-extractor': ^7.37.0
+      '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       best-random: ^1.0.0
@@ -5503,7 +5503,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../../../packages/test/mocha-test-setup
       '@fluidframework/test-runtime-utils': link:../../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
+      '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       best-random: 1.0.3
@@ -15239,7 +15239,7 @@ packages:
       '@fluid-tools/version-tools': 0.27.0
       '@fluidframework/build-tools': 0.27.0_@types+node@16.18.58
       '@fluidframework/bundle-size-tools': 0.27.0
-      '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
+      '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.10
       '@oclif/plugin-commands': 3.0.4
@@ -15304,7 +15304,7 @@ packages:
       '@fluid-tools/version-tools': 0.27.0
       '@fluidframework/build-tools': 0.27.0
       '@fluidframework/bundle-size-tools': 0.27.0
-      '@microsoft/api-extractor': 7.38.0
+      '@microsoft/api-extractor': 7.38.3
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.10
       '@oclif/plugin-commands': 3.0.4
@@ -15369,7 +15369,7 @@ packages:
       '@fluid-tools/version-tools': 0.27.0
       '@fluidframework/build-tools': 0.27.0_7zrvdqqpe6raskx6zfqiiakk2y
       '@fluidframework/bundle-size-tools': 0.27.0_webpack-cli@4.10.0
-      '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
+      '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@oclif/core': 2.4.0
       '@oclif/plugin-autocomplete': 2.3.10
       '@oclif/plugin-commands': 3.0.4
@@ -18525,46 +18525,6 @@ packages:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
       '@rushstack/node-core-library': 3.61.0_@types+node@16.18.58
-    transitivePeerDependencies:
-      - '@types/node'
-    dev: true
-
-  /@microsoft/api-extractor/7.38.0:
-    resolution: {integrity: sha512-e1LhZYnfw+JEebuY2bzhw0imDCl1nwjSThTrQqBXl40hrVo6xm3j/1EpUr89QyzgjqmAwek2ZkIVZbrhaR+cqg==}
-    hasBin: true
-    dependencies:
-      '@microsoft/api-extractor-model': 7.28.2
-      '@microsoft/tsdoc': 0.14.2
-      '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0
-      '@rushstack/rig-package': 0.5.1
-      '@rushstack/ts-command-line': 4.16.1
-      colors: 1.2.5
-      lodash: 4.17.21
-      resolve: 1.22.8
-      semver: 7.5.4
-      source-map: 0.6.1
-      typescript: 5.1.6
-    transitivePeerDependencies:
-      - '@types/node'
-    dev: true
-
-  /@microsoft/api-extractor/7.38.0_@types+node@16.18.58:
-    resolution: {integrity: sha512-e1LhZYnfw+JEebuY2bzhw0imDCl1nwjSThTrQqBXl40hrVo6xm3j/1EpUr89QyzgjqmAwek2ZkIVZbrhaR+cqg==}
-    hasBin: true
-    dependencies:
-      '@microsoft/api-extractor-model': 7.28.2_@types+node@16.18.58
-      '@microsoft/tsdoc': 0.14.2
-      '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.61.0_@types+node@16.18.58
-      '@rushstack/rig-package': 0.5.1
-      '@rushstack/ts-command-line': 4.16.1
-      colors: 1.2.5
-      lodash: 4.17.21
-      resolve: 1.22.8
-      semver: 7.5.4
-      source-map: 0.6.1
-      typescript: 5.1.6
     transitivePeerDependencies:
       - '@types/node'
     dev: true
