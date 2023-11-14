@@ -110,6 +110,12 @@ export class EditManager<
 	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
 	/**
+	 * The sequence ID corresponding to the oldest revertible commit owned by the local branch. This is used
+	 * to prevent the trunk from trimming this commit or commits after it as they're needed for undo.
+	 */
+	private _oldestRevertibleSequenceId?: SequenceId;
+
+	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
 	 * This makes it possible to model the trunk in the same way as any other branch (it branches off of a base commit)
 	 * which allows it to use branching APIs to interact with the other branches.
@@ -143,6 +149,8 @@ export class EditManager<
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
 		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
 		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
+
+		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed());
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -202,6 +210,46 @@ export class EditManager<
 	}
 
 	/**
+	 * Returns the sequence id of the oldest sequenced revertible commit on the local branch.
+	 *
+	 * TODO: may be more performant to maintain the oldest revertible on the branches themselves
+	 * this should be tested and revisited once branches are supported
+	 */
+	private getOldestRevertibleSequenceId(): SequenceId | undefined {
+		if (this._oldestRevertibleSequenceId === undefined) {
+			let oldest: SequenceId | undefined;
+			for (const revision of this.localBranch.revertibleCommits()) {
+				if (oldest === undefined) {
+					oldest = this.trunkMetadata.get(revision)?.sequenceId;
+				} else {
+					const current = this.trunkMetadata.get(revision)?.sequenceId;
+					if (current !== undefined) {
+						oldest = minSequenceId(oldest, current);
+					}
+				}
+			}
+			this._oldestRevertibleSequenceId = oldest;
+		}
+
+		return this._oldestRevertibleSequenceId;
+	}
+
+	private onRevertibleDisposed(): (revision: RevisionTag) => void {
+		return (revision: RevisionTag) => {
+			const metadata = this.trunkMetadata.get(revision);
+
+			// if this revision hasn't been sequenced, it won't be evicted
+			if (metadata !== undefined) {
+				const { sequenceId: id } = metadata;
+				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
+				if (id === this._oldestRevertibleSequenceId) {
+					this._oldestRevertibleSequenceId = undefined;
+				}
+			}
+		};
+	}
+
+	/**
 	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
 	 *
@@ -238,6 +286,19 @@ export class EditManager<
 			// If that branch is behind the minimum sequence id, we only want to evict commits older than it,
 			// even if those commits are behind the minimum sequence id
 			trunkTailSequenceId = minSequenceId(trunkTailSequenceId, minimumBranchBaseSequenceId);
+		}
+
+		// TODO get the oldest revertible sequence id from all registered branches, not just the local branch
+		const oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId();
+		if (oldestRevertibleSequenceId !== undefined) {
+			// use a smaller sequence number so that the oldest revertible is not trimmed
+			const sequenceIdBeforeOldestRevertible: SequenceId = {
+				sequenceNumber: brand(oldestRevertibleSequenceId.sequenceNumber - 1),
+			};
+			trunkTailSequenceId = minSequenceId(
+				trunkTailSequenceId,
+				sequenceIdBeforeOldestRevertible,
+			);
 		}
 
 		const [sequenceId, latestEvicted] = this.getClosestTrunkCommit(trunkTailSequenceId);

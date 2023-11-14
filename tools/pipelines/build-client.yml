@@ -158,11 +158,6 @@ extends:
     - nyc/packages
     checks:
     - checks
-    - syncpack:deps
-    - syncpack:versions
-    - check:versions
-    - generate:packageList
-    - prettier
     additionalBuildSteps:
     - task: Bash@3
       displayName: Inject devtools telemetry logger token

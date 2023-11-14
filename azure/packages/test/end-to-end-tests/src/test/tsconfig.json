@@ -1,11 +1,9 @@
 {
-	"extends": "@fluidframework/build-common/ts-common-config.json",
+	"extends": ["../../../../../../common/build/build-common/tsconfig.test.json"],
+	"include": ["./**/*", "../*"],
 	"compilerOptions": {
-		"declaration": false,
-		"declarationMap": false,
 		"rootDir": "../",
 		"outDir": "../../dist",
 		"types": ["mocha"],
 	},
-	"include": ["./**/*", "../*"],
 }
