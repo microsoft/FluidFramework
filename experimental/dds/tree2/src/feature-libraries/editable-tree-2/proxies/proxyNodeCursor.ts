@@ -31,9 +31,9 @@ import { type ProxyNode } from "./types";
  *
  * @privateRemarks
  * This is exported solely for testing purposes.
- * Consumers should use {@link cursorFromProxyTreeNode} instead.
+ * Consumers should use {@link cursorFromProxyTree} instead.
  */
-export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScript">>(
+export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "javaScript">>(
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 ): CursorAdapter<TNode> {
@@ -86,6 +86,8 @@ export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScrip
 					if (node === null) {
 						return [];
 					} else if (Array.isArray(node)) {
+						// A list with no children is considered to not have any fields.
+						// If it has children, return the special symbol indicating a list.
 						return node.length === 0 ? [] : [EmptyKey];
 					} else if (node instanceof Map) {
 						const unfilteredKeys = Array.from(node.keys()) as FieldKey[];
@@ -136,7 +138,7 @@ export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScrip
 
 			if (Object.prototype.hasOwnProperty.call(node, key)) {
 				const field = (node as Record<FieldKey, TNode>)[key];
-				return [field];
+				return field === undefined ? [] : [field];
 			}
 
 			return [];
@@ -147,19 +149,19 @@ export function createAdaptor<TNode extends ProxyNode<TreeNodeSchema, "javaScrip
 /**
  * Construct a {@link CursorWithNode} from a {@link ProxyNode}.
  *
- * @param node - The tree being inserted, which will be mapped to the editable tree domain via {@link createAdaptor}.
+ * @param node - The tree being inserted, which will be mapped to the editable tree domain via {@link createProxyTreeAdapter}.
  * @param context - The {@link TreeEntity.context} of the parent node under which the tree is being inserted.
  * @param typeSet - The types allowed under the parent node under which the tree is being inserted.
  * @param mode - The mode of cursor creation.
  * Determines whether the cursor is initialized in "node" mode or "field" mode.
  */
-export function cursorFromProxyTreeNode<TNode extends ProxyNode<TreeNodeSchema, "javaScript">>(
+export function cursorFromProxyTree<TNode extends ProxyNode<TreeNodeSchema, "javaScript">>(
 	node: TNode,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
 	mode: "node" | "field" = "node",
 ): CursorWithNode<TNode> {
-	const adapter = createAdaptor<TNode>(context, typeSet);
+	const adapter = createProxyTreeAdapter<TNode>(context, typeSet);
 	return mode === "node"
 		? stackTreeNodeCursor(adapter, node)
 		: stackTreeFieldCursor(adapter, node);
