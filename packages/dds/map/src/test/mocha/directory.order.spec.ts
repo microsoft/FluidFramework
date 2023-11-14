@@ -149,22 +149,34 @@ describe("Directory Iteration Order", () => {
 
 		it("Remote messages have no conflict with the local pending ops", () => {
 			directory1.createSubDirectory("a");
-			directory1.createSubDirectory("b").createSubDirectory("b-a");
-			directory2.createSubDirectory("c").createSubDirectory("c-b");
+			directory1.createSubDirectory("b").createSubDirectory("b-b");
+			directory2.createSubDirectory("c");
 			directory2.createSubDirectory("d");
 			directory1.deleteSubDirectory("a");
+			directory2.createSubDirectory("b").createSubDirectory("b-a");
 
 			containerRuntimeFactory.processSomeMessages(3);
 			assertDirectoryIterationOrder(directory1, ["b"]);
 			assertDirectoryIterationOrder(directory2, ["a", "b", "c", "d"]);
 
-			containerRuntimeFactory.processSomeMessages(3);
+			containerRuntimeFactory.processSomeMessages(2);
 			assertDirectoryIterationOrder(directory1, ["b", "c", "d"]);
 			assertDirectoryIterationOrder(directory2, ["a", "b", "c", "d"]);
 
 			containerRuntimeFactory.processAllMessages();
 			assertDirectoryIterationOrder(directory1, ["b", "c", "d"]);
 			assertDirectoryIterationOrder(directory2, ["b", "c", "d"]);
+
+			assert(directory1.getWorkingDirectory("b"));
+			assert(directory2.getWorkingDirectory("b"));
+			assertDirectoryIterationOrder(directory1.getWorkingDirectory("b") as ISharedDirectory, [
+				"b-b",
+				"b-a",
+			]);
+			assertDirectoryIterationOrder(directory2.getWorkingDirectory("b") as ISharedDirectory, [
+				"b-b",
+				"b-a",
+			]);
 		});
 
 		it("Remote messages have conflicts with the local pending ops", () => {

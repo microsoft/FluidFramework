@@ -343,13 +343,17 @@ export class DirectoryFactory implements IChannelFactory {
  * 1. If subdirectory A has a non-negative 'seq' and subdirectory B has a negative 'seq', subdirectory A is always placed first due to
  * the policy that acknowledged subdirectories precede locally created ones that have not been committed yet.
  *
- * 2. If both subdirectories A and B have a non-negative 'seq', but subdirectory A has a lower 'clientSeq', subdirectory A will be
- * positioned ahead. This scenario occurs when grouped batching is enabled, and a lower 'clientSeq' indicates that it was processed
- * earlier after the batch was ungrouped.
+ * 2. When both subdirectories A and B have a non-negative 'seq', they are compared as follows:
+ * - If A and B have different 'seq', they are ordered based on 'seq', and the one with the lower 'seq' will be positioned ahead. Notably this rule
+ * should not be applied in the directory ordering, since the lowest 'seq' is -1, when the directory is created locally but not acknowledged yet.
+ * - In the case where A and B have equal 'seq', the one with the lower 'clientSeq' will be positioned ahead. This scenario occurs when grouped
+ * batching is enabled, and a lower 'clientSeq' indicates that it was processed earlier after the batch was ungrouped.
  *
- * 3. If both subdirectories A and B have a negative 'seq', but subdirectory A has a lower 'clientSeq', subdirectory A will be placed
- * in front. This situation indicates that both subdirectories A and B were created locally and not acknowledged yet, with subdirectory
- * A having been created earlier.
+ * 3. When both subdirectories A and B have a negative 'seq', they are compared as follows:
+ * - If A and B have different 'seq', the one with lower 'seq' will be positioned ahead, which indicates the corresponding creation message was
+ * acknowledged by the server earlier.
+ * - If A and B have equal 'seq', the one with lower 'clientSeq' will be placed at the front. This scenario suggests that both subdirectories A
+ * and B were created locally and not acknowledged yet, with the one possessing the lower 'clientSeq' being created earlier.
  *
  * 4. A 'seq' value of zero indicates that the subdirectory was created in detached state, and it is considered acknowledged for the
  * purpose of ordering.
