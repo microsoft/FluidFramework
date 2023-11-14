@@ -99,6 +99,9 @@ resources:
 extends:
   template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
+    pool:
+      name: NewLarge
+      os: linux
     sdl:
       arrow:
         serviceConnection: Arrow_FluidFramework_public
@@ -121,9 +124,6 @@ extends:
         jobs:
           - job: build
             displayName: Build
-            pool:
-              name: NewLarge
-              os: linux
             variables:
               testCoverage: '${{ ne(variables[''Build.Reason''], ''PullRequest'') }}'
               releaseBuildVar: '$[variables.releaseBuild]'
