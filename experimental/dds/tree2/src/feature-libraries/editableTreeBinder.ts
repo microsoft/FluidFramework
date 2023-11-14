@@ -17,7 +17,7 @@ import {
 } from "../core";
 import { Events, ISubscribable } from "../events";
 import { brand, getOrCreate } from "../util";
-import { TreeNode } from "./editable-tree-2";
+import { TreeNode } from "./flex-tree";
 
 // TODO:
 // Tests for this file were removed along with the old editable-tree implementation in the commit that includes this note.
