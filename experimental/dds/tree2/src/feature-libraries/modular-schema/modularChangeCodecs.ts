@@ -31,7 +31,7 @@ import {
 	EncodedNodeChangeset,
 } from "./modularChangeFormat";
 
-function makeV0Codec(
+export function makeModularChangeCodec(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	{ jsonValidator: validator }: ICodecOptions,
 ): IJsonCodec<ModularChangeset> {
@@ -175,5 +175,5 @@ export function makeModularChangeCodecFamily(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 	options: ICodecOptions,
 ): ICodecFamily<ModularChangeset> {
-	return makeCodecFamily([[0, makeV0Codec(fieldKinds, options)]]);
+	return makeCodecFamily([[0, makeModularChangeCodec(fieldKinds, options)]]);
 }
