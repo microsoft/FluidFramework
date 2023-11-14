@@ -336,6 +336,7 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			// Optional fields should not generate IDs during invert
 			fakeIdAllocator,
 			failCrossFieldManager,
+			defaultRevisionMetadataFromChanges([state.mostRecentEdit.changeset]),
 		);
 		yield {
 			content: state.parent?.content,
