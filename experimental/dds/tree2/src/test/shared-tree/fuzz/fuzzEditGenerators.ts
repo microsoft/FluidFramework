@@ -21,7 +21,7 @@ import {
 } from "../../../shared-tree";
 import { brand, fail, getOrCreate } from "../../../util";
 import { AllowedUpdateType, FieldKey, FieldUpPath, JsonableTree, UpPath } from "../../../core";
-import { DownPath, TreeNode, toDownPath } from "../../../feature-libraries";
+import { DownPath, FlexTreeNode, toDownPath } from "../../../feature-libraries";
 import {
 	FieldEditTypes,
 	FuzzInsert,
@@ -476,7 +476,7 @@ export interface FieldPathWithCount {
 	count: number;
 }
 
-function upPathFromNode(node: TreeNode): UpPath {
+function upPathFromNode(node: FlexTreeNode): UpPath {
 	const parentField = node.parentField.parent;
 
 	return {
@@ -486,11 +486,11 @@ function upPathFromNode(node: TreeNode): UpPath {
 	};
 }
 
-function downPathFromNode(node: TreeNode): DownPath {
+function downPathFromNode(node: FlexTreeNode): DownPath {
 	return toDownPath(upPathFromNode(node));
 }
 
-function maybeDownPathFromNode(node: TreeNode | undefined): DownPath | undefined {
+function maybeDownPathFromNode(node: FlexTreeNode | undefined): DownPath | undefined {
 	return node === undefined ? undefined : downPathFromNode(node);
 }
 

@@ -63,7 +63,7 @@ import {
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
 	cursorForJsonableTreeNode,
-	TypedField,
+	FlexTreeTypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
 	ContextuallyTypedNodeData,
@@ -646,7 +646,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 	},
-): TypedField<TRoot> {
+): FlexTreeTypedField<TRoot> {
 	const forest = forestWithContent(content);
 	const branch = createTreeCheckout({
 		...args,
