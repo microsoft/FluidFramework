@@ -25,6 +25,9 @@ import {
 	FactoryTreeSchema,
 	Unenforced,
 	AllowedTypes,
+	FieldNodeSchema,
+	MapNodeSchema,
+	TreeNodeSchemaBase,
 } from "../feature-libraries";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
 
@@ -39,10 +42,7 @@ export type FactoryObjectNodeSchema<
 	Name extends number | string,
 	T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 > = FactoryTreeSchema<
-	TreeNodeSchema<
-		`${TScope}.${Name}`,
-		{ objectNodeFields: { [key in keyof T]: NormalizeField<T[key], Required> } }
-	>
+	ObjectNodeSchema<`${TScope}.${Name}`, { [key in keyof T]: NormalizeField<T[key], Required> }>
 >;
 
 /**
@@ -58,7 +58,7 @@ export type FactoryObjectNodeSchemaRecursive<
 	TScope extends string,
 	Name extends number | string,
 	T extends Unenforced<RestrictiveReadonlyRecord<string, ImplicitFieldSchema>>,
-> = FactoryTreeSchema<TreeNodeSchema<`${TScope}.${Name}`, { objectNodeFields: T }>>;
+> = FactoryTreeSchema<ObjectNodeSchema<`${TScope}.${Name}`, T>>;
 
 /**
  * Builds schema libraries, and the schema within them.
@@ -99,11 +99,7 @@ export class SchemaBuilder<
 		const T extends RestrictiveReadonlyRecord<string, ImplicitFieldSchema>,
 	>(name: Name, t: T): FactoryObjectNodeSchema<TScope, Name, T> {
 		const schema = super.object(name, t);
-		return addFactory(schema as ObjectNodeSchema) as unknown as FactoryObjectNodeSchema<
-			TScope,
-			Name,
-			T
-		>;
+		return addFactory(schema) as unknown as FactoryObjectNodeSchema<TScope, Name, T>;
 	}
 
 	public override objectRecursive<
@@ -135,13 +131,9 @@ export class SchemaBuilder<
 	 */
 	public list<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): FieldNodeSchema<
 		`${TScope}.List<${string}>`,
-		{
-			objectNodeFields: {
-				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
-			};
-		}
+		TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 	>;
 
 	/**
@@ -152,25 +144,17 @@ export class SchemaBuilder<
 	public list<Name extends TName, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): FieldNodeSchema<
 		`${TScope}.${Name}`,
-		{
-			objectNodeFields: {
-				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
-			};
-		}
+		TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 	>;
 
 	public list<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | Any | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeNodeSchema<
+	): FieldNodeSchema<
 		`${TScope}.${string}`,
-		{
-			objectNodeFields: {
-				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
-			};
-		}
+		TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 	> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as
@@ -180,13 +164,9 @@ export class SchemaBuilder<
 			const fullName = structuralName("List", types);
 			return getOrCreate(this.structuralTypes, fullName, () =>
 				this.namedList(fullName, nameOrAllowedTypes as T),
-			) as TreeNodeSchema<
+			) as FieldNodeSchema<
 				`${TScope}.${string}`,
-				{
-					objectNodeFields: {
-						[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
-					};
-				}
+				TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 			>;
 		}
 		return this.namedList(nameOrAllowedTypes as TName, allowedTypes);
@@ -203,17 +183,15 @@ export class SchemaBuilder<
 	private namedList<Name extends TName | string, const T extends ImplicitAllowedTypes>(
 		name: Name,
 		allowedTypes: T,
-	): TreeNodeSchema<
+	): FieldNodeSchema<
 		`${TScope}.${Name}`,
-		{
-			objectNodeFields: {
-				[""]: TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>;
-			};
-		}
+		TreeFieldSchema<typeof FieldKinds.sequence, NormalizeAllowedTypes<T>>
 	> {
-		const schema = TreeNodeSchema.create(this, this.scoped(name as TName & Name), {
-			objectNodeFields: { [""]: this.sequence(allowedTypes) },
-		});
+		const schema = FieldNodeSchema.create(
+			this,
+			this.scoped(name as TName & Name),
+			this.sequence(allowedTypes),
+		);
 		this.addNodeSchema(schema);
 		return schema;
 	}
@@ -233,12 +211,7 @@ export class SchemaBuilder<
 	 */
 	public override map<const T extends TreeNodeSchema | Any | readonly TreeNodeSchema[]>(
 		allowedTypes: T,
-	): TreeNodeSchema<
-		`${TScope}.Map<${string}>`,
-		{
-			mapFields: NormalizeField<T, typeof FieldKinds.optional>;
-		}
-	>;
+	): MapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField<T, typeof FieldKinds.optional>>;
 
 	/**
 	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link MapNode}.
@@ -246,20 +219,12 @@ export class SchemaBuilder<
 	public override map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(
 		name: Name,
 		fieldSchema: T,
-	): TreeNodeSchema<
-		`${TScope}.${Name}`,
-		{ mapFields: NormalizeField<T, typeof FieldKinds.optional> }
-	>;
+	): MapNodeSchema<`${TScope}.${Name}`, NormalizeField<T, typeof FieldKinds.optional>>;
 
 	public override map<const T extends MapFieldSchema | ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | Any | readonly TreeNodeSchema[]),
 		allowedTypes?: T,
-	): TreeNodeSchema<
-		`${TScope}.${string}`,
-		{
-			mapFields: NormalizeField<T, typeof FieldKinds.optional>;
-		}
-	> {
+	): MapNodeSchema<`${TScope}.${string}`, NormalizeField<T, typeof FieldKinds.optional>> {
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as
 				| (T & TreeNodeSchema)
@@ -274,11 +239,9 @@ export class SchemaBuilder<
 						fullName as TName,
 						normalizeField(nameOrAllowedTypes as T, FieldKinds.optional),
 					) as TreeNodeSchema,
-			) as TreeNodeSchema<
+			) as MapNodeSchema<
 				`${TScope}.${string}`,
-				{
-					mapFields: NormalizeField<T, typeof FieldKinds.optional>;
-				}
+				NormalizeField<T, typeof FieldKinds.optional>
 			>;
 		}
 		return super.map(
@@ -378,6 +341,9 @@ export class SchemaBuilder<
 	 *
 	 * Also be aware that code which relies on this (or the "recursive" SchemaBuilder methods tends to break VSCode's IntelliSense every time anything related to that code (even comments) is edited.
 	 * The command `TypeScript: Restart TS Server` should fix it.
+	 * Sometimes this does not work: the exact cause has not been confirmed but if you have the file open multiple times (for example in both sides of a window split into two columns): closing the extra copy may help.
+	 * Focusing the file with the errors before running `TypeScript: Restart TS Server` can also help.
+	 * Real compile errors (for example elsewhere in the file) can also cause the IntelliSense to not work correctly ever after `TypeScript: Restart TS Server`.
 	 */
 	public fixRecursiveReference<T extends AllowedTypes>(...types: T): void {}
 }
@@ -398,13 +364,13 @@ export function structuralName<const T extends string>(
 	let inner: string;
 	if (allowedTypes === Any) {
 		inner = "Any";
-	} else if (allowedTypes instanceof TreeNodeSchema) {
+	} else if (allowedTypes instanceof TreeNodeSchemaBase) {
 		return structuralName(collectionName, [allowedTypes]);
 	} else {
 		assert(Array.isArray(allowedTypes), 0x7c7 /* Types should be an array */);
 		const names = allowedTypes.map((t): string => {
 			// Ensure that lazy types (functions) don't slip through here.
-			assert(t instanceof TreeNodeSchema, 0x7c8 /* invalid type provided */);
+			assert(t instanceof TreeNodeSchemaBase, 0x7c8 /* invalid type provided */);
 			// TypeScript should know `t.name` is a string (from the extends constraint on TreeNodeSchema's name), but the linter objects.
 			// @ts-expect-error: Apparently TypeScript also fails to apply this constraint for some reason and is giving any:
 			type _check = requireFalse<isAny<typeof t.name>>;

@@ -14,7 +14,7 @@ import {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	MapSchema,
+	MapNodeSchema,
 	FieldNodeSchema,
 	MapFieldSchema,
 } from "../../typed-schema";
@@ -99,7 +99,10 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 		return editNode.value as ProxyNode<TSchema>;
 	}
 	if (schemaIsMap(schema)) {
-		return setEditNode(createMapProxy(), editNode as MapNode<MapSchema>) as ProxyNode<TSchema>;
+		return setEditNode(
+			createMapProxy(),
+			editNode as MapNode<MapNodeSchema>,
+		) as ProxyNode<TSchema>;
 	} else if (schemaIsFieldNode(schema)) {
 		return setEditNode(
 			createListProxy(),
@@ -561,18 +564,18 @@ function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> 
 
 const mapStaticDispatchMap: PropertyDescriptorMap = {
 	[Symbol.iterator]: {
-		value(this: SharedTreeMap<MapSchema>) {
+		value(this: SharedTreeMap<MapNodeSchema>) {
 			return this.entries();
 		},
 	},
 	delete: {
-		value(this: SharedTreeMap<MapSchema>, key: string): void {
+		value(this: SharedTreeMap<MapNodeSchema>, key: string): void {
 			const node = getEditNode(this);
 			node.delete(key);
 		},
 	},
 	entries: {
-		*value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
+		*value(this: SharedTreeMap<MapNodeSchema>): IterableIterator<[string, unknown]> {
 			const node = getEditNode(this);
 			for (const key of node.keys()) {
 				yield [key, getProxyForField(node.getBoxed(key))];
@@ -580,30 +583,30 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	get: {
-		value(this: SharedTreeMap<MapSchema>, key: string): unknown {
+		value(this: SharedTreeMap<MapNodeSchema>, key: string): unknown {
 			const node = getEditNode(this);
 			const field = node.getBoxed(key);
 			return getProxyForField(field);
 		},
 	},
 	has: {
-		value(this: SharedTreeMap<MapSchema>, key: string): boolean {
+		value(this: SharedTreeMap<MapNodeSchema>, key: string): boolean {
 			const node = getEditNode(this);
 			return node.has(key);
 		},
 	},
 	keys: {
-		value(this: SharedTreeMap<MapSchema>): IterableIterator<string> {
+		value(this: SharedTreeMap<MapNodeSchema>): IterableIterator<string> {
 			const node = getEditNode(this);
 			return node.keys();
 		},
 	},
 	set: {
 		value(
-			this: SharedTreeMap<MapSchema>,
+			this: SharedTreeMap<MapNodeSchema>,
 			key: string,
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
-		): SharedTreeMap<MapSchema> {
+		): SharedTreeMap<MapNodeSchema> {
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
@@ -616,12 +619,12 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	size: {
-		get(this: SharedTreeMap<MapSchema>) {
+		get(this: SharedTreeMap<MapNodeSchema>) {
 			return getEditNode(this).size;
 		},
 	},
 	values: {
-		*value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
+		*value(this: SharedTreeMap<MapNodeSchema>): IterableIterator<unknown> {
 			for (const [, value] of this.entries()) {
 				yield value;
 			}
@@ -634,7 +637,7 @@ const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
 
 // #endregion
 
-function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
+function createMapProxy<TSchema extends MapNodeSchema>(): SharedTreeMap<TSchema> {
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
 	const dispatch: object = Object.create(mapPrototype, {
 		// Empty - JavaScript Maps do not expose any "own" properties.
@@ -643,7 +646,7 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<SharedTreeMap<TSchema>>(
-		new Map<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">>(),
+		new Map<string, ProxyField<TSchema["info"], "sharedTree", "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -797,7 +800,7 @@ function extractContentMap<T extends Map<string, ProxyNode<TreeNodeSchema, "java
 			assert(editNode !== undefined, "Expected edit node to be defined when hydrating map");
 			assert(schemaIsMap(editNode.schema), "Expected map node when hydrating map");
 			hydrators.forEach(([key, hydrate]) =>
-				hydrate(getMapChildNode(editNode as MapNode<MapSchema>, key)),
+				hydrate(getMapChildNode(editNode as MapNode<MapNodeSchema>, key)),
 			);
 		},
 	};
@@ -838,7 +841,7 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 				editNode !== undefined,
 				"Expected edit node to be defined when hydrating object",
 			);
-			setEditNode(input, editNode); // This makes the input proxy usable and updates the proxy cache
+			setEditNode(input as SharedTreeObject<ObjectNodeSchema>, editNode as ObjectNode); // This makes the input proxy usable and updates the proxy cache
 			assert(
 				schemaIsObjectNode(editNode.schema),
 				"Expected object node when hydrating object content",
@@ -859,7 +862,7 @@ function getListChildNode(listNode: FieldNode<FieldNodeSchema>, index: number): 
 	return (field as Sequence<AllowedTypes>).boxedAt(index);
 }
 
-function getMapChildNode(mapNode: MapNode<MapSchema>, key: string): TreeNode | undefined {
+function getMapChildNode(mapNode: MapNode<MapNodeSchema>, key: string): TreeNode | undefined {
 	const field = mapNode.getBoxed(key);
 	assert(
 		field.schema.kind === FieldKinds.optional,

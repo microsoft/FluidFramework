@@ -1061,7 +1061,7 @@ describe("SharedTree", () => {
 
 			const rootFieldSchema = SchemaBuilder.required(Any);
 			const testSchemaBuilder = new SchemaBuilder({ scope: "testSchema" });
-			const rootNodeSchema = testSchemaBuilder.objectRecursive("Node", {
+			const rootNodeSchema = testSchemaBuilder.object("Node", {
 				foo: SchemaBuilder.sequence(leaf.number),
 				foo2: SchemaBuilder.sequence(leaf.number),
 			});
