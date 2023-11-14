@@ -18,7 +18,6 @@ import { SharedMap, SharedDirectory } from "@fluidframework/map";
 import { SharedMatrix } from "@fluidframework/matrix";
 import { MergeTreeDeltaType } from "@fluidframework/merge-tree";
 import { ConsensusQueue } from "@fluidframework/ordered-collection";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection";
 import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
@@ -42,6 +41,7 @@ import {
 	describeNoCompat,
 	itExpects,
 } from "@fluid-internal/test-version-utils";
+import { isPendingDetachedContainerState } from "@fluidframework/driver-utils";
 
 const detachedContainerRefSeqNumber = 0;
 
@@ -1001,11 +1001,15 @@ describeNoCompat("Detached Container", (getTestObjectProvider) => {
 		const subDataStore1 = await createFluidObject(dataStore.context, "default");
 		dataStore.root.set("attachKey", subDataStore1.handle);
 
-		const summaryForAttach: ISummaryTree = JSON.parse(container.serialize());
+		const snapshot = container.serialize();
+		const deserializedSummary = JSON.parse(snapshot);
+		if (!isPendingDetachedContainerState(deserializedSummary, ".hasBlobsSummaryTree")) {
+			throw Error("Cannot rehydrate detached container. Incorrect format");
+		}
 		const resolvedUrl = await provider.urlResolver.resolve(request);
 		assert(resolvedUrl);
 		const service = await provider.documentServiceFactory.createContainer(
-			summaryForAttach,
+			deserializedSummary.detachedSummary,
 			resolvedUrl,
 		);
 		const absoluteUrl = await provider.urlResolver.getAbsoluteUrl(service.resolvedUrl, "/");

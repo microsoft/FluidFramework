@@ -43,9 +43,11 @@ export { readAndParse } from "./readAndParse";
 export { calculateMaxWaitTime, IProgress, runWithRetry } from "./runWithRetry";
 export {
 	CombinedAppAndProtocolSummary,
+	PendingDetachedContainerState,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
+	isPendingDetachedContainerState,
 } from "./summaryForCreateNew";
 export { convertSummaryTreeToSnapshotITree } from "./treeConversions";
 export {

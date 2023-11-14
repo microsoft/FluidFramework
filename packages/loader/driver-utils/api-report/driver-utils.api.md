@@ -225,6 +225,9 @@ export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefine
 // @public
 export function isOnline(): OnlineStatus;
 
+// @internal
+export function isPendingDetachedContainerState(detachedContainerState: PendingDetachedContainerState, optionalRootTrees: string): detachedContainerState is PendingDetachedContainerState;
+
 // @public
 export function isRuntimeMessage(message: {
     type: string;
@@ -289,6 +292,16 @@ export class ParallelRequests<T> {
     get canceled(): boolean;
     // (undocumented)
     run(concurrency: number): Promise<void>;
+}
+
+// @internal
+export interface PendingDetachedContainerState {
+    // (undocumented)
+    attached: boolean;
+    // (undocumented)
+    detachedSummary: ISummaryTree;
+    // (undocumented)
+    pendingRuntimeState?: unknown;
 }
 
 // @public (undocumented)

@@ -57,6 +57,7 @@ import {
 	runWithRetry,
 	isCombinedAppAndProtocolSummary,
 	MessageType2,
+	isPendingDetachedContainerState,
 } from "@fluidframework/driver-utils";
 import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
@@ -365,6 +366,14 @@ export interface IPendingContainerState {
 	clientId?: string;
 }
 
+export interface IPendingDetachedContainerState {
+	attached: boolean;
+	// baseSnapshot: ISnapshotTree | undefined;
+	// snapshotBlobs: ISerializableBlobContents | undefined;
+	detachedSummary: ISummaryTree;
+	pendingRuntimeState?: unknown;
+}
+
 const summarizerClientType = "summarizer";
 
 interface IContainerLifecycleEvents extends IEvent {
@@ -477,11 +486,11 @@ export class Container
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
 				const deserializedSummary = JSON.parse(snapshot);
-				if (!isCombinedAppAndProtocolSummary(deserializedSummary, hasBlobsSummaryTree)) {
+
+				if (!isPendingDetachedContainerState(deserializedSummary, hasBlobsSummaryTree)) {
 					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
 				}
-
-				await container.rehydrateDetachedFromSnapshot(deserializedSummary);
+				await container.rehydrateDetachedFromSnapshot(deserializedSummary.detachedSummary);
 				return container;
 			},
 			{ start: true, end: true, cancel: "generic" },
@@ -1197,7 +1206,22 @@ export class Container
 				content: "true",
 			};
 		}
-		return JSON.stringify(combinedSummary);
+
+		const pendingRuntimeState = "await this.runtime.getPendingLocalState(props);";
+
+		if (this.offlineLoadEnabled) {
+			const snapshot = getSnapshotTreeFromSerializedContainer(combinedSummary);
+			this.baseSnapshot = snapshot;
+			this.baseSnapshotBlobs = getBlobContentsFromTreeWithBlobContents(snapshot);
+		}
+		const detachedContainerState: IPendingDetachedContainerState = {
+			attached: false,
+			// baseSnapshot: this.baseSnapshot,
+			// snapshotBlobs: this.baseSnapshotBlobs,
+			detachedSummary: combinedSummary,
+			pendingRuntimeState,
+		};
+		return JSON.stringify(detachedContainerState);
 	}
 
 	public async attach(
