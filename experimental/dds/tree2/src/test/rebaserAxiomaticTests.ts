@@ -4,21 +4,15 @@
  */
 
 import { strict as assert } from "assert";
-import {
-	makeAnonChange,
-	RevisionTag,
-	tagChange,
-	TaggedChange,
-	tagRollbackInverse,
-} from "../../core";
-import { defaultRevisionMetadataFromChanges } from "../utils";
+import { makeAnonChange, RevisionTag, tagChange, TaggedChange, tagRollbackInverse } from "../core";
+import { defaultRevisionMetadataFromChanges } from "./utils";
 
 import {
 	FieldStateTree,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
 	BoundFieldChangeRebaser,
-} from "../exhaustiveRebaserUtils";
+} from "./exhaustiveRebaserUtils";
 
 export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	initialStates: FieldStateTree<TContent, TChangeset>[],

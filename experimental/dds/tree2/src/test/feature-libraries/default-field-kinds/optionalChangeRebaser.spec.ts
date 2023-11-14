@@ -41,7 +41,7 @@ import {
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
 } from "../../exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "../rebaserAxiomaticTests";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 
 type RevisionTagMinter = () => RevisionTag;
 

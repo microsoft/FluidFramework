@@ -17,8 +17,7 @@ import {
 import { brand } from "../util";
 import { TestChange } from "./testChange";
 import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
-// eslint-disable-next-line import/no-internal-modules
-import { runExhaustiveComposeRebaseSuite } from "./feature-libraries/rebaserAxiomaticTests";
+import { runExhaustiveComposeRebaseSuite } from "./rebaserAxiomaticTests";
 import { deepFreeze } from "./utils";
 
 describe("TestChange", () => {
