@@ -45,7 +45,9 @@ export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "
 		},
 		type: (node: TNode) => {
 			if (node === undefined) {
-				throw new Error("undefined node");
+				throw new Error(
+					"Cursor adapter was passed an undefined node. This is unsupported.",
+				);
 			}
 			if (node === null) {
 				return leaf.null.name;
@@ -81,6 +83,11 @@ export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "
 			}
 		},
 		keysFromNode: (node: TNode) => {
+			if (node === undefined) {
+				throw new Error(
+					"Cursor adapter was passed an undefined node. This is unsupported.",
+				);
+			}
 			switch (typeof node) {
 				case "object":
 					if (node === null) {
@@ -117,6 +124,12 @@ export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "
 			}
 		},
 		getFieldFromNode: (node: TNode, key: FieldKey): readonly TNode[] => {
+			if (node === undefined) {
+				throw new Error(
+					"Cursor adapter was passed an undefined node. This is unsupported.",
+				);
+			}
+
 			// Object.prototype.hasOwnProperty can return true for strings (ex: with key "0"), so we have to filter them out.
 			// Rather than just special casing strings, we can handle them with an early return for all primitives.
 			if (typeof node !== "object") {
