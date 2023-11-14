@@ -6,8 +6,8 @@
 import { assert } from "@fluidframework/core-utils";
 import { fail } from "../../util";
 import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapNodeSchema } from "../typed-schema";
-import { TreeNode, ObjectNode, FieldNode, MapNode } from "../flex-tree";
-import { SharedTreeObject, SharedTreeList, SharedTreeMap, SharedTreeNode } from "./types";
+import { FlexTreeNode, FlexTreeObjectNode, FlexTreeFieldNode, FlexTreeMapNode } from "../flex-tree";
+import { SharedTreeObject, List, SharedTreeMap, SharedTreeNode } from "./types";
 
 /** Associates an edit node with a target object  */
 const targetSymbol = Symbol("EditNodeTarget");
@@ -21,7 +21,7 @@ interface HasTarget {
  * Since `SharedTreeNodes` are proxies with non-trivial `get` traps, this choice is meant to prevent the confusion of the lookup passing through multiple objects
  * via the trap, or the trap not properly handling the special symbol, etc.
  */
-const editNodeMap = new WeakMap<SharedTreeNode, TreeNode>();
+const editNodeMap = new WeakMap<SharedTreeNode, FlexTreeNode>();
 
 /**
  * Retrieves the edit node associated with the given target via {@link setEditNode}.
@@ -29,22 +29,22 @@ const editNodeMap = new WeakMap<SharedTreeNode, TreeNode>();
  */
 export function getEditNode<TSchema extends ObjectNodeSchema>(
 	target: SharedTreeObject<TSchema>,
-): ObjectNode;
+): FlexTreeObjectNode;
 export function getEditNode<TTypes extends AllowedTypes>(
-	target: SharedTreeList<TTypes>,
-): FieldNode<FieldNodeSchema>;
+	target: List<TTypes>,
+): FlexTreeFieldNode<FieldNodeSchema>;
 export function getEditNode<TSchema extends MapNodeSchema>(
 	target: SharedTreeMap<TSchema>,
-): MapNode<TSchema>;
-export function getEditNode(target: SharedTreeNode): TreeNode;
-export function getEditNode(target: SharedTreeNode): TreeNode {
+): FlexTreeMapNode<TSchema>;
+export function getEditNode(target: SharedTreeNode): FlexTreeNode;
+export function getEditNode(target: SharedTreeNode): FlexTreeNode {
 	return editNodeMap.get(target) ?? fail("Target is not associated with an edit node");
 }
 
 /**
  * Retrieves the edit node associated with the given target via {@link setEditNode}, if any.
  */
-export function tryGetEditNode(target: unknown): TreeNode | undefined {
+export function tryGetEditNode(target: unknown): FlexTreeNode | undefined {
 	if (typeof target === "object" && target !== null) {
 		return editNodeMap.get(target as SharedTreeNode);
 	}
@@ -54,7 +54,7 @@ export function tryGetEditNode(target: unknown): TreeNode | undefined {
 /**
  * Retrieves the target associated with the given edit node via {@link setEditNode}, if any.
  */
-export function tryGetEditNodeTarget(editNode: TreeNode): SharedTreeNode | undefined {
+export function tryGetEditNodeTarget(editNode: FlexTreeNode): SharedTreeNode | undefined {
 	return (editNode as Partial<HasTarget>)[targetSymbol];
 }
 
@@ -69,17 +69,17 @@ export function tryGetEditNodeTarget(editNode: TreeNode): SharedTreeNode | undef
  */
 export function setEditNode<T extends SharedTreeObject<ObjectNodeSchema>>(
 	target: T,
-	editNode: ObjectNode,
+	editNode: FlexTreeObjectNode,
 ): T;
-export function setEditNode<T extends SharedTreeList<AllowedTypes>>(
+export function setEditNode<T extends List<AllowedTypes>>(
 	target: T,
-	editNode: FieldNode<FieldNodeSchema>,
+	editNode: FlexTreeFieldNode<FieldNodeSchema>,
 ): T;
 export function setEditNode<T extends SharedTreeMap<MapNodeSchema>>(
 	target: T,
-	editNode: MapNode<MapNodeSchema>,
+	editNode: FlexTreeMapNode<MapNodeSchema>,
 ): T;
-export function setEditNode<T extends SharedTreeNode>(target: T, editNode: TreeNode): T {
+export function setEditNode<T extends SharedTreeNode>(target: T, editNode: FlexTreeNode): T {
 	assert(
 		tryGetEditNodeTarget(editNode) === undefined,
 		"Cannot associate an edit node with multiple targets",

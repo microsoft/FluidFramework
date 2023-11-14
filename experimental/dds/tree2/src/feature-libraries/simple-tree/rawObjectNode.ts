@@ -10,12 +10,12 @@ import { LocalNodeKey } from "../node-key";
 import {
 	TreeContext,
 	EditableTreeEvents,
-	ObjectNode,
-	ObjectNodeTyped,
-	TreeField,
-	TreeNode,
+	FlexTreeObjectNode,
+	FlexTreeObjectNodeTyped,
+	FlexTreeField,
+	FlexTreeNode,
 	TreeStatus,
-	TypedNode,
+	FlexTreeTypedNode,
 	boxedIterator,
 	onNextChange,
 } from "../flex-tree";
@@ -34,7 +34,7 @@ interface HasNodeContent<T> {
 export function extractRawNodeContent<TSchema extends ObjectNodeSchema, TContent>(
 	node: RawObjectNode<TSchema, TContent>,
 ): TContent;
-export function extractRawNodeContent(node: TreeNode): object | undefined;
+export function extractRawNodeContent(node: FlexTreeNode): object | undefined;
 export function extractRawNodeContent(node: object): object | undefined {
 	const content = (node as Partial<HasNodeContent<object>>)[nodeContent];
 	if (content !== undefined) {
@@ -55,7 +55,7 @@ export function extractRawNodeContent(node: object): object | undefined {
 export function createRawObjectNode<TSchema extends ObjectNodeSchema, TContent extends object>(
 	schema: TSchema,
 	content: TContent,
-): RawObjectNode<TSchema, TContent> & ObjectNodeTyped<TSchema> {
+): RawObjectNode<TSchema, TContent> & FlexTreeObjectNodeTyped<TSchema> {
 	const node = new RawObjectNode(schema, content);
 	for (const [key] of schema.objectNodeFields) {
 		Object.defineProperty(node, key, {
@@ -69,10 +69,10 @@ export function createRawObjectNode<TSchema extends ObjectNodeSchema, TContent e
 			enumerable: false,
 		});
 	}
-	return node as RawObjectNode<TSchema, TContent> & ObjectNodeTyped<TSchema>;
+	return node as RawObjectNode<TSchema, TContent> & FlexTreeObjectNodeTyped<TSchema>;
 }
 
-class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements ObjectNode {
+class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements FlexTreeObjectNode {
 	public constructor(
 		public readonly schema: TSchema,
 		content: TContent,
@@ -91,15 +91,15 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements Objec
 		return rawObjectNodeError();
 	}
 
-	public get parentField(): { readonly parent: TreeField; readonly index: number } {
+	public get parentField(): { readonly parent: FlexTreeField; readonly index: number } {
 		return rawObjectNodeError();
 	}
 
-	public tryGetField(key: FieldKey): TreeField | undefined {
+	public tryGetField(key: FieldKey): FlexTreeField | undefined {
 		return rawObjectNodeError();
 	}
 
-	public [boxedIterator](): IterableIterator<TreeField> {
+	public [boxedIterator](): IterableIterator<FlexTreeField> {
 		return rawObjectNodeError();
 	}
 
@@ -116,7 +116,7 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements Objec
 
 	public is<TSchemaCheck extends TreeNodeSchema>(
 		schema: TSchemaCheck,
-	): this is TypedNode<TSchemaCheck> {
+	): this is FlexTreeTypedNode<TSchemaCheck> {
 		return rawObjectNodeError();
 	}
 

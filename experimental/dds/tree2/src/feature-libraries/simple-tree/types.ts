@@ -22,19 +22,19 @@ import {
 import { AssignableFieldKinds } from "../flex-tree";
 
 /**
- * An object-like SharedTree node. Includes objects, lists, and maps.
+ * An non-{@link LeafNodeSchema|leaf} SharedTree node. Includes objects, lists, and maps.
  * @alpha
  */
 export type SharedTreeNode =
-	| SharedTreeList<AllowedTypes>
+	| List<AllowedTypes>
 	| SharedTreeObject<ObjectNodeSchema>
 	| SharedTreeMap<MapNodeSchema>;
 
 /**
- * Implements 'readonly T[]' and the list mutation APIs.
+ * A {@link SharedTreeNode} which implements 'readonly T[]' and the list mutation APIs.
  * @alpha
  */
-export interface SharedTreeList<
+export interface List<
 	TTypes extends AllowedTypes,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
 > extends ReadonlyArray<ProxyNodeUnion<TTypes, API>> {
@@ -88,7 +88,7 @@ export interface SharedTreeList<
 	 * @param source - The source list to move the item out of.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
 	 */
-	moveToStart(sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+	moveToStart(sourceIndex: number, source: List<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified item to the end of the list.
@@ -103,7 +103,7 @@ export interface SharedTreeList<
 	 * @param source - The source list to move the item out of.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
 	 */
-	moveToEnd(sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+	moveToEnd(sourceIndex: number, source: List<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified item to the desired location in the list.
@@ -121,7 +121,7 @@ export interface SharedTreeList<
 	 * @param source - The source list to move the item out of.
 	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
 	 */
-	moveToIndex(index: number, sourceIndex: number, source: SharedTreeList<AllowedTypes>): void;
+	moveToIndex(index: number, sourceIndex: number, source: List<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified items to the start of the list.
@@ -139,11 +139,7 @@ export interface SharedTreeList<
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
 	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToStart(
-		sourceStart: number,
-		sourceEnd: number,
-		source: SharedTreeList<AllowedTypes>,
-	): void;
+	moveRangeToStart(sourceStart: number, sourceEnd: number, source: List<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified items to the end of the list.
@@ -161,11 +157,7 @@ export interface SharedTreeList<
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination list,
 	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToEnd(
-		sourceStart: number,
-		sourceEnd: number,
-		source: SharedTreeList<AllowedTypes>,
-	): void;
+	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: List<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified items to the desired location within the list.
@@ -190,7 +182,7 @@ export interface SharedTreeList<
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: SharedTreeList<AllowedTypes>,
+		source: List<AllowedTypes>,
 	): void;
 }
 
@@ -350,7 +342,7 @@ export type ProxyNode<
 		: ReadonlyMap<string, ProxyField<TSchema["info"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
-		? SharedTreeList<TSchema["info"]["allowedTypes"], API>
+		? List<TSchema["info"]["allowedTypes"], API>
 		: readonly ProxyNodeUnion<TSchema["info"]["allowedTypes"], API>[]
 	: TSchema extends ObjectNodeSchema
 	? SharedTreeObject<TSchema, API>

@@ -7,7 +7,7 @@ import { FieldKey } from "../core";
 import {
 	TreeFieldSchema,
 	TreeSchema,
-	TypedField,
+	FlexTreeTypedField,
 	ProxyField,
 	TreeContext,
 	NodeKeyManager,
@@ -51,7 +51,7 @@ export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDispos
 	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
 	 */
-	readonly editableTree: TypedField<TRoot>;
+	readonly editableTree: FlexTreeTypedField<TRoot>;
 
 	/**
 	 * Spawn a new view which is based off of the current state of this view.
@@ -79,7 +79,7 @@ export class CheckoutView<
 > implements ITreeView<TRoot>
 {
 	public readonly context: Context;
-	public readonly editableTree: TypedField<TRoot>;
+	public readonly editableTree: FlexTreeTypedField<TRoot>;
 	public constructor(
 		public readonly checkout: TCheckout,
 		public readonly schema: TreeSchema<TRoot>,
@@ -94,7 +94,7 @@ export class CheckoutView<
 			nodeKeyManager,
 			nodeKeyFieldKey,
 		);
-		this.editableTree = this.context.root as TypedField<TRoot>;
+		this.editableTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
 
 	public [disposeSymbol](): void {

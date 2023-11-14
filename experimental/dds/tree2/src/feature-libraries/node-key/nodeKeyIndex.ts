@@ -5,20 +5,26 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
-import { ObjectNode, TreeContext, TreeField, TreeNode, boxedIterator } from "../flex-tree";
+import {
+	FlexTreeObjectNode,
+	TreeContext,
+	FlexTreeField,
+	FlexTreeNode,
+	boxedIterator,
+} from "../flex-tree";
 import { schemaIsObjectNode } from "../typed-schema";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 
 /**
  * The node key index records nodes with {@link LocalNodeKey}s and allows them to be looked up by key.
  */
-export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, ObjectNode> {
+export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNode> {
 	// TODO: The data structure that holds the nodes can likely be optimized to better support cloning
-	private readonly nodes: Map<LocalNodeKey, ObjectNode>;
+	private readonly nodes: Map<LocalNodeKey, FlexTreeObjectNode>;
 
 	public constructor(
 		public readonly fieldKey: FieldKey,
-		keys: Iterable<[LocalNodeKey, ObjectNode]> = [],
+		keys: Iterable<[LocalNodeKey, FlexTreeObjectNode]> = [],
 	) {
 		this.nodes = new Map(keys);
 	}
@@ -66,15 +72,15 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, ObjectNode> {
 	// #region ReadonlyMap interface
 	public forEach(
 		callbackfn: (
-			value: ObjectNode,
+			value: FlexTreeObjectNode,
 			key: LocalNodeKey,
-			map: ReadonlyMap<LocalNodeKey, ObjectNode>,
+			map: ReadonlyMap<LocalNodeKey, FlexTreeObjectNode>,
 		) => void,
 		thisArg?: any,
 	): void {
 		return this.nodes.forEach(callbackfn, thisArg);
 	}
-	public get(key: LocalNodeKey): ObjectNode | undefined {
+	public get(key: LocalNodeKey): FlexTreeObjectNode | undefined {
 		return this.nodes.get(key);
 	}
 	public has(key: LocalNodeKey): boolean {
@@ -83,25 +89,25 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, ObjectNode> {
 	public get size(): number {
 		return this.nodes.size;
 	}
-	public entries(): IterableIterator<[LocalNodeKey, ObjectNode]> {
+	public entries(): IterableIterator<[LocalNodeKey, FlexTreeObjectNode]> {
 		return this.nodes.entries();
 	}
 	public keys(): IterableIterator<LocalNodeKey> {
 		return this.nodes.keys();
 	}
-	public values(): IterableIterator<ObjectNode> {
+	public values(): IterableIterator<FlexTreeObjectNode> {
 		return this.nodes.values();
 	}
-	public [Symbol.iterator](): IterableIterator<[LocalNodeKey, ObjectNode]> {
+	public [Symbol.iterator](): IterableIterator<[LocalNodeKey, FlexTreeObjectNode]> {
 		return this.nodes[Symbol.iterator]();
 	}
 	// #endregion ReadonlyMap interface
 
-	private *findKeys(node: TreeNode): Iterable<[key: LocalNodeKey, node: ObjectNode]> {
+	private *findKeys(node: FlexTreeNode): Iterable<[key: LocalNodeKey, node: FlexTreeObjectNode]> {
 		if (schemaIsObjectNode(node.schema)) {
-			const key = (node as ObjectNode).localNodeKey;
+			const key = (node as FlexTreeObjectNode).localNodeKey;
 			if (key !== undefined) {
-				yield [key, node as ObjectNode];
+				yield [key, node as FlexTreeObjectNode];
 			}
 		}
 		for (const f of node[boxedIterator]()) {
@@ -109,7 +115,9 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, ObjectNode> {
 		}
 	}
 
-	private *findKeysInField(f: TreeField): Iterable<[key: LocalNodeKey, node: ObjectNode]> {
+	private *findKeysInField(
+		f: FlexTreeField,
+	): Iterable<[key: LocalNodeKey, node: FlexTreeObjectNode]> {
 		for (const child of f[boxedIterator]()) {
 			yield* this.findKeys(child);
 		}
