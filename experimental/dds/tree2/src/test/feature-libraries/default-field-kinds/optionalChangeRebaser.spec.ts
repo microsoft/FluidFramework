@@ -40,7 +40,7 @@ import {
 	getInputContext,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
-} from "../exhaustiveRebaserUtils";
+} from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../rebaserAxiomaticTests";
 
 type RevisionTagMinter = () => RevisionTag;

@@ -18,7 +18,7 @@ import {
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
 	BoundFieldChangeRebaser,
-} from "./exhaustiveRebaserUtils";
+} from "../exhaustiveRebaserUtils";
 
 export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	initialStates: FieldStateTree<TContent, TChangeset>[],

@@ -4,10 +4,22 @@
  */
 
 import { strict as assert } from "assert";
-import { singleTextCursor } from "../feature-libraries";
-import { makeAnonChange, FieldKey, tagChange, mintRevisionTag, deltaForSet } from "../core";
+import { RevisionMetadataSource, singleTextCursor } from "../feature-libraries";
+import {
+	makeAnonChange,
+	FieldKey,
+	tagChange,
+	mintRevisionTag,
+	deltaForSet,
+	RevisionTag,
+	TaggedChange,
+} from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
+import { ChildStateGenerator, FieldStateTree, getInputContext } from "./exhaustiveRebaserUtils";
+// eslint-disable-next-line import/no-internal-modules
+import { runExhaustiveComposeRebaseSuite } from "./feature-libraries/rebaserAxiomaticTests";
+import { deepFreeze } from "./utils";
 
 describe("TestChange", () => {
 	it("can be composed", () => {
@@ -89,5 +101,79 @@ describe("TestChange", () => {
 		const normal = TestChange.mint([0, 1], [2, 3]);
 		assert.deepEqual(empty, codec.decode(codec.encode(empty)));
 		assert.deepEqual(normal, codec.decode(codec.encode(normal)));
+	});
+});
+
+interface TestChangeContent {
+	inputContext: number[];
+	value: number;
+}
+
+type TestChangeTestState = FieldStateTree<TestChangeContent, TestChange>;
+
+function rebaseComposed(
+	metadata: RevisionMetadataSource,
+	change: TestChange,
+	...baseChanges: TaggedChange<TestChange>[]
+): TestChange {
+	baseChanges.forEach((base) => deepFreeze(base));
+	deepFreeze(change);
+
+	const composed = TestChange.compose(baseChanges);
+	const rebaseResult = TestChange.rebase(change, composed);
+	assert(rebaseResult !== undefined, "Shouldn't get undefined.");
+	return rebaseResult;
+}
+
+/**
+ * See {@link ChildStateGenerator}
+ */
+const generateChildStates: ChildStateGenerator<TestChangeContent, TestChange> = function* (
+	state: TestChangeTestState,
+	tagFromIntention: (intention: number) => RevisionTag,
+	mintIntention: () => number,
+): Iterable<TestChangeTestState> {
+	const inputContext = getInputContext(state);
+	const { value, inputContext: context } = state.content;
+	for (let i = value + 1; i < 4; i++) {
+		const intention = mintIntention();
+		const intentionsBefore = [];
+		for (let j = 1; j < value + 1; j++) {
+			intentionsBefore.push(j);
+		}
+
+		yield {
+			content: { value: i, inputContext: [] },
+			mostRecentEdit: {
+				changeset: tagChange(
+					TestChange.mint(intentionsBefore, i),
+					tagFromIntention(intention),
+				),
+				description: `Set${i},${inputContext.length}`,
+				intention,
+			},
+			parent: state,
+		};
+	}
+};
+
+describe("TestChange - Rebaser Axioms", () => {
+	describe.only("Exhaustive suite", () => {
+		runExhaustiveComposeRebaseSuite(
+			[{ content: { inputContext: [], value: 0 } }],
+			generateChildStates,
+			{
+				rebase: (change, base) => {
+					return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
+				},
+				compose: (changes) => {
+					return TestChange.compose(changes);
+				},
+				invert: (change) => {
+					return TestChange.invert(change.change);
+				},
+				rebaseComposed,
+			},
+		);
 	});
 });

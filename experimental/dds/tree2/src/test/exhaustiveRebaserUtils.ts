@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag, TaggedChange } from "../../core";
-import { RevisionMetadataSource } from "../../feature-libraries";
+import { RevisionTag, TaggedChange } from "../core";
+import { RevisionMetadataSource } from "../feature-libraries";
 
 /**
  * Given a state tree, constructs the sequence of intentions which led to that state.
