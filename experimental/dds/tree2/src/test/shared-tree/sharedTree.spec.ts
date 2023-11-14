@@ -798,6 +798,16 @@ describe("SharedTree", () => {
 			unsubscribe1();
 			unsubscribe2();
 		});
+
+		describe("out of collab window works for", () => {
+			it("an insert", () => {
+
+			});
+
+			it("an insert", () => {
+
+			});
+		})
 	});
 
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
