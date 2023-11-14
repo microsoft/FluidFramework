@@ -12,7 +12,7 @@ import { brand } from "../../../../util";
 import { EmptyKey } from "../../../../core";
 
 // Note: the behaviors here are more heavily tested by `proxies.spec.ts`.
-// This adds some basic unit test for the generated cursor adapter, but since the adaptor is an implementation
+// This adds some basic unit test for the generated cursor adapter, but since the adapter is an implementation
 // detail of the proxy API, deep coverage at this level was not prioritized.
 describe("cursorFromProxyTree", () => {
 	it("object", () => {

@@ -24,7 +24,7 @@ import { type TreeNodeSchema } from "../../typed-schema";
 import { type ProxyNode } from "./types";
 
 /**
- * Creates a {@link CursorAdaptor} capable of mapping proxy-domain trees to the editable tree domain.
+ * Creates a {@link CursorAdapter} capable of mapping proxy-domain trees to the editable tree domain.
  *
  * @param context - The {@link TreeEntity.context} of the parent node under which the tree is being inserted.
  * @param typeSet - The types allowed under the parent node under which the tree is being inserted.
