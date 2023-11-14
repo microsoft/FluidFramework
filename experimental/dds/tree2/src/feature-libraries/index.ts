@@ -141,8 +141,8 @@ export {
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -156,6 +156,7 @@ export {
 	markEager,
 	MapFieldSchema,
 	SchemaCollection,
+	TreeNodeSchemaBase,
 } from "./typed-schema";
 
 export {

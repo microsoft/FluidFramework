@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { fail } from "../../../util";
-import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapSchema } from "../../typed-schema";
+import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapNodeSchema } from "../../typed-schema";
 import { TreeNode, ObjectNode, FieldNode, MapNode } from "../editableTreeTypes";
 import { SharedTreeObject, SharedTreeList, SharedTreeMap, SharedTreeNode } from "./types";
 
@@ -33,7 +33,7 @@ export function getEditNode<TSchema extends ObjectNodeSchema>(
 export function getEditNode<TTypes extends AllowedTypes>(
 	target: SharedTreeList<TTypes>,
 ): FieldNode<FieldNodeSchema>;
-export function getEditNode<TSchema extends MapSchema>(
+export function getEditNode<TSchema extends MapNodeSchema>(
 	target: SharedTreeMap<TSchema>,
 ): MapNode<TSchema>;
 export function getEditNode(target: SharedTreeNode): TreeNode;
@@ -46,7 +46,7 @@ export function getEditNode(target: SharedTreeNode): TreeNode {
  */
 export function tryGetEditNode(target: unknown): TreeNode | undefined {
 	if (typeof target === "object" && target !== null) {
-		return editNodeMap.get(target);
+		return editNodeMap.get(target as SharedTreeNode);
 	}
 	return undefined;
 }
@@ -75,9 +75,9 @@ export function setEditNode<T extends SharedTreeList<AllowedTypes>>(
 	target: T,
 	editNode: FieldNode<FieldNodeSchema>,
 ): T;
-export function setEditNode<T extends SharedTreeMap<MapSchema>>(
+export function setEditNode<T extends SharedTreeMap<MapNodeSchema>>(
 	target: T,
-	editNode: MapNode<MapSchema>,
+	editNode: MapNode<MapNodeSchema>,
 ): T;
 export function setEditNode<T extends SharedTreeNode>(target: T, editNode: TreeNode): T {
 	assert(

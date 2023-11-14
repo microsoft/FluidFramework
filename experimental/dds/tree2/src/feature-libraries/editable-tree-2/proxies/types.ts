@@ -13,8 +13,8 @@ import {
 	FieldNodeSchema,
 	TreeFieldSchema,
 	InternalTypedSchemaTypes,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
 	TreeSchema,
@@ -28,7 +28,7 @@ import { AssignableFieldKinds } from "../editableTreeTypes";
 export type SharedTreeNode =
 	| SharedTreeList<AllowedTypes>
 	| SharedTreeObject<ObjectNodeSchema>
-	| SharedTreeMap<MapSchema>;
+	| SharedTreeMap<MapNodeSchema>;
 
 /**
  * Implements 'readonly T[]' and the list mutation APIs.
@@ -252,8 +252,8 @@ export type ObjectFields<
  *
  * @alpha
  */
-export interface SharedTreeMap<TSchema extends MapSchema>
-	extends ReadonlyMap<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">> {
+export interface SharedTreeMap<TSchema extends MapNodeSchema>
+	extends ReadonlyMap<string, ProxyField<TSchema["info"], "sharedTree", "notEmpty">> {
 	/**
 	 * Adds or updates an entry in the map with a specified `key` and a `value`.
 	 *
@@ -265,7 +265,7 @@ export interface SharedTreeMap<TSchema extends MapSchema>
 	 */
 	set(
 		key: string,
-		value: ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty"> | undefined,
+		value: ProxyField<TSchema["info"], "sharedTree", "notEmpty"> | undefined,
 	): void;
 
 	/**
@@ -342,16 +342,16 @@ export type ProxyNodeUnion<
 export type ProxyNode<
 	TSchema extends TreeNodeSchema,
 	API extends "javaScript" | "sharedTree" = "sharedTree",
-> = TSchema extends LeafSchema
-	? TreeValue<TSchema["leafValue"]>
-	: TSchema extends MapSchema
+> = TSchema extends LeafNodeSchema
+	? TreeValue<TSchema["info"]>
+	: TSchema extends MapNodeSchema
 	? API extends "sharedTree"
 		? SharedTreeMap<TSchema>
-		: ReadonlyMap<string, ProxyField<TSchema["mapFields"], API>>
+		: ReadonlyMap<string, ProxyField<TSchema["info"], API>>
 	: TSchema extends FieldNodeSchema
 	? API extends "sharedTree"
-		? SharedTreeList<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>
-		: readonly ProxyNodeUnion<TSchema["objectNodeFieldsObject"][""]["allowedTypes"], API>[]
+		? SharedTreeList<TSchema["info"]["allowedTypes"], API>
+		: readonly ProxyNodeUnion<TSchema["info"]["allowedTypes"], API>[]
 	: TSchema extends ObjectNodeSchema
 	? SharedTreeObject<TSchema, API>
 	: unknown;
