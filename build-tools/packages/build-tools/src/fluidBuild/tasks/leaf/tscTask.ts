@@ -507,6 +507,8 @@ export class TscMultiTask extends LeafWithDoneFileTask {
 
 			// Add src files
 			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));
+
+			// Calculate hashes of all the files; only the hashes will be stored in the donefile.
 			const hashesP = files.map(async (name) => {
 				const hash = await this.node.buildContext.fileHashCache.getFileHash(
 					this.getPackageFileFullPath(name),
