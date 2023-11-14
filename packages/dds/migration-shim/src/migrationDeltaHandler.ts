@@ -14,9 +14,10 @@ import { type IMigrationOp } from "./migrationShim.js";
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
  * Intercepts processing of ops to allow for migration, and swapping from LegacySharedTree to new SharedTree
  *
- * TODO: Needs to be able to process v1 and v2 ops, differentiate between them, understand the various states
- * and drop v1 ops after migration. After the MSN of the barrier op, it needs to process v2 ops without needing to
- * check for the v2 stamp.
+ * Able to process v1 and v2 ops, differentiate between them, understand the various states and drop v1 ops after
+ * migration.
+ *
+ * TODO: After the MSN of the barrier op, it needs to process v2 ops without needing to check for the v2 stamp.
  */
 export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	private legacyTreeHandler?: IDeltaHandler;
@@ -88,7 +89,6 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		localOpMetadata: unknown,
 	): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
-		// TODO: maybe call this preprocess shim op
 		assert(!this.isPreAttachState(), "Can't process ops before attaching tree handler");
 		if (
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
@@ -110,10 +110,10 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		return this.treeDeltaHandler.process(message, local, localOpMetadata);
 	}
 
-	// No idea whether any of the below 4 methods work as expected
 	public setConnectionState(connected: boolean): void {
 		return this.treeDeltaHandler.setConnectionState(connected);
 	}
+
 	public reSubmit(contents: unknown, localOpMetadata: unknown): void {
 		const opContents = contents as IOpContents;
 		if (this.isInV1StateAndIsBarrierOp(opContents)) {
