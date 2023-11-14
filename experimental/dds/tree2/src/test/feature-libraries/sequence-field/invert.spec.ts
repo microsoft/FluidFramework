@@ -299,7 +299,7 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("delete (same detach ID through metadata)", () => {
-			const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+			const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
 			const input = [
 				Mark.onEmptyCell(cellId, Mark.delete(1, brand(0), { changes: childChange1 })),
 			];
@@ -310,16 +310,21 @@ describe("SequenceField - Invert", () => {
 		});
 
 		it("delete (different detach ID)", () => {
-			const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+			const startId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const endId: ChangeAtomId = { revision: tag2, localId: brand(0) };
 			const input = [
-				Mark.onEmptyCell(cellId, Mark.delete(1, brand(0), { changes: childChange1 })),
+				Mark.delete(1, endId, {
+					changes: childChange1,
+					cellId: startId,
+				}),
 			];
 
 			const actual = invert(input, tag2);
 			const expected = [
 				Mark.delete(1, brand(0), {
 					changes: inverseChildChange1,
-					cellId: { revision: tag1, localId: brand<ChangesetLocalId>(0) },
+					cellId: endId,
+					detachIdOverride: startId,
 				}),
 			];
 			assert.deepEqual(actual, expected);
