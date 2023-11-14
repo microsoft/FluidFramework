@@ -99,6 +99,9 @@ resources:
 extends:
   template: v1/M365.Official.PipelineTemplate.yml@m365Pipelines
   parameters:
+    sdl:
+      arrow:
+        serviceConnection: Arrow_FluidFramework_public
     pool:
       name: Azure-Pipelines-1ESPT-ExDShared
       image: windows-2022
