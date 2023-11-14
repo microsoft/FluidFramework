@@ -20,9 +20,9 @@ import {
 	ArrayHasFixedLength,
 	Fields,
 } from "../typed-schema";
-import { EditableTreeEvents } from "../untypedTree";
 import { FieldKinds } from "../default-field-kinds";
 import { FieldKind } from "../modular-schema";
+import { EditableTreeEvents } from "./treeEvents";
 import { TreeContext } from "./context";
 
 /**

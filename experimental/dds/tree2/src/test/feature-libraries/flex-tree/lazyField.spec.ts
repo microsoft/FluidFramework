@@ -25,7 +25,7 @@ import {
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
-} from "../../../feature-libraries/editable-tree-2/lazyField";
+} from "../../../feature-libraries/flex-tree/lazyField";
 import {
 	getReadonlyContext,
 	initializeCursor,

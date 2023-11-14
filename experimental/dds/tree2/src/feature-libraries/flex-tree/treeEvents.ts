@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { UpPath, PathVisitor } from "../core";
-import { TreeNode } from "./editable-tree-2";
+import { UpPath, PathVisitor } from "../../core";
+import { TreeNode } from "./editableTreeTypes";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.

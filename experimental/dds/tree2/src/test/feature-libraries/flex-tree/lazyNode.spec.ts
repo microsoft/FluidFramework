@@ -15,7 +15,7 @@ import {
 	LazyObjectNode,
 	LazyTreeNode,
 	buildLazyObjectNode,
-} from "../../../feature-libraries/editable-tree-2/lazyTree";
+} from "../../../feature-libraries/flex-tree/lazyNode";
 import {
 	Any,
 	PrimitiveValue,
@@ -58,13 +58,9 @@ import {
 	LazyOptionalField,
 	LazySequence,
 	LazyValueField,
-} from "../../../feature-libraries/editable-tree-2/lazyField";
-import {
-	TreeEntity,
-	boxedIterator,
-	visitIterableTree,
-} from "../../../feature-libraries/editable-tree-2";
-import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
+} from "../../../feature-libraries/flex-tree/lazyField";
+import { TreeEntity, boxedIterator, visitIterableTree } from "../../../feature-libraries/flex-tree";
+import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context";
 import { TreeContent } from "../../../shared-tree";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
@@ -131,9 +127,9 @@ function createAnchors(
 	return { anchor, anchorNode };
 }
 
-describe("LazyTree", () => {
+describe("LazyNode", () => {
 	it("property names", () => {
-		const builder = new SchemaBuilder({ scope: "lazyTree" });
+		const builder = new SchemaBuilder({ scope: "LazyNode" });
 		const emptyStruct = builder.object("empty", {});
 		const testSchema = builder.intoSchema(SchemaBuilder.optional(emptyStruct));
 

@@ -47,7 +47,7 @@ import {
 	NodeKeyField,
 	FlexibleNodeSubSequence,
 } from "./editableTreeTypes";
-import { makeTree } from "./lazyTree";
+import { makeTree } from "./lazyNode";
 import {
 	LazyEntity,
 	anchorSymbol,

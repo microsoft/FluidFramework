@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { TreeNodeSchema, schemaIsFieldNode } from "../../typed-schema";
-import { EditableTreeEvents } from "../../untypedTree";
-import { TreeStatus } from "../editableTreeTypes";
+import { TreeNodeSchema, schemaIsFieldNode } from "../typed-schema";
+import { EditableTreeEvents, TreeStatus } from "../flex-tree";
 import { getOrCreateNodeProxy } from "./proxies";
 import { getEditNode, tryGetEditNode } from "./editNode";
 import { ProxyNode, SharedTreeNode } from "./types";

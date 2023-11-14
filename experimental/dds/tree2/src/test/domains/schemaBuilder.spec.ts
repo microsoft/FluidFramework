@@ -16,14 +16,13 @@ import {
 	ProxyNode,
 	ObjectNodeSchema,
 	SharedTreeObject,
+	TypedNode,
 } from "../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { TypedNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/proxies";
+import { extractFactoryContent } from "../../feature-libraries/simple-tree/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {

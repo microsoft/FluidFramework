@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { fail } from "../../../util";
-import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapNodeSchema } from "../../typed-schema";
-import { TreeNode, ObjectNode, FieldNode, MapNode } from "../editableTreeTypes";
+import { fail } from "../../util";
+import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapNodeSchema } from "../typed-schema";
+import { TreeNode, ObjectNode, FieldNode, MapNode } from "../flex-tree";
 import { SharedTreeObject, SharedTreeList, SharedTreeMap, SharedTreeNode } from "./types";
 
 /** Associates an edit node with a target object  */

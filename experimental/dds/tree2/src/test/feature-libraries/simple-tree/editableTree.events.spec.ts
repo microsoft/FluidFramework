@@ -12,9 +12,9 @@ import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
 import { viewWithContent } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { getEditNode } from "../../../feature-libraries/editable-tree-2/proxies/editNode";
+import { getEditNode } from "../../../feature-libraries/simple-tree/editNode";
 // eslint-disable-next-line import/no-internal-modules
-import { onNextChange } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
+import { onNextChange } from "../../../feature-libraries/flex-tree/editableTreeTypes";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({

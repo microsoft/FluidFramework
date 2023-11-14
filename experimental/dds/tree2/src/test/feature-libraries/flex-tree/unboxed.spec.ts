@@ -21,12 +21,12 @@ import {
 	FieldKinds,
 	TreeFieldSchema,
 } from "../../../feature-libraries";
-import { Context } from "../../../feature-libraries/editable-tree-2/context";
+import { Context } from "../../../feature-libraries/flex-tree/context";
 import {
 	unboxedField,
 	unboxedTree,
 	unboxedUnion,
-} from "../../../feature-libraries/editable-tree-2/unboxed";
+} from "../../../feature-libraries/flex-tree/unboxed";
 import { type TreeContent } from "../../../shared-tree";
 import { contextWithContentReadonly } from "./utils";
 

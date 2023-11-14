@@ -23,7 +23,7 @@ import {
 	UnknownUnboxed,
 	TypeArrayToTypedTreeArray,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
+} from "../../../feature-libraries/flex-tree/editableTreeTypes";
 import {
 	areSafelyAssignable,
 	Assume,

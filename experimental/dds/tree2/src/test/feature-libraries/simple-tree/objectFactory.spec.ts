@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
 import { ProxyNode, Tree, typeNameSymbol } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../../feature-libraries/editable-tree-2/proxies/proxies";
+import { extractFactoryContent } from "../../../feature-libraries/simple-tree/proxies";
 import { viewWithContent } from "../../utils";
 import { itWithRoot } from "./utils";
 

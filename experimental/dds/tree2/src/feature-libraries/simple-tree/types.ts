@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { TreeValue } from "../../../core";
-import { RestrictiveReadonlyRecord } from "../../../util";
-import { FieldKinds } from "../../default-field-kinds";
-import { FieldKind } from "../../modular-schema";
+import { TreeValue } from "../../core";
+import { RestrictiveReadonlyRecord } from "../../util";
+import { FieldKinds } from "../default-field-kinds";
+import { FieldKind } from "../modular-schema";
 import {
 	AllowedTypes,
 	Any,
@@ -18,8 +18,8 @@ import {
 	ObjectNodeSchema,
 	TreeNodeSchema,
 	TreeSchema,
-} from "../../typed-schema";
-import { AssignableFieldKinds } from "../editableTreeTypes";
+} from "../typed-schema";
+import { AssignableFieldKinds } from "../flex-tree";
 
 /**
  * An object-like SharedTree node. Includes objects, lists, and maps.
