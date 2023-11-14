@@ -17,7 +17,7 @@ import {
 	makeDetachedNodeId,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
-import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
+import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -556,7 +556,7 @@ export function optionalFieldIntoDelta(
 	} else {
 		if (Object.prototype.hasOwnProperty.call(update, "set")) {
 			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
-			const content = [singleTextCursor(setUpdate.set)];
+			const content = [cursorForJsonableTreeNode(setUpdate.set)];
 			const buildId = makeDetachedNodeId(
 				setUpdate.buildId.revision ?? change.fieldChange.revision ?? revision,
 				setUpdate.buildId.localId,

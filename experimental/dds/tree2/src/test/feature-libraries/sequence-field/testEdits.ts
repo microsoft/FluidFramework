@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { SequenceField as SF, singleTextCursor } from "../../../feature-libraries";
+import { SequenceField as SF, cursorForJsonableTreeNode } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import {
 	ChangeAtomId,
@@ -61,7 +61,7 @@ function createInsertChangeset(
 	const content = generateJsonables(size, startingValue);
 	return SF.sequenceFieldEditor.insert(
 		index,
-		content.map(singleTextCursor),
+		content.map(cursorForJsonableTreeNode),
 		id ?? brand(startingValue),
 	);
 }

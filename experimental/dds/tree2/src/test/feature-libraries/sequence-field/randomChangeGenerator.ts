@@ -5,7 +5,11 @@
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
-import { singleTextCursor, SequenceField as SF, NodeChangeset } from "../../../feature-libraries";
+import {
+	cursorForJsonableTreeNode,
+	SequenceField as SF,
+	NodeChangeset,
+} from "../../../feature-libraries";
 import { leaf } from "../../../domains";
 import { brand } from "../../../util";
 
@@ -38,7 +42,7 @@ export function generateRandomChange(
 			return builder.insert(
 				random.integer(0, maxIndex),
 				[
-					singleTextCursor({
+					cursorForJsonableTreeNode({
 						type: leaf.number.name,
 						value: random.integer(0, Number.MAX_SAFE_INTEGER),
 					}),

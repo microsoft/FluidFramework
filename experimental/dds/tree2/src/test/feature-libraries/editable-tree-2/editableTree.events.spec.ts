@@ -10,6 +10,11 @@ import { FieldKinds } from "../../../feature-libraries";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
+import { viewWithContent } from "../../utils";
+// eslint-disable-next-line import/no-internal-modules
+import { getEditNode } from "../../../feature-libraries/editable-tree-2/proxies/editNode";
+// eslint-disable-next-line import/no-internal-modules
+import { onNextChange } from "../../../feature-libraries/editable-tree-2/editableTreeTypes";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
@@ -33,7 +38,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("fire the expected number of times", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -141,7 +146,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("fire in the expected order and always together", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -197,7 +202,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("event argument contains the expected node", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -270,7 +275,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("listeners can be removed successfully", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -319,7 +324,7 @@ describe("beforeChange/afterChange events", () => {
 	it("tree is in correct state when events fire - primitive node deletions", () => {
 		const initialNumber = 20;
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: initialNumber,
@@ -347,7 +352,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - primitive node additions", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -377,7 +382,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - primitive node replacements", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -405,7 +410,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - node inserts to sequence fields", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -467,7 +472,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - node removals from sequence fields", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -507,7 +512,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("tree is in correct state when events fire - node moves in sequence fields", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -579,7 +584,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("not emitted by nodes when they are replaced", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -609,7 +614,7 @@ describe("beforeChange/afterChange events", () => {
 
 	it("bubble up from the affected node to the root", () => {
 		const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
-		const root = tree.schematize({
+		const root = tree.schematizeInternal({
 			initialTree: {
 				myString: "initial string",
 				myOptionalNumber: undefined,
@@ -652,5 +657,72 @@ describe("beforeChange/afterChange events", () => {
 		assert.strictEqual(rootAfterCounter, 1);
 		assert.strictEqual(childBeforeCounter, 1);
 		assert.strictEqual(childAfterCounter, 1);
+	});
+});
+
+describe("onNextChange event", () => {
+	const sb = new SchemaBuilder({ scope: "test" });
+	const object = sb.object("object", { content: sb.number });
+	const schema = sb.intoSchema(object);
+	const initialTree = { content: 3 };
+
+	it("fires exactly once after a change", () => {
+		const view = viewWithContent({ schema, initialTree });
+		const editNode = getEditNode(view.root);
+		let onNextChangeCount = 0;
+		editNode[onNextChange](() => (onNextChangeCount += 1));
+		assert(editNode.is(object));
+		editNode.content = 7;
+		assert.equal(onNextChangeCount, 1);
+		editNode.content = 12;
+		assert.equal(onNextChangeCount, 1);
+	});
+
+	it("can have at most one listener at a time", () => {
+		const view = viewWithContent({ schema, initialTree });
+		const editNode = getEditNode(view.root);
+		let onNextChangeEventCount = 0;
+		editNode[onNextChange](() => (onNextChangeEventCount += 1));
+		assert.throws(() => editNode[onNextChange](() => (onNextChangeEventCount += 1)));
+	});
+
+	it("can be subscribed to again after throwing and catching an error", () => {
+		const view = viewWithContent({ schema, initialTree });
+		const editNode = getEditNode(view.root);
+		assert(editNode.is(object));
+		editNode[onNextChange](() => {
+			throw new Error();
+		});
+		assert.throws(() => (editNode.content = 7));
+		editNode[onNextChange](() => {});
+	});
+
+	it("can be unsubscribed from", () => {
+		const view = viewWithContent({ schema, initialTree });
+		const editNode = getEditNode(view.root);
+		assert(editNode.is(object));
+		let onNextChangeEventFired = false;
+		const off = editNode[onNextChange](() => {
+			onNextChangeEventFired = true;
+		});
+		off();
+		editNode.content = 7;
+		assert.equal(onNextChangeEventFired, false);
+	});
+
+	it("unsubscription has no effect if the event has already fired", () => {
+		const view = viewWithContent({ schema, initialTree });
+		const editNode = getEditNode(view.root);
+		assert(editNode.is(object));
+		const off = editNode[onNextChange](() => {});
+		editNode.content = 7;
+		off();
+		let onNextChangeEventFired = false;
+		editNode[onNextChange](() => {
+			onNextChangeEventFired = true;
+		});
+		off();
+		editNode.content = 13;
+		assert.equal(onNextChangeEventFired, true);
 	});
 });

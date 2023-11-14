@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-cli",
-	"version": "0.27.0",
+	"version": "0.28.0",
 	"description": "Build tools for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -39,7 +39,7 @@
 		"build:readme": "fluid-readme generate readme --multi",
 		"build:test": "tsc --project ./test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib oclif.manifest.json \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",

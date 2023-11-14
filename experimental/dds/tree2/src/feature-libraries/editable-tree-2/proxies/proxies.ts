@@ -14,7 +14,7 @@ import {
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
-	MapSchema,
+	MapNodeSchema,
 	FieldNodeSchema,
 	MapFieldSchema,
 } from "../../typed-schema";
@@ -30,6 +30,7 @@ import {
 	TreeNode,
 	TypedField,
 	UnknownUnboxed,
+	onNextChange,
 } from "../editableTreeTypes";
 import { LazySequence } from "../lazyField";
 import { EmptyKey, FieldKey } from "../../../core";
@@ -98,7 +99,10 @@ export function getOrCreateNodeProxy<TSchema extends TreeNodeSchema>(
 		return editNode.value as ProxyNode<TSchema>;
 	}
 	if (schemaIsMap(schema)) {
-		return setEditNode(createMapProxy(), editNode as MapNode<MapSchema>) as ProxyNode<TSchema>;
+		return setEditNode(
+			createMapProxy(),
+			editNode as MapNode<MapNodeSchema>,
+		) as ProxyNode<TSchema>;
 	} else if (schemaIsFieldNode(schema)) {
 		return setEditNode(
 			createListProxy(),
@@ -156,8 +160,13 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| OptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
-						typedField.content = content;
-						hydrateProxies(typedField.boxedContent);
+						modifyChildren(
+							editNode,
+							() => {
+								typedField.content = content;
+							},
+							() => hydrateProxies(typedField.boxedContent),
+						);
 						break;
 					}
 					default:
@@ -246,8 +255,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
-			getSequenceField(this).insertAt(index, content);
-			hydrateProxies(getEditNode(this));
+			modifyChildren(
+				getEditNode(this),
+				() => getSequenceField(this).insertAt(index, content),
+				(listEditNode) => hydrateProxies(listEditNode),
+			);
 		},
 	},
 	insertAtStart: {
@@ -256,8 +268,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
-			getSequenceField(this).insertAtStart(content);
-			hydrateProxies(getEditNode(this));
+			modifyChildren(
+				getEditNode(this),
+				() => getSequenceField(this).insertAtStart(content),
+				(listEditNode) => hydrateProxies(listEditNode),
+			);
 		},
 	},
 	insertAtEnd: {
@@ -269,8 +284,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				value,
 				this.length,
 			);
-			getSequenceField(this).insertAtEnd(content);
-			hydrateProxies(getEditNode(this));
+			modifyChildren(
+				getEditNode(this),
+				() => getSequenceField(this).insertAtEnd(content),
+				(listEditNode) => hydrateProxies(listEditNode),
+			);
 		},
 	},
 	removeAt: {
@@ -546,18 +564,18 @@ function createListProxy<TTypes extends AllowedTypes>(): SharedTreeList<TTypes> 
 
 const mapStaticDispatchMap: PropertyDescriptorMap = {
 	[Symbol.iterator]: {
-		value(this: SharedTreeMap<MapSchema>) {
+		value(this: SharedTreeMap<MapNodeSchema>) {
 			return this.entries();
 		},
 	},
 	delete: {
-		value(this: SharedTreeMap<MapSchema>, key: string): void {
+		value(this: SharedTreeMap<MapNodeSchema>, key: string): void {
 			const node = getEditNode(this);
 			node.delete(key);
 		},
 	},
 	entries: {
-		*value(this: SharedTreeMap<MapSchema>): IterableIterator<[string, unknown]> {
+		*value(this: SharedTreeMap<MapNodeSchema>): IterableIterator<[string, unknown]> {
 			const node = getEditNode(this);
 			for (const key of node.keys()) {
 				yield [key, getProxyForField(node.getBoxed(key))];
@@ -565,46 +583,48 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 		},
 	},
 	get: {
-		value(this: SharedTreeMap<MapSchema>, key: string): unknown {
+		value(this: SharedTreeMap<MapNodeSchema>, key: string): unknown {
 			const node = getEditNode(this);
 			const field = node.getBoxed(key);
 			return getProxyForField(field);
 		},
 	},
 	has: {
-		value(this: SharedTreeMap<MapSchema>, key: string): boolean {
+		value(this: SharedTreeMap<MapNodeSchema>, key: string): boolean {
 			const node = getEditNode(this);
 			return node.has(key);
 		},
 	},
 	keys: {
-		value(this: SharedTreeMap<MapSchema>): IterableIterator<string> {
+		value(this: SharedTreeMap<MapNodeSchema>): IterableIterator<string> {
 			const node = getEditNode(this);
 			return node.keys();
 		},
 	},
 	set: {
 		value(
-			this: SharedTreeMap<MapSchema>,
+			this: SharedTreeMap<MapNodeSchema>,
 			key: string,
 			value: ProxyNodeUnion<AllowedTypes, "javaScript">,
-		): SharedTreeMap<MapSchema> {
-			const node = getEditNode(this);
+		): SharedTreeMap<MapNodeSchema> {
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
-			node.set(key, content);
-			hydrateProxies(getMapChildNode(node, key));
+			modifyChildren(
+				getEditNode(this),
+				(mapNode) => mapNode.set(key, content),
+				(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
+			);
 			return this;
 		},
 	},
 	size: {
-		get(this: SharedTreeMap<MapSchema>) {
+		get(this: SharedTreeMap<MapNodeSchema>) {
 			return getEditNode(this).size;
 		},
 	},
 	values: {
-		*value(this: SharedTreeMap<MapSchema>): IterableIterator<unknown> {
+		*value(this: SharedTreeMap<MapNodeSchema>): IterableIterator<unknown> {
 			for (const [, value] of this.entries()) {
 				yield value;
 			}
@@ -617,7 +637,7 @@ const mapPrototype = Object.create(Object.prototype, mapStaticDispatchMap);
 
 // #endregion
 
-function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
+function createMapProxy<TSchema extends MapNodeSchema>(): SharedTreeMap<TSchema> {
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target.
 	const dispatch: object = Object.create(mapPrototype, {
 		// Empty - JavaScript Maps do not expose any "own" properties.
@@ -626,7 +646,7 @@ function createMapProxy<TSchema extends MapSchema>(): SharedTreeMap<TSchema> {
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
 	const proxy = new Proxy<SharedTreeMap<TSchema>>(
-		new Map<string, ProxyField<TSchema["mapFields"], "sharedTree", "notEmpty">>(),
+		new Map<string, ProxyField<TSchema["info"], "sharedTree", "notEmpty">>(),
 		{
 			get: (target, key, receiver): unknown => {
 				// Pass the proxy as the receiver here, so that any methods on the prototype receive `proxy` as `this`.
@@ -780,7 +800,7 @@ function extractContentMap<T extends Map<string, ProxyNode<TreeNodeSchema, "java
 			assert(editNode !== undefined, "Expected edit node to be defined when hydrating map");
 			assert(schemaIsMap(editNode.schema), "Expected map node when hydrating map");
 			hydrators.forEach(([key, hydrate]) =>
-				hydrate(getMapChildNode(editNode as MapNode<MapSchema>, key)),
+				hydrate(getMapChildNode(editNode as MapNode<MapNodeSchema>, key)),
 			);
 		},
 	};
@@ -821,7 +841,7 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 				editNode !== undefined,
 				"Expected edit node to be defined when hydrating object",
 			);
-			setEditNode(input, editNode); // This makes the input proxy usable and updates the proxy cache
+			setEditNode(input as SharedTreeObject<ObjectNodeSchema>, editNode as ObjectNode); // This makes the input proxy usable and updates the proxy cache
 			assert(
 				schemaIsObjectNode(editNode.schema),
 				"Expected object node when hydrating object content",
@@ -842,7 +862,7 @@ function getListChildNode(listNode: FieldNode<FieldNodeSchema>, index: number): 
 	return (field as Sequence<AllowedTypes>).boxedAt(index);
 }
 
-function getMapChildNode(mapNode: MapNode<MapSchema>, key: string): TreeNode | undefined {
+function getMapChildNode(mapNode: MapNode<MapNodeSchema>, key: string): TreeNode | undefined {
 	const field = mapNode.getBoxed(key);
 	assert(
 		field.schema.kind === FieldKinds.optional,
@@ -859,4 +879,21 @@ function getObjectChildNode(objectNode: ObjectNode, key: string): TreeNode | und
 		"Expected required or optional field kind",
 	);
 	return (field as RequiredField<AllowedTypes> | OptionalField<AllowedTypes>).boxedContent;
+}
+
+/**
+ * Run the given function `modify`.
+ * If the function results in any changes to the direct children of `parent`, `after` will be run immediately thereafter.
+ */
+function modifyChildren<T extends TreeNode>(
+	parent: T,
+	modify: (parent: T) => void,
+	after?: (parent: T) => void,
+): void {
+	const offNextChange = parent[onNextChange](() => after?.(parent));
+	modify(parent);
+	// `onNextChange` unsubscribes itself after firing once. However, there is no guarantee that it will fire.
+	// For example, the `modify` function may result in a no-op that doesn't trigger an edit (e.g. inserting `[]` into a list).
+	// In those cases, we must unsubscribe manually here. If `modify` was not a no-op, it does no harm to call this function anyway.
+	offNextChange();
 }

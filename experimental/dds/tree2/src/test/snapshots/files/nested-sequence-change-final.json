@@ -145,18 +145,36 @@
                 "content": [
                   [
                     "rootFieldKey",
-                    [
-                      {
-                        "type": "has-sequence-map.SeqMap",
-                        "fields": {
-                          "foo": [
-                            {
-                              "type": "has-sequence-map.SeqMap"
-                            }
-                          ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
                         }
-                      }
-                    ]
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "has-sequence-map.SeqMap",
+                          false,
+                          [
+                            "foo",
+                            [
+                              "has-sequence-map.SeqMap",
+                              false,
+                              []
+                            ]
+                          ]
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"

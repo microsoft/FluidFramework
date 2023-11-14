@@ -153,6 +153,11 @@ module.exports = {
 			"extraneous-lockfiles": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
+			"fluid-build-tasks-eslint": [
+				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
+				"^azure/packages/azure-client/package.json",
+				"^azure/packages/azure-service-utils/package.json",
+			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
 				"tools/api-markdown-documenter/src/test/snapshots/.*",
@@ -203,6 +208,11 @@ module.exports = {
 				"^tools/markdown-magic",
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"^tools/getkeys",
+			],
+			"npm-package-json-esm": [
+				// This is an ESM-only package, and uses tsc to build the ESM output. The policy handler doesn't understand this
+				// case.
+				"packages/dds/migration-shim/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [

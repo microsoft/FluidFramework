@@ -25,13 +25,13 @@ import { brand, capitalize, disposeSymbol, fail, getOrCreate } from "../../util"
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
-	MapSchema,
+	MapNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
-	schemaIsObjectNode as schemaIsObjectNode,
+	schemaIsObjectNode,
 	FieldNodeSchema,
-	LeafSchema,
+	LeafNodeSchema,
 	ObjectNodeSchema,
 	Any,
 	AllowedTypes,
@@ -57,6 +57,7 @@ import {
 	OptionalField,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
+	onNextChange,
 } from "./editableTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
@@ -114,6 +115,7 @@ function buildSubclass(
 	if (schemaIsObjectNode(schema)) {
 		return buildLazyObjectNode(context, schema, cursor, anchorNode, anchor);
 	}
+	// TODO: there should be a common fallback that works for cases without a specialized implementation.
 	fail("unrecognized node kind");
 }
 
@@ -133,6 +135,8 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	readonly #removeDeleteCallback: () => void;
 
 	readonly #anchorNode: AnchorNode;
+
+	#removeNextChangeCallback: (() => void) | undefined;
 
 	public constructor(
 		context: Context,
@@ -166,7 +170,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 			this.context.schema.nodeSchema.get(schema.name) === schema,
 			0x785 /* Narrowing must be done to a schema that exists in this context */,
 		);
-		return (this.schema as TreeNodeSchema) === schema;
+		return this.schema === (schema as unknown);
 	}
 
 	protected override [tryMoveCursorToAnchorSymbol](
@@ -190,7 +194,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 	}
 
 	public tryGetField(fieldKey: FieldKey): TreeField | undefined {
-		const schema = getFieldSchema(fieldKey, this.schema);
+		const schema = this.schema.getFieldSchema(fieldKey);
 		return inCursorField(this[cursorSymbol], fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
 				return undefined;
@@ -201,7 +205,7 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 
 	public [boxedIterator](): IterableIterator<TreeField> {
 		return mapCursorFields(this[cursorSymbol], (cursor) =>
-			makeField(this.context, getFieldSchema(cursor.getFieldKey(), this.schema), cursor),
+			makeField(this.context, this.schema.getFieldSchema(cursor.getFieldKey()), cursor),
 		).values();
 	}
 
@@ -241,11 +245,10 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 			cursor.exitField();
 			const parentType = cursor.type;
 			cursor.enterField(key);
-			fieldSchema = getFieldSchema(
-				key,
+			const nodeSchema =
 				this.context.schema.nodeSchema.get(parentType) ??
-					fail("requested schema that does not exist"),
-			);
+				fail("requested schema that does not exist");
+			fieldSchema = nodeSchema.getFieldSchema(key);
 		}
 
 		const proxifiedField = makeField(this.context, fieldSchema, cursor);
@@ -326,9 +329,30 @@ export abstract class LazyTreeNode<TSchema extends TreeNodeSchema = TreeNodeSche
 				unreachableCase(eventName);
 		}
 	}
+
+	public [onNextChange](fn: (node: TreeNode) => void): () => void {
+		assert(
+			this.#removeNextChangeCallback === undefined,
+			"Only one subscriber may listen to next tree node change at a time",
+		);
+		this.#removeNextChangeCallback = this.#anchorNode.on("childrenChanged", () => {
+			this.#removeNextChangeCallback?.();
+			this.#removeNextChangeCallback = undefined;
+			fn(this);
+		});
+		const removeNextChangeCallback = this.#removeNextChangeCallback;
+		return () => {
+			// Only reset our saved callback if it's the one we closed over in the first place.
+			// It will be different if this is being called after a subsequent registration.
+			if (this.#removeNextChangeCallback === removeNextChangeCallback) {
+				this.#removeNextChangeCallback();
+				this.#removeNextChangeCallback = undefined;
+			}
+		};
+	}
 }
 
-export class LazyMap<TSchema extends MapSchema>
+export class LazyMap<TSchema extends MapNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements MapNode<TSchema>
 {
@@ -355,23 +379,23 @@ export class LazyMap<TSchema extends MapSchema>
 		return mapCursorFields(this[cursorSymbol], (cursor) => cursor.getFieldKey()).values();
 	}
 
-	public values(): IterableIterator<UnboxField<TSchema["mapFields"], "notEmpty">> {
+	public values(): IterableIterator<UnboxField<TSchema["info"], "notEmpty">> {
 		return mapCursorFields(
 			this[cursorSymbol],
 			(cursor) =>
-				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
-					TSchema["mapFields"],
+				unboxedField(this.context, this.schema.info, cursor) as UnboxField<
+					TSchema["info"],
 					"notEmpty"
 				>,
 		).values();
 	}
 
-	public entries(): IterableIterator<[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]> {
+	public entries(): IterableIterator<[FieldKey, UnboxField<TSchema["info"], "notEmpty">]> {
 		return mapCursorFields(this[cursorSymbol], (cursor) => {
-			const entry: [FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">] = [
+			const entry: [FieldKey, UnboxField<TSchema["info"], "notEmpty">] = [
 				cursor.getFieldKey(),
-				unboxedField(this.context, this.schema.mapFields, cursor) as UnboxField<
-					TSchema["mapFields"],
+				unboxedField(this.context, this.schema.info, cursor) as UnboxField<
+					TSchema["info"],
 					"notEmpty"
 				>,
 			];
@@ -381,7 +405,7 @@ export class LazyMap<TSchema extends MapSchema>
 
 	public forEach(
 		callbackFn: (
-			value: UnboxField<TSchema["mapFields"], "notEmpty">,
+			value: UnboxField<TSchema["info"], "notEmpty">,
 			key: FieldKey,
 			map: MapNode<TSchema>,
 		) => void,
@@ -397,21 +421,21 @@ export class LazyMap<TSchema extends MapSchema>
 		return this.tryGetField(brand(key)) !== undefined;
 	}
 
-	public get(key: string): UnboxField<TSchema["mapFields"]> {
+	public get(key: string): UnboxField<TSchema["info"]> {
 		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			unboxedField(this.context, this.schema.mapFields, cursor),
-		) as UnboxField<TSchema["mapFields"]>;
+			unboxedField(this.context, this.schema.info, cursor),
+		) as UnboxField<TSchema["info"]>;
 	}
 
-	public getBoxed(key: string): TypedField<TSchema["mapFields"]> {
+	public getBoxed(key: string): TypedField<TSchema["info"]> {
 		return inCursorField(this[cursorSymbol], brand(key), (cursor) =>
-			makeField(this.context, this.schema.mapFields, cursor),
-		) as TypedField<TSchema["mapFields"]>;
+			makeField(this.context, this.schema.info, cursor),
+		) as TypedField<TSchema["info"]>;
 	}
 
-	public set(key: string, content: FlexibleFieldContent<TSchema["mapFields"]> | undefined): void {
+	public set(key: string, content: FlexibleFieldContent<TSchema["info"]> | undefined): void {
 		const field = this.getBoxed(key);
-		const fieldSchema = this.schema.mapFields;
+		const fieldSchema = this.schema.info;
 
 		if (fieldSchema.kind === FieldKinds.optional) {
 			const optionalField = field as OptionalField<AllowedTypes>;
@@ -431,25 +455,25 @@ export class LazyMap<TSchema extends MapSchema>
 		this.set(key, undefined);
 	}
 
-	public override [boxedIterator](): IterableIterator<TypedField<TSchema["mapFields"]>> {
-		return super[boxedIterator]() as IterableIterator<TypedField<TSchema["mapFields"]>>;
+	public override [boxedIterator](): IterableIterator<TypedField<TSchema["info"]>> {
+		return super[boxedIterator]() as IterableIterator<TypedField<TSchema["info"]>>;
 	}
 
 	public [Symbol.iterator](): IterableIterator<
-		[FieldKey, UnboxField<TSchema["mapFields"], "notEmpty">]
+		[FieldKey, UnboxField<TSchema["info"], "notEmpty">]
 	> {
 		return this.entries();
 	}
 
 	public get asObject(): {
-		readonly [P in FieldKey]?: UnboxField<TSchema["mapFields"], "notEmpty">;
+		readonly [P in FieldKey]?: UnboxField<TSchema["info"], "notEmpty">;
 	} {
-		const record: Record<FieldKey, UnboxField<TSchema["mapFields"], "notEmpty"> | undefined> =
+		const record: Record<FieldKey, UnboxField<TSchema["info"], "notEmpty"> | undefined> =
 			Object.create(null);
 
 		forEachField(this[cursorSymbol], (cursor) => {
 			Object.defineProperty(record, cursor.getFieldKey(), {
-				value: unboxedField(this.context, this.schema.mapFields, cursor),
+				value: unboxedField(this.context, this.schema.info, cursor),
 				configurable: true,
 				enumerable: true,
 			});
@@ -458,7 +482,7 @@ export class LazyMap<TSchema extends MapSchema>
 	}
 }
 
-export class LazyLeaf<TSchema extends LeafSchema>
+export class LazyLeaf<TSchema extends LeafNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements Leaf<TSchema>
 {
@@ -475,8 +499,8 @@ export class LazyLeaf<TSchema extends LeafSchema>
 		makePropertyEnumerableOwn(this, "value", LazyTreeNode.prototype);
 	}
 
-	public override get value(): TreeValue<TSchema["leafValue"]> {
-		return super.value as TreeValue<TSchema["leafValue"]>;
+	public override get value(): TreeValue<TSchema["info"]> {
+		return super.value as TreeValue<TSchema["info"]>;
 	}
 }
 
@@ -484,24 +508,16 @@ export class LazyFieldNode<TSchema extends FieldNodeSchema>
 	extends LazyTreeNode<TSchema>
 	implements FieldNode<TSchema>
 {
-	public get content(): UnboxField<TSchema["objectNodeFieldsObject"][""]> {
+	public get content(): UnboxField<TSchema["info"]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
-			unboxedField(
-				this.context,
-				this.schema.objectNodeFields.get(EmptyKey) ?? fail("missing field schema"),
-				cursor,
-			),
-		) as UnboxField<TSchema["objectNodeFieldsObject"][""]>;
+			unboxedField(this.context, this.schema.info, cursor),
+		) as UnboxField<TSchema["info"]>;
 	}
 
-	public get boxedContent(): TypedField<TSchema["objectNodeFieldsObject"][""]> {
+	public get boxedContent(): TypedField<TSchema["info"]> {
 		return inCursorField(this[cursorSymbol], EmptyKey, (cursor) =>
-			makeField(
-				this.context,
-				this.schema.objectNodeFields.get(EmptyKey) ?? fail("missing field schema"),
-				cursor,
-			),
-		) as TypedField<TSchema["objectNodeFieldsObject"][""]>;
+			makeField(this.context, this.schema.info, cursor),
+		) as TypedField<TSchema["info"]>;
 	}
 }
 
@@ -662,8 +678,4 @@ function buildStructClass<TSchema extends ObjectNodeSchema>(
 	Object.defineProperties(CustomStruct.prototype, propertyDescriptorMap);
 
 	return CustomStruct;
-}
-
-export function getFieldSchema(field: FieldKey, schema: TreeNodeSchema): TreeFieldSchema {
-	return schema.objectNodeFields.get(field) ?? schema.mapFields ?? TreeFieldSchema.empty;
 }

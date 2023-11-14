@@ -41,6 +41,7 @@ import {
 	CellMark,
 	TransientEffect,
 	MarkEffect,
+	InverseAttachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -468,6 +469,14 @@ function areAdjacentIdRanges(
 	return (firstStart as number) + firstLength === secondStart;
 }
 
+function haveMergeableIdOverrides(
+	lhs: InverseAttachFields,
+	lhsCount: number,
+	rhs: InverseAttachFields,
+): boolean {
+	return areMergeableChangeAtoms(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride);
+}
+
 function areMergeableCellIds(
 	lhs: CellId | undefined,
 	lhsCount: number,
@@ -559,8 +568,11 @@ function tryMergeEffects(
 			break;
 		}
 		case "Delete": {
-			const lhsDetach = lhs as Detach;
-			if ((lhsDetach.id as number) + lhsCount === rhs.id) {
+			const lhsDetach = lhs as Delete;
+			if (
+				(lhsDetach.id as number) + lhsCount === rhs.id &&
+				haveMergeableIdOverrides(lhsDetach, lhsCount, rhs)
+			) {
 				return lhsDetach;
 			}
 			break;
@@ -570,6 +582,11 @@ function tryMergeEffects(
 			const lhsMoveOut = lhs as MoveOut | ReturnFrom;
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
+				haveMergeableIdOverrides(
+					lhsMoveOut as Partial<ReturnFrom>,
+					lhsCount,
+					rhs as Partial<ReturnFrom>,
+				) &&
 				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveOut;
