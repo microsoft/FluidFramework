@@ -16,7 +16,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
-		"clean": "rimraf --glob dist \"*.tsbuildinfo\" \"*.build.log\" nyc",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -79,7 +79,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.26.1",
+		"@fluidframework/build-tools": "^0.27.0",
 		"@types/expect-puppeteer": "2.2.1",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "2.2.0",

@@ -68,21 +68,23 @@ export {
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
-export { singleMapTreeCursor, mapTreeFromCursor } from "./mapTreeCursor";
+export { cursorForMapTreeField, cursorForMapTreeNode, mapTreeFromCursor } from "./mapTreeCursor";
 export { MemoizedIdRangeAllocator, IdRange } from "./memoizedIdRangeAllocator";
 export { buildForest } from "./object-forest";
 export { SchemaSummarizer, SchemaEditor, encodeTreeSchema } from "./schemaSummarizer";
 // This is exported because its useful for doing comparisons of schema in tests.
 export { makeSchemaCodec } from "./schemaIndexFormat";
 export {
-	singleStackTreeCursor,
+	stackTreeNodeCursor,
 	CursorAdapter,
 	prefixPath,
 	prefixFieldPath,
 	CursorWithNode,
+	stackTreeFieldCursor,
 } from "./treeCursorUtils";
 export {
-	singleTextCursor,
+	cursorForJsonableTreeNode,
+	cursorForJsonableTreeField,
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
@@ -139,8 +141,8 @@ export {
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -154,6 +156,7 @@ export {
 	markEager,
 	MapFieldSchema,
 	SchemaCollection,
+	TreeNodeSchemaBase,
 } from "./typed-schema";
 
 export {
@@ -177,6 +180,10 @@ export {
 	buildChunkedForest,
 	defaultChunkPolicy,
 	makeTreeChunker,
+	decode,
+	uncompressedEncode,
+	schemaCompressedEncode,
+	EncodedChunk,
 } from "./chunked-forest";
 
 export {
@@ -208,8 +215,6 @@ export {
 	defaultSchemaPolicy,
 } from "./default-field-kinds";
 
-export { TreeEvent, EditableTreeEvents } from "./untypedTree";
-
 export {
 	AssignableFieldKinds,
 	FieldNode,
@@ -235,6 +240,13 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	Typed,
+	Context,
+	TreeEvent,
+	EditableTreeEvents,
+} from "./flex-tree";
+
+export {
 	getProxyForField,
 	ObjectFields,
 	ProxyField,
@@ -248,14 +260,14 @@ export {
 	Tree,
 	TreeApi,
 	SharedTreeNode,
-	Typed,
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
 	addFactory,
-	Context,
-} from "./editable-tree-2";
+} from "./simple-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
+
+export { TreeCompressionStrategy } from "./treeCompressionUtils";
 
 // Split into separate import and export for compatibility with API-Extractor.
 import * as SchemaAware from "./schema-aware";

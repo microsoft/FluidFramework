@@ -19,7 +19,7 @@ import {
 } from "../../../core";
 import {
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	chunkTree,
 	TreeChunk,
 } from "../../../feature-libraries";
@@ -48,7 +48,7 @@ import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtili
 describe("basic chunk", () => {
 	it("calling chunkTree on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
-		const inputCursor = singleTextCursor(data);
+		const inputCursor = cursorForJsonableTreeNode(data);
 		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
@@ -63,7 +63,7 @@ describe("basic chunk", () => {
 
 	it("calling chunkField on existing chunk adds a reference", () => {
 		const data: JsonableTree = { type: brand("Foo"), value: "test" };
-		const inputCursor = singleTextCursor(data);
+		const inputCursor = cursorForJsonableTreeNode(data);
 		const chunk = chunkTree(inputCursor, basicOnlyChunkPolicy);
 		assert(!chunk.isShared(), "newly created chunk should not have more than one reference");
 
@@ -78,7 +78,7 @@ describe("basic chunk", () => {
 	testGeneralPurposeTreeCursor(
 		"basic chunk",
 		(data): ITreeCursor => {
-			const inputCursor = singleTextCursor(data);
+			const inputCursor = cursorForJsonableTreeNode(data);
 			const chunk = basicChunkTree(inputCursor, basicOnlyChunkPolicy);
 			const cursor: ITreeCursor = chunk.cursor();
 			cursor.enterNode(0);

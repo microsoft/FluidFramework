@@ -5,14 +5,14 @@
 
 import { strict as assert } from "assert";
 import { Delta, FieldKey, MapTree, TreeNodeSchemaIdentifier } from "../../core";
-import { mapFieldsChanges, mapTreeFromCursor, singleMapTreeCursor } from "../../feature-libraries";
+import { mapFieldsChanges, mapTreeFromCursor, cursorForMapTreeNode } from "../../feature-libraries";
 import { brand } from "../../util";
 import { deepFreeze } from "../utils";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const emptyMap = new Map();
 const nodeX = { type, value: "X", fields: emptyMap };
-const nodeXCursor = singleMapTreeCursor(nodeX);
+const nodeXCursor = cursorForMapTreeNode(nodeX);
 const fooField = brand<FieldKey>("foo");
 const detachId: Delta.DetachedNodeId = { minor: 43 };
 

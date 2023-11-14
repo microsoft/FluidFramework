@@ -5,7 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
-import { ObjectNode, TreeContext, TreeField, boxedIterator } from "../editable-tree-2";
+import { ObjectNode, TreeContext, TreeField, TreeNode, boxedIterator } from "../flex-tree";
+import { schemaIsObjectNode } from "../typed-schema";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 
 /**
@@ -96,10 +97,12 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, ObjectNode> {
 	}
 	// #endregion ReadonlyMap interface
 
-	private *findKeys(node: ObjectNode): Iterable<[key: LocalNodeKey, node: ObjectNode]> {
-		const key = node.localNodeKey;
-		if (key !== undefined) {
-			yield [key, node];
+	private *findKeys(node: TreeNode): Iterable<[key: LocalNodeKey, node: ObjectNode]> {
+		if (schemaIsObjectNode(node.schema)) {
+			const key = (node as ObjectNode).localNodeKey;
+			if (key !== undefined) {
+				yield [key, node as ObjectNode];
+			}
 		}
 		for (const f of node[boxedIterator]()) {
 			yield* this.findKeysInField(f);

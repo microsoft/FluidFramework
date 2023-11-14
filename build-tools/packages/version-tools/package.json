@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.27.0",
+	"version": "0.28.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -38,7 +38,7 @@
 		"build:readme": "fluid-readme generate readme",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib oclif.manifest.json \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",

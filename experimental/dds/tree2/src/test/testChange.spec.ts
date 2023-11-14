@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { RevisionMetadataSource, singleTextCursor } from "../feature-libraries";
+import { RevisionMetadataSource, cursorForJsonableTreeNode } from "../feature-libraries";
 import {
 	makeAnonChange,
 	FieldKey,
@@ -16,7 +16,7 @@ import {
 } from "../core";
 import { brand } from "../util";
 import { TestChange } from "./testChange";
-import { ChildStateGenerator, FieldStateTree, getInputContext } from "./exhaustiveRebaserUtils";
+import { ChildStateGenerator, FieldStateTree } from "./exhaustiveRebaserUtils";
 // eslint-disable-next-line import/no-internal-modules
 import { runExhaustiveComposeRebaseSuite } from "./feature-libraries/rebaserAxiomaticTests";
 import { deepFreeze } from "./utils";
@@ -78,7 +78,7 @@ describe("TestChange", () => {
 			[
 				fooField,
 				deltaForSet(
-					singleTextCursor({
+					cursorForJsonableTreeNode({
 						type: brand("test"),
 						value: "2|3",
 					}),

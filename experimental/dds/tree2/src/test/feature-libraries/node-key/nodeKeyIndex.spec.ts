@@ -25,7 +25,7 @@ import {
 	TreeFieldSchema,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeKeys } from "../../../feature-libraries/editable-tree-2/nodeKeys";
+import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys";
 import { SummarizeType, TestTreeProvider, treeWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
@@ -145,7 +145,7 @@ describe("Node Key Index", () => {
 
 		const manager1 = createMockNodeKeyManager();
 		const key = manager1.generateLocalNodeKey();
-		tree.schematize(
+		tree.schematizeInternal(
 			{
 				initialTree: {
 					[nodeKeyFieldKey]: manager1.stabilizeNodeKey(key),
@@ -162,7 +162,7 @@ describe("Node Key Index", () => {
 		await provider.summarize();
 		const tree2 = await provider.createTree();
 		await provider.ensureSynchronized();
-		const view2 = tree2.schematize(
+		const view2 = tree2.schematizeInternal(
 			{
 				initialTree: {
 					[nodeKeyFieldKey]: "not used",

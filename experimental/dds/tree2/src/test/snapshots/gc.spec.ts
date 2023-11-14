@@ -29,7 +29,7 @@ const someType = builder.object("foo", {
 const schema = builder.intoSchema(SchemaBuilder.required(someType));
 
 function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
-	return tree.schematize({
+	return tree.schematizeInternal({
 		initialTree: {
 			handles: [],
 			nested: undefined,

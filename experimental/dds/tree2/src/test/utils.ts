@@ -43,7 +43,7 @@ import {
 	runSynchronous,
 	SharedTreeContentSnapshot,
 	ITreeView,
-	TreeView,
+	CheckoutView,
 } from "../shared-tree";
 import {
 	Any,
@@ -62,7 +62,7 @@ import {
 	RevisionInfo,
 	RevisionMetadataSource,
 	revisionMetadataSourceFromInfo,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	TypedField,
 	jsonableTreeFromForest,
 	nodeKeyFieldKey as defaultNodeKeyFieldKey,
@@ -616,7 +616,7 @@ export function viewWithContent<TRoot extends TreeFieldSchema>(
 		forest,
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
-	return new TreeView(
+	return new CheckoutView(
 		view,
 		content.schema,
 		args?.nodeKeyManager ?? createMockNodeKeyManager(),
@@ -654,7 +654,7 @@ export function treeWithContent<TRoot extends TreeFieldSchema>(
 		schema: new InMemoryStoredSchemaRepository(content.schema),
 	});
 	const manager = args?.nodeKeyManager ?? createMockNodeKeyManager();
-	const view = new TreeView(
+	const view = new CheckoutView(
 		branch,
 		content.schema,
 		manager,
@@ -777,7 +777,7 @@ export function initializeTestTree(
 
 		// Apply an edit to the tree which inserts a node with a value
 		runSynchronous(tree, () => {
-			const writeCursors = state.map(singleTextCursor);
+			const writeCursors = state.map(cursorForJsonableTreeNode);
 			const field = tree.editor.sequenceField({
 				parent: undefined,
 				field: rootFieldKey,
@@ -960,7 +960,9 @@ export function announceTestDelta(
 	announceDelta(delta, deltaProcessor, detachedFieldIndex ?? makeDetachedFieldIndex());
 }
 
-export function createTestUndoRedoStacks(view: ITreeCheckout): {
+export function createTestUndoRedoStacks(
+	events: ISubscribable<{ revertible(type: Revertible): void }>,
+): {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;
@@ -968,7 +970,7 @@ export function createTestUndoRedoStacks(view: ITreeCheckout): {
 	const undoStack: Revertible[] = [];
 	const redoStack: Revertible[] = [];
 
-	const unsubscribe = view.events.on("revertible", (revertible) => {
+	const unsubscribe = events.on("revertible", (revertible) => {
 		if (revertible.kind === RevertibleKind.Undo) {
 			redoStack.push(revertible);
 		} else {
