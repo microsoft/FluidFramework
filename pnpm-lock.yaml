@@ -8021,6 +8021,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -8047,6 +8048,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/aqueduct:
@@ -8084,6 +8086,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -8122,6 +8125,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/attributor:
@@ -8160,6 +8164,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8197,6 +8202,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/client-logger/app-insights-logger:
@@ -8272,6 +8278,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8297,6 +8304,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/dds-interceptions:
@@ -8327,6 +8335,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -8356,6 +8365,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-framework:
@@ -8375,6 +8385,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -8393,6 +8404,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-static:
@@ -8428,6 +8440,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8462,6 +8475,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/oldest-client-observer:
@@ -8483,6 +8497,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8503,6 +8518,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/request-handler:
@@ -8533,6 +8549,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
@@ -8562,6 +8579,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/synthesize:
@@ -8587,6 +8605,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -8611,6 +8630,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/tinylicious-client:
@@ -8645,6 +8665,7 @@ importers:
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^2.0.2
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -8680,6 +8701,7 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.2
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/undo-redo:
@@ -8711,6 +8733,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/map': link:../../dds/map
@@ -8741,6 +8764,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/view-adapters:
@@ -8760,6 +8784,7 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8778,6 +8803,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/view-interfaces:
@@ -8794,6 +8820,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8809,6 +8836,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/container-loader:
