@@ -2,9 +2,9 @@
 # Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
 name: $(Build.BuildId)
 parameters:
-sdl:
-  arrow:
-    serviceConnection: Arrow_FluidFramework_public
+  sdl:
+    arrow:
+      serviceConnection: Arrow_FluidFramework_public
 - name: releaseBuildOverride
   displayName: Release Build (default = not released)
   type: string
