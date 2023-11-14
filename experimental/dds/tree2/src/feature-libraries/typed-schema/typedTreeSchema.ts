@@ -29,8 +29,6 @@ import { FieldKind, FullSchemaPolicy } from "../modular-schema";
 import { LazyItem } from "./flexList";
 import { ObjectToMap, objectToMapTyped } from "./typeUtils";
 
-// TODO: tests for this file
-
 /**
  * @alpha
  */
@@ -84,10 +82,6 @@ export abstract class TreeNodeSchemaBase<
 	public abstract readonly mapFields?: TreeFieldStoredSchema | undefined;
 	public abstract readonly leafValue?: ValueSchema | undefined;
 }
-
-// TODO: TreeNodeSchema should be a union of the more specific schema type below, rather than containing all the info for all of them.
-// When this change is made, FieldNodeSchema should be properly separated from ObjectNodeSchema,
-// and the bellow type checks could be done with instanceof tests.
 
 /**
  * @alpha
