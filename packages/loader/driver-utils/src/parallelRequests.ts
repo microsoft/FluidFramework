@@ -12,8 +12,8 @@ import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } fr
 import { logNetworkFailure } from "./networkUtils";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion";
+import { calculateMaxWaitTime, calculateWaitTimeFromError } from "./runWithRetry";
 
-const MaxFetchDelayInMs = 10000;
 const MissingFetchDelayInMs = 100;
 
 type WorkingState = "working" | "done" | "canceled";
@@ -426,7 +426,9 @@ async function getSingleOpBatch(
 
 	while (signal?.aborted !== true) {
 		retry++;
-		let delay = Math.min(MaxFetchDelayInMs, MissingFetchDelayInMs * Math.pow(2, retry));
+		let defaultDelay = MissingFetchDelayInMs;
+		let waitTime = 0;
+		let lastError: unknown;
 		const startTime = performance.now();
 
 		try {
@@ -470,6 +472,7 @@ async function getSingleOpBatch(
 				);
 			}
 		} catch (error) {
+			lastError = error;
 			const canRetry = canRetryOnError(error);
 
 			const retryAfter = getRetryDelayFromError(error);
@@ -493,10 +496,7 @@ async function getSingleOpBatch(
 				throw error;
 			}
 
-			if (retryAfter !== undefined) {
-				// If the error told us to wait, then we will wait for that specific amount rather than the default.
-				delay = retryAfter;
-			}
+			waitTime = Math.max(calculateWaitTimeFromError(error), defaultDelay);
 		}
 
 		if (telemetryEvent === undefined) {
@@ -509,9 +509,10 @@ async function getSingleOpBatch(
 		// If we get here something has gone wrong - either got an unexpected empty set of messages back or a real error.
 		// Either way we will wait a little bit before retrying.
 		await new Promise<void>((resolve) => {
-			setTimeout(resolve, delay);
+			setTimeout(resolve, waitTime);
 		});
 
+		defaultDelay = Math.min(defaultDelay * 2, calculateMaxWaitTime(lastError));
 		// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.
