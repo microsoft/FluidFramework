@@ -158,6 +158,12 @@ export function calculateMaxWaitTime(error: unknown): number {
 		: MaxReconnectDelayInMsWhenEndpointIsNotReachable;
 }
 
+/**
+ * Calculates wait time based on error.
+ * @param error - error based on which we decide wait time.
+ * @returns wait time from error.
+ * @public
+ */
 export function calculateWaitTimeFromError(error: unknown): number {
 	return (getRetryDelayFromError(error) ?? 0) * (Math.random() + 1);
 }
