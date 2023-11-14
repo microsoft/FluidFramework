@@ -253,7 +253,7 @@ export {
 	ProxyFieldInner,
 	ProxyNode,
 	ProxyNodeUnion,
-	SharedTreeList,
+	TreeList,
 	SharedTreeMap,
 	SharedTreeObject,
 	ProxyRoot,

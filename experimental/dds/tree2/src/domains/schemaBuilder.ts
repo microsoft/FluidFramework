@@ -113,7 +113,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link FieldNodeSchema} for a {@link SharedTreeList}.
+	 * Define (and add to this library if not already present) a structurally typed {@link FieldNodeSchema} for a {@link TreeList}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this List is defined as a function of the provided types.
@@ -137,7 +137,7 @@ export class SchemaBuilder<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link SharedTreeList}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeList}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
@@ -173,7 +173,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link SharedTreeList}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeList}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 *

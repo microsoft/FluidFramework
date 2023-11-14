@@ -5,7 +5,7 @@
 
 export { getProxyForField } from "./proxies";
 export {
-	List as SharedTreeList,
+	TreeList,
 	ObjectFields,
 	ProxyField,
 	ProxyFieldInner,

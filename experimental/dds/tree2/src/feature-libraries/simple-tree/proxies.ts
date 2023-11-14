@@ -45,7 +45,7 @@ import {
 	ProxyField,
 	ProxyNode,
 	ProxyNodeUnion,
-	List,
+	TreeList,
 	SharedTreeMap,
 	SharedTreeObject,
 } from "./types";
@@ -216,8 +216,9 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 /**
  * Given a list proxy, returns its underlying LazySequence field.
  */
-const getSequenceField = <TTypes extends AllowedTypes>(list: List<AllowedTypes, "javaScript">) =>
-	getEditNode(list).content as LazySequence<TTypes>;
+const getSequenceField = <TTypes extends AllowedTypes>(
+	list: TreeList<AllowedTypes, "javaScript">,
+) => getEditNode(list).content as LazySequence<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.
@@ -252,7 +253,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	at: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			index: number,
 		): FlexTreeUnknownUnboxed | undefined {
 			return getSequenceField(this).at(index);
@@ -260,7 +261,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAt: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			index: number,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
@@ -274,7 +275,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAtStart: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
@@ -287,7 +288,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	insertAtEnd: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			value: Iterable<ProxyNodeUnion<AllowedTypes, "javaScript">>,
 		): void {
 			const { content, hydrateProxies } = contextualizeInsertedListContent(
@@ -302,20 +303,20 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 		},
 	},
 	removeAt: {
-		value(this: List<AllowedTypes, "javaScript">, index: number): void {
+		value(this: TreeList<AllowedTypes, "javaScript">, index: number): void {
 			getSequenceField(this).removeAt(index);
 		},
 	},
 	removeRange: {
-		value(this: List<AllowedTypes, "javaScript">, start?: number, end?: number): void {
+		value(this: TreeList<AllowedTypes, "javaScript">, start?: number, end?: number): void {
 			getSequenceField(this).removeRange(start, end);
 		},
 	},
 	moveToStart: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			sourceIndex: number,
-			source?: List<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToStart(sourceIndex, getSequenceField(source));
@@ -326,9 +327,9 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveToEnd: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			sourceIndex: number,
-			source?: List<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToEnd(sourceIndex, getSequenceField(source));
@@ -339,10 +340,10 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveToIndex: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			index: number,
 			sourceIndex: number,
-			source?: List<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveToIndex(index, sourceIndex, getSequenceField(source));
@@ -353,10 +354,10 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToStart: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: List<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToStart(
@@ -371,10 +372,10 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToEnd: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: List<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToEnd(
@@ -389,11 +390,11 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 	},
 	moveRangeToIndex: {
 		value(
-			this: List<AllowedTypes, "javaScript">,
+			this: TreeList<AllowedTypes, "javaScript">,
 			index: number,
 			sourceStart: number,
 			sourceEnd: number,
-			source?: List<AllowedTypes>,
+			source?: TreeList<AllowedTypes>,
 		): void {
 			if (source !== undefined) {
 				getSequenceField(this).moveRangeToIndex(
@@ -479,7 +480,7 @@ function asIndex(key: string | symbol, length: number) {
 	}
 }
 
-function createListProxy<TTypes extends AllowedTypes>(): List<TTypes> {
+function createListProxy<TTypes extends AllowedTypes>(): TreeList<TTypes> {
 	// Create a 'dispatch' object that this Proxy forwards to instead of the proxy target, because we need
 	// the proxy target to be a plain JS array (see comments below when we instantiate the Proxy).
 	// Own properties on the dispatch object are surfaced as own properties of the proxy.
@@ -488,7 +489,7 @@ function createListProxy<TTypes extends AllowedTypes>(): List<TTypes> {
 	// Properties normally inherited from 'Array.prototype' are surfaced via the prototype chain.
 	const dispatch: object = Object.create(listPrototype, {
 		length: {
-			get(this: List<AllowedTypes, "javaScript">) {
+			get(this: TreeList<AllowedTypes, "javaScript">) {
 				return getSequenceField(this).length;
 			},
 			set() {},
@@ -500,7 +501,7 @@ function createListProxy<TTypes extends AllowedTypes>(): List<TTypes> {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
 	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
-	const proxy: List<TTypes> = new Proxy<List<TTypes>>([] as any, {
+	const proxy: TreeList<TTypes> = new Proxy<TreeList<TTypes>>([] as any, {
 		get: (target, key) => {
 			const field = getSequenceField(proxy);
 			const maybeIndex = asIndex(key, field.length);

@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { fail } from "../../util";
 import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapNodeSchema } from "../typed-schema";
 import { FlexTreeNode, FlexTreeObjectNode, FlexTreeFieldNode, FlexTreeMapNode } from "../flex-tree";
-import { SharedTreeObject, List, SharedTreeMap, SharedTreeNode } from "./types";
+import { SharedTreeObject, TreeList, SharedTreeMap, SharedTreeNode } from "./types";
 
 /** Associates an edit node with a target object  */
 const targetSymbol = Symbol("EditNodeTarget");
@@ -31,7 +31,7 @@ export function getEditNode<TSchema extends ObjectNodeSchema>(
 	target: SharedTreeObject<TSchema>,
 ): FlexTreeObjectNode;
 export function getEditNode<TTypes extends AllowedTypes>(
-	target: List<TTypes>,
+	target: TreeList<TTypes>,
 ): FlexTreeFieldNode<FieldNodeSchema>;
 export function getEditNode<TSchema extends MapNodeSchema>(
 	target: SharedTreeMap<TSchema>,
@@ -71,7 +71,7 @@ export function setEditNode<T extends SharedTreeObject<ObjectNodeSchema>>(
 	target: T,
 	editNode: FlexTreeObjectNode,
 ): T;
-export function setEditNode<T extends List<AllowedTypes>>(
+export function setEditNode<T extends TreeList<AllowedTypes>>(
 	target: T,
 	editNode: FlexTreeFieldNode<FieldNodeSchema>,
 ): T;

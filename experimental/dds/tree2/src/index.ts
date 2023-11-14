@@ -218,7 +218,7 @@ export {
 	schemaIsObjectNode,
 	AllowedTypeSet,
 	SchemaBuilderOptions,
-	SharedTreeList,
+	TreeList,
 	ObjectFields,
 	ProxyField,
 	ProxyFieldInner,
