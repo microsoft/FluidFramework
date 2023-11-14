@@ -31,6 +31,7 @@ import { NodeShape } from "./nodeShape";
  * Encode data from `cursor` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
+ * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
  */
 export function schemaCompressedEncode(
 	schema: StoredSchemaCollection,
@@ -85,7 +86,7 @@ export function treeShaper(
 	fieldHandler: FieldShaper,
 	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
-	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
+	const schema = fullSchema.nodeSchema.get(schemaName) ?? fail("missing schema");
 
 	// TODO:Performance:
 	// consider moving some optional and sequence fields to extra fields if they are commonly empty

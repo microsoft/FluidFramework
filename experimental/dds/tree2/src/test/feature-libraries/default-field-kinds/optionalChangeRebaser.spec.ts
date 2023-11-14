@@ -8,7 +8,7 @@ import {
 	CrossFieldManager,
 	NodeChangeset,
 	RevisionMetadataSource,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
@@ -68,7 +68,7 @@ const OptionalChange = {
 			detach: ChangesetLocalId;
 		},
 	) {
-		return optionalFieldEditor.set(singleTextCursor({ type, value }), wasEmpty, ids);
+		return optionalFieldEditor.set(cursorForJsonableTreeNode({ type, value }), wasEmpty, ids);
 	},
 
 	clear(id: ChangesetLocalId) {

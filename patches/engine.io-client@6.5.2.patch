@@ -1,0 +1,871 @@
+diff --git a/build/cjs/browser-entrypoint.d.ts b/build/cjs/browser-entrypoint.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..66bff7b27c3f85d1de74859c7a0cea12743eb42d
+--- /dev/null
++++ b/build/cjs/browser-entrypoint.d.ts
+@@ -0,0 +1,3 @@
++import { Socket } from "./socket.js";
++declare const _default: (uri: any, opts: any) => Socket;
++export default _default;
+diff --git a/build/cjs/contrib/has-cors.d.ts b/build/cjs/contrib/has-cors.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..346b0a5ced6d18c5ddbfa188af3c7fb445f2588b
+--- /dev/null
++++ b/build/cjs/contrib/has-cors.d.ts
+@@ -0,0 +1 @@
++export declare const hasCORS: boolean;
+diff --git a/build/cjs/contrib/parseqs.d.ts b/build/cjs/contrib/parseqs.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..528aab1121d3bf08978cfaf4c970d67657eaeb7d
+--- /dev/null
++++ b/build/cjs/contrib/parseqs.d.ts
+@@ -0,0 +1,15 @@
++/**
++ * Compiles a querystring
++ * Returns string representation of the object
++ *
++ * @param {Object}
++ * @api private
++ */
++export declare function encode(obj: any): string;
++/**
++ * Parses a simple querystring into an object
++ *
++ * @param {String} qs
++ * @api private
++ */
++export declare function decode(qs: any): {};
+diff --git a/build/cjs/contrib/parseuri.d.ts b/build/cjs/contrib/parseuri.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..31a3ca7a3629ba6fcbc62ac291fecd7a5738ca6f
+--- /dev/null
++++ b/build/cjs/contrib/parseuri.d.ts
+@@ -0,0 +1 @@
++export declare function parse(str: any): any;
+diff --git a/build/cjs/contrib/yeast.d.ts b/build/cjs/contrib/yeast.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..29b5b45e05094373758e4e19e11c65374e6fcca8
+--- /dev/null
++++ b/build/cjs/contrib/yeast.d.ts
+@@ -0,0 +1,23 @@
++/**
++ * Return a string representing the specified number.
++ *
++ * @param {Number} num The number to convert.
++ * @returns {String} The string representation of the number.
++ * @api public
++ */
++export declare function encode(num: any): string;
++/**
++ * Return the integer value specified by the given string.
++ *
++ * @param {String} str The string to convert.
++ * @returns {Number} The integer value represented by the string.
++ * @api public
++ */
++export declare function decode(str: any): number;
++/**
++ * Yeast: A tiny growing id generator.
++ *
++ * @returns {String} A unique id.
++ * @api public
++ */
++export declare function yeast(): string;
+diff --git a/build/cjs/globalThis.browser.d.ts b/build/cjs/globalThis.browser.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..28d0a7c53049a7e8fb870f66e21d33064a9452a7
+--- /dev/null
++++ b/build/cjs/globalThis.browser.d.ts
+@@ -0,0 +1 @@
++export declare const globalThisShim: any;
+diff --git a/build/cjs/globalThis.d.ts b/build/cjs/globalThis.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..4b9b90ffc7c268e4ca3d8f2f7b55c0b59ff539bf
+--- /dev/null
++++ b/build/cjs/globalThis.d.ts
+@@ -0,0 +1 @@
++export declare const globalThisShim: typeof globalThis;
+diff --git a/build/cjs/index.d.ts b/build/cjs/index.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..44d4569d8d1ef6b4b63ef479ad18465df67dc82b
+--- /dev/null
++++ b/build/cjs/index.d.ts
+@@ -0,0 +1,9 @@
++import { Socket } from "./socket.js";
++export { Socket };
++export { SocketOptions } from "./socket.js";
++export declare const protocol: number;
++export { Transport } from "./transport.js";
++export { transports } from "./transports/index.js";
++export { installTimerFunctions } from "./util.js";
++export { parse } from "./contrib/parseuri.js";
++export { nextTick } from "./transports/websocket-constructor.js";
+diff --git a/build/cjs/socket.d.ts b/build/cjs/socket.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..5ada1099d31ebc411a845d6b539f0d613b5c4cbf
+--- /dev/null
++++ b/build/cjs/socket.d.ts
+@@ -0,0 +1,358 @@
++import { Emitter } from "@socket.io/component-emitter";
++import type { Packet, BinaryType, RawData } from "engine.io-parser";
++import { CloseDetails, Transport } from "./transport.js";
++export interface SocketOptions {
++    /**
++     * The host that we're connecting to. Set from the URI passed when connecting
++     */
++    host: string;
++    /**
++     * The hostname for our connection. Set from the URI passed when connecting
++     */
++    hostname: string;
++    /**
++     * If this is a secure connection. Set from the URI passed when connecting
++     */
++    secure: boolean;
++    /**
++     * The port for our connection. Set from the URI passed when connecting
++     */
++    port: string | number;
++    /**
++     * Any query parameters in our uri. Set from the URI passed when connecting
++     */
++    query: {
++        [key: string]: any;
++    };
++    /**
++     * `http.Agent` to use, defaults to `false` (NodeJS only)
++     */
++    agent: string | boolean;
++    /**
++     * Whether the client should try to upgrade the transport from
++     * long-polling to something better.
++     * @default true
++     */
++    upgrade: boolean;
++    /**
++     * Forces base 64 encoding for polling transport even when XHR2
++     * responseType is available and WebSocket even if the used standard
++     * supports binary.
++     */
++    forceBase64: boolean;
++    /**
++     * The param name to use as our timestamp key
++     * @default 't'
++     */
++    timestampParam: string;
++    /**
++     * Whether to add the timestamp with each transport request. Note: this
++     * is ignored if the browser is IE or Android, in which case requests
++     * are always stamped
++     * @default false
++     */
++    timestampRequests: boolean;
++    /**
++     * A list of transports to try (in order). Engine.io always attempts to
++     * connect directly with the first one, provided the feature detection test
++     * for it passes.
++     *
++     * @default ['polling','websocket', 'webtransport']
++     */
++    transports: string[];
++    /**
++     * If true and if the previous websocket connection to the server succeeded,
++     * the connection attempt will bypass the normal upgrade process and will
++     * initially try websocket. A connection attempt following a transport error
++     * will use the normal upgrade process. It is recommended you turn this on
++     * only when using SSL/TLS connections, or if you know that your network does
++     * not block websockets.
++     * @default false
++     */
++    rememberUpgrade: boolean;
++    /**
++     * Are we only interested in transports that support binary?
++     */
++    onlyBinaryUpgrades: boolean;
++    /**
++     * Timeout for xhr-polling requests in milliseconds (0) (only for polling transport)
++     */
++    requestTimeout: number;
++    /**
++     * Transport options for Node.js client (headers etc)
++     */
++    transportOptions: Object;
++    /**
++     * (SSL) Certificate, Private key and CA certificates to use for SSL.
++     * Can be used in Node.js client environment to manually specify
++     * certificate information.
++     */
++    pfx: string;
++    /**
++     * (SSL) Private key to use for SSL. Can be used in Node.js client
++     * environment to manually specify certificate information.
++     */
++    key: string;
++    /**
++     * (SSL) A string or passphrase for the private key or pfx. Can be
++     * used in Node.js client environment to manually specify certificate
++     * information.
++     */
++    passphrase: string;
++    /**
++     * (SSL) Public x509 certificate to use. Can be used in Node.js client
++     * environment to manually specify certificate information.
++     */
++    cert: string;
++    /**
++     * (SSL) An authority certificate or array of authority certificates to
++     * check the remote host against.. Can be used in Node.js client
++     * environment to manually specify certificate information.
++     */
++    ca: string | string[];
++    /**
++     * (SSL) A string describing the ciphers to use or exclude. Consult the
++     * [cipher format list]
++     * (http://www.openssl.org/docs/apps/ciphers.html#CIPHER_LIST_FORMAT) for
++     * details on the format.. Can be used in Node.js client environment to
++     * manually specify certificate information.
++     */
++    ciphers: string;
++    /**
++     * (SSL) If true, the server certificate is verified against the list of
++     * supplied CAs. An 'error' event is emitted if verification fails.
++     * Verification happens at the connection level, before the HTTP request
++     * is sent. Can be used in Node.js client environment to manually specify
++     * certificate information.
++     */
++    rejectUnauthorized: boolean;
++    /**
++     * Headers that will be passed for each request to the server (via xhr-polling and via websockets).
++     * These values then can be used during handshake or for special proxies.
++     */
++    extraHeaders?: {
++        [header: string]: string;
++    };
++    /**
++     * Whether to include credentials (cookies, authorization headers, TLS
++     * client certificates, etc.) with cross-origin XHR polling requests
++     * @default false
++     */
++    withCredentials: boolean;
++    /**
++     * Whether to automatically close the connection whenever the beforeunload event is received.
++     * @default false
++     */
++    closeOnBeforeunload: boolean;
++    /**
++     * Whether to always use the native timeouts. This allows the client to
++     * reconnect when the native timeout functions are overridden, such as when
++     * mock clocks are installed.
++     * @default false
++     */
++    useNativeTimers: boolean;
++    /**
++     * weather we should unref the reconnect timer when it is
++     * create automatically
++     * @default false
++     */
++    autoUnref: boolean;
++    /**
++     * parameters of the WebSocket permessage-deflate extension (see ws module api docs). Set to false to disable.
++     * @default false
++     */
++    perMessageDeflate: {
++        threshold: number;
++    };
++    /**
++     * The path to get our client file from, in the case of the server
++     * serving it
++     * @default '/engine.io'
++     */
++    path: string;
++    /**
++     * Whether we should add a trailing slash to the request path.
++     * @default true
++     */
++    addTrailingSlash: boolean;
++    /**
++     * Either a single protocol string or an array of protocol strings. These strings are used to indicate sub-protocols,
++     * so that a single server can implement multiple WebSocket sub-protocols (for example, you might want one server to
++     * be able to handle different types of interactions depending on the specified protocol)
++     * @default []
++     */
++    protocols: string | string[];
++}
++interface HandshakeData {
++    sid: string;
++    upgrades: string[];
++    pingInterval: number;
++    pingTimeout: number;
++    maxPayload: number;
++}
++interface SocketReservedEvents {
++    open: () => void;
++    handshake: (data: HandshakeData) => void;
++    packet: (packet: Packet) => void;
++    packetCreate: (packet: Packet) => void;
++    data: (data: any) => void;
++    message: (data: any) => void;
++    drain: () => void;
++    flush: () => void;
++    heartbeat: () => void;
++    ping: () => void;
++    pong: () => void;
++    error: (err: string | Error) => void;
++    upgrading: (transport: any) => void;
++    upgrade: (transport: any) => void;
++    upgradeError: (err: Error) => void;
++    close: (reason: string, description?: CloseDetails | Error) => void;
++}
++type SocketState = "opening" | "open" | "closing" | "closed";
++export declare class Socket extends Emitter<Record<never, never>, Record<never, never>, SocketReservedEvents> {
++    id: string;
++    transport: Transport;
++    binaryType: BinaryType;
++    readyState: SocketState;
++    writeBuffer: Packet[];
++    private prevBufferLen;
++    private upgrades;
++    private pingInterval;
++    private pingTimeout;
++    private pingTimeoutTimer;
++    private setTimeoutFn;
++    private clearTimeoutFn;
++    private readonly beforeunloadEventListener;
++    private readonly offlineEventListener;
++    private upgrading;
++    private maxPayload?;
++    private readonly opts;
++    private readonly secure;
++    private readonly hostname;
++    private readonly port;
++    private readonly transports;
++    static priorWebsocketSuccess: boolean;
++    static protocol: number;
++    /**
++     * Socket constructor.
++     *
++     * @param {String|Object} uri - uri or options
++     * @param {Object} opts - options
++     */
++    constructor(uri: any, opts?: Partial<SocketOptions>);
++    /**
++     * Creates transport of the given type.
++     *
++     * @param {String} name - transport name
++     * @return {Transport}
++     * @private
++     */
++    private createTransport;
++    /**
++     * Initializes transport to use and starts probe.
++     *
++     * @private
++     */
++    private open;
++    /**
++     * Sets the current transport. Disables the existing one (if any).
++     *
++     * @private
++     */
++    private setTransport;
++    /**
++     * Probes a transport.
++     *
++     * @param {String} name - transport name
++     * @private
++     */
++    private probe;
++    /**
++     * Called when connection is deemed open.
++     *
++     * @private
++     */
++    private onOpen;
++    /**
++     * Handles a packet.
++     *
++     * @private
++     */
++    private onPacket;
++    /**
++     * Called upon handshake completion.
++     *
++     * @param {Object} data - handshake obj
++     * @private
++     */
++    private onHandshake;
++    /**
++     * Sets and resets ping timeout timer based on server pings.
++     *
++     * @private
++     */
++    private resetPingTimeout;
++    /**
++     * Called on `drain` event
++     *
++     * @private
++     */
++    private onDrain;
++    /**
++     * Flush write buffers.
++     *
++     * @private
++     */
++    private flush;
++    /**
++     * Ensure the encoded size of the writeBuffer is below the maxPayload value sent by the server (only for HTTP
++     * long-polling)
++     *
++     * @private
++     */
++    private getWritablePackets;
++    /**
++     * Sends a message.
++     *
++     * @param {String} msg - message.
++     * @param {Object} options.
++     * @param {Function} callback function.
++     * @return {Socket} for chaining.
++     */
++    write(msg: RawData, options?: any, fn?: any): this;
++    send(msg: RawData, options?: any, fn?: any): this;
++    /**
++     * Sends a packet.
++     *
++     * @param {String} type: packet type.
++     * @param {String} data.
++     * @param {Object} options.
++     * @param {Function} fn - callback function.
++     * @private
++     */
++    private sendPacket;
++    /**
++     * Closes the connection.
++     */
++    close(): this;
++    /**
++     * Called upon transport error
++     *
++     * @private
++     */
++    private onError;
++    /**
++     * Called upon transport close.
++     *
++     * @private
++     */
++    private onClose;
++    /**
++     * Filters upgrades, returning only those matching client transports.
++     *
++     * @param {Array} upgrades - server upgrades
++     * @private
++     */
++    private filterUpgrades;
++}
++export {};
+diff --git a/build/cjs/transport.d.ts b/build/cjs/transport.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..d93ff6c541e8ea4de32d1154a13fadf6eb550128
+--- /dev/null
++++ b/build/cjs/transport.d.ts
+@@ -0,0 +1,106 @@
++import type { Packet, RawData } from "engine.io-parser";
++import { Emitter } from "@socket.io/component-emitter";
++import { SocketOptions } from "./socket.js";
++declare class TransportError extends Error {
++    readonly description: any;
++    readonly context: any;
++    readonly type = "TransportError";
++    constructor(reason: string, description: any, context: any);
++}
++export interface CloseDetails {
++    description: string;
++    context?: unknown;
++}
++interface TransportReservedEvents {
++    open: () => void;
++    error: (err: TransportError) => void;
++    packet: (packet: Packet) => void;
++    close: (details?: CloseDetails) => void;
++    poll: () => void;
++    pollComplete: () => void;
++    drain: () => void;
++}
++type TransportState = "opening" | "open" | "closed" | "pausing" | "paused";
++export declare abstract class Transport extends Emitter<Record<never, never>, Record<never, never>, TransportReservedEvents> {
++    query: Record<string, string>;
++    writable: boolean;
++    protected opts: SocketOptions;
++    protected supportsBinary: boolean;
++    protected readyState: TransportState;
++    protected socket: any;
++    protected setTimeoutFn: typeof setTimeout;
++    /**
++     * Transport abstract constructor.
++     *
++     * @param {Object} opts - options
++     * @protected
++     */
++    constructor(opts: any);
++    /**
++     * Emits an error.
++     *
++     * @param {String} reason
++     * @param description
++     * @param context - the error context
++     * @return {Transport} for chaining
++     * @protected
++     */
++    protected onError(reason: string, description: any, context?: any): this;
++    /**
++     * Opens the transport.
++     */
++    open(): this;
++    /**
++     * Closes the transport.
++     */
++    close(): this;
++    /**
++     * Sends multiple packets.
++     *
++     * @param {Array} packets
++     */
++    send(packets: any): void;
++    /**
++     * Called upon open
++     *
++     * @protected
++     */
++    protected onOpen(): void;
++    /**
++     * Called with data.
++     *
++     * @param {String} data
++     * @protected
++     */
++    protected onData(data: RawData): void;
++    /**
++     * Called with a decoded packet.
++     *
++     * @protected
++     */
++    protected onPacket(packet: Packet): void;
++    /**
++     * Called upon close.
++     *
++     * @protected
++     */
++    protected onClose(details?: CloseDetails): void;
++    /**
++     * The name of the transport
++     */
++    abstract get name(): string;
++    /**
++     * Pauses the transport, in order not to lose packets during an upgrade.
++     *
++     * @param onPause
++     */
++    pause(onPause: () => void): void;
++    protected createUri(schema: string, query?: Record<string, unknown>): string;
++    private _hostname;
++    private _port;
++    private _query;
++    protected abstract doOpen(): any;
++    protected abstract doClose(): any;
++    protected abstract write(packets: Packet[]): any;
++}
++export {};
+diff --git a/build/cjs/transports/index.d.ts b/build/cjs/transports/index.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..6617f8ce41cd22eb67638dd483e48fe701510b52
+--- /dev/null
++++ b/build/cjs/transports/index.d.ts
+@@ -0,0 +1,8 @@
++import { Polling } from "./polling.js";
++import { WS } from "./websocket.js";
++import { WT } from "./webtransport.js";
++export declare const transports: {
++    websocket: typeof WS;
++    webtransport: typeof WT;
++    polling: typeof Polling;
++};
+diff --git a/build/cjs/transports/polling.d.ts b/build/cjs/transports/polling.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..176ce57ae022775b4508e7f4cf6807c588226e8a
+--- /dev/null
++++ b/build/cjs/transports/polling.d.ts
+@@ -0,0 +1,137 @@
++import { Transport } from "../transport.js";
++import { RawData } from "engine.io-parser";
++import { Emitter } from "@socket.io/component-emitter";
++export declare class Polling extends Transport {
++    private readonly xd;
++    private polling;
++    private pollXhr;
++    private cookieJar?;
++    /**
++     * XHR Polling constructor.
++     *
++     * @param {Object} opts
++     * @package
++     */
++    constructor(opts: any);
++    get name(): string;
++    /**
++     * Opens the socket (triggers polling). We write a PING message to determine
++     * when the transport is open.
++     *
++     * @protected
++     */
++    doOpen(): void;
++    /**
++     * Pauses polling.
++     *
++     * @param {Function} onPause - callback upon buffers are flushed and transport is paused
++     * @package
++     */
++    pause(onPause: any): void;
++    /**
++     * Starts polling cycle.
++     *
++     * @private
++     */
++    poll(): void;
++    /**
++     * Overloads onData to detect payloads.
++     *
++     * @protected
++     */
++    onData(data: any): void;
++    /**
++     * For polling, send a close packet.
++     *
++     * @protected
++     */
++    doClose(): void;
++    /**
++     * Writes a packets payload.
++     *
++     * @param {Array} packets - data packets
++     * @protected
++     */
++    write(packets: any): void;
++    /**
++     * Generates uri for connection.
++     *
++     * @private
++     */
++    private uri;
++    /**
++     * Creates a request.
++     *
++     * @param {String} method
++     * @private
++     */
++    request(opts?: {}): Request;
++    /**
++     * Sends data.
++     *
++     * @param {String} data to send.
++     * @param {Function} called upon flush.
++     * @private
++     */
++    private doWrite;
++    /**
++     * Starts a poll cycle.
++     *
++     * @private
++     */
++    private doPoll;
++}
++interface RequestReservedEvents {
++    success: () => void;
++    data: (data: RawData) => void;
++    error: (err: number | Error, context: unknown) => void;
++}
++export declare class Request extends Emitter<{}, {}, RequestReservedEvents> {
++    private readonly opts;
++    private readonly method;
++    private readonly uri;
++    private readonly data;
++    private xhr;
++    private setTimeoutFn;
++    private index;
++    static requestsCount: number;
++    static requests: {};
++    /**
++     * Request constructor
++     *
++     * @param {Object} options
++     * @package
++     */
++    constructor(uri: any, opts: any);
++    /**
++     * Creates the XHR object and sends the request.
++     *
++     * @private
++     */
++    private create;
++    /**
++     * Called upon error.
++     *
++     * @private
++     */
++    private onError;
++    /**
++     * Cleans up house.
++     *
++     * @private
++     */
++    private cleanup;
++    /**
++     * Called upon load.
++     *
++     * @private
++     */
++    private onLoad;
++    /**
++     * Aborts the request.
++     *
++     * @package
++     */
++    abort(): void;
++}
++export {};
+diff --git a/build/cjs/transports/websocket-constructor.browser.d.ts b/build/cjs/transports/websocket-constructor.browser.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..4f1b60e9ae097be5ebdaf2d1331433dc6db3ac0a
+--- /dev/null
++++ b/build/cjs/transports/websocket-constructor.browser.d.ts
+@@ -0,0 +1,4 @@
++export declare const nextTick: (cb: any, setTimeoutFn: any) => any;
++export declare const WebSocket: any;
++export declare const usingBrowserWebSocket = true;
++export declare const defaultBinaryType = "arraybuffer";
+diff --git a/build/cjs/transports/websocket-constructor.d.ts b/build/cjs/transports/websocket-constructor.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..55095005df2bff12f16d76bb0914a7e5563a8655
+--- /dev/null
++++ b/build/cjs/transports/websocket-constructor.d.ts
+@@ -0,0 +1,4 @@
++export declare const WebSocket: any;
++export declare const usingBrowserWebSocket = false;
++export declare const defaultBinaryType = "nodebuffer";
++export declare const nextTick: (callback: Function, ...args: any[]) => void;
+diff --git a/build/cjs/transports/websocket.d.ts b/build/cjs/transports/websocket.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..30dfe291957e4f3a912de2af9e640a9b39f37ce6
+--- /dev/null
++++ b/build/cjs/transports/websocket.d.ts
+@@ -0,0 +1,34 @@
++import { Transport } from "../transport.js";
++export declare class WS extends Transport {
++    private ws;
++    /**
++     * WebSocket transport constructor.
++     *
++     * @param {Object} opts - connection options
++     * @protected
++     */
++    constructor(opts: any);
++    get name(): string;
++    doOpen(): this;
++    /**
++     * Adds event listeners to the socket
++     *
++     * @private
++     */
++    private addEventListeners;
++    write(packets: any): void;
++    doClose(): void;
++    /**
++     * Generates uri for connection.
++     *
++     * @private
++     */
++    private uri;
++    /**
++     * Feature detection for WebSocket.
++     *
++     * @return {Boolean} whether this transport is available.
++     * @private
++     */
++    private check;
++}
+diff --git a/build/cjs/transports/webtransport.d.ts b/build/cjs/transports/webtransport.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..093d66051af1afac70b82a7e71a88bc22fa6a55c
+--- /dev/null
++++ b/build/cjs/transports/webtransport.d.ts
+@@ -0,0 +1,10 @@
++import { Transport } from "../transport.js";
++import { Packet } from "engine.io-parser";
++export declare class WT extends Transport {
++    private transport;
++    private writer;
++    get name(): string;
++    protected doOpen(): void;
++    protected write(packets: Packet[]): void;
++    protected doClose(): void;
++}
+diff --git a/build/cjs/transports/xmlhttprequest.browser.d.ts b/build/cjs/transports/xmlhttprequest.browser.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..cb475422b1d1cccb4b020470c099c285aca09849
+--- /dev/null
++++ b/build/cjs/transports/xmlhttprequest.browser.d.ts
+@@ -0,0 +1,2 @@
++export declare function XHR(opts: any): any;
++export declare function createCookieJar(): void;
+diff --git a/build/cjs/transports/xmlhttprequest.d.ts b/build/cjs/transports/xmlhttprequest.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f2af011a4bc21a9834bb47204bccbdfab03b2831
+--- /dev/null
++++ b/build/cjs/transports/xmlhttprequest.d.ts
+@@ -0,0 +1,17 @@
++export declare const XHR: any;
++export declare function createCookieJar(): CookieJar;
++interface Cookie {
++    name: string;
++    value: string;
++    expires?: Date;
++}
++/**
++ * @see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie
++ */
++export declare function parse(setCookieString: string): Cookie;
++export declare class CookieJar {
++    private cookies;
++    parseCookies(xhr: any): void;
++    addCookies(xhr: any): void;
++}
++export {};
+diff --git a/build/cjs/util.d.ts b/build/cjs/util.d.ts
+new file mode 100755
+index 0000000000000000000000000000000000000000..5921b7b7a35efccdbd0a0aab0a3fe5d741e459eb
+--- /dev/null
++++ b/build/cjs/util.d.ts
+@@ -0,0 +1,3 @@
++export declare function pick(obj: any, ...attr: any[]): any;
++export declare function installTimerFunctions(obj: any, opts: any): void;
++export declare function byteLength(obj: any): number;
+diff --git a/package.json b/package.json
+index 9fe1e2d8fd3bc82507ae0d974a7b9c68a31f57e4..b62e53de07758dc9dda11c947903fd6b2563a2d2 100644
+--- a/package.json
++++ b/package.json
+@@ -12,10 +12,14 @@
+     "./dist/engine.io.min.js": "./dist/engine.io.min.js",
+     ".": {
+       "import": {
++        "types": "./build/esm/index.d.ts",
+         "node": "./build/esm-debug/index.js",
+         "default": "./build/esm/index.js"
+       },
+-      "require": "./build/cjs/index.js"
++      "require": {
++        "types": "./build/cjs/index.d.ts",
++        "default": "./build/cjs/index.js"
++      }
+     },
+     "./debug": {
+       "import": "./build/esm-debug/index.js",

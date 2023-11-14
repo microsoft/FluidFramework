@@ -17,7 +17,7 @@ import {
 	makeDetachedNodeId,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap, brand } from "../../util";
-import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
+import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -31,9 +31,11 @@ import {
 	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
+	RemovedTreesFromChild,
 	RevisionInfo,
 } from "../modular-schema";
 import { ContentId, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
+import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 import { DetachedNodeBuild, DetachedNodeChanges, DetachedNodeRename } from "../../core/tree/delta";
 
@@ -308,7 +310,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			moves: rebasedMoves,
 			childChanges: childChanges.map(([id, childChange]) => [
 				withIntention(invertIdMap.get(id) ?? id),
-				invertChild(childChange, 0),
+				invertChild(childChange),
 			]),
 		};
 
@@ -505,7 +507,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		},
 	): OptionalChangeset => {
 		const result: OptionalChangeset = {
-			build: [{ id: { localId: ids.fill }, set: singleTextCursor(newContent) }],
+			build: [{ id: { localId: ids.fill }, set: jsonableTreeFromCursor(newContent) }],
 			moves: [[{ localId: ids.fill }, "self", "nodeTargeting"]],
 			childChanges: [],
 		};
@@ -544,7 +546,7 @@ export function optionalFieldIntoDelta(
 		for (const build of change.build) {
 			builds.push({
 				id: { major: build.id.revision ?? revision, minor: build.id.localId },
-				trees: [singleTextCursor(build.set)],
+				trees: [cursorForJsonableTreeNode(build.set)],
 			});
 		}
 		delta.build = builds;
@@ -614,6 +616,8 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	editor: optionalFieldEditor,
 
 	intoDelta: optionalFieldIntoDelta,
+	relevantRemovedTrees,
+
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChanges.length === 0 && change.moves.length === 0 && change.build.length === 0,
 };
@@ -627,5 +631,43 @@ function areEqualContentIds(a: ContentId, b: ContentId): boolean {
 	return areEqualChangeAtomIds(a, b);
 }
 
-// Ideas:
-// - Write strict 'isNormalized' function which we can assert on post-composition.
+function* relevantRemovedTrees(
+	change: OptionalChangeset,
+	removedTreesFromChild: RemovedTreesFromChild,
+): Iterable<Delta.DetachedNodeId> {
+	let removedNode: ChangeAtomId | undefined;
+	let restoredNode: ChangeAtomId | undefined;
+	const fieldChange = change.fieldChange;
+	if (fieldChange !== undefined) {
+		removedNode = { revision: fieldChange.revision, localId: fieldChange.id };
+		const newContent = fieldChange.newContent;
+		if (newContent !== undefined) {
+			if (Object.prototype.hasOwnProperty.call(newContent, "revert")) {
+				// This tree is being restored by this change, so it is a relevant removed tree.
+				restoredNode = (newContent as { revert: ChangeAtomId }).revert;
+				yield nodeIdFromChangeAtom(restoredNode);
+			}
+			if (newContent.changes !== undefined) {
+				yield* removedTreesFromChild(newContent.changes);
+			}
+		}
+	}
+	if (change.childChanges !== undefined) {
+		for (const [deletedBy, child] of change.childChanges) {
+			if (
+				deletedBy === "self" ||
+				(removedNode !== undefined && areEqualChangeIds(deletedBy, removedNode))
+			) {
+				// This node is in the document at the time this change applies, so it isn't a relevant removed tree.
+			} else {
+				if (restoredNode !== undefined && areEqualChangeIds(deletedBy, restoredNode)) {
+					// This tree is a relevant removed tree, but it is already included in the list
+				} else {
+					// This tree is being edited by this change, so it is a relevant removed tree.
+					yield nodeIdFromChangeAtom(deletedBy);
+				}
+			}
+			yield* removedTreesFromChild(child);
+		}
+	}
+}

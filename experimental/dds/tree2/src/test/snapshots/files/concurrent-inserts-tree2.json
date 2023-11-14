@@ -159,7 +159,7 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
                       "objectNodeFields": [
@@ -246,28 +246,46 @@
                 "content": [
                   [
                     "rootFieldKey",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "x"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "y"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "a"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "b"
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "c"
-                      }
-                    ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "x",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "y",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "a",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "b",
+                          [],
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "c",
+                          []
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"
@@ -284,8 +302,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [],
-                  "id": 4
+                  "maxId": 4
                 },
                 "encoding": "utf-8"
               }

@@ -11,21 +11,23 @@ import {
 	IGarbageCollectionData,
 } from "@fluidframework/runtime-definitions";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base";
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	applyDelta,
 	Delta,
 	FieldKey,
 	IEditableForest,
-	ITreeSubscriptionCursor,
-	JsonableTree,
+	ITreeCursorSynchronous,
 	makeDetachedFieldIndex,
 	mapCursorField,
 	mapCursorFields,
+	StoredSchemaCollection,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
 import { idAllocatorFromMaxId } from "../util";
-import { jsonableTreeFromCursor, singleTextCursor } from "./treeTextCursor";
+import { EncodedChunk, decode, schemaCompressedEncode, uncompressedEncode } from "./chunked-forest";
+import { FullSchemaPolicy } from "./modular-schema";
+import { TreeCompressionStrategy } from "./treeCompressionUtils";
 
 /**
  * The storage key for the blob in the summary containing tree data
@@ -38,10 +40,19 @@ const treeBlobKey = "ForestTree";
 export class ForestSummarizer implements Summarizable {
 	public readonly key = "Forest";
 
-	private readonly cursor: ITreeSubscriptionCursor;
+	private readonly schema: StoredSchemaCollection;
+	private readonly policy: FullSchemaPolicy;
+	private readonly encodeType: TreeCompressionStrategy;
 
-	public constructor(private readonly forest: IEditableForest) {
-		this.cursor = this.forest.allocateCursor();
+	public constructor(
+		private readonly forest: IEditableForest,
+		schema: StoredSchemaCollection,
+		policy: FullSchemaPolicy,
+		encodeType: TreeCompressionStrategy = TreeCompressionStrategy.Compressed,
+	) {
+		this.schema = schema;
+		this.policy = policy;
+		this.encodeType = encodeType;
 	}
 
 	/**
@@ -52,12 +63,12 @@ export class ForestSummarizer implements Summarizable {
 	 * @returns a snapshot of the forest's tree as a string.
 	 */
 	private getTreeString(stringify: SummaryElementStringifier): string {
-		this.forest.moveCursorToPath(undefined, this.cursor);
-		const fields = mapCursorFields(this.cursor, (cursor) => [
-			this.cursor.getFieldKey(),
-			mapCursorField(cursor, jsonableTreeFromCursor),
+		const rootCursor = this.forest.getCursorAboveDetachedFields();
+		// TODO: Encode all detached fields in one operation for better performance and compression
+		const fields = mapCursorFields(rootCursor, (cursor) => [
+			rootCursor.getFieldKey(),
+			encodeSummary(cursor, this.schema, this.policy, this.encodeType),
 		]);
-		this.cursor.clear();
 		return stringify(fields);
 	}
 
@@ -98,16 +109,25 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = parse(treeBufferString) as [FieldKey, JsonableTree[]][];
+			const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
 
 			const allocator = idAllocatorFromMaxId();
 			const delta: [FieldKey, Delta.FieldChanges][] = fields.map(([fieldKey, content]) => {
-				const buildId = { minor: allocator.allocate(content.length) };
+				const nodeCursors = mapCursorField(decode(content).cursor(), (cursor) =>
+					cursor.fork(),
+				);
+				const buildId = { minor: allocator.allocate(nodeCursors.length) };
+
 				return [
 					fieldKey,
 					{
-						build: [{ id: buildId, trees: content.map(singleTextCursor) }],
-						local: [{ count: content.length, attach: buildId }],
+						build: [
+							{
+								id: buildId,
+								trees: nodeCursors,
+							},
+						],
+						local: [{ count: nodeCursors.length, attach: buildId }],
 					},
 				];
 			});
@@ -115,5 +135,21 @@ export class ForestSummarizer implements Summarizable {
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);
 			applyDelta(new Map(delta), this.forest, makeDetachedFieldIndex("init"));
 		}
+	}
+}
+
+function encodeSummary(
+	cursor: ITreeCursorSynchronous,
+	schema: StoredSchemaCollection,
+	policy: FullSchemaPolicy,
+	encodeType: TreeCompressionStrategy,
+): EncodedChunk {
+	switch (encodeType) {
+		case TreeCompressionStrategy.Compressed:
+			return schemaCompressedEncode(schema, policy, cursor);
+		case TreeCompressionStrategy.Uncompressed:
+			return uncompressedEncode(cursor);
+		default:
+			unreachableCase(encodeType);
 	}
 }

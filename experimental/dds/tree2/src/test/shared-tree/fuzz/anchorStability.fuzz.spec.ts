@@ -3,23 +3,28 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import { AsyncGenerator, takeAsync } from "@fluid-internal/stochastic-test-utils";
+import { AsyncGenerator, takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
 	DDSFuzzTestState,
 	createDDSFuzzSuite,
 	DDSFuzzHarnessEvents,
-} from "@fluid-internal/test-dds-utils";
+} from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { UpPath, Anchor, Value, AllowedUpdateType } from "../../../core";
-import { InitializeAndSchematizeConfiguration, SharedTree } from "../../../shared-tree";
+import { UpPath, Anchor, Value } from "../../../core";
+import { TreeContent } from "../../../shared-tree";
 import {
 	cursorsFromContextualData,
 	jsonableTreeFromCursor,
 	typeNameSymbol,
 } from "../../../feature-libraries";
 import { SharedTreeTestFactory, createTestUndoRedoStacks, validateTree } from "../../utils";
-import { makeOpGenerator, EditGeneratorOpWeights, FuzzTestState } from "./fuzzEditGenerators";
+import {
+	makeOpGenerator,
+	EditGeneratorOpWeights,
+	FuzzTestState,
+	viewFromState,
+} from "./fuzzEditGenerators";
 import { fuzzReducer } from "./fuzzEditReducers";
 import {
 	createAnchors,
@@ -28,11 +33,11 @@ import {
 	fuzzSchema,
 	failureDirectory,
 	RevertibleSharedTreeView,
-	fuzzViewFromTree,
 } from "./fuzzUtils";
 import { Operation } from "./operationTypes";
 
-interface AbortFuzzTestState extends FuzzTestState {
+interface AnchorFuzzTestState extends FuzzTestState {
+	// Parallel array to `clients`: set in testStart
 	anchors?: Map<Anchor, [UpPath, Value]>[];
 }
 
@@ -51,22 +56,13 @@ const config = {
 		},
 		optionalChild: undefined,
 	},
-	allowedSchemaModifications: AllowedUpdateType.None,
-} satisfies InitializeAndSchematizeConfiguration;
+} satisfies TreeContent;
 
 const initialTreeJson = cursorsFromContextualData(
 	config,
 	config.schema.rootFieldSchema,
 	config.initialTree,
 ).map(jsonableTreeFromCursor);
-
-const onCreate = (tree: SharedTree) => {
-	// TODO: these tests should do one of:
-	// 1. Not involve actual shared trees at all and just involve an AnchorSet (to test) and a forest (for comparison), applying randomly generated deltas to both.
-	// 2. Not involve actual shared trees, instead create a view via viewWithContent.
-	// 3. Use a shared tree, but migrate off its deprecated `.view` API, and instead use the view returned here.
-	const view = tree.schematizeView(config);
-};
 
 /**
  * Fuzz tests in this suite are meant to exercise specific code paths or invariants.
@@ -101,27 +97,32 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(() => undefined),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
 		};
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
-			const tree = fuzzViewFromTree(initialState.clients[0].channel);
+		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
+			const tree = viewFromState(
+				initialState,
+				initialState.clients[0],
+				config.initialTree,
+			).checkout;
 			tree.transaction.start();
+			// These tests are hard coded to a single client, so this is fine.
 			initialState.anchors = [createAnchors(tree)];
 		});
 
-		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
+		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
+			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
+
 			// aborts any transactions that may still be in progress
-			const tree = finalState.clients[0].channel.view;
+			const tree = viewFromState(finalState, finalState.clients[0]).checkout;
 			tree.transaction.abort();
 			validateTree(tree, initialTreeJson);
-			const anchors = finalState.anchors;
-			assert(anchors !== undefined, "Anchors should be defined");
-			validateAnchors(finalState.clients[0].channel.view, anchors[0], true);
+			validateAnchors(tree, anchors[0], true);
 		});
 
 		createDDSFuzzSuite(model, {
@@ -156,25 +157,26 @@ describe("Fuzz - anchor stability", () => {
 		};
 		const generatorFactory = () =>
 			takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
-		const generator = generatorFactory() as AsyncGenerator<Operation, AbortFuzzTestState>;
+		const generator = generatorFactory() as AsyncGenerator<Operation, AnchorFuzzTestState>;
 		const model: DDSFuzzModel<
 			SharedTreeTestFactory,
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors-undo-redo",
-			factory: new SharedTreeTestFactory(onCreate),
+			factory: new SharedTreeTestFactory(() => undefined),
 			generatorFactory: () => generator,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
 		};
 
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
-		emitter.on("testStart", (initialState: AbortFuzzTestState) => {
+		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			initialState.anchors = [];
 			for (const client of initialState.clients) {
-				const view = fuzzViewFromTree(client.channel) as RevertibleSharedTreeView;
-				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view);
+				const view = viewFromState(initialState, client, config.initialTree)
+					.checkout as RevertibleSharedTreeView;
+				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				view.undoStack = undoStack;
 				view.redoStack = redoStack;
 				view.unsubscribe = unsubscribe;
@@ -182,11 +184,10 @@ describe("Fuzz - anchor stability", () => {
 			}
 		});
 
-		emitter.on("testEnd", (finalState: AbortFuzzTestState) => {
-			const anchors = finalState.anchors;
-			assert(anchors !== undefined, "Anchors should be defined");
+		emitter.on("testEnd", (finalState: AnchorFuzzTestState) => {
+			const anchors = finalState.anchors ?? assert.fail("Anchors should be defined");
 			for (const [i, client] of finalState.clients.entries()) {
-				validateAnchors(client.channel.view, anchors[i], false);
+				validateAnchors(viewFromState(finalState, client).checkout, anchors[i], false);
 			}
 		});
 

@@ -302,7 +302,6 @@ export class ModularChangeFamily
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.fieldChanges, change.revision),
 			genId,
-			undefined,
 			crossFieldTable,
 		);
 
@@ -345,7 +344,6 @@ export class ModularChangeFamily
 	private invertFieldMap(
 		changes: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
-		path: UpPath | undefined,
 		crossFieldTable: CrossFieldTable<InvertData>,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
@@ -359,18 +357,11 @@ export class ModularChangeFamily
 				fieldChange.fieldKind,
 			).rebaser.invert(
 				{ revision, change: fieldChange.change },
-				(childChanges, index) =>
+				(childChanges) =>
 					this.invertNodeChange(
 						{ revision, change: childChanges },
 						genId,
 						crossFieldTable,
-						index === undefined
-							? undefined
-							: {
-									parent: path,
-									parentField: field,
-									parentIndex: index,
-							  },
 					),
 				genId,
 				manager,
@@ -385,7 +376,6 @@ export class ModularChangeFamily
 			const invertData: InvertData = {
 				fieldKey: field,
 				fieldChange: invertedFieldChange,
-				path,
 				originalRevision: changes.revision,
 			};
 
@@ -399,7 +389,6 @@ export class ModularChangeFamily
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<InvertData>,
-		path?: UpPath,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -407,7 +396,6 @@ export class ModularChangeFamily
 			inverse.fieldChanges = this.invertFieldMap(
 				{ ...change, change: change.change.fieldChanges },
 				genId,
-				path,
 				crossFieldTable,
 			);
 		}
@@ -766,10 +754,9 @@ export class ModularChangeFamily
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number => {
+	const getIndex = (revision: RevisionTag): number | undefined => {
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
-		return index;
+		return index >= 0 ? index : undefined;
 	};
 	const tryGetIndex = (revision: RevisionTag): number | undefined => {
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
@@ -779,11 +766,16 @@ export function revisionMetadataSourceFromInfo(
 		if (revision === undefined) {
 			return undefined;
 		}
+		// TODO: Evaluate if this is still necessary.
 		const index = tryGetIndex(revision);
 		return index === undefined ? undefined : revInfos[index];
-		// return revision === undefined ? undefined : revInfos[getIndex(revision)];
 	};
-	return { getIndex, tryGetInfo };
+
+	const getRevisions = (): RevisionTag[] => {
+		return revInfos.map((info) => info.revision);
+	};
+
+	return { getIndex, tryGetInfo, getRevisions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
@@ -857,7 +849,6 @@ interface InvertData {
 	originalRevision: RevisionTag | undefined;
 	fieldKey: FieldKey;
 	fieldChange: FieldChange;
-	path: UpPath | undefined;
 }
 
 type ComposeData = FieldChange;
@@ -897,24 +888,20 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
 
-				let dependentEntry = getFirstFromCrossFieldMap(dependentsMap, revision, id, count);
-
 				const lastChangedId = (id as number) + count - 1;
-				while (dependentEntry !== undefined) {
-					crossFieldTable.invalidatedFields.add(dependentEntry.value);
-					const lastEntryId = dependentEntry.start + dependentEntry.length - 1;
-					const numChangedIdsAfterEntry = lastChangedId - lastEntryId;
-					if (numChangedIdsAfterEntry > 0) {
-						dependentEntry = getFirstFromCrossFieldMap(
-							dependentsMap,
-							revision,
-							brand(lastEntryId + 1),
-							numChangedIdsAfterEntry,
-						);
-					} else {
-						// We have found the last entry for the changed ID range.
-						break;
+				let firstId = id;
+				while (firstId <= lastChangedId) {
+					const dependentEntry = getFirstFromCrossFieldMap(
+						dependentsMap,
+						revision,
+						firstId,
+						lastChangedId - firstId + 1,
+					);
+					if (dependentEntry.value !== undefined) {
+						crossFieldTable.invalidatedFields.add(dependentEntry.value);
 					}
+
+					firstId = brand(firstId + dependentEntry.length);
 				}
 
 				if (

@@ -91,7 +91,7 @@ import {
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
-	IdCreationRangeWithStashedState,
+	SerializedIdCompressorWithOngoingSession,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -185,13 +185,12 @@ import {
 	getLongStack,
 } from "./opLifecycle";
 import { DeltaManagerSummarizerProxy } from "./deltaManagerSummarizerProxy";
-import { IBatchMetadata } from "./metadata";
+import { IBatchMetadata, IIdAllocationMetadata } from "./metadata";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessageOrSystemMessage,
 	type ContainerRuntimeIdAllocationMessage,
-	type LocalContainerRuntimeIdAllocationMessage,
 	type LocalContainerRuntimeMessage,
 	type OutboundContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
@@ -211,15 +210,6 @@ function compatBehaviorAllowsMessageType(
 ): boolean {
 	// undefined defaults to same behavior as "FailToProcess"
 	return compatBehavior === "Ignore";
-}
-
-function prepareLocalContainerRuntimeIdAllocationMessageForTransit(
-	message: LocalContainerRuntimeIdAllocationMessage | ContainerRuntimeIdAllocationMessage,
-): asserts message is ContainerRuntimeIdAllocationMessage {
-	// Remove the stashedState from the op if it's a stashed op
-	if ("stashedState" in message.contents) {
-		delete message.contents.stashedState;
-	}
 }
 
 /**
@@ -513,6 +503,7 @@ export interface RuntimeHeaderData {
 	wait?: boolean;
 	viaHandle?: boolean;
 	allowTombstone?: boolean;
+	allowInactive?: boolean;
 }
 
 /** Default values for Runtime Headers */
@@ -520,6 +511,7 @@ export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
 	viaHandle: false,
 	allowTombstone: false,
+	allowInactive: false,
 };
 
 /**
@@ -555,6 +547,10 @@ export interface IPendingRuntimeState {
 	 * Pending blobs from BlobManager
 	 */
 	pendingAttachmentBlobs?: IPendingBlobs;
+	/**
+	 * Pending idCompressor state
+	 */
+	pendingIdCompressorState?: SerializedIdCompressorWithOngoingSession;
 }
 
 const maxConsecutiveReconnectsKey = "Fluid.ContainerRuntime.MaxConsecutiveReconnects";
@@ -914,10 +910,16 @@ export class ContainerRuntime
 		let idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 		if (idCompressorEnabled) {
 			const { IdCompressor, createSessionId } = await import("./id-compressor");
-			idCompressor =
-				serializedIdCompressor !== undefined
-					? IdCompressor.deserialize(serializedIdCompressor, createSessionId())
-					: IdCompressor.create(logger);
+
+			const pendingLocalState = context.pendingLocalState as IPendingRuntimeState;
+
+			if (pendingLocalState?.pendingIdCompressorState !== undefined) {
+				idCompressor = IdCompressor.deserialize(pendingLocalState.pendingIdCompressorState);
+			} else if (serializedIdCompressor !== undefined) {
+				idCompressor = IdCompressor.deserialize(serializedIdCompressor, createSessionId());
+			} else {
+				idCompressor = IdCompressor.create(logger);
+			}
 		}
 
 		const runtime = new containerRuntimeCtor(
@@ -989,7 +991,7 @@ export class ContainerRuntime
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	private readonly submitSignalFn: (contents: any) => void;
+	private readonly submitSignalFn: (content: any, targetClientId?: string) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 
@@ -1186,11 +1188,6 @@ export class ContainerRuntime
 		return this.garbageCollector.tombstoneEnforcementAllowed;
 	}
 
-	/** If true, throw an error when a tombstone data store is retrieved */
-	public get gcThrowOnTombstoneLoad(): boolean {
-		return this.garbageCollector.throwOnTombstoneLoad;
-	}
-
 	/** If true, throw an error when a tombstone data store is used. */
 	public get gcThrowOnTombstoneUsage(): boolean {
 		return this.garbageCollector.throwOnTombstoneUsage;
@@ -1359,7 +1356,17 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.CompressionChunkingDisabled",
 		);
 
-		const opGroupingManager = new OpGroupingManager(this.groupedBatchingEnabled);
+		const opGroupingManager = new OpGroupingManager(
+			{
+				groupedBatchingEnabled: this.groupedBatchingEnabled,
+				opCountThreshold:
+					this.mc.config.getNumber("Fluid.ContainerRuntime.GroupedBatchingOpCount") ?? 2,
+				reentrantBatchGroupingEnabled:
+					this.mc.config.getBoolean("Fluid.ContainerRuntime.GroupedBatchingReentrancy") ??
+					true,
+			},
+			this.mc.logger,
+		);
 
 		const opSplitter = new OpSplitter(
 			chunks,
@@ -1569,7 +1576,6 @@ export class ContainerRuntime
 				compressionOptions,
 				maxBatchSizeInBytes: runtimeOptions.maxBatchSizeInBytes,
 				disablePartialFlush: disablePartialFlush === true,
-				enableGroupedBatching: this.groupedBatchingEnabled,
 			},
 			logger: this.mc.logger,
 			groupingManager: opGroupingManager,
@@ -1872,6 +1878,9 @@ export class ContainerRuntime
 		if (typeof request.headers?.[AllowTombstoneRequestHeaderKey] === "boolean") {
 			headerData.allowTombstone = request.headers[AllowTombstoneRequestHeaderKey];
 		}
+		if (typeof request.headers?.[AllowInactiveRequestHeaderKey] === "boolean") {
+			headerData.allowInactive = request.headers[AllowInactiveRequestHeaderKey];
+		}
 
 		// We allow Tombstone requests for sub-DataStore objects
 		if (requestForChild) {
@@ -1881,20 +1890,24 @@ export class ContainerRuntime
 		await this.dataStores.waitIfPendingAlias(id);
 		const internalId = this.internalId(id);
 		const dataStoreContext = await this.dataStores.getDataStore(internalId, headerData);
-		const dataStoreChannel = await dataStoreContext.realize();
 
 		// Remove query params, leading and trailing slashes from the url. This is done to make sure the format is
 		// the same as GC nodes id.
 		const urlWithoutQuery = trimLeadingAndTrailingSlashes(request.url.split("?")[0]);
+		// Get the initial snapshot details which contain the data store package path.
+		const details = await dataStoreContext.getInitialSnapshotDetails();
+
+		// Note that this will throw if the data store is inactive or tombstoned and throwing on incorrect usage
+		// is configured.
 		this.garbageCollector.nodeUpdated(
 			`/${urlWithoutQuery}`,
 			"Loaded",
 			undefined /* timestampMs */,
-			dataStoreContext.packagePath,
-			request?.headers,
+			details.pkg,
+			request,
+			headerData,
 		);
-
-		return dataStoreChannel;
+		return dataStoreContext.realize();
 	}
 
 	/** Adds the container's metadata to the given summary tree. */
@@ -2038,20 +2051,6 @@ export class ContainerRuntime
 	}
 
 	/**
-	 * Updates the runtime's IdCompressor with the stashed state present in the given op. This is a bit of a
-	 * hack and is unnecessarily expensive. As it stands, every locally stashed op (all ops that get stored in
-	 * the PendingStateManager) will store their serialized representation locally until ack'd. Upon receiving
-	 * this stashed state, the IdCompressor blindly deserializes to the stashed state and assumes the session.
-	 * Technically only the last stashed state is needed to do this correctly, but we would have to write some
-	 * more hacky code to modify the batch before it gets sent out.
-	 * @param content - An IdAllocationOp with "stashedState", which is a representation of un-ack'd local state.
-	 */
-	private async applyStashedIdAllocationOp(op: IdCreationRangeWithStashedState) {
-		const { IdCompressor } = await import("./id-compressor");
-		this.idCompressor = IdCompressor.deserialize(op.stashedState);
-	}
-
-	/**
 	 * Parse an op's type and actual content from given serialized content
 	 * ! Note: this format needs to be in-line with what is set in the "ContainerRuntime.submit(...)" method
 	 */
@@ -2076,7 +2075,7 @@ export class ContainerRuntime
 					this.idCompressor !== undefined,
 					0x67b /* IdCompressor should be defined if enabled */,
 				);
-				return this.applyStashedIdAllocationOp(opContents.contents);
+				return;
 			case ContainerMessageType.Alias:
 			case ContainerMessageType.BlobAttach:
 				return;
@@ -2328,7 +2327,14 @@ export class ContainerRuntime
 					this.idCompressor !== undefined,
 					0x67c /* IdCompressor should be defined if enabled */,
 				);
-				this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
+
+				// Don't re-finalize the range if we're processing a "savedOp" in
+				// stashed ops flow. The compressor is stashed with these ops already processed.
+				if (
+					(messageWithContext.message.metadata as IIdAllocationMetadata)?.savedOp !== true
+				) {
+					this.idCompressor.finalizeCreationRange(messageWithContext.message.contents);
+				}
 				break;
 			case ContainerMessageType.ChunkedOp:
 			case ContainerMessageType.Rejoin:
@@ -2538,6 +2544,12 @@ export class ContainerRuntime
 				"entryPoint must be defined on data store runtime for using getAliasedDataStoreEntryPoint",
 			);
 		}
+		this.garbageCollector.nodeUpdated(
+			`/${internalId}`,
+			"Loaded",
+			undefined /* timestampMs */,
+			context.packagePath,
+		);
 		return channel.entryPoint;
 	}
 
@@ -2664,16 +2676,28 @@ export class ContainerRuntime
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(type: string, content: any) {
+	public submitSignal(type: string, content: any, targetClientId?: string) {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
-		return this.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope, targetClientId);
 	}
 
-	public submitDataStoreSignal(address: string, type: string, content: any) {
+	/**
+	 * Submits the signal to be sent to other clients.
+	 * @param type - Type of the signal.
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
+	 */
+	public submitDataStoreSignal(
+		address: string,
+		type: string,
+		content: any,
+		targetClientId?: string,
+	) {
 		const envelope = this.createNewSignalEnvelope(address, type, content);
-		return this.submitSignalFn(envelope);
+		return this.submitSignalFn(envelope, targetClientId);
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
@@ -3485,13 +3509,13 @@ export class ContainerRuntime
 					contents: JSON.stringify(idAllocationMessage),
 					referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 					metadata: undefined,
-					localOpMetadata: this.idCompressor?.serialize(true),
+					localOpMetadata: undefined,
 					type: ContainerMessageType.IdAllocation,
 				};
 			}
 
 			if (idAllocationBatchMessage !== undefined) {
-				this.outbox.submit(idAllocationBatchMessage);
+				this.outbox.submitIdAllocation(idAllocationBatchMessage);
 			}
 		}
 	}
@@ -3716,10 +3740,7 @@ export class ContainerRuntime
 				break;
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
-				this.submit(message, localOpMetadata);
-				break;
 			case ContainerMessageType.IdAllocation: {
-				prepareLocalContainerRuntimeIdAllocationMessageForTransit(message);
 				this.submit(message, localOpMetadata);
 				break;
 			}
@@ -3959,9 +3980,12 @@ export class ContainerRuntime
 					return; // no pending state to save
 				}
 
+				const pendingIdCompressorState = this.idCompressor?.serialize(true);
+
 				const pendingState: IPendingRuntimeState = {
 					pending,
 					pendingAttachmentBlobs,
+					pendingIdCompressorState,
 				};
 				event.end({
 					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,

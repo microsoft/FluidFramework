@@ -8,7 +8,13 @@ import { FieldKey } from "../schema-stored";
 import * as Delta from "./delta";
 import { NodeIndex, PlaceIndex, Range } from "./pathTree";
 import { ForestRootId, DetachedFieldIndex } from "./detachedFieldIndex";
-import { areDetachedNodeIdsEqual, isAttachMark, isDetachMark, isReplaceMark } from "./deltaUtil";
+import {
+	areDetachedNodeIdsEqual,
+	isAttachMark,
+	isDetachMark,
+	isReplaceMark,
+	offsetDetachId,
+} from "./deltaUtil";
 
 /**
  * Implementation notes:
@@ -180,7 +186,7 @@ function transferRoots(
 			visitor.exitField(oldField);
 			detachedFieldIndex.deleteEntry(oldId);
 		}
-		assert(delayed.length < priorSize, "transferRoots should make progress");
+		assert(delayed.length < priorSize, 0x7cf /* transferRoots should make progress */);
 		nextBatch = delayed;
 	}
 }
@@ -330,24 +336,6 @@ function visitNode(
 	}
 }
 
-function offsetDetachId(detachId: Delta.DetachedNodeId, offset: number): Delta.DetachedNodeId;
-function offsetDetachId(
-	detachId: Delta.DetachedNodeId | undefined,
-	offset: number,
-): Delta.DetachedNodeId | undefined;
-function offsetDetachId(
-	detachId: Delta.DetachedNodeId | undefined,
-	offset: number,
-): Delta.DetachedNodeId | undefined {
-	if (detachId === undefined) {
-		return undefined;
-	}
-	return {
-		...detachId,
-		minor: detachId.minor + offset,
-	};
-}
-
 /**
  * Performs the following:
  * - Performs all root creations
@@ -391,7 +379,7 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 			if (mark.fields !== undefined) {
 				assert(
 					mark.attach === undefined || mark.detach !== undefined,
-					"Invalid nested changes on an additive mark",
+					0x7d0 /* Invalid nested changes on an additive mark */,
 				);
 				visitNode(index, mark.fields, visitor, config);
 			}

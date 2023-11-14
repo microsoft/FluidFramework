@@ -9,7 +9,12 @@
  * @packageDocumentation
  */
 
-export { FluidContainer, IFluidContainer, IFluidContainerEvents } from "./fluidContainer";
+export {
+	FluidContainer,
+	IFluidContainer,
+	IFluidContainerEvents,
+	InitialObjects,
+} from "./fluidContainer";
 export { DOProviderContainerRuntimeFactory } from "./rootDataObject";
 export { ServiceAudience } from "./serviceAudience";
 export {
@@ -25,6 +30,6 @@ export {
 	LoadableObjectCtor,
 	LoadableObjectRecord,
 	MemberChangedListener,
-	SharedObjectClass,
 	Myself,
+	SharedObjectClass,
 } from "./types";

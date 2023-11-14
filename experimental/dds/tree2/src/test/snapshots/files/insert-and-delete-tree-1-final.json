@@ -23,8 +23,8 @@
                             "fieldKind": "Sequence",
                             "change": [
                               {
-                                "type": "Delete",
                                 "count": 1,
+                                "type": "Delete",
                                 "id": 1
                               }
                             ]
@@ -61,7 +61,7 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.json.array",
                       "objectNodeFields": [
@@ -148,12 +148,30 @@
                 "content": [
                   [
                     "repair-1",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.string",
-                        "value": "42"
-                      }
-                    ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.string",
+                          true,
+                          "42",
+                          []
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"
@@ -170,6 +188,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-000000000004",
@@ -177,7 +196,7 @@
                       1
                     ]
                   ],
-                  "id": 1
+                  "maxId": 1
                 },
                 "encoding": "utf-8"
               }

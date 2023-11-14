@@ -13,6 +13,10 @@ import {
 	TreeNodeSchema,
 	allowedTypesIsAny,
 	SchemaCollection,
+	MapNodeSchema,
+	LeafNodeSchema,
+	FieldNodeSchema,
+	ObjectNodeSchema,
 } from "./typedTreeSchema";
 import { normalizeFlexListEager } from "./flexList";
 import { Sourced } from "./view";
@@ -76,7 +80,7 @@ export function aggregateSchemaLibraries(
 	libraries: Iterable<SchemaLibraryData>,
 	rootFieldSchema?: TreeFieldSchema,
 ): SchemaLibraryData {
-	const treeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
 	const adapters: SourcedAdapters = { tree: [] };
 
 	const errors: string[] = [];
@@ -95,19 +99,19 @@ export function aggregateSchemaLibraries(
 			errors.push(`Found another library with name "${library.name}"`);
 		}
 
-		for (const [key, tree] of library.treeSchema) {
+		for (const [key, tree] of library.nodeSchema) {
 			// This check is an assert since if it fails, the other error messages would be incorrect.
 			assert(
 				tree.builder.name === library.name,
 				0x6a9 /* tree must be part by the library its in */,
 			);
-			const existing = treeSchema.get(key);
+			const existing = nodeSchema.get(key);
 			if (existing !== undefined) {
 				errors.push(
 					`Multiple tree schema for identifier "${key}". One from library "${existing.builder.name}" and one from "${tree.builder.name}"`,
 				);
 			} else {
-				treeSchema.set(key, tree);
+				nodeSchema.set(key, tree);
 			}
 		}
 		for (const _adapter of library.adapters.tree ?? []) {
@@ -119,7 +123,7 @@ export function aggregateSchemaLibraries(
 		fail(errors.join("\n"));
 	}
 
-	const result = { rootFieldSchema, treeSchema, adapters, policy: defaultSchemaPolicy };
+	const result = { rootFieldSchema, nodeSchema, adapters, policy: defaultSchemaPolicy };
 	const errors2 = validateSchemaCollection(lintConfiguration, result, rootFieldSchema);
 	if (errors2.length !== 0) {
 		fail(errors2.join("\n"));
@@ -127,7 +131,7 @@ export function aggregateSchemaLibraries(
 
 	return {
 		name,
-		treeSchema,
+		nodeSchema,
 		adapters,
 	};
 }
@@ -146,7 +150,7 @@ export function validateSchemaCollection(
 	const errors: string[] = [];
 
 	// TODO: make this check specific to document schema. Replace check here for no tre or field schema (empty library).
-	if (collection.treeSchema.size === 0 && lintConfiguration.rejectEmpty) {
+	if (collection.nodeSchema.size === 0 && lintConfiguration.rejectEmpty) {
 		errors.push("No tree schema are included, meaning no data can possibly be stored.");
 	}
 
@@ -154,26 +158,36 @@ export function validateSchemaCollection(
 	if (rootFieldSchema !== undefined) {
 		validateRootField(lintConfiguration, collection, rootFieldSchema, errors);
 	}
-	for (const [identifier, tree] of collection.treeSchema) {
-		for (const [key, field] of tree.objectNodeFields) {
-			const description = () =>
-				`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
-			validateField(lintConfiguration, collection, field, description, errors);
-			validateObjectNodeFieldName(key, description, errors);
-		}
-		if (tree.mapFields !== undefined) {
+	for (const [identifier, tree] of collection.nodeSchema) {
+		if (tree instanceof MapNodeSchema) {
 			validateField(
 				lintConfiguration,
 				collection,
-				tree.mapFields,
+				tree.info,
 				() => `Map fields of "${identifier}" schema from library "${tree.builder.name}"`,
 				errors,
 			);
-			if ((tree.mapFields.kind.multiplicity as Multiplicity) === Multiplicity.Single) {
+			if ((tree.info.kind.multiplicity as Multiplicity) === Multiplicity.Single) {
 				errors.push(
 					`Map fields of "${identifier}" schema from library "${tree.builder.name}" has kind with multiplicity "Single". This is invalid since it requires all possible field keys to have a value under them.`,
 				);
 			}
+		} else if (tree instanceof LeafNodeSchema) {
+			// No validation for now.
+		} else if (tree instanceof FieldNodeSchema) {
+			const description = () =>
+				`Field node field of "${identifier}" schema from library "${tree.builder.name}"`;
+			validateField(lintConfiguration, collection, tree.info, description, errors);
+		} else if (tree instanceof ObjectNodeSchema) {
+			for (const [key, field] of tree.objectNodeFields) {
+				const description = () =>
+					`Object node field "${key}" of "${identifier}" schema from library "${tree.builder.name}"`;
+				validateField(lintConfiguration, collection, field, description, errors);
+				validateObjectNodeFieldName(key, description, errors);
+			}
+		} else {
+			// TODO: there should be a common fallback that works for cases without a specialized implementation.
+			fail("unrecognized node kind");
 		}
 	}
 
@@ -202,7 +216,7 @@ export function validateField(
 	if (!allowedTypesIsAny(types)) {
 		const normalizedTypes = normalizeFlexListEager(types);
 		for (const type of normalizedTypes) {
-			const referenced = collection.treeSchema.get(type.name);
+			const referenced = collection.nodeSchema.get(type.name);
 			if (referenced === undefined) {
 				errors.push(
 					`${describeField()} references type "${type.name}" from library "${

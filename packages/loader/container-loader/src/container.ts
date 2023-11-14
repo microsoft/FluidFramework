@@ -1718,7 +1718,10 @@ export class Container
 		// replay saved ops
 		if (pendingLocalState) {
 			for (const message of pendingLocalState.savedOps) {
-				this.processRemoteMessage(message);
+				this.processRemoteMessage({
+					...message,
+					metadata: { ...(message.metadata as Record<string, unknown>), savedOp: true },
+				});
 
 				// allow runtime to apply stashed ops at this op's sequence number
 				await this.runtime.notifyOpReplay?.(message);
@@ -2345,8 +2348,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(message: any) {
-		this._deltaManager.submitSignal(JSON.stringify(message));
+	private submitSignal(content: any, targetClientId?: string) {
+		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
 	private processSignal(message: ISignalMessage) {
@@ -2440,7 +2443,7 @@ export class Container
 				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
-			(message) => this.submitSignal(message),
+			(content, targetClientId) => this.submitSignal(content, targetClientId),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
