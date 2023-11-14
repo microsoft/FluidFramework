@@ -745,9 +745,10 @@ describe("SharedTree", () => {
 		});
 
 		describe("can concurrently restore and edit removed tree", () => {
+			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
+			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
+
 			it("with the edit sequenced first", () => {
-				const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
-				const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
 				const provider = new TestTreeProviderLite(2);
 				const content = {
 					schema,
@@ -794,8 +795,6 @@ describe("SharedTree", () => {
 			});
 
 			it("with the restore sequenced first", () => {
-				const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
-				const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
 				const provider = new TestTreeProviderLite(2);
 				const content = {
 					schema,
