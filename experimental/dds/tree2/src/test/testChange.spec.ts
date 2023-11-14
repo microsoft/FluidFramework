@@ -162,7 +162,7 @@ const generateChildStates: ChildStateGenerator<TestChangeContent, TestChange> = 
 };
 
 describe("TestChange - Rebaser Axioms", () => {
-	describe.only("Exhaustive suite", () => {
+	describe("Exhaustive suite", () => {
 		runExhaustiveComposeRebaseSuite(
 			[{ content: { inputContext: [], value: 0 } }],
 			generateChildStates,

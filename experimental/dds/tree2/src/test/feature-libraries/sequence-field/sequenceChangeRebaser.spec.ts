@@ -15,6 +15,8 @@ import {
 	tagRollbackInverse,
 	TreeNodeSchemaIdentifier,
 } from "../../../core";
+import { ChildStateGenerator, FieldStateTree } from "../../exhaustiveRebaserUtils";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 import { TestChange } from "../../testChange";
 import { deepFreeze, isDeltaVisible } from "../../utils";
 import { brand } from "../../../util";
@@ -27,8 +29,9 @@ import {
 	toDelta,
 	withNormalizedLineage,
 	withoutLineage,
+	rebase,
 } from "./utils";
-import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits";
+import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
 
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const tag1: RevisionTag = mintRevisionTag();
@@ -348,6 +351,53 @@ describe("SequenceField - Rebaser Axioms", () => {
 				}
 			}
 		}
+	});
+});
+
+type SequenceFieldTestState = FieldStateTree<number[] | undefined, TestChangeset>;
+
+/**
+ * See {@link ChildStateGenerator}
+ */
+const generateChildStates: ChildStateGenerator<number[] | undefined, TestChangeset> = function* (
+	state: SequenceFieldTestState,
+	tagFromIntention: (intention: number) => RevisionTag,
+	mintIntention: () => number,
+): Iterable<SequenceFieldTestState> {
+	const intention = mintIntention();
+	if (state.content === undefined) {
+		yield {
+			content: [1],
+			mostRecentEdit: {
+				changeset: tagChange(Change.insert(0, 1, 1), tagFromIntention(intention)),
+				intention,
+				description: `Insert`,
+			},
+			parent: state,
+		};
+	}
+
+	const another = mintIntention();
+	yield {
+		content: [1, 2],
+		mostRecentEdit: {
+			changeset: tagChange(Change.insert(1, 1, 2), tagFromIntention(another)),
+			intention: another,
+			description: `AnotherInsert`,
+		},
+		parent: state,
+	};
+};
+
+describe.only("SequenceField - State-based Rebaser Axioms", () => {
+	runExhaustiveComposeRebaseSuite([{ content: undefined }], generateChildStates, {
+		rebase,
+		invert,
+		compose: (changes, metadata) => compose(changes),
+		rebaseComposed: (metadata, change, ...baseChanges) => {
+			const composedChanges = compose(baseChanges);
+			return rebase(change, makeAnonChange(composedChanges));
+		},
 	});
 });
 
