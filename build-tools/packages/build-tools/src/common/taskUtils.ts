@@ -35,7 +35,7 @@ export async function getInstalledPackageVersion(packageName: string, cwd: strin
 }
 
 /**
- * Given a directory path, returns an array of all files within the path, relative to the provided path.
+ * Given a directory path, returns an array of all files within the path, rooted in the provided path.
  */
 export async function getRecursiveFiles(pathName: string) {
 	const files = await readdir(pathName, { withFileTypes: true });
