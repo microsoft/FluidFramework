@@ -514,17 +514,6 @@ export interface FieldMapObject<TChild> {
 }
 
 // @alpha
-<<<<<<< HEAD
-export interface FieldNode<in out TSchema extends FieldNodeSchema> extends TreeNode {
-    readonly boxedContent: TypedField<TSchema["info"]>;
-    readonly content: UnboxField<TSchema["info"]>;
-    // (undocumented)
-    readonly schema: TSchema;
-}
-
-// @alpha
-=======
->>>>>>> upstream/main
 export class FieldNodeSchema<Name extends string = string, Specification extends Unenforced<TreeFieldSchema> = TreeFieldSchema> extends TreeNodeSchemaBase<Name, Specification> {
     // (undocumented)
     static create<const Name extends string, const Specification extends TreeFieldSchema>(builder: Named<string>, name: TreeNodeSchemaIdentifier<Name>, specification: Specification): FieldNodeSchema<Name, Specification>;
@@ -609,10 +598,14 @@ export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
 export interface FlexTreeFieldNode<in out TSchema extends FieldNodeSchema> extends FlexTreeNode {
     readonly boxedContent: FlexTreeTypedField<TSchema["info"]>;
     readonly content: FlexTreeUnboxField<TSchema["info"]>;
+    // (undocumented)
+    readonly schema: TSchema;
 }
 
 // @alpha
 export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
+    // (undocumented)
+    readonly schema: TSchema;
     readonly value: TreeValue<TSchema["info"]>;
 }
 
@@ -634,6 +627,8 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
     getBoxed(key: string): FlexTreeTypedField<TSchema["info"]>;
     has(key: string): boolean;
     keys(): IterableIterator<FieldKey>;
+    // (undocumented)
+    readonly schema: TSchema;
     set(key: string, value: FlexibleFieldContent<TSchema["info"]>): void;
     readonly size: number;
     values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
@@ -1161,16 +1156,6 @@ type LazyItem<Item = unknown> = Item | (() => Item);
 export type LazyTreeNodeSchema = TreeNodeSchema | (() => TreeNodeSchema);
 
 // @alpha
-<<<<<<< HEAD
-export interface Leaf<in out TSchema extends LeafNodeSchema> extends TreeNode {
-    // (undocumented)
-    readonly schema: TSchema;
-    readonly value: TreeValue<TSchema["info"]>;
-}
-
-// @alpha
-=======
->>>>>>> upstream/main
 export const leaf: {
     number: LeafNodeSchema<"com.fluidframework.leaf.number", ValueSchema.Number>;
     boolean: LeafNodeSchema<"com.fluidframework.leaf.boolean", ValueSchema.Boolean>;
@@ -1212,31 +1197,6 @@ interface MakeNominal {
 // @alpha
 type MapFieldSchema = TreeFieldSchema<typeof FieldKinds.optional | typeof FieldKinds.sequence>;
 
-<<<<<<< HEAD
-// @alpha
-export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode {
-    [boxedIterator](): IterableIterator<TypedField<TSchema["info"]>>;
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<[FieldKey, UnboxField<TSchema["info"], "notEmpty">]>;
-    readonly asObject: {
-        readonly [P in FieldKey]?: UnboxField<TSchema["info"], "notEmpty">;
-    };
-    delete(key: string): void;
-    entries(): IterableIterator<[FieldKey, UnboxField<TSchema["info"], "notEmpty">]>;
-    forEach(callbackFn: (value: UnboxField<TSchema["info"], "notEmpty">, key: FieldKey, map: MapNode<TSchema>) => void, thisArg?: any): void;
-    get(key: string): UnboxField<TSchema["info"]>;
-    getBoxed(key: string): TypedField<TSchema["info"]>;
-    has(key: string): boolean;
-    keys(): IterableIterator<FieldKey>;
-    // (undocumented)
-    readonly schema: TSchema;
-    set(key: string, value: FlexibleFieldContent<TSchema["info"]>): void;
-    readonly size: number;
-    values(): IterableIterator<UnboxField<TSchema["info"], "notEmpty">>;
-}
-
-=======
->>>>>>> upstream/main
 // @alpha (undocumented)
 export class MapNodeSchema<const out Name extends string = string, const out Specification extends Unenforced<MapFieldSchema> = MapFieldSchema> extends TreeNodeSchemaBase<Name, Specification> {
     // (undocumented)
