@@ -102,10 +102,10 @@ extends:
     sdl:
       arrow:
         serviceConnection: Arrow_FluidFramework_public
-    pool:
-      name: Azure-Pipelines-1ESPT-ExDShared
-      image: windows-2022
-      os: windows
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared
+        image: windows-2022
+        os: windows
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
