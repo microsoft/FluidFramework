@@ -748,97 +748,64 @@ describe("SharedTree", () => {
 			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
 			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
 
-			it("with the edit sequenced first", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: [["a"], ["b"]] as any,
-				} satisfies InitializeAndSchematizeConfiguration;
-				const tree1 = provider.trees[0].schematizeInternal(content);
-				const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-					createTestUndoRedoStacks(tree1.checkout);
-				const tree2 = provider.trees[1].schematizeInternal(content);
-				const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-					createTestUndoRedoStacks(tree2.checkout);
+			for (const scenario of ["restore then change", "change then restore"]) {
+				it(`with the ${scenario} sequenced`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const content = {
+						schema,
+						allowedSchemaModifications: AllowedUpdateType.None,
+						initialTree: [["a"]] as any,
+					} satisfies InitializeAndSchematizeConfiguration;
+					const tree1 = provider.trees[0].schematizeInternal(content);
+					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+						createTestUndoRedoStacks(tree1.checkout);
+					const tree2 = provider.trees[1].schematizeInternal(content);
+					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
+						createTestUndoRedoStacks(tree2.checkout);
 
-				provider.processMessages();
+					provider.processMessages();
 
-				// Validate insertion
-				validateTreeContent(tree2.checkout, content);
+					// Validate insertion
+					validateTreeContent(tree2.checkout, content);
 
-				// edit subtree
-				tree2.root[0].insertAtEnd(["c"]);
-				provider.processMessages();
-				assert.equal(tree1.root[0][0], "a");
-				assert.equal(tree1.root[0][1], "c");
-				assert.equal(tree2.root[0][0], "a");
-				assert.equal(tree2.root[0][1], "c");
-				// delete subtree
-				tree1.root.removeAt(0);
-				provider.processMessages();
-				assert.equal(tree1.root[0][0], "b");
-				assert.equal(tree2.root[0][0], "b");
+					// edit subtree
+					tree2.root[0].insertAtEnd(["c"]);
+					provider.processMessages();
+					const contentAfterInsert = {
+						schema,
+						allowedSchemaModifications: AllowedUpdateType.None,
+						initialTree: [["a", "c"]] as any,
+					} satisfies InitializeAndSchematizeConfiguration;
+					validateTreeContent(tree1.checkout, contentAfterInsert);
+					validateTreeContent(tree2.checkout, contentAfterInsert);
+					// delete subtree
+					tree1.root.removeAt(0);
+					provider.processMessages();
+					const contentAfterRemove = {
+						schema,
+						allowedSchemaModifications: AllowedUpdateType.None,
+						initialTree: [] as any,
+					} satisfies InitializeAndSchematizeConfiguration;
+					validateTreeContent(tree1.checkout, contentAfterRemove);
+					validateTreeContent(tree2.checkout, contentAfterRemove);
 
-				undoStack2.pop()?.revert();
-				undoStack1.pop()?.revert();
-				provider.processMessages();
+					if (scenario === "restore then change") {
+						undoStack1.pop()?.revert();
+						undoStack2.pop()?.revert();
+					} else {
+						undoStack2.pop()?.revert();
+						undoStack1.pop()?.revert();
+					}
+					provider.processMessages();
 
-				// check the undo happened
-				assert.equal(tree1.root[0][0], "a");
-				assert.equal(tree1.root[0][1], undefined);
-				assert.equal(tree2.root[0][0], "a");
-				assert.equal(tree2.root[0][1], undefined);
+					// check the undo happened
+					validateTreeContent(tree1.checkout, content);
+					validateTreeContent(tree2.checkout, content);
 
-				unsubscribe1();
-				unsubscribe2();
-			});
-
-			it("with the restore sequenced first", () => {
-				const provider = new TestTreeProviderLite(2);
-				const content = {
-					schema,
-					allowedSchemaModifications: AllowedUpdateType.None,
-					initialTree: [["a"], ["b"]] as any,
-				} satisfies InitializeAndSchematizeConfiguration;
-				const tree1 = provider.trees[0].schematizeInternal(content);
-				const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-					createTestUndoRedoStacks(tree1.checkout);
-				const tree2 = provider.trees[1].schematizeInternal(content);
-				const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-					createTestUndoRedoStacks(tree2.checkout);
-
-				provider.processMessages();
-
-				// Validate insertion
-				validateTreeContent(tree2.checkout, content);
-
-				// edit subtree
-				tree2.root[0].insertAtEnd(["c"]);
-				provider.processMessages();
-				assert.equal(tree1.root[0][0], "a");
-				assert.equal(tree1.root[0][1], "c");
-				assert.equal(tree2.root[0][0], "a");
-				assert.equal(tree2.root[0][1], "c");
-				// delete subtree
-				tree1.root.removeAt(0);
-				provider.processMessages();
-				assert.equal(tree1.root[0][0], "b");
-				assert.equal(tree2.root[0][0], "b");
-
-				undoStack1.pop()?.revert();
-				undoStack2.pop()?.revert();
-				provider.processMessages();
-
-				// check the undo happened
-				assert.equal(tree1.root[0][0], "a");
-				assert.equal(tree1.root[0][1], undefined);
-				assert.equal(tree2.root[0][0], "a");
-				assert.equal(tree2.root[0][1], undefined);
-
-				unsubscribe1();
-				unsubscribe2();
-			});
+					unsubscribe1();
+					unsubscribe2();
+				});
+			}
 		});
 	});
 
