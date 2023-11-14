@@ -7,6 +7,9 @@ See [examples.spec.ts](./src/test/examples.spec.ts) for usage examples.
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
 
+**NOTE: This package is private to the `@microsot/fluid-framework` repository.**
+**It is not published, and therefore may only be used as a dev dependency.**
+
 ## Contribution Guidelines
 
 There are many ways to [contribute](https://github.com/microsoft/FluidFramework/blob/main/CONTRIBUTING.md) to Fluid.
@@ -29,8 +32,7 @@ Use of Microsoft trademarks or logos in modified versions of this project must n
 
 This project may contain Microsoft trademarks or logos for Microsoft projects, products, or services.
 
-Use of these trademarks or logos must follow Microsoft's [Trademark & Brand
-Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
+Use of these trademarks or logos must follow Microsoft's [Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
 
 Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
 

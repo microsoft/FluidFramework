@@ -6,7 +6,13 @@
 import { strict as assert } from "assert";
 import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
-import { DownPath, TreeField, TreeNode, singleTextCursor } from "../../../feature-libraries";
+import {
+	DownPath,
+	TreeField,
+	TreeNode,
+	cursorForJsonableTreeNode,
+	cursorForJsonableTreeField,
+} from "../../../feature-libraries";
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
 import { ISharedTree, ITreeCheckout, ITreeView, SharedTreeFactory } from "../../../shared-tree";
@@ -103,7 +109,7 @@ function applySequenceFieldEdit(
 			const parent = navigateToNode(tree, change.parent);
 			assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
 			const field = parent.boxedSequenceChildren;
-			field.insertAt(change.index, [singleTextCursor(change.value) as any]);
+			field.insertAt(change.index, cursorForJsonableTreeField([change.value]));
 			break;
 		}
 		case "delete": {
@@ -145,7 +151,7 @@ function applyValueFieldEdit(
 		field?.is(fuzzNode.objectNodeFieldsObject.requiredChild),
 		"Parent of Value change should have an optional field to modify",
 	);
-	field.content = singleTextCursor(change.value) as any;
+	field.content = cursorForJsonableTreeNode(change.value) as any;
 }
 
 function navigateToNode(
@@ -197,11 +203,11 @@ function applyOptionalFieldEdit(
 		case "set": {
 			const rootField = tree.editableTree;
 			if (change.parent === undefined) {
-				rootField.content = singleTextCursor(change.value) as any;
+				rootField.content = cursorForJsonableTreeNode(change.value) as any;
 			} else {
 				const parent = navigateToNode(tree, change.parent);
 				assert(parent?.is(fuzzNode), "Defined down-path should point to a valid parent");
-				parent.boxedOptionalChild.content = singleTextCursor(change.value) as any;
+				parent.boxedOptionalChild.content = cursorForJsonableTreeNode(change.value) as any;
 			}
 			break;
 		}
