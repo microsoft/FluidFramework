@@ -1877,7 +1877,7 @@ describe.only("Editing", () => {
 			expectJsonTree([tree1, tree2], [{ foo: "42", bar: "456" }]);
 		});
 
-		it.skip("can rebase a node edit over the node being replaced and restored", () => {
+		it("can rebase a node edit over the node being replaced and restored", () => {
 			const tree1 = makeTreeFromJson([{ foo: "40" }]);
 			const tree2 = tree1.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree1);
@@ -1946,7 +1946,7 @@ describe.only("Editing", () => {
 			expectJsonTree(tree2, [{ foo: "A", bar: "B" }]);
 		});
 
-		it.skip("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {
+		it("undo restores a removed node even when that node was not the one originally removed by the undone change", () => {
 			const tree = makeTreeFromJson(["42"]);
 			const tree2 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2);
@@ -2208,7 +2208,7 @@ describe.only("Editing", () => {
 				expectJsonTree([tree, tree2], [{}]);
 			});
 
-			it.skip("revived optional field node exists constraint", () => {
+			it("revived optional field node exists constraint", () => {
 				const tree = makeTreeFromJson([]);
 				const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree);
 				const rootSequence = tree.editor.sequenceField(rootField);
@@ -2309,7 +2309,7 @@ describe.only("Editing", () => {
 
 			// TODO: This doesn't update the constraint properly yet because
 			// rebaseChild isn't called inside of handleCurrAttach
-			it.skip("transaction dropped when node can't be inserted", () => {
+			it("transaction dropped when node can't be inserted", () => {
 				const tree = makeTreeFromJson([{}]);
 				const tree2 = tree.fork();
 
@@ -2391,7 +2391,7 @@ describe.only("Editing", () => {
 
 			// TODO: Constraint state isn't updated properly because
 			// rebaseChild isn't called when currMark is undefined in rebaseMarkList
-			it.skip("violated by move in under delete", () => {
+			it("violated by move in under delete", () => {
 				const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 				const tree2 = tree.fork();
 
@@ -2447,7 +2447,7 @@ describe.only("Editing", () => {
 		});
 	});
 
-	it.skip("edit removed content", () => {
+	it("edit removed content", () => {
 		const tree = makeTreeFromJson({ foo: "A" });
 		const cursor = tree.forest.allocateCursor();
 		moveToDetachedField(tree.forest, cursor);
