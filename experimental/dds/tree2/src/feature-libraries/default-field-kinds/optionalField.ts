@@ -635,39 +635,39 @@ function* relevantRemovedTrees(
 	change: OptionalChangeset,
 	removedTreesFromChild: RemovedTreesFromChild,
 ): Iterable<Delta.DetachedNodeId> {
-	let removedNode: ChangeAtomId | undefined;
-	let restoredNode: ChangeAtomId | undefined;
-	const fieldChange = change.fieldChange;
-	if (fieldChange !== undefined) {
-		removedNode = { revision: fieldChange.revision, localId: fieldChange.id };
-		const newContent = fieldChange.newContent;
-		if (newContent !== undefined) {
-			if (Object.prototype.hasOwnProperty.call(newContent, "revert")) {
-				// This tree is being restored by this change, so it is a relevant removed tree.
-				restoredNode = (newContent as { revert: ChangeAtomId }).revert;
-				yield nodeIdFromChangeAtom(restoredNode);
-			}
-			if (newContent.changes !== undefined) {
-				yield* removedTreesFromChild(newContent.changes);
-			}
-		}
-	}
-	if (change.childChanges !== undefined) {
-		for (const [deletedBy, child] of change.childChanges) {
-			if (
-				deletedBy === "self" ||
-				(removedNode !== undefined && areEqualChangeIds(deletedBy, removedNode))
-			) {
-				// This node is in the document at the time this change applies, so it isn't a relevant removed tree.
-			} else {
-				if (restoredNode !== undefined && areEqualChangeIds(deletedBy, restoredNode)) {
-					// This tree is a relevant removed tree, but it is already included in the list
-				} else {
-					// This tree is being edited by this change, so it is a relevant removed tree.
-					yield nodeIdFromChangeAtom(deletedBy);
-				}
-			}
-			yield* removedTreesFromChild(child);
-		}
-	}
+	// let removedNode: ChangeAtomId | undefined;
+	// let restoredNode: ChangeAtomId | undefined;
+	// const fieldChange = change.fieldChange;
+	// if (fieldChange !== undefined) {
+	// 	removedNode = { revision: fieldChange.revision, localId: fieldChange.id };
+	// 	const newContent = fieldChange.newContent;
+	// 	if (newContent !== undefined) {
+	// 		if (Object.prototype.hasOwnProperty.call(newContent, "revert")) {
+	// 			// This tree is being restored by this change, so it is a relevant removed tree.
+	// 			restoredNode = (newContent as { revert: ChangeAtomId }).revert;
+	// 			yield nodeIdFromChangeAtom(restoredNode);
+	// 		}
+	// 		if (newContent.changes !== undefined) {
+	// 			yield* removedTreesFromChild(newContent.changes);
+	// 		}
+	// 	}
+	// }
+	// if (change.childChanges !== undefined) {
+	// 	for (const [deletedBy, child] of change.childChanges) {
+	// 		if (
+	// 			deletedBy === "self" ||
+	// 			(removedNode !== undefined && areEqualChangeIds(deletedBy, removedNode))
+	// 		) {
+	// 			// This node is in the document at the time this change applies, so it isn't a relevant removed tree.
+	// 		} else {
+	// 			if (restoredNode !== undefined && areEqualChangeIds(deletedBy, restoredNode)) {
+	// 				// This tree is a relevant removed tree, but it is already included in the list
+	// 			} else {
+	// 				// This tree is being edited by this change, so it is a relevant removed tree.
+	// 				yield nodeIdFromChangeAtom(deletedBy);
+	// 			}
+	// 		}
+	// 		yield* removedTreesFromChild(child);
+	// 	}
+	// }
 }
