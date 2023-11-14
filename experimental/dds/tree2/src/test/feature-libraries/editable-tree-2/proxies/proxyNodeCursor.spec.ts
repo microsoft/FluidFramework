@@ -69,5 +69,10 @@ describe("cursorFromProxyTree", () => {
 
 		const fieldE = adapter.getFieldFromNode(root, brand("d")); // No such property as "e" in the schema or initial tree
 		assert.equal(fieldE.length, 0);
+
+		// Quick test of recursive invokation
+		assert.equal(adapter.value(root.a), a);
+		assert.equal(adapter.type(root.a), schemaBuilder.string.name);
+		assert.deepEqual(adapter.keysFromNode(root.a), []);
 	});
 });
