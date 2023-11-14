@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { brand, fail } from "../../../util";
+import { brand, fail } from "../../util";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
@@ -17,8 +17,8 @@ import {
 	MapNodeSchema,
 	FieldNodeSchema,
 	MapFieldSchema,
-} from "../../typed-schema";
-import { FieldKinds } from "../../default-field-kinds";
+} from "../typed-schema";
+import { FieldKinds } from "../default-field-kinds";
 import {
 	FieldNode,
 	FlexibleFieldContent,
@@ -31,12 +31,16 @@ import {
 	TypedField,
 	UnknownUnboxed,
 	onNextChange,
-} from "../editableTreeTypes";
-import { LazySequence } from "../lazyField";
-import { EmptyKey, FieldKey } from "../../../core";
-import { LazyObjectNode, getBoxedField } from "../lazyTree";
-import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../../contextuallyTyped";
-import { createRawObjectNode, extractRawNodeContent } from "../rawObjectNode";
+} from "../flex-tree";
+import { EmptyKey, FieldKey } from "../../core";
+import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../contextuallyTyped";
+// TODO: decide how to deal with dependencies on flex-tree implementation.
+// eslint-disable-next-line import/no-internal-modules
+import { LazySequence } from "../flex-tree/lazyField";
+// TODO: decide how to deal with dependencies on flex-tree implementation.
+// eslint-disable-next-line import/no-internal-modules
+import { LazyObjectNode, getBoxedField } from "../flex-tree/lazyNode";
+import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
 import {
 	ProxyField,
 	ProxyNode,

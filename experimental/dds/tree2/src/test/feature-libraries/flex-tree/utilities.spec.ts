@@ -12,10 +12,10 @@ import {
 	treeStatusFromAnchorCache,
 	treeStatusFromDetachedField,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/editable-tree-2/utilities";
+} from "../../../feature-libraries/flex-tree/utilities";
 import { applyTestDelta } from "../../utils";
 
-describe("editable-tree-2 utilities", () => {
+describe("flex-tree utilities", () => {
 	describe("treeStatusFromAnchorCache", () => {
 		it("root detachedField returns TreeStatus.InDocument", () => {
 			const anchors = new AnchorSet();

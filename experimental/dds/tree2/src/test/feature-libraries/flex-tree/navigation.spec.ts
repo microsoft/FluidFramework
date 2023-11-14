@@ -7,7 +7,7 @@ import {
 	Skip,
 	visitBipartiteIterableTreeWithState,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/editable-tree-2/navigation";
+} from "../../../feature-libraries/flex-tree/navigation";
 
 import { TreeField, TreeNode, boxedIterator } from "../../../feature-libraries";
 import { FieldUpPath, UpPath } from "../../../core";

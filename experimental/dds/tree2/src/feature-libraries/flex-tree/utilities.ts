@@ -11,7 +11,7 @@ import {
 	getDetachedFieldContainingPath,
 	rootField,
 } from "../../core";
-import { TreeStatus } from "../editable-tree-2";
+import { TreeStatus } from "./editableTreeTypes";
 /**
  * Checks the detached field and returns the TreeStatus based on whether or not the detached field is a root field.
  * @param detachedField - the detached field you want to check.

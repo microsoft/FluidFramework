@@ -25,27 +25,9 @@ export {
 	CheckTypesOverlap,
 	TreeStatus,
 	Typed,
+	onNextChange,
+	UnknownUnboxed,
 } from "./editableTreeTypes";
-
-export {
-	getProxyForField,
-	SharedTreeList,
-	ObjectFields,
-	ProxyField,
-	ProxyFieldInner,
-	ProxyNode,
-	ProxyNodeUnion,
-	SharedTreeMap,
-	SharedTreeObject,
-	ProxyRoot,
-	Tree,
-	TreeApi,
-	SharedTreeNode,
-	SharedTreeObjectFactory,
-	FactoryTreeSchema,
-	addFactory,
-} from "./proxies";
-export { createRawObjectNode, rawObjectErrorMessage, extractRawNodeContent } from "./rawObjectNode";
 
 export {
 	visitBipartiteIterableTree,
@@ -56,6 +38,8 @@ export {
 } from "./navigation";
 
 export { getTreeContext, TreeContext, Context } from "./context";
+
+export { TreeEvent, EditableTreeEvents } from "./treeEvents";
 
 // Below here are things that are used by the above, but not part of the desired API surface.
 import * as InternalEditableTreeTypes from "./internal";

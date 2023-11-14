@@ -6,10 +6,10 @@
 import { FieldKey, TreeNodeSchemaIdentifier } from "../../core";
 import { capitalize } from "../../util";
 import { ObjectNodeSchema, TreeNodeSchema } from "../typed-schema";
-import { EditableTreeEvents } from "../untypedTree";
 import { LocalNodeKey } from "../node-key";
-import { TreeContext } from "./context";
 import {
+	TreeContext,
+	EditableTreeEvents,
 	ObjectNode,
 	ObjectNodeTyped,
 	TreeField,
@@ -18,7 +18,7 @@ import {
 	TypedNode,
 	boxedIterator,
 	onNextChange,
-} from "./editableTreeTypes";
+} from "../flex-tree";
 
 const nodeContent = Symbol();
 interface HasNodeContent<T> {

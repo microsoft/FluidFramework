@@ -9,7 +9,7 @@ import { FieldKinds } from "../default-field-kinds";
 import { AllowedTypes, TreeFieldSchema, TreeNodeSchema, schemaIsLeaf } from "../typed-schema";
 import { Context } from "./context";
 import { TreeNode, UnboxField, UnboxNode, UnboxNodeUnion } from "./editableTreeTypes";
-import { makeTree } from "./lazyTree";
+import { makeTree } from "./lazyNode";
 import { makeField } from "./lazyField";
 
 /**

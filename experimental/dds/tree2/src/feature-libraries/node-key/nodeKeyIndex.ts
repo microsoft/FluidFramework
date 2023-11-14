@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
-import { ObjectNode, TreeContext, TreeField, TreeNode, boxedIterator } from "../editable-tree-2";
+import { ObjectNode, TreeContext, TreeField, TreeNode, boxedIterator } from "../flex-tree";
 import { schemaIsObjectNode } from "../typed-schema";
 import { LocalNodeKey, nodeKeyTreeIdentifier } from "./nodeKey";
 

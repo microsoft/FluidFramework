@@ -10,14 +10,14 @@ import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils";
 import { leaf, SchemaBuilder } from "../../../domains";
+import { boxedIterator } from "../../../feature-libraries/flex-tree";
 import {
-	boxedIterator,
 	createRawObjectNode,
 	extractRawNodeContent,
 	rawObjectErrorMessage,
-} from "../../../feature-libraries/editable-tree-2";
+} from "../../../feature-libraries/simple-tree/rawObjectNode";
 import { brand } from "../../../util";
-import { contextWithContentReadonly } from "./utils";
+import { contextWithContentReadonly } from "../flex-tree/utils";
 
 describe("raw object nodes", () => {
 	function getRawObjectNode() {
