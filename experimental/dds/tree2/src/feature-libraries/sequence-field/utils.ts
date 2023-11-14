@@ -374,7 +374,6 @@ export function isImpactful(
 			return true;
 		case "MoveIn":
 			// MoveIn marks always target an empty cell.
-			// See doc comment on Pin for more details on why.
 			assert(mark.cellId !== undefined, "MoveIn marks should target empty cells");
 			return true;
 		case "Insert":

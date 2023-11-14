@@ -248,7 +248,7 @@ describe("SequenceField - toDelta", () => {
 		};
 		const ins: Delta.Mark = {
 			count: 1,
-			attach: { minor: 52 },
+			attach: { major: tag, minor: 52 },
 		};
 		const markList: Delta.Mark[] = [
 			del,
@@ -258,7 +258,7 @@ describe("SequenceField - toDelta", () => {
 			{ count: 1, fields: childChange1Delta },
 		];
 		const expected: Delta.FieldChanges = {
-			build: [{ id: { minor: 52 }, trees: [contentCursor] }],
+			build: [{ id: { major: tag, minor: 52 }, trees: [contentCursor] }],
 			local: markList,
 		};
 		const actual = toDelta(changeset, tag);
@@ -267,7 +267,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("insert and modify => insert", () => {
 		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
-		const buildId = { minor: 0 };
+		const buildId = { major: tag, minor: 0 };
 		const expected: Delta.FieldChanges = {
 			build: [
 				{
@@ -280,7 +280,7 @@ describe("SequenceField - toDelta", () => {
 					],
 				},
 			],
-			global: [{ id: { ...buildId, major: tag }, fields: childChange1Delta }],
+			global: [{ id: buildId, fields: childChange1Delta }],
 			local: [{ count: 1, attach: buildId }],
 		};
 		const actual = toDelta(changeset, tag);

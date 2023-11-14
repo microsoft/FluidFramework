@@ -8,7 +8,6 @@ import { Delta, offsetDetachId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { Changeset, Mark } from "./format";
 import {
-	isDetach,
 	isInsert,
 	isNewAttach,
 	isReattachEffect,
@@ -45,11 +44,9 @@ function refersToRelevantRemovedTrees<TChild>(mark: Mark<TChild>): boolean {
 		if (isInsert(effect) && isReattachEffect(effect, mark.cellId)) {
 			// This tree is being restored.
 			return true;
-		} else if (isDetach(mark)) {
-			if (isDetachOfRemovedNodes(mark)) {
-				// This removed tree is being restored as part of a detach.
-				return true;
-			}
+		} else if (isDetachOfRemovedNodes(mark)) {
+			// This removed tree is being restored as part of a detach.
+			return true;
 		}
 		if (!isNewAttach(mark) && mark.changes !== undefined) {
 			// This removed tree is being edited.

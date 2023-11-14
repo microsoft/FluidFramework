@@ -101,13 +101,13 @@ export function sequenceFieldToDelta<TNodeChange>(
 						revision: mark.revision ?? revision,
 						localId: mark.id,
 					};
-					if (mark.cellId === undefined) {
+					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
 						local.push(deltaMark);
 					} else {
-						const oldId = nodeIdFromChangeAtom(mark.cellId);
+						const oldId = nodeIdFromChangeAtom(inputCellId);
 						// Removal of already removed content is only a no-op if the detach IDs are different.
-						if (!areEqualChangeAtomIds(mark.cellId, newDetachId)) {
+						if (!areEqualChangeAtomIds(inputCellId, newDetachId)) {
 							rename.push({
 								count: mark.count,
 								oldId,
@@ -142,8 +142,8 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Insert": {
-					assert(mark.cellId !== undefined, "Active Insert marks must have a CellId");
-					const buildId = nodeIdFromChangeAtom(mark.cellId);
+					assert(inputCellId !== undefined, "Active Insert marks must have a CellId");
+					const buildId = nodeIdFromChangeAtom(inputCellId);
 					deltaMark.attach = buildId;
 					if (deltaMark.fields) {
 						// Nested changes are represented on the node in its starting location

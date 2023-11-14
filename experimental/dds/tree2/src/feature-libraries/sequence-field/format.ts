@@ -168,6 +168,10 @@ export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagS
  * Content being inserted or or restored into a cell.
  * Always brings about the desired outcome: the content is in the targeted cells.
  *
+ * Rebasing this mark never causes it to insert/restore a different set of nodes.
+ * Rebasing this mark never causes it to fill a different set of cells
+ * (though the way those cells are identified may change).
+ *
  * When `content` is not defined, this mark revives the content that was last removed from the cell.
  *
  * Carries a `MoveId` in case it is rebased over the content being moved out, in which case this mark
@@ -209,6 +213,10 @@ export const HasMoveFields = Type.Composite([
  * Always brings about the desired outcome: the nodes being moved are in the target cells.
  * Note that this may not require any changes if these nodes are already in the target cells when this mark is applied.
  *
+ * Rebasing this mark never causes it to move-in a different set of nodes.
+ * Rebasing this mark never causes it to fill a different set of cells
+ * (though the way those cells are identified may change).
+ *
  * Only ever targets empty cells. It transforms into a idempotent Insert if the target cells are not empty.
  */
 export interface MoveIn extends HasMoveFields {
@@ -234,9 +242,12 @@ export const InverseAttachFields = Type.Object({
 });
 
 /**
- * Removes contents from cells.
- * Always brings about the desired outcome: the cells are empty.
- * Note that this may not require any changes if the cells are already empty when this mark is applied.
+ * Removes nodes from their cells.
+ * Always brings about the desired outcome: the targeted nodes are removed from their cells.
+ * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
+ *
+ * Rebasing this mark never causes it to target different set of nodes.
+ * Rebasing this mark can it to clear a different set of cells.
  */
 export interface Delete extends HasRevisionTag, InverseAttachFields {
 	type: "Delete";
@@ -256,9 +267,12 @@ export const Delete = Type.Composite(
 );
 
 /**
- * Moves content from cells to other cells.
+ * Removes nodes from their cells so they can be moved into other cells.
+ * Always brings about the desired outcome: the targeted nodes are removed from their cells.
+ * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
  *
- * When targeting empty cells, it will restore and move the content.
+ * Rebasing this mark never causes it to target different set of nodes.
+ * Rebasing this mark can it to clear a different set of cells.
  */
 export interface MoveOut extends HasMoveFields {
 	type: "MoveOut";
@@ -274,9 +288,12 @@ export const MoveOut = Type.Composite(
 );
 
 /**
- * Moves content from cells to other cells.
+ * Removes nodes from their cells so they can be moved into other cells.
+ * Always brings about the desired outcome: the targeted nodes are removed from their cells.
+ * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
  *
- * When targeting empty cells, it will restore and move the content.
+ * Rebasing this mark never causes it to target different set of nodes.
+ * Rebasing this mark can it to clear a different set of cells.
  * TODO: unify with `MoveOut`.
  */
 export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
