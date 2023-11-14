@@ -13,7 +13,14 @@ import {
 	ValueSchema,
 	storedEmptyFieldSchema,
 } from "../../core";
-import { Any, FieldKinds, TreeFieldSchema, TreeNodeSchema } from "../../feature-libraries";
+import {
+	Any,
+	FieldKinds,
+	LeafNodeSchema,
+	TreeFieldSchema,
+	TreeNodeSchema,
+	TreeNodeSchemaBase,
+} from "../../feature-libraries";
 import {
 	fieldSchemaFromStoredSchema,
 	treeSchemaFromStoredSchema,
@@ -24,12 +31,16 @@ import { brand } from "../../util";
 
 describe("storedToViewSchema", () => {
 	describe("fieldSchemaFromStoredSchema", () => {
-		const schemaX = TreeNodeSchema.create({ name: "z" }, "x", {
-			leafValue: ValueSchema.Number,
-		});
-		const schemaY = TreeNodeSchema.create({ name: "z" }, "y", {
-			leafValue: ValueSchema.Number,
-		});
+		const schemaX = LeafNodeSchema.create(
+			{ name: "z" },
+			brand<TreeNodeSchemaIdentifier>("x"),
+			ValueSchema.Number,
+		);
+		const schemaY = LeafNodeSchema.create(
+			{ name: "z" },
+			brand<TreeNodeSchemaIdentifier>("y"),
+			ValueSchema.Number,
+		);
 		const schemaMap = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>([
 			[schemaX.name, schemaX],
 			[schemaY.name, schemaY],
@@ -127,7 +138,7 @@ describe("storedToViewSchema", () => {
 			assert.deepEqual(viewSchema.nodeSchema.size, stored.nodeSchema.size);
 			for (const [key, nodeSchema] of viewSchema.nodeSchema) {
 				const storedNodeSchema = stored.nodeSchema.get(key) ?? assert.fail();
-				assert(nodeSchema instanceof TreeNodeSchema);
+				assert(nodeSchema instanceof TreeNodeSchemaBase);
 				assert.equal(nodeSchema.name, key);
 				if (storedNodeSchema.mapFields !== undefined) {
 					// Since its tested separately, assume fields are converted correctly.

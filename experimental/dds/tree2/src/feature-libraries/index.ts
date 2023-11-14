@@ -141,8 +141,8 @@ export {
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -156,6 +156,7 @@ export {
 	markEager,
 	MapFieldSchema,
 	SchemaCollection,
+	TreeNodeSchemaBase,
 } from "./typed-schema";
 
 export {
@@ -214,8 +215,6 @@ export {
 	defaultSchemaPolicy,
 } from "./default-field-kinds";
 
-export { TreeEvent, EditableTreeEvents } from "./untypedTree";
-
 export {
 	AssignableFieldKinds,
 	FieldNode,
@@ -241,6 +240,13 @@ export {
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
+	Typed,
+	Context,
+	TreeEvent,
+	EditableTreeEvents,
+} from "./flex-tree";
+
+export {
 	getProxyForField,
 	ObjectFields,
 	ProxyField,
@@ -254,12 +260,10 @@ export {
 	Tree,
 	TreeApi,
 	SharedTreeNode,
-	Typed,
 	SharedTreeObjectFactory,
 	FactoryTreeSchema,
 	addFactory,
-	Context,
-} from "./editable-tree-2";
+} from "./simple-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 

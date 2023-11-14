@@ -16,14 +16,13 @@ import {
 	ProxyNode,
 	ObjectNodeSchema,
 	SharedTreeObject,
+	TypedNode,
 } from "../../feature-libraries";
-// eslint-disable-next-line import/no-internal-modules
-import { TypedNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/proxies";
+import { extractFactoryContent } from "../../feature-libraries/simple-tree/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -34,11 +33,7 @@ describe("domains - SchemaBuilder", () => {
 				const listAny = builder.list(Any);
 				assert(schemaIsFieldNode(listAny));
 				assert.equal(listAny.name, "scope.List<Any>");
-				assert(
-					listAny.objectNodeFields
-						.get("")
-						.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])),
-				);
+				assert(listAny.info.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])));
 				type ListAny = TypedNode<typeof listAny>["content"];
 				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence<readonly [Any]>>>;
 
@@ -52,9 +47,9 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listImplicit));
 				assert.equal(listImplicit.name, `scope2.List<["${builder.number.name}"]>`);
 				assert(
-					listImplicit.objectNodeFields
-						.get("")
-						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
+					listImplicit.info.equals(
+						TreeFieldSchema.create(FieldKinds.sequence, [builder.number]),
+					),
 				);
 				type ListImplicit = TypedNode<typeof listImplicit>["content"];
 				type _check = requireTrue<
@@ -85,14 +80,12 @@ describe("domains - SchemaBuilder", () => {
 					`scope.List<["${builder.boolean.name}","${builder.number.name}"]>`,
 				);
 				assert(
-					listUnion.objectNodeFields
-						.get("")
-						.equals(
-							TreeFieldSchema.create(FieldKinds.sequence, [
-								builder.number,
-								builder.boolean,
-							]),
-						),
+					listUnion.info.equals(
+						TreeFieldSchema.create(FieldKinds.sequence, [
+							builder.number,
+							builder.boolean,
+						]),
+					),
 				);
 				type ListUnion = TypedNode<typeof listUnion>["content"];
 				type _check = requireTrue<
@@ -123,9 +116,7 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(list));
 				assert.equal(list.name, `scope.Foo`);
 				assert(
-					list.objectNodeFields
-						.get("")
-						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
+					list.info.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
 				type List = TypedNode<typeof list>["content"];
 				type _check = requireTrue<
