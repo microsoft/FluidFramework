@@ -428,7 +428,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const overChildChangesBySrc = new ChildChangeMap<NodeChangeset>();
 		for (const [id, change] of overChange.childChanges ?? []) {
-			overChildChangesBySrc.set(overDstToSrc.get(id) ?? id, change);
+			overChildChangesBySrc.set(overDstToSrc.get(withIntention(id)) ?? id, change);
 		}
 		const rebasedChildChanges: typeof childChanges = [];
 		for (const [id, childChange] of childChanges) {
@@ -636,39 +636,28 @@ function* relevantRemovedTrees(
 	change: OptionalChangeset,
 	removedTreesFromChild: RemovedTreesFromChild,
 ): Iterable<Delta.DetachedNodeId> {
-	// let removedNode: ChangeAtomId | undefined;
-	// let restoredNode: ChangeAtomId | undefined;
-	// const fieldChange = change.fieldChange;
-	// if (fieldChange !== undefined) {
-	// 	removedNode = { revision: fieldChange.revision, localId: fieldChange.id };
-	// 	const newContent = fieldChange.newContent;
-	// 	if (newContent !== undefined) {
-	// 		if (Object.prototype.hasOwnProperty.call(newContent, "revert")) {
-	// 			// This tree is being restored by this change, so it is a relevant removed tree.
-	// 			restoredNode = (newContent as { revert: ChangeAtomId }).revert;
-	// 			yield nodeIdFromChangeAtom(restoredNode);
-	// 		}
-	// 		if (newContent.changes !== undefined) {
-	// 			yield* removedTreesFromChild(newContent.changes);
-	// 		}
-	// 	}
-	// }
-	// if (change.childChanges !== undefined) {
-	// 	for (const [deletedBy, child] of change.childChanges) {
-	// 		if (
-	// 			deletedBy === "self" ||
-	// 			(removedNode !== undefined && areEqualChangeIds(deletedBy, removedNode))
-	// 		) {
-	// 			// This node is in the document at the time this change applies, so it isn't a relevant removed tree.
-	// 		} else {
-	// 			if (restoredNode !== undefined && areEqualChangeIds(deletedBy, restoredNode)) {
-	// 				// This tree is a relevant removed tree, but it is already included in the list
-	// 			} else {
-	// 				// This tree is being edited by this change, so it is a relevant removed tree.
-	// 				yield nodeIdFromChangeAtom(deletedBy);
-	// 			}
-	// 		}
-	// 		yield* removedTreesFromChild(child);
-	// 	}
-	// }
+	const dstToSrc = new ChildChangeMap<ContentId>();
+	const alreadyYieldedOrNewlyBuilt = new ChildChangeMap<boolean>();
+	for (const { id } of change.build) {
+		alreadyYieldedOrNewlyBuilt.set(id, true);
+	}
+
+	for (const [src, dst] of change.moves) {
+		dstToSrc.set(dst, src);
+		if (src !== "self" && !alreadyYieldedOrNewlyBuilt.has(src)) {
+			alreadyYieldedOrNewlyBuilt.set(src, true);
+			yield nodeIdFromChangeAtom(src);
+		}
+	}
+
+	for (const [id, childChange] of change.childChanges) {
+		// Child changes are relevant unless they apply to the tree which existed in the starting context of
+		// of this change.
+		const startingId = dstToSrc.get(id) ?? id;
+		if (startingId !== "self" && !alreadyYieldedOrNewlyBuilt.has(startingId)) {
+			alreadyYieldedOrNewlyBuilt.set(startingId, true);
+			yield nodeIdFromChangeAtom(startingId);
+		}
+		yield* removedTreesFromChild(childChange);
+	}
 }

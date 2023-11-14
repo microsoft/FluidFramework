@@ -78,7 +78,6 @@ export const valueFieldEditor: ValueFieldEditor = {
 	set: (
 		newContent: ITreeCursor,
 		ids: {
-			build: ChangesetLocalId;
 			fill: ChangesetLocalId;
 			detach: ChangesetLocalId;
 		},

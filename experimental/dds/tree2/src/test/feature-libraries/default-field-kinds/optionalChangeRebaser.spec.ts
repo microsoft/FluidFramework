@@ -46,6 +46,7 @@ import {
 	NamedChangeset,
 } from "../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../rebaserAxiomaticTests";
+import { assertEqual } from "./optionalFieldUtils";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -241,36 +242,6 @@ function computeChildChangeInputContext(state: OptionalFieldTestState): number[]
 	}
 
 	return intentions;
-}
-
-// Optional changesets may be equivalent but not evaluate to be deep-equal, as the order of moves is irrelevant.
-function assertEqual(
-	a: TaggedChange<OptionalChangeset> | undefined,
-	b: TaggedChange<OptionalChangeset> | undefined,
-): void {
-	if (a === undefined || b === undefined) {
-		assert.deepEqual(a, b);
-		return;
-	}
-	const normalizeContentId = (contentId: ContentId): string => {
-		if (typeof contentId === "string") {
-			return `s${contentId}`;
-		}
-		return `r${contentId.revision}id${contentId.localId}`;
-	};
-	// The composed rebase implementation deep-freezes.
-	const aCopy = { ...a, change: { ...a.change, moves: [...a.change.moves] } };
-	const bCopy = { ...b, change: { ...b.change, moves: [...b.change.moves] } };
-	aCopy.change.moves.sort(([c], [d]) =>
-		normalizeContentId(c).localeCompare(normalizeContentId(d)),
-	);
-	bCopy.change.moves.sort(([c], [d]) =>
-		normalizeContentId(c).localeCompare(normalizeContentId(d)),
-	);
-	// TODO: This shouldn't be necessary. might be causing correctness issues.
-	delete aCopy.change.reservedDetachId;
-	delete bCopy.change.reservedDetachId;
-	assert.deepEqual(aCopy, bCopy);
 }
 
 /**
