@@ -195,7 +195,7 @@ export {
 	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
 	AssignableFieldKinds,
-	TreeContext,
+	FlexTreeContext as TreeContext,
 	FlexTreeTypedField,
 	FlexTreeTypedNode,
 	FlexTreeTypedNodeUnion,

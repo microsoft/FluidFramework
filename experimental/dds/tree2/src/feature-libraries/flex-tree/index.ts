@@ -37,7 +37,7 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation";
 
-export { getTreeContext, FlexTreeContext as TreeContext, Context } from "./context";
+export { getTreeContext, FlexTreeContext, Context } from "./context";
 
 export { TreeEvent, EditableTreeEvents } from "./treeEvents";
 

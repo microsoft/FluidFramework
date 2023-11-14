@@ -9,7 +9,7 @@ import {
 	TreeSchema,
 	FlexTreeTypedField,
 	ProxyField,
-	TreeContext,
+	FlexTreeContext,
 	NodeKeyManager,
 	getTreeContext,
 	getProxyForField,
@@ -38,7 +38,7 @@ export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDispos
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.
 	 */
-	readonly context: TreeContext;
+	readonly context: FlexTreeContext;
 
 	/**
 	 * Access non-view schema specific aspects of of this branch.

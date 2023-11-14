@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { FieldKey, TreeStoredSchema, ValueSchema } from "../../core";
 import {
 	FlexTreeObjectNode,
-	TreeContext,
+	FlexTreeContext,
 	FlexTreeField,
 	FlexTreeNode,
 	boxedIterator,
@@ -47,7 +47,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	 * @param context - the editable tree context in which to search for node keys
 	 */
 	// TODO: This can be optimized by responding to deltas/changes to the tree, rather than rescanning the whole tree every time
-	public scanKeys(context: TreeContext): void {
+	public scanKeys(context: FlexTreeContext): void {
 		this.nodes.clear();
 		if (NodeKeyIndex.hasNodeKeyTreeSchema(context.schema)) {
 			for (const [id, node] of this.findKeysInField(context.root)) {
@@ -63,7 +63,7 @@ export class NodeKeyIndex implements ReadonlyMap<LocalNodeKey, FlexTreeObjectNod
 	/**
 	 * Create a copy of this index which can be mutated without affecting this one.
 	 */
-	public clone(context: TreeContext): NodeKeyIndex {
+	public clone(context: FlexTreeContext): NodeKeyIndex {
 		const indexClone = new NodeKeyIndex(this.fieldKey);
 		indexClone.scanKeys(context);
 		return indexClone;

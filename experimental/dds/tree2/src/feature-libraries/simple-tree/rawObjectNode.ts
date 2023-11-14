@@ -8,7 +8,7 @@ import { capitalize } from "../../util";
 import { ObjectNodeSchema, TreeNodeSchema } from "../typed-schema";
 import { LocalNodeKey } from "../node-key";
 import {
-	TreeContext,
+	FlexTreeContext,
 	EditableTreeEvents,
 	FlexTreeObjectNode,
 	FlexTreeObjectNodeTyped,
@@ -87,7 +87,7 @@ class RawObjectNode<TSchema extends ObjectNodeSchema, TContent> implements FlexT
 		return this.schema.name;
 	}
 
-	public get context(): TreeContext {
+	public get context(): FlexTreeContext {
 		return rawObjectNodeError();
 	}
 
