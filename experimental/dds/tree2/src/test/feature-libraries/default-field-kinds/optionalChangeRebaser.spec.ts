@@ -128,6 +128,7 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 		// Optional fields should not generate IDs during invert
 		fakeIdAllocator,
 		failCrossFieldManager,
+		defaultRevisionMetadataFromChanges([change]),
 	);
 }
 

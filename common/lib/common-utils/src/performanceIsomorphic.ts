@@ -11,3 +11,8 @@
  */
 export type IsomorphicPerformance = Partial<Performance> &
 	Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
+
+/**
+ * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ */
+export const performance: IsomorphicPerformance = globalThis.performance;
