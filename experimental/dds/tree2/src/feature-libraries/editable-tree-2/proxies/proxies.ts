@@ -46,7 +46,7 @@ import {
 	SharedTreeObject,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
-import { cursorFromProxyTreeNode } from "./proxyNodeCursor";
+import { cursorFromProxyTree } from "./proxyNodeCursor";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -161,11 +161,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 						const mappedContent =
 							content === undefined
 								? undefined
-								: cursorFromProxyTreeNode(
-										content,
-										editNode.context,
-										fieldSchema.types,
-								  );
+								: cursorFromProxyTree(content, editNode.context, fieldSchema.types);
 						modifyChildren(
 							editNode,
 							() => {
@@ -263,7 +259,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
-			const mappedContent = cursorFromProxyTreeNode(
+			const mappedContent = cursorFromProxyTree(
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
@@ -285,7 +281,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
-			const mappedContent = cursorFromProxyTreeNode(
+			const mappedContent = cursorFromProxyTree(
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
@@ -310,7 +306,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				value,
 				this.length,
 			);
-			const mappedContent = cursorFromProxyTreeNode(
+			const mappedContent = cursorFromProxyTree(
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
@@ -648,7 +644,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const mappedContent =
 				content === undefined
 					? undefined
-					: cursorFromProxyTreeNode(
+					: cursorFromProxyTree(
 							content,
 							node.context,
 							node.schema.mapFields?.types ??
