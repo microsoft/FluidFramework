@@ -423,10 +423,10 @@ async function getSingleOpBatch(
 	let retry: number = 0;
 	const nothing = { partial: false, cancel: true, payload: [] };
 	let waitStartTime: number = 0;
+	let defaultDelay = MissingFetchDelayInMs;
 
 	while (signal?.aborted !== true) {
 		retry++;
-		let defaultDelay = MissingFetchDelayInMs;
 		let waitTime = 0;
 		let lastError: unknown;
 		const startTime = performance.now();
