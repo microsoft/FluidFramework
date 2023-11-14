@@ -137,23 +137,23 @@ export function getOutputCellId(
 	metadata: RevisionMetadataSource | undefined,
 ): CellId | undefined {
 	if (isDetach(mark)) {
-		return getDetachCellId(mark, revision, metadata);
+		return getDetachOutputId(mark, revision, metadata);
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isTransientEffect(mark)) {
-		return getDetachCellId(mark.detach, revision, metadata);
+		return getDetachOutputId(mark.detach, revision, metadata);
 	}
 
 	return getInputCellId(mark, revision, metadata);
 }
 
-export function getDetachCellId(
+export function getDetachOutputId(
 	mark: Detach,
 	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource | undefined,
-): CellId {
+): ChangeAtomId {
 	return (
-		getOverrideCellId(mark) ?? {
+		getOverrideDetachId(mark) ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
 			localId: mark.id,
 		}
@@ -167,7 +167,7 @@ function getIntentionIfMetadataProvided(
 	return metadata === undefined ? revision : getIntention(revision, metadata);
 }
 
-function getOverrideCellId(mark: Detach): CellId | undefined {
+function getOverrideDetachId(mark: Detach): ChangeAtomId | undefined {
 	return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
 		? mark.detachIdOverride
 		: undefined;
@@ -536,7 +536,7 @@ function tryMergeEffects(
 	if (
 		isDetach(lhs) &&
 		isDetach(rhs) &&
-		!areMergeableCellIds(getOverrideCellId(lhs), lhsCount, getOverrideCellId(rhs))
+		!areMergeableCellIds(getOverrideDetachId(lhs), lhsCount, getOverrideDetachId(rhs))
 	) {
 		return undefined;
 	}

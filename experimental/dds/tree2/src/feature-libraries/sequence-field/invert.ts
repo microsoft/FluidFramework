@@ -25,7 +25,7 @@ import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
 	extractMarkEffect,
-	getDetachCellId,
+	getDetachOutputId,
 	getEndpoint,
 	getOutputCellId,
 	isAttach,
@@ -172,10 +172,10 @@ function invertMark<TNodeChange>(
 				);
 			}
 
-			const cellId = getDetachCellId(
+			const cellId = getDetachOutputId(
 				mark,
 				mark.revision ?? revision ?? fail("Revision must be defined"),
-				undefined,
+				revisionMetadata,
 			) ?? {
 				revision: mark.revision ?? revision ?? fail("Revision must be defined"),
 				localId: mark.id,

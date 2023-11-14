@@ -186,7 +186,7 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link ObjectNode} node.
+	 * Define (and add to this library) a {@link ObjectNodeSchema}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
@@ -230,7 +230,7 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link MapNode}.
+	 * Define (and add to this library) a {@link MapNodeSchema}.
 	 */
 	public map<Name extends TName, const T extends MapFieldSchema>(
 		name: Name,
@@ -257,7 +257,7 @@ export class SchemaBuilderBase<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link FieldNode}.
+	 * Define (and add to this library) a {@link FieldNodeSchema}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 *

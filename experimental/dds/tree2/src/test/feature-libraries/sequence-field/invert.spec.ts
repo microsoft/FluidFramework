@@ -87,18 +87,18 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("delete => revive (with override ID)", () => {
-		const cellId: ChangeAtomId = { revision: tag2, localId: brand(0) };
-		const input: TestChangeset = [
-			{
-				type: "Delete",
-				count: 2,
-				id: brand(5),
-				detachIdOverride: cellId,
-			},
-		];
+	it("delete => revive (with rollback ID)", () => {
+		const detachId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const input = tagRollbackInverse([Mark.delete(2, brand(0))], tag1, tag2);
+		const expected = [Mark.revive(2, detachId)];
+		const actual = invertChange(input);
+		assert.deepEqual(actual, expected);
+	});
 
-		const expected = [Mark.revive(2, cellId, { id: brand(5) })];
+	it("delete => revive (with override ID)", () => {
+		const detachIdOverride: ChangeAtomId = { revision: tag2, localId: brand(0) };
+		const input: TestChangeset = [Mark.delete(2, brand(5), { detachIdOverride })];
+		const expected = [Mark.revive(2, detachIdOverride, { id: brand(5) })];
 		const actual = invert(input);
 		assert.deepEqual(actual, expected);
 	});

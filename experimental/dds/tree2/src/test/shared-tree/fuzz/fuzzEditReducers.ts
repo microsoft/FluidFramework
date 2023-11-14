@@ -8,8 +8,8 @@ import { AsyncReducer, combineReducers } from "@fluid-private/stochastic-test-ut
 import { DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import {
 	DownPath,
-	TreeField,
-	TreeNode,
+	FlexTreeField,
+	FlexTreeNode,
 	cursorForJsonableTreeNode,
 	cursorForJsonableTreeField,
 } from "../../../feature-libraries";
@@ -157,15 +157,15 @@ function applyValueFieldEdit(
 function navigateToNode(
 	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
 	path: DownPath | undefined,
-): TreeNode | undefined {
+): FlexTreeNode | undefined {
 	const rootField = tree.editableTree;
 	if (path === undefined) {
 		return undefined;
 	}
 
 	const finalLocation = path.reduce<{
-		field: TreeField;
-		containedNode: TreeNode | undefined;
+		field: FlexTreeField;
+		containedNode: FlexTreeNode | undefined;
 	}>(
 		({ containedNode }, nextStep) => {
 			const childField = containedNode?.tryGetField(nextStep.field);

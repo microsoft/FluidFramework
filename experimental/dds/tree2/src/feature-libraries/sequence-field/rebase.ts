@@ -27,7 +27,6 @@ import {
 	cloneCellId,
 	areOutputCellsEmpty,
 	isNewAttach,
-	getDetachCellId,
 	getInputCellId,
 	isTransientEffect,
 	getOutputCellId,
@@ -35,6 +34,7 @@ import {
 	splitMark,
 	isAttach,
 	isDetachOfRemovedNodes,
+	getDetachOutputId,
 } from "./utils";
 import {
 	Changeset,
@@ -413,7 +413,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 			!isNewAttach(currMark),
 			0x69d /* A new attach should not be rebased over its cell being emptied */,
 		);
-		const baseCellId = getDetachCellId(baseMark, baseRevision, metadata);
+		const baseCellId = getDetachOutputId(baseMark, baseRevision, metadata);
 
 		if (isMoveSource(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
