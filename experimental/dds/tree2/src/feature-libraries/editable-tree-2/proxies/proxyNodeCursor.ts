@@ -51,10 +51,6 @@ export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "
 				return leaf.null.name;
 			}
 
-			if (isFluidHandle(node)) {
-				return leaf.handle.name;
-			}
-
 			switch (typeof node) {
 				case "number":
 					return leaf.number.name;
@@ -63,6 +59,10 @@ export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "
 				case "boolean":
 					return leaf.boolean.name;
 				default: {
+					if (isFluidHandle(node)) {
+						return leaf.handle.name;
+					}
+
 					const possibleTypes = getPossibleTypes(
 						context,
 						typeSet,
