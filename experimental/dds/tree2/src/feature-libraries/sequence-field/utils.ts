@@ -61,26 +61,6 @@ export function isNewAttach(mark: Mark<unknown>, revision?: RevisionTag): boolea
 	return isNewAttachEffect(mark, mark.cellId, revision);
 }
 
-export function isNewInsert(
-	mark: MarkEffect,
-	cellId: CellId | undefined,
-	revision?: RevisionTag,
-): boolean {
-	return mark.type === "Insert" && isNewAttachEffect(mark, cellId, revision);
-}
-
-export function containsNewInsert(mark: Mark<unknown>, revision?: RevisionTag): boolean {
-	const type = mark.type;
-	switch (type) {
-		case "Transient":
-			return isNewInsert(mark.attach, mark.cellId, revision);
-		case "Insert":
-			return isNewInsert(mark, mark.cellId, revision);
-		default:
-			return false;
-	}
-}
-
 export function isNewAttachEffect(
 	effect: MarkEffect,
 	cellId: CellId | undefined,

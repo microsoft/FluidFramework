@@ -54,7 +54,6 @@ import {
 	normalizeTransient,
 	isDetachOfRemovedNodes,
 	asTransient,
-	containsNewInsert,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
 
@@ -203,16 +202,8 @@ function composeMarks<TNodeChange>(
 
 		if (isTransientEffect(baseMark) || isDetachOfRemovedNodes(baseMark)) {
 			const baseTransient = asTransient(baseMark);
-			if (
-				areEqualCellIds(
-					getOutputCellId(newTransient, newRev, revisionMetadata),
-					baseTransient.cellId,
-				) &&
-				!containsNewInsert(baseTransient)
-			) {
-				// We only cancel the marks if the base detach was not contributing a new insert.
-				// TODO: once the building of nodes is conveyed outside of the insert mark, cancel the marks
-				// even when the base mark is contributing a new insert.
+			const newOutputId = getOutputCellId(newTransient, newRev, revisionMetadata);
+			if (areEqualCellIds(newOutputId, baseTransient.cellId)) {
 				return withNodeChange(
 					{ count: baseTransient.count, cellId: baseTransient.cellId },
 					nodeChange,
