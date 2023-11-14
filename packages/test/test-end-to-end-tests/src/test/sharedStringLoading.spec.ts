@@ -24,7 +24,7 @@ import {
 import { NonRetryableError, readAndParse } from "@fluidframework/driver-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ReferenceType, TextSegment } from "@fluidframework/merge-tree";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { describeNoCompat, itExpects } from "@fluid-private/test-version-utils";
 import { pkgVersion } from "../packageVersion.js";
 
 // REVIEW: enable compat testing?

@@ -22,7 +22,7 @@ import {
 import {
 	describeNoCompat,
 	itSkipsFailureOnSpecificDrivers,
-} from "@fluid-internal/test-version-utils";
+} from "@fluid-private/test-version-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { createInsertOnlyAttributionPolicy } from "@fluidframework/merge-tree";

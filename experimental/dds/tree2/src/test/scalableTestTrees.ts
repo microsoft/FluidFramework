@@ -3,18 +3,10 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
-import {
-	FieldKinds,
-	TreeFieldSchema,
-	isEditableField,
-	isEditableTree,
-	SchemaAware,
-	typeNameSymbol,
-	UnwrappedEditableField,
-} from "../feature-libraries";
+import { FieldKinds, TreeFieldSchema, SchemaAware, typeNameSymbol } from "../feature-libraries";
 import { leaf, jsonSchema, SchemaBuilder } from "../domains";
 import { brand, requireAssignableTo } from "../util";
-import { ISharedTreeView, TreeContent } from "../shared-tree";
+import { ITreeView, TreeContent } from "../shared-tree";
 import { FieldKey, moveToDetachedField, rootFieldKey, UpPath } from "../core";
 
 /**
@@ -166,11 +158,14 @@ export function readWideTreeAsJSObject(tree: JSWideTree): { nodesCount: number; 
 	return { nodesCount: nodes.length, sum };
 }
 
-export function readWideCursorTree(tree: ISharedTreeView): { nodesCount: number; sum: number } {
+export function readWideCursorTree(tree: ITreeView<typeof wideSchema.rootFieldSchema>): {
+	nodesCount: number;
+	sum: number;
+} {
 	let nodesCount = 0;
 	let sum = 0;
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+	const readCursor = tree.checkout.forest.allocateCursor();
+	moveToDetachedField(tree.checkout.forest, readCursor);
 	assert(readCursor.firstNode());
 	readCursor.firstField();
 	for (let inNode = readCursor.firstNode(); inNode; inNode = readCursor.nextNode()) {
@@ -181,11 +176,14 @@ export function readWideCursorTree(tree: ISharedTreeView): { nodesCount: number;
 	return { nodesCount, sum };
 }
 
-export function readDeepCursorTree(tree: ISharedTreeView): { depth: number; value: number } {
+export function readDeepCursorTree(tree: ITreeView<typeof deepSchema.rootFieldSchema>): {
+	depth: number;
+	value: number;
+} {
 	let depth = 0;
 	let value = 0;
-	const readCursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, readCursor);
+	const readCursor = tree.checkout.forest.allocateCursor();
+	moveToDetachedField(tree.checkout.forest, readCursor);
 	assert(readCursor.firstNode());
 	while (readCursor.firstField()) {
 		readCursor.firstNode();
@@ -235,28 +233,32 @@ export function wideLeafPath(index: number): UpPath {
 	return path;
 }
 
-export function readWideEditableTree(tree: ISharedTreeView): { nodesCount: number; sum: number } {
+export function readWideEditableTree(tree: ITreeView<typeof wideSchema.rootFieldSchema>): {
+	nodesCount: number;
+	sum: number;
+} {
 	let sum = 0;
 	let nodesCount = 0;
-	const root = tree.root;
-	assert(isEditableTree(root));
-	const field = root.foo;
-	assert(isEditableField(field));
+	const root = tree.editableTree;
+	const field = root.content.foo;
 	assert(field.length !== 0);
 	for (const currentNode of field) {
-		sum += currentNode as number;
+		sum += currentNode;
 		nodesCount += 1;
 	}
 	return { nodesCount, sum };
 }
 
-export function readDeepEditableTree(tree: ISharedTreeView): { depth: number; value: number } {
+export function readDeepEditableTree(tree: ITreeView<typeof deepSchema.rootFieldSchema>): {
+	depth: number;
+	value: number;
+} {
 	let depth = 0;
-	let currentNode: UnwrappedEditableField = tree.root;
-	while (isEditableTree(currentNode)) {
+	let currentNode = tree.editableTree.content;
+	while (currentNode.is(linkedListSchema)) {
 		currentNode = currentNode.foo;
 		depth++;
 	}
-	assert(typeof currentNode === "number");
-	return { depth, value: currentNode };
+	assert(currentNode.is(leaf.number));
+	return { depth, value: currentNode.value };
 }

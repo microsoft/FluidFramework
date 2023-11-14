@@ -37,8 +37,8 @@ import {
 	FieldKinds,
 	Any,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
 	TreeNodeSchema,
 	TreeFieldSchema,
@@ -150,7 +150,7 @@ describe("editableTreeTypes", () => {
 			mixed.boxedOptionalLeaf.boxedContent;
 		const sequence: Sequence<readonly [typeof leaf.number]> = mixed.sequence;
 
-		const child: number = sequence.at(0);
+		const child: number | undefined = sequence.at(0);
 		const childBoxed: TypedNode<typeof leaf.number> = sequence.boxedAt(0);
 	}
 
@@ -176,9 +176,9 @@ describe("editableTreeTypes", () => {
 		];
 
 		const optionalNumberField = SchemaBuilder.optional(leaf.number);
-		const mapSchema = undefined as unknown as TreeNodeSchema<
+		const mapSchema = undefined as unknown as MapNodeSchema<
 			"MapIteration",
-			{ mapFields: typeof optionalNumberField }
+			typeof optionalNumberField
 		>;
 		const mapNode = undefined as unknown as MapNode<typeof mapSchema>;
 		const unboxedMapIteration: [FieldKey, number][] = [...mapNode];
@@ -188,40 +188,40 @@ describe("editableTreeTypes", () => {
 	}
 
 	{
-		type _1 = requireAssignableTo<typeof leaf.boolean, LeafSchema>;
+		type _1 = requireAssignableTo<typeof leaf.boolean, LeafNodeSchema>;
 		type _2a = requireAssignableTo<typeof basicFieldNode, FieldNodeSchema>;
 		type _2 = requireAssignableTo<typeof jsonArray, FieldNodeSchema>;
-		type _3 = requireAssignableTo<typeof jsonObject, MapSchema>;
+		type _3 = requireAssignableTo<typeof jsonObject, MapNodeSchema>;
 		type _4 = requireAssignableTo<typeof emptyStruct, ObjectNodeSchema>;
 		type _5 = requireAssignableTo<typeof basicStruct, ObjectNodeSchema>;
 	}
 
 	{
-		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafSchema>>;
+		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafNodeSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof leaf.boolean, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, MapSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, MapNodeSchema>>;
 		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, ObjectNodeSchema>>;
 	}
 
 	{
-		type _1 = requireFalse<isAssignableTo<typeof jsonArray, LeafSchema>>;
+		type _1 = requireFalse<isAssignableTo<typeof jsonArray, LeafNodeSchema>>;
 		type _2 = requireTrue<isAssignableTo<typeof jsonArray, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof jsonArray, MapSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof jsonArray, MapNodeSchema>>;
 		// TODO: Fix
 		// type _4 = requireFalse<isAssignableTo<typeof jsonArray, ObjectNodeSchema>>
 	}
 
 	{
-		type _1 = requireFalse<isAssignableTo<typeof jsonObject, LeafSchema>>;
+		type _1 = requireFalse<isAssignableTo<typeof jsonObject, LeafNodeSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof jsonObject, FieldNodeSchema>>;
-		type _3 = requireTrue<isAssignableTo<typeof jsonObject, MapSchema>>;
+		type _3 = requireTrue<isAssignableTo<typeof jsonObject, MapNodeSchema>>;
 		type _4 = requireFalse<isAssignableTo<typeof jsonObject, ObjectNodeSchema>>;
 	}
 
 	{
-		type _1 = requireFalse<isAssignableTo<typeof basicStruct, LeafSchema>>;
+		type _1 = requireFalse<isAssignableTo<typeof basicStruct, LeafNodeSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof basicStruct, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof basicStruct, MapSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof basicStruct, MapNodeSchema>>;
 		type _4 = requireTrue<isAssignableTo<typeof basicStruct, ObjectNodeSchema>>;
 	}
 
@@ -381,8 +381,9 @@ describe("editableTreeTypes", () => {
 		// Unboxed FieldNode
 		{
 			type UnboxedFieldNode = UnboxNodeUnion<[typeof basicFieldNode]>;
-			type _1 = requireTrue<areSafelyAssignable<TreeNode | undefined, UnboxedFieldNode>>;
-			// @ts-expect-error union can unbox to undefined
+			type _1 = requireTrue<
+				areSafelyAssignable<TypedNode<typeof basicFieldNode>, UnboxedFieldNode>
+			>;
 			type _2 = requireAssignableTo<UnboxedFieldNode, TreeNode>;
 		}
 		// Recursive

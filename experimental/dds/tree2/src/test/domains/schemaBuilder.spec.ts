@@ -18,12 +18,12 @@ import {
 	SharedTreeObject,
 } from "../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { TypedNode, UnboxNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
+import { TypedNode } from "../../feature-libraries/editable-tree-2/editableTreeTypes";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/objectFactory";
+import { extractFactoryContent } from "../../feature-libraries/editable-tree-2/proxies/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -34,12 +34,8 @@ describe("domains - SchemaBuilder", () => {
 				const listAny = builder.list(Any);
 				assert(schemaIsFieldNode(listAny));
 				assert.equal(listAny.name, "scope.List<Any>");
-				assert(
-					listAny.objectNodeFields
-						.get("")
-						.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])),
-				);
-				type ListAny = UnboxNode<typeof listAny>;
+				assert(listAny.info.equals(TreeFieldSchema.create(FieldKinds.sequence, [Any])));
+				type ListAny = TypedNode<typeof listAny>["content"];
 				type _check = requireTrue<areSafelyAssignable<ListAny, Sequence<readonly [Any]>>>;
 
 				assert.equal(builder.list(Any), listAny);
@@ -52,13 +48,13 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(listImplicit));
 				assert.equal(listImplicit.name, `scope2.List<["${builder.number.name}"]>`);
 				assert(
-					listImplicit.objectNodeFields
-						.get("")
-						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
+					listImplicit.info.equals(
+						TreeFieldSchema.create(FieldKinds.sequence, [builder.number]),
+					),
 				);
-				type ListAny = UnboxNode<typeof listImplicit>;
+				type ListImplicit = TypedNode<typeof listImplicit>["content"];
 				type _check = requireTrue<
-					areSafelyAssignable<ListAny, Sequence<readonly [typeof builder.number]>>
+					areSafelyAssignable<ListImplicit, Sequence<readonly [typeof builder.number]>>
 				>;
 
 				assert.equal(builder.list(builder.number), listImplicit);
@@ -85,19 +81,17 @@ describe("domains - SchemaBuilder", () => {
 					`scope.List<["${builder.boolean.name}","${builder.number.name}"]>`,
 				);
 				assert(
-					listUnion.objectNodeFields
-						.get("")
-						.equals(
-							TreeFieldSchema.create(FieldKinds.sequence, [
-								builder.number,
-								builder.boolean,
-							]),
-						),
+					listUnion.info.equals(
+						TreeFieldSchema.create(FieldKinds.sequence, [
+							builder.number,
+							builder.boolean,
+						]),
+					),
 				);
-				type ListAny = UnboxNode<typeof listUnion>;
+				type ListUnion = TypedNode<typeof listUnion>["content"];
 				type _check = requireTrue<
 					areSafelyAssignable<
-						ListAny,
+						ListUnion,
 						Sequence<readonly [typeof builder.number, typeof builder.boolean]>
 					>
 				>;
@@ -105,7 +99,7 @@ describe("domains - SchemaBuilder", () => {
 				type _check2 = requireTrue<
 					// @ts-expect-error Currently not order independent: ideally this would compile
 					areSafelyAssignable<
-						ListAny,
+						ListUnion,
 						Sequence<readonly [typeof builder.boolean, typeof builder.number]>
 					>
 				>;
@@ -123,13 +117,11 @@ describe("domains - SchemaBuilder", () => {
 				assert(schemaIsFieldNode(list));
 				assert.equal(list.name, `scope.Foo`);
 				assert(
-					list.objectNodeFields
-						.get("")
-						.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
+					list.info.equals(TreeFieldSchema.create(FieldKinds.sequence, [builder.number])),
 				);
-				type ListAny = UnboxNode<typeof list>;
+				type List = TypedNode<typeof list>["content"];
 				type _check = requireTrue<
-					areSafelyAssignable<ListAny, Sequence<readonly [typeof builder.number]>>
+					areSafelyAssignable<List, Sequence<readonly [typeof builder.number]>>
 				>;
 
 				// Not cached for structural use
@@ -248,10 +240,10 @@ describe("domains - SchemaBuilder", () => {
 			const z: number | undefined = x.recursive?.recursive?.number;
 		}
 
-		const inner = recursiveObject.create({ recursive: undefined, number: 5 });
+		const innerContents = { recursive: undefined, number: 5 };
+		const inner = recursiveObject.create(innerContents);
 		const testOptional = recursiveObject.create({ number: 5 });
-
-		const outer1 = recursiveObject.create({ recursive: inner, number: 1 });
+		const outer1 = recursiveObject.create({ recursive: innerContents, number: 1 });
 		const outer2 = recursiveObject.create({ recursive: { number: 5 }, number: 1 });
 
 		checkCreated(inner, { number: 5, recursive: undefined });
@@ -301,5 +293,5 @@ export function checkCreated<TSchema extends ObjectNodeSchema>(
 	created: SharedTreeObject<TSchema>,
 	expected: ProxyNode<TSchema>,
 ): void {
-	assert.deepEqual(extractFactoryContent(created), expected);
+	assert.deepEqual(extractFactoryContent(created).content, expected);
 }

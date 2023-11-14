@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ValueSchema, PrimitiveValueSchema, TreeValue } from "../../core";
-import { areSafelyAssignable, requireTrue } from "../../util";
-import { PrimitiveValue } from "../contextuallyTyped";
+import { ValueSchema, TreeValue } from "../../core";
 
 /**
  * {@link ValueSchema} | undefined to allowed types for that schema.
@@ -13,11 +11,6 @@ import { PrimitiveValue } from "../contextuallyTyped";
  */
 export type TypedValueOrUndefined<TValue extends ValueSchema | undefined> =
 	TValue extends ValueSchema ? TreeValue<TValue> : undefined;
-
-{
-	type PrimitiveValue2 = TreeValue<PrimitiveValueSchema>;
-	type _check1 = requireTrue<areSafelyAssignable<PrimitiveValue, PrimitiveValue2>>;
-}
 
 /**
  * @alpha

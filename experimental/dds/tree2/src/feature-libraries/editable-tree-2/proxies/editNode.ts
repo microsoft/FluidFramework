@@ -5,12 +5,15 @@
 
 import { assert } from "@fluidframework/core-utils";
 import { fail } from "../../../util";
-import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapSchema } from "../../typed-schema";
+import { ObjectNodeSchema, AllowedTypes, FieldNodeSchema, MapNodeSchema } from "../../typed-schema";
 import { TreeNode, ObjectNode, FieldNode, MapNode } from "../editableTreeTypes";
 import { SharedTreeObject, SharedTreeList, SharedTreeMap, SharedTreeNode } from "./types";
 
-/** Stores a reference to an edit node on a {@link SharedTreeNode}. */
-const editNodeSymbol = Symbol("EditNode");
+/** Associates an edit node with a target object  */
+const targetSymbol = Symbol("EditNodeTarget");
+interface HasTarget {
+	[targetSymbol]: SharedTreeNode;
+}
 
 /**
  * This is intentionally a WeakMap, rather than a private symbol (e.g. like `editNodeSymbol`).
@@ -30,7 +33,7 @@ export function getEditNode<TSchema extends ObjectNodeSchema>(
 export function getEditNode<TTypes extends AllowedTypes>(
 	target: SharedTreeList<TTypes>,
 ): FieldNode<FieldNodeSchema>;
-export function getEditNode<TSchema extends MapSchema>(
+export function getEditNode<TSchema extends MapNodeSchema>(
 	target: SharedTreeMap<TSchema>,
 ): MapNode<TSchema>;
 export function getEditNode(target: SharedTreeNode): TreeNode;
@@ -43,7 +46,7 @@ export function getEditNode(target: SharedTreeNode): TreeNode {
  */
 export function tryGetEditNode(target: unknown): TreeNode | undefined {
 	if (typeof target === "object" && target !== null) {
-		return editNodeMap.get(target);
+		return editNodeMap.get(target as SharedTreeNode);
 	}
 	return undefined;
 }
@@ -51,8 +54,8 @@ export function tryGetEditNode(target: unknown): TreeNode | undefined {
 /**
  * Retrieves the target associated with the given edit node via {@link setEditNode}, if any.
  */
-export function tryGetEditNodeTarget(editNode: TreeNode): unknown | undefined {
-	return (editNode as { [editNodeSymbol]?: unknown })[editNodeSymbol];
+export function tryGetEditNodeTarget(editNode: TreeNode): SharedTreeNode | undefined {
+	return (editNode as Partial<HasTarget>)[targetSymbol];
 }
 
 /**
@@ -61,7 +64,8 @@ export function tryGetEditNodeTarget(editNode: TreeNode): unknown | undefined {
  * @remarks
  * This creates a 1:1 mapping between the target and tree node.
  * Either can be retrieved from the other via {@link getEditNode}/{@link tryGetEditNode} or {@link tryGetEditNodeTarget}.
- * Mapping multiple targets to tree nodes or visa versa is illegal.
+ * If the given target is already mapped to an edit node, the existing mapping will be overwritten.
+ * If the given edit node is already mapped to a different target, this function will fail.
  */
 export function setEditNode<T extends SharedTreeObject<ObjectNodeSchema>>(
 	target: T,
@@ -71,16 +75,17 @@ export function setEditNode<T extends SharedTreeList<AllowedTypes>>(
 	target: T,
 	editNode: FieldNode<FieldNodeSchema>,
 ): T;
-export function setEditNode<T extends SharedTreeMap<MapSchema>>(
+export function setEditNode<T extends SharedTreeMap<MapNodeSchema>>(
 	target: T,
-	editNode: MapNode<MapSchema>,
+	editNode: MapNode<MapNodeSchema>,
 ): T;
 export function setEditNode<T extends SharedTreeNode>(target: T, editNode: TreeNode): T {
 	assert(
-		!editNodeMap.has(target) && tryGetEditNodeTarget(editNode) === undefined,
-		"Unexpected edit node mapping: mapping already established",
+		tryGetEditNodeTarget(editNode) === undefined,
+		"Cannot associate an edit node with multiple targets",
 	);
+	delete (editNodeMap.get(target) as Partial<HasTarget>)?.[targetSymbol];
 	editNodeMap.set(target, editNode);
-	Object.defineProperty(editNode, editNodeSymbol, { value: target });
+	Object.defineProperty(editNode, targetSymbol, { value: target, configurable: true });
 	return target;
 }

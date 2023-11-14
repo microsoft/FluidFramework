@@ -24,7 +24,7 @@ import {
 } from "../feature-libraries";
 import { fail } from "../util";
 import { ISubscribable } from "../events";
-import { ViewEvents } from "./sharedTreeView";
+import { CheckoutEvents } from "./treeCheckout";
 
 /**
  * Modify `storedSchema` and invoke `setInitialTree` when it's time to set the tree content.
@@ -99,7 +99,7 @@ export function initializeContent(
  * - Better error for change to invalid schema approach than throwing on later event.
  */
 export function schematize(
-	events: ISubscribable<ViewEvents>,
+	events: ISubscribable<CheckoutEvents>,
 	storedSchema: StoredSchemaRepository,
 	config: SchematizeConfiguration,
 ): void {
@@ -161,7 +161,7 @@ export function schematize(
  * @param callback - run after a schema change. If returns true, will run after next change as well.
  */
 export function afterSchemaChanges(
-	events: ISubscribable<ViewEvents>,
+	events: ISubscribable<CheckoutEvents>,
 	storedSchema: StoredSchemaRepository,
 	callback: () => boolean,
 ): void {
@@ -248,3 +248,15 @@ export interface InitializeAndSchematizeConfiguration<
 	TRoot extends TreeFieldSchema = TreeFieldSchema,
 > extends TreeContent<TRoot>,
 		SchematizeConfiguration<TRoot> {}
+
+/**
+ * Options used to initialize (if needed) and schematize a `SharedTree`.
+ * @remarks
+ * Using this builder improves type safety and error quality over just constructing the configuration as a object.
+ * @alpha
+ */
+export function buildTreeConfiguration<T extends TreeFieldSchema>(
+	config: InitializeAndSchematizeConfiguration<T>,
+): InitializeAndSchematizeConfiguration<T> {
+	return config;
+}

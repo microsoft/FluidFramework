@@ -13,7 +13,7 @@ import {
 	createWeightedAsyncGenerator,
 	done,
 	makeRandom,
-} from '@fluid-internal/stochastic-test-utils';
+} from '@fluid-private/stochastic-test-utils';
 import { Side, TraitMap, WriteFormat } from '../../persisted-types';
 import { BuildNode, ChangeType, StablePlace, StableRange } from '../../ChangeTypes';
 import { TraitLocation, TreeView, TreeViewRange } from '../../TreeView';

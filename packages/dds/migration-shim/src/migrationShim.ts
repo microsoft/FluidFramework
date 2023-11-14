@@ -27,10 +27,11 @@ import {
 import { type SharedTreeFactory, type ISharedTree } from "@fluid-experimental/tree2";
 import { assert } from "@fluidframework/core-utils";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import { NoDeltasChannelServices, ShimChannelServices } from "./shimChannelServices.js";
+import { type IShimChannelServices, NoDeltasChannelServices } from "./shimChannelServices.js";
 import { MigrationShimDeltaHandler } from "./migrationDeltaHandler.js";
+import { PreMigrationDeltaConnection, StampDeltaConnection } from "./shimDeltaConnection.js";
 import { ShimHandle } from "./shimHandle.js";
-import { type IShim } from "./types.js";
+import { type IShim, type IStampedContents } from "./types.js";
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -92,7 +93,10 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	) {
 		super();
 		// TODO: consider flattening this class
-		this.migrationDeltaHandler = new MigrationShimDeltaHandler(this.processMigrateOp);
+		this.migrationDeltaHandler = new MigrationShimDeltaHandler(
+			this.processMigrateOp,
+			this.newTreeFactory.attributes,
+		);
 		// TODO: if we need to support the creation of legacy shared trees via the migration shim, we'll need to make
 		// sure that attaching the handle will make it live.
 		this.handle = new ShimHandle<MigrationShim>(this);
@@ -110,15 +114,20 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		) {
 			return false;
 		}
-		this.newTree = this.newTreeFactory.create(this.runtime, this.id);
-		this.populateNewSharedObjectFn(this.legacyTree, this.newTree);
+		const newTree = this.newTreeFactory.create(this.runtime, this.id);
+		assert(this.preMigrationDeltaConnection !== undefined, "Should be in v1 state");
+		this.preMigrationDeltaConnection.disableSubmit();
+		this.populateNewSharedObjectFn(this.legacyTree, newTree);
+		this.newTree = newTree;
 		this.reconnect();
 		this.emit("migrated");
 		return true;
 	};
 
 	private readonly migrationDeltaHandler: MigrationShimDeltaHandler;
-	private services?: ShimChannelServices;
+	private services?: IChannelServices;
+	private preMigrationDeltaConnection?: PreMigrationDeltaConnection;
+	private postMigrationServices?: IShimChannelServices;
 
 	private _legacyTree: LegacySharedTree | undefined;
 	private get legacyTree(): LegacySharedTree {
@@ -139,17 +148,17 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 		// This is a copy of submit local message from SharedObject
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(migrateOp, undefined);
+			this.services!.deltaConnection.submit(migrateOp as IStampedContents, undefined);
 		}
 	}
 
 	public get currentTree(): LegacySharedTree | ISharedTree {
-		// TODO: sync the returning of new tree with the "migrated" event
 		return this.newTree ?? this.legacyTree;
 	}
 
 	public async load(services: IChannelServices): Promise<void> {
 		const shimServices =
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);
@@ -202,14 +211,34 @@ export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements
 	private reconnect(): void {
 		assert(this.services !== undefined, 0x7e7 /* Not connected */);
 		assert(this.newTree !== undefined, 0x7e8 /* New tree not initialized */);
+		assert(this.postMigrationServices === undefined, "Already reconnected!");
 		// This method attaches the newTree's delta handler to the MigrationShimDeltaHandler
-		this.newTree.connect(this.services);
+		this.postMigrationServices = {
+			objectStorage: this.services.objectStorage,
+			deltaConnection: new StampDeltaConnection(
+				this.services.deltaConnection,
+				this.migrationDeltaHandler,
+				this.newTree.attributes,
+			),
+		};
+		this.newTree.connect(this.postMigrationServices);
 	}
 
-	private generateShimServicesOnce(services: IChannelServices): ShimChannelServices {
-		assert(this.services === undefined, 0x7e9 /* Already connected */);
-		this.services = new ShimChannelServices(services, this.migrationDeltaHandler);
-		return this.services;
+	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
+		assert(
+			this.services === undefined && this.preMigrationDeltaConnection === undefined,
+			0x7e9 /* Already connected */,
+		);
+		this.services = services;
+		this.preMigrationDeltaConnection = new PreMigrationDeltaConnection(
+			this.services.deltaConnection,
+			this.migrationDeltaHandler,
+		);
+		const shimServices: IShimChannelServices = {
+			objectStorage: this.services.objectStorage,
+			deltaConnection: this.preMigrationDeltaConnection,
+		};
+		return shimServices;
 	}
 
 	public getGCData(fullGC?: boolean | undefined): IGarbageCollectionData {

@@ -33,7 +33,7 @@ import {
 	DefaultEditBuilder,
 	FieldKinds,
 	TreeFieldSchema,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	typeNameSymbol,
 } from "../../feature-libraries";
 import { brand } from "../../util";
@@ -246,6 +246,11 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
+		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
+		tree.getLocalBranch().on("revertible", (revertible) => {
+			revertible.discard();
+		});
+
 		changeTree(tree);
 		factory.processAllMessages(); // Minimum sequence number === 0
 		assert.equal(getTrunkLength(tree), 1);
@@ -270,6 +275,11 @@ describe("SharedTreeCore", () => {
 		tree.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
+		});
+
+		// discard revertibles so that the trunk can be trimmed based on the minimum sequence number
+		tree.getLocalBranch().on("revertible", (revertible) => {
+			revertible.discard();
 		});
 
 		// The following scenario tests that branches are tracked across rebases and untracked after disposal.
@@ -345,16 +355,16 @@ describe("SharedTreeCore", () => {
 			factory.attributes,
 		);
 
-		const config: InitializeAndSchematizeConfiguration = {
+		const config = {
 			schema,
 			initialTree: undefined,
 			allowedSchemaModifications: AllowedUpdateType.None,
-		};
+		} satisfies InitializeAndSchematizeConfiguration;
 
-		const view1 = tree1.schematizeView(config);
-		const view2 = tree2.schematizeView(config);
-		const editable1 = view1.editableTree2(schema);
-		const editable2 = view2.editableTree2(schema);
+		const view1 = tree1.schematizeInternal(config);
+		const view2 = tree2.schematizeInternal(config);
+		const editable1 = view1.editableTree;
+		const editable2 = view2.editableTree;
 
 		editable2.content = { [typeNameSymbol]: node.name, child: undefined };
 		editable1.content = { [typeNameSymbol]: node.name, child: undefined };
@@ -445,7 +455,7 @@ function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
 	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, singleTextCursor({ type: brand("Node"), value: 42 }));
+	field.insert(0, cursorForJsonableTreeNode({ type: brand("Node"), value: 42 }));
 }
 
 /** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */

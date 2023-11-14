@@ -92,6 +92,26 @@ function findScript(json: PackageJson, command: string) {
 }
 
 /**
+ * Find the script name for the tsc-multi command in a npm package.json
+ *
+ * @param json - the package.json content to search script in
+ * @param config - the tsc-multi config to check for
+ * @returns  first script name found to match the command
+ *
+ * @remarks
+ */
+function findTscMultiScript(json: PackageJson, config: string) {
+	for (const script in json.scripts) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const scriptCommand = json.scripts[script]!;
+
+		if (scriptCommand.startsWith("tsc-multi") && scriptCommand.includes(config)) {
+			return script;
+		}
+	}
+}
+
+/**
  * By default, all `tsc*` script task will depend on "build:genver", and "^tsc",
  * So all the files that it depends on are in place.
  *
@@ -146,9 +166,9 @@ function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
 
 function findTscScript(json: PackageJson, project: string) {
 	if (project === "./tsconfig.json") {
-		return findScript(json, "tsc");
+		return findScript(json, "tsc") || findTscMultiScript(json, "tsc-multi.cjs.json");
 	}
-	return findScript(json, `tsc --project ${project}`);
+	return findScript(json, `tsc --project ${project}`) || findTscMultiScript(json, project);
 }
 /**
  * Get a list of build script names that the eslint depends on, based on .eslintrc file.
@@ -387,7 +407,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-eslint",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json;
 			try {
 				json = JSON.parse(readFile(file));
@@ -427,7 +447,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-tsc",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
@@ -448,7 +468,12 @@ export const handlers: Handler[] = [
 			for (const script in json.scripts) {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const command = json.scripts[script]!;
-				if (command.startsWith("tsc") && !ignore.has(script)) {
+				if (
+					// This clause ensures we don't match commands that are prefixed with "tsc", like "tsc-multi". The exception
+					// is when the whole command is "tsc".
+					(command.startsWith("tsc ") || command === "tsc") &&
+					!ignore.has(script)
+				) {
 					try {
 						const checkDeps = getTscCommandDependencies(
 							packageDir,
@@ -482,7 +507,12 @@ export const handlers: Handler[] = [
 				for (const script in json.scripts) {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const command = json.scripts[script]!;
-					if (command.startsWith("tsc") && !ignore.has(script)) {
+					if (
+						command.startsWith("tsc") &&
+						// tsc --watch tasks are long-running processes and don't need the standard task deps
+						!command.includes("--watch") &&
+						!ignore.has(script)
+					) {
 						try {
 							const checkDeps = getTscCommandDependencies(
 								packageDir,
