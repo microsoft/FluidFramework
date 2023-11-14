@@ -50,6 +50,7 @@ import {
 	DetachedCellMark,
 	MoveDestination,
 	MoveMarkEffect,
+	DetachOfRemovedNodes,
 } from "./helperTypes";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
@@ -192,10 +193,14 @@ function getOverrideCellId(mark: Detach): CellId | undefined {
 		: undefined;
 }
 
+/**
+ * Preserves the semantics of the given `mark` but repackages it into a `DetachOfRemovedNodes` when possible.
+ */
 export function normalizeTransient<TNodeChange>(
 	mark: CellMark<TransientEffect, TNodeChange>,
 	nodeChange?: TNodeChange,
-): Mark<TNodeChange> {
+): CellMark<TransientEffect | DetachOfRemovedNodes, TNodeChange> {
+	assert(mark.cellId !== undefined, "Transient marks should have a cell ID");
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
 		return withNodeChange(mark, nodeChange);
 	}
@@ -203,21 +208,23 @@ export function normalizeTransient<TNodeChange>(
 	// detach instead of using an explicit revive effect in a transient.
 	return withNodeChange(
 		{
+			...mark.detach,
 			count: mark.count,
 			cellId: mark.cellId,
-			...mark.detach,
 		},
 		nodeChange ?? mark.changes,
 	);
 }
 
-export function denormalizeTransient<TNodeChange>(
-	mark: CellMark<TransientEffect | Detach, TNodeChange>,
+/**
+ * Preserves the semantics of the given `mark` but repackages it into a `Transient` mark if it is not already one.
+ */
+export function asTransient<TNodeChange>(
+	mark: CellMark<TransientEffect | DetachOfRemovedNodes, TNodeChange>,
 ): CellMark<TransientEffect, TNodeChange> {
 	if (mark.type === "Transient") {
 		return mark;
 	}
-	assert(mark.cellId !== undefined, "Unable to convert non-reviving detach as transient");
 	const { cellId, count, changes, revision, ...effect } = mark;
 	const transient: CellMark<TransientEffect | Detach, TNodeChange> = {
 		type: "Transient",
@@ -330,9 +337,9 @@ export function isTransientEffect(effect: MarkEffect): effect is TransientEffect
 	return effect.type === "Transient";
 }
 
-export function isReviveAndDetach(
+export function isDetachOfRemovedNodes(
 	mark: Mark<unknown>,
-): mark is CellMark<Detach, unknown> & { cellId: CellId } {
+): mark is CellMark<DetachOfRemovedNodes, unknown> {
 	return isDetach(mark) && mark.cellId !== undefined;
 }
 

@@ -34,7 +34,7 @@ import {
 	getEndpoint,
 	splitMark,
 	isAttach,
-	isReviveAndDetach,
+	isDetachOfRemovedNodes,
 } from "./utils";
 import {
 	Changeset,
@@ -151,7 +151,7 @@ function rebaseMarkList<TNodeChange>(
 		if (
 			(markEmptiesCells(baseMark) ||
 				isTransientEffect(baseMark) ||
-				isReviveAndDetach(baseMark)) &&
+				isDetachOfRemovedNodes(baseMark)) &&
 			!isInverseAttach(baseMark)
 		) {
 			const detachId = getOutputCellId(baseMark, baseRevision, metadata);

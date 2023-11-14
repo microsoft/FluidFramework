@@ -53,8 +53,8 @@ import {
 	areEqualCellIds,
 	addRevision,
 	normalizeTransient,
-	isReviveAndDetach,
-	denormalizeTransient,
+	isDetachOfRemovedNodes,
+	asTransient,
 	containsNewInsert,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
@@ -167,8 +167,8 @@ function composeMarks<TNodeChange>(
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
-	if (isTransientEffect(newMark) || isReviveAndDetach(newMark)) {
-		const newTransient = denormalizeTransient(newMark);
+	if (isTransientEffect(newMark) || isDetachOfRemovedNodes(newMark)) {
+		const newTransient = asTransient(newMark);
 		const newDetachRevision = newTransient.detach.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
 			if (isMoveDestination(newTransient.attach) && isMoveSource(newTransient.detach)) {
@@ -202,8 +202,8 @@ function composeMarks<TNodeChange>(
 			);
 		}
 
-		if (isTransientEffect(baseMark) || isReviveAndDetach(baseMark)) {
-			const baseTransient = denormalizeTransient(baseMark);
+		if (isTransientEffect(baseMark) || isDetachOfRemovedNodes(baseMark)) {
+			const baseTransient = asTransient(baseMark);
 			if (
 				areEqualCellIds(
 					getOutputCellId(newTransient, newRev, revisionMetadata),
@@ -242,8 +242,8 @@ function composeMarks<TNodeChange>(
 
 		return withRevision(normalizeTransient(newTransient, nodeChange), newRev);
 	}
-	if (isTransientEffect(baseMark) || isReviveAndDetach(baseMark)) {
-		const baseTransient = denormalizeTransient(baseMark);
+	if (isTransientEffect(baseMark) || isDetachOfRemovedNodes(baseMark)) {
+		const baseTransient = asTransient(baseMark);
 		if (markFillsCells(newMark)) {
 			if (isMoveDestination(baseTransient.attach) && isMoveSource(baseTransient.detach)) {
 				assert(isMoveDestination(newMark), "Unexpected mark type");

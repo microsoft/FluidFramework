@@ -22,5 +22,6 @@ export interface DetachedCellMark extends HasMarkFields {
 
 export type EmptyOutputCellMark<TNodeChange> = CellMark<Detach | TransientEffect, TNodeChange>;
 
+export type DetachOfRemovedNodes = Detach & { cellId: CellId };
 export type MoveDestination = MoveIn;
 export type MoveMarkEffect = MoveSource | MoveDestination;

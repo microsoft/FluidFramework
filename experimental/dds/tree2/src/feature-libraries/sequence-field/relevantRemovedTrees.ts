@@ -12,7 +12,7 @@ import {
 	isInsert,
 	isNewAttach,
 	isReattachEffect,
-	isReviveAndDetach,
+	isDetachOfRemovedNodes,
 	isTransientEffect,
 } from "./utils";
 
@@ -46,7 +46,7 @@ function refersToRelevantRemovedTrees<TChild>(mark: Mark<TChild>): boolean {
 			// This tree is being restored.
 			return true;
 		} else if (isDetach(mark)) {
-			if (isReviveAndDetach(mark)) {
+			if (isDetachOfRemovedNodes(mark)) {
 				// This removed tree is being restored as part of a detach.
 				return true;
 			}
