@@ -43,7 +43,6 @@ import {
 	isTransientEffect,
 	areOverlappingIdRanges,
 	isNewAttach,
-	isReattach,
 	getInputCellId,
 	isAttach,
 	getOutputCellId,
@@ -267,58 +266,18 @@ function composeMarks<TNodeChange>(
 				),
 				baseTransient.attach.revision,
 			);
-
-			// TODO: This assumes that the original attach was successful.
-			// We should probably treat a muted transient effect as a noop.
 			return originalAttach;
-		}
-		if (newMark.type === NoopMarkType || newMark.type === "Placeholder") {
+		} else if (newMark.type === NoopMarkType || newMark.type === "Placeholder") {
 			assert(
 				newMark.cellId !== undefined,
 				0x718 /* Invalid node-targeting mark after transient */,
 			);
 			return withNodeChange(baseMark, nodeChange);
+		} else {
+			// This case is handled above as a transient.
+			assert(!isDetach(newMark), "Unexpected mark type");
+			return baseMark;
 		}
-		if (isDetach(newMark)) {
-			// If the transient's detach effect were a move, the newMark should be targeting its destination.
-			assert(!isMoveSource(baseTransient.detach), "Unexpected detach type in transient");
-			const newDetachId = getOutputCellId(newMark, newRev, revisionMetadata);
-			assert(
-				newDetachId !== undefined,
-				"Transient and detaches should have an output cell ID",
-			);
-			assert(baseMark.cellId !== undefined, "Transients should have an output cell ID");
-			if (areEqualCellIds(newDetachId, baseMark.cellId) && !containsNewInsert(baseMark)) {
-				// We only cancel the marks if the base detach was not contributing a new insert.
-				// TODO: once the building of nodes is conveyed outside of the insert mark, cancel the marks
-				// even when the base mark is contributing a new insert.
-				return withNodeChange(
-					{ count: baseMark.count, cellId: baseMark.cellId },
-					nodeChange,
-				);
-			}
-			// The latter detach supersedes the former.
-			baseTransient.detach = extractMarkEffect(newMark);
-			baseTransient.detach.revision = newRev;
-			return normalizeTransient(baseTransient, nodeChange);
-		}
-		if (newMark.type === "MoveIn" && isReattach(newMark)) {
-			// It's possible for ReturnTo to occur after a transient.
-			// Why possible: if the transient is a revive, then it's possible that the newMark comes from a client that
-			// knew about the node, and tried to move it out and return it.
-			// Because we don't support replacing a node within a cell, only a single specific node will ever occupy
-			// a given cell. This means the transient is attaching and detaching the same node that the ReturnTo is
-			// reattaching.
-			// The reattach subsumes the transient so we can adopt it.
-			return withRevision(withNodeChange(newMark, nodeChange), newRev);
-		}
-		// Because of the rebase sandwich, it is possible for a MoveIn mark to target an already existing cell.
-		// This occurs when a branch with a move get rebased over some other branch.
-		// However, the branch being rebased over can't be targeting the cell that the MoveIn is targeting,
-		// because no concurrent change has the ability to refer to such a cell.
-		// Therefore, a MoveIn mark cannot occur after a transient.
-		assert(newMark.type !== "MoveIn", 0x71a /* Invalid MoveIn after transient */);
-		return baseMark;
 	}
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
