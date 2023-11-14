@@ -133,27 +133,32 @@ const generateChildStates: ChildStateGenerator<TestChangeContent, TestChange> = 
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<TestChangeTestState> {
-	const inputContext = getInputContext(state);
 	const { value, inputContext: context } = state.content;
 	for (let i = value + 1; i < 4; i++) {
 		const intention = mintIntention();
-		const intentionsBefore = [];
-		for (let j = 1; j < value + 1; j++) {
-			intentionsBefore.push(j);
-		}
-
+		const change = TestChange.mint(context, i);
 		yield {
-			content: { value: i, inputContext: [] },
+			content: { value: i, inputContext: change.outputContext },
 			mostRecentEdit: {
-				changeset: tagChange(
-					TestChange.mint(intentionsBefore, i),
-					tagFromIntention(intention),
-				),
-				description: `Set${i},${inputContext.length}`,
+				changeset: tagChange(change, tagFromIntention(intention)),
+				description: `Set${i},${context}`,
 				intention,
 			},
 			parent: state,
 		};
+
+		for (let j = 1; j < value + 1; j++) {
+			const inverseChange = TestChange.mint(context, -i);
+			yield {
+				content: { value: i, inputContext: change.outputContext },
+				mostRecentEdit: {
+					changeset: tagChange(inverseChange, tagFromIntention(intention)),
+					description: `Inverse${j},${context}`,
+					intention,
+				},
+				parent: state,
+			};
+		}
 	}
 };
 
