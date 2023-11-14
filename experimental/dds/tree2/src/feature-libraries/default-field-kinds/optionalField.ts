@@ -355,8 +355,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			renamedDsts.set(dst, dst);
 		}
 		for (const [src, dst] of overChange.moves) {
-			if (!renamedDsts.has(src)) {
-				renamedDsts.set(src, withIntention(dst));
+			if (!renamedDsts.has(withIntention(src))) {
+				renamedDsts.set(withIntention(src), withIntention(dst));
 			}
 		}
 
@@ -448,7 +448,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const overBuilds = new ChildChangeMap<boolean>();
 		for (const { id } of overChange.build) {
-			overBuilds.set(id, true);
+			overBuilds.set(withIntention(id), true);
 		}
 		const rebased: OptionalChangeset = {
 			build: build.filter((build) => !overBuilds.has(build.id)),
@@ -519,6 +519,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		return result;
 	},
 
+	// TODO: If rebasing a bunch of things that set node to undefined, this will create some unnecessary moving around of nodes that are all undefined.
 	clear: (detachId: ChangesetLocalId): OptionalChangeset => ({
 		build: [],
 		moves: [["self", { localId: detachId }, "cellTargeting"]],

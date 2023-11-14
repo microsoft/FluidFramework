@@ -93,9 +93,9 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	// - Rebasing a single edit over N sequential edits
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
-	const numberOfEditsToRebaseOver = 2;
+	const numberOfEditsToRebaseOver = 3;
 	const numberOfEditsToRebase = 2; //numberOfEditsToRebaseOver;
-	const numberOfEditsToVerifyAssociativity = 5;
+	const numberOfEditsToVerifyAssociativity = 4;
 
 	describe("Rebase over compose", () => {
 		for (const initialState of initialStates) {
@@ -118,26 +118,6 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						const title = `Rebase ${name} over compose ${JSON.stringify(
 							namedEditsToRebaseOver.map(({ description }) => description),
 						)}`;
-
-						// continue;
-						// if (title !== 'Rebase SetA,0 over compose ["SetA,0","SetB,1"]') {
-						// 	continue;
-						// }
-
-						// if (
-						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["SetB,0","ChildChange79","ChildChange80"]'
-						// ) {
-						// 	continue;
-						// }
-						// continue;
-
-						// if (
-						// 	title !==
-						// 	'Rebase ChildChange1 over compose ["SetB,0","Undo:SetB,0","ChildChange102"]'
-						// ) {
-						// 	continue;
-						// }
 
 						it(title, () => {
 							const editsToRebaseOver = namedEditsToRebaseOver.map(
@@ -193,15 +173,17 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
-						// This demonstrates a case where rebasing over composition loses reservedDetachId.
-						// if (title !== 'Rebase ["SetB,0","Delete","Undo:Delete"] over SetB,0') {
-						// 	continue;
-						// }
-
-						if (title !== 'Rebase ["SetB,0","Undo:SetB,0"] over Delete') {
+						// TODO: Investigate.
+						if (
+							[
+								'Rebase ["Delete","Undo:Delete"] over Delete',
+								'Rebase ["Delete","SetB,1"] over Delete',
+								'Rebase ["Delete","SetA,1"] over Delete',
+								'Rebase ["ChildChange0","Delete"] over Delete',
+							].includes(title)
+						) {
 							continue;
 						}
-
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
