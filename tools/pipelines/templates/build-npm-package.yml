@@ -102,10 +102,10 @@ extends:
     sdl:
       arrow:
         serviceConnection: Arrow_FluidFramework_public
-    pool:
-      name: Azure-Pipelines-1ESPT-ExDShared
-      image: ubuntu-shared
-      os: linux
+      sourceAnalysisPool:
+        name: Azure-Pipelines-1ESPT-ExDShared-Validation
+        image: windows-2022
+        os: windows
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
@@ -121,6 +121,7 @@ extends:
         jobs:
           - job: build
             displayName: Build
+            pool: ${{ parameters.poolBuild }}
             variables:
               testCoverage: '${{ ne(variables[''Build.Reason''], ''PullRequest'') }}'
               releaseBuildVar: '$[variables.releaseBuild]'
