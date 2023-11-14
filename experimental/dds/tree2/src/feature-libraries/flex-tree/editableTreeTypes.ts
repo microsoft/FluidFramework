@@ -244,6 +244,8 @@ export interface TreeField extends TreeEntity<TreeFieldSchema> {
  * @alpha
  */
 export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * The number of elements in the map.
 	 *
@@ -403,6 +405,8 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
  * @alpha
  */
 export interface FieldNode<in out TSchema extends FieldNodeSchema> extends TreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * The content this field node wraps.
 	 * @remarks
@@ -460,6 +464,8 @@ export interface ObjectNode extends TreeNode {
  * @alpha
  */
 export interface Leaf<in out TSchema extends LeafNodeSchema> extends TreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * Value stored on this node.
 	 */

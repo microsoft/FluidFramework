@@ -517,6 +517,8 @@ export interface FieldMapObject<TChild> {
 export interface FieldNode<in out TSchema extends FieldNodeSchema> extends TreeNode {
     readonly boxedContent: TypedField<TSchema["info"]>;
     readonly content: UnboxField<TSchema["info"]>;
+    // (undocumented)
+    readonly schema: TSchema;
 }
 
 // @alpha
@@ -974,6 +976,8 @@ export type LazyTreeNodeSchema = TreeNodeSchema | (() => TreeNodeSchema);
 
 // @alpha
 export interface Leaf<in out TSchema extends LeafNodeSchema> extends TreeNode {
+    // (undocumented)
+    readonly schema: TSchema;
     readonly value: TreeValue<TSchema["info"]>;
 }
 
@@ -1034,6 +1038,8 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
     getBoxed(key: string): TypedField<TSchema["info"]>;
     has(key: string): boolean;
     keys(): IterableIterator<FieldKey>;
+    // (undocumented)
+    readonly schema: TSchema;
     set(key: string, value: FlexibleFieldContent<TSchema["info"]>): void;
     readonly size: number;
     values(): IterableIterator<UnboxField<TSchema["info"], "notEmpty">>;
