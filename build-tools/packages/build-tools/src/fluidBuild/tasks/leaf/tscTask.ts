@@ -8,8 +8,9 @@ import path from "path";
 import * as tsTypes from "typescript";
 import isEqual from "lodash.isequal";
 
+import { readFileSync } from "fs-extra";
 import { existsSync, readFileAsync } from "../../../common/utils";
-import { getInstalledPackageVersion } from "../../../common/taskUtils";
+import { getInstalledPackageVersion, getRecursiveFiles } from "../../../common/taskUtils";
 import { getTscUtils, TscUtil } from "../../../common/tscUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -413,29 +414,6 @@ export class TscTask extends LeafTask {
 	}
 }
 
-/**
- * A fluid-build task definition for tsc-multi.
- *
- * This implementation is a hack. It just uses the contents of the tsbuildinfo files created by the tsc-multi processes,
- * and duplicates the content into the doneFile. It's duplicative but seems to be the simplest way to get basic
- * incremental support in fluid-build.
- */
-export class TscMultiTask extends LeafWithDoneFileTask {
-	protected async getDoneFileContent(): Promise<string | undefined> {
-		const command = this.command;
-		const doneFile = this.getPackageFileFullPath(
-			command.includes("esnext") ? "tsconfig.mjs.tsbuildinfo" : "tsconfig.cjs.tsbuildinfo",
-		);
-
-		if (existsSync(doneFile)) {
-			const content = await readFileAsync(doneFile);
-			return content.toString();
-		}
-
-		return undefined;
-	}
-}
-
 // Base class for tasks that are dependent on a tsc compile
 export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	protected get recheckLeafIsUpToDate() {
@@ -484,4 +462,70 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 	}
 	protected abstract get configFileFullPath(): string;
 	protected abstract getToolVersion(): Promise<string>;
+}
+
+/**
+ * A fluid-build task definition for tsc-multi.
+ *
+ * This implementation is a hack. It just uses the contents of the tsbuildinfo files created by the tsc-multi processes,
+ * and duplicates the content into the doneFile. It's duplicative but seems to be the simplest way to get basic
+ * incremental support in fluid-build.
+ */
+export class TscMultiTask extends LeafWithDoneFileTask {
+	protected async getToolVersion() {
+		return getInstalledPackageVersion("tsc-multi", this.node.pkg.directory);
+	}
+
+	protected async getDoneFileContent(): Promise<string | undefined> {
+		const command = this.command;
+
+		/**
+		 * A list of files that should be considered part of the cache input, if they exist
+		 */
+		const commonFiles = [
+			"tsconfig.json",
+			"src/test/tsconfig.json",
+			"tsc-multi.json",
+			"tsc-multi.test.json",
+		]
+			.map((file) => path.resolve(this.package.directory, file))
+			.filter((file) => existsSync(file));
+
+		try {
+			// The path to the tsbuildinfo file differs based on if it's a CJS vs. ESM build. Use the presence of "esnext" in
+			// the command string to determine which file to use.
+			const tsbuildinfo = this.getPackageFileFullPath(
+				command.includes("esnext")
+					? "tsconfig.mjs.tsbuildinfo"
+					: "tsconfig.cjs.tsbuildinfo",
+			);
+
+			const files = [...commonFiles];
+
+			// Add src files
+			files.push(...(await getRecursiveFiles(path.resolve(this.package.directory, "src"))));
+			const hashesP = files.map(async (name) => {
+				const hash = await this.node.buildContext.fileHashCache.getFileHash(
+					this.getPackageFileFullPath(name),
+				);
+				return { name, hash };
+			});
+
+			let buildInfo: string = "";
+
+			if (existsSync(tsbuildinfo)) {
+				buildInfo = readFileSync(tsbuildinfo).toString();
+			}
+
+			const result = JSON.stringify({
+				version: await getInstalledPackageVersion("tsc-multi", this.node.pkg.directory),
+				buildInfo,
+				hashes: await Promise.all(hashesP),
+			});
+			return result;
+		} catch (e) {
+			this.traceError(`error generating done file content. ${e}`);
+		}
+		return undefined;
+	}
 }
