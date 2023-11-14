@@ -102,7 +102,10 @@ extends:
     sdl:
       arrow:
         serviceConnection: Arrow_FluidFramework_public
-    pool: ${{ parameters.poolCG }}
+    pool:
+      name: Azure-Pipelines-1ESPT-ExDShared
+      image: ubuntu-shared
+      os: linux
     customBuildTags:
       - ES365AIMigrationTooling
     stages:
