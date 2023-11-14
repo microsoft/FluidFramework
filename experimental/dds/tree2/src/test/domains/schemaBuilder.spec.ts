@@ -301,5 +301,5 @@ export function checkCreated<TSchema extends ObjectNodeSchema>(
 	created: SharedTreeObject<TSchema>,
 	expected: ProxyNode<TSchema>,
 ): void {
-	assert.deepEqual(extractFactoryContent(created), expected);
+	assert.deepEqual(extractFactoryContent(created).content, expected);
 }

@@ -151,7 +151,6 @@ declare function get_old_ClassDeclaration_ContainerRuntime():
 declare function use_current_ClassDeclaration_ContainerRuntime(
     use: TypeOnly<current.ContainerRuntime>);
 use_current_ClassDeclaration_ContainerRuntime(
-    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_ContainerRuntime());
 
 /*
@@ -266,6 +265,102 @@ use_old_ClassDeclaration_FluidDataStoreRegistry(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_GCFeatureMatrix": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_GCFeatureMatrix():
+    TypeOnly<old.GCFeatureMatrix>;
+declare function use_current_InterfaceDeclaration_GCFeatureMatrix(
+    use: TypeOnly<current.GCFeatureMatrix>);
+use_current_InterfaceDeclaration_GCFeatureMatrix(
+    get_old_InterfaceDeclaration_GCFeatureMatrix());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_GCFeatureMatrix": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_GCFeatureMatrix():
+    TypeOnly<current.GCFeatureMatrix>;
+declare function use_old_InterfaceDeclaration_GCFeatureMatrix(
+    use: TypeOnly<old.GCFeatureMatrix>);
+use_old_InterfaceDeclaration_GCFeatureMatrix(
+    get_current_InterfaceDeclaration_GCFeatureMatrix());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_GCNodeType": {"forwardCompat": false}
+*/
+declare function get_old_VariableDeclaration_GCNodeType():
+    TypeOnly<typeof old.GCNodeType>;
+declare function use_current_VariableDeclaration_GCNodeType(
+    use: TypeOnly<typeof current.GCNodeType>);
+use_current_VariableDeclaration_GCNodeType(
+    get_old_VariableDeclaration_GCNodeType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "VariableDeclaration_GCNodeType": {"backCompat": false}
+*/
+declare function get_current_VariableDeclaration_GCNodeType():
+    TypeOnly<typeof current.GCNodeType>;
+declare function use_old_VariableDeclaration_GCNodeType(
+    use: TypeOnly<typeof old.GCNodeType>);
+use_old_VariableDeclaration_GCNodeType(
+    get_current_VariableDeclaration_GCNodeType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_GCNodeType": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_GCNodeType():
+    TypeOnly<old.GCNodeType>;
+declare function use_current_TypeAliasDeclaration_GCNodeType(
+    use: TypeOnly<current.GCNodeType>);
+use_current_TypeAliasDeclaration_GCNodeType(
+    get_old_TypeAliasDeclaration_GCNodeType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_GCNodeType": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_GCNodeType():
+    TypeOnly<current.GCNodeType>;
+declare function use_old_TypeAliasDeclaration_GCNodeType(
+    use: TypeOnly<old.GCNodeType>);
+use_old_TypeAliasDeclaration_GCNodeType(
+    get_current_TypeAliasDeclaration_GCNodeType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_GCVersion": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_GCVersion():
+    TypeOnly<old.GCVersion>;
+declare function use_current_TypeAliasDeclaration_GCVersion(
+    use: TypeOnly<current.GCVersion>);
+use_current_TypeAliasDeclaration_GCVersion(
+    get_old_TypeAliasDeclaration_GCVersion());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_GCVersion": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_GCVersion():
+    TypeOnly<current.GCVersion>;
+declare function use_old_TypeAliasDeclaration_GCVersion(
+    use: TypeOnly<old.GCVersion>);
+use_old_TypeAliasDeclaration_GCVersion(
+    get_current_TypeAliasDeclaration_GCVersion());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IAckSummaryResult": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IAckSummaryResult():
@@ -334,6 +429,30 @@ declare function use_old_InterfaceDeclaration_IBaseSummarizeResult(
     use: TypeOnly<old.IBaseSummarizeResult>);
 use_old_InterfaceDeclaration_IBaseSummarizeResult(
     get_current_InterfaceDeclaration_IBaseSummarizeResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IBlobManagerLoadInfo": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IBlobManagerLoadInfo():
+    TypeOnly<old.IBlobManagerLoadInfo>;
+declare function use_current_InterfaceDeclaration_IBlobManagerLoadInfo(
+    use: TypeOnly<current.IBlobManagerLoadInfo>);
+use_current_InterfaceDeclaration_IBlobManagerLoadInfo(
+    get_old_InterfaceDeclaration_IBlobManagerLoadInfo());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IBlobManagerLoadInfo": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IBlobManagerLoadInfo():
+    TypeOnly<current.IBlobManagerLoadInfo>;
+declare function use_old_InterfaceDeclaration_IBlobManagerLoadInfo(
+    use: TypeOnly<old.IBlobManagerLoadInfo>);
+use_old_InterfaceDeclaration_IBlobManagerLoadInfo(
+    get_current_InterfaceDeclaration_IBlobManagerLoadInfo());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -530,6 +649,30 @@ use_old_InterfaceDeclaration_IContainerRuntimeMessageCompatDetails(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerRuntimeMetadata": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IContainerRuntimeMetadata():
+    TypeOnly<old.IContainerRuntimeMetadata>;
+declare function use_current_InterfaceDeclaration_IContainerRuntimeMetadata(
+    use: TypeOnly<current.IContainerRuntimeMetadata>);
+use_current_InterfaceDeclaration_IContainerRuntimeMetadata(
+    get_old_InterfaceDeclaration_IContainerRuntimeMetadata());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IContainerRuntimeMetadata": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IContainerRuntimeMetadata():
+    TypeOnly<current.IContainerRuntimeMetadata>;
+declare function use_old_InterfaceDeclaration_IContainerRuntimeMetadata(
+    use: TypeOnly<old.IContainerRuntimeMetadata>);
+use_old_InterfaceDeclaration_IContainerRuntimeMetadata(
+    get_current_InterfaceDeclaration_IContainerRuntimeMetadata());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IContainerRuntimeOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IContainerRuntimeOptions():
@@ -554,6 +697,30 @@ use_old_InterfaceDeclaration_IContainerRuntimeOptions(
 /*
 * Validate forward compat by using old type in place of current type
 * If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICreateContainerMetadata": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ICreateContainerMetadata():
+    TypeOnly<old.ICreateContainerMetadata>;
+declare function use_current_InterfaceDeclaration_ICreateContainerMetadata(
+    use: TypeOnly<current.ICreateContainerMetadata>);
+use_current_InterfaceDeclaration_ICreateContainerMetadata(
+    get_old_InterfaceDeclaration_ICreateContainerMetadata());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICreateContainerMetadata": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ICreateContainerMetadata():
+    TypeOnly<current.ICreateContainerMetadata>;
+declare function use_old_InterfaceDeclaration_ICreateContainerMetadata(
+    use: TypeOnly<old.ICreateContainerMetadata>);
+use_old_InterfaceDeclaration_ICreateContainerMetadata(
+    get_current_InterfaceDeclaration_ICreateContainerMetadata());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
 * "InterfaceDeclaration_IEnqueueSummarizeOptions": {"forwardCompat": false}
 */
 declare function get_old_InterfaceDeclaration_IEnqueueSummarizeOptions():
@@ -574,6 +741,30 @@ declare function use_old_InterfaceDeclaration_IEnqueueSummarizeOptions(
     use: TypeOnly<old.IEnqueueSummarizeOptions>);
 use_old_InterfaceDeclaration_IEnqueueSummarizeOptions(
     get_current_InterfaceDeclaration_IEnqueueSummarizeOptions());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGCMetadata": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IGCMetadata():
+    TypeOnly<old.IGCMetadata>;
+declare function use_current_InterfaceDeclaration_IGCMetadata(
+    use: TypeOnly<current.IGCMetadata>);
+use_current_InterfaceDeclaration_IGCMetadata(
+    get_old_InterfaceDeclaration_IGCMetadata());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IGCMetadata": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IGCMetadata():
+    TypeOnly<current.IGCMetadata>;
+declare function use_old_InterfaceDeclaration_IGCMetadata(
+    use: TypeOnly<old.IGCMetadata>);
+use_old_InterfaceDeclaration_IGCMetadata(
+    get_current_InterfaceDeclaration_IGCMetadata());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -766,6 +957,30 @@ declare function use_old_InterfaceDeclaration_IRetriableFailureResult(
     use: TypeOnly<old.IRetriableFailureResult>);
 use_old_InterfaceDeclaration_IRetriableFailureResult(
     get_current_InterfaceDeclaration_IRetriableFailureResult());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializedElection": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISerializedElection():
+    TypeOnly<old.ISerializedElection>;
+declare function use_current_InterfaceDeclaration_ISerializedElection(
+    use: TypeOnly<current.ISerializedElection>);
+use_current_InterfaceDeclaration_ISerializedElection(
+    get_old_InterfaceDeclaration_ISerializedElection());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISerializedElection": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISerializedElection():
+    TypeOnly<current.ISerializedElection>;
+declare function use_old_InterfaceDeclaration_ISerializedElection(
+    use: TypeOnly<old.ISerializedElection>);
+use_old_InterfaceDeclaration_ISerializedElection(
+    get_current_InterfaceDeclaration_ISerializedElection());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -1222,6 +1437,30 @@ declare function use_old_InterfaceDeclaration_ISummaryConfigurationHeuristics(
     use: TypeOnly<old.ISummaryConfigurationHeuristics>);
 use_old_InterfaceDeclaration_ISummaryConfigurationHeuristics(
     get_current_InterfaceDeclaration_ISummaryConfigurationHeuristics());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ISummaryMetadataMessage": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_ISummaryMetadataMessage():
+    TypeOnly<old.ISummaryMetadataMessage>;
+declare function use_current_TypeAliasDeclaration_ISummaryMetadataMessage(
+    use: TypeOnly<current.ISummaryMetadataMessage>);
+use_current_TypeAliasDeclaration_ISummaryMetadataMessage(
+    get_old_TypeAliasDeclaration_ISummaryMetadataMessage());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_ISummaryMetadataMessage": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_ISummaryMetadataMessage():
+    TypeOnly<current.ISummaryMetadataMessage>;
+declare function use_old_TypeAliasDeclaration_ISummaryMetadataMessage(
+    use: TypeOnly<old.ISummaryMetadataMessage>);
+use_old_TypeAliasDeclaration_ISummaryMetadataMessage(
+    get_current_TypeAliasDeclaration_ISummaryMetadataMessage());
 
 /*
 * Validate forward compat by using old type in place of current type

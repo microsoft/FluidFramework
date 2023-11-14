@@ -239,8 +239,8 @@ describe("LazyOptionalField", () => {
 		const { context, cursor } = initializeTreeWithContent({ schema, initialTree: 42 });
 		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
-		it("at", () => {
-			assert.equal(field.at(0), 42);
+		it("atIndex", () => {
+			assert.equal(field.atIndex(0), 42);
 		});
 
 		it("boxedAt", () => {
@@ -274,9 +274,9 @@ describe("LazyOptionalField", () => {
 		});
 		const field = new LazyOptionalField(context, rootSchema, cursor, rootFieldAnchor);
 
-		it("at", () => {
+		it("atIndex", () => {
 			// Invalid to request the value if there isn't one.
-			assert.throws(() => field.at(0));
+			assert.throws(() => field.atIndex(0));
 		});
 
 		it("boxedAt", () => {
@@ -315,8 +315,8 @@ describe("LazyValueField", () => {
 
 	const field = new LazyValueField(context, rootSchema, cursor, rootFieldAnchor);
 
-	it("at", () => {
-		assert.equal(field.at(0), initialTree);
+	it("atIndex", () => {
+		assert.equal(field.atIndex(0), initialTree);
 	});
 
 	it("boxedAt", () => {
@@ -355,11 +355,21 @@ describe("LazySequence", () => {
 
 	const sequence = new LazySequence(context, rootSchema, cursor, rootFieldAnchor);
 
+	it("atIndex", () => {
+		assert.equal(sequence.length, 2);
+		assert.equal(sequence.atIndex(0), 37);
+		assert.equal(sequence.atIndex(1), 42);
+		assert.throws(() => sequence.atIndex(2));
+	});
+
 	it("at", () => {
 		assert.equal(sequence.length, 2);
 		assert.equal(sequence.at(0), 37);
 		assert.equal(sequence.at(1), 42);
-		assert.throws(() => sequence.at(2));
+		assert.equal(sequence.at(-1), 42); // Negative index > -sequence.length
+		assert.equal(sequence.at(-2), 37); // Negative index > -sequence.length
+		assert.equal(sequence.at(2), undefined); // Positive index >= sequence.length
+		assert.equal(sequence.at(-3), undefined); // Negative index < -sequence.length
 	});
 
 	it("boxedAt", () => {

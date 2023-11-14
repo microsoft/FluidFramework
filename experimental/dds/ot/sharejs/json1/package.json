@@ -24,7 +24,7 @@
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
-		"dev": "npm run tsc && concurrently 'npm run tsc -- --watch' 'npm run build:test -- --watch'",
+		"dev": "npm run tsc && concurrently \"npm run tsc -- --watch\" \"npm run build:test -- --watch\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -67,10 +67,10 @@
 		"ot-json1": "^1.0.1"
 	},
 	"devDependencies": {
-		"@fluid-internal/test-dds-utils": "workspace:~",
+		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.37.0",

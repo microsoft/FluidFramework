@@ -98,7 +98,7 @@ export interface IIntegerRange {
  * @internal
  */
 export interface IClientEvents {
-	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void);
+	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
 	(
 		event: "delta",
 		listener: (
@@ -106,7 +106,7 @@ export interface IClientEvents {
 			deltaArgs: IMergeTreeDeltaCallbackArgs,
 			target: IEventThisPlaceHolder,
 		) => void,
-	);
+	): void;
 	(
 		event: "maintenance",
 		listener: (
@@ -114,7 +114,7 @@ export interface IClientEvents {
 			deltaArgs: IMergeTreeDeltaOpArgs | undefined,
 			target: IEventThisPlaceHolder,
 		) => void,
-	);
+	): void;
 }
 
 /**
@@ -1274,6 +1274,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				this.shortClientIdMap[oldData] = longClientId;
 			}
 		}
+	}
+
+	/**
+	 * @deprecated Use searchForMarker instead.
+	 */
+	findTile(startPos: number, tileLabel: string, preceding = true) {
+		const clientId = this.getClientId();
+		return this._mergeTree.findTile(startPos, clientId, tileLabel, preceding);
 	}
 
 	/**

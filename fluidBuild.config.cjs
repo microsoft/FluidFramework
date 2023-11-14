@@ -154,6 +154,13 @@ module.exports = {
 			"package-lockfiles-npm-version": [
 				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
+			"npm-package-json-scripts-args": [
+				// server/routerlicious and server/routerlicious/packages/routerlicious use
+				// linux only scripts that would require extra logic to validate properly.
+				// Ideally no packages would use OS specific scripts.
+				"^server/routerlicious/package.json",
+				"^server/routerlicious/packages/routerlicious/package.json",
+			],
 			"npm-package-json-script-clean": [
 				// eslint-config-fluid's build step generate printed configs that are checked in. No need to clean
 				"common/build/eslint-config-fluid/package.json",
@@ -235,12 +242,7 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
-				npm: [
-					"@fluidframework",
-					"fluid-framework",
-					"tinylicious",
-					"@fluid-internal/client-utils",
-				],
+				npm: ["@fluidframework", "fluid-framework", "@fluid-internal/client-utils"],
 				// A list of packages published to our internal-build feed. Note that packages published
 				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.
