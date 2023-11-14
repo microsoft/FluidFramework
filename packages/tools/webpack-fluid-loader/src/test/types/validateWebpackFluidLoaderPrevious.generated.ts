@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_VariableDeclaration_after():
     TypeOnly<typeof old.after>;
 declare function use_current_VariableDeclaration_after(
-    use: TypeOnly<typeof current.after>);
+    use: TypeOnly<typeof current.after>): void;
 use_current_VariableDeclaration_after(
     get_old_VariableDeclaration_after());
 
@@ -41,7 +41,7 @@ use_current_VariableDeclaration_after(
 declare function get_current_VariableDeclaration_after():
     TypeOnly<typeof current.after>;
 declare function use_old_VariableDeclaration_after(
-    use: TypeOnly<typeof old.after>);
+    use: TypeOnly<typeof old.after>): void;
 use_old_VariableDeclaration_after(
     get_current_VariableDeclaration_after());
 
@@ -53,7 +53,7 @@ use_old_VariableDeclaration_after(
 declare function get_old_VariableDeclaration_before():
     TypeOnly<typeof old.before>;
 declare function use_current_VariableDeclaration_before(
-    use: TypeOnly<typeof current.before>);
+    use: TypeOnly<typeof current.before>): void;
 use_current_VariableDeclaration_before(
     get_old_VariableDeclaration_before());
 
@@ -65,7 +65,7 @@ use_current_VariableDeclaration_before(
 declare function get_current_VariableDeclaration_before():
     TypeOnly<typeof current.before>;
 declare function use_old_VariableDeclaration_before(
-    use: TypeOnly<typeof old.before>);
+    use: TypeOnly<typeof old.before>): void;
 use_old_VariableDeclaration_before(
     get_current_VariableDeclaration_before());
 
@@ -77,7 +77,7 @@ use_old_VariableDeclaration_before(
 declare function get_old_FunctionDeclaration_devServerConfig():
     TypeOnly<typeof old.devServerConfig>;
 declare function use_current_FunctionDeclaration_devServerConfig(
-    use: TypeOnly<typeof current.devServerConfig>);
+    use: TypeOnly<typeof current.devServerConfig>): void;
 use_current_FunctionDeclaration_devServerConfig(
     get_old_FunctionDeclaration_devServerConfig());
 
@@ -89,6 +89,6 @@ use_current_FunctionDeclaration_devServerConfig(
 declare function get_current_FunctionDeclaration_devServerConfig():
     TypeOnly<typeof current.devServerConfig>;
 declare function use_old_FunctionDeclaration_devServerConfig(
-    use: TypeOnly<typeof old.devServerConfig>);
+    use: TypeOnly<typeof old.devServerConfig>): void;
 use_old_FunctionDeclaration_devServerConfig(
     get_current_FunctionDeclaration_devServerConfig());
