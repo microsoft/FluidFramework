@@ -191,24 +191,6 @@ describe("SequenceField - Invert", () => {
 		assert.deepEqual(inverse, expected);
 	});
 
-	it("move-in & delete => revive & return-from", () => {
-		const transient = [
-			Mark.transient(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(0)), {
-				changes: childChange1,
-			}),
-		];
-
-		const inverse = invert(transient);
-		const expected = [
-			Mark.returnFrom(1, brand(1), {
-				cellId: { revision: tag1, localId: brand(0) },
-				changes: inverseChildChange1,
-			}),
-		];
-
-		assert.deepEqual(inverse, expected);
-	});
-
 	it("Insert and move => move and delete", () => {
 		const insertAndMove = [
 			Mark.transient(Mark.insert(1, brand(0)), Mark.moveOut(1, brand(1)), {

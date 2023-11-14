@@ -375,7 +375,10 @@ function normalizeDeltaDetachedNodeId(
 	genId: IdAllocator,
 	idMap: Map<number, number>,
 ): Delta.DetachedNodeId {
+	if (delta.major !== undefined) {
+		return delta;
+	}
 	const minor = idMap.get(delta.minor) ?? genId.allocate();
 	idMap.set(delta.minor, minor);
-	return { ...delta, minor };
+	return { minor };
 }

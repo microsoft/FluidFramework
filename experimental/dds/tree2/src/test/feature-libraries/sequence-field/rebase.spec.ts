@@ -692,14 +692,13 @@ describe("SequenceField - Rebase", () => {
 		const rebased = rebase(del, moveAndDelete);
 		const expected = [
 			{ count: 1 },
-			Mark.onEmptyCell(
-				{
+			Mark.delete(1, brand(0), {
+				cellId: {
 					revision: tag1,
 					localId: brand(1),
 					adjacentCells: [{ id: brand(1), count: 1 }],
 				},
-				Mark.delete(1, brand(0)),
-			),
+			}),
 		];
 
 		assert.deepEqual(rebased, expected);
@@ -791,16 +790,14 @@ describe("SequenceField - Rebase", () => {
 
 		const rebased = rebase(move, del);
 		const expected = [
-			Mark.onEmptyCell(
-				{
+			Mark.moveOut(1, brand(0), {
+				cellId: {
 					revision: tag1,
 					localId: brand(0),
 					adjacentCells: [{ id: brand(0), count: 1 }],
 				},
-				Mark.moveOut(1, brand(0), {
-					finalEndpoint: { localId: brand(1) },
-				}),
-			),
+				finalEndpoint: { localId: brand(1) },
+			}),
 			{ count: 1 },
 			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
 			{ count: 1 },
@@ -809,6 +806,28 @@ describe("SequenceField - Rebase", () => {
 			}),
 		];
 
+		assert.deepEqual(rebased, expected);
+	});
+
+	it("[revive, move] ↷ [revive, move]", () => {
+		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+		const reviveAndMove1 = [
+			Mark.moveOut(1, brand(1), { cellId }),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1)),
+		];
+		const reviveAndMove2 = [
+			Mark.moveOut(1, brand(1), { cellId }),
+			{ count: 2 },
+			Mark.moveIn(1, brand(1)),
+		];
+		const rebased = rebase(reviveAndMove2, reviveAndMove1);
+		const expected = [
+			{ count: 1 },
+			Mark.moveOut(1, brand(1)),
+			{ count: 1 },
+			Mark.moveIn(1, brand(1)),
+		];
 		assert.deepEqual(rebased, expected);
 	});
 
@@ -845,28 +864,6 @@ describe("SequenceField - Rebase", () => {
 			Mark.returnFrom(1, brand(1)),
 			{ count: 2 },
 			Mark.returnTo(1, brand(1), cellDst2),
-		];
-		assert.deepEqual(rebased, expected);
-	});
-
-	it("[revive, move] ↷ [revive, move]", () => {
-		const cellId: ChangeAtomId = { revision: tag1, localId: brand(0) };
-		const reviveAndMove1 = [
-			Mark.moveOut(1, brand(1), { cellId }),
-			{ count: 1 },
-			Mark.moveIn(1, brand(1)),
-		];
-		const reviveAndMove2 = [
-			Mark.moveOut(1, brand(1), { cellId }),
-			{ count: 2 },
-			Mark.moveIn(1, brand(1)),
-		];
-		const rebased = rebase(reviveAndMove2, reviveAndMove1);
-		const expected = [
-			{ count: 1 },
-			Mark.moveOut(1, brand(1)),
-			{ count: 1 },
-			Mark.moveIn(1, brand(1)),
 		];
 		assert.deepEqual(rebased, expected);
 	});

@@ -173,37 +173,18 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("transient revive ○ modify", () => {
-		const detachId: ChangeAtomId = {
+		const inputId: ChangeAtomId = {
+			revision: tag1,
+			localId: brand(0),
+		};
+		const outputId: ChangeAtomId = {
 			revision: tag2,
 			localId: brand(1),
 		};
 		const changes = TestChange.mint([], 42);
-		const transientRevive = [
-			Mark.delete(
-				1,
-				{ revision: tag2, localId: brand(1) },
-				{
-					cellId: {
-						revision: tag1,
-						localId: brand(0),
-					},
-				},
-			),
-		];
-		const expected = [
-			Mark.delete(
-				1,
-				{ revision: tag2, localId: brand(1) },
-				{
-					cellId: {
-						revision: tag1,
-						localId: brand(0),
-					},
-					changes,
-				},
-			),
-		];
-		const modify = [Mark.modify(changes, detachId)];
+		const transientRevive = [Mark.delete(1, outputId, { cellId: inputId })];
+		const modify = [Mark.modify(changes, outputId)];
+		const expected = [Mark.delete(1, outputId, { cellId: inputId, changes })];
 		const actual = compose([makeAnonChange(transientRevive), makeAnonChange(modify)], revInfos);
 		assert.deepEqual(actual, expected);
 	});
