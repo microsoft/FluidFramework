@@ -51,6 +51,13 @@ are generated (empty entries are current versions):
 | NewContainerRuntime | old    | old    |                   | old          |
 | NewDataRuntime      | old    | old    | old               |              |
 
+### Cross version combinations
+
+In addition to the layer version combinations seen above, this package also provides functions to generate variations
+intended to test all layers of the current release against the latest major public release. For example, at the time
+of writing, main is on version `2.0.0-internal.7.3.0`, so we would test `2.0.0-internal.7.3.0` against the latest
+public release `1.3.7` instead of the latest internal major release (`2.0.0-internal.6.4.0`).
+
 ### Mocha test setup with layer version combinations
 
 There are three compat `describe*` to generate different combinations, depending of the need of the tests
@@ -76,9 +83,10 @@ to enable compat testing easily in the future just by changing the `describe*`.
 
 ### Legacy version defaults and installation
 
-By default, N-1, N-2, and LTS (hard coded) test variants are generated. The versions can be specified using command
-line (see below) to run the test against any two versions. This package includes a `mocha` global hook that will
-install legacy packages at the beginning of the package based on the `compatVersion` settings.
+By default, N-1 (public release), N-1 (internal release), N-2 (internal release), and LTS (hard coded) test variants are
+generated. The versions can be specified using command line (see below) to run the test against any two versions. This
+package includes a `mocha` global hook that will install legacy packages at the beginning of the package based on the
+`compatVersion` settings.
 
 ## Command line options
 

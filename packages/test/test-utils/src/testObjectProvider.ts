@@ -117,8 +117,17 @@ export interface ITestContainerConfig {
 export const createDocumentId = (): string => uuid();
 
 export interface IDocumentIdStrategy {
+	/**
+	 * Get document id
+	 */
 	get(): string;
+	/**
+	 * Update the document ID from the resolved container's URL and reset the ID property
+	 */
 	update(resolvedUrl?: IResolvedUrl): void;
+	/**
+	 * Reset document id to a new document id
+	 */
 	reset(): void;
 }
 
@@ -246,13 +255,13 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider implements ITestObjectProvider {
-	protected _loaderContainerTracker = new LoaderContainerTracker();
+	private _loaderContainerTracker = new LoaderContainerTracker();
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
 	private _logger: EventAndErrorTrackingLogger | undefined;
 	private readonly _documentIdStrategy: IDocumentIdStrategy;
 	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
-	protected _documentCreated = false;
+	private _documentCreated = false;
 
 	/**
 	 * Manage objects for loading and creating container, including the driver, loader, and OpProcessingController
@@ -495,7 +504,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
 	// Since documentId doesn't change we can only create/make one container. Call the load functions instead.
-	protected _documentCreated = false;
+	private _documentCreated = false;
 	// `_loadCount` is used to alternate which version we load the next container with.
 	// If loadCount is even then we will load with the "create" version, and if odd we load with the "load" version.
 	// After each test we will reset loadCount to 0 to ensure we always create the first container with the create version.

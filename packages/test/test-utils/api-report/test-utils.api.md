@@ -140,11 +140,8 @@ export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogg
 
 // @public (undocumented)
 export interface IDocumentIdStrategy {
-    // (undocumented)
     get(): string;
-    // (undocumented)
     reset(): void;
-    // (undocumented)
     update(resolvedUrl?: IResolvedUrl): void;
 }
 
@@ -325,8 +322,6 @@ export class TestObjectProvider implements ITestObjectProvider {
     // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
     // (undocumented)
-    protected _documentCreated: boolean;
-    // (undocumented)
     get documentId(): string;
     // (undocumented)
     get documentServiceFactory(): IDocumentServiceFactory;
@@ -338,8 +333,6 @@ export class TestObjectProvider implements ITestObjectProvider {
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     readonly LoaderConstructor: typeof Loader;
-    // (undocumented)
-    protected _loaderContainerTracker: LoaderContainerTracker;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)
     get logger(): EventAndErrorTrackingLogger;
@@ -375,8 +368,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
     // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
-    // (undocumented)
-    protected _documentCreated: boolean;
     // (undocumented)
     get documentId(): string;
     // (undocumented)

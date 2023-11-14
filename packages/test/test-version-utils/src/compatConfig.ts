@@ -18,15 +18,15 @@ import { pkgVersion } from "./packageVersion.js";
 import { baseVersion, codeVersion, testBaseVersion } from "./baseVersion.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
-/*
- * Generate configuration combinations for a particular compat version
- * NOTE: Please update this packages README.md if the default versions and config combination changes
- */
 export interface CompatVersion {
 	base: string;
 	delta: number;
 }
 
+/**
+ * Generate configuration combinations for a particular compat version
+ * @privateRemarks Please update this packages README.md if the default versions and config combination changes
+ */
 export interface CompatConfig {
 	name: string;
 	kind: CompatKind;

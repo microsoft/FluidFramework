@@ -22,7 +22,7 @@ export const CompatKind: {
 	/**
 	 * CrossVersion tests are used to test compatibility between the current version and the most recent major public release.
 	 * For example, at the time of writing, main is on version 2.0.0-internal.7.3.0, so we would test 2.0.0-internal.7.3.0
-	 * against the latest public release (1.3.7) instead of the latest internal major release (2.0.0-internal.6.4.0).
+	 * against the latest public release 1.3.7 instead of the latest internal major release (2.0.0-internal.6.4.0).
 	 */
 	CrossVersion: "CrossVersion";
 };
