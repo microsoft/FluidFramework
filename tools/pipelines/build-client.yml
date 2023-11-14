@@ -161,7 +161,7 @@ extends:
         command: 'custom'
         workingDir: ./packages/tools/devtools/devtools-browser-extension/
         customCommand: 'run webpack'
-    - task: PublishPipelineArtifact@1
+    - task: 1ES.PublishPipelineArtifact@1
       displayName: Publish Artifact - Devtools Browser Extension
       inputs:
         targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
