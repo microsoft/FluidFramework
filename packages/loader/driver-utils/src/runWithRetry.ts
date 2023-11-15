@@ -114,14 +114,13 @@ export async function runWithRetry<T>(
 
 			numRetries++;
 			lastError = err;
-			// If the error is throttling error, then wait for the specified time before retrying.
-			retryAfterMs =
-				getRetryDelayFromError(err) ??
-				Math.min(retryAfterMs * 2, calculateMaxWaitTime(err));
+			// Wait for the calculated time before retrying.
+			retryAfterMs = Math.max(getRetryDelayFromError(err) ?? 0, retryAfterMs);
 			if (progress.onRetry) {
 				progress.onRetry(retryAfterMs, err);
 			}
 			await delay(retryAfterMs);
+			retryAfterMs = Math.min(retryAfterMs * 2, calculateMaxWaitTime(err));
 		}
 	} while (!success);
 	if (numRetries > 0) {
@@ -139,13 +138,13 @@ export async function runWithRetry<T>(
 	return result!;
 }
 
-const MaxReconnectDelayInMsWhenEndpointIsReachable = 30000;
+const MaxReconnectDelayInMsWhenEndpointIsReachable = 60000;
 const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
 
 /**
  * In case endpoint(service or socket) is not reachable, then we maybe offline or may have got some transient error
  * not related to endpoint, in that case we want to try at faster pace and hence the max wait is lesser 8s as compared
- * to when endpoint is reachable in which case it is 30s.
+ * to when endpoint is reachable in which case it is 60s.
  * @param error - error based on which we decide max wait time.
  * @returns Max wait time.
  */
