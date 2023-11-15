@@ -11,6 +11,7 @@ importers:
       '@typescript-eslint/eslint-plugin': ~6.7.2
       '@typescript-eslint/parser': ~6.7.2
       concurrently: ^8.2.1
+      doctrine: ^3.0.0
       eslint: ~8.49.0
       eslint-config-prettier: ~9.0.0
       eslint-import-resolver-typescript: ~3.6.1
@@ -32,6 +33,7 @@ importers:
       '@rushstack/eslint-plugin-security': 0.7.0_nqak32av3q5g4zvdvug5ze76xm
       '@typescript-eslint/eslint-plugin': 6.7.2_ps7ltaqxwbgqwcra3t4mgez7p4
       '@typescript-eslint/parser': 6.7.2_nqak32av3q5g4zvdvug5ze76xm
+      doctrine: 3.0.0
       eslint-config-prettier: 9.0.0_eslint@8.49.0
       eslint-import-resolver-typescript: 3.6.1_dn6y4xdeicgawfqkpz57vfpqk4
       eslint-plugin-eslint-comments: 3.2.0_eslint@8.49.0
