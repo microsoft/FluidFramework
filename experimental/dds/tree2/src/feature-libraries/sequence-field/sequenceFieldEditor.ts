@@ -4,10 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangesetLocalId, ITreeCursor, ITreeCursorSynchronous, mapCursorField } from "../../core";
-import { FieldEditor } from "../modular-schema";
+import {
+	ChangesetLocalId,
+	ITreeCursor,
+	ITreeCursorSynchronous,
+	StoredSchemaCollection,
+	mapCursorField,
+} from "../../core";
+import { FieldEditor, FullSchemaPolicy } from "../modular-schema";
 import { brand } from "../../util";
-import { chunkTree, defaultChunkPolicy, uncompressedEncode } from "../chunked-forest";
+import {
+	chunkTree,
+	defaultChunkPolicy,
+	schemaCompressedEncode,
+	uncompressedEncode,
+} from "../chunked-forest";
 import {
 	CellId,
 	CellMark,
@@ -30,8 +41,15 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 	 * @param cursor - cursors in Nodes mode.
 	 * @privateRemarks
 	 * TODO: this should take a single cursor in fields mode.
+	 * TODO: the shapeInfo can be provided for schemaBasedEncoding of chunks as schema is not accessible at this level,
+	 * but this should eventually be removed once we separate the creation/encoding of ops into a separate file.
 	 */
-	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
+	insert(
+		index: number,
+		cursor: readonly ITreeCursor[],
+		id: ChangesetLocalId,
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
+	): Changeset<never>;
 	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
 	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
 
@@ -68,21 +86,23 @@ export const sequenceFieldEditor = {
 		index: number,
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): Changeset<never> => {
 		const fieldCursors = cursors.map((cursor) =>
 			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
 		);
-		const nodeCursors = [];
-		for (const fieldCursor of fieldCursors) {
-			const currentNodeCursors = mapCursorField(fieldCursor, (c) => c);
-			for (const nodeCursor of currentNodeCursors) {
-				nodeCursors.push(nodeCursor);
-			}
-		}
+		const nodeCursors = fieldCursors
+			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
+			.flat();
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
 			count: cursors.length,
-			content: nodeCursors.map(uncompressedEncode),
+			content:
+				shapeInfo !== undefined
+					? nodeCursors.map((cursor) =>
+							schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
+					  )
+					: nodeCursors.map(uncompressedEncode),
 			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);
