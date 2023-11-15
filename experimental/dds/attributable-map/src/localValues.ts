@@ -7,7 +7,6 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidSerializer,
 	ISerializedHandle,
-	parseHandles,
 	serializeHandles,
 	ValueType,
 } from "@fluidframework/shared-object-base";
@@ -118,7 +117,7 @@ export class LocalValueMaker {
 	 * Create a new LocalValueMaker.
 	 * @param serializer - The serializer to serialize / parse handles.
 	 */
-	public constructor(private readonly serializer: IFluidSerializer) {}
+	public constructor() {}
 
 	/**
 	 * Create a new local value from an incoming serialized value.
@@ -136,7 +135,7 @@ export class LocalValueMaker {
 			serializable.value = handle;
 		}
 
-		const translatedValue: unknown = parseHandles(serializable.value, this.serializer);
+		const translatedValue: unknown = serializable.value;
 
 		return new PlainLocalValue(translatedValue);
 	}

@@ -16,7 +16,12 @@ import {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
-import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
+import {
+	IFluidSerializer,
+	SharedObject,
+	ValueType,
+	parseHandles,
+} from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import * as path from "path-browserify";
 import {
@@ -706,7 +711,7 @@ export class SharedDirectory
 					const localValue = this.makeLocal(
 						key,
 						currentSubDir.absolutePath,
-						serializable,
+						parseHandles(serializable, this.serializer),
 					);
 					currentSubDir.populateStorage(key, localValue);
 				}

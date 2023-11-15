@@ -327,7 +327,7 @@ export class SharedCell<T = any>
 
 	private decode(cellValue: ICellValue): Serializable<T> {
 		const value = cellValue.value;
-		return this.serializer.decode(value) as Serializable<T>;
+		return value as Serializable<T>;
 	}
 
 	private createLocalOpMetadata(

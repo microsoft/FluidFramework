@@ -268,7 +268,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const contents: unknown = this.serializer.decode(message.contents);
+		const contents: unknown = message.contents;
 		const { commit, sessionId } = this.messageCodec.decode(contents);
 
 		this.editManager.addSequencedChange(

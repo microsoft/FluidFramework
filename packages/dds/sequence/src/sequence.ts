@@ -44,7 +44,6 @@ import {
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
-	parseHandles,
 	SharedObject,
 	ISharedObjectEvents,
 	SummarySerializer,
@@ -713,7 +712,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		return this.client.applyStashedOp(parseHandles(content, this.serializer));
+		return this.client.applyStashedOp(content);
 	}
 
 	private summarizeMergeTree(serializer: IFluidSerializer): ISummaryTreeWithStats {
@@ -739,7 +738,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	private processMergeTreeMsg(rawMessage: ISequencedDocumentMessage, local?: boolean) {
-		const message = parseHandles(rawMessage, this.serializer);
+		const message = rawMessage;
 
 		const ops: IMergeTreeDeltaOp[] = [];
 		function transformOps(event: SequenceDeltaEvent) {

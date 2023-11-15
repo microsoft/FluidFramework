@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
 	IFluidSerializer,
-	parseHandles,
 	SharedObject,
 	SummarySerializer,
 } from "@fluidframework/shared-object-base";
@@ -608,7 +607,7 @@ export class SharedMatrix<T = any>
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		const msg = parseHandles(rawMessage, this.serializer);
+		const msg: any = rawMessage;
 
 		const contents = msg.contents;
 
@@ -753,7 +752,7 @@ export class SharedMatrix<T = any>
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
 	 */
 	protected applyStashedOp(content: any): unknown {
-		const parsedContent = parseHandles(content, this.serializer);
+		const parsedContent = content;
 		if (
 			parsedContent.target === SnapshotPath.cols ||
 			parsedContent.target === SnapshotPath.rows

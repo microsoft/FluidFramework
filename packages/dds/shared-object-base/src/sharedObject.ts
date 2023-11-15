@@ -37,7 +37,7 @@ import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
-import { makeHandlesSerializable } from "./utils";
+import { makeHandlesSerializable, parseHandles } from "./utils";
 
 /**
  * Base class from which all shared objects derive.
@@ -447,7 +447,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				local: boolean,
 				localOpMetadata: unknown,
 			) => {
-				this.process(message, local, localOpMetadata);
+				this.process(parseHandles(message, this.serializer), local, localOpMetadata);
 			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
@@ -456,7 +456,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 				this.reSubmit(content, localOpMetadata);
 			},
 			applyStashedOp: (content: any): unknown => {
-				return this.applyStashedOp(content);
+				return this.applyStashedOp(parseHandles(content, this.serializer));
 			},
 			rollback: (content: any, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
