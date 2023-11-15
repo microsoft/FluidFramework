@@ -9,21 +9,21 @@ The `SharedTree` distributed data structure (DDS), available in Fluid Framework 
 
 A `SharedTree` object has the following characteristics:
 
-- It has a root and can have several types of branch nodes and several types of leaf nodes.
-- Although there are some exceptions, for the most part, each type of node closely mirrors a familiar JavaScript datatype, such as object, map, array, boolean, number, string, and null.
-- Again, with exceptions, your code accesses nodes with the syntax of JavaScript and TypeScript, such as dot notation, property assignment, and array indexes.
-- Besides being of the type `SharedTree`, the object must also conform to a schema that your code creates so it has an application-specific strong typing too.
-- The various types of branch nodes can be nested in one another (subject to the constraints of the schema).
+-   It has a root and can have several types of branch nodes and several types of leaf nodes.
+-   Although there are some exceptions, for the most part, each type of node closely mirrors a familiar JavaScript datatype, such as object, map, array, boolean, number, string, and null.
+-   Again, with exceptions, your code accesses nodes with the syntax of JavaScript and TypeScript, such as dot notation, property assignment, and array indexes.
+-   Besides being of the type `SharedTree`, the object must also conform to a schema that your code creates so it has an application-specific strong typing too.
+-   The various types of branch nodes can be nested in one another (subject to the constraints of the schema).
 
 ### Node types
 
 The following leaf node types are available:
 
-- **boolean**: Works identically to a JavaScript boolean.
-- **number**: Works identically to a JavaScript JavaScript number.
-- **string**: Works identically to a JavaScript string.
-- **null**: Works identically to a JavaScript null.
-- **FluidHandle**: A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles]({{< relref "handles.md" >}}).
+-   **boolean**: Works identically to a JavaScript boolean.
+-   **number**: Works identically to a JavaScript JavaScript number.
+-   **string**: Works identically to a JavaScript string.
+-   **null**: Works identically to a JavaScript null.
+-   **FluidHandle**: A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles]({{< relref "handles.md" >}}).
 
 The following subsections describe the available branch node types.
 
@@ -61,9 +61,9 @@ npm install @fluid-experimental/tree2
 
 The major programming tasks for using `SharedTree`s are:
 
-- Define a schema for the `SharedTree`. As you build out from prototype to full production application, you can add to this schema and create additional schemas for additional `ShareTree`s. See [Schema definition](#schema-definition).
-- Create the `SharedTree` object. See [Creation](#creation).
-- Create code that reads and writes to the nodes of the `SharedTree`. See [API](#api).
+-   Define a schema for the `SharedTree`. As you build out from prototype to full production application, you can add to this schema and create additional schemas for additional `ShareTree`s. See [Schema definition](#schema-definition).
+-   Create the `SharedTree` object. See [Creation](#creation).
+-   Create code that reads and writes to the nodes of the `SharedTree`. See [API](#api).
 
 ### Schema definition
 
@@ -81,16 +81,16 @@ As an example, consider an app that provides a digital board with groups of stic
 
 ![A screenshot of a sticky note board app](/images/sticky-note-board-app.png)
 
-The full sample is at: ------------------ LINK TO SAMPLE ------------------. *The code snippets in this article are simplified versions of the code in the sample.*
+The full sample is at: ------------------   LINK TO SAMPLE ------------------. *The code snippets in this article are simplified versions of the code in the sample.*
 
 #### Object schema
 
 Use the `object()` method to create a schema for a note. Note the following about this code:
 
-- The `object()`, `list()`, and `map()` methods return an object that defines a schema. Notionally, you can think of this object as datatype. (And there is a way, described later in this article, to convert it into an actual TypeScript type.)
-- The first parameter of `object()` is the name of the type.
-- The `id`, `text`, and `author` properties are leaf nodes.
-- The `votes` property is a list node, whose members are all strings. It is defined with an inline call of the `list()` method.
+-   The `object()`, `list()`, and `map()` methods return an object that defines a schema. Notionally, you can think of this object as datatype. (And there is a way, described later in this article, to convert it into an actual TypeScript type.)
+-   The first parameter of `object()` is the name of the type.
+-   The `id`, `text`, and `author` properties are leaf nodes.
+-   The `votes` property is a list node, whose members are all strings. It is defined with an inline call of the `list()` method.
 
 ```typescript
 const noteSchema = sb.object('note', {
@@ -216,7 +216,7 @@ You can now add child items to the `stickyNotesTree` object using the methods de
 
 ### API
 
-The `SharedTree` object provides methods that enable your code to add nodes to the tree, remove nodes, and move nodes within the tree. You can also set and read the values of leaf nodes. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although it is not possible to match exactly. 
+The `SharedTree` object provides methods that enable your code to add nodes to the tree, remove nodes, and move nodes within the tree. You can also set and read the values of leaf nodes. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although it is not possible to match exactly.
 
 #### Leaf node APIs
 
@@ -226,7 +226,7 @@ Leaf nodes are read and written exactly the way JavaScript primitive types are b
 myNewsPaperTree.articles[1].headline = "Man bites dog";
 ```
 
-The following examples show how to read from a leaf node. *Note that the datatype of `pointsForDetroitTigers` is `number`, not `sb.number`. *This is a general principle: the value returned from a leaf node, other than a `FluidHandle` node, is the underlying JavaScript primitive type.
+The following examples show how to read from a leaf node. *Note that the datatype of `pointsForDetroitTigers` is `number`, not `sb.number`.* This is a general principle: the value returned from a leaf node, other than a `FluidHandle` node, is the underlying JavaScript primitive type.
 
 ```typescript
 const pointsForDetroitTigers: number = seasonTree.tigersTeam.game1.points;
@@ -244,14 +244,14 @@ const counterHandle: FluidHandle = myTree.myObjectNode.myHandle;
 const myItems: List = stickyNotesTree.items;
 ```
 
-To write to an object node, you first create an object and then assign it to the node with the assignment operator (`=`). If the object node is a child of a map or list node, use the write [Map node write APIs](#map-node-write-apis) or [List node write APIs](#list-node-write-apis). 
+To write to an object node, you first create an object and then assign it to the node with the assignment operator (`=`). If the object node is a child of a map or list node, use the write [Map node write APIs](#map-node-write-apis) or [List node write APIs](#list-node-write-apis).
 
 You must create the object using `create()` method of schema object. The following shows how to create a note object from the sticky notes example.
 
 ```typescript
 const babyShowerNote = noteSchema.create({
     id: Guid.create().toString(),
-    text: “Baby shower is at 3 PM today.”,
+    text: "Baby shower is at 3 PM today.",
     author: "Bob",
     votes: ["0"]
 });
@@ -311,8 +311,8 @@ set(key: string, value: T)
 
 The `set()` method sets/changes the value of the item with the specified key. If the key is not present, the item is added to the map. Note the following:
 
-- The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `const myMapSchema = sb.map([sb.number, sb.string]);`, then `T` could be `number` or `string`.
-- If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
+-   The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `const myMapSchema = sb.map([sb.number, sb.string]);`, then `T` could be `number` or `string`.
+-   If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ```typescript
 delete(key: string): boolean
@@ -364,9 +364,9 @@ Inserts the provided value(s) at the end of the list. This is syntactic sugar fo
 
 List nodes have two methods that remove items from the node. Note the following about these methods:
 
-- Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
-- A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then only item 3 is removed. The other two are moved, regardless of the order of the move and remove operations.
-- Removal of items never overrides inserting items. For example, if one client removes items 10-15, and another client simultaneously inserts an item at index 12, the original items 10-15 are removed, but new item is inserted between item 9 and the item that used to be at index 16. This happens regardless of the order of the remove and insert operations.
+-   Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
+-   A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then only item 3 is removed. The other two are moved, regardless of the order of the move and remove operations.
+-   Removal of items never overrides inserting items. For example, if one client removes items 10-15, and another client simultaneously inserts an item at index 12, the original items 10-15 are removed, but new item is inserted between item 9 and the item that used to be at index 16. This happens regardless of the order of the remove and insert operations.
 
 For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
@@ -412,7 +412,7 @@ The `SharedTree` object supports two events: `beforeChange` and `afterChange`. Y
 
 The `Tree` class provides some static utility APIs for working with `ShareTree` objects.
 
-## Events
+## Event handling
 
 ```typescript
 Tree.on(node: SharedTreeNode, eventType: string, listener: () => void)
@@ -420,9 +420,9 @@ Tree.on(node: SharedTreeNode, eventType: string, listener: () => void)
 
 Assigns the specified `listener` function to the specified `event type` for the specified `node`. The `node` can be any node of the tree. The `[event type]` can be either "afterChange" or "beforeChange". An `event` object is automatically passed to the `listener`. It has three members:
 
-- `event.target`: The node on which the event was triggered.
-- `event.isLocal`: Specifies whether the change was made on the local client or a remote client.
-- `event.stopPropagation()`: If called in the listener, it stops the event from being triggered on the parent, in the tree, of the `event.target`.
+-   `event.target`: The node on which the event was triggered.
+-   `event.isLocal`: Specifies whether the change was made on the local client or a remote client.
+-   `event.stopPropagation()`: If called in the listener, it stops the event from being triggered on the parent, in the tree, of the `event.target`.
 
 ## Type guard
 
@@ -469,15 +469,15 @@ Tree.status(node: SharedTreeNode): TreeStatus
 
 Returns the current status of `node`. Possible values are:
 
-- **InDocument**: The node is in the tree.
-- **Removed**: The node has been removed from the tree but is still restorable by undo.
-- **Deleted**: The node is deleted and unrestorable.
+-   **InDocument**: The node is in the tree.
+-   **Removed**: The node has been removed from the tree but is still restorable by undo.
+-   **Deleted**: The node is deleted and unrestorable.
 
 ```typescript
 Tree.schema(node: SharedTreeNode): TreeNodeSchema
 ```
 
-Returns the object that defines the schema of the `node` object. 
+Returns the object that defines the schema of the `node` object.
 
 ## API Documentation
 
