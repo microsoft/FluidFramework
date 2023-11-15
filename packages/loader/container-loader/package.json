@@ -11,68 +11,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
-			}
-		},
-		"./container": {
-			"import": {
-				"types": "./lib/container.d.ts",
-				"default": "./lib/container.mjs"
-			},
-			"require": {
-				"types": "./dist/container.d.ts",
-				"default": "./dist/container.cjs"
-			}
-		},
-		"./contracts": {
-			"import": {
-				"types": "./lib/contracts.d.ts",
-				"default": "./lib/contracts.mjs"
-			},
-			"require": {
-				"types": "./dist/contracts.d.ts",
-				"default": "./dist/contracts.cjs"
-			}
-		},
-		"./connectionManager": {
-			"import": {
-				"types": "./lib/connectionManager.d.ts",
-				"default": "./lib/connectionManager.mjs"
-			},
-			"require": {
-				"types": "./dist/connectionManager.d.ts",
-				"default": "./dist/connectionManager.cjs"
-			}
-		},
-		"./deltaManager": {
-			"import": {
-				"types": "./lib/deltaManager.d.ts",
-				"default": "./lib/deltaManager.mjs"
-			},
-			"require": {
-				"types": "./dist/deltaManager.d.ts",
-				"default": "./dist/deltaManager.cjs"
-			}
-		},
-		"./utils": {
-			"import": {
-				"types": "./lib/utils.d.ts",
-				"default": "./lib/utils.mjs"
-			},
-			"require": {
-				"types": "./dist/utils.d.ts",
-				"default": "./dist/utils.cjs"
-			}
-		}
-	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
