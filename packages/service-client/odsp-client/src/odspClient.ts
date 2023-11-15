@@ -22,7 +22,6 @@ import {
 } from "@fluidframework/container-definitions";
 import { IClient } from "@fluidframework/protocol-definitions";
 import { Loader } from "@fluidframework/container-loader";
-import { v4 as uuid } from "uuid";
 import {
 	IOdspResolvedUrl,
 	OdspResourceTokenFetchOptions,
@@ -35,7 +34,7 @@ import {
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerServices,
-	OdspServiceAttributes,
+	OdspContainerAttributes,
 } from "./interfaces";
 import { OdspAudience } from "./odspAudience";
 
@@ -149,8 +148,8 @@ export class OdspClient {
 		const createNewRequest: IRequest = createOdspCreateContainerRequest(
 			connection.siteUrl,
 			connection.driveId,
-			connection.path,
-			uuid(),
+			connection.folderPath,
+			connection.fileName,
 		);
 
 		// eslint-disable-next-line import/no-deprecated
@@ -164,16 +163,14 @@ export class OdspClient {
 				throw new Error("Cannot attach container. Container is not in detached state");
 			}
 			await container.attach(createNewRequest);
-			const resolvedUrl = container.resolvedUrl as IOdspResolvedUrl;
-			if (container.resolvedUrl === undefined) {
-				throw new Error("Resolved Url not available on attached container");
+			const absoluteUrl = await container.getAbsoluteUrl("/");
+			if (absoluteUrl === undefined) {
+				throw new Error("Absolute Url not avaiable on attached container");
 			}
 			/**
-			 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
-			 * a new `itemId` is created in the user's drive, which developers can use for various operations
-			 * like updating, renaming, moving the Fluid file, changing permissions, and more.
+			 * The sharing URL for this container. It's the absoluet URL used as input to the `getContainer`.
 			 */
-			return resolvedUrl.itemId;
+			return absoluteUrl;
 		};
 		const fluidContainer = new FluidContainer(container, rootDataObject);
 		fluidContainer.attach = attach;
@@ -181,18 +178,14 @@ export class OdspClient {
 	}
 
 	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
-		const getAttributes = async (): Promise<OdspServiceAttributes> => {
+		const getAttributes = async (): Promise<OdspContainerAttributes> => {
 			const resolvedUrl = container.resolvedUrl as IOdspResolvedUrl;
 			if (resolvedUrl === undefined) {
 				throw new Error("Resolved Url not available on attached container");
 			}
-			const sharingUrl = await container.getAbsoluteUrl("/");
-			if (sharingUrl === undefined) {
-				throw new Error("Container has no absolute url");
-			}
 
 			return {
-				sharingUrl,
+				itemId: resolvedUrl.itemId,
 				driveId: resolvedUrl.driveId,
 			};
 		};

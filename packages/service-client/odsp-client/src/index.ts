@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	OdspConnectionConfig,
 	OdspClientProps,
 	OdspContainerServices,
-	OdspServiceAttributes,
+	OdspContainerAttributes as OdspServiceAttributes,
 	IOdspAudience,
 	OdspMember,
 } from "./interfaces";

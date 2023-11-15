@@ -1,10 +1,10 @@
-## @fluid-experimental/odsp-client
+# @fluid-experimental/odsp-client
 
-The odsp-client package provides a simple and powerful way to consume collaborative Fluid data with the ODSP service.
+The odsp-client package provides a simple and powerful way to consume collaborative Fluid data with the ODSP as a storage mechanism. Please note that odsp-client is currently an experimental package. We'd love for you to try it out and provide feedback but it is not yet recommended/supported for production scnearios.
 
 ## Using odsp-client
 
-The odsp-client package has a OdspClient class that allows you to interact with Fluid
+The odsp-client package has an `OdspClient`` class that allows you to interact with Fluid
 
 ```typescript
 import { OdspClient } from "@fluid-experimental/odsp-client";
@@ -31,9 +31,7 @@ const client = new OdspClient(clientProps);
 
 ### Experimental Features
 
-`OdspClient` supports the ability to instantiate with experimental features enabled.
-These features are experimental in nature and should **NOT** be used in production applications.
-To learn more, see [Experimental Features](https://fluidframework.com/docs/build/experimental-features/).
+`OdspClient` could be instantiated with experimental features. These features are experimental in nature and should **NOT** be used in production applications. To learn more, see [Experimental Features](https://fluidframework.com/docs/build/experimental-features/).
 
 ## Fluid Containers
 
@@ -54,7 +52,7 @@ const containerSchema = {
 		/*...*/
 	],
 };
-const OdspClient = new OdspClient(clientProps);
+const odspClient = new OdspClient(clientProps);
 const { container, services } = await OdspClient.createContainer(containerSchema);
 
 const itemId = await container.attach();
@@ -65,18 +63,18 @@ const driveId = attributes.driveId;
 
 ## Using Fluid Containers
 
-Using the `OdspClient` object the developer can create and get Fluid containers. Because Fluid needs to be connected to a server, containers need to be created and retrieved asynchronously.
+Using the `OdspClient` class the developer can create and get Fluid containers. Because Fluid needs to be connected to a server, containers need to be created and retrieved asynchronously.
 
 ```typescript
 import { OdspClient } from "@fluid-experimental/odsp-client";
 
-const OdspClient = new OdspClient(props);
+const odspClient = new OdspClient(props);
 const { container, services } = await OdspClient.getContainer("_unique-id_", schema);
 ```
 
 ## Using initial objects
 
-The most common way to use Fluid is through initial collaborative objects that are created when the Container is created.DistributedDataStructures and DataObjects are both supported types of collaborative objects.
+The most common way to use Fluid is through initial collaborative objects that are created when the Container is created. Distributed data structures and DataObjects are both supported types of collaborative objects.
 
 `initialObjects` are loaded into memory when the Container is loaded and the developer can access them via the Container's `initialObjects` property. The `initialObjects` property has the same signature as the Container schema.
 
@@ -97,5 +95,5 @@ const { container, services } = await OdspClient.getContainer("_unique-url_", sc
 const initialObjects = container.initialObjects;
 // Use the keys that we had set in the schema to load the individual objects
 const map1 = initialObjects.map1;
-const text1 = initialObjects["text1"];
+const text1 = initialObjects.text1;
 ```

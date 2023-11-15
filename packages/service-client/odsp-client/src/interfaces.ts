@@ -17,14 +17,14 @@ import { type IUser } from "@fluidframework/protocol-definitions";
  */
 export interface OdspConnectionConfig {
 	/**
-	 * Site url representing ODSP resource location. It points to the specific SharePoint site where you can store and access the containers you create.
-	 */
-	siteUrl: string;
-
-	/**
 	 * Instance that provides AAD endpoint tokens for Push and SharePoint
 	 */
 	tokenProvider: ITokenProvider;
+
+	/**
+	 * Site url representing ODSP resource location. It points to the specific SharePoint site where you can store and access the containers you create.
+	 */
+	siteUrl: string;
 
 	/**
 	 * RaaS Drive Id of the tenant where Fluid containers are created
@@ -34,7 +34,12 @@ export interface OdspConnectionConfig {
 	/**
 	 * Folder path where Fluid containers are created
 	 */
-	path: string;
+	folderPath: string;
+
+	/**
+	 * File name of Fluid containers
+	 */
+	fileName: string;
 }
 
 /**
@@ -68,13 +73,13 @@ export interface OdspClientProps {
  */
 export interface OdspContainerServices {
 	/**
-	 * Retrieves tenant-specific attributes associated with the ODSP service for the current Fluid container.
+	 * Retrieves container-specific attributes associated with the ODSP service for the current Fluid container.
 	 * This includes information such as sharing URL and drive IDs.
 	 *
 	 * @returns A Promise that resolves after the container is attached, providing an object containing the `OdspServiceAttributes`.
 	 * If the attachment is not yet complete or encounters an error, the Promise will be rejected.
 	 */
-	tenantAttributes: () => Promise<OdspServiceAttributes | undefined>;
+	tenantAttributes: () => Promise<OdspContainerAttributes>;
 
 	/**
 	 * Provides an object that can be used to get the users that are present in this Fluid session and
@@ -84,14 +89,16 @@ export interface OdspContainerServices {
 }
 
 /**
- * Represents attributes specific to the ODSP service for a Fluid container.
+ * Represents attributes specific to Fluid container.
  * @alpha
  */
-export interface OdspServiceAttributes {
+export interface OdspContainerAttributes {
 	/**
-	 * The sharing URL for this container. It's the complete URL used as input to the `getContainer` function.
+	 * A unique identifier for the file within the provided RaaS drive ID. When you attach a container,
+	 * a new `itemId` is created in the user's drive, which developers can use for various operations
+	 * like updating, renaming, moving the Fluid file, changing permissions, and more.
 	 */
-	sharingUrl: string;
+	itemId: string;
 
 	/**
 	 * Get the RaaS drive ID associated with the container. This can be useful when managing multiple

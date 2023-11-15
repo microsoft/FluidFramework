@@ -40,7 +40,8 @@ export interface OdspClientProps {
 // @alpha
 export interface OdspConnectionConfig {
     driveId: string;
-    path: string;
+    fileName: string;
+    folderPath: string;
     siteUrl: string;
     tokenProvider: ITokenProvider;
 }
@@ -48,7 +49,7 @@ export interface OdspConnectionConfig {
 // @alpha
 export interface OdspContainerServices {
     audience: IOdspAudience;
-    tenantAttributes: () => Promise<OdspServiceAttributes | undefined>;
+    tenantAttributes: () => Promise<OdspServiceAttributes>;
 }
 
 // @alpha
@@ -62,7 +63,7 @@ export interface OdspMember extends IMember {
 // @alpha
 export interface OdspServiceAttributes {
     driveId: string;
-    sharingUrl: string;
+    itemId: string;
 }
 
 // (No @packageDocumentation comment for this package)
