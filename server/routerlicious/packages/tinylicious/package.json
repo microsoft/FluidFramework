@@ -50,7 +50,7 @@
 		"@fluidframework/server-services-utils": "workspace:~",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"agentkeepalive": "^4.2.1",
-		"axios": "^0.26.0",
+		"axios": "^1.6.2",
 		"body-parser": "^1.17.1",
 		"charwise": "^3.0.1",
 		"compression": "^1.7.2",
@@ -65,7 +65,7 @@
 		"lodash": "^4.17.21",
 		"morgan": "^1.8.1",
 		"nconf": "^0.12.0",
-		"socket.io": "^4.5.0",
+		"socket.io": "^4.6.2",
 		"split": "^1.0.0",
 		"uuid": "^9.0.0",
 		"winston": "^3.6.0"
