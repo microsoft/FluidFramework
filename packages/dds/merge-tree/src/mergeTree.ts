@@ -461,7 +461,7 @@ export class MergeTree {
 	private localPartialsComputed = false;
 	// for now assume only markers have ids and so point directly at the Segment
 	// if we need to have pointers to non-markers, we can change to point at local refs
-	private readonly idToSegment = new Map<string, Marker>();
+	private readonly idToMarker = new Map<string, Marker>();
 	private minSeqListeners: Heap<MinListener> | undefined;
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
@@ -549,12 +549,12 @@ export class MergeTree {
 	public unlinkMarker(marker: Marker) {
 		const id = marker.getId();
 		if (id) {
-			this.idToSegment.delete(id);
+			this.idToMarker.delete(id);
 		}
 	}
 
-	private mapIdToSegment(id: string, marker: Marker) {
-		this.idToSegment.set(id, marker);
+	private mapIdToMarker(id: string, marker: Marker) {
+		this.idToMarker.set(id, marker);
 	}
 
 	private addNode(block: IMergeBlock, node: IMergeNode) {
@@ -1381,7 +1381,7 @@ export class MergeTree {
 
 	// TODO: error checking
 	public getMarkerFromId(id: string): Marker | undefined {
-		return this.idToSegment.get(id);
+		return this.idToMarker.get(id);
 	}
 
 	/**
@@ -1550,7 +1550,7 @@ export class MergeTree {
 				if (Marker.is(newSegment)) {
 					const markerId = newSegment.getId();
 					if (markerId) {
-						this.mapIdToSegment(markerId, newSegment);
+						this.mapIdToMarker(markerId, newSegment);
 					}
 				}
 
@@ -2328,7 +2328,7 @@ export class MergeTree {
 				// Also in insertMarker but need for reload segs case
 				// can add option for this only from reload segs
 				if (markerId) {
-					this.mapIdToSegment(markerId, segment);
+					this.mapIdToMarker(markerId, segment);
 				}
 				if (refTypeIncludesFlag(segment, ReferenceType.Tile)) {
 					addTile(segment, rightmostTiles);
