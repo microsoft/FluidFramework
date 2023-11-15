@@ -40,7 +40,6 @@ export interface IGCTestProvider {
 
 // eslint-disable-next-line jsdoc/require-description
 /**
- *
  * @internal
  */
 export const runGCTests = (ctor: new () => IGCTestProvider): void => {
