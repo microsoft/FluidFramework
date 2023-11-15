@@ -9,7 +9,6 @@ import { ContainerRuntime, IContainerRuntimeOptions } from "@fluidframework/cont
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { SharedMatrix } from "@fluidframework/matrix";
 import { Marker, ReferenceType, reservedMarkerIdKey } from "@fluidframework/merge-tree";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import type { SharedString } from "@fluidframework/sequence";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
@@ -161,7 +160,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 		}
 
 		const container = await createContainer();
-		mainDataStore = await requestFluidObject<TestDataObject>(container, "/");
+		mainDataStore = (await container.getEntryPoint()) as TestDataObject;
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(container);
 	});

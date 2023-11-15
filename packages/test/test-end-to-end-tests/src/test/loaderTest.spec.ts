@@ -9,7 +9,6 @@ import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container
 
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	describeNoCompat,
 	itSkipsFailureOnSpecificDrivers,
@@ -20,7 +19,7 @@ import {
 	requestResolvedObjectFromContainer,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
+import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 // REVIEW: enable compat testing?
 describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
@@ -135,8 +134,6 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 			[testFactoryWithRequestHeaders.type, Promise.resolve(testFactoryWithRequestHeaders)],
 		],
 		requestHandlers: [innerRequestHandler],
-		// The requestResolvedObjectFromContainer expects the entryPoint to act as containerRuntime request router
-		provideEntryPoint: async (containerRuntime: IContainerRuntime) => containerRuntime,
 	});
 
 	beforeEach(async () => {
@@ -147,7 +144,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 			loader,
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		dataStore1 = await requestFluidObject(container, "default");
+		dataStore1 = (await container.getEntryPoint()) as TestSharedDataObject1;
 
 		dataStore2 = await testSharedDataObjectFactory2.createInstance(
 			dataStore1._context.containerRuntime,
@@ -256,6 +253,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		},
 	);
 
+	// TODO: Remove this test when request is removed from Container AB#4991
 	itSkipsFailureOnSpecificDrivers("can handle url with query params", ["odsp"], async () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "url is undefined");
@@ -300,6 +298,7 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		);
 	});
 
+	// TODO: Remove this test when request is removed from Container AB#4991
 	it("can handle requests with headers", async () => {
 		const containerUrl = await container.getAbsoluteUrl("");
 		assert(containerUrl, "url is undefined");

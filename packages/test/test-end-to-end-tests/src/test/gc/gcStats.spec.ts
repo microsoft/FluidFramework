@@ -9,7 +9,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ContainerRuntime, IGCStats } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { ISummaryStats } from "@fluidframework/runtime-definitions";
-import { calculateStats, mergeStats, requestFluidObject } from "@fluidframework/runtime-utils";
+import { calculateStats, mergeStats } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
@@ -67,7 +67,7 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			this.skip();
 		}
 		container = await provider.makeTestContainer(defaultGCConfig);
-		mainDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+		mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(container);
 	});
@@ -80,14 +80,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	 * 2 attachment blobs.
 	 */
 	it("can correctly generate GC stats without unreferenced nodes", async () => {
-		const dataStore1 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		const dataStore2 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStore1 = (await (
+			await containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
+		const dataStore2 = (await (
+			await containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -133,14 +131,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	});
 
 	it("can correctly generate GC stats when nodes are unreferenced", async () => {
-		const dataStore1 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		const dataStore2 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStore1 = (await (
+			await containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
+		const dataStore2 = (await (
+			await containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -233,14 +229,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 	});
 
 	it("can correctly generate GC stats when nodes are re-referenced", async () => {
-		const dataStore1 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		const dataStore2 = await requestFluidObject<ITestDataObject>(
-			await containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStore1 = (await (
+			await containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
+		const dataStore2 = (await (
+			await containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		const expectedGCStats: IGCStats = {
 			nodeCount: 9,
 			unrefNodeCount: 0,
@@ -307,14 +301,12 @@ describeNoCompat("Garbage Collection Stats", (getTestObjectProvider) => {
 			},
 		],
 		async () => {
-			const dataStore1 = await requestFluidObject<ITestDataObject>(
-				await containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
-			const dataStore2 = await requestFluidObject<ITestDataObject>(
-				await containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
+			const dataStore1 = (await (
+				await containerRuntime.createDataStore(TestDataObjectType)
+			).entryPoint.get()) as ITestDataObject;
+			const dataStore2 = (await (
+				await containerRuntime.createDataStore(TestDataObjectType)
+			).entryPoint.get()) as ITestDataObject;
 			const expectedGCStats: IGCStats = {
 				nodeCount: 7,
 				unrefNodeCount: 0,

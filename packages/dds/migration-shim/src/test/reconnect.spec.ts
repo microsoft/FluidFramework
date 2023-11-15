@@ -18,7 +18,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
@@ -212,7 +211,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
 		const container = await provider.createContainer(runtimeFactory1);
-		const testObj = await requestFluidObject<TestDataObject>(container, "/");
+		const testObj = (await container.getEntryPoint()) as TestDataObject;
 		const legacyTree = testObj.getTree<LegacySharedTree>();
 
 		updateQuantity(legacyTree, originalValue);
@@ -224,7 +223,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 	it("Shims can reconnect", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
 		const container1 = await provider.loadContainer(runtimeFactory2);
-		const testObj1 = await requestFluidObject<TestDataObject>(container1, "/");
+		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
 		container1.disconnect();
@@ -260,7 +259,7 @@ describeNoCompat("Stamped v2 ops", (getTestObjectProvider) => {
 		const container2 = await provider.loadContainer(runtimeFactory2, undefined, {
 			[LoaderHeader.version]: summaryVersion,
 		});
-		const testObj2 = await requestFluidObject<TestDataObject>(container2, "/");
+		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<SharedTreeShim>();
 		const newTree2 = shim2.currentTree;
 		const view2 = getNewTreeView(newTree2);

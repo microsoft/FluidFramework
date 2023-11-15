@@ -12,7 +12,6 @@ import {
 	IConsensusRegisterCollection,
 	ReadPolicy,
 } from "@fluidframework/register-collection";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -54,17 +53,17 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 		beforeEach(async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 		});
 
@@ -301,7 +300,7 @@ describeNoCompat("ConsensusRegisterCollection grouped batching", (getTestObjectP
 
 	it("grouped batching doesn't hit 0x071", async () => {
 		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		const sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
 		const collection = ConsensusRegisterCollection.create(dataObject.runtime);

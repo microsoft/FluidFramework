@@ -9,7 +9,6 @@ window.performance.mark ??= () => undefined as PerformanceMark;
 window.performance.measure ??= () => undefined as PerformanceMeasure;
 
 import { strict as assert } from "assert";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider } from "@fluidframework/test-utils";
 import { describeLoaderCompat } from "@fluid-private/test-version-utils";
 import { htmlFormatter } from "../index.js";
@@ -46,7 +45,7 @@ describeLoaderCompat("Layout", (getTestObjectProvider) => {
 	before(async () => {
 		provider = getTestObjectProvider({ resetAfterEach: false });
 		const container = await provider.createContainer(FlowDocument.getFactory());
-		doc = await requestFluidObject<FlowDocument>(container, "default");
+		doc = (await container.getEntryPoint()) as FlowDocument;
 	});
 
 	beforeEach(() => {

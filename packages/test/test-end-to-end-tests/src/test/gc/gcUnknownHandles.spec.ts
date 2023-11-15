@@ -94,7 +94,7 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
 		}
 
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		const summarizerContainer = await provider.loadTestContainer(defaultGCConfig);

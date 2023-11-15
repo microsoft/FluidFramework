@@ -19,7 +19,6 @@ import {
 import { SharedObject } from "@fluidframework/shared-object-base";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 
 describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTestObjectProvider) => {
@@ -37,11 +36,10 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
 		`${name} should be ${attached ? "Attached" : "Detached"}`;
 
-	async function createDetachedContainerAndGetRootDataStore() {
+	async function createDetachedContainerAndGetEntryPoint() {
 		const container = await loader.createDetachedContainer(codeDetails);
 		// Get the root dataStore from the detached container.
-		const response = await container.request({ url: "/" });
-		const defaultDataStore = response.value as ITestFluidObject;
+		const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		return {
 			container,
 			defaultDataStore,
@@ -49,8 +47,8 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	}
 
 	const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
-		const router = await containerRuntime.createDataStore(["default"]);
-		const peerDataStore = await requestFluidObject<ITestFluidObject>(router, "/");
+		const dataStore = await containerRuntime.createDataStore(["default"]);
+		const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
 		return {
 			peerDataStore,
 			peerDataStoreRuntimeChannel: peerDataStore.channel,
@@ -89,7 +87,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Attaching dataStore should not attach unregistered DDS", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		await container.attach(request);
 
 		// Create another dataStore which returns the runtime channel.
@@ -125,7 +123,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Attaching dataStore should attach registered DDS", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		await container.attach(request);
 
 		// Create another dataStore which returns the runtime channel.
@@ -163,7 +161,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Attaching DDS should attach dataStore", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		await container.attach(request);
 
 		// Create another dataStore which returns the runtime channel.
@@ -198,7 +196,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Sticking handle in attached dds should attach the DDS in attached container", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		await container.attach(request);
 
 		// Create another dataStore which returns the runtime channel.
@@ -239,7 +237,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Registering DDS in attached dataStore should attach it", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		await container.attach(request);
 
 		// Create another dataStore which returns the runtime channel.
@@ -271,7 +269,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Registering DDS in detached dataStore should not attach it", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		await container.attach(request);
 
 		// Create another dataStore which returns the runtime channel.
@@ -300,7 +298,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Stick handle of 2 dds in each other and then attaching dataStore should attach both DDS", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		await container.attach(request);
 
 		// Create another dataStore which returns the runtime channel.
@@ -358,7 +356,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Stick handle of 2 dds in each other and then attaching 1 DDS should attach other DDS", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		await container.attach(request);
 
 		// Create another dataStore which returns the runtime channel.
@@ -415,8 +413,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 		"Stick handle of 2 dds(of 2 different dataStores) in each other and then attaching 1 DDS should " +
 			"attach other DDS and dataStore with correct recursion",
 		async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -490,8 +487,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 		"Stick handle of 2 different dataStores and dds in each other and then attaching 1 dataStore should " +
 			"attach other dataStores and dds with correct recursion",
 		async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another data store which returns the runtime channel.
@@ -558,8 +554,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 		"Generate more than 1 dds of a dataStore and then stick handles in different dds and then attaching " +
 			"1 handle should attach entire graph",
 		async () => {
-			const { container, defaultDataStore } =
-				await createDetachedContainerAndGetRootDataStore();
+			const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 			await container.attach(request);
 
 			// Create another dataStore which returns the runtime channel.
@@ -685,7 +680,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	);
 
 	it("Attach events on container", async () => {
-		const { container } = await createDetachedContainerAndGetRootDataStore();
+		const { container } = await createDetachedContainerAndGetEntryPoint();
 		let attachEvent = false;
 		container.on("attached", () => {
 			assert.strictEqual(attachEvent, false, "Should be only one attach event");
@@ -705,7 +700,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Attach events on dataStores", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 		let dataStoreContextAttachState = AttachState.Detached;
 		let dataStoreRuntimeAttachState = AttachState.Detached;
 		defaultDataStore.context.once("attaching", () => {
@@ -777,7 +772,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Attach events on referenced/unreferenced dataStores", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 
 		// Create first dataStore and store a reference
 		const { peerDataStore: dataStore1 } = await createPeerDataStore(
@@ -840,7 +835,7 @@ describeFullCompat(`Attach/Reference Api Tests For Attached Container`, (getTest
 	});
 
 	it("Attach events on referenced dataStores", async () => {
-		const { container, defaultDataStore } = await createDetachedContainerAndGetRootDataStore();
+		const { container, defaultDataStore } = await createDetachedContainerAndGetEntryPoint();
 
 		// Create first dataStore and store a reference in the root
 		const { peerDataStore: dataStore1 } = await createPeerDataStore(

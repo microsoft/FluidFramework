@@ -29,7 +29,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
-import { IErrorBase, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import { IErrorBase } from "@fluidframework/core-interfaces";
 import { getGCDeletedStateFromSummary, getGCStateFromSummary } from "./gcTestSummaryUtils.js";
 
 /**
@@ -101,7 +101,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	// Sends a unique op that's guaranteed to change the DDS for this specific container.
 	// This can also be used to transition a client to write mode.
 	const sendOpToUpdateSummaryTimestampToNow = async (container: IContainer) => {
-		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
+		const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 		defaultDataObject._root.set("send a", `op ${opCount++}`);
 	};
 
@@ -111,7 +111,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 		approximateUnreferenceTimestampMs: number,
 	) => {
 		const container = await makeContainer();
-		const defaultDataObject = await requestFluidObject<ITestDataObject>(container, "default");
+		const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(container);
 
 		const handleKey = "handle";
@@ -231,18 +231,6 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	});
 
 	describe("Loading swept data stores not allowed", () => {
-		/**
-		 * Our partners use ContainerRuntime.resolveHandle to issue requests. We can't easily call it directly,
-		 * but the test containers are wired up to route requests to this function.
-		 * (See the innerRequestHandler used in LocalCodeLoader for how it works)
-		 */
-		async function containerRuntime_resolveHandle(
-			container: IContainer,
-			request: IRequest,
-		): Promise<IResponse> {
-			return container.request(request);
-		}
-
 		// TODO: Receive ops scenarios - loaded before and loaded after (are these just context loading errors?)
 		itExpects(
 			"Requesting swept datastores fails in client loaded after sweep timeout and summarizing container",
@@ -267,7 +255,10 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				const container = await loadContainer(summaryVersion);
 
 				// This request fails since the datastore is swept
-				const errorResponse = await containerRuntime_resolveHandle(container, {
+				const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
+				const errorResponse = await (
+					entryPoint._context.containerRuntime as any
+				).resolveHandle({
 					url: unreferencedId,
 				});
 				assert.equal(
@@ -287,10 +278,12 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				);
 
 				// This request fails since the datastore is swept
-				const summarizerResponse = await containerRuntime_resolveHandle(
-					summarizingContainer,
-					{ url: unreferencedId },
-				);
+				const entryPoint2 = (await summarizingContainer.getEntryPoint()) as ITestDataObject;
+				const summarizerResponse = await (
+					entryPoint2._context.containerRuntime as any
+				).resolveHandle({
+					url: unreferencedId,
+				});
 				assert.equal(
 					summarizerResponse.status,
 					404,
@@ -338,7 +331,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
-				const response = await containerRuntime_resolveHandle(sendingContainer, {
+				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
+				const response = await (entryPoint._context.containerRuntime as any).resolveHandle({
 					url: unreferencedId,
 				});
 				const dataObject = response.value as ITestDataObject;
@@ -394,7 +388,8 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
-				const response = await containerRuntime_resolveHandle(sendingContainer, {
+				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
+				const response = await (entryPoint._context.containerRuntime as any).resolveHandle({
 					url: unreferencedId,
 				});
 				const dataObject = response.value as ITestDataObject;

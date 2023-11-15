@@ -7,7 +7,6 @@
 import * as crypto from "crypto";
 import { strict as assert } from "assert";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -42,17 +41,11 @@ const compressionSuite = (getProvider) => {
 			provider = await getProvider();
 
 			const localContainer = await provider.makeTestContainer(testContainerConfig);
-			const localDataObject = await requestFluidObject<ITestFluidObject>(
-				localContainer,
-				"default",
-			);
+			const localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
 			localMap = await localDataObject.getSharedObject<SharedMap>("mapKey");
 
 			const remoteContainer = await provider.loadTestContainer(testContainerConfig);
-			const remoteDataObject = await requestFluidObject<ITestFluidObject>(
-				remoteContainer,
-				"default",
-			);
+			const remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
 			remoteMap = await remoteDataObject.getSharedObject<SharedMap>("mapKey");
 		});
 

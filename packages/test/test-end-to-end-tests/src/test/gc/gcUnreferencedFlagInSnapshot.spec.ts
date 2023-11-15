@@ -9,7 +9,6 @@ import { ISummarizer } from "@fluidframework/container-runtime";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -104,7 +103,7 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 		}
 
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 	});
 
@@ -113,14 +112,12 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 		const { summarizer } = await createSummarizer(provider, mainContainer);
 
 		// Create couple of data stores.
-		const dataStore2 = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		const dataStore3 = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStore2 = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
+		const dataStore3 = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 
 		// Add the handles of the above dataStores to mark them as referenced.
 		mainDataStore._root.set("dataStore2", dataStore2.handle);
@@ -152,14 +149,12 @@ describeNoCompat("GC unreferenced flag in downloaded snapshot", (getTestObjectPr
 		const { summarizer } = await createSummarizer(provider, mainContainer);
 
 		// Create couple of data stores.
-		const dataStore2 = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
-		const dataStore3 = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStore2 = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
+		const dataStore3 = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 
 		// Add the handles of the above dataStores to mark them as referenced.
 		mainDataStore._root.set("dataStore2", dataStore2.handle);

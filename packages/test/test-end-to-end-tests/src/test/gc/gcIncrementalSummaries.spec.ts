@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { MockLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
@@ -63,7 +62,7 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider({ syncSummarizer: true });
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 	});
 
@@ -72,15 +71,13 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
-		const dataStoreB = await requestFluidObject<ITestDataObject>(
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStoreB = (await (
+			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-		const dataStoreC = await requestFluidObject<ITestDataObject>(
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStoreC = (await (
+			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 		// Summarize and validate that all data store entries are trees since this is the first summary.
@@ -107,15 +104,13 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
-		const dataStoreB = await requestFluidObject<ITestDataObject>(
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStoreB = (await (
+			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-		const dataStoreC = await requestFluidObject<ITestDataObject>(
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStoreC = (await (
+			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 		// Validate that all data store entries are trees since this is the first summary.
@@ -166,15 +161,13 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create data stores B and C, and mark them as referenced.
-		const dataStoreB = await requestFluidObject<ITestDataObject>(
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStoreB = (await (
+			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		dataStoreA._root.set("dataStoreB", dataStoreB.handle);
-		const dataStoreC = await requestFluidObject<ITestDataObject>(
-			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const dataStoreC = (await (
+			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 		// Summarize and validate that all data store entries are trees since this is the first summary.
@@ -249,18 +242,16 @@ describeNoCompat("GC incremental summaries", (getTestObjectProvider) => {
 			);
 
 			// Create data stores B and mark it as referenced.
-			const dataStoreB = await requestFluidObject<ITestDataObject>(
-				await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
+			const dataStoreB = (await (
+				await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
+			).entryPoint.get()) as ITestDataObject;
 			dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
 			// Create 10 data stores and mark them referenced by adding their handle to dataStoreB.
 			for (let i = 1; i <= 10; i++) {
-				const newDataStore = await requestFluidObject<ITestDataObject>(
-					await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const newDataStore = (await (
+					await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreB._root.set(`dataStoreB-${i}`, newDataStore.handle);
 			}
 			await provider.ensureSynchronized();

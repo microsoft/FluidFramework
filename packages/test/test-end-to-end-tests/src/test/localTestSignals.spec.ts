@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
@@ -38,10 +37,10 @@ describeFullCompat("TestSignals", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		provider = getTestObjectProvider();
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 		// need to be connected to send signals
 		if (container1.connectionState !== ConnectionState.Connected) {

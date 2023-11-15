@@ -14,7 +14,6 @@ import {
 	IConsensusOrderedCollection,
 	waitAcquireAndComplete,
 } from "@fluidframework/ordered-collection";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ChannelFactoryRegistry,
 	ITestFluidObject,
@@ -59,12 +58,12 @@ function generate(
 		beforeEach(async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+			dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 			sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataStore2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+			dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 			closeContainer2 = () => {
 				container2.close();
@@ -73,7 +72,7 @@ function generate(
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore3 = await requestFluidObject<ITestFluidObject>(container3, "default");
+			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 			sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 		});
 

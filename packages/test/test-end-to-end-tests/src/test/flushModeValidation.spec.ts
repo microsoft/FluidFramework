@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import { SharedMap } from "@fluidframework/map";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -47,7 +46,7 @@ describeFullCompat("Flush mode validation", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(configCopy);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		// Send an op in container1 so that it switches to "write" mode and wait for it to be connected.
 		dataObject1map1.set("key", "value");

@@ -8,7 +8,6 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ISummarizer } from "@fluidframework/container-runtime";
 import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -184,17 +183,16 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		// Create a document with GC allowed. It has to be allowed on creation because this setting cannot be changed
 		// throughout the lifetime of the document.
 		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC enabled as well.
 		const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Mark the data store as unreferenced by deleting its handle from the DDS.
@@ -236,7 +234,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		// Create a document with GC allowed. It has to be allowed on creation because this setting cannot be changed
 		// throughout the lifetime of the document.
 		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC disabled.
@@ -245,10 +243,9 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Mark the data store as unreferenced by deleting its handle from the DDS.
@@ -313,14 +310,13 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		// Create a document with GC allowed. It has to be allowed on creation because this setting cannot be changed
 		// throughout the lifetime of the document.
 		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Create a data store and mark it as unreferenced by storing and the removing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 		mainDataStore._root.delete("newDataStore");
 
@@ -391,7 +387,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 	it("keeps GC enabled throughout the lifetime of a document", async () => {
 		// Create a document with GC allowed.
 		mainContainer = await createContainer(true /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Create a summarizer with GC disabled.
@@ -400,10 +396,9 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Validate that GC ran even though gcAllowed was set to false. Whether GC runs or not is determined by the
@@ -418,7 +413,7 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 	it("keeps GC disabled throughout the lifetime of a document", async () => {
 		// Create a document with GC not allowed.
 		mainContainer = await createContainer(false /* gcAllowed */);
-		const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		await waitForContainerConnection(mainContainer);
 
 		// Get a new summarizer that sets gcAllowed option to true.
@@ -427,10 +422,9 @@ describeNoCompat("GC state reset in summaries", (getTestObjectProvider) => {
 		});
 
 		// Create and mark a new data store as referenced by storing its handle in a referenced DDS.
-		const newDataStore = await requestFluidObject<ITestDataObject>(
-			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType),
-			"",
-		);
+		const newDataStore = (await (
+			await mainDataStore._context.containerRuntime.createDataStore(TestDataObjectType)
+		).entryPoint.get()) as ITestDataObject;
 		mainDataStore._root.set("newDataStore", newDataStore.handle);
 
 		// Validate that GC did not run even though gcAllowed is set to true. Whether GC runs or not is determined by

@@ -10,7 +10,6 @@ import { ISummaryTree, SummaryType } from "@fluidframework/protocol-definitions"
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import { SharedMap } from "@fluidframework/map";
 import { gcTreeKey } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -61,7 +60,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 		}
 
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = await requestFluidObject<ITestDataObject>(mainContainer, "default");
+		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;
 		containerRuntime = dataStoreA._context.containerRuntime as IContainerRuntime;
 		await waitForContainerConnection(mainContainer);
 	});
@@ -71,10 +70,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			const { summarizer } = await createSummarizer(provider, mainContainer);
 
 			// Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
-			const dataStoreB = await requestFluidObject<ITestDataObject>(
-				await containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
+			const dataStoreB = (await (
+				await containerRuntime.createDataStore(TestDataObjectType)
+			).entryPoint.get()) as ITestDataObject;
 			dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
 			// Validate that the new data store does not have unreferenced timestamp.
@@ -178,10 +176,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 			const { summarizer: summarizer1 } = await createSummarizer(provider, mainContainer);
 
 			// Create a new data store and mark it as referenced by storing its handle in a referenced DDS.
-			const dataStoreB = await requestFluidObject<ITestDataObject>(
-				await containerRuntime.createDataStore(TestDataObjectType),
-				"",
-			);
+			const dataStoreB = (await (
+				await containerRuntime.createDataStore(TestDataObjectType)
+			).entryPoint.get()) as ITestDataObject;
 			dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
 			// Upload an attachment blob and mark it as referenced by storing its handle in a referenced DDS.
@@ -261,10 +258,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store B and mark it as referenced by storing its handle in A.
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
 				// Remove the reference to B which marks is as unreferenced.
@@ -308,14 +304,12 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
 				// Create data stores B and C and mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
@@ -369,18 +363,15 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
 				// Create data stores B, C and D and mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC -> dataStoreD
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreD = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreD = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 				dataStoreC._root.set("dataStoreD", dataStoreD.handle);
 				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
@@ -440,10 +431,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 				// Remove the reference to C to make it unreferenced.
@@ -457,10 +447,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
 
 				// 2. Create data store B. E = [].
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 
 				// 3. Add reference from A to B. E = [A -> B].
 				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
@@ -499,10 +488,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 				// Remove the reference to C to make it unreferenced.
@@ -518,7 +506,7 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				// 2. Create data store B. E = [].
 				const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
 				await dataStore.trySetAlias("dataStoreA");
-				const dataStoreB = await requestFluidObject<ITestDataObject>(dataStore, "");
+				const dataStoreB = (await dataStore.entryPoint.get()) as ITestDataObject;
 
 				// 4. Add reference from B to C. E = [A -> B, B -> C].
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
@@ -555,10 +543,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store C and mark it referenced by storing its handle in data store A.
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreA._root.set("dataStoreC", dataStoreC.handle);
 
 				// Remove the reference to C to make it unreferenced.
@@ -572,10 +559,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				assert(dsCTime1 !== undefined, `C should have unreferenced timestamp`);
 
 				// 2. Create data store B. E = [].
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 
 				// 3. Add reference from B to C. E = [].
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
@@ -616,10 +602,9 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				const { summarizer } = await createSummarizer(provider, mainContainer);
 
 				// Create data store D and mark it referenced by storing its handle in data store A.
-				const dataStoreD = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreD = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreA._root.set("dataStoreD", dataStoreD.handle);
 
 				// Remove the reference to D which marks it as unreferenced.
@@ -633,14 +618,12 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 				assert(dsDTime1 !== undefined, `D should have unreferenced timestamp`);
 
 				// 2. Create data stores B and C. E = [].
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 
 				// 3. Add reference from B to C. E = [].
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
@@ -714,14 +697,12 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
 				// Create data stores B and C and mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC.
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
 
@@ -769,18 +750,15 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
 				// Create data stores B, C and D mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC -> dataStoreD.
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreD = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreD = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreC._root.set("dataStoreD", dataStoreD.handle);
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 				dataStoreA._root.set("dataStoreB", dataStoreB.handle);
@@ -838,18 +816,15 @@ describeNoCompat("GC unreferenced timestamp", (getTestObjectProvider) => {
 
 				// Create data stores B, C and D mark them referenced as follows by storing their handles as follows:
 				// dataStoreA -> dataStoreB -> dataStoreC -> dataStoreD.
-				const dataStoreB = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreC = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
-				const dataStoreD = await requestFluidObject<ITestDataObject>(
-					await containerRuntime.createDataStore(TestDataObjectType),
-					"",
-				);
+				const dataStoreB = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreC = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
+				const dataStoreD = (await (
+					await containerRuntime.createDataStore(TestDataObjectType)
+				).entryPoint.get()) as ITestDataObject;
 				dataStoreC._root.set("dataStoreD", dataStoreD.handle);
 				dataStoreB._root.set("dataStoreC", dataStoreC.handle);
 				dataStoreA._root.set("dataStoreB", dataStoreB.handle);

@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime";
 import { ISummaryTree } from "@fluidframework/protocol-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestObjectProvider,
 	createSummarizer,
@@ -66,7 +65,10 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		messagePrefix: string,
 	) {
 		const blobId = blobNodePath.split("/")[2];
-		const response = await container.request({ url: blobNodePath });
+		const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
+		const response = await (entryPoint._context.containerRuntime as any).resolveHandle({
+			url: blobNodePath,
+		});
 		assert.strictEqual(response?.status, 404, `${messagePrefix}: Expecting a 404 response`);
 		assert.equal(
 			response.value,
@@ -78,7 +80,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 
 	async function createDataStoreAndSummarizer() {
 		const container = await provider.makeTestContainer(testContainerConfig);
-		const dataStore = await requestFluidObject<ITestDataObject>(container, "default");
+		const dataStore = (await container.getEntryPoint()) as ITestDataObject;
 
 		// Send an op to transition the container to write mode.
 		dataStore._root.set("transition to write", "true");
@@ -281,10 +283,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 			// expires.
 			await delay(sweepTimeoutMs / 2);
 			const container2 = await loadContainer(summary1.summaryVersion);
-			const container2MainDataStore = await requestFluidObject<ITestDataObject>(
-				container2,
-				"default",
-			);
+			const container2MainDataStore = (await container2.getEntryPoint()) as ITestDataObject;
 			// Upload the blob and keep the handle around until the blob uploaded by first container is deleted.
 			const container2BlobHandle = await container2MainDataStore._runtime.uploadBlob(
 				stringToBuffer(blobContents, "utf-8"),
@@ -303,10 +302,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 			// Load a container from this summary and upload a blob with the same content as the deleted blob.
 			// It should be fine to use it because from this container's perspective it uploaded a brand new blob.
 			const container3 = await loadContainer(summary2.summaryVersion);
-			const container3MainDataStore = await requestFluidObject<ITestDataObject>(
-				container3,
-				"default",
-			);
+			const container3MainDataStore = (await container3.getEntryPoint()) as ITestDataObject;
 
 			// Upload the same blob again in container3.
 			const container3BlobHandle = await container3MainDataStore._runtime.uploadBlob(
@@ -345,7 +341,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 				loaderProps: { ...testContainerConfig.loaderProps, detachedBlobStorage },
 			});
 			const mainContainer = await loader.createDetachedContainer(provider.defaultCodeDetails);
-			const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
+			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			return { mainContainer, mainDataStore };
 		}
 
@@ -676,7 +672,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		 */
 		async function createContainerAndDataStore() {
 			const mainContainer = await provider.makeTestContainer(testContainerConfig);
-			const mainDataStore = await requestFluidObject<ITestDataObject>(mainContainer, "/");
+			const mainDataStore = (await mainContainer.getEntryPoint()) as ITestDataObject;
 			await waitForContainerConnection(mainContainer, true);
 			return { mainContainer, mainDataStore };
 		}

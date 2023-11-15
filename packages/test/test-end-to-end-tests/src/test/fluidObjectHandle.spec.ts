@@ -6,7 +6,6 @@
 import assert from "assert";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { TestFluidObject, ITestObjectProvider } from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
@@ -27,20 +26,14 @@ describeFullCompat("FluidObjectHandle", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		// Create a Container for the first client.
 		const firstContainer = await provider.makeTestContainer();
-		firstContainerObject1 = await requestFluidObject<ITestDataObject>(
-			firstContainer,
-			"default",
-		);
+		firstContainerObject1 = (await firstContainer.getEntryPoint()) as ITestDataObject;
 		const containerRuntime1 = firstContainerObject1._context.containerRuntime;
 		const dataStore = await containerRuntime1.createDataStore(TestDataObjectType);
-		firstContainerObject2 = await requestFluidObject<ITestDataObject>(dataStore, "");
+		firstContainerObject2 = (await dataStore.entryPoint.get()) as ITestDataObject;
 
 		// Load the Container that was created by the first client.
 		const secondContainer = await provider.loadTestContainer();
-		secondContainerObject1 = await requestFluidObject<ITestDataObject>(
-			secondContainer,
-			"default",
-		);
+		secondContainerObject1 = (await secondContainer.getEntryPoint()) as ITestDataObject;
 
 		await provider.ensureSynchronized();
 	});

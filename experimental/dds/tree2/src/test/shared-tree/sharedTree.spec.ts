@@ -5,7 +5,6 @@
 import { strict as assert } from "assert";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { ITestFluidObject, waitForContainerConnection } from "@fluidframework/test-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerExperimental } from "@fluidframework/container-loader";
 import {
 	cursorForJsonableTreeNode,
@@ -885,7 +884,7 @@ describe("SharedTree", () => {
 
 			const loader = provider.makeTestLoader();
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
-			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = assertSchema(
 				await dataStore.getSharedObject<ISharedTree>("TestSharedTree"),
 				stringSequenceRootSchema,
@@ -1039,7 +1038,7 @@ describe("SharedTree", () => {
 
 			const loader = provider.makeTestLoader();
 			const loadedContainer = await loader.resolve({ url }, pendingOps);
-			const dataStore = await requestFluidObject<ITestFluidObject>(loadedContainer, "/");
+			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();

@@ -10,7 +10,6 @@ import {
 	enableOnNewFileKey,
 	IRuntimeAttributor,
 } from "@fluid-experimental/attributor";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { SharedCell } from "@fluidframework/cell";
 import {
 	ITestObjectProvider,
@@ -91,7 +90,7 @@ describeFullCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 	});
 
 	const sharedCellFromContainer = async (container: IContainer) => {
-		const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		return dataObject.getSharedObject<SharedCell>(cellId);
 	};
 

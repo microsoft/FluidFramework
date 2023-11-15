@@ -10,7 +10,6 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluid-private/test-version-utils";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 
 /**
@@ -113,7 +112,7 @@ describeFullCompat(
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 			// Get the outer dataStore from the detached container. This will create and load the inner data store
 			// during initialization.
-			const outerDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			const outerDataStore = (await container.getEntryPoint()) as ITestDataObject;
 			assert(outerDataStore !== undefined, "Could not load outer data store");
 			await assert.doesNotReject(container.attach(request), "Container did not attach");
 		});
@@ -138,7 +137,7 @@ describeFullCompat(
 			const container = await loader.createDetachedContainer(provider.defaultCodeDetails);
 
 			// Get the default dataStore from the detached container.
-			const defaultDataStore = await requestFluidObject<ITestDataObject>(container, "/");
+			const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
 
 			// Create another data store and make it visible by adding its handle in the root data store's DDS.
 			// This will create and load the inner data store during initialization.

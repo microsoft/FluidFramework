@@ -11,7 +11,6 @@ import {
 } from "@fluidframework/agent-scheduler";
 import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
 
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ITestObjectProvider, createTestContainerRuntimeFactory } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
@@ -44,7 +43,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 
 	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
 	const getAgentScheduler = async (container: IContainer): Promise<IAgentScheduler> => {
-		const scheduler = await requestFluidObject<IAgentScheduler>(container, "default");
+		const scheduler = (await container.getEntryPoint()) as IAgentScheduler;
 		await forceWriteMode(scheduler);
 		return scheduler;
 	};
@@ -125,11 +124,8 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 			container2 = await loadContainer();
 			scheduler2 = await getAgentScheduler(container2);
 
-			// const dataObject2 = await requestFluidObject<ITestDataObject>(container2, "default");
-
 			// // Set a key in the root map. The Container is created in "read" mode and so it cannot currently pick
 			// // tasks. Sending an op will switch it to "write" mode.
-			// dataObject2._root.set("tempKey2", "tempValue2");
 			await provider.ensureSynchronized();
 		});
 
@@ -255,10 +251,10 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 
 		beforeEach(async () => {
 			container1 = await createContainer();
-			scheduler1 = await requestFluidObject<IAgentScheduler>(container1, "default");
+			scheduler1 = (await container1.getEntryPoint()) as IAgentScheduler;
 
 			container2 = await loadContainer();
-			scheduler2 = await requestFluidObject<IAgentScheduler>(container2, "default");
+			scheduler2 = (await container2.getEntryPoint()) as IAgentScheduler;
 		});
 
 		it("Tasks picked while in read mode are assigned after switching to write mode", async () => {

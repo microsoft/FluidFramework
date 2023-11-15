@@ -14,7 +14,6 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { SharedMap } from "@fluidframework/map";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -125,13 +124,13 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		container1 = await provider.makeTestContainer(configCopy);
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(configCopy);
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 

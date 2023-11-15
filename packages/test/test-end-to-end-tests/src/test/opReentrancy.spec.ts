@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { SharedDirectory, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import {
 	ChannelFactoryRegistry,
@@ -68,8 +67,8 @@ describeFullCompat("Concurrent op processing via DDS event handlers", (getTestOb
 		container1 = await provider.makeTestContainer(configWithFeatureGates);
 		container2 = await provider.loadTestContainer(configWithFeatureGates);
 
-		dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
-		dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
 
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);

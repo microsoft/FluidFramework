@@ -20,7 +20,6 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { describeFullCompat, itExpects } from "@fluid-private/test-version-utils";
 
 interface ICodeProposalTestPackage extends IFluidPackage {
@@ -193,7 +192,7 @@ describeFullCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 		const maps: ISharedMap[] = [];
 		for (const container of containers) {
 			if (!container.closed) {
-				const dataObject = await requestFluidObject<ITestFluidObject>(container, "default");
+				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 				const map = await dataObject.getSharedObject<ISharedMap>("map");
 				const key = createDocumentId();
 				map.set(key, key);

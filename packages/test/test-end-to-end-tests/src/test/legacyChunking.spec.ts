@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 import { SharedMap } from "@fluidframework/map";
-import { requestFluidObject } from "@fluidframework/runtime-utils";
 import {
 	ITestFluidObject,
 	ChannelFactoryRegistry,
@@ -81,14 +80,11 @@ describeInstallVersions(
 
 	const setupContainers = async () => {
 		const oldContainer = await createOldContainer();
-		const oldDataObject = await requestFluidObject<ITestFluidObject>(oldContainer, "default");
+		const oldDataObject = (await oldContainer.getEntryPoint()) as ITestFluidObject;
 		oldMap = await oldDataObject.getSharedObject<SharedMap>(mapId);
 
 		const containerOnLatest = await provider.loadTestContainer(testContainerConfig);
-		const newDataObject = await requestFluidObject<ITestFluidObject>(
-			containerOnLatest,
-			"default",
-		);
+		const newDataObject = (await containerOnLatest.getEntryPoint()) as ITestFluidObject;
 		newMap = await newDataObject.getSharedObject<SharedMap>(mapId);
 
 		await provider.ensureSynchronized();

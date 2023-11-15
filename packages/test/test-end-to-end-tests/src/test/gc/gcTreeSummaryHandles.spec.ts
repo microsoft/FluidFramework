@@ -305,18 +305,16 @@ describeNoCompat("GC Tree stored as a handle in summaries", (getTestObjectProvid
 			);
 
 			mainContainer = await createContainer();
-			dataStoreA = await requestFluidObject<ITestFluidObject>(mainContainer, "default");
+			dataStoreA = (await mainContainer.getEntryPoint()) as ITestFluidObject;
 
 			// Create data stores B and C, and mark them as referenced.
-			dataStoreB = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type),
-				"",
-			);
+			dataStoreB = (await (
+				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type)
+			).entryPoint.get()) as ITestFluidObject;
 			dataStoreA.root.set("dataStoreB", dataStoreB.handle);
-			dataStoreC = await requestFluidObject<ITestFluidObject>(
-				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type),
-				"",
-			);
+			dataStoreC = (await (
+				await dataStoreA.context.containerRuntime.createDataStore(defaultFactory.type)
+			).entryPoint.get()) as ITestFluidObject;
 			dataStoreA.root.set("dataStoreC", dataStoreC.handle);
 
 			await waitForContainerConnection(mainContainer);
