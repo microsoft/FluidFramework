@@ -10,14 +10,14 @@ import {
 	Any,
 	FieldNodeSchema,
 	TreeFieldSchema,
-	LeafSchema,
-	MapSchema,
 	ObjectNodeSchema,
 	allowedTypesIsAny,
 	schemaIsFieldNode,
 	schemaIsLeaf,
 	schemaIsMap,
 	schemaIsObjectNode,
+	LeafNodeSchema,
+	MapNodeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/typed-schema/typedTreeSchema";
 import { FieldKinds } from "../../../feature-libraries";
@@ -90,40 +90,40 @@ describe("typedTreeSchema", () => {
 	});
 
 	{
-		type _1 = requireAssignableTo<typeof leaf.boolean, LeafSchema>;
+		type _1 = requireAssignableTo<typeof leaf.boolean, LeafNodeSchema>;
 		type _2a = requireAssignableTo<typeof basicFieldNode, FieldNodeSchema>;
 		type _2 = requireAssignableTo<typeof jsonArray, FieldNodeSchema>;
-		type _3 = requireAssignableTo<typeof jsonObject, MapSchema>;
+		type _3 = requireAssignableTo<typeof jsonObject, MapNodeSchema>;
 		type _4 = requireAssignableTo<typeof emptyObjectSchema, ObjectNodeSchema>;
 		type _5 = requireAssignableTo<typeof basicObjectSchema, ObjectNodeSchema>;
 	}
 
 	{
-		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafSchema>>;
+		type _1 = requireTrue<isAssignableTo<typeof leaf.boolean, LeafNodeSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof leaf.boolean, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, MapSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof leaf.boolean, MapNodeSchema>>;
 		type _4 = requireFalse<isAssignableTo<typeof leaf.boolean, ObjectNodeSchema>>;
 	}
 
 	{
-		type _1 = requireFalse<isAssignableTo<typeof jsonArray, LeafSchema>>;
+		type _1 = requireFalse<isAssignableTo<typeof jsonArray, LeafNodeSchema>>;
 		type _2 = requireTrue<isAssignableTo<typeof jsonArray, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof jsonArray, MapSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof jsonArray, MapNodeSchema>>;
 		// TODO: Fix
 		// type _4 = requireFalse<isAssignableTo<typeof jsonArray, ObjectNodeSchema>>
 	}
 
 	{
-		type _1 = requireFalse<isAssignableTo<typeof jsonObject, LeafSchema>>;
+		type _1 = requireFalse<isAssignableTo<typeof jsonObject, LeafNodeSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof jsonObject, FieldNodeSchema>>;
-		type _3 = requireTrue<isAssignableTo<typeof jsonObject, MapSchema>>;
+		type _3 = requireTrue<isAssignableTo<typeof jsonObject, MapNodeSchema>>;
 		type _4 = requireFalse<isAssignableTo<typeof jsonObject, ObjectNodeSchema>>;
 	}
 
 	{
-		type _1 = requireFalse<isAssignableTo<typeof basicObjectSchema, LeafSchema>>;
+		type _1 = requireFalse<isAssignableTo<typeof basicObjectSchema, LeafNodeSchema>>;
 		type _2 = requireFalse<isAssignableTo<typeof basicObjectSchema, FieldNodeSchema>>;
-		type _3 = requireFalse<isAssignableTo<typeof basicObjectSchema, MapSchema>>;
+		type _3 = requireFalse<isAssignableTo<typeof basicObjectSchema, MapNodeSchema>>;
 		type _4 = requireTrue<isAssignableTo<typeof basicObjectSchema, ObjectNodeSchema>>;
 	}
 });

@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_AgentSchedulerFactory():
     TypeOnly<old.AgentSchedulerFactory>;
 declare function use_current_ClassDeclaration_AgentSchedulerFactory(
-    use: TypeOnly<current.AgentSchedulerFactory>);
+    use: TypeOnly<current.AgentSchedulerFactory>): void;
 use_current_ClassDeclaration_AgentSchedulerFactory(
     get_old_ClassDeclaration_AgentSchedulerFactory());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_AgentSchedulerFactory(
 declare function get_current_ClassDeclaration_AgentSchedulerFactory():
     TypeOnly<current.AgentSchedulerFactory>;
 declare function use_old_ClassDeclaration_AgentSchedulerFactory(
-    use: TypeOnly<old.AgentSchedulerFactory>);
+    use: TypeOnly<old.AgentSchedulerFactory>): void;
 use_old_ClassDeclaration_AgentSchedulerFactory(
     get_current_ClassDeclaration_AgentSchedulerFactory());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_AgentSchedulerFactory(
 declare function get_old_VariableDeclaration_IAgentScheduler():
     TypeOnly<typeof old.IAgentScheduler>;
 declare function use_current_VariableDeclaration_IAgentScheduler(
-    use: TypeOnly<typeof current.IAgentScheduler>);
+    use: TypeOnly<typeof current.IAgentScheduler>): void;
 use_current_VariableDeclaration_IAgentScheduler(
     get_old_VariableDeclaration_IAgentScheduler());
 
@@ -65,7 +65,7 @@ use_current_VariableDeclaration_IAgentScheduler(
 declare function get_current_VariableDeclaration_IAgentScheduler():
     TypeOnly<typeof current.IAgentScheduler>;
 declare function use_old_VariableDeclaration_IAgentScheduler(
-    use: TypeOnly<typeof old.IAgentScheduler>);
+    use: TypeOnly<typeof old.IAgentScheduler>): void;
 use_old_VariableDeclaration_IAgentScheduler(
     get_current_VariableDeclaration_IAgentScheduler());
 
@@ -77,7 +77,7 @@ use_old_VariableDeclaration_IAgentScheduler(
 declare function get_old_InterfaceDeclaration_IAgentScheduler():
     TypeOnly<old.IAgentScheduler>;
 declare function use_current_InterfaceDeclaration_IAgentScheduler(
-    use: TypeOnly<current.IAgentScheduler>);
+    use: TypeOnly<current.IAgentScheduler>): void;
 use_current_InterfaceDeclaration_IAgentScheduler(
     get_old_InterfaceDeclaration_IAgentScheduler());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IAgentScheduler(
 declare function get_current_InterfaceDeclaration_IAgentScheduler():
     TypeOnly<current.IAgentScheduler>;
 declare function use_old_InterfaceDeclaration_IAgentScheduler(
-    use: TypeOnly<old.IAgentScheduler>);
+    use: TypeOnly<old.IAgentScheduler>): void;
 use_old_InterfaceDeclaration_IAgentScheduler(
     get_current_InterfaceDeclaration_IAgentScheduler());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IAgentScheduler(
 declare function get_old_InterfaceDeclaration_IAgentSchedulerEvents():
     TypeOnly<old.IAgentSchedulerEvents>;
 declare function use_current_InterfaceDeclaration_IAgentSchedulerEvents(
-    use: TypeOnly<current.IAgentSchedulerEvents>);
+    use: TypeOnly<current.IAgentSchedulerEvents>): void;
 use_current_InterfaceDeclaration_IAgentSchedulerEvents(
     get_old_InterfaceDeclaration_IAgentSchedulerEvents());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_IAgentSchedulerEvents(
 declare function get_current_InterfaceDeclaration_IAgentSchedulerEvents():
     TypeOnly<current.IAgentSchedulerEvents>;
 declare function use_old_InterfaceDeclaration_IAgentSchedulerEvents(
-    use: TypeOnly<old.IAgentSchedulerEvents>);
+    use: TypeOnly<old.IAgentSchedulerEvents>): void;
 use_old_InterfaceDeclaration_IAgentSchedulerEvents(
     get_current_InterfaceDeclaration_IAgentSchedulerEvents());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_IAgentSchedulerEvents(
 declare function get_old_InterfaceDeclaration_IProvideAgentScheduler():
     TypeOnly<old.IProvideAgentScheduler>;
 declare function use_current_InterfaceDeclaration_IProvideAgentScheduler(
-    use: TypeOnly<current.IProvideAgentScheduler>);
+    use: TypeOnly<current.IProvideAgentScheduler>): void;
 use_current_InterfaceDeclaration_IProvideAgentScheduler(
     get_old_InterfaceDeclaration_IProvideAgentScheduler());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_IProvideAgentScheduler(
 declare function get_current_InterfaceDeclaration_IProvideAgentScheduler():
     TypeOnly<current.IProvideAgentScheduler>;
 declare function use_old_InterfaceDeclaration_IProvideAgentScheduler(
-    use: TypeOnly<old.IProvideAgentScheduler>);
+    use: TypeOnly<old.IProvideAgentScheduler>): void;
 use_old_InterfaceDeclaration_IProvideAgentScheduler(
     get_current_InterfaceDeclaration_IProvideAgentScheduler());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_IProvideAgentScheduler(
 declare function get_old_InterfaceDeclaration_ITaskSubscriptionEvents():
     TypeOnly<old.ITaskSubscriptionEvents>;
 declare function use_current_InterfaceDeclaration_ITaskSubscriptionEvents(
-    use: TypeOnly<current.ITaskSubscriptionEvents>);
+    use: TypeOnly<current.ITaskSubscriptionEvents>): void;
 use_current_InterfaceDeclaration_ITaskSubscriptionEvents(
     get_old_InterfaceDeclaration_ITaskSubscriptionEvents());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_ITaskSubscriptionEvents(
 declare function get_current_InterfaceDeclaration_ITaskSubscriptionEvents():
     TypeOnly<current.ITaskSubscriptionEvents>;
 declare function use_old_InterfaceDeclaration_ITaskSubscriptionEvents(
-    use: TypeOnly<old.ITaskSubscriptionEvents>);
+    use: TypeOnly<old.ITaskSubscriptionEvents>): void;
 use_old_InterfaceDeclaration_ITaskSubscriptionEvents(
     get_current_InterfaceDeclaration_ITaskSubscriptionEvents());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_ITaskSubscriptionEvents(
 declare function get_old_ClassDeclaration_TaskSubscription():
     TypeOnly<old.TaskSubscription>;
 declare function use_current_ClassDeclaration_TaskSubscription(
-    use: TypeOnly<current.TaskSubscription>);
+    use: TypeOnly<current.TaskSubscription>): void;
 use_current_ClassDeclaration_TaskSubscription(
     get_old_ClassDeclaration_TaskSubscription());
 
@@ -185,6 +185,6 @@ use_current_ClassDeclaration_TaskSubscription(
 declare function get_current_ClassDeclaration_TaskSubscription():
     TypeOnly<current.TaskSubscription>;
 declare function use_old_ClassDeclaration_TaskSubscription(
-    use: TypeOnly<old.TaskSubscription>);
+    use: TypeOnly<old.TaskSubscription>): void;
 use_old_ClassDeclaration_TaskSubscription(
     get_current_ClassDeclaration_TaskSubscription());
