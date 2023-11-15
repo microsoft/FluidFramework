@@ -3,20 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaBuilder, Typed, leaf } from "@fluid-experimental/tree2";
+import {
+	AllowedUpdateType,
+	buildTreeConfiguration,
+	TypedNode,
+	SchemaBuilder,
+} from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "inventory app" });
+const builder = new SchemaBuilder({ scope: "com.contoso.app.inventory" });
 
-export const part = builder.struct("Contoso:Part-1.0.0", {
-	name: leaf.string,
-	quantity: leaf.number,
+export type Part = TypedNode<typeof Part>;
+export const Part = builder.object("Part", {
+	name: builder.string,
+	quantity: builder.number,
 });
 
-export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: builder.sequence(part),
+export type Inventory = TypedNode<typeof Inventory>;
+export const Inventory = builder.object("Inventory", {
+	parts: builder.list(Part),
 });
 
-export const schema = builder.toDocumentSchema(inventory);
-
-export type InventoryField = Typed<typeof schema.rootFieldSchema>;
-export type Inventory = Typed<typeof inventory>;
+export const treeConfiguration = buildTreeConfiguration({
+	schema: builder.intoSchema(Inventory),
+	allowedSchemaModifications: AllowedUpdateType.None,
+	initialTree: {
+		parts: {
+			// TODO: FieldNodes should not require wrapper object
+			"": [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		},
+	},
+});

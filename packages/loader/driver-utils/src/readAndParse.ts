@@ -17,6 +17,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions";
  * @typeParam T - Output type matching JSON format of inpyt blob data.
  *
  * @returns The object that we decoded and parsed via `JSON.parse`.
+ * @public
  */
 export async function readAndParse<T>(
 	storage: Pick<IDocumentStorageService, "readBlob">,

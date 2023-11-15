@@ -7,12 +7,18 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import { brand } from "../../util";
 import {
 	ISharedTree,
-	ISharedTreeView,
+	ITreeCheckout,
 	InitializeAndSchematizeConfiguration,
 	SharedTreeFactory,
 	runSynchronous,
 } from "../../shared-tree";
-import { Any, FieldKinds, FieldSchema, singleTextCursor } from "../../feature-libraries";
+import {
+	Any,
+	FieldKinds,
+	TreeFieldSchema,
+	TreeCompressionStrategy,
+	cursorForJsonableTreeNode,
+} from "../../feature-libraries";
 import { typeboxValidator } from "../../external-utilities";
 import {
 	TestTreeProviderLite,
@@ -26,11 +32,14 @@ import {
 import { AllowedUpdateType, FieldKey, JsonableTree, UpPath, rootFieldKey } from "../../core";
 import { leaf, SchemaBuilder } from "../../domains";
 
-const factory = new SharedTreeFactory({ jsonValidator: typeboxValidator });
+const factory = new SharedTreeFactory({
+	jsonValidator: typeboxValidator,
+	summaryEncodeType: TreeCompressionStrategy.Uncompressed,
+});
 
 const builder = new SchemaBuilder({ scope: "test trees" });
 const rootNodeSchema = builder.map("TestInner", SchemaBuilder.sequence(Any));
-const testSchema = builder.toDocumentSchema(SchemaBuilder.sequence(Any));
+const testSchema = builder.intoSchema(SchemaBuilder.sequence(Any));
 
 function generateCompleteTree(
 	fields: FieldKey[],
@@ -41,17 +50,17 @@ function generateCompleteTree(
 		new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 		"test",
 	);
-	const view = tree.schematize({
+	const view = tree.schematizeInternal({
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema: testSchema,
 		initialTree: [],
-	});
+	}).checkout;
 	generateTreeRecursively(view, undefined, fields, height, nodesPerField, { value: 1 });
 	return tree;
 }
 
 function generateTreeRecursively(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	parent: UpPath | undefined,
 	fieldKeys: FieldKey[],
 	height: number,
@@ -71,14 +80,14 @@ function generateTreeRecursively(
 
 		for (let i = 0; i < nodesPerField; i++) {
 			if (height === 1) {
-				const writeCursor = singleTextCursor({
+				const writeCursor = cursorForJsonableTreeNode({
 					type: leaf.string.name,
 					value: currentValue.value.toString(),
 				});
 				field.insert(i, writeCursor);
 				currentValue.value++;
 			} else {
-				const writeCursor = singleTextCursor({
+				const writeCursor = cursorForJsonableTreeNode({
 					type: rootNodeSchema.name,
 				});
 				field.insert(i, writeCursor);
@@ -136,7 +145,7 @@ export function generateTestTrees() {
 
 				// Apply an edit to the tree which inserts a node with a value
 				runSynchronous(tree1, () => {
-					const writeCursors = singleTextCursor(initialState);
+					const writeCursors = cursorForJsonableTreeNode(initialState);
 					const field = tree1.editor.sequenceField({
 						parent: undefined,
 						field: rootFieldKey,
@@ -169,19 +178,20 @@ export function generateTestTrees() {
 			runScenario: async (takeSnapshot) => {
 				const value = "42";
 				const provider = new TestTreeProviderLite(2);
-				const tree1 = provider.trees[0].schematize(emptyJsonSequenceConfig);
+				const tree1 = provider.trees[0].schematizeInternal(emptyJsonSequenceConfig);
 				provider.processMessages();
-				const tree2 = provider.trees[1].schematize(emptyJsonSequenceConfig);
+				const tree2 =
+					provider.trees[1].schematizeInternal(emptyJsonSequenceConfig).checkout;
 				provider.processMessages();
 
 				// Insert node
-				tree1.context.root.insertNodes(0, [value]);
+				tree1.editableTree.insertAtStart([value]);
 				provider.processMessages();
 
 				await takeSnapshot(provider.trees[0], "tree-0-after-insert");
 
 				// Delete node
-				remove(tree1, 0, 1);
+				tree1.editableTree.removeAt(0);
 
 				provider.processMessages();
 
@@ -199,11 +209,11 @@ export function generateTestTrees() {
 						initialTree: [0, 1, 2, 3],
 						allowedSchemaModifications: AllowedUpdateType.None,
 					};
-					const tree1 = provider.trees[0].schematize(config);
+					const tree1 = provider.trees[0].schematizeInternal(config).checkout;
 					provider.processMessages();
-					const tree2 = provider.trees[1].schematize(config);
-					const tree3 = provider.trees[2].schematize(config);
-					const tree4 = provider.trees[3].schematize(config);
+					const tree2 = provider.trees[1].schematizeInternal(config).checkout;
+					const tree3 = provider.trees[2].schematizeInternal(config).checkout;
+					const tree4 = provider.trees[3].schematizeInternal(config).checkout;
 					provider.processMessages();
 					remove(tree1, index, 1);
 					remove(tree2, index, 1);
@@ -221,9 +231,12 @@ export function generateTestTrees() {
 					"test",
 				);
 
-				baseTree.view.storedSchema.update(jsonSequenceRootSchema);
+				const tree1 = baseTree.schematizeInternal({
+					allowedSchemaModifications: AllowedUpdateType.None,
+					schema: jsonSequenceRootSchema,
+					initialTree: [],
+				}).checkout;
 
-				const tree1 = baseTree.view;
 				const tree2 = tree1.fork();
 				insert(tree1, 0, "y");
 				tree2.rebaseOnto(tree1);
@@ -268,9 +281,7 @@ export function generateTestTrees() {
 					scope: "has-handle",
 					libraries: [leaf.library],
 				});
-				const docSchema = innerBuilder.toDocumentSchema(
-					SchemaBuilder.optional(leaf.handle),
-				);
+				const docSchema = innerBuilder.intoSchema(SchemaBuilder.optional(leaf.handle));
 
 				const config = {
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -281,13 +292,16 @@ export function generateTestTrees() {
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
 				);
-				const view = tree.schematize(config);
+				const view = tree.schematizeInternal(config).checkout;
 
 				const field = view.editor.optionalField({
 					parent: undefined,
 					field: rootFieldKey,
 				});
-				field.set(singleTextCursor({ type: leaf.handle.name, value: tree.handle }), true);
+				field.set(
+					cursorForJsonableTreeNode({ type: leaf.handle.name, value: tree.handle }),
+					true,
+				);
 				await takeSnapshot(tree, "final");
 			},
 		},
@@ -299,11 +313,9 @@ export function generateTestTrees() {
 				});
 				const seqMapSchema = innerBuilder.mapRecursive(
 					"SeqMap",
-					FieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
+					TreeFieldSchema.createUnsafe(FieldKinds.sequence, [() => seqMapSchema]),
 				);
-				const docSchema = innerBuilder.toDocumentSchema(
-					SchemaBuilder.sequence(seqMapSchema),
-				);
+				const docSchema = innerBuilder.intoSchema(SchemaBuilder.sequence(seqMapSchema));
 
 				const config = {
 					allowedSchemaModifications: AllowedUpdateType.None,
@@ -315,7 +327,7 @@ export function generateTestTrees() {
 					new MockFluidDataStoreRuntime({ clientId: "test-client", id: "test" }),
 					"test",
 				);
-				const view = tree.schematize(config);
+				const view = tree.schematizeInternal(config).checkout;
 				view.transaction.start();
 				// We must make this shallow change to the sequence field as part of the same transaction as the
 				// nested change. Otherwise, the nested change will be represented using the generic field kind.
@@ -324,7 +336,7 @@ export function generateTestTrees() {
 						parent: undefined,
 						field: rootFieldKey,
 					})
-					.insert(0, [singleTextCursor({ type: seqMapSchema.name })]);
+					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
 				// The nested change
 				view.editor
 					.sequenceField({
@@ -335,7 +347,7 @@ export function generateTestTrees() {
 						},
 						field: brand("foo"),
 					})
-					.insert(0, [singleTextCursor({ type: seqMapSchema.name })]);
+					.insert(0, [cursorForJsonableTreeNode({ type: seqMapSchema.name })]);
 				view.transaction.commit();
 				await takeSnapshot(tree, "final");
 			},

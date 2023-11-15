@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_DefaultTokenProvider():
     TypeOnly<old.DefaultTokenProvider>;
 declare function use_current_ClassDeclaration_DefaultTokenProvider(
-    use: TypeOnly<current.DefaultTokenProvider>);
+    use: TypeOnly<current.DefaultTokenProvider>): void;
 use_current_ClassDeclaration_DefaultTokenProvider(
     get_old_ClassDeclaration_DefaultTokenProvider());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_DefaultTokenProvider(
 declare function get_current_ClassDeclaration_DefaultTokenProvider():
     TypeOnly<current.DefaultTokenProvider>;
 declare function use_old_ClassDeclaration_DefaultTokenProvider(
-    use: TypeOnly<old.DefaultTokenProvider>);
+    use: TypeOnly<old.DefaultTokenProvider>): void;
 use_old_ClassDeclaration_DefaultTokenProvider(
     get_current_ClassDeclaration_DefaultTokenProvider());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_DefaultTokenProvider(
 declare function get_old_ClassDeclaration_DocumentPostCreateError():
     TypeOnly<old.DocumentPostCreateError>;
 declare function use_current_ClassDeclaration_DocumentPostCreateError(
-    use: TypeOnly<current.DocumentPostCreateError>);
+    use: TypeOnly<current.DocumentPostCreateError>): void;
 use_current_ClassDeclaration_DocumentPostCreateError(
     get_old_ClassDeclaration_DocumentPostCreateError());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_DocumentPostCreateError(
 declare function get_current_ClassDeclaration_DocumentPostCreateError():
     TypeOnly<current.DocumentPostCreateError>;
 declare function use_old_ClassDeclaration_DocumentPostCreateError(
-    use: TypeOnly<old.DocumentPostCreateError>);
+    use: TypeOnly<old.DocumentPostCreateError>): void;
 use_old_ClassDeclaration_DocumentPostCreateError(
     get_current_ClassDeclaration_DocumentPostCreateError());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_DocumentPostCreateError(
 declare function get_old_InterfaceDeclaration_IRouterliciousDriverPolicies():
     TypeOnly<old.IRouterliciousDriverPolicies>;
 declare function use_current_InterfaceDeclaration_IRouterliciousDriverPolicies(
-    use: TypeOnly<current.IRouterliciousDriverPolicies>);
+    use: TypeOnly<current.IRouterliciousDriverPolicies>): void;
 use_current_InterfaceDeclaration_IRouterliciousDriverPolicies(
     get_old_InterfaceDeclaration_IRouterliciousDriverPolicies());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IRouterliciousDriverPolicies(
 declare function get_current_InterfaceDeclaration_IRouterliciousDriverPolicies():
     TypeOnly<current.IRouterliciousDriverPolicies>;
 declare function use_old_InterfaceDeclaration_IRouterliciousDriverPolicies(
-    use: TypeOnly<old.IRouterliciousDriverPolicies>);
+    use: TypeOnly<old.IRouterliciousDriverPolicies>): void;
 use_old_InterfaceDeclaration_IRouterliciousDriverPolicies(
     get_current_InterfaceDeclaration_IRouterliciousDriverPolicies());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IRouterliciousDriverPolicies(
 declare function get_old_InterfaceDeclaration_ITokenProvider():
     TypeOnly<old.ITokenProvider>;
 declare function use_current_InterfaceDeclaration_ITokenProvider(
-    use: TypeOnly<current.ITokenProvider>);
+    use: TypeOnly<current.ITokenProvider>): void;
 use_current_InterfaceDeclaration_ITokenProvider(
     get_old_InterfaceDeclaration_ITokenProvider());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_ITokenProvider(
 declare function get_current_InterfaceDeclaration_ITokenProvider():
     TypeOnly<current.ITokenProvider>;
 declare function use_old_InterfaceDeclaration_ITokenProvider(
-    use: TypeOnly<old.ITokenProvider>);
+    use: TypeOnly<old.ITokenProvider>): void;
 use_old_InterfaceDeclaration_ITokenProvider(
     get_current_InterfaceDeclaration_ITokenProvider());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_ITokenProvider(
 declare function get_old_InterfaceDeclaration_ITokenResponse():
     TypeOnly<old.ITokenResponse>;
 declare function use_current_InterfaceDeclaration_ITokenResponse(
-    use: TypeOnly<current.ITokenResponse>);
+    use: TypeOnly<current.ITokenResponse>): void;
 use_current_InterfaceDeclaration_ITokenResponse(
     get_old_InterfaceDeclaration_ITokenResponse());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_ITokenResponse(
 declare function get_current_InterfaceDeclaration_ITokenResponse():
     TypeOnly<current.ITokenResponse>;
 declare function use_old_InterfaceDeclaration_ITokenResponse(
-    use: TypeOnly<old.ITokenResponse>);
+    use: TypeOnly<old.ITokenResponse>): void;
 use_old_InterfaceDeclaration_ITokenResponse(
     get_current_InterfaceDeclaration_ITokenResponse());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_ITokenResponse(
 declare function get_old_InterfaceDeclaration_ITokenService():
     TypeOnly<old.ITokenService>;
 declare function use_current_InterfaceDeclaration_ITokenService(
-    use: TypeOnly<current.ITokenService>);
+    use: TypeOnly<current.ITokenService>): void;
 use_current_InterfaceDeclaration_ITokenService(
     get_old_InterfaceDeclaration_ITokenService());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_ITokenService(
 declare function get_current_InterfaceDeclaration_ITokenService():
     TypeOnly<current.ITokenService>;
 declare function use_old_InterfaceDeclaration_ITokenService(
-    use: TypeOnly<old.ITokenService>);
+    use: TypeOnly<old.ITokenService>): void;
 use_old_InterfaceDeclaration_ITokenService(
     get_current_InterfaceDeclaration_ITokenService());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_ITokenService(
 declare function get_old_ClassDeclaration_RouterliciousDocumentServiceFactory():
     TypeOnly<old.RouterliciousDocumentServiceFactory>;
 declare function use_current_ClassDeclaration_RouterliciousDocumentServiceFactory(
-    use: TypeOnly<current.RouterliciousDocumentServiceFactory>);
+    use: TypeOnly<current.RouterliciousDocumentServiceFactory>): void;
 use_current_ClassDeclaration_RouterliciousDocumentServiceFactory(
     get_old_ClassDeclaration_RouterliciousDocumentServiceFactory());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_RouterliciousDocumentServiceFactory(
 declare function get_current_ClassDeclaration_RouterliciousDocumentServiceFactory():
     TypeOnly<current.RouterliciousDocumentServiceFactory>;
 declare function use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
-    use: TypeOnly<old.RouterliciousDocumentServiceFactory>);
+    use: TypeOnly<old.RouterliciousDocumentServiceFactory>): void;
 use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
     get_current_ClassDeclaration_RouterliciousDocumentServiceFactory());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_RouterliciousDocumentServiceFactory(
 declare function get_old_EnumDeclaration_RouterliciousErrorType():
     TypeOnly<old.RouterliciousErrorType>;
 declare function use_current_EnumDeclaration_RouterliciousErrorType(
-    use: TypeOnly<current.RouterliciousErrorType>);
+    use: TypeOnly<current.RouterliciousErrorType>): void;
 use_current_EnumDeclaration_RouterliciousErrorType(
     get_old_EnumDeclaration_RouterliciousErrorType());
 
@@ -209,7 +209,7 @@ use_current_EnumDeclaration_RouterliciousErrorType(
 declare function get_current_EnumDeclaration_RouterliciousErrorType():
     TypeOnly<current.RouterliciousErrorType>;
 declare function use_old_EnumDeclaration_RouterliciousErrorType(
-    use: TypeOnly<old.RouterliciousErrorType>);
+    use: TypeOnly<old.RouterliciousErrorType>): void;
 use_old_EnumDeclaration_RouterliciousErrorType(
     get_current_EnumDeclaration_RouterliciousErrorType());
 
@@ -221,7 +221,7 @@ use_old_EnumDeclaration_RouterliciousErrorType(
 declare function get_old_VariableDeclaration_RouterliciousErrorTypes():
     TypeOnly<typeof old.RouterliciousErrorTypes>;
 declare function use_current_VariableDeclaration_RouterliciousErrorTypes(
-    use: TypeOnly<typeof current.RouterliciousErrorTypes>);
+    use: TypeOnly<typeof current.RouterliciousErrorTypes>): void;
 use_current_VariableDeclaration_RouterliciousErrorTypes(
     get_old_VariableDeclaration_RouterliciousErrorTypes());
 
@@ -233,7 +233,7 @@ use_current_VariableDeclaration_RouterliciousErrorTypes(
 declare function get_current_VariableDeclaration_RouterliciousErrorTypes():
     TypeOnly<typeof current.RouterliciousErrorTypes>;
 declare function use_old_VariableDeclaration_RouterliciousErrorTypes(
-    use: TypeOnly<typeof old.RouterliciousErrorTypes>);
+    use: TypeOnly<typeof old.RouterliciousErrorTypes>): void;
 use_old_VariableDeclaration_RouterliciousErrorTypes(
     get_current_VariableDeclaration_RouterliciousErrorTypes());
 
@@ -245,7 +245,7 @@ use_old_VariableDeclaration_RouterliciousErrorTypes(
 declare function get_old_TypeAliasDeclaration_RouterliciousErrorTypes():
     TypeOnly<old.RouterliciousErrorTypes>;
 declare function use_current_TypeAliasDeclaration_RouterliciousErrorTypes(
-    use: TypeOnly<current.RouterliciousErrorTypes>);
+    use: TypeOnly<current.RouterliciousErrorTypes>): void;
 use_current_TypeAliasDeclaration_RouterliciousErrorTypes(
     get_old_TypeAliasDeclaration_RouterliciousErrorTypes());
 
@@ -257,6 +257,6 @@ use_current_TypeAliasDeclaration_RouterliciousErrorTypes(
 declare function get_current_TypeAliasDeclaration_RouterliciousErrorTypes():
     TypeOnly<current.RouterliciousErrorTypes>;
 declare function use_old_TypeAliasDeclaration_RouterliciousErrorTypes(
-    use: TypeOnly<old.RouterliciousErrorTypes>);
+    use: TypeOnly<old.RouterliciousErrorTypes>): void;
 use_old_TypeAliasDeclaration_RouterliciousErrorTypes(
     get_current_TypeAliasDeclaration_RouterliciousErrorTypes());

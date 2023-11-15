@@ -34,5 +34,11 @@ export {
 	Optional,
 	NodeKeyFieldKind,
 	Forbidden,
-	SequenceFieldKind,
+	Sequence,
 } from "./feature-libraries";
+
+export {
+	FactoryObjectNodeSchema,
+	FactoryObjectNodeSchemaRecursive,
+	testRecursiveDomain,
+} from "./domains";

@@ -28,6 +28,7 @@ import { IFluidHandle } from '@fluidframework/core-interfaces';
 import { IFluidHandleContext } from '@fluidframework/core-interfaces';
 import { IFluidRouter } from '@fluidframework/core-interfaces';
 import { IGarbageCollectionData } from '@fluidframework/runtime-definitions';
+import { IGetPendingLocalStateProps } from '@fluidframework/container-definitions';
 import { IIdCompressor } from '@fluidframework/runtime-definitions';
 import { IIdCompressorCore } from '@fluidframework/runtime-definitions';
 import { ILoader } from '@fluidframework/container-definitions';
@@ -140,7 +141,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     ensureNoDataModelChanges<T>(callback: () => T): T;
     // (undocumented)
     get flushMode(): FlushMode;
-    readonly gcTombstoneEnforcementAllowed: boolean;
+    get gcThrowOnTombstoneUsage(): boolean;
+    get gcTombstoneEnforcementAllowed(): boolean;
     // (undocumented)
     readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
@@ -153,9 +155,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     getGCNodePackagePath(nodePath: string): Promise<readonly string[] | undefined>;
     getNodeType(nodePath: string): GCNodeType;
     // (undocumented)
-    getPendingLocalState(props?: {
-        notifyImminentClosure: boolean;
-    }): Promise<unknown>;
+    getPendingLocalState(props?: IGetPendingLocalStateProps): Promise<unknown>;
     // (undocumented)
     getQuorum(): IQuorumClients;
     // @deprecated
@@ -211,9 +211,8 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
     submitDataStoreAliasOp(contents: any, localOpMetadata: unknown): void;
     // (undocumented)
     submitDataStoreOp(id: string, contents: any, localOpMetadata?: unknown): void;
-    // (undocumented)
-    submitDataStoreSignal(address: string, type: string, content: any): void;
-    submitSignal(type: string, content: any): void;
+    submitDataStoreSignal(address: string, type: string, content: any, targetClientId?: string): void;
+    submitSignal(type: string, content: any, targetClientId?: string): void;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
     summarize(options: {
         fullTree?: boolean;
@@ -264,6 +263,26 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
     get IFluidDataStoreRegistry(): this;
 }
 
+// @public (undocumented)
+export interface GCFeatureMatrix {
+    sweepGeneration?: number;
+    tombstoneGeneration?: number;
+}
+
+// @public
+export const GCNodeType: {
+    DataStore: string;
+    SubDataStore: string;
+    Blob: string;
+    Other: string;
+};
+
+// @public (undocumented)
+export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
+
+// @public (undocumented)
+export type GCVersion = number;
+
 // @public
 export function generateStableId(): StableId;
 
@@ -293,6 +312,14 @@ export interface IBaseSummarizeResult {
     readonly stage: "base";
 }
 
+// @public
+export interface IBlobManagerLoadInfo {
+    // (undocumented)
+    ids?: string[];
+    // (undocumented)
+    redirectTable?: [string, string][];
+}
+
 // @public (undocumented)
 export interface IBroadcastSummaryResult {
     // (undocumented)
@@ -301,7 +328,7 @@ export interface IBroadcastSummaryResult {
     readonly summarizeOp: ISummaryOpMessage;
 }
 
-// @public (undocumented)
+// @public
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
@@ -360,6 +387,17 @@ export interface IContainerRuntimeMessageCompatDetails {
     behavior: CompatModeBehavior;
 }
 
+// @public (undocumented)
+export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
+    readonly disableIsolatedChannels?: true;
+    readonly idCompressorEnabled?: boolean;
+    readonly message: ISummaryMetadataMessage | undefined;
+    // (undocumented)
+    readonly summaryFormatVersion: 1;
+    readonly summaryNumber?: number;
+    readonly telemetryDocumentId?: string;
+}
+
 // @public
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
@@ -376,10 +414,26 @@ export interface IContainerRuntimeOptions {
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }
 
+// @public (undocumented)
+export interface ICreateContainerMetadata {
+    createContainerRuntimeVersion?: string;
+    createContainerTimestamp?: number;
+}
+
 // @public
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
+}
+
+// @public (undocumented)
+export interface IGCMetadata {
+    readonly gcFeature?: GCVersion;
+    readonly gcFeatureMatrix?: GCFeatureMatrix;
+    readonly sessionExpiryTimeoutMs?: number;
+    // @deprecated
+    readonly sweepEnabled?: boolean;
+    readonly sweepTimeoutMs?: number;
 }
 
 // @public (undocumented)
@@ -452,6 +506,13 @@ export interface IRefreshSummaryAckOptions {
 export interface IRetriableFailureResult {
     // (undocumented)
     readonly retryAfterSeconds?: number;
+}
+
+// @public
+export interface ISerializedElection {
+    readonly electedClientId: string | undefined;
+    readonly electedParentId: string | undefined;
+    readonly electionSequenceNumber: number;
 }
 
 // @public @deprecated (undocumented)
@@ -578,7 +639,7 @@ export interface ISummaryBaseConfiguration {
     maxOpsSinceLastSummary: number;
 }
 
-// @public (undocumented)
+// @public
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 // @public (undocumented)
@@ -615,6 +676,9 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     // (undocumented)
     state: "enabled";
 }
+
+// @public
+export type ISummaryMetadataMessage = Pick<ISequencedDocumentMessage, "clientId" | "clientSequenceNumber" | "minimumSequenceNumber" | "referenceSequenceNumber" | "sequenceNumber" | "timestamp" | "type">;
 
 // @public
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
@@ -785,7 +849,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 // @public
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
-// @public
+// @internal
 export function TEST_requestSummarizer(loader: ILoader, url: string): Promise<ISummarizer>;
 
 // @public

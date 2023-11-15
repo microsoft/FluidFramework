@@ -9,17 +9,17 @@ import { ITreeCursorSynchronous, JsonableTree } from "../core";
 import {
 	Any,
 	FieldKinds,
-	FieldSchema,
+	TreeFieldSchema,
 	FullSchemaPolicy,
 	Multiplicity,
 	SchemaAware,
 	SchemaLibrary,
+	TreeNodeSchema,
 	TreeSchema,
-	DocumentSchema,
 	cursorsForTypedFieldData,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 	typeNameSymbol,
 	valueSymbol,
 } from "../feature-libraries";
@@ -28,22 +28,22 @@ import { leaf, SchemaBuilder } from "../domains";
 
 interface TestTree {
 	readonly name: string;
-	readonly schemaData: DocumentSchema;
+	readonly schemaData: TreeSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: () => JsonableTree[];
 }
 
-function testTree<T extends TreeSchema>(
+function testTree<T extends TreeNodeSchema>(
 	name: string,
 	schemaData: SchemaLibrary,
 	rootNode: T,
 	data: SchemaAware.AllowedTypesToTypedTrees<SchemaAware.ApiMode.Flexible, [T]>,
 ): TestTree {
-	const fieldSchema = FieldSchema.create(FieldKinds.required, [rootNode]);
+	const fieldSchema = TreeFieldSchema.create(FieldKinds.required, [rootNode]);
 	return testField(name, schemaData, fieldSchema, data);
 }
 
-function testField<T extends FieldSchema>(
+function testField<T extends TreeFieldSchema>(
 	name: string,
 	schemaLibrary: SchemaLibrary,
 	rootField: T,
@@ -53,7 +53,7 @@ function testField<T extends FieldSchema>(
 		scope: name,
 		lint: { rejectForbidden: false, rejectEmpty: false },
 		libraries: [schemaLibrary],
-	}).toDocumentSchema(rootField);
+	}).intoSchema(rootField);
 	return {
 		name,
 		schemaData: schema,
@@ -67,7 +67,7 @@ function testField<T extends FieldSchema>(
 
 function cursorsToFieldContent(
 	cursors: readonly ITreeCursorSynchronous[],
-	schema: FieldSchema,
+	schema: TreeFieldSchema,
 ): readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined {
 	if (schema.kind.multiplicity === Multiplicity.Sequence) {
 		return cursors;
@@ -83,35 +83,35 @@ export function treeContentFromTestTree(test: TestTree): TreeContent {
 	return {
 		schema: test.schemaData,
 		initialTree: cursorsToFieldContent(
-			test.treeFactory().map(singleTextCursor),
+			test.treeFactory().map(cursorForJsonableTreeNode),
 			test.schemaData.rootFieldSchema,
 		),
 	};
 }
 
 const builder = new SchemaBuilder({ scope: "test" });
-export const minimal = builder.struct("minimal", {});
-export const hasMinimalValueField = builder.struct("hasMinimalValueField", {
+export const minimal = builder.object("minimal", {});
+export const hasMinimalValueField = builder.object("hasMinimalValueField", {
 	field: minimal,
 });
-export const hasNumericValueField = builder.struct("hasNumericValueField", {
+export const hasNumericValueField = builder.object("hasNumericValueField", {
 	field: leaf.number,
 });
-export const hasPolymorphicValueField = builder.struct("hasPolymorphicValueField", {
+export const hasPolymorphicValueField = builder.object("hasPolymorphicValueField", {
 	field: [leaf.number, minimal],
 });
-export const hasAnyValueField = builder.struct("hasAnyValueField", {
+export const hasAnyValueField = builder.object("hasAnyValueField", {
 	field: Any,
 });
-export const hasOptionalField = builder.struct("hasOptionalField", {
+export const hasOptionalField = builder.object("hasOptionalField", {
 	field: builder.optional(leaf.number),
 });
-export const allTheFields = builder.struct("allTheFields", {
+export const allTheFields = builder.object("allTheFields", {
 	optional: builder.optional(leaf.number),
 	valueField: leaf.number,
 	sequence: builder.sequence(leaf.number),
 });
-export const anyFields = builder.struct("anyFields", {
+export const anyFields = builder.object("anyFields", {
 	optional: builder.optional(Any),
 	valueField: Any,
 	sequence: builder.sequence(Any),
@@ -126,11 +126,11 @@ type NumericMapData = SchemaAware.AllowedTypesToTypedTrees<
 
 export const anyMap = builder.map("anyMap", builder.sequence(Any));
 
-export const recursiveType = builder.structRecursive("recursiveType", {
-	field: FieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
+export const recursiveType = builder.objectRecursive("recursiveType", {
+	field: TreeFieldSchema.createUnsafe(FieldKinds.optional, [() => recursiveType]),
 });
 
-export const library = builder.finalize();
+export const library = builder.intoLibrary();
 
 export const testTrees: readonly TestTree[] = [
 	testField("empty", library, SchemaBuilder.optional([]), undefined),

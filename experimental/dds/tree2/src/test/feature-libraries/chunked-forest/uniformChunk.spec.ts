@@ -13,14 +13,14 @@ import {
 } from "../../../feature-libraries/chunked-forest/uniformChunk";
 import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite";
 import { cursorToJsonObject, singleJsonCursor } from "../../../domains";
-import { EmptyKey, ITreeCursorSynchronous, TreeSchemaIdentifier } from "../../../core";
+import { EmptyKey, ITreeCursorSynchronous, TreeNodeSchemaIdentifier } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks";
 import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
-	singleMapTreeCursor,
-	singleTextCursor,
+	cursorForMapTreeNode,
+	cursorForJsonableTreeNode,
 	TreeChunk,
 } from "../../../feature-libraries";
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData";
@@ -64,7 +64,7 @@ describe("uniformChunk", () => {
 		cursorName: "uniformChunk",
 		builders: {
 			withKeys: (keys) => {
-				const schema: TreeSchemaIdentifier = mapSchema.name;
+				const schema: TreeNodeSchemaIdentifier = mapSchema.name;
 				const withKeysShape = new TreeShape(
 					schema,
 					false,
@@ -91,7 +91,7 @@ describe("uniformChunk", () => {
 			factory: (data: TreeChunk) => {
 				const cursor = data.cursor();
 				cursor.enterNode(0);
-				return singleTextCursor(jsonableTreeFromCursor(cursor));
+				return cursorForJsonableTreeNode(jsonableTreeFromCursor(cursor));
 			},
 		},
 		{
@@ -99,7 +99,7 @@ describe("uniformChunk", () => {
 			factory: (data: TreeChunk) => {
 				const cursor = data.cursor();
 				cursor.enterNode(0);
-				return singleMapTreeCursor(mapTreeFromCursor(cursor));
+				return cursorForMapTreeNode(mapTreeFromCursor(cursor));
 			},
 		},
 		{

@@ -13,6 +13,10 @@ import * as amqp from "amqplib";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
+/**
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
+ * and will be removed in a future release.
+ */
 class RabbitmqTaskSender implements ITaskMessageSender {
 	private readonly events = new EventEmitter();
 	private readonly rabbitmqConnectionString: string;
@@ -61,8 +65,13 @@ class RabbitmqTaskSender implements ITaskMessageSender {
 	}
 }
 
-// Factory to switch between specific message sender implementations. Returns a dummy implementation
-// if rabbitmq configs are not provided.
+/**
+ * Factory to switch between specific message sender implementations. Returns a dummy implementation
+ * if rabbitmq configs are not provided.
+ *
+ * @deprecated This was functionality related to RabbitMq which is not used anymore,
+ * and will be removed in a future release.
+ */
 export function createMessageSender(rabbitmqConfig: any, config: any): ITaskMessageSender {
 	// eslint-disable-next-line @typescript-eslint/prefer-optional-chain
 	return rabbitmqConfig && rabbitmqConfig.connectionString

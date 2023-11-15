@@ -83,30 +83,30 @@
                 "type": "blob",
                 "content": {
                   "version": "1.0.0",
-                  "treeSchema": [
+                  "nodeSchema": [
                     {
                       "name": "com.fluidframework.leaf.boolean",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 2
                     },
                     {
                       "name": "com.fluidframework.leaf.handle",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 3
                     },
                     {
                       "name": "com.fluidframework.leaf.null",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 4
                     },
                     {
                       "name": "com.fluidframework.leaf.number",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 0
                     },
                     {
                       "name": "com.fluidframework.leaf.string",
-                      "structFields": [],
+                      "objectNodeFields": [],
                       "leafValue": 1
                     },
                     {
@@ -117,7 +117,7 @@
                           "has-sequence-map.SeqMap"
                         ]
                       },
-                      "structFields": []
+                      "objectNodeFields": []
                     }
                   ],
                   "rootFieldSchema": {
@@ -143,18 +143,36 @@
                 "content": [
                   [
                     "rootFieldKey",
-                    [
-                      {
-                        "type": "has-sequence-map.SeqMap",
-                        "fields": {
-                          "foo": [
-                            {
-                              "type": "has-sequence-map.SeqMap"
-                            }
-                          ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
                         }
-                      }
-                    ]
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "has-sequence-map.SeqMap",
+                          false,
+                          [
+                            "foo",
+                            [
+                              "has-sequence-map.SeqMap",
+                              false,
+                              []
+                            ]
+                          ]
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"
@@ -171,8 +189,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
-                  "data": "[]",
-                  "id": 1
+                  "version": 1,
+                  "data": [],
+                  "maxId": 1
                 },
                 "encoding": "utf-8"
               }

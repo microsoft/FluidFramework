@@ -110,7 +110,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     _undoRemoveRows(rowStart: number, spec: IJSONSegment): void;
 }
 
-// @public (undocumented)
+// @public
 export class SharedMatrixFactory implements IChannelFactory {
     // (undocumented)
     static readonly Attributes: IChannelAttributes;

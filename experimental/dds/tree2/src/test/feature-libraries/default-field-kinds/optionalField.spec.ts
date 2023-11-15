@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "assert";
-import { CrossFieldManager, NodeChangeset } from "../../../feature-libraries";
+import {
+	CrossFieldManager,
+	NodeChangeset,
+	RemovedTreesFromChild,
+} from "../../../feature-libraries";
 import {
 	makeAnonChange,
 	TaggedChange,
@@ -12,10 +16,13 @@ import {
 	mintRevisionTag,
 	tagChange,
 	tagRollbackInverse,
+	makeDetachedNodeId,
+	FieldKey,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import { assertMarkListEqual, defaultRevisionMetadataFromChanges } from "../../utils";
+import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import {
+	optionalChangeHandler,
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
@@ -39,46 +46,44 @@ const failCrossFieldManager: CrossFieldManager = {
 	set: () => assert.fail("Should modify CrossFieldManager"),
 };
 
-const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.Modify => {
+const deltaFromChild1 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.FieldMap => {
 	assert.deepEqual(change, nodeChange1);
-	return {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				fooKey,
-				[
+	const buildId = makeDetachedNodeId(revision, 1);
+	return new Map<FieldKey, Delta.FieldChanges>([
+		[
+			fooKey,
+			{
+				build: [{ id: buildId, trees: [testTreeCursor("nodeChange1")] }],
+				local: [
 					{
-						type: Delta.MarkType.Insert,
-						content: [testTreeCursor("nodeChange1")],
-						oldContent: {
-							detachId: { major: revision, minor: 0 },
-						},
+						count: 1,
+						detach: makeDetachedNodeId(revision, 0),
+						attach: buildId,
 					},
 				],
-			],
-		]),
-	};
+			},
+		],
+	]);
 };
 
-const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.Modify => {
+const deltaFromChild2 = ({ change, revision }: TaggedChange<NodeChangeset>): Delta.FieldMap => {
 	assert.deepEqual(change, nodeChange2);
-	return {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				fooKey,
-				[
+	const buildId = makeDetachedNodeId(revision, 1);
+	return new Map<FieldKey, Delta.FieldChanges>([
+		[
+			fooKey,
+			{
+				build: [{ id: buildId, trees: [testTreeCursor("nodeChange2")] }],
+				local: [
 					{
-						type: Delta.MarkType.Insert,
-						content: [testTreeCursor("nodeChange2")],
-						oldContent: {
-							detachId: { major: revision, minor: 0 },
-						},
+						count: 1,
+						detach: makeDetachedNodeId(revision, 0),
+						attach: buildId,
 					},
 				],
-			],
-		]),
-	};
+			},
+		],
+	]);
 };
 
 const tag = mintRevisionTag();
@@ -226,6 +231,7 @@ describe("optionalField", () => {
 					childInverter,
 					fakeIdAllocator,
 					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([change1]),
 				),
 				expected,
 			);
@@ -291,6 +297,7 @@ describe("optionalField", () => {
 						() => assert.fail("Should not need to invert children"),
 						fakeIdAllocator,
 						failCrossFieldManager,
+						defaultRevisionMetadataFromChanges([deletion]),
 					),
 					tag2,
 					tag1,
@@ -382,81 +389,286 @@ describe("optionalField", () => {
 
 	describe("optionalFieldIntoDelta", () => {
 		it("can be converted to a delta when field was empty", () => {
-			const expected: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Insert,
-					buildId: { minor: 41 },
-					content: [testTreeCursor("tree1")],
-					fields: new Map([
-						[
-							fooKey,
+			const outerNodeId = makeDetachedNodeId(tag, 41);
+			const innerNodeId = makeDetachedNodeId(tag, 1);
+			const expected: Delta.FieldChanges = {
+				build: [{ id: outerNodeId, trees: [testTreeCursor("tree1")] }],
+				global: [
+					{
+						id: outerNodeId,
+						fields: new Map<FieldKey, Delta.FieldChanges>([
 							[
+								fooKey,
 								{
-									type: Delta.MarkType.Insert,
-									content: [testTreeCursor("nodeChange1")],
-									oldContent: {
-										detachId: { major: tag, minor: 0 },
-									},
+									build: [
+										{
+											id: innerNodeId,
+											trees: [testTreeCursor("nodeChange1")],
+										},
+									],
+									local: [
+										{
+											count: 1,
+											attach: innerNodeId,
+											detach: { major: tag, minor: 0 },
+										},
+									],
 								},
 							],
-						],
-					]),
-				},
-			];
+						]),
+					},
+				],
+				local: [{ count: 1, attach: outerNodeId }],
+			};
 
 			const actual = optionalFieldIntoDelta(change1, (change) =>
 				deltaFromChild1(tagChange(change, tag)),
 			);
-			assertMarkListEqual(actual, expected);
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("can be converted to a delta when restoring content", () => {
-			const expected: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Restore,
-					count: 1,
-					newContent: {
-						restoreId: { major: change2.revision, minor: 2 },
+			const expected: Delta.FieldChanges = {
+				local: [
+					{
+						count: 1,
+						attach: { major: change2.revision, minor: 2 },
+						detach: { major: revertChange2.revision, minor: 2 },
 					},
-					oldContent: {
-						detachId: { major: revertChange2.revision, minor: 2 },
-					},
-				},
-			];
+				],
+			};
 
 			const actual = optionalFieldIntoDelta(revertChange2, (change) =>
 				deltaFromChild1(tagChange(change, revertChange2.revision)),
 			);
-			assertMarkListEqual(actual, expected);
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("can be converted to a delta with only child changes", () => {
-			const expected: Delta.MarkList = [
-				{
-					type: Delta.MarkType.Modify,
-					fields: new Map([
-						[
-							fooKey,
+			const expected: Delta.FieldChanges = {
+				local: [
+					{
+						count: 1,
+						fields: new Map<FieldKey, Delta.FieldChanges>([
 							[
+								fooKey,
 								{
-									type: Delta.MarkType.Insert,
-									content: [testTreeCursor("nodeChange2")],
-									oldContent: {
-										detachId: { major: tag, minor: 0 },
-									},
+									build: [
+										{
+											id: { major: tag, minor: 1 },
+											trees: [testTreeCursor("nodeChange2")],
+										},
+									],
+									local: [
+										{
+											count: 1,
+											attach: { major: tag, minor: 1 },
+											detach: { major: tag, minor: 0 },
+										},
+									],
 								},
 							],
-						],
-					]),
-				},
-			];
-
-			assertMarkListEqual(
+						]),
+					},
+				],
+			};
+			assertFieldChangesEqual(
 				optionalFieldIntoDelta(change4, (change) =>
 					deltaFromChild2(tagChange(change, tag)),
 				),
 				expected,
 			);
+		});
+	});
+
+	describe("relevantRemovedTrees", () => {
+		const fill = tagChange(
+			optionalFieldEditor.set(testTreeCursor(""), true, brand(1), brand(2)),
+			mintRevisionTag(),
+		);
+		const clear = tagChange(optionalFieldEditor.clear(false, brand(1)), mintRevisionTag());
+		const hasChildChanges = tagChange(
+			optionalFieldEditor.buildChildChange(0, nodeChange1),
+			mintRevisionTag(),
+		);
+		const relevantNestedTree = { major: "Child revision", minor: 4242 };
+		const failingDelegate: RemovedTreesFromChild = (): never =>
+			assert.fail("Should not be called");
+		const noTreesDelegate: RemovedTreesFromChild = () => [];
+		const oneTreeDelegate: RemovedTreesFromChild = (child) => {
+			assert.deepEqual(child, nodeChange1);
+			return [relevantNestedTree];
+		};
+		describe("does not include", () => {
+			it("a tree being inserted", () => {
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(fill.change, noTreesDelegate),
+				);
+				assert.deepEqual(actual, []);
+			});
+			it("a tree with child changes being inserted", () => {
+				const changes = [fill, hasChildChanges];
+				const fillAndChange = optionalChangeRebaser.compose(
+					changes,
+					(): NodeChangeset => nodeChange1,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges(changes),
+				);
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(fillAndChange, noTreesDelegate),
+				);
+				assert.deepEqual(actual, []);
+			});
+			it("a tree being removed", () => {
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(clear.change, noTreesDelegate),
+				);
+				assert.deepEqual(actual, []);
+			});
+			it("a tree with child changes being removed", () => {
+				const changes = [hasChildChanges, clear];
+				const changeAndClear = optionalChangeRebaser.compose(
+					changes,
+					(): NodeChangeset => nodeChange1,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges(changes),
+				);
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(changeAndClear, noTreesDelegate),
+				);
+				assert.deepEqual(actual, []);
+			});
+			it("a tree that remains untouched", () => {
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees({}, noTreesDelegate),
+				);
+				assert.deepEqual(actual, []);
+			});
+			it("a tree that remains untouched aside from child changes", () => {
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(
+						hasChildChanges.change,
+						noTreesDelegate,
+					),
+				);
+				assert.deepEqual(actual, []);
+			});
+		});
+		describe("does include", () => {
+			it("a tree being restored", () => {
+				const restore = optionalChangeRebaser.invert(
+					clear,
+					() => assert.fail("Should not need to invert children"),
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([clear]),
+				);
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(restore, failingDelegate),
+				);
+				const expected = [makeDetachedNodeId(clear.revision, 1)];
+				assert.deepEqual(actual, expected);
+			});
+			it("a tree that remains removed but has nested changes", () => {
+				const rebasedNestedChange = optionalChangeRebaser.rebase(
+					hasChildChanges.change,
+					clear,
+					() => nodeChange1,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([clear, hasChildChanges]),
+				);
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(
+						rebasedNestedChange,
+						noTreesDelegate,
+					),
+				);
+				const expected = [makeDetachedNodeId(clear.revision, 1)];
+				assert.deepEqual(actual, expected);
+			});
+			it("relevant trees from nested changes under a tree being inserted", () => {
+				const changes = [fill, hasChildChanges];
+				const fillAndChange = optionalChangeRebaser.compose(
+					changes,
+					(): NodeChangeset => nodeChange1,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges(changes),
+				);
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(fillAndChange, oneTreeDelegate),
+				);
+				assert.deepEqual(actual, [relevantNestedTree]);
+			});
+			it("relevant trees from nested changes under a tree being removed", () => {
+				const changes = [hasChildChanges, clear];
+				const changeAndClear = optionalChangeRebaser.compose(
+					changes,
+					(): NodeChangeset => nodeChange1,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges(changes),
+				);
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(changeAndClear, oneTreeDelegate),
+				);
+				assert.deepEqual(actual, [relevantNestedTree]);
+			});
+			it("relevant trees from nested changes under a tree being restored", () => {
+				const restore = tagChange(
+					optionalChangeRebaser.invert(
+						clear,
+						() => assert.fail("Should not need to invert children"),
+						fakeIdAllocator,
+						failCrossFieldManager,
+						defaultRevisionMetadataFromChanges([clear]),
+					),
+					mintRevisionTag(),
+				);
+				const changes = [restore, hasChildChanges];
+				const restoreAndChange = optionalChangeRebaser.compose(
+					changes,
+					(): NodeChangeset => nodeChange1,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges(changes),
+				);
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(restoreAndChange, oneTreeDelegate),
+				);
+				const expected = [makeDetachedNodeId(clear.revision, 1), relevantNestedTree];
+				assert.deepEqual(actual, expected);
+			});
+			it("relevant trees from nested changes under a tree that remains removed", () => {
+				const rebasedNestedChange = optionalChangeRebaser.rebase(
+					hasChildChanges.change,
+					clear,
+					() => nodeChange1,
+					fakeIdAllocator,
+					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([clear, hasChildChanges]),
+				);
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(
+						rebasedNestedChange,
+						oneTreeDelegate,
+					),
+				);
+				const expected = [makeDetachedNodeId(clear.revision, 1), relevantNestedTree];
+				assert.deepEqual(actual, expected);
+			});
+			it("relevant trees from nested changes under a tree that remains in-doc ", () => {
+				const actual = Array.from(
+					optionalChangeHandler.relevantRemovedTrees(
+						hasChildChanges.change,
+						oneTreeDelegate,
+					),
+				);
+				assert.deepEqual(actual, [relevantNestedTree]);
+			});
 		});
 	});
 });

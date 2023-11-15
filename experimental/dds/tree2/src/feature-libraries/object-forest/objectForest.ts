@@ -20,7 +20,7 @@ import {
 	Anchor,
 	ITreeCursor,
 	CursorLocationType,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	MapTree,
 	getMapTreeField,
 	FieldAnchor,
@@ -31,6 +31,8 @@ import {
 	Range,
 	PlaceIndex,
 	Value,
+	ITreeCursorSynchronous,
+	aboveRootPlaceholder,
 } from "../../core";
 import {
 	brand,
@@ -40,12 +42,12 @@ import {
 	assertNonNegativeSafeInteger,
 } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
-import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
+import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
 import { createEmitter } from "../../events";
 
 function makeRoot(): MapTree {
 	return {
-		type: brand("above root placeholder"),
+		type: aboveRootPlaceholder,
 		fields: new Map(),
 	};
 }
@@ -88,7 +90,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 			// they are assumed to be copy on write. See TODO on NodeData.
 			forest.roots.fields.set(
 				key,
-				value.map((v) => mapTreeFromCursor(singleMapTreeCursor(v))),
+				value.map((v) => mapTreeFromCursor(cursorForMapTreeNode(v))),
 			);
 		}
 		return forest;
@@ -320,6 +322,10 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 		return;
 	}
+
+	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		return cursorForMapTreeNode(this.roots);
+	}
 }
 
 type ObjectField = MapTree[];
@@ -426,7 +432,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		assert(this.innerCursor !== undefined, 0x43e /* Cursor must be current to be used */);
 		return this.innerCursor.enterField(key);
 	}
-	public get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
 		return this.innerCursor.type;
 	}
@@ -457,7 +463,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		);
 		this.clear();
 		this.state = ITreeSubscriptionCursorState.Current;
-		this.innerCursor = singleMapTreeCursor(this.forest.roots);
+		this.innerCursor = cursorForMapTreeNode(this.forest.roots);
 		this.forest.currentCursors.add(this);
 	}
 
@@ -505,6 +511,6 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(anchors?: AnchorSet): IEditableForest {
+export function buildForest(anchors?: AnchorSet): ObjectForest {
 	return new ObjectForest(anchors);
 }

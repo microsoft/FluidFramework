@@ -37,7 +37,8 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change, deltaFromChild: ToDelta): Delta.MarkList => [],
+	intoDelta: (change, deltaFromChild: ToDelta): Delta.FieldChanges => ({}),
+	relevantRemovedTrees: (change): Iterable<Delta.DetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
 };
 

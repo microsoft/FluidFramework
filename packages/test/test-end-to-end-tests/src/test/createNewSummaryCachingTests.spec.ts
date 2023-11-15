@@ -9,7 +9,7 @@ import {
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import {
 	IContainerRuntimeOptions,
 	ISummaryConfiguration,

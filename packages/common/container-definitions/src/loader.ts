@@ -384,7 +384,10 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * TODO - in the case of failure options should give a retry policy.
 	 * Or some continuation function that allows attachment to a secondary document.
 	 */
-	attach(request: IRequest): Promise<void>;
+	attach(
+		request: IRequest,
+		attachProps?: { deltaConnection?: "none" | "delayed" },
+	): Promise<void>;
 
 	/**
 	 * Extract a snapshot of the container as long as it is in detached state. Calling this on an attached container
@@ -419,7 +422,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	 * Issue a request against the container for a resource.
 	 * @param request - The request to be issued against the container
 	 *
-	 * @deprecated - Requesting an arbitrary URL with headers will not be supported in a future major release.
+	 * @deprecated Requesting an arbitrary URL with headers will not be supported in a future major release.
 	 * Instead, access the objects in a Fluid Container using entryPoint, and then navigate from there using
 	 * app-specific logic (e.g. retrieving handles from the entryPoint's DDSes, or a container's entryPoint object
 	 * could implement a request paradigm itself)
@@ -429,7 +432,7 @@ export interface IContainer extends IEventProvider<IContainerEvents>, IFluidRout
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
@@ -522,12 +525,12 @@ export interface ILoader extends Partial<IProvideLoader> {
 	resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	request(request: IRequest): Promise<IResponse>;
 
 	/**
-	 * @deprecated - Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
+	 * @deprecated Will be removed in future major release. Migrate all usage of IFluidRouter to the Container's IFluidRouter/request.
 	 */
 	// eslint-disable-next-line import/no-deprecated
 	readonly IFluidRouter: IFluidRouter;
@@ -542,13 +545,25 @@ export interface IHostLoader extends ILoader {
 	 * Creates a new container using the specified chaincode but in an unattached state. While unattached all
 	 * updates will only be local until the user explicitly attaches the container to a service provider.
 	 */
-	createDetachedContainer(codeDetails: IFluidCodeDetails): Promise<IContainer>;
+	createDetachedContainer(
+		codeDetails: IFluidCodeDetails,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer>;
 
 	/**
 	 * Creates a new container using the specified snapshot but in an unattached state. While unattached all
 	 * updates will only be local until the user explicitly attaches the container to a service provider.
 	 */
-	rehydrateDetachedContainerFromSnapshot(snapshot: string): Promise<IContainer>;
+	rehydrateDetachedContainerFromSnapshot(
+		snapshot: string,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Promise<IContainer>;
 }
 
 /**

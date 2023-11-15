@@ -11,8 +11,10 @@ export interface IInventoryItemViewProps {
 	disabled?: boolean;
 }
 
-export const InventoryItemView: FC<IInventoryItemViewProps> = (props: IInventoryItemViewProps) => {
-	const { inventoryItem, disabled } = props;
+export const InventoryItemView: FC<IInventoryItemViewProps> = ({
+	inventoryItem,
+	disabled,
+}: IInventoryItemViewProps) => {
 	const quantityRef = useRef<HTMLInputElement>(null);
 	useEffect(() => {
 		const updateFromRemoteQuantity = () => {
@@ -62,8 +64,7 @@ interface IAddItemViewProps {
 	disabled?: boolean;
 }
 
-const AddItemView: FC<IAddItemViewProps> = (props: IAddItemViewProps) => {
-	const { addItem, disabled } = props;
+const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewProps) => {
 	const nameRef = useRef<HTMLInputElement>(null);
 	const quantityRef = useRef<HTMLInputElement>(null);
 
@@ -125,9 +126,10 @@ export interface IInventoryListViewProps {
 	disabled?: boolean;
 }
 
-export const InventoryListView: FC<IInventoryListViewProps> = (props: IInventoryListViewProps) => {
-	const { inventoryList, disabled } = props;
-
+export const InventoryListView: FC<IInventoryListViewProps> = ({
+	inventoryList,
+	disabled,
+}: IInventoryListViewProps) => {
 	const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>(
 		inventoryList.getItems(),
 	);

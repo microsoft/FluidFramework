@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ContainerDevtoolsProps():
     TypeOnly<old.ContainerDevtoolsProps>;
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsProps(
-    use: TypeOnly<current.ContainerDevtoolsProps>);
+    use: TypeOnly<current.ContainerDevtoolsProps>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsProps(
     get_old_InterfaceDeclaration_ContainerDevtoolsProps());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_ContainerDevtoolsProps(
 declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps():
     TypeOnly<current.ContainerDevtoolsProps>;
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsProps(
-    use: TypeOnly<old.ContainerDevtoolsProps>);
+    use: TypeOnly<old.ContainerDevtoolsProps>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsProps(
     get_current_InterfaceDeclaration_ContainerDevtoolsProps());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_ContainerDevtoolsProps(
 declare function get_old_TypeAliasDeclaration_ContainerKey():
     TypeOnly<old.ContainerKey>;
 declare function use_current_TypeAliasDeclaration_ContainerKey(
-    use: TypeOnly<current.ContainerKey>);
+    use: TypeOnly<current.ContainerKey>): void;
 use_current_TypeAliasDeclaration_ContainerKey(
     get_old_TypeAliasDeclaration_ContainerKey());
 
@@ -65,7 +65,7 @@ use_current_TypeAliasDeclaration_ContainerKey(
 declare function get_current_TypeAliasDeclaration_ContainerKey():
     TypeOnly<current.ContainerKey>;
 declare function use_old_TypeAliasDeclaration_ContainerKey(
-    use: TypeOnly<old.ContainerKey>);
+    use: TypeOnly<old.ContainerKey>): void;
 use_old_TypeAliasDeclaration_ContainerKey(
     get_current_TypeAliasDeclaration_ContainerKey());
 
@@ -77,7 +77,7 @@ use_old_TypeAliasDeclaration_ContainerKey(
 declare function get_old_ClassDeclaration_DevtoolsLogger():
     TypeOnly<old.DevtoolsLogger>;
 declare function use_current_ClassDeclaration_DevtoolsLogger(
-    use: TypeOnly<current.DevtoolsLogger>);
+    use: TypeOnly<current.DevtoolsLogger>): void;
 use_current_ClassDeclaration_DevtoolsLogger(
     get_old_ClassDeclaration_DevtoolsLogger());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_DevtoolsLogger(
 declare function get_current_ClassDeclaration_DevtoolsLogger():
     TypeOnly<current.DevtoolsLogger>;
 declare function use_old_ClassDeclaration_DevtoolsLogger(
-    use: TypeOnly<old.DevtoolsLogger>);
+    use: TypeOnly<old.DevtoolsLogger>): void;
 use_old_ClassDeclaration_DevtoolsLogger(
     get_current_ClassDeclaration_DevtoolsLogger());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_DevtoolsLogger(
 declare function get_old_InterfaceDeclaration_DevtoolsProps():
     TypeOnly<old.DevtoolsProps>;
 declare function use_current_InterfaceDeclaration_DevtoolsProps(
-    use: TypeOnly<current.DevtoolsProps>);
+    use: TypeOnly<current.DevtoolsProps>): void;
 use_current_InterfaceDeclaration_DevtoolsProps(
     get_old_InterfaceDeclaration_DevtoolsProps());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_DevtoolsProps(
 declare function get_current_InterfaceDeclaration_DevtoolsProps():
     TypeOnly<current.DevtoolsProps>;
 declare function use_old_InterfaceDeclaration_DevtoolsProps(
-    use: TypeOnly<old.DevtoolsProps>);
+    use: TypeOnly<old.DevtoolsProps>): void;
 use_old_InterfaceDeclaration_DevtoolsProps(
     get_current_InterfaceDeclaration_DevtoolsProps());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_DevtoolsProps(
 declare function get_old_InterfaceDeclaration_HasContainerKey():
     TypeOnly<old.HasContainerKey>;
 declare function use_current_InterfaceDeclaration_HasContainerKey(
-    use: TypeOnly<current.HasContainerKey>);
+    use: TypeOnly<current.HasContainerKey>): void;
 use_current_InterfaceDeclaration_HasContainerKey(
     get_old_InterfaceDeclaration_HasContainerKey());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_HasContainerKey(
 declare function get_current_InterfaceDeclaration_HasContainerKey():
     TypeOnly<current.HasContainerKey>;
 declare function use_old_InterfaceDeclaration_HasContainerKey(
-    use: TypeOnly<old.HasContainerKey>);
+    use: TypeOnly<old.HasContainerKey>): void;
 use_old_InterfaceDeclaration_HasContainerKey(
     get_current_InterfaceDeclaration_HasContainerKey());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_HasContainerKey(
 declare function get_old_InterfaceDeclaration_IDevtools():
     TypeOnly<old.IDevtools>;
 declare function use_current_InterfaceDeclaration_IDevtools(
-    use: TypeOnly<current.IDevtools>);
+    use: TypeOnly<current.IDevtools>): void;
 use_current_InterfaceDeclaration_IDevtools(
     get_old_InterfaceDeclaration_IDevtools());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_IDevtools(
 declare function get_current_InterfaceDeclaration_IDevtools():
     TypeOnly<current.IDevtools>;
 declare function use_old_InterfaceDeclaration_IDevtools(
-    use: TypeOnly<old.IDevtools>);
+    use: TypeOnly<old.IDevtools>): void;
 use_old_InterfaceDeclaration_IDevtools(
     get_current_InterfaceDeclaration_IDevtools());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_IDevtools(
 declare function get_old_FunctionDeclaration_initializeDevtools():
     TypeOnly<typeof old.initializeDevtools>;
 declare function use_current_FunctionDeclaration_initializeDevtools(
-    use: TypeOnly<typeof current.initializeDevtools>);
+    use: TypeOnly<typeof current.initializeDevtools>): void;
 use_current_FunctionDeclaration_initializeDevtools(
     get_old_FunctionDeclaration_initializeDevtools());
 
@@ -185,6 +185,6 @@ use_current_FunctionDeclaration_initializeDevtools(
 declare function get_current_FunctionDeclaration_initializeDevtools():
     TypeOnly<typeof current.initializeDevtools>;
 declare function use_old_FunctionDeclaration_initializeDevtools(
-    use: TypeOnly<typeof old.initializeDevtools>);
+    use: TypeOnly<typeof old.initializeDevtools>): void;
 use_old_FunctionDeclaration_initializeDevtools(
     get_current_FunctionDeclaration_initializeDevtools());

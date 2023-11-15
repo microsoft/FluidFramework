@@ -131,7 +131,7 @@ export interface FluidReleaseStateHandlerData {
 	 * A function that the state handlers can call to exit the application if needed. If this is undefined then the
 	 * handler function will not exit the app itself.
 	 */
-	exitFunc: (code?: number) => void;
+	exitFunc: (code: number) => void;
 }
 
 /**

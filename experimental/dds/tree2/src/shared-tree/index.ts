@@ -9,20 +9,26 @@ export {
 	SharedTreeOptions,
 	SharedTree,
 	ForestType,
+	SharedTreeContentSnapshot,
 } from "./sharedTree";
 
 export {
-	createSharedTreeView,
-	ISharedTreeView,
+	createTreeCheckout,
+	ITreeCheckout,
 	runSynchronous,
-	ViewEvents,
+	CheckoutEvents,
 	ITransaction,
-	ISharedTreeBranchView,
-} from "./sharedTreeView";
+	ITreeCheckoutFork,
+} from "./treeCheckout";
 
 export {
 	SchematizeConfiguration,
 	TreeContent,
 	InitializeAndSchematizeConfiguration,
 	SchemaConfiguration,
+	buildTreeConfiguration,
 } from "./schematizedTree";
+
+export { TypedTreeFactory, TypedTreeOptions, ITree, TreeView } from "./simpleTree";
+
+export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView";

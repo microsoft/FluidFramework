@@ -19,9 +19,10 @@ build-tools/packages/*/docs/*.md
 build-tools/packages/build-cli/README.md
 build-tools/packages/readme-command/README.md
 build-tools/packages/version-tools/README.md
-**/src/**/test/types/*
+**/src/**/test/types/*.generated.ts
 **/src/packageVersion.ts
 **/build-tools/CHANGELOG.md
+**/*.done.build.log
 
 # Dependencies
 **/node_modules/*
@@ -41,6 +42,7 @@ tools/pipelines/
 build-tools/packages/build-tools/src/test/data/
 experimental/dds/tree/src/test/documents/
 experimental/dds/tree2/src/test/snapshots/files/*.json
+experimental/dds/tree2/src/test/shared-tree/fuzz/failures/**/*.json
 packages/dds/merge-tree/src/test/literature/*.txt
 packages/dds/merge-tree/src/test/results/*.json
 packages/dds/sequence/src/test/snapshots/**/*.json
