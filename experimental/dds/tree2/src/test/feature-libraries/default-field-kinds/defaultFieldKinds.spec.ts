@@ -23,7 +23,7 @@ import { brand, fakeIdAllocator } from "../../../util";
 import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field";
-import { changesetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
+import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
 
 /**
  * A change to a child encoding as a simple placeholder string.

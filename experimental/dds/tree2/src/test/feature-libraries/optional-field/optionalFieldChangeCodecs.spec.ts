@@ -14,7 +14,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
 import { IJsonCodec } from "../../../codec";
-import { changesetForChild, testTree } from "./fieldKindTestUtils";
+import { changesetForChild, testTree } from "../fieldKindTestUtils";
 
 const nodeChange1 = changesetForChild("nodeChange1");
 

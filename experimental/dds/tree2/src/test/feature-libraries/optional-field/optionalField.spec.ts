@@ -29,7 +29,7 @@ import {
 	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
-import { changesetForChild, fooKey, testTree, testTreeCursor } from "./fieldKindTestUtils";
+import { changesetForChild, fooKey, testTree, testTreeCursor } from "../fieldKindTestUtils";
 
 /**
  * A change to a child encoding as a simple placeholder string.
