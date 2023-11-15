@@ -5,7 +5,7 @@
 
 import { TreeValue } from "../../core";
 import { RestrictiveReadonlyRecord } from "../../util";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import { FieldKind } from "../modular-schema";
 import {
 	AllowedTypes,

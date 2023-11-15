@@ -5,7 +5,7 @@
 
 import { ITreeSubscriptionCursor, inCursorNode } from "../../core";
 import { FieldKind } from "../modular-schema";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import { AllowedTypes, TreeFieldSchema, TreeNodeSchema, schemaIsLeaf } from "../typed-schema";
 import { Context } from "./context";
 import {

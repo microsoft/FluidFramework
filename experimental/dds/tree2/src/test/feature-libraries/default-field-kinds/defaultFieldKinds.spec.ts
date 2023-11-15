@@ -11,7 +11,7 @@ import {
 	valueFieldEditor,
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
+} from "../../../feature-libraries/default-schema/defaultFieldKinds";
 import {
 	makeAnonChange,
 	TaggedChange,

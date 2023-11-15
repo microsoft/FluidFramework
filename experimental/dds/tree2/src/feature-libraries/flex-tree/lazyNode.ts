@@ -36,7 +36,7 @@ import {
 	Any,
 	AllowedTypes,
 } from "../typed-schema";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import { LocalNodeKey } from "../node-key";
 import { EditableTreeEvents, TreeEvent } from "./treeEvents";
 import { Context } from "./context";

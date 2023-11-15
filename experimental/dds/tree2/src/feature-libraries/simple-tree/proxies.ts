@@ -18,7 +18,7 @@ import {
 	FieldNodeSchema,
 	MapFieldSchema,
 } from "../typed-schema";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import {
 	FlexTreeFieldNode,
 	FlexibleFieldContent,
