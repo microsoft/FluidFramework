@@ -4,7 +4,7 @@
  */
 
 import { UpPath, PathVisitor } from "../../core";
-import { TreeNode } from "./editableTreeTypes";
+import { FlexTreeNode } from "./flexTreeTypes";
 
 /**
  * This file provides an API for working with trees which is type safe even when schema is not known.
@@ -19,7 +19,7 @@ import { TreeNode } from "./editableTreeTypes";
  */
 
 /**
- * An event raised on a {@link TreeNode}.
+ * An event raised on a {@link FlexTreeNode}.
  *
  * @alpha
  */
@@ -27,11 +27,11 @@ export interface TreeEvent {
 	/**
 	 * The node of the tree where the listener receiving the event is attached.
 	 */
-	readonly target: TreeNode;
+	readonly target: FlexTreeNode;
 }
 
 /**
- * A collection of events that can be raised by a {@link TreeNode}.
+ * A collection of events that can be raised by a {@link FlexTreeNode}.
  * These events are triggered while the internal data structures are being updated.
  * Thus these events must not trigger reading of the anchorSet or forest.
  *
@@ -72,10 +72,10 @@ export interface EditableTreeEvents {
 	 * supported by SharedTree; {@link EditableTreeEvents.beforeChange} before the change is applied, and
 	 * {@link EditableTreeEvents.afterChange} after it is.
 	 *
-	 * {@link Sequence} fields present two exceptions:
+	 * {@link FieldKinds.sequence} fields present two exceptions:
 	 *
 	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
-	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link Sequence}
+	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link FieldKinds.sequence}
 	 * field the following will happen:
 	 * - {@link EditableTreeEvents.beforeChange} will fire once before either new node is present in the tree.
 	 * - {@link EditableTreeEvents.afterChange} will fire once after the first node is present in the tree, but the second one isn't.
@@ -99,10 +99,10 @@ export interface EditableTreeEvents {
 	 * by SharedTree; {@link EditableTreeEvents.beforeChange} before the change is applied, and
 	 * {@link EditableTreeEvents.afterChange} after it is.
 	 *
-	 * {@link Sequence} fields present two exceptions:
+	 * {@link FieldKinds.sequence} present two exceptions:
 	 *
 	 * The first one is that events will fire separately for each node involved in the operation (when inserting, removing,
-	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link Sequence}
+	 * or moving more than one node at a time). This means that, for example, when inserting two nodes into a {@link FieldKinds.sequence}
 	 * field the following will happen:
 	 * - {@link EditableTreeEvents.beforeChange} will fire once before either new node is present in the tree.
 	 * - {@link EditableTreeEvents.afterChange} will fire once after the first node is present in the tree, but the second one isn't.

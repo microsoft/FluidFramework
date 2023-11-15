@@ -17,7 +17,7 @@ import { NodeKeyIndex, NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { TreeSchema } from "../typed-schema";
 import { disposeSymbol, IDisposable } from "../../util";
-import { TreeField } from "./editableTreeTypes";
+import { FlexTreeField } from "./flexTreeTypes";
 import { makeField } from "./lazyField";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity";
 import { NodeKeys, SimpleNodeKeys } from "./nodeKeys";
@@ -27,11 +27,11 @@ import { NodeKeys, SimpleNodeKeys } from "./nodeKeys";
  * It handles group operations like transforming cursors into anchors for edits.
  * @alpha
  */
-export interface TreeContext extends ISubscribable<ForestEvents> {
+export interface FlexTreeContext extends ISubscribable<ForestEvents> {
 	/**
 	 * Gets the root field of the tree.
 	 */
-	get root(): TreeField;
+	get root(): FlexTreeField;
 
 	/**
 	 * Schema used within this context.
@@ -51,7 +51,7 @@ export interface TreeContext extends ISubscribable<ForestEvents> {
  *
  * @remarks An editor is required to edit the EditableTrees.
  */
-export class Context implements TreeContext, IDisposable {
+export class Context implements FlexTreeContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
 	public readonly withAnchors: Set<LazyEntity> = new Set();
 
@@ -115,7 +115,7 @@ export class Context implements TreeContext, IDisposable {
 		assert(this.withAnchors.size === 0, 0x775 /* free should remove all anchors */);
 	}
 
-	public get root(): TreeField {
+	public get root(): FlexTreeField {
 		assert(this.disposed === false, "use after dispose");
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);

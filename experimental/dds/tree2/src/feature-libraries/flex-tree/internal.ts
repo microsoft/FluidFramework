@@ -6,19 +6,19 @@
 // Used by public types, but not part of the desired API surface
 
 export {
-	TypedFieldInner,
-	UnboxFieldInner,
-	TypeArrayToTypedTreeArray,
-	ObjectNodeFields,
-	UnboxField,
-	UnboxNode,
-	UnboxNodeUnion,
-	NodeKeyField,
+	FlexTreeTypedFieldInner,
+	FlexTreeUnboxFieldInner,
+	TypeArrayToTypedFlexTreeArray,
+	FlexTreeObjectNodeFields,
+	FlexTreeUnboxField,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeNodeKeyField,
 	IsArrayOfOne,
-	UnknownUnboxed,
-	FixedSizeTypeArrayToTypedTree,
-	TypedNodeUnionHelper,
+	FlexTreeUnknownUnboxed,
+	FixedSizeTypeArrayToTypedFlexTree,
+	FlexTreeTypedNodeUnionHelper,
 	FlexibleNodeSubSequence,
-} from "./editableTreeTypes";
+} from "./flexTreeTypes";
 
 export { NodeKeys } from "./nodeKeys";

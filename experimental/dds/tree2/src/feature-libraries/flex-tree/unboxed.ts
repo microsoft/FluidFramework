@@ -8,38 +8,43 @@ import { FieldKind } from "../modular-schema";
 import { FieldKinds } from "../default-field-kinds";
 import { AllowedTypes, TreeFieldSchema, TreeNodeSchema, schemaIsLeaf } from "../typed-schema";
 import { Context } from "./context";
-import { TreeNode, UnboxField, UnboxNode, UnboxNodeUnion } from "./editableTreeTypes";
+import {
+	FlexTreeNode,
+	FlexTreeUnboxField,
+	FlexTreeUnboxNode,
+	FlexTreeUnboxNodeUnion,
+} from "./flexTreeTypes";
 import { makeTree } from "./lazyNode";
 import { makeField } from "./lazyField";
 
 /**
- * See {@link UnboxNode} for documentation on what unwrapping this performs.
+ * See {@link FlexTreeUnboxNode} for documentation on what unwrapping this performs.
  */
 export function unboxedTree<TSchema extends TreeNodeSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
-): UnboxNode<TSchema> {
+): FlexTreeUnboxNode<TSchema> {
 	if (schemaIsLeaf(schema)) {
-		return cursor.value as UnboxNode<TSchema>;
+		return cursor.value as FlexTreeUnboxNode<TSchema>;
 	}
 
-	return makeTree(context, cursor) as TreeNode as UnboxNode<TSchema>;
+	return makeTree(context, cursor) as FlexTreeNode as FlexTreeUnboxNode<TSchema>;
 }
 
 /**
- * See {@link UnboxNodeUnion} for documentation on what unwrapping this performs.
+ * See {@link FlexTreeUnboxNodeUnion} for documentation on what unwrapping this performs.
  */
 export function unboxedUnion<TTypes extends AllowedTypes>(
 	context: Context,
 	schema: TreeFieldSchema<FieldKind, TTypes>,
 	cursor: ITreeSubscriptionCursor,
-): UnboxNodeUnion<TTypes> {
+): FlexTreeUnboxNodeUnion<TTypes> {
 	const type = schema.monomorphicChildType;
 	if (type !== undefined) {
-		return unboxedTree(context, type, cursor) as UnboxNodeUnion<TTypes>;
+		return unboxedTree(context, type, cursor) as FlexTreeUnboxNodeUnion<TTypes>;
 	}
-	return makeTree(context, cursor) as UnboxNodeUnion<TTypes>;
+	return makeTree(context, cursor) as FlexTreeUnboxNodeUnion<TTypes>;
 }
 
 /**
@@ -51,22 +56,22 @@ export function unboxedField<TSchema extends TreeFieldSchema>(
 	context: Context,
 	schema: TSchema,
 	cursor: ITreeSubscriptionCursor,
-): UnboxField<TSchema> {
+): FlexTreeUnboxField<TSchema> {
 	const kind = schema.kind;
 	if (kind === FieldKinds.required) {
 		return inCursorNode(cursor, 0, (innerCursor) =>
 			unboxedUnion(context, schema, innerCursor),
-		) as UnboxField<TSchema>;
+		) as FlexTreeUnboxField<TSchema>;
 	}
 	if (kind === FieldKinds.optional) {
 		if (cursor.getFieldLength() === 0) {
-			return undefined as UnboxField<TSchema>;
+			return undefined as FlexTreeUnboxField<TSchema>;
 		}
 		return inCursorNode(cursor, 0, (innerCursor) =>
 			unboxedUnion(context, schema, innerCursor),
-		) as UnboxField<TSchema>;
+		) as FlexTreeUnboxField<TSchema>;
 	}
 
 	// TODO: forbidden and nodeKey
-	return makeField(context, schema, cursor) as UnboxField<TSchema>;
+	return makeField(context, schema, cursor) as FlexTreeUnboxField<TSchema>;
 }

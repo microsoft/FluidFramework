@@ -6,12 +6,12 @@
 import {
 	TreeFieldSchema,
 	ImplicitFieldSchema,
-	ProxyField,
-	ProxyRoot,
+	TreeField,
+	TreeRoot,
 	TreeSchema,
 	SchemaAware,
 } from "../../../feature-libraries";
-import { viewWithContent } from "../../utils";
+import { treeViewWithContent } from "../../utils";
 import { SchemaBuilder } from "../../../domains";
 
 /** Helper for making small test schemas. */
@@ -38,11 +38,11 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 export function itWithRoot<TRoot extends TreeFieldSchema>(
 	title: string,
 	schema: TreeSchema<TRoot>,
-	initialTree: ProxyRoot<TreeSchema<TRoot>, "javaScript">,
-	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
+	initialTree: TreeRoot<TreeSchema<TRoot>, "javaScript">,
+	fn: (root: TreeField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {
-		const view = viewWithContent({
+		const view = treeViewWithContent({
 			schema,
 			initialTree: initialTree as SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>,
 		});

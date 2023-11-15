@@ -6,19 +6,19 @@
 import {
 	AllowedUpdateType,
 	buildTreeConfiguration,
-	ProxyNode,
+	TypedNode,
 	SchemaBuilder,
 } from "@fluid-experimental/tree2";
 
 const builder = new SchemaBuilder({ scope: "com.contoso.app.inventory" });
 
-export type Part = ProxyNode<typeof Part>;
+export type Part = TypedNode<typeof Part>;
 export const Part = builder.object("Part", {
 	name: builder.string,
 	quantity: builder.number,
 });
 
-export type Inventory = ProxyNode<typeof Inventory>;
+export type Inventory = TypedNode<typeof Inventory>;
 export const Inventory = builder.object("Inventory", {
 	parts: builder.list(Part),
 });

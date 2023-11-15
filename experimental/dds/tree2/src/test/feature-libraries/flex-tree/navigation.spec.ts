@@ -9,7 +9,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/flex-tree/navigation";
 
-import { TreeField, TreeNode, boxedIterator } from "../../../feature-libraries";
+import { FlexTreeField, FlexTreeNode, boxedIterator } from "../../../feature-libraries";
 import { FieldUpPath, UpPath } from "../../../core";
 
 /**
@@ -45,7 +45,7 @@ function visitIterableTreeRecursive<T extends Iterable<T>>(
 }
 
 // Examples
-function test(root: TreeField): void {
+function test(root: FlexTreeField): void {
 	// Count depth in nodes:
 	let depth = 0;
 	visitBipartiteIterableTreeWithState(
@@ -53,8 +53,8 @@ function test(root: TreeField): void {
 		0,
 		(field) => field[boxedIterator](),
 		(node) => node[boxedIterator](),
-		(field: TreeField, n) => n,
-		(node: TreeNode, n) => {
+		(field: FlexTreeField, n) => n,
+		(node: FlexTreeNode, n) => {
 			depth = Math.max(n, depth);
 			return n + 1;
 		},
@@ -66,11 +66,11 @@ function test(root: TreeField): void {
 		undefined,
 		(field) => field[boxedIterator](),
 		(node) => node[boxedIterator](),
-		(field: TreeField, parent: UpPath | undefined): FieldUpPath => ({
+		(field: FlexTreeField, parent: UpPath | undefined): FieldUpPath => ({
 			parent,
 			field: field.key,
 		}),
-		(node: TreeNode, parent: FieldUpPath): UpPath => ({
+		(node: FlexTreeNode, parent: FieldUpPath): UpPath => ({
 			parent: parent.parent,
 			parentField: parent.field,
 			parentIndex: node.parentField.index,

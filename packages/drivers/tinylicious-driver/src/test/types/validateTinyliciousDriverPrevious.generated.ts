@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_InsecureTinyliciousTokenProvider():
     TypeOnly<old.InsecureTinyliciousTokenProvider>;
 declare function use_current_ClassDeclaration_InsecureTinyliciousTokenProvider(
-    use: TypeOnly<current.InsecureTinyliciousTokenProvider>);
+    use: TypeOnly<current.InsecureTinyliciousTokenProvider>): void;
 use_current_ClassDeclaration_InsecureTinyliciousTokenProvider(
     get_old_ClassDeclaration_InsecureTinyliciousTokenProvider());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_InsecureTinyliciousTokenProvider(
 declare function get_current_ClassDeclaration_InsecureTinyliciousTokenProvider():
     TypeOnly<current.InsecureTinyliciousTokenProvider>;
 declare function use_old_ClassDeclaration_InsecureTinyliciousTokenProvider(
-    use: TypeOnly<old.InsecureTinyliciousTokenProvider>);
+    use: TypeOnly<old.InsecureTinyliciousTokenProvider>): void;
 use_old_ClassDeclaration_InsecureTinyliciousTokenProvider(
     get_current_ClassDeclaration_InsecureTinyliciousTokenProvider());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_InsecureTinyliciousTokenProvider(
 declare function get_old_ClassDeclaration_InsecureTinyliciousUrlResolver():
     TypeOnly<old.InsecureTinyliciousUrlResolver>;
 declare function use_current_ClassDeclaration_InsecureTinyliciousUrlResolver(
-    use: TypeOnly<current.InsecureTinyliciousUrlResolver>);
+    use: TypeOnly<current.InsecureTinyliciousUrlResolver>): void;
 use_current_ClassDeclaration_InsecureTinyliciousUrlResolver(
     get_old_ClassDeclaration_InsecureTinyliciousUrlResolver());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_InsecureTinyliciousUrlResolver(
 declare function get_current_ClassDeclaration_InsecureTinyliciousUrlResolver():
     TypeOnly<current.InsecureTinyliciousUrlResolver>;
 declare function use_old_ClassDeclaration_InsecureTinyliciousUrlResolver(
-    use: TypeOnly<old.InsecureTinyliciousUrlResolver>);
+    use: TypeOnly<old.InsecureTinyliciousUrlResolver>): void;
 use_old_ClassDeclaration_InsecureTinyliciousUrlResolver(
     get_current_ClassDeclaration_InsecureTinyliciousUrlResolver());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_InsecureTinyliciousUrlResolver(
 declare function get_old_VariableDeclaration_createTinyliciousCreateNewRequest():
     TypeOnly<typeof old.createTinyliciousCreateNewRequest>;
 declare function use_current_VariableDeclaration_createTinyliciousCreateNewRequest(
-    use: TypeOnly<typeof current.createTinyliciousCreateNewRequest>);
+    use: TypeOnly<typeof current.createTinyliciousCreateNewRequest>): void;
 use_current_VariableDeclaration_createTinyliciousCreateNewRequest(
     get_old_VariableDeclaration_createTinyliciousCreateNewRequest());
 
@@ -89,7 +89,7 @@ use_current_VariableDeclaration_createTinyliciousCreateNewRequest(
 declare function get_current_VariableDeclaration_createTinyliciousCreateNewRequest():
     TypeOnly<typeof current.createTinyliciousCreateNewRequest>;
 declare function use_old_VariableDeclaration_createTinyliciousCreateNewRequest(
-    use: TypeOnly<typeof old.createTinyliciousCreateNewRequest>);
+    use: TypeOnly<typeof old.createTinyliciousCreateNewRequest>): void;
 use_old_VariableDeclaration_createTinyliciousCreateNewRequest(
     get_current_VariableDeclaration_createTinyliciousCreateNewRequest());
 
@@ -101,7 +101,7 @@ use_old_VariableDeclaration_createTinyliciousCreateNewRequest(
 declare function get_old_VariableDeclaration_defaultTinyliciousEndpoint():
     TypeOnly<typeof old.defaultTinyliciousEndpoint>;
 declare function use_current_VariableDeclaration_defaultTinyliciousEndpoint(
-    use: TypeOnly<typeof current.defaultTinyliciousEndpoint>);
+    use: TypeOnly<typeof current.defaultTinyliciousEndpoint>): void;
 use_current_VariableDeclaration_defaultTinyliciousEndpoint(
     get_old_VariableDeclaration_defaultTinyliciousEndpoint());
 
@@ -113,7 +113,7 @@ use_current_VariableDeclaration_defaultTinyliciousEndpoint(
 declare function get_current_VariableDeclaration_defaultTinyliciousEndpoint():
     TypeOnly<typeof current.defaultTinyliciousEndpoint>;
 declare function use_old_VariableDeclaration_defaultTinyliciousEndpoint(
-    use: TypeOnly<typeof old.defaultTinyliciousEndpoint>);
+    use: TypeOnly<typeof old.defaultTinyliciousEndpoint>): void;
 use_old_VariableDeclaration_defaultTinyliciousEndpoint(
     get_current_VariableDeclaration_defaultTinyliciousEndpoint());
 
@@ -125,7 +125,7 @@ use_old_VariableDeclaration_defaultTinyliciousEndpoint(
 declare function get_old_VariableDeclaration_defaultTinyliciousPort():
     TypeOnly<typeof old.defaultTinyliciousPort>;
 declare function use_current_VariableDeclaration_defaultTinyliciousPort(
-    use: TypeOnly<typeof current.defaultTinyliciousPort>);
+    use: TypeOnly<typeof current.defaultTinyliciousPort>): void;
 use_current_VariableDeclaration_defaultTinyliciousPort(
     get_old_VariableDeclaration_defaultTinyliciousPort());
 
@@ -137,6 +137,6 @@ use_current_VariableDeclaration_defaultTinyliciousPort(
 declare function get_current_VariableDeclaration_defaultTinyliciousPort():
     TypeOnly<typeof current.defaultTinyliciousPort>;
 declare function use_old_VariableDeclaration_defaultTinyliciousPort(
-    use: TypeOnly<typeof old.defaultTinyliciousPort>);
+    use: TypeOnly<typeof old.defaultTinyliciousPort>): void;
 use_old_VariableDeclaration_defaultTinyliciousPort(
     get_current_VariableDeclaration_defaultTinyliciousPort());

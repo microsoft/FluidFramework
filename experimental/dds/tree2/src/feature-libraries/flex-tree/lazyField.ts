@@ -34,19 +34,19 @@ import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
-	OptionalField,
-	Sequence,
-	TypedField,
-	TypedNodeUnion,
-	UnboxNodeUnion,
-	TreeField,
-	TreeNode,
-	RequiredField,
+	FlexTreeOptionalField,
+	FlexTreeSequenceField,
+	FlexTreeTypedField,
+	FlexTreeTypedNodeUnion,
+	FlexTreeUnboxNodeUnion,
+	FlexTreeField,
+	FlexTreeNode,
+	FlexTreeRequiredField,
 	boxedIterator,
 	TreeStatus,
-	NodeKeyField,
+	FlexTreeNodeKeyField,
 	FlexibleNodeSubSequence,
-} from "./editableTreeTypes";
+} from "./flexTreeTypes";
 import { makeTree } from "./lazyNode";
 import {
 	LazyEntity,
@@ -65,7 +65,7 @@ export function makeField(
 	context: Context,
 	schema: TreeFieldSchema,
 	cursor: ITreeSubscriptionCursor,
-): TreeField {
+): FlexTreeField {
 	const fieldAnchor = cursor.buildFieldAnchor();
 
 	const field = new (kindToClass.get(schema.kind) ?? fail("missing field implementation"))(
@@ -94,7 +94,7 @@ export function makeField(
  */
 export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedTypes>
 	extends LazyEntity<TreeFieldSchema<TKind, TTypes>, FieldAnchor>
-	implements TreeField
+	implements FlexTreeField
 {
 	public readonly key: FieldKey;
 
@@ -111,7 +111,9 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		makePropertyNotEnumerable(this, "key");
 	}
 
-	public is<TSchema extends TreeFieldSchema>(schema: TSchema): this is TypedField<TSchema> {
+	public is<TSchema extends TreeFieldSchema>(
+		schema: TSchema,
+	): this is FlexTreeTypedField<TSchema> {
 		assert(
 			this.context.schema.policy.fieldKinds.get(schema.kind.identifier) === schema.kind,
 			0x77c /* Narrowing must be done to a kind that exists in this context */,
@@ -120,7 +122,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		return this.schema.equals(schema);
 	}
 
-	public isSameAs(other: TreeField): boolean {
+	public isSameAs(other: FlexTreeField): boolean {
 		assert(
 			other.context === this.context,
 			0x77d /* Content from different editable trees should not be used together */,
@@ -128,7 +130,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		return this.key === other.key && this.parent === other.parent;
 	}
 
-	public get parent(): TreeNode | undefined {
+	public get parent(): FlexTreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
 		}
@@ -156,34 +158,36 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		return this[cursorSymbol].getFieldLength();
 	}
 
-	public atIndex(index: number): UnboxNodeUnion<TTypes> {
+	public atIndex(index: number): FlexTreeUnboxNodeUnion<TTypes> {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
 	}
 
-	public boxedAt(index: number): TypedNodeUnion<TTypes> {
+	public boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes> {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
 			makeTree(this.context, cursor),
-		) as TypedNodeUnion<TTypes>;
+		) as FlexTreeTypedNodeUnion<TTypes>;
 	}
 
-	public map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[] {
+	public map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[] {
 		return Array.from(this, callbackfn);
 	}
 
-	public mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[] {
+	public mapBoxed<U>(
+		callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U,
+	): U[] {
 		return Array.from(this[boxedIterator](), callbackfn);
 	}
 
-	public [boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>> {
+	public [boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>> {
 		return iterateCursorField(
 			this[cursorSymbol],
-			(cursor) => makeTree(this.context, cursor) as TypedNodeUnion<TTypes>,
+			(cursor) => makeTree(this.context, cursor) as FlexTreeTypedNodeUnion<TTypes>,
 		);
 	}
 
-	public [Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>> {
+	public [Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>> {
 		return iterateCursorField(this[cursorSymbol], (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
@@ -225,7 +229,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 
 export class LazySequence<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.sequence, TTypes>
-	implements Sequence<TTypes>
+	implements FlexTreeSequenceField<TTypes>
 {
 	public constructor(
 		context: Context,
@@ -238,7 +242,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
 	}
 
-	public at(index: number): UnboxNodeUnion<TTypes> | undefined {
+	public at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined {
 		// The logic here follows what Array.prototype.at does to handle any kind of index at runtime.
 		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at for details.
 		let finalIndex = Math.trunc(+index);
@@ -255,7 +259,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
 	}
-	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
+	public get asArray(): readonly FlexTreeUnboxNodeUnion<TTypes>[] {
 		return this.map((x) => x);
 	}
 
@@ -299,18 +303,26 @@ export class LazySequence<TTypes extends AllowedTypes>
 	}
 
 	public moveToStart(sourceIndex: number): void;
-	public moveToStart(sourceIndex: number, source: Sequence<AllowedTypes>): void;
-	public moveToStart(sourceIndex: number, source?: Sequence<AllowedTypes>): void {
+	public moveToStart(sourceIndex: number, source: FlexTreeSequenceField<AllowedTypes>): void;
+	public moveToStart(sourceIndex: number, source?: FlexTreeSequenceField<AllowedTypes>): void {
 		this._moveRangeToIndex(0, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToEnd(sourceIndex: number): void;
-	public moveToEnd(sourceIndex: number, source: Sequence<AllowedTypes>): void;
-	public moveToEnd(sourceIndex: number, source?: Sequence<AllowedTypes>): void {
+	public moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<AllowedTypes>): void;
+	public moveToEnd(sourceIndex: number, source?: FlexTreeSequenceField<AllowedTypes>): void {
 		this._moveRangeToIndex(this.length, sourceIndex, sourceIndex + 1, source);
 	}
 	public moveToIndex(index: number, sourceIndex: number): void;
-	public moveToIndex(index: number, sourceIndex: number, source: Sequence<AllowedTypes>): void;
-	public moveToIndex(index: number, sourceIndex: number, source?: Sequence<AllowedTypes>): void {
+	public moveToIndex(
+		index: number,
+		sourceIndex: number,
+		source: FlexTreeSequenceField<AllowedTypes>,
+	): void;
+	public moveToIndex(
+		index: number,
+		sourceIndex: number,
+		source?: FlexTreeSequenceField<AllowedTypes>,
+	): void {
 		this._moveRangeToIndex(index, sourceIndex, sourceIndex + 1, source);
 	}
 
@@ -318,12 +330,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<AllowedTypes>,
+		source: FlexTreeSequenceField<AllowedTypes>,
 	): void;
 	public moveRangeToStart(
 		sourceStart: number,
 		sourceEnd: number,
-		source?: Sequence<AllowedTypes>,
+		source?: FlexTreeSequenceField<AllowedTypes>,
 	): void {
 		this._moveRangeToIndex(0, sourceStart, sourceEnd, source);
 	}
@@ -332,12 +344,12 @@ export class LazySequence<TTypes extends AllowedTypes>
 	public moveRangeToEnd(
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<AllowedTypes>,
+		source: FlexTreeSequenceField<AllowedTypes>,
 	): void;
 	public moveRangeToEnd(
 		sourceStart: number,
 		sourceEnd: number,
-		source?: Sequence<AllowedTypes>,
+		source?: FlexTreeSequenceField<AllowedTypes>,
 	): void {
 		this._moveRangeToIndex(this.length, sourceStart, sourceEnd, source);
 	}
@@ -347,13 +359,13 @@ export class LazySequence<TTypes extends AllowedTypes>
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<AllowedTypes>,
+		source: FlexTreeSequenceField<AllowedTypes>,
 	): void;
 	public moveRangeToIndex(
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: Sequence<AllowedTypes>,
+		source?: FlexTreeSequenceField<AllowedTypes>,
 	): void {
 		this._moveRangeToIndex(index, sourceStart, sourceEnd, source);
 	}
@@ -362,7 +374,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source?: Sequence<AllowedTypes>,
+		source?: FlexTreeSequenceField<AllowedTypes>,
 	): void {
 		const sourceField = source !== undefined ? (this.isSameAs(source) ? this : source) : this;
 
@@ -396,7 +408,7 @@ export class LazySequence<TTypes extends AllowedTypes>
 
 export class LazyValueField<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.required, TTypes>
-	implements RequiredField<TTypes>
+	implements FlexTreeRequiredField<TTypes>
 {
 	public constructor(
 		context: Context,
@@ -415,7 +427,7 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public get content(): UnboxNodeUnion<TTypes> {
+	public get content(): FlexTreeUnboxNodeUnion<TTypes> {
 		return this.atIndex(0);
 	}
 
@@ -428,14 +440,14 @@ export class LazyValueField<TTypes extends AllowedTypes>
 		fieldEditor.set(content[0]);
 	}
 
-	public get boxedContent(): TypedNodeUnion<TTypes> {
+	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> {
 		return this.boxedAt(0);
 	}
 }
 
 export class LazyOptionalField<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.optional, TTypes>
-	implements OptionalField<TTypes>
+	implements FlexTreeOptionalField<TTypes>
 {
 	public constructor(
 		context: Context,
@@ -454,7 +466,7 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public get content(): UnboxNodeUnion<TTypes> | undefined {
+	public get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined {
 		return this.length === 0 ? undefined : this.atIndex(0);
 	}
 
@@ -473,14 +485,14 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 		fieldEditor.set(content.length === 0 ? undefined : content[0], this.length === 0);
 	}
 
-	public get boxedContent(): TypedNodeUnion<TTypes> | undefined {
+	public get boxedContent(): FlexTreeTypedNodeUnion<TTypes> | undefined {
 		return this.length === 0 ? undefined : this.boxedAt(0);
 	}
 }
 
 export class LazyNodeKeyField<TTypes extends AllowedTypes>
 	extends LazyField<typeof FieldKinds.nodeKey, TTypes>
-	implements NodeKeyField
+	implements FlexTreeNodeKeyField
 {
 	public constructor(
 		context: Context,

@@ -4,30 +4,30 @@
  */
 
 export {
-	TreeField,
-	TreeNode,
-	TreeEntity,
-	TypedField,
-	FieldNode,
+	FlexTreeField,
+	FlexTreeNode,
+	FlexTreeEntity,
+	FlexTreeTypedField,
+	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
-	Leaf,
-	MapNode,
-	OptionalField,
-	RequiredField,
-	Sequence,
-	ObjectNode,
-	ObjectNodeTyped,
+	FlexTreeLeafNode,
+	FlexTreeMapNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
+	FlexTreeObjectNode,
+	FlexTreeObjectNodeTyped,
 	AssignableFieldKinds,
-	TypedNode,
-	TypedNodeUnion,
+	FlexTreeTypedNode,
+	FlexTreeTypedNodeUnion,
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	Typed,
+	FlexTreeTyped,
 	onNextChange,
-	UnknownUnboxed,
-} from "./editableTreeTypes";
+	FlexTreeUnknownUnboxed,
+} from "./flexTreeTypes";
 
 export {
 	visitBipartiteIterableTree,
@@ -37,7 +37,7 @@ export {
 	visitIterableTreeWithState,
 } from "./navigation";
 
-export { getTreeContext, TreeContext, Context } from "./context";
+export { getTreeContext, FlexTreeContext, Context } from "./context";
 
 export { TreeEvent, EditableTreeEvents } from "./treeEvents";
 

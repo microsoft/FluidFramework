@@ -5,16 +5,16 @@
 
 export { getProxyForField } from "./proxies";
 export {
-	SharedTreeList,
-	ObjectFields,
-	ProxyField,
-	ProxyFieldInner,
-	ProxyNode,
-	ProxyNodeUnion,
-	SharedTreeMap,
-	SharedTreeObject,
-	ProxyRoot,
-	SharedTreeNode,
+	TreeListNode,
+	TreeObjectNodeFields,
+	TreeField,
+	TreeFieldInner,
+	TypedNode,
+	TreeNodeUnion,
+	TreeMapNode,
+	TreeObjectNode,
+	TreeRoot,
+	TreeNode,
 } from "./types";
 export { SharedTreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
 export { nodeApi as Tree, TreeApi } from "./node";

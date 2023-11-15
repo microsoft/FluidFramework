@@ -22,8 +22,8 @@ import {
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
-	TreeField,
-	TreeNode,
+	FlexTreeField,
+	FlexTreeNode,
 	Skip,
 	bannedFieldNames,
 	fieldApiPrefixes,
@@ -59,12 +59,16 @@ import {
 	LazySequence,
 	LazyValueField,
 } from "../../../feature-libraries/flex-tree/lazyField";
-import { TreeEntity, boxedIterator, visitIterableTree } from "../../../feature-libraries/flex-tree";
+import {
+	FlexTreeEntity,
+	boxedIterator,
+	visitIterableTree,
+} from "../../../feature-libraries/flex-tree";
 import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/context";
 import { TreeContent } from "../../../shared-tree";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { forestWithContent, viewWithContent } from "../../utils";
+import { forestWithContent, flexTreeViewWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -401,7 +405,7 @@ describe("LazyMap", () => {
 	});
 
 	it("set", () => {
-		const view = viewWithContent({ schema, initialTree: {} });
+		const view = flexTreeViewWithContent({ schema, initialTree: {} });
 		const mapNode = view.editableTree.content;
 		assert(mapNode.is(mapNodeSchema));
 
@@ -418,7 +422,7 @@ describe("LazyMap", () => {
 	});
 
 	it("getBoxed empty", () => {
-		const view = viewWithContent({ schema, initialTree: {} });
+		const view = flexTreeViewWithContent({ schema, initialTree: {} });
 		const mapNode = view.editableTree.content;
 		assert(mapNode.is(mapNodeSchema));
 
@@ -549,7 +553,7 @@ describe("buildLazyObjectNode", () => {
 	});
 });
 
-function fieldToMapTree(field: TreeField): MapTree[] {
+function fieldToMapTree(field: FlexTreeField): MapTree[] {
 	const results: MapTree[] = [];
 	for (const child of field[boxedIterator]()) {
 		results.push(nodeToMapTree(child));
@@ -557,7 +561,7 @@ function fieldToMapTree(field: TreeField): MapTree[] {
 	return results;
 }
 
-function nodeToMapTree(node: TreeNode): MapTree {
+function nodeToMapTree(node: FlexTreeNode): MapTree {
 	const fields: Map<FieldKey, MapTree[]> = new Map();
 	for (const field of node[boxedIterator]()) {
 		fields.set(field.key, fieldToMapTree(field));
@@ -566,7 +570,7 @@ function nodeToMapTree(node: TreeNode): MapTree {
 	return { fields, type: node.type, value: node.value };
 }
 
-function checkPropertyInvariants(root: TreeEntity): void {
+function checkPropertyInvariants(root: FlexTreeEntity): void {
 	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.

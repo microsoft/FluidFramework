@@ -11,7 +11,7 @@ import {
 } from "../../core";
 import { fail, disposeSymbol, IDisposable } from "../../util";
 import { Context } from "./context";
-import { TreeEntity, TreeStatus, boxedIterator } from "./editableTreeTypes";
+import { FlexTreeEntity, TreeStatus, boxedIterator } from "./flexTreeTypes";
 
 /**
  * Declare an enumerable own property on `T` under the key `key` using the implementation of one on `from`.
@@ -62,7 +62,7 @@ export const anchorSymbol = Symbol("anchor");
  * This is a base class for lazy (cursor based) UntypedEntity implementations, which uniformly handles cursors and anchors.
  */
 export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
-	implements TreeEntity<TSchema>, IDisposable
+	implements FlexTreeEntity<TSchema>, IDisposable
 {
 	readonly #lazyCursor: ITreeSubscriptionCursor;
 	public readonly [anchorSymbol]: TAnchor;
@@ -84,7 +84,7 @@ export abstract class LazyEntity<TSchema = unknown, TAnchor = unknown>
 		makePropertyNotEnumerable(this, anchorSymbol);
 	}
 
-	public abstract [boxedIterator](): IterableIterator<TreeEntity>;
+	public abstract [boxedIterator](): IterableIterator<FlexTreeEntity>;
 
 	public abstract treeStatus(): TreeStatus;
 

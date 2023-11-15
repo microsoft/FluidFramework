@@ -231,6 +231,7 @@ describe("optionalField", () => {
 					childInverter,
 					fakeIdAllocator,
 					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([change1]),
 				),
 				expected,
 			);
@@ -296,6 +297,7 @@ describe("optionalField", () => {
 						() => assert.fail("Should not need to invert children"),
 						fakeIdAllocator,
 						failCrossFieldManager,
+						defaultRevisionMetadataFromChanges([deletion]),
 					),
 					tag2,
 					tag1,
@@ -561,6 +563,7 @@ describe("optionalField", () => {
 					() => assert.fail("Should not need to invert children"),
 					fakeIdAllocator,
 					failCrossFieldManager,
+					defaultRevisionMetadataFromChanges([clear]),
 				);
 				const actual = Array.from(
 					optionalChangeHandler.relevantRemovedTrees(restore, failingDelegate),
@@ -621,6 +624,7 @@ describe("optionalField", () => {
 						() => assert.fail("Should not need to invert children"),
 						fakeIdAllocator,
 						failCrossFieldManager,
+						defaultRevisionMetadataFromChanges([clear]),
 					),
 					mintRevisionTag(),
 				);

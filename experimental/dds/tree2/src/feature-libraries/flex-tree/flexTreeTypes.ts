@@ -23,7 +23,7 @@ import {
 import { FieldKinds } from "../default-field-kinds";
 import { FieldKind } from "../modular-schema";
 import { EditableTreeEvents } from "./treeEvents";
-import { TreeContext } from "./context";
+import { FlexTreeContext } from "./context";
 
 /**
  * Allows boxed iteration of a tree/field
@@ -46,7 +46,7 @@ export const boxedIterator = Symbol();
  *
  * @alpha
  */
-export interface TreeEntity<out TSchema = unknown> {
+export interface FlexTreeEntity<out TSchema = unknown> {
 	/**
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
@@ -56,7 +56,7 @@ export interface TreeEntity<out TSchema = unknown> {
 	/**
 	 * A common context of a "forest" of EditableTrees.
 	 */
-	readonly context: TreeContext;
+	readonly context: FlexTreeContext;
 
 	/**
 	 * Gets the {@link TreeStatus} of this tree.
@@ -72,7 +72,7 @@ export interface TreeEntity<out TSchema = unknown> {
 	 * @remarks
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 */
-	[boxedIterator](): IterableIterator<TreeEntity>;
+	[boxedIterator](): IterableIterator<FlexTreeEntity>;
 }
 
 /**
@@ -107,19 +107,19 @@ export const onNextChange = Symbol("onNextChange");
  * Nodes are (shallowly) immutable and have a logical identity, a type and either a value or fields under string keys.
  *
  * This "logical identity" is exposed as the object identity: if a node is moved within a document,
- * the same {@link TreeNode} instance will be used in the new location.
+ * the same {@link FlexTreeNode} instance will be used in the new location.
  * Similarly, edits applied to a node's sub-tree concurrently with the move of the node will still be applied to its subtree in its new location.
  *
  *
  * @remarks
- * Down-casting (via {@link TreeNode#is}) is required to access Schema-Aware APIs, including editing.
+ * Down-casting (via {@link FlexTreeNode#is}) is required to access Schema-Aware APIs, including editing.
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
- * All editing is actually done via {@link TreeField}s: the nodes are immutable other than that they contain mutable fields.
+ * All editing is actually done via {@link FlexTreeField}s: the nodes are immutable other than that they contain mutable fields.
  *
  * @alpha
  */
-export interface TreeNode extends TreeEntity<TreeNodeSchema> {
+export interface FlexTreeNode extends FlexTreeEntity<TreeNodeSchema> {
 	/**
 	 * Value stored on this node.
 	 */
@@ -136,17 +136,17 @@ export interface TreeNode extends TreeEntity<TreeNodeSchema> {
 	/**
 	 * Gets a field of this node, if it is not empty.
 	 */
-	tryGetField(key: FieldKey): undefined | TreeField;
+	tryGetField(key: FieldKey): undefined | FlexTreeField;
 
 	/**
 	 * The field this tree is in, and the index within that field.
 	 */
-	readonly parentField: { readonly parent: TreeField; readonly index: number };
+	readonly parentField: { readonly parent: FlexTreeField; readonly index: number };
 
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TSchema extends TreeNodeSchema>(schema: TSchema): this is TypedNode<TSchema>;
+	is<TSchema extends TreeNodeSchema>(schema: TSchema): this is FlexTreeTypedNode<TSchema>;
 
 	/**
 	 * Same as `this.schema.name`.
@@ -155,7 +155,7 @@ export interface TreeNode extends TreeEntity<TreeNodeSchema> {
 	 */
 	readonly type: TreeNodeSchemaIdentifier;
 
-	[boxedIterator](): IterableIterator<TreeField>;
+	[boxedIterator](): IterableIterator<FlexTreeField>;
 
 	/**
 	 * Subscribe to the next change that affects this node's children.
@@ -172,11 +172,11 @@ export interface TreeNode extends TreeEntity<TreeNodeSchema> {
 	 * around "hydrating" proxies that were created with schema-provided factory functions.
 	 * It is not a public API and thus the symbol for this property is not exported.
 	 */
-	[onNextChange](fn: (node: TreeNode) => void): () => void;
+	[onNextChange](fn: (node: FlexTreeNode) => void): () => void;
 }
 
 /**
- * A collaboratively editable collection of nodes within a {@link TreeEntity}.
+ * A collaboratively editable collection of nodes within a {@link FlexTreeEntity}.
  *
  * Fields are inherently part of their parent, and thus cannot be moved.
  * Instead their content can be moved, deleted or created.
@@ -186,16 +186,16 @@ export interface TreeNode extends TreeEntity<TreeNodeSchema> {
  * @remarks
  * Fields are used wherever an editable collection of nodes is required.
  * This is required in two places:
- * 1. To hold the children of non-leaf {@link TreeNode}s.
- * 2. As the root of a {@link TreeEntity}.
+ * 1. To hold the children of non-leaf {@link FlexTreeNode}s.
+ * 2. As the root of a {@link FlexTreeEntity}.
  *
- * Down-casting (via {@link TreeField.is}) is required to access Schema-Aware APIs, including editing.
+ * Down-casting (via {@link FlexTreeField.is}) is required to access Schema-Aware APIs, including editing.
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  *
  * @alpha
  */
-export interface TreeField extends TreeEntity<TreeFieldSchema> {
+export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
 	/**
 	 * The `FieldKey` this field is under.
 	 * Defines what part of its parent this field makes up.
@@ -206,14 +206,14 @@ export interface TreeField extends TreeEntity<TreeFieldSchema> {
 	 * The node which has this field on it under `fieldKey`.
 	 * `undefined` iff this field is a detached field.
 	 */
-	readonly parent?: TreeNode;
+	readonly parent?: FlexTreeNode;
 
 	/**
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
-	is<TSchema extends TreeFieldSchema>(schema: TSchema): this is TypedField<TSchema>;
+	is<TSchema extends TreeFieldSchema>(schema: TSchema): this is FlexTreeTypedField<TSchema>;
 
-	[boxedIterator](): IterableIterator<TreeNode>;
+	[boxedIterator](): IterableIterator<FlexTreeNode>;
 
 	/**
 	 * Check if this field is the same as a different field.
@@ -225,25 +225,27 @@ export interface TreeField extends TreeEntity<TreeFieldSchema> {
 	 * If practical, cache TreeField instances so use of this method can be replaced with `===` to compare object identity.
 	 * Implementing this will require some care to preserve lazy-ness and work efficiently (without leaks) for empty fields, particularly on MapNodes.
 	 */
-	isSameAs(other: TreeField): boolean;
+	isSameAs(other: FlexTreeField): boolean;
 }
 
 // #region Node Kinds
 
 /**
- * A {@link TreeNode} that behaves like a `Map<string, Field>` for a specific `Field` type.
+ * A {@link FlexTreeNode} that behaves like a `Map<string, Field>` for a specific `Field` type.
  *
  * @remarks
- * Unlike TypeScript Map type, {@link MapNode.get} always provides a reference to any field looked up, even if it has never been set.
+ * Unlike TypeScript Map type, {@link FlexTreeMapNode.get} always provides a reference to any field looked up, even if it has never been set.
  *
- * This means that, for example, a `MapNode` of {@link Sequence} fields will return an empty sequence when a previously unused key is looked up,
+ * This means that, for example, a `MapNode` of {@link FlexTreeSequenceField} fields will return an empty sequence when a previously unused key is looked up,
  * and that sequence can be used to insert new items into the field.
  * Additionally empty fields (those containing no nodes) are not distinguished from fields which do not exist.
  * This differs from JavaScript Maps which have a subtle distinction between storing undefined as a value in the map and deleting an entry from the map.
  *
  * @alpha
  */
-export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode {
+export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends FlexTreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * The number of elements in the map.
 	 *
@@ -265,7 +267,7 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
 	 * Get the value associated with `key`.
 	 * @param key - which map entry to look up.
 	 */
-	get(key: string): UnboxField<TSchema["info"]>;
+	get(key: string): FlexTreeUnboxField<TSchema["info"]>;
 
 	/**
 	 * Get the field for `key`.
@@ -275,7 +277,7 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
 	 * All fields under a map implicitly exist, so `get` can be called with any key and will always return a field.
 	 * Even if the field is empty, it will still be returned, and can be edited to insert content into the map.
 	 */
-	getBoxed(key: string): TypedField<TSchema["info"]>;
+	getBoxed(key: string): FlexTreeTypedField<TSchema["info"]>;
 
 	/**
 	 * Returns an iterable of keys in the map.
@@ -291,7 +293,7 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
 	 * @remarks
 	 * All fields under a map implicitly exist, but `values` will yield only the fields containing one or more nodes.
 	 */
-	values(): IterableIterator<UnboxField<TSchema["info"], "notEmpty">>;
+	values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
 
 	/**
 	 * Returns an iterable of key, value pairs for every entry in the map.
@@ -299,9 +301,9 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
 	 * @remarks
 	 * All fields under a map implicitly exist, but `entries` will yield only the entries whose fields contain one or more nodes.
 	 *
-	 * This iteration provided by `entries()` is equivalent to that provided by direct iteration of the {@link MapNode} (a.k.a. `[Symbol.Iterator]()`).
+	 * This iteration provided by `entries()` is equivalent to that provided by direct iteration of the {@link FlexTreeMapNode} (a.k.a. `[Symbol.Iterator]()`).
 	 */
-	entries(): IterableIterator<[FieldKey, UnboxField<TSchema["info"], "notEmpty">]>;
+	entries(): IterableIterator<[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]>;
 
 	/**
 	 * Executes a provided function once per each key/value pair in the map.
@@ -313,9 +315,9 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
 	 */
 	forEach(
 		callbackFn: (
-			value: UnboxField<TSchema["info"], "notEmpty">,
+			value: FlexTreeUnboxField<TSchema["info"], "notEmpty">,
 			key: FieldKey,
-			map: MapNode<TSchema>,
+			map: FlexTreeMapNode<TSchema>,
 		) => void,
 		thisArg?: any,
 	): void;
@@ -351,24 +353,26 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
 	 * No mutations to the current view of the shared tree are permitted during iteration.
 	 * To iterate over the unboxed values of the map, use `Symbol.Iterator()`.
 	 */
-	[boxedIterator](): IterableIterator<TypedField<TSchema["info"]>>;
+	[boxedIterator](): IterableIterator<FlexTreeTypedField<TSchema["info"]>>;
 
-	[Symbol.iterator](): IterableIterator<[FieldKey, UnboxField<TSchema["info"], "notEmpty">]>;
+	[Symbol.iterator](): IterableIterator<
+		[FieldKey, FlexTreeUnboxField<TSchema["info"], "notEmpty">]
+	>;
 
 	/**
-	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
-	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link MapNode.get} or iterate over fields with `Symbol.iterator`.
+	 * An enumerable own property which allows JavaScript object traversals to access {@link FlexTreeSequenceField} content.
+	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link FlexTreeMapNode.get} or iterate over fields with `Symbol.iterator`.
 	 * See [ReadMe](./README.md) for details.
 	 *
 	 * This object is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
 	 */
 	readonly asObject: {
-		readonly [P in FieldKey]?: UnboxField<TSchema["info"], "notEmpty">;
+		readonly [P in FieldKey]?: FlexTreeUnboxField<TSchema["info"], "notEmpty">;
 	};
 }
 
 /**
- * A {@link TreeNode} that wraps a single {@link TreeField} (which is placed under the {@link EmptyKey}).
+ * A {@link FlexTreeNode} that wraps a single {@link FlexTreeField} (which is placed under the {@link EmptyKey}).
  *
  * @remarks
  * A FieldNode is mostly identical to a struct node with a single field using the {@link EmptyKey}, but provides access to it via a field named "content".
@@ -388,13 +392,13 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
  * in some cases (like when the content is moved to a different parent) this can be more flexible if a field node is introduced
  * to create a separate logical entity (node) which wraps the field.
  * This can even be useful with value fields to wrap terminal nodes if a stable merge
- * - When a field (such as a {@link Sequence}) is desired in a location where {@link TreeNode}s are required
- * (like the member of a union or the child of another {@link TreeField}).
+ * - When a field (such as a {@link FlexTreeSequenceField}) is desired in a location where {@link FlexTreeNode}s are required
+ * (like the member of a union or the child of another {@link FlexTreeField}).
  * This can is typically just a different perspective on one of the above cases.
  * For example:
  * `Sequence<Foo> | Sequence<Bar>` or `OptionalField<Sequence<Foo>>` can't be expressed as simple fields
  * (unlike `Sequence<Foo | Bar>` or `OptionalField<Foo>` which can be done as simple fields).
- * Instead {@link FieldNode}s can be use to achieve something similar, more like:
+ * Instead {@link FlexTreeFieldNode}s can be use to achieve something similar, more like:
  * `FieldNode<Sequence<Foo>> | FieldNode<Sequence<Bar>>` or `OptionalField<FieldNode<Sequence<Foo>>>`.
  *
  * @privateRemarks
@@ -402,33 +406,35 @@ export interface MapNode<in out TSchema extends MapNodeSchema> extends TreeNode 
  * This is a change from the old behavior to simplify unboxing and prevent cases where arbitrary deep chains of field nodes could unbox omitting information about the tree depth.
  * @alpha
  */
-export interface FieldNode<in out TSchema extends FieldNodeSchema> extends TreeNode {
+export interface FlexTreeFieldNode<in out TSchema extends FieldNodeSchema> extends FlexTreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * The content this field node wraps.
 	 * @remarks
-	 * This is a version of {@link FieldNode.boxedContent} but does unboxing.
-	 * Since field node are usually used to wrap fields which don't do unboxing (like {@link Sequence})
+	 * This is a version of {@link FlexTreeFieldNode.boxedContent} but does unboxing.
+	 * Since field node are usually used to wrap fields which don't do unboxing (like {@link FlexTreeSequenceField})
 	 */
-	readonly content: UnboxField<TSchema["info"]>;
+	readonly content: FlexTreeUnboxField<TSchema["info"]>;
 	/**
 	 * The field this field node wraps.
 	 *
 	 * @remarks
-	 * Since field nodes are usually used to wrap fields which don't do unboxing (like {@link Sequence}),
-	 * this is usually the same as {@link FieldNode.content}.
+	 * Since field nodes are usually used to wrap fields which don't do unboxing (like {@link FlexTreeSequenceField}),
+	 * this is usually the same as {@link FlexTreeFieldNode.content}.
 	 * This is also the same as `[...this][0]`.
 	 */
-	readonly boxedContent: TypedField<TSchema["info"]>;
+	readonly boxedContent: FlexTreeTypedField<TSchema["info"]>;
 }
 
 /**
- * A {@link TreeNode} that behaves like an "object" or "struct", providing properties to access its fields.
+ * A {@link FlexTreeNode} that behaves like an "object" or "struct", providing properties to access its fields.
  *
  * ObjectNodes consist of a finite collection of fields, each with their own (distinct) key and {@link TreeFieldSchema}.
  *
  * @remarks
  * ObjectNodes require complex typing, and have been split into two parts for implementation purposes.
- * See {@link ObjectNodeTyped} for the schema aware extensions to this that provide access to the fields.
+ * See {@link FlexTreeObjectNodeTyped} for the schema aware extensions to this that provide access to the fields.
  *
  * These "Objects" resemble "Structs" from a wide variety of programming languages
  * (Including Algol 68, C, Go, Rust, C# etc.).
@@ -438,11 +444,11 @@ export interface FieldNode<in out TSchema extends FieldNodeSchema> extends TreeN
  * Another common name for this abstraction is [record](https://en.wikipedia.org/wiki/Record_(computer_science)).
  * The name "Record" is avoided (in favor of Object) here because it has less precise connotations for most TypeScript developers.
  * For example, TypeScript has a built in `Record` type, but it requires all of the fields to have the same type,
- * putting its semantics half way between this library's "Object" schema and {@link MapNode}.
+ * putting its semantics half way between this library's "Object" schema and {@link FlexTreeMapNode}.
  *
  * @alpha
  */
-export interface ObjectNode extends TreeNode {
+export interface FlexTreeObjectNode extends FlexTreeNode {
 	readonly schema: ObjectNodeSchema;
 
 	/**
@@ -459,7 +465,9 @@ export interface ObjectNode extends TreeNode {
  * Leaf unboxes its content, so in schema aware APIs which do unboxing, the Leaf itself will be skipped over and its value will be returned directly.
  * @alpha
  */
-export interface Leaf<in out TSchema extends LeafNodeSchema> extends TreeNode {
+export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * Value stored on this node.
 	 */
@@ -467,7 +475,7 @@ export interface Leaf<in out TSchema extends LeafNodeSchema> extends TreeNode {
 }
 
 /**
- * An {@link ObjectNode} with schema aware accessors for its fields.
+ * An {@link FlexTreeObjectNode} with schema aware accessors for its fields.
  *
  * @privateRemarks
  *
@@ -476,12 +484,13 @@ export interface Leaf<in out TSchema extends LeafNodeSchema> extends TreeNode {
  *
  * @alpha
  */
-export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNodeSchema extends TSchema
-	? ObjectNode
-	: ObjectNode & ObjectNodeFields<TSchema["info"]>;
+export type FlexTreeObjectNodeTyped<TSchema extends ObjectNodeSchema> =
+	ObjectNodeSchema extends TSchema
+		? FlexTreeObjectNode
+		: FlexTreeObjectNode & FlexTreeObjectNodeFields<TSchema["info"]>;
 
 /**
- * Properties to access an object node's fields. See {@link ObjectNodeTyped}.
+ * Properties to access an object node's fields. See {@link FlexTreeObjectNodeTyped}.
  *
  * @privateRemarks TODOs:
  *
@@ -492,10 +501,10 @@ export type ObjectNodeTyped<TSchema extends ObjectNodeSchema> = ObjectNodeSchema
  *
  * @alpha
  */
-export type ObjectNodeFields<TFields extends Fields> = FlattenKeys<
+export type FlexTreeObjectNodeFields<TFields extends Fields> = FlattenKeys<
 	{
 		// boxed fields (TODO: maybe remove these when same as non-boxed version?)
-		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: TypedField<
+		readonly [key in keyof TFields as `boxed${Capitalize<key & string>}`]: FlexTreeTypedField<
 			TFields[key]
 		>;
 	} & {
@@ -504,14 +513,14 @@ export type ObjectNodeFields<TFields extends Fields> = FlattenKeys<
 		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 			? never
-			: key]: UnboxField<TFields[key]>;
+			: key]: FlexTreeUnboxField<TFields[key]>;
 	} & {
 		// Add setter (make property writable) when the field is of a kind that has a logical set operation.
 		// If we could map to getters and setters separately, we would preferably do that, but we can't.
 		// See https://github.com/microsoft/TypeScript/issues/43826 for more details on this limitation.
 		-readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
 			? key
-			: never]: UnboxField<TFields[key]>;
+			: never]: FlexTreeUnboxField<TFields[key]>;
 	} & {
 		// Setter method (when the field is of a kind that has a logical set operation).
 		readonly [key in keyof TFields as TFields[key]["kind"] extends AssignableFieldKinds
@@ -554,7 +563,7 @@ export type FlexibleNodeContent<TTypes extends AllowedTypes> =
 /**
  * Strongly typed tree literals for inserting a subsequence of nodes.
  *
- * Used to insert a batch of 0 or more nodes into some location in a {@link Sequence}.
+ * Used to insert a batch of 0 or more nodes into some location in a {@link FlexTreeSequenceField}.
  *
  * If a cursor is provided, it must be in Fields mode.
  * @alpha
@@ -574,9 +583,9 @@ export type FlexibleNodeSubSequence<TTypes extends AllowedTypes> =
 export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? never : T][0];
 
 /**
- * {@link TreeField} that stores a sequence of children.
+ * {@link FlexTreeField} that stores a sequence of children.
  *
- * Sequence fields can contain an ordered sequence any number of {@link TreeNode}s which must be of the {@link AllowedTypes} from the {@link TreeFieldSchema}).
+ * Sequence fields can contain an ordered sequence any number of {@link FlexTreeNode}s which must be of the {@link AllowedTypes} from the {@link TreeFieldSchema}).
  *
  * @remarks
  * Allows for concurrent editing based on index, adjusting the locations of indexes as needed so they apply to the same logical place in the sequence when rebased and merged.
@@ -590,7 +599,7 @@ export type CheckTypesOverlap<T, TCheck> = [Extract<T, TCheck> extends never ? n
  * Currently only nodes can be held onto with anchors, and this does not replicate the behavior implemented for editing.
  * @alpha
  */
-export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField {
+export interface FlexTreeSequenceField<in out TTypes extends AllowedTypes> extends FlexTreeField {
 	/**
 	 * Gets a node of this field by its index with unboxing.
 	 * @param index - Zero-based index of the item to retrieve. Negative values are interpreted from the end of the sequence.
@@ -601,25 +610,25 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @remarks
 	 * Semantics match {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at | Array.at}.
 	 */
-	at(index: number): UnboxNodeUnion<TTypes> | undefined;
+	at(index: number): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 
 	/**
 	 * Gets a boxed node of this field by its index.
 	 * Note that a node must exist at the given index.
 	 */
-	boxedAt(index: number): TypedNodeUnion<TTypes>;
+	boxedAt(index: number): FlexTreeTypedNodeUnion<TTypes>;
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
 	 * @param callbackfn - A function that accepts the child and its index.
 	 */
-	map<U>(callbackfn: (value: UnboxNodeUnion<TTypes>, index: number) => U): U[];
+	map<U>(callbackfn: (value: FlexTreeUnboxNodeUnion<TTypes>, index: number) => U): U[];
 
 	/**
 	 * Calls the provided callback function on each child of this sequence, and returns an array that contains the results.
 	 * @param callbackfn - A function that accepts the child and its index.
 	 */
-	mapBoxed<U>(callbackfn: (value: TypedNodeUnion<TTypes>, index: number) => U): U[];
+	mapBoxed<U>(callbackfn: (value: FlexTreeTypedNodeUnion<TTypes>, index: number) => U): U[];
 
 	readonly length: number;
 
@@ -673,7 +682,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @param source - The source sequence to move the item out of.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
 	 */
-	moveToStart(sourceIndex: number, source: Sequence<AllowedTypes>): void;
+	moveToStart(sourceIndex: number, source: FlexTreeSequenceField<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified item to the end of the sequence.
@@ -688,7 +697,7 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @param source - The source sequence to move the item out of.
 	 * @throws Throws if `sourceIndex` is not in the range [0, `list.length`).
 	 */
-	moveToEnd(sourceIndex: number, source: Sequence<AllowedTypes>): void;
+	moveToEnd(sourceIndex: number, source: FlexTreeSequenceField<AllowedTypes>): void;
 
 	/**
 	 * Moves the specified item to the desired location in the sequence.
@@ -706,7 +715,11 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @param source - The source sequence to move the item out of.
 	 * @throws Throws if any of the input indices are not in the range [0, `list.length`).
 	 */
-	moveToIndex(index: number, sourceIndex: number, source: Sequence<AllowedTypes>): void;
+	moveToIndex(
+		index: number,
+		sourceIndex: number,
+		source: FlexTreeSequenceField<AllowedTypes>,
+	): void;
 
 	/**
 	 * Moves the specified items to the start of the sequence.
@@ -724,7 +737,11 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
 	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToStart(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
+	moveRangeToStart(
+		sourceStart: number,
+		sourceEnd: number,
+		source: FlexTreeSequenceField<AllowedTypes>,
+	): void;
 
 	/**
 	 * Moves the specified items to the end of the sequence.
@@ -742,7 +759,11 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 	 * @throws Throws if the types of any of the items being moved are not allowed in the destination sequence,
 	 * if either of the input indices are not in the range [0, `list.length`) or if `sourceStart` is greater than `sourceEnd`.
 	 */
-	moveRangeToEnd(sourceStart: number, sourceEnd: number, source: Sequence<AllowedTypes>): void;
+	moveRangeToEnd(
+		sourceStart: number,
+		sourceEnd: number,
+		source: FlexTreeSequenceField<AllowedTypes>,
+	): void;
 
 	/**
 	 * Moves the specified items to the desired location within the sequence.
@@ -767,21 +788,21 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
 		index: number,
 		sourceStart: number,
 		sourceEnd: number,
-		source: Sequence<AllowedTypes>,
+		source: FlexTreeSequenceField<AllowedTypes>,
 	): void;
 
-	[boxedIterator](): IterableIterator<TypedNodeUnion<TTypes>>;
+	[boxedIterator](): IterableIterator<FlexTreeTypedNodeUnion<TTypes>>;
 
-	[Symbol.iterator](): IterableIterator<UnboxNodeUnion<TTypes>>;
+	[Symbol.iterator](): IterableIterator<FlexTreeUnboxNodeUnion<TTypes>>;
 
 	/**
-	 * An enumerable own property which allows JavaScript object traversals to access {@link Sequence} content.
-	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link Sequence#at} or iterate over nodes with `Symbol.iterator`.
+	 * An enumerable own property which allows JavaScript object traversals to access {@link FlexTreeSequenceField} content.
+	 * It is recommenced to NOT use this when possible (for performance and type safety reasons): instead use {@link FlexTreeSequenceField#at} or iterate over nodes with `Symbol.iterator`.
 	 * See [ReadMe](./README.md) for details.
 	 *
 	 * This array is not guaranteed to be kept up to date across edits and thus should not be held onto across edits.
 	 */
-	readonly asArray: readonly UnboxNodeUnion<TTypes>[];
+	readonly asArray: readonly FlexTreeUnboxNodeUnion<TTypes>[];
 }
 
 /**
@@ -791,11 +812,11 @@ export interface Sequence<in out TTypes extends AllowedTypes> extends TreeField 
  * Unboxes its content, so in schema aware APIs which do unboxing, the RequiredField itself will be skipped over and its content will be returned directly.
  * @alpha
  */
-export interface RequiredField<in out TTypes extends AllowedTypes> extends TreeField {
-	get content(): UnboxNodeUnion<TTypes>;
+export interface FlexTreeRequiredField<in out TTypes extends AllowedTypes> extends FlexTreeField {
+	get content(): FlexTreeUnboxNodeUnion<TTypes>;
 	set content(content: FlexibleNodeContent<TTypes>);
 
-	readonly boxedContent: TypedNodeUnion<TTypes>;
+	readonly boxedContent: FlexTreeTypedNodeUnion<TTypes>;
 }
 
 /**
@@ -812,18 +833,18 @@ export interface RequiredField<in out TTypes extends AllowedTypes> extends TreeF
  * Maybe link editor?
  * @alpha
  */
-export interface OptionalField<in out TTypes extends AllowedTypes> extends TreeField {
-	get content(): UnboxNodeUnion<TTypes> | undefined;
+export interface FlexTreeOptionalField<in out TTypes extends AllowedTypes> extends FlexTreeField {
+	get content(): FlexTreeUnboxNodeUnion<TTypes> | undefined;
 	set content(newContent: FlexibleNodeContent<TTypes> | undefined);
 
-	readonly boxedContent?: TypedNodeUnion<TTypes>;
+	readonly boxedContent?: FlexTreeTypedNodeUnion<TTypes>;
 }
 
 /**
  * Field that contains an immutable {@link StableNodeKey} identifying this node.
  * @alpha
  */
-export interface NodeKeyField extends TreeField {
+export interface FlexTreeNodeKeyField extends FlexTreeField {
 	readonly localNodeKey: LocalNodeKey;
 	readonly stableNodeKey: StableNodeKey;
 }
@@ -833,39 +854,39 @@ export interface NodeKeyField extends TreeField {
 // #region Typed
 
 /**
- * Schema aware specialization of {@link TreeField}.
+ * Schema aware specialization of {@link FlexTreeField}.
  * @alpha
  */
-export type TypedField<TSchema extends TreeFieldSchema> = TypedFieldInner<
+export type FlexTreeTypedField<TSchema extends TreeFieldSchema> = FlexTreeTypedFieldInner<
 	TSchema["kind"],
 	TSchema["allowedTypes"]
 >;
 
 /**
- * Helper for implementing {@link TypedField}.
+ * Helper for implementing {@link FlexTreeTypedField}.
  * @alpha
  */
-export type TypedFieldInner<
+export type FlexTreeTypedFieldInner<
 	Kind extends FieldKind,
 	Types extends AllowedTypes,
 > = Kind extends typeof FieldKinds.sequence
-	? Sequence<Types>
+	? FlexTreeSequenceField<Types>
 	: Kind extends typeof FieldKinds.required
-	? RequiredField<Types>
+	? FlexTreeRequiredField<Types>
 	: Kind extends typeof FieldKinds.optional
-	? OptionalField<Types>
+	? FlexTreeOptionalField<Types>
 	: Kind extends typeof FieldKinds.nodeKey
-	? NodeKeyField
-	: TreeField;
+	? FlexTreeNodeKeyField
+	: FlexTreeField;
 
 /**
- * Schema aware specialization of {@link TreeNode} for a given {@link AllowedTypes}.
+ * Schema aware specialization of {@link FlexTreeNode} for a given {@link AllowedTypes}.
  * @alpha
  */
-export type TypedNodeUnion<TTypes extends AllowedTypes> =
+export type FlexTreeTypedNodeUnion<TTypes extends AllowedTypes> =
 	TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
-		? TypedNodeUnionHelper<TTypes>
-		: TreeNode;
+		? FlexTreeTypedNodeUnionHelper<TTypes>
+		: FlexTreeNode;
 
 /**
  * Helper for implementing TypedNodeUnion.
@@ -874,61 +895,60 @@ export type TypedNodeUnion<TTypes extends AllowedTypes> =
  * The reason for this us unknown, but splitting it out fixed it.
  * @alpha
  */
-export type TypedNodeUnionHelper<TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>> =
-	InternalTypedSchemaTypes.ArrayToUnion<
-		TypeArrayToTypedTreeArray<
-			Assume<
-				InternalTypedSchemaTypes.FlexListToNonLazyArray<TTypes>,
-				readonly TreeNodeSchema[]
-			>
-		>
-	>;
+export type FlexTreeTypedNodeUnionHelper<
+	TTypes extends InternalTypedSchemaTypes.FlexList<TreeNodeSchema>,
+> = InternalTypedSchemaTypes.ArrayToUnion<
+	TypeArrayToTypedFlexTreeArray<
+		Assume<InternalTypedSchemaTypes.FlexListToNonLazyArray<TTypes>, readonly TreeNodeSchema[]>
+	>
+>;
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
  * @alpha
  */
-export type TypeArrayToTypedTreeArray<T extends readonly TreeNodeSchema[]> = [
+export type TypeArrayToTypedFlexTreeArray<T extends readonly TreeNodeSchema[]> = [
 	ArrayHasFixedLength<T> extends false
 		? T extends readonly (infer InnerT)[]
-			? [TypedNode<Assume<InnerT, TreeNodeSchema>>]
+			? [FlexTreeTypedNode<Assume<InnerT, TreeNodeSchema>>]
 			: never
-		: FixedSizeTypeArrayToTypedTree<T>,
+		: FixedSizeTypeArrayToTypedFlexTree<T>,
 ][_InlineTrick];
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
  * @alpha
  */
-export type FixedSizeTypeArrayToTypedTree<T extends readonly TreeNodeSchema[]> = [
+export type FixedSizeTypeArrayToTypedFlexTree<T extends readonly TreeNodeSchema[]> = [
 	T extends readonly [infer Head, ...infer Tail]
 		? [
-				TypedNode<Assume<Head, TreeNodeSchema>>,
-				...FixedSizeTypeArrayToTypedTree<Assume<Tail, readonly TreeNodeSchema[]>>,
+				FlexTreeTypedNode<Assume<Head, TreeNodeSchema>>,
+				...FixedSizeTypeArrayToTypedFlexTree<Assume<Tail, readonly TreeNodeSchema[]>>,
 		  ]
 		: [],
 ][_InlineTrick];
 
 /**
- * Schema aware specialization of {@link TreeEntity}.
+ * Schema aware specialization of {@link FlexTreeEntity}.
  * @alpha
  */
-export type Typed<TSchema extends TreeFieldSchema | TreeNodeSchema> = TSchema extends TreeNodeSchema
-	? TypedNode<TSchema>
-	: TypedField<Assume<TSchema, TreeFieldSchema>>;
+export type FlexTreeTyped<TSchema extends TreeFieldSchema | TreeNodeSchema> =
+	TSchema extends TreeNodeSchema
+		? FlexTreeTypedNode<TSchema>
+		: FlexTreeTypedField<Assume<TSchema, TreeFieldSchema>>;
 
 /**
- * Schema aware specialization of {@link TreeNode} for a given {@link TreeNodeSchema}.
+ * Schema aware specialization of {@link FlexTreeNode} for a given {@link TreeNodeSchema}.
  * @alpha
  */
-export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
-	? Leaf<TSchema>
+export type FlexTreeTypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
+	? FlexTreeLeafNode<TSchema>
 	: TSchema extends MapNodeSchema
-	? MapNode<TSchema>
+	? FlexTreeMapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? FieldNode<TSchema>
+	? FlexTreeFieldNode<TSchema>
 	: TSchema extends ObjectNodeSchema
-	? ObjectNodeTyped<TSchema>
-	: TreeNode;
+	? FlexTreeObjectNodeTyped<TSchema>
+	: FlexTreeNode;
 
 // #endregion
 
@@ -941,29 +961,29 @@ export type TypedNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNode
  * Recursively unboxes that content (then its content etc.) as well if the node union does unboxing.
  * @alpha
  */
-export type UnboxField<
+export type FlexTreeUnboxField<
 	TSchema extends TreeFieldSchema,
 	// If "notEmpty", then optional fields will unbox to their content (not their content | undefined)
 	Emptiness extends "maybeEmpty" | "notEmpty" = "maybeEmpty",
-> = UnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
+> = FlexTreeUnboxFieldInner<TSchema["kind"], TSchema["allowedTypes"], Emptiness>;
 
 /**
  * Helper for implementing {@link InternalEditableTreeTypes#UnboxField}.
  * @alpha
  */
-export type UnboxFieldInner<
+export type FlexTreeUnboxFieldInner<
 	Kind extends FieldKind,
 	TTypes extends AllowedTypes,
 	Emptiness extends "maybeEmpty" | "notEmpty",
 > = Kind extends typeof FieldKinds.sequence
-	? Sequence<TTypes>
+	? FlexTreeSequenceField<TTypes>
 	: Kind extends typeof FieldKinds.required
-	? UnboxNodeUnion<TTypes>
+	? FlexTreeUnboxNodeUnion<TTypes>
 	: Kind extends typeof FieldKinds.optional
-	? UnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
+	? FlexTreeUnboxNodeUnion<TTypes> | (Emptiness extends "notEmpty" ? never : undefined)
 	: // Since struct already provides a short-hand accessor for the local field key, and the field provides a nicer general API than the node under it in this case, do not unbox nodeKey fields.
 	Kind extends typeof FieldKinds.nodeKey
-	? NodeKeyField
+	? FlexTreeNodeKeyField
 	: // TODO: forbidden
 	  unknown;
 
@@ -974,18 +994,18 @@ export type UnboxFieldInner<
  * Recursively unboxes that content as well if the node kind does unboxing.
  * @alpha
  */
-export type UnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
+export type FlexTreeUnboxNodeUnion<TTypes extends AllowedTypes> = TTypes extends readonly [
 	InternalTypedSchemaTypes.LazyItem<infer InnerType>,
 ]
 	? InnerType extends TreeNodeSchema
-		? UnboxNode<InnerType>
+		? FlexTreeUnboxNode<InnerType>
 		: InnerType extends Any
-		? TreeNode
+		? FlexTreeNode
 		: // This case should not occur. If the result ever ends up unknown, look at places like this to debug.
 		  unknown
 	: boolean extends IsArrayOfOne<TTypes>
-	? UnknownUnboxed // Unknown if this will unbox. This should mainly happen when TTypes is AllowedTypes.
-	: TypedNodeUnion<TTypes>; // Known to not be a single type, so known not to unbox.
+	? FlexTreeUnknownUnboxed // Unknown if this will unbox. This should mainly happen when TTypes is AllowedTypes.
+	: FlexTreeTypedNodeUnion<TTypes>; // Known to not be a single type, so known not to unbox.
 
 /**
  * `true` if T is known to be an array of one item.
@@ -1006,20 +1026,20 @@ export type IsArrayOfOne<T extends readonly unknown[]> = T["length"] extends 1
  * Recursively unboxes that content as well if it does unboxing.
  * @alpha
  */
-export type UnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
+export type FlexTreeUnboxNode<TSchema extends TreeNodeSchema> = TSchema extends LeafNodeSchema
 	? TreeValue<TSchema["info"]>
 	: TSchema extends MapNodeSchema
-	? MapNode<TSchema>
+	? FlexTreeMapNode<TSchema>
 	: TSchema extends FieldNodeSchema
-	? FieldNode<TSchema>
+	? FlexTreeFieldNode<TSchema>
 	: TSchema extends ObjectNodeSchema
-	? ObjectNodeTyped<TSchema>
-	: UnknownUnboxed;
+	? FlexTreeObjectNodeTyped<TSchema>
+	: FlexTreeUnknownUnboxed;
 
 /**
  * Unboxed tree type for unknown schema cases.
  * @alpha
  */
-export type UnknownUnboxed = TreeValue | TreeNode;
+export type FlexTreeUnknownUnboxed = TreeValue | FlexTreeNode;
 
 // #endregion
