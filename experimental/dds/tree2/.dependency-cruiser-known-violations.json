@@ -1,30 +1,6 @@
 [
 	{
 		"type": "cycle",
-		"from": "src/domains/index.ts",
-		"to": "src/domains/schemaBuilder.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": ["src/domains/schemaBuilder.ts", "src/domains/index.ts"]
-	},
-	{
-		"type": "cycle",
-		"from": "src/domains/index.ts",
-		"to": "src/domains/testRecursiveDomain.ts",
-		"rule": {
-			"severity": "error",
-			"name": "no-circular"
-		},
-		"cycle": [
-			"src/domains/testRecursiveDomain.ts",
-			"src/domains/schemaBuilder.ts",
-			"src/domains/index.ts"
-		]
-	},
-	{
-		"type": "cycle",
 		"from": "src/feature-libraries/flex-tree/context.ts",
 		"to": "src/feature-libraries/flex-tree/lazyField.ts",
 		"rule": {

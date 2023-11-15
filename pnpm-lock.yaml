@@ -6683,6 +6683,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.28.0-210888
       '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
@@ -6728,6 +6729,7 @@ importers:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0-210888_@types+node@16.18.58
+      '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -9488,6 +9490,69 @@ importers:
       mocha-json-output-reporter: 2.1.0_mocha@10.2.0+moment@2.29.4
       mocha-multi-reporters: 1.5.1_mocha@10.2.0
       moment: 2.29.4
+      prettier: 3.0.3
+      rimraf: 4.4.1
+      typescript: 5.1.6
+
+  packages/service-client/odsp-client:
+    specifiers:
+      '@fluid-tools/build-cli': 0.28.0-210888
+      '@fluidframework/azure-client': workspace:~
+      '@fluidframework/build-common': ^2.0.3
+      '@fluidframework/build-tools': 0.28.0-210888
+      '@fluidframework/common-definitions': ^1.0.0
+      '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
+      '@fluidframework/core-interfaces': workspace:~
+      '@fluidframework/core-utils': workspace:~
+      '@fluidframework/driver-definitions': workspace:~
+      '@fluidframework/eslint-config-fluid': ^3.1.0
+      '@fluidframework/fluid-static': workspace:~
+      '@fluidframework/mocha-test-setup': workspace:~
+      '@fluidframework/odsp-doclib-utils': workspace:~
+      '@fluidframework/odsp-driver': workspace:~
+      '@fluidframework/odsp-driver-definitions': workspace:~
+      '@fluidframework/protocol-definitions': ^3.0.0
+      '@fluidframework/runtime-utils': workspace:~
+      '@fluidframework/telemetry-utils': workspace:~
+      '@microsoft/api-extractor': ^7.38.3
+      '@types/node': ^16.18.38
+      c8: ^7.7.1
+      cross-env: ^7.0.3
+      eslint: ~8.50.0
+      mocha: ^10.2.0
+      prettier: ~3.0.3
+      rimraf: ^4.4.0
+      typescript: ~5.1.6
+      uuid: ^9.0.0
+    dependencies:
+      '@fluidframework/azure-client': link:../../../azure/packages/azure-client
+      '@fluidframework/common-definitions': 1.0.0
+      '@fluidframework/container-definitions': link:../../common/container-definitions
+      '@fluidframework/container-loader': link:../../loader/container-loader
+      '@fluidframework/core-interfaces': link:../../common/core-interfaces
+      '@fluidframework/core-utils': link:../../common/core-utils
+      '@fluidframework/driver-definitions': link:../../common/driver-definitions
+      '@fluidframework/fluid-static': link:../../framework/fluid-static
+      '@fluidframework/odsp-doclib-utils': link:../../utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver': link:../../drivers/odsp-driver
+      '@fluidframework/odsp-driver-definitions': link:../../drivers/odsp-driver-definitions
+      '@fluidframework/protocol-definitions': 3.0.0
+      '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
+      uuid: 9.0.1
+    devDependencies:
+      '@fluid-tools/build-cli': 0.28.0-210888_bnjxas577mbdnhldblqqi36nsq
+      '@fluidframework/build-common': 2.0.3
+      '@fluidframework/build-tools': 0.28.0-210888_@types+node@16.18.58
+      '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
+      '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
+      '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
+      '@types/node': 16.18.58
+      c8: 7.14.0
+      cross-env: 7.0.3
+      eslint: 8.50.0
+      mocha: 10.2.0
       prettier: 3.0.3
       rimraf: 4.4.1
       typescript: 5.1.6
@@ -23999,7 +24064,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.3_debug@4.3.4
+      follow-redirects: 1.15.3
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
