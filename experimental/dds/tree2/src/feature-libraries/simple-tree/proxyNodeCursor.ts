@@ -46,9 +46,29 @@ export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "
 ): CursorAdapter<TNode> {
 	return {
 		value: (node: TNode) => {
-			return isPrimitiveValue(node) || node === null || isFluidHandle(node)
-				? (node as Value)
-				: undefined;
+			if (node === null) {
+				return null;
+			}
+			switch (typeof node) {
+				case "number":
+					if (Object.is(node, -0)) {
+						// Our serialized data format does not support -0.
+						// Map such input to +0.
+						return 0;
+					} else if (Number.isNaN(node) || !Number.isFinite(node)) {
+						// Our serialized data format does not support NaN nor +/-∞.
+						// Map such inputs to null.
+						return null;
+					} else {
+						return node;
+					}
+				case "boolean":
+				case "string":
+					return node;
+				default: {
+					return isFluidHandle(node) ? node : undefined;
+				}
+			}
 		},
 		type: (node: TNode) => {
 			if (node === undefined) {
