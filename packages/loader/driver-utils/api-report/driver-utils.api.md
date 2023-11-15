@@ -396,9 +396,6 @@ export class UsageError extends LoggingError implements IDriverErrorBase, IFluid
     readonly errorType = DriverErrorType.usageError;
 }
 
-// @public (undocumented)
-export const waitForOnline: () => Promise<void>;
-
 // (No @packageDocumentation comment for this package)
 
 ```
