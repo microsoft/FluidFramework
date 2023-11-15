@@ -183,8 +183,7 @@ function getSaveInfo(
  *     validateConsistency: (a, b) => { assert.equal(a.getText(), b.getText()); }
  * }
  * ```
- * This model can be used directly to create a suite of fuzz tests with
- * {@link (createDDSFuzzSuite:function)}
+ * This model can be used directly to create a suite of fuzz tests with {@link (createDDSFuzzSuite:function)}
  *
  * @internal
  */
