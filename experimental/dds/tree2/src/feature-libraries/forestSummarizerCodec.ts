@@ -10,6 +10,8 @@ import { FieldKey } from "../core";
 import { Format, Versioned, version } from "./forestSummarizerFormat";
 import { EncodedChunk } from "./chunked-forest";
 
+// TODO: As of now this codec does not contain that much logic on encoding, and mainly provides a codec which version stamps,
+// and validates the format of the data. Eventually we will want to add more logic in here.
 export function makeForestSummarizerCodec({
 	jsonValidator: validator,
 }: ICodecOptions): IJsonCodec<[FieldKey, EncodedChunk][], Format> {

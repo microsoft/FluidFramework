@@ -117,8 +117,7 @@ export class ForestSummarizer implements Summarizable {
 			const treeBufferString = bufferToString(treeBuffer, "utf8");
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			// const fields = parse(treeBufferString) as [FieldKey, EncodedChunk][];
-			const fields = this.codec.decode(JSON.parse(treeBufferString));
+			const fields = this.codec.decode(parse(treeBufferString) as Format);
 			const allocator = idAllocatorFromMaxId();
 			const delta: [FieldKey, Delta.FieldChanges][] = fields.map(([fieldKey, content]) => {
 				const nodeCursors = mapCursorField(decode(content).cursor(), (cursor) =>
