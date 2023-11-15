@@ -146,10 +146,10 @@ export interface IGCTestProvider {
 // @internal
 export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOperation) => void;
 
-// @internal (undocumented)
+// @internal
 export function replayTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(ddsModel: DDSFuzzModel<TChannelFactory, TOperation>, seed: number, operations: TOperation[], saveInfo?: SaveInfo, providedOptions?: Partial<DDSFuzzSuiteOptions>): Promise<void>;
 
-// @internal (undocumented)
+// @internal
 export const runGCTests: (ctor: new () => IGCTestProvider) => void;
 
 // @internal (undocumented)
