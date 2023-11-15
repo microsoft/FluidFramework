@@ -247,7 +247,7 @@ export const InverseAttachFields = Type.Object({
  * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
  *
  * Rebasing this mark never causes it to target different set of nodes.
- * Rebasing this mark can it to clear a different set of cells.
+ * Rebasing this mark can cause it to clear a different set of cells.
  */
 export interface Delete extends HasRevisionTag, InverseAttachFields {
 	type: "Delete";
@@ -272,7 +272,7 @@ export const Delete = Type.Composite(
  * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
  *
  * Rebasing this mark never causes it to target different set of nodes.
- * Rebasing this mark can it to clear a different set of cells.
+ * Rebasing this mark can cause it to clear a different set of cells.
  */
 export interface MoveOut extends HasMoveFields {
 	type: "MoveOut";
@@ -293,7 +293,7 @@ export const MoveOut = Type.Composite(
  * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
  *
  * Rebasing this mark never causes it to target different set of nodes.
- * Rebasing this mark can it to clear a different set of cells.
+ * Rebasing this mark can cause it to clear a different set of cells.
  * TODO: unify with `MoveOut`.
  */
 export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
