@@ -12,7 +12,12 @@ import {
 	ITenantOrderer,
 	ITenantStorage,
 } from "@fluidframework/server-services-core";
-import { BasicRestWrapper, GitManager, Historian, IGitManager } from "@fluidframework/server-services-client";
+import {
+	BasicRestWrapper,
+	GitManager,
+	Historian,
+	IGitManager,
+} from "@fluidframework/server-services-client";
 
 export class TinyliciousTenant implements ITenant {
 	private readonly owner = "tinylicious";
@@ -26,7 +31,14 @@ export class TinyliciousTenant implements ITenant {
 		// Using an explicitly constructed rest wrapper so we can pass the Axios instance whose static defaults
 		// were modified by t9s, and avoid issues if the module that contains BasicRestWrapper depends on a different
 		// version of Axios.
-		const restWrapper = new BasicRestWrapper(historianUrl, undefined, undefined, undefined, undefined, Axios);
+		const restWrapper = new BasicRestWrapper(
+			historianUrl,
+			undefined,
+			undefined,
+			undefined,
+			undefined,
+			Axios,
+		);
 		const historian = new Historian(historianUrl, false, false, restWrapper);
 
 		this.manager = new GitManager(historian);
