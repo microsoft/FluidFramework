@@ -16,7 +16,7 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils";
-import { ITreeViewFork, ITreeView } from "../../../shared-tree";
+import { ITreeViewFork, FlexTreeView } from "../../../shared-tree";
 import {
 	makeOpGenerator,
 	EditGeneratorOpWeights,
@@ -36,7 +36,7 @@ import { Operation } from "./operationTypes";
  * This interface is meant to be used for tests that require you to store a branch of a tree
  */
 interface BranchedTreeFuzzTestState extends FuzzTestState {
-	main?: ITreeView<typeof fuzzSchema.rootFieldSchema>;
+	main?: FlexTreeView<typeof fuzzSchema.rootFieldSchema>;
 	branch?: ITreeViewFork<typeof fuzzSchema.rootFieldSchema>;
 }
 

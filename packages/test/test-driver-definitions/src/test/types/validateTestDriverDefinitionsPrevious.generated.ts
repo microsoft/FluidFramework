@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_DriverEndpoint():
     TypeOnly<old.DriverEndpoint>;
 declare function use_current_TypeAliasDeclaration_DriverEndpoint(
-    use: TypeOnly<current.DriverEndpoint>);
+    use: TypeOnly<current.DriverEndpoint>): void;
 use_current_TypeAliasDeclaration_DriverEndpoint(
     get_old_TypeAliasDeclaration_DriverEndpoint());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_DriverEndpoint(
 declare function get_current_TypeAliasDeclaration_DriverEndpoint():
     TypeOnly<current.DriverEndpoint>;
 declare function use_old_TypeAliasDeclaration_DriverEndpoint(
-    use: TypeOnly<old.DriverEndpoint>);
+    use: TypeOnly<old.DriverEndpoint>): void;
 use_old_TypeAliasDeclaration_DriverEndpoint(
     get_current_TypeAliasDeclaration_DriverEndpoint());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_DriverEndpoint(
 declare function get_old_InterfaceDeclaration_ITelemetryBufferedLogger():
     TypeOnly<old.ITelemetryBufferedLogger>;
 declare function use_current_InterfaceDeclaration_ITelemetryBufferedLogger(
-    use: TypeOnly<current.ITelemetryBufferedLogger>);
+    use: TypeOnly<current.ITelemetryBufferedLogger>): void;
 use_current_InterfaceDeclaration_ITelemetryBufferedLogger(
     get_old_InterfaceDeclaration_ITelemetryBufferedLogger());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_ITelemetryBufferedLogger(
 declare function get_current_InterfaceDeclaration_ITelemetryBufferedLogger():
     TypeOnly<current.ITelemetryBufferedLogger>;
 declare function use_old_InterfaceDeclaration_ITelemetryBufferedLogger(
-    use: TypeOnly<old.ITelemetryBufferedLogger>);
+    use: TypeOnly<old.ITelemetryBufferedLogger>): void;
 use_old_InterfaceDeclaration_ITelemetryBufferedLogger(
     get_current_InterfaceDeclaration_ITelemetryBufferedLogger());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_ITelemetryBufferedLogger(
 declare function get_old_InterfaceDeclaration_ITestDriver():
     TypeOnly<old.ITestDriver>;
 declare function use_current_InterfaceDeclaration_ITestDriver(
-    use: TypeOnly<current.ITestDriver>);
+    use: TypeOnly<current.ITestDriver>): void;
 use_current_InterfaceDeclaration_ITestDriver(
     get_old_InterfaceDeclaration_ITestDriver());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_ITestDriver(
 declare function get_current_InterfaceDeclaration_ITestDriver():
     TypeOnly<current.ITestDriver>;
 declare function use_old_InterfaceDeclaration_ITestDriver(
-    use: TypeOnly<old.ITestDriver>);
+    use: TypeOnly<old.ITestDriver>): void;
 use_old_InterfaceDeclaration_ITestDriver(
     get_current_InterfaceDeclaration_ITestDriver());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_ITestDriver(
 declare function get_old_TypeAliasDeclaration_OdspEndpoint():
     TypeOnly<old.OdspEndpoint>;
 declare function use_current_TypeAliasDeclaration_OdspEndpoint(
-    use: TypeOnly<current.OdspEndpoint>);
+    use: TypeOnly<current.OdspEndpoint>): void;
 use_current_TypeAliasDeclaration_OdspEndpoint(
     get_old_TypeAliasDeclaration_OdspEndpoint());
 
@@ -113,7 +113,7 @@ use_current_TypeAliasDeclaration_OdspEndpoint(
 declare function get_current_TypeAliasDeclaration_OdspEndpoint():
     TypeOnly<current.OdspEndpoint>;
 declare function use_old_TypeAliasDeclaration_OdspEndpoint(
-    use: TypeOnly<old.OdspEndpoint>);
+    use: TypeOnly<old.OdspEndpoint>): void;
 use_old_TypeAliasDeclaration_OdspEndpoint(
     get_current_TypeAliasDeclaration_OdspEndpoint());
 
@@ -125,7 +125,7 @@ use_old_TypeAliasDeclaration_OdspEndpoint(
 declare function get_old_TypeAliasDeclaration_RouterliciousEndpoint():
     TypeOnly<old.RouterliciousEndpoint>;
 declare function use_current_TypeAliasDeclaration_RouterliciousEndpoint(
-    use: TypeOnly<current.RouterliciousEndpoint>);
+    use: TypeOnly<current.RouterliciousEndpoint>): void;
 use_current_TypeAliasDeclaration_RouterliciousEndpoint(
     get_old_TypeAliasDeclaration_RouterliciousEndpoint());
 
@@ -137,7 +137,7 @@ use_current_TypeAliasDeclaration_RouterliciousEndpoint(
 declare function get_current_TypeAliasDeclaration_RouterliciousEndpoint():
     TypeOnly<current.RouterliciousEndpoint>;
 declare function use_old_TypeAliasDeclaration_RouterliciousEndpoint(
-    use: TypeOnly<old.RouterliciousEndpoint>);
+    use: TypeOnly<old.RouterliciousEndpoint>): void;
 use_old_TypeAliasDeclaration_RouterliciousEndpoint(
     get_current_TypeAliasDeclaration_RouterliciousEndpoint());
 
@@ -149,7 +149,7 @@ use_old_TypeAliasDeclaration_RouterliciousEndpoint(
 declare function get_old_TypeAliasDeclaration_TestDriverTypes():
     TypeOnly<old.TestDriverTypes>;
 declare function use_current_TypeAliasDeclaration_TestDriverTypes(
-    use: TypeOnly<current.TestDriverTypes>);
+    use: TypeOnly<current.TestDriverTypes>): void;
 use_current_TypeAliasDeclaration_TestDriverTypes(
     get_old_TypeAliasDeclaration_TestDriverTypes());
 
@@ -161,6 +161,6 @@ use_current_TypeAliasDeclaration_TestDriverTypes(
 declare function get_current_TypeAliasDeclaration_TestDriverTypes():
     TypeOnly<current.TestDriverTypes>;
 declare function use_old_TypeAliasDeclaration_TestDriverTypes(
-    use: TypeOnly<old.TestDriverTypes>);
+    use: TypeOnly<old.TestDriverTypes>): void;
 use_old_TypeAliasDeclaration_TestDriverTypes(
     get_current_TypeAliasDeclaration_TestDriverTypes());

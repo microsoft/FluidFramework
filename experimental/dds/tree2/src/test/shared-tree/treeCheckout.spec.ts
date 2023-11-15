@@ -12,7 +12,7 @@ import {
 	emptyJsonSequenceConfig,
 	insert,
 	jsonSequenceRootSchema,
-	viewWithContent,
+	flexTreeViewWithContent,
 	checkoutWithContent,
 } from "../utils";
 import {
@@ -34,7 +34,7 @@ describe("sharedTreeView", () => {
 		const schema = builder.intoSchema(builder.optional(rootTreeNodeSchema));
 
 		it("triggers events for local and subtree changes", () => {
-			const view = viewWithContent({
+			const view = flexTreeViewWithContent({
 				schema,
 				initialTree: {
 					x: 24,
@@ -75,7 +75,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("propagates path args for local and subtree changes", () => {
-			const view = viewWithContent({
+			const view = flexTreeViewWithContent({
 				schema,
 				initialTree: {
 					x: 24,
@@ -125,10 +125,12 @@ describe("sharedTreeView", () => {
 			});
 			const branch = tree1.fork();
 
-			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-				createTestUndoRedoStacks(tree1);
-			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-				createTestUndoRedoStacks(branch);
+			const { undoStack: undoStack1, unsubscribe: unsubscribe1 } = createTestUndoRedoStacks(
+				tree1.events,
+			);
+			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
+				branch.events,
+			);
 
 			// Insert node
 			insertFirstNode(branch, "42");
@@ -312,7 +314,7 @@ describe("sharedTreeView", () => {
 		});
 
 		itView("update anchors after undoing", (view) => {
-			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view);
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			insertFirstNode(view, "A");
 			let cursor = view.forest.allocateCursor();
 			moveToDetachedField(view.forest, cursor);

@@ -86,6 +86,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		invertChild: NodeChangeInverter,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -96,6 +97,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		originalRevision: RevisionTag | undefined,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
