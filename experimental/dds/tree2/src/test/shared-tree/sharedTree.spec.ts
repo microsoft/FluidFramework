@@ -813,10 +813,10 @@ describe("SharedTree", () => {
 					} satisfies InitializeAndSchematizeConfiguration;
 					const tree1 = provider.trees[0].schematizeInternal(content);
 					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-						createTestUndoRedoStacks(tree1.checkout);
+						createTestUndoRedoStacks(tree1.checkout.events);
 					const tree2 = provider.trees[1].schematizeInternal(content);
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-						createTestUndoRedoStacks(tree2.checkout);
+						createTestUndoRedoStacks(tree2.checkout.events);
 
 					provider.processMessages();
 
