@@ -159,6 +159,7 @@ export function invert(change: TaggedChange<TestChangeset>): TestChangeset {
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
 		table,
+		defaultRevisionMetadataFromChanges([change]),
 	);
 
 	if (table.isInvalidated) {

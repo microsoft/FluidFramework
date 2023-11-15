@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_FileSnapshotReader():
     TypeOnly<old.FileSnapshotReader>;
 declare function use_current_ClassDeclaration_FileSnapshotReader(
-    use: TypeOnly<current.FileSnapshotReader>);
+    use: TypeOnly<current.FileSnapshotReader>): void;
 use_current_ClassDeclaration_FileSnapshotReader(
     get_old_ClassDeclaration_FileSnapshotReader());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_FileSnapshotReader(
 declare function get_current_ClassDeclaration_FileSnapshotReader():
     TypeOnly<current.FileSnapshotReader>;
 declare function use_old_ClassDeclaration_FileSnapshotReader(
-    use: TypeOnly<old.FileSnapshotReader>);
+    use: TypeOnly<old.FileSnapshotReader>): void;
 use_old_ClassDeclaration_FileSnapshotReader(
     get_current_ClassDeclaration_FileSnapshotReader());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_FileSnapshotReader(
 declare function get_old_InterfaceDeclaration_IFileSnapshot():
     TypeOnly<old.IFileSnapshot>;
 declare function use_current_InterfaceDeclaration_IFileSnapshot(
-    use: TypeOnly<current.IFileSnapshot>);
+    use: TypeOnly<current.IFileSnapshot>): void;
 use_current_InterfaceDeclaration_IFileSnapshot(
     get_old_InterfaceDeclaration_IFileSnapshot());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IFileSnapshot(
 declare function get_current_InterfaceDeclaration_IFileSnapshot():
     TypeOnly<current.IFileSnapshot>;
 declare function use_old_InterfaceDeclaration_IFileSnapshot(
-    use: TypeOnly<old.IFileSnapshot>);
+    use: TypeOnly<old.IFileSnapshot>): void;
 use_old_InterfaceDeclaration_IFileSnapshot(
     get_current_InterfaceDeclaration_IFileSnapshot());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IFileSnapshot(
 declare function get_old_ClassDeclaration_OpStorage():
     TypeOnly<old.OpStorage>;
 declare function use_current_ClassDeclaration_OpStorage(
-    use: TypeOnly<current.OpStorage>);
+    use: TypeOnly<current.OpStorage>): void;
 use_current_ClassDeclaration_OpStorage(
     get_old_ClassDeclaration_OpStorage());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_OpStorage(
 declare function get_current_ClassDeclaration_OpStorage():
     TypeOnly<current.OpStorage>;
 declare function use_old_ClassDeclaration_OpStorage(
-    use: TypeOnly<old.OpStorage>);
+    use: TypeOnly<old.OpStorage>): void;
 use_old_ClassDeclaration_OpStorage(
     get_current_ClassDeclaration_OpStorage());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_OpStorage(
 declare function get_old_ClassDeclaration_ReadDocumentStorageServiceBase():
     TypeOnly<old.ReadDocumentStorageServiceBase>;
 declare function use_current_ClassDeclaration_ReadDocumentStorageServiceBase(
-    use: TypeOnly<current.ReadDocumentStorageServiceBase>);
+    use: TypeOnly<current.ReadDocumentStorageServiceBase>): void;
 use_current_ClassDeclaration_ReadDocumentStorageServiceBase(
     get_old_ClassDeclaration_ReadDocumentStorageServiceBase());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_ReadDocumentStorageServiceBase(
 declare function get_current_ClassDeclaration_ReadDocumentStorageServiceBase():
     TypeOnly<current.ReadDocumentStorageServiceBase>;
 declare function use_old_ClassDeclaration_ReadDocumentStorageServiceBase(
-    use: TypeOnly<old.ReadDocumentStorageServiceBase>);
+    use: TypeOnly<old.ReadDocumentStorageServiceBase>): void;
 use_old_ClassDeclaration_ReadDocumentStorageServiceBase(
     get_current_ClassDeclaration_ReadDocumentStorageServiceBase());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_ReadDocumentStorageServiceBase(
 declare function get_old_ClassDeclaration_ReplayController():
     TypeOnly<old.ReplayController>;
 declare function use_current_ClassDeclaration_ReplayController(
-    use: TypeOnly<current.ReplayController>);
+    use: TypeOnly<current.ReplayController>): void;
 use_current_ClassDeclaration_ReplayController(
     get_old_ClassDeclaration_ReplayController());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_ReplayController(
 declare function get_current_ClassDeclaration_ReplayController():
     TypeOnly<current.ReplayController>;
 declare function use_old_ClassDeclaration_ReplayController(
-    use: TypeOnly<old.ReplayController>);
+    use: TypeOnly<old.ReplayController>): void;
 use_old_ClassDeclaration_ReplayController(
     get_current_ClassDeclaration_ReplayController());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_ReplayController(
 declare function get_old_ClassDeclaration_ReplayDocumentService():
     TypeOnly<old.ReplayDocumentService>;
 declare function use_current_ClassDeclaration_ReplayDocumentService(
-    use: TypeOnly<current.ReplayDocumentService>);
+    use: TypeOnly<current.ReplayDocumentService>): void;
 use_current_ClassDeclaration_ReplayDocumentService(
     get_old_ClassDeclaration_ReplayDocumentService());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_ReplayDocumentService(
 declare function get_current_ClassDeclaration_ReplayDocumentService():
     TypeOnly<current.ReplayDocumentService>;
 declare function use_old_ClassDeclaration_ReplayDocumentService(
-    use: TypeOnly<old.ReplayDocumentService>);
+    use: TypeOnly<old.ReplayDocumentService>): void;
 use_old_ClassDeclaration_ReplayDocumentService(
     get_current_ClassDeclaration_ReplayDocumentService());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_ReplayDocumentService(
 declare function get_old_ClassDeclaration_ReplayDocumentServiceFactory():
     TypeOnly<old.ReplayDocumentServiceFactory>;
 declare function use_current_ClassDeclaration_ReplayDocumentServiceFactory(
-    use: TypeOnly<current.ReplayDocumentServiceFactory>);
+    use: TypeOnly<current.ReplayDocumentServiceFactory>): void;
 use_current_ClassDeclaration_ReplayDocumentServiceFactory(
     get_old_ClassDeclaration_ReplayDocumentServiceFactory());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_ReplayDocumentServiceFactory(
 declare function get_current_ClassDeclaration_ReplayDocumentServiceFactory():
     TypeOnly<current.ReplayDocumentServiceFactory>;
 declare function use_old_ClassDeclaration_ReplayDocumentServiceFactory(
-    use: TypeOnly<old.ReplayDocumentServiceFactory>);
+    use: TypeOnly<old.ReplayDocumentServiceFactory>): void;
 use_old_ClassDeclaration_ReplayDocumentServiceFactory(
     get_current_ClassDeclaration_ReplayDocumentServiceFactory());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_ReplayDocumentServiceFactory(
 declare function get_old_ClassDeclaration_SnapshotStorage():
     TypeOnly<old.SnapshotStorage>;
 declare function use_current_ClassDeclaration_SnapshotStorage(
-    use: TypeOnly<current.SnapshotStorage>);
+    use: TypeOnly<current.SnapshotStorage>): void;
 use_current_ClassDeclaration_SnapshotStorage(
     get_old_ClassDeclaration_SnapshotStorage());
 
@@ -209,7 +209,7 @@ use_current_ClassDeclaration_SnapshotStorage(
 declare function get_current_ClassDeclaration_SnapshotStorage():
     TypeOnly<current.SnapshotStorage>;
 declare function use_old_ClassDeclaration_SnapshotStorage(
-    use: TypeOnly<old.SnapshotStorage>);
+    use: TypeOnly<old.SnapshotStorage>): void;
 use_old_ClassDeclaration_SnapshotStorage(
     get_current_ClassDeclaration_SnapshotStorage());
 
@@ -221,7 +221,7 @@ use_old_ClassDeclaration_SnapshotStorage(
 declare function get_old_ClassDeclaration_StaticStorageDocumentServiceFactory():
     TypeOnly<old.StaticStorageDocumentServiceFactory>;
 declare function use_current_ClassDeclaration_StaticStorageDocumentServiceFactory(
-    use: TypeOnly<current.StaticStorageDocumentServiceFactory>);
+    use: TypeOnly<current.StaticStorageDocumentServiceFactory>): void;
 use_current_ClassDeclaration_StaticStorageDocumentServiceFactory(
     get_old_ClassDeclaration_StaticStorageDocumentServiceFactory());
 
@@ -233,6 +233,6 @@ use_current_ClassDeclaration_StaticStorageDocumentServiceFactory(
 declare function get_current_ClassDeclaration_StaticStorageDocumentServiceFactory():
     TypeOnly<current.StaticStorageDocumentServiceFactory>;
 declare function use_old_ClassDeclaration_StaticStorageDocumentServiceFactory(
-    use: TypeOnly<old.StaticStorageDocumentServiceFactory>);
+    use: TypeOnly<old.StaticStorageDocumentServiceFactory>): void;
 use_old_ClassDeclaration_StaticStorageDocumentServiceFactory(
     get_current_ClassDeclaration_StaticStorageDocumentServiceFactory());

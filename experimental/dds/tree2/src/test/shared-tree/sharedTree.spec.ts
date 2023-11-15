@@ -39,7 +39,7 @@ import {
 	ForestType,
 	ISharedTree,
 	ITreeCheckout,
-	ITreeView,
+	FlexTreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
 	SharedTreeFactory,
@@ -106,7 +106,7 @@ describe("SharedTree", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
-			const view = tree.schematizeInternal({
+			const view = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -119,7 +119,7 @@ describe("SharedTree", () => {
 			tree.storedSchema.update(schema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
-			const schematized = tree.schematizeInternal({
+			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -143,7 +143,7 @@ describe("SharedTree", () => {
 		it("upgrade schema", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
 			tree.storedSchema.update(schema);
-			const schematized = tree.schematizeInternal({
+			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
 				schema: schemaGeneralized,
@@ -798,6 +798,61 @@ describe("SharedTree", () => {
 			unsubscribe1();
 			unsubscribe2();
 		});
+
+		describe("can concurrently restore and edit removed tree", () => {
+			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
+			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
+
+			for (const scenario of ["restore then change", "change then restore"]) {
+				it(`with the ${scenario} sequenced`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const content = {
+						schema,
+						allowedSchemaModifications: AllowedUpdateType.None,
+						initialTree: [["a"]] as any,
+					} satisfies InitializeAndSchematizeConfiguration;
+					const tree1 = provider.trees[0].schematize(content);
+					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+						createTestUndoRedoStacks(tree1.events);
+					const tree2 = provider.trees[1].schematize(content);
+					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
+						createTestUndoRedoStacks(tree2.events);
+
+					provider.processMessages();
+
+					// Validate insertion
+					validateTreeContent(tree2.view.checkout, content);
+
+					// edit subtree
+					tree2.root[0].insertAtEnd(["b"]);
+					provider.processMessages();
+					assert.deepEqual(tree1.root, [["a", "b"]]);
+					assert.deepEqual(tree2.root, [["a", "b"]]);
+
+					// delete subtree
+					tree1.root.removeAt(0);
+					provider.processMessages();
+					assert.deepEqual(tree1.root, []);
+					assert.deepEqual(tree2.root, []);
+
+					if (scenario === "restore then change") {
+						undoStack1.pop()?.revert();
+						undoStack2.pop()?.revert();
+					} else {
+						undoStack2.pop()?.revert();
+						undoStack1.pop()?.revert();
+					}
+
+					provider.processMessages();
+					// check the undo happened
+					assert.deepEqual(tree1.root, [["a"]]);
+					assert.deepEqual(tree2.root, [["a"]]);
+
+					unsubscribe1();
+					unsubscribe2();
+				});
+			}
+		});
 	});
 
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
@@ -1258,7 +1313,7 @@ describe("SharedTree", () => {
 function assertSchema<TRoot extends TreeFieldSchema>(
 	tree: ISharedTree,
 	schema: TreeSchema<TRoot>,
-): ITreeView<TRoot> {
+): FlexTreeView<TRoot> {
 	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
 }
 

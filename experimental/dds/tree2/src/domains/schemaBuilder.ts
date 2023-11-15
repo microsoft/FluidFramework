@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { leaf } from "../domains";
 import {
 	Any,
 	FieldKind,
@@ -30,6 +29,7 @@ import {
 	TreeNodeSchemaBase,
 } from "../feature-libraries";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
+import { leaf } from "./leafDomain";
 
 /**
  * A {@link ObjectNodeSchema} that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
@@ -113,7 +113,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link TreeNodeSchema} for a {@link FieldNode} of a {@link Sequence}.
+	 * Define (and add to this library if not already present) a structurally typed {@link FieldNodeSchema} for a {@link TreeList}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this List is defined as a function of the provided types.
@@ -137,7 +137,7 @@ export class SchemaBuilder<
 	>;
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link FieldNode} of a {@link Sequence}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeList}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 */
@@ -173,7 +173,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link FieldNode} of a {@link Sequence}.
+	 * Define (and add to this library) a {@link FieldNodeSchema} for a {@link TreeList}.
 	 *
 	 * The name must be unique among all TreeNodeSchema in the the document schema.
 	 *
@@ -197,7 +197,7 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define (and add to this library if not already present) a structurally typed {@link TreeNodeSchema} for a {@link MapNode}.
+	 * Define (and add to this library if not already present) a structurally typed {@link MapNodeSchema} for a {@link SharedTreeMap}.
 	 *
 	 * @remarks
 	 * The {@link TreeNodeSchemaIdentifier} for this Map is defined as a function of the provided types.
@@ -214,7 +214,7 @@ export class SchemaBuilder<
 	): MapNodeSchema<`${TScope}.Map<${string}>`, NormalizeField<T, typeof FieldKinds.optional>>;
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchema} for a {@link MapNode}.
+	 * Define (and add to this library) a {@link MapNodeSchema} for a {@link SharedTreeMap}.
 	 */
 	public override map<Name extends TName, const T extends MapFieldSchema | ImplicitAllowedTypes>(
 		name: Name,
@@ -251,16 +251,16 @@ export class SchemaBuilder<
 	}
 
 	/**
-	 * Define a schema for an {@link OptionalField}.
+	 * Define a schema for an {@link FieldKinds.optional|optional field}.
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.optional` to {@link TreeFieldSchema.create}.
 	 *
-	 * This method is also available as an instance method on {@link SchemaBuilder}
+	 * This method is also available as an instance method on {@link SchemaBuilder}.
 	 */
 	public static optional = fieldHelper(FieldKinds.optional);
 
 	/**
-	 * Define a schema for an {@link OptionalField}.
+	 * Define a schema for an {@link FieldKinds.optional|optional field}.
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.optional` to {@link TreeFieldSchema.create}.
 	 *
@@ -270,20 +270,20 @@ export class SchemaBuilder<
 	public readonly optional = SchemaBuilder.optional;
 
 	/**
-	 * Define a schema for an {@link RequiredField}.
+	 * Define a schema for a {@link FieldKinds.required|required field}.
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.required` to {@link TreeFieldSchema.create}.
 	 *
-	 * This method is also available as an instance method on {@link SchemaBuilder}
+	 * This method is also available as an instance method on {@link SchemaBuilder}.
 	 */
 	public static required = fieldHelper(FieldKinds.required);
 
 	/**
-	 * Define a schema for a {@link RequiredField}.
+	 * Define a schema for a {@link FieldKinds.required|required field}.
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.required` to {@link TreeFieldSchema.create}.
 	 * Note that `FieldKinds.required` is the current default field kind, so APIs accepting {@link ImplicitFieldSchema}
-	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link RequiredField}.
+	 * can be passed the `allowedTypes` and will implicitly wrap it up in a {@link FieldKinds.required|required field}.
 	 *
 	 * Since this creates a {@link TreeFieldSchema} (and not a {@link TreeNodeSchema}), the resulting schema is structurally typed, and not impacted by the {@link SchemaBuilderBase.scope}:
 	 * therefore this method is the same as the static version.
@@ -291,7 +291,7 @@ export class SchemaBuilder<
 	public readonly required = SchemaBuilder.required;
 
 	/**
-	 * Define a schema for a {@link Sequence}.
+	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.sequence` to {@link TreeFieldSchema.create}.
 	 *
@@ -300,7 +300,7 @@ export class SchemaBuilder<
 	public static sequence = fieldHelper(FieldKinds.sequence);
 
 	/**
-	 * Define a schema for a {@link Sequence}.
+	 * Define a schema for a {@link FieldKinds.sequence|sequence field}.
 	 * @remarks
 	 * Shorthand or passing `FieldKinds.sequence` to {@link TreeFieldSchema.create}.
 	 *

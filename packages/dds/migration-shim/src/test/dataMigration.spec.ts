@@ -31,9 +31,9 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type Typed,
-	type ITreeView,
 	disposeSymbol,
+	type TreeView,
+	type ProxyField,
 } from "@fluid-experimental/tree2";
 import { LoaderHeader } from "@fluidframework/container-definitions";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
@@ -109,8 +109,8 @@ const inventorySchema = builder.object("abcInventory", {
 const inventoryFieldSchema = SchemaBuilder.required(inventorySchema);
 const schema = builder.intoSchema(inventoryFieldSchema);
 
-function getNewTreeView(tree: ISharedTree): ITreeView<typeof inventoryFieldSchema> {
-	return tree.schematizeInternal({
+function getNewTreeView(tree: ISharedTree): TreeView<ProxyField<typeof inventoryFieldSchema>> {
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},
@@ -273,8 +273,8 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 
 		const view1 = getNewTreeView(tree1);
 		const view2 = getNewTreeView(tree2);
-		const treeNode1: Typed<typeof inventorySchema> = view1.editableTree.content;
-		const treeNode2: Typed<typeof inventorySchema> = view2.editableTree.content;
+		const treeNode1 = view1.root;
+		const treeNode2 = view2.root;
 
 		// Validate migrated values of the old tree match the new tree
 		const migratedValue1 = treeNode1.quantity;
@@ -330,11 +330,11 @@ describeNoCompat("HotSwap", (getTestObjectProvider) => {
 		// Get the migrated values from the new tree
 		const tree1 = shim1.currentTree as ISharedTree;
 		const view1 = getNewTreeView(tree1);
-		const treeNode1 = view1.root as unknown as Typed<typeof inventorySchema>;
+		const treeNode1 = view1.root;
 
 		const tree2 = shim2.currentTree;
 		const view2 = getNewTreeView(tree2);
-		const treeNode2 = view2.root as unknown as Typed<typeof inventorySchema>;
+		const treeNode2 = view2.root;
 		const migratedValue2 = treeNode2.quantity;
 		assert(
 			migratedValue2 === originalValue,
