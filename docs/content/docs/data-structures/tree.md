@@ -5,13 +5,13 @@ menuPosition: 6
 
 ## Introduction
 
-The `SharedTree` distributed data structure (DDS), available in Fluid Framework 2.0 preview and later, is used to store most or all of your application's shared data in a hierarchical structure. 
+The `SharedTree` distributed data structure (DDS), available in Fluid Framework 2.0 preview and later, is used to store most or all of your application's shared data in a hierarchical structure.
 
 A `SharedTree` object has the following characteristics:
 
 - It has a root and can have several types of branch nodes and several types of leaf nodes.
-- Although there are some exceptions, for the most part, each type of node closely mirrors a familiar JavaScript datatype, such as object, map, array, boolean, number, string, and null. 
-- Again, with exceptions, your code accesses nodes with the syntax of JavaScript and TypeScript, such as dot notation, property assignment, and array indexes. 
+- Although there are some exceptions, for the most part, each type of node closely mirrors a familiar JavaScript datatype, such as object, map, array, boolean, number, string, and null.
+- Again, with exceptions, your code accesses nodes with the syntax of JavaScript and TypeScript, such as dot notation, property assignment, and array indexes.
 - Besides being of the type `SharedTree`, the object must also conform to a schema that your code creates so it has an application-specific strong typing too.
 - The various types of branch nodes can be nested in one another (subject to the constraints of the schema).
 
@@ -22,7 +22,7 @@ The following leaf node types are available:
 - **boolean**: Works identically to a JavaScript boolean.
 - **number**: Works identically to a JavaScript JavaScript number.
 - **string**: Works identically to a JavaScript string.
-- **null**: Works identically to a JavaScript null. 
+- **null**: Works identically to a JavaScript null.
 - **FluidHandle**: A handle to a Fluid DDS or Data Object in the current container. For more information about handles see [Handles]({{< relref "handles.md" >}}).
 
 The following subsections describe the available branch node types.
@@ -35,7 +35,7 @@ For information about creating the schema for an object node, see [Object schema
 
 #### Map nodes
 
-A map node is a set of zero or more key-value pairs similar to a JavaScript Map object, but the keys can only be strings. The schema for the `SharedTree` that your code defines will specify the possible node types that can be values of the keys. It can specify that all node types are allowed or only a subset. There is no way to specify different subsets of node types for different keys. 
+A map node is a set of zero or more key-value pairs similar to a JavaScript Map object, but the keys can only be strings. The schema for the `SharedTree` that your code defines will specify the possible node types that can be values of the keys. It can specify that all node types are allowed or only a subset. There is no way to specify different subsets of node types for different keys.
 
 The schema for a map node cannot specify particular key names, nor can it specify a maximum or minimum number of key-value pairs.
 
@@ -75,9 +75,9 @@ import { ... SchemaBuilder, ... } from '@fluid-experimental/tree2';
 const sb = new SchemaBuilder({ scope: 'ec1db2e8-0a00-11ee-be56-0242ac120002' });
 ```
 
-The `SchemaBuilder` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes. It also has three methods for specifying branch nodes; `object()`, `list()`, and `map()`. Use the members of the class to build a schema. 
+The `SchemaBuilder` class defines five primitive data types; `boolean`, `string`, `number`, `null`, and `handle` for specifying leaf nodes. It also has three methods for specifying branch nodes; `object()`, `list()`, and `map()`. Use the members of the class to build a schema.
 
-As an example, consider an app that provides a digital board with groups of sticky notes as shown in the following screenshot: 
+As an example, consider an app that provides a digital board with groups of sticky notes as shown in the following screenshot:
 
 ![A screenshot of a sticky note board app](/images/sticky-note-board-app.png)
 
@@ -101,7 +101,7 @@ const noteSchema = sb.object('note', {
 });
 ```
 
-Create the schema for a group of notes. 
+Create the schema for a group of notes.
 
 ```typescript
 const groupSchema = sb.object('group', {
@@ -137,13 +137,13 @@ const rootSchema = sb.object('root', {
 });
 ```
 
-The next step is to create the complete schema with a call of the `SchemaBuilder.intoSchema()` method. 
+The next step is to create the complete schema with a call of the `SchemaBuilder.intoSchema()` method.
 
 ```typescript
 const appSchema = sb.intoSchema(rootSchema);
 ```
 
-The final step is to create a configuration object that will be used when a `SharedTree` object is created. See [Creation](#creation). The following is an example of doing this. Note that the `initialTree` property specifies the initial value of the tree. The value assigned to it must conform to the root schema, so in this example, it has a single `items` property. The value of the `items` property specifies that the items list is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree. 
+The final step is to create a configuration object that will be used when a `SharedTree` object is created. See [Creation](#creation). The following is an example of doing this. Note that the `initialTree` property specifies the initial value of the tree. The value assigned to it must conform to the root schema, so in this example, it has a single `items` property. The value of the `items` property specifies that the items list is empty. It is not a requirement that the initial tree be empty: you can assign one or more groups or notes to the initial tree.
 
 ```typescript
 export const appSchemaConfig = {
@@ -156,13 +156,13 @@ export const appSchemaConfig = {
 
 #### Map schema
 
-The sticky notes example doesn't have any map branches, but creating a map schema is like creating a list schema, except that you use the `map()` method. Consider a silent auction app. Users view various items up for auction and place bids for items they want. One way to represent the bids for an item is with a map from user names to bids. The following snippet shows how to create the schema. Note that `map()` doesn't need a parameter to specify the type of keys because it is always string. 
+The sticky notes example doesn't have any map branches, but creating a map schema is like creating a list schema, except that you use the `map()` method. Consider a silent auction app. Users view various items up for auction and place bids for items they want. One way to represent the bids for an item is with a map from user names to bids. The following snippet shows how to create the schema. Note that `map()` doesn't need a parameter to specify the type of keys because it is always string.
 
 ```typescript
 const auctionItemSchema = sb.map(sb.number);
 ```
 
-Like `list()`, `map()` can accept an array of types when the values of the map are not all the same type. 
+Like `list()`, `map()` can accept an array of types when the values of the map are not all the same type.
 
 ```typescript
 const myMapSchema = sb.map([sb.number, sb.string]);
@@ -175,8 +175,8 @@ To specify that a property is not required, pass it to the `SchemaBuilder.option
 ```typescript
 const proposalSchema = sb.object('proposal', {
     id: sb.string,
-    text: sb.optional(sb.string), 
-    comments: sb.optional(sb.list(commentSchema)),   
+    text: sb.optional(sb.string),
+    comments: sb.optional(sb.list(commentSchema)),
 });
 ```
 
@@ -249,9 +249,9 @@ To write to an object node, you first create an object and then assign it to the
 You must create the object using `create()` method of schema object. The following shows how to create a note object from the sticky notes example.
 
 ```typescript
-const babyShowerNote = noteSchema.create({ 
-    id: Guid.create().toString(), 
-    text: “Baby shower is at 3 PM today.”, 
+const babyShowerNote = noteSchema.create({
+    id: Guid.create().toString(),
+    text: “Baby shower is at 3 PM today.”,
     author: "Bob",
     votes: ["0"]
 });
@@ -263,62 +263,62 @@ We show how to add this note to a list of notes in the tree in [List node APIs](
 
 ##### Map node read APIs
 
-The read APIs for map nodes have the same names and syntax as the corresponding APIs for JavaScript Map objects. 
+The read APIs for map nodes have the same names and syntax as the corresponding APIs for JavaScript Map objects.
 
 ```typescript
-has(key): boolean 
+has(key): boolean
 ```
 
-Returns `true`` if the key is present in the map. 
+Returns `true`` if the key is present in the map.
 
 ```typescript
-get(key): T | undefined 
+get(key): T | undefined
 ```
 
-Returns the value of the property with the specified key. 
+Returns the value of the property with the specified key.
 
 ```typescript
 keys(): IterableIterator<string>
 ```
 
-Returns an Iterator that contains the keys in the map node. The keys are iterated in the order that they were added. 
+Returns an Iterator that contains the keys in the map node. The keys are iterated in the order that they were added.
 
 ```typescript
-values(): IterableIterator<T> 
+values(): IterableIterator<T>
 ```
 
-Returns an Iterator that contains the values in the map node. The values are iterated in the order that they were added. 
+Returns an Iterator that contains the values in the map node. The values are iterated in the order that they were added.
 
 ```typescript
-entries(): IterableIterator<[string, T]> 
+entries(): IterableIterator<[string, T]>
 ```
 
-Returns an Iterator that contains the key/value pairs in the map node. The pairs are iterated in the order that they were added. 
+Returns an Iterator that contains the key/value pairs in the map node. The pairs are iterated in the order that they were added.
 
 ```typescript
-map(callback: ()=>[]): IterableIterator<[string, T]>  
+map(callback: ()=>[]): IterableIterator<[string, T]>
 ```
 
-Returns an array, not a map node or list node, that is a result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map). 
+Returns an array, not a map node or list node, that is a result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
 
 ##### Map node write APIs
 
 The write methods for map nodes are also the same as the corresponding methods for JavaScript Map objects.
 
 ```typescript
-set(key: string, value: T) 
+set(key: string, value: T)
 ```
 
 The `set()` method sets/changes the value of the item with the specified key. If the key is not present, the item is added to the map. Note the following:
 
 - The `T` can be any type that conforms to the map node's schema. For example, if the schema was defined with `const myMapSchema = sb.map([sb.number, sb.string]);`, then `T` could be `number` or `string`.
-- If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}). 
+- If multiple clients set the same key simultaneously, the key gets the value set by the last edit to apply. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ```typescript
-delete(key: string): boolean 
+delete(key: string): boolean
 ```
 
-The `delete()` method removes the item with the specified key. If the key is not present, the method returns `false`. If one client sets a key and another deletes it simultaneously, the key is deleted only if the deletion op is the last one applied. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}). 
+The `delete()` method removes the item with the specified key. If the key is not present, the method returns `false`. If one client sets a key and another deletes it simultaneously, the key is deleted only if the deletion op is the last one applied. For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ##### Map node properties
 
@@ -343,66 +343,66 @@ The write APIs for list nodes are quite different from JavaScript arrays. There 
 List nodes have three methods that insert new items into the node. Note that in all of the following, the `T` can be any type that conforms to the list node's schema. For example, if the schema was defined with `const myListSchema = sb.list([sb.number, sb.string]);`, then `T` could be `number` or `string`.
 
 ```typescript
-insertAt(index: number, value: Iterable<T>) 
+insertAt(index: number, value: Iterable<T>)
 ```
 
-Inserts the provided value(s) at the specified `index`. If the `index` is greater than the length of the list, the items are inserted at the end of the list. 
+Inserts the provided value(s) at the specified `index`. If the `index` is greater than the length of the list, the items are inserted at the end of the list.
 
 ```typescript
-insertAtStart(value: Iterable<T>) 
+insertAtStart(value: Iterable<T>)
 ```
 
-Inserts the provided value(s) at the start of the list. This is sugar for `insertAt(0, …)`. 
+Inserts the provided value(s) at the start of the list. This is sugar for `insertAt(0, …)`.
 
 ```typescript
-insertAtEnd(value: Iterable<T>) 
+insertAtEnd(value: Iterable<T>)
 ```
 
-Inserts the provided value(s) at the end of the list. This is syntactic sugar for `insertAt(Infinity, …)`. 
+Inserts the provided value(s) at the end of the list. This is syntactic sugar for `insertAt(Infinity, …)`.
 
 ###### Remove methods
 
 List nodes have two methods that remove items from the node. Note the following about these methods:
 
-- Removed items are saved internally for a time in case they need to be restored as a result of an undo operation. 
-- A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then only item 3 is removed. The other two are moved, regardless of the order of the move and remove operations. 
-- Removal of items never overrides inserting items. For example, , if one client removes items 10-15, and another client simultaneously inserts an item at index 12, the original items 10-15 are removed, but new item is inserted between item 9 and the item that used to be at index 16. This happens regardless of the order of the remove and insert operations.
+- Removed items are saved internally for a time in case they need to be restored as a result of an undo operation.
+- A removed item may be restored as a result of a simultaneous move operation from another client. For example, if one client removes items 3-5, and another client simultaneously moves items 4 and 5, then only item 3 is removed. The other two are moved, regardless of the order of the move and remove operations.
+- Removal of items never overrides inserting items. For example, if one client removes items 10-15, and another client simultaneously inserts an item at index 12, the original items 10-15 are removed, but new item is inserted between item 9 and the item that used to be at index 16. This happens regardless of the order of the remove and insert operations.
 
-For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}). 
-
-```typescript
-removeAt(index: number) 
-```
-
-Removes the item at the given `index.`` 
+For the meaning of "simultaneously", see [Types of distributed data structures]({{< relref "overview.md" >}}).
 
 ```typescript
-removeRange(start?: number, end?: number) 
+removeAt(index: number)
 ```
 
-Removes the items indicated by the `start` index (inclusive) and `end` index (exclusive). If the end index is omitted, every item from the start index to the end is removed. If the start index is omitted, it defaults to 0. So, calling `removeRange()` removes all the items in the list. 
+Removes the item at the given `index`.
+
+```typescript
+removeRange(start?: number, end?: number)
+```
+
+Removes the items indicated by the `start` index (inclusive) and `end` index (exclusive). If the end index is omitted, every item from the start index to the end is removed. If the start index is omitted, it defaults to 0. So, calling `removeRange()` removes all the items in the list.
 
 ###### Move methods
 
 List nodes have three methods that move items within a list or from one list node to another. When moving from one list node to another, these methods must be called from the destination list node.
 
 ```typescript
-moveToStart(sourceStartIndex: number, sourceEndIndex: number, source?: List<T>) 
+moveToStart(sourceStartIndex: number, sourceEndIndex: number, source?: List<T>)
 ```
 
 Moves the specified items to the start of the list. Specify a `source` list if it is different from the destination list.
 
 ```typescript
-moveToEnd(sourceStartIndex: number, sourceEndIndex: number, source?: List<T>) 
+moveToEnd(sourceStartIndex: number, sourceEndIndex: number, source?: List<T>)
 ```
 
 Moves the specified items to the end of the list. Specify a `source` list if it is different from the destination list.
 
 ```typescript
-moveToIndex(index: number, sourceStartIndex: number, sourceEndIndex: number, source?: List<T>) 
+moveToIndex(index: number, sourceStartIndex: number, sourceEndIndex: number, source?: List<T>)
 ```
 
-Moves the items to the specified `index` in the destination list. The item that is at `index` before the method is called will be at the first index position that follows the moved items after the move. Specify a `source` list if it is different from the destination list. If the items are being moved within the same list, the `index` position is calculated including the items being moved. 
+Moves the items to the specified `index` in the destination list. The item that is at `index` before the method is called will be at the first index position that follows the moved items after the move. Specify a `source` list if it is different from the destination list. If the items are being moved within the same list, the `index` position is calculated including the items being moved.
 
 ### Events
 
@@ -415,7 +415,7 @@ The `Tree` class provides some static utility APIs for working with `ShareTree` 
 ## Events
 
 ```typescript
-Tree.on(node: SharedTreeNode, eventType: string, listener: () => void) 
+Tree.on(node: SharedTreeNode, eventType: string, listener: () => void)
 ```
 
 Assigns the specified `listener` function to the specified `event type` for the specified `node`. The `node` can be any node of the tree. The `[event type]` can be either "afterChange" or "beforeChange". An `event` object is automatically passed to the `listener`. It has three members:
@@ -458,8 +458,8 @@ Returns the parent node of `node`. The following snippet continues the sticky no
 const parent = Tree.parent(note);
 
 if (Tree.is(parent, notes) || Tree.is(parent, items)) {
-    const index = parent.indexOf(note);        
-    parent.removeAt(index);        
+    const index = parent.indexOf(note);
+    parent.removeAt(index);
 }
 ```
 
