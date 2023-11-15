@@ -17,7 +17,7 @@ import {
 	cursorForJsonableTreeField,
 } from "../../../feature-libraries";
 import { FieldAnchor, FieldKey, rootFieldKey, UpPath } from "../../../core";
-import { forestWithContent, viewWithContent } from "../../utils";
+import { forestWithContent, flexTreeViewWithContent } from "../../utils";
 import { leaf, leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { brand } from "../../../util";
 import {
@@ -275,7 +275,7 @@ describe("LazyOptionalField", () => {
 	});
 
 	it("content", () => {
-		const view = viewWithContent({
+		const view = flexTreeViewWithContent({
 			schema,
 			initialTree: 5,
 		});
@@ -331,7 +331,7 @@ describe("LazyValueField", () => {
 	});
 
 	it("content", () => {
-		const view = viewWithContent({
+		const view = flexTreeViewWithContent({
 			schema,
 			initialTree: "X",
 		});
@@ -361,7 +361,7 @@ describe("LazySequence", () => {
 	}
 
 	function testMutableSequence(data: number[]) {
-		const view = viewWithContent({
+		const view = flexTreeViewWithContent({
 			schema,
 			initialTree: data,
 		});

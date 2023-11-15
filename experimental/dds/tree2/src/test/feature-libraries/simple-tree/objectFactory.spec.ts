@@ -8,7 +8,7 @@ import { SchemaBuilder } from "../../../domains";
 import { ProxyNode, Tree, typeNameSymbol } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../../feature-libraries/simple-tree/proxies";
-import { viewWithContent } from "../../utils";
+import { treeViewWithContent } from "../../utils";
 import { itWithRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
@@ -203,7 +203,7 @@ describe("SharedTreeObject factories", () => {
 		// be the same as the one that is about to be hydrated for the same underlying edit node, and thus hydration
 		// would fail because it tried to map an edit node which already had a proxy to a different proxy.
 		// TODO: remove any cast when `viewWithContent` is properly typed with proxy types
-		const view = viewWithContent({ schema, initialTree: initialTree as any });
+		const view = treeViewWithContent({ schema, initialTree: initialTree as any });
 		function readData() {
 			const objectContent = view.root.child.content;
 			assert(objectContent !== undefined);
@@ -218,7 +218,7 @@ describe("SharedTreeObject factories", () => {
 		Tree.on(view.root, "afterChange", () => {
 			readData();
 		});
-		view.checkout.events.on("afterBatch", () => {
+		view.events.on("afterBatch", () => {
 			readData();
 		});
 		const content = { content: 3 };
@@ -376,7 +376,7 @@ describe("SharedTreeObject factories", () => {
 				for (const child of objectTypes) {
 					// Generate a test for all permutations of object, list and map
 					it(`${root} → ${parent} → ${child}`, () => {
-						const view = viewWithContent({
+						const view = treeViewWithContent({
 							schema: comboSchema,
 							initialTree: { root: undefined },
 						});
@@ -406,7 +406,7 @@ describe("SharedTreeObject factories", () => {
 
 						// Ensure that the proxies can be read during the change, as well as after
 						Tree.on(view.root, "afterChange", () => validate());
-						view.checkout.events.on("afterBatch", () => validate());
+						view.events.on("afterBatch", () => validate());
 						view.root.root = tree;
 						validate();
 					});
