@@ -1,36 +1,26 @@
 {
-	"name": "@fluid-experimental/migration-shim",
+	"name": "@fluid-experimental/odsp-client",
 	"version": "2.0.0-internal.7.3.0",
 	"private": true,
-	"description": "HotSwap DDS",
+	"description": "A tool to enable creation and loading of Fluid containers using the ODSP service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/dds/migration-shim"
+		"directory": "packages/service-client/odsp-client"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"type": "module",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		}
-	},
+	"main": "dist/index.js",
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:genver": "gen-version",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist \"*.tsbuildinfo\" \"*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -40,11 +30,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --ignore \"dist/test/types/*\" --recursive dist/test -r node_modules/@fluidframework/mocha-test-setup",
-		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"tsc": "tsc"
 	},
 	"c8": {
 		"all": true,
@@ -67,41 +53,34 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
-		"@fluid-experimental/tree": "workspace:~",
-		"@fluid-experimental/tree2": "workspace:~",
-		"@fluid-internal/client-utils": "workspace:~",
+		"@fluidframework/azure-client": "workspace:~",
+		"@fluidframework/common-definitions": "^1.0.0",
 		"@fluidframework/container-definitions": "workspace:~",
+		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/driver-utils": "workspace:~",
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/odsp-doclib-utils": "workspace:~",
+		"@fluidframework/odsp-driver": "workspace:~",
+		"@fluidframework/odsp-driver-definitions": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.0.0",
-		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/telemetry-utils": "workspace:~"
+		"@fluidframework/telemetry-utils": "workspace:~",
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluid-tools/build-cli": "0.28.0-210888",
-		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "0.28.0-210888",
-		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
-		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "^7.38.3",
-		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"c8": "^7.7.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
-		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6"
