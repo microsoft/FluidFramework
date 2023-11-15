@@ -8,6 +8,8 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 
 /**
  * Defines a set of functions to be passed to the GC test runner.
+ *
+ * @internal
  */
 export interface IGCTestProvider {
 	/**
@@ -36,6 +38,11 @@ export interface IGCTestProvider {
 	addNestedHandles(): Promise<void>;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ *
+ * @internal
+ */
 export const runGCTests = (ctor: new () => IGCTestProvider): void => {
 	let provider: IGCTestProvider;
 

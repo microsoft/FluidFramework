@@ -7260,9 +7260,11 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
+      '@microsoft/api-extractor': ^7.37.0
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       execa: ^5.1.1
@@ -7288,9 +7290,11 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@microsoft/api-extractor': 7.38.0_@types+node@16.18.58
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       execa: 5.1.1
