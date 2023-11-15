@@ -36,9 +36,9 @@ describe("Odsp Error", () => {
 	 */
 	function isIGenericNetworkError(input: unknown): input is IGenericNetworkError {
 		return (
+			input !== undefined &&
 			(input as Partial<IGenericNetworkError>).errorType ===
-				DriverErrorTypes.genericNetworkError &&
-			(input as Partial<IGenericNetworkError>) !== undefined
+				DriverErrorTypes.genericNetworkError
 		);
 	}
 
