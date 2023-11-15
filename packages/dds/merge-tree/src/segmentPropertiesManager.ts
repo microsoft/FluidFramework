@@ -18,7 +18,12 @@ export enum PropertiesRollback {
 	/** Rollback */
 	Rollback,
 
-	/** Rollback of a rewrite */
+	/**
+	 * Rollback of a rewrite
+	 *
+	 * @deprecated This functionality lacks test coverage and is largely unused. It
+	 * will be removed in a future release.
+	 */
 	Rewrite,
 }
 

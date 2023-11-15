@@ -161,6 +161,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param props - The properties to annotate the marker with
 	 * @param consensusCallback - The callback called when consensus is reached
 	 * @returns The annotate op if valid, otherwise undefined
+	 *
+	 * @deprecated This functionality lacks test coverage and is largely unused. It
+	 * will be removed in a future release.
 	 */
 	public annotateMarkerNotifyConsensus(
 		marker: Marker,

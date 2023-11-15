@@ -102,6 +102,10 @@ export interface IMergeTreeRemoveMsg extends IMergeTreeDelta {
 	relativePos2?: IRelativePosition;
 }
 
+/**
+ * @deprecated This functionality lacks test coverage and is largely unused. It
+ * will be removed in a future release.
+ */
 export interface ICombiningOp {
 	name: string;
 	defaultValue?: any;
@@ -116,6 +120,10 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	pos2?: number;
 	relativePos2?: IRelativePosition;
 	props: Record<string, any>;
+	/**
+	 * @deprecated This functionality lacks test coverage and is largely unused. It
+	 * will be removed in a future release.
+	 */
 	combiningOp?: ICombiningOp;
 }
 
