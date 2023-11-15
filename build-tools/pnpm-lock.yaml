@@ -16,7 +16,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': ~0.26.2
       '@microsoft/api-documenter': ^7.22.24
-      '@microsoft/api-extractor': ^7.36.1
+      '@microsoft/api-extractor': ^7.38.3
       c8: ^7.14.0
       commitizen: ^4.3.0
       concurrently: ^8.2.1
@@ -40,7 +40,7 @@ importers:
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.26.2
       '@microsoft/api-documenter': 7.22.24
-      '@microsoft/api-extractor': 7.36.1
+      '@microsoft/api-extractor': 7.38.3
       c8: 7.14.0
       commitizen: 4.3.0_typescript@5.1.6
       concurrently: 8.2.1
@@ -1189,26 +1189,6 @@ packages:
     transitivePeerDependencies:
       - '@types/node'
 
-  /@microsoft/api-extractor/7.36.1:
-    resolution: {integrity: sha512-2SPp1jq6wDY5IOsRLUv/4FxngslctBZJlztAJ3uWpCAwqKQG7ESdL3DhEza+StbYLtBQmu1Pk6q1Vkhl7qD/bg==}
-    hasBin: true
-    dependencies:
-      '@microsoft/api-extractor-model': 7.27.4
-      '@microsoft/tsdoc': 0.14.2
-      '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.59.5
-      '@rushstack/rig-package': 0.4.0
-      '@rushstack/ts-command-line': 4.15.1
-      colors: 1.2.5
-      lodash: 4.17.21
-      resolve: 1.22.1
-      semver: 7.3.8
-      source-map: 0.6.1
-      typescript: 5.0.4
-    transitivePeerDependencies:
-      - '@types/node'
-    dev: true
-
   /@microsoft/api-extractor/7.38.3:
     resolution: {integrity: sha512-xt9iYyC5f39281j77JTA9C3ISJpW1XWkCcnw+2vM78CPnro6KhPfwQdPDfwS5JCPNuq0grm8cMdPUOPvrchDWw==}
     hasBin: true
@@ -2110,13 +2090,6 @@ packages:
       resolve: 1.22.8
       semver: 7.5.4
       z-schema: 5.0.5
-
-  /@rushstack/rig-package/0.4.0:
-    resolution: {integrity: sha512-FnM1TQLJYwSiurP6aYSnansprK5l8WUK8VG38CmAaZs29ZeL1msjK0AP1VS4ejD33G0kE/2cpsPsS9jDenBMxw==}
-    dependencies:
-      resolve: 1.22.8
-      strip-json-comments: 3.1.1
-    dev: true
 
   /@rushstack/rig-package/0.5.1:
     resolution: {integrity: sha512-pXRYSe29TjRw7rqxD4WS3HN/sRSbfr+tJs4a9uuaSIBAITbUggygdhuG0VrO0EO+QqH91GhYMN4S6KRtOEmGVA==}
