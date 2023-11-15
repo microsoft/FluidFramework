@@ -6681,6 +6681,7 @@ importers:
       '@fluidframework/build-common': ^2.0.3
       '@fluidframework/build-tools': 0.28.0-210888
       '@fluidframework/container-definitions': workspace:~
+      '@fluidframework/container-loader': workspace:~
       '@fluidframework/container-runtime': workspace:~
       '@fluidframework/core-interfaces': workspace:~
       '@fluidframework/core-utils': workspace:~
@@ -6726,6 +6727,7 @@ importers:
       '@fluidframework/aqueduct': link:../../framework/aqueduct
       '@fluidframework/build-common': 2.0.3
       '@fluidframework/build-tools': 0.28.0-210888_@types+node@16.18.58
+      '@fluidframework/container-loader': link:../../loader/container-loader
       '@fluidframework/container-runtime': link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
@@ -23997,7 +23999,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.3_debug@4.3.4
+      follow-redirects: 1.15.3
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
