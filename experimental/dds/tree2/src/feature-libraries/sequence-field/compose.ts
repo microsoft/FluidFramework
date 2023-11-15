@@ -258,16 +258,13 @@ function composeMarks<TNodeChange>(
 				baseTransient.attach.revision,
 			);
 			return originalAttach;
-		} else if (newMark.type === NoopMarkType || newMark.type === "Placeholder") {
+		} else {
+			// Other mark types have been handled by previous conditional branches.
 			assert(
-				newMark.cellId !== undefined,
-				0x718 /* Invalid node-targeting mark after transient */,
+				newMark.type === NoopMarkType || newMark.type === "Placeholder",
+				"Unexpected mark type",
 			);
 			return withNodeChange(baseMark, nodeChange);
-		} else {
-			// This case is handled above as a transient.
-			assert(!isDetach(newMark), "Unexpected mark type");
-			return baseMark;
 		}
 	}
 
