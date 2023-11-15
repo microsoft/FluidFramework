@@ -11,7 +11,7 @@ import {
 	TreeSchema,
 	SchemaAware,
 } from "../../../feature-libraries";
-import { viewWithContent } from "../../utils";
+import { treeViewWithContent } from "../../utils";
 import { SchemaBuilder } from "../../../domains";
 
 /** Helper for making small test schemas. */
@@ -42,7 +42,7 @@ export function itWithRoot<TRoot extends TreeFieldSchema>(
 	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {
-		const view = viewWithContent({
+		const view = treeViewWithContent({
 			schema,
 			initialTree: initialTree as SchemaAware.TypedField<TRoot, SchemaAware.ApiMode.Flexible>,
 		});
