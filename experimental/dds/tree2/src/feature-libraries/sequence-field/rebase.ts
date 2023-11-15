@@ -363,6 +363,8 @@ function fuseMarks<T>(newMark: Mark<T>, movedMark: Mark<T>): Mark<T> {
 		}
 		return fusedMark;
 	}
+	// The only case we expect for two marks from the same changeset to overlap is when one is a move source
+	// and the other is a move destination bringing the nodes back into place.
 	assert(false, "Unexpected combination of moved and new marks");
 }
 
