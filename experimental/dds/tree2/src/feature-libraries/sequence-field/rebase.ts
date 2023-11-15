@@ -400,7 +400,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
-	let rebasedMark: Mark<TNodeChange> | undefined;
+	let rebasedMark: Mark<TNodeChange>;
 	if (isDetach(baseMark)) {
 		if (baseMark.cellId !== undefined) {
 			// Detaches on empty cells have an implicit revive effect.
@@ -435,7 +435,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 			: withCellId(currMark, undefined);
 	} else if (isAttachAndDetachEffect(baseMark)) {
 		assert(baseMark.cellId !== undefined, "AttachAndDetach mark should target an empty cell");
-		rebasedMark = rebaseMarkIgnoreChild(
+		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
 			baseRevision,
@@ -444,15 +444,17 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 			nodeExistenceState,
 		);
 		rebasedMark = rebaseMarkIgnoreChild(
-			rebasedMark,
+			halfRebasedMark,
 			{ ...baseMark.detach, count: baseMark.count },
 			baseRevision,
 			metadata,
 			moveEffects,
 			nodeExistenceState,
 		);
+	} else {
+		rebasedMark = currMark;
 	}
-	return rebasedMark ?? currMark;
+	return rebasedMark;
 }
 
 /**
