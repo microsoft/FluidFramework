@@ -230,6 +230,7 @@ describeFullCompat(`Dehydrate Rehydrate Container Test`, (getTestObjectProvider)
 	};
 
 	const getSnapshotTreeFromSerializedSnapshot = (container: IContainer) => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return getSnapshotTreeFromSerializedContainer(JSON.parse(container.serialize()));
 	};
 
