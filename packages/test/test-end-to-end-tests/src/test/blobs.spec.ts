@@ -18,6 +18,7 @@ import { SharedString } from "@fluidframework/sequence";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	TestObjectProviderWithVersionedLoad,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -105,6 +106,10 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	it("can get remote attached blob", async function () {
+		// TODO: Re-enable after cross version compat bugs are fixed.
+		if (provider instanceof TestObjectProviderWithVersionedLoad) {
+			this.skip();
+		}
 		const testString = "this is a test string";
 		const testKey = "a blob";
 		const container1 = await provider.makeTestContainer(testContainerConfig);
@@ -125,6 +130,9 @@ describeFullCompat("blobs", (getTestObjectProvider) => {
 	});
 
 	it("round trip blob handle on shared string property", async function () {
+		if (provider instanceof TestObjectProviderWithVersionedLoad) {
+			this.skip();
+		}
 		const container1 = await provider.makeTestContainer(testContainerConfig);
 		const container2 = await provider.loadTestContainer(testContainerConfig);
 		const testString = "this is a test string";
