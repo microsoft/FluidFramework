@@ -625,7 +625,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
 	) {
-		// TODO: Which driver should we use, does it matter?
 		this._documentIdStrategy = getDocumentIdStrategy(driverForCreating.type);
 	}
 
@@ -652,7 +651,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 */
 	public get documentServiceFactory() {
 		if (!this._documentServiceFactory) {
-			// TODO: What are the implications of using one driver here?
 			this._documentServiceFactory = this.driverForCreating.createDocumentServiceFactory();
 		}
 		return this._documentServiceFactory;
@@ -663,7 +661,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 */
 	public get urlResolver() {
 		if (!this._urlResolver) {
-			// TODO: What are the implications of using one driver here?
 			this._urlResolver = this.driverForCreating.createUrlResolver();
 		}
 		return this._urlResolver;
