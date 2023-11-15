@@ -14,7 +14,7 @@ import { EmptyKey } from "../../../core";
 // Note: the behaviors here are more heavily tested by `proxies.spec.ts`.
 // This adds some basic unit test for the generated cursor adapter, but since the adapter is an implementation
 // detail of the proxy API, deep coverage at this level was not prioritized.
-describe("cursorFromProxyTree", () => {
+describe.only("cursorFromProxyTree", () => {
 	it("object", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const rootSchema = schemaBuilder.object("object", {
@@ -168,5 +168,37 @@ describe("cursorFromProxyTree", () => {
 
 		const fieldE = adapter.getFieldFromNode(root, brand("e")); // No entry specified in initialTree
 		assert.equal(fieldE.length, 0);
+	});
+
+	// Our data serialization format does not support certain numeric values.
+	// These tests are intended to verify the mapping behaviors for those values.
+	describe("Incompatible numeric value conversion", () => {
+		function assertMapping(value: number, expected: unknown): void {
+			const schemaBuilder = new SchemaBuilder({ scope: "test" });
+			const schema = schemaBuilder.intoSchema(schemaBuilder.number);
+			const view = viewWithContent({
+				schema,
+				initialTree: value,
+			});
+			const adapter = createProxyTreeAdapter(view.context, schema.rootFieldSchema.types);
+			const result = adapter.value(view.root);
+			assert.deepEqual(result, expected);
+		}
+
+		it("NaN", () => {
+			assertMapping(Number.NaN, null);
+		});
+
+		it("-0", () => {
+			assertMapping(-0, 0);
+		});
+
+		it("+∞", () => {
+			assertMapping(Number.POSITIVE_INFINITY, null);
+		});
+
+		it("-∞", () => {
+			assertMapping(Number.NEGATIVE_INFINITY, null);
+		});
 	});
 });
