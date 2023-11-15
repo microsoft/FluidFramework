@@ -175,11 +175,13 @@ describe("defaultFieldKinds", () => {
 				return nodeChange2;
 			};
 
+			const taggedChange = { revision: mintRevisionTag(), change: change1WithChildChange };
 			const inverted = fieldHandler.rebaser.invert(
-				{ revision: mintRevisionTag(), change: change1WithChildChange },
+				taggedChange,
 				childInverter,
 				fakeIdAllocator,
 				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([taggedChange]),
 			);
 
 			assert.deepEqual(inverted.childChanges, [["self", nodeChange2]]);

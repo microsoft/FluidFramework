@@ -41,6 +41,7 @@ import {
 	CellMark,
 	TransientEffect,
 	MarkEffect,
+	InverseAttachFields,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import { isMoveDestination, isMoveMark, MoveEffectTable } from "./moveEffectTable";
@@ -141,23 +142,23 @@ export function getOutputCellId(
 ): CellId | undefined {
 	if (markEmptiesCells(mark)) {
 		assert(isDetach(mark), 0x750 /* Only detaches can empty cells */);
-		return getDetachCellId(mark, revision, metadata);
+		return getDetachOutputId(mark, revision, metadata);
 	} else if (markFillsCells(mark)) {
 		return undefined;
 	} else if (isTransientEffect(mark)) {
-		return getDetachCellId(mark.detach, revision, metadata);
+		return getDetachOutputId(mark.detach, revision, metadata);
 	}
 
 	return getInputCellId(mark, revision, metadata);
 }
 
-export function getDetachCellId(
+export function getDetachOutputId(
 	mark: Detach,
 	revision: RevisionTag | undefined,
 	metadata: RevisionMetadataSource | undefined,
-): CellId {
+): ChangeAtomId {
 	return (
-		getOverrideCellId(mark) ?? {
+		getOverrideDetachId(mark) ?? {
 			revision: getIntentionIfMetadataProvided(mark.revision ?? revision, metadata),
 			localId: mark.id,
 		}
@@ -171,7 +172,7 @@ function getIntentionIfMetadataProvided(
 	return metadata === undefined ? revision : getIntention(revision, metadata);
 }
 
-function getOverrideCellId(mark: Detach): CellId | undefined {
+function getOverrideDetachId(mark: Detach): ChangeAtomId | undefined {
 	return mark.type !== "MoveOut" && mark.detachIdOverride !== undefined
 		? mark.detachIdOverride
 		: undefined;
@@ -388,6 +389,14 @@ function areAdjacentIdRanges(
 	return (firstStart as number) + firstLength === secondStart;
 }
 
+function haveMergeableIdOverrides(
+	lhs: InverseAttachFields,
+	lhsCount: number,
+	rhs: InverseAttachFields,
+): boolean {
+	return areMergeableChangeAtoms(lhs.detachIdOverride, lhsCount, rhs.detachIdOverride);
+}
+
 function areMergeableCellIds(
 	lhs: CellId | undefined,
 	lhsCount: number,
@@ -461,7 +470,7 @@ function tryMergeEffects(
 	if (
 		isDetach(lhs) &&
 		isDetach(rhs) &&
-		!areMergeableCellIds(getOverrideCellId(lhs), lhsCount, getOverrideCellId(rhs))
+		!areMergeableCellIds(getOverrideDetachId(lhs), lhsCount, getOverrideDetachId(rhs))
 	) {
 		return undefined;
 	}
@@ -480,17 +489,25 @@ function tryMergeEffects(
 			break;
 		}
 		case "Delete": {
-			const lhsDetach = lhs as Detach;
-			if ((lhsDetach.id as number) + lhsCount === rhs.id) {
+			const lhsDetach = lhs as Delete;
+			if (
+				(lhsDetach.id as number) + lhsCount === rhs.id &&
+				haveMergeableIdOverrides(lhsDetach, lhsCount, rhs)
+			) {
 				return lhsDetach;
 			}
 			break;
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
-			const lhsMoveOut = lhs as MoveOut;
+			const lhsMoveOut = lhs as MoveOut | ReturnFrom;
 			if (
 				(lhsMoveOut.id as number) + lhsCount === rhs.id &&
+				haveMergeableIdOverrides(
+					lhsMoveOut as Partial<ReturnFrom>,
+					lhsCount,
+					rhs as Partial<ReturnFrom>,
+				) &&
 				areMergeableChangeAtoms(lhsMoveOut.finalEndpoint, lhsCount, rhs.finalEndpoint)
 			) {
 				return lhsMoveOut;

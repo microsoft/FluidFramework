@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TreeContext, TreeNode } from "@fluid-experimental/tree2";
+import { TreeContext, FlexTreeNode } from "@fluid-experimental/tree2";
 import React from "react";
 
 /**
@@ -27,7 +27,7 @@ export function useTreeContext(document: TreeContext): void {
  * React Hook to trigger invalidation of the current component if anything in the provided subtree changes.
  * This does NOT include if this subtree is moved into a different parent!
  */
-export function useSubtree(tree: TreeNode): void {
+export function useSubtree(tree: FlexTreeNode): void {
 	// This proof-of-concept implementation allocates a state variable this is modified
 	// when the tree changes to trigger re-render.
 	const [, setInvalidations] = React.useState(0);

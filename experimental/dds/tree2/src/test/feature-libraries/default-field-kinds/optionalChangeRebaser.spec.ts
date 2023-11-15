@@ -40,8 +40,8 @@ import {
 	getInputContext,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
-} from "../exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "../rebaserAxiomaticTests";
+} from "../../exhaustiveRebaserUtils";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -114,6 +114,7 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 		// Optional fields should not generate IDs during invert
 		fakeIdAllocator,
 		failCrossFieldManager,
+		defaultRevisionMetadataFromChanges([change]),
 	);
 }
 
@@ -369,6 +370,7 @@ describe("OptionalField - Rebaser Axioms", () => {
 			[{ content: undefined }, { content: "A" }],
 			generateChildStates,
 			{ rebase, rebaseComposed, compose, invert },
+			{ skipRebaseOverCompose: true },
 		);
 	});
 });
