@@ -12,7 +12,7 @@ import {
 	emptyJsonSequenceConfig,
 	insert,
 	jsonSequenceRootSchema,
-	viewWithContent,
+	flexTreeViewWithContent,
 	checkoutWithContent,
 } from "../utils";
 import {
@@ -34,7 +34,7 @@ describe("sharedTreeView", () => {
 		const schema = builder.intoSchema(builder.optional(rootTreeNodeSchema));
 
 		it("triggers events for local and subtree changes", () => {
-			const view = viewWithContent({
+			const view = flexTreeViewWithContent({
 				schema,
 				initialTree: {
 					x: 24,
@@ -75,7 +75,7 @@ describe("sharedTreeView", () => {
 		});
 
 		it("propagates path args for local and subtree changes", () => {
-			const view = viewWithContent({
+			const view = flexTreeViewWithContent({
 				schema,
 				initialTree: {
 					x: 24,

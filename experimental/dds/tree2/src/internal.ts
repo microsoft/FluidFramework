@@ -34,7 +34,7 @@ export {
 	Optional,
 	NodeKeyFieldKind,
 	Forbidden,
-	SequenceFieldKind,
+	Sequence,
 } from "./feature-libraries";
 
 export {

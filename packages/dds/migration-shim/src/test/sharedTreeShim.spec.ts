@@ -22,8 +22,9 @@ import {
 	type ISharedTree,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type ITreeView,
+	type TreeView,
 	type ProxyNode,
+	type ProxyField,
 } from "@fluid-experimental/tree2";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime";
@@ -55,8 +56,8 @@ const rootType = builder.object("abc", {
 });
 const schema = builder.intoSchema(rootType);
 
-function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
-	return tree.schematizeInternal({
+function getNewTreeView(tree: ISharedTree): TreeView<ProxyField<typeof schema.rootFieldSchema>> {
+	return tree.schematize({
 		initialTree: {
 			quantity: 0,
 		},

@@ -31,4 +31,4 @@ export {
 
 export { TypedTreeFactory, TypedTreeOptions, ITree, TreeView } from "./simpleTree";
 
-export { ITreeView, CheckoutView, ITreeViewFork } from "./treeView";
+export { FlexTreeView, CheckoutFlexTreeView, ITreeViewFork } from "./treeView";
