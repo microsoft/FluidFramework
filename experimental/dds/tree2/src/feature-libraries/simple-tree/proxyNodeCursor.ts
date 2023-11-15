@@ -10,7 +10,6 @@ import {
 	rootFieldKey,
 	type FieldKey,
 	type TreeTypeSet,
-	type Value,
 	CursorLocationType,
 } from "../../core";
 // eslint-disable-next-line import/no-internal-modules
@@ -20,7 +19,6 @@ import {
 	type TreeDataContext,
 	getPossibleTypes,
 	isFluidHandle,
-	isPrimitiveValue,
 } from "../contextuallyTyped";
 import {
 	type CursorAdapter,
