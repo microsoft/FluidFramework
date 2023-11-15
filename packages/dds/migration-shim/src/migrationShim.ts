@@ -169,7 +169,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.verifyNotClosed}
 	 */
-	protected verifyNotClosed(): void {
+	private verifyNotClosed(): void {
 		if (this.closeError !== undefined) {
 			throw this.closeError;
 		}
