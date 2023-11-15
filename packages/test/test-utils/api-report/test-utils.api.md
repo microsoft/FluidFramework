@@ -138,7 +138,7 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
 // @public (undocumented)
 export function getUnexpectedLogErrorException(logger: EventAndErrorTrackingLogger | undefined, prefix?: string): Error | undefined;
 
-// @public (undocumented)
+// @public
 export interface IDocumentIdStrategy {
     get(): string;
     reset(): void;

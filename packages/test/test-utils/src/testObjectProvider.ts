@@ -194,6 +194,9 @@ export interface ITestContainerConfig {
 
 export const createDocumentId = (): string => uuid();
 
+/**
+ * Used to retrieve, update, and reset document id based on the type of driver being used.
+ */
 export interface IDocumentIdStrategy {
 	/**
 	 * Get document id
