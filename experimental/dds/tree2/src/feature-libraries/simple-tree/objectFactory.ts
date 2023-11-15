@@ -9,7 +9,7 @@ import { createRawObjectProxy } from "./proxies";
 import { TypedNode, TreeObjectNode } from "./types";
 
 /**
- * Adds a factory function (`create`) to the given schema so that it satisfies the {@link SharedTreeObjectFactory} interface.
+ * Adds a factory function (`create`) to the given schema so that it satisfies the {@link TreeObjectFactory} interface.
  */
 export function addFactory<TSchema extends ObjectNodeSchema<string, any>>(
 	schema: TSchema,
@@ -26,7 +26,7 @@ export function addFactory<TSchema extends ObjectNodeSchema<string, any>>(
  * Creates `{@link TreeObjectNode}`s of the given schema type via a `create` method.
  * @alpha
  */
-export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
+export interface TreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
 	/**
 	 * Create a {@link TreeObjectNode} that can be inserted into the tree via assignment `=`.
 	 * @param content - the data making up the {@link TreeObjectNode} to be created.
@@ -40,8 +40,8 @@ export interface SharedTreeObjectFactory<TSchema extends TreeNodeSchemaBase> {
 }
 
 /**
- * A {@link TreeNodeSchema} which is also a {@link SharedTreeObjectFactory}.
+ * A {@link TreeNodeSchema} which is also a {@link TreeObjectFactory}.
  * @alpha
  */
 export type FactoryTreeSchema<TSchema extends TreeNodeSchemaBase> = TSchema &
-	SharedTreeObjectFactory<TSchema>;
+	TreeObjectFactory<TSchema>;

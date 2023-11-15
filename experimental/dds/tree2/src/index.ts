@@ -231,7 +231,7 @@ export {
 	TreeNode,
 	FlexTreeTyped,
 	TreeEvent,
-	SharedTreeObjectFactory,
+	TreeObjectFactory,
 	SchemaCollection,
 	FactoryTreeSchema,
 	TreeCompressionStrategy,

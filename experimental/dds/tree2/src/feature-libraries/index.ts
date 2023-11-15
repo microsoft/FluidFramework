@@ -260,7 +260,7 @@ export {
 	Tree,
 	TreeApi,
 	TreeNode,
-	SharedTreeObjectFactory,
+	TreeObjectFactory,
 	FactoryTreeSchema,
 	addFactory,
 } from "./simple-tree";
