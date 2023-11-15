@@ -45,7 +45,7 @@ export interface ITree extends IChannel {
 	 * The tree (now known to have been initialized) has its stored schema checked against the provided view `schema`.
 	 *
 	 * If the schema are compatible (including updating the stored schema if permitted via `allowedSchemaModifications`),
-	 * a {@link TreeField} for the root of the tree is returned, with a schema aware API based on the provided view schema.
+	 * a {@link TreeView} is returned, with a schema aware API based on the provided view schema.
 	 *
 	 * If the schema are not compatible, and exception is thrown.
 	 *
@@ -97,7 +97,7 @@ export interface TreeView<in out TRoot> extends IDisposable {
 }
 
 /**
- * A channel factory that creates a {@link TreeField}.
+ * A channel factory that creates an {@link ITree}.
  * @alpha
  */
 export class TypedTreeFactory implements IChannelFactory {

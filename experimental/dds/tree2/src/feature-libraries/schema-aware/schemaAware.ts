@@ -11,6 +11,10 @@ import {
 	TreeFieldSchema,
 	TreeNodeSchema,
 	AllowedTypes,
+	LeafNodeSchema,
+	ObjectNodeSchema,
+	Fields,
+	FieldNodeSchema,
 } from "../typed-schema";
 import { Assume, FlattenKeys, _InlineTrick } from "../../util";
 import { TypedValueOrUndefined } from "./schemaAwareUtil";
@@ -83,7 +87,7 @@ export type FlexibleObject<TValueSchema extends ValueSchema | undefined, TName> 
  * @alpha
  */
 export type UnbrandedName<TName> = [
-	TName extends infer S & TreeNodeSchemaIdentifier ? S : string,
+	TName extends TreeNodeSchemaIdentifier<infer S> ? S : string,
 ][_InlineTrick];
 
 /**
@@ -94,7 +98,7 @@ export type UnbrandedName<TName> = [
  */
 export type TypedFields<
 	Mode extends ApiMode,
-	TFields extends undefined | { [key: string]: TreeFieldSchema },
+	TFields extends undefined | { readonly [key: string]: TreeFieldSchema },
 > = [
 	TFields extends { [key: string]: TreeFieldSchema }
 		? {
@@ -178,8 +182,12 @@ export type UntypedApi<Mode extends ApiMode> = {
 export type TypedNode<TSchema extends TreeNodeSchema, Mode extends ApiMode> = FlattenKeys<
 	CollectOptions<
 		Mode,
-		TypedFields<Mode, TSchema["objectNodeFieldsObject"]>,
-		TSchema["leafValue"],
+		TSchema extends ObjectNodeSchema<string, infer TFields extends Fields>
+			? TypedFields<Mode, TFields>
+			: TSchema extends FieldNodeSchema<string, infer TField extends TreeFieldSchema>
+			? TypedFields<Mode, { "": TField }>
+			: EmptyObject,
+		TSchema extends LeafNodeSchema<string, infer TValueSchema> ? TValueSchema : undefined,
 		TSchema["name"]
 	>
 >;

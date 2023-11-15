@@ -38,7 +38,7 @@ importers:
       changesets-format-with-issue-links: ^0.3.0
       concurrently: ^8.2.1
       copyfiles: ^2.4.1
-      danger: ^10.9.0
+      danger: ^11.3.0
       eslint: ~8.50.0
       jest: ^29.6.2
       mocha: ^10.2.0
@@ -65,7 +65,7 @@ importers:
       changesets-format-with-issue-links: 0.3.0_@changesets+cli@2.26.2
       concurrently: 8.2.1
       copyfiles: 2.4.1
-      danger: 10.9.0_@octokit+core@4.2.4
+      danger: 11.3.0
       eslint: 8.50.0
       jest: 29.7.0
       mocha: 10.2.0
@@ -114,6 +114,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -154,6 +155,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
       uuid: 9.0.1
 
@@ -202,6 +204,7 @@ importers:
       jsrsasign: ^10.5.25
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -221,6 +224,7 @@ importers:
       eslint-config-prettier: 9.0.0_eslint@8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   azure/packages/external-controller:
@@ -265,6 +269,7 @@ importers:
       tinylicious: ^2.0.2
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
       webpack: ^5.82.0
@@ -314,6 +319,7 @@ importers:
       tinylicious: 2.0.2
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.0_wlox7xpecxj4rvkt6b6o7frtlu
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
       webpack: 5.88.2_webpack-cli@4.10.0
       webpack-cli: 4.10.0_ai6cu5vnuisb2akyozxbiaqwvu
@@ -3937,6 +3943,7 @@ importers:
   examples/version-migration/tree-shim:
     specifiers:
       '@fluid-example/example-utils': workspace:~
+      '@fluid-experimental/migration-shim': workspace:~
       '@fluid-experimental/react-inputs': workspace:~
       '@fluid-experimental/tree': workspace:~
       '@fluid-experimental/tree2': workspace:~
@@ -3980,8 +3987,10 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
+      start-server-and-test: ^1.11.7
       style-loader: ^1.0.0
       tiny-typed-emitter: ^2.1.0
+      tinylicious: ^2.0.2
       ts-jest: ^29.1.1
       ts-loader: ^9.3.0
       typescript: ~5.1.6
@@ -3992,6 +4001,7 @@ importers:
       webpack-merge: ^5.8.0
     dependencies:
       '@fluid-example/example-utils': link:../../utils/example-utils
+      '@fluid-experimental/migration-shim': link:../../../packages/dds/migration-shim
       '@fluid-experimental/react-inputs': link:../../../experimental/framework/react-inputs
       '@fluid-experimental/tree': link:../../../experimental/dds/tree
       '@fluid-experimental/tree2': link:../../../experimental/dds/tree2
@@ -4038,7 +4048,9 @@ importers:
       process: 0.11.10
       puppeteer: 17.1.3
       rimraf: 4.4.1
+      start-server-and-test: 1.15.5
       style-loader: 1.3.0_webpack@5.88.2
+      tinylicious: 2.0.2
       ts-jest: 29.1.1_gvmt7aj7nai5bnvsxmiksfugce
       ts-loader: 9.5.0_wlox7xpecxj4rvkt6b6o7frtlu
       typescript: 5.1.6
@@ -6021,12 +6033,13 @@ importers:
       '@types/node': ^16.18.38
       '@types/puppeteer': 1.3.0
       '@types/rewire': ^2.5.28
-      '@types/sha.js': ^2.4.0
+      '@types/sha.js': ^2.4.4
       '@types/sinon': ^7.0.13
       base64-js: ^1.5.1
       buffer: ^6.0.3
       c8: ^7.7.1
       concurrently: ^8.2.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -6071,10 +6084,11 @@ importers:
       '@types/node': 16.18.58
       '@types/puppeteer': 1.3.0
       '@types/rewire': 2.5.28
-      '@types/sha.js': 2.4.2
+      '@types/sha.js': 2.4.4
       '@types/sinon': 7.5.2
       c8: 7.14.0
       concurrently: 8.2.1
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -6174,6 +6188,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -6197,6 +6212,7 @@ importers:
       '@types/node': 16.18.58
       '@types/sinon': 7.5.2
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -6219,6 +6235,7 @@ importers:
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/protocol-definitions': ^3.0.0
       '@microsoft/api-extractor': ^7.37.0
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -6233,6 +6250,7 @@ importers:
       '@fluidframework/driver-definitions-previous': /@fluidframework/driver-definitions/2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.0
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -7602,7 +7620,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/node-fetch': ^2.5.10
-      '@types/sha.js': ^2.4.0
       '@types/sinon': ^7.0.13
       c8: ^7.7.1
       cross-env: ^7.0.3
@@ -7644,7 +7661,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       '@types/node-fetch': 2.6.6
-      '@types/sha.js': 2.4.2
       '@types/sinon': 7.5.2
       c8: 7.14.0
       cross-env: 7.0.3
@@ -8003,6 +8019,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -8029,6 +8046,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/aqueduct:
@@ -8066,6 +8084,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -8104,6 +8123,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/attributor:
@@ -8142,6 +8162,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8179,6 +8200,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/client-logger/app-insights-logger:
@@ -8254,6 +8276,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8279,6 +8302,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/dds-interceptions:
@@ -8309,6 +8333,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -8338,6 +8363,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-framework:
@@ -8357,6 +8383,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-definitions': link:../../common/container-definitions
@@ -8375,6 +8402,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/fluid-static:
@@ -8410,6 +8438,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8444,6 +8473,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/oldest-client-observer:
@@ -8465,6 +8495,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluid-internal/client-utils': link:../../common/client-utils
@@ -8485,6 +8516,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/request-handler:
@@ -8515,6 +8547,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/container-runtime-definitions': link:../../runtime/container-runtime-definitions
@@ -8544,6 +8577,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/synthesize:
@@ -8569,6 +8603,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-utils': link:../../common/core-utils
@@ -8593,6 +8628,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/tinylicious-client:
@@ -8627,6 +8663,7 @@ importers:
       rimraf: ^4.4.0
       start-server-and-test: ^1.11.7
       tinylicious: ^2.0.2
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       uuid: ^9.0.0
     dependencies:
@@ -8662,6 +8699,7 @@ importers:
       rimraf: 4.4.1
       start-server-and-test: 1.15.5
       tinylicious: 2.0.2
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/undo-redo:
@@ -8693,6 +8731,7 @@ importers:
       moment: ^2.21.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/map': link:../../dds/map
@@ -8723,6 +8762,7 @@ importers:
       moment: 2.29.4
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/view-adapters:
@@ -8742,6 +8782,7 @@ importers:
       react: ^17.0.1
       react-dom: ^17.0.1
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8760,6 +8801,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/framework/view-interfaces:
@@ -8776,6 +8818,7 @@ importers:
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
     dependencies:
       '@fluidframework/core-interfaces': link:../../common/core-interfaces
@@ -8791,6 +8834,7 @@ importers:
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/container-loader:
@@ -17557,6 +17601,39 @@ packages:
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
     dev: true
 
+  /@gitbeaker/core/35.8.1:
+    resolution: {integrity: sha512-KBrDykVKSmU9Q9Gly8KeHOgdc0lZSa435srECxuO0FGqqBcUQ82hPqUc13YFkkdOI9T1JRA3qSFajg8ds0mZKA==}
+    engines: {node: '>=14.2.0'}
+    dependencies:
+      '@gitbeaker/requester-utils': 35.8.1
+      form-data: 4.0.0
+      li: 1.3.0
+      mime: 3.0.0
+      query-string: 7.1.3
+      xcase: 2.0.1
+    dev: true
+
+  /@gitbeaker/node/35.8.1:
+    resolution: {integrity: sha512-g6rX853y61qNhzq9cWtxIEoe2KDeFBtXAeWMGWJnc3nz3WRump2pIICvJqw/yobLZqmTNt+ea6w3/n92Mnbn3g==}
+    engines: {node: '>=14.2.0'}
+    deprecated: Please use its successor @gitbeaker/rest
+    dependencies:
+      '@gitbeaker/core': 35.8.1
+      '@gitbeaker/requester-utils': 35.8.1
+      delay: 5.0.0
+      got: 11.8.6
+      xcase: 2.0.1
+    dev: true
+
+  /@gitbeaker/requester-utils/35.8.1:
+    resolution: {integrity: sha512-MFzdH+Z6eJaCZA5ruWsyvm6SXRyrQHjYVR6aY8POFraIy7ceIHOprWCs1R+0ydDZ8KtBnd8OTHjlJ0sLtSFJCg==}
+    engines: {node: '>=14.2.0'}
+    dependencies:
+      form-data: 4.0.0
+      qs: 6.11.2
+      xcase: 2.0.1
+    dev: true
+
   /@griffel/core/1.14.3:
     resolution: {integrity: sha512-d1QqS8mP1fzF8KLLN/nhxNUHguMM9I61Ckjnn5zNUqxUlRaebnhbpa2kLDVBdIy1k22+76+NTg+pIpXXjGf+vg==}
     dependencies:
@@ -21326,7 +21403,7 @@ packages:
     resolution: {integrity: sha512-gm6It+7hCuVSFMl9kP9NYX5TTqc6GRcb9HXm0/YhKnou1E0pyocG+6IR/1GNOu/yCkRnD9bRlp5BYw8puvf2kA==}
     dependencies:
       '@technote-space/anchor-markdown-header': 1.1.42
-      '@textlint/markdown-to-ast': 13.3.3
+      '@textlint/markdown-to-ast': 13.4.0
       htmlparser2: 8.0.2
       update-section: 0.3.3
     transitivePeerDependencies:
@@ -21385,14 +21462,14 @@ packages:
       '@testing-library/dom': 8.20.1
     dev: true
 
-  /@textlint/ast-node-types/13.3.3:
-    resolution: {integrity: sha512-KCpJppfX3Km69twa6SmVEJ8mkyAZSrxw3XaaLQSlpc7PWnLUJSCHGPVECI1nSUDhiTd1r6zlRvWuyIAZJiov+A==}
+  /@textlint/ast-node-types/13.4.0:
+    resolution: {integrity: sha512-roVeLjnf8UPntFICb1uEwE2dccC8V/T5N1x7eBxkT3VDmSQkyfIAuGtlpwyH0wNKEwJmjO/2gSm2fCjW5K/rbA==}
     dev: true
 
-  /@textlint/markdown-to-ast/13.3.3:
-    resolution: {integrity: sha512-jeqWyChTtJHWxEnH46V6qjr+OCTh6evm45aDqMzdg+b8ocXY+NhudiCMeHcVGoz042UEwc6w4reLn8+Is+SZ+A==}
+  /@textlint/markdown-to-ast/13.4.0:
+    resolution: {integrity: sha512-rF70kFestQHaqB+cRl4QrvjIn0bjR3birnAXjux9iEXWfrS7cxWyrEWmKkBPO5o8yoGF9q9JKBkDaypPzNsIhg==}
     dependencies:
-      '@textlint/ast-node-types': 13.3.3
+      '@textlint/ast-node-types': 13.4.0
       debug: 4.3.4
       mdast-util-gfm-autolink-literal: 0.1.3
       remark-footnotes: 3.0.0
@@ -22108,8 +22185,8 @@ packages:
       '@types/mime': 3.0.2
       '@types/node': 16.18.58
 
-  /@types/sha.js/2.4.2:
-    resolution: {integrity: sha512-NGwYSCPCwuZc4Mdf3M0PA9nEjLm16z17zYZTrFVnjAtPSrYN6eMkzup2jelkoe9piZdJq/WVaoTJxE+SyrJKEQ==}
+  /@types/sha.js/2.4.4:
+    resolution: {integrity: sha512-Qukd+D6S2Hm0wLVt2Vh+/eWBIoUt+wF8jWjBsG4F8EFQRwKtYvtXCPcNl2OEUQ1R+eTr3xuSaBYUyM3WD1x/Qw==}
     dependencies:
       '@types/node': 16.18.58
     dev: true
@@ -26850,6 +26927,54 @@ packages:
       supports-hyperlinks: 1.0.1
     transitivePeerDependencies:
       - '@octokit/core'
+      - encoding
+      - supports-color
+    dev: true
+
+  /danger/11.3.0:
+    resolution: {integrity: sha512-h4zkvmEfRVZp2EIKlQSky0IotxrDbJZtXgMTvyN1nwPCfg0JgvQVmVbvOZXrOgNVlgL+42ZDjNL2qAwVmJypNw==}
+    engines: {node: '>=14.13.1'}
+    hasBin: true
+    dependencies:
+      '@gitbeaker/core': 35.8.1
+      '@gitbeaker/node': 35.8.1
+      '@octokit/rest': 18.12.0
+      async-retry: 1.2.3
+      chalk: 2.4.2
+      commander: 2.20.3
+      core-js: 3.33.0
+      debug: 4.3.4
+      fast-json-patch: 3.1.1
+      get-stdin: 6.0.0
+      http-proxy-agent: 5.0.0
+      https-proxy-agent: 5.0.1
+      hyperlinker: 1.0.0
+      json5: 2.2.3
+      jsonpointer: 5.0.1
+      jsonwebtoken: 9.0.2
+      lodash.find: 4.6.0
+      lodash.includes: 4.3.0
+      lodash.isobject: 3.0.2
+      lodash.keys: 4.2.0
+      lodash.mapvalues: 4.6.0
+      lodash.memoize: 4.1.2
+      memfs-or-file-map-to-github-branch: 1.2.1
+      micromatch: 4.0.5
+      node-cleanup: 2.1.2
+      node-fetch: 2.7.0
+      override-require: 1.1.1
+      p-limit: 2.3.0
+      parse-diff: 0.7.1
+      parse-git-config: 2.0.3
+      parse-github-url: 1.0.2
+      parse-link-header: 2.0.0
+      pinpoint: 1.1.0
+      prettyjson: 1.2.5
+      readline-sync: 1.4.10
+      regenerator-runtime: 0.13.11
+      require-from-string: 2.0.2
+      supports-hyperlinks: 1.0.1
+    transitivePeerDependencies:
       - encoding
       - supports-color
     dev: true
@@ -35582,6 +35707,12 @@ packages:
     hasBin: true
     dev: true
 
+  /mime/3.0.0:
+    resolution: {integrity: sha512-jSCU7/VB1loIWBZe14aEYHU/+1UMEHoaO7qxCOVJOw9GgH72VAWppxNcjU+x9a2k3GSIBXNKxXQFqRvvZ7vr3A==}
+    engines: {node: '>=10.0.0'}
+    hasBin: true
+    dev: true
+
   /mimic-fn/1.2.0:
     resolution: {integrity: sha512-jf84uxzwiuiIVKiOLpfYk7N46TSy8ubTonmneY9vrpHNAnp0QBt2BxWV9dO3/j+BoVAb+a5G6YDPW3M5HOdMWQ==}
     engines: {node: '>=4'}
@@ -37167,6 +37298,13 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       p-map: 2.1.0
+    dev: true
+
+  /p-all/3.0.0:
+    resolution: {integrity: sha512-qUZbvbBFVXm6uJ7U/WDiO0fv6waBMbjlCm4E66oZdRR+egswICarIdHyVSZZHudH8T5SF8x/JG0q0duFzPnlBw==}
+    engines: {node: '>=10'}
+    dependencies:
+      p-map: 4.0.0
     dev: true
 
   /p-cancelable/1.1.0:
@@ -38828,6 +38966,16 @@ packages:
 
   /query-string/6.14.1:
     resolution: {integrity: sha512-XDxAeVmpfu1/6IjyT/gXHOl+S0vQ9owggJ30hhWKdHAsNPOcasn5o9BW0eejZqL2e4vMjhAxoW3jVHcD6mbcYw==}
+    engines: {node: '>=6'}
+    dependencies:
+      decode-uri-component: 0.2.2
+      filter-obj: 1.1.0
+      split-on-first: 1.1.0
+      strict-uri-encode: 2.0.0
+    dev: true
+
+  /query-string/7.1.3:
+    resolution: {integrity: sha512-hh2WYhq4fi8+b+/2Kg9CEge4fDPvHS534aOOvOZeQ3+Vf2mCFsaFBYj0i+iXcAq6I9Vzp5fjMFBlONvayDC1qg==}
     engines: {node: '>=6'}
     dependencies:
       decode-uri-component: 0.2.2
@@ -41556,6 +41704,12 @@ packages:
       webpack: 5.88.2_webpack-cli@4.10.0
     dev: true
 
+  /string-to-stream/3.0.1:
+    resolution: {integrity: sha512-Hl092MV3USJuUCC6mfl9sPzGloA3K5VwdIeJjYIkXY/8K+mUvaeEabWJgArp+xXrsWxCajeT2pc4axbVhIZJyg==}
+    dependencies:
+      readable-stream: 3.6.2
+    dev: true
+
   /string-width/1.0.2:
     resolution: {integrity: sha512-0XsVpQLnVCXHJfyEs8tC0zpTVIr5PKKsQtkT29IwupnPTjtPmQ3xT/4yCREF9hYkV/3M3kzcUTSAZT6a6h81tw==}
     engines: {node: '>=0.10.0'}
@@ -41834,6 +41988,11 @@ packages:
       readable-stream: 2.3.8
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /superstruct/1.0.3:
+    resolution: {integrity: sha512-8iTn3oSS8nRGn+C2pgXSKPI3jmpm6FExNazNpjvqS6ZUJQCej3PUXEKM8NjHBOs54ExM+LPW/FBRhymrdcCiSg==}
+    engines: {node: '>=14.0.0'}
     dev: true
 
   /supertest/3.4.2:
@@ -42741,6 +42900,28 @@ packages:
         optional: true
     dependencies:
       typescript: 5.1.6
+    dev: true
+
+  /tsc-multi/1.1.0_typescript@5.1.6:
+    resolution: {integrity: sha512-THE6X+sse7EZ2qMhqXvBhd2HMTvXyWwYnx+2T/ijqdp/6Rf7rUc2uPRzPdrrljZCNcYDeL0qP2P7tqm2IwayTg==}
+    engines: {node: '>=14'}
+    hasBin: true
+    peerDependencies:
+      typescript: '>=4.3.0'
+    dependencies:
+      debug: 4.3.4
+      fast-glob: 3.3.1
+      get-stdin: 8.0.0
+      p-all: 3.0.0
+      picocolors: 1.0.0
+      signal-exit: 3.0.7
+      string-to-stream: 3.0.1
+      superstruct: 1.0.3
+      tslib: 2.6.2
+      typescript: 5.1.6
+      yargs: 17.7.2
+    transitivePeerDependencies:
+      - supports-color
     dev: true
 
   /tsconfck/2.1.2_typescript@5.1.6:
@@ -45039,6 +45220,10 @@ packages:
     hasBin: true
     optionalDependencies:
       default-browser-id: 1.0.4
+    dev: true
+
+  /xcase/2.0.1:
+    resolution: {integrity: sha512-UmFXIPU+9Eg3E9m/728Bii0lAIuoc+6nbrNUKaRPJOFp91ih44qqGlWtxMB6kXFrRD6po+86ksHM5XHCfk6iPw==}
     dev: true
 
   /xdg-basedir/3.0.0:
