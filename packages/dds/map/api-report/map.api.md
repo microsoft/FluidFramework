@@ -191,7 +191,7 @@ export interface IValueChanged {
 
 // @public
 export class LocalValueMaker {
-    constructor(serializer: IFluidSerializer);
+    constructor();
     fromInMemory(value: unknown): ILocalValue;
     fromSerializable(serializable: ISerializableValue): ILocalValue;
 }

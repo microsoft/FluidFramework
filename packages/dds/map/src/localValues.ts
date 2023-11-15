@@ -106,7 +106,7 @@ export class LocalValueMaker {
 	 * Create a new LocalValueMaker.
 	 * @param serializer - The serializer to serialize / parse handles.
 	 */
-	public constructor(private readonly serializer: IFluidSerializer) {}
+	public constructor() {}
 
 	/**
 	 * Create a new local value from an incoming serialized value.
