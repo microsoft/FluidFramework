@@ -400,7 +400,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 	moveEffects: MoveEffectTable<TNodeChange>,
 	nodeExistenceState: NodeExistenceState,
 ): Mark<TNodeChange> {
-	let rebasedMark;
+	let rebasedMark: Mark<TNodeChange> | undefined;
 	if (isDetach(baseMark)) {
 		if (baseMark.cellId !== undefined) {
 			// Detaches on empty cells have an implicit revive effect.
@@ -414,16 +414,17 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 
 		if (isMoveSource(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
+			assert(!isNewAttach(currMark), "New attaches should not be rebased over moves");
 			const { remains, follows } = separateEffectsForMove(currMark);
-			if (follows !== undefined) {
+			if (follows !== undefined || currMark.changes !== undefined) {
 				sendMarkToDest(
-					follows,
+					withNodeChange({ ...follows, count: baseMark.count }, currMark.changes),
 					moveEffects,
 					getEndpoint(baseMark, baseRevision),
 					baseMark.count,
 				);
 			}
-			rebasedMark = remains ?? { count: baseMark.count };
+			rebasedMark = { ...(remains ?? {}), count: baseMark.count };
 		} else {
 			rebasedMark = currMark;
 		}
@@ -458,30 +459,26 @@ function rebaseMarkIgnoreChild<TNodeChange>(
  * @returns A pair of marks that represent the effects which should remain in place in the face of concurrent move,
  * and the effects that should be sent to the move destination.
  */
-function separateEffectsForMove<T>(mark: Mark<T>): { remains?: Mark<T>; follows?: Mark<T> } {
-	assert(!isNewAttach(mark), "New attaches should not be rebased over moves");
+function separateEffectsForMove(mark: MarkEffect): { remains?: MarkEffect; follows?: MarkEffect } {
 	const type = mark.type;
 	switch (type) {
 		case "Delete":
 		case "MoveOut":
 		case "ReturnFrom":
-		case "AttachAndDetach":
-			// TODO: Handle cases where AttachAndDetach have different move-following policies.
 			return { follows: mark };
+		case "AttachAndDetach":
+			return { follows: mark.detach, remains: mark.attach };
 		case "MoveIn":
 			return { remains: mark };
 		case NoopMarkType:
-			return mark.changes !== undefined ? { follows: mark } : {};
+			return {};
 		case "Insert": {
-			const follows: CellMark<ReturnFrom, T> = {
+			const follows: ReturnFrom = {
 				type: "ReturnFrom",
-				count: mark.count,
 				id: mark.id,
-				changes: mark.changes,
 			};
-			const remains: CellMark<MoveIn, T> = {
+			const remains: MoveIn = {
 				type: "MoveIn",
-				count: mark.count,
 				id: mark.id,
 			};
 			if (mark.revision !== undefined) {
