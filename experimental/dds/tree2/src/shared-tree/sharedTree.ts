@@ -48,10 +48,8 @@ import {
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
-	TreeRoot,
-	getProxyForField,
-	TreeField,
 } from "../feature-libraries";
+import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import { TreeView, type ITree } from "./simpleTree";

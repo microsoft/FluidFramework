@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { rootFieldKey } from "../../../core";
-import { TreeRoot, TreeNode, Tree, TreeStatus, Any } from "../../../feature-libraries";
-import { SchemaBuilder } from "../../../domains";
+import { rootFieldKey } from "../../core";
+import { TreeStatus, Any } from "../../feature-libraries";
+import { TreeRoot, TreeNode, Tree } from "../../simple-tree";
+import { SchemaBuilder } from "../../domains";
 import { itWithRoot } from "./utils";
 
 describe("node API", () => {

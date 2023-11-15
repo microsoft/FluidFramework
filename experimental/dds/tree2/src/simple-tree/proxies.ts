@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { brand, fail } from "../../util";
+import { brand, fail } from "../util";
 import {
 	AllowedTypes,
 	TreeFieldSchema,
@@ -17,9 +17,7 @@ import {
 	MapNodeSchema,
 	FieldNodeSchema,
 	MapFieldSchema,
-} from "../typed-schema";
-import { FieldKinds } from "../default-field-kinds";
-import {
+	FieldKinds,
 	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexTreeMapNode,
@@ -31,12 +29,14 @@ import {
 	FlexTreeTypedField,
 	FlexTreeUnknownUnboxed,
 	onNextChange,
-} from "../flex-tree";
-import { EmptyKey, FieldKey } from "../../core";
-import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../contextuallyTyped";
+	ContextuallyTypedNodeData,
+	typeNameSymbol,
+	isFluidHandle,
+} from "../feature-libraries";
+import { EmptyKey, FieldKey } from "../core";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
-import { LazyObjectNode, getBoxedField } from "../flex-tree/lazyNode";
+import { LazyObjectNode, getBoxedField } from "../feature-libraries/flex-tree/lazyNode";
 import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
 import {
 	TreeField,

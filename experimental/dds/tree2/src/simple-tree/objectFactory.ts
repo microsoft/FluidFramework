@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Assume } from "../../util";
-import { ObjectNodeSchema, TreeNodeSchemaBase } from "../typed-schema";
+import { Assume } from "../util";
+import { ObjectNodeSchema, TreeNodeSchemaBase } from "../feature-libraries";
 import { createRawObjectProxy } from "./proxies";
 import { TypedNode, TreeObjectNode } from "./types";
 
