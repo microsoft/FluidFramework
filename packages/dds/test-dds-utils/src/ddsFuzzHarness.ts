@@ -1163,7 +1163,7 @@ export async function replayTest<
 }
 
 /**
- * TODO: Write documentation.
+ * Creates a suite of eventual consistency tests for a particular DDS model.
  * @internal
  */
 export function createDDSFuzzSuite<
