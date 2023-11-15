@@ -33,10 +33,10 @@ export class TinyliciousTenant implements ITenant {
 		// version of Axios.
 		const restWrapper = new BasicRestWrapper(
 			historianUrl,
-			undefined, /* defaultQueryString */
-			undefined, /* maxBodyLength */
-			undefined, /* maxContentLength */
-			undefined, /* defaultHeaders */
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
 			Axios,
 		);
 		const historian = new Historian(historianUrl, false, false, restWrapper);
