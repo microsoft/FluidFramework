@@ -14,7 +14,7 @@ import { EmptyKey } from "../../../core";
 // Note: the behaviors here are more heavily tested by `proxies.spec.ts`.
 // This adds some basic unit test for the generated cursor adapter, but since the adapter is an implementation
 // detail of the proxy API, deep coverage at this level was not prioritized.
-describe.only("cursorFromProxyTree", () => {
+describe("cursorFromProxyTree", () => {
 	it("object", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const rootSchema = schemaBuilder.object("object", {
