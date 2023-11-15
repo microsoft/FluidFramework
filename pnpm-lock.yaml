@@ -8858,6 +8858,7 @@ importers:
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
+      '@types/debug': ^4.1.5
       '@types/double-ended-queue': ^2.1.0
       '@types/events': ^3.0.0
       '@types/lodash': ^4.14.118
@@ -8878,6 +8879,7 @@ importers:
       prettier: ~3.0.3
       rimraf: ^4.4.0
       sinon: ^7.4.2
+      tsc-multi: ^1.1.0
       typescript: ~5.1.6
       url: ^0.11.0
       uuid: ^9.0.0
@@ -8906,6 +8908,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
+      '@types/debug': 4.1.9
       '@types/double-ended-queue': 2.1.4
       '@types/events': 3.0.1
       '@types/lodash': 4.14.199
@@ -8922,6 +8925,7 @@ importers:
       prettier: 3.0.3
       rimraf: 4.4.1
       sinon: 7.5.0
+      tsc-multi: 1.1.0_typescript@5.1.6
       typescript: 5.1.6
 
   packages/loader/driver-utils:
@@ -24062,7 +24066,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.3_debug@4.3.4
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
