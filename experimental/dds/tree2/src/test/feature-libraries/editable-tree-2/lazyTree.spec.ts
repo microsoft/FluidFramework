@@ -21,8 +21,7 @@ import {
 	PrimitiveValue,
 	isPrimitiveValue,
 	jsonableTreeFromCursor,
-	singleMapTreeCursor,
-	Tree,
+	cursorForMapTreeNode,
 	TreeField,
 	TreeNode,
 	Skip,
@@ -39,6 +38,7 @@ import {
 	DefaultEditBuilder,
 	DefaultChangeFamily,
 	DefaultChangeset,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
 import {
 	Anchor,
@@ -59,12 +59,16 @@ import {
 	LazySequence,
 	LazyValueField,
 } from "../../../feature-libraries/editable-tree-2/lazyField";
-import { boxedIterator, visitIterableTree } from "../../../feature-libraries/editable-tree-2";
+import {
+	TreeEntity,
+	boxedIterator,
+	visitIterableTree,
+} from "../../../feature-libraries/editable-tree-2";
 import { Context, getTreeContext } from "../../../feature-libraries/editable-tree-2/context";
 import { TreeContent } from "../../../shared-tree";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { forestWithContent } from "../../utils";
+import { forestWithContent, viewWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -265,7 +269,7 @@ describe("LazyTree", () => {
 
 						const mapTree = fieldToMapTree(context.root);
 						const jsonable = mapTree
-							.map(singleMapTreeCursor)
+							.map(cursorForMapTreeNode)
 							.map(jsonableTreeFromCursor);
 
 						const expected = testTree.treeFactory();
@@ -401,13 +405,30 @@ describe("LazyMap", () => {
 	});
 
 	it("set", () => {
-		assert.equal(editCallCount, 0);
+		const view = viewWithContent({ schema, initialTree: {} });
+		const mapNode = view.editableTree.content;
+		assert(mapNode.is(mapNodeSchema));
 
-		node.set(brand("baz"), "First edit");
-		assert.equal(editCallCount, 1);
+		mapNode.set("baz", "First edit");
+		mapNode.set("foo", "Second edit");
+		assert.equal(mapNode.get("baz"), "First edit");
+		assert.equal(mapNode.get("foo"), "Second edit");
 
-		node.set(brand("foo"), "Second edit");
-		assert.equal(editCallCount, 2);
+		mapNode.set("foo", cursorForJsonableTreeNode({ type: leafDomain.string.name, value: "X" }));
+		assert.equal(mapNode.get("foo"), "X");
+		mapNode.set("foo", undefined);
+		assert.equal(mapNode.get("foo"), undefined);
+		assert.equal(mapNode.has("foo"), false);
+	});
+
+	it("getBoxed empty", () => {
+		const view = viewWithContent({ schema, initialTree: {} });
+		const mapNode = view.editableTree.content;
+		assert(mapNode.is(mapNodeSchema));
+
+		const empty = mapNode.getBoxed("foo");
+		assert.equal(empty.parent, mapNode);
+		assert.equal(empty.key, "foo");
 	});
 
 	it("delete", () => {
@@ -549,7 +570,7 @@ function nodeToMapTree(node: TreeNode): MapTree {
 	return { fields, type: node.type, value: node.value };
 }
 
-function checkPropertyInvariants(root: Tree): void {
+function checkPropertyInvariants(root: TreeEntity): void {
 	const treeValues = new Map<unknown, number>();
 	// Assert all nodes and fields traversed, and all values found.
 	// TODO: checking that unboxed fields and nodes were traversed is not fully implemented here.

@@ -7,7 +7,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import path from "path";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { Trace } from "@fluid-internal/client-utils";
 import { ReferenceType } from "../ops";
 import { createMap, extend, MapLike } from "../properties";
@@ -157,8 +157,8 @@ function measureFetch(startFile: string, withBookmarks = false) {
 	for (let i = 0; i < reps; i++) {
 		for (let pos = 0; pos < client.getLength(); ) {
 			// curPG.pos is ca end
-			const curPG = client.searchForMarker(pos, "pg", true)!;
-			const properties = curPG.properties!;
+			const curPG = client.findTile(pos, "pg", false)!;
+			const properties = curPG.tile.properties!;
 			const curSegOff = client.getContainingSegment(pos)!;
 			const curSeg = curSegOff.segment!;
 			// Combine paragraph and direct properties

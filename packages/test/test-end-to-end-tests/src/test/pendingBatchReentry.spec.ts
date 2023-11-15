@@ -14,7 +14,7 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import { describeNoCompat } from "@fluid-private/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { FlushMode } from "@fluidframework/runtime-definitions";

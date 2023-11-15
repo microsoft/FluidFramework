@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "build:genver"];
+const tscDependsOn = ["^tsc", "^api", "build:genver"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -47,7 +47,19 @@ module.exports = {
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
 		"build:esnext": tscDependsOn,
-		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
+		"build:test": [
+			...tscDependsOn,
+			"typetests:gen",
+			"tsc",
+			"api-extractor:commonjs",
+			"api-extractor:esnext",
+		],
+		"api": {
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			script: false,
+		},
+		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
+		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
 		"build:readme": {
@@ -192,6 +204,11 @@ module.exports = {
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"^tools/getkeys",
 			],
+			"npm-package-json-esm": [
+				// This is an ESM-only package, and uses tsc to build the ESM output. The policy handler doesn't understand this
+				// case.
+				"packages/dds/migration-shim/package.json",
+			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [
 				// We deliberately improperly import from deep in the package tree while we migrate everything into other
@@ -242,12 +259,7 @@ module.exports = {
 
 			mustPublish: {
 				// These packages will always be published to npm. This is called the "public" feed.
-				npm: [
-					"@fluidframework",
-					"fluid-framework",
-					"tinylicious",
-					"@fluid-internal/client-utils",
-				],
+				npm: ["@fluidframework", "fluid-framework", "@fluid-internal/client-utils"],
 				// A list of packages published to our internal-build feed. Note that packages published
 				// to npm will also be published to this feed. This should be a minimal set required for legacy compat of
 				// internal partners or internal CI requirements.

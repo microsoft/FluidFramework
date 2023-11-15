@@ -270,29 +270,65 @@
                 "content": [
                   [
                     "rootFieldKey",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 0
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 1
-                      },
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 2
-                      }
-                    ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          0,
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
+                          1,
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
+                          2,
+                          []
+                        ]
+                      ]
+                    }
                   ],
                   [
                     "repair-4",
-                    [
-                      {
-                        "type": "com.fluidframework.leaf.number",
-                        "value": 3
-                      }
-                    ]
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
+                          }
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          3,
+                          []
+                        ]
+                      ]
+                    }
                   ]
                 ],
                 "encoding": "utf-8"
@@ -309,6 +345,7 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [
                     [
                       "beefbeef-beef-4000-8000-00000000002b",
@@ -316,7 +353,7 @@
                       4
                     ]
                   ],
-                  "id": 4
+                  "maxId": 4
                 },
                 "encoding": "utf-8"
               }

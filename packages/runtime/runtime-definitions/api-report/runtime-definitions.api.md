@@ -171,15 +171,11 @@ export interface IdCreationRange {
     readonly ids?: {
         readonly firstGenCount: number;
         readonly count: number;
+        readonly requestedClusterSize: number;
     };
     // (undocumented)
     readonly sessionId: SessionId;
 }
-
-// @public (undocumented)
-export type IdCreationRangeWithStashedState = IdCreationRange & {
-    stashedState: SerializedIdCompressorWithOngoingSession;
-};
 
 // @public
 export interface IEnvelope {
@@ -343,9 +339,6 @@ export interface IInboundSignalMessage extends ISignalMessage {
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
     snapshot: IAttachMessage["snapshot"] | null;
 };
-
-// @public
-export const initialClusterCapacity = 512;
 
 // @public (undocumented)
 export interface IProvideFluidDataStoreFactory {

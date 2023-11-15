@@ -13,12 +13,14 @@ import {
 	FieldAnchor,
 	inCursorNode,
 	FieldUpPath,
-	ITreeCursor,
 	keyAsDetachedField,
 	iterateCursorField,
+	isCursor,
+	ITreeCursorSynchronous,
+	mapCursorField,
 } from "../../core";
 import { FieldKind } from "../modular-schema";
-import { NewFieldContent, normalizeNewFieldContent } from "../contextuallyTyped";
+import { cursorFromContextualData } from "../contextuallyTyped";
 import {
 	FieldKinds,
 	OptionalFieldEditBuilder,
@@ -28,6 +30,7 @@ import {
 import { assertValidIndex, assertValidRangeIndices, brand, disposeSymbol, fail } from "../../util";
 import { AllowedTypes, TreeFieldSchema } from "../typed-schema";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
+import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
 import { Context } from "./context";
 import {
 	FlexibleNodeContent,
@@ -42,6 +45,7 @@ import {
 	boxedIterator,
 	TreeStatus,
 	NodeKeyField,
+	FlexibleNodeSubSequence,
 } from "./editableTreeTypes";
 import { makeTree } from "./lazyTree";
 import {
@@ -124,10 +128,6 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		return this.key === other.key && this.parent === other.parent;
 	}
 
-	public normalizeNewContent(content: NewFieldContent): readonly ITreeCursor[] {
-		return normalizeNewFieldContent(this.context, this.schema, content);
-	}
-
 	public get parent(): TreeNode | undefined {
 		if (this[anchorSymbol].parent === undefined) {
 			return undefined;
@@ -156,7 +156,7 @@ export abstract class LazyField<TKind extends FieldKind, TTypes extends AllowedT
 		return this[cursorSymbol].getFieldLength();
 	}
 
-	public at(index: number): UnboxNodeUnion<TTypes> {
+	public atIndex(index: number): UnboxNodeUnion<TTypes> {
 		return inCursorNode(this[cursorSymbol], index, (cursor) =>
 			unboxedUnion(this.context, this.schema, cursor),
 		);
@@ -238,6 +238,23 @@ export class LazySequence<TTypes extends AllowedTypes>
 		makePropertyEnumerableOwn(this, "asArray", LazySequence.prototype);
 	}
 
+	public at(index: number): UnboxNodeUnion<TTypes> | undefined {
+		// The logic here follows what Array.prototype.at does to handle any kind of index at runtime.
+		// See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at for details.
+		let finalIndex = Math.trunc(+index);
+		if (isNaN(finalIndex)) {
+			finalIndex = 0;
+		}
+		if (finalIndex < -this.length || finalIndex >= this.length) {
+			return undefined;
+		}
+		if (finalIndex < 0) {
+			finalIndex = finalIndex + this.length;
+		}
+		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
+			unboxedUnion(this.context, this.schema, cursor),
+		);
+	}
 	public get asArray(): readonly UnboxNodeUnion<TTypes>[] {
 		return this.map((x) => x);
 	}
@@ -248,18 +265,22 @@ export class LazySequence<TTypes extends AllowedTypes>
 		return fieldEditor;
 	}
 
-	public insertAt(index: number, value: Iterable<FlexibleNodeContent<TTypes>>): void {
-		const fieldEditor = this.sequenceEditor();
-		const content = this.normalizeNewContent(Array.isArray(value) ? value : Array.from(value));
+	public insertAt(index: number, value: FlexibleNodeSubSequence<TTypes>): void {
 		assertValidIndex(index, this, true);
+		const content: ITreeCursorSynchronous[] = isCursor(value)
+			? prepareFieldCursorForInsert(value)
+			: Array.from(value, (item) =>
+					cursorFromContextualData(this.context, this.schema.types, item),
+			  );
+		const fieldEditor = this.sequenceEditor();
 		fieldEditor.insert(index, content);
 	}
 
-	public insertAtStart(value: Iterable<FlexibleNodeContent<TTypes>>): void {
+	public insertAtStart(value: FlexibleNodeSubSequence<TTypes>): void {
 		this.insertAt(0, value);
 	}
 
-	public insertAtEnd(value: Iterable<FlexibleNodeContent<TTypes>>): void {
+	public insertAtEnd(value: FlexibleNodeSubSequence<TTypes>): void {
 		this.insertAt(this.length, value);
 	}
 
@@ -395,11 +416,13 @@ export class LazyValueField<TTypes extends AllowedTypes>
 	}
 
 	public get content(): UnboxNodeUnion<TTypes> {
-		return this.at(0);
+		return this.atIndex(0);
 	}
 
 	public set content(newContent: FlexibleNodeContent<TTypes>) {
-		const content = this.normalizeNewContent(newContent);
+		const content: ITreeCursorSynchronous[] = isCursor(newContent)
+			? prepareNodeCursorForInsert(newContent)
+			: [cursorFromContextualData(this.context, this.schema.types, newContent)];
 		const fieldEditor = this.valueFieldEditor();
 		assert(content.length === 1, 0x780 /* value field content should normalize to one item */);
 		fieldEditor.set(content[0]);
@@ -432,11 +455,16 @@ export class LazyOptionalField<TTypes extends AllowedTypes>
 	}
 
 	public get content(): UnboxNodeUnion<TTypes> | undefined {
-		return this.length === 0 ? undefined : this.at(0);
+		return this.length === 0 ? undefined : this.atIndex(0);
 	}
 
 	public set content(newContent: FlexibleNodeContent<TTypes> | undefined) {
-		const content = this.normalizeNewContent(newContent);
+		const content: ITreeCursorSynchronous[] =
+			newContent === undefined
+				? []
+				: isCursor(newContent)
+				? prepareNodeCursorForInsert(newContent)
+				: [cursorFromContextualData(this.context, this.schema.types, newContent)];
 		const fieldEditor = this.optionalEditor();
 		assert(
 			content.length <= 1,
@@ -503,3 +531,25 @@ const builderList: [FieldKind, Builder][] = [
 ];
 
 const kindToClass: ReadonlyMap<FieldKind, Builder> = new Map(builderList);
+
+/**
+ * Prepare a fields cursor (holding a sequence of nodes) for inserting.
+ */
+function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous[] {
+	// TODO: optionally validate content against schema.
+
+	// Convert from the desired API (single field cursor) to the currently required API (array of node cursors).
+	// This is inefficient, and particularly bad if the data was efficiently chunked using uniform chunks.
+	// TODO: update editing APIs to take in field cursors not arrays of node cursors, then remove this copying conversion.
+	return mapCursorField(cursor, () => cursorForMapTreeNode(mapTreeFromCursor(cursor)));
+}
+
+/**
+ * Prepare a node cursor (holding a single node) for inserting.
+ */
+function prepareNodeCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous[] {
+	// TODO: optionally validate content against schema.
+
+	assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes mode");
+	return [cursor];
+}

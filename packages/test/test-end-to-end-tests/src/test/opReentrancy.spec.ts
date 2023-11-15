@@ -15,13 +15,13 @@ import {
 	ITestFluidObject,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils";
-import { describeNoCompat, itExpects } from "@fluid-internal/test-version-utils";
+import { describeFullCompat, itExpects } from "@fluid-private/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
 import { IContainer } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree";
 import { FlushMode } from "@fluidframework/runtime-definitions";
 
-describeNoCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
+describeFullCompat("Concurrent op processing via DDS event handlers", (getTestObjectProvider) => {
 	const mapId = "mapKey";
 	const sharedStringId = "sharedStringKey";
 	const sharedDirectoryId = "sharedDirectoryKey";

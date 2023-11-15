@@ -32,6 +32,7 @@
 fluid-framework
 @fluidframework/dds-interceptions
 @fluidframework/data-object-base
+@fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
 @fluidframework/agent-scheduler

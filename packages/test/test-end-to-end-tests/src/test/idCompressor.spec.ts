@@ -15,7 +15,7 @@ import {
 	summarizeNow,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
-import { ITestDataObject, describeNoCompat } from "@fluid-internal/test-version-utils";
+import { ITestDataObject, describeNoCompat } from "@fluid-private/test-version-utils";
 import type { SharedCell } from "@fluidframework/cell";
 import {
 	IIdCompressor,
@@ -720,8 +720,8 @@ describeNoCompat("IdCompressor Summaries", (getTestObjectProvider) => {
 		const base64Content = (compressorSummary as any).content as string;
 		const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));
 		return {
-			sessionCount: floatView[3],
-			clusterCount: floatView[4],
+			sessionCount: floatView[2],
+			clusterCount: floatView[3],
 		};
 	}
 

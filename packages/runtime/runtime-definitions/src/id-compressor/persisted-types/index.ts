@@ -8,6 +8,4 @@ export {
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,
-	IdCreationRangeWithStashedState,
-	initialClusterCapacity,
 } from "./0.0.1";
