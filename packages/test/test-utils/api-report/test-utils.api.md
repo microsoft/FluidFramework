@@ -188,40 +188,23 @@ export interface ITestFluidObject extends IProvideTestFluidObject, IFluidLoadabl
 
 // @public (undocumented)
 export interface ITestObjectProvider {
-    // (undocumented)
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
-    // (undocumented)
     createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    // (undocumented)
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): IHostLoader;
-    // (undocumented)
     defaultCodeDetails: IFluidCodeDetails;
-    // (undocumented)
     documentId: string;
-    // (undocumented)
     documentServiceFactory: IDocumentServiceFactory;
-    // (undocumented)
     driver: ITestDriver;
-    // (undocumented)
     ensureSynchronized(timeoutDuration?: number): Promise<void>;
-    // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
     logger: EventAndErrorTrackingLogger | undefined;
-    // (undocumented)
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): IHostLoader;
-    // (undocumented)
     opProcessingController: IOpProcessingController;
-    // (undocumented)
     reset(): void;
-    // (undocumented)
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): any;
-    // (undocumented)
     updateDocumentId(url: IResolvedUrl | undefined): void;
-    // (undocumented)
     urlResolver: IUrlResolver;
 }
 
@@ -314,87 +297,50 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 // @public
 export class TestObjectProvider implements ITestObjectProvider {
-    constructor(LoaderConstructor: typeof Loader, driver: ITestDriver, createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
+    constructor(LoaderConstructor: typeof Loader,
+    driver: ITestDriver,
+    createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
-    // (undocumented)
     readonly createFluidEntryPoint: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
-    // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
-    // (undocumented)
     get documentId(): string;
-    // (undocumented)
     get documentServiceFactory(): IDocumentServiceFactory;
-    // (undocumented)
     readonly driver: ITestDriver;
-    // (undocumented)
     ensureSynchronized(): Promise<void>;
-    // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
-    readonly LoaderConstructor: typeof Loader;
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
     get logger(): EventAndErrorTrackingLogger;
-    set logger(logger: EventAndErrorTrackingLogger);
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
-    // (undocumented)
     get opProcessingController(): IOpProcessingController;
-    // (undocumented)
     reset(): void;
-    // (undocumented)
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
-    // (undocumented)
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
-    // (undocumented)
     get urlResolver(): IUrlResolver;
-    // (undocumented)
-    waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 }
 
 // @public
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
     constructor(LoaderConstructorForCreating: typeof Loader, LoaderConstructorForLoading: typeof Loader, driverForCreating: ITestDriver, driverForLoading: ITestDriver, createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint, createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint);
-    // (undocumented)
     createContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>): Promise<IContainer>;
-    // (undocumented)
     get createFluidEntryPoint(): (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    // (undocumented)
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
-    // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
-    // (undocumented)
     get documentId(): string;
-    // (undocumented)
     get documentServiceFactory(): IDocumentServiceFactory;
-    // (undocumented)
     get driver(): ITestDriver;
-    // (undocumented)
     ensureSynchronized(): Promise<void>;
-    // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
     get logger(): EventAndErrorTrackingLogger;
-    set logger(logger: EventAndErrorTrackingLogger);
-    // (undocumented)
     makeTestContainer(testContainerConfig?: ITestContainerConfig): Promise<IContainer>;
-    // (undocumented)
     makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader;
-    // (undocumented)
     get opProcessingController(): IOpProcessingController;
-    // (undocumented)
     reset(): void;
-    // (undocumented)
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
-    // (undocumented)
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
-    // (undocumented)
     get urlResolver(): IUrlResolver;
-    // (undocumented)
-    waitContainerToCatchUp(container: IContainer): Promise<boolean>;
 }
 
 // @public
