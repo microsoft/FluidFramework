@@ -626,6 +626,7 @@ export class SharedSequence<T> extends SharedSegmentSequence<SubSequence<T>> {
 export class SharedString extends SharedSegmentSequence<SharedStringSegment> implements ISharedString {
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     annotateMarker(marker: Marker, props: PropertySet, combiningOp?: ICombiningOp): void;
+    // @deprecated
     annotateMarkerNotifyConsensus(marker: Marker, props: PropertySet, callback: (m: Marker) => void): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
     // @deprecated

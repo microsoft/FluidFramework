@@ -196,7 +196,7 @@ export class SharedString
 	 * @param marker - The marker to annotate
 	 * @param props - The properties to annotate the marker with
 	 * @param consensusCallback - The callback called when consensus is reached
-	 * 
+	 *
 	 * @deprecated This functionality lacks test coverage and is largely unused. It
 	 * will be removed in a future release.
 	 */
