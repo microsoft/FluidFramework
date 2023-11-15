@@ -27,7 +27,7 @@ import {
 	cloneCellId,
 	areOutputCellsEmpty,
 	isNewAttach,
-	getDetachCellId,
+	getDetachOutputId,
 	getInputCellId,
 	isTransientEffect,
 	getOutputCellId,
@@ -380,7 +380,7 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 	let rebasedMark = currMark;
 	if (markEmptiesCells(baseMark)) {
 		assert(isDetach(baseMark), 0x70b /* Only detach marks should empty cells */);
-		const baseCellId = getDetachCellId(baseMark, baseRevision, metadata);
+		const baseCellId = getDetachOutputId(baseMark, baseRevision, metadata);
 
 		// TODO: Should also check if this is a transient move source
 		if (isMoveSource(baseMark)) {
