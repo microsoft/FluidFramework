@@ -94,7 +94,7 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	// - Rebasing N sequential edits over a single edit, sandwich-rebasing style
 	//   (meaning [A, B, C] ↷ D involves B ↷ compose([A⁻¹, D, A']) and C ↷ compose([B⁻¹, A⁻¹, D, A', B']))
 	const numberOfEditsToRebaseOver = 3;
-	const numberOfEditsToRebase = 2; //numberOfEditsToRebaseOver;
+	const numberOfEditsToRebase = numberOfEditsToRebaseOver;
 	const numberOfEditsToVerifyAssociativity = 4;
 
 	describe("Rebase over compose", () => {
@@ -173,17 +173,6 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
-						// TODO: Investigate.
-						if (
-							[
-								'Rebase ["Delete","Undo:Delete"] over Delete',
-								'Rebase ["Delete","SetB,1"] over Delete',
-								'Rebase ["Delete","SetA,1"] over Delete',
-								'Rebase ["ChildChange0","Delete"] over Delete',
-							].includes(title)
-						) {
-							continue;
-						}
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);

@@ -153,7 +153,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				const id = this.modularBuilder.generateId();
 				const optionalChange =
 					newContent === undefined
-						? optional.changeHandler.editor.clear(id)
+						? optional.changeHandler.editor.clear(wasEmpty, id)
 						: optional.changeHandler.editor.set(newContent, wasEmpty, {
 								fill: this.modularBuilder.generateId(),
 								detach: this.modularBuilder.generateId(),

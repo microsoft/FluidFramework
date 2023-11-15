@@ -72,8 +72,10 @@ const OptionalChange = {
 		return optionalFieldEditor.set(cursorForJsonableTreeNode({ type, value }), wasEmpty, ids);
 	},
 
+	// TODO: Add coverage in this file for clear(true, id).
+	// This was only caught by more e2e tests.
 	clear(id: ChangesetLocalId) {
-		return optionalFieldEditor.clear(id);
+		return optionalFieldEditor.clear(false, id);
 	},
 
 	buildChildChange(childChange: TestChange) {

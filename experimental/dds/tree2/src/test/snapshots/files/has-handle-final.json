@@ -21,12 +21,7 @@
                           {
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
-                            "change": {
-                              "fieldChange": {
-                                "id": 0,
-                                "wasEmpty": true
-                              }
-                            }
+                            "change": {}
                           }
                         ]
                       },
@@ -41,21 +36,31 @@
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
                             "change": {
-                              "fieldChange": {
-                                "id": 0,
-                                "wasEmpty": true,
-                                "newContent": {
+                              "b": [
+                                {
+                                  "id": {
+                                    "localId": 1
+                                  },
                                   "set": {
                                     "type": "com.fluidframework.leaf.handle",
                                     "value": {
                                       "type": "__fluid_handle__",
                                       "url": "/test/test"
                                     }
-                                  },
-                                  "buildId": {
-                                    "localId": 1
                                   }
                                 }
+                              ],
+                              "m": [
+                                [
+                                  {
+                                    "localId": 1
+                                  },
+                                  0,
+                                  true
+                                ]
+                              ],
+                              "d": {
+                                "localId": 2
                               }
                             }
                           }

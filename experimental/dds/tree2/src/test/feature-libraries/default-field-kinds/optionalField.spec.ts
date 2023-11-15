@@ -307,7 +307,7 @@ describe("optionalField", () => {
 				const tag1 = mintRevisionTag();
 				const tag2 = mintRevisionTag();
 				const changeToRebase = optionalFieldEditor.buildChildChange(0, nodeChange1);
-				const deletion = tagChange(optionalFieldEditor.clear(brand(1)), tag1);
+				const deletion = tagChange(optionalFieldEditor.clear(false, brand(1)), tag1);
 				const revive = tagRollbackInverse(
 					optionalChangeRebaser.invert(
 						deletion,
@@ -507,7 +507,7 @@ describe("optionalField", () => {
 			optionalFieldEditor.set(testTreeCursor(""), true, { detach: brand(1), fill: brand(2) }),
 			mintRevisionTag(),
 		);
-		const clear = tagChange(optionalFieldEditor.clear(brand(1)), mintRevisionTag());
+		const clear = tagChange(optionalFieldEditor.clear(false, brand(1)), mintRevisionTag());
 		const hasChildChanges = tagChange(
 			optionalFieldEditor.buildChildChange(0, nodeChange1),
 			mintRevisionTag(),

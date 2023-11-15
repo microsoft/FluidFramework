@@ -368,25 +368,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			changeDstToSrc.set(dst, src);
 		}
 
-		let changeAndOverSetSelf = false;
-		let changeEmptiesSelf = false;
 		for (const [src, dst, target] of moves) {
-			if (overDstToSrc.has(dst)) {
-				// assert(
-				// 	dst === "self",
-				// 	"Rebasing over a change attempted to duplicate content in a non-self register",
-				// );
-				if (dst === "self") {
-					// Over moved content into 'self', but we'd also like to populate it. In order to fill the register,
-					// we might need to include a move from 'self' to a new register.
-					changeAndOverSetSelf = true;
-				}
-			}
 			if (target === "cellTargeting") {
 				if (
 					overSrcToDst.get(src) !== undefined &&
 					overDstToSrc.get(src) === undefined &&
-					changeDstToSrc.get(src) !== undefined
+					// TODO: This might need to be explicit, previously there was a childChanges.length === 0 check here, which is obviously bogus for transactions.
+					//  Similarly audit cases where we add an entry.
+					reservedDetachId === undefined
 				) {
 					// Over removed the content occupying this cell and didn't fill it with other content.
 					// Additionally, this change intends to fill the cell with other content, which is the primary reason
@@ -409,20 +398,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// (since the target kind is node targeting, it may not still map to a noop after further rebases)
 				rebasedMoves.push([rebasedSrc, dst, target]);
 			}
-
-			if (src === "self") {
-				changeEmptiesSelf = true;
-			}
 		}
 
 		// We rebased a fill from an empty state over another edit which also sets this field.
 		// We need to make sure that we also empty the field.
-		if (changeAndOverSetSelf && !changeEmptiesSelf) {
-			rebasedMoves.push([
-				"self",
-				change.reservedDetachId ?? { localId: brand(genId.getNextId()) },
-				"cellTargeting",
-			]);
+
+		// TODO: This might need to be explicit.
+		const overFillsEmptyField = !overSrcToDst.has("self") && overDstToSrc.has("self");
+		if (overFillsEmptyField && reservedDetachId !== undefined) {
+			rebasedMoves.push(["self", reservedDetachId, "cellTargeting"]);
 			reservedDetachId = undefined;
 		}
 
@@ -493,7 +477,7 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * @param wasEmpty - whether the field is empty when creating this change
 	 * @param changeId - the ID associated with the detach.
 	 */
-	clear(id: ChangesetLocalId): OptionalChangeset;
+	clear(wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
@@ -520,11 +504,14 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 	},
 
 	// TODO: If rebasing a bunch of things that set node to undefined, this will create some unnecessary moving around of nodes that are all undefined.
-	clear: (detachId: ChangesetLocalId): OptionalChangeset => ({
-		build: [],
-		moves: [["self", { localId: detachId }, "cellTargeting"]],
-		childChanges: [],
-	}),
+	clear: (wasEmpty: boolean, detachId: ChangesetLocalId): OptionalChangeset =>
+		wasEmpty
+			? { build: [], moves: [], childChanges: [], reservedDetachId: { localId: detachId } }
+			: {
+					build: [],
+					moves: [["self", { localId: detachId }, "cellTargeting"]],
+					childChanges: [],
+			  },
 
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
 		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
