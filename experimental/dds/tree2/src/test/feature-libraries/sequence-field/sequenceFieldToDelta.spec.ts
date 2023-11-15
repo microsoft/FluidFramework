@@ -94,7 +94,7 @@ describe("SequenceField - toDelta", () => {
 		const changeset = Change.insert(0, 1);
 		const expected = deltaForSet(contentCursor, { minor: 0 });
 		const actual = toDelta(changeset);
-		assert.deepStrictEqual(actual, expected);
+		assertFieldChangesEqual(actual, expected);
 	});
 
 	it("revive => restore", () => {
@@ -261,7 +261,7 @@ describe("SequenceField - toDelta", () => {
 			local: markList,
 		};
 		const actual = toDelta(changeset, tag);
-		assert.deepStrictEqual(actual, expected);
+		assertFieldChangesEqual(actual, expected);
 	});
 
 	it("insert and modify => insert", () => {

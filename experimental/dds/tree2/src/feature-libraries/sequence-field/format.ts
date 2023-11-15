@@ -4,14 +4,9 @@
  */
 
 import { ObjectOptions, TSchema, Type } from "@sinclair/typebox";
-import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	JsonableTree,
-	RevisionTag,
-	RevisionTagSchema,
-} from "../../core";
+import { ChangeAtomId, ChangesetLocalId, RevisionTag, RevisionTagSchema } from "../../core";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId, NodeChangeset } from "../modular-schema";
+import { EncodedChunk } from "../chunked-forest";
 
 // TODO:AB#4259 Decouple types used for sequence-field's in-memory representation from their encoded variants.
 // Currently, types in this file are largely used for both.
@@ -21,9 +16,10 @@ import { ChangesetLocalIdSchema, EncodedChangeAtomId, NodeChangeset } from "../m
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
 /**
- * The contents of a node to be created
+ * The contents of a node to be created.
+ * This is an EncodedChunk of exactly 1 node.
  */
-export type ProtoNode = JsonableTree;
+export type ProtoNode = EncodedChunk;
 export const ProtoNode = Type.Any();
 
 export type CellCount = number;

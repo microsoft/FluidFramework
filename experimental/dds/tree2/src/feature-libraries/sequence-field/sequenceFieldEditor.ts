@@ -4,10 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { jsonableTreeFromCursor } from "../treeTextCursor";
-import { ChangesetLocalId, ITreeCursor } from "../../core";
+import { ChangesetLocalId, ITreeCursor, ITreeCursorSynchronous, mapCursorField } from "../../core";
 import { FieldEditor } from "../modular-schema";
 import { brand } from "../../util";
+import { chunkTree, defaultChunkPolicy, uncompressedEncode } from "../chunked-forest";
 import {
 	CellId,
 	CellMark,
@@ -69,10 +69,20 @@ export const sequenceFieldEditor = {
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
 	): Changeset<never> => {
+		const fieldCursors = cursors.map((cursor) =>
+			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
+		);
+		const nodeCursors = [];
+		for (const fieldCursor of fieldCursors) {
+			const currentNodeCursors = mapCursorField(fieldCursor, (c) => c);
+			for (const nodeCursor of currentNodeCursors) {
+				nodeCursors.push(nodeCursor);
+			}
+		}
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
 			count: cursors.length,
-			content: cursors.map(jsonableTreeFromCursor),
+			content: nodeCursors.map(uncompressedEncode),
 			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);
