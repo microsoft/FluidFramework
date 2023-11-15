@@ -25,6 +25,12 @@ export class UsageError extends LoggingError implements IDriverErrorBase, IFluid
 	}
 }
 
+/**
+ * Check whether error is fileNotFoundOrAccessDeniedError.
+ * @param error - error to be evaluated
+ * @returns - True if the error is fileNotFoundOrAccessDeniedError
+ * @public
+ */
 export function isFileNotFoundOrAccessDeniedError(error: any): boolean {
 	return (
 		isFluidError(error) && error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError

@@ -223,6 +223,9 @@ export interface IProgress {
 export function isCombinedAppAndProtocolSummary(summary: ISummaryTree | undefined, ...optionalRootTrees: string[]): summary is CombinedAppAndProtocolSummary;
 
 // @public
+export function isFileNotFoundOrAccessDeniedError(error: any): boolean;
+
+// @public
 export function isOnline(): OnlineStatus;
 
 // @public
