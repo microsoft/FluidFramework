@@ -321,7 +321,7 @@ export class SharedTree
 
 	public schematize<TRoot extends TreeFieldSchema>(
 		config: InitializeAndSchematizeConfiguration<TRoot>,
-	): TreeView<ProxyRoot<TreeSchema<TRoot>>> {
+	): WrapperTreeView<TRoot, CheckoutFlexTreeView<TRoot>> {
 		const view = this.schematizeInternal(config);
 		return new WrapperTreeView(view);
 	}
