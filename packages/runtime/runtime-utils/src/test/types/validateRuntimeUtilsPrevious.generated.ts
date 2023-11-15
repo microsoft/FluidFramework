@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_Factory():
     TypeOnly<old.Factory>;
 declare function use_current_TypeAliasDeclaration_Factory(
-    use: TypeOnly<current.Factory>);
+    use: TypeOnly<current.Factory>): void;
 use_current_TypeAliasDeclaration_Factory(
     get_old_TypeAliasDeclaration_Factory());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_Factory(
 declare function get_current_TypeAliasDeclaration_Factory():
     TypeOnly<current.Factory>;
 declare function use_old_TypeAliasDeclaration_Factory(
-    use: TypeOnly<old.Factory>);
+    use: TypeOnly<old.Factory>): void;
 use_old_TypeAliasDeclaration_Factory(
     get_current_TypeAliasDeclaration_Factory());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_Factory(
 declare function get_old_ClassDeclaration_GCDataBuilder():
     TypeOnly<old.GCDataBuilder>;
 declare function use_current_ClassDeclaration_GCDataBuilder(
-    use: TypeOnly<current.GCDataBuilder>);
+    use: TypeOnly<current.GCDataBuilder>): void;
 use_current_ClassDeclaration_GCDataBuilder(
     get_old_ClassDeclaration_GCDataBuilder());
 
@@ -65,7 +65,7 @@ use_current_ClassDeclaration_GCDataBuilder(
 declare function get_current_ClassDeclaration_GCDataBuilder():
     TypeOnly<current.GCDataBuilder>;
 declare function use_old_ClassDeclaration_GCDataBuilder(
-    use: TypeOnly<old.GCDataBuilder>);
+    use: TypeOnly<old.GCDataBuilder>): void;
 use_old_ClassDeclaration_GCDataBuilder(
     get_current_ClassDeclaration_GCDataBuilder());
 
@@ -77,7 +77,7 @@ use_old_ClassDeclaration_GCDataBuilder(
 declare function get_old_ClassDeclaration_ObjectStoragePartition():
     TypeOnly<old.ObjectStoragePartition>;
 declare function use_current_ClassDeclaration_ObjectStoragePartition(
-    use: TypeOnly<current.ObjectStoragePartition>);
+    use: TypeOnly<current.ObjectStoragePartition>): void;
 use_current_ClassDeclaration_ObjectStoragePartition(
     get_old_ClassDeclaration_ObjectStoragePartition());
 
@@ -89,7 +89,7 @@ use_current_ClassDeclaration_ObjectStoragePartition(
 declare function get_current_ClassDeclaration_ObjectStoragePartition():
     TypeOnly<current.ObjectStoragePartition>;
 declare function use_old_ClassDeclaration_ObjectStoragePartition(
-    use: TypeOnly<old.ObjectStoragePartition>);
+    use: TypeOnly<old.ObjectStoragePartition>): void;
 use_old_ClassDeclaration_ObjectStoragePartition(
     get_current_ClassDeclaration_ObjectStoragePartition());
 
@@ -101,7 +101,7 @@ use_old_ClassDeclaration_ObjectStoragePartition(
 declare function get_old_TypeAliasDeclaration_ReadAndParseBlob():
     TypeOnly<old.ReadAndParseBlob>;
 declare function use_current_TypeAliasDeclaration_ReadAndParseBlob(
-    use: TypeOnly<current.ReadAndParseBlob>);
+    use: TypeOnly<current.ReadAndParseBlob>): void;
 use_current_TypeAliasDeclaration_ReadAndParseBlob(
     get_old_TypeAliasDeclaration_ReadAndParseBlob());
 
@@ -113,7 +113,7 @@ use_current_TypeAliasDeclaration_ReadAndParseBlob(
 declare function get_current_TypeAliasDeclaration_ReadAndParseBlob():
     TypeOnly<current.ReadAndParseBlob>;
 declare function use_old_TypeAliasDeclaration_ReadAndParseBlob(
-    use: TypeOnly<old.ReadAndParseBlob>);
+    use: TypeOnly<old.ReadAndParseBlob>): void;
 use_old_TypeAliasDeclaration_ReadAndParseBlob(
     get_current_TypeAliasDeclaration_ReadAndParseBlob());
 
@@ -125,7 +125,7 @@ use_old_TypeAliasDeclaration_ReadAndParseBlob(
 declare function get_old_ClassDeclaration_RequestParser():
     TypeOnly<old.RequestParser>;
 declare function use_current_ClassDeclaration_RequestParser(
-    use: TypeOnly<current.RequestParser>);
+    use: TypeOnly<current.RequestParser>): void;
 use_current_ClassDeclaration_RequestParser(
     get_old_ClassDeclaration_RequestParser());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_RequestParser(
 declare function get_current_ClassDeclaration_RequestParser():
     TypeOnly<current.RequestParser>;
 declare function use_old_ClassDeclaration_RequestParser(
-    use: TypeOnly<old.RequestParser>);
+    use: TypeOnly<old.RequestParser>): void;
 use_old_ClassDeclaration_RequestParser(
     get_current_ClassDeclaration_RequestParser());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_RequestParser(
 declare function get_old_ClassDeclaration_RuntimeFactoryHelper():
     TypeOnly<old.RuntimeFactoryHelper>;
 declare function use_current_ClassDeclaration_RuntimeFactoryHelper(
-    use: TypeOnly<current.RuntimeFactoryHelper>);
+    use: TypeOnly<current.RuntimeFactoryHelper>): void;
 use_current_ClassDeclaration_RuntimeFactoryHelper(
     get_old_ClassDeclaration_RuntimeFactoryHelper());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_RuntimeFactoryHelper(
 declare function get_current_ClassDeclaration_RuntimeFactoryHelper():
     TypeOnly<current.RuntimeFactoryHelper>;
 declare function use_old_ClassDeclaration_RuntimeFactoryHelper(
-    use: TypeOnly<old.RuntimeFactoryHelper>);
+    use: TypeOnly<old.RuntimeFactoryHelper>): void;
 use_old_ClassDeclaration_RuntimeFactoryHelper(
     get_current_ClassDeclaration_RuntimeFactoryHelper());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_RuntimeFactoryHelper(
 declare function get_old_ClassDeclaration_SummaryTreeBuilder():
     TypeOnly<old.SummaryTreeBuilder>;
 declare function use_current_ClassDeclaration_SummaryTreeBuilder(
-    use: TypeOnly<current.SummaryTreeBuilder>);
+    use: TypeOnly<current.SummaryTreeBuilder>): void;
 use_current_ClassDeclaration_SummaryTreeBuilder(
     get_old_ClassDeclaration_SummaryTreeBuilder());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_SummaryTreeBuilder(
 declare function get_current_ClassDeclaration_SummaryTreeBuilder():
     TypeOnly<current.SummaryTreeBuilder>;
 declare function use_old_ClassDeclaration_SummaryTreeBuilder(
-    use: TypeOnly<old.SummaryTreeBuilder>);
+    use: TypeOnly<old.SummaryTreeBuilder>): void;
 use_old_ClassDeclaration_SummaryTreeBuilder(
     get_current_ClassDeclaration_SummaryTreeBuilder());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_SummaryTreeBuilder(
 declare function get_old_ClassDeclaration_TelemetryContext():
     TypeOnly<old.TelemetryContext>;
 declare function use_current_ClassDeclaration_TelemetryContext(
-    use: TypeOnly<current.TelemetryContext>);
+    use: TypeOnly<current.TelemetryContext>): void;
 use_current_ClassDeclaration_TelemetryContext(
     get_old_ClassDeclaration_TelemetryContext());
 
@@ -209,7 +209,7 @@ use_current_ClassDeclaration_TelemetryContext(
 declare function get_current_ClassDeclaration_TelemetryContext():
     TypeOnly<current.TelemetryContext>;
 declare function use_old_ClassDeclaration_TelemetryContext(
-    use: TypeOnly<old.TelemetryContext>);
+    use: TypeOnly<old.TelemetryContext>): void;
 use_old_ClassDeclaration_TelemetryContext(
     get_current_ClassDeclaration_TelemetryContext());
 
@@ -221,7 +221,7 @@ use_old_ClassDeclaration_TelemetryContext(
 declare function get_old_FunctionDeclaration_addBlobToSummary():
     TypeOnly<typeof old.addBlobToSummary>;
 declare function use_current_FunctionDeclaration_addBlobToSummary(
-    use: TypeOnly<typeof current.addBlobToSummary>);
+    use: TypeOnly<typeof current.addBlobToSummary>): void;
 use_current_FunctionDeclaration_addBlobToSummary(
     get_old_FunctionDeclaration_addBlobToSummary());
 
@@ -233,7 +233,7 @@ use_current_FunctionDeclaration_addBlobToSummary(
 declare function get_current_FunctionDeclaration_addBlobToSummary():
     TypeOnly<typeof current.addBlobToSummary>;
 declare function use_old_FunctionDeclaration_addBlobToSummary(
-    use: TypeOnly<typeof old.addBlobToSummary>);
+    use: TypeOnly<typeof old.addBlobToSummary>): void;
 use_old_FunctionDeclaration_addBlobToSummary(
     get_current_FunctionDeclaration_addBlobToSummary());
 
@@ -245,7 +245,7 @@ use_old_FunctionDeclaration_addBlobToSummary(
 declare function get_old_FunctionDeclaration_addSummarizeResultToSummary():
     TypeOnly<typeof old.addSummarizeResultToSummary>;
 declare function use_current_FunctionDeclaration_addSummarizeResultToSummary(
-    use: TypeOnly<typeof current.addSummarizeResultToSummary>);
+    use: TypeOnly<typeof current.addSummarizeResultToSummary>): void;
 use_current_FunctionDeclaration_addSummarizeResultToSummary(
     get_old_FunctionDeclaration_addSummarizeResultToSummary());
 
@@ -257,7 +257,7 @@ use_current_FunctionDeclaration_addSummarizeResultToSummary(
 declare function get_current_FunctionDeclaration_addSummarizeResultToSummary():
     TypeOnly<typeof current.addSummarizeResultToSummary>;
 declare function use_old_FunctionDeclaration_addSummarizeResultToSummary(
-    use: TypeOnly<typeof old.addSummarizeResultToSummary>);
+    use: TypeOnly<typeof old.addSummarizeResultToSummary>): void;
 use_old_FunctionDeclaration_addSummarizeResultToSummary(
     get_current_FunctionDeclaration_addSummarizeResultToSummary());
 
@@ -269,7 +269,7 @@ use_old_FunctionDeclaration_addSummarizeResultToSummary(
 declare function get_old_FunctionDeclaration_addTreeToSummary():
     TypeOnly<typeof old.addTreeToSummary>;
 declare function use_current_FunctionDeclaration_addTreeToSummary(
-    use: TypeOnly<typeof current.addTreeToSummary>);
+    use: TypeOnly<typeof current.addTreeToSummary>): void;
 use_current_FunctionDeclaration_addTreeToSummary(
     get_old_FunctionDeclaration_addTreeToSummary());
 
@@ -281,7 +281,7 @@ use_current_FunctionDeclaration_addTreeToSummary(
 declare function get_current_FunctionDeclaration_addTreeToSummary():
     TypeOnly<typeof current.addTreeToSummary>;
 declare function use_old_FunctionDeclaration_addTreeToSummary(
-    use: TypeOnly<typeof old.addTreeToSummary>);
+    use: TypeOnly<typeof old.addTreeToSummary>): void;
 use_old_FunctionDeclaration_addTreeToSummary(
     get_current_FunctionDeclaration_addTreeToSummary());
 
@@ -293,7 +293,7 @@ use_old_FunctionDeclaration_addTreeToSummary(
 declare function get_old_FunctionDeclaration_calculateStats():
     TypeOnly<typeof old.calculateStats>;
 declare function use_current_FunctionDeclaration_calculateStats(
-    use: TypeOnly<typeof current.calculateStats>);
+    use: TypeOnly<typeof current.calculateStats>): void;
 use_current_FunctionDeclaration_calculateStats(
     get_old_FunctionDeclaration_calculateStats());
 
@@ -305,7 +305,7 @@ use_current_FunctionDeclaration_calculateStats(
 declare function get_current_FunctionDeclaration_calculateStats():
     TypeOnly<typeof current.calculateStats>;
 declare function use_old_FunctionDeclaration_calculateStats(
-    use: TypeOnly<typeof old.calculateStats>);
+    use: TypeOnly<typeof old.calculateStats>): void;
 use_old_FunctionDeclaration_calculateStats(
     get_current_FunctionDeclaration_calculateStats());
 
@@ -317,7 +317,7 @@ use_old_FunctionDeclaration_calculateStats(
 declare function get_old_FunctionDeclaration_convertSnapshotTreeToSummaryTree():
     TypeOnly<typeof old.convertSnapshotTreeToSummaryTree>;
 declare function use_current_FunctionDeclaration_convertSnapshotTreeToSummaryTree(
-    use: TypeOnly<typeof current.convertSnapshotTreeToSummaryTree>);
+    use: TypeOnly<typeof current.convertSnapshotTreeToSummaryTree>): void;
 use_current_FunctionDeclaration_convertSnapshotTreeToSummaryTree(
     get_old_FunctionDeclaration_convertSnapshotTreeToSummaryTree());
 
@@ -329,7 +329,7 @@ use_current_FunctionDeclaration_convertSnapshotTreeToSummaryTree(
 declare function get_current_FunctionDeclaration_convertSnapshotTreeToSummaryTree():
     TypeOnly<typeof current.convertSnapshotTreeToSummaryTree>;
 declare function use_old_FunctionDeclaration_convertSnapshotTreeToSummaryTree(
-    use: TypeOnly<typeof old.convertSnapshotTreeToSummaryTree>);
+    use: TypeOnly<typeof old.convertSnapshotTreeToSummaryTree>): void;
 use_old_FunctionDeclaration_convertSnapshotTreeToSummaryTree(
     get_current_FunctionDeclaration_convertSnapshotTreeToSummaryTree());
 
@@ -341,7 +341,7 @@ use_old_FunctionDeclaration_convertSnapshotTreeToSummaryTree(
 declare function get_old_FunctionDeclaration_convertSummaryTreeToITree():
     TypeOnly<typeof old.convertSummaryTreeToITree>;
 declare function use_current_FunctionDeclaration_convertSummaryTreeToITree(
-    use: TypeOnly<typeof current.convertSummaryTreeToITree>);
+    use: TypeOnly<typeof current.convertSummaryTreeToITree>): void;
 use_current_FunctionDeclaration_convertSummaryTreeToITree(
     get_old_FunctionDeclaration_convertSummaryTreeToITree());
 
@@ -353,7 +353,7 @@ use_current_FunctionDeclaration_convertSummaryTreeToITree(
 declare function get_current_FunctionDeclaration_convertSummaryTreeToITree():
     TypeOnly<typeof current.convertSummaryTreeToITree>;
 declare function use_old_FunctionDeclaration_convertSummaryTreeToITree(
-    use: TypeOnly<typeof old.convertSummaryTreeToITree>);
+    use: TypeOnly<typeof old.convertSummaryTreeToITree>): void;
 use_old_FunctionDeclaration_convertSummaryTreeToITree(
     get_current_FunctionDeclaration_convertSummaryTreeToITree());
 
@@ -365,7 +365,7 @@ use_old_FunctionDeclaration_convertSummaryTreeToITree(
 declare function get_old_FunctionDeclaration_convertToSummaryTree():
     TypeOnly<typeof old.convertToSummaryTree>;
 declare function use_current_FunctionDeclaration_convertToSummaryTree(
-    use: TypeOnly<typeof current.convertToSummaryTree>);
+    use: TypeOnly<typeof current.convertToSummaryTree>): void;
 use_current_FunctionDeclaration_convertToSummaryTree(
     get_old_FunctionDeclaration_convertToSummaryTree());
 
@@ -377,7 +377,7 @@ use_current_FunctionDeclaration_convertToSummaryTree(
 declare function get_current_FunctionDeclaration_convertToSummaryTree():
     TypeOnly<typeof current.convertToSummaryTree>;
 declare function use_old_FunctionDeclaration_convertToSummaryTree(
-    use: TypeOnly<typeof old.convertToSummaryTree>);
+    use: TypeOnly<typeof old.convertToSummaryTree>): void;
 use_old_FunctionDeclaration_convertToSummaryTree(
     get_current_FunctionDeclaration_convertToSummaryTree());
 
@@ -389,7 +389,7 @@ use_old_FunctionDeclaration_convertToSummaryTree(
 declare function get_old_FunctionDeclaration_convertToSummaryTreeWithStats():
     TypeOnly<typeof old.convertToSummaryTreeWithStats>;
 declare function use_current_FunctionDeclaration_convertToSummaryTreeWithStats(
-    use: TypeOnly<typeof current.convertToSummaryTreeWithStats>);
+    use: TypeOnly<typeof current.convertToSummaryTreeWithStats>): void;
 use_current_FunctionDeclaration_convertToSummaryTreeWithStats(
     get_old_FunctionDeclaration_convertToSummaryTreeWithStats());
 
@@ -401,7 +401,7 @@ use_current_FunctionDeclaration_convertToSummaryTreeWithStats(
 declare function get_current_FunctionDeclaration_convertToSummaryTreeWithStats():
     TypeOnly<typeof current.convertToSummaryTreeWithStats>;
 declare function use_old_FunctionDeclaration_convertToSummaryTreeWithStats(
-    use: TypeOnly<typeof old.convertToSummaryTreeWithStats>);
+    use: TypeOnly<typeof old.convertToSummaryTreeWithStats>): void;
 use_old_FunctionDeclaration_convertToSummaryTreeWithStats(
     get_current_FunctionDeclaration_convertToSummaryTreeWithStats());
 
@@ -413,7 +413,7 @@ use_old_FunctionDeclaration_convertToSummaryTreeWithStats(
 declare function get_old_VariableDeclaration_create404Response():
     TypeOnly<typeof old.create404Response>;
 declare function use_current_VariableDeclaration_create404Response(
-    use: TypeOnly<typeof current.create404Response>);
+    use: TypeOnly<typeof current.create404Response>): void;
 use_current_VariableDeclaration_create404Response(
     get_old_VariableDeclaration_create404Response());
 
@@ -425,7 +425,7 @@ use_current_VariableDeclaration_create404Response(
 declare function get_current_VariableDeclaration_create404Response():
     TypeOnly<typeof current.create404Response>;
 declare function use_old_VariableDeclaration_create404Response(
-    use: TypeOnly<typeof old.create404Response>);
+    use: TypeOnly<typeof old.create404Response>): void;
 use_old_VariableDeclaration_create404Response(
     get_current_VariableDeclaration_create404Response());
 
@@ -437,7 +437,7 @@ use_old_VariableDeclaration_create404Response(
 declare function get_old_FunctionDeclaration_createDataStoreFactory():
     TypeOnly<typeof old.createDataStoreFactory>;
 declare function use_current_FunctionDeclaration_createDataStoreFactory(
-    use: TypeOnly<typeof current.createDataStoreFactory>);
+    use: TypeOnly<typeof current.createDataStoreFactory>): void;
 use_current_FunctionDeclaration_createDataStoreFactory(
     get_old_FunctionDeclaration_createDataStoreFactory());
 
@@ -449,7 +449,7 @@ use_current_FunctionDeclaration_createDataStoreFactory(
 declare function get_current_FunctionDeclaration_createDataStoreFactory():
     TypeOnly<typeof current.createDataStoreFactory>;
 declare function use_old_FunctionDeclaration_createDataStoreFactory(
-    use: TypeOnly<typeof old.createDataStoreFactory>);
+    use: TypeOnly<typeof old.createDataStoreFactory>): void;
 use_old_FunctionDeclaration_createDataStoreFactory(
     get_current_FunctionDeclaration_createDataStoreFactory());
 
@@ -461,7 +461,7 @@ use_old_FunctionDeclaration_createDataStoreFactory(
 declare function get_old_FunctionDeclaration_createResponseError():
     TypeOnly<typeof old.createResponseError>;
 declare function use_current_FunctionDeclaration_createResponseError(
-    use: TypeOnly<typeof current.createResponseError>);
+    use: TypeOnly<typeof current.createResponseError>): void;
 use_current_FunctionDeclaration_createResponseError(
     get_old_FunctionDeclaration_createResponseError());
 
@@ -473,7 +473,7 @@ use_current_FunctionDeclaration_createResponseError(
 declare function get_current_FunctionDeclaration_createResponseError():
     TypeOnly<typeof current.createResponseError>;
 declare function use_old_FunctionDeclaration_createResponseError(
-    use: TypeOnly<typeof old.createResponseError>);
+    use: TypeOnly<typeof old.createResponseError>): void;
 use_old_FunctionDeclaration_createResponseError(
     get_current_FunctionDeclaration_createResponseError());
 
@@ -485,7 +485,7 @@ use_old_FunctionDeclaration_createResponseError(
 declare function get_old_FunctionDeclaration_exceptionToResponse():
     TypeOnly<typeof old.exceptionToResponse>;
 declare function use_current_FunctionDeclaration_exceptionToResponse(
-    use: TypeOnly<typeof current.exceptionToResponse>);
+    use: TypeOnly<typeof current.exceptionToResponse>): void;
 use_current_FunctionDeclaration_exceptionToResponse(
     get_old_FunctionDeclaration_exceptionToResponse());
 
@@ -497,7 +497,7 @@ use_current_FunctionDeclaration_exceptionToResponse(
 declare function get_current_FunctionDeclaration_exceptionToResponse():
     TypeOnly<typeof current.exceptionToResponse>;
 declare function use_old_FunctionDeclaration_exceptionToResponse(
-    use: TypeOnly<typeof old.exceptionToResponse>);
+    use: TypeOnly<typeof old.exceptionToResponse>): void;
 use_old_FunctionDeclaration_exceptionToResponse(
     get_current_FunctionDeclaration_exceptionToResponse());
 
@@ -509,7 +509,7 @@ use_old_FunctionDeclaration_exceptionToResponse(
 declare function get_old_FunctionDeclaration_generateHandleContextPath():
     TypeOnly<typeof old.generateHandleContextPath>;
 declare function use_current_FunctionDeclaration_generateHandleContextPath(
-    use: TypeOnly<typeof current.generateHandleContextPath>);
+    use: TypeOnly<typeof current.generateHandleContextPath>): void;
 use_current_FunctionDeclaration_generateHandleContextPath(
     get_old_FunctionDeclaration_generateHandleContextPath());
 
@@ -521,7 +521,7 @@ use_current_FunctionDeclaration_generateHandleContextPath(
 declare function get_current_FunctionDeclaration_generateHandleContextPath():
     TypeOnly<typeof current.generateHandleContextPath>;
 declare function use_old_FunctionDeclaration_generateHandleContextPath(
-    use: TypeOnly<typeof old.generateHandleContextPath>);
+    use: TypeOnly<typeof old.generateHandleContextPath>): void;
 use_old_FunctionDeclaration_generateHandleContextPath(
     get_current_FunctionDeclaration_generateHandleContextPath());
 
@@ -533,7 +533,7 @@ use_old_FunctionDeclaration_generateHandleContextPath(
 declare function get_old_FunctionDeclaration_getBlobSize():
     TypeOnly<typeof old.getBlobSize>;
 declare function use_current_FunctionDeclaration_getBlobSize(
-    use: TypeOnly<typeof current.getBlobSize>);
+    use: TypeOnly<typeof current.getBlobSize>): void;
 use_current_FunctionDeclaration_getBlobSize(
     get_old_FunctionDeclaration_getBlobSize());
 
@@ -545,7 +545,7 @@ use_current_FunctionDeclaration_getBlobSize(
 declare function get_current_FunctionDeclaration_getBlobSize():
     TypeOnly<typeof current.getBlobSize>;
 declare function use_old_FunctionDeclaration_getBlobSize(
-    use: TypeOnly<typeof old.getBlobSize>);
+    use: TypeOnly<typeof old.getBlobSize>): void;
 use_old_FunctionDeclaration_getBlobSize(
     get_current_FunctionDeclaration_getBlobSize());
 
@@ -557,7 +557,7 @@ use_old_FunctionDeclaration_getBlobSize(
 declare function get_old_FunctionDeclaration_getNormalizedObjectStoragePathParts():
     TypeOnly<typeof old.getNormalizedObjectStoragePathParts>;
 declare function use_current_FunctionDeclaration_getNormalizedObjectStoragePathParts(
-    use: TypeOnly<typeof current.getNormalizedObjectStoragePathParts>);
+    use: TypeOnly<typeof current.getNormalizedObjectStoragePathParts>): void;
 use_current_FunctionDeclaration_getNormalizedObjectStoragePathParts(
     get_old_FunctionDeclaration_getNormalizedObjectStoragePathParts());
 
@@ -569,7 +569,7 @@ use_current_FunctionDeclaration_getNormalizedObjectStoragePathParts(
 declare function get_current_FunctionDeclaration_getNormalizedObjectStoragePathParts():
     TypeOnly<typeof current.getNormalizedObjectStoragePathParts>;
 declare function use_old_FunctionDeclaration_getNormalizedObjectStoragePathParts(
-    use: TypeOnly<typeof old.getNormalizedObjectStoragePathParts>);
+    use: TypeOnly<typeof old.getNormalizedObjectStoragePathParts>): void;
 use_old_FunctionDeclaration_getNormalizedObjectStoragePathParts(
     get_current_FunctionDeclaration_getNormalizedObjectStoragePathParts());
 
@@ -581,7 +581,7 @@ use_old_FunctionDeclaration_getNormalizedObjectStoragePathParts(
 declare function get_old_FunctionDeclaration_listBlobsAtTreePath():
     TypeOnly<typeof old.listBlobsAtTreePath>;
 declare function use_current_FunctionDeclaration_listBlobsAtTreePath(
-    use: TypeOnly<typeof current.listBlobsAtTreePath>);
+    use: TypeOnly<typeof current.listBlobsAtTreePath>): void;
 use_current_FunctionDeclaration_listBlobsAtTreePath(
     get_old_FunctionDeclaration_listBlobsAtTreePath());
 
@@ -593,7 +593,7 @@ use_current_FunctionDeclaration_listBlobsAtTreePath(
 declare function get_current_FunctionDeclaration_listBlobsAtTreePath():
     TypeOnly<typeof current.listBlobsAtTreePath>;
 declare function use_old_FunctionDeclaration_listBlobsAtTreePath(
-    use: TypeOnly<typeof old.listBlobsAtTreePath>);
+    use: TypeOnly<typeof old.listBlobsAtTreePath>): void;
 use_old_FunctionDeclaration_listBlobsAtTreePath(
     get_current_FunctionDeclaration_listBlobsAtTreePath());
 
@@ -605,7 +605,7 @@ use_old_FunctionDeclaration_listBlobsAtTreePath(
 declare function get_old_FunctionDeclaration_mergeStats():
     TypeOnly<typeof old.mergeStats>;
 declare function use_current_FunctionDeclaration_mergeStats(
-    use: TypeOnly<typeof current.mergeStats>);
+    use: TypeOnly<typeof current.mergeStats>): void;
 use_current_FunctionDeclaration_mergeStats(
     get_old_FunctionDeclaration_mergeStats());
 
@@ -617,7 +617,7 @@ use_current_FunctionDeclaration_mergeStats(
 declare function get_current_FunctionDeclaration_mergeStats():
     TypeOnly<typeof current.mergeStats>;
 declare function use_old_FunctionDeclaration_mergeStats(
-    use: TypeOnly<typeof old.mergeStats>);
+    use: TypeOnly<typeof old.mergeStats>): void;
 use_old_FunctionDeclaration_mergeStats(
     get_current_FunctionDeclaration_mergeStats());
 
@@ -629,7 +629,7 @@ use_old_FunctionDeclaration_mergeStats(
 declare function get_old_FunctionDeclaration_requestFluidObject():
     TypeOnly<typeof old.requestFluidObject>;
 declare function use_current_FunctionDeclaration_requestFluidObject(
-    use: TypeOnly<typeof current.requestFluidObject>);
+    use: TypeOnly<typeof current.requestFluidObject>): void;
 use_current_FunctionDeclaration_requestFluidObject(
     get_old_FunctionDeclaration_requestFluidObject());
 
@@ -641,7 +641,7 @@ use_current_FunctionDeclaration_requestFluidObject(
 declare function get_current_FunctionDeclaration_requestFluidObject():
     TypeOnly<typeof current.requestFluidObject>;
 declare function use_old_FunctionDeclaration_requestFluidObject(
-    use: TypeOnly<typeof old.requestFluidObject>);
+    use: TypeOnly<typeof old.requestFluidObject>): void;
 use_old_FunctionDeclaration_requestFluidObject(
     get_current_FunctionDeclaration_requestFluidObject());
 
@@ -653,7 +653,7 @@ use_old_FunctionDeclaration_requestFluidObject(
 declare function get_old_FunctionDeclaration_responseToException():
     TypeOnly<typeof old.responseToException>;
 declare function use_current_FunctionDeclaration_responseToException(
-    use: TypeOnly<typeof current.responseToException>);
+    use: TypeOnly<typeof current.responseToException>): void;
 use_current_FunctionDeclaration_responseToException(
     get_old_FunctionDeclaration_responseToException());
 
@@ -665,7 +665,7 @@ use_current_FunctionDeclaration_responseToException(
 declare function get_current_FunctionDeclaration_responseToException():
     TypeOnly<typeof current.responseToException>;
 declare function use_old_FunctionDeclaration_responseToException(
-    use: TypeOnly<typeof old.responseToException>);
+    use: TypeOnly<typeof old.responseToException>): void;
 use_old_FunctionDeclaration_responseToException(
     get_current_FunctionDeclaration_responseToException());
 
@@ -677,7 +677,7 @@ use_old_FunctionDeclaration_responseToException(
 declare function get_old_FunctionDeclaration_seqFromTree():
     TypeOnly<typeof old.seqFromTree>;
 declare function use_current_FunctionDeclaration_seqFromTree(
-    use: TypeOnly<typeof current.seqFromTree>);
+    use: TypeOnly<typeof current.seqFromTree>): void;
 use_current_FunctionDeclaration_seqFromTree(
     get_old_FunctionDeclaration_seqFromTree());
 
@@ -689,7 +689,7 @@ use_current_FunctionDeclaration_seqFromTree(
 declare function get_current_FunctionDeclaration_seqFromTree():
     TypeOnly<typeof current.seqFromTree>;
 declare function use_old_FunctionDeclaration_seqFromTree(
-    use: TypeOnly<typeof old.seqFromTree>);
+    use: TypeOnly<typeof old.seqFromTree>): void;
 use_old_FunctionDeclaration_seqFromTree(
     get_current_FunctionDeclaration_seqFromTree());
 
@@ -701,7 +701,7 @@ use_old_FunctionDeclaration_seqFromTree(
 declare function get_old_FunctionDeclaration_unpackChildNodesUsedRoutes():
     TypeOnly<typeof old.unpackChildNodesUsedRoutes>;
 declare function use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
-    use: TypeOnly<typeof current.unpackChildNodesUsedRoutes>);
+    use: TypeOnly<typeof current.unpackChildNodesUsedRoutes>): void;
 use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
     get_old_FunctionDeclaration_unpackChildNodesUsedRoutes());
 
@@ -713,7 +713,7 @@ use_current_FunctionDeclaration_unpackChildNodesUsedRoutes(
 declare function get_current_FunctionDeclaration_unpackChildNodesUsedRoutes():
     TypeOnly<typeof current.unpackChildNodesUsedRoutes>;
 declare function use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
-    use: TypeOnly<typeof old.unpackChildNodesUsedRoutes>);
+    use: TypeOnly<typeof old.unpackChildNodesUsedRoutes>): void;
 use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
     get_current_FunctionDeclaration_unpackChildNodesUsedRoutes());
 
@@ -725,7 +725,7 @@ use_old_FunctionDeclaration_unpackChildNodesUsedRoutes(
 declare function get_old_FunctionDeclaration_utf8ByteLength():
     TypeOnly<typeof old.utf8ByteLength>;
 declare function use_current_FunctionDeclaration_utf8ByteLength(
-    use: TypeOnly<typeof current.utf8ByteLength>);
+    use: TypeOnly<typeof current.utf8ByteLength>): void;
 use_current_FunctionDeclaration_utf8ByteLength(
     get_old_FunctionDeclaration_utf8ByteLength());
 
@@ -737,6 +737,6 @@ use_current_FunctionDeclaration_utf8ByteLength(
 declare function get_current_FunctionDeclaration_utf8ByteLength():
     TypeOnly<typeof current.utf8ByteLength>;
 declare function use_old_FunctionDeclaration_utf8ByteLength(
-    use: TypeOnly<typeof old.utf8ByteLength>);
+    use: TypeOnly<typeof old.utf8ByteLength>): void;
 use_old_FunctionDeclaration_utf8ByteLength(
     get_current_FunctionDeclaration_utf8ByteLength());
