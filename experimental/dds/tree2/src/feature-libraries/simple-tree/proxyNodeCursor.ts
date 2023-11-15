@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 
 import {
 	EmptyKey,
@@ -188,6 +188,6 @@ export function cursorFromProxyTree<TNode extends ProxyNode<TreeNodeSchema, "jav
 		case CursorLocationType.Fields:
 			return stackTreeFieldCursor(adapter, node);
 		default:
-			throw new Error(`Unrecognized CursorLocationType: "${mode}."`);
+			unreachableCase(mode);
 	}
 }
