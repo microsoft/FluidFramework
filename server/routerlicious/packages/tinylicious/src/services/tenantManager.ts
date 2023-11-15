@@ -29,14 +29,14 @@ export class TinyliciousTenant implements ITenant {
 		private readonly historianUrl: string,
 	) {
 		// Using an explicitly constructed rest wrapper so we can pass the Axios instance whose static defaults
-		// were modified by t9s, and avoid issues if the module that contains BasicRestWrapper depends on a different
+		// were modified by Tinylicious, and avoid issues if the module that contains BasicRestWrapper depends on a different
 		// version of Axios.
 		const restWrapper = new BasicRestWrapper(
 			historianUrl,
-			undefined,
-			undefined,
-			undefined,
-			undefined,
+			undefined, /* defaultQueryString */
+			undefined, /* maxBodyLength */
+			undefined, /* maxContentLength */
+			undefined, /* defaultHeaders */
 			Axios,
 		);
 		const historian = new Historian(historianUrl, false, false, restWrapper);

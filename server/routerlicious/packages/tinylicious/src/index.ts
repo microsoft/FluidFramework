@@ -19,7 +19,7 @@ import { TinyliciousRunnerFactory } from "./runnerFactory";
 	General context:
 	By default Axios keeps TCP connections (sockets) open after a request is done using them, so that they can be reused
 	by a subsequent request without having to pay the cost of establishing a new connection.
-	An http client and the server it communicates with can have their own timeouts for how long they keep those connections
+	Both the http client and the server it communicates with can have their own timeouts for how long they keep those connections
 	open.
 	If the timeouts don't match, it can happen that one end closes the connection and the other one will see an error
 	next time it tries to use it.
@@ -44,7 +44,7 @@ import { TinyliciousRunnerFactory } from "./runnerFactory";
 	Axios.
 	For example, requests to Historian end up using BasicRestWrapper from services-client; that class will use the default
 	instance from whichever Axios version the services-client package depends on, unless one is explicitly passed in.
-	Ideally, an Axios instance should	be passed to it to avoid this potential issue.
+	Ideally, an Axios instance should be passed to it to avoid this potential issue.
 
 	CAREFUL: the fact that TCP connections are kept open to allow reuse after a request is done with one of them can lead
 	to port exhaustion if the process issuing requests is using new TCP sockets every time instead of reusing them.
