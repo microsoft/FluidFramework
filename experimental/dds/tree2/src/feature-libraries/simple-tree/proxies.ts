@@ -36,9 +36,6 @@ import { CursorLocationType, EmptyKey, FieldKey } from "../../core";
 import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../contextuallyTyped";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
-import { LazySequence } from "../flex-tree/lazyField";
-// TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../flex-tree/lazyNode";
 import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
 import {
@@ -139,7 +136,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 
 	// TODO: Although the target is an object literal, it's still worthwhile to try experimenting with
 	// a dispatch object to see if it improves performance.
-	const proxy: SharedTreeObject<TSchema> = new Proxy(
+	const proxy = new Proxy(
 		{},
 		{
 			get(target, key): unknown {
@@ -223,7 +220,7 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
  */
 const getSequenceField = <TTypes extends AllowedTypes>(
 	list: TreeList<AllowedTypes, "javaScript">,
-) => getEditNode(list).content as LazySequence<TTypes>;
+) => getEditNode(list).content as FlexTreeSequenceField<TTypes>;
 
 // Used by 'insert*()' APIs to converts new content (expressed as a proxy union) to contextually
 // typed data prior to forwarding to 'LazySequence.insert*()'.

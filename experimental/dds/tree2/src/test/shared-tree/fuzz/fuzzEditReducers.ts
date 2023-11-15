@@ -15,7 +15,7 @@ import {
 } from "../../../feature-libraries";
 import { fail } from "../../../util";
 import { validateTreeConsistency } from "../../utils";
-import { ISharedTree, ITreeCheckout, ITreeView, SharedTreeFactory } from "../../../shared-tree";
+import { ISharedTree, ITreeCheckout, FlexTreeView, SharedTreeFactory } from "../../../shared-tree";
 import { Revertible } from "../../../core";
 import {
 	FieldEdit,
@@ -80,7 +80,7 @@ export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory
  * TODO: Maybe take in a schema aware strongly typed Tree node or field.
  */
 export function applyFieldEdit(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	fieldEdit: FieldEdit,
 ): void {
 	switch (fieldEdit.change.type) {
@@ -99,7 +99,7 @@ export function applyFieldEdit(
 }
 
 function applySequenceFieldEdit(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzFieldChange,
 ): void {
 	switch (change.type) {
@@ -140,7 +140,7 @@ function applySequenceFieldEdit(
 }
 
 function applyValueFieldEdit(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzSet,
 ): void {
 	assert(change.parent !== undefined, "Value change should not occur at the root.");
@@ -155,7 +155,7 @@ function applyValueFieldEdit(
 }
 
 function navigateToNode(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	path: DownPath | undefined,
 ): FlexTreeNode | undefined {
 	const rootField = tree.editableTree;
@@ -196,7 +196,7 @@ function navigateToNode(
 }
 
 function applyOptionalFieldEdit(
-	tree: ITreeView<typeof fuzzSchema.rootFieldSchema>,
+	tree: FlexTreeView<typeof fuzzSchema.rootFieldSchema>,
 	change: FuzzSet | FuzzDelete,
 ): void {
 	switch (change.type) {

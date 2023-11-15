@@ -598,10 +598,14 @@ export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
 export interface FlexTreeFieldNode<in out TSchema extends FieldNodeSchema> extends FlexTreeNode {
     readonly boxedContent: FlexTreeTypedField<TSchema["info"]>;
     readonly content: FlexTreeUnboxField<TSchema["info"]>;
+    // (undocumented)
+    readonly schema: TSchema;
 }
 
 // @alpha
 export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
+    // (undocumented)
+    readonly schema: TSchema;
     readonly value: TreeValue<TSchema["info"]>;
 }
 
@@ -623,6 +627,8 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
     getBoxed(key: string): FlexTreeTypedField<TSchema["info"]>;
     has(key: string): boolean;
     keys(): IterableIterator<FieldKey>;
+    // (undocumented)
+    readonly schema: TSchema;
     set(key: string, value: FlexibleFieldContent<TSchema["info"]>): void;
     readonly size: number;
     values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
@@ -758,6 +764,14 @@ InternalTypedSchemaTypes.LazyItem<infer InnerType>
 
 // @alpha
 type FlexTreeUnknownUnboxed = TreeValue | FlexTreeNode;
+
+// @alpha
+export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
+    readonly checkout: ITreeCheckout;
+    readonly context: TreeContext;
+    readonly editableTree: FlexTreeTypedField<TRoot>;
+    fork(): ITreeViewFork<TRoot>;
+}
 
 // @alpha (undocumented)
 interface Forbidden extends FieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {
@@ -998,8 +1012,8 @@ export type IsEvent<Event> = Event extends (...args: any[]) => any ? true : fals
 // @alpha
 export interface ISharedTree extends ISharedObject, ITree {
     contentSnapshot(): SharedTreeContentSnapshot;
-    requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): ITreeView<TRoot> | undefined;
-    schematizeInternal<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): ITreeView<TRoot>;
+    requireSchema<TRoot extends TreeFieldSchema>(schema: TreeSchema<TRoot>, onSchemaIncompatible: () => void): FlexTreeView<TRoot> | undefined;
+    schematizeInternal<TRoot extends TreeFieldSchema>(config: InitializeAndSchematizeConfiguration<TRoot>): FlexTreeView<TRoot>;
 }
 
 // @alpha (undocumented)
@@ -1095,16 +1109,7 @@ export enum ITreeSubscriptionCursorState {
 }
 
 // @alpha
-export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
-    readonly checkout: ITreeCheckout;
-    readonly context: TreeContext;
-    readonly editableTree: FlexTreeTypedField<TRoot>;
-    fork(): ITreeViewFork<TRoot>;
-    readonly root: ProxyField<TRoot>;
-}
-
-// @alpha
-export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends ITreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends FlexTreeView<TRoot> {
     // (undocumented)
     readonly checkout: ITreeCheckoutFork;
 }

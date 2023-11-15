@@ -258,7 +258,7 @@ export {
 	TypedTreeOptions,
 	ITree,
 	SharedTreeContentSnapshot,
-	ITreeView,
+	FlexTreeView,
 	TreeView,
 	ITreeViewFork,
 	buildTreeConfiguration,

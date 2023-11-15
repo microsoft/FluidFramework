@@ -1,33 +1,6 @@
 [
   {
     "type": "cycle",
-    "from": "src/domains/index.ts",
-    "to": "src/domains/schemaBuilder.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/domains/schemaBuilder.ts",
-      "src/domains/index.ts"
-    ]
-  },
-  {
-    "type": "cycle",
-    "from": "src/domains/index.ts",
-    "to": "src/domains/testRecursiveDomain.ts",
-    "rule": {
-      "severity": "error",
-      "name": "no-circular"
-    },
-    "cycle": [
-      "src/domains/testRecursiveDomain.ts",
-      "src/domains/schemaBuilder.ts",
-      "src/domains/index.ts"
-    ]
-  },
-  {
-    "type": "cycle",
     "from": "src/domains/leafDomain.ts",
     "to": "src/feature-libraries/index.ts",
     "rule": {
