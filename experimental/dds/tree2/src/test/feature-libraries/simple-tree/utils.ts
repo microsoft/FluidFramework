@@ -6,8 +6,8 @@
 import {
 	TreeFieldSchema,
 	ImplicitFieldSchema,
-	ProxyField,
-	ProxyRoot,
+	TreeField,
+	TreeRoot,
 	TreeSchema,
 	SchemaAware,
 } from "../../../feature-libraries";
@@ -38,8 +38,8 @@ export function makeSchema<const TSchema extends ImplicitFieldSchema>(
 export function itWithRoot<TRoot extends TreeFieldSchema>(
 	title: string,
 	schema: TreeSchema<TRoot>,
-	initialTree: ProxyRoot<TreeSchema<TRoot>, "javaScript">,
-	fn: (root: ProxyField<(typeof schema)["rootFieldSchema"]>) => void,
+	initialTree: TreeRoot<TreeSchema<TRoot>, "javaScript">,
+	fn: (root: TreeField<(typeof schema)["rootFieldSchema"]>) => void,
 ): void {
 	it(title, () => {
 		const view = treeViewWithContent({

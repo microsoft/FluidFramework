@@ -14,7 +14,7 @@ import { ISharedTree, SharedTree, SharedTreeFactory, TreeView } from "../../shar
 import { typeboxValidator } from "../../external-utilities";
 import { SchemaBuilder } from "../../domains";
 import { AllowedUpdateType } from "../../core";
-import { ProxyField } from "../../feature-libraries";
+import { TreeField } from "../../feature-libraries";
 
 const builder = new SchemaBuilder({ scope: "test" });
 const someType = builder.object("foo", {
@@ -29,7 +29,7 @@ const someType = builder.object("foo", {
 
 const schema = builder.intoSchema(SchemaBuilder.required(someType));
 
-function getNewTreeView(tree: ISharedTree): TreeView<ProxyField<typeof schema.rootFieldSchema>> {
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
 	return tree.schematize({
 		initialTree: {
 			handles: { "": [] },
