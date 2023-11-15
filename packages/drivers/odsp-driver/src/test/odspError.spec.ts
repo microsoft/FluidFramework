@@ -47,8 +47,8 @@ describe("Odsp Error", () => {
 	 */
 	function isIThrottlingWarning(input: unknown): input is IThrottlingWarning {
 		return (
-			(input as Partial<IThrottlingWarning>).errorType === FluidErrorTypes.throttlingError &&
-			(input as Partial<IThrottlingWarning>) !== undefined
+			input !== undefined &&
+			(input as Partial<IThrottlingWarning>).errorType === FluidErrorTypes.throttlingError
 		);
 	}
 
