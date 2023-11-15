@@ -133,6 +133,7 @@
 				"backCompat": false
 			},
 			"ClassDeclaration_SharedString": {
+				"forwardCompat": false,
 				"backCompat": false
 			},
 			"TypeAliasDeclaration_SharedStringSegment": {
