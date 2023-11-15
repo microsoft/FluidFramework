@@ -661,7 +661,7 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 								fail("Map node schema missing map schema."),
 					  );
 			modifyChildren(
-				getEditNode(this),
+				node,
 				(mapNode) => mapNode.set(key, mappedContent),
 				(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
 			);
