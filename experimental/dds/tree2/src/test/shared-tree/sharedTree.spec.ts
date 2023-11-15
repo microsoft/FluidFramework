@@ -801,10 +801,39 @@ describe("SharedTree", () => {
 
 		describe("out of collab window works for", () => {
 			it("an insert", () => {
+				const provider = new TestTreeProviderLite(2);
+				const content = {
+					schema: stringSequenceRootSchema,
+					allowedSchemaModifications: AllowedUpdateType.None,
+					initialTree: ["A", "B", "C", "D"],
+				} satisfies InitializeAndSchematizeConfiguration;
+				const tree1 = provider.trees[0].schematizeInternal(content);
+	
+				const {
+					undoStack,
+					redoStack,
+					unsubscribe,
+				} = createTestUndoRedoStacks(tree1.checkout.events);
+	
+				provider.processMessages();
+				const tree2 = provider.trees[0].schematizeInternal(content);
 
-			});
+				const root1 = tree1.editableTree;
+				const root2 = tree2.editableTree;
+				// Insert nodes on both trees
+				root1.insertAt(1, ["x"]);
+				root1.insertAt(3, ["y"]);
 
-			it("an insert", () => {
+				provider.processMessages();
+				assert.deepEqual(root1.asArray, ["A", "x", "B", "C", "y", "D"]);
+				assert.deepEqual(root2.asArray, ["A", "x", "B", "C", "y", "D"]);
+				
+				undoStack[0].revert();
+				provider.processMessages();
+				assert.deepEqual(root1.asArray, ["A", "B", "C", "y", "D"]);
+				assert.deepEqual(root2.asArray, ["A", "B", "C", "y", "D"]);
+
+			it("a remove", () => {
 
 			});
 		})
