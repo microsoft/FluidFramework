@@ -9492,7 +9492,7 @@ importers:
       rimraf: 4.4.1
       typescript: 5.1.6
 
-  packages/service-client/odsp-client:
+  packages/service-clients/odsp-client:
     specifiers:
       '@fluid-tools/build-cli': 0.28.0-210888
       '@fluidframework/azure-client': workspace:~
@@ -24062,7 +24062,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.3_debug@4.3.4
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
