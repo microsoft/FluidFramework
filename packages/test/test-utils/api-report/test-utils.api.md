@@ -361,10 +361,6 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     // (undocumented)
     get createFluidEntryPoint(): (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
     // (undocumented)
-    readonly createFluidEntryPointForCreating: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    // (undocumented)
-    readonly createFluidEntryPointForLoading: (testContainerConfig?: ITestContainerConfig) => fluidEntryPoint;
-    // (undocumented)
     createLoader(packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>, loaderProps?: Partial<ILoaderProps>): Loader;
     // (undocumented)
     get defaultCodeDetails(): IFluidCodeDetails;
@@ -375,17 +371,9 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     // (undocumented)
     get driver(): ITestDriver;
     // (undocumented)
-    readonly driverForCreating: ITestDriver;
-    // (undocumented)
-    readonly driverForLoading: ITestDriver;
-    // (undocumented)
     ensureSynchronized(): Promise<void>;
     // (undocumented)
     loadContainer(entryPoint: fluidEntryPoint, loaderProps?: Partial<ILoaderProps>, requestHeader?: IRequestHeader): Promise<IContainer>;
-    // (undocumented)
-    readonly LoaderConstructorForCreating: typeof Loader;
-    // (undocumented)
-    readonly LoaderConstructorForLoading: typeof Loader;
     // (undocumented)
     loadTestContainer(testContainerConfig?: ITestContainerConfig, requestHeader?: IRequestHeader): Promise<IContainer>;
     // (undocumented)

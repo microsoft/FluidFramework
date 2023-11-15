@@ -512,14 +512,14 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private _loadCount: number = 0;
 
 	constructor(
-		public readonly LoaderConstructorForCreating: typeof Loader,
-		public readonly LoaderConstructorForLoading: typeof Loader,
-		public readonly driverForCreating: ITestDriver,
-		public readonly driverForLoading: ITestDriver,
-		public readonly createFluidEntryPointForCreating: (
+		private readonly LoaderConstructorForCreating: typeof Loader,
+		private readonly LoaderConstructorForLoading: typeof Loader,
+		private readonly driverForCreating: ITestDriver,
+		private readonly driverForLoading: ITestDriver,
+		private readonly createFluidEntryPointForCreating: (
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
-		public readonly createFluidEntryPointForLoading: (
+		private readonly createFluidEntryPointForLoading: (
 			testContainerConfig?: ITestContainerConfig,
 		) => fluidEntryPoint,
 	) {
