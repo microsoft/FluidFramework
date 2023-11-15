@@ -14,11 +14,25 @@ import {
 	BoundFieldChangeRebaser,
 } from "./exhaustiveRebaserUtils";
 
+interface ExhaustiveSuiteOptions {
+	skipRebaseOverCompose?: boolean;
+}
+
+const defaultSuiteOptions: Required<ExhaustiveSuiteOptions> = {
+	/**
+	 * Some FieldKinds don't pass this suite and can override this option to skip it.
+	 */
+	skipRebaseOverCompose: false,
+};
+
 export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	initialStates: FieldStateTree<TContent, TChangeset>[],
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
 	{ rebase, rebaseComposed, invert, compose }: BoundFieldChangeRebaser<TChangeset>,
+	options?: ExhaustiveSuiteOptions,
 ) {
+	const definedOptions = { ...defaultSuiteOptions, ...options };
+
 	function rebaseTagged(
 		change: TaggedChange<TChangeset>,
 		...baseChanges: TaggedChange<TChangeset>[]
@@ -38,7 +52,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	const numberOfEditsToRebaseOver = 2;
 	const numberOfEditsToRebase = numberOfEditsToRebaseOver;
 
-	describe.skip("Rebase over compose", () => {
+	// Skip the "Rebase over compose" suite if specified to in the suite options.
+	const rebaseOverComposeDescribe = definedOptions.skipRebaseOverCompose
+		? describe.skip
+		: describe;
+
+	rebaseOverComposeDescribe("Rebase over compose", () => {
 		for (const initialState of initialStates) {
 			describe(`starting with contents ${JSON.stringify(initialState.content)}`, () => {
 				for (const [

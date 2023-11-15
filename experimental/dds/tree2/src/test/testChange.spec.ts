@@ -147,7 +147,7 @@ const generateChildStates: ChildStateGenerator<TestChangeContent, TestChange> = 
 		};
 
 		for (let j = 1; j < value + 1; j++) {
-			const inverseChange = TestChange.mint(context, -i);
+			const inverseChange = TestChange.mint(context, -j);
 			yield {
 				content: { value: i, inputContext: change.outputContext },
 				mostRecentEdit: {
