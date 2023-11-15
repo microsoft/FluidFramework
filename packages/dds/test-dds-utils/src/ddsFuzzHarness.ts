@@ -396,7 +396,7 @@ export interface DDSFuzzSuiteOptions {
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.only` syntax works. See {@link (createDDSFuzzSuite:function)}.
+	 * If you prefer, a variant of the standard `.only` syntax works. See {@link (createDDSFuzzSuite:namespace).only}.
 	 */
 	only: Iterable<number>;
 
