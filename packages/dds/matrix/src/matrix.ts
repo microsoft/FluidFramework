@@ -12,6 +12,7 @@ import {
 	Serializable,
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
+import { isFileNotFoundOrAccessDeniedError } from "@fluidframework/driver-utils";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
@@ -44,6 +45,7 @@ const enum SnapshotPath {
 	rows = "rows",
 	cols = "cols",
 	cells = "cells",
+	setCellConflictResolutionPolicyIsFWW = "setCellConflictResolutionPolicyIsFWW",
 }
 
 interface ISetOp<T> {
@@ -61,6 +63,10 @@ interface ISetOpMetadata {
 	colsRefSeq: number;
 	referenceSeqNumber: number;
 	clientId: string | undefined;
+}
+
+interface ISetCellChangePolicyOp {
+	type: MatrixOp.changeSetCellPolicy;
 }
 
 /**
@@ -149,13 +155,28 @@ export class SharedMatrix<T = any>
 	private cells = new SparseArray2D<MatrixItem<T>>(); // Stores cell values.
 	private pending = new SparseArray2D<number>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence numner in a cell.
+	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
+	private setCellPolicySwitchOpSeqNumber = -1;
 
+	/**
+	 * Constructor for the Shared Matrix
+	 * @param runtime - DataStore runtime.
+	 * @param id - id of the dds
+	 * @param attributes - channel attributes
+	 * @param _isSetCellConflictResolutionPolicyFWW - Conflict resolution for Matrix set op is First Writer Win in case of
+	 * race condition. Client can still overwrite values in case of no race.
+	 */
 	constructor(
 		runtime: IFluidDataStoreRuntime,
 		public id: string,
 		attributes: IChannelAttributes,
+		_isSetCellConflictResolutionPolicyFWW?: boolean,
 	) {
 		super(id, runtime, attributes, "fluid_matrix_");
+
+		if (_isSetCellConflictResolutionPolicyFWW === true) {
+			this.setCellPolicySwitchOpSeqNumber = 0;
+		}
 
 		this.rows = new PermutationVector(
 			SnapshotPath.rows,
@@ -224,6 +245,10 @@ export class SharedMatrix<T = any>
 	}
 	public get colCount() {
 		return this.cols.getLength();
+	}
+
+	public isSetCellConflictResolutionPolicyFWW?() {
+		return this.setCellPolicySwitchOpSeqNumber > -1;
 	}
 
 	public getCell(row: number, col: number): MatrixItem<T> {
@@ -486,6 +511,10 @@ export class SharedMatrix<T = any>
 				this.handle,
 			),
 		);
+		builder.addBlob(
+			SnapshotPath.setCellConflictResolutionPolicyIsFWW,
+			serializer.stringify(this.setCellPolicySwitchOpSeqNumber, this.handle),
+		);
 		return builder.getSummaryTree();
 	}
 
@@ -595,6 +624,12 @@ export class SharedMatrix<T = any>
 				);
 				break;
 			default: {
+				if (content.type === MatrixOp.changeSetCellPolicy) {
+					this.submitLocalMessage({
+						type: MatrixOp.changeSetCellPolicy,
+					});
+					break;
+				}
 				assert(
 					content.type === MatrixOp.set,
 					0x020 /* "Unknown SharedMatrix 'op' type." */,
@@ -611,38 +646,61 @@ export class SharedMatrix<T = any>
 					clientId,
 				} = localOpMetadata as ISetOpMetadata;
 
-				const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
-					rowHandle,
-					colHandle,
-				);
-				const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
-				const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
-				if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
-					// If we generated this op, after seeing the last set op, or it was from this client only
-					// then regenerate the op, otherwise raise conflict.
-					if (
-						lastCellModificationDetails === undefined ||
-						clientId === this.runtime.clientId ||
-						referenceSeqNumber >= lastCellModificationDetails.seqNum
-					) {
-						this.sendSetCellOp(
-							row,
-							col,
-							setOp.value,
+				// Policy is not FWW. So behave accordingly.
+				if (this.setCellPolicySwitchOpSeqNumber > -1) {
+					const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
+					const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
+					if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
+						const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
 							rowHandle,
 							colHandle,
-							localSeq,
-							rowsRefSeq,
-							colsRefSeq,
 						);
-					} else {
-						this.emit(
-							"conflict",
-							row,
-							col,
-							this.cells.getCell(rowHandle, colHandle), // Current value
-							setOp.value, // Ignored value
-						);
+						// If we generated this op, after seeing the last set op, or it was from this client only
+						// then regenerate the op, otherwise raise conflict.
+						if (
+							lastCellModificationDetails === undefined ||
+							clientId === this.runtime.clientId ||
+							referenceSeqNumber >= lastCellModificationDetails.seqNum
+						) {
+							this.sendSetCellOp(
+								row,
+								col,
+								setOp.value,
+								rowHandle,
+								colHandle,
+								localSeq,
+								rowsRefSeq,
+								colsRefSeq,
+							);
+						} else {
+							this.emit(
+								"conflict",
+								row,
+								col,
+								this.cells.getCell(rowHandle, colHandle), // Current value
+								parseHandles(setOp.value, this.serializer), // Ignored value
+							);
+						}
+					}
+				} else {
+					// If there are more pending local writes to the same row/col handle, it is important
+					// to skip resubmitting this op since it is possible the row/col handle has been recycled
+					// and now refers to a different position than when this op was originally submitted.
+					if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
+						const row = this.rebasePosition(this.rows, setOp.row, rowsRefSeq, localSeq);
+						const col = this.rebasePosition(this.cols, setOp.col, colsRefSeq, localSeq);
+						if (row !== undefined && col !== undefined && row >= 0 && col >= 0) {
+							this.sendSetCellOp(
+								row,
+								col,
+								setOp.value,
+								rowHandle,
+								colHandle,
+								localSeq,
+								rowsRefSeq,
+								colsRefSeq,
+							);
+						}
 					}
 				}
 				break;
@@ -675,10 +733,66 @@ export class SharedMatrix<T = any>
 
 			this.cells = SparseArray2D.load(cellData);
 			this.pending = SparseArray2D.load(pendingCliSeqData);
-			this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
+			// Old summaries will not have this info, so check that.
+			if (cellLastWriteTracker !== undefined) {
+				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
+			}
+
+			this.setCellPolicySwitchOpSeqNumber = await deserializeBlob(
+				storage,
+				SnapshotPath.setCellConflictResolutionPolicyIsFWW,
+				this.serializer,
+			).catch((error) => {
+				// Older Snapshot or summaries taken by older clients will not have this blob.
+				if (isFileNotFoundOrAccessDeniedError(error) === true) {
+					this.logger.sendTelemetryEvent(
+						{
+							eventName: "MatrixLoadFromOldFormatSummary",
+						},
+						error,
+					);
+					return -1;
+				}
+			});
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
 		}
+	}
+
+	/**
+	 * Tells whether the op should be applied or not based on First Write Win policy.
+	 */
+	private shouldSetCellBasedOnFWW(
+		rowHandle: Handle,
+		colHandle: Handle,
+		message: ISequencedDocumentMessage,
+	) {
+		assert(message.clientId !== null, "clientId should not be null");
+		const lastCellModificationDetails = this.cellLastWriteTracker.getCell(rowHandle, colHandle);
+		// If someone tried to Overwrite the cell value or first write on this cell or
+		// same client tried to modify the cell.
+		if (
+			lastCellModificationDetails === undefined ||
+			lastCellModificationDetails.clientId === message.clientId ||
+			message.referenceSequenceNumber >= lastCellModificationDetails.seqNum
+		) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Tells whether the client process this op according to First Write Win or not.
+	 * @param message - Op to process.
+	 */
+	private isSetCellOpMadeInFWWPolicy(message: ISequencedDocumentMessage) {
+		if (
+			this.setCellPolicySwitchOpSeqNumber !== -1 &&
+			message.referenceSequenceNumber >= this.setCellPolicySwitchOpSeqNumber
+		) {
+			return true;
+		}
+		return false;
 	}
 
 	protected processCore(
@@ -698,55 +812,28 @@ export class SharedMatrix<T = any>
 				this.rows.applyMsg(msg, local);
 				break;
 			default: {
+				if (contents.type === MatrixOp.changeSetCellPolicy) {
+					this.setCellPolicySwitchOpSeqNumber = rawMessage.sequenceNumber;
+					return;
+				}
+
 				assert(
 					contents.type === MatrixOp.set,
 					0x021 /* "SharedMatrix message contents have unexpected type!" */,
 				);
 
-				const { row, col } = contents;
-
-				const adjustedRow = this.rows.adjustPosition(row, rawMessage);
-				if (adjustedRow !== undefined) {
-					const adjustedCol = this.cols.adjustPosition(col, rawMessage);
-
-					if (adjustedCol !== undefined) {
-						const rowHandle =
-							(localOpMetadata as ISetOpMetadata)?.rowHandle ??
-							this.rows.getAllocatedHandle(adjustedRow);
-						const colHandle =
-							(localOpMetadata as ISetOpMetadata)?.colHandle ??
-							this.cols.getAllocatedHandle(adjustedCol);
-
-						assert(
-							isHandleValid(rowHandle) && isHandleValid(colHandle),
-							0x022 /* "SharedMatrix row and/or col handles are invalid!" */,
-						);
-
-						const lastCellModificationDetails = this.cellLastWriteTracker.getCell(
-							rowHandle,
-							colHandle,
-						);
-
-						const { value } = contents;
-						assert(rawMessage.clientId !== null, "clientid should not be null!!");
-						// If someone tried to Overwrite the cell value or first write on this cell or
-						// same client tried to modify the cell.
-						if (
-							lastCellModificationDetails === undefined ||
-							lastCellModificationDetails.clientId === rawMessage.clientId ||
-							rawMessage.referenceSequenceNumber >= lastCellModificationDetails.seqNum
-						) {
-							if (!local) {
-								this.cells.setCell(rowHandle, colHandle, value);
-								for (const consumer of this.consumers.values()) {
-									consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
-								}
-							}
+				const { row, col, value } = contents;
+				assert(rawMessage.clientId !== null, "clientId should not be null!!");
+				if (local) {
+					// We are receiving the ACK for a local pending set operation.
+					const { rowHandle, colHandle, localSeq } = localOpMetadata as ISetOpMetadata;
+					if (this.isSetCellOpMadeInFWWPolicy(rawMessage)) {
+						if (this.shouldSetCellBasedOnFWW(rowHandle, colHandle, rawMessage)) {
 							this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
 								seqNum: rawMessage.sequenceNumber,
 								clientId: rawMessage.clientId,
 							});
-						} else if (local) {
+						} else {
 							// conflict. We would already set the right contents in the cell, when we would have received
 							// set op for that cell from other client.
 							this.emit(
@@ -756,6 +843,58 @@ export class SharedMatrix<T = any>
 								this.cells.getCell(rowHandle, colHandle), // Current value
 								value, // Ignored value
 							);
+						}
+					} else {
+						if (this.isLatestPendingWrite(rowHandle, colHandle, localSeq)) {
+							this.pending.setCell(rowHandle, colHandle, undefined);
+							this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
+								seqNum: rawMessage.sequenceNumber,
+								clientId: rawMessage.clientId,
+							});
+						}
+					}
+				} else {
+					const adjustedRow = this.rows.adjustPosition(row, rawMessage);
+					if (adjustedRow !== undefined) {
+						const adjustedCol = this.cols.adjustPosition(col, rawMessage);
+
+						if (adjustedCol !== undefined) {
+							const rowHandle = this.rows.getAllocatedHandle(adjustedRow);
+							const colHandle = this.cols.getAllocatedHandle(adjustedCol);
+
+							assert(
+								isHandleValid(rowHandle) && isHandleValid(colHandle),
+								0x022 /* "SharedMatrix row and/or col handles are invalid!" */,
+							);
+							if (this.isSetCellOpMadeInFWWPolicy(rawMessage)) {
+								// If someone tried to Overwrite the cell value or first write on this cell or
+								// same client tried to modify the cell.
+								if (
+									this.shouldSetCellBasedOnFWW(rowHandle, colHandle, rawMessage)
+								) {
+									this.cells.setCell(rowHandle, colHandle, value);
+									this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
+										seqNum: rawMessage.sequenceNumber,
+										clientId: rawMessage.clientId,
+									});
+									for (const consumer of this.consumers.values()) {
+										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
+									}
+								}
+							} else {
+								// If there is a pending (unACKed) local write to the same cell, skip the current op
+								// since it "happened before" the pending write.
+								if (this.pending.getCell(rowHandle, colHandle) === undefined) {
+									this.cells.setCell(rowHandle, colHandle, value);
+									this.cellLastWriteTracker.setCell(rowHandle, colHandle, {
+										seqNum: rawMessage.sequenceNumber,
+										clientId: rawMessage.clientId,
+									});
+									for (const consumer of this.consumers.values()) {
+										consumer.cellsChanged(adjustedRow, adjustedCol, 1, 1, this);
+									}
+								}
+							}
 						}
 					}
 				}
@@ -800,6 +939,49 @@ export class SharedMatrix<T = any>
 			this.cellLastWriteTracker.clearCols(/* colStart: */ colHandle, /* colCount: */ 1);
 		}
 	};
+
+	/**
+	 * Api to switch Set Op policy from Last Writer Win to First Writer Win. It only switches from LWW to FWW
+	 * and not from FWW to LWW. An op will be sent to communicate this to other clients.
+	 */
+	public switchSetCellPolicy?() {
+		if (this.setCellPolicySwitchOpSeqNumber === -1) {
+			if (this.isAttached()) {
+				const op: ISetCellChangePolicyOp = {
+					type: MatrixOp.changeSetCellPolicy,
+				};
+
+				this.submitLocalMessage(op);
+			} else {
+				this.setCellPolicySwitchOpSeqNumber = 0;
+			}
+		}
+	}
+
+	/**
+	 * Returns true if the latest pending write to the cell indicated by the given row/col handles
+	 * matches the given 'localSeq'.
+	 *
+	 * A return value of `true` indicates that there are no later local operations queued that will
+	 * clobber the write op at the given 'localSeq'.  This includes later ops that overwrite the cell
+	 * with a different value as well as row/col removals that might recycled the given row/col handles.
+	 */
+	private isLatestPendingWrite(rowHandle: Handle, colHandle: Handle, localSeq: number) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const pendingLocalSeq = this.pending.getCell(rowHandle, colHandle)!;
+
+		// Note while we're awaiting the ACK for a local set, it's possible for the row/col to be
+		// locally removed and the row/col handles recycled.  If this happens, the pendingLocalSeq will
+		// be 'undefined' or > 'localSeq'.
+		assert(
+			!(pendingLocalSeq < localSeq),
+			0x023 /* "The 'localSeq' of pending write (if any) must be <= the localSeq of the currently processed op." */,
+		);
+
+		// If this is the most recent write to the cell by the local client, the stored localSeq
+		// will be an exact match for the given 'localSeq'.
+		return pendingLocalSeq === localSeq;
+	}
 
 	public toString() {
 		let s = `client:${

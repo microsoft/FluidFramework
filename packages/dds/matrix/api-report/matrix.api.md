@@ -48,7 +48,7 @@ export type MatrixItem<T> = Serializable<Exclude<T, null>> | undefined;
 
 // @public
 export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> implements IMatrixProducer<MatrixItem<T>>, IMatrixReader<MatrixItem<T>>, IMatrixWriter<MatrixItem<T>> {
-    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
+    constructor(runtime: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes, _isSetCellConflictResolutionPolicyFWW?: boolean | undefined);
     // (undocumented)
     protected applyStashedOp(content: any): unknown;
     // (undocumented)
@@ -69,6 +69,8 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     insertCols(colStart: number, count: number): void;
     // (undocumented)
     insertRows(rowStart: number, count: number): void;
+    // (undocumented)
+    isSetCellConflictResolutionPolicyFWW?(): boolean | undefined;
     // (undocumented)
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
@@ -99,6 +101,7 @@ export class SharedMatrix<T = any> extends SharedObject<ISharedMatrixEvents<T>> 
     protected submitLocalMessage(message: any, localOpMetadata?: any): void;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
+    switchSetCellPolicy?(): void;
     // (undocumented)
     toString(): string;
     // @internal (undocumented)

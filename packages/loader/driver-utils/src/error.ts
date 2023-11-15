@@ -4,8 +4,12 @@
  */
 
 // eslint-disable-next-line import/no-deprecated
-import { DriverErrorType, IDriverErrorBase } from "@fluidframework/driver-definitions";
-import { IFluidErrorBase, LoggingError } from "@fluidframework/telemetry-utils";
+import {
+	DriverErrorType,
+	DriverErrorTypes,
+	IDriverErrorBase,
+} from "@fluidframework/driver-definitions";
+import { IFluidErrorBase, LoggingError, isFluidError } from "@fluidframework/telemetry-utils";
 
 /** Error indicating an API is being used improperly resulting in an invalid operation. */
 export class UsageError extends LoggingError implements IDriverErrorBase, IFluidErrorBase {
@@ -16,4 +20,10 @@ export class UsageError extends LoggingError implements IDriverErrorBase, IFluid
 	constructor(message: string) {
 		super(message, { usageError: true });
 	}
+}
+
+export function isFileNotFoundOrAccessDeniedError(error: any): boolean {
+	return (
+		isFluidError(error) && error.errorType === DriverErrorTypes.fileNotFoundOrAccessDeniedError
+	);
 }
