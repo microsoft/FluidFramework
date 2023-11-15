@@ -598,10 +598,14 @@ export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
 export interface FlexTreeFieldNode<in out TSchema extends FieldNodeSchema> extends FlexTreeNode {
     readonly boxedContent: FlexTreeTypedField<TSchema["info"]>;
     readonly content: FlexTreeUnboxField<TSchema["info"]>;
+    // (undocumented)
+    readonly schema: TSchema;
 }
 
 // @alpha
 export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
+    // (undocumented)
+    readonly schema: TSchema;
     readonly value: TreeValue<TSchema["info"]>;
 }
 
@@ -623,6 +627,8 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
     getBoxed(key: string): FlexTreeTypedField<TSchema["info"]>;
     has(key: string): boolean;
     keys(): IterableIterator<FieldKey>;
+    // (undocumented)
+    readonly schema: TSchema;
     set(key: string, value: FlexibleFieldContent<TSchema["info"]>): void;
     readonly size: number;
     values(): IterableIterator<FlexTreeUnboxField<TSchema["info"], "notEmpty">>;
