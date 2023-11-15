@@ -22,7 +22,7 @@ import {
 import { brand, fakeIdAllocator } from "../../../util";
 import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+import { OptionalChangeset } from "../../../feature-libraries/optional-field";
 import { changesetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
 
 /**

@@ -31,10 +31,9 @@ import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
+	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/default-field-kinds/optionalField";
-// eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+} from "../../../feature-libraries/optional-field";
 import {
 	FieldStateTree,
 	getInputContext,

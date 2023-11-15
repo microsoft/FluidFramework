@@ -8,11 +8,12 @@ import { NodeChangeset } from "../../../feature-libraries";
 import { mintRevisionTag } from "../../../core";
 import { JsonCompatibleReadOnly, brand } from "../../../util";
 import { EncodingTestData, makeEncodingTestSuite } from "../../utils";
-// eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+import {
+	OptionalChangeset,
+	makeOptionalFieldCodecFamily,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/optional-field";
 import { IJsonCodec } from "../../../codec";
-// eslint-disable-next-line import/no-internal-modules
-import { makeOptionalFieldCodecFamily } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeCodecs";
 import { changesetForChild, testTree } from "./fieldKindTestUtils";
 
 const nodeChange1 = changesetForChild("nodeChange1");
