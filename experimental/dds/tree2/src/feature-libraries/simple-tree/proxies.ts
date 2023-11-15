@@ -282,7 +282,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAt(index, mappedContent),
+				() => sequenceField.insertAt(index, mappedContent),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -304,7 +304,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAtStart(mappedContent),
+				() => sequenceField.insertAtStart(mappedContent),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -329,7 +329,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 
 			modifyChildren(
 				getEditNode(this),
-				() => getSequenceField(this).insertAtEnd(mappedContent),
+				() => sequenceField.insertAtEnd(mappedContent),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
