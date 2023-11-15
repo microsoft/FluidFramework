@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_ClassDeclaration_FluidCache():
     TypeOnly<old.FluidCache>;
 declare function use_current_ClassDeclaration_FluidCache(
-    use: TypeOnly<current.FluidCache>);
+    use: TypeOnly<current.FluidCache>): void;
 use_current_ClassDeclaration_FluidCache(
     get_old_ClassDeclaration_FluidCache());
 
@@ -41,7 +41,7 @@ use_current_ClassDeclaration_FluidCache(
 declare function get_current_ClassDeclaration_FluidCache():
     TypeOnly<current.FluidCache>;
 declare function use_old_ClassDeclaration_FluidCache(
-    use: TypeOnly<old.FluidCache>);
+    use: TypeOnly<old.FluidCache>): void;
 use_old_ClassDeclaration_FluidCache(
     get_current_ClassDeclaration_FluidCache());
 
@@ -53,7 +53,7 @@ use_old_ClassDeclaration_FluidCache(
 declare function get_old_InterfaceDeclaration_FluidCacheConfig():
     TypeOnly<old.FluidCacheConfig>;
 declare function use_current_InterfaceDeclaration_FluidCacheConfig(
-    use: TypeOnly<current.FluidCacheConfig>);
+    use: TypeOnly<current.FluidCacheConfig>): void;
 use_current_InterfaceDeclaration_FluidCacheConfig(
     get_old_InterfaceDeclaration_FluidCacheConfig());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_FluidCacheConfig(
 declare function get_current_InterfaceDeclaration_FluidCacheConfig():
     TypeOnly<current.FluidCacheConfig>;
 declare function use_old_InterfaceDeclaration_FluidCacheConfig(
-    use: TypeOnly<old.FluidCacheConfig>);
+    use: TypeOnly<old.FluidCacheConfig>): void;
 use_old_InterfaceDeclaration_FluidCacheConfig(
     get_current_InterfaceDeclaration_FluidCacheConfig());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_FluidCacheConfig(
 declare function get_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance():
     TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>;
 declare function use_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
-    use: TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>);
+    use: TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>): void;
 use_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
     get_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance());
 
@@ -89,6 +89,6 @@ use_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
 declare function get_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance():
     TypeOnly<typeof current.deleteFluidCacheIndexDbInstance>;
 declare function use_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
-    use: TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>);
+    use: TypeOnly<typeof old.deleteFluidCacheIndexDbInstance>): void;
 use_old_FunctionDeclaration_deleteFluidCacheIndexDbInstance(
     get_current_FunctionDeclaration_deleteFluidCacheIndexDbInstance());

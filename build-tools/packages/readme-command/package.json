@@ -27,7 +27,7 @@
 		"build:compile": "npm run tsc && npm run build:readme",
 		"build:manifest": "oclif manifest",
 		"build:readme": "node ./bin/dev generate readme",
-		"clean": "rimraf --glob dist lib oclif.manifest.json \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",

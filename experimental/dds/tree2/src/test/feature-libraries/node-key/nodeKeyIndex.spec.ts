@@ -19,13 +19,13 @@ import {
 	StableNodeKey,
 	SchemaAware,
 	nodeKeyFieldKey,
-	TypedField,
+	FlexTreeTypedField,
 	Any,
 	createMockNodeKeyManager,
 	TreeFieldSchema,
 } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeKeys } from "../../../feature-libraries/editable-tree-2/nodeKeys";
+import { NodeKeys } from "../../../feature-libraries/flex-tree/nodeKeys";
 import { SummarizeType, TestTreeProvider, treeWithContent } from "../../utils";
 import { AllowedUpdateType } from "../../../core";
 
@@ -49,7 +49,7 @@ describe("Node Key Index", () => {
 			typeof nodeSchemaData.rootFieldSchema,
 			SchemaAware.ApiMode.Simple
 		>,
-	): TypedField<typeof nodeSchemaData.rootFieldSchema> {
+	): FlexTreeTypedField<typeof nodeSchemaData.rootFieldSchema> {
 		return treeWithContent({ initialTree, schema: nodeSchemaData });
 	}
 

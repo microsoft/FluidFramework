@@ -7,12 +7,10 @@ import { FieldKey } from "../core";
 import {
 	TreeFieldSchema,
 	TreeSchema,
-	TypedField,
-	ProxyField,
-	TreeContext,
+	FlexTreeTypedField,
+	FlexTreeContext,
 	NodeKeyManager,
 	getTreeContext,
-	getProxyForField,
 	Context,
 } from "../feature-libraries";
 import { IDisposable, disposeSymbol } from "../util";
@@ -26,19 +24,14 @@ import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout";
  * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
  * @alpha
  */
-export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
+export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
 	/**
-	 * The current root of the tree.
-	 */
-	readonly root: ProxyField<TRoot>;
-
-	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ITreeView.editableTree}.
+	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.editableTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.
 	 */
-	readonly context: TreeContext;
+	readonly context: FlexTreeContext;
 
 	/**
 	 * Access non-view schema specific aspects of of this branch.
@@ -51,7 +44,7 @@ export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDispos
 	/**
 	 * Get a typed view of the tree content using the editable-tree-2 API.
 	 */
-	readonly editableTree: TypedField<TRoot>;
+	readonly editableTree: FlexTreeTypedField<TRoot>;
 
 	/**
 	 * Spawn a new view which is based off of the current state of this view.
@@ -63,23 +56,23 @@ export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDispos
 /**
  * Branch (like in a version control system) of SharedTree.
  *
- * {@link ITreeView} that has forked off of the main trunk/branch.
+ * {@link FlexTreeView} that has forked off of the main trunk/branch.
  * @alpha
  */
-export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends ITreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
 }
 
 /**
- * Implementation of ITreeView wrapping a ITreeCheckout.
+ * Implementation of FlexTreeView wrapping a ITreeCheckout.
  */
-export class CheckoutView<
+export class CheckoutFlexTreeView<
 	in out TRoot extends TreeFieldSchema,
 	out TCheckout extends ITreeCheckout = ITreeCheckout,
-> implements ITreeView<TRoot>
+> implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
-	public readonly editableTree: TypedField<TRoot>;
+	public readonly editableTree: FlexTreeTypedField<TRoot>;
 	public constructor(
 		public readonly checkout: TCheckout,
 		public readonly schema: TreeSchema<TRoot>,
@@ -94,7 +87,7 @@ export class CheckoutView<
 			nodeKeyManager,
 			nodeKeyFieldKey,
 		);
-		this.editableTree = this.context.root as TypedField<TRoot>;
+		this.editableTree = this.context.root as FlexTreeTypedField<TRoot>;
 	}
 
 	public [disposeSymbol](): void {
@@ -102,12 +95,13 @@ export class CheckoutView<
 		this.onDispose?.();
 	}
 
-	public get root(): ProxyField<TRoot> {
-		return getProxyForField(this.editableTree);
-	}
-
-	public fork(): CheckoutView<TRoot, ITreeCheckoutFork> {
+	public fork(): CheckoutFlexTreeView<TRoot, ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
-		return new CheckoutView(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
+		return new CheckoutFlexTreeView(
+			branch,
+			this.schema,
+			this.nodeKeyManager,
+			this.nodeKeyFieldKey,
+		);
 	}
 }
