@@ -17,6 +17,7 @@ import {
 	getOutputCellId,
 	isNewAttach,
 	isAttachAndDetachEffect,
+	getDetachOutputId,
 } from "./utils";
 import { isMoveDestination, isMoveSource } from "./moveEffectTable";
 
@@ -103,10 +104,7 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Delete": {
-					const newDetachId = mark.detachIdOverride ?? {
-						revision: mark.revision ?? revision,
-						localId: mark.id,
-					};
+					const newDetachId = getDetachOutputId(mark, revision, undefined);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
 						local.push(deltaMark);
