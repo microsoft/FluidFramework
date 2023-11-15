@@ -1129,8 +1129,9 @@ function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOpt
 	return options.only instanceof Set && options.skip instanceof Set;
 }
 
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Performs the test again to verify if the DDS still fails with the same error message.
+ *
  * @internal
  */
 export async function replayTest<

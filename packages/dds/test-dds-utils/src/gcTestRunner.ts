@@ -38,8 +38,10 @@ export interface IGCTestProvider {
 	addNestedHandles(): Promise<void>;
 }
 
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Runs a series of GC tests for DDSes to verify that they have correctly implemented GC.
+ * The DDSes should store handles and generate the expected GC Data.
+ *
  * @internal
  */
 export const runGCTests = (ctor: new () => IGCTestProvider): void => {
