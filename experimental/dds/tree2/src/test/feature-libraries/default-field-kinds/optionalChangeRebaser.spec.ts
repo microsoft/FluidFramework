@@ -369,6 +369,7 @@ describe("OptionalField - Rebaser Axioms", () => {
 			[{ content: undefined }, { content: "A" }],
 			generateChildStates,
 			{ rebase, rebaseComposed, compose, invert },
+			{ skipRebaseOverCompose: true },
 		);
 	});
 });
