@@ -7,8 +7,7 @@ import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/pro
 import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { assert } from "@fluidframework/core-utils";
 import { type IOpContents, type IShimDeltaHandler } from "./types.js";
-import { attributesMatch } from "./utils.js";
-import { type IMigrationOp } from "./migrationShim.js";
+import { attributesMatch, isBarrierOp, isStampedOp } from "./utils.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the Migration Shim distributed data structure.
@@ -141,18 +140,14 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 
 	public rollback?(contents: unknown, localOpMetadata: unknown): void {
 		const opContents = contents as IOpContents;
-		if (this.isBarrierOp(opContents)) {
+		if (isBarrierOp(opContents)) {
 			throw new Error("MigrationShim does not support rollback of barrier ops");
 		}
 		return this.treeDeltaHandler.rollback?.(contents, localOpMetadata);
 	}
 
-	private isBarrierOp(contents: IOpContents): contents is IMigrationOp {
-		return contents.type === "barrier";
-	}
-
 	private isInV1StateAndIsBarrierOp(contents: IOpContents): boolean {
-		return this.isUsingOldV1() && this.isBarrierOp(contents);
+		return this.isUsingOldV1() && isBarrierOp(contents);
 	}
 
 	/**
@@ -169,7 +164,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		}
 
 		// Drop v1 ops when in v2 state
-		if (contents.fluidMigrationStamp === undefined) {
+		if (!isStampedOp(contents)) {
 			return true;
 		}
 

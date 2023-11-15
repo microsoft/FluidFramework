@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { type IChannelAttributes, type IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { MessageType, type ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { type IOpContents, type IShimDeltaHandler } from "./types.js";
-import { attributesMatch } from "./utils.js";
+import { attributesMatch, isStampedOp } from "./utils.js";
 
 /**
  * Handles incoming and outgoing deltas/ops for the SharedTreeShim distributed data structure.
@@ -105,7 +105,7 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	 * @returns whether or not the op is a v1 or migrate op and should be dropped/ignored.
 	 */
 	private shouldDropOp(contents: IOpContents): boolean {
-		if (contents.fluidMigrationStamp === undefined) {
+		if (!isStampedOp(contents)) {
 			return true;
 		}
 
