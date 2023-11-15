@@ -39,7 +39,7 @@ import {
 	ForestType,
 	ISharedTree,
 	ITreeCheckout,
-	ITreeView,
+	FlexTreeView,
 	InitializeAndSchematizeConfiguration,
 	SharedTree,
 	SharedTreeFactory,
@@ -106,7 +106,7 @@ describe("SharedTree", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree");
 			assert.equal(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
-			const view = tree.schematizeInternal({
+			const view = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -119,7 +119,7 @@ describe("SharedTree", () => {
 			tree.storedSchema.update(schema);
 
 			// No op upgrade with AllowedUpdateType.None does not error
-			const schematized = tree.schematizeInternal({
+			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.None,
 				initialTree: 10,
 				schema,
@@ -143,7 +143,7 @@ describe("SharedTree", () => {
 		it("upgrade schema", () => {
 			const tree = factory.create(new MockFluidDataStoreRuntime(), "the tree") as SharedTree;
 			tree.storedSchema.update(schema);
-			const schematized = tree.schematizeInternal({
+			const schematized = tree.schematize({
 				allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 				initialTree: 5,
 				schema: schemaGeneralized,
@@ -1258,7 +1258,7 @@ describe("SharedTree", () => {
 function assertSchema<TRoot extends TreeFieldSchema>(
 	tree: ISharedTree,
 	schema: TreeSchema<TRoot>,
-): ITreeView<TRoot> {
+): FlexTreeView<TRoot> {
 	return tree.requireSchema(schema, () => assert.fail()) ?? assert.fail();
 }
 
