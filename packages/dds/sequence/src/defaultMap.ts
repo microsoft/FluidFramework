@@ -5,12 +5,7 @@
 
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
-	IFluidSerializer,
-	makeHandlesSerializable,
-	parseHandles,
-	ValueType,
-} from "@fluidframework/shared-object-base";
+import { IFluidSerializer, parseHandles, ValueType } from "@fluidframework/shared-object-base";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils";
 import { makeSerializable, ValueTypeLocalValue } from "./localValues";
@@ -437,7 +432,7 @@ export class DefaultMap<T> {
 			params: any,
 			localOpMetadata: IMapMessageLocalMetadata,
 		) => {
-			const translatedParams = makeHandlesSerializable(params, this.serializer, this.handle);
+			const translatedParams = params;
 
 			const op: IMapValueTypeOperation = {
 				key,

@@ -140,7 +140,7 @@ export class SharedCell<T = any>
 	public set(value: Serializable<T>): void {
 		// Serialize the value if required.
 		const operationValue: ICellValue = {
-			value: this.serializer.encode(value, this.handle),
+			value,
 		};
 
 		// Set the value locally.

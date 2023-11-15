@@ -260,7 +260,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 			commit,
 			sessionId: this.editManager.localSessionId,
 		});
-		this.submitLocalMessage(this.serializer.encode(message, this.handle));
+		this.submitLocalMessage(message);
 	}
 
 	protected processCore(

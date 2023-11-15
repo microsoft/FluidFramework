@@ -1414,7 +1414,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	}
 
 	private serializeEdit<TChange>(preparedEdit: Edit<TChange>): Edit<TChange> {
-		return this.serializer.encode(preparedEdit, this.handle) as Edit<TChange>;
+		return preparedEdit;
 	}
 
 	/** A type-safe `submitLocalMessage` wrapper to enforce op format */

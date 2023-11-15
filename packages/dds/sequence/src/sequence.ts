@@ -44,7 +44,6 @@ import {
 import { ObjectStoragePartition, SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import {
 	IFluidSerializer,
-	makeHandlesSerializable,
 	parseHandles,
 	SharedObject,
 	ISharedObjectEvents,
@@ -405,7 +404,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		if (!this.isAttached()) {
 			return;
 		}
-		const translated = makeHandlesSerializable(message, this.serializer, this.handle);
+		const translated: any = message;
 		const metadata = this.client.peekPendingSegmentGroups(
 			message.type === MergeTreeDeltaType.GROUP ? message.ops.length : 1,
 		);

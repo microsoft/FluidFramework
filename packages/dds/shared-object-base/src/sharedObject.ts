@@ -37,6 +37,7 @@ import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
 import { SummarySerializer } from "./summarySerializer";
 import { ISharedObject, ISharedObjectEvents } from "./types";
+import { makeHandlesSerializable } from "./utils";
 
 /**
  * Base class from which all shared objects derive.
@@ -344,6 +345,8 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 */
 	protected abstract onDisconnect();
 
+	protected abstract get serializer(): IFluidSerializer;
+
 	/**
 	 * Submits a message by the local client to the runtime.
 	 * @param content - Content of the message
@@ -355,7 +358,10 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.services!.deltaConnection.submit(content, localOpMetadata);
+			this.services!.deltaConnection.submit(
+				makeHandlesSerializable(content, this.serializer, this.handle),
+				localOpMetadata,
+			);
 		}
 	}
 

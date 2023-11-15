@@ -15,7 +15,6 @@ import {
 } from "@fluidframework/datastore-definitions";
 import {
 	IFluidSerializer,
-	makeHandlesSerializable,
 	parseHandles,
 	SharedObject,
 	SummarySerializer,
@@ -473,10 +472,7 @@ export class SharedMatrix<T = any>
 			0x01d /* "Trying to submit message to runtime while detached!" */,
 		);
 
-		super.submitLocalMessage(
-			makeHandlesSerializable(message, this.serializer, this.handle),
-			localOpMetadata,
-		);
+		super.submitLocalMessage(message, localOpMetadata);
 
 		// Ensure that row/col 'localSeq' are synchronized (see 'nextLocalSeq()').
 		assert(
