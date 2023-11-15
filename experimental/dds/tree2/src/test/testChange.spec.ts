@@ -128,48 +128,37 @@ const generateChildStates: ChildStateGenerator<number[], TestChange> = function*
 	mintIntention: () => number,
 ): Iterable<TestChangeTestState> {
 	const context = state.content;
-	for (const edit of [[1], [2, 3]]) {
-		const intention = mintIntention();
-		const change = TestChange.mint(context, edit);
-		yield {
-			content: change.outputContext,
-			mostRecentEdit: {
-				changeset: tagChange(change, tagFromIntention(intention)),
-				description: `Set${JSON.stringify(edit)},${JSON.stringify(context)}`,
-				intention,
-			},
-			parent: state,
-		};
-	}
-
-	for (const previousEdit of context) {
-		const intention = mintIntention();
-		const change = TestChange.mint(context, -previousEdit);
-		yield {
-			content: change.outputContext,
-			mostRecentEdit: {
-				changeset: tagChange(change, tagFromIntention(intention)),
-				description: `Inverse[${previousEdit}],${JSON.stringify(context)}`,
-				intention,
-			},
-			parent: state,
-		};
-	}
+	const intention = mintIntention();
+	const change = TestChange.mint(context, intention);
+	yield {
+		content: change.outputContext,
+		mostRecentEdit: {
+			changeset: tagChange(change, tagFromIntention(intention)),
+			description: JSON.stringify(intention),
+			intention,
+		},
+		parent: state,
+	};
 };
 
 describe("TestChange - Rebaser Axioms", () => {
-	describe.only("Exhaustive suite", () => {
-		runExhaustiveComposeRebaseSuite([{ content: [] }], generateChildStates, {
-			rebase: (change, base) => {
-				return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
+	describe("Exhaustive suite", () => {
+		runExhaustiveComposeRebaseSuite(
+			[{ content: [] }],
+			generateChildStates,
+			{
+				rebase: (change, base) => {
+					return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
+				},
+				compose: (changes) => {
+					return TestChange.compose(changes);
+				},
+				invert: (change) => {
+					return TestChange.invert(change.change);
+				},
+				rebaseComposed,
 			},
-			compose: (changes) => {
-				return TestChange.compose(changes);
-			},
-			invert: (change) => {
-				return TestChange.invert(change.change);
-			},
-			rebaseComposed,
-		});
+			{ numberOfEditsToRebase: 4, numberOfEditsToRebaseOver: 4 },
+		);
 	});
 });
