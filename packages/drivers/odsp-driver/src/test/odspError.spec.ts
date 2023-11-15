@@ -187,7 +187,6 @@ describe("Odsp Error", () => {
 		if (!isIThrottlingWarning(networkError)) {
 			assert.fail("networkError should be a throttlingError");
 		} else {
-			console.log(networkError);
 			assert(
 				networkError.message.includes("handler"),
 				"error message should include handler name",
