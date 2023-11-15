@@ -359,15 +359,15 @@ export class DirectoryFactory implements IChannelFactory {
  * purpose of ordering.
  */
 const seqCollectionComparator = (a: SeqNumCollection, b: SeqNumCollection) => {
-	if (a.seq >= 0) {
-		if (b.seq >= 0) {
+	if (isAcknowledgedOrDetached(a)) {
+		if (isAcknowledgedOrDetached(b)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return a.seq !== b.seq ? a.seq - b.seq : a.clientSeq! - b.clientSeq!;
 		} else {
 			return -1;
 		}
 	} else {
-		if (b.seq < 0) {
+		if (!isAcknowledgedOrDetached(b)) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			return a.seq !== b.seq ? a.seq - b.seq : a.clientSeq! - b.clientSeq!;
 		} else {
@@ -375,6 +375,10 @@ const seqCollectionComparator = (a: SeqNumCollection, b: SeqNumCollection) => {
 		}
 	}
 };
+
+function isAcknowledgedOrDetached(seqNumCollection: SeqNumCollection) {
+	return seqNumCollection.seq >= 0;
+}
 
 interface SeqNumCollection {
 	seq: number;
@@ -2281,7 +2285,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// don't need to register events because deleting never unregistered
 				this._subdirectories.set(op.subdirName as string, localOpMetadata.subDirectory);
 				// Restore the record in creation tracker
-				if (localOpMetadata.subDirectory.seqNumCollection.seq > 0) {
+				if (isAcknowledgedOrDetached(localOpMetadata.subDirectory.seqNumCollection)) {
 					this.ackedCreationSeqTracker.set(op.subdirName, {
 						...localOpMetadata.subDirectory.seqNumCollection,
 					});
@@ -2473,7 +2477,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				};
 				const subDirectory = this._subdirectories.get(op.subdirName);
 				// Clear the creation tracker record
-				// this.localCreationSeqTracker.delete(op.subdirName);
 				this.ackedCreationSeqTracker.delete(op.subdirName);
 				resetSubDirectoryTree(subDirectory);
 			}
@@ -2618,7 +2621,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			 * Store the sequnce numbers of newly created subdirectory to the proper creation tracker, based
 			 * on whether the creation behavior has been ack'd or not
 			 */
-			if (seqNumCollection.seq < 0) {
+			if (!isAcknowledgedOrDetached(seqNumCollection)) {
 				this.localCreationSeqTracker.set(subdirName, { ...seqNumCollection });
 			} else {
 				this.ackedCreationSeqTracker.set(subdirName, { ...seqNumCollection });
