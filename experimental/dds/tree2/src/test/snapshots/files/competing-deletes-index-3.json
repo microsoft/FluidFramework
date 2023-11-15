@@ -267,70 +267,73 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
-                    {
-                      "version": 1,
-                      "identifiers": [],
-                      "shapes": [
-                        {
-                          "c": {
-                            "extraFields": 1,
-                            "fields": []
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      "rootFieldKey",
+                      {
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
                           }
-                        },
-                        {
-                          "a": 0
-                        }
-                      ],
-                      "data": [
-                        1,
-                        [
-                          "com.fluidframework.leaf.number",
-                          true,
-                          0,
-                          [],
-                          "com.fluidframework.leaf.number",
-                          true,
+                        ],
+                        "data": [
                           1,
-                          [],
-                          "com.fluidframework.leaf.number",
-                          true,
-                          2,
-                          []
+                          [
+                            "com.fluidframework.leaf.number",
+                            true,
+                            0,
+                            [],
+                            "com.fluidframework.leaf.number",
+                            true,
+                            1,
+                            [],
+                            "com.fluidframework.leaf.number",
+                            true,
+                            2,
+                            []
+                          ]
                         ]
-                      ]
-                    }
-                  ],
-                  [
-                    "repair-4",
-                    {
-                      "version": 1,
-                      "identifiers": [],
-                      "shapes": [
-                        {
-                          "c": {
-                            "extraFields": 1,
-                            "fields": []
+                      }
+                    ],
+                    [
+                      "repair-4",
+                      {
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
                           }
-                        },
-                        {
-                          "a": 0
-                        }
-                      ],
-                      "data": [
-                        1,
-                        [
-                          "com.fluidframework.leaf.number",
-                          true,
-                          3,
-                          []
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "com.fluidframework.leaf.number",
+                            true,
+                            3,
+                            []
+                          ]
                         ]
-                      ]
-                    }
+                      }
+                    ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }
