@@ -54,9 +54,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"EnumDeclaration_OdspErrorType": {
-				"forwardCompat": false
-			},
 			"RemovedEnumDeclaration_OdspErrorType": {
 				"forwardCompat": false,
 				"backCompat": false
