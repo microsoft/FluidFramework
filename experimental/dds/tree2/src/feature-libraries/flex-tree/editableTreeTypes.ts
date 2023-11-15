@@ -244,6 +244,8 @@ export interface FlexTreeField extends FlexTreeEntity<TreeFieldSchema> {
  * @alpha
  */
 export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends FlexTreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * The number of elements in the map.
 	 *
@@ -405,6 +407,8 @@ export interface FlexTreeMapNode<in out TSchema extends MapNodeSchema> extends F
  * @alpha
  */
 export interface FlexTreeFieldNode<in out TSchema extends FieldNodeSchema> extends FlexTreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * The content this field node wraps.
 	 * @remarks
@@ -462,6 +466,8 @@ export interface FlexTreeObjectNode extends FlexTreeNode {
  * @alpha
  */
 export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
+	readonly schema: TSchema;
+
 	/**
 	 * Value stored on this node.
 	 */

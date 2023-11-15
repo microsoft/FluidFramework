@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { leaf } from "../domains";
 import {
 	Any,
 	FieldKind,
@@ -30,6 +29,7 @@ import {
 	TreeNodeSchemaBase,
 } from "../feature-libraries";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
+import { leaf } from "./leafDomain";
 
 /**
  * A {@link ObjectNodeSchema} that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link SharedTreeObject}s.
