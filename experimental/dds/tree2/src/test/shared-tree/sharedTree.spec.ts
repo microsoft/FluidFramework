@@ -811,17 +811,17 @@ describe("SharedTree", () => {
 						allowedSchemaModifications: AllowedUpdateType.None,
 						initialTree: [["a"]] as any,
 					} satisfies InitializeAndSchematizeConfiguration;
-					const tree1 = provider.trees[0].schematizeInternal(content);
+					const tree1 = provider.trees[0].schematize(content);
 					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
-						createTestUndoRedoStacks(tree1.checkout.events);
-					const tree2 = provider.trees[1].schematizeInternal(content);
+						createTestUndoRedoStacks(tree1.events);
+					const tree2 = provider.trees[1].schematize(content);
 					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
-						createTestUndoRedoStacks(tree2.checkout.events);
+						createTestUndoRedoStacks(tree2.events);
 
 					provider.processMessages();
 
 					// Validate insertion
-					validateTreeContent(tree2.checkout, content);
+					validateTreeContent(tree2.view.checkout, content);
 
 					// edit subtree
 					tree2.root[0].insertAtEnd(["b"]);
