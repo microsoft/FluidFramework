@@ -333,24 +333,24 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
  *
  * Only ever targets empty cells.
  *
- * As a matter of normalization, only use a transient mark when the attach is a new insert or a move destination.
- * In all other cases (the attach would be a revive), we rely on the implicit reviving semantics of the detach and
- * represent that detach on its own (i.e., not wrapped in a transient).
+ * As a matter of normalization, only use an AttachAndDetach mark when the attach is a new insert or a move
+ * destination. In all other cases (the attach would be a revive), we rely on the implicit reviving semantics of the
+ * detach and represent that detach on its own (i.e., not wrapped in an AttachAndDetach).
  */
-export interface TransientEffect {
-	type: "Transient";
+export interface AttachAndDetach {
+	type: "AttachAndDetach";
 	attach: Attach;
 	detach: Detach;
 }
 
-export const TransientEffect = Type.Object({
-	type: Type.Literal("Transient"),
+export const AttachAndDetach = Type.Object({
+	type: Type.Literal("AttachAndDetach"),
 	attach: Attach,
 	detach: Detach,
 });
 
-export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect;
-export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);
+export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | AttachAndDetach;
+export const MarkEffect = Type.Union([NoopMark, Attach, Detach, AttachAndDetach]);
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
 export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(

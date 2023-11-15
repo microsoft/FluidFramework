@@ -32,7 +32,7 @@ import {
 	isDetach,
 	isImpactful,
 	isReattach,
-	normalizeTransient,
+	normalizeCellRename,
 	splitMark,
 	withNodeChange,
 } from "./utils";
@@ -192,7 +192,7 @@ function invertMark<TNodeChange>(
 			let effect: MarkEffect = moveIn;
 			if (areInputCellsEmpty(mark)) {
 				effect = {
-					type: "Transient",
+					type: "AttachAndDetach",
 					attach: moveIn,
 					detach: {
 						type: "Delete",
@@ -220,7 +220,7 @@ function invertMark<TNodeChange>(
 
 			return applyMovedChanges(invertedMark, revision, crossFieldManager);
 		}
-		case "Transient": {
+		case "AttachAndDetach": {
 			// Which should get the child change? Don't want to invert twice
 			const attach: Mark<TNodeChange> = {
 				count: mark.count,
@@ -285,7 +285,7 @@ function invertMark<TNodeChange>(
 				assert(isDetach(attachInverse), "Inverse of an attach should be a detach");
 
 				const inverted: Mark<TNodeChange> = {
-					type: "Transient",
+					type: "AttachAndDetach",
 					count: attachInverse.count,
 					attach: extractMarkEffect(detachInverseCurr),
 					detach: extractMarkEffect(attachInverse),
@@ -304,7 +304,7 @@ function invertMark<TNodeChange>(
 					inverted.changes = attachInverse.changes;
 				}
 
-				inverses.push(normalizeTransient(inverted));
+				inverses.push(normalizeCellRename(inverted));
 			}
 
 			return inverses;

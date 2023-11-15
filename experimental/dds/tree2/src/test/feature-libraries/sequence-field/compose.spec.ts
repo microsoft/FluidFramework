@@ -109,7 +109,7 @@ describe("SequenceField - Compose", () => {
 				{ changes, cellId: { revision: tag1, localId: brand(4) } },
 			),
 			Mark.returnTo(1, { localId: brand(5) }, { revision: tag1, localId: brand(5) }),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert(1, { localId: brand(6) }),
 				Mark.delete(1, { localId: brand(0) }),
 				{ changes },
@@ -159,12 +159,12 @@ describe("SequenceField - Compose", () => {
 		);
 		const actual = compose([insert, del, modify], revInfos);
 		const expected = [
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert(node1, { revision: tag1, localId: brand(0) }),
 				Mark.delete(1, brand(1), { revision: tag2 }),
 				{ changes },
 			),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert(node2, { revision: tag1, localId: brand(1) }),
 				Mark.delete(1, brand(2), { revision: tag2 }),
 			),
@@ -196,7 +196,7 @@ describe("SequenceField - Compose", () => {
 		};
 		const changes = TestChange.mint([], 42);
 		const insert = [
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert(1, brand(0), { revision: tag1 }),
 				Mark.delete(1, brand(1), { revision: tag2 }),
 			),
@@ -299,7 +299,7 @@ describe("SequenceField - Compose", () => {
 
 	it("Transient insert ○ transient revive", () => {
 		const insert = tagChange(
-			[Mark.transient(Mark.insert(1, brand(0)), Mark.delete(1, brand(1)))],
+			[Mark.attachAndDetach(Mark.insert(1, brand(0)), Mark.delete(1, brand(1)))],
 			tag1,
 		);
 
@@ -310,7 +310,7 @@ describe("SequenceField - Compose", () => {
 
 		const composed = compose([insert, revive]);
 		const expected = [
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert(1, { revision: tag1, localId: brand(0) }, { revision: tag1 }),
 				Mark.delete(1, brand(0), { revision: tag2 }),
 			),
@@ -325,7 +325,7 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([insert, deletion]);
 		const expected = [
 			Mark.insert([{ type, value: 1 }], { localId: brand(1), revision: tag1 }),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag1 }),
 				Mark.delete(1, brand(0), { revision: tag2 }),
 			),
@@ -341,7 +341,7 @@ describe("SequenceField - Compose", () => {
 		const expected = [
 			Mark.moveIn(1, brand(0)),
 			Mark.insert([{ type, value: 1 }], { localId: brand(1) }),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert([{ type, value: 2 }], { localId: brand(2) }),
 				Mark.moveOut(1, brand(0)),
 			),
@@ -378,11 +378,11 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([makeAnonChange(insert), deletion], revInfos);
 		const expected = [
 			Mark.insert([{ type, value: 1 }], { localId: brand(1), revision: tag1 }),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag1 }),
 				Mark.delete(1, brand(0), { revision: tag2 }),
 			),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert(
 					[
 						{ type, value: 3 },
@@ -392,7 +392,7 @@ describe("SequenceField - Compose", () => {
 				),
 				Mark.delete(2, brand(1), { revision: tag2 }),
 			),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert([{ type, value: 5 }], { localId: brand(5), revision: tag1 }),
 				Mark.delete(1, brand(3), { revision: tag2 }),
 			),
@@ -431,11 +431,11 @@ describe("SequenceField - Compose", () => {
 		const expected = [
 			Mark.moveIn(4, brand(0)),
 			Mark.insert([{ type, value: 1 }], { localId: brand(1), revision: tag1 }),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag1 }),
 				Mark.moveOut(1, brand(0)),
 			),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert(
 					[
 						{ type, value: 3 },
@@ -445,7 +445,7 @@ describe("SequenceField - Compose", () => {
 				),
 				Mark.moveOut(2, brand(1)),
 			),
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.insert([{ type, value: 5 }], { localId: brand(5), revision: tag1 }),
 				Mark.moveOut(1, brand(3)),
 			),
@@ -782,7 +782,7 @@ describe("SequenceField - Compose", () => {
 			{ count: 1 },
 			Mark.moveOut(1, brand(0)),
 			{ count: 2 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
 		];
 		const actual = shallowCompose([makeAnonChange(move), makeAnonChange(deletion)]);
 		assert.deepEqual(actual, expected);
@@ -798,7 +798,7 @@ describe("SequenceField - Compose", () => {
 		// We expect vestigial moves to exist to record that the cell's ID was changed.
 		const expected = [
 			{ count: 4 },
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.returnTo(1, { revision: tag3, localId: brand(0) }, cellId1),
 				Mark.returnFrom(1, { revision: tag4, localId: brand(0) }),
 			),
@@ -839,7 +839,7 @@ describe("SequenceField - Compose", () => {
 
 		const composed = compose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		const expected = [
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
 				Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
 			),
@@ -872,7 +872,7 @@ describe("SequenceField - Compose", () => {
 				finalEndpoint: { revision: undefined, localId: brand(1) },
 			}),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1), { finalEndpoint: { revision: undefined, localId: brand(0) } }),
 		];
@@ -886,7 +886,7 @@ describe("SequenceField - Compose", () => {
 		const expected = [
 			Mark.moveIn(1, brand(1), { finalEndpoint: { revision: undefined, localId: brand(0) } }),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
 			{ count: 1 },
 			Mark.moveOut(1, brand(0), {
 				finalEndpoint: { revision: undefined, localId: brand(1) },
@@ -900,7 +900,7 @@ describe("SequenceField - Compose", () => {
 		const move2 = Change.move(0, 1, 2);
 		const actual = shallowCompose([tagChange(move1, tag1), tagChange(move2, tag2)]);
 		const expected = [
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
 				Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
 			),
@@ -943,7 +943,7 @@ describe("SequenceField - Compose", () => {
 				},
 			),
 			{ count: 1 },
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
 				Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
 			),
@@ -1152,12 +1152,12 @@ describe("SequenceField - Compose", () => {
 		const composed = shallowCompose([move1, move2, return1]);
 		const expected = [
 			{ count: 2 },
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.moveIn(1, { revision: tag1, localId: brand(0) }),
 				Mark.moveOut(1, { revision: tag2, localId: brand(0) }),
 			),
 			{ count: 1 },
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.moveIn(1, { revision: tag2, localId: brand(0) }),
 				Mark.returnFrom(1, { revision: tag3, localId: brand(0) }),
 			),

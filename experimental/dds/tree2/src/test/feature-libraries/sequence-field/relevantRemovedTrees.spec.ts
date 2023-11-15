@@ -99,7 +99,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("a tree being transiently inserted", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.delete(1, atomId)),
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId)),
 			];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
@@ -107,7 +107,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("a tree with child changes being transiently inserted", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.delete(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId), {
 					changes: childChange,
 				}),
 			];
@@ -117,7 +117,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("a tree being transiently inserted and moved out", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.moveOut(1, atomId)),
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId)),
 			];
 			const actual = SF.relevantRemovedTrees(input, noTreeDelegate);
 			const array = Array.from(actual);
@@ -125,7 +125,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("a tree with child changes being transiently inserted and moved out", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
 					changes: childChange,
 				}),
 			];
@@ -223,7 +223,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("relevant trees from nested changes under a tree being transiently inserted", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.delete(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.delete(1, atomId), {
 					changes: childChange,
 				}),
 			];
@@ -241,7 +241,7 @@ describe("SequenceField - relevantRemovedTrees", () => {
 		});
 		it("relevant trees from nested changes under a tree being transiently inserted and moved out", () => {
 			const input: TestChangeset = [
-				Mark.transient(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
+				Mark.attachAndDetach(Mark.insert(1, atomId), Mark.moveOut(1, atomId), {
 					changes: childChange,
 				}),
 			];

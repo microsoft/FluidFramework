@@ -16,7 +16,7 @@ import {
 	getInputCellId,
 	getOutputCellId,
 	isNewAttach,
-	isTransientEffect,
+	isAttachAndDetachEffect,
 } from "./utils";
 import { isMoveDestination, isMoveSource } from "./moveEffectTable";
 
@@ -52,17 +52,23 @@ export function sequenceFieldToDelta<TNodeChange>(
 			// Since each cell is associated with exactly one node,
 			// the cell starting end ending populated means the cell content has not changed.
 			local.push(deltaMark);
-		} else if (isTransientEffect(mark)) {
-			assert(inputCellId !== undefined, "Transient mark should have defined input cell ID");
+		} else if (isAttachAndDetachEffect(mark)) {
+			assert(
+				inputCellId !== undefined,
+				"AttachAndDetach mark should have defined input cell ID",
+			);
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
 			if (isMoveDestination(mark.attach) && isMoveSource(mark.detach)) {
-				assert(mark.changes === undefined, "Transient moves should not have changes");
+				assert(mark.changes === undefined, "AttachAndDetach moves should not have changes");
 				continue;
 			}
 
 			const outputId = getOutputCellId(mark, revision, undefined);
-			assert(outputId !== undefined, "Transient mark should have defined output cell ID");
+			assert(
+				outputId !== undefined,
+				"AttachAndDetach mark should have defined output cell ID",
+			);
 			const oldId = nodeIdFromChangeAtom(
 				isMoveDestination(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
 			);

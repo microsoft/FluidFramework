@@ -9,7 +9,7 @@ import {
 	Detach,
 	Mark,
 	CellMark,
-	TransientEffect,
+	AttachAndDetach,
 	MoveIn,
 	MoveSource,
 } from "./format";
@@ -20,8 +20,9 @@ export interface DetachedCellMark extends HasMarkFields {
 	cellId: CellId;
 }
 
-export type EmptyOutputCellMark<TNodeChange> = CellMark<Detach | TransientEffect, TNodeChange>;
+export type EmptyOutputCellMark<TNodeChange> = CellMark<Detach | AttachAndDetach, TNodeChange>;
 
-export type DetachOfRemovedNodes = Detach & { cellId: CellId };
 export type MoveDestination = MoveIn;
 export type MoveMarkEffect = MoveSource | MoveDestination;
+export type DetachOfRemovedNodes = Detach & { cellId: CellId };
+export type CellRename = AttachAndDetach | DetachOfRemovedNodes;

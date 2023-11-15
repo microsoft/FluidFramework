@@ -175,7 +175,7 @@ describe("SequenceField - Invert", () => {
 
 	it("insert & delete => revive & delete", () => {
 		const transient = [
-			Mark.transient(Mark.insert(1, brand(1)), Mark.delete(1, brand(0)), {
+			Mark.attachAndDetach(Mark.insert(1, brand(1)), Mark.delete(1, brand(0)), {
 				changes: childChange1,
 			}),
 		];
@@ -193,7 +193,7 @@ describe("SequenceField - Invert", () => {
 
 	it("Insert and move => move and delete", () => {
 		const insertAndMove = [
-			Mark.transient(Mark.insert(1, brand(0)), Mark.moveOut(1, brand(1)), {
+			Mark.attachAndDetach(Mark.insert(1, brand(0)), Mark.moveOut(1, brand(1)), {
 				changes: childChange1,
 			}),
 			{ count: 1 },
@@ -202,7 +202,7 @@ describe("SequenceField - Invert", () => {
 
 		const inverse = invert(insertAndMove);
 		const expected = [
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 				Mark.delete(1, brand(0)),
 			),
@@ -217,7 +217,7 @@ describe("SequenceField - Invert", () => {
 		const moveAndDelete = [
 			Mark.moveOut(1, brand(0), { changes: childChange1 }),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
 		];
 
 		const inverse = invert(moveAndDelete);
@@ -240,7 +240,7 @@ describe("SequenceField - Invert", () => {
 				finalEndpoint: { localId: brand(1) },
 			}),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1), { finalEndpoint: { localId: brand(0) } }),
 		];
@@ -254,7 +254,7 @@ describe("SequenceField - Invert", () => {
 				{ finalEndpoint: { localId: brand(1) } },
 			),
 			{ count: 1 },
-			Mark.transient(
+			Mark.attachAndDetach(
 				Mark.returnTo(1, brand(1), { revision: tag1, localId: brand(1) }),
 				Mark.returnFrom(1, brand(0)),
 			),

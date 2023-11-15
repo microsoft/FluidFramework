@@ -39,7 +39,7 @@ import {
 	HasMarkFields,
 	CellId,
 	CellMark,
-	TransientEffect,
+	AttachAndDetach,
 	MarkEffect,
 	InverseAttachFields,
 } from "./format";
@@ -51,6 +51,7 @@ import {
 	MoveDestination,
 	MoveMarkEffect,
 	DetachOfRemovedNodes,
+	CellRename,
 } from "./helperTypes";
 
 export function isEmpty<T>(change: Changeset<T>): boolean {
@@ -70,7 +71,7 @@ export function isNewAttachEffect(
 		(isAttach(effect) &&
 			cellId !== undefined &&
 			(effect.revision ?? revision) === (cellId.revision ?? revision)) ||
-		(isTransientEffect(effect) && isNewAttachEffect(effect.attach, cellId, revision))
+		(isAttachAndDetachEffect(effect) && isNewAttachEffect(effect.attach, cellId, revision))
 	);
 }
 
@@ -118,7 +119,7 @@ export function getInputCellId(
 	}
 
 	let markRevision: RevisionTag | undefined;
-	if (isTransientEffect(mark)) {
+	if (isAttachAndDetachEffect(mark)) {
 		markRevision = mark.attach.revision;
 	} else {
 		assert(isAttach(mark), "Only attach marks should have undefined revision in cell ID");
@@ -140,7 +141,7 @@ export function getOutputCellId(
 		return getDetachOutputId(mark, revision, metadata);
 	} else if (markFillsCells(mark)) {
 		return undefined;
-	} else if (isTransientEffect(mark)) {
+	} else if (isAttachAndDetachEffect(mark)) {
 		return getDetachOutputId(mark.detach, revision, metadata);
 	}
 
@@ -176,16 +177,16 @@ function getOverrideDetachId(mark: Detach): ChangeAtomId | undefined {
 /**
  * Preserves the semantics of the given `mark` but repackages it into a `DetachOfRemovedNodes` when possible.
  */
-export function normalizeTransient<TNodeChange>(
-	mark: CellMark<TransientEffect, TNodeChange>,
+export function normalizeCellRename<TNodeChange>(
+	mark: CellMark<AttachAndDetach, TNodeChange>,
 	nodeChange?: TNodeChange,
-): CellMark<TransientEffect | DetachOfRemovedNodes, TNodeChange> {
-	assert(mark.cellId !== undefined, "Transient marks should have a cell ID");
+): CellMark<AttachAndDetach | DetachOfRemovedNodes, TNodeChange> {
+	assert(mark.cellId !== undefined, "AttachAndDetach marks should have a cell ID");
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
 		return withNodeChange(mark, nodeChange);
 	}
 	// Normalization: when the attach is a revive, we rely on the implicit reviving semantics of the
-	// detach instead of using an explicit revive effect in a transient.
+	// detach instead of using an explicit revive effect in an AttachAndDetach mark.
 	return withNodeChange(
 		{
 			...mark.detach,
@@ -197,17 +198,17 @@ export function normalizeTransient<TNodeChange>(
 }
 
 /**
- * Preserves the semantics of the given `mark` but repackages it into a `Transient` mark if it is not already one.
+ * Preserves the semantics of the given `mark` but repackages it into an `AttachAndDetach` mark if it is not already one.
  */
-export function asTransient<TNodeChange>(
-	mark: CellMark<TransientEffect | DetachOfRemovedNodes, TNodeChange>,
-): CellMark<TransientEffect, TNodeChange> {
-	if (mark.type === "Transient") {
+export function asAttachAndDetach<TNodeChange>(
+	mark: CellMark<CellRename, TNodeChange>,
+): CellMark<AttachAndDetach, TNodeChange> {
+	if (mark.type === "AttachAndDetach") {
 		return mark;
 	}
 	const { cellId, count, changes, revision, ...effect } = mark;
-	const transient: CellMark<TransientEffect | Detach, TNodeChange> = {
-		type: "Transient",
+	const attachAndDetach: CellMark<AttachAndDetach | Detach, TNodeChange> = {
+		type: "AttachAndDetach",
 		count,
 		cellId,
 		attach: {
@@ -217,13 +218,13 @@ export function asTransient<TNodeChange>(
 		detach: effect,
 	};
 	if (changes !== undefined) {
-		transient.changes = changes;
+		attachAndDetach.changes = changes;
 	}
 	if (revision !== undefined) {
-		transient.attach.revision = revision;
-		transient.detach.revision = revision;
+		attachAndDetach.attach.revision = revision;
+		attachAndDetach.detach.revision = revision;
 	}
-	return transient;
+	return attachAndDetach;
 }
 
 export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TMark): TMark {
@@ -237,7 +238,7 @@ export function cloneMark<TMark extends Mark<TNodeChange>, TNodeChange>(mark: TM
 
 export function cloneMarkEffect<TEffect extends MarkEffect>(effect: TEffect): TEffect {
 	const clone = { ...effect };
-	if (clone.type === "Transient") {
+	if (clone.type === "AttachAndDetach") {
 		clone.attach = cloneMarkEffect(clone.attach);
 		clone.detach = cloneMarkEffect(clone.detach);
 	}
@@ -313,14 +314,18 @@ export function markHasCellEffect(mark: Mark<unknown>): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
-export function isTransientEffect(effect: MarkEffect): effect is TransientEffect {
-	return effect.type === "Transient";
+export function isAttachAndDetachEffect(effect: MarkEffect): effect is AttachAndDetach {
+	return effect.type === "AttachAndDetach";
 }
 
 export function isDetachOfRemovedNodes(
 	mark: Mark<unknown>,
 ): mark is CellMark<DetachOfRemovedNodes, unknown> {
 	return isDetach(mark) && mark.cellId !== undefined;
+}
+
+export function isCellRename(mark: Mark<unknown>): mark is CellMark<CellRename, unknown> {
+	return isAttachAndDetachEffect(mark) || isDetachOfRemovedNodes(mark);
 }
 
 export function areInputCellsEmpty<T>(mark: Mark<T>): mark is EmptyInputCellMark<T> {
@@ -336,7 +341,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 		case "Delete":
 		case "MoveOut":
 		case "ReturnFrom":
-		case "Transient":
+		case "AttachAndDetach":
 			return true;
 		case "MoveIn":
 		case "Insert":
@@ -368,7 +373,7 @@ export function isImpactful(
 			assert(outputId !== undefined, "Delete marks must have an output cell ID");
 			return !areEqualChangeAtomIds(mark.cellId, outputId);
 		}
-		case "Transient":
+		case "AttachAndDetach":
 		case "MoveOut":
 		case "ReturnFrom":
 			return true;
@@ -514,10 +519,10 @@ function tryMergeEffects(
 		return lhs;
 	}
 
-	if (rhs.type === "Transient") {
-		const lhsTransient = lhs as TransientEffect;
-		const attach = tryMergeEffects(lhsTransient.attach, rhs.attach, lhsCount);
-		const detach = tryMergeEffects(lhsTransient.detach, rhs.detach, lhsCount);
+	if (rhs.type === "AttachAndDetach") {
+		const lhsAttachAndDetach = lhs as AttachAndDetach;
+		const attach = tryMergeEffects(lhsAttachAndDetach.attach, rhs.attach, lhsCount);
+		const detach = tryMergeEffects(lhsAttachAndDetach.detach, rhs.detach, lhsCount);
 		if (attach === undefined || detach === undefined) {
 			return undefined;
 		}
@@ -526,7 +531,7 @@ function tryMergeEffects(
 			isAttach(attach) && isDetach(detach),
 			"Merged marks should be same type as input marks",
 		);
-		return { ...lhsTransient, attach, detach };
+		return { ...lhsAttachAndDetach, attach, detach };
 	}
 
 	if ((lhs as HasRevisionTag).revision !== rhs.revision) {
@@ -1042,7 +1047,7 @@ function splitMarkEffect<TEffect extends MarkEffect>(
 			}
 			return [effect, effect2];
 		}
-		case "Transient": {
+		case "AttachAndDetach": {
 			const [attach1, attach2] = splitMarkEffect(effect.attach, length);
 			const [detach1, detach2] = splitMarkEffect(effect.detach, length);
 			const effect1 = {
@@ -1142,7 +1147,7 @@ export function addRevision(effect: MarkEffect, revision: RevisionTag | undefine
 		return;
 	}
 
-	if (effect.type === "Transient") {
+	if (effect.type === "AttachAndDetach") {
 		addRevision(effect.attach, revision);
 		addRevision(effect.detach, revision);
 		return;

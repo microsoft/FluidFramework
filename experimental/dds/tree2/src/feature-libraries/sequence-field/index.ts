@@ -27,7 +27,7 @@ export {
 	HasLineage,
 	IdRange,
 	CellMark,
-	TransientEffect,
+	AttachAndDetach,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,

@@ -48,7 +48,7 @@ export const cases: {
 	return: createReturnChangeset(1, 3, 0, { revision: tag, localId: brand(0) }),
 	transient_insert: [
 		{ count: 1 },
-		createTransientMark(createInsertMark(2, brand(1)), createDeleteMark(2, brand(2))),
+		createAttachAndDetachMark(createInsertMark(2, brand(1)), createDeleteMark(2, brand(2))),
 	],
 };
 
@@ -352,30 +352,33 @@ function createModifyMark<TChange>(
 	return mark;
 }
 
-function createTransientMark<TChange>(
+function createAttachAndDetachMark<TChange>(
 	attach: SF.CellMark<SF.Attach, TChange>,
 	detach: SF.CellMark<SF.Detach, TChange>,
-	overrides?: Partial<SF.CellMark<SF.TransientEffect, TChange>>,
-): SF.CellMark<SF.TransientEffect, TChange> {
+	overrides?: Partial<SF.CellMark<SF.AttachAndDetach, TChange>>,
+): SF.CellMark<SF.AttachAndDetach, TChange> {
 	assert(attach.count === detach.count, "Attach and detach must have the same count");
-	assert(attach.cellId !== undefined, "Transient attach should apply to an empty cell");
-	assert(detach.cellId === undefined, "Transient detach should apply to an populated cell");
+	assert(attach.cellId !== undefined, "AttachAndDetach attach should apply to an empty cell");
+	assert(detach.cellId === undefined, "AttachAndDetach detach should apply to an populated cell");
 	assert(
 		attach.changes === undefined && detach.changes === undefined,
 		"Attach and detach must not carry changes",
 	);
-	// As a matter of normalization, we only use transient marks to represent cases where the detach's
+	// As a matter of normalization, we only use AttachAndDetach marks to represent cases where the detach's
 	// implicit revival semantics would not be a sufficient representation.
-	assert(attach.type === "MoveIn" || attach.content !== undefined, "Unnecessary transient mark");
-	const transient: SF.CellMark<SF.TransientEffect, TChange> = {
-		type: "Transient",
+	assert(
+		attach.type === "MoveIn" || attach.content !== undefined,
+		"Unnecessary AttachAndDetach mark",
+	);
+	const mark: SF.CellMark<SF.AttachAndDetach, TChange> = {
+		type: "AttachAndDetach",
 		count: attach.count,
 		cellId: attach.cellId,
 		attach: SF.extractMarkEffect(attach),
 		detach: SF.extractMarkEffect(detach),
 		...overrides,
 	};
-	return transient;
+	return mark;
 }
 
 function overrideCellId<TMark extends SF.HasMarkFields<unknown>>(
@@ -397,7 +400,7 @@ export const MarkMaker = {
 	moveIn: createMoveInMark,
 	returnFrom: createReturnFromMark,
 	returnTo: createReturnToMark,
-	transient: createTransientMark,
+	attachAndDetach: createAttachAndDetachMark,
 };
 
 export const ChangeMaker = {

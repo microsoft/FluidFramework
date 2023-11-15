@@ -40,7 +40,6 @@ import {
 	withNodeChange,
 	withRevision,
 	markEmptiesCells,
-	isTransientEffect,
 	areOverlappingIdRanges,
 	isNewAttach,
 	getInputCellId,
@@ -51,9 +50,9 @@ import {
 	getEndpoint,
 	areEqualCellIds,
 	addRevision,
-	normalizeTransient,
-	isDetachOfRemovedNodes,
-	asTransient,
+	normalizeCellRename,
+	asAttachAndDetach,
+	isCellRename,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
 
@@ -165,11 +164,14 @@ function composeMarks<TNodeChange>(
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
-	if (isTransientEffect(newMark) || isDetachOfRemovedNodes(newMark)) {
-		const newTransient = asTransient(newMark);
-		const newDetachRevision = newTransient.detach.revision ?? newRev;
+	if (isCellRename(newMark)) {
+		const newAttachAndDetach = asAttachAndDetach(newMark);
+		const newDetachRevision = newAttachAndDetach.detach.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
-			if (isMoveDestination(newTransient.attach) && isMoveSource(newTransient.detach)) {
+			if (
+				isMoveDestination(newAttachAndDetach.attach) &&
+				isMoveSource(newAttachAndDetach.detach)
+			) {
 				assert(isMoveSource(baseMark), "Unexpected mark type");
 
 				// The base changeset and new changeset both move these nodes.
@@ -188,39 +190,39 @@ function composeMarks<TNodeChange>(
 					CrossFieldTarget.Destination,
 					getEndpoint(baseMark, undefined),
 					baseMark.count,
-					{ revision: newDetachRevision, localId: newTransient.detach.id },
+					{ revision: newDetachRevision, localId: newAttachAndDetach.detach.id },
 				);
 			}
 
-			// baseMark is a detach which cancels with the attach portion of the transient,
-			// so we are just left with the detach portion of the transient.
+			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
+			// so we are just left with the detach portion of the AttachAndDetach.
 			return withRevision(
-				withNodeChange({ ...newTransient.detach, count: baseMark.count }, nodeChange),
+				withNodeChange({ ...newAttachAndDetach.detach, count: baseMark.count }, nodeChange),
 				newDetachRevision,
 			);
 		}
 
-		if (isTransientEffect(baseMark) || isDetachOfRemovedNodes(baseMark)) {
-			const baseTransient = asTransient(baseMark);
-			const newOutputId = getOutputCellId(newTransient, newRev, revisionMetadata);
-			if (areEqualCellIds(newOutputId, baseTransient.cellId)) {
+		if (isCellRename(baseMark)) {
+			const baseAttachAndDetach = asAttachAndDetach(baseMark);
+			const newOutputId = getOutputCellId(newAttachAndDetach, newRev, revisionMetadata);
+			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
 				return withNodeChange(
-					{ count: baseTransient.count, cellId: baseTransient.cellId },
+					{ count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId },
 					nodeChange,
 				);
 			}
 
 			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
-			const originalAttach = { ...baseTransient.attach };
-			const finalDetach = { ...newTransient.detach };
+			const originalAttach = { ...baseAttachAndDetach.attach };
+			const finalDetach = { ...newAttachAndDetach.detach };
 			const detachRevision = finalDetach.revision ?? newRev;
 			if (detachRevision !== undefined) {
 				finalDetach.revision = detachRevision;
 			}
 
-			return normalizeTransient(
+			return normalizeCellRename(
 				{
-					type: "Transient",
+					type: "AttachAndDetach",
 					cellId: baseMark.cellId,
 					count: baseMark.count,
 					attach: originalAttach,
@@ -230,32 +232,38 @@ function composeMarks<TNodeChange>(
 			);
 		}
 
-		return withRevision(normalizeTransient(newTransient, nodeChange), newRev);
+		return withRevision(normalizeCellRename(newAttachAndDetach, nodeChange), newRev);
 	}
-	if (isTransientEffect(baseMark) || isDetachOfRemovedNodes(baseMark)) {
-		const baseTransient = asTransient(baseMark);
+	if (isCellRename(baseMark)) {
+		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
-			if (isMoveDestination(baseTransient.attach) && isMoveSource(baseTransient.detach)) {
+			if (
+				isMoveDestination(baseAttachAndDetach.attach) &&
+				isMoveSource(baseAttachAndDetach.detach)
+			) {
 				assert(isMoveDestination(newMark), "Unexpected mark type");
 				setEndpoint(
 					moveEffects,
 					CrossFieldTarget.Source,
 					getEndpoint(newMark, newRev),
-					baseTransient.count,
-					{ revision: baseTransient.attach.revision, localId: baseTransient.attach.id },
+					baseAttachAndDetach.count,
+					{
+						revision: baseAttachAndDetach.attach.revision,
+						localId: baseAttachAndDetach.attach.id,
+					},
 				);
 			}
 
 			const originalAttach = withRevision(
 				withNodeChange(
 					{
-						...baseTransient.attach,
-						cellId: baseTransient.cellId,
-						count: baseTransient.count,
+						...baseAttachAndDetach.attach,
+						cellId: baseAttachAndDetach.cellId,
+						count: baseAttachAndDetach.count,
 					},
 					nodeChange,
 				),
-				baseTransient.attach.revision,
+				baseAttachAndDetach.attach.revision,
 			);
 			return originalAttach;
 		} else {
@@ -321,7 +329,7 @@ function composeMarks<TNodeChange>(
 				finalSource,
 			);
 
-			// The `finalEndpoint` field of transient move effect pairs is not used,
+			// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
 			// so we remove it as a normalization.
 			delete attach.finalEndpoint;
 			delete detach.finalEndpoint;
@@ -331,9 +339,9 @@ function composeMarks<TNodeChange>(
 			// The output and input cell IDs are the same, so this mark has no effect.
 			return withNodeChange({ count: baseMark.count, cellId: baseMark.cellId }, nodeChange);
 		}
-		return normalizeTransient(
+		return normalizeCellRename(
 			{
-				type: "Transient",
+				type: "AttachAndDetach",
 				cellId: baseMark.cellId,
 				count: baseMark.count,
 				attach,

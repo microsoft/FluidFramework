@@ -345,7 +345,7 @@ describe("SequenceField - toDelta", () => {
 		// TODO: Should test revives and returns in addition to inserts and moves
 		it("insert & delete", () => {
 			const changeset = [
-				Mark.transient(Mark.insert(content2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.delete(2, brand(2))),
 			];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
@@ -358,7 +358,7 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move", () => {
 			const changeset = [
-				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
 				Mark.moveIn(2, brand(2)),
 			];
@@ -377,7 +377,7 @@ describe("SequenceField - toDelta", () => {
 			const changeset = [
 				Mark.moveOut(2, brand(0)),
 				{ count: 1 },
-				Mark.transient(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
 			];
 			const delta = toDelta(changeset);
 
@@ -391,9 +391,9 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move & delete", () => {
 			const changeset = [
-				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
-				Mark.transient(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
 			];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
@@ -413,8 +413,8 @@ describe("SequenceField - toDelta", () => {
 			const changeset = [
 				Mark.moveOut(2, brand(0), { finalEndpoint: { localId: brand(4) } }),
 				{ count: 1 },
-				Mark.transient(Mark.moveIn(2, brand(0)), Mark.moveOut(2, brand(2))),
-				Mark.transient(Mark.moveIn(2, brand(2)), Mark.moveOut(2, brand(4))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.moveOut(2, brand(4))),
 				{ count: 1 },
 				Mark.moveIn(2, brand(4), { finalEndpoint: { localId: brand(0) } }),
 			];

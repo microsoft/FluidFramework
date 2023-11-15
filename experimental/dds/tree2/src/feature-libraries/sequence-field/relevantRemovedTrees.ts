@@ -12,7 +12,7 @@ import {
 	isNewAttach,
 	isReattachEffect,
 	isDetachOfRemovedNodes,
-	isTransientEffect,
+	isAttachAndDetachEffect,
 } from "./utils";
 
 export type RemovedTreesFromTChild<TChild> = (child: TChild) => Iterable<Delta.DetachedNodeId>;
@@ -40,7 +40,7 @@ export function* relevantRemovedTrees<TChild>(
 
 function refersToRelevantRemovedTrees<TChild>(mark: Mark<TChild>): boolean {
 	if (mark.cellId !== undefined) {
-		const effect = isTransientEffect(mark) ? mark.attach : mark;
+		const effect = isAttachAndDetachEffect(mark) ? mark.attach : mark;
 		if (isInsert(effect) && isReattachEffect(effect, mark.cellId)) {
 			// This tree is being restored.
 			return true;

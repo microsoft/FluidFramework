@@ -669,7 +669,9 @@ describe("SequenceField - Rebase", () => {
 
 	it("rebasing over transient adds lineage", () => {
 		const insert = Change.insert(0, 1);
-		const transient = [Mark.transient(Mark.insert(2, brand(0)), Mark.delete(2, brand(2)))];
+		const transient = [
+			Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.delete(2, brand(2))),
+		];
 		const rebased = rebase(insert, transient);
 		const expected = [
 			Mark.insert(1, {
@@ -685,7 +687,7 @@ describe("SequenceField - Rebase", () => {
 		const moveAndDelete = [
 			Mark.moveOut(1, brand(0)),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
 		];
 
 		const del = Change.delete(0, 1);
@@ -707,7 +709,7 @@ describe("SequenceField - Rebase", () => {
 	// TODO: Enable this once BUG 6155 is fixed
 	it.skip("delete ↷ [move, delete] (reverse move direction)", () => {
 		const moveAndDelete = [
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
 			{ count: 1 },
 			Mark.moveOut(1, brand(0)),
 		];
@@ -753,7 +755,7 @@ describe("SequenceField - Rebase", () => {
 		const reviveMoveDelete = [
 			Mark.moveOut(1, brand(1), { cellId }),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(1)), Mark.delete(1, brand(2))),
 		];
 		const revive = [Mark.revive(1, cellId)];
 		const rebased = rebase(revive, reviveMoveDelete, tag2);
@@ -783,7 +785,7 @@ describe("SequenceField - Rebase", () => {
 				finalEndpoint: { localId: brand(1) },
 			}),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1), { finalEndpoint: { localId: brand(0) } }),
 		];
@@ -799,7 +801,7 @@ describe("SequenceField - Rebase", () => {
 				finalEndpoint: { localId: brand(1) },
 			}),
 			{ count: 1 },
-			Mark.transient(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
+			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.moveOut(1, brand(1))),
 			{ count: 1 },
 			Mark.moveIn(1, brand(1), {
 				finalEndpoint: { localId: brand(0) },

@@ -8,7 +8,7 @@ import { ChangeAtomId, RevisionTag } from "../../core";
 import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
 import { RangeQueryResult, brand } from "../../util";
 import { CellMark, Mark, MarkEffect, MoveId, MoveSource } from "./format";
-import { areEqualCellIds, cloneMark, isTransientEffect, splitMark } from "./utils";
+import { areEqualCellIds, cloneMark, isAttachAndDetachEffect, splitMark } from "./utils";
 import { MoveDestination, MoveMarkEffect } from "./helperTypes";
 
 export type MoveEffectTable<T> = CrossFieldManager<MoveEffect<T>>;
@@ -228,7 +228,7 @@ export function applyMoveEffectsToMark<T>(
 	consumeEffect: boolean,
 	composeChildren?: (a: T | undefined, b: T | undefined) => T | undefined,
 ): Mark<T>[] {
-	if (isTransientEffect(mark)) {
+	if (isAttachAndDetachEffect(mark)) {
 		if (isMoveDestination(mark.attach)) {
 			if (isMoveSource(mark.detach)) {
 				// Move effects should not be applied to intermediate move locations.
