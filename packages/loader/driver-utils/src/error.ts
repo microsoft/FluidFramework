@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
 import {
+	// eslint-disable-next-line import/no-deprecated
 	DriverErrorType,
 	DriverErrorTypes,
 	IDriverErrorBase,
