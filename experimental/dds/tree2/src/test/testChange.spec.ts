@@ -103,12 +103,7 @@ describe("TestChange", () => {
 	});
 });
 
-interface TestChangeContent {
-	inputContext: number[];
-	value: number;
-}
-
-type TestChangeTestState = FieldStateTree<TestChangeContent, TestChange>;
+type TestChangeTestState = FieldStateTree<number[], TestChange>;
 
 function rebaseComposed(
 	metadata: RevisionMetadataSource,
@@ -127,57 +122,54 @@ function rebaseComposed(
 /**
  * See {@link ChildStateGenerator}
  */
-const generateChildStates: ChildStateGenerator<TestChangeContent, TestChange> = function* (
+const generateChildStates: ChildStateGenerator<number[], TestChange> = function* (
 	state: TestChangeTestState,
 	tagFromIntention: (intention: number) => RevisionTag,
 	mintIntention: () => number,
 ): Iterable<TestChangeTestState> {
-	const { value, inputContext: context } = state.content;
-	for (let i = value + 1; i < 4; i++) {
+	const context = state.content;
+	for (const edit of [[1], [2, 3]]) {
 		const intention = mintIntention();
-		const change = TestChange.mint(context, i);
+		const change = TestChange.mint(context, edit);
 		yield {
-			content: { value: i, inputContext: change.outputContext },
+			content: change.outputContext,
 			mostRecentEdit: {
 				changeset: tagChange(change, tagFromIntention(intention)),
-				description: `Set${i},${context}`,
+				description: `Set${JSON.stringify(edit)},${JSON.stringify(context)}`,
 				intention,
 			},
 			parent: state,
 		};
+	}
 
-		for (let j = 1; j < value + 1; j++) {
-			const inverseChange = TestChange.mint(context, -j);
-			yield {
-				content: { value: i, inputContext: change.outputContext },
-				mostRecentEdit: {
-					changeset: tagChange(inverseChange, tagFromIntention(intention)),
-					description: `Inverse${j},${context}`,
-					intention,
-				},
-				parent: state,
-			};
-		}
+	for (const previousEdit of context) {
+		const intention = mintIntention();
+		const change = TestChange.mint(context, -previousEdit);
+		yield {
+			content: change.outputContext,
+			mostRecentEdit: {
+				changeset: tagChange(change, tagFromIntention(intention)),
+				description: `Inverse[${previousEdit}],${JSON.stringify(context)}`,
+				intention,
+			},
+			parent: state,
+		};
 	}
 };
 
 describe("TestChange - Rebaser Axioms", () => {
-	describe("Exhaustive suite", () => {
-		runExhaustiveComposeRebaseSuite(
-			[{ content: { inputContext: [], value: 0 } }],
-			generateChildStates,
-			{
-				rebase: (change, base) => {
-					return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
-				},
-				compose: (changes) => {
-					return TestChange.compose(changes);
-				},
-				invert: (change) => {
-					return TestChange.invert(change.change);
-				},
-				rebaseComposed,
+	describe.only("Exhaustive suite", () => {
+		runExhaustiveComposeRebaseSuite([{ content: [] }], generateChildStates, {
+			rebase: (change, base) => {
+				return TestChange.rebase(change, base.change) ?? TestChange.emptyChange;
 			},
-		);
+			compose: (changes) => {
+				return TestChange.compose(changes);
+			},
+			invert: (change) => {
+				return TestChange.invert(change.change);
+			},
+			rebaseComposed,
+		});
 	});
 });
