@@ -350,9 +350,15 @@ function detachPass(delta: Delta.FieldChanges, visitor: DeltaVisitor, config: Pa
 	if (delta.build !== undefined) {
 		for (const { id, trees } of delta.build) {
 			for (let i = 0; i < trees.length; i += 1) {
-				const root = config.detachedFieldIndex.createEntry(offsetDetachId(id, i));
-				const field = config.detachedFieldIndex.toFieldKey(root);
-				visitor.create([trees[i]], field);
+				const offsettedId = offsetDetachId(id, i);
+				let root = config.detachedFieldIndex.tryGetEntry(offsettedId);
+				// Tree building is idempotent. We can therefore ignore build instructions for trees that already exist.
+				// The idempotence is leveraged by undo/redo as well as sandwich rebasing.
+				if (root === undefined) {
+					root = config.detachedFieldIndex.createEntry(offsettedId);
+					const field = config.detachedFieldIndex.toFieldKey(root);
+					visitor.create([trees[i]], field);
+				}
 			}
 		}
 	}

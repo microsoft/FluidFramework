@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-internal-modules
 import { createProxyTreeAdapter } from "../../../feature-libraries/simple-tree/proxyNodeCursor";
 import { SchemaBuilder } from "../../../domains";
-import { viewWithContent } from "../../utils";
+import { treeViewWithContent } from "../../utils";
 import { brand } from "../../../util";
 import { EmptyKey } from "../../../core";
 
@@ -34,7 +34,7 @@ describe("cursorFromProxyTree", () => {
 		];
 		const c = new Map<string, number | string>(cEntries);
 
-		const view = viewWithContent({
+		const view = treeViewWithContent({
 			schema,
 			initialTree: {
 				a,
@@ -45,7 +45,7 @@ describe("cursorFromProxyTree", () => {
 		});
 		const root = view.root;
 
-		const adapter = createProxyTreeAdapter(view.context, schema.rootFieldSchema.types);
+		const adapter = createProxyTreeAdapter({ schema }, schema.rootFieldSchema.types);
 
 		assert.equal(adapter.value(root), undefined);
 		assert.equal(adapter.type(root), rootSchema.name);
@@ -81,13 +81,13 @@ describe("cursorFromProxyTree", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const schema = schemaBuilder.intoSchema(schemaBuilder.string);
 
-		const view = viewWithContent({
+		const view = treeViewWithContent({
 			schema,
 			initialTree: "Hello world",
 		});
 		const root = view.root;
 
-		const adapter = createProxyTreeAdapter(view.context, schema.rootFieldSchema.types);
+		const adapter = createProxyTreeAdapter({ schema }, schema.rootFieldSchema.types);
 
 		assert.equal(adapter.value(root), "Hello world");
 		assert.equal(adapter.type(root), schemaBuilder.string.name);
@@ -103,13 +103,13 @@ describe("cursorFromProxyTree", () => {
 
 		const entries = [42, 37, -1];
 
-		const view = viewWithContent({
+		const view = treeViewWithContent({
 			schema,
 			initialTree: entries as any,
 		});
 		const root = view.root;
 
-		const adapter = createProxyTreeAdapter(view.context, schema.rootFieldSchema.types);
+		const adapter = createProxyTreeAdapter({ schema }, schema.rootFieldSchema.types);
 
 		assert.equal(adapter.value(root), undefined);
 		assert.equal(adapter.type(root), rootSchema.name);
@@ -137,13 +137,13 @@ describe("cursorFromProxyTree", () => {
 			// ["d", undefined],
 		];
 
-		const view = viewWithContent({
+		const view = treeViewWithContent({
 			schema,
 			initialTree: new Map<string, boolean | number | string | undefined>(entries) as any,
 		});
 		const root = view.root;
 
-		const adapter = createProxyTreeAdapter(view.context, schema.rootFieldSchema.types);
+		const adapter = createProxyTreeAdapter({ schema }, schema.rootFieldSchema.types);
 
 		assert.equal(adapter.value(root), undefined);
 		assert.equal(adapter.type(root), rootSchema.name);
