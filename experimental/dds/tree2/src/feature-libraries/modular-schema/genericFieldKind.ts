@@ -72,7 +72,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return change.map(
 				({ index, nodeChange }: GenericChange): GenericChange => ({
 					index,
-					nodeChange: invertChild(nodeChange, index),
+					nodeChange: invertChild(nodeChange),
 				}),
 			);
 		},

@@ -13,7 +13,7 @@ import {
 	ITestFluidObject,
 	timeoutPromise,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { ConnectionState } from "@fluidframework/container-loader";
 
 const testContainerConfig: ITestContainerConfig = {

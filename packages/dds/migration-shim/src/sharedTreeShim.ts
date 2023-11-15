@@ -94,6 +94,7 @@ export class SharedTreeShim implements IShim {
 		// This weird shimServices logic is to enable rehydration of the SharedTreeShim from a snapshot in a detached
 		// state.
 		const shimServices =
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			this.runtime.attachState === AttachState.Detached
 				? new NoDeltasChannelServices(services)
 				: this.generateShimServicesOnce(services);

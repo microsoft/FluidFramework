@@ -101,15 +101,15 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
 	(
 		event: "createIntervalCollection",
 		listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 	(
 		event: "sequenceDelta",
 		listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 	(
 		event: "maintenance",
 		listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void,
-	);
+	): void;
 }
 
 /**
@@ -144,7 +144,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			switch (event.deltaOperation) {
 				case MergeTreeDeltaType.ANNOTATE: {
 					const lastAnnotate = ops[ops.length - 1] as IMergeTreeAnnotateMsg;
-					const props = {};
+					const props: PropertySet = {};
 					for (const key of Object.keys(r.propertyDeltas)) {
 						props[key] = r.segment.properties?.[key] ?? null;
 					}

@@ -58,7 +58,7 @@
 	},
 	"devDependencies": {
 		"@fluid-experimental/property-common": "workspace:~",
-		"@fluid-internal/test-drivers": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/container-loader": "workspace:~",

@@ -63,9 +63,9 @@ interface RemoveSegmentRefProperties {
  * @alpha
  */
 export interface MergeTreeRevertibleDriver {
-	insertFromSpec(pos: number, spec: IJSONSegment);
-	removeRange(start: number, end: number);
-	annotateRange(start: number, end: number, props: PropertySet);
+	insertFromSpec(pos: number, spec: IJSONSegment): void;
+	removeRange(start: number, end: number): void;
+	annotateRange(start: number, end: number, props: PropertySet): void;
 }
 
 /**

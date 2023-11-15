@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { generatePairwiseOptions } from "@fluid-internal/test-pairwise-generator";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { ReferenceType } from "../ops";
 import {

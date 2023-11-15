@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-const tscDependsOn = ["^tsc", "build:genver"];
+const tscDependsOn = ["^tsc", "^api", "build:genver"];
 /**
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
@@ -47,7 +47,19 @@ module.exports = {
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
 		"build:esnext": tscDependsOn,
-		"build:test": [...tscDependsOn, "typetests:gen", "tsc"],
+		"build:test": [
+			...tscDependsOn,
+			"typetests:gen",
+			"tsc",
+			"api-extractor:commonjs",
+			"api-extractor:esnext",
+		],
+		"api": {
+			dependsOn: ["api-extractor:commonjs", "api-extractor:esnext"],
+			script: false,
+		},
+		"api-extractor:commonjs": [...tscDependsOn, "tsc"],
+		"api-extractor:esnext": [...tscDependsOn, "api-extractor:commonjs", "build:esnext"],
 		"build:docs": [...tscDependsOn, "tsc"],
 		"ci:build:docs": [...tscDependsOn, "tsc"],
 		"build:readme": {
@@ -191,6 +203,11 @@ module.exports = {
 				"^tools/markdown-magic",
 				// getKeys has a fake tsconfig.json to make ./eslintrc.cjs work, but we don't need clean script
 				"^tools/getkeys",
+			],
+			"npm-package-json-esm": [
+				// This is an ESM-only package, and uses tsc to build the ESM output. The policy handler doesn't understand this
+				// case.
+				"packages/dds/migration-shim/package.json",
 			],
 			// This handler will be rolled out slowly, so excluding most packages here while we roll it out.
 			"npm-package-exports-field": [

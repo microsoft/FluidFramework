@@ -4,7 +4,7 @@
  */
 
 import commander from "commander";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ITestDriver,
 	TestDriverTypes,

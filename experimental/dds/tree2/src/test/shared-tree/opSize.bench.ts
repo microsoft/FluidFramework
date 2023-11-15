@@ -7,8 +7,8 @@ import Table from "easy-table";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
-import { singleTextCursor } from "../../feature-libraries";
-import { ISharedTree, ISharedTreeView, SharedTreeFactory } from "../../shared-tree";
+import { cursorForJsonableTreeNode } from "../../feature-libraries";
+import { ISharedTree, ITreeCheckout, SharedTreeFactory } from "../../shared-tree";
 import { JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util";
 import {
 	AllowedUpdateType,
@@ -55,13 +55,13 @@ const childrenFieldKey: FieldKey = brand("children");
 function initializeTestTree(
 	tree: ISharedTree,
 	state: JsonableTree = initialTestJsonTree,
-): ISharedTreeView {
-	const writeCursor = singleTextCursor(state);
+): ITreeCheckout {
+	const writeCursor = cursorForJsonableTreeNode(state);
 	return tree.schematize({
 		allowedSchemaModifications: AllowedUpdateType.SchemaCompatible,
 		initialTree: [writeCursor],
 		schema: fullSchemaData,
-	}).branch;
+	}).checkout;
 }
 
 function utf8Length(data: JsonCompatibleReadOnly): number {
@@ -85,7 +85,7 @@ function createTreeWithSize(desiredByteSize: number): JsonableTree {
 	return node;
 }
 
-function getChildrenLength(tree: ISharedTreeView): number {
+function getChildrenLength(tree: ITreeCheckout): number {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
@@ -95,7 +95,7 @@ function getChildrenLength(tree: ISharedTreeView): number {
 	return length;
 }
 
-function assertChildNodeCount(tree: ISharedTreeView, nodeCount: number): void {
+function assertChildNodeCount(tree: ITreeCheckout, nodeCount: number): void {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
@@ -107,7 +107,7 @@ function assertChildNodeCount(tree: ISharedTreeView, nodeCount: number): void {
 /**
  * Checks that the first `childCount` values under "children" have the provided value.
  */
-function expectChildrenValues(tree: ISharedTreeView, expected: Value, childCount: number): void {
+function expectChildrenValues(tree: ITreeCheckout, expected: Value, childCount: number): void {
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
 	cursor.enterNode(0);
@@ -136,7 +136,7 @@ function createInitialTree(childNodes: number, childNodeByteSize: number): Jsona
 }
 
 function insertNodesWithIndividualTransactions(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	jsonNode: JsonableTree,
 	count: number,
 ): void {
@@ -147,7 +147,7 @@ function insertNodesWithIndividualTransactions(
 			parentField: rootFieldKey,
 			parentIndex: 0,
 		};
-		const writeCursor = singleTextCursor(jsonNode);
+		const writeCursor = cursorForJsonableTreeNode(jsonNode);
 		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
 		field.insert(0, writeCursor);
 		tree.transaction.commit();
@@ -155,7 +155,7 @@ function insertNodesWithIndividualTransactions(
 }
 
 function insertNodesWithSingleTransaction(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	jsonNode: JsonableTree,
 	count: number,
 ): void {
@@ -167,13 +167,13 @@ function insertNodesWithSingleTransaction(
 	};
 	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
 	for (let i = 0; i < count; i++) {
-		field.insert(0, singleTextCursor(jsonNode));
+		field.insert(0, cursorForJsonableTreeNode(jsonNode));
 	}
 	tree.transaction.commit();
 }
 
 function deleteNodesWithIndividualTransactions(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	numDeletes: number,
 	deletesPerTransaction: number,
 ): void {
@@ -190,7 +190,7 @@ function deleteNodesWithIndividualTransactions(
 	}
 }
 
-function deleteNodesWithSingleTransaction(tree: ISharedTreeView, numDeletes: number): void {
+function deleteNodesWithSingleTransaction(tree: ITreeCheckout, numDeletes: number): void {
 	tree.transaction.start();
 	const path = {
 		parent: undefined,
@@ -207,7 +207,7 @@ function createStringFromLength(numberOfBytes: number): string {
 }
 
 function editNodesWithIndividualTransactions(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	numChildrenToEdit: number,
 	editPayload: Value,
 ): void {
@@ -222,7 +222,7 @@ function editNodesWithIndividualTransactions(
 		editor.delete(i, 1);
 		editor.insert(
 			i,
-			singleTextCursor({
+			cursorForJsonableTreeNode({
 				type: childSchema.name,
 				value: editPayload,
 				fields: {
@@ -235,7 +235,7 @@ function editNodesWithIndividualTransactions(
 }
 
 function editNodesWithSingleTransaction(
-	tree: ISharedTreeView,
+	tree: ITreeCheckout,
 	numChildrenToEdit: number,
 	editPayload: Value,
 ): void {
@@ -250,7 +250,7 @@ function editNodesWithSingleTransaction(
 		editor.delete(i, 1);
 		editor.insert(
 			i,
-			singleTextCursor({
+			cursorForJsonableTreeNode({
 				type: childSchema.name,
 				value: editPayload,
 				fields: {

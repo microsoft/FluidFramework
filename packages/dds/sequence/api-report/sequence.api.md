@@ -144,7 +144,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
     readonly attached: boolean;
     attachIndex(index: IntervalIndex<TInterval>): void;
     change(id: string, start: SequencePlace, end: SequencePlace): TInterval | undefined;
-    changeProperties(id: string, props: PropertySet): any;
+    changeProperties(id: string, props: PropertySet): void;
     // (undocumented)
     CreateBackwardIteratorWithEndPosition(endPosition: number): Iterator<TInterval>;
     // (undocumented)
@@ -169,9 +169,9 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval> ex
 
 // @public
 export interface IIntervalCollectionEvent<TInterval extends ISerializableInterval> extends IEvent {
-    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): any;
-    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
-    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): any;
+    (event: "changeInterval", listener: (interval: TInterval, previousInterval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined, slide: boolean) => void): void;
+    (event: "addInterval" | "deleteInterval", listener: (interval: TInterval, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
+    (event: "propertyChanged", listener: (interval: TInterval, propertyDeltas: PropertySet, local: boolean, op: ISequencedDocumentMessage | undefined) => void): void;
 }
 
 // @public @sealed @deprecated (undocumented)
@@ -363,11 +363,11 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 // @public
 export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
     // (undocumented)
-    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): any;
+    (event: "createIntervalCollection", listener: (label: string, local: boolean, target: IEventThisPlaceHolder) => void): void;
     // (undocumented)
-    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): any;
+    (event: "sequenceDelta", listener: (event: SequenceDeltaEvent, target: IEventThisPlaceHolder) => void): void;
     // (undocumented)
-    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): any;
+    (event: "maintenance", listener: (event: SequenceMaintenanceEvent, target: IEventThisPlaceHolder) => void): void;
 }
 
 // @public
@@ -616,6 +616,11 @@ export class SharedString extends SharedSegmentSequence<SharedStringSegment> imp
     constructor(document: IFluidDataStoreRuntime, id: string, attributes: IChannelAttributes);
     annotateMarker(marker: Marker, props: PropertySet): void;
     static create(runtime: IFluidDataStoreRuntime, id?: string): SharedString;
+    // @deprecated
+    findTile(startPos: number | undefined, tileLabel: string, preceding?: boolean): {
+        tile: ReferencePosition;
+        pos: number;
+    } | undefined;
     static getFactory(): SharedStringFactory;
     getMarkerFromId(id: string): ISegment | undefined;
     getText(start?: number, end?: number): string;

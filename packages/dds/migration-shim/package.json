@@ -13,7 +13,14 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"type": "module",
-	"main": "dist/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -74,7 +81,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-internal/test-version-utils": "workspace:~",
+		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.26.1",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
