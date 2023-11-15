@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.number",
+        "value": true,
+        "fields": []
+      }
+    },
+    {
+      "a": 2
+    },
+    {
+      "d": 0
+    },
+    {
+      "c": {
+        "type": "test.anyFields",
+        "value": false,
+        "fields": [
+          {
+            "key": "optional",
+            "shape": 1
+          },
+          {
+            "key": "valueField",
+            "shape": 2
+          },
+          {
+            "key": "sequence",
+            "shape": 1
+          }
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.minimal",
+        "value": false,
+        "fields": []
+      }
+    }
+  ],
+  "data": [
+    3,
+    [
+      0,
+      5
+    ],
+    0,
+    5,
+    [
+      0,
+      5,
+      4
+    ]
+  ]
+}

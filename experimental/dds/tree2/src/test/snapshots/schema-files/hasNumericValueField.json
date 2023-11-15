@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "test.hasNumericValueField",
+        "value": false,
+        "fields": [
+          {
+            "key": "field",
+            "shape": 1
+          }
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.number",
+        "value": true,
+        "fields": []
+      }
+    }
+  ],
+  "data": [
+    0,
+    5
+  ]
+}

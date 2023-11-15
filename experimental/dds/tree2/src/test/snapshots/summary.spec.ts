@@ -3,25 +3,37 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-internal-modules */
+
 import path from "path";
-import { ISummaryTree } from "@fluidframework/protocol-definitions";
 import { useAsyncDeterministicStableId } from "../../util";
-import { createSnapshot, regenTestDirectory, verifyEqualPastSnapshot } from "./utils";
+import { testTrees as schemaTestTrees } from "../testTrees";
+import { makeSchemaCompressedCodec } from "../../feature-libraries/chunked-forest/codec/compressedCodecs";
+import { typeboxValidator } from "../../external-utilities";
+import { defaultSchemaPolicy } from "../../feature-libraries";
+import { fieldCursorFromJsonableTrees } from "../feature-libraries/chunked-forest/fieldCursorTestUtilities";
+import {
+	createSchemaSnapshot,
+	createSnapshot,
+	regenTestDirectory,
+	verifyEqualPastSchemaSnapshot,
+	verifyEqualPastSnapshot,
+} from "./utils";
 import { generateTestTrees } from "./testTrees";
 
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
-const dirPathTail = "src/test/snapshots/files";
-const dirPath = path.join(__dirname, `../../../${dirPathTail}`);
+const dirPathTail = "src/test/snapshots";
+const dirPath = path.join(__dirname, `../../../${dirPathTail}/files`);
+const schemaDirPath = path.join(__dirname, `../../../${dirPathTail}/schema-files`);
 
 function getFilepath(name: string): string {
 	return path.join(dirPath, `${name}.json`);
 }
 
-const trees: {
-	name: string;
-	summary: ISummaryTree;
-}[] = [];
+function getSchemaFilepath(name: string): string {
+	return path.join(schemaDirPath, `${name}.json`);
+}
 
 const testNames = new Set<string>();
 
@@ -55,6 +67,31 @@ describe("snapshot tests", () => {
 					}
 				});
 			});
+		});
+	}
+});
+
+describe("schema snapshots", () => {
+	if (regenerateSnapshots) {
+		regenTestDirectory(schemaDirPath);
+	}
+
+	for (const { name, treeFactory, schemaData } of schemaTestTrees) {
+		it(name, async () => {
+			const tree = treeFactory();
+			const codec = makeSchemaCompressedCodec(
+				{ jsonValidator: typeboxValidator },
+				schemaData,
+				defaultSchemaPolicy,
+			);
+			const encoded = codec.encode(fieldCursorFromJsonableTrees(tree));
+
+			// eslint-disable-next-line unicorn/prefer-ternary
+			if (regenerateSnapshots) {
+				await createSchemaSnapshot(getSchemaFilepath(name), encoded);
+			} else {
+				await verifyEqualPastSchemaSnapshot(getSchemaFilepath(name), encoded, name);
+			}
 		});
 	}
 });

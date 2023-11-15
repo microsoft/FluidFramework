@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.boolean",
+        "value": true,
+        "fields": []
+      }
+    }
+  ],
+  "data": [
+    0,
+    false
+  ]
+}

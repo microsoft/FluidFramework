@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "test.numericMap",
+        "value": false,
+        "fields": [],
+        "extraFields": 1
+      }
+    },
+    {
+      "a": 2
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.number",
+        "value": true,
+        "fields": []
+      }
+    }
+  ],
+  "data": [
+    0,
+    []
+  ]
+}
