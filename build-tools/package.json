@@ -1,6 +1,6 @@
 {
 	"name": "root",
-	"version": "0.27.0",
+	"version": "0.28.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -74,7 +74,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "~0.26.2",
 		"@microsoft/api-documenter": "^7.22.24",
-		"@microsoft/api-extractor": "^7.36.1",
+		"@microsoft/api-extractor": "^7.38.3",
 		"c8": "^7.14.0",
 		"commitizen": "^4.3.0",
 		"concurrently": "^8.2.1",

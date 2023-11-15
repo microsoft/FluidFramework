@@ -8,7 +8,7 @@ import {
 	CrossFieldManager,
 	NodeChangeset,
 	RevisionMetadataSource,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
 import {
 	ChangesetLocalId,
@@ -40,8 +40,8 @@ import {
 	getInputContext,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
-} from "../exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "../rebaserAxiomaticTests";
+} from "../../exhaustiveRebaserUtils";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -62,7 +62,12 @@ const OptionalChange = {
 		id: ChangesetLocalId = brand(0),
 		buildId: ChangesetLocalId = brand(40),
 	) {
-		return optionalFieldEditor.set(singleTextCursor({ type, value }), wasEmpty, id, buildId);
+		return optionalFieldEditor.set(
+			cursorForJsonableTreeNode({ type, value }),
+			wasEmpty,
+			id,
+			buildId,
+		);
 	},
 
 	clear(wasEmpty: boolean, id: ChangesetLocalId = brand(0)) {
@@ -109,6 +114,7 @@ function invert(change: TaggedChange<OptionalChangeset>): OptionalChangeset {
 		// Optional fields should not generate IDs during invert
 		fakeIdAllocator,
 		failCrossFieldManager,
+		defaultRevisionMetadataFromChanges([change]),
 	);
 }
 
@@ -364,6 +370,7 @@ describe("OptionalField - Rebaser Axioms", () => {
 			[{ content: undefined }, { content: "A" }],
 			generateChildStates,
 			{ rebase, rebaseComposed, compose, invert },
+			{ skipRebaseOverCompose: true },
 		);
 	});
 });

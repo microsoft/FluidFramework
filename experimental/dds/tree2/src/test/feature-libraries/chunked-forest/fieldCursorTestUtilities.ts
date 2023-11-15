@@ -5,30 +5,15 @@
 
 import { strict as assert } from "assert";
 import {
-	EmptyKey,
 	FieldUpPath,
 	ITreeCursorSynchronous,
 	JsonableTree,
 	mapCursorField,
 	rootFieldKey,
 } from "../../../core";
-import { jsonArray, leaf } from "../../../domains";
-import { jsonableTreeFromCursor, singleTextCursor, TreeChunk } from "../../../feature-libraries";
+import { leaf } from "../../../domains";
+import { jsonableTreeFromCursor, TreeChunk } from "../../../feature-libraries";
 import { checkFieldTraversal } from "../../cursorTestSuite";
-
-/**
- * Note that returned cursor is not at the root of its tree, so its path may be unexpected.
- * It is placed under index 0 of the EmptyKey field.
- *
- * TODO:
- * treeCursorUtils should support creating field cursors not just "singleTextCursor", and that logic should replace this function.
- */
-export function fieldCursorFromJsonableTrees(trees: JsonableTree[]): ITreeCursorSynchronous {
-	const fullTree: JsonableTree = { type: jsonArray.name, fields: { [EmptyKey]: trees } };
-	const cursor = singleTextCursor(fullTree);
-	cursor.enterField(EmptyKey);
-	return cursor;
-}
 
 export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): JsonableTree[] {
 	return mapCursorField(cursor, jsonableTreeFromCursor);
