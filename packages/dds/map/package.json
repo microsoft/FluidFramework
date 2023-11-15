@@ -11,58 +11,6 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"exports": {
-		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
-			}
-		},
-		"./public": {
-			"import": {
-				"types": "./lib/map-public.d.ts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/map-public.d.ts",
-				"default": "./dist/index.cjs"
-			}
-		},
-		"./beta": {
-			"import": {
-				"types": "./lib/map-beta.d.ts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/map-beta.d.ts",
-				"default": "./dist/index.cjs"
-			}
-		},
-		"./alpha": {
-			"import": {
-				"types": "./lib/map-alpha.d.ts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/map-alpha.d.ts",
-				"default": "./dist/index.cjs"
-			}
-		},
-		"./internal": {
-			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./lib/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.cjs"
-			}
-		}
-	},
 	"main": "dist/index.cjs",
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
