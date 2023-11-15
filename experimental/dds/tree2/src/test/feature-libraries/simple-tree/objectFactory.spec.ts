@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 import { SchemaBuilder } from "../../../domains";
-import { ProxyNode, Tree, typeNameSymbol } from "../../../feature-libraries";
+import { TypedNode, Tree, typeNameSymbol } from "../../../feature-libraries";
 // eslint-disable-next-line import/no-internal-modules
 import { extractFactoryContent } from "../../../feature-libraries/simple-tree/proxies";
 import { treeViewWithContent } from "../../utils";
@@ -268,10 +268,10 @@ describe("SharedTreeObject factories", () => {
 			comboSchemaBuilder.object("root", { root: comboSchemaBuilder.optional(comboRoot) }),
 		);
 
-		type ComboRoot = ProxyNode<typeof comboRoot>;
-		type ComboParent = ProxyNode<typeof comboParent>;
-		type ComboChild = ProxyNode<typeof comboChild>;
-		type ComboLeaf = ProxyNode<typeof comboLeaf>;
+		type ComboRoot = TypedNode<typeof comboRoot>;
+		type ComboParent = TypedNode<typeof comboParent>;
+		type ComboChild = TypedNode<typeof comboChild>;
+		type ComboLeaf = TypedNode<typeof comboLeaf>;
 		type ComboObject = ComboRoot | ComboParent | ComboChild | ComboLeaf;
 
 		/** Iterates through all the objects in a combo tree */
