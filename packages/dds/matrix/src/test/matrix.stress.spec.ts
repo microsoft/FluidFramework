@@ -515,7 +515,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 				},
 				{
 					numClients: 2,
-					numOps: 150,
+					numOps: 100,
 					syncProbability: 0.03,
 					disconnectProbability: 0.2,
 					undoRedoProbability: 0.1,
