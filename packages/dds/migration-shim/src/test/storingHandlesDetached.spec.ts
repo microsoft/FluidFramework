@@ -23,7 +23,7 @@ import {
 	type TreeView,
 	SchemaBuilder,
 	SharedTreeFactory,
-	type ProxyField,
+	type TreeField,
 } from "@fluid-experimental/tree2";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { stringToBuffer } from "@fluid-internal/client-utils";
@@ -38,7 +38,7 @@ const handleType = builder.object("handleObj", {
 });
 const schema = builder.intoSchema(handleType);
 
-function getNewTreeView(tree: ISharedTree): TreeView<ProxyField<typeof schema.rootFieldSchema>> {
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
 	return tree.schematize({
 		initialTree: {
 			handle: undefined,

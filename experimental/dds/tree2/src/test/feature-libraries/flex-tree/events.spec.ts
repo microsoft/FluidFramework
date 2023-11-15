@@ -12,7 +12,7 @@ import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
 import { flexTreeViewWithContent } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { onNextChange } from "../../../feature-libraries/flex-tree/editableTreeTypes";
+import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
