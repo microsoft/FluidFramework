@@ -115,6 +115,15 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 }
 
 /**
+ * Metadata about this op that the ContainerRuntime is responsible for
+ * interpreting and transmitting with the op
+ */
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface ContainerRuntimeOpMetadata {
+	//* Some stuff about handles added by this op, exact shape TBD
+}
+
+/**
  * Encapsulates the return codes of the aliasing API.
  *
  * 'Success' - the datastore has been successfully aliased. It can now be used.
@@ -478,7 +487,7 @@ export interface IFluidDataStoreContext
 		 */
 		localOpMetadata?: unknown;
 		/** Metadata to be handled by the runtime and included in the final op payload */
-		rootMetadata: unknown;
+		rootMetadata: ContainerRuntimeOpMetadata;
 	}): void;
 
 	/**

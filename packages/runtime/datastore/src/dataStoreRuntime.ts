@@ -52,6 +52,7 @@ import {
 	VisibilityState,
 	ITelemetryContext,
 	IIdCompressor,
+	ContainerRuntimeOpMetadata,
 } from "@fluidframework/runtime-definitions";
 import {
 	convertSnapshotTreeToSummaryTree,
@@ -912,7 +913,8 @@ export class FluidDataStoreRuntime
 
 	/** Returns a function for submitting an op to the channel at the given address */
 	private readonly getSubmitFnForChannel =
-		(address: string) => (contents: any, localOpMetadata: unknown, rootMetadata: unknown) => {
+		(address: string) =>
+		(contents: any, localOpMetadata: unknown, rootMetadata: ContainerRuntimeOpMetadata) => {
 			const envelope: IEnvelope = { address, contents };
 			this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata, rootMetadata);
 		};
@@ -921,7 +923,7 @@ export class FluidDataStoreRuntime
 		type: DataStoreMessageType,
 		content: any,
 		localOpMetadata: unknown = undefined,
-		rootMetadata: unknown = undefined,
+		rootMetadata: ContainerRuntimeOpMetadata = {},
 	): void {
 		this.verifyNotClosed();
 

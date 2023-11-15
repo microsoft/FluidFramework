@@ -10,6 +10,7 @@ import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	ContainerRuntimeOpMetadata,
 } from "@fluidframework/runtime-definitions";
 import { IChannelAttributes } from "./storage";
 import { IFluidDataStoreRuntime } from "./dataStoreRuntime";
@@ -191,7 +192,7 @@ export interface IDeltaConnection {
 		 */
 		localOpMetadata: unknown;
 		/** Metadata to be handled by the runtime and included in the final op payload */
-		rootMetadata: unknown;
+		rootMetadata: ContainerRuntimeOpMetadata;
 	}): void;
 
 	/**

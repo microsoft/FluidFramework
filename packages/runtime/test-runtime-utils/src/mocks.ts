@@ -40,6 +40,7 @@ import {
 } from "@fluidframework/datastore-definitions";
 import { getNormalizedObjectStoragePathParts, mergeStats } from "@fluidframework/runtime-utils";
 import {
+	ContainerRuntimeOpMetadata,
 	FlushMode,
 	IFluidDataStoreChannel,
 	IGarbageCollectionData,
@@ -65,7 +66,7 @@ export class MockDeltaConnection implements IDeltaConnection {
 		private readonly submitFn: (
 			messageContent: any,
 			localOpMetadata: unknown,
-			rootMetadata: unknown,
+			rootMetadata: ContainerRuntimeOpMetadata,
 		) => number,
 		private readonly dirtyFn: () => void,
 	) {}
@@ -77,13 +78,13 @@ export class MockDeltaConnection implements IDeltaConnection {
 
 	/** @deprecated Use submit2 */
 	public submit(messageContent: any, localOpMetadata: unknown): number {
-		return this.submitFn(messageContent, localOpMetadata, /* rootMetadata */ undefined);
+		return this.submitFn(messageContent, localOpMetadata, /* rootMetadata */ {});
 	}
 
 	public submit2(data: {
 		messageContent: unknown;
 		localOpMetadata?: unknown;
-		rootMetadata: unknown;
+		rootMetadata: ContainerRuntimeOpMetadata;
 	}): void {
 		this.submitFn(data.messageContent, data.localOpMetadata, data.rootMetadata);
 	}
@@ -637,8 +638,11 @@ export class MockFluidDataStoreRuntime
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
-			(messageContent: any, localOpMetadata: unknown, rootMetadata: unknown) =>
-				this.submitMessageInternal(messageContent, localOpMetadata, rootMetadata),
+			(
+				messageContent: any,
+				localOpMetadata: unknown,
+				rootMetadata: ContainerRuntimeOpMetadata,
+			) => this.submitMessageInternal(messageContent, localOpMetadata, rootMetadata),
 			() => this.setChannelDirty(),
 		);
 		this.deltaConnections.push(deltaConnection);
@@ -739,7 +743,7 @@ export class MockFluidDataStoreRuntime
 	private submitMessageInternal(
 		messageContent: any,
 		localOpMetadata: unknown,
-		rootMetadata: unknown,
+		rootMetadata: ContainerRuntimeOpMetadata,
 	): number {
 		assert(
 			this.containerRuntime !== undefined,

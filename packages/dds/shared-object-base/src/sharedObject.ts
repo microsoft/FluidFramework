@@ -32,6 +32,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	IExperimentalIncrementalSummaryContext,
+	ContainerRuntimeOpMetadata,
 } from "@fluidframework/runtime-definitions";
 import { FluidSerializer, IFluidSerializer } from "./serializer";
 import { SharedObjectHandle } from "./handle";
@@ -356,7 +357,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 	 * also sent if we are asked to resubmit the message.
 	 */
 	protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
-		this.submitLocalMessage2({ content, localOpMetadata, rootMetadata: undefined });
+		this.submitLocalMessage2({ content, localOpMetadata, rootMetadata: {} });
 	}
 
 	/**
@@ -373,7 +374,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
 		 */
 		localOpMetadata?: unknown;
 		/** Metadata to be handled by the runtime and included in the final op payload */
-		rootMetadata: unknown;
+		rootMetadata: ContainerRuntimeOpMetadata;
 	}): void {
 		const { content: messageContent, localOpMetadata, rootMetadata } = data;
 		this.verifyNotClosed();

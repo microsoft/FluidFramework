@@ -91,6 +91,7 @@ import {
 	IIdCompressorCore,
 	IdCreationRange,
 	IdCreationRangeWithStashedState,
+	ContainerRuntimeOpMetadata,
 } from "@fluidframework/runtime-definitions";
 import {
 	addBlobToSummary,
@@ -3431,14 +3432,14 @@ export class ContainerRuntime
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
-		this.submitDataStoreOp2({ id, contents, localOpMetadata, rootMetadata: undefined });
+		this.submitDataStoreOp2({ id, contents, localOpMetadata, rootMetadata: {} });
 	}
 
 	public submitDataStoreOp2(data: {
 		id: string;
 		contents: any;
 		localOpMetadata?: unknown;
-		rootMetadata: unknown;
+		rootMetadata: ContainerRuntimeOpMetadata;
 	}): void {
 		//* TODO: Apply rootMetadata to the envelope
 		const envelope: IEnvelope = {

@@ -4,6 +4,7 @@
 
 ```ts
 
+import { ContainerRuntimeOpMetadata } from '@fluidframework/runtime-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
 import { IChannelServices } from '@fluidframework/datastore-definitions';
@@ -262,7 +263,7 @@ export class SharedDirectory extends SharedObject<ISharedDirectoryEvents> implem
     submitDirectoryMessage2(data: {
         op: IDirectoryOperation;
         localOpMetadata: unknown;
-        rootMetadata: unknown;
+        rootMetadata: ContainerRuntimeOpMetadata;
     }): void;
     // @internal (undocumented)
     protected summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;

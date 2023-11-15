@@ -4,6 +4,7 @@
 
 ```ts
 
+import { ContainerRuntimeOpMetadata } from '@fluidframework/runtime-definitions';
 import { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IChannel } from '@fluidframework/datastore-definitions';
@@ -143,7 +144,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected submitLocalMessage2(data: {
         content: unknown;
         localOpMetadata?: unknown;
-        rootMetadata: unknown;
+        rootMetadata: ContainerRuntimeOpMetadata;
     }): void;
     // (undocumented)
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;

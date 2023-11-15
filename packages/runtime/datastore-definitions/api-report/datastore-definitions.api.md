@@ -5,6 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { ContainerRuntimeOpMetadata } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
 import { IAudience } from '@fluidframework/container-definitions';
 import { IDeltaManager } from '@fluidframework/container-definitions';
@@ -84,7 +85,7 @@ export interface IDeltaConnection {
     submit2?(data: {
         messageContent: unknown;
         localOpMetadata: unknown;
-        rootMetadata: unknown;
+        rootMetadata: ContainerRuntimeOpMetadata;
     }): void;
 }
 

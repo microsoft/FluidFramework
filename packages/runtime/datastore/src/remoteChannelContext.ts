@@ -17,6 +17,7 @@ import {
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 	ITelemetryContext,
+	ContainerRuntimeOpMetadata,
 } from "@fluidframework/runtime-definitions";
 import {
 	createChildLogger,
@@ -48,7 +49,11 @@ export class RemoteChannelContext implements IChannelContext {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IDocumentStorageService,
-		submitFn: (content: any, localOpMetadata: unknown, rootMetadata: unknown) => void,
+		submitFn: (
+			content: any,
+			localOpMetadata: unknown,
+			rootMetadata: ContainerRuntimeOpMetadata,
+		) => void,
 		dirtyFn: (address: string) => void,
 		addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 		private readonly id: string,

@@ -15,7 +15,11 @@ import {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions";
-import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
+import {
+	ContainerRuntimeOpMetadata,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+} from "@fluidframework/runtime-definitions";
 import { IFluidSerializer, SharedObject, ValueType } from "@fluidframework/shared-object-base";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils";
 import * as path from "path-browserify";
@@ -641,7 +645,7 @@ export class SharedDirectory
 		 */
 		localOpMetadata: unknown;
 		/** Metadata to be handled by the runtime and included in the final op payload */
-		rootMetadata: unknown;
+		rootMetadata: ContainerRuntimeOpMetadata;
 	}): void {
 		const { op: content, localOpMetadata, rootMetadata } = data;
 		this.submitLocalMessage2({ content, localOpMetadata, rootMetadata });
@@ -1800,7 +1804,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			pendingMessageId: pendingMsgId,
 			previousStorage: previousValue,
 		};
-		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: undefined }); //* FIX
+		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: {} }); //* FIX
 	}
 
 	/**
@@ -1846,7 +1850,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 		const pendingMessageId = this.getKeyMessageId(op);
 		const localOpMetadata = { type: "edit", pendingMessageId, previousValue };
-		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: undefined }); //* FIX
+		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: {} }); //* FIX
 	}
 
 	/**
@@ -1922,7 +1926,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const localOpMetadata: ICreateSubDirLocalOpMetadata = {
 			type: "createSubDir",
 		};
-		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: undefined }); //* FIX
+		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: {} }); //* FIX
 	}
 
 	/**
@@ -1941,7 +1945,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "deleteSubDir",
 			subDirectory: subDir,
 		};
-		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: undefined }); //* FIX
+		this.directory.submitDirectoryMessage2({ op, localOpMetadata, rootMetadata: {} }); //* FIX
 	}
 
 	/**

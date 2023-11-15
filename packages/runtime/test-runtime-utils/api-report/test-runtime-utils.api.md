@@ -7,6 +7,7 @@
 /// <reference types="node" />
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { ContainerRuntimeOpMetadata } from '@fluidframework/runtime-definitions';
 import { CreateChildSummarizerNodeFn } from '@fluidframework/runtime-definitions';
 import { CreateChildSummarizerNodeParam } from '@fluidframework/runtime-definitions';
 import { EventEmitter } from 'events';
@@ -181,7 +182,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 // @public
 export class MockDeltaConnection implements IDeltaConnection {
-    constructor(submitFn: (messageContent: any, localOpMetadata: unknown, rootMetadata: unknown) => number, dirtyFn: () => void);
+    constructor(submitFn: (messageContent: any, localOpMetadata: unknown, rootMetadata: ContainerRuntimeOpMetadata) => number, dirtyFn: () => void);
     // (undocumented)
     attach(handler: IDeltaHandler): void;
     // (undocumented)
@@ -202,7 +203,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     submit2(data: {
         messageContent: unknown;
         localOpMetadata?: unknown;
-        rootMetadata: unknown;
+        rootMetadata: ContainerRuntimeOpMetadata;
     }): void;
 }
 

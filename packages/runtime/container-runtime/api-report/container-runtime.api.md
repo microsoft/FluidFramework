@@ -5,6 +5,7 @@
 ```ts
 
 import { AttachState } from '@fluidframework/container-definitions';
+import { ContainerRuntimeOpMetadata } from '@fluidframework/runtime-definitions';
 import { ContainerWarning } from '@fluidframework/container-definitions';
 import { FluidDataStoreRegistryEntry } from '@fluidframework/runtime-definitions';
 import { FluidObject } from '@fluidframework/core-interfaces';
@@ -216,7 +217,7 @@ export class ContainerRuntime extends TypedEventEmitter<IContainerRuntimeEvents 
         id: string;
         contents: any;
         localOpMetadata?: unknown;
-        rootMetadata: unknown;
+        rootMetadata: ContainerRuntimeOpMetadata;
     }): void;
     // (undocumented)
     submitDataStoreSignal(address: string, type: string, content: any): void;

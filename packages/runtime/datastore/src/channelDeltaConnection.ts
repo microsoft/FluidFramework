@@ -8,6 +8,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 import { IDeltaConnection, IDeltaHandler } from "@fluidframework/datastore-definitions";
 import { DataProcessingError } from "@fluidframework/telemetry-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { ContainerRuntimeOpMetadata } from "@fluidframework/runtime-definitions";
 
 export class ChannelDeltaConnection implements IDeltaConnection {
 	private _handler: IDeltaHandler | undefined;
@@ -25,7 +26,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		private readonly submitFn: (
 			content: any,
 			localOpMetadata: unknown,
-			rootMetadata: unknown,
+			rootMetadata: ContainerRuntimeOpMetadata,
 		) => void,
 		public readonly dirty: () => void,
 		public readonly addedGCOutboundReference: (
@@ -36,13 +37,13 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	/** @deprecated Use submit2 instead */
 	public submit(messageContent: any, localOpMetadata: unknown): void {
-		this.submitFn(messageContent, localOpMetadata, /* rootMetadata */ undefined);
+		this.submitFn(messageContent, localOpMetadata, /* rootMetadata */ {});
 	}
 
 	public submit2(data: {
 		messageContent: unknown;
 		localOpMetadata: unknown;
-		rootMetadata: unknown;
+		rootMetadata: ContainerRuntimeOpMetadata;
 	}): void {
 		this.submitFn(data.messageContent, data.localOpMetadata, data.rootMetadata);
 	}

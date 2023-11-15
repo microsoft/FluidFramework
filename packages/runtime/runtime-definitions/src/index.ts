@@ -13,6 +13,7 @@ export {
 export {
 	AliasResult,
 	CreateChildSummarizerNodeFn,
+	ContainerRuntimeOpMetadata,
 	FlushMode,
 	FlushModeExperimental,
 	IContainerRuntimeBase,

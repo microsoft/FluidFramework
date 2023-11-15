@@ -24,6 +24,7 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IFluidDataStoreContext,
+	ContainerRuntimeOpMetadata,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary } from "@fluidframework/runtime-utils";
 import { readAndParse } from "@fluidframework/driver-utils";
@@ -75,7 +76,11 @@ export interface ChannelServiceEndpoints {
 
 export function createChannelServiceEndpoints(
 	connected: boolean,
-	submitFn: (content: any, localOpMetadata: unknown, rootMetadata: unknown) => void,
+	submitFn: (
+		content: any,
+		localOpMetadata: unknown,
+		rootMetadata: ContainerRuntimeOpMetadata,
+	) => void,
 	dirtyFn: () => void,
 	addedGCOutboundReferenceFn: (srcHandle: IFluidHandle, outboundHandle: IFluidHandle) => void,
 	storageService: IDocumentStorageService,

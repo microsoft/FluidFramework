@@ -53,6 +53,7 @@ import {
 	IIdCompressor,
 	IIdCompressorCore,
 	VisibilityState,
+	ContainerRuntimeOpMetadata,
 } from "@fluidframework/runtime-definitions";
 import { addBlobToSummary, convertSummaryTreeToITree } from "@fluidframework/runtime-utils";
 import {
@@ -693,7 +694,7 @@ export abstract class FluidDataStoreContext
 			type,
 			messageContent: content,
 			localOpMetadata,
-			rootMetadata: undefined,
+			rootMetadata: {},
 		});
 	}
 
@@ -709,7 +710,7 @@ export abstract class FluidDataStoreContext
 		 */
 		localOpMetadata?: unknown;
 		/** Metadata to be handled by the runtime and included in the final op payload */
-		rootMetadata: unknown;
+		rootMetadata: ContainerRuntimeOpMetadata;
 	}): void {
 		const { type, messageContent: content, localOpMetadata, rootMetadata } = data;
 

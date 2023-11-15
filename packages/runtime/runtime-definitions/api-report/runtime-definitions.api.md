@@ -50,6 +50,10 @@ export const blobCountPropertyName = "BlobCount";
 // @public (undocumented)
 export const channelsTreeName = ".channels";
 
+// @public
+export interface ContainerRuntimeOpMetadata {
+}
+
 // @public (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -271,7 +275,7 @@ export interface IFluidDataStoreContext extends IEventProvider<IFluidDataStoreCo
         type: string;
         messageContent: unknown;
         localOpMetadata?: unknown;
-        rootMetadata: unknown;
+        rootMetadata: ContainerRuntimeOpMetadata;
     }): void;
     submitSignal(type: string, content: any): void;
     // (undocumented)
