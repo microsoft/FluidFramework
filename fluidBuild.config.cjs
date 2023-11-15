@@ -26,6 +26,7 @@ module.exports = {
 			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
+
 		"commonjs": {
 			dependsOn: ["tsc", "build:test"],
 			script: false,
@@ -46,7 +47,7 @@ module.exports = {
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
-		"build:esnext": tscDependsOn,
+		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
 			...tscDependsOn,
 			"typetests:gen",

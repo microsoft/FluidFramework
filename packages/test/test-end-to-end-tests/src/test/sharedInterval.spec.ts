@@ -12,7 +12,7 @@ import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IIntervalCollection, SequenceInterval, SharedString } from "@fluidframework/sequence";
 // This is not in sequence's public API, but an e2e test in this file sniffs the summary.
 // eslint-disable-next-line import/no-internal-modules
-import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.cjs";
+import type { ISerializedIntervalCollectionV2 } from "@fluidframework/sequence/dist/intervalCollection.js";
 import {
 	ITestObjectProvider,
 	ITestContainerConfig,
