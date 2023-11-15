@@ -769,25 +769,16 @@ describe("SharedTree", () => {
 					validateTreeContent(tree2.checkout, content);
 
 					// edit subtree
-					tree2.root[0].insertAtEnd(["c"]);
+					tree2.root[0].insertAtEnd(["b"]);
 					provider.processMessages();
-					const contentAfterInsert = {
-						schema,
-						allowedSchemaModifications: AllowedUpdateType.None,
-						initialTree: [["a", "c"]] as any,
-					} satisfies InitializeAndSchematizeConfiguration;
-					validateTreeContent(tree1.checkout, contentAfterInsert);
-					validateTreeContent(tree2.checkout, contentAfterInsert);
+					assert.deepEqual(tree1.root, [["a", "b"]]);
+					assert.deepEqual(tree2.root, [["a", "b"]]);
+
 					// delete subtree
 					tree1.root.removeAt(0);
 					provider.processMessages();
-					const contentAfterRemove = {
-						schema,
-						allowedSchemaModifications: AllowedUpdateType.None,
-						initialTree: [] as any,
-					} satisfies InitializeAndSchematizeConfiguration;
-					validateTreeContent(tree1.checkout, contentAfterRemove);
-					validateTreeContent(tree2.checkout, contentAfterRemove);
+					assert.deepEqual(tree1.root, []);
+					assert.deepEqual(tree2.root, []);
 
 					if (scenario === "restore then change") {
 						undoStack1.pop()?.revert();
@@ -796,11 +787,11 @@ describe("SharedTree", () => {
 						undoStack2.pop()?.revert();
 						undoStack1.pop()?.revert();
 					}
-					provider.processMessages();
 
+					provider.processMessages();
 					// check the undo happened
-					validateTreeContent(tree1.checkout, content);
-					validateTreeContent(tree2.checkout, content);
+					assert.deepEqual(tree1.root, [["a"]]);
+					assert.deepEqual(tree2.root, [["a"]]);
 
 					unsubscribe1();
 					unsubscribe2();
