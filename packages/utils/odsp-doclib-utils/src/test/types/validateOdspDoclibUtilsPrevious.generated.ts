@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IClientConfig():
     TypeOnly<old.IClientConfig>;
 declare function use_current_InterfaceDeclaration_IClientConfig(
-    use: TypeOnly<current.IClientConfig>);
+    use: TypeOnly<current.IClientConfig>): void;
 use_current_InterfaceDeclaration_IClientConfig(
     get_old_InterfaceDeclaration_IClientConfig());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IClientConfig(
 declare function get_current_InterfaceDeclaration_IClientConfig():
     TypeOnly<current.IClientConfig>;
 declare function use_old_InterfaceDeclaration_IClientConfig(
-    use: TypeOnly<old.IClientConfig>);
+    use: TypeOnly<old.IClientConfig>): void;
 use_old_InterfaceDeclaration_IClientConfig(
     get_current_InterfaceDeclaration_IClientConfig());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IClientConfig(
 declare function get_old_InterfaceDeclaration_IOdspAuthRequestInfo():
     TypeOnly<old.IOdspAuthRequestInfo>;
 declare function use_current_InterfaceDeclaration_IOdspAuthRequestInfo(
-    use: TypeOnly<current.IOdspAuthRequestInfo>);
+    use: TypeOnly<current.IOdspAuthRequestInfo>): void;
 use_current_InterfaceDeclaration_IOdspAuthRequestInfo(
     get_old_InterfaceDeclaration_IOdspAuthRequestInfo());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IOdspAuthRequestInfo(
 declare function get_current_InterfaceDeclaration_IOdspAuthRequestInfo():
     TypeOnly<current.IOdspAuthRequestInfo>;
 declare function use_old_InterfaceDeclaration_IOdspAuthRequestInfo(
-    use: TypeOnly<old.IOdspAuthRequestInfo>);
+    use: TypeOnly<old.IOdspAuthRequestInfo>): void;
 use_old_InterfaceDeclaration_IOdspAuthRequestInfo(
     get_current_InterfaceDeclaration_IOdspAuthRequestInfo());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IOdspAuthRequestInfo(
 declare function get_old_InterfaceDeclaration_IOdspDriveItem():
     TypeOnly<old.IOdspDriveItem>;
 declare function use_current_InterfaceDeclaration_IOdspDriveItem(
-    use: TypeOnly<current.IOdspDriveItem>);
+    use: TypeOnly<current.IOdspDriveItem>): void;
 use_current_InterfaceDeclaration_IOdspDriveItem(
     get_old_InterfaceDeclaration_IOdspDriveItem());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IOdspDriveItem(
 declare function get_current_InterfaceDeclaration_IOdspDriveItem():
     TypeOnly<current.IOdspDriveItem>;
 declare function use_old_InterfaceDeclaration_IOdspDriveItem(
-    use: TypeOnly<old.IOdspDriveItem>);
+    use: TypeOnly<old.IOdspDriveItem>): void;
 use_old_InterfaceDeclaration_IOdspDriveItem(
     get_current_InterfaceDeclaration_IOdspDriveItem());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IOdspDriveItem(
 declare function get_old_InterfaceDeclaration_IOdspTokens():
     TypeOnly<old.IOdspTokens>;
 declare function use_current_InterfaceDeclaration_IOdspTokens(
-    use: TypeOnly<current.IOdspTokens>);
+    use: TypeOnly<current.IOdspTokens>): void;
 use_current_InterfaceDeclaration_IOdspTokens(
     get_old_InterfaceDeclaration_IOdspTokens());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_IOdspTokens(
 declare function get_current_InterfaceDeclaration_IOdspTokens():
     TypeOnly<current.IOdspTokens>;
 declare function use_old_InterfaceDeclaration_IOdspTokens(
-    use: TypeOnly<old.IOdspTokens>);
+    use: TypeOnly<old.IOdspTokens>): void;
 use_old_InterfaceDeclaration_IOdspTokens(
     get_current_InterfaceDeclaration_IOdspTokens());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_IOdspTokens(
 declare function get_old_InterfaceDeclaration_OdspErrorResponse():
     TypeOnly<old.OdspErrorResponse>;
 declare function use_current_InterfaceDeclaration_OdspErrorResponse(
-    use: TypeOnly<current.OdspErrorResponse>);
+    use: TypeOnly<current.OdspErrorResponse>): void;
 use_current_InterfaceDeclaration_OdspErrorResponse(
     get_old_InterfaceDeclaration_OdspErrorResponse());
 
@@ -137,7 +137,7 @@ use_current_InterfaceDeclaration_OdspErrorResponse(
 declare function get_current_InterfaceDeclaration_OdspErrorResponse():
     TypeOnly<current.OdspErrorResponse>;
 declare function use_old_InterfaceDeclaration_OdspErrorResponse(
-    use: TypeOnly<old.OdspErrorResponse>);
+    use: TypeOnly<old.OdspErrorResponse>): void;
 use_old_InterfaceDeclaration_OdspErrorResponse(
     get_current_InterfaceDeclaration_OdspErrorResponse());
 
@@ -149,7 +149,7 @@ use_old_InterfaceDeclaration_OdspErrorResponse(
 declare function get_old_InterfaceDeclaration_OdspErrorResponseInnerError():
     TypeOnly<old.OdspErrorResponseInnerError>;
 declare function use_current_InterfaceDeclaration_OdspErrorResponseInnerError(
-    use: TypeOnly<current.OdspErrorResponseInnerError>);
+    use: TypeOnly<current.OdspErrorResponseInnerError>): void;
 use_current_InterfaceDeclaration_OdspErrorResponseInnerError(
     get_old_InterfaceDeclaration_OdspErrorResponseInnerError());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_OdspErrorResponseInnerError(
 declare function get_current_InterfaceDeclaration_OdspErrorResponseInnerError():
     TypeOnly<current.OdspErrorResponseInnerError>;
 declare function use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
-    use: TypeOnly<old.OdspErrorResponseInnerError>);
+    use: TypeOnly<old.OdspErrorResponseInnerError>): void;
 use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
     get_current_InterfaceDeclaration_OdspErrorResponseInnerError());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_OdspErrorResponseInnerError(
 declare function get_old_ClassDeclaration_OdspRedirectError():
     TypeOnly<old.OdspRedirectError>;
 declare function use_current_ClassDeclaration_OdspRedirectError(
-    use: TypeOnly<current.OdspRedirectError>);
+    use: TypeOnly<current.OdspRedirectError>): void;
 use_current_ClassDeclaration_OdspRedirectError(
     get_old_ClassDeclaration_OdspRedirectError());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_OdspRedirectError(
 declare function get_current_ClassDeclaration_OdspRedirectError():
     TypeOnly<current.OdspRedirectError>;
 declare function use_old_ClassDeclaration_OdspRedirectError(
-    use: TypeOnly<old.OdspRedirectError>);
+    use: TypeOnly<old.OdspRedirectError>): void;
 use_old_ClassDeclaration_OdspRedirectError(
     get_current_ClassDeclaration_OdspRedirectError());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_OdspRedirectError(
 declare function get_old_VariableDeclaration_OdspServiceReadOnlyErrorCode():
     TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>;
 declare function use_current_VariableDeclaration_OdspServiceReadOnlyErrorCode(
-    use: TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>);
+    use: TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>): void;
 use_current_VariableDeclaration_OdspServiceReadOnlyErrorCode(
     get_old_VariableDeclaration_OdspServiceReadOnlyErrorCode());
 
@@ -209,7 +209,7 @@ use_current_VariableDeclaration_OdspServiceReadOnlyErrorCode(
 declare function get_current_VariableDeclaration_OdspServiceReadOnlyErrorCode():
     TypeOnly<typeof current.OdspServiceReadOnlyErrorCode>;
 declare function use_old_VariableDeclaration_OdspServiceReadOnlyErrorCode(
-    use: TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>);
+    use: TypeOnly<typeof old.OdspServiceReadOnlyErrorCode>): void;
 use_old_VariableDeclaration_OdspServiceReadOnlyErrorCode(
     get_current_VariableDeclaration_OdspServiceReadOnlyErrorCode());
 
@@ -221,7 +221,7 @@ use_old_VariableDeclaration_OdspServiceReadOnlyErrorCode(
 declare function get_old_TypeAliasDeclaration_TokenRequestCredentials():
     TypeOnly<old.TokenRequestCredentials>;
 declare function use_current_TypeAliasDeclaration_TokenRequestCredentials(
-    use: TypeOnly<current.TokenRequestCredentials>);
+    use: TypeOnly<current.TokenRequestCredentials>): void;
 use_current_TypeAliasDeclaration_TokenRequestCredentials(
     get_old_TypeAliasDeclaration_TokenRequestCredentials());
 
@@ -233,7 +233,7 @@ use_current_TypeAliasDeclaration_TokenRequestCredentials(
 declare function get_current_TypeAliasDeclaration_TokenRequestCredentials():
     TypeOnly<current.TokenRequestCredentials>;
 declare function use_old_TypeAliasDeclaration_TokenRequestCredentials(
-    use: TypeOnly<old.TokenRequestCredentials>);
+    use: TypeOnly<old.TokenRequestCredentials>): void;
 use_old_TypeAliasDeclaration_TokenRequestCredentials(
     get_current_TypeAliasDeclaration_TokenRequestCredentials());
 
@@ -245,7 +245,7 @@ use_old_TypeAliasDeclaration_TokenRequestCredentials(
 declare function get_old_FunctionDeclaration_authRequestWithRetry():
     TypeOnly<typeof old.authRequestWithRetry>;
 declare function use_current_FunctionDeclaration_authRequestWithRetry(
-    use: TypeOnly<typeof current.authRequestWithRetry>);
+    use: TypeOnly<typeof current.authRequestWithRetry>): void;
 use_current_FunctionDeclaration_authRequestWithRetry(
     get_old_FunctionDeclaration_authRequestWithRetry());
 
@@ -257,7 +257,7 @@ use_current_FunctionDeclaration_authRequestWithRetry(
 declare function get_current_FunctionDeclaration_authRequestWithRetry():
     TypeOnly<typeof current.authRequestWithRetry>;
 declare function use_old_FunctionDeclaration_authRequestWithRetry(
-    use: TypeOnly<typeof old.authRequestWithRetry>);
+    use: TypeOnly<typeof old.authRequestWithRetry>): void;
 use_old_FunctionDeclaration_authRequestWithRetry(
     get_current_FunctionDeclaration_authRequestWithRetry());
 
@@ -269,7 +269,7 @@ use_old_FunctionDeclaration_authRequestWithRetry(
 declare function get_old_FunctionDeclaration_createOdspNetworkError():
     TypeOnly<typeof old.createOdspNetworkError>;
 declare function use_current_FunctionDeclaration_createOdspNetworkError(
-    use: TypeOnly<typeof current.createOdspNetworkError>);
+    use: TypeOnly<typeof current.createOdspNetworkError>): void;
 use_current_FunctionDeclaration_createOdspNetworkError(
     get_old_FunctionDeclaration_createOdspNetworkError());
 
@@ -281,7 +281,7 @@ use_current_FunctionDeclaration_createOdspNetworkError(
 declare function get_current_FunctionDeclaration_createOdspNetworkError():
     TypeOnly<typeof current.createOdspNetworkError>;
 declare function use_old_FunctionDeclaration_createOdspNetworkError(
-    use: TypeOnly<typeof old.createOdspNetworkError>);
+    use: TypeOnly<typeof old.createOdspNetworkError>): void;
 use_old_FunctionDeclaration_createOdspNetworkError(
     get_current_FunctionDeclaration_createOdspNetworkError());
 
@@ -293,7 +293,7 @@ use_old_FunctionDeclaration_createOdspNetworkError(
 declare function get_old_FunctionDeclaration_enrichOdspError():
     TypeOnly<typeof old.enrichOdspError>;
 declare function use_current_FunctionDeclaration_enrichOdspError(
-    use: TypeOnly<typeof current.enrichOdspError>);
+    use: TypeOnly<typeof current.enrichOdspError>): void;
 use_current_FunctionDeclaration_enrichOdspError(
     get_old_FunctionDeclaration_enrichOdspError());
 
@@ -305,7 +305,7 @@ use_current_FunctionDeclaration_enrichOdspError(
 declare function get_current_FunctionDeclaration_enrichOdspError():
     TypeOnly<typeof current.enrichOdspError>;
 declare function use_old_FunctionDeclaration_enrichOdspError(
-    use: TypeOnly<typeof old.enrichOdspError>);
+    use: TypeOnly<typeof old.enrichOdspError>): void;
 use_old_FunctionDeclaration_enrichOdspError(
     get_current_FunctionDeclaration_enrichOdspError());
 
@@ -317,7 +317,7 @@ use_old_FunctionDeclaration_enrichOdspError(
 declare function get_old_VariableDeclaration_fetchIncorrectResponse():
     TypeOnly<typeof old.fetchIncorrectResponse>;
 declare function use_current_VariableDeclaration_fetchIncorrectResponse(
-    use: TypeOnly<typeof current.fetchIncorrectResponse>);
+    use: TypeOnly<typeof current.fetchIncorrectResponse>): void;
 use_current_VariableDeclaration_fetchIncorrectResponse(
     get_old_VariableDeclaration_fetchIncorrectResponse());
 
@@ -329,7 +329,7 @@ use_current_VariableDeclaration_fetchIncorrectResponse(
 declare function get_current_VariableDeclaration_fetchIncorrectResponse():
     TypeOnly<typeof current.fetchIncorrectResponse>;
 declare function use_old_VariableDeclaration_fetchIncorrectResponse(
-    use: TypeOnly<typeof old.fetchIncorrectResponse>);
+    use: TypeOnly<typeof old.fetchIncorrectResponse>): void;
 use_old_VariableDeclaration_fetchIncorrectResponse(
     get_current_VariableDeclaration_fetchIncorrectResponse());
 
@@ -341,7 +341,7 @@ use_old_VariableDeclaration_fetchIncorrectResponse(
 declare function get_old_FunctionDeclaration_fetchTokens():
     TypeOnly<typeof old.fetchTokens>;
 declare function use_current_FunctionDeclaration_fetchTokens(
-    use: TypeOnly<typeof current.fetchTokens>);
+    use: TypeOnly<typeof current.fetchTokens>): void;
 use_current_FunctionDeclaration_fetchTokens(
     get_old_FunctionDeclaration_fetchTokens());
 
@@ -353,7 +353,7 @@ use_current_FunctionDeclaration_fetchTokens(
 declare function get_current_FunctionDeclaration_fetchTokens():
     TypeOnly<typeof current.fetchTokens>;
 declare function use_old_FunctionDeclaration_fetchTokens(
-    use: TypeOnly<typeof old.fetchTokens>);
+    use: TypeOnly<typeof old.fetchTokens>): void;
 use_old_FunctionDeclaration_fetchTokens(
     get_current_FunctionDeclaration_fetchTokens());
 
@@ -365,7 +365,7 @@ use_old_FunctionDeclaration_fetchTokens(
 declare function get_old_FunctionDeclaration_getAadTenant():
     TypeOnly<typeof old.getAadTenant>;
 declare function use_current_FunctionDeclaration_getAadTenant(
-    use: TypeOnly<typeof current.getAadTenant>);
+    use: TypeOnly<typeof current.getAadTenant>): void;
 use_current_FunctionDeclaration_getAadTenant(
     get_old_FunctionDeclaration_getAadTenant());
 
@@ -377,7 +377,7 @@ use_current_FunctionDeclaration_getAadTenant(
 declare function get_current_FunctionDeclaration_getAadTenant():
     TypeOnly<typeof current.getAadTenant>;
 declare function use_old_FunctionDeclaration_getAadTenant(
-    use: TypeOnly<typeof old.getAadTenant>);
+    use: TypeOnly<typeof old.getAadTenant>): void;
 use_old_FunctionDeclaration_getAadTenant(
     get_current_FunctionDeclaration_getAadTenant());
 
@@ -389,7 +389,7 @@ use_old_FunctionDeclaration_getAadTenant(
 declare function get_old_FunctionDeclaration_getAadUrl():
     TypeOnly<typeof old.getAadUrl>;
 declare function use_current_FunctionDeclaration_getAadUrl(
-    use: TypeOnly<typeof current.getAadUrl>);
+    use: TypeOnly<typeof current.getAadUrl>): void;
 use_current_FunctionDeclaration_getAadUrl(
     get_old_FunctionDeclaration_getAadUrl());
 
@@ -401,7 +401,7 @@ use_current_FunctionDeclaration_getAadUrl(
 declare function get_current_FunctionDeclaration_getAadUrl():
     TypeOnly<typeof current.getAadUrl>;
 declare function use_old_FunctionDeclaration_getAadUrl(
-    use: TypeOnly<typeof old.getAadUrl>);
+    use: TypeOnly<typeof old.getAadUrl>): void;
 use_old_FunctionDeclaration_getAadUrl(
     get_current_FunctionDeclaration_getAadUrl());
 
@@ -413,7 +413,7 @@ use_old_FunctionDeclaration_getAadUrl(
 declare function get_old_FunctionDeclaration_getAsync():
     TypeOnly<typeof old.getAsync>;
 declare function use_current_FunctionDeclaration_getAsync(
-    use: TypeOnly<typeof current.getAsync>);
+    use: TypeOnly<typeof current.getAsync>): void;
 use_current_FunctionDeclaration_getAsync(
     get_old_FunctionDeclaration_getAsync());
 
@@ -425,7 +425,7 @@ use_current_FunctionDeclaration_getAsync(
 declare function get_current_FunctionDeclaration_getAsync():
     TypeOnly<typeof current.getAsync>;
 declare function use_old_FunctionDeclaration_getAsync(
-    use: TypeOnly<typeof old.getAsync>);
+    use: TypeOnly<typeof old.getAsync>): void;
 use_old_FunctionDeclaration_getAsync(
     get_current_FunctionDeclaration_getAsync());
 
@@ -437,7 +437,7 @@ use_old_FunctionDeclaration_getAsync(
 declare function get_old_FunctionDeclaration_getChildrenByDriveItem():
     TypeOnly<typeof old.getChildrenByDriveItem>;
 declare function use_current_FunctionDeclaration_getChildrenByDriveItem(
-    use: TypeOnly<typeof current.getChildrenByDriveItem>);
+    use: TypeOnly<typeof current.getChildrenByDriveItem>): void;
 use_current_FunctionDeclaration_getChildrenByDriveItem(
     get_old_FunctionDeclaration_getChildrenByDriveItem());
 
@@ -449,7 +449,7 @@ use_current_FunctionDeclaration_getChildrenByDriveItem(
 declare function get_current_FunctionDeclaration_getChildrenByDriveItem():
     TypeOnly<typeof current.getChildrenByDriveItem>;
 declare function use_old_FunctionDeclaration_getChildrenByDriveItem(
-    use: TypeOnly<typeof old.getChildrenByDriveItem>);
+    use: TypeOnly<typeof old.getChildrenByDriveItem>): void;
 use_old_FunctionDeclaration_getChildrenByDriveItem(
     get_current_FunctionDeclaration_getChildrenByDriveItem());
 
@@ -461,7 +461,7 @@ use_old_FunctionDeclaration_getChildrenByDriveItem(
 declare function get_old_FunctionDeclaration_getDriveId():
     TypeOnly<typeof old.getDriveId>;
 declare function use_current_FunctionDeclaration_getDriveId(
-    use: TypeOnly<typeof current.getDriveId>);
+    use: TypeOnly<typeof current.getDriveId>): void;
 use_current_FunctionDeclaration_getDriveId(
     get_old_FunctionDeclaration_getDriveId());
 
@@ -473,7 +473,7 @@ use_current_FunctionDeclaration_getDriveId(
 declare function get_current_FunctionDeclaration_getDriveId():
     TypeOnly<typeof current.getDriveId>;
 declare function use_old_FunctionDeclaration_getDriveId(
-    use: TypeOnly<typeof old.getDriveId>);
+    use: TypeOnly<typeof old.getDriveId>): void;
 use_old_FunctionDeclaration_getDriveId(
     get_current_FunctionDeclaration_getDriveId());
 
@@ -485,7 +485,7 @@ use_old_FunctionDeclaration_getDriveId(
 declare function get_old_FunctionDeclaration_getDriveItemByRootFileName():
     TypeOnly<typeof old.getDriveItemByRootFileName>;
 declare function use_current_FunctionDeclaration_getDriveItemByRootFileName(
-    use: TypeOnly<typeof current.getDriveItemByRootFileName>);
+    use: TypeOnly<typeof current.getDriveItemByRootFileName>): void;
 use_current_FunctionDeclaration_getDriveItemByRootFileName(
     get_old_FunctionDeclaration_getDriveItemByRootFileName());
 
@@ -497,7 +497,7 @@ use_current_FunctionDeclaration_getDriveItemByRootFileName(
 declare function get_current_FunctionDeclaration_getDriveItemByRootFileName():
     TypeOnly<typeof current.getDriveItemByRootFileName>;
 declare function use_old_FunctionDeclaration_getDriveItemByRootFileName(
-    use: TypeOnly<typeof old.getDriveItemByRootFileName>);
+    use: TypeOnly<typeof old.getDriveItemByRootFileName>): void;
 use_old_FunctionDeclaration_getDriveItemByRootFileName(
     get_current_FunctionDeclaration_getDriveItemByRootFileName());
 
@@ -509,7 +509,7 @@ use_old_FunctionDeclaration_getDriveItemByRootFileName(
 declare function get_old_FunctionDeclaration_getDriveItemByServerRelativePath():
     TypeOnly<typeof old.getDriveItemByServerRelativePath>;
 declare function use_current_FunctionDeclaration_getDriveItemByServerRelativePath(
-    use: TypeOnly<typeof current.getDriveItemByServerRelativePath>);
+    use: TypeOnly<typeof current.getDriveItemByServerRelativePath>): void;
 use_current_FunctionDeclaration_getDriveItemByServerRelativePath(
     get_old_FunctionDeclaration_getDriveItemByServerRelativePath());
 
@@ -521,7 +521,7 @@ use_current_FunctionDeclaration_getDriveItemByServerRelativePath(
 declare function get_current_FunctionDeclaration_getDriveItemByServerRelativePath():
     TypeOnly<typeof current.getDriveItemByServerRelativePath>;
 declare function use_old_FunctionDeclaration_getDriveItemByServerRelativePath(
-    use: TypeOnly<typeof old.getDriveItemByServerRelativePath>);
+    use: TypeOnly<typeof old.getDriveItemByServerRelativePath>): void;
 use_old_FunctionDeclaration_getDriveItemByServerRelativePath(
     get_current_FunctionDeclaration_getDriveItemByServerRelativePath());
 
@@ -533,7 +533,7 @@ use_old_FunctionDeclaration_getDriveItemByServerRelativePath(
 declare function get_old_FunctionDeclaration_getDriveItemFromDriveAndItem():
     TypeOnly<typeof old.getDriveItemFromDriveAndItem>;
 declare function use_current_FunctionDeclaration_getDriveItemFromDriveAndItem(
-    use: TypeOnly<typeof current.getDriveItemFromDriveAndItem>);
+    use: TypeOnly<typeof current.getDriveItemFromDriveAndItem>): void;
 use_current_FunctionDeclaration_getDriveItemFromDriveAndItem(
     get_old_FunctionDeclaration_getDriveItemFromDriveAndItem());
 
@@ -545,7 +545,7 @@ use_current_FunctionDeclaration_getDriveItemFromDriveAndItem(
 declare function get_current_FunctionDeclaration_getDriveItemFromDriveAndItem():
     TypeOnly<typeof current.getDriveItemFromDriveAndItem>;
 declare function use_old_FunctionDeclaration_getDriveItemFromDriveAndItem(
-    use: TypeOnly<typeof old.getDriveItemFromDriveAndItem>);
+    use: TypeOnly<typeof old.getDriveItemFromDriveAndItem>): void;
 use_old_FunctionDeclaration_getDriveItemFromDriveAndItem(
     get_current_FunctionDeclaration_getDriveItemFromDriveAndItem());
 
@@ -557,7 +557,7 @@ use_old_FunctionDeclaration_getDriveItemFromDriveAndItem(
 declare function get_old_FunctionDeclaration_getFetchTokenUrl():
     TypeOnly<typeof old.getFetchTokenUrl>;
 declare function use_current_FunctionDeclaration_getFetchTokenUrl(
-    use: TypeOnly<typeof current.getFetchTokenUrl>);
+    use: TypeOnly<typeof current.getFetchTokenUrl>): void;
 use_current_FunctionDeclaration_getFetchTokenUrl(
     get_old_FunctionDeclaration_getFetchTokenUrl());
 
@@ -569,7 +569,7 @@ use_current_FunctionDeclaration_getFetchTokenUrl(
 declare function get_current_FunctionDeclaration_getFetchTokenUrl():
     TypeOnly<typeof current.getFetchTokenUrl>;
 declare function use_old_FunctionDeclaration_getFetchTokenUrl(
-    use: TypeOnly<typeof old.getFetchTokenUrl>);
+    use: TypeOnly<typeof old.getFetchTokenUrl>): void;
 use_old_FunctionDeclaration_getFetchTokenUrl(
     get_current_FunctionDeclaration_getFetchTokenUrl());
 
@@ -581,7 +581,7 @@ use_old_FunctionDeclaration_getFetchTokenUrl(
 declare function get_old_FunctionDeclaration_getLoginPageUrl():
     TypeOnly<typeof old.getLoginPageUrl>;
 declare function use_current_FunctionDeclaration_getLoginPageUrl(
-    use: TypeOnly<typeof current.getLoginPageUrl>);
+    use: TypeOnly<typeof current.getLoginPageUrl>): void;
 use_current_FunctionDeclaration_getLoginPageUrl(
     get_old_FunctionDeclaration_getLoginPageUrl());
 
@@ -593,7 +593,7 @@ use_current_FunctionDeclaration_getLoginPageUrl(
 declare function get_current_FunctionDeclaration_getLoginPageUrl():
     TypeOnly<typeof current.getLoginPageUrl>;
 declare function use_old_FunctionDeclaration_getLoginPageUrl(
-    use: TypeOnly<typeof old.getLoginPageUrl>);
+    use: TypeOnly<typeof old.getLoginPageUrl>): void;
 use_old_FunctionDeclaration_getLoginPageUrl(
     get_current_FunctionDeclaration_getLoginPageUrl());
 
@@ -605,7 +605,7 @@ use_old_FunctionDeclaration_getLoginPageUrl(
 declare function get_old_VariableDeclaration_getOdspRefreshTokenFn():
     TypeOnly<typeof old.getOdspRefreshTokenFn>;
 declare function use_current_VariableDeclaration_getOdspRefreshTokenFn(
-    use: TypeOnly<typeof current.getOdspRefreshTokenFn>);
+    use: TypeOnly<typeof current.getOdspRefreshTokenFn>): void;
 use_current_VariableDeclaration_getOdspRefreshTokenFn(
     get_old_VariableDeclaration_getOdspRefreshTokenFn());
 
@@ -617,7 +617,7 @@ use_current_VariableDeclaration_getOdspRefreshTokenFn(
 declare function get_current_VariableDeclaration_getOdspRefreshTokenFn():
     TypeOnly<typeof current.getOdspRefreshTokenFn>;
 declare function use_old_VariableDeclaration_getOdspRefreshTokenFn(
-    use: TypeOnly<typeof old.getOdspRefreshTokenFn>);
+    use: TypeOnly<typeof old.getOdspRefreshTokenFn>): void;
 use_old_VariableDeclaration_getOdspRefreshTokenFn(
     get_current_VariableDeclaration_getOdspRefreshTokenFn());
 
@@ -629,7 +629,7 @@ use_old_VariableDeclaration_getOdspRefreshTokenFn(
 declare function get_old_VariableDeclaration_getOdspScope():
     TypeOnly<typeof old.getOdspScope>;
 declare function use_current_VariableDeclaration_getOdspScope(
-    use: TypeOnly<typeof current.getOdspScope>);
+    use: TypeOnly<typeof current.getOdspScope>): void;
 use_current_VariableDeclaration_getOdspScope(
     get_old_VariableDeclaration_getOdspScope());
 
@@ -641,7 +641,7 @@ use_current_VariableDeclaration_getOdspScope(
 declare function get_current_VariableDeclaration_getOdspScope():
     TypeOnly<typeof current.getOdspScope>;
 declare function use_old_VariableDeclaration_getOdspScope(
-    use: TypeOnly<typeof old.getOdspScope>);
+    use: TypeOnly<typeof old.getOdspScope>): void;
 use_old_VariableDeclaration_getOdspScope(
     get_current_VariableDeclaration_getOdspScope());
 
@@ -653,7 +653,7 @@ use_old_VariableDeclaration_getOdspScope(
 declare function get_old_VariableDeclaration_getPushRefreshTokenFn():
     TypeOnly<typeof old.getPushRefreshTokenFn>;
 declare function use_current_VariableDeclaration_getPushRefreshTokenFn(
-    use: TypeOnly<typeof current.getPushRefreshTokenFn>);
+    use: TypeOnly<typeof current.getPushRefreshTokenFn>): void;
 use_current_VariableDeclaration_getPushRefreshTokenFn(
     get_old_VariableDeclaration_getPushRefreshTokenFn());
 
@@ -665,7 +665,7 @@ use_current_VariableDeclaration_getPushRefreshTokenFn(
 declare function get_current_VariableDeclaration_getPushRefreshTokenFn():
     TypeOnly<typeof current.getPushRefreshTokenFn>;
 declare function use_old_VariableDeclaration_getPushRefreshTokenFn(
-    use: TypeOnly<typeof old.getPushRefreshTokenFn>);
+    use: TypeOnly<typeof old.getPushRefreshTokenFn>): void;
 use_old_VariableDeclaration_getPushRefreshTokenFn(
     get_current_VariableDeclaration_getPushRefreshTokenFn());
 
@@ -677,7 +677,7 @@ use_old_VariableDeclaration_getPushRefreshTokenFn(
 declare function get_old_VariableDeclaration_getRefreshTokenFn():
     TypeOnly<typeof old.getRefreshTokenFn>;
 declare function use_current_VariableDeclaration_getRefreshTokenFn(
-    use: TypeOnly<typeof current.getRefreshTokenFn>);
+    use: TypeOnly<typeof current.getRefreshTokenFn>): void;
 use_current_VariableDeclaration_getRefreshTokenFn(
     get_old_VariableDeclaration_getRefreshTokenFn());
 
@@ -689,7 +689,7 @@ use_current_VariableDeclaration_getRefreshTokenFn(
 declare function get_current_VariableDeclaration_getRefreshTokenFn():
     TypeOnly<typeof current.getRefreshTokenFn>;
 declare function use_old_VariableDeclaration_getRefreshTokenFn(
-    use: TypeOnly<typeof old.getRefreshTokenFn>);
+    use: TypeOnly<typeof old.getRefreshTokenFn>): void;
 use_old_VariableDeclaration_getRefreshTokenFn(
     get_current_VariableDeclaration_getRefreshTokenFn());
 
@@ -701,7 +701,7 @@ use_old_VariableDeclaration_getRefreshTokenFn(
 declare function get_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse():
     TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>;
 declare function use_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
-    use: TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>);
+    use: TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>): void;
 use_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
     get_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse());
 
@@ -713,7 +713,7 @@ use_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
 declare function get_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse():
     TypeOnly<typeof current.getSPOAndGraphRequestIdsFromResponse>;
 declare function use_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
-    use: TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>);
+    use: TypeOnly<typeof old.getSPOAndGraphRequestIdsFromResponse>): void;
 use_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
     get_current_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse());
 
@@ -725,7 +725,7 @@ use_old_FunctionDeclaration_getSPOAndGraphRequestIdsFromResponse(
 declare function get_old_FunctionDeclaration_getServer():
     TypeOnly<typeof old.getServer>;
 declare function use_current_FunctionDeclaration_getServer(
-    use: TypeOnly<typeof current.getServer>);
+    use: TypeOnly<typeof current.getServer>): void;
 use_current_FunctionDeclaration_getServer(
     get_old_FunctionDeclaration_getServer());
 
@@ -737,7 +737,7 @@ use_current_FunctionDeclaration_getServer(
 declare function get_current_FunctionDeclaration_getServer():
     TypeOnly<typeof current.getServer>;
 declare function use_old_FunctionDeclaration_getServer(
-    use: TypeOnly<typeof old.getServer>);
+    use: TypeOnly<typeof old.getServer>): void;
 use_old_FunctionDeclaration_getServer(
     get_current_FunctionDeclaration_getServer());
 
@@ -749,7 +749,7 @@ use_old_FunctionDeclaration_getServer(
 declare function get_old_FunctionDeclaration_getSiteUrl():
     TypeOnly<typeof old.getSiteUrl>;
 declare function use_current_FunctionDeclaration_getSiteUrl(
-    use: TypeOnly<typeof current.getSiteUrl>);
+    use: TypeOnly<typeof current.getSiteUrl>): void;
 use_current_FunctionDeclaration_getSiteUrl(
     get_old_FunctionDeclaration_getSiteUrl());
 
@@ -761,7 +761,7 @@ use_current_FunctionDeclaration_getSiteUrl(
 declare function get_current_FunctionDeclaration_getSiteUrl():
     TypeOnly<typeof current.getSiteUrl>;
 declare function use_old_FunctionDeclaration_getSiteUrl(
-    use: TypeOnly<typeof old.getSiteUrl>);
+    use: TypeOnly<typeof old.getSiteUrl>): void;
 use_old_FunctionDeclaration_getSiteUrl(
     get_current_FunctionDeclaration_getSiteUrl());
 
@@ -773,7 +773,7 @@ use_old_FunctionDeclaration_getSiteUrl(
 declare function get_old_FunctionDeclaration_hasFacetCodes():
     TypeOnly<typeof old.hasFacetCodes>;
 declare function use_current_FunctionDeclaration_hasFacetCodes(
-    use: TypeOnly<typeof current.hasFacetCodes>);
+    use: TypeOnly<typeof current.hasFacetCodes>): void;
 use_current_FunctionDeclaration_hasFacetCodes(
     get_old_FunctionDeclaration_hasFacetCodes());
 
@@ -785,7 +785,7 @@ use_current_FunctionDeclaration_hasFacetCodes(
 declare function get_current_FunctionDeclaration_hasFacetCodes():
     TypeOnly<typeof current.hasFacetCodes>;
 declare function use_old_FunctionDeclaration_hasFacetCodes(
-    use: TypeOnly<typeof old.hasFacetCodes>);
+    use: TypeOnly<typeof old.hasFacetCodes>): void;
 use_old_FunctionDeclaration_hasFacetCodes(
     get_current_FunctionDeclaration_hasFacetCodes());
 
@@ -797,7 +797,7 @@ use_old_FunctionDeclaration_hasFacetCodes(
 declare function get_old_FunctionDeclaration_isOdspHostname():
     TypeOnly<typeof old.isOdspHostname>;
 declare function use_current_FunctionDeclaration_isOdspHostname(
-    use: TypeOnly<typeof current.isOdspHostname>);
+    use: TypeOnly<typeof current.isOdspHostname>): void;
 use_current_FunctionDeclaration_isOdspHostname(
     get_old_FunctionDeclaration_isOdspHostname());
 
@@ -809,7 +809,7 @@ use_current_FunctionDeclaration_isOdspHostname(
 declare function get_current_FunctionDeclaration_isOdspHostname():
     TypeOnly<typeof current.isOdspHostname>;
 declare function use_old_FunctionDeclaration_isOdspHostname(
-    use: TypeOnly<typeof old.isOdspHostname>);
+    use: TypeOnly<typeof old.isOdspHostname>): void;
 use_old_FunctionDeclaration_isOdspHostname(
     get_current_FunctionDeclaration_isOdspHostname());
 
@@ -821,7 +821,7 @@ use_old_FunctionDeclaration_isOdspHostname(
 declare function get_old_FunctionDeclaration_isPushChannelHostname():
     TypeOnly<typeof old.isPushChannelHostname>;
 declare function use_current_FunctionDeclaration_isPushChannelHostname(
-    use: TypeOnly<typeof current.isPushChannelHostname>);
+    use: TypeOnly<typeof current.isPushChannelHostname>): void;
 use_current_FunctionDeclaration_isPushChannelHostname(
     get_old_FunctionDeclaration_isPushChannelHostname());
 
@@ -833,7 +833,7 @@ use_current_FunctionDeclaration_isPushChannelHostname(
 declare function get_current_FunctionDeclaration_isPushChannelHostname():
     TypeOnly<typeof current.isPushChannelHostname>;
 declare function use_old_FunctionDeclaration_isPushChannelHostname(
-    use: TypeOnly<typeof old.isPushChannelHostname>);
+    use: TypeOnly<typeof old.isPushChannelHostname>): void;
 use_old_FunctionDeclaration_isPushChannelHostname(
     get_current_FunctionDeclaration_isPushChannelHostname());
 
@@ -845,7 +845,7 @@ use_old_FunctionDeclaration_isPushChannelHostname(
 declare function get_old_FunctionDeclaration_parseFacetCodes():
     TypeOnly<typeof old.parseFacetCodes>;
 declare function use_current_FunctionDeclaration_parseFacetCodes(
-    use: TypeOnly<typeof current.parseFacetCodes>);
+    use: TypeOnly<typeof current.parseFacetCodes>): void;
 use_current_FunctionDeclaration_parseFacetCodes(
     get_old_FunctionDeclaration_parseFacetCodes());
 
@@ -857,7 +857,7 @@ use_current_FunctionDeclaration_parseFacetCodes(
 declare function get_current_FunctionDeclaration_parseFacetCodes():
     TypeOnly<typeof current.parseFacetCodes>;
 declare function use_old_FunctionDeclaration_parseFacetCodes(
-    use: TypeOnly<typeof old.parseFacetCodes>);
+    use: TypeOnly<typeof old.parseFacetCodes>): void;
 use_old_FunctionDeclaration_parseFacetCodes(
     get_current_FunctionDeclaration_parseFacetCodes());
 
@@ -869,7 +869,7 @@ use_old_FunctionDeclaration_parseFacetCodes(
 declare function get_old_FunctionDeclaration_postAsync():
     TypeOnly<typeof old.postAsync>;
 declare function use_current_FunctionDeclaration_postAsync(
-    use: TypeOnly<typeof current.postAsync>);
+    use: TypeOnly<typeof current.postAsync>): void;
 use_current_FunctionDeclaration_postAsync(
     get_old_FunctionDeclaration_postAsync());
 
@@ -881,7 +881,7 @@ use_current_FunctionDeclaration_postAsync(
 declare function get_current_FunctionDeclaration_postAsync():
     TypeOnly<typeof current.postAsync>;
 declare function use_old_FunctionDeclaration_postAsync(
-    use: TypeOnly<typeof old.postAsync>);
+    use: TypeOnly<typeof old.postAsync>): void;
 use_old_FunctionDeclaration_postAsync(
     get_current_FunctionDeclaration_postAsync());
 
@@ -893,7 +893,7 @@ use_old_FunctionDeclaration_postAsync(
 declare function get_old_VariableDeclaration_pushScope():
     TypeOnly<typeof old.pushScope>;
 declare function use_current_VariableDeclaration_pushScope(
-    use: TypeOnly<typeof current.pushScope>);
+    use: TypeOnly<typeof current.pushScope>): void;
 use_current_VariableDeclaration_pushScope(
     get_old_VariableDeclaration_pushScope());
 
@@ -905,7 +905,7 @@ use_current_VariableDeclaration_pushScope(
 declare function get_current_VariableDeclaration_pushScope():
     TypeOnly<typeof current.pushScope>;
 declare function use_old_VariableDeclaration_pushScope(
-    use: TypeOnly<typeof old.pushScope>);
+    use: TypeOnly<typeof old.pushScope>): void;
 use_old_VariableDeclaration_pushScope(
     get_current_VariableDeclaration_pushScope());
 
@@ -917,7 +917,7 @@ use_old_VariableDeclaration_pushScope(
 declare function get_old_FunctionDeclaration_putAsync():
     TypeOnly<typeof old.putAsync>;
 declare function use_current_FunctionDeclaration_putAsync(
-    use: TypeOnly<typeof current.putAsync>);
+    use: TypeOnly<typeof current.putAsync>): void;
 use_current_FunctionDeclaration_putAsync(
     get_old_FunctionDeclaration_putAsync());
 
@@ -929,7 +929,7 @@ use_current_FunctionDeclaration_putAsync(
 declare function get_current_FunctionDeclaration_putAsync():
     TypeOnly<typeof current.putAsync>;
 declare function use_old_FunctionDeclaration_putAsync(
-    use: TypeOnly<typeof old.putAsync>);
+    use: TypeOnly<typeof old.putAsync>): void;
 use_old_FunctionDeclaration_putAsync(
     get_current_FunctionDeclaration_putAsync());
 
@@ -941,7 +941,7 @@ use_old_FunctionDeclaration_putAsync(
 declare function get_old_FunctionDeclaration_refreshTokens():
     TypeOnly<typeof old.refreshTokens>;
 declare function use_current_FunctionDeclaration_refreshTokens(
-    use: TypeOnly<typeof current.refreshTokens>);
+    use: TypeOnly<typeof current.refreshTokens>): void;
 use_current_FunctionDeclaration_refreshTokens(
     get_old_FunctionDeclaration_refreshTokens());
 
@@ -953,7 +953,7 @@ use_current_FunctionDeclaration_refreshTokens(
 declare function get_current_FunctionDeclaration_refreshTokens():
     TypeOnly<typeof current.refreshTokens>;
 declare function use_old_FunctionDeclaration_refreshTokens(
-    use: TypeOnly<typeof old.refreshTokens>);
+    use: TypeOnly<typeof old.refreshTokens>): void;
 use_old_FunctionDeclaration_refreshTokens(
     get_current_FunctionDeclaration_refreshTokens());
 
@@ -965,7 +965,7 @@ use_old_FunctionDeclaration_refreshTokens(
 declare function get_old_FunctionDeclaration_throwOdspNetworkError():
     TypeOnly<typeof old.throwOdspNetworkError>;
 declare function use_current_FunctionDeclaration_throwOdspNetworkError(
-    use: TypeOnly<typeof current.throwOdspNetworkError>);
+    use: TypeOnly<typeof current.throwOdspNetworkError>): void;
 use_current_FunctionDeclaration_throwOdspNetworkError(
     get_old_FunctionDeclaration_throwOdspNetworkError());
 
@@ -977,7 +977,7 @@ use_current_FunctionDeclaration_throwOdspNetworkError(
 declare function get_current_FunctionDeclaration_throwOdspNetworkError():
     TypeOnly<typeof current.throwOdspNetworkError>;
 declare function use_old_FunctionDeclaration_throwOdspNetworkError(
-    use: TypeOnly<typeof old.throwOdspNetworkError>);
+    use: TypeOnly<typeof old.throwOdspNetworkError>): void;
 use_old_FunctionDeclaration_throwOdspNetworkError(
     get_current_FunctionDeclaration_throwOdspNetworkError());
 
@@ -989,7 +989,7 @@ use_old_FunctionDeclaration_throwOdspNetworkError(
 declare function get_old_FunctionDeclaration_tryParseErrorResponse():
     TypeOnly<typeof old.tryParseErrorResponse>;
 declare function use_current_FunctionDeclaration_tryParseErrorResponse(
-    use: TypeOnly<typeof current.tryParseErrorResponse>);
+    use: TypeOnly<typeof current.tryParseErrorResponse>): void;
 use_current_FunctionDeclaration_tryParseErrorResponse(
     get_old_FunctionDeclaration_tryParseErrorResponse());
 
@@ -1001,7 +1001,7 @@ use_current_FunctionDeclaration_tryParseErrorResponse(
 declare function get_current_FunctionDeclaration_tryParseErrorResponse():
     TypeOnly<typeof current.tryParseErrorResponse>;
 declare function use_old_FunctionDeclaration_tryParseErrorResponse(
-    use: TypeOnly<typeof old.tryParseErrorResponse>);
+    use: TypeOnly<typeof old.tryParseErrorResponse>): void;
 use_old_FunctionDeclaration_tryParseErrorResponse(
     get_current_FunctionDeclaration_tryParseErrorResponse());
 
@@ -1013,7 +1013,7 @@ use_old_FunctionDeclaration_tryParseErrorResponse(
 declare function get_old_FunctionDeclaration_unauthPostAsync():
     TypeOnly<typeof old.unauthPostAsync>;
 declare function use_current_FunctionDeclaration_unauthPostAsync(
-    use: TypeOnly<typeof current.unauthPostAsync>);
+    use: TypeOnly<typeof current.unauthPostAsync>): void;
 use_current_FunctionDeclaration_unauthPostAsync(
     get_old_FunctionDeclaration_unauthPostAsync());
 
@@ -1025,6 +1025,6 @@ use_current_FunctionDeclaration_unauthPostAsync(
 declare function get_current_FunctionDeclaration_unauthPostAsync():
     TypeOnly<typeof current.unauthPostAsync>;
 declare function use_old_FunctionDeclaration_unauthPostAsync(
-    use: TypeOnly<typeof old.unauthPostAsync>);
+    use: TypeOnly<typeof old.unauthPostAsync>): void;
 use_old_FunctionDeclaration_unauthPostAsync(
     get_current_FunctionDeclaration_unauthPostAsync());

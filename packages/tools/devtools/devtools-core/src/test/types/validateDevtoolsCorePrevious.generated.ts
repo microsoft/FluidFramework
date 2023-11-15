@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_AudienceChangeLogEntry():
     TypeOnly<old.AudienceChangeLogEntry>;
 declare function use_current_InterfaceDeclaration_AudienceChangeLogEntry(
-    use: TypeOnly<current.AudienceChangeLogEntry>);
+    use: TypeOnly<current.AudienceChangeLogEntry>): void;
 use_current_InterfaceDeclaration_AudienceChangeLogEntry(
     get_old_InterfaceDeclaration_AudienceChangeLogEntry());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_AudienceChangeLogEntry(
 declare function get_current_InterfaceDeclaration_AudienceChangeLogEntry():
     TypeOnly<current.AudienceChangeLogEntry>;
 declare function use_old_InterfaceDeclaration_AudienceChangeLogEntry(
-    use: TypeOnly<old.AudienceChangeLogEntry>);
+    use: TypeOnly<old.AudienceChangeLogEntry>): void;
 use_old_InterfaceDeclaration_AudienceChangeLogEntry(
     get_current_InterfaceDeclaration_AudienceChangeLogEntry());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_AudienceChangeLogEntry(
 declare function get_old_InterfaceDeclaration_AudienceClientMetadata():
     TypeOnly<old.AudienceClientMetadata>;
 declare function use_current_InterfaceDeclaration_AudienceClientMetadata(
-    use: TypeOnly<current.AudienceClientMetadata>);
+    use: TypeOnly<current.AudienceClientMetadata>): void;
 use_current_InterfaceDeclaration_AudienceClientMetadata(
     get_old_InterfaceDeclaration_AudienceClientMetadata());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_AudienceClientMetadata(
 declare function get_current_InterfaceDeclaration_AudienceClientMetadata():
     TypeOnly<current.AudienceClientMetadata>;
 declare function use_old_InterfaceDeclaration_AudienceClientMetadata(
-    use: TypeOnly<old.AudienceClientMetadata>);
+    use: TypeOnly<old.AudienceClientMetadata>): void;
 use_old_InterfaceDeclaration_AudienceClientMetadata(
     get_current_InterfaceDeclaration_AudienceClientMetadata());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_AudienceClientMetadata(
 declare function get_old_InterfaceDeclaration_AudienceSummary_Message():
     TypeOnly<old.AudienceSummary.Message>;
 declare function use_current_InterfaceDeclaration_AudienceSummary_Message(
-    use: TypeOnly<current.AudienceSummary.Message>);
+    use: TypeOnly<current.AudienceSummary.Message>): void;
 use_current_InterfaceDeclaration_AudienceSummary_Message(
     get_old_InterfaceDeclaration_AudienceSummary_Message());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_AudienceSummary_Message(
 declare function get_current_InterfaceDeclaration_AudienceSummary_Message():
     TypeOnly<current.AudienceSummary.Message>;
 declare function use_old_InterfaceDeclaration_AudienceSummary_Message(
-    use: TypeOnly<old.AudienceSummary.Message>);
+    use: TypeOnly<old.AudienceSummary.Message>): void;
 use_old_InterfaceDeclaration_AudienceSummary_Message(
     get_current_InterfaceDeclaration_AudienceSummary_Message());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_AudienceSummary_Message(
 declare function get_old_InterfaceDeclaration_AudienceSummary_MessageData():
     TypeOnly<old.AudienceSummary.MessageData>;
 declare function use_current_InterfaceDeclaration_AudienceSummary_MessageData(
-    use: TypeOnly<current.AudienceSummary.MessageData>);
+    use: TypeOnly<current.AudienceSummary.MessageData>): void;
 use_current_InterfaceDeclaration_AudienceSummary_MessageData(
     get_old_InterfaceDeclaration_AudienceSummary_MessageData());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_AudienceSummary_MessageData(
 declare function get_current_InterfaceDeclaration_AudienceSummary_MessageData():
     TypeOnly<current.AudienceSummary.MessageData>;
 declare function use_old_InterfaceDeclaration_AudienceSummary_MessageData(
-    use: TypeOnly<old.AudienceSummary.MessageData>);
+    use: TypeOnly<old.AudienceSummary.MessageData>): void;
 use_old_InterfaceDeclaration_AudienceSummary_MessageData(
     get_current_InterfaceDeclaration_AudienceSummary_MessageData());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_AudienceSummary_MessageData(
 declare function get_old_VariableDeclaration_AudienceSummary_MessageType():
     TypeOnly<typeof old.AudienceSummary.MessageType>;
 declare function use_current_VariableDeclaration_AudienceSummary_MessageType(
-    use: TypeOnly<typeof current.AudienceSummary.MessageType>);
+    use: TypeOnly<typeof current.AudienceSummary.MessageType>): void;
 use_current_VariableDeclaration_AudienceSummary_MessageType(
     get_old_VariableDeclaration_AudienceSummary_MessageType());
 
@@ -137,7 +137,7 @@ use_current_VariableDeclaration_AudienceSummary_MessageType(
 declare function get_current_VariableDeclaration_AudienceSummary_MessageType():
     TypeOnly<typeof current.AudienceSummary.MessageType>;
 declare function use_old_VariableDeclaration_AudienceSummary_MessageType(
-    use: TypeOnly<typeof old.AudienceSummary.MessageType>);
+    use: TypeOnly<typeof old.AudienceSummary.MessageType>): void;
 use_old_VariableDeclaration_AudienceSummary_MessageType(
     get_current_VariableDeclaration_AudienceSummary_MessageType());
 
@@ -149,7 +149,7 @@ use_old_VariableDeclaration_AudienceSummary_MessageType(
 declare function get_old_FunctionDeclaration_AudienceSummary_createMessage():
     TypeOnly<typeof old.AudienceSummary.createMessage>;
 declare function use_current_FunctionDeclaration_AudienceSummary_createMessage(
-    use: TypeOnly<typeof current.AudienceSummary.createMessage>);
+    use: TypeOnly<typeof current.AudienceSummary.createMessage>): void;
 use_current_FunctionDeclaration_AudienceSummary_createMessage(
     get_old_FunctionDeclaration_AudienceSummary_createMessage());
 
@@ -161,7 +161,7 @@ use_current_FunctionDeclaration_AudienceSummary_createMessage(
 declare function get_current_FunctionDeclaration_AudienceSummary_createMessage():
     TypeOnly<typeof current.AudienceSummary.createMessage>;
 declare function use_old_FunctionDeclaration_AudienceSummary_createMessage(
-    use: TypeOnly<typeof old.AudienceSummary.createMessage>);
+    use: TypeOnly<typeof old.AudienceSummary.createMessage>): void;
 use_old_FunctionDeclaration_AudienceSummary_createMessage(
     get_current_FunctionDeclaration_AudienceSummary_createMessage());
 
@@ -173,7 +173,7 @@ use_old_FunctionDeclaration_AudienceSummary_createMessage(
 declare function get_old_InterfaceDeclaration_CloseContainer_Message():
     TypeOnly<old.CloseContainer.Message>;
 declare function use_current_InterfaceDeclaration_CloseContainer_Message(
-    use: TypeOnly<current.CloseContainer.Message>);
+    use: TypeOnly<current.CloseContainer.Message>): void;
 use_current_InterfaceDeclaration_CloseContainer_Message(
     get_old_InterfaceDeclaration_CloseContainer_Message());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_CloseContainer_Message(
 declare function get_current_InterfaceDeclaration_CloseContainer_Message():
     TypeOnly<current.CloseContainer.Message>;
 declare function use_old_InterfaceDeclaration_CloseContainer_Message(
-    use: TypeOnly<old.CloseContainer.Message>);
+    use: TypeOnly<old.CloseContainer.Message>): void;
 use_old_InterfaceDeclaration_CloseContainer_Message(
     get_current_InterfaceDeclaration_CloseContainer_Message());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_CloseContainer_Message(
 declare function get_old_TypeAliasDeclaration_CloseContainer_MessageData():
     TypeOnly<old.CloseContainer.MessageData>;
 declare function use_current_TypeAliasDeclaration_CloseContainer_MessageData(
-    use: TypeOnly<current.CloseContainer.MessageData>);
+    use: TypeOnly<current.CloseContainer.MessageData>): void;
 use_current_TypeAliasDeclaration_CloseContainer_MessageData(
     get_old_TypeAliasDeclaration_CloseContainer_MessageData());
 
@@ -209,7 +209,7 @@ use_current_TypeAliasDeclaration_CloseContainer_MessageData(
 declare function get_current_TypeAliasDeclaration_CloseContainer_MessageData():
     TypeOnly<current.CloseContainer.MessageData>;
 declare function use_old_TypeAliasDeclaration_CloseContainer_MessageData(
-    use: TypeOnly<old.CloseContainer.MessageData>);
+    use: TypeOnly<old.CloseContainer.MessageData>): void;
 use_old_TypeAliasDeclaration_CloseContainer_MessageData(
     get_current_TypeAliasDeclaration_CloseContainer_MessageData());
 
@@ -221,7 +221,7 @@ use_old_TypeAliasDeclaration_CloseContainer_MessageData(
 declare function get_old_VariableDeclaration_CloseContainer_MessageType():
     TypeOnly<typeof old.CloseContainer.MessageType>;
 declare function use_current_VariableDeclaration_CloseContainer_MessageType(
-    use: TypeOnly<typeof current.CloseContainer.MessageType>);
+    use: TypeOnly<typeof current.CloseContainer.MessageType>): void;
 use_current_VariableDeclaration_CloseContainer_MessageType(
     get_old_VariableDeclaration_CloseContainer_MessageType());
 
@@ -233,7 +233,7 @@ use_current_VariableDeclaration_CloseContainer_MessageType(
 declare function get_current_VariableDeclaration_CloseContainer_MessageType():
     TypeOnly<typeof current.CloseContainer.MessageType>;
 declare function use_old_VariableDeclaration_CloseContainer_MessageType(
-    use: TypeOnly<typeof old.CloseContainer.MessageType>);
+    use: TypeOnly<typeof old.CloseContainer.MessageType>): void;
 use_old_VariableDeclaration_CloseContainer_MessageType(
     get_current_VariableDeclaration_CloseContainer_MessageType());
 
@@ -245,7 +245,7 @@ use_old_VariableDeclaration_CloseContainer_MessageType(
 declare function get_old_FunctionDeclaration_CloseContainer_createMessage():
     TypeOnly<typeof old.CloseContainer.createMessage>;
 declare function use_current_FunctionDeclaration_CloseContainer_createMessage(
-    use: TypeOnly<typeof current.CloseContainer.createMessage>);
+    use: TypeOnly<typeof current.CloseContainer.createMessage>): void;
 use_current_FunctionDeclaration_CloseContainer_createMessage(
     get_old_FunctionDeclaration_CloseContainer_createMessage());
 
@@ -257,7 +257,7 @@ use_current_FunctionDeclaration_CloseContainer_createMessage(
 declare function get_current_FunctionDeclaration_CloseContainer_createMessage():
     TypeOnly<typeof current.CloseContainer.createMessage>;
 declare function use_old_FunctionDeclaration_CloseContainer_createMessage(
-    use: TypeOnly<typeof old.CloseContainer.createMessage>);
+    use: TypeOnly<typeof old.CloseContainer.createMessage>): void;
 use_old_FunctionDeclaration_CloseContainer_createMessage(
     get_current_FunctionDeclaration_CloseContainer_createMessage());
 
@@ -269,7 +269,7 @@ use_old_FunctionDeclaration_CloseContainer_createMessage(
 declare function get_old_InterfaceDeclaration_ConnectContainer_Message():
     TypeOnly<old.ConnectContainer.Message>;
 declare function use_current_InterfaceDeclaration_ConnectContainer_Message(
-    use: TypeOnly<current.ConnectContainer.Message>);
+    use: TypeOnly<current.ConnectContainer.Message>): void;
 use_current_InterfaceDeclaration_ConnectContainer_Message(
     get_old_InterfaceDeclaration_ConnectContainer_Message());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_ConnectContainer_Message(
 declare function get_current_InterfaceDeclaration_ConnectContainer_Message():
     TypeOnly<current.ConnectContainer.Message>;
 declare function use_old_InterfaceDeclaration_ConnectContainer_Message(
-    use: TypeOnly<old.ConnectContainer.Message>);
+    use: TypeOnly<old.ConnectContainer.Message>): void;
 use_old_InterfaceDeclaration_ConnectContainer_Message(
     get_current_InterfaceDeclaration_ConnectContainer_Message());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_ConnectContainer_Message(
 declare function get_old_TypeAliasDeclaration_ConnectContainer_MessageData():
     TypeOnly<old.ConnectContainer.MessageData>;
 declare function use_current_TypeAliasDeclaration_ConnectContainer_MessageData(
-    use: TypeOnly<current.ConnectContainer.MessageData>);
+    use: TypeOnly<current.ConnectContainer.MessageData>): void;
 use_current_TypeAliasDeclaration_ConnectContainer_MessageData(
     get_old_TypeAliasDeclaration_ConnectContainer_MessageData());
 
@@ -305,7 +305,7 @@ use_current_TypeAliasDeclaration_ConnectContainer_MessageData(
 declare function get_current_TypeAliasDeclaration_ConnectContainer_MessageData():
     TypeOnly<current.ConnectContainer.MessageData>;
 declare function use_old_TypeAliasDeclaration_ConnectContainer_MessageData(
-    use: TypeOnly<old.ConnectContainer.MessageData>);
+    use: TypeOnly<old.ConnectContainer.MessageData>): void;
 use_old_TypeAliasDeclaration_ConnectContainer_MessageData(
     get_current_TypeAliasDeclaration_ConnectContainer_MessageData());
 
@@ -317,7 +317,7 @@ use_old_TypeAliasDeclaration_ConnectContainer_MessageData(
 declare function get_old_VariableDeclaration_ConnectContainer_MessageType():
     TypeOnly<typeof old.ConnectContainer.MessageType>;
 declare function use_current_VariableDeclaration_ConnectContainer_MessageType(
-    use: TypeOnly<typeof current.ConnectContainer.MessageType>);
+    use: TypeOnly<typeof current.ConnectContainer.MessageType>): void;
 use_current_VariableDeclaration_ConnectContainer_MessageType(
     get_old_VariableDeclaration_ConnectContainer_MessageType());
 
@@ -329,7 +329,7 @@ use_current_VariableDeclaration_ConnectContainer_MessageType(
 declare function get_current_VariableDeclaration_ConnectContainer_MessageType():
     TypeOnly<typeof current.ConnectContainer.MessageType>;
 declare function use_old_VariableDeclaration_ConnectContainer_MessageType(
-    use: TypeOnly<typeof old.ConnectContainer.MessageType>);
+    use: TypeOnly<typeof old.ConnectContainer.MessageType>): void;
 use_old_VariableDeclaration_ConnectContainer_MessageType(
     get_current_VariableDeclaration_ConnectContainer_MessageType());
 
@@ -341,7 +341,7 @@ use_old_VariableDeclaration_ConnectContainer_MessageType(
 declare function get_old_FunctionDeclaration_ConnectContainer_createMessage():
     TypeOnly<typeof old.ConnectContainer.createMessage>;
 declare function use_current_FunctionDeclaration_ConnectContainer_createMessage(
-    use: TypeOnly<typeof current.ConnectContainer.createMessage>);
+    use: TypeOnly<typeof current.ConnectContainer.createMessage>): void;
 use_current_FunctionDeclaration_ConnectContainer_createMessage(
     get_old_FunctionDeclaration_ConnectContainer_createMessage());
 
@@ -353,7 +353,7 @@ use_current_FunctionDeclaration_ConnectContainer_createMessage(
 declare function get_current_FunctionDeclaration_ConnectContainer_createMessage():
     TypeOnly<typeof current.ConnectContainer.createMessage>;
 declare function use_old_FunctionDeclaration_ConnectContainer_createMessage(
-    use: TypeOnly<typeof old.ConnectContainer.createMessage>);
+    use: TypeOnly<typeof old.ConnectContainer.createMessage>): void;
 use_old_FunctionDeclaration_ConnectContainer_createMessage(
     get_current_FunctionDeclaration_ConnectContainer_createMessage());
 
@@ -365,7 +365,7 @@ use_old_FunctionDeclaration_ConnectContainer_createMessage(
 declare function get_old_InterfaceDeclaration_ConnectionStateChangeLogEntry():
     TypeOnly<old.ConnectionStateChangeLogEntry>;
 declare function use_current_InterfaceDeclaration_ConnectionStateChangeLogEntry(
-    use: TypeOnly<current.ConnectionStateChangeLogEntry>);
+    use: TypeOnly<current.ConnectionStateChangeLogEntry>): void;
 use_current_InterfaceDeclaration_ConnectionStateChangeLogEntry(
     get_old_InterfaceDeclaration_ConnectionStateChangeLogEntry());
 
@@ -377,7 +377,7 @@ use_current_InterfaceDeclaration_ConnectionStateChangeLogEntry(
 declare function get_current_InterfaceDeclaration_ConnectionStateChangeLogEntry():
     TypeOnly<current.ConnectionStateChangeLogEntry>;
 declare function use_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(
-    use: TypeOnly<old.ConnectionStateChangeLogEntry>);
+    use: TypeOnly<old.ConnectionStateChangeLogEntry>): void;
 use_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(
     get_current_InterfaceDeclaration_ConnectionStateChangeLogEntry());
 
@@ -389,7 +389,7 @@ use_old_InterfaceDeclaration_ConnectionStateChangeLogEntry(
 declare function get_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags():
     TypeOnly<old.ContainerDevtoolsFeatureFlags>;
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
-    use: TypeOnly<current.ContainerDevtoolsFeatureFlags>);
+    use: TypeOnly<current.ContainerDevtoolsFeatureFlags>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
     get_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
 declare function get_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags():
     TypeOnly<current.ContainerDevtoolsFeatureFlags>;
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
-    use: TypeOnly<old.ContainerDevtoolsFeatureFlags>);
+    use: TypeOnly<old.ContainerDevtoolsFeatureFlags>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
     get_current_InterfaceDeclaration_ContainerDevtoolsFeatureFlags());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_ContainerDevtoolsFeatureFlags(
 declare function get_old_InterfaceDeclaration_ContainerDevtoolsFeatures_Message():
     TypeOnly<old.ContainerDevtoolsFeatures.Message>;
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsFeatures_Message(
-    use: TypeOnly<current.ContainerDevtoolsFeatures.Message>);
+    use: TypeOnly<current.ContainerDevtoolsFeatures.Message>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsFeatures_Message(
     get_old_InterfaceDeclaration_ContainerDevtoolsFeatures_Message());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_ContainerDevtoolsFeatures_Message(
 declare function get_current_InterfaceDeclaration_ContainerDevtoolsFeatures_Message():
     TypeOnly<current.ContainerDevtoolsFeatures.Message>;
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsFeatures_Message(
-    use: TypeOnly<old.ContainerDevtoolsFeatures.Message>);
+    use: TypeOnly<old.ContainerDevtoolsFeatures.Message>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsFeatures_Message(
     get_current_InterfaceDeclaration_ContainerDevtoolsFeatures_Message());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_ContainerDevtoolsFeatures_Message(
 declare function get_old_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData():
     TypeOnly<old.ContainerDevtoolsFeatures.MessageData>;
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData(
-    use: TypeOnly<current.ContainerDevtoolsFeatures.MessageData>);
+    use: TypeOnly<current.ContainerDevtoolsFeatures.MessageData>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData(
     get_old_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData());
 
@@ -449,7 +449,7 @@ use_current_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData(
 declare function get_current_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData():
     TypeOnly<current.ContainerDevtoolsFeatures.MessageData>;
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData(
-    use: TypeOnly<old.ContainerDevtoolsFeatures.MessageData>);
+    use: TypeOnly<old.ContainerDevtoolsFeatures.MessageData>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData(
     get_current_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData());
 
@@ -461,7 +461,7 @@ use_old_InterfaceDeclaration_ContainerDevtoolsFeatures_MessageData(
 declare function get_old_VariableDeclaration_ContainerDevtoolsFeatures_MessageType():
     TypeOnly<typeof old.ContainerDevtoolsFeatures.MessageType>;
 declare function use_current_VariableDeclaration_ContainerDevtoolsFeatures_MessageType(
-    use: TypeOnly<typeof current.ContainerDevtoolsFeatures.MessageType>);
+    use: TypeOnly<typeof current.ContainerDevtoolsFeatures.MessageType>): void;
 use_current_VariableDeclaration_ContainerDevtoolsFeatures_MessageType(
     get_old_VariableDeclaration_ContainerDevtoolsFeatures_MessageType());
 
@@ -473,7 +473,7 @@ use_current_VariableDeclaration_ContainerDevtoolsFeatures_MessageType(
 declare function get_current_VariableDeclaration_ContainerDevtoolsFeatures_MessageType():
     TypeOnly<typeof current.ContainerDevtoolsFeatures.MessageType>;
 declare function use_old_VariableDeclaration_ContainerDevtoolsFeatures_MessageType(
-    use: TypeOnly<typeof old.ContainerDevtoolsFeatures.MessageType>);
+    use: TypeOnly<typeof old.ContainerDevtoolsFeatures.MessageType>): void;
 use_old_VariableDeclaration_ContainerDevtoolsFeatures_MessageType(
     get_current_VariableDeclaration_ContainerDevtoolsFeatures_MessageType());
 
@@ -485,7 +485,7 @@ use_old_VariableDeclaration_ContainerDevtoolsFeatures_MessageType(
 declare function get_old_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage():
     TypeOnly<typeof old.ContainerDevtoolsFeatures.createMessage>;
 declare function use_current_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage(
-    use: TypeOnly<typeof current.ContainerDevtoolsFeatures.createMessage>);
+    use: TypeOnly<typeof current.ContainerDevtoolsFeatures.createMessage>): void;
 use_current_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage(
     get_old_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage());
 
@@ -497,7 +497,7 @@ use_current_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage(
 declare function get_current_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage():
     TypeOnly<typeof current.ContainerDevtoolsFeatures.createMessage>;
 declare function use_old_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage(
-    use: TypeOnly<typeof old.ContainerDevtoolsFeatures.createMessage>);
+    use: TypeOnly<typeof old.ContainerDevtoolsFeatures.createMessage>): void;
 use_old_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage(
     get_current_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage());
 
@@ -509,7 +509,7 @@ use_old_FunctionDeclaration_ContainerDevtoolsFeatures_createMessage(
 declare function get_old_InterfaceDeclaration_ContainerDevtoolsProps():
     TypeOnly<old.ContainerDevtoolsProps>;
 declare function use_current_InterfaceDeclaration_ContainerDevtoolsProps(
-    use: TypeOnly<current.ContainerDevtoolsProps>);
+    use: TypeOnly<current.ContainerDevtoolsProps>): void;
 use_current_InterfaceDeclaration_ContainerDevtoolsProps(
     get_old_InterfaceDeclaration_ContainerDevtoolsProps());
 
@@ -521,7 +521,7 @@ use_current_InterfaceDeclaration_ContainerDevtoolsProps(
 declare function get_current_InterfaceDeclaration_ContainerDevtoolsProps():
     TypeOnly<current.ContainerDevtoolsProps>;
 declare function use_old_InterfaceDeclaration_ContainerDevtoolsProps(
-    use: TypeOnly<old.ContainerDevtoolsProps>);
+    use: TypeOnly<old.ContainerDevtoolsProps>): void;
 use_old_InterfaceDeclaration_ContainerDevtoolsProps(
     get_current_InterfaceDeclaration_ContainerDevtoolsProps());
 
@@ -533,7 +533,7 @@ use_old_InterfaceDeclaration_ContainerDevtoolsProps(
 declare function get_old_TypeAliasDeclaration_ContainerKey():
     TypeOnly<old.ContainerKey>;
 declare function use_current_TypeAliasDeclaration_ContainerKey(
-    use: TypeOnly<current.ContainerKey>);
+    use: TypeOnly<current.ContainerKey>): void;
 use_current_TypeAliasDeclaration_ContainerKey(
     get_old_TypeAliasDeclaration_ContainerKey());
 
@@ -545,7 +545,7 @@ use_current_TypeAliasDeclaration_ContainerKey(
 declare function get_current_TypeAliasDeclaration_ContainerKey():
     TypeOnly<current.ContainerKey>;
 declare function use_old_TypeAliasDeclaration_ContainerKey(
-    use: TypeOnly<old.ContainerKey>);
+    use: TypeOnly<old.ContainerKey>): void;
 use_old_TypeAliasDeclaration_ContainerKey(
     get_current_TypeAliasDeclaration_ContainerKey());
 
@@ -557,7 +557,7 @@ use_old_TypeAliasDeclaration_ContainerKey(
 declare function get_old_InterfaceDeclaration_ContainerList_Message():
     TypeOnly<old.ContainerList.Message>;
 declare function use_current_InterfaceDeclaration_ContainerList_Message(
-    use: TypeOnly<current.ContainerList.Message>);
+    use: TypeOnly<current.ContainerList.Message>): void;
 use_current_InterfaceDeclaration_ContainerList_Message(
     get_old_InterfaceDeclaration_ContainerList_Message());
 
@@ -569,7 +569,7 @@ use_current_InterfaceDeclaration_ContainerList_Message(
 declare function get_current_InterfaceDeclaration_ContainerList_Message():
     TypeOnly<current.ContainerList.Message>;
 declare function use_old_InterfaceDeclaration_ContainerList_Message(
-    use: TypeOnly<old.ContainerList.Message>);
+    use: TypeOnly<old.ContainerList.Message>): void;
 use_old_InterfaceDeclaration_ContainerList_Message(
     get_current_InterfaceDeclaration_ContainerList_Message());
 
@@ -581,7 +581,7 @@ use_old_InterfaceDeclaration_ContainerList_Message(
 declare function get_old_InterfaceDeclaration_ContainerList_MessageData():
     TypeOnly<old.ContainerList.MessageData>;
 declare function use_current_InterfaceDeclaration_ContainerList_MessageData(
-    use: TypeOnly<current.ContainerList.MessageData>);
+    use: TypeOnly<current.ContainerList.MessageData>): void;
 use_current_InterfaceDeclaration_ContainerList_MessageData(
     get_old_InterfaceDeclaration_ContainerList_MessageData());
 
@@ -593,7 +593,7 @@ use_current_InterfaceDeclaration_ContainerList_MessageData(
 declare function get_current_InterfaceDeclaration_ContainerList_MessageData():
     TypeOnly<current.ContainerList.MessageData>;
 declare function use_old_InterfaceDeclaration_ContainerList_MessageData(
-    use: TypeOnly<old.ContainerList.MessageData>);
+    use: TypeOnly<old.ContainerList.MessageData>): void;
 use_old_InterfaceDeclaration_ContainerList_MessageData(
     get_current_InterfaceDeclaration_ContainerList_MessageData());
 
@@ -605,7 +605,7 @@ use_old_InterfaceDeclaration_ContainerList_MessageData(
 declare function get_old_VariableDeclaration_ContainerList_MessageType():
     TypeOnly<typeof old.ContainerList.MessageType>;
 declare function use_current_VariableDeclaration_ContainerList_MessageType(
-    use: TypeOnly<typeof current.ContainerList.MessageType>);
+    use: TypeOnly<typeof current.ContainerList.MessageType>): void;
 use_current_VariableDeclaration_ContainerList_MessageType(
     get_old_VariableDeclaration_ContainerList_MessageType());
 
@@ -617,7 +617,7 @@ use_current_VariableDeclaration_ContainerList_MessageType(
 declare function get_current_VariableDeclaration_ContainerList_MessageType():
     TypeOnly<typeof current.ContainerList.MessageType>;
 declare function use_old_VariableDeclaration_ContainerList_MessageType(
-    use: TypeOnly<typeof old.ContainerList.MessageType>);
+    use: TypeOnly<typeof old.ContainerList.MessageType>): void;
 use_old_VariableDeclaration_ContainerList_MessageType(
     get_current_VariableDeclaration_ContainerList_MessageType());
 
@@ -629,7 +629,7 @@ use_old_VariableDeclaration_ContainerList_MessageType(
 declare function get_old_FunctionDeclaration_ContainerList_createMessage():
     TypeOnly<typeof old.ContainerList.createMessage>;
 declare function use_current_FunctionDeclaration_ContainerList_createMessage(
-    use: TypeOnly<typeof current.ContainerList.createMessage>);
+    use: TypeOnly<typeof current.ContainerList.createMessage>): void;
 use_current_FunctionDeclaration_ContainerList_createMessage(
     get_old_FunctionDeclaration_ContainerList_createMessage());
 
@@ -641,7 +641,7 @@ use_current_FunctionDeclaration_ContainerList_createMessage(
 declare function get_current_FunctionDeclaration_ContainerList_createMessage():
     TypeOnly<typeof current.ContainerList.createMessage>;
 declare function use_old_FunctionDeclaration_ContainerList_createMessage(
-    use: TypeOnly<typeof old.ContainerList.createMessage>);
+    use: TypeOnly<typeof old.ContainerList.createMessage>): void;
 use_old_FunctionDeclaration_ContainerList_createMessage(
     get_current_FunctionDeclaration_ContainerList_createMessage());
 
@@ -653,7 +653,7 @@ use_old_FunctionDeclaration_ContainerList_createMessage(
 declare function get_old_InterfaceDeclaration_ContainerStateChange_Message():
     TypeOnly<old.ContainerStateChange.Message>;
 declare function use_current_InterfaceDeclaration_ContainerStateChange_Message(
-    use: TypeOnly<current.ContainerStateChange.Message>);
+    use: TypeOnly<current.ContainerStateChange.Message>): void;
 use_current_InterfaceDeclaration_ContainerStateChange_Message(
     get_old_InterfaceDeclaration_ContainerStateChange_Message());
 
@@ -665,7 +665,7 @@ use_current_InterfaceDeclaration_ContainerStateChange_Message(
 declare function get_current_InterfaceDeclaration_ContainerStateChange_Message():
     TypeOnly<current.ContainerStateChange.Message>;
 declare function use_old_InterfaceDeclaration_ContainerStateChange_Message(
-    use: TypeOnly<old.ContainerStateChange.Message>);
+    use: TypeOnly<old.ContainerStateChange.Message>): void;
 use_old_InterfaceDeclaration_ContainerStateChange_Message(
     get_current_InterfaceDeclaration_ContainerStateChange_Message());
 
@@ -677,7 +677,7 @@ use_old_InterfaceDeclaration_ContainerStateChange_Message(
 declare function get_old_InterfaceDeclaration_ContainerStateChange_MessageData():
     TypeOnly<old.ContainerStateChange.MessageData>;
 declare function use_current_InterfaceDeclaration_ContainerStateChange_MessageData(
-    use: TypeOnly<current.ContainerStateChange.MessageData>);
+    use: TypeOnly<current.ContainerStateChange.MessageData>): void;
 use_current_InterfaceDeclaration_ContainerStateChange_MessageData(
     get_old_InterfaceDeclaration_ContainerStateChange_MessageData());
 
@@ -689,7 +689,7 @@ use_current_InterfaceDeclaration_ContainerStateChange_MessageData(
 declare function get_current_InterfaceDeclaration_ContainerStateChange_MessageData():
     TypeOnly<current.ContainerStateChange.MessageData>;
 declare function use_old_InterfaceDeclaration_ContainerStateChange_MessageData(
-    use: TypeOnly<old.ContainerStateChange.MessageData>);
+    use: TypeOnly<old.ContainerStateChange.MessageData>): void;
 use_old_InterfaceDeclaration_ContainerStateChange_MessageData(
     get_current_InterfaceDeclaration_ContainerStateChange_MessageData());
 
@@ -701,7 +701,7 @@ use_old_InterfaceDeclaration_ContainerStateChange_MessageData(
 declare function get_old_VariableDeclaration_ContainerStateChange_MessageType():
     TypeOnly<typeof old.ContainerStateChange.MessageType>;
 declare function use_current_VariableDeclaration_ContainerStateChange_MessageType(
-    use: TypeOnly<typeof current.ContainerStateChange.MessageType>);
+    use: TypeOnly<typeof current.ContainerStateChange.MessageType>): void;
 use_current_VariableDeclaration_ContainerStateChange_MessageType(
     get_old_VariableDeclaration_ContainerStateChange_MessageType());
 
@@ -713,7 +713,7 @@ use_current_VariableDeclaration_ContainerStateChange_MessageType(
 declare function get_current_VariableDeclaration_ContainerStateChange_MessageType():
     TypeOnly<typeof current.ContainerStateChange.MessageType>;
 declare function use_old_VariableDeclaration_ContainerStateChange_MessageType(
-    use: TypeOnly<typeof old.ContainerStateChange.MessageType>);
+    use: TypeOnly<typeof old.ContainerStateChange.MessageType>): void;
 use_old_VariableDeclaration_ContainerStateChange_MessageType(
     get_current_VariableDeclaration_ContainerStateChange_MessageType());
 
@@ -725,7 +725,7 @@ use_old_VariableDeclaration_ContainerStateChange_MessageType(
 declare function get_old_FunctionDeclaration_ContainerStateChange_createMessage():
     TypeOnly<typeof old.ContainerStateChange.createMessage>;
 declare function use_current_FunctionDeclaration_ContainerStateChange_createMessage(
-    use: TypeOnly<typeof current.ContainerStateChange.createMessage>);
+    use: TypeOnly<typeof current.ContainerStateChange.createMessage>): void;
 use_current_FunctionDeclaration_ContainerStateChange_createMessage(
     get_old_FunctionDeclaration_ContainerStateChange_createMessage());
 
@@ -737,7 +737,7 @@ use_current_FunctionDeclaration_ContainerStateChange_createMessage(
 declare function get_current_FunctionDeclaration_ContainerStateChange_createMessage():
     TypeOnly<typeof current.ContainerStateChange.createMessage>;
 declare function use_old_FunctionDeclaration_ContainerStateChange_createMessage(
-    use: TypeOnly<typeof old.ContainerStateChange.createMessage>);
+    use: TypeOnly<typeof old.ContainerStateChange.createMessage>): void;
 use_old_FunctionDeclaration_ContainerStateChange_createMessage(
     get_current_FunctionDeclaration_ContainerStateChange_createMessage());
 
@@ -749,7 +749,7 @@ use_old_FunctionDeclaration_ContainerStateChange_createMessage(
 declare function get_old_EnumDeclaration_ContainerStateChangeKind():
     TypeOnly<old.ContainerStateChangeKind>;
 declare function use_current_EnumDeclaration_ContainerStateChangeKind(
-    use: TypeOnly<current.ContainerStateChangeKind>);
+    use: TypeOnly<current.ContainerStateChangeKind>): void;
 use_current_EnumDeclaration_ContainerStateChangeKind(
     get_old_EnumDeclaration_ContainerStateChangeKind());
 
@@ -761,7 +761,7 @@ use_current_EnumDeclaration_ContainerStateChangeKind(
 declare function get_current_EnumDeclaration_ContainerStateChangeKind():
     TypeOnly<current.ContainerStateChangeKind>;
 declare function use_old_EnumDeclaration_ContainerStateChangeKind(
-    use: TypeOnly<old.ContainerStateChangeKind>);
+    use: TypeOnly<old.ContainerStateChangeKind>): void;
 use_old_EnumDeclaration_ContainerStateChangeKind(
     get_current_EnumDeclaration_ContainerStateChangeKind());
 
@@ -773,7 +773,7 @@ use_old_EnumDeclaration_ContainerStateChangeKind(
 declare function get_old_InterfaceDeclaration_ContainerStateHistory_Message():
     TypeOnly<old.ContainerStateHistory.Message>;
 declare function use_current_InterfaceDeclaration_ContainerStateHistory_Message(
-    use: TypeOnly<current.ContainerStateHistory.Message>);
+    use: TypeOnly<current.ContainerStateHistory.Message>): void;
 use_current_InterfaceDeclaration_ContainerStateHistory_Message(
     get_old_InterfaceDeclaration_ContainerStateHistory_Message());
 
@@ -785,7 +785,7 @@ use_current_InterfaceDeclaration_ContainerStateHistory_Message(
 declare function get_current_InterfaceDeclaration_ContainerStateHistory_Message():
     TypeOnly<current.ContainerStateHistory.Message>;
 declare function use_old_InterfaceDeclaration_ContainerStateHistory_Message(
-    use: TypeOnly<old.ContainerStateHistory.Message>);
+    use: TypeOnly<old.ContainerStateHistory.Message>): void;
 use_old_InterfaceDeclaration_ContainerStateHistory_Message(
     get_current_InterfaceDeclaration_ContainerStateHistory_Message());
 
@@ -797,7 +797,7 @@ use_old_InterfaceDeclaration_ContainerStateHistory_Message(
 declare function get_old_InterfaceDeclaration_ContainerStateHistory_MessageData():
     TypeOnly<old.ContainerStateHistory.MessageData>;
 declare function use_current_InterfaceDeclaration_ContainerStateHistory_MessageData(
-    use: TypeOnly<current.ContainerStateHistory.MessageData>);
+    use: TypeOnly<current.ContainerStateHistory.MessageData>): void;
 use_current_InterfaceDeclaration_ContainerStateHistory_MessageData(
     get_old_InterfaceDeclaration_ContainerStateHistory_MessageData());
 
@@ -809,7 +809,7 @@ use_current_InterfaceDeclaration_ContainerStateHistory_MessageData(
 declare function get_current_InterfaceDeclaration_ContainerStateHistory_MessageData():
     TypeOnly<current.ContainerStateHistory.MessageData>;
 declare function use_old_InterfaceDeclaration_ContainerStateHistory_MessageData(
-    use: TypeOnly<old.ContainerStateHistory.MessageData>);
+    use: TypeOnly<old.ContainerStateHistory.MessageData>): void;
 use_old_InterfaceDeclaration_ContainerStateHistory_MessageData(
     get_current_InterfaceDeclaration_ContainerStateHistory_MessageData());
 
@@ -821,7 +821,7 @@ use_old_InterfaceDeclaration_ContainerStateHistory_MessageData(
 declare function get_old_VariableDeclaration_ContainerStateHistory_MessageType():
     TypeOnly<typeof old.ContainerStateHistory.MessageType>;
 declare function use_current_VariableDeclaration_ContainerStateHistory_MessageType(
-    use: TypeOnly<typeof current.ContainerStateHistory.MessageType>);
+    use: TypeOnly<typeof current.ContainerStateHistory.MessageType>): void;
 use_current_VariableDeclaration_ContainerStateHistory_MessageType(
     get_old_VariableDeclaration_ContainerStateHistory_MessageType());
 
@@ -833,7 +833,7 @@ use_current_VariableDeclaration_ContainerStateHistory_MessageType(
 declare function get_current_VariableDeclaration_ContainerStateHistory_MessageType():
     TypeOnly<typeof current.ContainerStateHistory.MessageType>;
 declare function use_old_VariableDeclaration_ContainerStateHistory_MessageType(
-    use: TypeOnly<typeof old.ContainerStateHistory.MessageType>);
+    use: TypeOnly<typeof old.ContainerStateHistory.MessageType>): void;
 use_old_VariableDeclaration_ContainerStateHistory_MessageType(
     get_current_VariableDeclaration_ContainerStateHistory_MessageType());
 
@@ -845,7 +845,7 @@ use_old_VariableDeclaration_ContainerStateHistory_MessageType(
 declare function get_old_FunctionDeclaration_ContainerStateHistory_createMessage():
     TypeOnly<typeof old.ContainerStateHistory.createMessage>;
 declare function use_current_FunctionDeclaration_ContainerStateHistory_createMessage(
-    use: TypeOnly<typeof current.ContainerStateHistory.createMessage>);
+    use: TypeOnly<typeof current.ContainerStateHistory.createMessage>): void;
 use_current_FunctionDeclaration_ContainerStateHistory_createMessage(
     get_old_FunctionDeclaration_ContainerStateHistory_createMessage());
 
@@ -857,7 +857,7 @@ use_current_FunctionDeclaration_ContainerStateHistory_createMessage(
 declare function get_current_FunctionDeclaration_ContainerStateHistory_createMessage():
     TypeOnly<typeof current.ContainerStateHistory.createMessage>;
 declare function use_old_FunctionDeclaration_ContainerStateHistory_createMessage(
-    use: TypeOnly<typeof old.ContainerStateHistory.createMessage>);
+    use: TypeOnly<typeof old.ContainerStateHistory.createMessage>): void;
 use_old_FunctionDeclaration_ContainerStateHistory_createMessage(
     get_current_FunctionDeclaration_ContainerStateHistory_createMessage());
 
@@ -869,7 +869,7 @@ use_old_FunctionDeclaration_ContainerStateHistory_createMessage(
 declare function get_old_InterfaceDeclaration_ContainerStateMetadata():
     TypeOnly<old.ContainerStateMetadata>;
 declare function use_current_InterfaceDeclaration_ContainerStateMetadata(
-    use: TypeOnly<current.ContainerStateMetadata>);
+    use: TypeOnly<current.ContainerStateMetadata>): void;
 use_current_InterfaceDeclaration_ContainerStateMetadata(
     get_old_InterfaceDeclaration_ContainerStateMetadata());
 
@@ -881,7 +881,7 @@ use_current_InterfaceDeclaration_ContainerStateMetadata(
 declare function get_current_InterfaceDeclaration_ContainerStateMetadata():
     TypeOnly<current.ContainerStateMetadata>;
 declare function use_old_InterfaceDeclaration_ContainerStateMetadata(
-    use: TypeOnly<old.ContainerStateMetadata>);
+    use: TypeOnly<old.ContainerStateMetadata>): void;
 use_old_InterfaceDeclaration_ContainerStateMetadata(
     get_current_InterfaceDeclaration_ContainerStateMetadata());
 
@@ -893,7 +893,7 @@ use_old_InterfaceDeclaration_ContainerStateMetadata(
 declare function get_old_InterfaceDeclaration_DataEdit_Message():
     TypeOnly<old.DataEdit.Message>;
 declare function use_current_InterfaceDeclaration_DataEdit_Message(
-    use: TypeOnly<current.DataEdit.Message>);
+    use: TypeOnly<current.DataEdit.Message>): void;
 use_current_InterfaceDeclaration_DataEdit_Message(
     get_old_InterfaceDeclaration_DataEdit_Message());
 
@@ -905,7 +905,7 @@ use_current_InterfaceDeclaration_DataEdit_Message(
 declare function get_current_InterfaceDeclaration_DataEdit_Message():
     TypeOnly<current.DataEdit.Message>;
 declare function use_old_InterfaceDeclaration_DataEdit_Message(
-    use: TypeOnly<old.DataEdit.Message>);
+    use: TypeOnly<old.DataEdit.Message>): void;
 use_old_InterfaceDeclaration_DataEdit_Message(
     get_current_InterfaceDeclaration_DataEdit_Message());
 
@@ -917,7 +917,7 @@ use_old_InterfaceDeclaration_DataEdit_Message(
 declare function get_old_InterfaceDeclaration_DataEdit_MessageData():
     TypeOnly<old.DataEdit.MessageData>;
 declare function use_current_InterfaceDeclaration_DataEdit_MessageData(
-    use: TypeOnly<current.DataEdit.MessageData>);
+    use: TypeOnly<current.DataEdit.MessageData>): void;
 use_current_InterfaceDeclaration_DataEdit_MessageData(
     get_old_InterfaceDeclaration_DataEdit_MessageData());
 
@@ -929,7 +929,7 @@ use_current_InterfaceDeclaration_DataEdit_MessageData(
 declare function get_current_InterfaceDeclaration_DataEdit_MessageData():
     TypeOnly<current.DataEdit.MessageData>;
 declare function use_old_InterfaceDeclaration_DataEdit_MessageData(
-    use: TypeOnly<old.DataEdit.MessageData>);
+    use: TypeOnly<old.DataEdit.MessageData>): void;
 use_old_InterfaceDeclaration_DataEdit_MessageData(
     get_current_InterfaceDeclaration_DataEdit_MessageData());
 
@@ -941,7 +941,7 @@ use_old_InterfaceDeclaration_DataEdit_MessageData(
 declare function get_old_VariableDeclaration_DataEdit_MessageType():
     TypeOnly<typeof old.DataEdit.MessageType>;
 declare function use_current_VariableDeclaration_DataEdit_MessageType(
-    use: TypeOnly<typeof current.DataEdit.MessageType>);
+    use: TypeOnly<typeof current.DataEdit.MessageType>): void;
 use_current_VariableDeclaration_DataEdit_MessageType(
     get_old_VariableDeclaration_DataEdit_MessageType());
 
@@ -953,7 +953,7 @@ use_current_VariableDeclaration_DataEdit_MessageType(
 declare function get_current_VariableDeclaration_DataEdit_MessageType():
     TypeOnly<typeof current.DataEdit.MessageType>;
 declare function use_old_VariableDeclaration_DataEdit_MessageType(
-    use: TypeOnly<typeof old.DataEdit.MessageType>);
+    use: TypeOnly<typeof old.DataEdit.MessageType>): void;
 use_old_VariableDeclaration_DataEdit_MessageType(
     get_current_VariableDeclaration_DataEdit_MessageType());
 
@@ -965,7 +965,7 @@ use_old_VariableDeclaration_DataEdit_MessageType(
 declare function get_old_FunctionDeclaration_DataEdit_createMessage():
     TypeOnly<typeof old.DataEdit.createMessage>;
 declare function use_current_FunctionDeclaration_DataEdit_createMessage(
-    use: TypeOnly<typeof current.DataEdit.createMessage>);
+    use: TypeOnly<typeof current.DataEdit.createMessage>): void;
 use_current_FunctionDeclaration_DataEdit_createMessage(
     get_old_FunctionDeclaration_DataEdit_createMessage());
 
@@ -977,7 +977,7 @@ use_current_FunctionDeclaration_DataEdit_createMessage(
 declare function get_current_FunctionDeclaration_DataEdit_createMessage():
     TypeOnly<typeof current.DataEdit.createMessage>;
 declare function use_old_FunctionDeclaration_DataEdit_createMessage(
-    use: TypeOnly<typeof old.DataEdit.createMessage>);
+    use: TypeOnly<typeof old.DataEdit.createMessage>): void;
 use_old_FunctionDeclaration_DataEdit_createMessage(
     get_current_FunctionDeclaration_DataEdit_createMessage());
 
@@ -989,7 +989,7 @@ use_old_FunctionDeclaration_DataEdit_createMessage(
 declare function get_old_InterfaceDeclaration_DataVisualization_Message():
     TypeOnly<old.DataVisualization.Message>;
 declare function use_current_InterfaceDeclaration_DataVisualization_Message(
-    use: TypeOnly<current.DataVisualization.Message>);
+    use: TypeOnly<current.DataVisualization.Message>): void;
 use_current_InterfaceDeclaration_DataVisualization_Message(
     get_old_InterfaceDeclaration_DataVisualization_Message());
 
@@ -1001,7 +1001,7 @@ use_current_InterfaceDeclaration_DataVisualization_Message(
 declare function get_current_InterfaceDeclaration_DataVisualization_Message():
     TypeOnly<current.DataVisualization.Message>;
 declare function use_old_InterfaceDeclaration_DataVisualization_Message(
-    use: TypeOnly<old.DataVisualization.Message>);
+    use: TypeOnly<old.DataVisualization.Message>): void;
 use_old_InterfaceDeclaration_DataVisualization_Message(
     get_current_InterfaceDeclaration_DataVisualization_Message());
 
@@ -1013,7 +1013,7 @@ use_old_InterfaceDeclaration_DataVisualization_Message(
 declare function get_old_InterfaceDeclaration_DataVisualization_MessageData():
     TypeOnly<old.DataVisualization.MessageData>;
 declare function use_current_InterfaceDeclaration_DataVisualization_MessageData(
-    use: TypeOnly<current.DataVisualization.MessageData>);
+    use: TypeOnly<current.DataVisualization.MessageData>): void;
 use_current_InterfaceDeclaration_DataVisualization_MessageData(
     get_old_InterfaceDeclaration_DataVisualization_MessageData());
 
@@ -1025,7 +1025,7 @@ use_current_InterfaceDeclaration_DataVisualization_MessageData(
 declare function get_current_InterfaceDeclaration_DataVisualization_MessageData():
     TypeOnly<current.DataVisualization.MessageData>;
 declare function use_old_InterfaceDeclaration_DataVisualization_MessageData(
-    use: TypeOnly<old.DataVisualization.MessageData>);
+    use: TypeOnly<old.DataVisualization.MessageData>): void;
 use_old_InterfaceDeclaration_DataVisualization_MessageData(
     get_current_InterfaceDeclaration_DataVisualization_MessageData());
 
@@ -1037,7 +1037,7 @@ use_old_InterfaceDeclaration_DataVisualization_MessageData(
 declare function get_old_VariableDeclaration_DataVisualization_MessageType():
     TypeOnly<typeof old.DataVisualization.MessageType>;
 declare function use_current_VariableDeclaration_DataVisualization_MessageType(
-    use: TypeOnly<typeof current.DataVisualization.MessageType>);
+    use: TypeOnly<typeof current.DataVisualization.MessageType>): void;
 use_current_VariableDeclaration_DataVisualization_MessageType(
     get_old_VariableDeclaration_DataVisualization_MessageType());
 
@@ -1049,7 +1049,7 @@ use_current_VariableDeclaration_DataVisualization_MessageType(
 declare function get_current_VariableDeclaration_DataVisualization_MessageType():
     TypeOnly<typeof current.DataVisualization.MessageType>;
 declare function use_old_VariableDeclaration_DataVisualization_MessageType(
-    use: TypeOnly<typeof old.DataVisualization.MessageType>);
+    use: TypeOnly<typeof old.DataVisualization.MessageType>): void;
 use_old_VariableDeclaration_DataVisualization_MessageType(
     get_current_VariableDeclaration_DataVisualization_MessageType());
 
@@ -1061,7 +1061,7 @@ use_old_VariableDeclaration_DataVisualization_MessageType(
 declare function get_old_FunctionDeclaration_DataVisualization_createMessage():
     TypeOnly<typeof old.DataVisualization.createMessage>;
 declare function use_current_FunctionDeclaration_DataVisualization_createMessage(
-    use: TypeOnly<typeof current.DataVisualization.createMessage>);
+    use: TypeOnly<typeof current.DataVisualization.createMessage>): void;
 use_current_FunctionDeclaration_DataVisualization_createMessage(
     get_old_FunctionDeclaration_DataVisualization_createMessage());
 
@@ -1073,7 +1073,7 @@ use_current_FunctionDeclaration_DataVisualization_createMessage(
 declare function get_current_FunctionDeclaration_DataVisualization_createMessage():
     TypeOnly<typeof current.DataVisualization.createMessage>;
 declare function use_old_FunctionDeclaration_DataVisualization_createMessage(
-    use: TypeOnly<typeof old.DataVisualization.createMessage>);
+    use: TypeOnly<typeof old.DataVisualization.createMessage>): void;
 use_old_FunctionDeclaration_DataVisualization_createMessage(
     get_current_FunctionDeclaration_DataVisualization_createMessage());
 
@@ -1085,7 +1085,7 @@ use_old_FunctionDeclaration_DataVisualization_createMessage(
 declare function get_old_InterfaceDeclaration_DevtoolsDisposed_Message():
     TypeOnly<old.DevtoolsDisposed.Message>;
 declare function use_current_InterfaceDeclaration_DevtoolsDisposed_Message(
-    use: TypeOnly<current.DevtoolsDisposed.Message>);
+    use: TypeOnly<current.DevtoolsDisposed.Message>): void;
 use_current_InterfaceDeclaration_DevtoolsDisposed_Message(
     get_old_InterfaceDeclaration_DevtoolsDisposed_Message());
 
@@ -1097,7 +1097,7 @@ use_current_InterfaceDeclaration_DevtoolsDisposed_Message(
 declare function get_current_InterfaceDeclaration_DevtoolsDisposed_Message():
     TypeOnly<current.DevtoolsDisposed.Message>;
 declare function use_old_InterfaceDeclaration_DevtoolsDisposed_Message(
-    use: TypeOnly<old.DevtoolsDisposed.Message>);
+    use: TypeOnly<old.DevtoolsDisposed.Message>): void;
 use_old_InterfaceDeclaration_DevtoolsDisposed_Message(
     get_current_InterfaceDeclaration_DevtoolsDisposed_Message());
 
@@ -1109,7 +1109,7 @@ use_old_InterfaceDeclaration_DevtoolsDisposed_Message(
 declare function get_old_VariableDeclaration_DevtoolsDisposed_MessageType():
     TypeOnly<typeof old.DevtoolsDisposed.MessageType>;
 declare function use_current_VariableDeclaration_DevtoolsDisposed_MessageType(
-    use: TypeOnly<typeof current.DevtoolsDisposed.MessageType>);
+    use: TypeOnly<typeof current.DevtoolsDisposed.MessageType>): void;
 use_current_VariableDeclaration_DevtoolsDisposed_MessageType(
     get_old_VariableDeclaration_DevtoolsDisposed_MessageType());
 
@@ -1121,7 +1121,7 @@ use_current_VariableDeclaration_DevtoolsDisposed_MessageType(
 declare function get_current_VariableDeclaration_DevtoolsDisposed_MessageType():
     TypeOnly<typeof current.DevtoolsDisposed.MessageType>;
 declare function use_old_VariableDeclaration_DevtoolsDisposed_MessageType(
-    use: TypeOnly<typeof old.DevtoolsDisposed.MessageType>);
+    use: TypeOnly<typeof old.DevtoolsDisposed.MessageType>): void;
 use_old_VariableDeclaration_DevtoolsDisposed_MessageType(
     get_current_VariableDeclaration_DevtoolsDisposed_MessageType());
 
@@ -1133,7 +1133,7 @@ use_old_VariableDeclaration_DevtoolsDisposed_MessageType(
 declare function get_old_FunctionDeclaration_DevtoolsDisposed_createMessage():
     TypeOnly<typeof old.DevtoolsDisposed.createMessage>;
 declare function use_current_FunctionDeclaration_DevtoolsDisposed_createMessage(
-    use: TypeOnly<typeof current.DevtoolsDisposed.createMessage>);
+    use: TypeOnly<typeof current.DevtoolsDisposed.createMessage>): void;
 use_current_FunctionDeclaration_DevtoolsDisposed_createMessage(
     get_old_FunctionDeclaration_DevtoolsDisposed_createMessage());
 
@@ -1145,7 +1145,7 @@ use_current_FunctionDeclaration_DevtoolsDisposed_createMessage(
 declare function get_current_FunctionDeclaration_DevtoolsDisposed_createMessage():
     TypeOnly<typeof current.DevtoolsDisposed.createMessage>;
 declare function use_old_FunctionDeclaration_DevtoolsDisposed_createMessage(
-    use: TypeOnly<typeof old.DevtoolsDisposed.createMessage>);
+    use: TypeOnly<typeof old.DevtoolsDisposed.createMessage>): void;
 use_old_FunctionDeclaration_DevtoolsDisposed_createMessage(
     get_current_FunctionDeclaration_DevtoolsDisposed_createMessage());
 
@@ -1157,7 +1157,7 @@ use_old_FunctionDeclaration_DevtoolsDisposed_createMessage(
 declare function get_old_InterfaceDeclaration_DevtoolsFeatureFlags():
     TypeOnly<old.DevtoolsFeatureFlags>;
 declare function use_current_InterfaceDeclaration_DevtoolsFeatureFlags(
-    use: TypeOnly<current.DevtoolsFeatureFlags>);
+    use: TypeOnly<current.DevtoolsFeatureFlags>): void;
 use_current_InterfaceDeclaration_DevtoolsFeatureFlags(
     get_old_InterfaceDeclaration_DevtoolsFeatureFlags());
 
@@ -1169,7 +1169,7 @@ use_current_InterfaceDeclaration_DevtoolsFeatureFlags(
 declare function get_current_InterfaceDeclaration_DevtoolsFeatureFlags():
     TypeOnly<current.DevtoolsFeatureFlags>;
 declare function use_old_InterfaceDeclaration_DevtoolsFeatureFlags(
-    use: TypeOnly<old.DevtoolsFeatureFlags>);
+    use: TypeOnly<old.DevtoolsFeatureFlags>): void;
 use_old_InterfaceDeclaration_DevtoolsFeatureFlags(
     get_current_InterfaceDeclaration_DevtoolsFeatureFlags());
 
@@ -1181,7 +1181,7 @@ use_old_InterfaceDeclaration_DevtoolsFeatureFlags(
 declare function get_old_InterfaceDeclaration_DevtoolsFeatures_Message():
     TypeOnly<old.DevtoolsFeatures.Message>;
 declare function use_current_InterfaceDeclaration_DevtoolsFeatures_Message(
-    use: TypeOnly<current.DevtoolsFeatures.Message>);
+    use: TypeOnly<current.DevtoolsFeatures.Message>): void;
 use_current_InterfaceDeclaration_DevtoolsFeatures_Message(
     get_old_InterfaceDeclaration_DevtoolsFeatures_Message());
 
@@ -1193,7 +1193,7 @@ use_current_InterfaceDeclaration_DevtoolsFeatures_Message(
 declare function get_current_InterfaceDeclaration_DevtoolsFeatures_Message():
     TypeOnly<current.DevtoolsFeatures.Message>;
 declare function use_old_InterfaceDeclaration_DevtoolsFeatures_Message(
-    use: TypeOnly<old.DevtoolsFeatures.Message>);
+    use: TypeOnly<old.DevtoolsFeatures.Message>): void;
 use_old_InterfaceDeclaration_DevtoolsFeatures_Message(
     get_current_InterfaceDeclaration_DevtoolsFeatures_Message());
 
@@ -1205,7 +1205,7 @@ use_old_InterfaceDeclaration_DevtoolsFeatures_Message(
 declare function get_old_InterfaceDeclaration_DevtoolsFeatures_MessageData():
     TypeOnly<old.DevtoolsFeatures.MessageData>;
 declare function use_current_InterfaceDeclaration_DevtoolsFeatures_MessageData(
-    use: TypeOnly<current.DevtoolsFeatures.MessageData>);
+    use: TypeOnly<current.DevtoolsFeatures.MessageData>): void;
 use_current_InterfaceDeclaration_DevtoolsFeatures_MessageData(
     get_old_InterfaceDeclaration_DevtoolsFeatures_MessageData());
 
@@ -1217,7 +1217,7 @@ use_current_InterfaceDeclaration_DevtoolsFeatures_MessageData(
 declare function get_current_InterfaceDeclaration_DevtoolsFeatures_MessageData():
     TypeOnly<current.DevtoolsFeatures.MessageData>;
 declare function use_old_InterfaceDeclaration_DevtoolsFeatures_MessageData(
-    use: TypeOnly<old.DevtoolsFeatures.MessageData>);
+    use: TypeOnly<old.DevtoolsFeatures.MessageData>): void;
 use_old_InterfaceDeclaration_DevtoolsFeatures_MessageData(
     get_current_InterfaceDeclaration_DevtoolsFeatures_MessageData());
 
@@ -1229,7 +1229,7 @@ use_old_InterfaceDeclaration_DevtoolsFeatures_MessageData(
 declare function get_old_VariableDeclaration_DevtoolsFeatures_MessageType():
     TypeOnly<typeof old.DevtoolsFeatures.MessageType>;
 declare function use_current_VariableDeclaration_DevtoolsFeatures_MessageType(
-    use: TypeOnly<typeof current.DevtoolsFeatures.MessageType>);
+    use: TypeOnly<typeof current.DevtoolsFeatures.MessageType>): void;
 use_current_VariableDeclaration_DevtoolsFeatures_MessageType(
     get_old_VariableDeclaration_DevtoolsFeatures_MessageType());
 
@@ -1241,7 +1241,7 @@ use_current_VariableDeclaration_DevtoolsFeatures_MessageType(
 declare function get_current_VariableDeclaration_DevtoolsFeatures_MessageType():
     TypeOnly<typeof current.DevtoolsFeatures.MessageType>;
 declare function use_old_VariableDeclaration_DevtoolsFeatures_MessageType(
-    use: TypeOnly<typeof old.DevtoolsFeatures.MessageType>);
+    use: TypeOnly<typeof old.DevtoolsFeatures.MessageType>): void;
 use_old_VariableDeclaration_DevtoolsFeatures_MessageType(
     get_current_VariableDeclaration_DevtoolsFeatures_MessageType());
 
@@ -1253,7 +1253,7 @@ use_old_VariableDeclaration_DevtoolsFeatures_MessageType(
 declare function get_old_FunctionDeclaration_DevtoolsFeatures_createMessage():
     TypeOnly<typeof old.DevtoolsFeatures.createMessage>;
 declare function use_current_FunctionDeclaration_DevtoolsFeatures_createMessage(
-    use: TypeOnly<typeof current.DevtoolsFeatures.createMessage>);
+    use: TypeOnly<typeof current.DevtoolsFeatures.createMessage>): void;
 use_current_FunctionDeclaration_DevtoolsFeatures_createMessage(
     get_old_FunctionDeclaration_DevtoolsFeatures_createMessage());
 
@@ -1265,7 +1265,7 @@ use_current_FunctionDeclaration_DevtoolsFeatures_createMessage(
 declare function get_current_FunctionDeclaration_DevtoolsFeatures_createMessage():
     TypeOnly<typeof current.DevtoolsFeatures.createMessage>;
 declare function use_old_FunctionDeclaration_DevtoolsFeatures_createMessage(
-    use: TypeOnly<typeof old.DevtoolsFeatures.createMessage>);
+    use: TypeOnly<typeof old.DevtoolsFeatures.createMessage>): void;
 use_old_FunctionDeclaration_DevtoolsFeatures_createMessage(
     get_current_FunctionDeclaration_DevtoolsFeatures_createMessage());
 
@@ -1277,7 +1277,7 @@ use_old_FunctionDeclaration_DevtoolsFeatures_createMessage(
 declare function get_old_ClassDeclaration_DevtoolsLogger():
     TypeOnly<old.DevtoolsLogger>;
 declare function use_current_ClassDeclaration_DevtoolsLogger(
-    use: TypeOnly<current.DevtoolsLogger>);
+    use: TypeOnly<current.DevtoolsLogger>): void;
 use_current_ClassDeclaration_DevtoolsLogger(
     get_old_ClassDeclaration_DevtoolsLogger());
 
@@ -1289,7 +1289,7 @@ use_current_ClassDeclaration_DevtoolsLogger(
 declare function get_current_ClassDeclaration_DevtoolsLogger():
     TypeOnly<current.DevtoolsLogger>;
 declare function use_old_ClassDeclaration_DevtoolsLogger(
-    use: TypeOnly<old.DevtoolsLogger>);
+    use: TypeOnly<old.DevtoolsLogger>): void;
 use_old_ClassDeclaration_DevtoolsLogger(
     get_current_ClassDeclaration_DevtoolsLogger());
 
@@ -1301,7 +1301,7 @@ use_old_ClassDeclaration_DevtoolsLogger(
 declare function get_old_InterfaceDeclaration_DisconnectContainer_Message():
     TypeOnly<old.DisconnectContainer.Message>;
 declare function use_current_InterfaceDeclaration_DisconnectContainer_Message(
-    use: TypeOnly<current.DisconnectContainer.Message>);
+    use: TypeOnly<current.DisconnectContainer.Message>): void;
 use_current_InterfaceDeclaration_DisconnectContainer_Message(
     get_old_InterfaceDeclaration_DisconnectContainer_Message());
 
@@ -1313,7 +1313,7 @@ use_current_InterfaceDeclaration_DisconnectContainer_Message(
 declare function get_current_InterfaceDeclaration_DisconnectContainer_Message():
     TypeOnly<current.DisconnectContainer.Message>;
 declare function use_old_InterfaceDeclaration_DisconnectContainer_Message(
-    use: TypeOnly<old.DisconnectContainer.Message>);
+    use: TypeOnly<old.DisconnectContainer.Message>): void;
 use_old_InterfaceDeclaration_DisconnectContainer_Message(
     get_current_InterfaceDeclaration_DisconnectContainer_Message());
 
@@ -1325,7 +1325,7 @@ use_old_InterfaceDeclaration_DisconnectContainer_Message(
 declare function get_old_TypeAliasDeclaration_DisconnectContainer_MessageData():
     TypeOnly<old.DisconnectContainer.MessageData>;
 declare function use_current_TypeAliasDeclaration_DisconnectContainer_MessageData(
-    use: TypeOnly<current.DisconnectContainer.MessageData>);
+    use: TypeOnly<current.DisconnectContainer.MessageData>): void;
 use_current_TypeAliasDeclaration_DisconnectContainer_MessageData(
     get_old_TypeAliasDeclaration_DisconnectContainer_MessageData());
 
@@ -1337,7 +1337,7 @@ use_current_TypeAliasDeclaration_DisconnectContainer_MessageData(
 declare function get_current_TypeAliasDeclaration_DisconnectContainer_MessageData():
     TypeOnly<current.DisconnectContainer.MessageData>;
 declare function use_old_TypeAliasDeclaration_DisconnectContainer_MessageData(
-    use: TypeOnly<old.DisconnectContainer.MessageData>);
+    use: TypeOnly<old.DisconnectContainer.MessageData>): void;
 use_old_TypeAliasDeclaration_DisconnectContainer_MessageData(
     get_current_TypeAliasDeclaration_DisconnectContainer_MessageData());
 
@@ -1349,7 +1349,7 @@ use_old_TypeAliasDeclaration_DisconnectContainer_MessageData(
 declare function get_old_VariableDeclaration_DisconnectContainer_MessageType():
     TypeOnly<typeof old.DisconnectContainer.MessageType>;
 declare function use_current_VariableDeclaration_DisconnectContainer_MessageType(
-    use: TypeOnly<typeof current.DisconnectContainer.MessageType>);
+    use: TypeOnly<typeof current.DisconnectContainer.MessageType>): void;
 use_current_VariableDeclaration_DisconnectContainer_MessageType(
     get_old_VariableDeclaration_DisconnectContainer_MessageType());
 
@@ -1361,7 +1361,7 @@ use_current_VariableDeclaration_DisconnectContainer_MessageType(
 declare function get_current_VariableDeclaration_DisconnectContainer_MessageType():
     TypeOnly<typeof current.DisconnectContainer.MessageType>;
 declare function use_old_VariableDeclaration_DisconnectContainer_MessageType(
-    use: TypeOnly<typeof old.DisconnectContainer.MessageType>);
+    use: TypeOnly<typeof old.DisconnectContainer.MessageType>): void;
 use_old_VariableDeclaration_DisconnectContainer_MessageType(
     get_current_VariableDeclaration_DisconnectContainer_MessageType());
 
@@ -1373,7 +1373,7 @@ use_old_VariableDeclaration_DisconnectContainer_MessageType(
 declare function get_old_FunctionDeclaration_DisconnectContainer_createMessage():
     TypeOnly<typeof old.DisconnectContainer.createMessage>;
 declare function use_current_FunctionDeclaration_DisconnectContainer_createMessage(
-    use: TypeOnly<typeof current.DisconnectContainer.createMessage>);
+    use: TypeOnly<typeof current.DisconnectContainer.createMessage>): void;
 use_current_FunctionDeclaration_DisconnectContainer_createMessage(
     get_old_FunctionDeclaration_DisconnectContainer_createMessage());
 
@@ -1385,7 +1385,7 @@ use_current_FunctionDeclaration_DisconnectContainer_createMessage(
 declare function get_current_FunctionDeclaration_DisconnectContainer_createMessage():
     TypeOnly<typeof current.DisconnectContainer.createMessage>;
 declare function use_old_FunctionDeclaration_DisconnectContainer_createMessage(
-    use: TypeOnly<typeof old.DisconnectContainer.createMessage>);
+    use: TypeOnly<typeof old.DisconnectContainer.createMessage>): void;
 use_old_FunctionDeclaration_DisconnectContainer_createMessage(
     get_current_FunctionDeclaration_DisconnectContainer_createMessage());
 
@@ -1397,7 +1397,7 @@ use_old_FunctionDeclaration_DisconnectContainer_createMessage(
 declare function get_old_InterfaceDeclaration_Edit():
     TypeOnly<old.Edit>;
 declare function use_current_InterfaceDeclaration_Edit(
-    use: TypeOnly<current.Edit>);
+    use: TypeOnly<current.Edit>): void;
 use_current_InterfaceDeclaration_Edit(
     get_old_InterfaceDeclaration_Edit());
 
@@ -1409,7 +1409,7 @@ use_current_InterfaceDeclaration_Edit(
 declare function get_current_InterfaceDeclaration_Edit():
     TypeOnly<current.Edit>;
 declare function use_old_InterfaceDeclaration_Edit(
-    use: TypeOnly<old.Edit>);
+    use: TypeOnly<old.Edit>): void;
 use_old_InterfaceDeclaration_Edit(
     get_current_InterfaceDeclaration_Edit());
 
@@ -1421,7 +1421,7 @@ use_old_InterfaceDeclaration_Edit(
 declare function get_old_TypeAliasDeclaration_EditData():
     TypeOnly<old.EditData>;
 declare function use_current_TypeAliasDeclaration_EditData(
-    use: TypeOnly<current.EditData>);
+    use: TypeOnly<current.EditData>): void;
 use_current_TypeAliasDeclaration_EditData(
     get_old_TypeAliasDeclaration_EditData());
 
@@ -1433,7 +1433,7 @@ use_current_TypeAliasDeclaration_EditData(
 declare function get_current_TypeAliasDeclaration_EditData():
     TypeOnly<current.EditData>;
 declare function use_old_TypeAliasDeclaration_EditData(
-    use: TypeOnly<old.EditData>);
+    use: TypeOnly<old.EditData>): void;
 use_old_TypeAliasDeclaration_EditData(
     get_current_TypeAliasDeclaration_EditData());
 
@@ -1445,7 +1445,7 @@ use_old_TypeAliasDeclaration_EditData(
 declare function get_old_TypeAliasDeclaration_EditSharedObject():
     TypeOnly<old.EditSharedObject>;
 declare function use_current_TypeAliasDeclaration_EditSharedObject(
-    use: TypeOnly<current.EditSharedObject>);
+    use: TypeOnly<current.EditSharedObject>): void;
 use_current_TypeAliasDeclaration_EditSharedObject(
     get_old_TypeAliasDeclaration_EditSharedObject());
 
@@ -1457,7 +1457,7 @@ use_current_TypeAliasDeclaration_EditSharedObject(
 declare function get_current_TypeAliasDeclaration_EditSharedObject():
     TypeOnly<current.EditSharedObject>;
 declare function use_old_TypeAliasDeclaration_EditSharedObject(
-    use: TypeOnly<old.EditSharedObject>);
+    use: TypeOnly<old.EditSharedObject>): void;
 use_old_TypeAliasDeclaration_EditSharedObject(
     get_current_TypeAliasDeclaration_EditSharedObject());
 
@@ -1469,7 +1469,7 @@ use_old_TypeAliasDeclaration_EditSharedObject(
 declare function get_old_VariableDeclaration_EditType():
     TypeOnly<typeof old.EditType>;
 declare function use_current_VariableDeclaration_EditType(
-    use: TypeOnly<typeof current.EditType>);
+    use: TypeOnly<typeof current.EditType>): void;
 use_current_VariableDeclaration_EditType(
     get_old_VariableDeclaration_EditType());
 
@@ -1481,7 +1481,7 @@ use_current_VariableDeclaration_EditType(
 declare function get_current_VariableDeclaration_EditType():
     TypeOnly<typeof current.EditType>;
 declare function use_old_VariableDeclaration_EditType(
-    use: TypeOnly<typeof old.EditType>);
+    use: TypeOnly<typeof old.EditType>): void;
 use_old_VariableDeclaration_EditType(
     get_current_VariableDeclaration_EditType());
 
@@ -1493,7 +1493,7 @@ use_old_VariableDeclaration_EditType(
 declare function get_old_TypeAliasDeclaration_EditType():
     TypeOnly<old.EditType>;
 declare function use_current_TypeAliasDeclaration_EditType(
-    use: TypeOnly<current.EditType>);
+    use: TypeOnly<current.EditType>): void;
 use_current_TypeAliasDeclaration_EditType(
     get_old_TypeAliasDeclaration_EditType());
 
@@ -1505,7 +1505,7 @@ use_current_TypeAliasDeclaration_EditType(
 declare function get_current_TypeAliasDeclaration_EditType():
     TypeOnly<current.EditType>;
 declare function use_old_TypeAliasDeclaration_EditType(
-    use: TypeOnly<old.EditType>);
+    use: TypeOnly<old.EditType>): void;
 use_old_TypeAliasDeclaration_EditType(
     get_current_TypeAliasDeclaration_EditType());
 
@@ -1517,7 +1517,7 @@ use_old_TypeAliasDeclaration_EditType(
 declare function get_old_InterfaceDeclaration_FluidDevtoolsProps():
     TypeOnly<old.FluidDevtoolsProps>;
 declare function use_current_InterfaceDeclaration_FluidDevtoolsProps(
-    use: TypeOnly<current.FluidDevtoolsProps>);
+    use: TypeOnly<current.FluidDevtoolsProps>): void;
 use_current_InterfaceDeclaration_FluidDevtoolsProps(
     get_old_InterfaceDeclaration_FluidDevtoolsProps());
 
@@ -1529,7 +1529,7 @@ use_current_InterfaceDeclaration_FluidDevtoolsProps(
 declare function get_current_InterfaceDeclaration_FluidDevtoolsProps():
     TypeOnly<current.FluidDevtoolsProps>;
 declare function use_old_InterfaceDeclaration_FluidDevtoolsProps(
-    use: TypeOnly<old.FluidDevtoolsProps>);
+    use: TypeOnly<old.FluidDevtoolsProps>): void;
 use_old_InterfaceDeclaration_FluidDevtoolsProps(
     get_current_InterfaceDeclaration_FluidDevtoolsProps());
 
@@ -1541,7 +1541,7 @@ use_old_InterfaceDeclaration_FluidDevtoolsProps(
 declare function get_old_InterfaceDeclaration_FluidHandleNode():
     TypeOnly<old.FluidHandleNode>;
 declare function use_current_InterfaceDeclaration_FluidHandleNode(
-    use: TypeOnly<current.FluidHandleNode>);
+    use: TypeOnly<current.FluidHandleNode>): void;
 use_current_InterfaceDeclaration_FluidHandleNode(
     get_old_InterfaceDeclaration_FluidHandleNode());
 
@@ -1553,7 +1553,7 @@ use_current_InterfaceDeclaration_FluidHandleNode(
 declare function get_current_InterfaceDeclaration_FluidHandleNode():
     TypeOnly<current.FluidHandleNode>;
 declare function use_old_InterfaceDeclaration_FluidHandleNode(
-    use: TypeOnly<old.FluidHandleNode>);
+    use: TypeOnly<old.FluidHandleNode>): void;
 use_old_InterfaceDeclaration_FluidHandleNode(
     get_current_InterfaceDeclaration_FluidHandleNode());
 
@@ -1565,7 +1565,7 @@ use_old_InterfaceDeclaration_FluidHandleNode(
 declare function get_old_TypeAliasDeclaration_FluidObjectId():
     TypeOnly<old.FluidObjectId>;
 declare function use_current_TypeAliasDeclaration_FluidObjectId(
-    use: TypeOnly<current.FluidObjectId>);
+    use: TypeOnly<current.FluidObjectId>): void;
 use_current_TypeAliasDeclaration_FluidObjectId(
     get_old_TypeAliasDeclaration_FluidObjectId());
 
@@ -1577,7 +1577,7 @@ use_current_TypeAliasDeclaration_FluidObjectId(
 declare function get_current_TypeAliasDeclaration_FluidObjectId():
     TypeOnly<current.FluidObjectId>;
 declare function use_old_TypeAliasDeclaration_FluidObjectId(
-    use: TypeOnly<old.FluidObjectId>);
+    use: TypeOnly<old.FluidObjectId>): void;
 use_old_TypeAliasDeclaration_FluidObjectId(
     get_current_TypeAliasDeclaration_FluidObjectId());
 
@@ -1589,7 +1589,7 @@ use_old_TypeAliasDeclaration_FluidObjectId(
 declare function get_old_TypeAliasDeclaration_FluidObjectNode():
     TypeOnly<old.FluidObjectNode>;
 declare function use_current_TypeAliasDeclaration_FluidObjectNode(
-    use: TypeOnly<current.FluidObjectNode>);
+    use: TypeOnly<current.FluidObjectNode>): void;
 use_current_TypeAliasDeclaration_FluidObjectNode(
     get_old_TypeAliasDeclaration_FluidObjectNode());
 
@@ -1601,7 +1601,7 @@ use_current_TypeAliasDeclaration_FluidObjectNode(
 declare function get_current_TypeAliasDeclaration_FluidObjectNode():
     TypeOnly<current.FluidObjectNode>;
 declare function use_old_TypeAliasDeclaration_FluidObjectNode(
-    use: TypeOnly<old.FluidObjectNode>);
+    use: TypeOnly<old.FluidObjectNode>): void;
 use_old_TypeAliasDeclaration_FluidObjectNode(
     get_current_TypeAliasDeclaration_FluidObjectNode());
 
@@ -1613,7 +1613,7 @@ use_old_TypeAliasDeclaration_FluidObjectNode(
 declare function get_old_InterfaceDeclaration_FluidObjectNodeBase():
     TypeOnly<old.FluidObjectNodeBase>;
 declare function use_current_InterfaceDeclaration_FluidObjectNodeBase(
-    use: TypeOnly<current.FluidObjectNodeBase>);
+    use: TypeOnly<current.FluidObjectNodeBase>): void;
 use_current_InterfaceDeclaration_FluidObjectNodeBase(
     get_old_InterfaceDeclaration_FluidObjectNodeBase());
 
@@ -1625,7 +1625,7 @@ use_current_InterfaceDeclaration_FluidObjectNodeBase(
 declare function get_current_InterfaceDeclaration_FluidObjectNodeBase():
     TypeOnly<current.FluidObjectNodeBase>;
 declare function use_old_InterfaceDeclaration_FluidObjectNodeBase(
-    use: TypeOnly<old.FluidObjectNodeBase>);
+    use: TypeOnly<old.FluidObjectNodeBase>): void;
 use_old_InterfaceDeclaration_FluidObjectNodeBase(
     get_current_InterfaceDeclaration_FluidObjectNodeBase());
 
@@ -1637,7 +1637,7 @@ use_old_InterfaceDeclaration_FluidObjectNodeBase(
 declare function get_old_InterfaceDeclaration_FluidObjectTreeNode():
     TypeOnly<old.FluidObjectTreeNode>;
 declare function use_current_InterfaceDeclaration_FluidObjectTreeNode(
-    use: TypeOnly<current.FluidObjectTreeNode>);
+    use: TypeOnly<current.FluidObjectTreeNode>): void;
 use_current_InterfaceDeclaration_FluidObjectTreeNode(
     get_old_InterfaceDeclaration_FluidObjectTreeNode());
 
@@ -1649,7 +1649,7 @@ use_current_InterfaceDeclaration_FluidObjectTreeNode(
 declare function get_current_InterfaceDeclaration_FluidObjectTreeNode():
     TypeOnly<current.FluidObjectTreeNode>;
 declare function use_old_InterfaceDeclaration_FluidObjectTreeNode(
-    use: TypeOnly<old.FluidObjectTreeNode>);
+    use: TypeOnly<old.FluidObjectTreeNode>): void;
 use_old_InterfaceDeclaration_FluidObjectTreeNode(
     get_current_InterfaceDeclaration_FluidObjectTreeNode());
 
@@ -1661,7 +1661,7 @@ use_old_InterfaceDeclaration_FluidObjectTreeNode(
 declare function get_old_InterfaceDeclaration_FluidObjectValueNode():
     TypeOnly<old.FluidObjectValueNode>;
 declare function use_current_InterfaceDeclaration_FluidObjectValueNode(
-    use: TypeOnly<current.FluidObjectValueNode>);
+    use: TypeOnly<current.FluidObjectValueNode>): void;
 use_current_InterfaceDeclaration_FluidObjectValueNode(
     get_old_InterfaceDeclaration_FluidObjectValueNode());
 
@@ -1673,7 +1673,7 @@ use_current_InterfaceDeclaration_FluidObjectValueNode(
 declare function get_current_InterfaceDeclaration_FluidObjectValueNode():
     TypeOnly<current.FluidObjectValueNode>;
 declare function use_old_InterfaceDeclaration_FluidObjectValueNode(
-    use: TypeOnly<old.FluidObjectValueNode>);
+    use: TypeOnly<old.FluidObjectValueNode>): void;
 use_old_InterfaceDeclaration_FluidObjectValueNode(
     get_current_InterfaceDeclaration_FluidObjectValueNode());
 
@@ -1685,7 +1685,7 @@ use_old_InterfaceDeclaration_FluidObjectValueNode(
 declare function get_old_InterfaceDeclaration_FluidUnknownObjectNode():
     TypeOnly<old.FluidUnknownObjectNode>;
 declare function use_current_InterfaceDeclaration_FluidUnknownObjectNode(
-    use: TypeOnly<current.FluidUnknownObjectNode>);
+    use: TypeOnly<current.FluidUnknownObjectNode>): void;
 use_current_InterfaceDeclaration_FluidUnknownObjectNode(
     get_old_InterfaceDeclaration_FluidUnknownObjectNode());
 
@@ -1697,7 +1697,7 @@ use_current_InterfaceDeclaration_FluidUnknownObjectNode(
 declare function get_current_InterfaceDeclaration_FluidUnknownObjectNode():
     TypeOnly<current.FluidUnknownObjectNode>;
 declare function use_old_InterfaceDeclaration_FluidUnknownObjectNode(
-    use: TypeOnly<old.FluidUnknownObjectNode>);
+    use: TypeOnly<old.FluidUnknownObjectNode>): void;
 use_old_InterfaceDeclaration_FluidUnknownObjectNode(
     get_current_InterfaceDeclaration_FluidUnknownObjectNode());
 
@@ -1709,7 +1709,7 @@ use_old_InterfaceDeclaration_FluidUnknownObjectNode(
 declare function get_old_InterfaceDeclaration_GetAudienceSummary_Message():
     TypeOnly<old.GetAudienceSummary.Message>;
 declare function use_current_InterfaceDeclaration_GetAudienceSummary_Message(
-    use: TypeOnly<current.GetAudienceSummary.Message>);
+    use: TypeOnly<current.GetAudienceSummary.Message>): void;
 use_current_InterfaceDeclaration_GetAudienceSummary_Message(
     get_old_InterfaceDeclaration_GetAudienceSummary_Message());
 
@@ -1721,7 +1721,7 @@ use_current_InterfaceDeclaration_GetAudienceSummary_Message(
 declare function get_current_InterfaceDeclaration_GetAudienceSummary_Message():
     TypeOnly<current.GetAudienceSummary.Message>;
 declare function use_old_InterfaceDeclaration_GetAudienceSummary_Message(
-    use: TypeOnly<old.GetAudienceSummary.Message>);
+    use: TypeOnly<old.GetAudienceSummary.Message>): void;
 use_old_InterfaceDeclaration_GetAudienceSummary_Message(
     get_current_InterfaceDeclaration_GetAudienceSummary_Message());
 
@@ -1733,7 +1733,7 @@ use_old_InterfaceDeclaration_GetAudienceSummary_Message(
 declare function get_old_TypeAliasDeclaration_GetAudienceSummary_MessageData():
     TypeOnly<old.GetAudienceSummary.MessageData>;
 declare function use_current_TypeAliasDeclaration_GetAudienceSummary_MessageData(
-    use: TypeOnly<current.GetAudienceSummary.MessageData>);
+    use: TypeOnly<current.GetAudienceSummary.MessageData>): void;
 use_current_TypeAliasDeclaration_GetAudienceSummary_MessageData(
     get_old_TypeAliasDeclaration_GetAudienceSummary_MessageData());
 
@@ -1745,7 +1745,7 @@ use_current_TypeAliasDeclaration_GetAudienceSummary_MessageData(
 declare function get_current_TypeAliasDeclaration_GetAudienceSummary_MessageData():
     TypeOnly<current.GetAudienceSummary.MessageData>;
 declare function use_old_TypeAliasDeclaration_GetAudienceSummary_MessageData(
-    use: TypeOnly<old.GetAudienceSummary.MessageData>);
+    use: TypeOnly<old.GetAudienceSummary.MessageData>): void;
 use_old_TypeAliasDeclaration_GetAudienceSummary_MessageData(
     get_current_TypeAliasDeclaration_GetAudienceSummary_MessageData());
 
@@ -1757,7 +1757,7 @@ use_old_TypeAliasDeclaration_GetAudienceSummary_MessageData(
 declare function get_old_VariableDeclaration_GetAudienceSummary_MessageType():
     TypeOnly<typeof old.GetAudienceSummary.MessageType>;
 declare function use_current_VariableDeclaration_GetAudienceSummary_MessageType(
-    use: TypeOnly<typeof current.GetAudienceSummary.MessageType>);
+    use: TypeOnly<typeof current.GetAudienceSummary.MessageType>): void;
 use_current_VariableDeclaration_GetAudienceSummary_MessageType(
     get_old_VariableDeclaration_GetAudienceSummary_MessageType());
 
@@ -1769,7 +1769,7 @@ use_current_VariableDeclaration_GetAudienceSummary_MessageType(
 declare function get_current_VariableDeclaration_GetAudienceSummary_MessageType():
     TypeOnly<typeof current.GetAudienceSummary.MessageType>;
 declare function use_old_VariableDeclaration_GetAudienceSummary_MessageType(
-    use: TypeOnly<typeof old.GetAudienceSummary.MessageType>);
+    use: TypeOnly<typeof old.GetAudienceSummary.MessageType>): void;
 use_old_VariableDeclaration_GetAudienceSummary_MessageType(
     get_current_VariableDeclaration_GetAudienceSummary_MessageType());
 
@@ -1781,7 +1781,7 @@ use_old_VariableDeclaration_GetAudienceSummary_MessageType(
 declare function get_old_FunctionDeclaration_GetAudienceSummary_createMessage():
     TypeOnly<typeof old.GetAudienceSummary.createMessage>;
 declare function use_current_FunctionDeclaration_GetAudienceSummary_createMessage(
-    use: TypeOnly<typeof current.GetAudienceSummary.createMessage>);
+    use: TypeOnly<typeof current.GetAudienceSummary.createMessage>): void;
 use_current_FunctionDeclaration_GetAudienceSummary_createMessage(
     get_old_FunctionDeclaration_GetAudienceSummary_createMessage());
 
@@ -1793,7 +1793,7 @@ use_current_FunctionDeclaration_GetAudienceSummary_createMessage(
 declare function get_current_FunctionDeclaration_GetAudienceSummary_createMessage():
     TypeOnly<typeof current.GetAudienceSummary.createMessage>;
 declare function use_old_FunctionDeclaration_GetAudienceSummary_createMessage(
-    use: TypeOnly<typeof old.GetAudienceSummary.createMessage>);
+    use: TypeOnly<typeof old.GetAudienceSummary.createMessage>): void;
 use_old_FunctionDeclaration_GetAudienceSummary_createMessage(
     get_current_FunctionDeclaration_GetAudienceSummary_createMessage());
 
@@ -1805,7 +1805,7 @@ use_old_FunctionDeclaration_GetAudienceSummary_createMessage(
 declare function get_old_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message():
     TypeOnly<old.GetContainerDevtoolsFeatures.Message>;
 declare function use_current_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message(
-    use: TypeOnly<current.GetContainerDevtoolsFeatures.Message>);
+    use: TypeOnly<current.GetContainerDevtoolsFeatures.Message>): void;
 use_current_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message(
     get_old_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message());
 
@@ -1817,7 +1817,7 @@ use_current_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message(
 declare function get_current_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message():
     TypeOnly<current.GetContainerDevtoolsFeatures.Message>;
 declare function use_old_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message(
-    use: TypeOnly<old.GetContainerDevtoolsFeatures.Message>);
+    use: TypeOnly<old.GetContainerDevtoolsFeatures.Message>): void;
 use_old_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message(
     get_current_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message());
 
@@ -1829,7 +1829,7 @@ use_old_InterfaceDeclaration_GetContainerDevtoolsFeatures_Message(
 declare function get_old_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData():
     TypeOnly<old.GetContainerDevtoolsFeatures.MessageData>;
 declare function use_current_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData(
-    use: TypeOnly<current.GetContainerDevtoolsFeatures.MessageData>);
+    use: TypeOnly<current.GetContainerDevtoolsFeatures.MessageData>): void;
 use_current_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData(
     get_old_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData());
 
@@ -1841,7 +1841,7 @@ use_current_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData(
 declare function get_current_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData():
     TypeOnly<current.GetContainerDevtoolsFeatures.MessageData>;
 declare function use_old_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData(
-    use: TypeOnly<old.GetContainerDevtoolsFeatures.MessageData>);
+    use: TypeOnly<old.GetContainerDevtoolsFeatures.MessageData>): void;
 use_old_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData(
     get_current_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData());
 
@@ -1853,7 +1853,7 @@ use_old_TypeAliasDeclaration_GetContainerDevtoolsFeatures_MessageData(
 declare function get_old_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType():
     TypeOnly<typeof old.GetContainerDevtoolsFeatures.MessageType>;
 declare function use_current_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType(
-    use: TypeOnly<typeof current.GetContainerDevtoolsFeatures.MessageType>);
+    use: TypeOnly<typeof current.GetContainerDevtoolsFeatures.MessageType>): void;
 use_current_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType(
     get_old_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType());
 
@@ -1865,7 +1865,7 @@ use_current_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType(
 declare function get_current_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType():
     TypeOnly<typeof current.GetContainerDevtoolsFeatures.MessageType>;
 declare function use_old_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType(
-    use: TypeOnly<typeof old.GetContainerDevtoolsFeatures.MessageType>);
+    use: TypeOnly<typeof old.GetContainerDevtoolsFeatures.MessageType>): void;
 use_old_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType(
     get_current_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType());
 
@@ -1877,7 +1877,7 @@ use_old_VariableDeclaration_GetContainerDevtoolsFeatures_MessageType(
 declare function get_old_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage():
     TypeOnly<typeof old.GetContainerDevtoolsFeatures.createMessage>;
 declare function use_current_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage(
-    use: TypeOnly<typeof current.GetContainerDevtoolsFeatures.createMessage>);
+    use: TypeOnly<typeof current.GetContainerDevtoolsFeatures.createMessage>): void;
 use_current_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage(
     get_old_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage());
 
@@ -1889,7 +1889,7 @@ use_current_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage(
 declare function get_current_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage():
     TypeOnly<typeof current.GetContainerDevtoolsFeatures.createMessage>;
 declare function use_old_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage(
-    use: TypeOnly<typeof old.GetContainerDevtoolsFeatures.createMessage>);
+    use: TypeOnly<typeof old.GetContainerDevtoolsFeatures.createMessage>): void;
 use_old_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage(
     get_current_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage());
 
@@ -1901,7 +1901,7 @@ use_old_FunctionDeclaration_GetContainerDevtoolsFeatures_createMessage(
 declare function get_old_InterfaceDeclaration_GetContainerList_Message():
     TypeOnly<old.GetContainerList.Message>;
 declare function use_current_InterfaceDeclaration_GetContainerList_Message(
-    use: TypeOnly<current.GetContainerList.Message>);
+    use: TypeOnly<current.GetContainerList.Message>): void;
 use_current_InterfaceDeclaration_GetContainerList_Message(
     get_old_InterfaceDeclaration_GetContainerList_Message());
 
@@ -1913,7 +1913,7 @@ use_current_InterfaceDeclaration_GetContainerList_Message(
 declare function get_current_InterfaceDeclaration_GetContainerList_Message():
     TypeOnly<current.GetContainerList.Message>;
 declare function use_old_InterfaceDeclaration_GetContainerList_Message(
-    use: TypeOnly<old.GetContainerList.Message>);
+    use: TypeOnly<old.GetContainerList.Message>): void;
 use_old_InterfaceDeclaration_GetContainerList_Message(
     get_current_InterfaceDeclaration_GetContainerList_Message());
 
@@ -1925,7 +1925,7 @@ use_old_InterfaceDeclaration_GetContainerList_Message(
 declare function get_old_VariableDeclaration_GetContainerList_MessageType():
     TypeOnly<typeof old.GetContainerList.MessageType>;
 declare function use_current_VariableDeclaration_GetContainerList_MessageType(
-    use: TypeOnly<typeof current.GetContainerList.MessageType>);
+    use: TypeOnly<typeof current.GetContainerList.MessageType>): void;
 use_current_VariableDeclaration_GetContainerList_MessageType(
     get_old_VariableDeclaration_GetContainerList_MessageType());
 
@@ -1937,7 +1937,7 @@ use_current_VariableDeclaration_GetContainerList_MessageType(
 declare function get_current_VariableDeclaration_GetContainerList_MessageType():
     TypeOnly<typeof current.GetContainerList.MessageType>;
 declare function use_old_VariableDeclaration_GetContainerList_MessageType(
-    use: TypeOnly<typeof old.GetContainerList.MessageType>);
+    use: TypeOnly<typeof old.GetContainerList.MessageType>): void;
 use_old_VariableDeclaration_GetContainerList_MessageType(
     get_current_VariableDeclaration_GetContainerList_MessageType());
 
@@ -1949,7 +1949,7 @@ use_old_VariableDeclaration_GetContainerList_MessageType(
 declare function get_old_FunctionDeclaration_GetContainerList_createMessage():
     TypeOnly<typeof old.GetContainerList.createMessage>;
 declare function use_current_FunctionDeclaration_GetContainerList_createMessage(
-    use: TypeOnly<typeof current.GetContainerList.createMessage>);
+    use: TypeOnly<typeof current.GetContainerList.createMessage>): void;
 use_current_FunctionDeclaration_GetContainerList_createMessage(
     get_old_FunctionDeclaration_GetContainerList_createMessage());
 
@@ -1961,7 +1961,7 @@ use_current_FunctionDeclaration_GetContainerList_createMessage(
 declare function get_current_FunctionDeclaration_GetContainerList_createMessage():
     TypeOnly<typeof current.GetContainerList.createMessage>;
 declare function use_old_FunctionDeclaration_GetContainerList_createMessage(
-    use: TypeOnly<typeof old.GetContainerList.createMessage>);
+    use: TypeOnly<typeof old.GetContainerList.createMessage>): void;
 use_old_FunctionDeclaration_GetContainerList_createMessage(
     get_current_FunctionDeclaration_GetContainerList_createMessage());
 
@@ -1973,7 +1973,7 @@ use_old_FunctionDeclaration_GetContainerList_createMessage(
 declare function get_old_InterfaceDeclaration_GetContainerState_Message():
     TypeOnly<old.GetContainerState.Message>;
 declare function use_current_InterfaceDeclaration_GetContainerState_Message(
-    use: TypeOnly<current.GetContainerState.Message>);
+    use: TypeOnly<current.GetContainerState.Message>): void;
 use_current_InterfaceDeclaration_GetContainerState_Message(
     get_old_InterfaceDeclaration_GetContainerState_Message());
 
@@ -1985,7 +1985,7 @@ use_current_InterfaceDeclaration_GetContainerState_Message(
 declare function get_current_InterfaceDeclaration_GetContainerState_Message():
     TypeOnly<current.GetContainerState.Message>;
 declare function use_old_InterfaceDeclaration_GetContainerState_Message(
-    use: TypeOnly<old.GetContainerState.Message>);
+    use: TypeOnly<old.GetContainerState.Message>): void;
 use_old_InterfaceDeclaration_GetContainerState_Message(
     get_current_InterfaceDeclaration_GetContainerState_Message());
 
@@ -1997,7 +1997,7 @@ use_old_InterfaceDeclaration_GetContainerState_Message(
 declare function get_old_TypeAliasDeclaration_GetContainerState_MessageData():
     TypeOnly<old.GetContainerState.MessageData>;
 declare function use_current_TypeAliasDeclaration_GetContainerState_MessageData(
-    use: TypeOnly<current.GetContainerState.MessageData>);
+    use: TypeOnly<current.GetContainerState.MessageData>): void;
 use_current_TypeAliasDeclaration_GetContainerState_MessageData(
     get_old_TypeAliasDeclaration_GetContainerState_MessageData());
 
@@ -2009,7 +2009,7 @@ use_current_TypeAliasDeclaration_GetContainerState_MessageData(
 declare function get_current_TypeAliasDeclaration_GetContainerState_MessageData():
     TypeOnly<current.GetContainerState.MessageData>;
 declare function use_old_TypeAliasDeclaration_GetContainerState_MessageData(
-    use: TypeOnly<old.GetContainerState.MessageData>);
+    use: TypeOnly<old.GetContainerState.MessageData>): void;
 use_old_TypeAliasDeclaration_GetContainerState_MessageData(
     get_current_TypeAliasDeclaration_GetContainerState_MessageData());
 
@@ -2021,7 +2021,7 @@ use_old_TypeAliasDeclaration_GetContainerState_MessageData(
 declare function get_old_VariableDeclaration_GetContainerState_MessageType():
     TypeOnly<typeof old.GetContainerState.MessageType>;
 declare function use_current_VariableDeclaration_GetContainerState_MessageType(
-    use: TypeOnly<typeof current.GetContainerState.MessageType>);
+    use: TypeOnly<typeof current.GetContainerState.MessageType>): void;
 use_current_VariableDeclaration_GetContainerState_MessageType(
     get_old_VariableDeclaration_GetContainerState_MessageType());
 
@@ -2033,7 +2033,7 @@ use_current_VariableDeclaration_GetContainerState_MessageType(
 declare function get_current_VariableDeclaration_GetContainerState_MessageType():
     TypeOnly<typeof current.GetContainerState.MessageType>;
 declare function use_old_VariableDeclaration_GetContainerState_MessageType(
-    use: TypeOnly<typeof old.GetContainerState.MessageType>);
+    use: TypeOnly<typeof old.GetContainerState.MessageType>): void;
 use_old_VariableDeclaration_GetContainerState_MessageType(
     get_current_VariableDeclaration_GetContainerState_MessageType());
 
@@ -2045,7 +2045,7 @@ use_old_VariableDeclaration_GetContainerState_MessageType(
 declare function get_old_FunctionDeclaration_GetContainerState_createMessage():
     TypeOnly<typeof old.GetContainerState.createMessage>;
 declare function use_current_FunctionDeclaration_GetContainerState_createMessage(
-    use: TypeOnly<typeof current.GetContainerState.createMessage>);
+    use: TypeOnly<typeof current.GetContainerState.createMessage>): void;
 use_current_FunctionDeclaration_GetContainerState_createMessage(
     get_old_FunctionDeclaration_GetContainerState_createMessage());
 
@@ -2057,7 +2057,7 @@ use_current_FunctionDeclaration_GetContainerState_createMessage(
 declare function get_current_FunctionDeclaration_GetContainerState_createMessage():
     TypeOnly<typeof current.GetContainerState.createMessage>;
 declare function use_old_FunctionDeclaration_GetContainerState_createMessage(
-    use: TypeOnly<typeof old.GetContainerState.createMessage>);
+    use: TypeOnly<typeof old.GetContainerState.createMessage>): void;
 use_old_FunctionDeclaration_GetContainerState_createMessage(
     get_current_FunctionDeclaration_GetContainerState_createMessage());
 
@@ -2069,7 +2069,7 @@ use_old_FunctionDeclaration_GetContainerState_createMessage(
 declare function get_old_InterfaceDeclaration_GetDataVisualization_Message():
     TypeOnly<old.GetDataVisualization.Message>;
 declare function use_current_InterfaceDeclaration_GetDataVisualization_Message(
-    use: TypeOnly<current.GetDataVisualization.Message>);
+    use: TypeOnly<current.GetDataVisualization.Message>): void;
 use_current_InterfaceDeclaration_GetDataVisualization_Message(
     get_old_InterfaceDeclaration_GetDataVisualization_Message());
 
@@ -2081,7 +2081,7 @@ use_current_InterfaceDeclaration_GetDataVisualization_Message(
 declare function get_current_InterfaceDeclaration_GetDataVisualization_Message():
     TypeOnly<current.GetDataVisualization.Message>;
 declare function use_old_InterfaceDeclaration_GetDataVisualization_Message(
-    use: TypeOnly<old.GetDataVisualization.Message>);
+    use: TypeOnly<old.GetDataVisualization.Message>): void;
 use_old_InterfaceDeclaration_GetDataVisualization_Message(
     get_current_InterfaceDeclaration_GetDataVisualization_Message());
 
@@ -2093,7 +2093,7 @@ use_old_InterfaceDeclaration_GetDataVisualization_Message(
 declare function get_old_TypeAliasDeclaration_GetDataVisualization_MessageData():
     TypeOnly<old.GetDataVisualization.MessageData>;
 declare function use_current_TypeAliasDeclaration_GetDataVisualization_MessageData(
-    use: TypeOnly<current.GetDataVisualization.MessageData>);
+    use: TypeOnly<current.GetDataVisualization.MessageData>): void;
 use_current_TypeAliasDeclaration_GetDataVisualization_MessageData(
     get_old_TypeAliasDeclaration_GetDataVisualization_MessageData());
 
@@ -2105,7 +2105,7 @@ use_current_TypeAliasDeclaration_GetDataVisualization_MessageData(
 declare function get_current_TypeAliasDeclaration_GetDataVisualization_MessageData():
     TypeOnly<current.GetDataVisualization.MessageData>;
 declare function use_old_TypeAliasDeclaration_GetDataVisualization_MessageData(
-    use: TypeOnly<old.GetDataVisualization.MessageData>);
+    use: TypeOnly<old.GetDataVisualization.MessageData>): void;
 use_old_TypeAliasDeclaration_GetDataVisualization_MessageData(
     get_current_TypeAliasDeclaration_GetDataVisualization_MessageData());
 
@@ -2117,7 +2117,7 @@ use_old_TypeAliasDeclaration_GetDataVisualization_MessageData(
 declare function get_old_VariableDeclaration_GetDataVisualization_MessageType():
     TypeOnly<typeof old.GetDataVisualization.MessageType>;
 declare function use_current_VariableDeclaration_GetDataVisualization_MessageType(
-    use: TypeOnly<typeof current.GetDataVisualization.MessageType>);
+    use: TypeOnly<typeof current.GetDataVisualization.MessageType>): void;
 use_current_VariableDeclaration_GetDataVisualization_MessageType(
     get_old_VariableDeclaration_GetDataVisualization_MessageType());
 
@@ -2129,7 +2129,7 @@ use_current_VariableDeclaration_GetDataVisualization_MessageType(
 declare function get_current_VariableDeclaration_GetDataVisualization_MessageType():
     TypeOnly<typeof current.GetDataVisualization.MessageType>;
 declare function use_old_VariableDeclaration_GetDataVisualization_MessageType(
-    use: TypeOnly<typeof old.GetDataVisualization.MessageType>);
+    use: TypeOnly<typeof old.GetDataVisualization.MessageType>): void;
 use_old_VariableDeclaration_GetDataVisualization_MessageType(
     get_current_VariableDeclaration_GetDataVisualization_MessageType());
 
@@ -2141,7 +2141,7 @@ use_old_VariableDeclaration_GetDataVisualization_MessageType(
 declare function get_old_FunctionDeclaration_GetDataVisualization_createMessage():
     TypeOnly<typeof old.GetDataVisualization.createMessage>;
 declare function use_current_FunctionDeclaration_GetDataVisualization_createMessage(
-    use: TypeOnly<typeof current.GetDataVisualization.createMessage>);
+    use: TypeOnly<typeof current.GetDataVisualization.createMessage>): void;
 use_current_FunctionDeclaration_GetDataVisualization_createMessage(
     get_old_FunctionDeclaration_GetDataVisualization_createMessage());
 
@@ -2153,7 +2153,7 @@ use_current_FunctionDeclaration_GetDataVisualization_createMessage(
 declare function get_current_FunctionDeclaration_GetDataVisualization_createMessage():
     TypeOnly<typeof current.GetDataVisualization.createMessage>;
 declare function use_old_FunctionDeclaration_GetDataVisualization_createMessage(
-    use: TypeOnly<typeof old.GetDataVisualization.createMessage>);
+    use: TypeOnly<typeof old.GetDataVisualization.createMessage>): void;
 use_old_FunctionDeclaration_GetDataVisualization_createMessage(
     get_current_FunctionDeclaration_GetDataVisualization_createMessage());
 
@@ -2165,7 +2165,7 @@ use_old_FunctionDeclaration_GetDataVisualization_createMessage(
 declare function get_old_InterfaceDeclaration_GetDevtoolsFeatures_Message():
     TypeOnly<old.GetDevtoolsFeatures.Message>;
 declare function use_current_InterfaceDeclaration_GetDevtoolsFeatures_Message(
-    use: TypeOnly<current.GetDevtoolsFeatures.Message>);
+    use: TypeOnly<current.GetDevtoolsFeatures.Message>): void;
 use_current_InterfaceDeclaration_GetDevtoolsFeatures_Message(
     get_old_InterfaceDeclaration_GetDevtoolsFeatures_Message());
 
@@ -2177,7 +2177,7 @@ use_current_InterfaceDeclaration_GetDevtoolsFeatures_Message(
 declare function get_current_InterfaceDeclaration_GetDevtoolsFeatures_Message():
     TypeOnly<current.GetDevtoolsFeatures.Message>;
 declare function use_old_InterfaceDeclaration_GetDevtoolsFeatures_Message(
-    use: TypeOnly<old.GetDevtoolsFeatures.Message>);
+    use: TypeOnly<old.GetDevtoolsFeatures.Message>): void;
 use_old_InterfaceDeclaration_GetDevtoolsFeatures_Message(
     get_current_InterfaceDeclaration_GetDevtoolsFeatures_Message());
 
@@ -2189,7 +2189,7 @@ use_old_InterfaceDeclaration_GetDevtoolsFeatures_Message(
 declare function get_old_VariableDeclaration_GetDevtoolsFeatures_MessageType():
     TypeOnly<typeof old.GetDevtoolsFeatures.MessageType>;
 declare function use_current_VariableDeclaration_GetDevtoolsFeatures_MessageType(
-    use: TypeOnly<typeof current.GetDevtoolsFeatures.MessageType>);
+    use: TypeOnly<typeof current.GetDevtoolsFeatures.MessageType>): void;
 use_current_VariableDeclaration_GetDevtoolsFeatures_MessageType(
     get_old_VariableDeclaration_GetDevtoolsFeatures_MessageType());
 
@@ -2201,7 +2201,7 @@ use_current_VariableDeclaration_GetDevtoolsFeatures_MessageType(
 declare function get_current_VariableDeclaration_GetDevtoolsFeatures_MessageType():
     TypeOnly<typeof current.GetDevtoolsFeatures.MessageType>;
 declare function use_old_VariableDeclaration_GetDevtoolsFeatures_MessageType(
-    use: TypeOnly<typeof old.GetDevtoolsFeatures.MessageType>);
+    use: TypeOnly<typeof old.GetDevtoolsFeatures.MessageType>): void;
 use_old_VariableDeclaration_GetDevtoolsFeatures_MessageType(
     get_current_VariableDeclaration_GetDevtoolsFeatures_MessageType());
 
@@ -2213,7 +2213,7 @@ use_old_VariableDeclaration_GetDevtoolsFeatures_MessageType(
 declare function get_old_FunctionDeclaration_GetDevtoolsFeatures_createMessage():
     TypeOnly<typeof old.GetDevtoolsFeatures.createMessage>;
 declare function use_current_FunctionDeclaration_GetDevtoolsFeatures_createMessage(
-    use: TypeOnly<typeof current.GetDevtoolsFeatures.createMessage>);
+    use: TypeOnly<typeof current.GetDevtoolsFeatures.createMessage>): void;
 use_current_FunctionDeclaration_GetDevtoolsFeatures_createMessage(
     get_old_FunctionDeclaration_GetDevtoolsFeatures_createMessage());
 
@@ -2225,7 +2225,7 @@ use_current_FunctionDeclaration_GetDevtoolsFeatures_createMessage(
 declare function get_current_FunctionDeclaration_GetDevtoolsFeatures_createMessage():
     TypeOnly<typeof current.GetDevtoolsFeatures.createMessage>;
 declare function use_old_FunctionDeclaration_GetDevtoolsFeatures_createMessage(
-    use: TypeOnly<typeof old.GetDevtoolsFeatures.createMessage>);
+    use: TypeOnly<typeof old.GetDevtoolsFeatures.createMessage>): void;
 use_old_FunctionDeclaration_GetDevtoolsFeatures_createMessage(
     get_current_FunctionDeclaration_GetDevtoolsFeatures_createMessage());
 
@@ -2237,7 +2237,7 @@ use_old_FunctionDeclaration_GetDevtoolsFeatures_createMessage(
 declare function get_old_InterfaceDeclaration_GetRootDataVisualizations_Message():
     TypeOnly<old.GetRootDataVisualizations.Message>;
 declare function use_current_InterfaceDeclaration_GetRootDataVisualizations_Message(
-    use: TypeOnly<current.GetRootDataVisualizations.Message>);
+    use: TypeOnly<current.GetRootDataVisualizations.Message>): void;
 use_current_InterfaceDeclaration_GetRootDataVisualizations_Message(
     get_old_InterfaceDeclaration_GetRootDataVisualizations_Message());
 
@@ -2249,7 +2249,7 @@ use_current_InterfaceDeclaration_GetRootDataVisualizations_Message(
 declare function get_current_InterfaceDeclaration_GetRootDataVisualizations_Message():
     TypeOnly<current.GetRootDataVisualizations.Message>;
 declare function use_old_InterfaceDeclaration_GetRootDataVisualizations_Message(
-    use: TypeOnly<old.GetRootDataVisualizations.Message>);
+    use: TypeOnly<old.GetRootDataVisualizations.Message>): void;
 use_old_InterfaceDeclaration_GetRootDataVisualizations_Message(
     get_current_InterfaceDeclaration_GetRootDataVisualizations_Message());
 
@@ -2261,7 +2261,7 @@ use_old_InterfaceDeclaration_GetRootDataVisualizations_Message(
 declare function get_old_TypeAliasDeclaration_GetRootDataVisualizations_MessageData():
     TypeOnly<old.GetRootDataVisualizations.MessageData>;
 declare function use_current_TypeAliasDeclaration_GetRootDataVisualizations_MessageData(
-    use: TypeOnly<current.GetRootDataVisualizations.MessageData>);
+    use: TypeOnly<current.GetRootDataVisualizations.MessageData>): void;
 use_current_TypeAliasDeclaration_GetRootDataVisualizations_MessageData(
     get_old_TypeAliasDeclaration_GetRootDataVisualizations_MessageData());
 
@@ -2273,7 +2273,7 @@ use_current_TypeAliasDeclaration_GetRootDataVisualizations_MessageData(
 declare function get_current_TypeAliasDeclaration_GetRootDataVisualizations_MessageData():
     TypeOnly<current.GetRootDataVisualizations.MessageData>;
 declare function use_old_TypeAliasDeclaration_GetRootDataVisualizations_MessageData(
-    use: TypeOnly<old.GetRootDataVisualizations.MessageData>);
+    use: TypeOnly<old.GetRootDataVisualizations.MessageData>): void;
 use_old_TypeAliasDeclaration_GetRootDataVisualizations_MessageData(
     get_current_TypeAliasDeclaration_GetRootDataVisualizations_MessageData());
 
@@ -2285,7 +2285,7 @@ use_old_TypeAliasDeclaration_GetRootDataVisualizations_MessageData(
 declare function get_old_VariableDeclaration_GetRootDataVisualizations_MessageType():
     TypeOnly<typeof old.GetRootDataVisualizations.MessageType>;
 declare function use_current_VariableDeclaration_GetRootDataVisualizations_MessageType(
-    use: TypeOnly<typeof current.GetRootDataVisualizations.MessageType>);
+    use: TypeOnly<typeof current.GetRootDataVisualizations.MessageType>): void;
 use_current_VariableDeclaration_GetRootDataVisualizations_MessageType(
     get_old_VariableDeclaration_GetRootDataVisualizations_MessageType());
 
@@ -2297,7 +2297,7 @@ use_current_VariableDeclaration_GetRootDataVisualizations_MessageType(
 declare function get_current_VariableDeclaration_GetRootDataVisualizations_MessageType():
     TypeOnly<typeof current.GetRootDataVisualizations.MessageType>;
 declare function use_old_VariableDeclaration_GetRootDataVisualizations_MessageType(
-    use: TypeOnly<typeof old.GetRootDataVisualizations.MessageType>);
+    use: TypeOnly<typeof old.GetRootDataVisualizations.MessageType>): void;
 use_old_VariableDeclaration_GetRootDataVisualizations_MessageType(
     get_current_VariableDeclaration_GetRootDataVisualizations_MessageType());
 
@@ -2309,7 +2309,7 @@ use_old_VariableDeclaration_GetRootDataVisualizations_MessageType(
 declare function get_old_FunctionDeclaration_GetRootDataVisualizations_createMessage():
     TypeOnly<typeof old.GetRootDataVisualizations.createMessage>;
 declare function use_current_FunctionDeclaration_GetRootDataVisualizations_createMessage(
-    use: TypeOnly<typeof current.GetRootDataVisualizations.createMessage>);
+    use: TypeOnly<typeof current.GetRootDataVisualizations.createMessage>): void;
 use_current_FunctionDeclaration_GetRootDataVisualizations_createMessage(
     get_old_FunctionDeclaration_GetRootDataVisualizations_createMessage());
 
@@ -2321,7 +2321,7 @@ use_current_FunctionDeclaration_GetRootDataVisualizations_createMessage(
 declare function get_current_FunctionDeclaration_GetRootDataVisualizations_createMessage():
     TypeOnly<typeof current.GetRootDataVisualizations.createMessage>;
 declare function use_old_FunctionDeclaration_GetRootDataVisualizations_createMessage(
-    use: TypeOnly<typeof old.GetRootDataVisualizations.createMessage>);
+    use: TypeOnly<typeof old.GetRootDataVisualizations.createMessage>): void;
 use_old_FunctionDeclaration_GetRootDataVisualizations_createMessage(
     get_current_FunctionDeclaration_GetRootDataVisualizations_createMessage());
 
@@ -2333,7 +2333,7 @@ use_old_FunctionDeclaration_GetRootDataVisualizations_createMessage(
 declare function get_old_InterfaceDeclaration_GetTelemetryHistory_Message():
     TypeOnly<old.GetTelemetryHistory.Message>;
 declare function use_current_InterfaceDeclaration_GetTelemetryHistory_Message(
-    use: TypeOnly<current.GetTelemetryHistory.Message>);
+    use: TypeOnly<current.GetTelemetryHistory.Message>): void;
 use_current_InterfaceDeclaration_GetTelemetryHistory_Message(
     get_old_InterfaceDeclaration_GetTelemetryHistory_Message());
 
@@ -2345,7 +2345,7 @@ use_current_InterfaceDeclaration_GetTelemetryHistory_Message(
 declare function get_current_InterfaceDeclaration_GetTelemetryHistory_Message():
     TypeOnly<current.GetTelemetryHistory.Message>;
 declare function use_old_InterfaceDeclaration_GetTelemetryHistory_Message(
-    use: TypeOnly<old.GetTelemetryHistory.Message>);
+    use: TypeOnly<old.GetTelemetryHistory.Message>): void;
 use_old_InterfaceDeclaration_GetTelemetryHistory_Message(
     get_current_InterfaceDeclaration_GetTelemetryHistory_Message());
 
@@ -2357,7 +2357,7 @@ use_old_InterfaceDeclaration_GetTelemetryHistory_Message(
 declare function get_old_VariableDeclaration_GetTelemetryHistory_MessageType():
     TypeOnly<typeof old.GetTelemetryHistory.MessageType>;
 declare function use_current_VariableDeclaration_GetTelemetryHistory_MessageType(
-    use: TypeOnly<typeof current.GetTelemetryHistory.MessageType>);
+    use: TypeOnly<typeof current.GetTelemetryHistory.MessageType>): void;
 use_current_VariableDeclaration_GetTelemetryHistory_MessageType(
     get_old_VariableDeclaration_GetTelemetryHistory_MessageType());
 
@@ -2369,7 +2369,7 @@ use_current_VariableDeclaration_GetTelemetryHistory_MessageType(
 declare function get_current_VariableDeclaration_GetTelemetryHistory_MessageType():
     TypeOnly<typeof current.GetTelemetryHistory.MessageType>;
 declare function use_old_VariableDeclaration_GetTelemetryHistory_MessageType(
-    use: TypeOnly<typeof old.GetTelemetryHistory.MessageType>);
+    use: TypeOnly<typeof old.GetTelemetryHistory.MessageType>): void;
 use_old_VariableDeclaration_GetTelemetryHistory_MessageType(
     get_current_VariableDeclaration_GetTelemetryHistory_MessageType());
 
@@ -2381,7 +2381,7 @@ use_old_VariableDeclaration_GetTelemetryHistory_MessageType(
 declare function get_old_FunctionDeclaration_GetTelemetryHistory_createMessage():
     TypeOnly<typeof old.GetTelemetryHistory.createMessage>;
 declare function use_current_FunctionDeclaration_GetTelemetryHistory_createMessage(
-    use: TypeOnly<typeof current.GetTelemetryHistory.createMessage>);
+    use: TypeOnly<typeof current.GetTelemetryHistory.createMessage>): void;
 use_current_FunctionDeclaration_GetTelemetryHistory_createMessage(
     get_old_FunctionDeclaration_GetTelemetryHistory_createMessage());
 
@@ -2393,7 +2393,7 @@ use_current_FunctionDeclaration_GetTelemetryHistory_createMessage(
 declare function get_current_FunctionDeclaration_GetTelemetryHistory_createMessage():
     TypeOnly<typeof current.GetTelemetryHistory.createMessage>;
 declare function use_old_FunctionDeclaration_GetTelemetryHistory_createMessage(
-    use: TypeOnly<typeof old.GetTelemetryHistory.createMessage>);
+    use: TypeOnly<typeof old.GetTelemetryHistory.createMessage>): void;
 use_old_FunctionDeclaration_GetTelemetryHistory_createMessage(
     get_current_FunctionDeclaration_GetTelemetryHistory_createMessage());
 
@@ -2405,7 +2405,7 @@ use_old_FunctionDeclaration_GetTelemetryHistory_createMessage(
 declare function get_old_InterfaceDeclaration_HasContainerKey():
     TypeOnly<old.HasContainerKey>;
 declare function use_current_InterfaceDeclaration_HasContainerKey(
-    use: TypeOnly<current.HasContainerKey>);
+    use: TypeOnly<current.HasContainerKey>): void;
 use_current_InterfaceDeclaration_HasContainerKey(
     get_old_InterfaceDeclaration_HasContainerKey());
 
@@ -2417,7 +2417,7 @@ use_current_InterfaceDeclaration_HasContainerKey(
 declare function get_current_InterfaceDeclaration_HasContainerKey():
     TypeOnly<current.HasContainerKey>;
 declare function use_old_InterfaceDeclaration_HasContainerKey(
-    use: TypeOnly<old.HasContainerKey>);
+    use: TypeOnly<old.HasContainerKey>): void;
 use_old_InterfaceDeclaration_HasContainerKey(
     get_current_InterfaceDeclaration_HasContainerKey());
 
@@ -2429,7 +2429,7 @@ use_old_InterfaceDeclaration_HasContainerKey(
 declare function get_old_InterfaceDeclaration_HasFluidObjectId():
     TypeOnly<old.HasFluidObjectId>;
 declare function use_current_InterfaceDeclaration_HasFluidObjectId(
-    use: TypeOnly<current.HasFluidObjectId>);
+    use: TypeOnly<current.HasFluidObjectId>): void;
 use_current_InterfaceDeclaration_HasFluidObjectId(
     get_old_InterfaceDeclaration_HasFluidObjectId());
 
@@ -2441,7 +2441,7 @@ use_current_InterfaceDeclaration_HasFluidObjectId(
 declare function get_current_InterfaceDeclaration_HasFluidObjectId():
     TypeOnly<current.HasFluidObjectId>;
 declare function use_old_InterfaceDeclaration_HasFluidObjectId(
-    use: TypeOnly<old.HasFluidObjectId>);
+    use: TypeOnly<old.HasFluidObjectId>): void;
 use_old_InterfaceDeclaration_HasFluidObjectId(
     get_current_InterfaceDeclaration_HasFluidObjectId());
 
@@ -2453,7 +2453,7 @@ use_old_InterfaceDeclaration_HasFluidObjectId(
 declare function get_old_InterfaceDeclaration_IDevtoolsMessage():
     TypeOnly<old.IDevtoolsMessage>;
 declare function use_current_InterfaceDeclaration_IDevtoolsMessage(
-    use: TypeOnly<current.IDevtoolsMessage>);
+    use: TypeOnly<current.IDevtoolsMessage>): void;
 use_current_InterfaceDeclaration_IDevtoolsMessage(
     get_old_InterfaceDeclaration_IDevtoolsMessage());
 
@@ -2465,7 +2465,7 @@ use_current_InterfaceDeclaration_IDevtoolsMessage(
 declare function get_current_InterfaceDeclaration_IDevtoolsMessage():
     TypeOnly<current.IDevtoolsMessage>;
 declare function use_old_InterfaceDeclaration_IDevtoolsMessage(
-    use: TypeOnly<old.IDevtoolsMessage>);
+    use: TypeOnly<old.IDevtoolsMessage>): void;
 use_old_InterfaceDeclaration_IDevtoolsMessage(
     get_current_InterfaceDeclaration_IDevtoolsMessage());
 
@@ -2477,7 +2477,7 @@ use_old_InterfaceDeclaration_IDevtoolsMessage(
 declare function get_old_InterfaceDeclaration_IFluidDevtools():
     TypeOnly<old.IFluidDevtools>;
 declare function use_current_InterfaceDeclaration_IFluidDevtools(
-    use: TypeOnly<current.IFluidDevtools>);
+    use: TypeOnly<current.IFluidDevtools>): void;
 use_current_InterfaceDeclaration_IFluidDevtools(
     get_old_InterfaceDeclaration_IFluidDevtools());
 
@@ -2489,7 +2489,7 @@ use_current_InterfaceDeclaration_IFluidDevtools(
 declare function get_current_InterfaceDeclaration_IFluidDevtools():
     TypeOnly<current.IFluidDevtools>;
 declare function use_old_InterfaceDeclaration_IFluidDevtools(
-    use: TypeOnly<old.IFluidDevtools>);
+    use: TypeOnly<old.IFluidDevtools>): void;
 use_old_InterfaceDeclaration_IFluidDevtools(
     get_current_InterfaceDeclaration_IFluidDevtools());
 
@@ -2501,7 +2501,7 @@ use_old_InterfaceDeclaration_IFluidDevtools(
 declare function get_old_InterfaceDeclaration_IMessageRelay():
     TypeOnly<old.IMessageRelay>;
 declare function use_current_InterfaceDeclaration_IMessageRelay(
-    use: TypeOnly<current.IMessageRelay>);
+    use: TypeOnly<current.IMessageRelay>): void;
 use_current_InterfaceDeclaration_IMessageRelay(
     get_old_InterfaceDeclaration_IMessageRelay());
 
@@ -2513,7 +2513,7 @@ use_current_InterfaceDeclaration_IMessageRelay(
 declare function get_current_InterfaceDeclaration_IMessageRelay():
     TypeOnly<current.IMessageRelay>;
 declare function use_old_InterfaceDeclaration_IMessageRelay(
-    use: TypeOnly<old.IMessageRelay>);
+    use: TypeOnly<old.IMessageRelay>): void;
 use_old_InterfaceDeclaration_IMessageRelay(
     get_current_InterfaceDeclaration_IMessageRelay());
 
@@ -2525,7 +2525,7 @@ use_old_InterfaceDeclaration_IMessageRelay(
 declare function get_old_InterfaceDeclaration_IMessageRelayEvents():
     TypeOnly<old.IMessageRelayEvents>;
 declare function use_current_InterfaceDeclaration_IMessageRelayEvents(
-    use: TypeOnly<current.IMessageRelayEvents>);
+    use: TypeOnly<current.IMessageRelayEvents>): void;
 use_current_InterfaceDeclaration_IMessageRelayEvents(
     get_old_InterfaceDeclaration_IMessageRelayEvents());
 
@@ -2537,7 +2537,7 @@ use_current_InterfaceDeclaration_IMessageRelayEvents(
 declare function get_current_InterfaceDeclaration_IMessageRelayEvents():
     TypeOnly<current.IMessageRelayEvents>;
 declare function use_old_InterfaceDeclaration_IMessageRelayEvents(
-    use: TypeOnly<old.IMessageRelayEvents>);
+    use: TypeOnly<old.IMessageRelayEvents>): void;
 use_old_InterfaceDeclaration_IMessageRelayEvents(
     get_current_InterfaceDeclaration_IMessageRelayEvents());
 
@@ -2549,7 +2549,7 @@ use_old_InterfaceDeclaration_IMessageRelayEvents(
 declare function get_old_InterfaceDeclaration_ISourcedDevtoolsMessage():
     TypeOnly<old.ISourcedDevtoolsMessage>;
 declare function use_current_InterfaceDeclaration_ISourcedDevtoolsMessage(
-    use: TypeOnly<current.ISourcedDevtoolsMessage>);
+    use: TypeOnly<current.ISourcedDevtoolsMessage>): void;
 use_current_InterfaceDeclaration_ISourcedDevtoolsMessage(
     get_old_InterfaceDeclaration_ISourcedDevtoolsMessage());
 
@@ -2561,7 +2561,7 @@ use_current_InterfaceDeclaration_ISourcedDevtoolsMessage(
 declare function get_current_InterfaceDeclaration_ISourcedDevtoolsMessage():
     TypeOnly<current.ISourcedDevtoolsMessage>;
 declare function use_old_InterfaceDeclaration_ISourcedDevtoolsMessage(
-    use: TypeOnly<old.ISourcedDevtoolsMessage>);
+    use: TypeOnly<old.ISourcedDevtoolsMessage>): void;
 use_old_InterfaceDeclaration_ISourcedDevtoolsMessage(
     get_current_InterfaceDeclaration_ISourcedDevtoolsMessage());
 
@@ -2573,7 +2573,7 @@ use_old_InterfaceDeclaration_ISourcedDevtoolsMessage(
 declare function get_old_InterfaceDeclaration_ITimestampedTelemetryEvent():
     TypeOnly<old.ITimestampedTelemetryEvent>;
 declare function use_current_InterfaceDeclaration_ITimestampedTelemetryEvent(
-    use: TypeOnly<current.ITimestampedTelemetryEvent>);
+    use: TypeOnly<current.ITimestampedTelemetryEvent>): void;
 use_current_InterfaceDeclaration_ITimestampedTelemetryEvent(
     get_old_InterfaceDeclaration_ITimestampedTelemetryEvent());
 
@@ -2585,7 +2585,7 @@ use_current_InterfaceDeclaration_ITimestampedTelemetryEvent(
 declare function get_current_InterfaceDeclaration_ITimestampedTelemetryEvent():
     TypeOnly<current.ITimestampedTelemetryEvent>;
 declare function use_old_InterfaceDeclaration_ITimestampedTelemetryEvent(
-    use: TypeOnly<old.ITimestampedTelemetryEvent>);
+    use: TypeOnly<old.ITimestampedTelemetryEvent>): void;
 use_old_InterfaceDeclaration_ITimestampedTelemetryEvent(
     get_current_InterfaceDeclaration_ITimestampedTelemetryEvent());
 
@@ -2597,7 +2597,7 @@ use_old_InterfaceDeclaration_ITimestampedTelemetryEvent(
 declare function get_old_InterfaceDeclaration_InboundHandlers():
     TypeOnly<old.InboundHandlers>;
 declare function use_current_InterfaceDeclaration_InboundHandlers(
-    use: TypeOnly<current.InboundHandlers>);
+    use: TypeOnly<current.InboundHandlers>): void;
 use_current_InterfaceDeclaration_InboundHandlers(
     get_old_InterfaceDeclaration_InboundHandlers());
 
@@ -2609,7 +2609,7 @@ use_current_InterfaceDeclaration_InboundHandlers(
 declare function get_current_InterfaceDeclaration_InboundHandlers():
     TypeOnly<current.InboundHandlers>;
 declare function use_old_InterfaceDeclaration_InboundHandlers(
-    use: TypeOnly<old.InboundHandlers>);
+    use: TypeOnly<old.InboundHandlers>): void;
 use_old_InterfaceDeclaration_InboundHandlers(
     get_current_InterfaceDeclaration_InboundHandlers());
 
@@ -2621,7 +2621,7 @@ use_old_InterfaceDeclaration_InboundHandlers(
 declare function get_old_InterfaceDeclaration_LogEntry():
     TypeOnly<old.LogEntry>;
 declare function use_current_InterfaceDeclaration_LogEntry(
-    use: TypeOnly<current.LogEntry>);
+    use: TypeOnly<current.LogEntry>): void;
 use_current_InterfaceDeclaration_LogEntry(
     get_old_InterfaceDeclaration_LogEntry());
 
@@ -2633,7 +2633,7 @@ use_current_InterfaceDeclaration_LogEntry(
 declare function get_current_InterfaceDeclaration_LogEntry():
     TypeOnly<current.LogEntry>;
 declare function use_old_InterfaceDeclaration_LogEntry(
-    use: TypeOnly<old.LogEntry>);
+    use: TypeOnly<old.LogEntry>): void;
 use_old_InterfaceDeclaration_LogEntry(
     get_current_InterfaceDeclaration_LogEntry());
 
@@ -2645,7 +2645,7 @@ use_old_InterfaceDeclaration_LogEntry(
 declare function get_old_EnumDeclaration_MemberChangeKind():
     TypeOnly<old.MemberChangeKind>;
 declare function use_current_EnumDeclaration_MemberChangeKind(
-    use: TypeOnly<current.MemberChangeKind>);
+    use: TypeOnly<current.MemberChangeKind>): void;
 use_current_EnumDeclaration_MemberChangeKind(
     get_old_EnumDeclaration_MemberChangeKind());
 
@@ -2657,7 +2657,7 @@ use_current_EnumDeclaration_MemberChangeKind(
 declare function get_current_EnumDeclaration_MemberChangeKind():
     TypeOnly<current.MemberChangeKind>;
 declare function use_old_EnumDeclaration_MemberChangeKind(
-    use: TypeOnly<old.MemberChangeKind>);
+    use: TypeOnly<old.MemberChangeKind>): void;
 use_old_EnumDeclaration_MemberChangeKind(
     get_current_EnumDeclaration_MemberChangeKind());
 
@@ -2669,7 +2669,7 @@ use_old_EnumDeclaration_MemberChangeKind(
 declare function get_old_InterfaceDeclaration_MessageLoggingOptions():
     TypeOnly<old.MessageLoggingOptions>;
 declare function use_current_InterfaceDeclaration_MessageLoggingOptions(
-    use: TypeOnly<current.MessageLoggingOptions>);
+    use: TypeOnly<current.MessageLoggingOptions>): void;
 use_current_InterfaceDeclaration_MessageLoggingOptions(
     get_old_InterfaceDeclaration_MessageLoggingOptions());
 
@@ -2681,7 +2681,7 @@ use_current_InterfaceDeclaration_MessageLoggingOptions(
 declare function get_current_InterfaceDeclaration_MessageLoggingOptions():
     TypeOnly<current.MessageLoggingOptions>;
 declare function use_old_InterfaceDeclaration_MessageLoggingOptions(
-    use: TypeOnly<old.MessageLoggingOptions>);
+    use: TypeOnly<old.MessageLoggingOptions>): void;
 use_old_InterfaceDeclaration_MessageLoggingOptions(
     get_current_InterfaceDeclaration_MessageLoggingOptions());
 
@@ -2693,7 +2693,7 @@ use_old_InterfaceDeclaration_MessageLoggingOptions(
 declare function get_old_TypeAliasDeclaration_Primitive():
     TypeOnly<old.Primitive>;
 declare function use_current_TypeAliasDeclaration_Primitive(
-    use: TypeOnly<current.Primitive>);
+    use: TypeOnly<current.Primitive>): void;
 use_current_TypeAliasDeclaration_Primitive(
     get_old_TypeAliasDeclaration_Primitive());
 
@@ -2705,7 +2705,7 @@ use_current_TypeAliasDeclaration_Primitive(
 declare function get_current_TypeAliasDeclaration_Primitive():
     TypeOnly<current.Primitive>;
 declare function use_old_TypeAliasDeclaration_Primitive(
-    use: TypeOnly<old.Primitive>);
+    use: TypeOnly<old.Primitive>): void;
 use_old_TypeAliasDeclaration_Primitive(
     get_current_TypeAliasDeclaration_Primitive());
 
@@ -2717,7 +2717,7 @@ use_old_TypeAliasDeclaration_Primitive(
 declare function get_old_InterfaceDeclaration_RootDataVisualizations_Message():
     TypeOnly<old.RootDataVisualizations.Message>;
 declare function use_current_InterfaceDeclaration_RootDataVisualizations_Message(
-    use: TypeOnly<current.RootDataVisualizations.Message>);
+    use: TypeOnly<current.RootDataVisualizations.Message>): void;
 use_current_InterfaceDeclaration_RootDataVisualizations_Message(
     get_old_InterfaceDeclaration_RootDataVisualizations_Message());
 
@@ -2729,7 +2729,7 @@ use_current_InterfaceDeclaration_RootDataVisualizations_Message(
 declare function get_current_InterfaceDeclaration_RootDataVisualizations_Message():
     TypeOnly<current.RootDataVisualizations.Message>;
 declare function use_old_InterfaceDeclaration_RootDataVisualizations_Message(
-    use: TypeOnly<old.RootDataVisualizations.Message>);
+    use: TypeOnly<old.RootDataVisualizations.Message>): void;
 use_old_InterfaceDeclaration_RootDataVisualizations_Message(
     get_current_InterfaceDeclaration_RootDataVisualizations_Message());
 
@@ -2741,7 +2741,7 @@ use_old_InterfaceDeclaration_RootDataVisualizations_Message(
 declare function get_old_InterfaceDeclaration_RootDataVisualizations_MessageData():
     TypeOnly<old.RootDataVisualizations.MessageData>;
 declare function use_current_InterfaceDeclaration_RootDataVisualizations_MessageData(
-    use: TypeOnly<current.RootDataVisualizations.MessageData>);
+    use: TypeOnly<current.RootDataVisualizations.MessageData>): void;
 use_current_InterfaceDeclaration_RootDataVisualizations_MessageData(
     get_old_InterfaceDeclaration_RootDataVisualizations_MessageData());
 
@@ -2753,7 +2753,7 @@ use_current_InterfaceDeclaration_RootDataVisualizations_MessageData(
 declare function get_current_InterfaceDeclaration_RootDataVisualizations_MessageData():
     TypeOnly<current.RootDataVisualizations.MessageData>;
 declare function use_old_InterfaceDeclaration_RootDataVisualizations_MessageData(
-    use: TypeOnly<old.RootDataVisualizations.MessageData>);
+    use: TypeOnly<old.RootDataVisualizations.MessageData>): void;
 use_old_InterfaceDeclaration_RootDataVisualizations_MessageData(
     get_current_InterfaceDeclaration_RootDataVisualizations_MessageData());
 
@@ -2765,7 +2765,7 @@ use_old_InterfaceDeclaration_RootDataVisualizations_MessageData(
 declare function get_old_VariableDeclaration_RootDataVisualizations_MessageType():
     TypeOnly<typeof old.RootDataVisualizations.MessageType>;
 declare function use_current_VariableDeclaration_RootDataVisualizations_MessageType(
-    use: TypeOnly<typeof current.RootDataVisualizations.MessageType>);
+    use: TypeOnly<typeof current.RootDataVisualizations.MessageType>): void;
 use_current_VariableDeclaration_RootDataVisualizations_MessageType(
     get_old_VariableDeclaration_RootDataVisualizations_MessageType());
 
@@ -2777,7 +2777,7 @@ use_current_VariableDeclaration_RootDataVisualizations_MessageType(
 declare function get_current_VariableDeclaration_RootDataVisualizations_MessageType():
     TypeOnly<typeof current.RootDataVisualizations.MessageType>;
 declare function use_old_VariableDeclaration_RootDataVisualizations_MessageType(
-    use: TypeOnly<typeof old.RootDataVisualizations.MessageType>);
+    use: TypeOnly<typeof old.RootDataVisualizations.MessageType>): void;
 use_old_VariableDeclaration_RootDataVisualizations_MessageType(
     get_current_VariableDeclaration_RootDataVisualizations_MessageType());
 
@@ -2789,7 +2789,7 @@ use_old_VariableDeclaration_RootDataVisualizations_MessageType(
 declare function get_old_FunctionDeclaration_RootDataVisualizations_createMessage():
     TypeOnly<typeof old.RootDataVisualizations.createMessage>;
 declare function use_current_FunctionDeclaration_RootDataVisualizations_createMessage(
-    use: TypeOnly<typeof current.RootDataVisualizations.createMessage>);
+    use: TypeOnly<typeof current.RootDataVisualizations.createMessage>): void;
 use_current_FunctionDeclaration_RootDataVisualizations_createMessage(
     get_old_FunctionDeclaration_RootDataVisualizations_createMessage());
 
@@ -2801,7 +2801,7 @@ use_current_FunctionDeclaration_RootDataVisualizations_createMessage(
 declare function get_current_FunctionDeclaration_RootDataVisualizations_createMessage():
     TypeOnly<typeof current.RootDataVisualizations.createMessage>;
 declare function use_old_FunctionDeclaration_RootDataVisualizations_createMessage(
-    use: TypeOnly<typeof old.RootDataVisualizations.createMessage>);
+    use: TypeOnly<typeof old.RootDataVisualizations.createMessage>): void;
 use_old_FunctionDeclaration_RootDataVisualizations_createMessage(
     get_current_FunctionDeclaration_RootDataVisualizations_createMessage());
 
@@ -2813,7 +2813,7 @@ use_old_FunctionDeclaration_RootDataVisualizations_createMessage(
 declare function get_old_TypeAliasDeclaration_RootHandleNode():
     TypeOnly<old.RootHandleNode>;
 declare function use_current_TypeAliasDeclaration_RootHandleNode(
-    use: TypeOnly<current.RootHandleNode>);
+    use: TypeOnly<current.RootHandleNode>): void;
 use_current_TypeAliasDeclaration_RootHandleNode(
     get_old_TypeAliasDeclaration_RootHandleNode());
 
@@ -2825,7 +2825,7 @@ use_current_TypeAliasDeclaration_RootHandleNode(
 declare function get_current_TypeAliasDeclaration_RootHandleNode():
     TypeOnly<current.RootHandleNode>;
 declare function use_old_TypeAliasDeclaration_RootHandleNode(
-    use: TypeOnly<old.RootHandleNode>);
+    use: TypeOnly<old.RootHandleNode>): void;
 use_old_TypeAliasDeclaration_RootHandleNode(
     get_current_TypeAliasDeclaration_RootHandleNode());
 
@@ -2837,7 +2837,7 @@ use_old_TypeAliasDeclaration_RootHandleNode(
 declare function get_old_InterfaceDeclaration_SharedObjectEdit():
     TypeOnly<old.SharedObjectEdit>;
 declare function use_current_InterfaceDeclaration_SharedObjectEdit(
-    use: TypeOnly<current.SharedObjectEdit>);
+    use: TypeOnly<current.SharedObjectEdit>): void;
 use_current_InterfaceDeclaration_SharedObjectEdit(
     get_old_InterfaceDeclaration_SharedObjectEdit());
 
@@ -2849,7 +2849,7 @@ use_current_InterfaceDeclaration_SharedObjectEdit(
 declare function get_current_InterfaceDeclaration_SharedObjectEdit():
     TypeOnly<current.SharedObjectEdit>;
 declare function use_old_InterfaceDeclaration_SharedObjectEdit(
-    use: TypeOnly<old.SharedObjectEdit>);
+    use: TypeOnly<old.SharedObjectEdit>): void;
 use_old_InterfaceDeclaration_SharedObjectEdit(
     get_current_InterfaceDeclaration_SharedObjectEdit());
 
@@ -2861,7 +2861,7 @@ use_old_InterfaceDeclaration_SharedObjectEdit(
 declare function get_old_InterfaceDeclaration_StateChangeLogEntry():
     TypeOnly<old.StateChangeLogEntry<any>>;
 declare function use_current_InterfaceDeclaration_StateChangeLogEntry(
-    use: TypeOnly<current.StateChangeLogEntry<any>>);
+    use: TypeOnly<current.StateChangeLogEntry<any>>): void;
 use_current_InterfaceDeclaration_StateChangeLogEntry(
     get_old_InterfaceDeclaration_StateChangeLogEntry());
 
@@ -2873,7 +2873,7 @@ use_current_InterfaceDeclaration_StateChangeLogEntry(
 declare function get_current_InterfaceDeclaration_StateChangeLogEntry():
     TypeOnly<current.StateChangeLogEntry<any>>;
 declare function use_old_InterfaceDeclaration_StateChangeLogEntry(
-    use: TypeOnly<old.StateChangeLogEntry<any>>);
+    use: TypeOnly<old.StateChangeLogEntry<any>>): void;
 use_old_InterfaceDeclaration_StateChangeLogEntry(
     get_current_InterfaceDeclaration_StateChangeLogEntry());
 
@@ -2885,7 +2885,7 @@ use_old_InterfaceDeclaration_StateChangeLogEntry(
 declare function get_old_InterfaceDeclaration_TelemetryEvent_Message():
     TypeOnly<old.TelemetryEvent.Message>;
 declare function use_current_InterfaceDeclaration_TelemetryEvent_Message(
-    use: TypeOnly<current.TelemetryEvent.Message>);
+    use: TypeOnly<current.TelemetryEvent.Message>): void;
 use_current_InterfaceDeclaration_TelemetryEvent_Message(
     get_old_InterfaceDeclaration_TelemetryEvent_Message());
 
@@ -2897,7 +2897,7 @@ use_current_InterfaceDeclaration_TelemetryEvent_Message(
 declare function get_current_InterfaceDeclaration_TelemetryEvent_Message():
     TypeOnly<current.TelemetryEvent.Message>;
 declare function use_old_InterfaceDeclaration_TelemetryEvent_Message(
-    use: TypeOnly<old.TelemetryEvent.Message>);
+    use: TypeOnly<old.TelemetryEvent.Message>): void;
 use_old_InterfaceDeclaration_TelemetryEvent_Message(
     get_current_InterfaceDeclaration_TelemetryEvent_Message());
 
@@ -2909,7 +2909,7 @@ use_old_InterfaceDeclaration_TelemetryEvent_Message(
 declare function get_old_InterfaceDeclaration_TelemetryEvent_MessageData():
     TypeOnly<old.TelemetryEvent.MessageData>;
 declare function use_current_InterfaceDeclaration_TelemetryEvent_MessageData(
-    use: TypeOnly<current.TelemetryEvent.MessageData>);
+    use: TypeOnly<current.TelemetryEvent.MessageData>): void;
 use_current_InterfaceDeclaration_TelemetryEvent_MessageData(
     get_old_InterfaceDeclaration_TelemetryEvent_MessageData());
 
@@ -2921,7 +2921,7 @@ use_current_InterfaceDeclaration_TelemetryEvent_MessageData(
 declare function get_current_InterfaceDeclaration_TelemetryEvent_MessageData():
     TypeOnly<current.TelemetryEvent.MessageData>;
 declare function use_old_InterfaceDeclaration_TelemetryEvent_MessageData(
-    use: TypeOnly<old.TelemetryEvent.MessageData>);
+    use: TypeOnly<old.TelemetryEvent.MessageData>): void;
 use_old_InterfaceDeclaration_TelemetryEvent_MessageData(
     get_current_InterfaceDeclaration_TelemetryEvent_MessageData());
 
@@ -2933,7 +2933,7 @@ use_old_InterfaceDeclaration_TelemetryEvent_MessageData(
 declare function get_old_VariableDeclaration_TelemetryEvent_MessageType():
     TypeOnly<typeof old.TelemetryEvent.MessageType>;
 declare function use_current_VariableDeclaration_TelemetryEvent_MessageType(
-    use: TypeOnly<typeof current.TelemetryEvent.MessageType>);
+    use: TypeOnly<typeof current.TelemetryEvent.MessageType>): void;
 use_current_VariableDeclaration_TelemetryEvent_MessageType(
     get_old_VariableDeclaration_TelemetryEvent_MessageType());
 
@@ -2945,7 +2945,7 @@ use_current_VariableDeclaration_TelemetryEvent_MessageType(
 declare function get_current_VariableDeclaration_TelemetryEvent_MessageType():
     TypeOnly<typeof current.TelemetryEvent.MessageType>;
 declare function use_old_VariableDeclaration_TelemetryEvent_MessageType(
-    use: TypeOnly<typeof old.TelemetryEvent.MessageType>);
+    use: TypeOnly<typeof old.TelemetryEvent.MessageType>): void;
 use_old_VariableDeclaration_TelemetryEvent_MessageType(
     get_current_VariableDeclaration_TelemetryEvent_MessageType());
 
@@ -2957,7 +2957,7 @@ use_old_VariableDeclaration_TelemetryEvent_MessageType(
 declare function get_old_FunctionDeclaration_TelemetryEvent_createMessage():
     TypeOnly<typeof old.TelemetryEvent.createMessage>;
 declare function use_current_FunctionDeclaration_TelemetryEvent_createMessage(
-    use: TypeOnly<typeof current.TelemetryEvent.createMessage>);
+    use: TypeOnly<typeof current.TelemetryEvent.createMessage>): void;
 use_current_FunctionDeclaration_TelemetryEvent_createMessage(
     get_old_FunctionDeclaration_TelemetryEvent_createMessage());
 
@@ -2969,7 +2969,7 @@ use_current_FunctionDeclaration_TelemetryEvent_createMessage(
 declare function get_current_FunctionDeclaration_TelemetryEvent_createMessage():
     TypeOnly<typeof current.TelemetryEvent.createMessage>;
 declare function use_old_FunctionDeclaration_TelemetryEvent_createMessage(
-    use: TypeOnly<typeof old.TelemetryEvent.createMessage>);
+    use: TypeOnly<typeof old.TelemetryEvent.createMessage>): void;
 use_old_FunctionDeclaration_TelemetryEvent_createMessage(
     get_current_FunctionDeclaration_TelemetryEvent_createMessage());
 
@@ -2981,7 +2981,7 @@ use_old_FunctionDeclaration_TelemetryEvent_createMessage(
 declare function get_old_InterfaceDeclaration_TelemetryHistory_Message():
     TypeOnly<old.TelemetryHistory.Message>;
 declare function use_current_InterfaceDeclaration_TelemetryHistory_Message(
-    use: TypeOnly<current.TelemetryHistory.Message>);
+    use: TypeOnly<current.TelemetryHistory.Message>): void;
 use_current_InterfaceDeclaration_TelemetryHistory_Message(
     get_old_InterfaceDeclaration_TelemetryHistory_Message());
 
@@ -2993,7 +2993,7 @@ use_current_InterfaceDeclaration_TelemetryHistory_Message(
 declare function get_current_InterfaceDeclaration_TelemetryHistory_Message():
     TypeOnly<current.TelemetryHistory.Message>;
 declare function use_old_InterfaceDeclaration_TelemetryHistory_Message(
-    use: TypeOnly<old.TelemetryHistory.Message>);
+    use: TypeOnly<old.TelemetryHistory.Message>): void;
 use_old_InterfaceDeclaration_TelemetryHistory_Message(
     get_current_InterfaceDeclaration_TelemetryHistory_Message());
 
@@ -3005,7 +3005,7 @@ use_old_InterfaceDeclaration_TelemetryHistory_Message(
 declare function get_old_InterfaceDeclaration_TelemetryHistory_MessageData():
     TypeOnly<old.TelemetryHistory.MessageData>;
 declare function use_current_InterfaceDeclaration_TelemetryHistory_MessageData(
-    use: TypeOnly<current.TelemetryHistory.MessageData>);
+    use: TypeOnly<current.TelemetryHistory.MessageData>): void;
 use_current_InterfaceDeclaration_TelemetryHistory_MessageData(
     get_old_InterfaceDeclaration_TelemetryHistory_MessageData());
 
@@ -3017,7 +3017,7 @@ use_current_InterfaceDeclaration_TelemetryHistory_MessageData(
 declare function get_current_InterfaceDeclaration_TelemetryHistory_MessageData():
     TypeOnly<current.TelemetryHistory.MessageData>;
 declare function use_old_InterfaceDeclaration_TelemetryHistory_MessageData(
-    use: TypeOnly<old.TelemetryHistory.MessageData>);
+    use: TypeOnly<old.TelemetryHistory.MessageData>): void;
 use_old_InterfaceDeclaration_TelemetryHistory_MessageData(
     get_current_InterfaceDeclaration_TelemetryHistory_MessageData());
 
@@ -3029,7 +3029,7 @@ use_old_InterfaceDeclaration_TelemetryHistory_MessageData(
 declare function get_old_VariableDeclaration_TelemetryHistory_MessageType():
     TypeOnly<typeof old.TelemetryHistory.MessageType>;
 declare function use_current_VariableDeclaration_TelemetryHistory_MessageType(
-    use: TypeOnly<typeof current.TelemetryHistory.MessageType>);
+    use: TypeOnly<typeof current.TelemetryHistory.MessageType>): void;
 use_current_VariableDeclaration_TelemetryHistory_MessageType(
     get_old_VariableDeclaration_TelemetryHistory_MessageType());
 
@@ -3041,7 +3041,7 @@ use_current_VariableDeclaration_TelemetryHistory_MessageType(
 declare function get_current_VariableDeclaration_TelemetryHistory_MessageType():
     TypeOnly<typeof current.TelemetryHistory.MessageType>;
 declare function use_old_VariableDeclaration_TelemetryHistory_MessageType(
-    use: TypeOnly<typeof old.TelemetryHistory.MessageType>);
+    use: TypeOnly<typeof old.TelemetryHistory.MessageType>): void;
 use_old_VariableDeclaration_TelemetryHistory_MessageType(
     get_current_VariableDeclaration_TelemetryHistory_MessageType());
 
@@ -3053,7 +3053,7 @@ use_old_VariableDeclaration_TelemetryHistory_MessageType(
 declare function get_old_FunctionDeclaration_TelemetryHistory_createMessage():
     TypeOnly<typeof old.TelemetryHistory.createMessage>;
 declare function use_current_FunctionDeclaration_TelemetryHistory_createMessage(
-    use: TypeOnly<typeof current.TelemetryHistory.createMessage>);
+    use: TypeOnly<typeof current.TelemetryHistory.createMessage>): void;
 use_current_FunctionDeclaration_TelemetryHistory_createMessage(
     get_old_FunctionDeclaration_TelemetryHistory_createMessage());
 
@@ -3065,7 +3065,7 @@ use_current_FunctionDeclaration_TelemetryHistory_createMessage(
 declare function get_current_FunctionDeclaration_TelemetryHistory_createMessage():
     TypeOnly<typeof current.TelemetryHistory.createMessage>;
 declare function use_old_FunctionDeclaration_TelemetryHistory_createMessage(
-    use: TypeOnly<typeof old.TelemetryHistory.createMessage>);
+    use: TypeOnly<typeof old.TelemetryHistory.createMessage>): void;
 use_old_FunctionDeclaration_TelemetryHistory_createMessage(
     get_current_FunctionDeclaration_TelemetryHistory_createMessage());
 
@@ -3077,7 +3077,7 @@ use_old_FunctionDeclaration_TelemetryHistory_createMessage(
 declare function get_old_InterfaceDeclaration_TreeNodeBase():
     TypeOnly<old.TreeNodeBase>;
 declare function use_current_InterfaceDeclaration_TreeNodeBase(
-    use: TypeOnly<current.TreeNodeBase>);
+    use: TypeOnly<current.TreeNodeBase>): void;
 use_current_InterfaceDeclaration_TreeNodeBase(
     get_old_InterfaceDeclaration_TreeNodeBase());
 
@@ -3089,7 +3089,7 @@ use_current_InterfaceDeclaration_TreeNodeBase(
 declare function get_current_InterfaceDeclaration_TreeNodeBase():
     TypeOnly<current.TreeNodeBase>;
 declare function use_old_InterfaceDeclaration_TreeNodeBase(
-    use: TypeOnly<old.TreeNodeBase>);
+    use: TypeOnly<old.TreeNodeBase>): void;
 use_old_InterfaceDeclaration_TreeNodeBase(
     get_current_InterfaceDeclaration_TreeNodeBase());
 
@@ -3101,7 +3101,7 @@ use_old_InterfaceDeclaration_TreeNodeBase(
 declare function get_old_InterfaceDeclaration_UnknownObjectNode():
     TypeOnly<old.UnknownObjectNode>;
 declare function use_current_InterfaceDeclaration_UnknownObjectNode(
-    use: TypeOnly<current.UnknownObjectNode>);
+    use: TypeOnly<current.UnknownObjectNode>): void;
 use_current_InterfaceDeclaration_UnknownObjectNode(
     get_old_InterfaceDeclaration_UnknownObjectNode());
 
@@ -3113,7 +3113,7 @@ use_current_InterfaceDeclaration_UnknownObjectNode(
 declare function get_current_InterfaceDeclaration_UnknownObjectNode():
     TypeOnly<current.UnknownObjectNode>;
 declare function use_old_InterfaceDeclaration_UnknownObjectNode(
-    use: TypeOnly<old.UnknownObjectNode>);
+    use: TypeOnly<old.UnknownObjectNode>): void;
 use_old_InterfaceDeclaration_UnknownObjectNode(
     get_current_InterfaceDeclaration_UnknownObjectNode());
 
@@ -3125,7 +3125,7 @@ use_old_InterfaceDeclaration_UnknownObjectNode(
 declare function get_old_InterfaceDeclaration_ValueNodeBase():
     TypeOnly<old.ValueNodeBase>;
 declare function use_current_InterfaceDeclaration_ValueNodeBase(
-    use: TypeOnly<current.ValueNodeBase>);
+    use: TypeOnly<current.ValueNodeBase>): void;
 use_current_InterfaceDeclaration_ValueNodeBase(
     get_old_InterfaceDeclaration_ValueNodeBase());
 
@@ -3137,7 +3137,7 @@ use_current_InterfaceDeclaration_ValueNodeBase(
 declare function get_current_InterfaceDeclaration_ValueNodeBase():
     TypeOnly<current.ValueNodeBase>;
 declare function use_old_InterfaceDeclaration_ValueNodeBase(
-    use: TypeOnly<old.ValueNodeBase>);
+    use: TypeOnly<old.ValueNodeBase>): void;
 use_old_InterfaceDeclaration_ValueNodeBase(
     get_current_InterfaceDeclaration_ValueNodeBase());
 
@@ -3149,7 +3149,7 @@ use_old_InterfaceDeclaration_ValueNodeBase(
 declare function get_old_TypeAliasDeclaration_VisualChildNode():
     TypeOnly<old.VisualChildNode>;
 declare function use_current_TypeAliasDeclaration_VisualChildNode(
-    use: TypeOnly<current.VisualChildNode>);
+    use: TypeOnly<current.VisualChildNode>): void;
 use_current_TypeAliasDeclaration_VisualChildNode(
     get_old_TypeAliasDeclaration_VisualChildNode());
 
@@ -3161,7 +3161,7 @@ use_current_TypeAliasDeclaration_VisualChildNode(
 declare function get_current_TypeAliasDeclaration_VisualChildNode():
     TypeOnly<current.VisualChildNode>;
 declare function use_old_TypeAliasDeclaration_VisualChildNode(
-    use: TypeOnly<old.VisualChildNode>);
+    use: TypeOnly<old.VisualChildNode>): void;
 use_old_TypeAliasDeclaration_VisualChildNode(
     get_current_TypeAliasDeclaration_VisualChildNode());
 
@@ -3173,7 +3173,7 @@ use_old_TypeAliasDeclaration_VisualChildNode(
 declare function get_old_TypeAliasDeclaration_VisualNode():
     TypeOnly<old.VisualNode>;
 declare function use_current_TypeAliasDeclaration_VisualNode(
-    use: TypeOnly<current.VisualNode>);
+    use: TypeOnly<current.VisualNode>): void;
 use_current_TypeAliasDeclaration_VisualNode(
     get_old_TypeAliasDeclaration_VisualNode());
 
@@ -3185,7 +3185,7 @@ use_current_TypeAliasDeclaration_VisualNode(
 declare function get_current_TypeAliasDeclaration_VisualNode():
     TypeOnly<current.VisualNode>;
 declare function use_old_TypeAliasDeclaration_VisualNode(
-    use: TypeOnly<old.VisualNode>);
+    use: TypeOnly<old.VisualNode>): void;
 use_old_TypeAliasDeclaration_VisualNode(
     get_current_TypeAliasDeclaration_VisualNode());
 
@@ -3197,7 +3197,7 @@ use_old_TypeAliasDeclaration_VisualNode(
 declare function get_old_InterfaceDeclaration_VisualNodeBase():
     TypeOnly<old.VisualNodeBase>;
 declare function use_current_InterfaceDeclaration_VisualNodeBase(
-    use: TypeOnly<current.VisualNodeBase>);
+    use: TypeOnly<current.VisualNodeBase>): void;
 use_current_InterfaceDeclaration_VisualNodeBase(
     get_old_InterfaceDeclaration_VisualNodeBase());
 
@@ -3209,7 +3209,7 @@ use_current_InterfaceDeclaration_VisualNodeBase(
 declare function get_current_InterfaceDeclaration_VisualNodeBase():
     TypeOnly<current.VisualNodeBase>;
 declare function use_old_InterfaceDeclaration_VisualNodeBase(
-    use: TypeOnly<old.VisualNodeBase>);
+    use: TypeOnly<old.VisualNodeBase>): void;
 use_old_InterfaceDeclaration_VisualNodeBase(
     get_current_InterfaceDeclaration_VisualNodeBase());
 
@@ -3221,7 +3221,7 @@ use_old_InterfaceDeclaration_VisualNodeBase(
 declare function get_old_EnumDeclaration_VisualNodeKind():
     TypeOnly<old.VisualNodeKind>;
 declare function use_current_EnumDeclaration_VisualNodeKind(
-    use: TypeOnly<current.VisualNodeKind>);
+    use: TypeOnly<current.VisualNodeKind>): void;
 use_current_EnumDeclaration_VisualNodeKind(
     get_old_EnumDeclaration_VisualNodeKind());
 
@@ -3233,7 +3233,7 @@ use_current_EnumDeclaration_VisualNodeKind(
 declare function get_current_EnumDeclaration_VisualNodeKind():
     TypeOnly<current.VisualNodeKind>;
 declare function use_old_EnumDeclaration_VisualNodeKind(
-    use: TypeOnly<old.VisualNodeKind>);
+    use: TypeOnly<old.VisualNodeKind>): void;
 use_old_EnumDeclaration_VisualNodeKind(
     get_current_EnumDeclaration_VisualNodeKind());
 
@@ -3245,7 +3245,7 @@ use_old_EnumDeclaration_VisualNodeKind(
 declare function get_old_InterfaceDeclaration_VisualTreeNode():
     TypeOnly<old.VisualTreeNode>;
 declare function use_current_InterfaceDeclaration_VisualTreeNode(
-    use: TypeOnly<current.VisualTreeNode>);
+    use: TypeOnly<current.VisualTreeNode>): void;
 use_current_InterfaceDeclaration_VisualTreeNode(
     get_old_InterfaceDeclaration_VisualTreeNode());
 
@@ -3257,7 +3257,7 @@ use_current_InterfaceDeclaration_VisualTreeNode(
 declare function get_current_InterfaceDeclaration_VisualTreeNode():
     TypeOnly<current.VisualTreeNode>;
 declare function use_old_InterfaceDeclaration_VisualTreeNode(
-    use: TypeOnly<old.VisualTreeNode>);
+    use: TypeOnly<old.VisualTreeNode>): void;
 use_old_InterfaceDeclaration_VisualTreeNode(
     get_current_InterfaceDeclaration_VisualTreeNode());
 
@@ -3269,7 +3269,7 @@ use_old_InterfaceDeclaration_VisualTreeNode(
 declare function get_old_InterfaceDeclaration_VisualValueNode():
     TypeOnly<old.VisualValueNode>;
 declare function use_current_InterfaceDeclaration_VisualValueNode(
-    use: TypeOnly<current.VisualValueNode>);
+    use: TypeOnly<current.VisualValueNode>): void;
 use_current_InterfaceDeclaration_VisualValueNode(
     get_old_InterfaceDeclaration_VisualValueNode());
 
@@ -3281,7 +3281,7 @@ use_current_InterfaceDeclaration_VisualValueNode(
 declare function get_current_InterfaceDeclaration_VisualValueNode():
     TypeOnly<current.VisualValueNode>;
 declare function use_old_InterfaceDeclaration_VisualValueNode(
-    use: TypeOnly<old.VisualValueNode>);
+    use: TypeOnly<old.VisualValueNode>): void;
 use_old_InterfaceDeclaration_VisualValueNode(
     get_current_InterfaceDeclaration_VisualValueNode());
 
@@ -3293,7 +3293,7 @@ use_old_InterfaceDeclaration_VisualValueNode(
 declare function get_old_VariableDeclaration_devtoolsMessageSource():
     TypeOnly<typeof old.devtoolsMessageSource>;
 declare function use_current_VariableDeclaration_devtoolsMessageSource(
-    use: TypeOnly<typeof current.devtoolsMessageSource>);
+    use: TypeOnly<typeof current.devtoolsMessageSource>): void;
 use_current_VariableDeclaration_devtoolsMessageSource(
     get_old_VariableDeclaration_devtoolsMessageSource());
 
@@ -3305,7 +3305,7 @@ use_current_VariableDeclaration_devtoolsMessageSource(
 declare function get_current_VariableDeclaration_devtoolsMessageSource():
     TypeOnly<typeof current.devtoolsMessageSource>;
 declare function use_old_VariableDeclaration_devtoolsMessageSource(
-    use: TypeOnly<typeof old.devtoolsMessageSource>);
+    use: TypeOnly<typeof old.devtoolsMessageSource>): void;
 use_old_VariableDeclaration_devtoolsMessageSource(
     get_current_VariableDeclaration_devtoolsMessageSource());
 
@@ -3317,7 +3317,7 @@ use_old_VariableDeclaration_devtoolsMessageSource(
 declare function get_old_FunctionDeclaration_handleIncomingMessage():
     TypeOnly<typeof old.handleIncomingMessage>;
 declare function use_current_FunctionDeclaration_handleIncomingMessage(
-    use: TypeOnly<typeof current.handleIncomingMessage>);
+    use: TypeOnly<typeof current.handleIncomingMessage>): void;
 use_current_FunctionDeclaration_handleIncomingMessage(
     get_old_FunctionDeclaration_handleIncomingMessage());
 
@@ -3329,7 +3329,7 @@ use_current_FunctionDeclaration_handleIncomingMessage(
 declare function get_current_FunctionDeclaration_handleIncomingMessage():
     TypeOnly<typeof current.handleIncomingMessage>;
 declare function use_old_FunctionDeclaration_handleIncomingMessage(
-    use: TypeOnly<typeof old.handleIncomingMessage>);
+    use: TypeOnly<typeof old.handleIncomingMessage>): void;
 use_old_FunctionDeclaration_handleIncomingMessage(
     get_current_FunctionDeclaration_handleIncomingMessage());
 
@@ -3341,7 +3341,7 @@ use_old_FunctionDeclaration_handleIncomingMessage(
 declare function get_old_FunctionDeclaration_handleIncomingWindowMessage():
     TypeOnly<typeof old.handleIncomingWindowMessage>;
 declare function use_current_FunctionDeclaration_handleIncomingWindowMessage(
-    use: TypeOnly<typeof current.handleIncomingWindowMessage>);
+    use: TypeOnly<typeof current.handleIncomingWindowMessage>): void;
 use_current_FunctionDeclaration_handleIncomingWindowMessage(
     get_old_FunctionDeclaration_handleIncomingWindowMessage());
 
@@ -3353,7 +3353,7 @@ use_current_FunctionDeclaration_handleIncomingWindowMessage(
 declare function get_current_FunctionDeclaration_handleIncomingWindowMessage():
     TypeOnly<typeof current.handleIncomingWindowMessage>;
 declare function use_old_FunctionDeclaration_handleIncomingWindowMessage(
-    use: TypeOnly<typeof old.handleIncomingWindowMessage>);
+    use: TypeOnly<typeof old.handleIncomingWindowMessage>): void;
 use_old_FunctionDeclaration_handleIncomingWindowMessage(
     get_current_FunctionDeclaration_handleIncomingWindowMessage());
 
@@ -3365,7 +3365,7 @@ use_old_FunctionDeclaration_handleIncomingWindowMessage(
 declare function get_old_FunctionDeclaration_initializeDevtools():
     TypeOnly<typeof old.initializeDevtools>;
 declare function use_current_FunctionDeclaration_initializeDevtools(
-    use: TypeOnly<typeof current.initializeDevtools>);
+    use: TypeOnly<typeof current.initializeDevtools>): void;
 use_current_FunctionDeclaration_initializeDevtools(
     get_old_FunctionDeclaration_initializeDevtools());
 
@@ -3377,7 +3377,7 @@ use_current_FunctionDeclaration_initializeDevtools(
 declare function get_current_FunctionDeclaration_initializeDevtools():
     TypeOnly<typeof current.initializeDevtools>;
 declare function use_old_FunctionDeclaration_initializeDevtools(
-    use: TypeOnly<typeof old.initializeDevtools>);
+    use: TypeOnly<typeof old.initializeDevtools>): void;
 use_old_FunctionDeclaration_initializeDevtools(
     get_current_FunctionDeclaration_initializeDevtools());
 
@@ -3389,7 +3389,7 @@ use_old_FunctionDeclaration_initializeDevtools(
 declare function get_old_FunctionDeclaration_isDevtoolsMessage():
     TypeOnly<typeof old.isDevtoolsMessage>;
 declare function use_current_FunctionDeclaration_isDevtoolsMessage(
-    use: TypeOnly<typeof current.isDevtoolsMessage>);
+    use: TypeOnly<typeof current.isDevtoolsMessage>): void;
 use_current_FunctionDeclaration_isDevtoolsMessage(
     get_old_FunctionDeclaration_isDevtoolsMessage());
 
@@ -3401,6 +3401,6 @@ use_current_FunctionDeclaration_isDevtoolsMessage(
 declare function get_current_FunctionDeclaration_isDevtoolsMessage():
     TypeOnly<typeof current.isDevtoolsMessage>;
 declare function use_old_FunctionDeclaration_isDevtoolsMessage(
-    use: TypeOnly<typeof old.isDevtoolsMessage>);
+    use: TypeOnly<typeof old.isDevtoolsMessage>): void;
 use_old_FunctionDeclaration_isDevtoolsMessage(
     get_current_FunctionDeclaration_isDevtoolsMessage());
