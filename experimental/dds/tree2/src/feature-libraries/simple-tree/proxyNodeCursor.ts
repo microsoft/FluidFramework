@@ -5,7 +5,14 @@
 
 import { assert } from "@fluidframework/core-utils";
 
-import { EmptyKey, rootFieldKey, type FieldKey, type TreeTypeSet, type Value } from "../../core";
+import {
+	EmptyKey,
+	rootFieldKey,
+	type FieldKey,
+	type TreeTypeSet,
+	type Value,
+	CursorLocationType,
+} from "../../core";
 // eslint-disable-next-line import/no-internal-modules
 import { leaf } from "../../domains/leafDomain";
 import {
@@ -173,10 +180,15 @@ export function cursorFromProxyTree<TNode extends ProxyNode<TreeNodeSchema, "jav
 	node: TNode,
 	context: TreeDataContext,
 	typeSet: TreeTypeSet,
-	mode: "node" | "field" = "node",
+	mode: CursorLocationType = CursorLocationType.Nodes,
 ): CursorWithNode<TNode> {
 	const adapter = createProxyTreeAdapter<TNode>(context, typeSet);
-	return mode === "node"
-		? stackTreeNodeCursor(adapter, node)
-		: stackTreeFieldCursor(adapter, node);
+	switch (mode) {
+		case CursorLocationType.Nodes:
+			return stackTreeNodeCursor(adapter, node);
+		case CursorLocationType.Fields:
+			return stackTreeFieldCursor(adapter, node);
+		default:
+			throw new Error(`Unrecognized CursorLocationType: "${mode}."`);
+	}
 }

@@ -32,7 +32,7 @@ import {
 	FlexTreeUnknownUnboxed,
 	onNextChange,
 } from "../flex-tree";
-import { EmptyKey, FieldKey } from "../../core";
+import { CursorLocationType, EmptyKey, FieldKey } from "../../core";
 import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../contextuallyTyped";
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
@@ -277,7 +277,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
-				"field",
+				CursorLocationType.Fields,
 			);
 
 			modifyChildren(
@@ -299,7 +299,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
-				"field",
+				CursorLocationType.Fields,
 			);
 
 			modifyChildren(
@@ -324,7 +324,7 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
-				"field",
+				CursorLocationType.Fields,
 			);
 
 			modifyChildren(
