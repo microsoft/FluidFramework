@@ -148,7 +148,6 @@ export function createProxyTreeAdapter<TNode extends ProxyNode<TreeNodeSchema, "
 			}
 
 			if (Array.isArray(node)) {
-				// TODO: verify this
 				return key === EmptyKey || key === rootFieldKey ? node : [];
 			}
 
