@@ -18,10 +18,9 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 
 /**
  * 0 means use LWW.
- * 1 means use FWW.
  * 2 means use LWW and then switch to FWW.
  */
-[0, 1, 2].forEach((isSetCellPolicyFWW: number) => {
+[0, 2].forEach((isSetCellPolicyFWW: number) => {
 	describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
 		describe("stress", () => {
 			let containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;

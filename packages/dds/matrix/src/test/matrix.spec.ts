@@ -66,7 +66,7 @@ function createMatrixForReconnection(
 	return { matrix, containerRuntime };
 }
 
-describe("Matrix1", () => {
+describe("Matrix", () => {
 	[false, true].forEach((isSetCellPolicyFWW: boolean) => {
 		describe(`Matrix isSetCellPolicyFWW=${isSetCellPolicyFWW}`, () => {
 			describe("local client", () => {
