@@ -12,7 +12,7 @@ import { getRetryDelayFromError, canRetryOnError, createGenericNetworkError } fr
 import { logNetworkFailure } from "./networkUtils";
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion";
-import { calculateMaxWaitTime, calculateWaitTimeFromError } from "./runWithRetry";
+import { calculateMaxWaitTime } from "./runWithRetry";
 
 const MissingFetchDelayInMs = 100;
 
@@ -423,11 +423,10 @@ async function getSingleOpBatch(
 	let retry: number = 0;
 	const nothing = { partial: false, cancel: true, payload: [] };
 	let waitStartTime: number = 0;
-	let defaultDelay = MissingFetchDelayInMs;
+	let waitTime = MissingFetchDelayInMs;
 
 	while (signal?.aborted !== true) {
 		retry++;
-		let waitTime = 0;
 		let lastError: unknown;
 		const startTime = performance.now();
 
@@ -496,7 +495,7 @@ async function getSingleOpBatch(
 				throw error;
 			}
 
-			waitTime = Math.max(calculateWaitTimeFromError(error), defaultDelay);
+			waitTime = Math.max(retryAfter ?? 0, waitTime);
 		}
 
 		if (telemetryEvent === undefined) {
@@ -512,7 +511,7 @@ async function getSingleOpBatch(
 			setTimeout(resolve, waitTime);
 		});
 
-		defaultDelay = Math.min(defaultDelay * 2, calculateMaxWaitTime(lastError));
+		waitTime = Math.min(waitTime * 2, calculateMaxWaitTime(lastError));
 		// If we believe we're offline, we assume there's no point in trying until we at least think we're online.
 		// NOTE: This isn't strictly true for drivers that don't require network (e.g. local driver).  Really this logic
 		// should probably live in the driver.

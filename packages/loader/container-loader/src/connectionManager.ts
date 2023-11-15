@@ -27,7 +27,6 @@ import {
 	logNetworkFailure,
 	isRuntimeMessage,
 	calculateMaxWaitTime,
-	calculateWaitTimeFromError,
 } from "@fluidframework/driver-utils";
 import {
 	ConnectionMode,
@@ -648,19 +647,22 @@ export class ConnectionManager implements IConnectionManager {
 
 				const waitStartTime = performance.now();
 				const retryDelayFromError = getRetryDelayFromError(origError);
+				// If the error told us to wait, then we wait for that time. If the error didn't tell us to wait,
+				// let's still wait a little bit before retrying. We skip this delay if we're confident we're offline,
+				// because we probably just need to wait to come back online. But we never have strong signal of being
+				// offline, so we at least wait for sometime.
 				if (retryDelayFromError !== undefined || globalThis.navigator?.onLine !== false) {
-					// If the error told us to wait, then we wait. If the error didn't tell us to wait, let's still wait
-					// a little bit before retrying. We skip this delay if we're confident we're offline, because we
-					// probably just need to wait to come back online.
-					const waitTime = Math.max(calculateWaitTimeFromError(origError), delayMs);
-					// Only raise event in case the delay was supplied by the service.
-					if (retryDelayFromError !== undefined) {
-						this.props.reconnectionDelayHandler(waitTime, origError);
-					}
+					delayMs = Math.max(retryDelayFromError ?? 0, delayMs);
+					// Raise event in case the delay was there.
+					this.props.reconnectionDelayHandler(delayMs, origError);
 					await new Promise<void>((resolve) => {
-						setTimeout(resolve, waitTime);
+						setTimeout(resolve, delayMs);
 					});
 					delayMs = Math.min(delayMs * 2, calculateMaxWaitTime(origError));
+				} else {
+					await new Promise<void>((resolve) => {
+						setTimeout(resolve, 200);
+					});
 				}
 
 				// If we believe we're offline, we assume there's no point in trying until we at least think we're online.

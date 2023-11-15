@@ -55,8 +55,7 @@ export async function runWithRetry<T>(
 ): Promise<T> {
 	let result: T | undefined;
 	let success = false;
-	let retryAfterMsDefault = 1000; // has to be positive!
-	let retryAfterMs = 0;
+	let retryAfterMs = 1000; // has to be positive!
 	let numRetries = 0;
 	const startTime = performance.now();
 	let lastError: any;
@@ -117,13 +116,13 @@ export async function runWithRetry<T>(
 
 			numRetries++;
 			lastError = err;
-			// If the error is throttling error, then wait for the calculated time before retrying.
-			retryAfterMs = Math.max(calculateWaitTimeFromError(err), retryAfterMsDefault);
-			retryAfterMsDefault = Math.min(retryAfterMsDefault * 2, calculateMaxWaitTime(err));
+			// Wait for the calculated time before retrying.
+			retryAfterMs = Math.max(getRetryDelayFromError(err) ?? 0, retryAfterMs);
 			if (progress.onRetry) {
 				progress.onRetry(retryAfterMs, err);
 			}
 			await delay(retryAfterMs);
+			retryAfterMs = Math.min(retryAfterMs * 2, calculateMaxWaitTime(err));
 		}
 	} while (!success);
 	if (numRetries > 0) {
@@ -156,14 +155,4 @@ export function calculateMaxWaitTime(error: unknown): number {
 	return isFluidError(error) && error.getTelemetryProperties().endpointReached === true
 		? MaxReconnectDelayInMsWhenEndpointIsReachable
 		: MaxReconnectDelayInMsWhenEndpointIsNotReachable;
-}
-
-/**
- * Calculates wait time based on error.
- * @param error - error based on which we decide wait time.
- * @returns wait time from error.
- * @public
- */
-export function calculateWaitTimeFromError(error: unknown): number {
-	return (getRetryDelayFromError(error) ?? 0) * (Math.random() + 1);
 }

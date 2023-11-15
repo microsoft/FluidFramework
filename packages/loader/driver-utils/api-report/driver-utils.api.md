@@ -92,9 +92,6 @@ export function buildSnapshotTree(entries: ITreeEntry[], blobMap: Map<string, Ar
 // @public
 export function calculateMaxWaitTime(error: unknown): number;
 
-// @public
-export function calculateWaitTimeFromError(error: unknown): number;
-
 // @public (undocumented)
 export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
@@ -398,6 +395,9 @@ export class UsageError extends LoggingError implements IDriverErrorBase, IFluid
     // (undocumented)
     readonly errorType = DriverErrorType.usageError;
 }
+
+// @public (undocumented)
+export const waitForOnline: () => Promise<void>;
 
 // (No @packageDocumentation comment for this package)
 
