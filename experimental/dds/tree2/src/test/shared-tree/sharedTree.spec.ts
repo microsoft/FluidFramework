@@ -798,6 +798,61 @@ describe("SharedTree", () => {
 			unsubscribe1();
 			unsubscribe2();
 		});
+
+		describe("can concurrently restore and edit removed tree", () => {
+			const sb = new SchemaBuilder({ scope: "shared tree undo tests" });
+			const schema = sb.intoSchema(sb.list(sb.list(sb.string)));
+
+			for (const scenario of ["restore then change", "change then restore"]) {
+				it(`with the ${scenario} sequenced`, () => {
+					const provider = new TestTreeProviderLite(2);
+					const content = {
+						schema,
+						allowedSchemaModifications: AllowedUpdateType.None,
+						initialTree: [["a"]] as any,
+					} satisfies InitializeAndSchematizeConfiguration;
+					const tree1 = provider.trees[0].schematizeInternal(content);
+					const { undoStack: undoStack1, unsubscribe: unsubscribe1 } =
+						createTestUndoRedoStacks(tree1.checkout.events);
+					const tree2 = provider.trees[1].schematizeInternal(content);
+					const { undoStack: undoStack2, unsubscribe: unsubscribe2 } =
+						createTestUndoRedoStacks(tree2.checkout.events);
+
+					provider.processMessages();
+
+					// Validate insertion
+					validateTreeContent(tree2.checkout, content);
+
+					// edit subtree
+					tree2.root[0].insertAtEnd(["b"]);
+					provider.processMessages();
+					assert.deepEqual(tree1.root, [["a", "b"]]);
+					assert.deepEqual(tree2.root, [["a", "b"]]);
+
+					// delete subtree
+					tree1.root.removeAt(0);
+					provider.processMessages();
+					assert.deepEqual(tree1.root, []);
+					assert.deepEqual(tree2.root, []);
+
+					if (scenario === "restore then change") {
+						undoStack1.pop()?.revert();
+						undoStack2.pop()?.revert();
+					} else {
+						undoStack2.pop()?.revert();
+						undoStack1.pop()?.revert();
+					}
+
+					provider.processMessages();
+					// check the undo happened
+					assert.deepEqual(tree1.root, [["a"]]);
+					assert.deepEqual(tree2.root, [["a"]]);
+
+					unsubscribe1();
+					unsubscribe2();
+				});
+			}
+		});
 	});
 
 	// TODO: many of these events tests should be tests of SharedTreeView instead.
