@@ -49,7 +49,7 @@ const childComposer1_2 = (changes: TaggedChange<NodeChangeset>[]): NodeChangeset
 	return arbitraryChildChange;
 };
 
-describe.only("defaultFieldKinds", () => {
+describe("defaultFieldKinds", () => {
 	describe("valueFieldEditor.set", () => {
 		it("valueFieldEditor.set", () => {
 			const expected: OptionalChangeset = {

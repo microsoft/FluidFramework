@@ -444,7 +444,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	});
 }
 
-describe.only("OptionalField - Rebaser Axioms", () => {
+describe("OptionalField - Rebaser Axioms", () => {
 	describe("Using valid edits from an undefined field", () => {
 		runSingleEditRebaseAxiomSuite({ content: undefined });
 	});

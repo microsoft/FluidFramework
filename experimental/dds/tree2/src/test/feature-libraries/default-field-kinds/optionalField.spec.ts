@@ -129,7 +129,7 @@ const change4: TaggedChange<OptionalChangeset> = tagChange(
 );
 
 // TODO: unit test standalone functions from optionalField.ts
-describe.only("optionalField", () => {
+describe("optionalField", () => {
 	// TODO: more editor tests
 	describe("editor", () => {
 		it("can be created", () => {

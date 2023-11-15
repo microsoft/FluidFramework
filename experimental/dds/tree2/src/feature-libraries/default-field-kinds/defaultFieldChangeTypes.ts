@@ -105,7 +105,7 @@ export type ContentId = ChangeAtomId | "self";
  */
 export interface OptionalChangeset {
 	build: { set: JsonableTree; id: ChangeAtomId }[];
-	moves: [src: ContentId, dst: ContentId, kind: "nodeTargeting" | "cellTargeting"][];
+	moves: (readonly [src: ContentId, dst: ContentId, kind: "nodeTargeting" | "cellTargeting"])[];
 
 	childChanges: [register: ContentId, childChange: NodeChangeset][];
 

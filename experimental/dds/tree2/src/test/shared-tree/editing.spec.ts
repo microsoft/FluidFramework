@@ -43,7 +43,7 @@ const rootNode: UpPath = {
 	parentIndex: 0,
 };
 
-describe.only("Editing", () => {
+describe("Editing", () => {
 	describe("Sequence Field", () => {
 		it("concurrent inserts", () => {
 			const tree1 = makeTreeFromJson([]);
