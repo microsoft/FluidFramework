@@ -186,7 +186,6 @@ function getSaveInfo(
  * This model can be used directly to create a suite of fuzz tests with
  * {@link (createDDSFuzzSuite:function)}
  *
- *
  * @internal
  */
 export interface DDSFuzzModel<
