@@ -2,9 +2,9 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-import { IMember, IServiceAudience } from "@fluidframework/fluid-static";
-import { ITelemetryBaseLogger } from "@fluidframework/common-definitions";
-import { ITokenProvider } from "@fluidframework/azure-client";
+import type { IMember, IServiceAudience } from "@fluidframework/fluid-static";
+import { type ITelemetryBaseLogger } from "@fluidframework/common-definitions";
+import { type ITokenProvider } from "@fluidframework/azure-client";
 import { type IConfigProviderBase } from "@fluidframework/telemetry-utils";
 import { type IUser } from "@fluidframework/protocol-definitions";
 
@@ -35,11 +35,6 @@ export interface OdspConnectionConfig {
 	 * Folder path where Fluid containers are created
 	 */
 	folderPath: string;
-
-	/**
-	 * File name of Fluid containers
-	 */
-	fileName: string;
 }
 
 /**

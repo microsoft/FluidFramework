@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { v4 as uuid } from "uuid";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions";
 import {
 	OdspDocumentServiceFactory,
@@ -26,7 +27,7 @@ import {
 	IOdspResolvedUrl,
 	OdspResourceTokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions";
-import { ITokenResponse } from "@fluidframework/azure-client";
+import type { ITokenResponse } from "@fluidframework/azure-client";
 // eslint-disable-next-line import/no-deprecated
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 import { IRequest } from "@fluidframework/core-interfaces";
@@ -149,7 +150,7 @@ export class OdspClient {
 			connection.siteUrl,
 			connection.driveId,
 			connection.folderPath,
-			connection.fileName,
+			uuid(),
 		);
 
 		// eslint-disable-next-line import/no-deprecated

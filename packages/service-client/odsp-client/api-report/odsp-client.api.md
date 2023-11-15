@@ -7,8 +7,8 @@
 import { ContainerSchema } from '@fluidframework/fluid-static';
 import { IConfigProviderBase } from '@fluidframework/telemetry-utils';
 import { IFluidContainer } from '@fluidframework/fluid-static';
-import { IMember } from '@fluidframework/fluid-static';
-import { IServiceAudience } from '@fluidframework/fluid-static';
+import type { IMember } from '@fluidframework/fluid-static';
+import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenProvider } from '@fluidframework/azure-client';
 
@@ -40,7 +40,6 @@ export interface OdspClientProps {
 // @alpha
 export interface OdspConnectionConfig {
     driveId: string;
-    fileName: string;
     folderPath: string;
     siteUrl: string;
     tokenProvider: ITokenProvider;
