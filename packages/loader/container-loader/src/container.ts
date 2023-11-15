@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import lodashPkg from "lodash";
-// eslint-disable-next-line @typescript-eslint/unbound-method
-const { merge } = lodashPkg;
+import { merge } from "lodash";
 
 import { v4 as uuid } from "uuid";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
