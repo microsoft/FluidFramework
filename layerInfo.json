@@ -159,12 +159,12 @@
 			},
 			"OdspClient": {
 				"dirs": ["packages/service-client/odsp-client"],
-				"deps": [ "AzureClient" ]
+				"deps": ["AzureClient"]
 			},
 			"UberPackage": {
 				"packages": ["fluid-framework"],
 				"deps": ["Container-Definitions", "Framework"]
-		},
+			},
 			"Azure-Service-Utils": {
 				"packages": ["@fluidframework/azure-service-utils"],
 				"deps": ["Protocol-Definitions", "Server-Shared-Utils", "Test-Utils"]
