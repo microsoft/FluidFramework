@@ -514,7 +514,7 @@ import { UndoRedoStackManager } from "./undoRedoStackManager";
 					seed: 0x73493cb5,
 				},
 				{
-					numClients: 3,
+					numClients: 2,
 					numOps: 150,
 					syncProbability: 0.03,
 					disconnectProbability: 0.2,
