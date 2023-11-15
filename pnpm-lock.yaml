@@ -9424,7 +9424,6 @@ importers:
       '@fluidframework/core-utils': workspace:~
       '@fluidframework/datastore-definitions': workspace:~
       '@fluidframework/driver-definitions': workspace:~
-      '@fluidframework/driver-utils': workspace:~
       '@fluidframework/eslint-config-fluid': ^3.1.0
       '@fluidframework/mocha-test-setup': workspace:~
       '@fluidframework/protocol-definitions': ^3.0.0
@@ -9438,7 +9437,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
-      axios: ^0.26.0
       c8: ^7.7.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
@@ -9459,13 +9457,11 @@ importers:
       '@fluidframework/core-utils': link:../../common/core-utils
       '@fluidframework/datastore-definitions': link:../datastore-definitions
       '@fluidframework/driver-definitions': link:../../common/driver-definitions
-      '@fluidframework/driver-utils': link:../../loader/driver-utils
       '@fluidframework/protocol-definitions': 3.0.0
       '@fluidframework/routerlicious-driver': link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-definitions': link:../runtime-definitions
       '@fluidframework/runtime-utils': link:../runtime-utils
       '@fluidframework/telemetry-utils': link:../../utils/telemetry-utils
-      axios: 0.26.1
       events: 3.3.0
       jsrsasign: 10.8.6
       uuid: 9.0.1
@@ -24062,7 +24058,7 @@ packages:
   /axios/0.27.2_debug@4.3.4:
     resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
     dependencies:
-      follow-redirects: 1.15.3
+      follow-redirects: 1.15.3_debug@4.3.4
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
