@@ -161,12 +161,23 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			return { srcToDst, dstToSrc };
 		};
 
+		let latestReservedDetachId: ContentId | undefined = undefined;
+		let isInputContextEmpty: boolean | undefined;
+
 		const builds: OptionalChangeset["build"] = [];
 		let childChangesByOriginalId = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
 		// TODO: Maybe this can be done in-place?
 		// Additionally, doing intermediate cancellation would help with cloning if in-place proves too difficult
 		let current = getBidirectionalMaps([]);
 		for (const { change, revision } of changes) {
+			if (
+				isInputContextEmpty === undefined &&
+				(change.moves.length > 0 || change.reservedDetachId !== undefined)
+			) {
+				// change includes sets to the field, thus the emptiness of it previously can be inferred.
+				// Note that this block isn't entered for child-only changes.
+				isInputContextEmpty = change.reservedDetachId !== undefined;
+			}
 			const withIntention = (id: ContentId): ContentId => {
 				// return id;
 				if (id === "self") {
@@ -191,8 +202,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				[dst: ContentId, target: "nodeTargeting" | "cellTargeting"]
 			>();
 			const nextDstToSrc = new ChildChangeMap<ContentId>();
-			// const nextSrcToDst = current.srcToDst.clone();
-			// const nextDstToSrc = current.dstToSrc.clone();
+
+			if (change.reservedDetachId !== undefined) {
+				latestReservedDetachId = withIntention(change.reservedDetachId);
+			}
 
 			// Compose all the things that `change` moved.
 			for (const [src, dst, target] of change.moves) {
@@ -257,6 +270,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				composeChild(childChanges),
 			]),
 		};
+
+		if (isInputContextEmpty === true) {
+			composed.reservedDetachId = latestReservedDetachId;
+		}
 
 		return composed;
 	},

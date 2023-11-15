@@ -198,6 +198,7 @@ describe("optionalField", () => {
 					[{ localId: brand(41), revision: change1.revision }, "self", "nodeTargeting"],
 				],
 				childChanges: [["self", arbitraryChildChange]],
+				reservedDetachId: { localId: brand(1), revision: change1.revision },
 			};
 
 			assert.deepEqual(

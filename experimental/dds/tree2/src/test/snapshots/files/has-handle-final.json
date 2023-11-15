@@ -21,7 +21,11 @@
                           {
                             "fieldKey": "rootFieldKey",
                             "fieldKind": "Optional",
-                            "change": {}
+                            "change": {
+                              "d": {
+                                "localId": 0
+                              }
+                            }
                           }
                         ]
                       },
