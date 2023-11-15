@@ -37,6 +37,14 @@ export interface IShimDeltaHandler extends IDeltaHandler {
 }
 
 /**
+ * A v1 op or a v2 unstamped op
+ */
+export interface IUnstampedContents {
+	fluidMigrationStamp?: IChannelAttributes;
+	[key: string | number]: unknown;
+}
+
+/**
  * A v2 op will have a `fluidMigrationStamp` property. This is a type guard to check if the op is a v2 op.
  */
 export interface IStampedContents {
@@ -54,7 +62,7 @@ export interface IStampedContents {
  *
  * @internal
  */
-export type IOpContents = IStampedContents | Record<string | number, unknown> | IMigrationOp;
+export type IOpContents = IStampedContents | IUnstampedContents | IMigrationOp;
 
 /**
  * An interface for a shim channel that intercepts a LegacySharedTree or new SharedTree DDS.
