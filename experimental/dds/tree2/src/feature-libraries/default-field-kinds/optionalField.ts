@@ -32,6 +32,7 @@ import {
 	NodeExistenceState,
 	FieldChangeHandler,
 	RemovedTreesFromChild,
+	NodeChangePruner,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
@@ -441,6 +442,26 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		return rebased;
+	},
+
+	prune: (change: OptionalChangeset, pruneChild: NodeChangePruner): OptionalChangeset => {
+		if (change.childChanges === undefined) {
+			return change;
+		}
+
+		const prunedChange: OptionalChangeset = {};
+		if (change.fieldChange !== undefined) {
+			prunedChange.fieldChange = change.fieldChange;
+		}
+
+		for (const [id, childChange] of change.childChanges) {
+			const prunedNode = pruneChild(childChange);
+			if (prunedNode !== undefined) {
+				prunedChange.childChanges?.push([id, prunedNode]);
+			}
+		}
+
+		return prunedChange;
 	},
 };
 

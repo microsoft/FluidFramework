@@ -101,6 +101,11 @@ export interface FieldChangeRebaser<TChangeset> {
 		revisionMetadata: RevisionMetadataSource,
 		existenceState?: NodeExistenceState,
 	): TChangeset;
+
+	/**
+	 * @returns `change` with any empty child node changesets removed.
+	 */
+	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
 }
 
 /**
@@ -127,6 +132,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	return {
 		...data,
 		amendCompose: () => fail("Not implemented"),
+		prune: (change) => change,
 	};
 }
 
@@ -174,6 +180,11 @@ export type NodeChangeRebaser = (
  * @alpha
  */
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
+
+/**
+ * @alpha
+ */
+export type NodeChangePruner = (change: NodeChangeset) => NodeChangeset | undefined;
 
 /**
  * A function that returns the set of removed trees that should be in memory for a given node changeset to be applied.

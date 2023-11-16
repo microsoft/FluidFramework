@@ -8,6 +8,7 @@ import { amendCompose, compose } from "./compose";
 import { Changeset } from "./format";
 import { invert } from "./invert";
 import { rebase } from "./rebase";
+import { prune } from "./prune";
 
 export type SequenceChangeRebaser = FieldChangeRebaser<Changeset>;
 
@@ -16,4 +17,5 @@ export const sequenceFieldChangeRebaser = {
 	amendCompose,
 	invert,
 	rebase,
+	prune,
 };

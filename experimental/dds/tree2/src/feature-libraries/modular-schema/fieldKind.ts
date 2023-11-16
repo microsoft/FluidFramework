@@ -84,6 +84,7 @@ export class FieldKindWithEditor<
 	public constructor(
 		identifier: TName,
 		multiplicity: TMultiplicity,
+		// TODO: Should this be unknown instead?
 		public readonly changeHandler: FieldChangeHandler<any, TEditor>,
 		private readonly allowsTreeSupersetOf: (
 			originalTypes: TreeTypeSet,

@@ -465,7 +465,7 @@ export class ModularChangeFamily
 		}
 
 		return makeModularChangeset(
-			rebasedFields,
+			this.pruneFieldMap(rebasedFields) ?? new Map(),
 			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
@@ -698,6 +698,37 @@ export class ModularChangeFamily
 		}
 		// TODO: update the API to allow undefined to be returned here
 		return new Map();
+	}
+
+	private pruneFieldMap(changeset: FieldChangeMap): FieldChangeMap | undefined {
+		const prunedChangeset: FieldChangeMap = new Map();
+		for (const [field, fieldChange] of changeset) {
+			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
+
+			const prunedFieldChangeset = handler.rebaser.prune(fieldChange.change, (node) =>
+				this.pruneNodeChange(node),
+			);
+
+			if (!handler.isEmpty(prunedFieldChangeset)) {
+				prunedChangeset.set(field, { ...fieldChange, change: brand(prunedFieldChangeset) });
+			}
+		}
+
+		return prunedChangeset.size > 0 ? prunedChangeset : undefined;
+	}
+
+	private pruneNodeChange(changeset: NodeChangeset): NodeChangeset | undefined {
+		const prunedFields =
+			changeset.fieldChanges !== undefined
+				? this.pruneFieldMap(changeset.fieldChanges)
+				: undefined;
+
+		const prunedChange = { ...changeset, fieldChanges: prunedFields };
+		if (prunedChange.fieldChanges === undefined) {
+			delete prunedChange.fieldChanges;
+		}
+
+		return isEmptyNodeChangeset(prunedChange) ? undefined : prunedChange;
 	}
 
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
