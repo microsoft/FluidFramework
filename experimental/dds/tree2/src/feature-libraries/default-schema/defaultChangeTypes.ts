@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaChange, ModularChangeset } from "../modular-schema";
+import { ModularChangeset } from "../modular-schema";
+import { SchemaChange } from "../schema-editing";
 
 export interface SharedTreeChange {
 	readonly modularChange?: ModularChangeset;

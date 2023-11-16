@@ -1,0 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+export { makeSchemaChangeCodec } from "./schemaChangeCodecs";
+export { SchemaChange } from "./schemaChangeTypes";
+export { SchemaChangeFamily, SchemaEditor } from "./schemaChangeFamily";

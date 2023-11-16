@@ -1005,10 +1005,6 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		}
 	}
 
-	public apply(change: ModularChangeset): void {
-		this.applyChange(change);
-	}
-
 	/**
 	 * Adds a change to the edit builder
 	 * @param field - the field which is being edited

@@ -55,6 +55,3 @@ export {
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";
 export { makeModularChangeCodec } from "./modularChangeCodecs";
-export { makeSchemaChangeCodec } from "./schemaChangeCodecs";
-export { SchemaChange } from "./schemaChangeTypes";
-export { SchemaChangeFamily } from "./schemaChangeFamily";

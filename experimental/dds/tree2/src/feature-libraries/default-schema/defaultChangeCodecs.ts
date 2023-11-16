@@ -6,12 +6,9 @@
 import { IJsonCodec, ICodecOptions, ICodecFamily, makeCodecFamily } from "../../codec";
 import { FieldKindIdentifier } from "../../core";
 import { Mutable } from "../../util";
-import {
-	FieldKindWithEditor,
-	makeSchemaChangeCodec,
-	makeModularChangeCodec,
-} from "../modular-schema";
-import { SharedTreeChange } from "./sharedTreeChangeTypes";
+import { FieldKindWithEditor, makeModularChangeCodec } from "../modular-schema";
+import { makeSchemaChangeCodec } from "../schema-editing";
+import { SharedTreeChange } from "./defaultChangeTypes";
 
 export interface EncodedSharedTreeChange {
 	readonly modularChange?: ReturnType<ReturnType<typeof makeModularChangeCodec>["encode"]>;
