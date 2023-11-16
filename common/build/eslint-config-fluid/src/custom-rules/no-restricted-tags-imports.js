@@ -37,7 +37,7 @@ module.exports = {
 	},
 	create(context) {
 		const options = context.options[0] || {};
-		// Get restricted tags and throw error if not formatted correctly, ie: start with '@'
+		// Get restricted tags and throw error if not formatted correctly, ie: doesn't start with '@'
 		const restrictedTags = new Set(
 			(options.tags || []).map((tag) => {
 				if (!tag.startsWith("@")) {
@@ -67,12 +67,10 @@ module.exports = {
 						if (comment.type !== "Block") {
 							return;
 						}
-						// Add supplementary warnings like we don't have guidance for @label. Plz don't use it. Add some default error.
 						const tsdocParser = new TSDocParser();
 						// The leading and trailing new line characters were trimmed so we need to readd them for tsdoc to parse the comment correctly.
 						let x = `/**\n` + comment.value + `\n */`;
 						const parserContext = tsdocParser.parseString(x);
-						// const parsedContext = jsDoc.parse(comment.value, { unwrap: true });
 						restrictedTags.forEach((tag) => {
 							if (parserContext.docComment.modifierTagSet.hasTagName(tag)) {
 								context.report({
