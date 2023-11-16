@@ -71,6 +71,7 @@ export const sequenceFieldEditor = {
 	): Changeset<never> => {
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
+			id,
 			count: cursors.length,
 			content: cursors.map(jsonableTreeFromCursor),
 			cellId: { localId: id },
@@ -84,6 +85,7 @@ export const sequenceFieldEditor = {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
+			id: detachEvent.localId,
 			count,
 			cellId: detachEvent,
 		};
