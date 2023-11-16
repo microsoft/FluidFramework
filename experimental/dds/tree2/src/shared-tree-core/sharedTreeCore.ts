@@ -144,12 +144,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange> extends
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		const summarizables = this.getSummarizables();
-
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
-		for (const s of summarizables) {
+		for (const s of this.getSummarizables()) {
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(

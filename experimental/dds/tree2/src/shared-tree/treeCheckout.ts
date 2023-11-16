@@ -198,6 +198,9 @@ export function createTreeCheckout(args?: {
  * @alpha
  */
 export interface ITransaction {
+	/**
+	 * Events pertaining to this transaction.
+	 */
 	readonly events: ISubscribable<TransactionEvents>;
 	/**
 	 * Start a new transaction.

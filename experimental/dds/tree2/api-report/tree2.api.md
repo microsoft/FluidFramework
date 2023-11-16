@@ -1028,7 +1028,6 @@ export interface ISubscribable<E extends Events<E>> {
 export interface ITransaction {
     abort(): TransactionResult.Abort;
     commit(): TransactionResult.Commit;
-    // (undocumented)
     readonly events: ISubscribable<TransactionEvents>;
     inProgress(): boolean;
     start(): void;

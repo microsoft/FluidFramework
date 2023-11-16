@@ -184,7 +184,7 @@ export class SharedTree
 			return [
 				new SchemaSummarizer(runtime, schema, options),
 				new ForestSummarizer(
-					forest,
+					this.viewForSummarization?.forest ?? this.view.forest,
 					schema,
 					defaultSchemaPolicy,
 					options.summaryEncodeType,

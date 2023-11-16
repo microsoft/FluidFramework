@@ -17,6 +17,8 @@ import {
 	SchemaBuilderInternal,
 	boxedIterator,
 	TreeSchema,
+	LeafNodeSchema,
+	Sequence,
 } from "../../feature-libraries";
 import { brand, disposeSymbol, fail, TransactionResult } from "../../util";
 import {
@@ -57,6 +59,7 @@ import {
 	TreeStoredSchema,
 	AllowedUpdateType,
 	storedEmptyFieldSchema,
+	ValueSchema,
 } from "../../core";
 import { typeboxValidator } from "../../external-utilities";
 import { EditManager } from "../../shared-tree-core";
@@ -555,15 +558,25 @@ describe("SharedTree", () => {
 		assert.deepEqual(tree2.editableTree.asArray, ["A", "B", "C"]);
 	});
 
+	// See 0x7f1: tree doesn't tolerate calling schematize on it more than once.
+	// We also cannot dispose the view we create during `onCreate`, since these tests need to create
+	// a transaction spanning the attach process. Instead we stash it in a local variable with this type.
+	type StringView = FlexTreeView<
+		TreeFieldSchema<
+			Sequence,
+			readonly [LeafNodeSchema<"com.fluidframework.leaf.string", ValueSchema.String>]
+		>
+	>;
 	describe("can tolerate incomplete transactions when attaching", () => {
 		it("when completed", async () => {
+			let view: StringView | undefined;
 			const onCreate = (tree: SharedTree) => {
 				tree.storedSchema.update(stringSequenceRootSchema);
 				tree.view.transaction.start();
-				const view = assertSchema(tree, stringSequenceRootSchema).editableTree;
-				view.insertAtStart(["A"]);
-				view.insertAt(1, ["C"]);
-				assert.deepEqual(view.asArray, ["A", "C"]);
+				view = assertSchema(tree, stringSequenceRootSchema);
+				view.editableTree.insertAtStart(["A"]);
+				view.editableTree.insertAt(1, ["C"]);
+				assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
 			};
 			const provider = await TestTreeProvider.create(
 				1,
@@ -571,12 +584,12 @@ describe("SharedTree", () => {
 				new SharedTreeTestFactory(onCreate),
 			);
 
-			const tree1 = assertSchema(provider.trees[0], stringSequenceRootSchema);
+			const tree1 = view ?? fail("Expected tree1 view to be created while detached");
 			assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
 			const tree2 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
 			tree1.checkout.transaction.commit();
 			// Check that the joining tree was initialized with data from the attach summary
-			assert.deepEqual(tree2, []);
+			assert.deepEqual(tree2.editableTree.asArray, []);
 
 			await provider.ensureSynchronized();
 			assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
@@ -590,20 +603,21 @@ describe("SharedTree", () => {
 		});
 
 		it("when aborted", async () => {
+			let view: StringView | undefined;
 			const onCreate = (tree: SharedTree) => {
 				tree.storedSchema.update(stringSequenceRootSchema);
 				tree.view.transaction.start();
-				const view = assertSchema(tree, stringSequenceRootSchema).editableTree;
-				view.insertAtStart(["A"]);
-				view.insertAt(1, ["C"]);
-				assert.deepEqual(view.asArray, ["A", "C"]);
+				view = assertSchema(tree, stringSequenceRootSchema);
+				view.editableTree.insertAtStart(["A"]);
+				view.editableTree.insertAt(1, ["C"]);
+				assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
 			};
 			const provider = await TestTreeProvider.create(
 				1,
 				SummarizeType.onDemand,
 				new SharedTreeTestFactory(onCreate),
 			);
-			const tree1 = assertSchema(provider.trees[0], stringSequenceRootSchema);
+			const tree1 = view ?? fail("Expected tree1 view to be created while detached");
 			assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
 			const tree2 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
 			tree1.checkout.transaction.abort();
@@ -623,20 +637,22 @@ describe("SharedTree", () => {
 		});
 
 		it("when nested", async () => {
+			let view: StringView | undefined;
 			const onCreate = (tree: SharedTree) => {
 				tree.storedSchema.update(stringSequenceRootSchema);
 				tree.view.transaction.start();
-				const view = assertSchema(tree, stringSequenceRootSchema).editableTree;
-				view.insertAtStart(["A"]);
-				view.insertAt(1, "C");
-				assert.deepEqual(view.asArray, ["A", "C"]);
+				tree.view.transaction.start();
+				view = assertSchema(tree, stringSequenceRootSchema);
+				view.editableTree.insertAtStart(["A"]);
+				view.editableTree.insertAt(1, ["C"]);
+				assert.deepEqual(view.editableTree.asArray, ["A", "C"]);
 			};
 			const provider = await TestTreeProvider.create(
 				1,
 				SummarizeType.onDemand,
 				new SharedTreeTestFactory(onCreate),
 			);
-			const tree1 = assertSchema(provider.trees[0], stringSequenceRootSchema);
+			const tree1 = view ?? fail("Expected tree1 view to be created while detached");
 			assert.deepEqual(tree1.editableTree.asArray, ["A", "C"]);
 			const tree2 = assertSchema(await provider.createTree(), stringSequenceRootSchema);
 			tree1.checkout.transaction.commit();
@@ -660,6 +676,38 @@ describe("SharedTree", () => {
 			assert.deepEqual(tree1.editableTree.asArray, ["A", "B", "C"]);
 			assert.deepEqual(tree2.editableTree.asArray, ["A", "B", "C"]);
 		});
+	});
+
+	it("only forks the view on transaction start when necessary", async () => {
+		// Forking the view on transaction start is expensive but necessary while in a detached state.
+		// This test verifies we don't activate the forking logic even after attaching.
+		let view: StringView | undefined;
+		const forkLog: string[] = [];
+		const onCreate = (tree: SharedTree) => {
+			tree.storedSchema.update(stringSequenceRootSchema);
+			view = assertSchema(tree, stringSequenceRootSchema);
+			const editableView = view.editableTree;
+			const originalFork = tree.view.fork.bind(tree.view);
+			tree.view.fork = () => {
+				forkLog.push("fork");
+				return originalFork();
+			};
+
+			tree.view.transaction.start();
+			editableView.insertAtStart(["A", "C"]);
+		};
+		await TestTreeProvider.create(
+			1,
+			SummarizeType.onDemand,
+			new SharedTreeTestFactory(onCreate),
+		);
+		forkLog.push("attach");
+		const tree1 = view ?? fail("Expected tree1 view to be created while detached");
+		tree1.checkout.transaction.commit();
+		tree1.checkout.transaction.start();
+		tree1.checkout.transaction.commit();
+		// Second transaction should not trigger another fork.
+		assert.deepEqual(forkLog, ["fork", "attach"]);
 	});
 
 	it("has bounded memory growth in EditManager", () => {
