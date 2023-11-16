@@ -85,10 +85,14 @@ function arrayToMapTree(
 	typeSet: TreeTypeSet,
 ): MapTree {
 	const type = getType(tree, context, typeSet);
+	const childTypeSet = context.schema.nodeSchema.get(type)?.objectNodeFields.get(EmptyKey)?.types;
+	if (childTypeSet === undefined) {
+		throw new Error("TODO");
+	}
 
 	const mappedChildren = tree
 		.filter((child) => child !== undefined)
-		.map((child) => toMapTree(child, context, typeSet)); // TODO: is this the right typeSet for list?
+		.map((child) => toMapTree(child, context, childTypeSet));
 
 	// List children are represented as a single field entry denoted with `EmptyKey`
 	const fields = new Map<FieldKey, MapTree[]>([[EmptyKey, mappedChildren]]);
@@ -129,9 +133,12 @@ function recordToMapTree(
 	const fields = new Map<FieldKey, MapTree[]>();
 	for (const [key, value] of Object.entries(tree)) {
 		if (value !== undefined) {
-			const childTypeSet =
-				context.schema.nodeSchema.get(type)?.objectNodeFields.get(brand(key))?.types ??
-				fail("TODO");
+			const childTypeSet = context.schema.nodeSchema
+				.get(type)
+				?.objectNodeFields.get(brand(key))?.types;
+			if (childTypeSet === undefined) {
+				throw new Error("TODO");
+			}
 			const mappedChildTree = toMapTree(value, context, childTypeSet);
 			fields.set(brand(key), [mappedChildTree]);
 		}

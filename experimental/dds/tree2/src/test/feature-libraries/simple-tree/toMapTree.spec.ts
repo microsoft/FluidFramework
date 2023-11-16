@@ -153,9 +153,13 @@ describe("toMapTree", () => {
 
 	it("complex", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
+		const childObjectSchema = schemaBuilder.object("child-object", {
+			name: schemaBuilder.string,
+			age: schemaBuilder.number,
+		});
 		const rootSchema = schemaBuilder.object("complex-object", {
 			a: schemaBuilder.string,
-			b: schemaBuilder.list([schemaBuilder.number, schemaBuilder.handle, schemaBuilder.null]),
+			b: schemaBuilder.list([childObjectSchema, schemaBuilder.handle, schemaBuilder.null]),
 			c: schemaBuilder.map([schemaBuilder.string, schemaBuilder.number]),
 		});
 		const schema = schemaBuilder.intoSchema(rootSchema);
@@ -163,7 +167,7 @@ describe("toMapTree", () => {
 		const handle = new MockHandle<boolean>(true);
 
 		const a = "Hello world";
-		const b = [42, null, 37, handle];
+		const b = [{ name: "Jack", age: 37 }, null, { name: "Jill", age: 42 }, handle];
 		const cEntries: [string, string | number][] = [
 			["foo", 0],
 			["bar", "1"],
@@ -188,15 +192,63 @@ describe("toMapTree", () => {
 					[
 						{
 							type: brand(
-								'test.List<["com.fluidframework.leaf.handle","com.fluidframework.leaf.null","com.fluidframework.leaf.number"]>',
+								'test.List<["com.fluidframework.leaf.handle","com.fluidframework.leaf.null","test.child-object"]>',
 							),
 							fields: new Map<FieldKey, MapTree[]>([
 								[
 									EmptyKey,
 									[
-										{ type: leaf.number.name, value: 42, fields: new Map() },
+										{
+											type: childObjectSchema.name,
+											fields: new Map<FieldKey, MapTree[]>([
+												[
+													brand("name"),
+													[
+														{
+															type: leaf.string.name,
+															value: "Jack",
+															fields: new Map(),
+														},
+													],
+												],
+												[
+													brand("age"),
+													[
+														{
+															type: leaf.number.name,
+															value: 37,
+															fields: new Map(),
+														},
+													],
+												],
+											]),
+										},
 										{ type: leaf.null.name, value: null, fields: new Map() },
-										{ type: leaf.number.name, value: 37, fields: new Map() },
+										{
+											type: childObjectSchema.name,
+											fields: new Map<FieldKey, MapTree[]>([
+												[
+													brand("name"),
+													[
+														{
+															type: leaf.string.name,
+															value: "Jill",
+															fields: new Map(),
+														},
+													],
+												],
+												[
+													brand("age"),
+													[
+														{
+															type: leaf.number.name,
+															value: 42,
+															fields: new Map(),
+														},
+													],
+												],
+											]),
+										},
 										{
 											type: leaf.handle.name,
 											value: handle,
