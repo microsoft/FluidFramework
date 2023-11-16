@@ -10,8 +10,7 @@ import { useAsyncDeterministicStableId } from "../../util";
 import { testTrees as schemaTestTrees } from "../testTrees";
 import { makeSchemaCompressedCodec } from "../../feature-libraries/chunked-forest/codec/compressedCodecs";
 import { typeboxValidator } from "../../external-utilities";
-import { defaultSchemaPolicy } from "../../feature-libraries";
-import { fieldCursorFromJsonableTrees } from "../feature-libraries/chunked-forest/fieldCursorTestUtilities";
+import { cursorForJsonableTreeField, defaultSchemaPolicy } from "../../feature-libraries";
 import {
 	createSchemaSnapshot,
 	createSnapshot,
@@ -84,7 +83,7 @@ describe("schema snapshots", () => {
 				schemaData,
 				defaultSchemaPolicy,
 			);
-			const encoded = codec.encode(fieldCursorFromJsonableTrees(tree));
+			const encoded = codec.encode(cursorForJsonableTreeField(tree));
 
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (regenerateSnapshots) {
