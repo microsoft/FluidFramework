@@ -6642,6 +6642,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -6679,6 +6680,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -6719,6 +6721,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -6757,6 +6760,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -6998,6 +7002,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/random-js': ^1.0.31
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -7039,6 +7044,7 @@ importers:
       '@types/node': 16.18.58
       '@types/random-js': 1.0.31
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -7284,6 +7290,7 @@ importers:
       '@fluidframework/runtime-utils': workspace:~
       '@fluidframework/shared-object-base': workspace:~
       '@fluidframework/test-runtime-utils': workspace:~
+      '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
@@ -7314,6 +7321,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/mocha-test-setup': link:../../test/mocha-test-setup
       '@fluidframework/runtime-utils': link:../../runtime/runtime-utils
+      '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
@@ -42695,7 +42703,7 @@ packages:
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
-      jest: 29.7.0
+      jest: 29.7.0_@types+node@16.18.58
       jest-util: 29.7.0
       json5: 2.2.3
       lodash.memoize: 4.1.2
