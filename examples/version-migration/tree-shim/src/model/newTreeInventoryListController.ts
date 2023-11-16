@@ -9,7 +9,7 @@ import {
 	AllowedUpdateType,
 	ISharedTree,
 	Tree,
-	ProxyNode,
+	TypedNode,
 	SchemaBuilder,
 	disposeSymbol,
 } from "@fluid-experimental/tree2";
@@ -31,10 +31,10 @@ const inventoryItemSchema = builder.object("Contoso:InventoryItem-1.0.0", {
 	// The number in stock
 	quantity: builder.number,
 });
-type InventoryItemNode = ProxyNode<typeof inventoryItemSchema>;
+type InventoryItemNode = TypedNode<typeof inventoryItemSchema>;
 
 const inventoryItemList = builder.list(inventoryItemSchema);
-type InventoryItemList = ProxyNode<typeof inventoryItemList>;
+type InventoryItemList = TypedNode<typeof inventoryItemList>;
 
 const inventorySchema = builder.object("Contoso:Inventory-1.0.0", {
 	inventoryItemList,

@@ -46,7 +46,7 @@ import {
 	TreeStatus,
 	FlexTreeNodeKeyField,
 	FlexibleNodeSubSequence,
-} from "./editableTreeTypes";
+} from "./flexTreeTypes";
 import { makeTree } from "./lazyNode";
 import {
 	LazyEntity,
