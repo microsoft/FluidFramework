@@ -15,10 +15,13 @@
 	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
 		"build:genver": "gen-version",
 		"build:test": "tsc-multi --config tsc-multi.test.json",
@@ -92,6 +95,7 @@
 		"@types/node": "^16.18.38",
 		"@types/sinon": "^7.0.13",
 		"c8": "^7.7.1",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"mocha": "^10.2.0",
@@ -103,6 +107,18 @@
 		"sinon": "^7.4.2",
 		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"broken": {}
