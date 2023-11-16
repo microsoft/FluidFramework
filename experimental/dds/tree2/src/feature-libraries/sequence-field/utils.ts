@@ -354,6 +354,7 @@ export function areOutputCellsEmpty(mark: Mark<unknown>): boolean {
 /**
  * @returns true, iff the given `mark` would have impact on the field when applied.
  * Ignores the impact of nested changes.
+ * CellRename effects are considered impactful if they actually change the ID of the cells.
  */
 export function isImpactful(
 	mark: Mark<unknown>,
