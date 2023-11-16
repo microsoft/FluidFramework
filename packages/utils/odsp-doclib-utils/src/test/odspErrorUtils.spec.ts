@@ -22,6 +22,17 @@ describe("OdspErrorUtils", () => {
 		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
 	}
 
+	/**
+	 * Checks if the input is an {@link IGenericNetworkError}.
+	 */
+	function isIGenericNetworkError(input: unknown): input is IGenericNetworkError {
+		return (
+			(input as Partial<IGenericNetworkError>).errorType ===
+				DriverErrorTypes.genericNetworkError &&
+			(input as Partial<IGenericNetworkError>) !== undefined
+		);
+	}
+
 	describe("createOdspNetworkError", () => {
 		it("GenericNetworkError Test_1", () => {
 			const networkError = createOdspNetworkError("Test Message", 500);
@@ -45,7 +56,11 @@ describe("OdspErrorUtils", () => {
 				"Error should be a genericNetworkError",
 			);
 			assert.equal(networkError.canRetry, false, "400 is non-retryable");
-			assert.equal(networkError.statusCode, 400, "status code should be preserved");
+			assert.equal(
+				(networkError as Partial<IGenericNetworkError>).statusCode,
+				400,
+				"status code should be preserved",
+			);
 		});
 
 		it("GenericNetworkError Test", () => {
