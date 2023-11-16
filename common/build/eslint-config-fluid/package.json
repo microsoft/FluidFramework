@@ -51,6 +51,7 @@
 		"concurrently": "^8.2.1",
 		"eslint": "~8.49.0",
 		"prettier": "~3.0.3",
+		"rimraf": "^4.4.1",
 		"sort-json": "^2.0.1",
 		"typescript": "~4.5.5"
 	},
