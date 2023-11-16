@@ -8861,7 +8861,6 @@ importers:
       '@types/debug': ^4.1.5
       '@types/double-ended-queue': ^2.1.0
       '@types/events': ^3.0.0
-      '@types/lodash': ^4.14.118
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
@@ -8871,7 +8870,6 @@ importers:
       double-ended-queue: ^2.1.0-0
       eslint: ~8.50.0
       events: ^3.1.0
-      lodash: ^4.17.21
       mocha: ^10.2.0
       mocha-json-output-reporter: ^2.0.1
       mocha-multi-reporters: ^1.5.1
@@ -8896,7 +8894,6 @@ importers:
       debug: 4.3.4
       double-ended-queue: 2.1.0-0
       events: 3.3.0
-      lodash: 4.17.21
       url: 0.11.3
       uuid: 9.0.1
     devDependencies:
@@ -8911,7 +8908,6 @@ importers:
       '@types/debug': 4.1.9
       '@types/double-ended-queue': 2.1.4
       '@types/events': 3.0.1
-      '@types/lodash': 4.14.199
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       '@types/sinon': 7.5.2
