@@ -7,7 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { fail, Mutable } from "../../util";
 import { Delta, TaggedChange, areEqualChangeAtomIds, makeDetachedNodeId } from "../../core";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { cursorForJsonableTreeNode } from "../treeTextCursor";
+import { decode } from "../chunked-forest";
 import { MarkList, NoopMarkType } from "./format";
 import {
 	areInputCellsEmpty,
@@ -64,9 +64,19 @@ export function sequenceFieldToDelta<TNodeChange>(
 				);
 				if (!areEqualChangeAtomIds(inputCellId, outputId)) {
 					if (mark.attach.type === "Insert" && mark.attach.content !== undefined) {
+						const cursors = [];
+						for (const encodedChunk of mark.attach.content) {
+							const currentCursor = decode(encodedChunk).cursor();
+							assert(
+								currentCursor.getFieldLength() === 1,
+								"should only contain 1 node",
+							);
+							currentCursor.enterNode(0);
+							cursors.push(currentCursor);
+						}
 						build.push({
 							id: oldId,
-							trees: mark.attach.content.map(cursorForJsonableTreeNode),
+							trees: cursors,
 						});
 					}
 					rename.push({
@@ -135,22 +145,24 @@ export function sequenceFieldToDelta<TNodeChange>(
 						global.push({ id: buildId, fields: deltaMark.fields });
 						delete deltaMark.fields;
 					}
-					// Since these cursors are fieldCursors, round trip them back into node cursors.
-					const cursors = mark.content.map((encodedChunk) =>
-						decode(encodedChunk).cursor(),
-					);
-					const nodeCursors: ITreeCursorSynchronous[] = [];
-					cursors.forEach((cursor) => {
-						nodeCursors.push(...mapCursorField(cursor, (c) => cursor.fork()));
-					});
 					if (isNewAttach(mark)) {
 						assert(
 							mark.content !== undefined,
 							0x7dc /* New insert must have content */,
 						);
+						const cursors = [];
+						for (const encodedChunk of mark.content) {
+							const currentCursor = decode(encodedChunk).cursor();
+							assert(
+								currentCursor.getFieldLength() === 1,
+								"should only contain 1 node",
+							);
+							currentCursor.enterNode(0);
+							cursors.push(currentCursor);
+						}
 						build.push({
 							id: buildId,
-							trees: nodeCursors,
+							trees: cursors,
 						});
 					}
 					local.push(deltaMark);

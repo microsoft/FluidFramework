@@ -6,8 +6,7 @@
 import { ObjectOptions, TSchema, Type } from "@sinclair/typebox";
 import { ChangeAtomId, ChangesetLocalId, RevisionTag, RevisionTagSchema } from "../../core";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId, NodeChangeset } from "../modular-schema";
-// eslint-disable-next-line import/no-internal-modules
-import { EncodedChunk } from "../chunked-forest/codec/format";
+import { EncodedChunk } from "../chunked-forest";
 
 // TODO:AB#4259 Decouple types used for sequence-field's in-memory representation from their encoded variants.
 // Currently, types in this file are largely used for both.

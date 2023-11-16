@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF, cursorForJsonableTreeNode } from "../../../feature-libraries";
+import {
+	SequenceField as SF,
+	chunkTree,
+	cursorForJsonableTreeNode,
+	defaultChunkPolicy,
+	uncompressedEncode,
+} from "../../../feature-libraries";
 import { brand } from "../../../util";
 import {
 	ChangeAtomId,
@@ -160,7 +166,7 @@ function createInsertMark<TChange = never>(
 		? countOrContent
 		: generateJsonables(countOrContent);
 	const cursors = content
-		.map(singleTextCursor)
+		.map(cursorForJsonableTreeNode)
 		.map((cursor) => chunkTree(cursor, defaultChunkPolicy).cursor());
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
 	const mark: SF.CellMark<SF.Insert, TChange> = {

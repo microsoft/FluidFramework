@@ -4,14 +4,21 @@
  */
 
 import { assert } from "@fluidframework/core-utils";
-import { ChangesetLocalId, ITreeCursor, ITreeCursorSynchronous, SchemaData } from "../../core";
+import {
+	ChangesetLocalId,
+	ITreeCursor,
+	ITreeCursorSynchronous,
+	StoredSchemaCollection,
+	mapCursorField,
+} from "../../core";
 import { FieldEditor, FullSchemaPolicy } from "../modular-schema";
 import { brand } from "../../util";
-// eslint-disable-next-line import/no-internal-modules
-import { uncompressedEncode } from "../chunked-forest/codec/uncompressedEncode";
-import { chunkTree, defaultChunkPolicy } from "../chunked-forest";
-// eslint-disable-next-line import/no-internal-modules
-import { schemaCompressedEncode } from "../chunked-forest/codec/schemaBasedEncoding";
+import {
+	chunkTree,
+	defaultChunkPolicy,
+	schemaCompressedEncode,
+	uncompressedEncode,
+} from "../chunked-forest";
 import {
 	CellId,
 	CellMark,
@@ -39,7 +46,7 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 		index: number,
 		cursor: readonly ITreeCursor[],
 		id: ChangesetLocalId,
-		shapeInfo?: { schema: SchemaData; policy: FullSchemaPolicy },
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): Changeset<never>;
 	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
 	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
@@ -77,21 +84,24 @@ export const sequenceFieldEditor = {
 		index: number,
 		cursors: readonly ITreeCursor[],
 		id: ChangesetLocalId,
-		shapeInfo?: { schema: SchemaData; policy: FullSchemaPolicy },
+		shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 	): Changeset<never> => {
-		const chunkedCursors = cursors.map((cursor) =>
+		const fieldCursors = cursors.map((cursor) =>
 			chunkTree(cursor as ITreeCursorSynchronous, defaultChunkPolicy).cursor(),
 		);
+		const nodeCursors = fieldCursors
+			.map((fieldCursor) => mapCursorField(fieldCursor, (c) => c))
+			.flat();
 		// TODO: once we refactor the code to have access to the schema/policy, add support for schemaCompressedEncode.
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
 			count: cursors.length,
 			content:
 				shapeInfo !== undefined
-					? chunkedCursors.map((cursor) =>
+					? nodeCursors.map((cursor) =>
 							schemaCompressedEncode(shapeInfo.schema, shapeInfo.policy, cursor),
 					  )
-					: chunkedCursors.map(uncompressedEncode),
+					: nodeCursors.map(uncompressedEncode),
 			cellId: { localId: id },
 		};
 		return markAtIndex(index, mark);

@@ -14,9 +14,9 @@ import {
 	ChangeFamilyEditor,
 	FieldUpPath,
 	TaggedChange,
-	SchemaData,
 	compareFieldUpPaths,
 	topDownPath,
+	StoredSchemaCollection,
 } from "../../core";
 import { brand, isReadonlyArray } from "../../util";
 import {
@@ -248,7 +248,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			insert: (
 				index: number,
 				newContent: ITreeCursor | readonly ITreeCursor[],
-				shapeInfo?: { schema: SchemaData; policy: FullSchemaPolicy },
+				shapeInfo?: { schema: StoredSchemaCollection; policy: FullSchemaPolicy },
 			): void => {
 				const content = isReadonlyArray(newContent) ? newContent : [newContent];
 				const length = content.length;
