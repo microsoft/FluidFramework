@@ -26,11 +26,10 @@ import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
+	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/default-field-kinds/optionalField";
-// eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
-import { changesetForChild, fooKey, testTree, testTreeCursor } from "./fieldKindTestUtils";
+} from "../../../feature-libraries/optional-field";
+import { changesetForChild, fooKey, testTree, testTreeCursor } from "../fieldKindTestUtils";
 
 /**
  * A change to a child encoding as a simple placeholder string.

@@ -20,7 +20,7 @@ import {
 	ArrayHasFixedLength,
 	Fields,
 } from "../typed-schema";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import { FieldKind } from "../modular-schema";
 import { EditableTreeEvents } from "./treeEvents";
 import { FlexTreeContext } from "./context";

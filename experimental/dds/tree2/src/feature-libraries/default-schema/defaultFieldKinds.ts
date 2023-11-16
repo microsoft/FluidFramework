@@ -22,9 +22,12 @@ import {
 	FieldKindWithEditor,
 } from "../modular-schema";
 import { sequenceFieldChangeHandler } from "../sequence-field";
-import { noChangeCodecFamily } from "./defaultFieldChangeCodecs";
-import { OptionalChangeset } from "./defaultFieldChangeTypes";
-import { optionalChangeHandler, optionalFieldEditor } from "./optionalField";
+import {
+	noChangeCodecFamily,
+	OptionalChangeset,
+	optionalChangeHandler,
+	optionalFieldEditor,
+} from "../optional-field";
 
 /**
  * ChangeHandler that only handles no-op / identity changes.

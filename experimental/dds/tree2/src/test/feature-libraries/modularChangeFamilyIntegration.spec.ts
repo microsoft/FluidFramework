@@ -29,7 +29,7 @@ import { testChangeReceiver } from "../utils";
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-field-kinds/defaultFieldKinds";
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
 

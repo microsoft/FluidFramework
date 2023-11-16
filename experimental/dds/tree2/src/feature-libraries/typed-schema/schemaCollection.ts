@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils";
 import { Adapters, TreeAdapter, TreeNodeSchemaIdentifier } from "../../core";
 import { Multiplicity } from "../modular-schema";
 import { capitalize, fail, requireAssignableTo } from "../../util";
-import { defaultSchemaPolicy, FieldKinds } from "../default-field-kinds";
+import { defaultSchemaPolicy, FieldKinds } from "../default-schema";
 import {
 	TreeFieldSchema,
 	TreeNodeSchema,
