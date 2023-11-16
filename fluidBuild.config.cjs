@@ -26,7 +26,6 @@ module.exports = {
 			dependsOn: ["commonjs", "build:esnext", "build:test", "build:copy"],
 			script: false,
 		},
-
 		"commonjs": {
 			dependsOn: ["tsc", "build:test"],
 			script: false,
