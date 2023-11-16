@@ -4,11 +4,12 @@
  */
 
 import { strict as assert } from "assert";
-import { SchemaBuilder } from "../../../domains";
-import { TypedNode, Tree, typeNameSymbol } from "../../../feature-libraries";
+import { SchemaBuilder } from "../../domains";
+import { typeNameSymbol } from "../../feature-libraries";
+import { TypedNode, Tree } from "../../simple-tree";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../../feature-libraries/simple-tree/proxies";
-import { treeViewWithContent } from "../../utils";
+import { extractFactoryContent } from "../../simple-tree/proxies";
+import { treeViewWithContent } from "../utils";
 import { itWithRoot } from "./utils";
 
 describe("SharedTreeObject factories", () => {
