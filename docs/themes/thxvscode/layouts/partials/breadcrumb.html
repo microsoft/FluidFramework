@@ -17,7 +17,7 @@
 {{ $packageName := index $urlSegments 2 }}
 
 {{ if $packageName }}
-  {{ $packageDisplayName := index $.Site.Data.displayToPackageName $packageName }}
+  {{ $packageDisplayName := index $.Site.Data.displayNameToPackageName $packageName }}
 
   {{ range $key, $value := $.Site.Data.packages }}
     {{ if in $value $packageDisplayName }}

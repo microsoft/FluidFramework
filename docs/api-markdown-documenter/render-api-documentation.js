@@ -172,8 +172,8 @@ function buildNavBar(documents) {
 	);
 
 	saveToFile("allAPIs.yaml", allAPIs);
-	saveToFile("packageNameToDisplay.yaml", packageMap);
-	saveToFile("displayToPackageName.yaml", invertMap(packageMap));
+	saveToFile("packageNameToDisplayName.yaml", packageMap);
+	saveToFile("displayNameToPackageName.yaml", invertMap(packageMap));
 }
 
 const saveToFile = (filename, data) =>

@@ -101,7 +101,7 @@
                             {{- range (where $packagePages "Params.package" .) -}}
                                 {{ $targetPage = . }}
                             {{- end }}
-                            {{ $packageKey := index $.Site.Data.packageNameToDisplay $targetPage.Params.package }}
+                            {{ $packageKey := index $.Site.Data.packageNameToDisplayName $targetPage.Params.package }}
                             {{ $apiDetails := index $.Site.Data.allAPIs $packageKey }}
                             {{ $isCurrentPage := in (trim $current.RelPermalink " ") (trim $targetPage.RelPermalink " ") }}
                             {{ $hasActiveLeaf := false }}
@@ -220,7 +220,7 @@
                 </option>
             <!-- {{- end }} -->
     
-                {{ $packageKey := index $.Site.Data.packageNameToDisplay $targetPage.Params.package }}
+                {{ $packageKey := index $.Site.Data.packageNameToDisplayName $targetPage.Params.package }}
                 {{ $apiDetails := index $.Site.Data.allAPIs $packageKey }}
                 {{ range $category := slice "Interface" "Class" "Enum" }}
                     {{ if isset $apiDetails $category }}
