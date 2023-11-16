@@ -9,7 +9,7 @@ import { TaggedChange } from "../../../core";
 import {
 	RegisterId,
 	OptionalChangeset,
-} from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes";
 
 // Optional changesets may be equivalent but not evaluate to be deep-equal, as some ordering is irrelevant.
 export function assertEqual(

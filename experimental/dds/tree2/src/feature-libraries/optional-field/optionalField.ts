@@ -10,11 +10,8 @@ import {
 	TaggedChange,
 	tagChange,
 	ChangesetLocalId,
-	ChangeAtomId,
 	RevisionTag,
-	JsonableTree,
 	areEqualChangeAtomIds,
-	makeDetachedNodeId,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap, brand } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
@@ -33,10 +30,10 @@ import {
 	FieldChangeHandler,
 	RemovedTreesFromChild,
 } from "../modular-schema";
-import { RegisterId, OptionalChangeset } from "./defaultFieldChangeTypes";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 import { DetachedNodeBuild, DetachedNodeChanges, DetachedNodeRename } from "../../core/tree/delta";
+import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes";
+import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
 
 interface IChildChangeMap<T> {
 	set(id: RegisterId, childChange: T): void;

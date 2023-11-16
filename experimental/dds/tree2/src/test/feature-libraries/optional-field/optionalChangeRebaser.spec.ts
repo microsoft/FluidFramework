@@ -31,10 +31,9 @@ import {
 	optionalChangeRebaser,
 	optionalFieldEditor,
 	optionalFieldIntoDelta,
+	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
-// eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes";
 import {
 	FieldStateTree,
 	getSequentialEdits,
@@ -42,7 +41,7 @@ import {
 	ChildStateGenerator,
 } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
-import { assertEqual } from "./optionalFieldUtils";
+import { assertEqual } from "../default-field-kinds/optionalFieldUtils";
 
 type RevisionTagMinter = () => RevisionTag;
 

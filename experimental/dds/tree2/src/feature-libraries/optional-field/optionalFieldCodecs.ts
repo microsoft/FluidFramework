@@ -6,12 +6,12 @@
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
 import type { NodeChangeset } from "../modular-schema";
-import type { RegisterId, OptionalChangeset } from "./defaultFieldChangeTypes";
+import type { OptionalChangeset, RegisterId } from "./optionalFieldChangeTypes";
 import {
-	EncodedBuild,
-	EncodedRegisterId,
 	EncodedOptionalChangeset,
-} from "./defaultFieldChangeFormat";
+	EncodedRegisterId,
+	EncodedBuild,
+} from "./optionalFieldChangeFormat";
 
 export const noChangeCodecFamily: ICodecFamily<0> = makeCodecFamily([[0, unitCodec]]);
 
@@ -59,7 +59,6 @@ function makeOptionalFieldCodec(
 					encoded.m.push([
 						registerIdCodec.encode(src),
 						registerIdCodec.encode(dst),
-						// TODO: omit sometimes
 						type === "nodeTargeting",
 					]);
 				}
