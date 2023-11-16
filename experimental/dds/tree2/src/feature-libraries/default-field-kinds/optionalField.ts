@@ -497,7 +497,6 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		return result;
 	},
 
-	// TODO: If rebasing a bunch of things that set node to undefined, this will create some unnecessary moving around of nodes that are all undefined.
 	clear: (wasEmpty: boolean, detachId: ChangesetLocalId): OptionalChangeset =>
 		wasEmpty
 			? { build: [], moves: [], childChanges: [], reservedDetachId: { localId: detachId } }
@@ -536,7 +535,7 @@ export function optionalFieldIntoDelta(
 
 	const dstToSrc = new ChildChangeMap<ContentId>();
 
-	let markNoops = true;
+	let markIsANoop = true;
 	const mark: Mutable<Delta.Mark> = { count: 1 };
 
 	if (change.moves.length > 0) {
@@ -545,10 +544,10 @@ export function optionalFieldIntoDelta(
 			dstToSrc.set(dst, src);
 			if (src === "self" && dst !== "self") {
 				mark.detach = { major: dst.revision ?? revision, minor: dst.localId };
-				markNoops = false;
+				markIsANoop = false;
 			} else if (dst === "self" && src !== "self") {
 				mark.attach = { major: src.revision ?? revision, minor: src.localId };
-				markNoops = false;
+				markIsANoop = false;
 			} else if (src !== "self" && dst !== "self") {
 				renames.push({
 					count: 1,
@@ -576,7 +575,7 @@ export function optionalFieldIntoDelta(
 				});
 			} else {
 				mark.fields = childDelta;
-				markNoops = false;
+				markIsANoop = false;
 			}
 		}
 
@@ -585,7 +584,7 @@ export function optionalFieldIntoDelta(
 		}
 	}
 
-	if (!markNoops) {
+	if (!markIsANoop) {
 		delta.local = [mark];
 	}
 

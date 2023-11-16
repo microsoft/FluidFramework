@@ -20,10 +20,20 @@ export const makeOptionalFieldCodecFamily = (
 ): ICodecFamily<OptionalChangeset> => makeCodecFamily([[0, makeOptionalFieldCodec(childCodec)]]);
 
 const contentIdCodec: IJsonCodec<ContentId, EncodedContentId> = {
-	encode: (contentId: ContentId) =>
-		contentId === "self" ? 0 : { localId: contentId.localId, revision: contentId.revision },
-	decode: (contentId: EncodedContentId) =>
-		contentId === 0 ? "self" : { localId: contentId.localId, revision: contentId.revision },
+	encode: (contentId: ContentId) => {
+		if (contentId === "self") {
+			return 0;
+		}
+
+		return { ...contentId };
+	},
+	decode: (contentId: EncodedContentId) => {
+		if (contentId === 0) {
+			return "self";
+		}
+
+		return { ...contentId };
+	},
 };
 
 function makeOptionalFieldCodec(
@@ -79,7 +89,7 @@ function makeOptionalFieldCodec(
 							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
 						] as const,
 				) ?? [];
-			return {
+			const decoded: OptionalChangeset = {
 				build: encoded.b ?? [], // TODO: worth it to copy here?
 				moves,
 				childChanges:
@@ -87,9 +97,12 @@ function makeOptionalFieldCodec(
 						contentIdCodec.decode(id),
 						childCodec.decode(encodedChange),
 					]) ?? [],
-				reservedDetachId:
-					encoded.d !== undefined ? contentIdCodec.decode(encoded.d) : undefined,
 			};
+
+			if (encoded.d !== undefined) {
+				decoded.reservedDetachId = contentIdCodec.decode(encoded.d);
+			}
+			return decoded;
 		},
 		encodedSchema: EncodedOptionalChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
