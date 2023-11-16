@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { SchemaBuilder } from "../../../domains";
-import { TypedNode, TreeRoot, Tree, typeNameSymbol } from "../../../feature-libraries";
+import { SchemaBuilder } from "../../domains";
+import { TypedNode, TreeRoot, Tree } from "../../simple-tree";
+import { typeNameSymbol } from "../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
 
 describe("SharedTree proxies", () => {
