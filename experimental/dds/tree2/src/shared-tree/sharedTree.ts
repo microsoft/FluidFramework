@@ -48,10 +48,8 @@ import {
 	NodeKeyManager,
 	FieldKinds,
 	normalizeNewFieldContent,
-	ProxyRoot,
-	getProxyForField,
-	ProxyField,
 } from "../feature-libraries";
+import { TreeRoot, getProxyForField, TreeField } from "../simple-tree";
 import { HasListeners, IEmitter, ISubscribable, createEmitter } from "../events";
 import { JsonCompatibleReadOnly, brand, disposeSymbol, fail } from "../util";
 import { TreeView, type ITree } from "./simpleTree";
@@ -440,7 +438,7 @@ export class SharedTreeFactory implements IChannelFactory {
 export class WrapperTreeView<
 	in out TRoot extends TreeFieldSchema,
 	TView extends FlexTreeView<TRoot>,
-> implements TreeView<ProxyField<TRoot>>
+> implements TreeView<TreeField<TRoot>>
 {
 	public constructor(public readonly view: TView) {}
 
@@ -452,7 +450,7 @@ export class WrapperTreeView<
 		return this.view.checkout.events;
 	}
 
-	public get root(): ProxyRoot<TreeSchema<TRoot>> {
+	public get root(): TreeRoot<TreeSchema<TRoot>> {
 		return getProxyForField(this.view.editableTree);
 	}
 }

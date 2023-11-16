@@ -5,8 +5,9 @@
 
 import { strict as assert } from "assert";
 import { MockHandle } from "@fluidframework/test-runtime-utils";
-import { SchemaBuilder } from "../../../domains";
-import { ProxyNode, ProxyRoot, Tree, typeNameSymbol } from "../../../feature-libraries";
+import { SchemaBuilder } from "../../domains";
+import { TypedNode, TreeRoot, Tree } from "../../simple-tree";
+import { typeNameSymbol } from "../../feature-libraries";
 import { itWithRoot, pretty } from "./utils";
 
 describe("SharedTree proxies", () => {
@@ -526,9 +527,9 @@ describe("SharedTreeList", () => {
 
 			/** This function returns a union of both listA and listB, which exercises more interesting compile type-checking cases */
 			function getEitherList(
-				root: ProxyRoot<typeof schema>,
+				root: TreeRoot<typeof schema>,
 				list: "a" | "b",
-			): ProxyNode<typeof listA> | ProxyNode<typeof listB> {
+			): TypedNode<typeof listA> | TypedNode<typeof listB> {
 				return list === "a" ? root.listA : root.listB;
 			}
 

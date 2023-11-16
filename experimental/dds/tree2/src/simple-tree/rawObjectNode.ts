@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { FieldKey, TreeNodeSchemaIdentifier } from "../../core";
-import { capitalize } from "../../util";
-import { ObjectNodeSchema, TreeNodeSchema } from "../typed-schema";
-import { LocalNodeKey } from "../node-key";
+import { FieldKey, TreeNodeSchemaIdentifier } from "../core";
+import { capitalize } from "../util";
 import {
+	ObjectNodeSchema,
+	TreeNodeSchema,
+	LocalNodeKey,
 	FlexTreeContext,
 	EditableTreeEvents,
 	FlexTreeObjectNode,
@@ -18,7 +19,7 @@ import {
 	FlexTreeTypedNode,
 	boxedIterator,
 	onNextChange,
-} from "../flex-tree";
+} from "../feature-libraries";
 
 const nodeContent = Symbol();
 interface HasNodeContent<T> {

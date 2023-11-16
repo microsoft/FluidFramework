@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { rootFieldKey } from "../../../core";
-import { ProxyRoot, SharedTreeNode, Tree, TreeStatus, Any } from "../../../feature-libraries";
-import { SchemaBuilder } from "../../../domains";
+import { rootFieldKey } from "../../core";
+import { TreeStatus, Any } from "../../feature-libraries";
+import { TreeRoot, TreeNode, Tree } from "../../simple-tree";
+import { SchemaBuilder } from "../../domains";
 import { itWithRoot } from "./utils";
 
 describe("node API", () => {
@@ -17,7 +18,7 @@ describe("node API", () => {
 	const list = sb.list(object);
 	const parent = sb.object("parent", { object, list });
 	const treeSchema = sb.intoSchema(parent);
-	const initialTree: ProxyRoot<typeof treeSchema, "javaScript"> = {
+	const initialTree: TreeRoot<typeof treeSchema, "javaScript"> = {
 		object: { content: 42 },
 		list: [{ content: 42 }, { content: 42 }, { content: 42 }],
 	};
@@ -104,7 +105,7 @@ describe("node API", () => {
 	});
 
 	describe("events", () => {
-		function check(mutate: (root: ProxyRoot<typeof treeSchema>) => void) {
+		function check(mutate: (root: TreeRoot<typeof treeSchema>) => void) {
 			itWithRoot(
 				".on(..) must subscribe to change event",
 				treeSchema,
@@ -112,7 +113,7 @@ describe("node API", () => {
 				(root) => {
 					const log: any[][] = [];
 
-					Tree.on(root as SharedTreeNode, "afterChange", (...args: any[]) => {
+					Tree.on(root as TreeNode, "afterChange", (...args: any[]) => {
 						log.push(args);
 					});
 
@@ -134,7 +135,7 @@ describe("node API", () => {
 					const log: any[][] = [];
 
 					const unsubscribe = Tree.on(
-						root as SharedTreeNode,
+						root as TreeNode,
 						"afterChange",
 						(...args: any[]) => {
 							log.push(args);

@@ -4,10 +4,10 @@
  */
 
 import { strict as assert } from "assert";
-import { LeafNodeSchema, NewFieldContent, TreeSchema } from "../../../feature-libraries";
-import { leaf, SchemaBuilder } from "../../../domains";
-import { TreeValue } from "../../../core";
-import { treeViewWithContent } from "../../utils";
+import { LeafNodeSchema, NewFieldContent, TreeSchema } from "../../feature-libraries";
+import { leaf, SchemaBuilder } from "../../domains";
+import { TreeValue } from "../../core";
+import { treeViewWithContent } from "../utils";
 import { itWithRoot, makeSchema, pretty } from "./utils";
 
 interface TestCase {
