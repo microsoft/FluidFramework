@@ -53,7 +53,10 @@ export class SharedTreeShimDeltaHandler implements IShimDeltaHandler {
 	): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
 		// Drop v1 ops
-		assert(this.hasTreeDeltaHandler(), 0x831 /* Can't process ops before attaching tree handler */);
+		assert(
+			this.hasTreeDeltaHandler(),
+			0x831 /* Can't process ops before attaching tree handler */,
+		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type !== MessageType.Operation) {
 			return;

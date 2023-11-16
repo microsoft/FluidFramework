@@ -88,7 +88,10 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		localOpMetadata: unknown,
 	): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
-		assert(!this.isPreAttachState(), 0x82c /* Can't process ops before attaching tree handler */);
+		assert(
+			!this.isPreAttachState(),
+			0x82c /* Can't process ops before attaching tree handler */,
+		);
 		if (
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			message.type !== MessageType.Operation
@@ -157,7 +160,10 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	 * @returns whether or not we should drop the op
 	 */
 	private shouldDropOp(contents: IOpContents): boolean {
-		assert(!this.isPreAttachState(), 0x82d /* Can't process ops before attaching tree handler */);
+		assert(
+			!this.isPreAttachState(),
+			0x82d /* Can't process ops before attaching tree handler */,
+		);
 		// Don't drop ops when we are in v1 state
 		if (this.isUsingOldV1()) {
 			return false;

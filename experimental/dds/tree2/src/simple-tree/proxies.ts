@@ -774,8 +774,14 @@ function extractContentArray<T extends TypedNode<TreeNodeSchema, "javaScript">[]
 	return {
 		content: output,
 		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
-			assert(editNode !== undefined, 0x7f6 /* Expected edit node to be defined when hydrating list */);
-			assert(schemaIsFieldNode(editNode.schema), 0x7f7 /* Expected field node when hydrating list */);
+			assert(
+				editNode !== undefined,
+				0x7f6 /* Expected edit node to be defined when hydrating list */,
+			);
+			assert(
+				schemaIsFieldNode(editNode.schema),
+				0x7f7 /* Expected field node when hydrating list */,
+			);
 			hydrators.forEach(([i, hydrate]) =>
 				hydrate(
 					getListChildNode(
@@ -804,7 +810,10 @@ function extractContentMap<T extends Map<string, TypedNode<TreeNodeSchema, "java
 	return {
 		content: output,
 		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
-			assert(editNode !== undefined, 0x7f8 /* Expected edit node to be defined when hydrating map */);
+			assert(
+				editNode !== undefined,
+				0x7f8 /* Expected edit node to be defined when hydrating map */,
+			);
 			assert(schemaIsMap(editNode.schema), 0x7f9 /* Expected map node when hydrating map */);
 			hydrators.forEach(([key, hydrate]) =>
 				hydrate(getMapChildNode(editNode as FlexTreeMapNode<MapNodeSchema>, key)),
