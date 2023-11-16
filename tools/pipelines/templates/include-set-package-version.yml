@@ -1,11 +1,12 @@
-# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
-# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
 parameters:
 - name: buildDirectory
   type: string
 - name: buildNumberInPatch
   type: string
-  default: ''
+  default:
 - name: tagName
   type: string
 - name: includeInternalVersions
@@ -14,14 +15,24 @@ parameters:
 - name: buildToolsVersionToInstall
   type: string
   default: repo
+
+# The path to the pnpm store.
 - name: pnpmStorePath
   type: string
   default: $(Pipeline.Workspace)/.pnpm-store
+
+# The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
+# group
 - name: interdependencyRange
   type: string
+
+# Parameter for modifying the 'types' field in the package.json.
+# If the value `none` is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
   type: string
   default: none
+
+# Set version
 steps:
 - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
@@ -35,11 +46,13 @@ steps:
         # <https://docs.microsoft.com/en-us/azure/devops/pipelines/scripts/logging-commands?view=azure-devops&tabs=bash#prependpath-prepend-a-path-to-the--path-environment-variable>
         # more information.
         echo "##vso[task.prependpath]$(Build.SourcesDirectory)/build-tools/packages/build-cli/bin"
+
   - template: /tools/pipelines/templates/include-install-pnpm.yml@self
     parameters:
       buildDirectory: $(Build.SourcesDirectory)/build-tools
       pnpmStorePath: ${{ parameters.pnpmStorePath }}
       enableCache: false
+
   - task: Bash@3
     name: InstallBuildTools
     displayName: Install Fluid Build Tools (from repo)
@@ -49,6 +62,7 @@ steps:
       script: |
         pnpm i --frozen-lockfile
         pnpm build:compile
+
 - ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
   - task: Bash@3
     name: InstallBuildTools
@@ -59,6 +73,7 @@ steps:
       script: |
         echo "${{ parameters.buildToolsVersionToInstall }}"
         npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+
 - task: Bash@3
   name: BuildToolsInstallCheck
   displayName: Check Build Tools Installation
@@ -70,6 +85,7 @@ steps:
       which flub
       flub --help
       flub commands
+
 - task: Bash@3
   name: SetVersion
   displayName: Set Package Version
@@ -86,15 +102,19 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       # expect lerna.json and package.json be in the current working directory
+
       echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
       echo TEST_BUILD=$TEST_BUILD
       echo VERSION_RELEASE=$VERSION_RELEASE
       echo VERSION_PATCH=$VERSION_PATCH
       echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
       echo PACKAGE_TYPES_FIELD=$PACKAGE_TYPES_FIELD
+
       # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
       # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
       flub generate buildVersion
+
+# This check runs only when the value of `Change package types` is selected as `alpha` or `beta`
 - ${{ if ne(parameters.packageTypesOverride, 'none') }}:
   - task: Bash@3
     displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
@@ -105,6 +125,7 @@ steps:
       script: |
         # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.  
         flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists 
+
 - task: Bash@3
   displayName: Update Package Version (flub)
   env:
@@ -115,6 +136,9 @@ steps:
     targetType: 'filePath'
     workingDirectory: ${{ parameters.buildDirectory }}
     filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
+
+# This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
+# help find and prevent bugs in the version bumping tools.
 - task: Bash@3
   displayName: Check for caret dependencies on internal versions
   inputs:
@@ -126,6 +150,9 @@ steps:
         echo "##vso[task.logissue type=error]Fluid internal versions shouldn't use caret dependencies"
         exit -1;
       fi
+
+# This task is a last-minute verification that no Fluid internal dev versions show up with caret dependencies. This is
+# to help find and prevent bugs in the version bumping tools.
 - task: Bash@3
   displayName: Check for caret dependencies on dev versions
   inputs:
