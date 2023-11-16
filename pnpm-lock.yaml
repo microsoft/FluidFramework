@@ -9165,6 +9165,7 @@ importers:
       '@types/sinon': ^7.0.13
       '@types/uuid': ^9.0.2
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       double-ended-queue: ^2.1.0-0
       eslint: ~8.50.0
@@ -9215,6 +9216,7 @@ importers:
       '@types/sinon': 7.5.2
       '@types/uuid': 9.0.5
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -9239,6 +9241,7 @@ importers:
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.38.3
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -9256,6 +9259,7 @@ importers:
       '@fluidframework/container-runtime-definitions-previous': /@fluidframework/container-runtime-definitions/2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.3
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -9286,6 +9290,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       lodash: ^4.17.21
@@ -9324,6 +9329,7 @@ importers:
       '@types/node': 16.18.58
       '@types/uuid': 9.0.5
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -9346,6 +9352,7 @@ importers:
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions': workspace:~
       '@microsoft/api-extractor': ^7.38.3
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -9362,6 +9369,7 @@ importers:
       '@fluidframework/datastore-definitions-previous': /@fluidframework/datastore-definitions/2.0.0-internal.7.2.0
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.3
+      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -9379,6 +9387,7 @@ importers:
       '@fluidframework/protocol-definitions': ^3.0.0
       '@fluidframework/runtime-definitions-previous': npm:@fluidframework/runtime-definitions@2.0.0-internal.7.2.0
       '@microsoft/api-extractor': ^7.38.3
+      copyfiles: ^2.4.1
       eslint: ~8.50.0
       eslint-plugin-deprecation: ~2.0.0
       prettier: ~3.0.3
@@ -9396,6 +9405,7 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@fluidframework/runtime-definitions-previous': /@fluidframework/runtime-definitions/2.0.0-internal.7.2.0
       '@microsoft/api-extractor': 7.38.3
+      copyfiles: 2.4.1
       eslint: 8.50.0
       eslint-plugin-deprecation: 2.0.0_loebgezstcsvd2poh2d55fifke
       prettier: 3.0.3
@@ -9424,6 +9434,7 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -9457,6 +9468,7 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -9494,6 +9506,7 @@ importers:
       '@types/node': ^16.18.38
       '@types/uuid': ^9.0.2
       c8: ^7.7.1
+      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       events: ^3.1.0
@@ -9534,6 +9547,7 @@ importers:
       '@types/node': 16.18.58
       '@types/uuid': 9.0.5
       c8: 7.14.0
+      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
