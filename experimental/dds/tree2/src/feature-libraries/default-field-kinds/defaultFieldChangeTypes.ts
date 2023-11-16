@@ -3,61 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ChangeAtomId, ChangesetLocalId, JsonableTree, RevisionTag } from "../../core";
+import { ChangeAtomId, JsonableTree } from "../../core";
 import { NodeChangeset } from "../modular-schema";
-
-export type NodeUpdate =
-	| {
-			set: JsonableTree;
-			/**
-			 * ID associated with the creation of the new tree.
-			 */
-			buildId: ChangeAtomId;
-	  }
-	| {
-			/**
-			 * The change being reverted.
-			 */
-			revert: ChangeAtomId;
-	  };
-
-export interface OptionalFieldChange {
-	/**
-	 * Uniquely identifies, in the scope of the changeset, the change made to the field.
-	 * Globally unique across all changesets when paired with the changeset's revision tag.
-	 */
-	readonly id: ChangesetLocalId;
-
-	/**
-	 * When populated, indicates the revision that this field change is associated with.
-	 * Is left undefined when the revision is the same as that of the whole changeset
-	 * (which would also be undefined in the case of an anonymous changeset).
-	 */
-	readonly revision?: RevisionTag;
-
-	/**
-	 * The new content for the trait. If undefined, the trait will be cleared.
-	 */
-	newContent?: NodeUpdate;
-
-	removed: ContentId;
-
-	// /**
-	//  * When defined, signifies ContentId which overrides the id of the node occupying this field after the change.
-	//  * This is used for restored nodes, either via undo or
-	//  *
-	//  *
-	//  * When undefined, the node occupying this field is implicitly identified via its subsequent removal.
-	//  */
-	inserted: ContentId;
-
-	// TODO: This is no longer necessary for each change within array of field changes.
-	// Maybe should be moved to OptionalChangeset.
-	/**
-	 * Whether the field was empty in the state this change is based on.
-	 */
-	wasEmpty: boolean;
-}
 
 /**
  * TL;DR:
@@ -109,6 +56,5 @@ export interface OptionalChangeset {
 
 	childChanges: [register: ContentId, childChange: NodeChangeset][];
 
-	// TODO: This should probably live in test code instead. It's unnecessary for production codepath, but makes equivalence assertions easier.
 	reservedDetachId?: ContentId;
 }

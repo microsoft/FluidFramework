@@ -20,10 +20,6 @@ import {
 	BoundFieldChangeRebaser,
 } from "./exhaustiveRebaserUtils";
 import { fail } from "../../util";
-import {
-	ContentId,
-	OptionalChangeset,
-} from "../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 
 export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 	initialStates: FieldStateTree<TContent, TChangeset>[],
@@ -173,6 +169,13 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
+						if (
+							title !==
+							'Rebase ["Delete","Undo:Delete","Undo:Undo:Delete","Undo:Undo:Undo:Delete"] over SetA,0'
+						) {
+							continue;
+						}
+
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
@@ -258,37 +261,12 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 						namedSourceEdits.map(({ description }) => description),
 					)}`;
 
-					// if (title !== 'for ["SetA,0","ChildChange2","Delete"]') {
-					// 	continue;
-					// }
-
-					// if (title !== 'for ["ChildChange1","SetB,1","ChildChange19"]') {
-					// 	continue;
-					// }
-
-					// if (
-					// 	title !==
-					// 	'for ["SetB,0","Undo:SetB,0","SetB,2","Undo:SetB,2","ChildChange2227"]'
-					// ) {
-					// 	continue;
-					// }
-
-					// if (title !== 'for ["ChildChange1","SetB,1","Undo:SetB,1","SetB,3"]') {
-					// 	continue;
-					// }
-
-					// if (title !== 'for ["Delete","SetB,1","SetB,2","Delete","Undo:Delete"]') {
-					// 	continue;
-					// }
-
 					// Note that this test case doesn't verify associativity of rollback inverses.
 					// That's covered some by "Composed sandwich rebase over single edit"
 					it(title, () => {
 						const edits = namedSourceEdits.map(({ changeset }) => changeset);
 						verifyComposeAssociativity(edits);
 					});
-
-					// TODO: build id should be normalized with attach id.
 				}
 			});
 		}

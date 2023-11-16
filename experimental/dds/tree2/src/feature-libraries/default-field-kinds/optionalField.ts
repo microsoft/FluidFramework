@@ -32,9 +32,8 @@ import {
 	NodeExistenceState,
 	FieldChangeHandler,
 	RemovedTreesFromChild,
-	RevisionInfo,
 } from "../modular-schema";
-import { ContentId, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
+import { ContentId, OptionalChangeset } from "./defaultFieldChangeTypes";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 import { DetachedNodeBuild, DetachedNodeChanges, DetachedNodeRename } from "../../core/tree/delta";
@@ -166,8 +165,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const builds: OptionalChangeset["build"] = [];
 		let childChangesByOriginalId = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
-		// TODO: Maybe this can be done in-place?
-		// Additionally, doing intermediate cancellation would help with cloning if in-place proves too difficult
+		// TODO: It might be possible to compose moves in place rather than repeatedly copy.
+		// Additionally, working out a 'register allocation' strategy which enables frequent cancellation of noop moves
+		// for sandwich rebases would help with cloning if in-place proves too difficult
 		let current = getBidirectionalMaps([]);
 		for (const { change, revision } of changes) {
 			if (
@@ -179,7 +179,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				isInputContextEmpty = change.reservedDetachId !== undefined;
 			}
 			const withIntention = (id: ContentId): ContentId => {
-				// return id;
 				if (id === "self") {
 					return id;
 				}
@@ -257,10 +256,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const composedMoves: OptionalChangeset["moves"] = [];
 		for (const [src, [dst, target]] of current.srcToDst.entries()) {
-			// Might be valid to put this back. I took it out to not take any risks, but it wasn't the root cause at the time I took it out.
-			// if (!areEqualContentIds(src, dst)) {
 			composedMoves.push([src, dst, target]);
-			// }
 		}
 		const composed: OptionalChangeset = {
 			build: builds,
@@ -287,8 +283,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	): OptionalChangeset => {
 		const { moves, childChanges } = change;
 		const invertIdMap = new ChildChangeMap<ContentId>();
-		let originalHasAttach = false;
-		let originalHasDetach = false;
 		const withIntention = (id: ContentId): ContentId => {
 			if (id === "self") {
 				return id;
@@ -297,29 +291,19 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		};
 		for (const [src, dst] of moves) {
 			invertIdMap.set(dst, src);
-			// TODO: Unclear if we need the second clauses here.
-			if (src === "self" && dst !== "self") {
-				originalHasDetach = true;
-			}
-			if (dst === "self" && src !== "self") {
-				originalHasAttach = true;
-			}
 		}
 
 		const rebasedMoves: typeof change.moves = [];
-		// let inverseAttachesContent = false;
 		for (const [src, dst, target] of moves) {
+			// TODO: This assert can reasonably fail for transactions, meaning we have litte test coverage there.
 			assert(
 				src === "self" || dst === "self",
 				"Only inverses for single-register attached sets are supported.",
 			);
-			if (dst === "self") {
-				// TODO.
-				assert(src !== "self", "when does this happen");
+			if (dst === "self" && src !== "self") {
 				rebasedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]); // not sure this is right
 			} else {
 				rebasedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
-				// inverseAttachesContent = true;
 			}
 		}
 		const inverted: OptionalChangeset = {
@@ -331,9 +315,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			]),
 		};
 
-		// if (originalHasDetach && !originalHasAttach) {
-		// 	inverted.moves.push(["self", { localId: brand(genId.getNextId()) }]);
-		// }
 		return inverted;
 	},
 
@@ -363,17 +344,19 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const overDstToSrc = new ChildChangeMap<ContentId>();
 		const overSrcToDst = new ChildChangeMap<ContentId>();
 		for (const [src, dst] of overChange.moves) {
-			overSrcToDst.set(withIntention(src), withIntention(dst));
-			overDstToSrc.set(withIntention(dst), withIntention(src));
+			const srcTagged = withIntention(src);
+			const dstTagged = withIntention(dst);
+			overSrcToDst.set(srcTagged, dstTagged);
+			overDstToSrc.set(dstTagged, srcTagged);
 		}
 
 		const renamedDsts = new ChildChangeMap<ContentId>();
 		for (const [_, dst] of moves) {
 			renamedDsts.set(dst, dst);
 		}
-		for (const [src, dst] of overChange.moves) {
-			if (!renamedDsts.has(withIntention(src))) {
-				renamedDsts.set(withIntention(src), withIntention(dst));
+		for (const [src, dst] of overSrcToDst.entries()) {
+			if (!renamedDsts.has(src)) {
+				renamedDsts.set(src, dst);
 			}
 		}
 
@@ -387,6 +370,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		for (const [src, dst, target] of moves) {
 			if (target === "cellTargeting") {
+				// TODO: Should we drop cell targeting / node targeting and just special-case 'self'? Might be simpler to understand.
 				if (
 					overSrcToDst.get(src) !== undefined &&
 					overDstToSrc.get(src) === undefined &&
@@ -395,13 +379,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					reservedDetachId === undefined
 				) {
 					// Over removed the content occupying this cell and didn't fill it with other content.
-					// Additionally, this change intends to fill the cell with other content, which is the primary reason
-					// why it needed to remove existing content from the cell.
-					// Since the cell is already empty, we can drop the move.
-
-					// Note that it's important that the change intends to fill the cell with other content, as otherwise
-					// we might accidentally drop the intent to clear a cell if rebasing over a change that already has,
-					// which is a problem if we further rebase over changes that populate it again.
+					// This change includes field changes,
 					reservedDetachId = dst;
 				} else {
 					// Cell-targeting.
@@ -409,8 +387,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				}
 			} else {
 				// Figure out where content in src ended up in `overTagged`
-				const movedSrc = overSrcToDst.get(src); // following withIntention can probably be removed
-				const rebasedSrc = movedSrc !== undefined ? withIntention(movedSrc) : src;
+				const rebasedSrc = overSrcToDst.get(src) ?? src;
 				// Note: we cannot drop changes which map a node to itself, as this loses the intention of the original edit
 				// (since the target kind is node targeting, it may not still map to a noop after further rebases)
 				rebasedMoves.push([rebasedSrc, dst, target]);

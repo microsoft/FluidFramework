@@ -5,14 +5,8 @@
 
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
-import { JsonCompatibleReadOnly, Mutable } from "../../util";
 import type { NodeChangeset } from "../modular-schema";
-import type {
-	ContentId,
-	NodeUpdate,
-	OptionalChangeset,
-	OptionalFieldChange,
-} from "./defaultFieldChangeTypes";
+import type { ContentId, OptionalChangeset } from "./defaultFieldChangeTypes";
 import {
 	EncodedBuild,
 	EncodedContentId,
@@ -35,7 +29,6 @@ const contentIdCodec: IJsonCodec<ContentId, EncodedContentId> = {
 function makeOptionalFieldCodec(
 	childCodec: IJsonCodec<NodeChangeset>,
 ): IJsonCodec<OptionalChangeset, EncodedOptionalChangeset<TAnySchema>> {
-	// const nodeUpdateCodec = makeNodeUpdateCodec(childCodec);
 	return {
 		encode: (change: OptionalChangeset) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
@@ -97,69 +90,7 @@ function makeOptionalFieldCodec(
 				reservedDetachId:
 					encoded.d !== undefined ? contentIdCodec.decode(encoded.d) : undefined,
 			};
-			// const decoded: Mutable<OptionalChangeset> = {
-			// 	fieldChanges: [],
-			// 	// contentId: { id: "this", type: "after" },
-			// } as any;
-			// if (encoded.fieldChange !== undefined) {
-			// 	const decodedFieldChange: Mutable<OptionalFieldChange> = {
-			// 		id: encoded.fieldChange.id,
-			// 		wasEmpty: encoded.fieldChange.wasEmpty,
-			// 		inserted: { type: "after", id: "this" },
-			// 		removed: { type: "before", id: "this" },
-			// 	};
-			// 	if (encoded.fieldChange.revision !== undefined) {
-			// 		decodedFieldChange.revision = encoded.fieldChange.revision;
-			// 	}
-			// 	if (encoded.fieldChange.newContent !== undefined) {
-			// 		decodedFieldChange.newContent = nodeUpdateCodec.decode(
-			// 			encoded.fieldChange.newContent,
-			// 		);
-			// 	}
-			// 	decoded.fieldChanges.push(decodedFieldChange);
-			// }
-
-			// if (encoded.childChanges !== undefined) {
-			// 	decoded.childChanges = encoded.childChanges.map(([id, childChange]) => [
-			// 		{ id, type: "after" },
-			// 		childCodec.decode(childChange),
-			// 	]);
-			// }
-
-			// return decoded;
 		},
 		encodedSchema: EncodedOptionalChangeset(childCodec.encodedSchema ?? Type.Any()),
 	};
 }
-
-// function makeNodeUpdateCodec(
-// 	childCodec: IJsonCodec<NodeChangeset>,
-// ): IJsonCodec<NodeUpdate, EncodedNodeUpdate<TAnySchema>> {
-// 	return {
-// 		encode: (update: NodeUpdate) => {
-// 			const encoded: EncodedNodeUpdate<TAnySchema> =
-// 				"revert" in update
-// 					? { revert: update.revert }
-// 					: { set: update.set, buildId: update.buildId };
-
-// 			// if (update.changes !== undefined) {
-// 			// 	encoded.changes = childCodec.encode(update.changes);
-// 			// }
-
-// 			return encoded as JsonCompatibleReadOnly & EncodedNodeUpdate<TAnySchema>;
-// 		},
-// 		decode: (encoded: EncodedNodeUpdate<TAnySchema>) => {
-// 			const decoded: NodeUpdate =
-// 				"revert" in encoded
-// 					? { revert: encoded.revert }
-// 					: { set: encoded.set, buildId: encoded.buildId };
-
-// 			// if (encoded.changes !== undefined) {
-// 			// 	decoded.changes = childCodec.decode(encoded.changes);
-// 			// }
-
-// 			return decoded;
-// 		},
-// 		encodedSchema: EncodedNodeUpdate(childCodec.encodedSchema ?? Type.Any()),
-// 	};
-// }

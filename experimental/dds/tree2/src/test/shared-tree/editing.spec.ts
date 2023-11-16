@@ -1852,27 +1852,46 @@ describe("Editing", () => {
 	});
 
 	describe("Optional Field", () => {
-		// minimization of seed 14 top-level fuzz test.
-		// relates to compose associativity.
-		it("can rebase TODO naming", () => {
-			const tree1 = makeTreeFromJson([{ foo: "1" }]);
-			const tree2 = tree1.fork();
-			const tree3 = tree1.fork();
+		describe("can rebase a set over another set", () => {
+			it("from a non-empty state", () => {
+				const tree1 = makeTreeFromJson([{ foo: "1" }]);
+				const tree2 = tree1.fork();
+				const tree3 = tree1.fork();
 
-			tree2.editor
-				.valueField({ parent: rootNode, field: brand("foo") })
-				.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "2" }));
+				tree2.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "2" }));
 
-			tree3.editor
-				.valueField({ parent: rootNode, field: brand("foo") })
-				.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "3" }));
+				tree3.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "3" }));
 
-			tree3.rebaseOnto(tree2);
-			// tree1.merge(tree2, false);
-			// tree1.merge(tree3, false);
-			// tree2.rebaseOnto(tree1);
+				tree3.rebaseOnto(tree2);
+				tree2.merge(tree3, false);
+				tree1.merge(tree3, false);
 
-			expectJsonTree([tree3], [{ foo: "3" }]);
+				expectJsonTree([tree1, tree2, tree3], [{ foo: "3" }]);
+			});
+
+			it("from an empty state", () => {
+				const tree1 = makeTreeFromJson([{}]);
+				const tree2 = tree1.fork();
+				const tree3 = tree1.fork();
+
+				tree2.editor
+					.optionalField({ parent: rootNode, field: brand("foo") })
+					.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "2" }), true);
+
+				tree3.editor
+					.optionalField({ parent: rootNode, field: brand("foo") })
+					.set(cursorForJsonableTreeNode({ type: leaf.string.name, value: "3" }), true);
+
+				tree3.rebaseOnto(tree2);
+				tree2.merge(tree3, false);
+				tree1.merge(tree3, false);
+
+				expectJsonTree([tree1, tree2, tree3], [{ foo: "3" }]);
+			});
 		});
 
 		it("can rebase a node replacement and a dependent edit to the new node", () => {
