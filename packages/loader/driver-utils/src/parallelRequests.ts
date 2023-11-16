@@ -14,7 +14,8 @@ import { logNetworkFailure } from "./networkUtils";
 import { pkgVersion as driverVersion } from "./packageVersion";
 import { calculateMaxWaitTime } from "./runWithRetry";
 
-const MissingFetchDelayInMs = 100;
+// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+const MissingFetchDelayInMs = 50;
 
 type WorkingState = "working" | "done" | "canceled";
 
@@ -423,7 +424,7 @@ async function getSingleOpBatch(
 	let retry: number = 0;
 	const nothing = { partial: false, cancel: true, payload: [] };
 	let waitStartTime: number = 0;
-	let waitTime = MissingFetchDelayInMs / 2;
+	let waitTime = MissingFetchDelayInMs;
 
 	while (signal?.aborted !== true) {
 		retry++;

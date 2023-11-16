@@ -63,7 +63,8 @@ import { DeltaQueue } from "./deltaQueue";
 import { SignalType } from "./protocol";
 import { isDeltaStreamConnectionForbiddenError } from "./utils";
 
-const InitialReconnectDelayInMs = 1000;
+// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
+const InitialReconnectDelayInMs = 500;
 const DefaultChunkSize = 16 * 1024;
 
 const fatalConnectErrorProp = { fatalConnectError: true };
@@ -542,8 +543,7 @@ export class ConnectionManager implements IConnectionManager {
 			return;
 		}
 
-		// Initialize with half as when we calculate the actual wait time, then we double it.
-		let delayMs = InitialReconnectDelayInMs / 2;
+		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
 		const connectStartTime = performance.now();
 		let lastError: any;

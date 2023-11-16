@@ -55,6 +55,7 @@ export async function runWithRetry<T>(
 ): Promise<T> {
 	let result: T | undefined;
 	let success = false;
+	// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 	let retryAfterMs = 500; // has to be positive!
 	let numRetries = 0;
 	const startTime = performance.now();
