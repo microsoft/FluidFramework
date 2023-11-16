@@ -13,11 +13,7 @@ import { toMapTree } from "../../../feature-libraries/simple-tree/toMapTree";
 import { brand } from "../../../util";
 import { EmptyKey, FieldKey, type MapTree } from "../../../core";
 
-// TODOs:
-// - Fluid handle
-// - null
-
-describe.only("toMapTree", () => {
+describe("toMapTree", () => {
 	it("string", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const schema = schemaBuilder.intoSchema(schemaBuilder.string);
