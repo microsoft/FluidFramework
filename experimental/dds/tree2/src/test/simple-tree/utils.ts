@@ -6,13 +6,12 @@
 import {
 	TreeFieldSchema,
 	ImplicitFieldSchema,
-	TreeField,
-	TreeRoot,
 	TreeSchema,
 	SchemaAware,
-} from "../../../feature-libraries";
-import { treeViewWithContent } from "../../utils";
-import { SchemaBuilder } from "../../../domains";
+} from "../../feature-libraries";
+import { TreeField, TreeRoot } from "../../simple-tree";
+import { treeViewWithContent } from "../utils";
+import { SchemaBuilder } from "../../domains";
 
 /** Helper for making small test schemas. */
 

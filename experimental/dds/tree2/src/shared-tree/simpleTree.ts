@@ -10,7 +10,8 @@ import {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions";
-import { TreeField, TreeFieldSchema } from "../feature-libraries";
+import { TreeField } from "../simple-tree";
+import { TreeFieldSchema } from "../feature-libraries";
 import { ISubscribable } from "../events";
 import { IDisposable } from "../util";
 import { SharedTree, SharedTreeOptions } from "./sharedTree";

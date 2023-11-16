@@ -13,16 +13,15 @@ import {
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
-	TypedNode,
 	ObjectNodeSchema,
-	TreeObjectNode,
 	FlexTreeTypedNode,
 } from "../../feature-libraries";
+import { TypedNode, TreeObjectNode } from "../../simple-tree";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../feature-libraries/simple-tree/proxies";
+import { extractFactoryContent } from "../../simple-tree/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {

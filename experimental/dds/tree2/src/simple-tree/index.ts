@@ -16,5 +16,5 @@ export {
 	TreeRoot,
 	TreeNode,
 } from "./types";
-export { SharedTreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
+export { TreeObjectFactory, FactoryTreeSchema, addFactory } from "./objectFactory";
 export { nodeApi as Tree, TreeApi } from "./node";

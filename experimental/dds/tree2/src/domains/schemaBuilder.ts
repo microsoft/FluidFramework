@@ -19,20 +19,19 @@ import {
 	SchemaBuilderBase,
 	ImplicitFieldSchema,
 	Required,
-	addFactory,
 	ObjectNodeSchema,
-	FactoryTreeSchema,
 	Unenforced,
 	AllowedTypes,
 	FieldNodeSchema,
 	MapNodeSchema,
 	TreeNodeSchemaBase,
 } from "../feature-libraries";
+import { FactoryTreeSchema, addFactory } from "../simple-tree";
 import { RestrictiveReadonlyRecord, getOrCreate, isAny, requireFalse } from "../util";
 import { leaf } from "./leafDomain";
 
 /**
- * A {@link ObjectNodeSchema} that satisfies the {@link SharedTreeObjectFactory} and therefore can create {@link TreeObjectNode}s.
+ * A {@link ObjectNodeSchema} that satisfies the {@link TreeObjectFactory} and therefore can create {@link TreeObjectNode}s.
  * @privateRemarks
  * This type exists because TypeScript is not able to correlate the two places where it is used if the body of this type is inlined.
  * @alpha
