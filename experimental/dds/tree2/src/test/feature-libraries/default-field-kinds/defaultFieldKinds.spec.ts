@@ -11,7 +11,7 @@ import {
 	valueFieldEditor,
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/default-field-kinds/defaultFieldKinds";
+} from "../../../feature-libraries/default-schema/defaultFieldKinds";
 import {
 	makeAnonChange,
 	TaggedChange,
@@ -20,10 +20,10 @@ import {
 	ChangesetLocalId,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import { defaultRevisionMetadataFromChanges, fakeTaggedRepair as fakeRepair } from "../../utils";
+import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
-import { changesetForChild, testTree, testTreeCursor } from "./fieldKindTestUtils";
+import { OptionalChangeset } from "../../../feature-libraries/optional-field";
+import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -53,12 +53,15 @@ describe("defaultFieldKinds", () => {
 		it("valueFieldEditor.set", () => {
 			const expected: OptionalChangeset = {
 				fieldChange: {
-					newContent: { set: testTree("tree1") },
+					newContent: { set: testTree("tree1"), buildId: { localId: brand(41) } },
 					id: brand(1),
 					wasEmpty: false,
 				},
 			};
-			assert.deepEqual(valueFieldEditor.set(testTreeCursor("tree1"), brand(1)), expected);
+			assert.deepEqual(
+				valueFieldEditor.set(testTreeCursor("tree1"), brand(1), brand(41)),
+				expected,
+			);
 		});
 	});
 
@@ -74,17 +77,21 @@ describe("defaultFieldKinds", () => {
 		const childChange3: OptionalChangeset = { childChanges: [["self", arbitraryChildChange]] };
 
 		const change1 = tagChange(
-			fieldHandler.editor.set(testTreeCursor("tree1"), brand(1)),
+			fieldHandler.editor.set(testTreeCursor("tree1"), brand(1), brand(41)),
 			mintRevisionTag(),
 		);
 		const change2 = tagChange(
-			fieldHandler.editor.set(testTreeCursor("tree2"), brand(2)),
+			fieldHandler.editor.set(testTreeCursor("tree2"), brand(2), brand(42)),
 			mintRevisionTag(),
 		);
 
 		const change1WithChildChange: OptionalChangeset = {
 			fieldChange: {
-				newContent: { set: testTree("tree1"), changes: nodeChange1 },
+				newContent: {
+					set: testTree("tree1"),
+					changes: nodeChange1,
+					buildId: { localId: brand(41) },
+				},
 				wasEmpty: false,
 				id: brand(1),
 				revision: change1.revision,
@@ -98,7 +105,7 @@ describe("defaultFieldKinds", () => {
 			fieldChange: {
 				id: brand(2),
 				revision: change2.revision,
-				newContent: { set: testTree("tree2") },
+				newContent: { set: testTree("tree2"), buildId: { localId: brand(42) } },
 				wasEmpty: false,
 			},
 		});
@@ -168,12 +175,13 @@ describe("defaultFieldKinds", () => {
 				return nodeChange2;
 			};
 
+			const taggedChange = { revision: mintRevisionTag(), change: change1WithChildChange };
 			const inverted = fieldHandler.rebaser.invert(
-				{ revision: mintRevisionTag(), change: change1WithChildChange },
+				taggedChange,
 				childInverter,
-				fakeRepair,
 				fakeIdAllocator,
 				failCrossFieldManager,
+				defaultRevisionMetadataFromChanges([taggedChange]),
 			);
 
 			assert.deepEqual(inverted.childChanges, [["self", nodeChange2]]);

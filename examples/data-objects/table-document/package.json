@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-document",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.3.0",
 	"description": "Chaincode component containing a table's data",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -20,7 +20,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -61,14 +61,14 @@
 		"@fluidframework/request-handler": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"debug": "^4.1.1"
+		"debug": "^4.3.4"
 	},
 	"devDependencies": {
-		"@fluid-internal/test-version-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.25.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.25.0",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluid-private/test-version-utils": "workspace:~",
+		"@fluid-tools/build-cli": "0.28.0-210888",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.28.0-210888",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
@@ -79,8 +79,6 @@
 		"c8": "^7.7.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
-		"eslint-import-resolver-typescript": "^3.6.1",
-		"eslint-plugin-import": "~2.28.1",
 		"mocha": "^10.2.0",
 		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",

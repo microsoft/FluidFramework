@@ -178,7 +178,6 @@ describe("selectAndFilterPackages", async () => {
 			"@fluid-private/changelog-generator-wrapper",
 			"@fluid-internal/getkeys",
 			"@fluidframework/test-tools",
-			"tinylicious",
 		]);
 	});
 
@@ -225,6 +224,7 @@ describe("selectAndFilterPackages", async () => {
 		const { selected } = selectAndFilterPackages(context, selectionOptions, filters);
 		const dirs = selected.map((p) => context.repo.relativeToRepo(p.directory));
 
+		expect(selected.length).to.equal(1);
 		expect(dirs).to.be.containingAllOf(["build-tools"]);
 	});
 

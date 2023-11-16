@@ -18,9 +18,7 @@ import {
 	RevisionTag,
 	SessionId,
 	SimpleDependee,
-	UndoRedoManager,
 } from "../core";
-import { createEmitter, ISubscribable } from "../events";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
 import {
 	Commit,
@@ -38,27 +36,16 @@ const minimumPossibleSequenceId: SequenceId = {
 	sequenceNumber: minimumPossibleSequenceNumber,
 };
 
-export interface EditManagerEvents<TChangeset> {
-	/**
-	 * Fired every time that a new commit is added to the trunk
-	 * @param newHead - the new head of the trunk
-	 */
-	newTrunkHead(newHead: GraphCommit<TChangeset>): void;
-}
-
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
  * which were based on a given session's branch, to the document history
  */
 // TODO: Try to reduce this to a single type parameter
 export class EditManager<
-		TEditor extends ChangeFamilyEditor,
-		TChangeset,
-		TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
-	>
-	extends SimpleDependee
-	implements ISubscribable<EditManagerEvents<TChangeset>>
-{
+	TEditor extends ChangeFamilyEditor,
+	TChangeset,
+	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
+> extends SimpleDependee {
 	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
 	private readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
 
@@ -79,9 +66,6 @@ export class EditManager<
 		sequenceIdComparator,
 	);
 
-	/** The {@link UndoRedoManager} associated with the trunk */
-	private readonly trunkUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
-
 	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
 	 * at the time of submitting the latest known edit on the branch.
@@ -95,9 +79,6 @@ export class EditManager<
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
 	 */
 	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset>;
-
-	/** The {@link UndoRedoManager} associated with the local branch. */
-	private readonly localBranchUndoRedoManager: UndoRedoManager<TChangeset, TEditor>;
 
 	/**
 	 * Tracks where on the trunk all registered branches are based. Each key is the sequence id of a commit on
@@ -117,21 +98,18 @@ export class EditManager<
 	private minimumSequenceNumber = minimumPossibleSequenceNumber;
 
 	/**
+	 * The sequence ID corresponding to the oldest revertible commit owned by the local branch. This is used
+	 * to prevent the trunk from trimming this commit or commits after it as they're needed for undo.
+	 */
+	private _oldestRevertibleSequenceId?: SequenceId;
+
+	/**
 	 * A special commit that is a "base" (tail) of the trunk, though not part of the trunk itself.
 	 * This makes it possible to model the trunk in the same way as any other branch (it branches off of a base commit)
 	 * which allows it to use branching APIs to interact with the other branches.
 	 * Each time trunk eviction occurs, the most recent evicted commit becomes the new `trunkBase`.
 	 */
 	private trunkBase: GraphCommit<TChangeset>;
-
-	private readonly events = createEmitter<EditManagerEvents<TChangeset>>();
-
-	public on<K extends keyof EditManagerEvents<TChangeset>>(
-		eventName: K,
-		listener: EditManagerEvents<TChangeset>[K],
-	): () => void {
-		return this.events.on(eventName, listener);
-	}
 
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
@@ -148,14 +126,10 @@ export class EditManager<
 			change: changeFamily.rebaser.compose([]),
 		};
 		this.sequenceMap.set(minimumPossibleSequenceId, this.trunkBase);
-		this.localBranchUndoRedoManager = UndoRedoManager.create(changeFamily);
-		this.trunkUndoRedoManager = this.localBranchUndoRedoManager.clone();
-		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily, this.trunkUndoRedoManager);
-		this.localBranch = new SharedTreeBranch(
-			this.trunk.getHead(),
-			changeFamily,
-			this.localBranchUndoRedoManager,
-		);
+		this.trunk = new SharedTreeBranch(this.trunkBase, changeFamily);
+		this.localBranch = new SharedTreeBranch(this.trunk.getHead(), changeFamily);
+
+		this.localBranch.on("revertibleDispose", this.onRevertibleDisposed());
 
 		// Track all forks of the local branch for purposes of trunk eviction. Unlike the local branch, they have
 		// an unknown lifetime and rebase frequency, so we can not make any assumptions about which trunk commits
@@ -215,6 +189,46 @@ export class EditManager<
 	}
 
 	/**
+	 * Returns the sequence id of the oldest sequenced revertible commit on the local branch.
+	 *
+	 * TODO: may be more performant to maintain the oldest revertible on the branches themselves
+	 * this should be tested and revisited once branches are supported
+	 */
+	private getOldestRevertibleSequenceId(): SequenceId | undefined {
+		if (this._oldestRevertibleSequenceId === undefined) {
+			let oldest: SequenceId | undefined;
+			for (const revision of this.localBranch.revertibleCommits()) {
+				if (oldest === undefined) {
+					oldest = this.trunkMetadata.get(revision)?.sequenceId;
+				} else {
+					const current = this.trunkMetadata.get(revision)?.sequenceId;
+					if (current !== undefined) {
+						oldest = minSequenceId(oldest, current);
+					}
+				}
+			}
+			this._oldestRevertibleSequenceId = oldest;
+		}
+
+		return this._oldestRevertibleSequenceId;
+	}
+
+	private onRevertibleDisposed(): (revision: RevisionTag) => void {
+		return (revision: RevisionTag) => {
+			const metadata = this.trunkMetadata.get(revision);
+
+			// if this revision hasn't been sequenced, it won't be evicted
+			if (metadata !== undefined) {
+				const { sequenceId: id } = metadata;
+				// if this revision corresponds with the current oldest revertible sequence id, replace it with the new oldest
+				if (id === this._oldestRevertibleSequenceId) {
+					this._oldestRevertibleSequenceId = undefined;
+				}
+			}
+		};
+	}
+
+	/**
 	 * Advances the minimum sequence number, and removes all commits from the trunk which lie outside the collaboration window.
 	 * @param minimumSequenceNumber - the sequence number of the newest commit that all peers (including this one) have received and applied to their trunks.
 	 *
@@ -251,6 +265,19 @@ export class EditManager<
 			// If that branch is behind the minimum sequence id, we only want to evict commits older than it,
 			// even if those commits are behind the minimum sequence id
 			trunkTailSequenceId = minSequenceId(trunkTailSequenceId, minimumBranchBaseSequenceId);
+		}
+
+		// TODO get the oldest revertible sequence id from all registered branches, not just the local branch
+		const oldestRevertibleSequenceId = this.getOldestRevertibleSequenceId();
+		if (oldestRevertibleSequenceId !== undefined) {
+			// use a smaller sequence number so that the oldest revertible is not trimmed
+			const sequenceIdBeforeOldestRevertible: SequenceId = {
+				sequenceNumber: brand(oldestRevertibleSequenceId.sequenceNumber - 1),
+			};
+			trunkTailSequenceId = minSequenceId(
+				trunkTailSequenceId,
+				sequenceIdBeforeOldestRevertible,
+			);
 		}
 
 		const [sequenceId, latestEvicted] = this.getClosestTrunkCommit(trunkTailSequenceId);
@@ -290,7 +317,6 @@ export class EditManager<
 				(s, { revision }) => {
 					// Cleanup look-aside data for each evicted commit
 					this.trunkMetadata.delete(revision);
-					this.localBranchUndoRedoManager.untrackCommitType(revision);
 					// Delete all evicted commits from `sequenceMap` except for the latest one, which is the new `trunkBase`
 					if (equalSequenceIds(s, sequenceId)) {
 						assert(
@@ -546,18 +572,12 @@ export class EditManager<
 	}
 
 	private pushToTrunk(sequenceId: SequenceId, commit: Commit<TChangeset>, local = false): void {
-		this.trunk.setHead(mintCommit(this.trunk.getHead(), commit));
+		const mintedCommit = mintCommit(this.trunk.getHead(), commit);
+		this.trunk.setHead(mintedCommit);
+		this.localBranch.updateRevertibleCommit(mintedCommit);
 		const trunkHead = this.trunk.getHead();
-		if (local) {
-			const type =
-				this.localBranchUndoRedoManager.getCommitType(trunkHead.revision) ??
-				fail("Local commit types must be tracked until they are sequenced.");
-
-			this.trunkUndoRedoManager.trackCommit(trunkHead, type);
-		}
 		this.sequenceMap.set(sequenceId, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceId, sessionId: commit.sessionId });
-		this.events.emit("newTrunkHead", trunkHead);
 	}
 
 	/**

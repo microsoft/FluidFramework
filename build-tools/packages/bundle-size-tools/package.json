@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/bundle-size-tools",
-	"version": "0.26.0",
+	"version": "0.28.0",
 	"description": "Utility for analyzing bundle size regressions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -10,6 +10,14 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"exports": {
+		".": {
+			"default": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			}
+		}
+	},
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
@@ -18,7 +26,8 @@
 		"build:copy": "copyfiles -u 1 \"src/**/*.fsl\" dist",
 		"build:docs": "api-extractor run --local",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob 'dist' '*.tsbuildinfo' '_api-extractor-temp'",
+		"clean": "rimraf --glob dist \"*.tsbuildinfo\" _api-extractor-temp",
+		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix",
 		"format": "npm run prettier:fix",
@@ -38,19 +47,15 @@
 		"webpack": "^5.88.1"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/eslint-config-fluid": "^2.1.0",
-		"@microsoft/api-extractor": "^7.36.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/msgpack-lite": "^0.1.8",
-		"@types/node": "^14.18.53",
+		"@types/node": "^18.18.6",
 		"@types/pako": "^2.0.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
-		"eslint": "~8.6.0",
-		"eslint-plugin-eslint-comments": "~3.2.0",
-		"eslint-plugin-import": "~2.25.4",
-		"eslint-plugin-unicorn": "~40.0.0",
-		"eslint-plugin-unused-imports": "~2.0.0",
+		"eslint": "~8.51.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.1"
 	}

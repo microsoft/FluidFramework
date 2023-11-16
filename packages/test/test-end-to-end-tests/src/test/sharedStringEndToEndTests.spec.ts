@@ -14,14 +14,20 @@ import {
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	ITestFluidObject,
+	createSummarizer,
+	summarizeNow,
 } from "@fluidframework/test-utils";
-import { describeFullCompat } from "@fluid-internal/test-version-utils";
+import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
 
 const stringId = "sharedStringKey";
 const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 const testContainerConfig: ITestContainerConfig = {
 	fluidDataObjectType: DataObjectFactoryType.Test,
 	registry,
+};
+const groupedBatchingContainerConfig: ITestContainerConfig = {
+	...testContainerConfig,
+	runtimeOptions: { enableGroupedBatching: true },
 };
 
 describeFullCompat("SharedString", (getTestObjectProvider) => {
@@ -116,5 +122,67 @@ describeFullCompat("SharedString", (getTestObjectProvider) => {
 		assert.equal(detachedString1.isAttached(), true, "detachedString1 should be attached");
 		assert.equal(detachedString2.isAttached(), true, "detachedString2 should be attached");
 		assert.equal(sharedString1.isAttached(), true, "sharedString1 should be attached");
+	});
+});
+
+describeNoCompat("SharedString grouped batching", (getTestObjectProvider) => {
+	let provider: ITestObjectProvider;
+	beforeEach(() => {
+		provider = getTestObjectProvider();
+	});
+
+	it("can load summarized grouped batch at min seqnum", async () => {
+		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
+		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+
+		const text = "syncSharedString";
+		dataObject1.context.containerRuntime.orderSequentially(() => {
+			for (let i = 0; i < text.length; i++) {
+				sharedString1.insertText(i, text.charAt(i));
+			}
+		});
+
+		// Grouped batch should be min seqnum
+		await provider.ensureSynchronized();
+
+		sharedString1.insertText(0, "a");
+		await provider.ensureSynchronized();
+		const { summarizer } = await createSummarizer(provider, container1, testContainerConfig);
+		await summarizeNow(summarizer);
+
+		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+
+		// These calls ensures assert 0x072 isn't hit
+		sharedString2.insertText(0, "a");
+		await provider.ensureSynchronized();
+	});
+
+	it("can load summarized grouped batch", async () => {
+		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
+		const dataObject1 = await requestFluidObject<ITestFluidObject>(container1, "default");
+		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+
+		const text = "syncSharedString";
+		dataObject1.context.containerRuntime.orderSequentially(() => {
+			for (let i = 0; i < text.length; i++) {
+				sharedString1.insertText(i, text.charAt(i));
+			}
+		});
+
+		// Summarize grouped batch
+		await provider.ensureSynchronized();
+		const { summarizer } = await createSummarizer(provider, container1, testContainerConfig);
+		await summarizeNow(summarizer);
+
+		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const dataObject2 = await requestFluidObject<ITestFluidObject>(container2, "default");
+		const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+
+		// These calls ensures assert 0x072 isn't hit
+		sharedString2.insertText(0, "a");
+		await provider.ensureSynchronized();
 	});
 });

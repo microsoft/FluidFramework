@@ -1,4 +1,15 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "@fluidframework/build-common/api-extractor-common-strict.json"
+	"extends": "@fluidframework/build-common/api-extractor-base.json",
+	"messages": {
+		"extractorMessageReporting": {
+			"ae-missing-release-tag": {
+				// TODO: Fix violations and remove this rule override
+				"logLevel": "none"
+			}
+		}
+	},
+	"dtsRollup": {
+		"enabled": true
+	}
 }

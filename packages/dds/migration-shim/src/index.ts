@@ -10,4 +10,9 @@
  * @packageDocumentation
  */
 
-export { MigrationShim } from "./migrationShim";
+export type { IMigrationEvent } from "./migrationShim.js";
+export { MigrationShim } from "./migrationShim.js";
+export { MigrationShimFactory } from "./migrationShimFactory.js";
+export { SharedTreeShim } from "./sharedTreeShim.js";
+export { SharedTreeShimFactory } from "./sharedTreeShimFactory.js";
+export type { IShim } from "./types.js";

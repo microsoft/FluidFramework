@@ -14,6 +14,19 @@ parameters:
     - none
     - prerelease
     - release
+# Parameter for modifying the 'types' field in the package.json.
+# If the value `none` is provided, the 'types' field in package.json will remain unchanged.
+- name: packageTypesOverride
+  displayName: Change package types (default = none)
+  type: string
+  default: none
+  values:
+    - none
+    - alpha
+    - beta
+    # 'public' and 'untrimmed' options have not been fully developed yet
+    # - public
+    # - untrimmed
 - name: publishOverride
   displayName: Publish Override (default = based on branch)
   type: string
@@ -52,6 +65,7 @@ trigger:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -71,7 +85,8 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-log-test-failures.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
 
 pr:
   branches:
@@ -82,6 +97,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - packages
     - azure
     - examples
@@ -99,13 +115,15 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-log-test-failures.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
 
 extends:
   template: templates/build-npm-package.yml
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
+    packageTypesOverride: ${{ parameters.packageTypesOverride }}
     nonScopedPackages: ${{ parameters.nonScopedPackages }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
@@ -113,12 +131,14 @@ extends:
     packageManager: pnpm
     buildDirectory: .
     tagName: client
+    isReleaseGroup: true
     poolBuild: NewLarge
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false
-    taskBuildDocs: false
+    taskBuildDocs: true
     publishDocs: true
+    telemetry: true
     taskTest:
     - webpack
     - ci:test:mocha
@@ -137,30 +157,26 @@ extends:
     - nyc/experimental
     - nyc/packages
     checks:
-    - syncpack:deps
-    - syncpack:versions
-    - check:versions
-    - generate:packageList
-    - prettier
+    - checks
     additionalBuildSteps:
-      - task: Bash@3
-        displayName: Inject devtools telemetry logger token
-        inputs:
-          targetType: 'inline'
-          script: |
-            echo Generating .env
-            echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
+    - task: Bash@3
+      displayName: Inject devtools telemetry logger token
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo Generating .env
+          echo "DEVTOOLS_TELEMETRY_TOKEN=$(devtools-telemetry-key)" >> ./packages/tools/devtools/devtools-browser-extension/.env
 
-      - task: Npm@1
-        displayName: Build devtools
-        inputs:
-          command: 'custom'
-          workingDir: ./packages/tools/devtools/devtools-browser-extension/
-          customCommand: 'run webpack'
+    - task: Npm@1
+      displayName: Build devtools
+      inputs:
+        command: 'custom'
+        workingDir: ./packages/tools/devtools/devtools-browser-extension/
+        customCommand: 'run webpack'
 
-      - task: PublishPipelineArtifact@1
-        displayName: Publish Artifact - Devtools Browser Extension
-        inputs:
-          targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
-          artifactName: 'devtools-extension-bundle'
-          publishLocation: 'pipeline'
+    - task: PublishPipelineArtifact@1
+      displayName: Publish Artifact - Devtools Browser Extension
+      inputs:
+        targetPath: './packages/tools/devtools/devtools-browser-extension/dist/bundle/'
+        artifactName: 'devtools-extension-bundle'
+        publishLocation: 'pipeline'

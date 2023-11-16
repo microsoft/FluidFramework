@@ -21,7 +21,8 @@ data:
         },
         "lumberjack": {
             "options": {
-                "enableGlobalTelemetryContext": {{ .Values.lumberjack.options.enableGlobalTelemetryContext }}
+                "enableGlobalTelemetryContext": {{ .Values.lumberjack.options.enableGlobalTelemetryContext }},
+                "enableSanitization": {{ .Values.lumberjack.options.enableSanitization }}
             }
         },
         "mongo": {
@@ -204,9 +205,6 @@ data:
             "checkpointBatchSize": 1,
             "checkpointTimeIntervalMsec": 1000,
             "restartOnCheckpointFailure": {{ .Values.scriptorium.restartOnCheckpointFailure }}
-        },
-        "rabbitmq": {
-            "connectionString": "{{ .Values.rabbitmq.connectionString }}"
         },
         "riddler": {
             "port": 5000

@@ -25,7 +25,7 @@ import { filterFlags, selectionFlags } from "./flags";
 export abstract class PackageCommand<
 	T extends typeof Command & { flags: typeof PackageCommand.flags },
 > extends BaseCommand<T> {
-	static flags = {
+	static readonly flags = {
 		concurrency: Flags.integer({
 			description: "The number of tasks to execute concurrently.",
 			default: 25,
@@ -65,12 +65,12 @@ export abstract class PackageCommand<
 		kind: PackageKind,
 	): Promise<void>;
 
-	protected parseFlags() {
+	protected parseFlags(): void {
 		this.selectionOptions = parsePackageSelectionFlags(this.flags);
 		this.filterOptions = parsePackageFilterFlags(this.flags);
 	}
 
-	protected async selectAndFilterPackages() {
+	protected async selectAndFilterPackages(): Promise<void> {
 		if (this.selectionOptions === undefined) {
 			throw new Error(`No packages selected.`);
 		}
@@ -85,7 +85,7 @@ export abstract class PackageCommand<
 		[this.selectedPackages, this.filteredPackages] = [selected, filtered];
 	}
 
-	public async run(): Promise<any> {
+	public async run(): Promise<unknown> {
 		this.parseFlags();
 
 		assert(this.selectionOptions !== undefined, "selectionOptions is undefined");
@@ -112,7 +112,7 @@ export abstract class PackageCommand<
 		let succeeded = 0;
 		// In verbose mode, we output a log line per package. In non-verbose mode, we want to display an activity
 		// spinner, so we only start the spinner if verbose is false.
-		const verbose = this.flags.verbose;
+		const { verbose } = this.flags;
 
 		function updateStatus(): void {
 			if (!verbose) {

@@ -6,15 +6,15 @@
 @fluid-tools/fetch-tool
 @fluid-experimental/devtools-core
 @fluid-experimental/devtools
-@fluid-internal/test-version-utils
+@fluid-private/test-version-utils
 @fluidframework/test-utils
 @fluid-internal/test-service-load
-@fluid-internal/test-pairwise-generator
-@fluid-internal/test-end-to-end-tests
-@fluid-internal/test-drivers
+@fluid-private/test-pairwise-generator
+@fluid-private/test-end-to-end-tests
+@fluid-private/test-drivers
 @fluidframework/test-driver-definitions
 @fluid-internal/test-app-insights-logger
-@fluid-internal/stochastic-test-utils
+@fluid-private/stochastic-test-utils
 @fluidframework/mocha-test-setup
 @fluidframework/test-runtime-utils
 @fluidframework/runtime-utils
@@ -23,7 +23,7 @@
 @fluidframework/datastore
 @fluidframework/container-runtime-definitions
 @fluidframework/container-runtime
-@fluid-internal/test-loader-utils
+@fluid-private/test-loader-utils
 @fluidframework/location-redirection-utils
 @fluidframework/driver-utils
 @fluidframework/container-loader
@@ -38,6 +38,7 @@
 fluid-framework
 @fluidframework/dds-interceptions
 @fluidframework/data-object-base
+@fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
 @fluidframework/agent-scheduler
@@ -54,7 +55,7 @@ fluid-framework
 @fluidframework/driver-web-cache
 @fluidframework/driver-base
 @fluidframework/debugger
-@fluid-internal/test-dds-utils
+@fluid-private/test-dds-utils
 @fluidframework/task-manager
 @fluidframework/shared-summary-block
 @fluidframework/shared-object-base

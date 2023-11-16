@@ -26,7 +26,21 @@ export interface FieldChangeHandler<
 		change: TaggedChange<TChangeset>,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.MarkList;
+	): Delta.FieldChanges;
+	/**
+	 * Returns the set of removed trees that should be in memory for the given change to be applied.
+	 * A removed tree is relevant if it is being restored being edited (or both).
+	 *
+	 * Implementations are allowed to be conservative by returning more trees than strictly necessary
+	 * (though they should try to avoid doing so for the sake of performance).
+	 *
+	 * @param change - The change to be applied.
+	 * @param removedTreesFromChild - Delegate for collecting relevant removed trees from child changes.
+	 */
+	readonly relevantRemovedTrees: (
+		change: TChangeset,
+		removedTreesFromChild: RemovedTreesFromChild,
+	) => Iterable<Delta.DetachedNodeId>;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -70,9 +84,9 @@ export interface FieldChangeRebaser<TChangeset> {
 	invert(
 		change: TaggedChange<TChangeset>,
 		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -81,9 +95,9 @@ export interface FieldChangeRebaser<TChangeset> {
 	amendInvert(
 		invertedChange: TChangeset,
 		originalRevision: RevisionTag | undefined,
-		reviver: NodeReviver,
 		genId: IdAllocator,
 		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): TChangeset;
 
 	/**
@@ -119,12 +133,12 @@ export interface FieldChangeRebaser<TChangeset> {
  */
 export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (changes: TChangeset[]) => TChangeset;
-	invert: (change: TChangeset, reviver: NodeReviver) => TChangeset;
+	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (changes, _composeChild, _genId) => data.compose(changes.map((c) => c.change)),
-		invert: (change, _invertChild, reviver, _genId) => data.invert(change.change, reviver),
+		invert: (change, _invertChild, _genId) => data.invert(change.change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over.change),
 	});
 }
@@ -154,24 +168,12 @@ export interface FieldEditor<TChangeset> {
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  * @alpha
  */
-export type ToDelta = (child: NodeChangeset) => Delta.Modify;
+export type ToDelta = (child: NodeChangeset) => Delta.FieldMap;
 
 /**
  * @alpha
  */
-export type NodeReviver = (
-	revision: RevisionTag,
-	index: number,
-	count: number,
-) => Delta.ProtoNode[];
-
-/**
- * @alpha
- */
-export type NodeChangeInverter = (
-	change: NodeChangeset,
-	index: number | undefined,
-) => NodeChangeset;
+export type NodeChangeInverter = (change: NodeChangeset) => NodeChangeset;
 
 /**
  * @alpha
@@ -200,6 +202,13 @@ export type NodeChangeRebaser = (
 export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => NodeChangeset;
 
 /**
+ * A function that returns the set of removed trees that should be in memory for a given node changeset to be applied.
+ *
+ * @alpha
+ */
+export type RemovedTreesFromChild = (child: NodeChangeset) => Iterable<Delta.DetachedNodeId>;
+
+/**
  * A callback that returns the index of the changeset associated with the given RevisionTag among the changesets being
  * composed or rebased. This index is solely meant to communicate relative ordering, and is only valid within the scope of the
  * compose or rebase operation.
@@ -210,14 +219,15 @@ export type NodeChangeComposer = (changes: TaggedChange<NodeChangeset>[]) => Nod
  * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
  * @alpha
  */
-export type RevisionIndexer = (tag: RevisionTag) => number;
+export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 
 /**
  * @alpha
  */
 export interface RevisionMetadataSource {
+	readonly getRevisions: () => RevisionTag[];
 	readonly getIndex: RevisionIndexer;
-	readonly getInfo: (tag: RevisionTag) => RevisionInfo;
+	readonly tryGetInfo: (tag: RevisionTag | undefined) => RevisionInfo | undefined;
 }
 
 /**
@@ -227,5 +237,5 @@ export function getIntention(
 	rev: RevisionTag | undefined,
 	revisionMetadata: RevisionMetadataSource,
 ): RevisionTag | undefined {
-	return rev === undefined ? undefined : revisionMetadata.getInfo(rev).rollbackOf ?? rev;
+	return revisionMetadata.tryGetInfo(rev)?.rollbackOf ?? rev;
 }

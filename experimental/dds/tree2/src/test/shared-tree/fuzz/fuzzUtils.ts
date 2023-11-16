@@ -3,75 +3,76 @@
  * Licensed under the MIT License.
  */
 import { strict as assert } from "assert";
+import { join as pathJoin } from "path";
 import {
-	JsonableTree,
-	fieldSchema,
-	SchemaData,
-	rootFieldKey,
 	moveToDetachedField,
 	Anchor,
 	UpPath,
 	Value,
 	clonePath,
-	compareUpPaths,
 	forEachNodeInSubtree,
+	Revertible,
+	TreeNavigationResult,
 } from "../../../core";
-import { FieldKinds, singleTextCursor } from "../../../feature-libraries";
-import { brand } from "../../../util";
-import { SharedTree, ISharedTreeView } from "../../../shared-tree";
-import { namedTreeSchema } from "../../utils";
+import { FieldKinds, TreeFieldSchema, FlexTreeObjectNodeTyped } from "../../../feature-libraries";
+import { SharedTree, ITreeCheckout, ISharedTree } from "../../../shared-tree";
+import { SchemaBuilder, leaf } from "../../../domains";
+import { expectEqualPaths } from "../../utils";
 
-export const initialTreeState: JsonableTree = {
-	type: brand("Node"),
-	fields: {
-		foo: [
-			{ type: brand("Number"), value: 0 },
-			{ type: brand("Number"), value: 1 },
-			{ type: brand("Number"), value: 2 },
-		],
-		foo2: [
-			{ type: brand("Number"), value: 3 },
-			{ type: brand("Number"), value: 4 },
-			{ type: brand("Number"), value: 5 },
-		],
-	},
-};
-
-const rootFieldSchema = fieldSchema(FieldKinds.required);
-const rootNodeSchema = namedTreeSchema({
-	name: "TestValue",
-	mapFields: fieldSchema(FieldKinds.sequence),
+const builder = new SchemaBuilder({ scope: "tree2fuzz", libraries: [leaf.library] });
+export const fuzzNode = builder.objectRecursive("node", {
+	requiredChild: TreeFieldSchema.createUnsafe(FieldKinds.required, [
+		() => fuzzNode,
+		...leaf.primitives,
+	]),
+	optionalChild: TreeFieldSchema.createUnsafe(FieldKinds.optional, [
+		() => fuzzNode,
+		...leaf.primitives,
+	]),
+	sequenceChildren: TreeFieldSchema.createUnsafe(FieldKinds.sequence, [
+		() => fuzzNode,
+		...leaf.primitives,
+	]),
 });
 
-export const testSchema: SchemaData = {
-	treeSchema: new Map([[rootNodeSchema.name, rootNodeSchema]]),
-	rootFieldSchema,
-};
+export type FuzzNodeSchema = typeof fuzzNode;
+
+export type FuzzNode = FlexTreeObjectNodeTyped<FuzzNodeSchema>;
+
+export const fuzzSchema = builder.intoSchema(fuzzNode.objectNodeFieldsObject.optionalChild);
+
+export function fuzzViewFromTree(tree: ISharedTree): ITreeCheckout {
+	assert(tree instanceof SharedTree);
+	return tree.view;
+}
 
 export const onCreate = (tree: SharedTree) => {
-	tree.storedSchema.update(testSchema);
-	const field = tree.view.editor.sequenceField({ parent: undefined, field: rootFieldKey });
-	field.insert(0, singleTextCursor(initialTreeState));
+	tree.storedSchema.update(fuzzSchema);
 };
 
+/**
+ * Asserts that each anchor in `anchors` points to a node in `view` holding the provided value.
+ * If `checkPaths` is provided, also asserts the located node has the provided path.
+ */
 export function validateAnchors(
-	tree: ISharedTreeView,
+	view: ITreeCheckout,
 	anchors: ReadonlyMap<Anchor, [UpPath, Value]>,
 	checkPaths: boolean,
 ) {
+	const cursor = view.forest.allocateCursor();
 	for (const [anchor, [path, value]] of anchors) {
-		const cursor = tree.forest.allocateCursor();
-		tree.forest.tryMoveCursorToNode(anchor, cursor);
+		const result = view.forest.tryMoveCursorToNode(anchor, cursor);
+		assert.equal(result, TreeNavigationResult.Ok);
 		assert.equal(cursor.value, value);
 		if (checkPaths) {
-			const actualPath = tree.locate(anchor);
-			assert(compareUpPaths(actualPath, path));
+			const actualPath = view.locate(anchor);
+			expectEqualPaths(actualPath, path);
 		}
-		cursor.free();
 	}
+	cursor.free();
 }
 
-export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value]> {
+export function createAnchors(tree: ITreeCheckout): Map<Anchor, [UpPath, Value]> {
 	const anchors: Map<Anchor, [UpPath, Value]> = new Map();
 	const cursor = tree.forest.allocateCursor();
 	moveToDetachedField(tree.forest, cursor);
@@ -84,3 +85,18 @@ export function createAnchors(tree: ISharedTreeView): Map<Anchor, [UpPath, Value
 	cursor.free();
 	return anchors;
 }
+
+export type RevertibleSharedTreeView = ITreeCheckout & {
+	undoStack: Revertible[];
+	redoStack: Revertible[];
+	unsubscribe: () => void;
+};
+
+export function isRevertibleSharedTreeView(s: ITreeCheckout): s is RevertibleSharedTreeView {
+	return (s as RevertibleSharedTreeView).undoStack !== undefined;
+}
+
+export const failureDirectory = pathJoin(
+	__dirname,
+	"../../../../src/test/shared-tree/fuzz/failures",
+);

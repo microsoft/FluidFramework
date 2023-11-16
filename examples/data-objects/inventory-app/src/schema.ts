@@ -3,22 +3,42 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaBuilder, TypedField, TypedNode, leaf } from "@fluid-experimental/tree2";
+import {
+	AllowedUpdateType,
+	buildTreeConfiguration,
+	TypedNode,
+	SchemaBuilder,
+} from "@fluid-experimental/tree2";
 
-const builder = new SchemaBuilder({ scope: "inventory app", libraries: [leaf.library] });
+const builder = new SchemaBuilder({ scope: "com.contoso.app.inventory" });
 
-export const part = builder.struct("Contoso:Part-1.0.0", {
-	name: SchemaBuilder.fieldRequired(leaf.string),
-	quantity: SchemaBuilder.fieldRequired(leaf.number),
+export type Part = TypedNode<typeof Part>;
+export const Part = builder.object("Part", {
+	name: builder.string,
+	quantity: builder.number,
 });
 
-export const inventory = builder.struct("Contoso:Inventory-1.0.0", {
-	parts: SchemaBuilder.fieldSequence(part),
+export type Inventory = TypedNode<typeof Inventory>;
+export const Inventory = builder.object("Inventory", {
+	parts: builder.list(Part),
 });
 
-export const inventoryField = SchemaBuilder.fieldRequired(inventory);
-export type InventoryField = TypedField<typeof inventoryField>;
-
-export const schema = builder.toDocumentSchema(inventoryField);
-
-export type Inventory = TypedNode<typeof inventory>;
+export const treeConfiguration = buildTreeConfiguration({
+	schema: builder.intoSchema(Inventory),
+	allowedSchemaModifications: AllowedUpdateType.None,
+	initialTree: {
+		parts: {
+			// TODO: FieldNodes should not require wrapper object
+			"": [
+				{
+					name: "nut",
+					quantity: 0,
+				},
+				{
+					name: "bolt",
+					quantity: 0,
+				},
+			],
+		},
+	},
+});

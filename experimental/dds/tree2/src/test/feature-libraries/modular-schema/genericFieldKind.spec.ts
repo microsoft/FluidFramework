@@ -12,11 +12,18 @@ import {
 	RevisionMetadataSource,
 	MemoizedIdRangeAllocator,
 } from "../../../feature-libraries";
-import { makeAnonChange, tagChange, TaggedChange, Delta, FieldKey } from "../../../core";
+import {
+	makeAnonChange,
+	tagChange,
+	TaggedChange,
+	Delta,
+	FieldKey,
+	deltaForSet,
+} from "../../../core";
 import { fakeIdAllocator, brand } from "../../../util";
 import {
 	EncodingTestData,
-	fakeTaggedRepair as fakeRepair,
+	defaultRevisionMetadataFromChanges,
 	makeEncodingTestSuite,
 } from "../../utils";
 import { IJsonCodec } from "../../../codec";
@@ -61,8 +68,9 @@ const nodeChange0To2: NodeChangeset = nodeChangeFromValueChange(valueChange0To2)
 const unexpectedDelegate = () => assert.fail("Unexpected call");
 
 const revisionMetadata: RevisionMetadataSource = {
+	getRevisions: () => assert.fail("Unexpected revision index query"),
 	getIndex: () => assert.fail("Unexpected revision index query"),
-	getInfo: () => assert.fail("Unexpected revision info query"),
+	tryGetInfo: () => assert.fail("Unexpected revision info query"),
 };
 
 const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangeset => {
@@ -81,12 +89,13 @@ const childComposer = (nodeChanges: TaggedChange<NodeChangeset>[]): NodeChangese
 
 const childInverter = (nodeChange: NodeChangeset): NodeChangeset => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
+	const taggedChange = makeAnonChange(valueChange);
 	const inverse = valueHandler.rebaser.invert(
-		makeAnonChange(valueChange),
+		taggedChange,
 		unexpectedDelegate,
-		fakeRepair,
 		fakeIdAllocator,
 		crossFieldManager,
+		defaultRevisionMetadataFromChanges([taggedChange]),
 	);
 	return nodeChangeFromValueChange(inverse);
 };
@@ -117,24 +126,17 @@ const childRebaser = (
 };
 
 const detachId = { minor: 42 };
+const buildId = { minor: 42 };
 
-const childToDelta = (nodeChange: NodeChangeset): Delta.Modify => {
+const childToDelta = (nodeChange: NodeChangeset): Delta.FieldMap => {
 	const valueChange = valueChangeFromNodeChange(nodeChange);
 	assert(typeof valueChange !== "number");
-	const nodeDelta: Delta.Modify = {
-		type: Delta.MarkType.Modify,
-		fields: new Map([
-			[
-				valueFieldKey,
-				[
-					{ type: Delta.MarkType.Remove, count: 1, detachId },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(valueChange.new)] },
-				],
-			],
-		]),
-	};
-	return nodeDelta;
+	return deltaForValueChange(valueChange.new);
 };
+
+function deltaForValueChange(newValue: number): Delta.FieldMap {
+	return new Map([[valueFieldKey, deltaForSet(singleJsonCursor(newValue), buildId, detachId)]]);
+}
 
 const crossFieldManager: CrossFieldManager = {
 	get: unexpectedDelegate,
@@ -352,12 +354,13 @@ describe("Generic FieldKind", () => {
 				nodeChange: nodeChange2To1,
 			},
 		];
+		const taggedChange = makeAnonChange(forward);
 		const actual = genericFieldKind.changeHandler.rebaser.invert(
-			makeAnonChange(forward),
+			taggedChange,
 			childInverter,
-			fakeRepair,
 			fakeIdAllocator,
 			crossFieldManager,
+			defaultRevisionMetadataFromChanges([taggedChange]),
 		);
 		assert.deepEqual(actual, expected);
 	});
@@ -374,33 +377,13 @@ describe("Generic FieldKind", () => {
 			},
 		];
 
-		const valueDelta1: Delta.Mark = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					valueFieldKey,
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(1)] },
-					],
-				],
-			]),
+		const expected: Delta.FieldChanges = {
+			local: [
+				{ count: 1, fields: deltaForValueChange(1) },
+				{ count: 1 },
+				{ count: 1, fields: deltaForValueChange(2) },
+			],
 		};
-
-		const valueDelta2: Delta.Mark = {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					valueFieldKey,
-					[
-						{ type: Delta.MarkType.Remove, count: 1, detachId },
-						{ type: Delta.MarkType.Insert, content: [singleJsonCursor(2)] },
-					],
-				],
-			]),
-		};
-
-		const expected: Delta.MarkList = [valueDelta1, 1, valueDelta2];
 
 		const actual = genericFieldKind.changeHandler.intoDelta(
 			makeAnonChange(input),
@@ -459,5 +442,27 @@ describe("Generic FieldKind", () => {
 		assert.deepEqual(change0, [{ index: 0, nodeChange: nodeChange0To1 }]);
 		assert.deepEqual(change1, [{ index: 1, nodeChange: nodeChange0To1 }]);
 		assert.deepEqual(change2, [{ index: 2, nodeChange: nodeChange0To1 }]);
+	});
+
+	it("relevantRemovedTrees", () => {
+		const actual = genericFieldKind.changeHandler.relevantRemovedTrees(
+			[
+				{
+					index: 0,
+					nodeChange: nodeChange0To1,
+				},
+				{
+					index: 2,
+					nodeChange: nodeChange1To2,
+				},
+			],
+			(child) =>
+				child === nodeChange0To1
+					? [{ minor: 42 }]
+					: child === nodeChange1To2
+					? [{ minor: 43 }]
+					: assert.fail("Unexpected child"),
+		);
+		assert.deepEqual(Array.from(actual), [{ minor: 42 }, { minor: 43 }]);
 	});
 });

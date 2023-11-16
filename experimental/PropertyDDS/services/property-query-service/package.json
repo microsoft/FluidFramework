@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-query-service",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.3.0",
 	"private": true,
 	"description": "Moira service",
 	"homepage": "https://fluidframework.com",
@@ -18,26 +18,26 @@
 		"server.js"
 	],
 	"scripts": {
-		"coverage": "run-s -c init:default coverage:all term",
+		"clean": "rimraf --glob nyc",
 		"coverage:all": "c8 mocha",
 		"coverage:basic": "RANDOMIZE_FILE_ORDER=1 nyc --report-dir coverage/basic mocha --opts test/basic/mocha.opts",
 		"coverage:db": "c8 --report-dir coverage/db mocha --opts test/db/mocha.opts",
 		"coverage:endtoend": "c8 --report-dir coverage/endtoend mocha --opts test/endtoend/mocha.opts",
-		"mocha": "mocha",
+		"coverage": "run-s -c init:default coverage:all term",
+		"format": "npm run prettier:fix",
+		"lint:fix": "npm run prettier:fix",
+		"lint": "npm run prettier",
 		"mocha:basic": "mocha --opts test/basic/mocha.opts",
 		"mocha:db": "mocha --opts test/db/mocha.opts",
 		"mocha:endtoend": "mocha --opts test/endtoend/mocha.opts",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier",
-		"lint:fix": "npm run prettier:fix",
-		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
+		"mocha": "mocha",
 		"prettier:fix": "prettier --write . --ignore-path ../../../../.prettierignore",
+		"prettier": "prettier --check . --ignore-path ../../../../.prettierignore",
 		"start": "node server.js",
-		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"clean": "rimraf --glob 'nyc'"
+		"test:mocha": "mocha --exit -r node_modules/@fluidframework/mocha-test-setup",
+		"test": "npm run test:mocha"
 	},
 	"c8": {
 		"report-dir": "nyc/report",

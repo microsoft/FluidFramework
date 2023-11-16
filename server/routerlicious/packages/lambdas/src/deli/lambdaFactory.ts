@@ -250,7 +250,10 @@ export class DeliLambdaFactory
 							3 /* maxRetries */,
 							1000 /* retryAfterMs */,
 							getLumberBaseProperties(documentId, tenantId),
-							(error) => error.code === 11000 /* shouldIgnoreError */,
+							(error) =>
+								error.code === 11000 ||
+								error.message?.toString()?.indexOf("E11000 duplicate key") >=
+									0 /* shouldIgnoreError */,
 							(error) => true /* shouldRetry */,
 						);
 
@@ -262,13 +265,14 @@ export class DeliLambdaFactory
 						return;
 					}
 					const filter = { documentId, tenantId, session: { $exists: true } };
+					const keepSessionActive = this.checkpointService.getGlobalCheckpointFailed();
 					const data = {
 						"session.isSessionAlive": false,
-						"session.isSessionActive": false,
+						"session.isSessionActive": keepSessionActive,
 						"lastAccessTime": Date.now(),
 					};
 					await this.documentRepository.updateOne(filter, data, undefined);
-					const message = `Marked session alive and active as false for closeType:
+					const message = `Marked session alive as false and active as ${keepSessionActive} for closeType:
                         ${JSON.stringify(closeType)}`;
 
 					context.log?.info(message, { messageMetaData });

@@ -21,6 +21,7 @@ export {
 	getOrAddInMap,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
+	forEachInNestedMap,
 	NestedMap,
 	SizedNestedMap,
 	populateNestedMap,
@@ -73,6 +74,7 @@ export {
 	assertNonNegativeSafeInteger,
 	generateStableId,
 	useDeterministicStableId,
+	useAsyncDeterministicStableId,
 	objectToMap,
 	oneFromSet,
 	Named,
@@ -80,6 +82,7 @@ export {
 	IDisposable,
 	capitalize,
 	assertValidRangeIndices,
+	transformObjectMap,
 } from "./utils";
 export { ReferenceCountedBase, ReferenceCounted } from "./referenceCounting";
 
@@ -102,7 +105,14 @@ export {
 	brandedSlot,
 } from "./brandedMap";
 
-export { getFirstFromRangeMap, RangeEntry, RangeMap, setInRangeMap } from "./rangeMap";
+export {
+	getFirstEntryFromRangeMap,
+	getFromRangeMap,
+	RangeEntry,
+	RangeMap,
+	RangeQueryResult,
+	setInRangeMap,
+} from "./rangeMap";
 
 export {
 	IdAllocator,

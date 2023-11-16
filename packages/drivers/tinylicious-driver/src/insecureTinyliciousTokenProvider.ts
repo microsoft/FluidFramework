@@ -11,6 +11,8 @@ import { v4 as uuid } from "uuid";
 /**
  * As the name implies this is not secure and should not be used in production. It simply makes the example easier
  * to get up and running.
+ *
+ * @public
  */
 export class InsecureTinyliciousTokenProvider implements ITokenProvider {
 	constructor(

@@ -20,7 +20,7 @@ import {
 	Anchor,
 	ITreeCursor,
 	CursorLocationType,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 	MapTree,
 	getMapTreeField,
 	FieldAnchor,
@@ -31,6 +31,8 @@ import {
 	Range,
 	PlaceIndex,
 	Value,
+	ITreeCursorSynchronous,
+	aboveRootPlaceholder,
 } from "../../core";
 import {
 	brand,
@@ -40,12 +42,12 @@ import {
 	assertNonNegativeSafeInteger,
 } from "../../util";
 import { CursorWithNode, SynchronousCursor } from "../treeCursorUtils";
-import { mapTreeFromCursor, singleMapTreeCursor } from "../mapTreeCursor";
+import { mapTreeFromCursor, cursorForMapTreeNode } from "../mapTreeCursor";
 import { createEmitter } from "../../events";
 
 function makeRoot(): MapTree {
 	return {
-		type: brand("above root placeholder"),
+		type: aboveRootPlaceholder,
 		fields: new Map(),
 	};
 }
@@ -88,7 +90,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 			// they are assumed to be copy on write. See TODO on NodeData.
 			forest.roots.fields.set(
 				key,
-				value.map((v) => mapTreeFromCursor(singleMapTreeCursor(v))),
+				value.map((v) => mapTreeFromCursor(cursorForMapTreeNode(v))),
 			);
 		}
 		return forest;
@@ -162,15 +164,15 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 				const [parent, key] = cursor.getParent();
 				assert(
 					parent !== this.forest.roots || key !== source,
-					"Attach source field must be different from current field",
+					0x7b6 /* Attach source field must be different from current field */,
 				);
 				const currentField = getMapTreeField(parent, key, true);
 				assertValidIndex(destination, currentField, true);
 				const sourceField = getMapTreeField(this.forest.roots, source, false);
-				assert(sourceField !== undefined, "Attach source field must exist");
+				assert(sourceField !== undefined, 0x7b7 /* Attach source field must exist */);
 				assert(
 					sourceField.length === count,
-					"Attach must consume all nodes in source field",
+					0x7b8 /* Attach must consume all nodes in source field */,
 				);
 				// TODO: this will fail for very large insertions due to argument limits.
 				currentField.splice(destination, 0, ...sourceField);
@@ -189,7 +191,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 					destination === undefined ||
 						parent !== this.forest.roots ||
 						key !== destination,
-					"Detach destination field must be different from current field",
+					0x7b9 /* Detach destination field must be different from current field */,
 				);
 				const currentField = getMapTreeField(parent, key, true);
 				assertValidRange(source, currentField);
@@ -210,7 +212,7 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 			): void {
 				assert(
 					newContentSource !== oldContentDestination,
-					"Replace detached source field and detached destination field must be different",
+					0x7ba /* Replace detached source field and detached destination field must be different */,
 				);
 				this.forest.invalidateDependents();
 				this.detachEdit(range, oldContentDestination);
@@ -320,6 +322,10 @@ class ObjectForest extends SimpleDependee implements IEditableForest {
 
 		return;
 	}
+
+	public getCursorAboveDetachedFields(): ITreeCursorSynchronous {
+		return cursorForMapTreeNode(this.roots);
+	}
 }
 
 type ObjectField = MapTree[];
@@ -426,7 +432,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		assert(this.innerCursor !== undefined, 0x43e /* Cursor must be current to be used */);
 		return this.innerCursor.enterField(key);
 	}
-	public get type(): TreeSchemaIdentifier {
+	public get type(): TreeNodeSchemaIdentifier {
 		assert(this.innerCursor !== undefined, 0x43f /* Cursor must be current to be used */);
 		return this.innerCursor.type;
 	}
@@ -457,7 +463,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 		);
 		this.clear();
 		this.state = ITreeSubscriptionCursorState.Current;
-		this.innerCursor = singleMapTreeCursor(this.forest.roots);
+		this.innerCursor = cursorForMapTreeNode(this.forest.roots);
 		this.forest.currentCursors.add(this);
 	}
 
@@ -505,6 +511,6 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 /**
  * @returns an implementation of {@link IEditableForest} with no data or schema.
  */
-export function buildForest(anchors?: AnchorSet): IEditableForest {
+export function buildForest(anchors?: AnchorSet): ObjectForest {
 	return new ObjectForest(anchors);
 }

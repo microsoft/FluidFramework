@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/dds-interceptions",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.3.0",
 	"description": "Distributed Data Structures that support an interception callback",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,19 +11,31 @@
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
-	"main": "dist/index.js",
-	"module": "lib/index.js",
+	"exports": {
+		".": {
+			"import": {
+				"types": "./lib/index.d.ts",
+				"default": "./lib/index.mjs"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"main": "dist/index.cjs",
+	"module": "lib/index.mjs",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:compile:min": "npm run build:compile",
-		"build:docs": "api-extractor run --local --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/doc-models/* ../../../_api-extractor-temp/",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
-		"ci:build:docs": "api-extractor run --typescript-compiler-folder ../../../node_modules/typescript && copyfiles -u 1 ./_api-extractor-temp/* ../../../_api-extractor-temp/",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log' '_api-extractor-temp' 'nyc'",
+		"build:docs": "api-extractor run --local",
+		"build:esnext": "tsc-multi --config ../../../common/build/build-common/tsc-multi.esm.json",
+		"build:test": "tsc-multi --config ./tsc-multi.test.json",
+		"ci:build:docs": "api-extractor run",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -33,9 +45,9 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../../.prettierignore",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha --recursive 'dist/test/**/*.spec.js' -r node_modules/@fluidframework/mocha-test-setup",
+		"test:mocha": "mocha --recursive \"dist/test/**/*.spec.cjs\" -r node_modules/@fluidframework/mocha-test-setup",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "tsc",
+		"tsc": "tsc-multi --config ../../../common/build/build-common/tsc-multi.cjs.json",
 		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
@@ -44,12 +56,12 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.ts",
-			"dist/test/**/*.js"
+			"dist/test/**/*.cjs"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.ts",
-			"dist/**/*.js"
+			"dist/**/*.cjs"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -67,19 +79,18 @@
 		"@fluidframework/sequence": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.25.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.25.0",
-		"@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@2.0.0-internal.7.0.0",
-		"@fluidframework/eslint-config-fluid": "^3.0.0",
+		"@fluid-tools/build-cli": "0.28.0-210888",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.28.0-210888",
+		"@fluidframework/dds-interceptions-previous": "npm:@fluidframework/dds-interceptions@2.0.0-internal.7.2.0",
+		"@fluidframework/eslint-config-fluid": "^3.1.0",
 		"@fluidframework/mocha-test-setup": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "^7.37.0",
+		"@microsoft/api-extractor": "^7.38.3",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^9.1.1",
 		"@types/node": "^16.18.38",
 		"c8": "^7.7.1",
-		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"diff": "^3.5.0",
 		"eslint": "~8.50.0",
@@ -89,6 +100,7 @@
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
+		"tsc-multi": "^1.1.0",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {

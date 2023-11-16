@@ -8,14 +8,17 @@ import { strict as assert } from "assert";
 import {
 	FlexListToNonLazyArray,
 	FlexListToLazyArray,
-	normalizeFlexList,
+	normalizeFlexListLazy,
 	LazyItem,
 	ArrayHasFixedLength,
 	normalizeFlexListEager,
+	markEager,
+	FlexList,
+	isLazy,
 	// Allow importing from this specific file which is being tested:
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/typed-schema/flexList";
-import { requireAssignableTo, requireFalse, requireTrue } from "../../../util";
+import { areSafelyAssignable, requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 
 // Test ArrayHasFixedLength
 {
@@ -75,18 +78,45 @@ import { requireAssignableTo, requireFalse, requireTrue } from "../../../util";
 	type checkE = requireAssignableTo<e, [() => 2]>;
 }
 
+// Test FlexListToNonLazyArray
+{
+	type a = FlexListToNonLazyArray<number[]>;
+	type checkA = requireTrue<areSafelyAssignable<a, readonly number[]>>;
+
+	type b = FlexListToNonLazyArray<[]>;
+	type checkB = requireTrue<areSafelyAssignable<b, []>>;
+
+	type c = FlexListToNonLazyArray<[() => 5, 6, () => 7]>;
+	type checkC = requireTrue<areSafelyAssignable<c, [5, 6, 7]>>;
+}
+
 describe("FlexList", () => {
-	it("normalizeFlexList", () => {
+	it("correctly normalizes lists to be lazy", () => {
 		const list = [2, (): 1 => 1] as const;
-		const normalized = normalizeFlexList(list);
+		const normalized = normalizeFlexListLazy(list);
 		assert(normalized.length === 2);
 		const data = normalized.map((f) => f());
 		assert.deepEqual(data, [2, 1]);
 	});
 
-	it("normalizeFlexListEager", () => {
+	it("correctly normalizes lists to be eager", () => {
 		const list = [2, (): 1 => 1] as const;
 		const normalized: readonly [2, 1] = normalizeFlexListEager(list);
 		assert.deepEqual(normalized, [2, 1]);
+	});
+
+	it("can mark functions as eager", () => {
+		const fn = () => 42;
+		assert.equal(isLazy(fn), true);
+		markEager(fn);
+		assert.equal(isLazy(fn), false);
+	});
+
+	it("correctly normalizes functions marked as eager", () => {
+		const eagerGenerator = markEager(() => 42);
+		const lazyGenerator = () => () => 42;
+		const list: FlexList<() => number> = [eagerGenerator, lazyGenerator];
+		normalizeFlexListEager(list).forEach((g) => assert.equal(g(), 42));
+		normalizeFlexListLazy(list).forEach((g) => assert.equal(g()(), 42));
 	});
 });

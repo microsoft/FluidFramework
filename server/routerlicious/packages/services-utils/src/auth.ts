@@ -57,7 +57,7 @@ export function validateTokenClaims(
 		throw new NetworkError(403, "DocumentId in token claims does not match request.");
 	}
 
-	if (claims.scopes === undefined || claims.scopes.length === 0) {
+	if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {
 		throw new NetworkError(403, "Missing scopes in token claims.");
 	}
 
@@ -156,6 +156,15 @@ function getTokenFromRequest(request: Request): string {
 
 const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
 
+// Used to sanitize Redis error object and remove sensitive information
+function sanitizeError(error: any) {
+	if (error?.command?.args) {
+		error.command.args = ["REDACTED"];
+	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return error;
+}
+
 export async function verifyToken(
 	tenantId: string,
 	documentId: string,
@@ -198,7 +207,11 @@ export async function verifyToken(
 		// Check token cache first
 		if ((options.enableTokenCache || options.ensureSingleUseToken) && options.tokenCache) {
 			const cachedToken = await options.tokenCache.get(token).catch((error) => {
-				Lumberjack.error("Unable to retrieve cached JWT", logProperties, error);
+				Lumberjack.error(
+					"Unable to retrieve cached JWT",
+					logProperties,
+					sanitizeError(error),
+				);
 				return false;
 			});
 
@@ -224,7 +237,7 @@ export async function verifyToken(
 					tokenLifetimeMs !== undefined ? Math.floor(tokenLifetimeMs / 1000) : undefined,
 				)
 				.catch((error) => {
-					Lumberjack.error("Unable to cache JWT", logProperties, error);
+					Lumberjack.error("Unable to cache JWT", logProperties, sanitizeError(error));
 				});
 		}
 	} catch (error) {
@@ -336,7 +349,7 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
 			);
 		}
 
-		if (claims.scopes === undefined || claims.scopes.length === 0) {
+		if (claims.scopes === undefined || claims.scopes === null || claims.scopes.length === 0) {
 			return respondWithNetworkError(
 				response,
 				new NetworkError(403, "Missing scopes in token claims."),
