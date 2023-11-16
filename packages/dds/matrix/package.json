@@ -15,12 +15,15 @@
 	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
+		"api": "fluid-build . --task api",
+		"api-extractor:commonjs": "api-extractor run --local",
+		"api-extractor:esnext": "copyfiles -u 1 \"dist/**/*-@(alpha|beta|public|untrimmed).d.ts\" lib",
 		"bench": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
 		"bench:profile": "cd bench && tsc && node -r ts-node/register --prof --logfile=profile.log --no-logfile-per-isolate src/index.ts --runInBand && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in bench/profile.txt",
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "fluid-build . --task api",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:genver": "gen-version",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
@@ -92,6 +95,7 @@
 		"@types/node": "^16.18.38",
 		"best-random": "^1.0.0",
 		"c8": "^7.7.1",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.50.0",
 		"hotloop": "^1.2.0",
@@ -104,6 +108,18 @@
 		"ts-node": "^10.9.1",
 		"typescript": "~5.1.6",
 		"uuid": "^9.0.0"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"build:docs": {
+				"dependsOn": [
+					"...",
+					"api-extractor:commonjs",
+					"api-extractor:esnext"
+				],
+				"script": false
+			}
+		}
 	},
 	"typeValidation": {
 		"broken": {}
