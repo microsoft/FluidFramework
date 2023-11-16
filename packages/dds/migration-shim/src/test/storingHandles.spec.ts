@@ -31,10 +31,11 @@ import {
 import {
 	AllowedUpdateType,
 	type ISharedTree,
-	type ITreeView,
+	type TreeView,
 	SchemaBuilder,
 	SharedTreeFactory,
 	disposeSymbol,
+	type TreeField,
 } from "@fluid-experimental/tree2";
 // eslint-disable-next-line import/no-internal-modules
 import { type EditLog } from "@fluid-experimental/tree/dist/EditLog.js";
@@ -141,8 +142,8 @@ const handleType = builder.object("handleObj", {
 });
 const schema = builder.intoSchema(handleType);
 
-function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
-	return tree.schematizeInternal({
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
+	return tree.schematize({
 		initialTree: {
 			handle: undefined,
 		},

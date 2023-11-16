@@ -13,16 +13,15 @@ import {
 	TreeNodeSchema,
 	schemaIsFieldNode,
 	schemaIsMap,
-	ProxyNode,
 	ObjectNodeSchema,
-	SharedTreeObject,
 	FlexTreeTypedNode,
 } from "../../feature-libraries";
+import { TypedNode, TreeObjectNode } from "../../simple-tree";
 import { areSafelyAssignable, isAny, requireFalse, requireTrue } from "../../util";
 // eslint-disable-next-line import/no-internal-modules
 import { structuralName } from "../../domains/schemaBuilder";
 // eslint-disable-next-line import/no-internal-modules
-import { extractFactoryContent } from "../../feature-libraries/simple-tree/proxies";
+import { extractFactoryContent } from "../../simple-tree/proxies";
 
 describe("domains - SchemaBuilder", () => {
 	describe("list", () => {
@@ -221,10 +220,10 @@ describe("domains - SchemaBuilder", () => {
 
 		type _0 = requireFalse<isAny<typeof testObject>>;
 		type _1 = requireTrue<
-			areSafelyAssignable<ProxyNode<typeof testObject>, { number: number }>
+			areSafelyAssignable<TypedNode<typeof testObject>, { number: number }>
 		>;
 
-		function typeTests(x: ProxyNode<typeof testObject>) {
+		function typeTests(x: TypedNode<typeof testObject>) {
 			const y: number = x.number;
 		}
 	});
@@ -238,7 +237,7 @@ describe("domains - SchemaBuilder", () => {
 		});
 
 		type _0 = requireFalse<isAny<typeof recursiveObject>>;
-		type Proxied = ProxyNode<typeof recursiveObject>;
+		type Proxied = TypedNode<typeof recursiveObject>;
 		type _1 = requireFalse<isAny<Proxied>>;
 
 		function typeTests(x: Proxied) {
@@ -285,7 +284,7 @@ describe("domains - SchemaBuilder", () => {
 			>
 		>;
 
-		function typeTests(x: ProxyNode<typeof recursiveObject2>) {
+		function typeTests(x: TypedNode<typeof recursiveObject2>) {
 			const y: number = x.number;
 			const z: number | undefined = x.recursive?.recursive?.number;
 		}
@@ -301,8 +300,8 @@ describe("domains - SchemaBuilder", () => {
  * These build objects are intentionally not holding the data their types make them appear to have as part of a workaround for https://github.com/microsoft/TypeScript/issues/43826.
  */
 export function checkCreated<TSchema extends ObjectNodeSchema>(
-	created: SharedTreeObject<TSchema>,
-	expected: ProxyNode<TSchema>,
+	created: TreeObjectNode<TSchema>,
+	expected: TypedNode<TSchema>,
 ): void {
 	assert.deepEqual(extractFactoryContent(created).content, expected);
 }

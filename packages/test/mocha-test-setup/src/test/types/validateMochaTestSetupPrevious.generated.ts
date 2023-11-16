@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_VariableDeclaration_mochaHooks():
     TypeOnly<typeof old.mochaHooks>;
 declare function use_current_VariableDeclaration_mochaHooks(
-    use: TypeOnly<typeof current.mochaHooks>);
+    use: TypeOnly<typeof current.mochaHooks>): void;
 use_current_VariableDeclaration_mochaHooks(
     get_old_VariableDeclaration_mochaHooks());
 
@@ -41,6 +41,6 @@ use_current_VariableDeclaration_mochaHooks(
 declare function get_current_VariableDeclaration_mochaHooks():
     TypeOnly<typeof current.mochaHooks>;
 declare function use_old_VariableDeclaration_mochaHooks(
-    use: TypeOnly<typeof old.mochaHooks>);
+    use: TypeOnly<typeof old.mochaHooks>): void;
 use_old_VariableDeclaration_mochaHooks(
     get_current_VariableDeclaration_mochaHooks());

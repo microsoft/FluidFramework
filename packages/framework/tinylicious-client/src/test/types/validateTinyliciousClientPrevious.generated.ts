@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ITelemetryBaseEvent():
     TypeOnly<old.ITelemetryBaseEvent>;
 declare function use_current_InterfaceDeclaration_ITelemetryBaseEvent(
-    use: TypeOnly<current.ITelemetryBaseEvent>);
+    use: TypeOnly<current.ITelemetryBaseEvent>): void;
 use_current_InterfaceDeclaration_ITelemetryBaseEvent(
     get_old_InterfaceDeclaration_ITelemetryBaseEvent());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_ITelemetryBaseEvent(
 declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
     TypeOnly<current.ITelemetryBaseEvent>;
 declare function use_old_InterfaceDeclaration_ITelemetryBaseEvent(
-    use: TypeOnly<old.ITelemetryBaseEvent>);
+    use: TypeOnly<old.ITelemetryBaseEvent>): void;
 use_old_InterfaceDeclaration_ITelemetryBaseEvent(
     get_current_InterfaceDeclaration_ITelemetryBaseEvent());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_ITelemetryBaseEvent(
 declare function get_old_InterfaceDeclaration_ITelemetryBaseLogger():
     TypeOnly<old.ITelemetryBaseLogger>;
 declare function use_current_InterfaceDeclaration_ITelemetryBaseLogger(
-    use: TypeOnly<current.ITelemetryBaseLogger>);
+    use: TypeOnly<current.ITelemetryBaseLogger>): void;
 use_current_InterfaceDeclaration_ITelemetryBaseLogger(
     get_old_InterfaceDeclaration_ITelemetryBaseLogger());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_ITelemetryBaseLogger(
 declare function get_current_InterfaceDeclaration_ITelemetryBaseLogger():
     TypeOnly<current.ITelemetryBaseLogger>;
 declare function use_old_InterfaceDeclaration_ITelemetryBaseLogger(
-    use: TypeOnly<old.ITelemetryBaseLogger>);
+    use: TypeOnly<old.ITelemetryBaseLogger>): void;
 use_old_InterfaceDeclaration_ITelemetryBaseLogger(
     get_current_InterfaceDeclaration_ITelemetryBaseLogger());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
 declare function get_old_TypeAliasDeclaration_ITinyliciousAudience():
     TypeOnly<old.ITinyliciousAudience>;
 declare function use_current_TypeAliasDeclaration_ITinyliciousAudience(
-    use: TypeOnly<current.ITinyliciousAudience>);
+    use: TypeOnly<current.ITinyliciousAudience>): void;
 use_current_TypeAliasDeclaration_ITinyliciousAudience(
     get_old_TypeAliasDeclaration_ITinyliciousAudience());
 
@@ -89,7 +89,7 @@ use_current_TypeAliasDeclaration_ITinyliciousAudience(
 declare function get_current_TypeAliasDeclaration_ITinyliciousAudience():
     TypeOnly<current.ITinyliciousAudience>;
 declare function use_old_TypeAliasDeclaration_ITinyliciousAudience(
-    use: TypeOnly<old.ITinyliciousAudience>);
+    use: TypeOnly<old.ITinyliciousAudience>): void;
 use_old_TypeAliasDeclaration_ITinyliciousAudience(
     get_current_TypeAliasDeclaration_ITinyliciousAudience());
 
@@ -101,7 +101,7 @@ use_old_TypeAliasDeclaration_ITinyliciousAudience(
 declare function get_old_ClassDeclaration_TinyliciousAudience():
     TypeOnly<old.TinyliciousAudience>;
 declare function use_current_ClassDeclaration_TinyliciousAudience(
-    use: TypeOnly<current.TinyliciousAudience>);
+    use: TypeOnly<current.TinyliciousAudience>): void;
 use_current_ClassDeclaration_TinyliciousAudience(
     get_old_ClassDeclaration_TinyliciousAudience());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_TinyliciousAudience(
 declare function get_current_ClassDeclaration_TinyliciousAudience():
     TypeOnly<current.TinyliciousAudience>;
 declare function use_old_ClassDeclaration_TinyliciousAudience(
-    use: TypeOnly<old.TinyliciousAudience>);
+    use: TypeOnly<old.TinyliciousAudience>): void;
 use_old_ClassDeclaration_TinyliciousAudience(
     get_current_ClassDeclaration_TinyliciousAudience());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_TinyliciousAudience(
 declare function get_old_ClassDeclaration_TinyliciousClient():
     TypeOnly<old.TinyliciousClient>;
 declare function use_current_ClassDeclaration_TinyliciousClient(
-    use: TypeOnly<current.TinyliciousClient>);
+    use: TypeOnly<current.TinyliciousClient>): void;
 use_current_ClassDeclaration_TinyliciousClient(
     get_old_ClassDeclaration_TinyliciousClient());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_TinyliciousClient(
 declare function get_current_ClassDeclaration_TinyliciousClient():
     TypeOnly<current.TinyliciousClient>;
 declare function use_old_ClassDeclaration_TinyliciousClient(
-    use: TypeOnly<old.TinyliciousClient>);
+    use: TypeOnly<old.TinyliciousClient>): void;
 use_old_ClassDeclaration_TinyliciousClient(
     get_current_ClassDeclaration_TinyliciousClient());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_TinyliciousClient(
 declare function get_old_InterfaceDeclaration_TinyliciousClientProps():
     TypeOnly<old.TinyliciousClientProps>;
 declare function use_current_InterfaceDeclaration_TinyliciousClientProps(
-    use: TypeOnly<current.TinyliciousClientProps>);
+    use: TypeOnly<current.TinyliciousClientProps>): void;
 use_current_InterfaceDeclaration_TinyliciousClientProps(
     get_old_InterfaceDeclaration_TinyliciousClientProps());
 
@@ -161,7 +161,7 @@ use_current_InterfaceDeclaration_TinyliciousClientProps(
 declare function get_current_InterfaceDeclaration_TinyliciousClientProps():
     TypeOnly<current.TinyliciousClientProps>;
 declare function use_old_InterfaceDeclaration_TinyliciousClientProps(
-    use: TypeOnly<old.TinyliciousClientProps>);
+    use: TypeOnly<old.TinyliciousClientProps>): void;
 use_old_InterfaceDeclaration_TinyliciousClientProps(
     get_current_InterfaceDeclaration_TinyliciousClientProps());
 
@@ -173,7 +173,7 @@ use_old_InterfaceDeclaration_TinyliciousClientProps(
 declare function get_old_InterfaceDeclaration_TinyliciousConnectionConfig():
     TypeOnly<old.TinyliciousConnectionConfig>;
 declare function use_current_InterfaceDeclaration_TinyliciousConnectionConfig(
-    use: TypeOnly<current.TinyliciousConnectionConfig>);
+    use: TypeOnly<current.TinyliciousConnectionConfig>): void;
 use_current_InterfaceDeclaration_TinyliciousConnectionConfig(
     get_old_InterfaceDeclaration_TinyliciousConnectionConfig());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_TinyliciousConnectionConfig(
 declare function get_current_InterfaceDeclaration_TinyliciousConnectionConfig():
     TypeOnly<current.TinyliciousConnectionConfig>;
 declare function use_old_InterfaceDeclaration_TinyliciousConnectionConfig(
-    use: TypeOnly<old.TinyliciousConnectionConfig>);
+    use: TypeOnly<old.TinyliciousConnectionConfig>): void;
 use_old_InterfaceDeclaration_TinyliciousConnectionConfig(
     get_current_InterfaceDeclaration_TinyliciousConnectionConfig());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_TinyliciousConnectionConfig(
 declare function get_old_InterfaceDeclaration_TinyliciousContainerServices():
     TypeOnly<old.TinyliciousContainerServices>;
 declare function use_current_InterfaceDeclaration_TinyliciousContainerServices(
-    use: TypeOnly<current.TinyliciousContainerServices>);
+    use: TypeOnly<current.TinyliciousContainerServices>): void;
 use_current_InterfaceDeclaration_TinyliciousContainerServices(
     get_old_InterfaceDeclaration_TinyliciousContainerServices());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_TinyliciousContainerServices(
 declare function get_current_InterfaceDeclaration_TinyliciousContainerServices():
     TypeOnly<current.TinyliciousContainerServices>;
 declare function use_old_InterfaceDeclaration_TinyliciousContainerServices(
-    use: TypeOnly<old.TinyliciousContainerServices>);
+    use: TypeOnly<old.TinyliciousContainerServices>): void;
 use_old_InterfaceDeclaration_TinyliciousContainerServices(
     get_current_InterfaceDeclaration_TinyliciousContainerServices());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_TinyliciousContainerServices(
 declare function get_old_InterfaceDeclaration_TinyliciousMember():
     TypeOnly<old.TinyliciousMember>;
 declare function use_current_InterfaceDeclaration_TinyliciousMember(
-    use: TypeOnly<current.TinyliciousMember>);
+    use: TypeOnly<current.TinyliciousMember>): void;
 use_current_InterfaceDeclaration_TinyliciousMember(
     get_old_InterfaceDeclaration_TinyliciousMember());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_TinyliciousMember(
 declare function get_current_InterfaceDeclaration_TinyliciousMember():
     TypeOnly<current.TinyliciousMember>;
 declare function use_old_InterfaceDeclaration_TinyliciousMember(
-    use: TypeOnly<old.TinyliciousMember>);
+    use: TypeOnly<old.TinyliciousMember>): void;
 use_old_InterfaceDeclaration_TinyliciousMember(
     get_current_InterfaceDeclaration_TinyliciousMember());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_TinyliciousMember(
 declare function get_old_InterfaceDeclaration_TinyliciousUser():
     TypeOnly<old.TinyliciousUser>;
 declare function use_current_InterfaceDeclaration_TinyliciousUser(
-    use: TypeOnly<current.TinyliciousUser>);
+    use: TypeOnly<current.TinyliciousUser>): void;
 use_current_InterfaceDeclaration_TinyliciousUser(
     get_old_InterfaceDeclaration_TinyliciousUser());
 
@@ -257,6 +257,6 @@ use_current_InterfaceDeclaration_TinyliciousUser(
 declare function get_current_InterfaceDeclaration_TinyliciousUser():
     TypeOnly<current.TinyliciousUser>;
 declare function use_old_InterfaceDeclaration_TinyliciousUser(
-    use: TypeOnly<old.TinyliciousUser>);
+    use: TypeOnly<old.TinyliciousUser>): void;
 use_old_InterfaceDeclaration_TinyliciousUser(
     get_current_InterfaceDeclaration_TinyliciousUser());

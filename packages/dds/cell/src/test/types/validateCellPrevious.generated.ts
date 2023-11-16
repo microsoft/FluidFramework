@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_ICellAttributionOptions():
     TypeOnly<old.ICellAttributionOptions>;
 declare function use_current_InterfaceDeclaration_ICellAttributionOptions(
-    use: TypeOnly<current.ICellAttributionOptions>);
+    use: TypeOnly<current.ICellAttributionOptions>): void;
 use_current_InterfaceDeclaration_ICellAttributionOptions(
     get_old_InterfaceDeclaration_ICellAttributionOptions());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_ICellAttributionOptions(
 declare function get_current_InterfaceDeclaration_ICellAttributionOptions():
     TypeOnly<current.ICellAttributionOptions>;
 declare function use_old_InterfaceDeclaration_ICellAttributionOptions(
-    use: TypeOnly<old.ICellAttributionOptions>);
+    use: TypeOnly<old.ICellAttributionOptions>): void;
 use_old_InterfaceDeclaration_ICellAttributionOptions(
     get_current_InterfaceDeclaration_ICellAttributionOptions());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_ICellAttributionOptions(
 declare function get_old_InterfaceDeclaration_ICellOptions():
     TypeOnly<old.ICellOptions>;
 declare function use_current_InterfaceDeclaration_ICellOptions(
-    use: TypeOnly<current.ICellOptions>);
+    use: TypeOnly<current.ICellOptions>): void;
 use_current_InterfaceDeclaration_ICellOptions(
     get_old_InterfaceDeclaration_ICellOptions());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_ICellOptions(
 declare function get_current_InterfaceDeclaration_ICellOptions():
     TypeOnly<current.ICellOptions>;
 declare function use_old_InterfaceDeclaration_ICellOptions(
-    use: TypeOnly<old.ICellOptions>);
+    use: TypeOnly<old.ICellOptions>): void;
 use_old_InterfaceDeclaration_ICellOptions(
     get_current_InterfaceDeclaration_ICellOptions());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_ICellOptions(
 declare function get_old_InterfaceDeclaration_ISharedCell():
     TypeOnly<old.ISharedCell>;
 declare function use_current_InterfaceDeclaration_ISharedCell(
-    use: TypeOnly<current.ISharedCell>);
+    use: TypeOnly<current.ISharedCell>): void;
 use_current_InterfaceDeclaration_ISharedCell(
     get_old_InterfaceDeclaration_ISharedCell());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_ISharedCell(
 declare function get_current_InterfaceDeclaration_ISharedCell():
     TypeOnly<current.ISharedCell>;
 declare function use_old_InterfaceDeclaration_ISharedCell(
-    use: TypeOnly<old.ISharedCell>);
+    use: TypeOnly<old.ISharedCell>): void;
 use_old_InterfaceDeclaration_ISharedCell(
     get_current_InterfaceDeclaration_ISharedCell());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_ISharedCell(
 declare function get_old_InterfaceDeclaration_ISharedCellEvents():
     TypeOnly<old.ISharedCellEvents<any>>;
 declare function use_current_InterfaceDeclaration_ISharedCellEvents(
-    use: TypeOnly<current.ISharedCellEvents<any>>);
+    use: TypeOnly<current.ISharedCellEvents<any>>): void;
 use_current_InterfaceDeclaration_ISharedCellEvents(
     get_old_InterfaceDeclaration_ISharedCellEvents());
 
@@ -113,7 +113,7 @@ use_current_InterfaceDeclaration_ISharedCellEvents(
 declare function get_current_InterfaceDeclaration_ISharedCellEvents():
     TypeOnly<current.ISharedCellEvents<any>>;
 declare function use_old_InterfaceDeclaration_ISharedCellEvents(
-    use: TypeOnly<old.ISharedCellEvents<any>>);
+    use: TypeOnly<old.ISharedCellEvents<any>>): void;
 use_old_InterfaceDeclaration_ISharedCellEvents(
     get_current_InterfaceDeclaration_ISharedCellEvents());
 
@@ -125,7 +125,7 @@ use_old_InterfaceDeclaration_ISharedCellEvents(
 declare function get_old_ClassDeclaration_SharedCell():
     TypeOnly<old.SharedCell>;
 declare function use_current_ClassDeclaration_SharedCell(
-    use: TypeOnly<current.SharedCell>);
+    use: TypeOnly<current.SharedCell>): void;
 use_current_ClassDeclaration_SharedCell(
     get_old_ClassDeclaration_SharedCell());
 
@@ -137,6 +137,6 @@ use_current_ClassDeclaration_SharedCell(
 declare function get_current_ClassDeclaration_SharedCell():
     TypeOnly<current.SharedCell>;
 declare function use_old_ClassDeclaration_SharedCell(
-    use: TypeOnly<old.SharedCell>);
+    use: TypeOnly<old.SharedCell>): void;
 use_old_ClassDeclaration_SharedCell(
     get_current_ClassDeclaration_SharedCell());
