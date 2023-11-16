@@ -37,6 +37,7 @@ import { ContextuallyTypedNodeData, isFluidHandle, typeNameSymbol } from "../con
 // TODO: decide how to deal with dependencies on flex-tree implementation.
 // eslint-disable-next-line import/no-internal-modules
 import { LazyObjectNode, getBoxedField } from "../flex-tree/lazyNode";
+import { cursorForMapTreeNode } from "../mapTreeCursor";
 import { createRawObjectNode, extractRawNodeContent } from "./rawObjectNode";
 import {
 	TreeField,
@@ -47,7 +48,7 @@ import {
 	TreeObjectNode,
 } from "./types";
 import { tryGetEditNodeTarget, setEditNode, getEditNode, tryGetEditNode } from "./editNode";
-import { cursorFromProxyTree } from "./proxyNodeCursor";
+import { toMapTree } from "./toMapTree";
 
 /** Retrieve the associated proxy for the given field. */
 export function getProxyForField<TSchema extends TreeFieldSchema>(
@@ -169,17 +170,25 @@ function createObjectProxy<TSchema extends ObjectNodeSchema>(
 							| FlexTreeOptionalField<AllowedTypes>;
 
 						const { content, hydrateProxies } = extractFactoryContent(value);
-						const mappedContent =
-							content === undefined
-								? undefined
-								: cursorFromProxyTree(content, editNode.context, fieldSchema.types);
-						modifyChildren(
-							editNode,
-							() => {
-								typedField.content = mappedContent;
-							},
-							() => hydrateProxies(typedField.boxedContent),
-						);
+						assert(content !== undefined, "Encountered undefined tree content.");
+						if (content === undefined) {
+							typedField.content = undefined;
+						} else {
+							const mappedContent = toMapTree(
+								content,
+								editNode.context,
+								fieldSchema.types,
+							);
+							const cursor = cursorForMapTreeNode(mappedContent);
+							modifyChildren(
+								editNode,
+								() => {
+									typedField.content = cursor;
+								},
+								() => hydrateProxies(typedField.boxedContent),
+							);
+						}
+
 						break;
 					}
 					default:
@@ -270,16 +279,16 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, index);
-			const mappedContent = cursorFromProxyTree(
+			const mappedContent = toMapTree(
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
-				CursorLocationType.Fields,
 			);
+			const cursor = cursorForMapTreeNode(mappedContent, CursorLocationType.Fields);
 
 			modifyChildren(
 				getEditNode(this),
-				() => sequenceField.insertAt(index, mappedContent),
+				() => sequenceField.insertAt(index, cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -292,16 +301,16 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 			const sequenceField = getSequenceField(this);
 
 			const { content, hydrateProxies } = contextualizeInsertedListContent(value, 0);
-			const mappedContent = cursorFromProxyTree(
+			const mappedContent = toMapTree(
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
-				CursorLocationType.Fields,
 			);
+			const cursor = cursorForMapTreeNode(mappedContent, CursorLocationType.Fields);
 
 			modifyChildren(
 				getEditNode(this),
-				() => sequenceField.insertAtStart(mappedContent),
+				() => sequenceField.insertAtStart(cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -317,16 +326,16 @@ const listPrototypeProperties: PropertyDescriptorMap = {
 				value,
 				this.length,
 			);
-			const mappedContent = cursorFromProxyTree(
+			const mappedContent = toMapTree(
 				content,
 				sequenceField.context,
 				sequenceField.schema.types,
-				CursorLocationType.Fields,
 			);
+			const cursor = cursorForMapTreeNode(mappedContent, CursorLocationType.Fields);
 
 			modifyChildren(
 				getEditNode(this),
-				() => sequenceField.insertAtEnd(mappedContent),
+				() => sequenceField.insertAtEnd(cursor),
 				(listEditNode) => hydrateProxies(listEditNode),
 			);
 		},
@@ -648,20 +657,18 @@ const mapStaticDispatchMap: PropertyDescriptorMap = {
 			const { content, hydrateProxies } = extractFactoryContent(
 				value as FlexibleFieldContent<MapFieldSchema>,
 			);
-			const mappedContent =
-				content === undefined
-					? undefined
-					: cursorFromProxyTree(
-							content,
-							node.context,
-							node.schema.mapFields?.types ??
-								fail("Map node schema missing map schema."),
-					  );
-			modifyChildren(
-				node,
-				(mapNode) => mapNode.set(key, mappedContent),
-				(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
-			);
+			if (content === undefined) {
+				node.set(key, undefined);
+			} else {
+				const mappedContent = toMapTree(content, node.context, node.schema.mapFields.types);
+				const cursor = cursorForMapTreeNode(mappedContent);
+				modifyChildren(
+					node,
+					(mapNode) => mapNode.set(key, cursor),
+					(mapNode) => hydrateProxies(getMapChildNode(mapNode, key)),
+				);
+			}
+
 			return this;
 		},
 	},

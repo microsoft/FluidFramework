@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils";
 import {
 	FieldKey,
 	MapTree,
@@ -23,10 +23,22 @@ import {
 } from "./treeCursorUtils";
 
 /**
- * @returns an {@link ITreeCursorSynchronous} in nodes mode for a single MapTree.
+ * @param root - The tree with which the cursor will be associated.
+ * @param mode - The mode the cursor should be initialized in.
+ * @returns An {@link ITreeCursorSynchronous} in nodes mode for a single {@link MapTree}.
  */
-export function cursorForMapTreeNode(root: MapTree): CursorWithNode<MapTree> {
-	return stackTreeNodeCursor(adapter, root);
+export function cursorForMapTreeNode(
+	root: MapTree,
+	mode: CursorLocationType = CursorLocationType.Nodes,
+): CursorWithNode<MapTree> {
+	switch (mode) {
+		case CursorLocationType.Nodes:
+			return stackTreeNodeCursor(adapter, root);
+		case CursorLocationType.Fields:
+			return stackTreeFieldCursor(adapter, root);
+		default:
+			unreachableCase(mode);
+	}
 }
 
 /**

@@ -12,7 +12,7 @@
       "src/feature-libraries/simple-tree/index.ts",
       "src/feature-libraries/simple-tree/node.ts",
       "src/feature-libraries/simple-tree/proxies.ts",
-      "src/feature-libraries/simple-tree/proxyNodeCursor.ts",
+      "src/feature-libraries/simple-tree/toMapTree.ts",
       "src/domains/leafDomain.ts"
     ]
   },
@@ -136,7 +136,7 @@
     "cycle": [
       "src/feature-libraries/simple-tree/objectFactory.ts",
       "src/feature-libraries/simple-tree/proxies.ts",
-      "src/feature-libraries/simple-tree/proxyNodeCursor.ts",
+      "src/feature-libraries/simple-tree/toMapTree.ts",
       "src/domains/leafDomain.ts",
       "src/feature-libraries/index.ts",
       "src/feature-libraries/simple-tree/index.ts"
@@ -152,7 +152,7 @@
     },
     "cycle": [
       "src/feature-libraries/simple-tree/proxies.ts",
-      "src/feature-libraries/simple-tree/proxyNodeCursor.ts",
+      "src/feature-libraries/simple-tree/toMapTree.ts",
       "src/domains/leafDomain.ts",
       "src/feature-libraries/index.ts",
       "src/feature-libraries/simple-tree/index.ts"
