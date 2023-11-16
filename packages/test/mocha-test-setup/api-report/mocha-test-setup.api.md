@@ -4,8 +4,7 @@
 
 ```ts
 
-/// <reference types="mocha" />
-// @public (undocumented)
+// @internal (undocumented)
 export const mochaHooks: {
     beforeAll(): void;
     beforeEach(this: Mocha.Context): void;

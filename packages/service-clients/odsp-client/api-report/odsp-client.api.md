@@ -12,10 +12,10 @@ import type { IServiceAudience } from '@fluidframework/fluid-static';
 import { ITelemetryBaseLogger } from '@fluidframework/common-definitions';
 import { ITokenProvider } from '@fluidframework/azure-client';
 
-// @alpha
+// @internal
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
-// @alpha @sealed
+// @internal @sealed
 export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
@@ -30,14 +30,14 @@ export class OdspClient {
     }>;
 }
 
-// @alpha (undocumented)
+// @internal (undocumented)
 export interface OdspClientProps {
     readonly configProvider?: IConfigProviderBase;
     readonly connection: OdspConnectionConfig;
     readonly logger?: ITelemetryBaseLogger;
 }
 
-// @alpha
+// @internal
 export interface OdspConnectionConfig {
     driveId: string;
     folderPath: string;
@@ -45,13 +45,13 @@ export interface OdspConnectionConfig {
     tokenProvider: ITokenProvider;
 }
 
-// @alpha
+// @internal
 export interface OdspContainerServices {
     audience: IOdspAudience;
     tenantAttributes: () => Promise<OdspServiceAttributes>;
 }
 
-// @alpha
+// @internal
 export interface OdspMember extends IMember {
     // (undocumented)
     email: string;
@@ -59,7 +59,7 @@ export interface OdspMember extends IMember {
     name: string;
 }
 
-// @alpha
+// @internal
 export interface OdspServiceAttributes {
     driveId: string;
     itemId: string;
