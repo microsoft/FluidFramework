@@ -5,7 +5,7 @@
 
 import { ITreeSubscriptionCursor, inCursorNode } from "../../core";
 import { FieldKind } from "../modular-schema";
-import { FieldKinds } from "../default-field-kinds";
+import { FieldKinds } from "../default-schema";
 import { AllowedTypes, TreeFieldSchema, TreeNodeSchema, schemaIsLeaf } from "../typed-schema";
 import { Context } from "./context";
 import {
@@ -13,7 +13,7 @@ import {
 	FlexTreeUnboxField,
 	FlexTreeUnboxNode,
 	FlexTreeUnboxNodeUnion,
-} from "./editableTreeTypes";
+} from "./flexTreeTypes";
 import { makeTree } from "./lazyNode";
 import { makeField } from "./lazyField";
 

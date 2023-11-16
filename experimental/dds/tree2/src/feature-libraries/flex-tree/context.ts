@@ -12,12 +12,12 @@ import {
 	IForestSubscription,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { IDefaultEditBuilder } from "../default-field-kinds";
+import { IDefaultEditBuilder } from "../default-schema";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { TreeSchema } from "../typed-schema";
 import { disposeSymbol, IDisposable } from "../../util";
-import { FlexTreeField } from "./editableTreeTypes";
+import { FlexTreeField } from "./flexTreeTypes";
 import { makeField } from "./lazyField";
 import { LazyEntity, prepareForEditSymbol } from "./lazyEntity";
 import { NodeKeys, SimpleNodeKeys } from "./nodeKeys";

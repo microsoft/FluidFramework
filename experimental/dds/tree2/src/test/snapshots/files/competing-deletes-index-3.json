@@ -86,7 +86,7 @@
                                 "type": "Delete",
                                 "id": 0,
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-00000000002b",
+                                  "revision": "beefbeef-beef-4000-8000-00000000002c",
                                   "localId": 0,
                                   "adjacentCells": [
                                     {
@@ -267,73 +267,70 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": {
-                  "version": 1,
-                  "data": [
-                    [
-                      "rootFieldKey",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
+                "content": [
+                  [
+                    "rootFieldKey",
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
                           }
-                        ],
-                        "data": [
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          0,
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
                           1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            0,
-                            [],
-                            "com.fluidframework.leaf.number",
-                            true,
-                            1,
-                            [],
-                            "com.fluidframework.leaf.number",
-                            true,
-                            2,
-                            []
-                          ]
+                          [],
+                          "com.fluidframework.leaf.number",
+                          true,
+                          2,
+                          []
                         ]
-                      }
-                    ],
-                    [
-                      "repair-4",
-                      {
-                        "version": 1,
-                        "identifiers": [],
-                        "shapes": [
-                          {
-                            "c": {
-                              "extraFields": 1,
-                              "fields": []
-                            }
-                          },
-                          {
-                            "a": 0
+                      ]
+                    }
+                  ],
+                  [
+                    "repair-6",
+                    {
+                      "version": 1,
+                      "identifiers": [],
+                      "shapes": [
+                        {
+                          "c": {
+                            "extraFields": 1,
+                            "fields": []
                           }
-                        ],
-                        "data": [
-                          1,
-                          [
-                            "com.fluidframework.leaf.number",
-                            true,
-                            3,
-                            []
-                          ]
+                        },
+                        {
+                          "a": 0
+                        }
+                      ],
+                      "data": [
+                        1,
+                        [
+                          "com.fluidframework.leaf.number",
+                          true,
+                          3,
+                          []
                         ]
-                      }
-                    ]
+                      ]
+                    }
                   ]
-                },
+                ],
                 "encoding": "utf-8"
               }
             }
@@ -351,12 +348,12 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-00000000002b",
+                      "beefbeef-beef-4000-8000-00000000002d",
                       0,
-                      4
+                      6
                     ]
                   ],
-                  "maxId": 4
+                  "maxId": 6
                 },
                 "encoding": "utf-8"
               }

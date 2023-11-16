@@ -5,7 +5,7 @@
 
 import { ValueSchema } from "../core";
 import { SchemaBuilderBase, SchemaBuilderOptions } from "./schemaBuilderBase";
-import { FieldKinds } from "./default-field-kinds";
+import { FieldKinds } from "./default-schema";
 import { LeafNodeSchema } from "./typed-schema";
 
 /**

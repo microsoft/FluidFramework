@@ -27,7 +27,7 @@ export {
 	FlexTreeTyped,
 	onNextChange,
 	FlexTreeUnknownUnboxed,
-} from "./editableTreeTypes";
+} from "./flexTreeTypes";
 
 export {
 	visitBipartiteIterableTree,

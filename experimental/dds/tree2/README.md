@@ -354,14 +354,13 @@ flowchart
         core-->codec-->util
         feature-->shared-tree-core
         shared-tree-core-->core
-        shared-tree-->feature
+        shared-tree-->simple-tree
+        simple-tree-->feature
         external-utilities-->feature
         subgraph feature ["feature-libraries"]
             direction TB
-            schema-aware-->defaultSchema
-            schema-aware-->contextuallyTyped
-            editable-tree-->contextuallyTyped
-            editable-tree-->node-key
+            flex-tree-->contextuallyTyped
+            flex-tree-->node-key
             defaultRebaser
             contextuallyTyped-->defaultFieldKinds
             defaultSchema-->defaultFieldKinds-->modular-schema
@@ -377,7 +376,7 @@ flowchart
         subgraph domains
             JSON
         end
-        domains-->feature
+        domains-->simple-tree
     end
     package-->runtime["Fluid runtime"]
 ```
