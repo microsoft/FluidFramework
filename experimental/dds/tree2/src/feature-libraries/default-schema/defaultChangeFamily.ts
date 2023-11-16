@@ -199,7 +199,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					} else {
 						assert(
 							sourceIndex + count <= attachAncestorIndex,
-							"Invalid move: the destination is below one of the moved elements.",
+							0x801 /* Invalid move: the destination is below one of the moved elements. */,
 						);
 						// The attach path runs through a node located after the detached nodes.
 						// adjust the index for the node at that depth of the path, so that it is interpreted correctly
