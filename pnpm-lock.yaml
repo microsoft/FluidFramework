@@ -8074,7 +8074,6 @@ importers:
       '@fluidframework/telemetry-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^16.18.38
-      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -8102,7 +8101,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/node': 16.18.58
-      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -8136,7 +8134,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -8176,7 +8173,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -8215,7 +8211,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       lz4js: ^0.2.0
@@ -8255,7 +8250,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -8279,7 +8273,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       '@types/sinon': ^7.0.13
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       eslint-config-prettier: ~9.0.0
@@ -8304,7 +8297,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       '@types/sinon': 7.5.2
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       eslint-config-prettier: 9.0.0_eslint@8.50.0
@@ -8339,7 +8331,6 @@ importers:
       '@fluidframework/shared-object-base': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^16.18.38
-      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -8366,7 +8357,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/node': 16.18.58
-      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -8392,7 +8382,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -8423,7 +8412,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -8450,7 +8438,6 @@ importers:
       '@fluidframework/sequence': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^16.18.38
-      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -8470,7 +8457,6 @@ importers:
       '@fluidframework/eslint-config-fluid': 3.1.0_loebgezstcsvd2poh2d55fifke
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/node': 16.18.58
-      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -8502,7 +8488,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -8538,7 +8523,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -8565,7 +8549,6 @@ importers:
       '@fluidframework/test-runtime-utils': workspace:~
       '@microsoft/api-extractor': ^7.38.3
       '@types/node': ^16.18.38
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       prettier: ~3.0.3
@@ -8587,7 +8570,6 @@ importers:
       '@fluidframework/test-runtime-utils': link:../../runtime/test-runtime-utils
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/node': 16.18.58
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       prettier: 3.0.3
@@ -8614,7 +8596,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -8645,7 +8626,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -8673,7 +8653,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       eslint: ~8.50.0
       mocha: ^10.2.0
@@ -8699,7 +8678,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       eslint: 8.50.0
       mocha: 10.2.0
@@ -8737,7 +8715,6 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
-      copyfiles: ^2.4.1
       eslint: ~8.50.0
       mocha: ^10.2.0
       prettier: ~3.0.3
@@ -8774,7 +8751,6 @@ importers:
       '@microsoft/api-extractor': 7.38.3_@types+node@16.18.58
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
-      copyfiles: 2.4.1
       eslint: 8.50.0
       mocha: 10.2.0
       prettier: 3.0.3
@@ -8803,7 +8779,6 @@ importers:
       '@types/mocha': ^9.1.1
       '@types/node': ^16.18.38
       c8: ^7.7.1
-      copyfiles: ^2.4.1
       cross-env: ^7.0.3
       diff: ^3.5.0
       eslint: ~8.50.0
@@ -8836,7 +8811,6 @@ importers:
       '@types/mocha': 9.1.1
       '@types/node': 16.18.58
       c8: 7.14.0
-      copyfiles: 2.4.1
       cross-env: 7.0.3
       diff: 3.5.0
       eslint: 8.50.0
@@ -8861,7 +8835,6 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       react: ^17.0.1
@@ -8883,7 +8856,6 @@ importers:
       '@microsoft/api-extractor': 7.38.3
       '@types/react': 17.0.68
       '@types/react-dom': 17.0.21
-      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
@@ -8901,7 +8873,6 @@ importers:
       '@microsoft/api-extractor': ^7.38.3
       '@types/react': ^17.0.44
       '@types/react-dom': ^17.0.18
-      copyfiles: ^2.4.1
       eslint: ~8.50.0
       prettier: ~3.0.3
       rimraf: ^4.4.0
@@ -8918,7 +8889,6 @@ importers:
       '@microsoft/api-extractor': 7.38.3
       '@types/react': 17.0.68
       '@types/react-dom': 17.0.21
-      copyfiles: 2.4.1
       eslint: 8.50.0
       prettier: 3.0.3
       rimraf: 4.4.1
