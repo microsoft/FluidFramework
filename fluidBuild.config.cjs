@@ -46,7 +46,7 @@ module.exports = {
 		"build:genver": [],
 		"typetests:gen": ["^tsc", "build:genver"], // we may reexport type from dependent packages, needs to build them first.
 		"tsc": tscDependsOn,
-		"build:esnext": tscDependsOn,
+		"build:esnext": [...tscDependsOn, "^build:esnext"],
 		"build:test": [
 			...tscDependsOn,
 			"typetests:gen",
@@ -157,6 +157,7 @@ module.exports = {
 				// Can be removed once the policy handler is updated to support tsc-multi as equivalent to tsc.
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
+				"^packages/drivers/.*/package.json",
 				"^packages/framework/.*/package.json",
 			],
 			"html-copyright-file-header": [
