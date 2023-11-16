@@ -103,6 +103,69 @@ describe("ModularChangeFamily integration", () => {
 			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
 			assert.deepEqual(rebasedDelta, expectedDelta);
 		});
+
+		it("Nested moves both requiring a second pass", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(family, changeReceiver);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+
+			// Note that these are the paths before any edits have happened.
+			const node1Path = { parent: undefined, parentField: fieldA, parentIndex: 1 };
+			const node2Path = { parent: node1Path, parentField: fieldB, parentIndex: 1 };
+
+			editor.enterTransaction();
+
+			// Moves node2, which is a child of node1 to an earlier position in its field
+			editor
+				.sequenceField({
+					parent: node1Path,
+					field: fieldB,
+				})
+				.move(1, 1, 0);
+
+			// Moves node1 to an earlier position in the field
+			editor.sequenceField(fieldAPath).move(1, 1, 0);
+
+			// Modifies node2 so that both fieldA and fieldB have changes that need to be transfered
+			// from a move source to a destination during invert.
+			editor
+				.sequenceField({
+					parent: node2Path,
+					field: fieldC,
+				})
+				.delete(0, 1);
+
+			editor.exitTransaction();
+			const [move1, move2, modify] = getChanges();
+			const moves = family.compose([makeAnonChange(move1), makeAnonChange(move2)]);
+
+			const rebased = family.rebase(modify, tagChange(moves, tag1));
+			const fieldCExpected = [MarkMaker.delete(1, brand(2))];
+			const node2Expected = {
+				fieldChanges: new Map([
+					[fieldC, { fieldKind: sequence.identifier, change: fieldCExpected }],
+				]),
+			};
+
+			const fieldBExpected = [{ count: 1, changes: node2Expected }];
+
+			const node1Expected = {
+				fieldChanges: new Map([
+					[fieldB, { fieldKind: sequence.identifier, change: fieldBExpected }],
+				]),
+			};
+
+			const fieldAExpected = [{ count: 1, changes: node1Expected }];
+
+			const expected: ModularChangeset = {
+				fieldChanges: new Map([
+					[fieldA, { fieldKind: sequence.identifier, change: brand(fieldAExpected) }],
+				]),
+			};
+
+			assert.deepEqual(rebased, expected);
+		});
 	});
 
 	describe("compose", () => {
@@ -255,7 +318,7 @@ describe("ModularChangeFamily integration", () => {
 	});
 
 	describe("invert", () => {
-		it("Move requiring a second pass", () => {
+		it("Nested moves both requiring a second pass", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, changeReceiver);
 
