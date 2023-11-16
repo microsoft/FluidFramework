@@ -53,7 +53,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 
 	public isPreAttachState(): boolean {
 		const preAttach = this.legacyTreeHandler === undefined && this.newTreeHandler === undefined;
-		assert(!preAttach || !this.attached, "Should not be attached in preAttach state");
+		assert(!preAttach || !this.attached, 0x82a /* Should not be attached in preAttach state */);
 		return preAttach;
 	}
 
@@ -63,7 +63,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 
 	public isUsingNewV2(): boolean {
 		const isUsingV2 = this.legacyTreeHandler !== undefined && this.newTreeHandler !== undefined;
-		assert(!isUsingV2 || this.attached, "Should be attached if in v2 state");
+		assert(!isUsingV2 || this.attached, 0x82b /* Should be attached if in v2 state */);
 		return isUsingV2;
 	}
 
@@ -88,7 +88,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		localOpMetadata: unknown,
 	): void {
 		// This allows us to process the migrate op and prevent the shared object from processing the wrong ops
-		assert(!this.isPreAttachState(), "Can't process ops before attaching tree handler");
+		assert(!this.isPreAttachState(), 0x82c /* Can't process ops before attaching tree handler */);
 		if (
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 			message.type !== MessageType.Operation
@@ -157,7 +157,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 	 * @returns whether or not we should drop the op
 	 */
 	private shouldDropOp(contents: IOpContents): boolean {
-		assert(!this.isPreAttachState(), "Can't process ops before attaching tree handler");
+		assert(!this.isPreAttachState(), 0x82d /* Can't process ops before attaching tree handler */);
 		// Don't drop ops when we are in v1 state
 		if (this.isUsingOldV1()) {
 			return false;
@@ -171,7 +171,7 @@ export class MigrationShimDeltaHandler implements IShimDeltaHandler {
 		// Don't drop v2 ops in v2 state
 		assert(
 			attributesMatch(contents.fluidMigrationStamp, this.attributes),
-			"Unexpected v2 op with mismatched attributes",
+			0x82e /* Unexpected v2 op with mismatched attributes */,
 		);
 		return false;
 	}

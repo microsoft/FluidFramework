@@ -774,8 +774,8 @@ function extractContentArray<T extends TypedNode<TreeNodeSchema, "javaScript">[]
 	return {
 		content: output,
 		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
-			assert(editNode !== undefined, "Expected edit node to be defined when hydrating list");
-			assert(schemaIsFieldNode(editNode.schema), "Expected field node when hydrating list");
+			assert(editNode !== undefined, 0x7f6 /* Expected edit node to be defined when hydrating list */);
+			assert(schemaIsFieldNode(editNode.schema), 0x7f7 /* Expected field node when hydrating list */);
 			hydrators.forEach(([i, hydrate]) =>
 				hydrate(
 					getListChildNode(
@@ -804,8 +804,8 @@ function extractContentMap<T extends Map<string, TypedNode<TreeNodeSchema, "java
 	return {
 		content: output,
 		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
-			assert(editNode !== undefined, "Expected edit node to be defined when hydrating map");
-			assert(schemaIsMap(editNode.schema), "Expected map node when hydrating map");
+			assert(editNode !== undefined, 0x7f8 /* Expected edit node to be defined when hydrating map */);
+			assert(schemaIsMap(editNode.schema), 0x7f9 /* Expected map node when hydrating map */);
 			hydrators.forEach(([key, hydrate]) =>
 				hydrate(getMapChildNode(editNode as FlexTreeMapNode<MapNodeSchema>, key)),
 			);
@@ -846,12 +846,12 @@ function extractContentObject<T extends object>(input: T): ExtractedFactoryConte
 		hydrateProxies: (editNode: FlexTreeNode | undefined) => {
 			assert(
 				editNode !== undefined,
-				"Expected edit node to be defined when hydrating object",
+				0x7fa /* Expected edit node to be defined when hydrating object */,
 			);
 			setEditNode(input as TreeObjectNode<ObjectNodeSchema>, editNode as FlexTreeObjectNode); // This makes the input proxy usable and updates the proxy cache
 			assert(
 				schemaIsObjectNode(editNode.schema),
-				"Expected object node when hydrating object content",
+				0x7fb /* Expected object node when hydrating object content */,
 			);
 			hydrators.forEach(([key, hydrate]) =>
 				hydrate(getObjectChildNode(editNode as FlexTreeObjectNode, key)),
@@ -867,7 +867,7 @@ function getListChildNode(
 	const field = listNode.tryGetField(EmptyKey);
 	assert(
 		field?.schema.kind === FieldKinds.sequence,
-		"Expected sequence field when hydrating list",
+		0x7fc /* Expected sequence field when hydrating list */,
 	);
 	return (field as FlexTreeSequenceField<AllowedTypes>).boxedAt(index);
 }
@@ -879,7 +879,7 @@ function getMapChildNode(
 	const field = mapNode.getBoxed(key);
 	assert(
 		field.schema.kind === FieldKinds.optional,
-		"Sequence field kind is unsupported as map values",
+		0x7fd /* Sequence field kind is unsupported as map values */,
 	);
 	return (field as FlexTreeOptionalField<AllowedTypes>).boxedContent;
 }
@@ -889,7 +889,7 @@ function getObjectChildNode(objectNode: FlexTreeObjectNode, key: string): FlexTr
 		objectNode.tryGetField(brand(key)) ?? fail("Expected a field for inserted content");
 	assert(
 		field.schema.kind === FieldKinds.required || field.schema.kind === FieldKinds.optional,
-		"Expected required or optional field kind",
+		0x7fe /* Expected required or optional field kind */,
 	);
 	return (field as FlexTreeRequiredField<AllowedTypes> | FlexTreeOptionalField<AllowedTypes>)
 		.boxedContent;

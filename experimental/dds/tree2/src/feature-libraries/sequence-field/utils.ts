@@ -122,7 +122,10 @@ export function getInputCellId(
 	if (isAttachAndDetachEffect(mark)) {
 		markRevision = mark.attach.revision;
 	} else {
-		assert(isAttach(mark), "Only attach marks should have undefined revision in cell ID");
+		assert(
+			isAttach(mark),
+			0x822 /* Only attach marks should have undefined revision in cell ID */,
+		);
 		markRevision = mark.revision;
 	}
 
@@ -181,7 +184,7 @@ export function normalizeCellRename<TNodeChange>(
 	mark: CellMark<AttachAndDetach, TNodeChange>,
 	nodeChange?: TNodeChange,
 ): CellMark<AttachAndDetach | DetachOfRemovedNodes, TNodeChange> {
-	assert(mark.cellId !== undefined, "AttachAndDetach marks should have a cell ID");
+	assert(mark.cellId !== undefined, 0x823 /* AttachAndDetach marks should have a cell ID */);
 	if (mark.attach.type !== "Insert" || isNewAttachEffect(mark.attach, mark.cellId)) {
 		return withNodeChange(mark, nodeChange);
 	}
@@ -371,7 +374,7 @@ export function isImpactful(
 				return true;
 			}
 			const outputId = getOutputCellId(mark, revision, revisionMetadata);
-			assert(outputId !== undefined, "Delete marks must have an output cell ID");
+			assert(outputId !== undefined, 0x824 /* Delete marks must have an output cell ID */);
 			return !areEqualChangeAtomIds(mark.cellId, outputId);
 		}
 		case "AttachAndDetach":
@@ -380,7 +383,7 @@ export function isImpactful(
 			return true;
 		case "MoveIn":
 			// MoveIn marks always target an empty cell.
-			assert(mark.cellId !== undefined, "MoveIn marks should target empty cells");
+			assert(mark.cellId !== undefined, 0x825 /* MoveIn marks should target empty cells */);
 			return true;
 		case "Insert":
 			// A Revive has no impact if the nodes are already in the document.
@@ -530,7 +533,7 @@ function tryMergeEffects(
 
 		assert(
 			isAttach(attach) && isDetach(detach),
-			"Merged marks should be same type as input marks",
+			0x826 /* Merged marks should be same type as input marks */,
 		);
 		return { ...lhsAttachAndDetach, attach, detach };
 	}
@@ -589,10 +592,16 @@ function tryMergeEffects(
 			const lhsInsert = lhs as Insert;
 			if ((lhsInsert.id as number) + lhsCount === rhs.id) {
 				if (rhs.content === undefined) {
-					assert(lhsInsert.content === undefined, "Insert content type mismatch");
+					assert(
+						lhsInsert.content === undefined,
+						0x827 /* Insert content type mismatch */,
+					);
 					return lhsInsert;
 				} else {
-					assert(lhsInsert.content !== undefined, "Insert content type mismatch");
+					assert(
+						lhsInsert.content !== undefined,
+						0x828 /* Insert content type mismatch */,
+					);
 					return { ...lhsInsert, content: [...lhsInsert.content, ...rhs.content] };
 				}
 			}
@@ -1156,7 +1165,7 @@ export function addRevision(effect: MarkEffect, revision: RevisionTag | undefine
 
 	assert(
 		effect.revision === undefined || effect.revision === revision,
-		"Should not overwrite mark revision",
+		0x829 /* Should not overwrite mark revision */,
 	);
 	effect.revision = revision;
 }
