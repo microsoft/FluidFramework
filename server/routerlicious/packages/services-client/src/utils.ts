@@ -4,13 +4,13 @@
  */
 
 import * as resources from "@fluidframework/gitresources";
-import Axios, { AxiosRequestHeaders } from "axios";
+import { default as Axios, RawAxiosRequestHeaders } from "axios";
 
 export async function getOrCreateRepository(
 	endpoint: string,
 	owner: string,
 	repository: string,
-	headers?: AxiosRequestHeaders,
+	headers?: RawAxiosRequestHeaders,
 ): Promise<void> {
 	console.log(`Get Repo: ${endpoint}/${owner}/${repository}`);
 
