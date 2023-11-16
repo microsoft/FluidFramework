@@ -27,6 +27,7 @@ import {
 	PlaceIndex,
 	Range,
 	ITreeCursorSynchronous,
+	aboveRootPlaceholder,
 } from "../../core";
 import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util";
 import { createEmitter } from "../../events";
@@ -35,7 +36,7 @@ import { basicChunkTree, chunkTree, IChunker } from "./chunkTree";
 import { ChunkedCursor, TreeChunk } from "./chunk";
 
 function makeRoot(): BasicChunk {
-	return new BasicChunk(brand("above root placeholder"), new Map());
+	return new BasicChunk(aboveRootPlaceholder, new Map());
 }
 
 interface StackNode {

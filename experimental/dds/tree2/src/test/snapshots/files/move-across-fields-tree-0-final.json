@@ -25,6 +25,7 @@
                             "change": [
                               {
                                 "type": "Insert",
+                                "id": 0,
                                 "count": 1,
                                 "content": [
                                   {
@@ -189,46 +190,68 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
+                "content": {
+                  "version": 1,
+                  "data": [
                     [
+                      "rootFieldKey",
                       {
-                        "type": "Node",
-                        "fields": {
-                          "foo": [
-                            {
-                              "type": "Node",
-                              "value": "a"
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
                             }
-                          ],
-                          "bar": [
-                            {
-                              "type": "Node",
-                              "value": "d"
-                            },
-                            {
-                              "type": "Node",
-                              "value": "b"
-                            },
-                            {
-                              "type": "Node",
-                              "value": "c"
-                            },
-                            {
-                              "type": "Node",
-                              "value": "e"
-                            },
-                            {
-                              "type": "Node",
-                              "value": "f"
-                            }
+                          },
+                          {
+                            "a": 0
+                          }
+                        ],
+                        "data": [
+                          1,
+                          [
+                            "Node",
+                            false,
+                            [
+                              "foo",
+                              [
+                                "Node",
+                                true,
+                                "a",
+                                []
+                              ],
+                              "bar",
+                              [
+                                "Node",
+                                true,
+                                "d",
+                                [],
+                                "Node",
+                                true,
+                                "b",
+                                [],
+                                "Node",
+                                true,
+                                "c",
+                                [],
+                                "Node",
+                                true,
+                                "e",
+                                [],
+                                "Node",
+                                true,
+                                "f",
+                                []
+                              ]
+                            ]
                           ]
-                        }
+                        ]
                       }
                     ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }
@@ -243,8 +266,9 @@
               "DetachedFieldIndexBlob": {
                 "type": "blob",
                 "content": {
+                  "version": 1,
                   "data": [],
-                  "id": 2
+                  "maxId": 2
                 },
                 "encoding": "utf-8"
               }

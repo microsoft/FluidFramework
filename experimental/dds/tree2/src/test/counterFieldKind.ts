@@ -5,7 +5,11 @@
 
 import { Type } from "@sinclair/typebox";
 import { ICodecFamily, makeCodecFamily, makeValueCodec } from "../codec";
-import { FieldChangeHandler, FieldChangeRebaser, singleTextCursor } from "../feature-libraries";
+import {
+	FieldChangeHandler,
+	FieldChangeRebaser,
+	cursorForJsonableTreeNode,
+} from "../feature-libraries";
 // This is imported directly to implement an example of a field kind.
 import {
 	FieldKindWithEditor,
@@ -73,7 +77,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 									{
 										id: buildId,
 										trees: [
-											singleTextCursor({
+											cursorForJsonableTreeNode({
 												// KLUDGE: Domains should not be depended on by anything.
 												// This is to get around the removal of setValue.
 												type: leaf.number.name,
@@ -89,6 +93,7 @@ export const counterHandle: FieldChangeHandler<number> = {
 			],
 		};
 	},
+	relevantRemovedTrees: (change) => [],
 	isEmpty: (change: number) => change === 0,
 };
 

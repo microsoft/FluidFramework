@@ -53,7 +53,6 @@ export class SharedTreeShim implements IShim {
 	}
 
 	public get attributes(): IChannelAttributes {
-		// TODO: investigate if we need to add the shim attributes to denote the transition from v1 -> v2 with v1 ops -> v2 ops
 		return this.currentTree.attributes;
 	}
 
@@ -106,7 +105,6 @@ export class SharedTreeShim implements IShim {
 	}
 
 	public create(): void {
-		// TODO: Should we be allowing the creation of legacy shared trees?
 		this._currentTree = this.sharedTreeFactory.create(this.runtime, this.id);
 	}
 

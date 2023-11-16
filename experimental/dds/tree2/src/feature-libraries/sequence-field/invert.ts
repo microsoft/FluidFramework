@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { ChangeAtomId, RevisionTag, TaggedChange } from "../../core";
 import { IdAllocator, fail } from "../../util";
-import { CrossFieldManager, CrossFieldTarget } from "../modular-schema";
+import { CrossFieldManager, CrossFieldTarget, RevisionMetadataSource } from "../modular-schema";
 import {
 	Changeset,
 	Mark,
@@ -17,27 +17,27 @@ import {
 	NoopMark,
 	Delete,
 	CellMark,
+	MoveIn,
+	MarkEffect,
+	MoveSource,
 } from "./format";
 import { MarkListFactory } from "./markListFactory";
 import {
 	areInputCellsEmpty,
 	extractMarkEffect,
-	getDetachCellId,
+	getDetachOutputId,
 	getEndpoint,
-	getInputLength,
 	getOutputCellId,
 	isAttach,
 	isDetach,
-	isMuted,
+	isImpactful,
 	isReattach,
+	normalizeCellRename,
 	splitMark,
 	withNodeChange,
 } from "./utils";
 
-export type NodeChangeInverter<TNodeChange> = (
-	change: TNodeChange,
-	index: number | undefined,
-) => TNodeChange;
+export type NodeChangeInverter<TNodeChange> = (change: TNodeChange) => TNodeChange;
 
 /**
  * Inverts a given changeset.
@@ -52,12 +52,14 @@ export function invert<TNodeChange>(
 	invertChild: NodeChangeInverter<TNodeChange>,
 	genId: IdAllocator,
 	crossFieldManager: CrossFieldManager,
+	revisionMetadata: RevisionMetadataSource,
 ): Changeset<TNodeChange> {
 	return invertMarkList(
 		change.change,
 		change.revision,
 		invertChild,
 		crossFieldManager as CrossFieldManager<TNodeChange>,
+		revisionMetadata,
 	);
 }
 
@@ -79,14 +81,19 @@ function invertMarkList<TNodeChange>(
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
+	revisionMetadata: RevisionMetadataSource,
 ): MarkList<TNodeChange> {
 	const inverseMarkList = new MarkListFactory<TNodeChange>();
-	let inputIndex = 0;
 
 	for (const mark of markList) {
-		const inverseMarks = invertMark(mark, inputIndex, revision, invertChild, crossFieldManager);
+		const inverseMarks = invertMark(
+			mark,
+			revision,
+			invertChild,
+			crossFieldManager,
+			revisionMetadata,
+		);
 		inverseMarkList.push(...inverseMarks);
-		inputIndex += getInputLength(mark);
 	}
 
 	return inverseMarkList.list;
@@ -94,60 +101,45 @@ function invertMarkList<TNodeChange>(
 
 function invertMark<TNodeChange>(
 	mark: Mark<TNodeChange>,
-	inputIndex: number,
 	revision: RevisionTag | undefined,
 	invertChild: NodeChangeInverter<TNodeChange>,
 	crossFieldManager: CrossFieldManager<TNodeChange>,
+	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange>[] {
+	if (!isImpactful(mark, revision, revisionMetadata)) {
+		return [invertNodeChangeOrSkip(mark.count, mark.changes, invertChild, mark.cellId)];
+	}
 	const type = mark.type;
 	switch (type) {
 		case NoopMarkType: {
 			const inverse = { ...mark };
 			if (mark.changes !== undefined) {
-				if (mark.cellId === undefined) {
-					inverse.changes = invertChild(mark.changes, inputIndex);
-				} else {
-					// TODO: preserve modifications to the removed nodes.
-					delete inverse.changes;
-				}
+				inverse.changes = invertChild(mark.changes);
 			}
 			return [inverse];
 		}
 		case "Delete": {
 			assert(revision !== undefined, 0x5a1 /* Unable to revert to undefined revision */);
-			const markRevision = mark.revision ?? revision;
-			const inverseRevision = mark.detachIdOverride?.revision ?? markRevision;
-			if (mark.cellId === undefined) {
-				const inverse = withNodeChange(
-					{
-						type: "Insert",
-						cellId: mark.detachIdOverride ?? {
-							revision: markRevision,
-							localId: mark.id,
-						},
-						count: mark.count,
-						inverseOf: inverseRevision,
-					},
-					invertNodeChange(mark.changes, inputIndex, invertChild),
-				);
-				return [inverse];
-			}
-			// TODO: preserve modifications to the removed nodes.
-			return [];
+			const outputId = getOutputCellId(mark, revision, revisionMetadata);
+			const inverse: Mark<TNodeChange> =
+				mark.cellId === undefined
+					? {
+							type: "Insert",
+							id: mark.id,
+							cellId: outputId,
+							count: mark.count,
+					  }
+					: {
+							type: "Delete",
+							id: mark.id,
+							cellId: outputId,
+							count: mark.count,
+							detachIdOverride: mark.cellId,
+					  };
+			return [withNodeChange(inverse, invertNodeChange(mark.changes, invertChild))];
 		}
 		case "Insert": {
-			if (isMuted(mark)) {
-				return [
-					invertNodeChangeOrSkip(
-						mark.count,
-						mark.changes,
-						inputIndex,
-						invertChild,
-						mark.cellId,
-					),
-				];
-			}
-			assert(mark.cellId !== undefined, "Active inserts should target empty cells");
+			assert(mark.cellId !== undefined, 0x80c /* Active inserts should target empty cells */);
 			const deleteMark: CellMark<Delete, TNodeChange> = {
 				type: "Delete",
 				count: mark.count,
@@ -158,22 +150,11 @@ function invertMark<TNodeChange>(
 				deleteMark.detachIdOverride = mark.cellId;
 			}
 
-			const inverse = withNodeChange(
-				deleteMark,
-				invertNodeChange(mark.changes, inputIndex, invertChild),
-			);
+			const inverse = withNodeChange(deleteMark, invertNodeChange(mark.changes, invertChild));
 			return [inverse];
 		}
 		case "MoveOut":
 		case "ReturnFrom": {
-			if (areInputCellsEmpty(mark)) {
-				// TODO: preserve modifications to the removed nodes.
-				return [];
-			}
-			if (mark.type === "ReturnFrom" && mark.isDstConflicted) {
-				// The nodes were present but the destination was conflicted, the mark had no effect on the nodes.
-				return [invertNodeChangeOrSkip(mark.count, mark.changes, inputIndex, invertChild)];
-			}
 			if (mark.changes !== undefined) {
 				assert(
 					mark.count === 1,
@@ -186,37 +167,43 @@ function invertMark<TNodeChange>(
 					endpoint.revision,
 					endpoint.localId,
 					mark.count,
-					invertChild(mark.changes, inputIndex),
+					invertChild(mark.changes),
 					true,
 				);
 			}
 
-			const cellId = getDetachCellId(
+			const cellId = getDetachOutputId(
 				mark,
 				mark.revision ?? revision ?? fail("Revision must be defined"),
-				undefined,
+				revisionMetadata,
 			) ?? {
 				revision: mark.revision ?? revision ?? fail("Revision must be defined"),
 				localId: mark.id,
 			};
 
-			const invertedMark: Mark<TNodeChange> = {
+			const moveIn: MoveIn = {
 				type: "MoveIn",
 				id: mark.id,
-				count: mark.count,
-				cellId,
 			};
 
 			if (mark.finalEndpoint !== undefined) {
-				invertedMark.finalEndpoint = { localId: mark.finalEndpoint.localId };
+				moveIn.finalEndpoint = { localId: mark.finalEndpoint.localId };
 			}
-			return [invertedMark];
+			let effect: MarkEffect = moveIn;
+			if (areInputCellsEmpty(mark)) {
+				effect = {
+					type: "AttachAndDetach",
+					attach: moveIn,
+					detach: {
+						type: "Delete",
+						id: mark.id,
+						detachIdOverride: mark.cellId,
+					},
+				};
+			}
+			return [{ ...effect, count: mark.count, cellId }];
 		}
 		case "MoveIn": {
-			if (isMuted(mark)) {
-				return mark.cellId === undefined ? [{ count: mark.count }] : [];
-			}
-
 			const invertedMark: CellMark<ReturnFrom, TNodeChange> = {
 				type: "ReturnFrom",
 				id: mark.id,
@@ -233,7 +220,7 @@ function invertMark<TNodeChange>(
 
 			return applyMovedChanges(invertedMark, revision, crossFieldManager);
 		}
-		case "Transient": {
+		case "AttachAndDetach": {
 			// Which should get the child change? Don't want to invert twice
 			const attach: Mark<TNodeChange> = {
 				count: mark.count,
@@ -252,17 +239,17 @@ function invertMark<TNodeChange>(
 			};
 			const attachInverses = invertMark(
 				attach,
-				inputIndex,
-				mark.revision ?? revision,
+				revision,
 				invertChild,
 				crossFieldManager,
+				revisionMetadata,
 			);
 			const detachInverses = invertMark(
 				detach,
-				inputIndex,
-				mark.revision ?? revision,
+				revision,
 				invertChild,
 				crossFieldManager,
+				revisionMetadata,
 			);
 
 			if (detachInverses.length === 0) {
@@ -271,11 +258,11 @@ function invertMark<TNodeChange>(
 
 			assert(
 				detachInverses.length === 1,
-				"Only expected MoveIn marks to be split when inverting",
+				0x80d /* Only expected MoveIn marks to be split when inverting */,
 			);
 
 			let detachInverse = detachInverses[0];
-			assert(isAttach(detachInverse), "Inverse of a detach should be an attach");
+			assert(isAttach(detachInverse), 0x80e /* Inverse of a detach should be an attach */);
 
 			const inverses: Mark<TNodeChange>[] = [];
 			for (const attachInverse of attachInverses) {
@@ -289,16 +276,22 @@ function invertMark<TNodeChange>(
 
 				if (attachInverse.type === NoopMarkType) {
 					if (attachInverse.changes !== undefined) {
-						assert(detachInverseCurr.changes === undefined, "Unexpected node changes");
+						assert(
+							detachInverseCurr.changes === undefined,
+							0x80f /* Unexpected node changes */,
+						);
 						detachInverseCurr.changes = attachInverse.changes;
 					}
 					inverses.push(detachInverseCurr);
 					continue;
 				}
-				assert(isDetach(attachInverse), "Inverse of an attach should be a detach");
+				assert(
+					isDetach(attachInverse),
+					0x810 /* Inverse of an attach should be a detach */,
+				);
 
 				const inverted: Mark<TNodeChange> = {
-					type: "Transient",
+					type: "AttachAndDetach",
 					count: attachInverse.count,
 					attach: extractMarkEffect(detachInverseCurr),
 					detach: extractMarkEffect(attachInverse),
@@ -313,11 +306,11 @@ function invertMark<TNodeChange>(
 				}
 
 				if (attachInverse.changes !== undefined) {
-					assert(inverted.changes === undefined, "Unexpected node changes");
+					assert(inverted.changes === undefined, 0x811 /* Unexpected node changes */);
 					inverted.changes = attachInverse.changes;
 				}
 
-				inverses.push(inverted);
+				inverses.push(normalizeCellRename(inverted));
 			}
 
 			return inverses;
@@ -364,13 +357,23 @@ function applyMovedChanges<TNodeChange>(
 	if (entry.length < mark.count) {
 		const [mark1, mark2] = splitMark(mark, entry.length);
 		const mark1WithChanges =
-			entry.value !== undefined ? withNodeChange(mark1, entry.value) : mark1;
+			entry.value !== undefined
+				? withNodeChange<CellMark<MoveSource, TNodeChange>, MoveSource, TNodeChange>(
+						mark1,
+						entry.value,
+				  )
+				: mark1;
 
 		return [mark1WithChanges, ...applyMovedChanges(mark2, revision, manager)];
 	}
 
 	if (entry.value !== undefined) {
-		return [withNodeChange(mark, entry.value)];
+		return [
+			withNodeChange<CellMark<MoveSource, TNodeChange>, MoveSource, TNodeChange>(
+				mark,
+				entry.value,
+			),
+		];
 	}
 
 	return [mark];
@@ -379,7 +382,6 @@ function applyMovedChanges<TNodeChange>(
 function invertNodeChangeOrSkip<TNodeChange>(
 	length: number,
 	changes: TNodeChange | undefined,
-	index: number,
 	inverter: NodeChangeInverter<TNodeChange>,
 	detachEvent?: ChangeAtomId,
 ): Mark<TNodeChange> {
@@ -387,7 +389,7 @@ function invertNodeChangeOrSkip<TNodeChange>(
 		assert(length === 1, 0x66c /* A modify mark must have length equal to one */);
 		const noop: CellMark<NoopMark, TNodeChange> = {
 			count: 1,
-			changes: inverter(changes, index),
+			changes: inverter(changes),
 		};
 		if (detachEvent !== undefined) {
 			noop.cellId = detachEvent;
@@ -400,8 +402,7 @@ function invertNodeChangeOrSkip<TNodeChange>(
 
 function invertNodeChange<TNodeChange>(
 	change: TNodeChange | undefined,
-	index: number,
 	inverter: NodeChangeInverter<TNodeChange>,
 ): TNodeChange | undefined {
-	return change === undefined ? undefined : inverter(change, index);
+	return change === undefined ? undefined : inverter(change);
 }

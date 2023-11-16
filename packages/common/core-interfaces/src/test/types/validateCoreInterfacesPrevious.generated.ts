@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_TypeAliasDeclaration_ExtendEventProvider():
     TypeOnly<old.ExtendEventProvider<any,any,any>>;
 declare function use_current_TypeAliasDeclaration_ExtendEventProvider(
-    use: TypeOnly<current.ExtendEventProvider<any,any,any>>);
+    use: TypeOnly<current.ExtendEventProvider<any,any,any>>): void;
 use_current_TypeAliasDeclaration_ExtendEventProvider(
     get_old_TypeAliasDeclaration_ExtendEventProvider());
 
@@ -41,7 +41,7 @@ use_current_TypeAliasDeclaration_ExtendEventProvider(
 declare function get_current_TypeAliasDeclaration_ExtendEventProvider():
     TypeOnly<current.ExtendEventProvider<any,any,any>>;
 declare function use_old_TypeAliasDeclaration_ExtendEventProvider(
-    use: TypeOnly<old.ExtendEventProvider<any,any,any>>);
+    use: TypeOnly<old.ExtendEventProvider<any,any,any>>): void;
 use_old_TypeAliasDeclaration_ExtendEventProvider(
     get_current_TypeAliasDeclaration_ExtendEventProvider());
 
@@ -53,7 +53,7 @@ use_old_TypeAliasDeclaration_ExtendEventProvider(
 declare function get_old_VariableDeclaration_FluidErrorTypes():
     TypeOnly<typeof old.FluidErrorTypes>;
 declare function use_current_VariableDeclaration_FluidErrorTypes(
-    use: TypeOnly<typeof current.FluidErrorTypes>);
+    use: TypeOnly<typeof current.FluidErrorTypes>): void;
 use_current_VariableDeclaration_FluidErrorTypes(
     get_old_VariableDeclaration_FluidErrorTypes());
 
@@ -65,7 +65,7 @@ use_current_VariableDeclaration_FluidErrorTypes(
 declare function get_current_VariableDeclaration_FluidErrorTypes():
     TypeOnly<typeof current.FluidErrorTypes>;
 declare function use_old_VariableDeclaration_FluidErrorTypes(
-    use: TypeOnly<typeof old.FluidErrorTypes>);
+    use: TypeOnly<typeof old.FluidErrorTypes>): void;
 use_old_VariableDeclaration_FluidErrorTypes(
     get_current_VariableDeclaration_FluidErrorTypes());
 
@@ -77,7 +77,7 @@ use_old_VariableDeclaration_FluidErrorTypes(
 declare function get_old_TypeAliasDeclaration_FluidErrorTypes():
     TypeOnly<old.FluidErrorTypes>;
 declare function use_current_TypeAliasDeclaration_FluidErrorTypes(
-    use: TypeOnly<current.FluidErrorTypes>);
+    use: TypeOnly<current.FluidErrorTypes>): void;
 use_current_TypeAliasDeclaration_FluidErrorTypes(
     get_old_TypeAliasDeclaration_FluidErrorTypes());
 
@@ -89,7 +89,7 @@ use_current_TypeAliasDeclaration_FluidErrorTypes(
 declare function get_current_TypeAliasDeclaration_FluidErrorTypes():
     TypeOnly<current.FluidErrorTypes>;
 declare function use_old_TypeAliasDeclaration_FluidErrorTypes(
-    use: TypeOnly<old.FluidErrorTypes>);
+    use: TypeOnly<old.FluidErrorTypes>): void;
 use_old_TypeAliasDeclaration_FluidErrorTypes(
     get_current_TypeAliasDeclaration_FluidErrorTypes());
 
@@ -101,7 +101,7 @@ use_old_TypeAliasDeclaration_FluidErrorTypes(
 declare function get_old_TypeAliasDeclaration_FluidObject():
     TypeOnly<old.FluidObject>;
 declare function use_current_TypeAliasDeclaration_FluidObject(
-    use: TypeOnly<current.FluidObject>);
+    use: TypeOnly<current.FluidObject>): void;
 use_current_TypeAliasDeclaration_FluidObject(
     get_old_TypeAliasDeclaration_FluidObject());
 
@@ -113,7 +113,7 @@ use_current_TypeAliasDeclaration_FluidObject(
 declare function get_current_TypeAliasDeclaration_FluidObject():
     TypeOnly<current.FluidObject>;
 declare function use_old_TypeAliasDeclaration_FluidObject(
-    use: TypeOnly<old.FluidObject>);
+    use: TypeOnly<old.FluidObject>): void;
 use_old_TypeAliasDeclaration_FluidObject(
     get_current_TypeAliasDeclaration_FluidObject());
 
@@ -125,7 +125,7 @@ use_old_TypeAliasDeclaration_FluidObject(
 declare function get_old_TypeAliasDeclaration_FluidObjectKeys():
     TypeOnly<old.FluidObjectKeys<any>>;
 declare function use_current_TypeAliasDeclaration_FluidObjectKeys(
-    use: TypeOnly<current.FluidObjectKeys<any>>);
+    use: TypeOnly<current.FluidObjectKeys<any>>): void;
 use_current_TypeAliasDeclaration_FluidObjectKeys(
     get_old_TypeAliasDeclaration_FluidObjectKeys());
 
@@ -137,7 +137,7 @@ use_current_TypeAliasDeclaration_FluidObjectKeys(
 declare function get_current_TypeAliasDeclaration_FluidObjectKeys():
     TypeOnly<current.FluidObjectKeys<any>>;
 declare function use_old_TypeAliasDeclaration_FluidObjectKeys(
-    use: TypeOnly<old.FluidObjectKeys<any>>);
+    use: TypeOnly<old.FluidObjectKeys<any>>): void;
 use_old_TypeAliasDeclaration_FluidObjectKeys(
     get_current_TypeAliasDeclaration_FluidObjectKeys());
 
@@ -149,7 +149,7 @@ use_old_TypeAliasDeclaration_FluidObjectKeys(
 declare function get_old_TypeAliasDeclaration_FluidObjectProviderKeys():
     TypeOnly<old.FluidObjectProviderKeys<any,any>>;
 declare function use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
-    use: TypeOnly<current.FluidObjectProviderKeys<any,any>>);
+    use: TypeOnly<current.FluidObjectProviderKeys<any,any>>): void;
 use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
     get_old_TypeAliasDeclaration_FluidObjectProviderKeys());
 
@@ -161,7 +161,7 @@ use_current_TypeAliasDeclaration_FluidObjectProviderKeys(
 declare function get_current_TypeAliasDeclaration_FluidObjectProviderKeys():
     TypeOnly<current.FluidObjectProviderKeys<any,any>>;
 declare function use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
-    use: TypeOnly<old.FluidObjectProviderKeys<any,any>>);
+    use: TypeOnly<old.FluidObjectProviderKeys<any,any>>): void;
 use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
     get_current_TypeAliasDeclaration_FluidObjectProviderKeys());
 
@@ -173,7 +173,7 @@ use_old_TypeAliasDeclaration_FluidObjectProviderKeys(
 declare function get_old_InterfaceDeclaration_IDisposable():
     TypeOnly<old.IDisposable>;
 declare function use_current_InterfaceDeclaration_IDisposable(
-    use: TypeOnly<current.IDisposable>);
+    use: TypeOnly<current.IDisposable>): void;
 use_current_InterfaceDeclaration_IDisposable(
     get_old_InterfaceDeclaration_IDisposable());
 
@@ -185,7 +185,7 @@ use_current_InterfaceDeclaration_IDisposable(
 declare function get_current_InterfaceDeclaration_IDisposable():
     TypeOnly<current.IDisposable>;
 declare function use_old_InterfaceDeclaration_IDisposable(
-    use: TypeOnly<old.IDisposable>);
+    use: TypeOnly<old.IDisposable>): void;
 use_old_InterfaceDeclaration_IDisposable(
     get_current_InterfaceDeclaration_IDisposable());
 
@@ -197,7 +197,7 @@ use_old_InterfaceDeclaration_IDisposable(
 declare function get_old_InterfaceDeclaration_IErrorBase():
     TypeOnly<old.IErrorBase>;
 declare function use_current_InterfaceDeclaration_IErrorBase(
-    use: TypeOnly<current.IErrorBase>);
+    use: TypeOnly<current.IErrorBase>): void;
 use_current_InterfaceDeclaration_IErrorBase(
     get_old_InterfaceDeclaration_IErrorBase());
 
@@ -209,7 +209,7 @@ use_current_InterfaceDeclaration_IErrorBase(
 declare function get_current_InterfaceDeclaration_IErrorBase():
     TypeOnly<current.IErrorBase>;
 declare function use_old_InterfaceDeclaration_IErrorBase(
-    use: TypeOnly<old.IErrorBase>);
+    use: TypeOnly<old.IErrorBase>): void;
 use_old_InterfaceDeclaration_IErrorBase(
     get_current_InterfaceDeclaration_IErrorBase());
 
@@ -221,7 +221,7 @@ use_old_InterfaceDeclaration_IErrorBase(
 declare function get_old_InterfaceDeclaration_IErrorEvent():
     TypeOnly<old.IErrorEvent>;
 declare function use_current_InterfaceDeclaration_IErrorEvent(
-    use: TypeOnly<current.IErrorEvent>);
+    use: TypeOnly<current.IErrorEvent>): void;
 use_current_InterfaceDeclaration_IErrorEvent(
     get_old_InterfaceDeclaration_IErrorEvent());
 
@@ -233,7 +233,7 @@ use_current_InterfaceDeclaration_IErrorEvent(
 declare function get_current_InterfaceDeclaration_IErrorEvent():
     TypeOnly<current.IErrorEvent>;
 declare function use_old_InterfaceDeclaration_IErrorEvent(
-    use: TypeOnly<old.IErrorEvent>);
+    use: TypeOnly<old.IErrorEvent>): void;
 use_old_InterfaceDeclaration_IErrorEvent(
     get_current_InterfaceDeclaration_IErrorEvent());
 
@@ -245,7 +245,7 @@ use_old_InterfaceDeclaration_IErrorEvent(
 declare function get_old_InterfaceDeclaration_IEvent():
     TypeOnly<old.IEvent>;
 declare function use_current_InterfaceDeclaration_IEvent(
-    use: TypeOnly<current.IEvent>);
+    use: TypeOnly<current.IEvent>): void;
 use_current_InterfaceDeclaration_IEvent(
     get_old_InterfaceDeclaration_IEvent());
 
@@ -257,7 +257,7 @@ use_current_InterfaceDeclaration_IEvent(
 declare function get_current_InterfaceDeclaration_IEvent():
     TypeOnly<current.IEvent>;
 declare function use_old_InterfaceDeclaration_IEvent(
-    use: TypeOnly<old.IEvent>);
+    use: TypeOnly<old.IEvent>): void;
 use_old_InterfaceDeclaration_IEvent(
     get_current_InterfaceDeclaration_IEvent());
 
@@ -269,7 +269,7 @@ use_old_InterfaceDeclaration_IEvent(
 declare function get_old_InterfaceDeclaration_IEventProvider():
     TypeOnly<old.IEventProvider<any>>;
 declare function use_current_InterfaceDeclaration_IEventProvider(
-    use: TypeOnly<current.IEventProvider<any>>);
+    use: TypeOnly<current.IEventProvider<any>>): void;
 use_current_InterfaceDeclaration_IEventProvider(
     get_old_InterfaceDeclaration_IEventProvider());
 
@@ -281,7 +281,7 @@ use_current_InterfaceDeclaration_IEventProvider(
 declare function get_current_InterfaceDeclaration_IEventProvider():
     TypeOnly<current.IEventProvider<any>>;
 declare function use_old_InterfaceDeclaration_IEventProvider(
-    use: TypeOnly<old.IEventProvider<any>>);
+    use: TypeOnly<old.IEventProvider<any>>): void;
 use_old_InterfaceDeclaration_IEventProvider(
     get_current_InterfaceDeclaration_IEventProvider());
 
@@ -293,7 +293,7 @@ use_old_InterfaceDeclaration_IEventProvider(
 declare function get_old_TypeAliasDeclaration_IEventThisPlaceHolder():
     TypeOnly<old.IEventThisPlaceHolder>;
 declare function use_current_TypeAliasDeclaration_IEventThisPlaceHolder(
-    use: TypeOnly<current.IEventThisPlaceHolder>);
+    use: TypeOnly<current.IEventThisPlaceHolder>): void;
 use_current_TypeAliasDeclaration_IEventThisPlaceHolder(
     get_old_TypeAliasDeclaration_IEventThisPlaceHolder());
 
@@ -305,7 +305,7 @@ use_current_TypeAliasDeclaration_IEventThisPlaceHolder(
 declare function get_current_TypeAliasDeclaration_IEventThisPlaceHolder():
     TypeOnly<current.IEventThisPlaceHolder>;
 declare function use_old_TypeAliasDeclaration_IEventThisPlaceHolder(
-    use: TypeOnly<old.IEventThisPlaceHolder>);
+    use: TypeOnly<old.IEventThisPlaceHolder>): void;
 use_old_TypeAliasDeclaration_IEventThisPlaceHolder(
     get_current_TypeAliasDeclaration_IEventThisPlaceHolder());
 
@@ -317,7 +317,7 @@ use_old_TypeAliasDeclaration_IEventThisPlaceHolder(
 declare function get_old_TypeAliasDeclaration_IEventTransformer():
     TypeOnly<old.IEventTransformer<any,any>>;
 declare function use_current_TypeAliasDeclaration_IEventTransformer(
-    use: TypeOnly<current.IEventTransformer<any,any>>);
+    use: TypeOnly<current.IEventTransformer<any,any>>): void;
 use_current_TypeAliasDeclaration_IEventTransformer(
     get_old_TypeAliasDeclaration_IEventTransformer());
 
@@ -329,7 +329,7 @@ use_current_TypeAliasDeclaration_IEventTransformer(
 declare function get_current_TypeAliasDeclaration_IEventTransformer():
     TypeOnly<current.IEventTransformer<any,any>>;
 declare function use_old_TypeAliasDeclaration_IEventTransformer(
-    use: TypeOnly<old.IEventTransformer<any,any>>);
+    use: TypeOnly<old.IEventTransformer<any,any>>): void;
 use_old_TypeAliasDeclaration_IEventTransformer(
     get_current_TypeAliasDeclaration_IEventTransformer());
 
@@ -341,7 +341,7 @@ use_old_TypeAliasDeclaration_IEventTransformer(
 declare function get_old_InterfaceDeclaration_IFluidCodeDetails():
     TypeOnly<old.IFluidCodeDetails>;
 declare function use_current_InterfaceDeclaration_IFluidCodeDetails(
-    use: TypeOnly<current.IFluidCodeDetails>);
+    use: TypeOnly<current.IFluidCodeDetails>): void;
 use_current_InterfaceDeclaration_IFluidCodeDetails(
     get_old_InterfaceDeclaration_IFluidCodeDetails());
 
@@ -353,7 +353,7 @@ use_current_InterfaceDeclaration_IFluidCodeDetails(
 declare function get_current_InterfaceDeclaration_IFluidCodeDetails():
     TypeOnly<current.IFluidCodeDetails>;
 declare function use_old_InterfaceDeclaration_IFluidCodeDetails(
-    use: TypeOnly<old.IFluidCodeDetails>);
+    use: TypeOnly<old.IFluidCodeDetails>): void;
 use_old_InterfaceDeclaration_IFluidCodeDetails(
     get_current_InterfaceDeclaration_IFluidCodeDetails());
 
@@ -365,7 +365,7 @@ use_old_InterfaceDeclaration_IFluidCodeDetails(
 declare function get_old_VariableDeclaration_IFluidCodeDetailsComparer():
     TypeOnly<typeof old.IFluidCodeDetailsComparer>;
 declare function use_current_VariableDeclaration_IFluidCodeDetailsComparer(
-    use: TypeOnly<typeof current.IFluidCodeDetailsComparer>);
+    use: TypeOnly<typeof current.IFluidCodeDetailsComparer>): void;
 use_current_VariableDeclaration_IFluidCodeDetailsComparer(
     get_old_VariableDeclaration_IFluidCodeDetailsComparer());
 
@@ -377,7 +377,7 @@ use_current_VariableDeclaration_IFluidCodeDetailsComparer(
 declare function get_current_VariableDeclaration_IFluidCodeDetailsComparer():
     TypeOnly<typeof current.IFluidCodeDetailsComparer>;
 declare function use_old_VariableDeclaration_IFluidCodeDetailsComparer(
-    use: TypeOnly<typeof old.IFluidCodeDetailsComparer>);
+    use: TypeOnly<typeof old.IFluidCodeDetailsComparer>): void;
 use_old_VariableDeclaration_IFluidCodeDetailsComparer(
     get_current_VariableDeclaration_IFluidCodeDetailsComparer());
 
@@ -389,7 +389,7 @@ use_old_VariableDeclaration_IFluidCodeDetailsComparer(
 declare function get_old_InterfaceDeclaration_IFluidCodeDetailsComparer():
     TypeOnly<old.IFluidCodeDetailsComparer>;
 declare function use_current_InterfaceDeclaration_IFluidCodeDetailsComparer(
-    use: TypeOnly<current.IFluidCodeDetailsComparer>);
+    use: TypeOnly<current.IFluidCodeDetailsComparer>): void;
 use_current_InterfaceDeclaration_IFluidCodeDetailsComparer(
     get_old_InterfaceDeclaration_IFluidCodeDetailsComparer());
 
@@ -401,7 +401,7 @@ use_current_InterfaceDeclaration_IFluidCodeDetailsComparer(
 declare function get_current_InterfaceDeclaration_IFluidCodeDetailsComparer():
     TypeOnly<current.IFluidCodeDetailsComparer>;
 declare function use_old_InterfaceDeclaration_IFluidCodeDetailsComparer(
-    use: TypeOnly<old.IFluidCodeDetailsComparer>);
+    use: TypeOnly<old.IFluidCodeDetailsComparer>): void;
 use_old_InterfaceDeclaration_IFluidCodeDetailsComparer(
     get_current_InterfaceDeclaration_IFluidCodeDetailsComparer());
 
@@ -413,7 +413,7 @@ use_old_InterfaceDeclaration_IFluidCodeDetailsComparer(
 declare function get_old_InterfaceDeclaration_IFluidCodeDetailsConfig():
     TypeOnly<old.IFluidCodeDetailsConfig>;
 declare function use_current_InterfaceDeclaration_IFluidCodeDetailsConfig(
-    use: TypeOnly<current.IFluidCodeDetailsConfig>);
+    use: TypeOnly<current.IFluidCodeDetailsConfig>): void;
 use_current_InterfaceDeclaration_IFluidCodeDetailsConfig(
     get_old_InterfaceDeclaration_IFluidCodeDetailsConfig());
 
@@ -425,7 +425,7 @@ use_current_InterfaceDeclaration_IFluidCodeDetailsConfig(
 declare function get_current_InterfaceDeclaration_IFluidCodeDetailsConfig():
     TypeOnly<current.IFluidCodeDetailsConfig>;
 declare function use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
-    use: TypeOnly<old.IFluidCodeDetailsConfig>);
+    use: TypeOnly<old.IFluidCodeDetailsConfig>): void;
 use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
     get_current_InterfaceDeclaration_IFluidCodeDetailsConfig());
 
@@ -437,7 +437,7 @@ use_old_InterfaceDeclaration_IFluidCodeDetailsConfig(
 declare function get_old_VariableDeclaration_IFluidHandle():
     TypeOnly<typeof old.IFluidHandle>;
 declare function use_current_VariableDeclaration_IFluidHandle(
-    use: TypeOnly<typeof current.IFluidHandle>);
+    use: TypeOnly<typeof current.IFluidHandle>): void;
 use_current_VariableDeclaration_IFluidHandle(
     get_old_VariableDeclaration_IFluidHandle());
 
@@ -449,7 +449,7 @@ use_current_VariableDeclaration_IFluidHandle(
 declare function get_current_VariableDeclaration_IFluidHandle():
     TypeOnly<typeof current.IFluidHandle>;
 declare function use_old_VariableDeclaration_IFluidHandle(
-    use: TypeOnly<typeof old.IFluidHandle>);
+    use: TypeOnly<typeof old.IFluidHandle>): void;
 use_old_VariableDeclaration_IFluidHandle(
     get_current_VariableDeclaration_IFluidHandle());
 
@@ -461,7 +461,7 @@ use_old_VariableDeclaration_IFluidHandle(
 declare function get_old_InterfaceDeclaration_IFluidHandle():
     TypeOnly<old.IFluidHandle>;
 declare function use_current_InterfaceDeclaration_IFluidHandle(
-    use: TypeOnly<current.IFluidHandle>);
+    use: TypeOnly<current.IFluidHandle>): void;
 use_current_InterfaceDeclaration_IFluidHandle(
     get_old_InterfaceDeclaration_IFluidHandle());
 
@@ -473,7 +473,7 @@ use_current_InterfaceDeclaration_IFluidHandle(
 declare function get_current_InterfaceDeclaration_IFluidHandle():
     TypeOnly<current.IFluidHandle>;
 declare function use_old_InterfaceDeclaration_IFluidHandle(
-    use: TypeOnly<old.IFluidHandle>);
+    use: TypeOnly<old.IFluidHandle>): void;
 use_old_InterfaceDeclaration_IFluidHandle(
     get_current_InterfaceDeclaration_IFluidHandle());
 
@@ -485,7 +485,7 @@ use_old_InterfaceDeclaration_IFluidHandle(
 declare function get_old_VariableDeclaration_IFluidHandleContext():
     TypeOnly<typeof old.IFluidHandleContext>;
 declare function use_current_VariableDeclaration_IFluidHandleContext(
-    use: TypeOnly<typeof current.IFluidHandleContext>);
+    use: TypeOnly<typeof current.IFluidHandleContext>): void;
 use_current_VariableDeclaration_IFluidHandleContext(
     get_old_VariableDeclaration_IFluidHandleContext());
 
@@ -497,7 +497,7 @@ use_current_VariableDeclaration_IFluidHandleContext(
 declare function get_current_VariableDeclaration_IFluidHandleContext():
     TypeOnly<typeof current.IFluidHandleContext>;
 declare function use_old_VariableDeclaration_IFluidHandleContext(
-    use: TypeOnly<typeof old.IFluidHandleContext>);
+    use: TypeOnly<typeof old.IFluidHandleContext>): void;
 use_old_VariableDeclaration_IFluidHandleContext(
     get_current_VariableDeclaration_IFluidHandleContext());
 
@@ -509,7 +509,7 @@ use_old_VariableDeclaration_IFluidHandleContext(
 declare function get_old_InterfaceDeclaration_IFluidHandleContext():
     TypeOnly<old.IFluidHandleContext>;
 declare function use_current_InterfaceDeclaration_IFluidHandleContext(
-    use: TypeOnly<current.IFluidHandleContext>);
+    use: TypeOnly<current.IFluidHandleContext>): void;
 use_current_InterfaceDeclaration_IFluidHandleContext(
     get_old_InterfaceDeclaration_IFluidHandleContext());
 
@@ -521,7 +521,7 @@ use_current_InterfaceDeclaration_IFluidHandleContext(
 declare function get_current_InterfaceDeclaration_IFluidHandleContext():
     TypeOnly<current.IFluidHandleContext>;
 declare function use_old_InterfaceDeclaration_IFluidHandleContext(
-    use: TypeOnly<old.IFluidHandleContext>);
+    use: TypeOnly<old.IFluidHandleContext>): void;
 use_old_InterfaceDeclaration_IFluidHandleContext(
     get_current_InterfaceDeclaration_IFluidHandleContext());
 
@@ -533,7 +533,7 @@ use_old_InterfaceDeclaration_IFluidHandleContext(
 declare function get_old_VariableDeclaration_IFluidLoadable():
     TypeOnly<typeof old.IFluidLoadable>;
 declare function use_current_VariableDeclaration_IFluidLoadable(
-    use: TypeOnly<typeof current.IFluidLoadable>);
+    use: TypeOnly<typeof current.IFluidLoadable>): void;
 use_current_VariableDeclaration_IFluidLoadable(
     get_old_VariableDeclaration_IFluidLoadable());
 
@@ -545,7 +545,7 @@ use_current_VariableDeclaration_IFluidLoadable(
 declare function get_current_VariableDeclaration_IFluidLoadable():
     TypeOnly<typeof current.IFluidLoadable>;
 declare function use_old_VariableDeclaration_IFluidLoadable(
-    use: TypeOnly<typeof old.IFluidLoadable>);
+    use: TypeOnly<typeof old.IFluidLoadable>): void;
 use_old_VariableDeclaration_IFluidLoadable(
     get_current_VariableDeclaration_IFluidLoadable());
 
@@ -557,7 +557,7 @@ use_old_VariableDeclaration_IFluidLoadable(
 declare function get_old_InterfaceDeclaration_IFluidLoadable():
     TypeOnly<old.IFluidLoadable>;
 declare function use_current_InterfaceDeclaration_IFluidLoadable(
-    use: TypeOnly<current.IFluidLoadable>);
+    use: TypeOnly<current.IFluidLoadable>): void;
 use_current_InterfaceDeclaration_IFluidLoadable(
     get_old_InterfaceDeclaration_IFluidLoadable());
 
@@ -569,7 +569,7 @@ use_current_InterfaceDeclaration_IFluidLoadable(
 declare function get_current_InterfaceDeclaration_IFluidLoadable():
     TypeOnly<current.IFluidLoadable>;
 declare function use_old_InterfaceDeclaration_IFluidLoadable(
-    use: TypeOnly<old.IFluidLoadable>);
+    use: TypeOnly<old.IFluidLoadable>): void;
 use_old_InterfaceDeclaration_IFluidLoadable(
     get_current_InterfaceDeclaration_IFluidLoadable());
 
@@ -581,7 +581,7 @@ use_old_InterfaceDeclaration_IFluidLoadable(
 declare function get_old_InterfaceDeclaration_IFluidPackage():
     TypeOnly<old.IFluidPackage>;
 declare function use_current_InterfaceDeclaration_IFluidPackage(
-    use: TypeOnly<current.IFluidPackage>);
+    use: TypeOnly<current.IFluidPackage>): void;
 use_current_InterfaceDeclaration_IFluidPackage(
     get_old_InterfaceDeclaration_IFluidPackage());
 
@@ -593,7 +593,7 @@ use_current_InterfaceDeclaration_IFluidPackage(
 declare function get_current_InterfaceDeclaration_IFluidPackage():
     TypeOnly<current.IFluidPackage>;
 declare function use_old_InterfaceDeclaration_IFluidPackage(
-    use: TypeOnly<old.IFluidPackage>);
+    use: TypeOnly<old.IFluidPackage>): void;
 use_old_InterfaceDeclaration_IFluidPackage(
     get_current_InterfaceDeclaration_IFluidPackage());
 
@@ -605,7 +605,7 @@ use_old_InterfaceDeclaration_IFluidPackage(
 declare function get_old_InterfaceDeclaration_IFluidPackageEnvironment():
     TypeOnly<old.IFluidPackageEnvironment>;
 declare function use_current_InterfaceDeclaration_IFluidPackageEnvironment(
-    use: TypeOnly<current.IFluidPackageEnvironment>);
+    use: TypeOnly<current.IFluidPackageEnvironment>): void;
 use_current_InterfaceDeclaration_IFluidPackageEnvironment(
     get_old_InterfaceDeclaration_IFluidPackageEnvironment());
 
@@ -617,7 +617,7 @@ use_current_InterfaceDeclaration_IFluidPackageEnvironment(
 declare function get_current_InterfaceDeclaration_IFluidPackageEnvironment():
     TypeOnly<current.IFluidPackageEnvironment>;
 declare function use_old_InterfaceDeclaration_IFluidPackageEnvironment(
-    use: TypeOnly<old.IFluidPackageEnvironment>);
+    use: TypeOnly<old.IFluidPackageEnvironment>): void;
 use_old_InterfaceDeclaration_IFluidPackageEnvironment(
     get_current_InterfaceDeclaration_IFluidPackageEnvironment());
 
@@ -629,7 +629,7 @@ use_old_InterfaceDeclaration_IFluidPackageEnvironment(
 declare function get_old_VariableDeclaration_IFluidRouter():
     TypeOnly<typeof old.IFluidRouter>;
 declare function use_current_VariableDeclaration_IFluidRouter(
-    use: TypeOnly<typeof current.IFluidRouter>);
+    use: TypeOnly<typeof current.IFluidRouter>): void;
 use_current_VariableDeclaration_IFluidRouter(
     get_old_VariableDeclaration_IFluidRouter());
 
@@ -641,7 +641,7 @@ use_current_VariableDeclaration_IFluidRouter(
 declare function get_current_VariableDeclaration_IFluidRouter():
     TypeOnly<typeof current.IFluidRouter>;
 declare function use_old_VariableDeclaration_IFluidRouter(
-    use: TypeOnly<typeof old.IFluidRouter>);
+    use: TypeOnly<typeof old.IFluidRouter>): void;
 use_old_VariableDeclaration_IFluidRouter(
     get_current_VariableDeclaration_IFluidRouter());
 
@@ -653,7 +653,7 @@ use_old_VariableDeclaration_IFluidRouter(
 declare function get_old_InterfaceDeclaration_IFluidRouter():
     TypeOnly<old.IFluidRouter>;
 declare function use_current_InterfaceDeclaration_IFluidRouter(
-    use: TypeOnly<current.IFluidRouter>);
+    use: TypeOnly<current.IFluidRouter>): void;
 use_current_InterfaceDeclaration_IFluidRouter(
     get_old_InterfaceDeclaration_IFluidRouter());
 
@@ -665,7 +665,7 @@ use_current_InterfaceDeclaration_IFluidRouter(
 declare function get_current_InterfaceDeclaration_IFluidRouter():
     TypeOnly<current.IFluidRouter>;
 declare function use_old_InterfaceDeclaration_IFluidRouter(
-    use: TypeOnly<old.IFluidRouter>);
+    use: TypeOnly<old.IFluidRouter>): void;
 use_old_InterfaceDeclaration_IFluidRouter(
     get_current_InterfaceDeclaration_IFluidRouter());
 
@@ -677,7 +677,7 @@ use_old_InterfaceDeclaration_IFluidRouter(
 declare function get_old_VariableDeclaration_IFluidRunnable():
     TypeOnly<typeof old.IFluidRunnable>;
 declare function use_current_VariableDeclaration_IFluidRunnable(
-    use: TypeOnly<typeof current.IFluidRunnable>);
+    use: TypeOnly<typeof current.IFluidRunnable>): void;
 use_current_VariableDeclaration_IFluidRunnable(
     get_old_VariableDeclaration_IFluidRunnable());
 
@@ -689,7 +689,7 @@ use_current_VariableDeclaration_IFluidRunnable(
 declare function get_current_VariableDeclaration_IFluidRunnable():
     TypeOnly<typeof current.IFluidRunnable>;
 declare function use_old_VariableDeclaration_IFluidRunnable(
-    use: TypeOnly<typeof old.IFluidRunnable>);
+    use: TypeOnly<typeof old.IFluidRunnable>): void;
 use_old_VariableDeclaration_IFluidRunnable(
     get_current_VariableDeclaration_IFluidRunnable());
 
@@ -701,7 +701,7 @@ use_old_VariableDeclaration_IFluidRunnable(
 declare function get_old_InterfaceDeclaration_IFluidRunnable():
     TypeOnly<old.IFluidRunnable>;
 declare function use_current_InterfaceDeclaration_IFluidRunnable(
-    use: TypeOnly<current.IFluidRunnable>);
+    use: TypeOnly<current.IFluidRunnable>): void;
 use_current_InterfaceDeclaration_IFluidRunnable(
     get_old_InterfaceDeclaration_IFluidRunnable());
 
@@ -713,7 +713,7 @@ use_current_InterfaceDeclaration_IFluidRunnable(
 declare function get_current_InterfaceDeclaration_IFluidRunnable():
     TypeOnly<current.IFluidRunnable>;
 declare function use_old_InterfaceDeclaration_IFluidRunnable(
-    use: TypeOnly<old.IFluidRunnable>);
+    use: TypeOnly<old.IFluidRunnable>): void;
 use_old_InterfaceDeclaration_IFluidRunnable(
     get_current_InterfaceDeclaration_IFluidRunnable());
 
@@ -725,7 +725,7 @@ use_old_InterfaceDeclaration_IFluidRunnable(
 declare function get_old_InterfaceDeclaration_IGenericError():
     TypeOnly<old.IGenericError>;
 declare function use_current_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<current.IGenericError>);
+    use: TypeOnly<current.IGenericError>): void;
 use_current_InterfaceDeclaration_IGenericError(
     get_old_InterfaceDeclaration_IGenericError());
 
@@ -737,7 +737,7 @@ use_current_InterfaceDeclaration_IGenericError(
 declare function get_current_InterfaceDeclaration_IGenericError():
     TypeOnly<current.IGenericError>;
 declare function use_old_InterfaceDeclaration_IGenericError(
-    use: TypeOnly<old.IGenericError>);
+    use: TypeOnly<old.IGenericError>): void;
 use_old_InterfaceDeclaration_IGenericError(
     get_current_InterfaceDeclaration_IGenericError());
 
@@ -749,7 +749,7 @@ use_old_InterfaceDeclaration_IGenericError(
 declare function get_old_InterfaceDeclaration_ILoggingError():
     TypeOnly<old.ILoggingError>;
 declare function use_current_InterfaceDeclaration_ILoggingError(
-    use: TypeOnly<current.ILoggingError>);
+    use: TypeOnly<current.ILoggingError>): void;
 use_current_InterfaceDeclaration_ILoggingError(
     get_old_InterfaceDeclaration_ILoggingError());
 
@@ -761,7 +761,7 @@ use_current_InterfaceDeclaration_ILoggingError(
 declare function get_current_InterfaceDeclaration_ILoggingError():
     TypeOnly<current.ILoggingError>;
 declare function use_old_InterfaceDeclaration_ILoggingError(
-    use: TypeOnly<old.ILoggingError>);
+    use: TypeOnly<old.ILoggingError>): void;
 use_old_InterfaceDeclaration_ILoggingError(
     get_current_InterfaceDeclaration_ILoggingError());
 
@@ -773,7 +773,7 @@ use_old_InterfaceDeclaration_ILoggingError(
 declare function get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
     TypeOnly<old.IProvideFluidCodeDetailsComparer>;
 declare function use_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
-    use: TypeOnly<current.IProvideFluidCodeDetailsComparer>);
+    use: TypeOnly<current.IProvideFluidCodeDetailsComparer>): void;
 use_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
     get_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer());
 
@@ -785,7 +785,7 @@ use_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
 declare function get_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer():
     TypeOnly<current.IProvideFluidCodeDetailsComparer>;
 declare function use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
-    use: TypeOnly<old.IProvideFluidCodeDetailsComparer>);
+    use: TypeOnly<old.IProvideFluidCodeDetailsComparer>): void;
 use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
     get_current_InterfaceDeclaration_IProvideFluidCodeDetailsComparer());
 
@@ -797,7 +797,7 @@ use_old_InterfaceDeclaration_IProvideFluidCodeDetailsComparer(
 declare function get_old_InterfaceDeclaration_IProvideFluidHandle():
     TypeOnly<old.IProvideFluidHandle>;
 declare function use_current_InterfaceDeclaration_IProvideFluidHandle(
-    use: TypeOnly<current.IProvideFluidHandle>);
+    use: TypeOnly<current.IProvideFluidHandle>): void;
 use_current_InterfaceDeclaration_IProvideFluidHandle(
     get_old_InterfaceDeclaration_IProvideFluidHandle());
 
@@ -809,7 +809,7 @@ use_current_InterfaceDeclaration_IProvideFluidHandle(
 declare function get_current_InterfaceDeclaration_IProvideFluidHandle():
     TypeOnly<current.IProvideFluidHandle>;
 declare function use_old_InterfaceDeclaration_IProvideFluidHandle(
-    use: TypeOnly<old.IProvideFluidHandle>);
+    use: TypeOnly<old.IProvideFluidHandle>): void;
 use_old_InterfaceDeclaration_IProvideFluidHandle(
     get_current_InterfaceDeclaration_IProvideFluidHandle());
 
@@ -821,7 +821,7 @@ use_old_InterfaceDeclaration_IProvideFluidHandle(
 declare function get_old_InterfaceDeclaration_IProvideFluidHandleContext():
     TypeOnly<old.IProvideFluidHandleContext>;
 declare function use_current_InterfaceDeclaration_IProvideFluidHandleContext(
-    use: TypeOnly<current.IProvideFluidHandleContext>);
+    use: TypeOnly<current.IProvideFluidHandleContext>): void;
 use_current_InterfaceDeclaration_IProvideFluidHandleContext(
     get_old_InterfaceDeclaration_IProvideFluidHandleContext());
 
@@ -833,7 +833,7 @@ use_current_InterfaceDeclaration_IProvideFluidHandleContext(
 declare function get_current_InterfaceDeclaration_IProvideFluidHandleContext():
     TypeOnly<current.IProvideFluidHandleContext>;
 declare function use_old_InterfaceDeclaration_IProvideFluidHandleContext(
-    use: TypeOnly<old.IProvideFluidHandleContext>);
+    use: TypeOnly<old.IProvideFluidHandleContext>): void;
 use_old_InterfaceDeclaration_IProvideFluidHandleContext(
     get_current_InterfaceDeclaration_IProvideFluidHandleContext());
 
@@ -845,7 +845,7 @@ use_old_InterfaceDeclaration_IProvideFluidHandleContext(
 declare function get_old_InterfaceDeclaration_IProvideFluidLoadable():
     TypeOnly<old.IProvideFluidLoadable>;
 declare function use_current_InterfaceDeclaration_IProvideFluidLoadable(
-    use: TypeOnly<current.IProvideFluidLoadable>);
+    use: TypeOnly<current.IProvideFluidLoadable>): void;
 use_current_InterfaceDeclaration_IProvideFluidLoadable(
     get_old_InterfaceDeclaration_IProvideFluidLoadable());
 
@@ -857,7 +857,7 @@ use_current_InterfaceDeclaration_IProvideFluidLoadable(
 declare function get_current_InterfaceDeclaration_IProvideFluidLoadable():
     TypeOnly<current.IProvideFluidLoadable>;
 declare function use_old_InterfaceDeclaration_IProvideFluidLoadable(
-    use: TypeOnly<old.IProvideFluidLoadable>);
+    use: TypeOnly<old.IProvideFluidLoadable>): void;
 use_old_InterfaceDeclaration_IProvideFluidLoadable(
     get_current_InterfaceDeclaration_IProvideFluidLoadable());
 
@@ -869,7 +869,7 @@ use_old_InterfaceDeclaration_IProvideFluidLoadable(
 declare function get_old_InterfaceDeclaration_IProvideFluidRouter():
     TypeOnly<old.IProvideFluidRouter>;
 declare function use_current_InterfaceDeclaration_IProvideFluidRouter(
-    use: TypeOnly<current.IProvideFluidRouter>);
+    use: TypeOnly<current.IProvideFluidRouter>): void;
 use_current_InterfaceDeclaration_IProvideFluidRouter(
     get_old_InterfaceDeclaration_IProvideFluidRouter());
 
@@ -881,7 +881,7 @@ use_current_InterfaceDeclaration_IProvideFluidRouter(
 declare function get_current_InterfaceDeclaration_IProvideFluidRouter():
     TypeOnly<current.IProvideFluidRouter>;
 declare function use_old_InterfaceDeclaration_IProvideFluidRouter(
-    use: TypeOnly<old.IProvideFluidRouter>);
+    use: TypeOnly<old.IProvideFluidRouter>): void;
 use_old_InterfaceDeclaration_IProvideFluidRouter(
     get_current_InterfaceDeclaration_IProvideFluidRouter());
 
@@ -893,7 +893,7 @@ use_old_InterfaceDeclaration_IProvideFluidRouter(
 declare function get_old_InterfaceDeclaration_IProvideFluidRunnable():
     TypeOnly<old.IProvideFluidRunnable>;
 declare function use_current_InterfaceDeclaration_IProvideFluidRunnable(
-    use: TypeOnly<current.IProvideFluidRunnable>);
+    use: TypeOnly<current.IProvideFluidRunnable>): void;
 use_current_InterfaceDeclaration_IProvideFluidRunnable(
     get_old_InterfaceDeclaration_IProvideFluidRunnable());
 
@@ -905,7 +905,7 @@ use_current_InterfaceDeclaration_IProvideFluidRunnable(
 declare function get_current_InterfaceDeclaration_IProvideFluidRunnable():
     TypeOnly<current.IProvideFluidRunnable>;
 declare function use_old_InterfaceDeclaration_IProvideFluidRunnable(
-    use: TypeOnly<old.IProvideFluidRunnable>);
+    use: TypeOnly<old.IProvideFluidRunnable>): void;
 use_old_InterfaceDeclaration_IProvideFluidRunnable(
     get_current_InterfaceDeclaration_IProvideFluidRunnable());
 
@@ -917,7 +917,7 @@ use_old_InterfaceDeclaration_IProvideFluidRunnable(
 declare function get_old_InterfaceDeclaration_IRequest():
     TypeOnly<old.IRequest>;
 declare function use_current_InterfaceDeclaration_IRequest(
-    use: TypeOnly<current.IRequest>);
+    use: TypeOnly<current.IRequest>): void;
 use_current_InterfaceDeclaration_IRequest(
     get_old_InterfaceDeclaration_IRequest());
 
@@ -929,7 +929,7 @@ use_current_InterfaceDeclaration_IRequest(
 declare function get_current_InterfaceDeclaration_IRequest():
     TypeOnly<current.IRequest>;
 declare function use_old_InterfaceDeclaration_IRequest(
-    use: TypeOnly<old.IRequest>);
+    use: TypeOnly<old.IRequest>): void;
 use_old_InterfaceDeclaration_IRequest(
     get_current_InterfaceDeclaration_IRequest());
 
@@ -941,7 +941,7 @@ use_old_InterfaceDeclaration_IRequest(
 declare function get_old_InterfaceDeclaration_IRequestHeader():
     TypeOnly<old.IRequestHeader>;
 declare function use_current_InterfaceDeclaration_IRequestHeader(
-    use: TypeOnly<current.IRequestHeader>);
+    use: TypeOnly<current.IRequestHeader>): void;
 use_current_InterfaceDeclaration_IRequestHeader(
     get_old_InterfaceDeclaration_IRequestHeader());
 
@@ -953,7 +953,7 @@ use_current_InterfaceDeclaration_IRequestHeader(
 declare function get_current_InterfaceDeclaration_IRequestHeader():
     TypeOnly<current.IRequestHeader>;
 declare function use_old_InterfaceDeclaration_IRequestHeader(
-    use: TypeOnly<old.IRequestHeader>);
+    use: TypeOnly<old.IRequestHeader>): void;
 use_old_InterfaceDeclaration_IRequestHeader(
     get_current_InterfaceDeclaration_IRequestHeader());
 
@@ -965,7 +965,7 @@ use_old_InterfaceDeclaration_IRequestHeader(
 declare function get_old_InterfaceDeclaration_IResponse():
     TypeOnly<old.IResponse>;
 declare function use_current_InterfaceDeclaration_IResponse(
-    use: TypeOnly<current.IResponse>);
+    use: TypeOnly<current.IResponse>): void;
 use_current_InterfaceDeclaration_IResponse(
     get_old_InterfaceDeclaration_IResponse());
 
@@ -977,7 +977,7 @@ use_current_InterfaceDeclaration_IResponse(
 declare function get_current_InterfaceDeclaration_IResponse():
     TypeOnly<current.IResponse>;
 declare function use_old_InterfaceDeclaration_IResponse(
-    use: TypeOnly<old.IResponse>);
+    use: TypeOnly<old.IResponse>): void;
 use_old_InterfaceDeclaration_IResponse(
     get_current_InterfaceDeclaration_IResponse());
 
@@ -989,7 +989,7 @@ use_old_InterfaceDeclaration_IResponse(
 declare function get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType():
     TypeOnly<old.ITaggedTelemetryPropertyType>;
 declare function use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    use: TypeOnly<current.ITaggedTelemetryPropertyType>);
+    use: TypeOnly<current.ITaggedTelemetryPropertyType>): void;
 use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
     get_old_InterfaceDeclaration_ITaggedTelemetryPropertyType());
 
@@ -1001,7 +1001,7 @@ use_current_InterfaceDeclaration_ITaggedTelemetryPropertyType(
 declare function get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType():
     TypeOnly<current.ITaggedTelemetryPropertyType>;
 declare function use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
-    use: TypeOnly<old.ITaggedTelemetryPropertyType>);
+    use: TypeOnly<old.ITaggedTelemetryPropertyType>): void;
 use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
     get_current_InterfaceDeclaration_ITaggedTelemetryPropertyType());
 
@@ -1013,7 +1013,7 @@ use_old_InterfaceDeclaration_ITaggedTelemetryPropertyType(
 declare function get_old_InterfaceDeclaration_ITelemetryBaseEvent():
     TypeOnly<old.ITelemetryBaseEvent>;
 declare function use_current_InterfaceDeclaration_ITelemetryBaseEvent(
-    use: TypeOnly<current.ITelemetryBaseEvent>);
+    use: TypeOnly<current.ITelemetryBaseEvent>): void;
 use_current_InterfaceDeclaration_ITelemetryBaseEvent(
     get_old_InterfaceDeclaration_ITelemetryBaseEvent());
 
@@ -1025,7 +1025,7 @@ use_current_InterfaceDeclaration_ITelemetryBaseEvent(
 declare function get_current_InterfaceDeclaration_ITelemetryBaseEvent():
     TypeOnly<current.ITelemetryBaseEvent>;
 declare function use_old_InterfaceDeclaration_ITelemetryBaseEvent(
-    use: TypeOnly<old.ITelemetryBaseEvent>);
+    use: TypeOnly<old.ITelemetryBaseEvent>): void;
 use_old_InterfaceDeclaration_ITelemetryBaseEvent(
     get_current_InterfaceDeclaration_ITelemetryBaseEvent());
 
@@ -1037,7 +1037,7 @@ use_old_InterfaceDeclaration_ITelemetryBaseEvent(
 declare function get_old_InterfaceDeclaration_ITelemetryBaseLogger():
     TypeOnly<old.ITelemetryBaseLogger>;
 declare function use_current_InterfaceDeclaration_ITelemetryBaseLogger(
-    use: TypeOnly<current.ITelemetryBaseLogger>);
+    use: TypeOnly<current.ITelemetryBaseLogger>): void;
 use_current_InterfaceDeclaration_ITelemetryBaseLogger(
     get_old_InterfaceDeclaration_ITelemetryBaseLogger());
 
@@ -1049,7 +1049,7 @@ use_current_InterfaceDeclaration_ITelemetryBaseLogger(
 declare function get_current_InterfaceDeclaration_ITelemetryBaseLogger():
     TypeOnly<current.ITelemetryBaseLogger>;
 declare function use_old_InterfaceDeclaration_ITelemetryBaseLogger(
-    use: TypeOnly<old.ITelemetryBaseLogger>);
+    use: TypeOnly<old.ITelemetryBaseLogger>): void;
 use_old_InterfaceDeclaration_ITelemetryBaseLogger(
     get_current_InterfaceDeclaration_ITelemetryBaseLogger());
 
@@ -1061,7 +1061,7 @@ use_old_InterfaceDeclaration_ITelemetryBaseLogger(
 declare function get_old_TypeAliasDeclaration_ITelemetryBaseProperties():
     TypeOnly<old.ITelemetryBaseProperties>;
 declare function use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
-    use: TypeOnly<current.ITelemetryBaseProperties>);
+    use: TypeOnly<current.ITelemetryBaseProperties>): void;
 use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
     get_old_TypeAliasDeclaration_ITelemetryBaseProperties());
 
@@ -1073,7 +1073,7 @@ use_current_TypeAliasDeclaration_ITelemetryBaseProperties(
 declare function get_current_TypeAliasDeclaration_ITelemetryBaseProperties():
     TypeOnly<current.ITelemetryBaseProperties>;
 declare function use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
-    use: TypeOnly<old.ITelemetryBaseProperties>);
+    use: TypeOnly<old.ITelemetryBaseProperties>): void;
 use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
     get_current_TypeAliasDeclaration_ITelemetryBaseProperties());
 
@@ -1085,7 +1085,7 @@ use_old_TypeAliasDeclaration_ITelemetryBaseProperties(
 declare function get_old_InterfaceDeclaration_ITelemetryErrorEvent():
     TypeOnly<old.ITelemetryErrorEvent>;
 declare function use_current_InterfaceDeclaration_ITelemetryErrorEvent(
-    use: TypeOnly<current.ITelemetryErrorEvent>);
+    use: TypeOnly<current.ITelemetryErrorEvent>): void;
 use_current_InterfaceDeclaration_ITelemetryErrorEvent(
     get_old_InterfaceDeclaration_ITelemetryErrorEvent());
 
@@ -1097,7 +1097,7 @@ use_current_InterfaceDeclaration_ITelemetryErrorEvent(
 declare function get_current_InterfaceDeclaration_ITelemetryErrorEvent():
     TypeOnly<current.ITelemetryErrorEvent>;
 declare function use_old_InterfaceDeclaration_ITelemetryErrorEvent(
-    use: TypeOnly<old.ITelemetryErrorEvent>);
+    use: TypeOnly<old.ITelemetryErrorEvent>): void;
 use_old_InterfaceDeclaration_ITelemetryErrorEvent(
     get_current_InterfaceDeclaration_ITelemetryErrorEvent());
 
@@ -1109,7 +1109,7 @@ use_old_InterfaceDeclaration_ITelemetryErrorEvent(
 declare function get_old_InterfaceDeclaration_ITelemetryGenericEvent():
     TypeOnly<old.ITelemetryGenericEvent>;
 declare function use_current_InterfaceDeclaration_ITelemetryGenericEvent(
-    use: TypeOnly<current.ITelemetryGenericEvent>);
+    use: TypeOnly<current.ITelemetryGenericEvent>): void;
 use_current_InterfaceDeclaration_ITelemetryGenericEvent(
     get_old_InterfaceDeclaration_ITelemetryGenericEvent());
 
@@ -1121,7 +1121,7 @@ use_current_InterfaceDeclaration_ITelemetryGenericEvent(
 declare function get_current_InterfaceDeclaration_ITelemetryGenericEvent():
     TypeOnly<current.ITelemetryGenericEvent>;
 declare function use_old_InterfaceDeclaration_ITelemetryGenericEvent(
-    use: TypeOnly<old.ITelemetryGenericEvent>);
+    use: TypeOnly<old.ITelemetryGenericEvent>): void;
 use_old_InterfaceDeclaration_ITelemetryGenericEvent(
     get_current_InterfaceDeclaration_ITelemetryGenericEvent());
 
@@ -1133,7 +1133,7 @@ use_old_InterfaceDeclaration_ITelemetryGenericEvent(
 declare function get_old_InterfaceDeclaration_ITelemetryLogger():
     TypeOnly<old.ITelemetryLogger>;
 declare function use_current_InterfaceDeclaration_ITelemetryLogger(
-    use: TypeOnly<current.ITelemetryLogger>);
+    use: TypeOnly<current.ITelemetryLogger>): void;
 use_current_InterfaceDeclaration_ITelemetryLogger(
     get_old_InterfaceDeclaration_ITelemetryLogger());
 
@@ -1145,7 +1145,7 @@ use_current_InterfaceDeclaration_ITelemetryLogger(
 declare function get_current_InterfaceDeclaration_ITelemetryLogger():
     TypeOnly<current.ITelemetryLogger>;
 declare function use_old_InterfaceDeclaration_ITelemetryLogger(
-    use: TypeOnly<old.ITelemetryLogger>);
+    use: TypeOnly<old.ITelemetryLogger>): void;
 use_old_InterfaceDeclaration_ITelemetryLogger(
     get_current_InterfaceDeclaration_ITelemetryLogger());
 
@@ -1157,7 +1157,7 @@ use_old_InterfaceDeclaration_ITelemetryLogger(
 declare function get_old_InterfaceDeclaration_ITelemetryPerformanceEvent():
     TypeOnly<old.ITelemetryPerformanceEvent>;
 declare function use_current_InterfaceDeclaration_ITelemetryPerformanceEvent(
-    use: TypeOnly<current.ITelemetryPerformanceEvent>);
+    use: TypeOnly<current.ITelemetryPerformanceEvent>): void;
 use_current_InterfaceDeclaration_ITelemetryPerformanceEvent(
     get_old_InterfaceDeclaration_ITelemetryPerformanceEvent());
 
@@ -1169,7 +1169,7 @@ use_current_InterfaceDeclaration_ITelemetryPerformanceEvent(
 declare function get_current_InterfaceDeclaration_ITelemetryPerformanceEvent():
     TypeOnly<current.ITelemetryPerformanceEvent>;
 declare function use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
-    use: TypeOnly<old.ITelemetryPerformanceEvent>);
+    use: TypeOnly<old.ITelemetryPerformanceEvent>): void;
 use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
     get_current_InterfaceDeclaration_ITelemetryPerformanceEvent());
 
@@ -1181,7 +1181,7 @@ use_old_InterfaceDeclaration_ITelemetryPerformanceEvent(
 declare function get_old_InterfaceDeclaration_ITelemetryProperties():
     TypeOnly<old.ITelemetryProperties>;
 declare function use_current_InterfaceDeclaration_ITelemetryProperties(
-    use: TypeOnly<current.ITelemetryProperties>);
+    use: TypeOnly<current.ITelemetryProperties>): void;
 use_current_InterfaceDeclaration_ITelemetryProperties(
     get_old_InterfaceDeclaration_ITelemetryProperties());
 
@@ -1193,7 +1193,7 @@ use_current_InterfaceDeclaration_ITelemetryProperties(
 declare function get_current_InterfaceDeclaration_ITelemetryProperties():
     TypeOnly<current.ITelemetryProperties>;
 declare function use_old_InterfaceDeclaration_ITelemetryProperties(
-    use: TypeOnly<old.ITelemetryProperties>);
+    use: TypeOnly<old.ITelemetryProperties>): void;
 use_old_InterfaceDeclaration_ITelemetryProperties(
     get_current_InterfaceDeclaration_ITelemetryProperties());
 
@@ -1205,7 +1205,7 @@ use_old_InterfaceDeclaration_ITelemetryProperties(
 declare function get_old_InterfaceDeclaration_IThrottlingWarning():
     TypeOnly<old.IThrottlingWarning>;
 declare function use_current_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<current.IThrottlingWarning>);
+    use: TypeOnly<current.IThrottlingWarning>): void;
 use_current_InterfaceDeclaration_IThrottlingWarning(
     get_old_InterfaceDeclaration_IThrottlingWarning());
 
@@ -1217,7 +1217,7 @@ use_current_InterfaceDeclaration_IThrottlingWarning(
 declare function get_current_InterfaceDeclaration_IThrottlingWarning():
     TypeOnly<current.IThrottlingWarning>;
 declare function use_old_InterfaceDeclaration_IThrottlingWarning(
-    use: TypeOnly<old.IThrottlingWarning>);
+    use: TypeOnly<old.IThrottlingWarning>): void;
 use_old_InterfaceDeclaration_IThrottlingWarning(
     get_current_InterfaceDeclaration_IThrottlingWarning());
 
@@ -1229,7 +1229,7 @@ use_old_InterfaceDeclaration_IThrottlingWarning(
 declare function get_old_InterfaceDeclaration_IUsageError():
     TypeOnly<old.IUsageError>;
 declare function use_current_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<current.IUsageError>);
+    use: TypeOnly<current.IUsageError>): void;
 use_current_InterfaceDeclaration_IUsageError(
     get_old_InterfaceDeclaration_IUsageError());
 
@@ -1241,7 +1241,7 @@ use_current_InterfaceDeclaration_IUsageError(
 declare function get_current_InterfaceDeclaration_IUsageError():
     TypeOnly<current.IUsageError>;
 declare function use_old_InterfaceDeclaration_IUsageError(
-    use: TypeOnly<old.IUsageError>);
+    use: TypeOnly<old.IUsageError>): void;
 use_old_InterfaceDeclaration_IUsageError(
     get_current_InterfaceDeclaration_IUsageError());
 
@@ -1253,7 +1253,7 @@ use_old_InterfaceDeclaration_IUsageError(
 declare function get_old_VariableDeclaration_LogLevel():
     TypeOnly<typeof old.LogLevel>;
 declare function use_current_VariableDeclaration_LogLevel(
-    use: TypeOnly<typeof current.LogLevel>);
+    use: TypeOnly<typeof current.LogLevel>): void;
 use_current_VariableDeclaration_LogLevel(
     get_old_VariableDeclaration_LogLevel());
 
@@ -1265,7 +1265,7 @@ use_current_VariableDeclaration_LogLevel(
 declare function get_current_VariableDeclaration_LogLevel():
     TypeOnly<typeof current.LogLevel>;
 declare function use_old_VariableDeclaration_LogLevel(
-    use: TypeOnly<typeof old.LogLevel>);
+    use: TypeOnly<typeof old.LogLevel>): void;
 use_old_VariableDeclaration_LogLevel(
     get_current_VariableDeclaration_LogLevel());
 
@@ -1277,7 +1277,7 @@ use_old_VariableDeclaration_LogLevel(
 declare function get_old_TypeAliasDeclaration_LogLevel():
     TypeOnly<old.LogLevel>;
 declare function use_current_TypeAliasDeclaration_LogLevel(
-    use: TypeOnly<current.LogLevel>);
+    use: TypeOnly<current.LogLevel>): void;
 use_current_TypeAliasDeclaration_LogLevel(
     get_old_TypeAliasDeclaration_LogLevel());
 
@@ -1289,7 +1289,7 @@ use_current_TypeAliasDeclaration_LogLevel(
 declare function get_current_TypeAliasDeclaration_LogLevel():
     TypeOnly<current.LogLevel>;
 declare function use_old_TypeAliasDeclaration_LogLevel(
-    use: TypeOnly<old.LogLevel>);
+    use: TypeOnly<old.LogLevel>): void;
 use_old_TypeAliasDeclaration_LogLevel(
     get_current_TypeAliasDeclaration_LogLevel());
 
@@ -1301,7 +1301,7 @@ use_old_TypeAliasDeclaration_LogLevel(
 declare function get_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder():
     TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>;
 declare function use_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
-    use: TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>);
+    use: TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>): void;
 use_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
     get_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder());
 
@@ -1313,7 +1313,7 @@ use_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
 declare function get_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder():
     TypeOnly<current.ReplaceIEventThisPlaceHolder<any,any>>;
 declare function use_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
-    use: TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>);
+    use: TypeOnly<old.ReplaceIEventThisPlaceHolder<any,any>>): void;
 use_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
     get_current_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder());
 
@@ -1325,7 +1325,7 @@ use_old_TypeAliasDeclaration_ReplaceIEventThisPlaceHolder(
 declare function get_old_InterfaceDeclaration_Tagged():
     TypeOnly<old.Tagged<any,any>>;
 declare function use_current_InterfaceDeclaration_Tagged(
-    use: TypeOnly<current.Tagged<any,any>>);
+    use: TypeOnly<current.Tagged<any,any>>): void;
 use_current_InterfaceDeclaration_Tagged(
     get_old_InterfaceDeclaration_Tagged());
 
@@ -1337,7 +1337,7 @@ use_current_InterfaceDeclaration_Tagged(
 declare function get_current_InterfaceDeclaration_Tagged():
     TypeOnly<current.Tagged<any,any>>;
 declare function use_old_InterfaceDeclaration_Tagged(
-    use: TypeOnly<old.Tagged<any,any>>);
+    use: TypeOnly<old.Tagged<any,any>>): void;
 use_old_InterfaceDeclaration_Tagged(
     get_current_InterfaceDeclaration_Tagged());
 
@@ -1349,7 +1349,7 @@ use_old_InterfaceDeclaration_Tagged(
 declare function get_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType():
     TypeOnly<old.TelemetryBaseEventPropertyType>;
 declare function use_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
-    use: TypeOnly<current.TelemetryBaseEventPropertyType>);
+    use: TypeOnly<current.TelemetryBaseEventPropertyType>): void;
 use_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
     get_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType());
 
@@ -1361,7 +1361,7 @@ use_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
 declare function get_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType():
     TypeOnly<current.TelemetryBaseEventPropertyType>;
 declare function use_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
-    use: TypeOnly<old.TelemetryBaseEventPropertyType>);
+    use: TypeOnly<old.TelemetryBaseEventPropertyType>): void;
 use_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
     get_current_TypeAliasDeclaration_TelemetryBaseEventPropertyType());
 
@@ -1373,7 +1373,7 @@ use_old_TypeAliasDeclaration_TelemetryBaseEventPropertyType(
 declare function get_old_TypeAliasDeclaration_TelemetryEventCategory():
     TypeOnly<old.TelemetryEventCategory>;
 declare function use_current_TypeAliasDeclaration_TelemetryEventCategory(
-    use: TypeOnly<current.TelemetryEventCategory>);
+    use: TypeOnly<current.TelemetryEventCategory>): void;
 use_current_TypeAliasDeclaration_TelemetryEventCategory(
     get_old_TypeAliasDeclaration_TelemetryEventCategory());
 
@@ -1385,7 +1385,7 @@ use_current_TypeAliasDeclaration_TelemetryEventCategory(
 declare function get_current_TypeAliasDeclaration_TelemetryEventCategory():
     TypeOnly<current.TelemetryEventCategory>;
 declare function use_old_TypeAliasDeclaration_TelemetryEventCategory(
-    use: TypeOnly<old.TelemetryEventCategory>);
+    use: TypeOnly<old.TelemetryEventCategory>): void;
 use_old_TypeAliasDeclaration_TelemetryEventCategory(
     get_current_TypeAliasDeclaration_TelemetryEventCategory());
 
@@ -1397,7 +1397,7 @@ use_old_TypeAliasDeclaration_TelemetryEventCategory(
 declare function get_old_TypeAliasDeclaration_TelemetryEventPropertyType():
     TypeOnly<old.TelemetryEventPropertyType>;
 declare function use_current_TypeAliasDeclaration_TelemetryEventPropertyType(
-    use: TypeOnly<current.TelemetryEventPropertyType>);
+    use: TypeOnly<current.TelemetryEventPropertyType>): void;
 use_current_TypeAliasDeclaration_TelemetryEventPropertyType(
     get_old_TypeAliasDeclaration_TelemetryEventPropertyType());
 
@@ -1409,7 +1409,7 @@ use_current_TypeAliasDeclaration_TelemetryEventPropertyType(
 declare function get_current_TypeAliasDeclaration_TelemetryEventPropertyType():
     TypeOnly<current.TelemetryEventPropertyType>;
 declare function use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
-    use: TypeOnly<old.TelemetryEventPropertyType>);
+    use: TypeOnly<old.TelemetryEventPropertyType>): void;
 use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
     get_current_TypeAliasDeclaration_TelemetryEventPropertyType());
 
@@ -1421,7 +1421,7 @@ use_old_TypeAliasDeclaration_TelemetryEventPropertyType(
 declare function get_old_TypeAliasDeclaration_TransformedEvent():
     TypeOnly<old.TransformedEvent<any,any,any>>;
 declare function use_current_TypeAliasDeclaration_TransformedEvent(
-    use: TypeOnly<current.TransformedEvent<any,any,any>>);
+    use: TypeOnly<current.TransformedEvent<any,any,any>>): void;
 use_current_TypeAliasDeclaration_TransformedEvent(
     get_old_TypeAliasDeclaration_TransformedEvent());
 
@@ -1433,7 +1433,7 @@ use_current_TypeAliasDeclaration_TransformedEvent(
 declare function get_current_TypeAliasDeclaration_TransformedEvent():
     TypeOnly<current.TransformedEvent<any,any,any>>;
 declare function use_old_TypeAliasDeclaration_TransformedEvent(
-    use: TypeOnly<old.TransformedEvent<any,any,any>>);
+    use: TypeOnly<old.TransformedEvent<any,any,any>>): void;
 use_old_TypeAliasDeclaration_TransformedEvent(
     get_current_TypeAliasDeclaration_TransformedEvent());
 
@@ -1445,7 +1445,7 @@ use_old_TypeAliasDeclaration_TransformedEvent(
 declare function get_old_VariableDeclaration_isFluidCodeDetails():
     TypeOnly<typeof old.isFluidCodeDetails>;
 declare function use_current_VariableDeclaration_isFluidCodeDetails(
-    use: TypeOnly<typeof current.isFluidCodeDetails>);
+    use: TypeOnly<typeof current.isFluidCodeDetails>): void;
 use_current_VariableDeclaration_isFluidCodeDetails(
     get_old_VariableDeclaration_isFluidCodeDetails());
 
@@ -1457,7 +1457,7 @@ use_current_VariableDeclaration_isFluidCodeDetails(
 declare function get_current_VariableDeclaration_isFluidCodeDetails():
     TypeOnly<typeof current.isFluidCodeDetails>;
 declare function use_old_VariableDeclaration_isFluidCodeDetails(
-    use: TypeOnly<typeof old.isFluidCodeDetails>);
+    use: TypeOnly<typeof old.isFluidCodeDetails>): void;
 use_old_VariableDeclaration_isFluidCodeDetails(
     get_current_VariableDeclaration_isFluidCodeDetails());
 
@@ -1469,7 +1469,7 @@ use_old_VariableDeclaration_isFluidCodeDetails(
 declare function get_old_VariableDeclaration_isFluidPackage():
     TypeOnly<typeof old.isFluidPackage>;
 declare function use_current_VariableDeclaration_isFluidPackage(
-    use: TypeOnly<typeof current.isFluidPackage>);
+    use: TypeOnly<typeof current.isFluidPackage>): void;
 use_current_VariableDeclaration_isFluidPackage(
     get_old_VariableDeclaration_isFluidPackage());
 
@@ -1481,6 +1481,6 @@ use_current_VariableDeclaration_isFluidPackage(
 declare function get_current_VariableDeclaration_isFluidPackage():
     TypeOnly<typeof current.isFluidPackage>;
 declare function use_old_VariableDeclaration_isFluidPackage(
-    use: TypeOnly<typeof old.isFluidPackage>);
+    use: TypeOnly<typeof old.isFluidPackage>): void;
 use_old_VariableDeclaration_isFluidPackage(
     get_current_VariableDeclaration_isFluidPackage());

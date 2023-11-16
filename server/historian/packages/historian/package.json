@@ -15,7 +15,7 @@
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc",
-		"clean": "rimraf --glob dist \"*.tsbuildinfo\" \"*.build.log\"",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --ext=ts,tsx --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -25,7 +25,7 @@
 		"prettier:fix": "prettier --write . --ignore-path ../../.prettierignore",
 		"start": "node dist/www.js",
 		"tsc": "tsc",
-		"tslint": "tslint 'src/**/*.ts'"
+		"tslint": "tslint \"src/**/*.ts\""
 	},
 	"dependencies": {
 		"@fluidframework/historian-base": "^0.0.1",

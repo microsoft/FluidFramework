@@ -15,6 +15,7 @@ import {
 	ModularChangeset,
 	RevisionInfo,
 	FieldKindWithEditor,
+	NodeChangeInverter,
 } from "../../../feature-libraries";
 import {
 	makeAnonChange,
@@ -50,7 +51,7 @@ import { ValueChangeset, valueField } from "./basicRebasers";
 
 const singleNodeRebaser: FieldChangeRebaser<NodeChangeset> = {
 	compose: (changes, composeChild) => composeChild(changes),
-	invert: (change, invertChild) => invertChild(change.change, 0),
+	invert: (change, invertChild) => invertChild(change.change),
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base.change) ?? {},
 	amendCompose: () => fail("Not supported"),
 	amendInvert: () => fail("Not supported"),
@@ -71,6 +72,7 @@ const singleNodeHandler: FieldChangeHandler<NodeChangeset> = {
 	intoDelta: ({ change }, deltaFromChild): Delta.FieldChanges => ({
 		local: [{ count: 1, fields: deltaFromChild(change) }],
 	}),
+	relevantRemovedTrees: (change, removedTreesFromChild) => removedTreesFromChild(change),
 	isEmpty: (change) => change.fieldChanges === undefined,
 };
 
@@ -715,6 +717,28 @@ describe("ModularChangeFamily", () => {
 			rebaseWasTested = true;
 			return change;
 		};
+		let invertWasTested = false;
+		const invert: FieldChangeRebaser<RevisionTag[]>["invert"] = (
+			change: TaggedChange<RevisionTag[]>,
+			invertChild: NodeChangeInverter,
+			genId,
+			crossFieldManager,
+			{ getIndex, tryGetInfo },
+		): RevisionTag[] => {
+			const relevantRevisions = [rev3];
+			const revsIndices: number[] = relevantRevisions.map((c) =>
+				ensureIndexDefined(getIndex(c)),
+			);
+			const revsInfos: RevisionInfo[] = relevantRevisions.map(
+				(c) => tryGetInfo(c) ?? assert.fail(),
+			);
+			assert.deepEqual(revsIndices, [0]);
+			const expected: RevisionInfo[] = [{ revision: rev3, rollbackOf: rev0 }];
+			assert.deepEqual(revsInfos, expected);
+			invertWasTested = true;
+			return change.change;
+		};
+
 		const throwCodec = {
 			encode: () => fail("Should not be called"),
 			decode: () => fail("Should not be called"),
@@ -724,6 +748,7 @@ describe("ModularChangeFamily", () => {
 				compose,
 				rebase,
 				amendRebase: (change: RevisionTag[]) => change,
+				invert,
 			},
 			isEmpty: (change: RevisionTag[]) => change.length === 0,
 			codecsFactory: () => makeCodecFamily([[0, throwCodec]]),
@@ -791,6 +816,8 @@ describe("ModularChangeFamily", () => {
 		const expectedRebaseInfo: RevisionInfo[] = [{ revision: rev4, rollbackOf: rev2 }];
 		assert.deepEqual(rebased.revisions, expectedRebaseInfo);
 		assert(rebaseWasTested);
+		dummyFamily.invert(tagRollbackInverse(changeB, rev3, rev0), false);
+		assert(invertWasTested);
 	});
 
 	function ensureIndexDefined(index: number | undefined): number {

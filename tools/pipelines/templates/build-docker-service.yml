@@ -58,6 +58,10 @@ parameters:
   type: string
   default:
 
+- name: isReleaseGroup
+  type: boolean
+  default: false
+
 - name: pool
   type: string
   default: Small
@@ -439,6 +443,7 @@ stages:
     parameters:
       namespace: true
       tagName: ${{ parameters.tagName }}
+      isReleaseGroup: ${{ parameters.isReleaseGroup }}
 
 - ${{ if eq(variables.releaseImage, true) }}:
   - template: include-publish-docker-service.yml

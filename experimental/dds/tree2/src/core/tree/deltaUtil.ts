@@ -77,6 +77,24 @@ export function makeDetachedNodeId(
 	return out;
 }
 
+export function offsetDetachId(id: DetachedNodeId, offset: number): DetachedNodeId;
+export function offsetDetachId(
+	id: DetachedNodeId | undefined,
+	offset: number,
+): DetachedNodeId | undefined;
+export function offsetDetachId(
+	id: DetachedNodeId | undefined,
+	offset: number,
+): DetachedNodeId | undefined {
+	if (id === undefined) {
+		return undefined;
+	}
+	return {
+		...id,
+		minor: id.minor + offset,
+	};
+}
+
 export function areDetachedNodeIdsEqual(a: DetachedNodeId, b: DetachedNodeId): boolean {
 	return a.major === b.major && a.minor === b.minor;
 }

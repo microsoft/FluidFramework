@@ -20,7 +20,7 @@ import {
 	FieldKinds,
 	FieldKindWithEditor,
 	ModularChangeset,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../feature-libraries";
 
 import { brand, IdAllocator, idAllocatorFromMaxId, Mutable } from "../../util";
@@ -29,7 +29,7 @@ import { testChangeReceiver } from "../utils";
 import { ModularChangeFamily } from "../../feature-libraries/modular-schema/modularChangeFamily";
 import { leaf } from "../../domains";
 // eslint-disable-next-line import/no-internal-modules
-import { sequence } from "../../feature-libraries/default-field-kinds/defaultFieldKinds";
+import { sequence } from "../../feature-libraries/default-schema/defaultFieldKinds";
 // eslint-disable-next-line import/no-internal-modules
 import { MarkMaker } from "./sequence-field/testEdits";
 
@@ -90,15 +90,11 @@ describe("ModularChangeFamily integration", () => {
 				{ parent: undefined, field: fieldB },
 				2,
 			);
-			editor.move(
-				{ parent: undefined, field: fieldA },
-				1,
-				1,
-				{ parent: undefined, field: fieldB },
-				2,
-			);
-			const [remove, move, expected] = getChanges();
-			const rebased = family.rebase(move, tagChange(remove, mintRevisionTag()));
+			const [remove, move] = getChanges();
+			const baseTag = mintRevisionTag();
+			const restore = family.invert(tagChange(remove, baseTag), false);
+			const expected = family.compose([makeAnonChange(restore), makeAnonChange(move)]);
+			const rebased = family.rebase(move, tagChange(remove, baseTag));
 			const rebasedDelta = normalizeDelta(family.intoDelta(makeAnonChange(rebased)));
 			const expectedDelta = normalizeDelta(family.intoDelta(makeAnonChange(expected)));
 			assert.deepEqual(rebasedDelta, expectedDelta);
@@ -118,7 +114,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = singleTextCursor({ type: leaf.number.name, value: newValue });
+			const newNode = cursorForJsonableTreeNode({ type: leaf.number.name, value: newValue });
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -173,7 +169,7 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const newValue = "new value";
-			const newNode = singleTextCursor({ type: leaf.number.name, value: newValue });
+			const newNode = cursorForJsonableTreeNode({ type: leaf.number.name, value: newValue });
 			editor
 				.sequenceField({
 					parent: { parent: undefined, parentField: fieldB, parentIndex: 0 },
@@ -379,7 +375,9 @@ function normalizeDeltaDetachedNodeId(
 	genId: IdAllocator,
 	idMap: Map<number, number>,
 ): Delta.DetachedNodeId {
-	assert(delta.major === undefined, "Normalize only supports minor detached node IDs");
+	if (delta.major !== undefined) {
+		return delta;
+	}
 	const minor = idMap.get(delta.minor) ?? genId.allocate();
 	idMap.set(delta.minor, minor);
 	return { minor };

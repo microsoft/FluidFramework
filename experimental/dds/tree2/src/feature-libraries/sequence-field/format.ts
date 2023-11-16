@@ -54,9 +54,6 @@ export const HasMoveId = Type.Object({ id: MoveId });
 
 export type NodeChangeType = NodeChangeset;
 
-// Boolean encodings can use this alternative to save space for frequently false values.
-const OptionalTrue = Type.Optional(Type.Literal(true));
-
 /**
  * Represents a position within a contiguous range of nodes detached by a single changeset.
  * Note that `LineageEvent`s with the same revision are not necessarily referring to the same detach.
@@ -149,19 +146,6 @@ export const HasMarkFields = <TNodeChange extends TSchema>(tNodeChange: TNodeCha
 		count: CellCount,
 	});
 
-export interface HasReattachFields {
-	/**
-	 * The revision this mark is inverting a detach from.
-	 * If defined this mark is a revert-only inverse,
-	 * meaning that it will only reattach nodes if those nodes were last detached by `inverseOf`.
-	 * If `inverseOf` is undefined, this mark will reattach nodes regardless of when they were last detached.
-	 */
-	inverseOf?: RevisionTag;
-}
-export const HasReattachFields = Type.Object({
-	inverseOf: Type.Optional(RevisionTagSchema),
-});
-
 export interface NoopMark {
 	/**
 	 * Declared for consistency with other marks.
@@ -180,7 +164,20 @@ export interface HasRevisionTag {
 }
 export const HasRevisionTag = Type.Object({ revision: Type.Optional(RevisionTagSchema) });
 
-export interface Insert extends HasRevisionTag, HasReattachFields {
+/**
+ * Content being inserted or or restored into a cell.
+ * Always brings about the desired outcome: the content is in the targeted cells.
+ *
+ * Rebasing this mark never causes it to insert/restore a different set of nodes.
+ * Rebasing this mark never causes it to fill a different set of cells
+ * (though the way those cells are identified may change).
+ *
+ * When `content` is not defined, this mark revives the content that was last removed from the cell.
+ *
+ * Carries a `MoveId` in case it is rebased over the content being moved out, in which case this mark
+ * will transform into a pair of returns which will move the content back into this cell.
+ */
+export interface Insert extends HasMoveId, HasRevisionTag {
 	type: "Insert";
 	/**
 	 * The content to insert. Only populated for new attaches.
@@ -189,8 +186,8 @@ export interface Insert extends HasRevisionTag, HasReattachFields {
 }
 export const Insert = Type.Composite(
 	[
+		HasMoveId,
 		HasRevisionTag,
-		HasReattachFields,
 		Type.Object({
 			type: Type.Literal("Insert"),
 			content: Type.Array(ProtoNode),
@@ -211,22 +208,26 @@ export const HasMoveFields = Type.Composite([
 	Type.Object({ finalEndpoint: Type.Optional(EncodedChangeAtomId) }),
 ]);
 
-export interface MoveIn extends HasMoveFields, HasReattachFields {
+/**
+ * Fills empty cells with content that is moved out from another cell.
+ * Always brings about the desired outcome: the nodes being moved are in the target cells.
+ * Note that this may not require any changes if these nodes are already in the target cells when this mark is applied.
+ *
+ * Rebasing this mark never causes it to move-in a different set of nodes.
+ * Rebasing this mark never causes it to fill a different set of cells
+ * (though the way those cells are identified may change).
+ *
+ * Only ever targets empty cells. It transforms into a idempotent Insert if the target cells are not empty.
+ */
+export interface MoveIn extends HasMoveFields {
 	type: "MoveIn";
-	/**
-	 * When true, the corresponding MoveOut has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isSrcConflicted?: true;
 }
 
 export const MoveIn = Type.Composite(
 	[
 		HasMoveFields,
-		HasReattachFields,
 		Type.Object({
 			type: Type.Literal("MoveIn"),
-			isSrcConflicted: OptionalTrue,
 		}),
 	],
 	noAdditionalProps,
@@ -240,6 +241,14 @@ export const InverseAttachFields = Type.Object({
 	detachIdOverride: Type.Optional(EncodedChangeAtomId),
 });
 
+/**
+ * Removes nodes from their cells.
+ * Always brings about the desired outcome: the targeted nodes are removed from their cells.
+ * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
+ *
+ * Rebasing this mark never causes it to target different set of nodes.
+ * Rebasing this mark can cause it to clear a different set of cells.
+ */
 export interface Delete extends HasRevisionTag, InverseAttachFields {
 	type: "Delete";
 	id: ChangesetLocalId;
@@ -257,6 +266,14 @@ export const Delete = Type.Composite(
 	noAdditionalProps,
 );
 
+/**
+ * Removes nodes from their cells so they can be moved into other cells.
+ * Always brings about the desired outcome: the targeted nodes are removed from their cells.
+ * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
+ *
+ * Rebasing this mark never causes it to target different set of nodes.
+ * Rebasing this mark can cause it to clear a different set of cells.
+ */
 export interface MoveOut extends HasMoveFields {
 	type: "MoveOut";
 }
@@ -270,14 +287,17 @@ export const MoveOut = Type.Composite(
 	noAdditionalProps,
 );
 
+/**
+ * Removes nodes from their cells so they can be moved into other cells.
+ * Always brings about the desired outcome: the targeted nodes are removed from their cells.
+ * Note that this may not require any changes if targeted nodes are already removed when this mark is applied.
+ *
+ * Rebasing this mark never causes it to target different set of nodes.
+ * Rebasing this mark can cause it to clear a different set of cells.
+ * TODO: unify with `MoveOut`.
+ */
 export interface ReturnFrom extends HasMoveFields, InverseAttachFields {
 	type: "ReturnFrom";
-
-	/**
-	 * When true, the corresponding ReturnTo has a conflict.
-	 * This is independent of whether this mark has a conflict.
-	 */
-	isDstConflicted?: true;
 }
 export const ReturnFrom = Type.Composite(
 	[
@@ -285,7 +305,6 @@ export const ReturnFrom = Type.Composite(
 		InverseAttachFields,
 		Type.Object({
 			type: Type.Literal("ReturnFrom"),
-			isDstConflicted: OptionalTrue,
 		}),
 	],
 	noAdditionalProps,
@@ -309,23 +328,29 @@ export interface MovePlaceholder extends HasRevisionTag, HasMoveId {
 	type: "Placeholder";
 }
 
-export interface TransientEffect extends HasRevisionTag {
-	type: "Transient";
+/**
+ * Fills then empties cells.
+ *
+ * Only ever targets empty cells.
+ *
+ * As a matter of normalization, only use an AttachAndDetach mark when the attach is a new insert or a move
+ * destination. In all other cases (the attach would be a revive), we rely on the implicit reviving semantics of the
+ * detach and represent that detach on its own (i.e., not wrapped in an AttachAndDetach).
+ */
+export interface AttachAndDetach {
+	type: "AttachAndDetach";
 	attach: Attach;
 	detach: Detach;
 }
 
-export const TransientEffect = Type.Composite([
-	HasRevisionTag,
-	Type.Object({
-		type: Type.Literal("Transient"),
-		attach: Attach,
-		detach: Detach,
-	}),
-]);
+export const AttachAndDetach = Type.Object({
+	type: Type.Literal("AttachAndDetach"),
+	attach: Attach,
+	detach: Detach,
+});
 
-export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | TransientEffect;
-export const MarkEffect = Type.Union([NoopMark, Attach, Detach, TransientEffect]);
+export type MarkEffect = NoopMark | MovePlaceholder | Attach | Detach | AttachAndDetach;
+export const MarkEffect = Type.Union([NoopMark, Attach, Detach, AttachAndDetach]);
 
 export type CellMark<TMark, TNodeChange> = TMark & HasMarkFields<TNodeChange>;
 export const CellMark = <TMark extends TSchema, TNodeChange extends TSchema>(

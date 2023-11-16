@@ -26,6 +26,11 @@ import { splitMark } from "./utils";
 import { MoveDestination } from "./helperTypes";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
+	/**
+	 * @param cursor - cursors in Nodes mode.
+	 * @privateRemarks
+	 * TODO: this should take a single cursor in fields mode.
+	 */
 	insert(index: number, cursor: readonly ITreeCursor[], id: ChangesetLocalId): Changeset<never>;
 	delete(index: number, count: number, id: ChangesetLocalId): Changeset<never>;
 	revive(index: number, count: number, detachEvent: CellId, isIntention?: true): Changeset<never>;
@@ -66,6 +71,7 @@ export const sequenceFieldEditor = {
 	): Changeset<never> => {
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
+			id,
 			count: cursors.length,
 			content: cursors.map(jsonableTreeFromCursor),
 			cellId: { localId: id },
@@ -75,21 +81,14 @@ export const sequenceFieldEditor = {
 	delete: (index: number, count: number, id: ChangesetLocalId): Changeset<never> =>
 		count === 0 ? [] : markAtIndex(index, { type: "Delete", count, id }),
 
-	revive: (
-		index: number,
-		count: number,
-		detachEvent: CellId,
-		isIntention: boolean = false,
-	): Changeset<never> => {
+	revive: (index: number, count: number, detachEvent: CellId): Changeset<never> => {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
+			id: detachEvent.localId,
 			count,
 			cellId: detachEvent,
 		};
-		if (!isIntention) {
-			mark.inverseOf = detachEvent.revision;
-		}
 		return count === 0 ? [] : markAtIndex(index, mark);
 	},
 
@@ -154,7 +153,7 @@ export const sequenceFieldEditor = {
 
 		return moveMarksToMarkList(sourceIndex, count, destIndex, returnFrom, returnTo);
 	},
-};
+} satisfies SequenceFieldEditor;
 
 function moveMarksToMarkList(
 	sourceIndex: number,
