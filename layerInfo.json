@@ -158,7 +158,7 @@
 				]
 			},
 			"OdspClient": {
-				"dirs": ["packages/service-client/odsp-client"],
+				"dirs": ["packages/service-clients/odsp-client"],
 				"deps": ["AzureClient"]
 			},
 			"UberPackage": {
