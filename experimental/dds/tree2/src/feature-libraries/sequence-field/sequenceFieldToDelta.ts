@@ -56,19 +56,22 @@ export function sequenceFieldToDelta<TNodeChange>(
 		} else if (isAttachAndDetachEffect(mark)) {
 			assert(
 				inputCellId !== undefined,
-				"AttachAndDetach mark should have defined input cell ID",
+				0x81e /* AttachAndDetach mark should have defined input cell ID */,
 			);
 			// The cell starting and ending empty means the cell content has not changed,
 			// unless transient content was inserted/attached.
 			if (isMoveDestination(mark.attach) && isMoveSource(mark.detach)) {
-				assert(mark.changes === undefined, "AttachAndDetach moves should not have changes");
+				assert(
+					mark.changes === undefined,
+					0x81f /* AttachAndDetach moves should not have changes */,
+				);
 				continue;
 			}
 
 			const outputId = getOutputCellId(mark, revision, undefined);
 			assert(
 				outputId !== undefined,
-				"AttachAndDetach mark should have defined output cell ID",
+				0x820 /* AttachAndDetach mark should have defined output cell ID */,
 			);
 			const oldId = nodeIdFromChangeAtom(
 				isMoveDestination(mark.attach) ? getEndpoint(mark.attach, revision) : inputCellId,
@@ -146,7 +149,10 @@ export function sequenceFieldToDelta<TNodeChange>(
 					break;
 				}
 				case "Insert": {
-					assert(inputCellId !== undefined, "Active Insert marks must have a CellId");
+					assert(
+						inputCellId !== undefined,
+						0x821 /* Active Insert marks must have a CellId */,
+					);
 					const buildId = nodeIdFromChangeAtom(inputCellId);
 					deltaMark.attach = buildId;
 					if (deltaMark.fields) {
