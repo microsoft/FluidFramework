@@ -88,13 +88,43 @@ describe.only("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
-	it("complex", () => {
+	it("object", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const rootSchema = schemaBuilder.object("object", {
 			a: schemaBuilder.string,
+			b: schemaBuilder.number,
+			c: schemaBuilder.boolean,
+			d: schemaBuilder.optional(schemaBuilder.number),
+		});
+		const schema = schemaBuilder.intoSchema(rootSchema);
+
+		const tree = {
+			a: "Hello world",
+			b: 42,
+			c: false,
+			d: undefined, // Should be skipped in output
+		};
+
+		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+
+		const expected: MapTree = {
+			type: brand("test.object"),
+			fields: new Map<FieldKey, MapTree[]>([
+				[brand("a"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
+				[brand("b"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
+				[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
+			]),
+		};
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("complex", () => {
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
+		const rootSchema = schemaBuilder.object("complex-object", {
+			a: schemaBuilder.string,
 			b: schemaBuilder.list(schemaBuilder.number),
 			c: schemaBuilder.map([schemaBuilder.string, schemaBuilder.number]),
-			d: schemaBuilder.optional(schemaBuilder.number),
 		});
 		const schema = schemaBuilder.intoSchema(rootSchema);
 
@@ -111,13 +141,12 @@ describe.only("toMapTree", () => {
 			a,
 			b,
 			c,
-			d: undefined,
 		};
 
 		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
 		const expected: MapTree = {
-			type: brand("test.object"),
+			type: brand("test.complex-object"),
 			fields: new Map<FieldKey, MapTree[]>([
 				[brand("a"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
 				[
