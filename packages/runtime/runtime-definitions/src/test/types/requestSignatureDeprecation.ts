@@ -8,7 +8,6 @@
 
 import { IDataStore } from "../../dataStoreContext";
 
-
 declare const dataStore: IDataStore;
 
 // These are deprecated

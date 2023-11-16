@@ -16,7 +16,6 @@ import {
 	testChangeFamilyFactory,
 	TestChangeRebaser,
 } from "../testChange";
-import { MockRepairDataStoreProvider } from "../utils";
 import { Commit, EditManager } from "../../shared-tree-core";
 import { brand, makeArray } from "../../util";
 
@@ -25,16 +24,26 @@ export type TestEditManager = EditManager<ChangeFamilyEditor, TestChange, TestCh
 export function editManagerFactory(options: {
 	rebaser?: ChangeRebaser<TestChange>;
 	sessionId?: SessionId;
+	autoDiscardRevertibles?: boolean;
 }): {
 	manager: TestEditManager;
 	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
+	const autoDiscardRevertibles = options.autoDiscardRevertibles ?? true;
 	const family = testChangeFamilyFactory(options.rebaser);
 	const manager = new EditManager<
 		ChangeFamilyEditor,
 		TestChange,
 		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>(family, options.sessionId ?? "0", new MockRepairDataStoreProvider());
+	>(family, options.sessionId ?? "0");
+
+	if (autoDiscardRevertibles === true) {
+		// by default, discard revertibles in the edit manager tests
+		manager.localBranch.on("revertible", (revertible) => {
+			revertible.discard();
+		});
+	}
+
 	return { manager, family };
 }
 

@@ -258,7 +258,7 @@ export function assertValidRangeIndices(
 	endIndex: number,
 	array: { readonly length: number },
 ) {
-	assert(endIndex > startIndex, "Range indices are malformed.");
+	assert(endIndex >= startIndex, 0x79c /* Range indices are malformed. */);
 	assertValidIndex(startIndex, array, false);
 	assertValidIndex(endIndex, array, true);
 }
@@ -274,6 +274,16 @@ export function assertValidIndex(
 	} else {
 		assert(index < array.length, 0x379 /* index must be less than length */);
 	}
+}
+
+export function assertValidRange(
+	{ start, end }: { start: number; end: number },
+	array: { readonly length: number },
+) {
+	assertNonNegativeSafeInteger(start);
+	assertNonNegativeSafeInteger(end);
+	assert(end <= array.length, 0x79d /* Range end must be less than or equal to length */);
+	assert(start <= end, 0x79e /* Range start must be less than or equal to range start */);
 }
 
 export function assertNonNegativeSafeInteger(index: number) {
@@ -293,7 +303,7 @@ export function assertNonNegativeSafeInteger(index: number) {
  *
  * @alpha
  */
-export type Assume<TInput, TAssumeToBe> = TInput extends TAssumeToBe ? TInput : TAssumeToBe;
+export type Assume<TInput, TAssumeToBe> = [TInput] extends [TAssumeToBe] ? TInput : TAssumeToBe;
 
 /**
  * The counter used to generate deterministic stable ids for testing purposes.
@@ -324,6 +334,21 @@ export function useDeterministicStableId<T>(f: () => T): T {
 	deterministicStableIdCount = 1;
 	try {
 		return f();
+		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
+		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
+	} finally {
+		deterministicStableIdCount = undefined;
+	}
+}
+
+export async function useAsyncDeterministicStableId<T>(f: () => Promise<T>): Promise<T> {
+	assert(
+		deterministicStableIdCount === undefined,
+		0x79f /* useAsyncDeterministicStableId cannot be nested */,
+	);
+	deterministicStableIdCount = 1;
+	try {
+		return await f();
 		// Since this is intended to be used by tests, and test runners often recover from exceptions to run more tests,
 		// clean this up with a finally block to reduce risk of breaking unrelated tests after a failure.
 	} finally {
@@ -374,7 +399,36 @@ export function objectToMap<MapKey extends string | number | symbol, MapValue>(
 }
 
 /**
+ * Convert an object used as a map into a new object used like a map.
+ *
+ * @remarks
+ * This function must only be used with objects specifically intended to encode map like information.
+ * The only time such objects should be used is for encoding maps as object literals to allow for developer ergonomics or JSON compatibility.
+ * Even those two use-cases need to be carefully considered as using objects as maps can have a lot of issues
+ * (including but not limited to unintended access to __proto__ and other non-owned keys).
+ * {@link objectToMap} helps these few cases get into using an actual map in as safe of a way as is practical.
+ */
+export function transformObjectMap<MapKey extends string | number | symbol, MapValue, NewMapValue>(
+	objectMap: Record<MapKey, MapValue>,
+	transformer: (value: MapValue, key: MapKey) => NewMapValue,
+): Record<MapKey, MapValue> {
+	const output: Record<MapKey, MapValue> = Object.create(null);
+	// This function must only be used with objects specifically intended to encode map like information.
+	for (const key of Object.keys(objectMap)) {
+		const element = objectMap[key as MapKey];
+		Object.defineProperty(output, key, {
+			enumerable: true,
+			configurable: true,
+			writable: true,
+			value: transformer(element, key as MapKey),
+		});
+	}
+	return output;
+}
+
+/**
  * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
+ * @alpha
  */
 export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
 	if (set === undefined) {
@@ -401,11 +455,15 @@ export interface Named<TName> {
  * Placeholder for `Symbol.dispose`.
  *
  * Replace this with `Symbol.dispose` when it is available.
+ * @alpha
  */
-export const disposeSymbol: unique symbol = Symbol("Symbol.dispose");
+export const disposeSymbol: unique symbol = Symbol("Symbol.dispose placeholder");
 
 /**
  * An object with an explicit lifetime that can be ended.
+ * @privateRemarks
+ * TODO: align this with core-utils/IDisposable.
+ * @alpha
  */
 export interface IDisposable {
 	/**

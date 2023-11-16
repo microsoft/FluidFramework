@@ -14,8 +14,10 @@ import {
 	mintRevisionTag,
 	ChangeFamilyEditor,
 	Delta,
+	GraphCommit,
 } from "../../core";
 import { brand, clone, makeArray, RecursiveReadonly } from "../../util";
+import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
 import {
 	TestChange,
 	UnrebasableTestChangeRebaser,
@@ -23,7 +25,7 @@ import {
 	asDelta,
 	NoOpChangeRebaser,
 } from "../testChange";
-import { Commit, EditManager, SeqNumber } from "../../shared-tree-core";
+import { createTestUndoRedoStacks } from "../utils";
 import {
 	TestEditManager,
 	editManagerFactory,
@@ -407,7 +409,68 @@ describe("EditManager", () => {
 				checkChangeList(manager, [6, 7, 8]);
 			});
 
-			// TODO:#4593: Add test to ensure that peer branches don't pass in incorrect repairDataStoreProviders when rebasing
+			it("does not evict commits including and after the oldest revertible commit", () => {
+				const { manager } = editManagerFactory({ autoDiscardRevertibles: false });
+				const { unsubscribe } = createTestUndoRedoStacks(manager.localBranch);
+
+				const commit1 = applyLocalCommit(manager, [], 1);
+				const commit2 = applyLocalCommit(manager, [], 1);
+				const commit3 = applyLocalCommit(manager, [], 1);
+				const commit4 = applyLocalCommit(manager, [], 1);
+				manager.addSequencedChange(commit1, brand(1), brand(0));
+				manager.addSequencedChange(commit2, brand(2), brand(0));
+				manager.addSequencedChange(commit3, brand(3), brand(0));
+				manager.addSequencedChange(commit4, brand(4), brand(0));
+				manager.advanceMinimumSequenceNumber(brand(4));
+
+				// check that commits are all still in the trunk
+				let current: GraphCommit<TestChange> | undefined = manager.getTrunkHead();
+				assert.equal(current.revision, commit4.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit3.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit2.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit1.revision);
+
+				unsubscribe();
+			});
+
+			it("advances the oldest revertible commit when that revertible is disposed", () => {
+				const { manager } = editManagerFactory({ autoDiscardRevertibles: false });
+				const { undoStack, unsubscribe } = createTestUndoRedoStacks(manager.localBranch);
+
+				const commit1 = applyLocalCommit(manager, [], 1);
+				const commit2 = applyLocalCommit(manager, [], 1);
+				const commit3 = applyLocalCommit(manager, [], 1);
+				const commit4 = applyLocalCommit(manager, [], 1);
+				manager.addSequencedChange(commit1, brand(1), brand(0));
+				manager.addSequencedChange(commit2, brand(2), brand(0));
+				manager.addSequencedChange(commit3, brand(3), brand(0));
+				manager.addSequencedChange(commit4, brand(4), brand(0));
+
+				// discard the oldest revertible and trim the trunk
+				undoStack[0].discard();
+				manager.advanceMinimumSequenceNumber(brand(4));
+
+				// check that all commits except the first are still in the trunk
+				let current: GraphCommit<TestChange> | undefined = manager.getTrunkHead();
+				assert.equal(current.revision, commit4.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit3.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.equal(current.revision, commit2.revision);
+				current = current.parent;
+				assert(current !== undefined);
+				assert.notEqual(current.revision, commit1.revision);
+
+				unsubscribe();
+			});
 		});
 
 		it("Updates local branch when loading from summary", () => {
@@ -823,7 +886,7 @@ function runUnitTestScenario(
 					// Local changes should always lead to a delta that is equivalent to the local change.
 					manager.localBranch.apply(changeset, revision);
 					assert.deepEqual(
-						manager.changeFamily.intoDelta(manager.localBranch.getHead().change),
+						manager.changeFamily.intoDelta(manager.localBranch.getHead()),
 						asDelta([seq]),
 					);
 					break;

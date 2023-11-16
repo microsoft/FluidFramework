@@ -13,10 +13,10 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema";
-import { fail } from "../../../util";
+import { Mutable, fail } from "../../../util";
 import { makeCodecFamily, makeValueCodec } from "../../../codec";
 import { singleJsonCursor } from "../../../domains";
-import { Delta } from "../../../core";
+import { Delta, makeDetachedNodeId } from "../../../core";
 
 /**
  * Picks the last value written.
@@ -81,14 +81,19 @@ export const valueHandler: FieldChangeHandler<ValueChangeset> = {
 		makeCodecFamily([[0, makeValueCodec<TUnsafe<ValueChangeset>>(Type.Any())]]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: ({ change }, deltaFromChild) =>
-		change === 0
-			? []
-			: [
-					{ type: Delta.MarkType.Delete, count: 1 },
-					{ type: Delta.MarkType.Insert, content: [singleJsonCursor(change.new)] },
-			  ],
+	intoDelta: ({ change, revision }): Delta.FieldChanges => {
+		const delta: Mutable<Delta.FieldChanges> = {};
+		if (change !== 0) {
+			// This is an arbitrary number for testing.
+			const changeId = makeDetachedNodeId(revision, 424242);
+			const buildId = makeDetachedNodeId(revision, 424243);
+			delta.build = [{ id: buildId, trees: [singleJsonCursor(change.new)] }];
+			delta.local = [{ count: 1, attach: buildId, detach: changeId }];
+		}
+		return delta;
+	},
 
+	relevantRemovedTrees: (change) => [],
 	isEmpty: (change) => change === 0,
 };
 

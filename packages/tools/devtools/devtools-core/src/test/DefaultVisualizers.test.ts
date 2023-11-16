@@ -18,12 +18,11 @@ import { type ISharedObject } from "@fluidframework/shared-object-base";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils";
 import {
 	AllowedUpdateType,
-	FieldKinds,
 	SchemaBuilder,
-	ValueSchema,
 	SharedTreeFactory,
 	valueSymbol,
 	typeNameSymbol,
+	leaf,
 } from "@fluid-experimental/tree2";
 
 import { EditType, type FluidObjectId } from "../CommonInterfaces";
@@ -403,32 +402,28 @@ describe("DefaultVisualizers unit tests", () => {
 
 	it("SharedTree", async () => {
 		const factory = new SharedTreeFactory();
-		const builder = new SchemaBuilder("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaBuilder({
+			scope: "DefaultVisualizer_SharedTree_Test",
+			libraries: [leaf.library],
+		});
 
 		const sharedTree = factory.create(new MockFluidDataStoreRuntime(), "test");
 
-		const stringSchema = builder.leaf("string-property", ValueSchema.String);
-		const numberSchema = builder.leaf("number-property", ValueSchema.Number);
-		const booleanSchema = builder.leaf("boolean-property", ValueSchema.Boolean);
-		const handleSchema = builder.leaf("handle-property", ValueSchema.FluidHandle);
-
-		const leafSchema = builder.struct("leaf-item", {
-			leafField: SchemaBuilder.fieldRequired(booleanSchema, handleSchema, stringSchema),
+		const leafSchema = builder.object("leaf-item", {
+			leafField: [leaf.boolean, leaf.handle, leaf.string],
 		});
 
-		const childSchema = builder.struct("child-item", {
-			childField: SchemaBuilder.fieldRequired(stringSchema, booleanSchema),
-			childData: SchemaBuilder.fieldOptional(leafSchema),
+		const childSchema = builder.object("child-item", {
+			childField: [leaf.string, leaf.boolean],
+			childData: builder.optional(leafSchema),
 		});
 
-		const rootNodeSchema = builder.struct("root-item", {
-			childrenOne: SchemaBuilder.fieldSequence(childSchema),
-			childrenTwo: SchemaBuilder.fieldRequired(numberSchema),
+		const rootNodeSchema = builder.object("root-item", {
+			childrenOne: builder.sequence(childSchema),
+			childrenTwo: leaf.number,
 		});
 
-		const schema = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.required, rootNodeSchema),
-		);
+		const schema = builder.intoSchema(rootNodeSchema);
 
 		sharedTree.schematize({
 			schema,
@@ -439,7 +434,7 @@ describe("DefaultVisualizers unit tests", () => {
 						childField: "Hello world!",
 						childData: {
 							leafField: {
-								[typeNameSymbol]: stringSchema.name,
+								[typeNameSymbol]: leaf.string.name,
 								[valueSymbol]: "Hello world again!",
 							},
 						},
@@ -448,7 +443,7 @@ describe("DefaultVisualizers unit tests", () => {
 						childField: true,
 						childData: {
 							leafField: {
-								[typeNameSymbol]: booleanSchema.name,
+								[typeNameSymbol]: leaf.boolean.name,
 								[valueSymbol]: false, // TODO: Use a handle here.
 							},
 						},
@@ -462,75 +457,688 @@ describe("DefaultVisualizers unit tests", () => {
 			visualizeChildData,
 		);
 
+		// TODO: this should probably:
+		// 1. Use a more maintainable approach (like comparing json snapshot files on disk with an automated way to update them).
+		// 2. Use a more concise format.
+		// 3. Use a smaller test tree with a simpler schema.
 		const expected: FluidObjectTreeNode = {
-			typeMetadata: "SharedTree",
-			nodeKind: VisualNodeKind.FluidTreeNode,
 			fluidObjectId: "test",
 			children: {
-				childrenOne: {
-					nodeKind: VisualNodeKind.TreeNode,
-					typeMetadata: "object",
+				tree: {
 					children: {
 						"0": {
-							nodeKind: VisualNodeKind.TreeNode,
-							typeMetadata: "object",
 							children: {
-								childField: {
-									nodeKind: VisualNodeKind.ValueNode,
+								type: {
+									value: "DefaultVisualizer_SharedTree_Test.root-item",
 									typeMetadata: "string",
-									value: "Hello world!",
+									nodeKind: VisualNodeKind.ValueNode,
 								},
-								childData: {
-									nodeKind: VisualNodeKind.TreeNode,
-									typeMetadata: "object",
+								fields: {
 									children: {
-										leafField: {
-											nodeKind: VisualNodeKind.ValueNode,
-											typeMetadata: "string",
-											value: "Hello world again!",
+										childrenTwo: {
+											children: {
+												"0": {
+													children: {
+														type: {
+															value: "com.fluidframework.leaf.number",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														value: {
+															value: 32,
+															typeMetadata: "number",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+													},
+													nodeKind: VisualNodeKind.TreeNode,
+													typeMetadata: "object",
+												},
+											},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+										childrenOne: {
+											children: {
+												"0": {
+													children: {
+														type: {
+															value: "DefaultVisualizer_SharedTree_Test.child-item",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														fields: {
+															children: {
+																childField: {
+																	children: {
+																		"0": {
+																			children: {
+																				type: {
+																					value: "com.fluidframework.leaf.string",
+																					typeMetadata:
+																						"string",
+																					nodeKind:
+																						VisualNodeKind.ValueNode,
+																				},
+																				value: {
+																					value: "Hello world!",
+																					typeMetadata:
+																						"string",
+																					nodeKind:
+																						VisualNodeKind.ValueNode,
+																				},
+																			},
+																			nodeKind:
+																				VisualNodeKind.TreeNode,
+																			typeMetadata: "object",
+																		},
+																	},
+																	nodeKind:
+																		VisualNodeKind.TreeNode,
+																	typeMetadata: "object",
+																},
+																childData: {
+																	children: {
+																		"0": {
+																			children: {
+																				type: {
+																					value: "DefaultVisualizer_SharedTree_Test.leaf-item",
+																					typeMetadata:
+																						"string",
+																					nodeKind:
+																						VisualNodeKind.ValueNode,
+																				},
+																				fields: {
+																					children: {
+																						leafField: {
+																							children:
+																								{
+																									"0": {
+																										children:
+																											{
+																												type: {
+																													value: "com.fluidframework.leaf.string",
+																													typeMetadata:
+																														"string",
+																													nodeKind:
+																														VisualNodeKind.ValueNode,
+																												},
+																												value: {
+																													value: "Hello world again!",
+																													typeMetadata:
+																														"string",
+																													nodeKind:
+																														VisualNodeKind.ValueNode,
+																												},
+																											},
+																										nodeKind:
+																											VisualNodeKind.TreeNode,
+																										typeMetadata:
+																											"object",
+																									},
+																								},
+																							nodeKind:
+																								VisualNodeKind.TreeNode,
+																							typeMetadata:
+																								"object",
+																						},
+																					},
+																					nodeKind:
+																						VisualNodeKind.TreeNode,
+																					typeMetadata:
+																						"object",
+																				},
+																			},
+																			nodeKind:
+																				VisualNodeKind.TreeNode,
+																			typeMetadata: "object",
+																		},
+																	},
+																	nodeKind:
+																		VisualNodeKind.TreeNode,
+																	typeMetadata: "object",
+																},
+															},
+															nodeKind: VisualNodeKind.TreeNode,
+															typeMetadata: "object",
+														},
+													},
+													nodeKind: VisualNodeKind.TreeNode,
+													typeMetadata: "object",
+												},
+												"1": {
+													children: {
+														type: {
+															value: "DefaultVisualizer_SharedTree_Test.child-item",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														fields: {
+															children: {
+																childField: {
+																	children: {
+																		"0": {
+																			children: {
+																				type: {
+																					value: "com.fluidframework.leaf.boolean",
+																					typeMetadata:
+																						"string",
+																					nodeKind:
+																						VisualNodeKind.ValueNode,
+																				},
+																				value: {
+																					value: true,
+																					typeMetadata:
+																						"boolean",
+																					nodeKind:
+																						VisualNodeKind.ValueNode,
+																				},
+																			},
+																			nodeKind:
+																				VisualNodeKind.TreeNode,
+																			typeMetadata: "object",
+																		},
+																	},
+																	nodeKind:
+																		VisualNodeKind.TreeNode,
+																	typeMetadata: "object",
+																},
+																childData: {
+																	children: {
+																		"0": {
+																			children: {
+																				type: {
+																					value: "DefaultVisualizer_SharedTree_Test.leaf-item",
+																					typeMetadata:
+																						"string",
+																					nodeKind:
+																						VisualNodeKind.ValueNode,
+																				},
+																				fields: {
+																					children: {
+																						leafField: {
+																							children:
+																								{
+																									"0": {
+																										children:
+																											{
+																												type: {
+																													value: "com.fluidframework.leaf.boolean",
+																													typeMetadata:
+																														"string",
+																													nodeKind:
+																														VisualNodeKind.ValueNode,
+																												},
+																												value: {
+																													value: false,
+																													typeMetadata:
+																														"boolean",
+																													nodeKind:
+																														VisualNodeKind.ValueNode,
+																												},
+																											},
+																										nodeKind:
+																											VisualNodeKind.TreeNode,
+																										typeMetadata:
+																											"object",
+																									},
+																								},
+																							nodeKind:
+																								VisualNodeKind.TreeNode,
+																							typeMetadata:
+																								"object",
+																						},
+																					},
+																					nodeKind:
+																						VisualNodeKind.TreeNode,
+																					typeMetadata:
+																						"object",
+																				},
+																			},
+																			nodeKind:
+																				VisualNodeKind.TreeNode,
+																			typeMetadata: "object",
+																		},
+																	},
+																	nodeKind:
+																		VisualNodeKind.TreeNode,
+																	typeMetadata: "object",
+																},
+															},
+															nodeKind: VisualNodeKind.TreeNode,
+															typeMetadata: "object",
+														},
+													},
+													nodeKind: VisualNodeKind.TreeNode,
+													typeMetadata: "object",
+												},
+											},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
 										},
 									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
 								},
 							},
-						},
-						"1": {
 							nodeKind: VisualNodeKind.TreeNode,
 							typeMetadata: "object",
-							children: {
-								childField: {
-									nodeKind: VisualNodeKind.ValueNode,
-									typeMetadata: "boolean",
-									value: true,
-								},
-								childData: {
-									nodeKind: VisualNodeKind.TreeNode,
-									typeMetadata: "object",
-									children: {
-										leafField: {
-											nodeKind: VisualNodeKind.ValueNode,
-											typeMetadata: "boolean",
-											value: false,
-										},
-									},
-								},
-							},
 						},
 					},
-				},
-				childrenTwo: {
 					nodeKind: VisualNodeKind.TreeNode,
 					typeMetadata: "object",
+				},
+				schema: {
 					children: {
-						"0": {
+						version: {
+							value: "1.0.0",
+							typeMetadata: "string",
 							nodeKind: VisualNodeKind.ValueNode,
-							typeMetadata: "number",
-							value: 32,
+						},
+						rootFieldSchema: {
+							children: {
+								kind: {
+									value: "Value",
+									typeMetadata: "string",
+									nodeKind: VisualNodeKind.ValueNode,
+								},
+								types: {
+									children: {
+										"0": {
+											value: "DefaultVisualizer_SharedTree_Test.root-item",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+							},
+							nodeKind: VisualNodeKind.TreeNode,
+							typeMetadata: "object",
+						},
+						nodeSchema: {
+							children: {
+								"0": {
+									children: {
+										name: {
+											value: "DefaultVisualizer_SharedTree_Test.child-item",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										mapFields: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										leafValue: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										objectNodeFields: {
+											children: {
+												"0": {
+													children: {
+														kind: {
+															value: "Optional",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														name: {
+															value: "childData",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														types: {
+															children: {
+																"0": {
+																	value: "DefaultVisualizer_SharedTree_Test.leaf-item",
+																	typeMetadata: "string",
+																	nodeKind:
+																		VisualNodeKind.ValueNode,
+																},
+															},
+															nodeKind: VisualNodeKind.TreeNode,
+															typeMetadata: "object",
+														},
+													},
+													nodeKind: VisualNodeKind.TreeNode,
+													typeMetadata: "object",
+												},
+												"1": {
+													children: {
+														kind: {
+															value: "Value",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														name: {
+															value: "childField",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														types: {
+															children: {
+																"0": {
+																	value: "com.fluidframework.leaf.string",
+																	typeMetadata: "string",
+																	nodeKind:
+																		VisualNodeKind.ValueNode,
+																},
+																"1": {
+																	value: "com.fluidframework.leaf.boolean",
+																	typeMetadata: "string",
+																	nodeKind:
+																		VisualNodeKind.ValueNode,
+																},
+															},
+															nodeKind: VisualNodeKind.TreeNode,
+															typeMetadata: "object",
+														},
+													},
+													nodeKind: VisualNodeKind.TreeNode,
+													typeMetadata: "object",
+												},
+											},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+								"1": {
+									children: {
+										name: {
+											value: "DefaultVisualizer_SharedTree_Test.leaf-item",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										mapFields: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										leafValue: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										objectNodeFields: {
+											children: {
+												"0": {
+													children: {
+														kind: {
+															value: "Value",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														name: {
+															value: "leafField",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														types: {
+															children: {
+																"0": {
+																	value: "com.fluidframework.leaf.boolean",
+																	typeMetadata: "string",
+																	nodeKind:
+																		VisualNodeKind.ValueNode,
+																},
+																"1": {
+																	value: "com.fluidframework.leaf.handle",
+																	typeMetadata: "string",
+																	nodeKind:
+																		VisualNodeKind.ValueNode,
+																},
+																"2": {
+																	value: "com.fluidframework.leaf.string",
+																	typeMetadata: "string",
+																	nodeKind:
+																		VisualNodeKind.ValueNode,
+																},
+															},
+															nodeKind: VisualNodeKind.TreeNode,
+															typeMetadata: "object",
+														},
+													},
+													nodeKind: VisualNodeKind.TreeNode,
+													typeMetadata: "object",
+												},
+											},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+								"2": {
+									children: {
+										name: {
+											value: "DefaultVisualizer_SharedTree_Test.root-item",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										mapFields: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										leafValue: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										objectNodeFields: {
+											children: {
+												"0": {
+													children: {
+														kind: {
+															value: "Sequence",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														name: {
+															value: "childrenOne",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														types: {
+															children: {
+																"0": {
+																	value: "DefaultVisualizer_SharedTree_Test.child-item",
+																	typeMetadata: "string",
+																	nodeKind:
+																		VisualNodeKind.ValueNode,
+																},
+															},
+															nodeKind: VisualNodeKind.TreeNode,
+															typeMetadata: "object",
+														},
+													},
+													nodeKind: VisualNodeKind.TreeNode,
+													typeMetadata: "object",
+												},
+												"1": {
+													children: {
+														kind: {
+															value: "Value",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														name: {
+															value: "childrenTwo",
+															typeMetadata: "string",
+															nodeKind: VisualNodeKind.ValueNode,
+														},
+														types: {
+															children: {
+																"0": {
+																	value: "com.fluidframework.leaf.number",
+																	typeMetadata: "string",
+																	nodeKind:
+																		VisualNodeKind.ValueNode,
+																},
+															},
+															nodeKind: VisualNodeKind.TreeNode,
+															typeMetadata: "object",
+														},
+													},
+													nodeKind: VisualNodeKind.TreeNode,
+													typeMetadata: "object",
+												},
+											},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+								"3": {
+									children: {
+										name: {
+											value: "com.fluidframework.leaf.boolean",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										mapFields: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										leafValue: {
+											value: 2,
+											typeMetadata: "number",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										objectNodeFields: {
+											children: {},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+								"4": {
+									children: {
+										name: {
+											value: "com.fluidframework.leaf.handle",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										mapFields: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										leafValue: {
+											value: 3,
+											typeMetadata: "number",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										objectNodeFields: {
+											children: {},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+								"5": {
+									children: {
+										name: {
+											value: "com.fluidframework.leaf.null",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										mapFields: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										leafValue: {
+											value: 4,
+											typeMetadata: "number",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										objectNodeFields: {
+											children: {},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+								"6": {
+									children: {
+										name: {
+											value: "com.fluidframework.leaf.number",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										mapFields: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										leafValue: {
+											value: 0,
+											typeMetadata: "number",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										objectNodeFields: {
+											children: {},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+								"7": {
+									children: {
+										name: {
+											value: "com.fluidframework.leaf.string",
+											typeMetadata: "string",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										mapFields: {
+											typeMetadata: "undefined",
+											nodeKind: VisualNodeKind.ValueNode,
+											value: undefined,
+										},
+										leafValue: {
+											value: 1,
+											typeMetadata: "number",
+											nodeKind: VisualNodeKind.ValueNode,
+										},
+										objectNodeFields: {
+											children: {},
+											nodeKind: VisualNodeKind.TreeNode,
+											typeMetadata: "object",
+										},
+									},
+									nodeKind: VisualNodeKind.TreeNode,
+									typeMetadata: "object",
+								},
+							},
+							nodeKind: VisualNodeKind.TreeNode,
+							typeMetadata: "object",
 						},
 					},
+					nodeKind: VisualNodeKind.TreeNode,
+					typeMetadata: "object",
 				},
 			},
+			typeMetadata: "SharedTree",
+			nodeKind: VisualNodeKind.FluidTreeNode,
 		};
-
 		expect(result).to.deep.equal(expected);
 	});
 

@@ -1,4 +1,4 @@
-# @fluid-internal/test-end-to-end-tests
+# @fluid-private/test-end-to-end-tests
 
 These tests can be written by using the [test-utils](../test-utils/src).
 

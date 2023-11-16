@@ -4,47 +4,52 @@
  */
 import { strict as assert, fail } from "assert";
 import {
-	SchemaBuilder,
 	Any,
-	TypedSchemaCollection,
-	FieldSchema,
+	TreeSchema,
+	TreeFieldSchema,
 	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	NewFieldContent,
 } from "../../feature-libraries";
-import { ViewEvents } from "../../shared-tree";
+import { CheckoutEvents } from "../../shared-tree";
 import {
-	ValueSchema,
 	AllowedUpdateType,
 	SimpleObservingDependent,
 	InMemoryStoredSchemaRepository,
-	SchemaData,
+	TreeStoredSchema,
 	cloneSchemaData,
 } from "../../core";
 import { jsonSequenceRootSchema } from "../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { TreeContent, initializeContent, schematize } from "../../shared-tree/schematizedTree";
 import { createEmitter } from "../../events";
+import { SchemaBuilder, leaf } from "../../domains";
 
-const builder = new SchemaBuilder("Schematize Tree Tests");
-const root = builder.leaf("root", ValueSchema.Number);
-const schema = builder.intoDocumentSchema(SchemaBuilder.fieldOptional(root));
+const builder = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests" });
+const root = leaf.number;
+const schema = builder.intoSchema(SchemaBuilder.optional(root));
 
-const builderGeneralized = new SchemaBuilder("Schematize Tree Tests Generalized");
-const rootGeneralized = builderGeneralized.leaf("root", ValueSchema.Number);
-const schemaGeneralized = builderGeneralized.intoDocumentSchema(SchemaBuilder.fieldOptional(Any));
+const builderGeneralized = new SchemaBuilder({
+	scope: "test",
+	name: "Schematize Tree Tests Generalized",
+});
 
-const builderValue = new SchemaBuilder("Schematize Tree Tests");
-const root2 = builderValue.leaf("root", ValueSchema.Number);
-const schemaValueRoot = builderValue.intoDocumentSchema(SchemaBuilder.fieldRequired(Any));
+const schemaGeneralized = builderGeneralized.intoSchema(SchemaBuilder.optional(Any));
 
-const emptySchema = new SchemaBuilder("Empty", {
-	rejectEmpty: false,
-	rejectForbidden: false,
-}).intoDocumentSchema(SchemaBuilder.field(FieldKinds.forbidden));
+const builderValue = new SchemaBuilder({ scope: "test", name: "Schematize Tree Tests2" });
 
-function expectSchema(actual: SchemaData, expected: SchemaData): void {
+const schemaValueRoot = builderValue.intoSchema(SchemaBuilder.required(Any));
+
+const emptySchema = new SchemaBuilder({
+	scope: "Empty",
+	lint: {
+		rejectEmpty: false,
+		rejectForbidden: false,
+	},
+}).intoSchema(TreeFieldSchema.empty);
+
+function expectSchema(actual: TreeStoredSchema, expected: TreeStoredSchema): void {
 	// Check schema match
 	assert(allowsRepoSuperset(defaultSchemaPolicy, actual, expected));
 	assert(allowsRepoSuperset(defaultSchemaPolicy, expected, actual));
@@ -52,7 +57,7 @@ function expectSchema(actual: SchemaData, expected: SchemaData): void {
 
 describe("schematizeTree", () => {
 	describe("initializeContent", () => {
-		function testInitialize<TRoot extends FieldSchema>(
+		function testInitialize<TRoot extends TreeFieldSchema>(
 			name: string,
 			content: TreeContent<TRoot>,
 		): void {
@@ -73,7 +78,7 @@ describe("schematizeTree", () => {
 					// this test should be updated to use it to greatly increase its validation.
 
 					const storedSchema = new InMemoryStoredSchemaRepository();
-					let previousSchema: SchemaData = cloneSchemaData(storedSchema);
+					let previousSchema: TreeStoredSchema = cloneSchemaData(storedSchema);
 					expectSchema(storedSchema, previousSchema);
 
 					let currentData: NewFieldContent;
@@ -128,7 +133,7 @@ describe("schematizeTree", () => {
 
 	describe("schematize", () => {
 		describe("noop upgrade", () => {
-			const testCases: [string, TypedSchemaCollection][] = [
+			const testCases: [string, TreeSchema][] = [
 				["empty", emptySchema],
 				["basic-optional", schema],
 				["basic-value", schemaValueRoot],
@@ -136,7 +141,7 @@ describe("schematizeTree", () => {
 			];
 			for (const [name, data] of testCases) {
 				it(name, () => {
-					const events = createEmitter<ViewEvents>();
+					const events = createEmitter<CheckoutEvents>();
 					const storedSchema = new InMemoryStoredSchemaRepository(data);
 
 					// Error if modified
@@ -152,7 +157,7 @@ describe("schematizeTree", () => {
 		});
 
 		it("upgrade works", () => {
-			const events = createEmitter<ViewEvents>();
+			const events = createEmitter<CheckoutEvents>();
 			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 
 			schematize(events, storedSchema, {
@@ -163,7 +168,7 @@ describe("schematizeTree", () => {
 		});
 
 		it("upgrade schema errors when in AllowedUpdateType.None", () => {
-			const events = createEmitter<ViewEvents>();
+			const events = createEmitter<CheckoutEvents>();
 			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 			assert.throws(() => {
 				schematize(events, storedSchema, {
@@ -174,7 +179,7 @@ describe("schematizeTree", () => {
 		});
 
 		it("incompatible upgrade errors and does not modify schema", () => {
-			const events = createEmitter<ViewEvents>();
+			const events = createEmitter<CheckoutEvents>();
 			const storedSchema = new InMemoryStoredSchemaRepository(schemaGeneralized);
 
 			let modified = false;
@@ -197,7 +202,7 @@ describe("schematizeTree", () => {
 		});
 
 		it("errors at correct time when schema changes to not be compatible with view schema", () => {
-			const events = createEmitter<ViewEvents>();
+			const events = createEmitter<CheckoutEvents>();
 			const storedSchema = new InMemoryStoredSchemaRepository(schema);
 
 			schematize(events, storedSchema, {

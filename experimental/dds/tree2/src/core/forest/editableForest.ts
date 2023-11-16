@@ -6,14 +6,14 @@
 import { assert } from "@fluidframework/core-utils";
 import { FieldKey } from "../schema-stored";
 import {
-	AnchorSet,
 	DetachedField,
 	Delta,
 	Anchor,
 	ITreeCursorSynchronous,
-	rootFieldKey,
 	DeltaVisitor,
 	applyDelta,
+	makeDetachedFieldIndex,
+	deltaForRootInitialization,
 } from "../tree";
 import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
 
@@ -23,20 +23,13 @@ import { IForestSubscription, ITreeSubscriptionCursor } from "./forest";
  */
 export interface IEditableForest extends IForestSubscription {
 	/**
-	 * Set of anchors this forest is tracking.
+	 * Provides a visitor that can be used to mutate the forest.
 	 *
-	 * To keep these anchors usable, this AnchorSet must be updated / rebased for any changes made to the forest.
-	 * It is the responsibility of the called of the forest editing methods to do this, not the forest itself.
-	 * The caller performs these updates because it has more semantic knowledge about the edits, which can be needed to
-	 * update the anchors in a semantically optimal way.
-	 */
-	readonly anchors: AnchorSet;
-
-	/**
 	 * @returns a visitor that can be used to mutate the forest.
 	 *
+	 * @remarks
 	 * Mutating the forest does NOT update anchors.
-	 * The visitor must be released after use.
+	 * The visitor must be released after use by calling {@link DeltaVisitor.free} on it.
 	 * It is invalid to acquire a visitor without releasing the previous one.
 	 */
 	acquireVisitor(): DeltaVisitor;
@@ -54,8 +47,8 @@ export function initializeForest(
 	content: readonly ITreeCursorSynchronous[],
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const insert: Delta.Insert = { type: Delta.MarkType.Insert, content };
-	applyDelta(new Map([[rootFieldKey, [insert]]]), forest);
+	const delta: Delta.Root = deltaForRootInitialization(content);
+	applyDelta(delta, forest, makeDetachedFieldIndex("init"));
 }
 
 // TODO: Types below here may be useful for input into edit building APIs, but are no longer used here directly.

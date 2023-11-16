@@ -5,60 +5,49 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct";
 import {
-	AllowedUpdateType,
 	ForestType,
-	TypedTreeChannel,
-	TypedTreeFactory,
+	ISharedTree,
+	SharedTreeFactory,
+	TreeView,
 	typeboxValidator,
 } from "@fluid-experimental/tree2";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { InventoryField, inventoryField, schema } from "./schema";
+import { Inventory, treeConfiguration } from "./schema";
 
 const treeKey = "tree";
 
-const factory = new TypedTreeFactory({
+const factory = new SharedTreeFactory({
 	jsonValidator: typeboxValidator,
 	forest: ForestType.Reference,
-	initialTree: {
-		parts: [
-			{
-				name: "nut",
-				quantity: 0,
-			},
-			{
-				name: "bolt",
-				quantity: 0,
-			},
-		],
-	},
-	allowedSchemaModifications: AllowedUpdateType.None,
-	schema,
-	subtype: "InventoryList",
 });
 
 export class InventoryList extends DataObject {
-	private _tree: TypedTreeChannel<typeof inventoryField> | undefined;
+	#tree?: ISharedTree;
+	#view?: TreeView<Inventory>;
 
-	public get tree(): InventoryField {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this._tree!.root;
+	public get inventory(): Inventory {
+		if (this.#view === undefined)
+			throw new Error("view should be initialized by hasInitialized");
+		return this.#view.root;
 	}
 
 	protected async initializingFirstTime() {
-		this._tree = this.runtime.createChannel(undefined, factory.type) as TypedTreeChannel<
-			typeof inventoryField
-		>;
-		this.root.set(treeKey, this._tree.handle);
+		this.#tree = this.runtime.createChannel(undefined, factory.type) as ISharedTree;
+		this.root.set(treeKey, this.#tree.handle);
 	}
 
 	protected async initializingFromExisting() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._tree = await this.root
-			.get<IFluidHandle<TypedTreeChannel<typeof inventoryField>>>(treeKey)!
-			.get();
+		const handle = this.root.get<IFluidHandle<ISharedTree>>(treeKey);
+		if (handle === undefined)
+			throw new Error("map should be populated on creation by 'initializingFirstTime'");
+		this.#tree = await handle.get();
 	}
 
-	protected async hasInitialized() {}
+	protected async hasInitialized() {
+		if (this.#tree === undefined)
+			throw new Error("tree should be initialized by initializing* methods");
+		this.#view = this.#tree.schematize(treeConfiguration);
+	}
 }
 
 export const InventoryListFactory = new DataObjectFactory(

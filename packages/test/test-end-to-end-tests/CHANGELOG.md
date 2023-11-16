@@ -1,4 +1,12 @@
-# @fluid-internal/test-end-to-end-tests
+# @fluid-private/test-end-to-end-tests
+
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+Dependency updates only.
 
 ## 2.0.0-internal.7.0.0
 
@@ -63,7 +71,7 @@ Dependency updates only.
 
 -   end-to-end-tests package moved to internal scope ([#14788](https://github.com/microsoft/FluidFramework/pull-requests/14788)) [f3b68b0629](https://github.com/microsoft/FluidFramework/commits/f3b68b06293a7f8769edd83775fb265d0073a75a)
 
-    The `@fluidframework/test-end-to-end-tests` packages has been renamed to @fluid-internal/test-end-to-end-tests.
+    The `@fluidframework/test-end-to-end-tests` packages has been renamed to @fluid-private/test-end-to-end-tests.
 
 -   Ability to enable grouped batching ([#14512](https://github.com/microsoft/FluidFramework/pull-requests/14512)) [8e4dc47a38](https://github.com/microsoft/FluidFramework/commits/8e4dc47a3871bcaf1f7c1339c362d9c9d08551fc)
 

@@ -3,17 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	FieldKinds,
-	NodeChangeset,
-	SchemaBuilder,
-	singleTextCursor,
-} from "../../../feature-libraries";
-import { FieldKey, ValueSchema, JsonableTree, ITreeCursorSynchronous } from "../../../core";
+import { FieldKinds, NodeChangeset, cursorForJsonableTreeNode } from "../../../feature-libraries";
+import { FieldKey, JsonableTree, ITreeCursorSynchronous } from "../../../core";
 import { brand } from "../../../util";
-
-const builder = new SchemaBuilder("defaultFieldKinds tests");
-export const testLeaf = builder.leaf("TestLeaf", ValueSchema.String);
+import { leaf } from "../../../domains";
 
 // TODO: Users of this are mainly working with in memory representations.
 // Therefore it should not be using JsonableTrees.
@@ -23,7 +16,7 @@ export const testLeaf = builder.leaf("TestLeaf", ValueSchema.String);
  * Arbitrary tree with value `s`
  */
 export function testTree(s: string): JsonableTree {
-	return { type: testLeaf.name, value: s };
+	return { type: leaf.string.name, value: s };
 }
 
 /**
@@ -31,7 +24,7 @@ export function testTree(s: string): JsonableTree {
  */
 export function testTreeCursor(s: string): ITreeCursorSynchronous {
 	// For encoding tests to pass, cursors must be deepEqual to those produced by decode, so the tree text format must be used here.
-	return singleTextCursor(testTree(s));
+	return cursorForJsonableTreeNode(testTree(s));
 }
 
 export const fooKey: FieldKey = brand("foo");

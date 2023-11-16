@@ -8,14 +8,16 @@ import {
 	Delta,
 	ITreeCursor,
 	TaggedChange,
-	ITreeCursorSynchronous,
 	tagChange,
 	ChangesetLocalId,
 	ChangeAtomId,
 	RevisionTag,
+	JsonableTree,
+	areEqualChangeAtomIds,
+	makeDetachedNodeId,
 } from "../../core";
 import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
-import { singleTextCursor, jsonableTreeFromCursor } from "../treeTextCursor";
+import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
 	FieldChangeRebaser,
@@ -24,14 +26,14 @@ import {
 	NodeChangeRebaser,
 	NodeChangeset,
 	FieldEditor,
-	NodeReviver,
 	CrossFieldManager,
 	RevisionMetadataSource,
 	getIntention,
 	NodeExistenceState,
 	FieldChangeHandler,
+	RemovedTreesFromChild,
 } from "../modular-schema";
-import { populateChildModifications } from "../deltaUtils";
+import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 
@@ -125,6 +127,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose: (
 		changes: TaggedChange<OptionalChangeset>[],
 		composeChild: NodeChangeComposer,
+		genId: IdAllocator,
+		crossFieldManager: CrossFieldManager,
+		revisionMetadata: RevisionMetadataSource,
 	): OptionalChangeset => {
 		const perChildChanges = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
 		const addChildChange = (id: ChangeId, ...changeList: TaggedChange<NodeChangeset>[]) => {
@@ -138,7 +143,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		let fieldChange: Mutable<OptionalFieldChange> | undefined;
 		let currentChildNodeChanges: TaggedChange<NodeChangeset>[] = [];
+		let index = 0;
 		for (const { change, revision } of changes) {
+			const fieldChangeInfo = revisionMetadata.tryGetInfo(
+				revision ?? change.fieldChange?.revision,
+			);
 			const { childChanges } = change;
 			if (childChanges !== undefined) {
 				for (const [childId, childChange] of childChanges) {
@@ -158,18 +167,41 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				if (fieldChange === undefined) {
 					fieldChange = {
 						id: change.fieldChange.id,
-						revision: change.fieldChange.revision ?? revision,
+						revision: fieldChangeInfo?.revision,
 						wasEmpty: change.fieldChange.wasEmpty,
 					};
 				} else {
 					fieldChange.id = change.fieldChange.id;
-					fieldChange.revision = change.fieldChange.revision ?? revision;
+					fieldChange.revision = fieldChangeInfo?.revision;
 				}
 
+				let hasMatchingPriorInverse = false;
+				const maybePriorInverse = changes.findIndex((c) => {
+					const cChangeInfo = revisionMetadata.tryGetInfo(
+						// Change c may be a composite, in which case we need to look the revision of the fieldChange
+						c.revision ?? c.change.fieldChange?.revision,
+					);
+					return (
+						(cChangeInfo?.rollbackOf !== undefined &&
+							cChangeInfo?.rollbackOf === fieldChangeInfo?.revision) ||
+						(cChangeInfo?.revision !== undefined &&
+							cChangeInfo?.revision === fieldChangeInfo?.rollbackOf)
+					);
+				});
+				hasMatchingPriorInverse = maybePriorInverse !== -1 && maybePriorInverse < index;
+
 				if (change.fieldChange.newContent !== undefined) {
-					fieldChange.newContent = { ...change.fieldChange.newContent };
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						fieldChange.newContent = { ...change.fieldChange.newContent };
+					}
 				} else {
-					delete fieldChange.newContent;
+					if (hasMatchingPriorInverse) {
+						fieldChange = undefined;
+					} else {
+						delete fieldChange.newContent;
+					}
 				}
 
 				// Node was changed by this revision: flush the current changes
@@ -183,10 +215,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 				if (change.fieldChange.newContent?.changes !== undefined) {
 					currentChildNodeChanges.push(
-						tagChange(change.fieldChange.newContent.changes, revision),
+						tagChange(change.fieldChange.newContent.changes, fieldChangeInfo?.revision),
 					);
 				}
 			}
+			index++;
 		}
 
 		if (currentChildNodeChanges.length > 0) {
@@ -222,7 +255,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	invert: (
 		{ revision, change }: TaggedChange<OptionalChangeset>,
 		invertChild: NodeChangeInverter,
-		reviver: NodeReviver,
 	): OptionalChangeset => {
 		// Changes to the child that existed in this field before `change` was applied.
 		let originalChildChanges: NodeChangeset | undefined;
@@ -230,12 +262,12 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (change.childChanges !== undefined) {
 			for (const [id, childChange] of change.childChanges) {
 				if (id === "self" && change.fieldChange !== undefined) {
-					originalChildChanges = invertChild(childChange, 0);
+					originalChildChanges = invertChild(childChange);
 				} else {
 					inverseChildChanges.set(
 						// This makes assumptions about how sandwich rebasing works
 						id,
-						invertChild(childChange, 0),
+						invertChild(childChange),
 					);
 				}
 			}
@@ -243,7 +275,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		const selfChanges = change.fieldChange?.newContent?.changes;
 		if (selfChanges !== undefined) {
-			inverseChildChanges.set("self", invertChild(selfChanges, 0));
+			inverseChildChanges.set("self", invertChild(selfChanges));
 		}
 
 		const inverse: OptionalChangeset = {
@@ -264,8 +296,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			if (!fieldChange.wasEmpty) {
 				assert(revision !== undefined, 0x592 /* Unable to revert to undefined revision */);
 				inverse.fieldChange.newContent = {
-					revert: reviver(revision, 0, 1)[0],
-					changeId: { revision, localId: fieldChange.id },
+					revert: { revision, localId: fieldChange.id },
 					changes: originalChildChanges,
 				};
 			}
@@ -313,7 +344,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						localId: over.fieldChange.id,
 					};
 					if ("revert" in overContent) {
-						restoredUndoChangeId = overContent.changeId;
+						restoredUndoChangeId = overContent.revert;
 					}
 				}
 			}
@@ -445,31 +476,43 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	 * Creates a change which replaces the field with `newContent`
 	 * @param newContent - the new content for the field
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param id - the ID associated with the change.
+	 * @param changeId - the ID associated with the replacement of the current content.
+	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
 	set(
-		newContent: ITreeCursor | undefined,
+		newContent: ITreeCursor,
 		wasEmpty: boolean,
-		id: ChangesetLocalId,
+		changeId: ChangesetLocalId,
+		buildId: ChangesetLocalId,
 	): OptionalChangeset;
+
+	/**
+	 * Creates a change which clears the field's contents (if any).
+	 * @param wasEmpty - whether the field is empty when creating this change
+	 * @param changeId - the ID associated with the change.
+	 */
+	clear(wasEmpty: boolean, changeId: ChangesetLocalId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
-		newContent: ITreeCursor | undefined,
+		newContent: ITreeCursor,
 		wasEmpty: boolean,
 		id: ChangesetLocalId,
+		buildId: ChangesetLocalId,
 	): OptionalChangeset => ({
 		fieldChange: {
 			id,
-			newContent:
-				newContent === undefined
-					? undefined
-					: {
-							set: jsonableTreeFromCursor(newContent),
-					  },
+			newContent: {
+				set: jsonableTreeFromCursor(newContent),
+				buildId: { localId: buildId },
+			},
 			wasEmpty,
 		},
+	}),
+
+	clear: (wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset => ({
+		fieldChange: { id, wasEmpty },
 	}),
 
 	buildChildChange: (index: number, childChange: NodeChangeset): OptionalChangeset => {
@@ -478,68 +521,58 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 	},
 };
 
-function deltaFromInsertAndChange(
-	insertedContent: ITreeCursorSynchronous | undefined,
-	nodeChange: NodeChangeset | undefined,
-	deltaFromNode: ToDelta,
-): Delta.Mark[] {
-	if (insertedContent !== undefined) {
-		const insert: Mutable<Delta.Insert> = {
-			type: Delta.MarkType.Insert,
-			content: [insertedContent],
-		};
-		if (nodeChange !== undefined) {
-			const nodeDelta = deltaFromNode(nodeChange);
-			populateChildModifications(nodeDelta, insert);
-		}
-		return [insert];
+export function optionalFieldIntoDelta(
+	{ change, revision }: TaggedChange<OptionalChangeset>,
+	deltaFromChild: ToDelta,
+): Delta.FieldChanges {
+	const delta: Mutable<Delta.FieldChanges> = {};
+	const [_, childChange] = change.childChanges?.find(([changeId]) => changeId === "self") ?? [];
+	if (childChange === undefined && change.fieldChange === undefined) {
+		return delta;
 	}
 
-	if (nodeChange !== undefined) {
-		return [deltaFromNode(nodeChange)];
+	const mark: Mutable<Delta.Mark> = { count: 1 };
+	delta.local = [mark];
+
+	if (childChange !== undefined) {
+		mark.fields = deltaFromChild(childChange);
 	}
 
-	return [];
-}
-
-function deltaForDelete(
-	nodeExists: boolean,
-	nodeChange: NodeChangeset | undefined,
-	deltaFromNode: ToDelta,
-): Delta.Mark[] {
-	if (!nodeExists) {
-		return [];
-	}
-
-	const deleteDelta: Mutable<Delta.Delete> = { type: Delta.MarkType.Delete, count: 1 };
-	if (nodeChange !== undefined) {
-		const modify = deltaFromNode(nodeChange);
-		deleteDelta.fields = modify.fields;
-	}
-	return [deleteDelta];
-}
-
-export function optionalFieldIntoDelta(change: OptionalChangeset, deltaFromChild: ToDelta) {
-	const [_, childChange] = change.childChanges?.find(([id]) => id === "self") ?? [];
 	if (change.fieldChange === undefined) {
-		return childChange !== undefined ? [deltaFromChild(childChange)] : [];
+		return delta;
 	}
 
-	const deleteDelta = deltaForDelete(!change.fieldChange.wasEmpty, childChange, deltaFromChild);
+	if (!change.fieldChange.wasEmpty) {
+		const detachId = {
+			major: change.fieldChange.revision ?? revision,
+			minor: change.fieldChange.id,
+		};
+		mark.detach = detachId;
+	}
 
-	const update = change.fieldChange?.newContent;
-	let content: ITreeCursorSynchronous | undefined;
+	const update = change.fieldChange.newContent;
 	if (update === undefined) {
-		content = undefined;
-	} else if ("set" in update) {
-		content = singleTextCursor(update.set);
+		// The field is being cleared
 	} else {
-		content = update.revert;
+		if (Object.prototype.hasOwnProperty.call(update, "set")) {
+			const setUpdate = update as { set: JsonableTree; buildId: ChangeAtomId };
+			const content = [cursorForJsonableTreeNode(setUpdate.set)];
+			const buildId = makeDetachedNodeId(
+				setUpdate.buildId.revision ?? change.fieldChange.revision ?? revision,
+				setUpdate.buildId.localId,
+			);
+			mark.attach = buildId;
+			delta.build = [{ id: buildId, trees: content }];
+		} else {
+			const changeId = (update as { revert: ChangeAtomId }).revert;
+			mark.attach = makeDetachedNodeId(changeId.revision, changeId.localId);
+		}
+		if (update.changes !== undefined) {
+			const fields = deltaFromChild(update.changes);
+			delta.global = [{ id: mark.attach, fields }];
+		}
 	}
-
-	const insertDelta = deltaFromInsertAndChange(content, update?.changes, deltaFromChild);
-
-	return [...deleteDelta, ...insertDelta];
+	return delta;
 }
 
 export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, OptionalFieldEditor> = {
@@ -547,8 +580,9 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 	codecsFactory: makeOptionalFieldCodecFamily,
 	editor: optionalFieldEditor,
 
-	intoDelta: ({ change }: TaggedChange<OptionalChangeset>, deltaFromChild: ToDelta) =>
-		optionalFieldIntoDelta(change, deltaFromChild),
+	intoDelta: optionalFieldIntoDelta,
+	relevantRemovedTrees,
+
 	isEmpty: (change: OptionalChangeset) =>
 		change.childChanges === undefined && change.fieldChange === undefined,
 };
@@ -558,5 +592,46 @@ function areEqualChangeIds(a: ChangeId, b: ChangeId): boolean {
 		return a === b;
 	}
 
-	return a.revision === b.revision && a.localId === b.localId;
+	return areEqualChangeAtomIds(a, b);
+}
+
+function* relevantRemovedTrees(
+	change: OptionalChangeset,
+	removedTreesFromChild: RemovedTreesFromChild,
+): Iterable<Delta.DetachedNodeId> {
+	let removedNode: ChangeAtomId | undefined;
+	let restoredNode: ChangeAtomId | undefined;
+	const fieldChange = change.fieldChange;
+	if (fieldChange !== undefined) {
+		removedNode = { revision: fieldChange.revision, localId: fieldChange.id };
+		const newContent = fieldChange.newContent;
+		if (newContent !== undefined) {
+			if (Object.prototype.hasOwnProperty.call(newContent, "revert")) {
+				// This tree is being restored by this change, so it is a relevant removed tree.
+				restoredNode = (newContent as { revert: ChangeAtomId }).revert;
+				yield nodeIdFromChangeAtom(restoredNode);
+			}
+			if (newContent.changes !== undefined) {
+				yield* removedTreesFromChild(newContent.changes);
+			}
+		}
+	}
+	if (change.childChanges !== undefined) {
+		for (const [deletedBy, child] of change.childChanges) {
+			if (
+				deletedBy === "self" ||
+				(removedNode !== undefined && areEqualChangeIds(deletedBy, removedNode))
+			) {
+				// This node is in the document at the time this change applies, so it isn't a relevant removed tree.
+			} else {
+				if (restoredNode !== undefined && areEqualChangeIds(deletedBy, restoredNode)) {
+					// This tree is a relevant removed tree, but it is already included in the list
+				} else {
+					// This tree is being edited by this change, so it is a relevant removed tree.
+					yield nodeIdFromChangeAtom(deletedBy);
+				}
+			}
+			yield* removedTreesFromChild(child);
+		}
+	}
 }

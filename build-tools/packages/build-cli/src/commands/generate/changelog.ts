@@ -7,7 +7,7 @@ import { Package, FluidRepo } from "@fluidframework/build-tools";
 import { fromInternalScheme, isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import { command as execCommand } from "execa";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { inc } from "semver";
 import { CleanOptions } from "simple-git";
 
@@ -23,9 +23,9 @@ async function replaceInFile(search: string, replace: string, path: string): Pro
 }
 
 export default class GenerateChangeLogCommand extends BaseCommand<typeof GenerateChangeLogCommand> {
-	static description = "Generate a changelog for packages based on changesets.";
+	static readonly description = "Generate a changelog for packages based on changesets.";
 
-	static flags = {
+	static readonly flags = {
 		releaseGroup: releaseGroupFlag({
 			required: true,
 		}),
@@ -34,9 +34,9 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 				"The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
 		...BaseCommand.flags,
-	};
+	} as const;
 
-	static examples = [
+	static readonly examples = [
 		{
 			description: "Generate changelogs for the client release group.",
 			command: "<%= config.bin %> <%= command.id %> --releaseGroup client",
@@ -97,7 +97,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<typeof Generat
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			  [context.fullPackageMap.get(releaseGroup)!];
 
-		const installed = await FluidRepo.ensureInstalled(packagesToCheck, true);
+		const installed = await FluidRepo.ensureInstalled(packagesToCheck);
 
 		if (!installed) {
 			this.error(`Error installing dependencies for: ${releaseGroup}`);

@@ -5,6 +5,7 @@
 
 export {
 	assertIsRevisionTag,
+	areEqualChangeAtomIds,
 	mintRevisionTag,
 	isRevisionTag,
 	mintCommit,

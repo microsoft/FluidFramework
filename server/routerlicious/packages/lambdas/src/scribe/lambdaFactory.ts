@@ -44,7 +44,7 @@ import { CheckpointManager } from "./checkpointManager";
 import { ScribeLambda } from "./lambda";
 import { SummaryReader } from "./summaryReader";
 import { SummaryWriter } from "./summaryWriter";
-import { initializeProtocol, sendToDeli } from "./utils";
+import { getClientIds, initializeProtocol, sendToDeli } from "./utils";
 import { ILatestSummaryState } from "./interfaces";
 import { PendingMessageReader } from "./pendingMessageReader";
 
@@ -127,20 +127,19 @@ export class ScribeLambdaFactory
 				(error) => true /* shouldRetry */,
 			)) as IDocument;
 
-			if (JSON.parse(document.scribe)?.isCorrupt) {
-				Lumberjack.info(
-					`Received attempt to connect to a corrupted document.`,
-					lumberProperties,
-				);
-				return new NoOpLambda(context);
-			}
-
 			if (!isDocumentValid(document)) {
 				// Document sessions can be joined (via Alfred) after a document is functionally deleted.
 				// If the document doesn't exist or is marked for deletion then we trivially accept every message.
 				const errorMessage = `Received attempt to connect to a missing/deleted document.`;
 				context.log?.error(errorMessage, { messageMetaData });
 				Lumberjack.error(errorMessage, lumberProperties);
+				return new NoOpLambda(context);
+			}
+			if (JSON.parse(document.scribe)?.isCorrupt) {
+				Lumberjack.info(
+					`Received attempt to connect to a corrupted document.`,
+					lumberProperties,
+				);
 				return new NoOpLambda(context);
 			}
 			if (!isDocumentSessionValid(document, this.serviceConfiguration)) {
@@ -300,7 +299,9 @@ export class ScribeLambdaFactory
 			logOffset: lastCheckpoint.logOffset,
 			protocolHead: latestSummary.protocolHead,
 			numOpsSinceLastSummary: opsSinceLastSummary.length,
-			LastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
+			lastCheckpointProtocolSeqNo: lastCheckpoint.protocolState.sequenceNumber,
+			clientCount: lastCheckpoint.protocolState.members.length,
+			clients: getClientIds(lastCheckpoint.protocolState, 5),
 		};
 		Lumberjack.info(`Creating scribe lambda`, scribeLambdaProperties);
 		const scribeLambda = new ScribeLambda(

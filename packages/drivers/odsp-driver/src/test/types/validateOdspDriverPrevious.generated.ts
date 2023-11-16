@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_EnumDeclaration_ClpCompliantAppHeader():
     TypeOnly<old.ClpCompliantAppHeader>;
 declare function use_current_EnumDeclaration_ClpCompliantAppHeader(
-    use: TypeOnly<current.ClpCompliantAppHeader>);
+    use: TypeOnly<current.ClpCompliantAppHeader>): void;
 use_current_EnumDeclaration_ClpCompliantAppHeader(
     get_old_EnumDeclaration_ClpCompliantAppHeader());
 
@@ -41,9 +41,105 @@ use_current_EnumDeclaration_ClpCompliantAppHeader(
 declare function get_current_EnumDeclaration_ClpCompliantAppHeader():
     TypeOnly<current.ClpCompliantAppHeader>;
 declare function use_old_EnumDeclaration_ClpCompliantAppHeader(
-    use: TypeOnly<old.ClpCompliantAppHeader>);
+    use: TypeOnly<old.ClpCompliantAppHeader>): void;
 use_old_EnumDeclaration_ClpCompliantAppHeader(
     get_current_EnumDeclaration_ClpCompliantAppHeader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_EpochTracker": {"forwardCompat": false}
+*/
+declare function get_old_ClassDeclaration_EpochTracker():
+    TypeOnly<old.EpochTracker>;
+declare function use_current_ClassDeclaration_EpochTracker(
+    use: TypeOnly<current.EpochTracker>): void;
+use_current_ClassDeclaration_EpochTracker(
+    get_old_ClassDeclaration_EpochTracker());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "ClassDeclaration_EpochTracker": {"backCompat": false}
+*/
+declare function get_current_ClassDeclaration_EpochTracker():
+    TypeOnly<current.EpochTracker>;
+declare function use_old_ClassDeclaration_EpochTracker(
+    use: TypeOnly<old.EpochTracker>): void;
+use_old_ClassDeclaration_EpochTracker(
+    get_current_ClassDeclaration_EpochTracker());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FetchType": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_FetchType():
+    TypeOnly<old.FetchType>;
+declare function use_current_TypeAliasDeclaration_FetchType(
+    use: TypeOnly<current.FetchType>): void;
+use_current_TypeAliasDeclaration_FetchType(
+    get_old_TypeAliasDeclaration_FetchType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FetchType": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_FetchType():
+    TypeOnly<current.FetchType>;
+declare function use_old_TypeAliasDeclaration_FetchType(
+    use: TypeOnly<old.FetchType>): void;
+use_old_TypeAliasDeclaration_FetchType(
+    get_current_TypeAliasDeclaration_FetchType());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FetchTypeInternal": {"forwardCompat": false}
+*/
+declare function get_old_TypeAliasDeclaration_FetchTypeInternal():
+    TypeOnly<old.FetchTypeInternal>;
+declare function use_current_TypeAliasDeclaration_FetchTypeInternal(
+    use: TypeOnly<current.FetchTypeInternal>): void;
+use_current_TypeAliasDeclaration_FetchTypeInternal(
+    get_old_TypeAliasDeclaration_FetchTypeInternal());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "TypeAliasDeclaration_FetchTypeInternal": {"backCompat": false}
+*/
+declare function get_current_TypeAliasDeclaration_FetchTypeInternal():
+    TypeOnly<current.FetchTypeInternal>;
+declare function use_old_TypeAliasDeclaration_FetchTypeInternal(
+    use: TypeOnly<old.FetchTypeInternal>): void;
+use_old_TypeAliasDeclaration_FetchTypeInternal(
+    get_current_TypeAliasDeclaration_FetchTypeInternal());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICacheAndTracker": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ICacheAndTracker():
+    TypeOnly<old.ICacheAndTracker>;
+declare function use_current_InterfaceDeclaration_ICacheAndTracker(
+    use: TypeOnly<current.ICacheAndTracker>): void;
+use_current_InterfaceDeclaration_ICacheAndTracker(
+    get_old_InterfaceDeclaration_ICacheAndTracker());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ICacheAndTracker": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ICacheAndTracker():
+    TypeOnly<current.ICacheAndTracker>;
+declare function use_old_InterfaceDeclaration_ICacheAndTracker(
+    use: TypeOnly<old.ICacheAndTracker>): void;
+use_old_InterfaceDeclaration_ICacheAndTracker(
+    get_current_InterfaceDeclaration_ICacheAndTracker());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -53,7 +149,7 @@ use_old_EnumDeclaration_ClpCompliantAppHeader(
 declare function get_old_InterfaceDeclaration_IClpCompliantAppHeader():
     TypeOnly<old.IClpCompliantAppHeader>;
 declare function use_current_InterfaceDeclaration_IClpCompliantAppHeader(
-    use: TypeOnly<current.IClpCompliantAppHeader>);
+    use: TypeOnly<current.IClpCompliantAppHeader>): void;
 use_current_InterfaceDeclaration_IClpCompliantAppHeader(
     get_old_InterfaceDeclaration_IClpCompliantAppHeader());
 
@@ -65,9 +161,129 @@ use_current_InterfaceDeclaration_IClpCompliantAppHeader(
 declare function get_current_InterfaceDeclaration_IClpCompliantAppHeader():
     TypeOnly<current.IClpCompliantAppHeader>;
 declare function use_old_InterfaceDeclaration_IClpCompliantAppHeader(
-    use: TypeOnly<old.IClpCompliantAppHeader>);
+    use: TypeOnly<old.IClpCompliantAppHeader>): void;
 use_old_InterfaceDeclaration_IClpCompliantAppHeader(
     get_current_InterfaceDeclaration_IClpCompliantAppHeader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_INonPersistentCache": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_INonPersistentCache():
+    TypeOnly<old.INonPersistentCache>;
+declare function use_current_InterfaceDeclaration_INonPersistentCache(
+    use: TypeOnly<current.INonPersistentCache>): void;
+use_current_InterfaceDeclaration_INonPersistentCache(
+    get_old_InterfaceDeclaration_INonPersistentCache());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_INonPersistentCache": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_INonPersistentCache():
+    TypeOnly<current.INonPersistentCache>;
+declare function use_old_InterfaceDeclaration_INonPersistentCache(
+    use: TypeOnly<old.INonPersistentCache>): void;
+use_old_InterfaceDeclaration_INonPersistentCache(
+    get_current_InterfaceDeclaration_INonPersistentCache());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspCache": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOdspCache():
+    TypeOnly<old.IOdspCache>;
+declare function use_current_InterfaceDeclaration_IOdspCache(
+    use: TypeOnly<current.IOdspCache>): void;
+use_current_InterfaceDeclaration_IOdspCache(
+    get_old_InterfaceDeclaration_IOdspCache());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspCache": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOdspCache():
+    TypeOnly<current.IOdspCache>;
+declare function use_old_InterfaceDeclaration_IOdspCache(
+    use: TypeOnly<old.IOdspCache>): void;
+use_old_InterfaceDeclaration_IOdspCache(
+    get_current_InterfaceDeclaration_IOdspCache());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspResponse": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IOdspResponse():
+    TypeOnly<old.IOdspResponse<any>>;
+declare function use_current_InterfaceDeclaration_IOdspResponse(
+    use: TypeOnly<current.IOdspResponse<any>>): void;
+use_current_InterfaceDeclaration_IOdspResponse(
+    get_old_InterfaceDeclaration_IOdspResponse());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IOdspResponse": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IOdspResponse():
+    TypeOnly<current.IOdspResponse<any>>;
+declare function use_old_InterfaceDeclaration_IOdspResponse(
+    use: TypeOnly<old.IOdspResponse<any>>): void;
+use_old_InterfaceDeclaration_IOdspResponse(
+    get_current_InterfaceDeclaration_IOdspResponse());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPersistedFileCache": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPersistedFileCache():
+    TypeOnly<old.IPersistedFileCache>;
+declare function use_current_InterfaceDeclaration_IPersistedFileCache(
+    use: TypeOnly<current.IPersistedFileCache>): void;
+use_current_InterfaceDeclaration_IPersistedFileCache(
+    get_old_InterfaceDeclaration_IPersistedFileCache());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPersistedFileCache": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPersistedFileCache():
+    TypeOnly<current.IPersistedFileCache>;
+declare function use_old_InterfaceDeclaration_IPersistedFileCache(
+    use: TypeOnly<old.IPersistedFileCache>): void;
+use_old_InterfaceDeclaration_IPersistedFileCache(
+    get_current_InterfaceDeclaration_IPersistedFileCache());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPrefetchSnapshotContents": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_IPrefetchSnapshotContents():
+    TypeOnly<old.IPrefetchSnapshotContents>;
+declare function use_current_InterfaceDeclaration_IPrefetchSnapshotContents(
+    use: TypeOnly<current.IPrefetchSnapshotContents>): void;
+use_current_InterfaceDeclaration_IPrefetchSnapshotContents(
+    get_old_InterfaceDeclaration_IPrefetchSnapshotContents());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_IPrefetchSnapshotContents": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_IPrefetchSnapshotContents():
+    TypeOnly<current.IPrefetchSnapshotContents>;
+declare function use_old_InterfaceDeclaration_IPrefetchSnapshotContents(
+    use: TypeOnly<old.IPrefetchSnapshotContents>): void;
+use_old_InterfaceDeclaration_IPrefetchSnapshotContents(
+    get_current_InterfaceDeclaration_IPrefetchSnapshotContents());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -77,7 +293,7 @@ use_old_InterfaceDeclaration_IClpCompliantAppHeader(
 declare function get_old_InterfaceDeclaration_ISharingLinkHeader():
     TypeOnly<old.ISharingLinkHeader>;
 declare function use_current_InterfaceDeclaration_ISharingLinkHeader(
-    use: TypeOnly<current.ISharingLinkHeader>);
+    use: TypeOnly<current.ISharingLinkHeader>): void;
 use_current_InterfaceDeclaration_ISharingLinkHeader(
     get_old_InterfaceDeclaration_ISharingLinkHeader());
 
@@ -89,7 +305,7 @@ use_current_InterfaceDeclaration_ISharingLinkHeader(
 declare function get_current_InterfaceDeclaration_ISharingLinkHeader():
     TypeOnly<current.ISharingLinkHeader>;
 declare function use_old_InterfaceDeclaration_ISharingLinkHeader(
-    use: TypeOnly<old.ISharingLinkHeader>);
+    use: TypeOnly<old.ISharingLinkHeader>): void;
 use_old_InterfaceDeclaration_ISharingLinkHeader(
     get_current_InterfaceDeclaration_ISharingLinkHeader());
 
@@ -101,7 +317,7 @@ use_old_InterfaceDeclaration_ISharingLinkHeader(
 declare function get_old_InterfaceDeclaration_ISnapshotContents():
     TypeOnly<old.ISnapshotContents>;
 declare function use_current_InterfaceDeclaration_ISnapshotContents(
-    use: TypeOnly<current.ISnapshotContents>);
+    use: TypeOnly<current.ISnapshotContents>): void;
 use_current_InterfaceDeclaration_ISnapshotContents(
     get_old_InterfaceDeclaration_ISnapshotContents());
 
@@ -113,9 +329,33 @@ use_current_InterfaceDeclaration_ISnapshotContents(
 declare function get_current_InterfaceDeclaration_ISnapshotContents():
     TypeOnly<current.ISnapshotContents>;
 declare function use_old_InterfaceDeclaration_ISnapshotContents(
-    use: TypeOnly<old.ISnapshotContents>);
+    use: TypeOnly<old.ISnapshotContents>): void;
 use_old_InterfaceDeclaration_ISnapshotContents(
     get_current_InterfaceDeclaration_ISnapshotContents());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotContentsWithProps": {"forwardCompat": false}
+*/
+declare function get_old_InterfaceDeclaration_ISnapshotContentsWithProps():
+    TypeOnly<old.ISnapshotContentsWithProps>;
+declare function use_current_InterfaceDeclaration_ISnapshotContentsWithProps(
+    use: TypeOnly<current.ISnapshotContentsWithProps>): void;
+use_current_InterfaceDeclaration_ISnapshotContentsWithProps(
+    get_old_InterfaceDeclaration_ISnapshotContentsWithProps());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "InterfaceDeclaration_ISnapshotContentsWithProps": {"backCompat": false}
+*/
+declare function get_current_InterfaceDeclaration_ISnapshotContentsWithProps():
+    TypeOnly<current.ISnapshotContentsWithProps>;
+declare function use_old_InterfaceDeclaration_ISnapshotContentsWithProps(
+    use: TypeOnly<old.ISnapshotContentsWithProps>): void;
+use_old_InterfaceDeclaration_ISnapshotContentsWithProps(
+    get_current_InterfaceDeclaration_ISnapshotContentsWithProps());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -125,7 +365,7 @@ use_old_InterfaceDeclaration_ISnapshotContents(
 declare function get_old_VariableDeclaration_OdcApiSiteOrigin():
     TypeOnly<typeof old.OdcApiSiteOrigin>;
 declare function use_current_VariableDeclaration_OdcApiSiteOrigin(
-    use: TypeOnly<typeof current.OdcApiSiteOrigin>);
+    use: TypeOnly<typeof current.OdcApiSiteOrigin>): void;
 use_current_VariableDeclaration_OdcApiSiteOrigin(
     get_old_VariableDeclaration_OdcApiSiteOrigin());
 
@@ -137,7 +377,7 @@ use_current_VariableDeclaration_OdcApiSiteOrigin(
 declare function get_current_VariableDeclaration_OdcApiSiteOrigin():
     TypeOnly<typeof current.OdcApiSiteOrigin>;
 declare function use_old_VariableDeclaration_OdcApiSiteOrigin(
-    use: TypeOnly<typeof old.OdcApiSiteOrigin>);
+    use: TypeOnly<typeof old.OdcApiSiteOrigin>): void;
 use_old_VariableDeclaration_OdcApiSiteOrigin(
     get_current_VariableDeclaration_OdcApiSiteOrigin());
 
@@ -149,7 +389,7 @@ use_old_VariableDeclaration_OdcApiSiteOrigin(
 declare function get_old_VariableDeclaration_OdcFileSiteOrigin():
     TypeOnly<typeof old.OdcFileSiteOrigin>;
 declare function use_current_VariableDeclaration_OdcFileSiteOrigin(
-    use: TypeOnly<typeof current.OdcFileSiteOrigin>);
+    use: TypeOnly<typeof current.OdcFileSiteOrigin>): void;
 use_current_VariableDeclaration_OdcFileSiteOrigin(
     get_old_VariableDeclaration_OdcFileSiteOrigin());
 
@@ -161,7 +401,7 @@ use_current_VariableDeclaration_OdcFileSiteOrigin(
 declare function get_current_VariableDeclaration_OdcFileSiteOrigin():
     TypeOnly<typeof current.OdcFileSiteOrigin>;
 declare function use_old_VariableDeclaration_OdcFileSiteOrigin(
-    use: TypeOnly<typeof old.OdcFileSiteOrigin>);
+    use: TypeOnly<typeof old.OdcFileSiteOrigin>): void;
 use_old_VariableDeclaration_OdcFileSiteOrigin(
     get_current_VariableDeclaration_OdcFileSiteOrigin());
 
@@ -173,7 +413,7 @@ use_old_VariableDeclaration_OdcFileSiteOrigin(
 declare function get_old_ClassDeclaration_OdspDocumentServiceFactory():
     TypeOnly<old.OdspDocumentServiceFactory>;
 declare function use_current_ClassDeclaration_OdspDocumentServiceFactory(
-    use: TypeOnly<current.OdspDocumentServiceFactory>);
+    use: TypeOnly<current.OdspDocumentServiceFactory>): void;
 use_current_ClassDeclaration_OdspDocumentServiceFactory(
     get_old_ClassDeclaration_OdspDocumentServiceFactory());
 
@@ -185,7 +425,7 @@ use_current_ClassDeclaration_OdspDocumentServiceFactory(
 declare function get_current_ClassDeclaration_OdspDocumentServiceFactory():
     TypeOnly<current.OdspDocumentServiceFactory>;
 declare function use_old_ClassDeclaration_OdspDocumentServiceFactory(
-    use: TypeOnly<old.OdspDocumentServiceFactory>);
+    use: TypeOnly<old.OdspDocumentServiceFactory>): void;
 use_old_ClassDeclaration_OdspDocumentServiceFactory(
     get_current_ClassDeclaration_OdspDocumentServiceFactory());
 
@@ -197,7 +437,7 @@ use_old_ClassDeclaration_OdspDocumentServiceFactory(
 declare function get_old_ClassDeclaration_OdspDocumentServiceFactoryCore():
     TypeOnly<old.OdspDocumentServiceFactoryCore>;
 declare function use_current_ClassDeclaration_OdspDocumentServiceFactoryCore(
-    use: TypeOnly<current.OdspDocumentServiceFactoryCore>);
+    use: TypeOnly<current.OdspDocumentServiceFactoryCore>): void;
 use_current_ClassDeclaration_OdspDocumentServiceFactoryCore(
     get_old_ClassDeclaration_OdspDocumentServiceFactoryCore());
 
@@ -209,7 +449,7 @@ use_current_ClassDeclaration_OdspDocumentServiceFactoryCore(
 declare function get_current_ClassDeclaration_OdspDocumentServiceFactoryCore():
     TypeOnly<current.OdspDocumentServiceFactoryCore>;
 declare function use_old_ClassDeclaration_OdspDocumentServiceFactoryCore(
-    use: TypeOnly<old.OdspDocumentServiceFactoryCore>);
+    use: TypeOnly<old.OdspDocumentServiceFactoryCore>): void;
 use_old_ClassDeclaration_OdspDocumentServiceFactoryCore(
     get_current_ClassDeclaration_OdspDocumentServiceFactoryCore());
 
@@ -221,7 +461,7 @@ use_old_ClassDeclaration_OdspDocumentServiceFactoryCore(
 declare function get_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit():
     TypeOnly<old.OdspDocumentServiceFactoryWithCodeSplit>;
 declare function use_current_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
-    use: TypeOnly<current.OdspDocumentServiceFactoryWithCodeSplit>);
+    use: TypeOnly<current.OdspDocumentServiceFactoryWithCodeSplit>): void;
 use_current_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
     get_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit());
 
@@ -233,7 +473,7 @@ use_current_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
 declare function get_current_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit():
     TypeOnly<current.OdspDocumentServiceFactoryWithCodeSplit>;
 declare function use_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
-    use: TypeOnly<old.OdspDocumentServiceFactoryWithCodeSplit>);
+    use: TypeOnly<old.OdspDocumentServiceFactoryWithCodeSplit>): void;
 use_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
     get_current_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit());
 
@@ -245,7 +485,7 @@ use_old_ClassDeclaration_OdspDocumentServiceFactoryWithCodeSplit(
 declare function get_old_ClassDeclaration_OdspDriverUrlResolver():
     TypeOnly<old.OdspDriverUrlResolver>;
 declare function use_current_ClassDeclaration_OdspDriverUrlResolver(
-    use: TypeOnly<current.OdspDriverUrlResolver>);
+    use: TypeOnly<current.OdspDriverUrlResolver>): void;
 use_current_ClassDeclaration_OdspDriverUrlResolver(
     get_old_ClassDeclaration_OdspDriverUrlResolver());
 
@@ -257,7 +497,7 @@ use_current_ClassDeclaration_OdspDriverUrlResolver(
 declare function get_current_ClassDeclaration_OdspDriverUrlResolver():
     TypeOnly<current.OdspDriverUrlResolver>;
 declare function use_old_ClassDeclaration_OdspDriverUrlResolver(
-    use: TypeOnly<old.OdspDriverUrlResolver>);
+    use: TypeOnly<old.OdspDriverUrlResolver>): void;
 use_old_ClassDeclaration_OdspDriverUrlResolver(
     get_current_ClassDeclaration_OdspDriverUrlResolver());
 
@@ -269,7 +509,7 @@ use_old_ClassDeclaration_OdspDriverUrlResolver(
 declare function get_old_ClassDeclaration_OdspDriverUrlResolverForShareLink():
     TypeOnly<old.OdspDriverUrlResolverForShareLink>;
 declare function use_current_ClassDeclaration_OdspDriverUrlResolverForShareLink(
-    use: TypeOnly<current.OdspDriverUrlResolverForShareLink>);
+    use: TypeOnly<current.OdspDriverUrlResolverForShareLink>): void;
 use_current_ClassDeclaration_OdspDriverUrlResolverForShareLink(
     get_old_ClassDeclaration_OdspDriverUrlResolverForShareLink());
 
@@ -281,7 +521,7 @@ use_current_ClassDeclaration_OdspDriverUrlResolverForShareLink(
 declare function get_current_ClassDeclaration_OdspDriverUrlResolverForShareLink():
     TypeOnly<current.OdspDriverUrlResolverForShareLink>;
 declare function use_old_ClassDeclaration_OdspDriverUrlResolverForShareLink(
-    use: TypeOnly<old.OdspDriverUrlResolverForShareLink>);
+    use: TypeOnly<old.OdspDriverUrlResolverForShareLink>): void;
 use_old_ClassDeclaration_OdspDriverUrlResolverForShareLink(
     get_current_ClassDeclaration_OdspDriverUrlResolverForShareLink());
 
@@ -293,7 +533,7 @@ use_old_ClassDeclaration_OdspDriverUrlResolverForShareLink(
 declare function get_old_InterfaceDeclaration_OdspFluidDataStoreLocator():
     TypeOnly<old.OdspFluidDataStoreLocator>;
 declare function use_current_InterfaceDeclaration_OdspFluidDataStoreLocator(
-    use: TypeOnly<current.OdspFluidDataStoreLocator>);
+    use: TypeOnly<current.OdspFluidDataStoreLocator>): void;
 use_current_InterfaceDeclaration_OdspFluidDataStoreLocator(
     get_old_InterfaceDeclaration_OdspFluidDataStoreLocator());
 
@@ -305,7 +545,7 @@ use_current_InterfaceDeclaration_OdspFluidDataStoreLocator(
 declare function get_current_InterfaceDeclaration_OdspFluidDataStoreLocator():
     TypeOnly<current.OdspFluidDataStoreLocator>;
 declare function use_old_InterfaceDeclaration_OdspFluidDataStoreLocator(
-    use: TypeOnly<old.OdspFluidDataStoreLocator>);
+    use: TypeOnly<old.OdspFluidDataStoreLocator>): void;
 use_old_InterfaceDeclaration_OdspFluidDataStoreLocator(
     get_current_InterfaceDeclaration_OdspFluidDataStoreLocator());
 
@@ -317,7 +557,7 @@ use_old_InterfaceDeclaration_OdspFluidDataStoreLocator(
 declare function get_old_InterfaceDeclaration_ShareLinkFetcherProps():
     TypeOnly<old.ShareLinkFetcherProps>;
 declare function use_current_InterfaceDeclaration_ShareLinkFetcherProps(
-    use: TypeOnly<current.ShareLinkFetcherProps>);
+    use: TypeOnly<current.ShareLinkFetcherProps>): void;
 use_current_InterfaceDeclaration_ShareLinkFetcherProps(
     get_old_InterfaceDeclaration_ShareLinkFetcherProps());
 
@@ -329,7 +569,7 @@ use_current_InterfaceDeclaration_ShareLinkFetcherProps(
 declare function get_current_InterfaceDeclaration_ShareLinkFetcherProps():
     TypeOnly<current.ShareLinkFetcherProps>;
 declare function use_old_InterfaceDeclaration_ShareLinkFetcherProps(
-    use: TypeOnly<old.ShareLinkFetcherProps>);
+    use: TypeOnly<old.ShareLinkFetcherProps>): void;
 use_old_InterfaceDeclaration_ShareLinkFetcherProps(
     get_current_InterfaceDeclaration_ShareLinkFetcherProps());
 
@@ -341,7 +581,7 @@ use_old_InterfaceDeclaration_ShareLinkFetcherProps(
 declare function get_old_EnumDeclaration_SharingLinkHeader():
     TypeOnly<old.SharingLinkHeader>;
 declare function use_current_EnumDeclaration_SharingLinkHeader(
-    use: TypeOnly<current.SharingLinkHeader>);
+    use: TypeOnly<current.SharingLinkHeader>): void;
 use_current_EnumDeclaration_SharingLinkHeader(
     get_old_EnumDeclaration_SharingLinkHeader());
 
@@ -353,9 +593,33 @@ use_current_EnumDeclaration_SharingLinkHeader(
 declare function get_current_EnumDeclaration_SharingLinkHeader():
     TypeOnly<current.SharingLinkHeader>;
 declare function use_old_EnumDeclaration_SharingLinkHeader(
-    use: TypeOnly<old.SharingLinkHeader>);
+    use: TypeOnly<old.SharingLinkHeader>): void;
 use_old_EnumDeclaration_SharingLinkHeader(
     get_current_EnumDeclaration_SharingLinkHeader());
+
+/*
+* Validate forward compat by using old type in place of current type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SnapshotFormatSupportType": {"forwardCompat": false}
+*/
+declare function get_old_EnumDeclaration_SnapshotFormatSupportType():
+    TypeOnly<old.SnapshotFormatSupportType>;
+declare function use_current_EnumDeclaration_SnapshotFormatSupportType(
+    use: TypeOnly<current.SnapshotFormatSupportType>): void;
+use_current_EnumDeclaration_SnapshotFormatSupportType(
+    get_old_EnumDeclaration_SnapshotFormatSupportType());
+
+/*
+* Validate back compat by using current type in place of old type
+* If breaking change required, add in package.json under typeValidation.broken:
+* "EnumDeclaration_SnapshotFormatSupportType": {"backCompat": false}
+*/
+declare function get_current_EnumDeclaration_SnapshotFormatSupportType():
+    TypeOnly<current.SnapshotFormatSupportType>;
+declare function use_old_EnumDeclaration_SnapshotFormatSupportType(
+    use: TypeOnly<old.SnapshotFormatSupportType>): void;
+use_old_EnumDeclaration_SnapshotFormatSupportType(
+    get_current_EnumDeclaration_SnapshotFormatSupportType());
 
 /*
 * Validate forward compat by using old type in place of current type
@@ -365,7 +629,7 @@ use_old_EnumDeclaration_SharingLinkHeader(
 declare function get_old_FunctionDeclaration_checkUrl():
     TypeOnly<typeof old.checkUrl>;
 declare function use_current_FunctionDeclaration_checkUrl(
-    use: TypeOnly<typeof current.checkUrl>);
+    use: TypeOnly<typeof current.checkUrl>): void;
 use_current_FunctionDeclaration_checkUrl(
     get_old_FunctionDeclaration_checkUrl());
 
@@ -377,7 +641,7 @@ use_current_FunctionDeclaration_checkUrl(
 declare function get_current_FunctionDeclaration_checkUrl():
     TypeOnly<typeof current.checkUrl>;
 declare function use_old_FunctionDeclaration_checkUrl(
-    use: TypeOnly<typeof old.checkUrl>);
+    use: TypeOnly<typeof old.checkUrl>): void;
 use_old_FunctionDeclaration_checkUrl(
     get_current_FunctionDeclaration_checkUrl());
 
@@ -389,7 +653,7 @@ use_old_FunctionDeclaration_checkUrl(
 declare function get_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory():
     TypeOnly<typeof old.createLocalOdspDocumentServiceFactory>;
 declare function use_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
-    use: TypeOnly<typeof current.createLocalOdspDocumentServiceFactory>);
+    use: TypeOnly<typeof current.createLocalOdspDocumentServiceFactory>): void;
 use_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
     get_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory());
 
@@ -401,7 +665,7 @@ use_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
 declare function get_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory():
     TypeOnly<typeof current.createLocalOdspDocumentServiceFactory>;
 declare function use_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
-    use: TypeOnly<typeof old.createLocalOdspDocumentServiceFactory>);
+    use: TypeOnly<typeof old.createLocalOdspDocumentServiceFactory>): void;
 use_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
     get_current_FunctionDeclaration_createLocalOdspDocumentServiceFactory());
 
@@ -413,7 +677,7 @@ use_old_FunctionDeclaration_createLocalOdspDocumentServiceFactory(
 declare function get_old_FunctionDeclaration_createOdspCreateContainerRequest():
     TypeOnly<typeof old.createOdspCreateContainerRequest>;
 declare function use_current_FunctionDeclaration_createOdspCreateContainerRequest(
-    use: TypeOnly<typeof current.createOdspCreateContainerRequest>);
+    use: TypeOnly<typeof current.createOdspCreateContainerRequest>): void;
 use_current_FunctionDeclaration_createOdspCreateContainerRequest(
     get_old_FunctionDeclaration_createOdspCreateContainerRequest());
 
@@ -425,7 +689,7 @@ use_current_FunctionDeclaration_createOdspCreateContainerRequest(
 declare function get_current_FunctionDeclaration_createOdspCreateContainerRequest():
     TypeOnly<typeof current.createOdspCreateContainerRequest>;
 declare function use_old_FunctionDeclaration_createOdspCreateContainerRequest(
-    use: TypeOnly<typeof old.createOdspCreateContainerRequest>);
+    use: TypeOnly<typeof old.createOdspCreateContainerRequest>): void;
 use_old_FunctionDeclaration_createOdspCreateContainerRequest(
     get_current_FunctionDeclaration_createOdspCreateContainerRequest());
 
@@ -437,7 +701,7 @@ use_old_FunctionDeclaration_createOdspCreateContainerRequest(
 declare function get_old_FunctionDeclaration_createOdspUrl():
     TypeOnly<typeof old.createOdspUrl>;
 declare function use_current_FunctionDeclaration_createOdspUrl(
-    use: TypeOnly<typeof current.createOdspUrl>);
+    use: TypeOnly<typeof current.createOdspUrl>): void;
 use_current_FunctionDeclaration_createOdspUrl(
     get_old_FunctionDeclaration_createOdspUrl());
 
@@ -449,7 +713,7 @@ use_current_FunctionDeclaration_createOdspUrl(
 declare function get_current_FunctionDeclaration_createOdspUrl():
     TypeOnly<typeof current.createOdspUrl>;
 declare function use_old_FunctionDeclaration_createOdspUrl(
-    use: TypeOnly<typeof old.createOdspUrl>);
+    use: TypeOnly<typeof old.createOdspUrl>): void;
 use_old_FunctionDeclaration_createOdspUrl(
     get_current_FunctionDeclaration_createOdspUrl());
 
@@ -461,7 +725,7 @@ use_old_FunctionDeclaration_createOdspUrl(
 declare function get_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator():
     TypeOnly<typeof old.encodeOdspFluidDataStoreLocator>;
 declare function use_current_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
-    use: TypeOnly<typeof current.encodeOdspFluidDataStoreLocator>);
+    use: TypeOnly<typeof current.encodeOdspFluidDataStoreLocator>): void;
 use_current_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
     get_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator());
 
@@ -473,7 +737,7 @@ use_current_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
 declare function get_current_FunctionDeclaration_encodeOdspFluidDataStoreLocator():
     TypeOnly<typeof current.encodeOdspFluidDataStoreLocator>;
 declare function use_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
-    use: TypeOnly<typeof old.encodeOdspFluidDataStoreLocator>);
+    use: TypeOnly<typeof old.encodeOdspFluidDataStoreLocator>): void;
 use_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
     get_current_FunctionDeclaration_encodeOdspFluidDataStoreLocator());
 
@@ -485,7 +749,7 @@ use_old_FunctionDeclaration_encodeOdspFluidDataStoreLocator(
 declare function get_old_FunctionDeclaration_getApiRoot():
     TypeOnly<typeof old.getApiRoot>;
 declare function use_current_FunctionDeclaration_getApiRoot(
-    use: TypeOnly<typeof current.getApiRoot>);
+    use: TypeOnly<typeof current.getApiRoot>): void;
 use_current_FunctionDeclaration_getApiRoot(
     get_old_FunctionDeclaration_getApiRoot());
 
@@ -497,7 +761,7 @@ use_current_FunctionDeclaration_getApiRoot(
 declare function get_current_FunctionDeclaration_getApiRoot():
     TypeOnly<typeof current.getApiRoot>;
 declare function use_old_FunctionDeclaration_getApiRoot(
-    use: TypeOnly<typeof old.getApiRoot>);
+    use: TypeOnly<typeof old.getApiRoot>): void;
 use_old_FunctionDeclaration_getApiRoot(
     get_current_FunctionDeclaration_getApiRoot());
 
@@ -509,7 +773,7 @@ use_old_FunctionDeclaration_getApiRoot(
 declare function get_old_FunctionDeclaration_getHashedDocumentId():
     TypeOnly<typeof old.getHashedDocumentId>;
 declare function use_current_FunctionDeclaration_getHashedDocumentId(
-    use: TypeOnly<typeof current.getHashedDocumentId>);
+    use: TypeOnly<typeof current.getHashedDocumentId>): void;
 use_current_FunctionDeclaration_getHashedDocumentId(
     get_old_FunctionDeclaration_getHashedDocumentId());
 
@@ -521,7 +785,7 @@ use_current_FunctionDeclaration_getHashedDocumentId(
 declare function get_current_FunctionDeclaration_getHashedDocumentId():
     TypeOnly<typeof current.getHashedDocumentId>;
 declare function use_old_FunctionDeclaration_getHashedDocumentId(
-    use: TypeOnly<typeof old.getHashedDocumentId>);
+    use: TypeOnly<typeof old.getHashedDocumentId>): void;
 use_old_FunctionDeclaration_getHashedDocumentId(
     get_current_FunctionDeclaration_getHashedDocumentId());
 
@@ -533,7 +797,7 @@ use_old_FunctionDeclaration_getHashedDocumentId(
 declare function get_old_FunctionDeclaration_getLocatorFromOdspUrl():
     TypeOnly<typeof old.getLocatorFromOdspUrl>;
 declare function use_current_FunctionDeclaration_getLocatorFromOdspUrl(
-    use: TypeOnly<typeof current.getLocatorFromOdspUrl>);
+    use: TypeOnly<typeof current.getLocatorFromOdspUrl>): void;
 use_current_FunctionDeclaration_getLocatorFromOdspUrl(
     get_old_FunctionDeclaration_getLocatorFromOdspUrl());
 
@@ -545,7 +809,7 @@ use_current_FunctionDeclaration_getLocatorFromOdspUrl(
 declare function get_current_FunctionDeclaration_getLocatorFromOdspUrl():
     TypeOnly<typeof current.getLocatorFromOdspUrl>;
 declare function use_old_FunctionDeclaration_getLocatorFromOdspUrl(
-    use: TypeOnly<typeof old.getLocatorFromOdspUrl>);
+    use: TypeOnly<typeof old.getLocatorFromOdspUrl>): void;
 use_old_FunctionDeclaration_getLocatorFromOdspUrl(
     get_current_FunctionDeclaration_getLocatorFromOdspUrl());
 
@@ -557,7 +821,7 @@ use_old_FunctionDeclaration_getLocatorFromOdspUrl(
 declare function get_old_FunctionDeclaration_getOdspUrlParts():
     TypeOnly<typeof old.getOdspUrlParts>;
 declare function use_current_FunctionDeclaration_getOdspUrlParts(
-    use: TypeOnly<typeof current.getOdspUrlParts>);
+    use: TypeOnly<typeof current.getOdspUrlParts>): void;
 use_current_FunctionDeclaration_getOdspUrlParts(
     get_old_FunctionDeclaration_getOdspUrlParts());
 
@@ -569,7 +833,7 @@ use_current_FunctionDeclaration_getOdspUrlParts(
 declare function get_current_FunctionDeclaration_getOdspUrlParts():
     TypeOnly<typeof current.getOdspUrlParts>;
 declare function use_old_FunctionDeclaration_getOdspUrlParts(
-    use: TypeOnly<typeof old.getOdspUrlParts>);
+    use: TypeOnly<typeof old.getOdspUrlParts>): void;
 use_old_FunctionDeclaration_getOdspUrlParts(
     get_current_FunctionDeclaration_getOdspUrlParts());
 
@@ -581,7 +845,7 @@ use_old_FunctionDeclaration_getOdspUrlParts(
 declare function get_old_FunctionDeclaration_isOdcOrigin():
     TypeOnly<typeof old.isOdcOrigin>;
 declare function use_current_FunctionDeclaration_isOdcOrigin(
-    use: TypeOnly<typeof current.isOdcOrigin>);
+    use: TypeOnly<typeof current.isOdcOrigin>): void;
 use_current_FunctionDeclaration_isOdcOrigin(
     get_old_FunctionDeclaration_isOdcOrigin());
 
@@ -593,7 +857,7 @@ use_current_FunctionDeclaration_isOdcOrigin(
 declare function get_current_FunctionDeclaration_isOdcOrigin():
     TypeOnly<typeof current.isOdcOrigin>;
 declare function use_old_FunctionDeclaration_isOdcOrigin(
-    use: TypeOnly<typeof old.isOdcOrigin>);
+    use: TypeOnly<typeof old.isOdcOrigin>): void;
 use_old_FunctionDeclaration_isOdcOrigin(
     get_current_FunctionDeclaration_isOdcOrigin());
 
@@ -605,7 +869,7 @@ use_old_FunctionDeclaration_isOdcOrigin(
 declare function get_old_FunctionDeclaration_isOdcUrl():
     TypeOnly<typeof old.isOdcUrl>;
 declare function use_current_FunctionDeclaration_isOdcUrl(
-    use: TypeOnly<typeof current.isOdcUrl>);
+    use: TypeOnly<typeof current.isOdcUrl>): void;
 use_current_FunctionDeclaration_isOdcUrl(
     get_old_FunctionDeclaration_isOdcUrl());
 
@@ -617,7 +881,7 @@ use_current_FunctionDeclaration_isOdcUrl(
 declare function get_current_FunctionDeclaration_isOdcUrl():
     TypeOnly<typeof current.isOdcUrl>;
 declare function use_old_FunctionDeclaration_isOdcUrl(
-    use: TypeOnly<typeof old.isOdcUrl>);
+    use: TypeOnly<typeof old.isOdcUrl>): void;
 use_old_FunctionDeclaration_isOdcUrl(
     get_current_FunctionDeclaration_isOdcUrl());
 
@@ -629,7 +893,7 @@ use_old_FunctionDeclaration_isOdcUrl(
 declare function get_old_FunctionDeclaration_isSpoUrl():
     TypeOnly<typeof old.isSpoUrl>;
 declare function use_current_FunctionDeclaration_isSpoUrl(
-    use: TypeOnly<typeof current.isSpoUrl>);
+    use: TypeOnly<typeof current.isSpoUrl>): void;
 use_current_FunctionDeclaration_isSpoUrl(
     get_old_FunctionDeclaration_isSpoUrl());
 
@@ -641,7 +905,7 @@ use_current_FunctionDeclaration_isSpoUrl(
 declare function get_current_FunctionDeclaration_isSpoUrl():
     TypeOnly<typeof current.isSpoUrl>;
 declare function use_old_FunctionDeclaration_isSpoUrl(
-    use: TypeOnly<typeof old.isSpoUrl>);
+    use: TypeOnly<typeof old.isSpoUrl>): void;
 use_old_FunctionDeclaration_isSpoUrl(
     get_current_FunctionDeclaration_isSpoUrl());
 
@@ -653,7 +917,7 @@ use_old_FunctionDeclaration_isSpoUrl(
 declare function get_old_VariableDeclaration_locatorQueryParamName():
     TypeOnly<typeof old.locatorQueryParamName>;
 declare function use_current_VariableDeclaration_locatorQueryParamName(
-    use: TypeOnly<typeof current.locatorQueryParamName>);
+    use: TypeOnly<typeof current.locatorQueryParamName>): void;
 use_current_VariableDeclaration_locatorQueryParamName(
     get_old_VariableDeclaration_locatorQueryParamName());
 
@@ -665,7 +929,7 @@ use_current_VariableDeclaration_locatorQueryParamName(
 declare function get_current_VariableDeclaration_locatorQueryParamName():
     TypeOnly<typeof current.locatorQueryParamName>;
 declare function use_old_VariableDeclaration_locatorQueryParamName(
-    use: TypeOnly<typeof old.locatorQueryParamName>);
+    use: TypeOnly<typeof old.locatorQueryParamName>): void;
 use_old_VariableDeclaration_locatorQueryParamName(
     get_current_VariableDeclaration_locatorQueryParamName());
 
@@ -677,7 +941,7 @@ use_old_VariableDeclaration_locatorQueryParamName(
 declare function get_old_FunctionDeclaration_parseCompactSnapshotResponse():
     TypeOnly<typeof old.parseCompactSnapshotResponse>;
 declare function use_current_FunctionDeclaration_parseCompactSnapshotResponse(
-    use: TypeOnly<typeof current.parseCompactSnapshotResponse>);
+    use: TypeOnly<typeof current.parseCompactSnapshotResponse>): void;
 use_current_FunctionDeclaration_parseCompactSnapshotResponse(
     get_old_FunctionDeclaration_parseCompactSnapshotResponse());
 
@@ -689,7 +953,7 @@ use_current_FunctionDeclaration_parseCompactSnapshotResponse(
 declare function get_current_FunctionDeclaration_parseCompactSnapshotResponse():
     TypeOnly<typeof current.parseCompactSnapshotResponse>;
 declare function use_old_FunctionDeclaration_parseCompactSnapshotResponse(
-    use: TypeOnly<typeof old.parseCompactSnapshotResponse>);
+    use: TypeOnly<typeof old.parseCompactSnapshotResponse>): void;
 use_old_FunctionDeclaration_parseCompactSnapshotResponse(
     get_current_FunctionDeclaration_parseCompactSnapshotResponse());
 
@@ -701,7 +965,7 @@ use_old_FunctionDeclaration_parseCompactSnapshotResponse(
 declare function get_old_FunctionDeclaration_prefetchLatestSnapshot():
     TypeOnly<typeof old.prefetchLatestSnapshot>;
 declare function use_current_FunctionDeclaration_prefetchLatestSnapshot(
-    use: TypeOnly<typeof current.prefetchLatestSnapshot>);
+    use: TypeOnly<typeof current.prefetchLatestSnapshot>): void;
 use_current_FunctionDeclaration_prefetchLatestSnapshot(
     get_old_FunctionDeclaration_prefetchLatestSnapshot());
 
@@ -713,7 +977,7 @@ use_current_FunctionDeclaration_prefetchLatestSnapshot(
 declare function get_current_FunctionDeclaration_prefetchLatestSnapshot():
     TypeOnly<typeof current.prefetchLatestSnapshot>;
 declare function use_old_FunctionDeclaration_prefetchLatestSnapshot(
-    use: TypeOnly<typeof old.prefetchLatestSnapshot>);
+    use: TypeOnly<typeof old.prefetchLatestSnapshot>): void;
 use_old_FunctionDeclaration_prefetchLatestSnapshot(
     get_current_FunctionDeclaration_prefetchLatestSnapshot());
 
@@ -725,7 +989,7 @@ use_old_FunctionDeclaration_prefetchLatestSnapshot(
 declare function get_old_FunctionDeclaration_storeLocatorInOdspUrl():
     TypeOnly<typeof old.storeLocatorInOdspUrl>;
 declare function use_current_FunctionDeclaration_storeLocatorInOdspUrl(
-    use: TypeOnly<typeof current.storeLocatorInOdspUrl>);
+    use: TypeOnly<typeof current.storeLocatorInOdspUrl>): void;
 use_current_FunctionDeclaration_storeLocatorInOdspUrl(
     get_old_FunctionDeclaration_storeLocatorInOdspUrl());
 
@@ -737,6 +1001,6 @@ use_current_FunctionDeclaration_storeLocatorInOdspUrl(
 declare function get_current_FunctionDeclaration_storeLocatorInOdspUrl():
     TypeOnly<typeof current.storeLocatorInOdspUrl>;
 declare function use_old_FunctionDeclaration_storeLocatorInOdspUrl(
-    use: TypeOnly<typeof old.storeLocatorInOdspUrl>);
+    use: TypeOnly<typeof old.storeLocatorInOdspUrl>): void;
 use_old_FunctionDeclaration_storeLocatorInOdspUrl(
     get_current_FunctionDeclaration_storeLocatorInOdspUrl());

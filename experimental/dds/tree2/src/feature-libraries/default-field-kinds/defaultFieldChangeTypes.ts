@@ -3,26 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ChangeAtomId,
-	ChangesetLocalId,
-	ITreeCursorSynchronous,
-	JsonableTree,
-	RevisionTag,
-} from "../../core";
+import { ChangeAtomId, ChangesetLocalId, JsonableTree, RevisionTag } from "../../core";
 import { NodeChangeset } from "../modular-schema";
 
 export type NodeUpdate =
 	| {
 			set: JsonableTree;
+			/**
+			 * ID associated with the creation of the new tree.
+			 */
+			buildId: ChangeAtomId;
 			changes?: NodeChangeset;
 	  }
 	| {
 			/**
-			 * The node being restored.
+			 * The change being reverted.
 			 */
-			revert: ITreeCursorSynchronous;
-			changeId: ChangeAtomId;
+			revert: ChangeAtomId;
 			changes?: NodeChangeset;
 	  };
 

@@ -4,7 +4,7 @@
  */
 
 import commander from "commander";
-import { makeRandom } from "@fluid-internal/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import {
 	ITestDriver,
 	TestDriverTypes,
@@ -108,7 +108,8 @@ async function main() {
 			driverEndpointName: endpoint,
 			profile: profileName,
 		},
-		random.pick([LogLevel.verbose, LogLevel.default]),
+		// Turn on verbose events for ALL stress test runs.
+		random.pick([LogLevel.verbose]),
 	);
 
 	// this will enabling capturing the full stack for errors

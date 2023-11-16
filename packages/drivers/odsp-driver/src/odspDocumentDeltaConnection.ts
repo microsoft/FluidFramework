@@ -19,6 +19,7 @@ import {
 	IConnect,
 	IDocumentMessage,
 	INack,
+	ISentSignalMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
@@ -34,6 +35,7 @@ import { pkgVersion } from "./packageVersion";
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 const feature_get_ops = "api_get_ops";
 const feature_flush_ops = "api_flush_ops";
+const feature_submit_signals_v2 = "submit_signals_v2";
 
 export interface FlushResult {
 	lastPersistedSequenceNumber?: number;
@@ -296,8 +298,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			relayUserAgent: [client.details.environment, ` driverVersion:${pkgVersion}`].join(";"),
 		};
 
+		connectMessage.supportedFeatures = {
+			[feature_submit_signals_v2]: true,
+		};
+
 		// Reference to this client supporting get_ops flow.
-		connectMessage.supportedFeatures = {};
 		if (mc.config.getBoolean("Fluid.Driver.Odsp.GetOpsEnabled") !== false) {
 			connectMessage.supportedFeatures[feature_get_ops] = true;
 		}
@@ -536,9 +541,16 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				}
 			};
 
-			this.earlySignalHandler = (msg: ISignalMessage, messageDocumentId?: string) => {
+			this.earlySignalHandler = (
+				msg: ISignalMessage | ISignalMessage[],
+				messageDocumentId?: string,
+			) => {
 				if (messageDocumentId === undefined || messageDocumentId === this.documentId) {
-					this.queuedSignals.push(msg);
+					if (Array.isArray(msg)) {
+						this.queuedSignals.push(...msg);
+					} else {
+						this.queuedSignals.push(msg);
+					}
 				}
 			};
 		}
@@ -634,11 +646,18 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 			case "signal":
 				// per document signal handling
-				super.addTrackedListener(event, (msg: ISignalMessage, documentId?: string) => {
-					if (!this.enableMultiplexing || !documentId || documentId === this.documentId) {
-						listener(msg, documentId);
-					}
-				});
+				super.addTrackedListener(
+					event,
+					(msg: ISignalMessage | ISignalMessage[], documentId?: string) => {
+						if (
+							!this.enableMultiplexing ||
+							!documentId ||
+							documentId === this.documentId
+						) {
+							listener(msg, documentId);
+						}
+					},
+				);
 				break;
 
 			case "nack":
@@ -722,10 +741,17 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Submits a new signal to the server
 	 *
-	 * @param message - signal to submit
+	 * @param content - Content of the signal.
+	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
-	public submitSignal(message: IDocumentMessage): void {
-		this.emitMessages("submitSignal", [[message]]);
+	public submitSignal(content: IDocumentMessage, targetClientId?: string): void {
+		const signal: ISentSignalMessage = {
+			content,
+			targetClientId,
+		};
+
+		// back-compat: the typing for this method and emitMessages is incorrect, will be fixed in a future PR
+		this.emitMessages("submitSignal", [signal] as any);
 	}
 
 	/**

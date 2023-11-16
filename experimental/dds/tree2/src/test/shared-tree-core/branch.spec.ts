@@ -9,7 +9,6 @@ import { onForkTransitive, SharedTreeBranch, SharedTreeBranchChange } from "../.
 import {
 	GraphCommit,
 	RevisionTag,
-	UndoRedoManager,
 	assertIsRevisionTag,
 	findAncestor,
 	findCommonAncestor,
@@ -19,10 +18,9 @@ import {
 	DefaultChangeset,
 	DefaultEditBuilder,
 	DefaultChangeFamily,
-	singleTextCursor,
+	cursorForJsonableTreeNode,
 } from "../../feature-libraries";
 import { brand, fail } from "../../util";
-import { MockRepairDataStoreProvider } from "../utils";
 import { noopValidator } from "../../codec";
 
 const defaultChangeFamily = new DefaultChangeFamily({ jsonValidator: noopValidator });
@@ -500,74 +498,6 @@ describe("Branches", () => {
 		});
 	});
 
-	it("error if undo is called with no undo redo manager", () => {
-		const branch = create();
-		assert.throws(
-			() => branch.undo(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Must construct branch with an `UndoRedoManager` in order to undo.",
-				),
-		);
-	});
-
-	it("error if redo is called with no undo redo manager", () => {
-		const branch = create();
-		assert.throws(
-			() => branch.redo(),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Must construct branch with an `UndoRedoManager` in order to redo.",
-				),
-		);
-	});
-
-	it("can rebase a non-revertible branch onto a revertible branch", () => {
-		const branch = create();
-		const revertibleBranch = createRevertible(branch);
-		change(revertibleBranch);
-		branch.rebaseOnto(revertibleBranch);
-		assert.equal(branch.getHead(), revertibleBranch.getHead());
-	});
-
-	it("error when rebasing a revertible branch onto a non-revertible branch", () => {
-		const branch = create();
-		const revertibleBranch = createRevertible(branch);
-		change(branch);
-		assert.throws(
-			() => revertibleBranch.rebaseOnto(branch),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Cannot rebase a revertible branch onto a non-revertible branch",
-				),
-		);
-	});
-
-	it("can merge a revertible branch into a non-revertible branch", () => {
-		const branch = create();
-		const revertibleBranch = createRevertible(branch);
-		change(revertibleBranch);
-		branch.merge(revertibleBranch);
-		assert.equal(branch.getHead(), revertibleBranch.getHead());
-	});
-
-	it("error when merging a non-revertible branch into a revertible branch", () => {
-		const branch = create();
-		const revertibleBranch = createRevertible(branch);
-		change(branch);
-		assert.throws(
-			() => revertibleBranch.merge(branch),
-			(e: Error) =>
-				validateAssertionError(
-					e,
-					"Cannot merge a non-revertible branch into a revertible branch",
-				),
-		);
-	});
-
 	describe("transitive fork event", () => {
 		/** Creates forks at various "depths" and returns the number of forks created */
 		function forkTransitive<T extends { fork(): T }>(forkable: T): number {
@@ -619,25 +549,12 @@ describe("Branches", () => {
 			revision: nullRevisionTag,
 		};
 
-		const branch = new SharedTreeBranch(
-			initCommit,
-			defaultChangeFamily,
-			new MockRepairDataStoreProvider(),
-		);
+		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
 		if (onChange !== undefined) {
 			branch.on("change", onChange);
 		}
 
 		return branch;
-	}
-
-	function createRevertible(from: DefaultBranch): DefaultBranch {
-		return new SharedTreeBranch(
-			from.getHead(),
-			defaultChangeFamily,
-			new MockRepairDataStoreProvider(),
-			UndoRedoManager.create(defaultChangeFamily),
-		);
 	}
 
 	let changeValue = 0;
@@ -647,7 +564,7 @@ describe("Branches", () => {
 
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
-		const cursor = singleTextCursor({ type: brand("TestValue"), value: changeValue });
+		const cursor = cursorForJsonableTreeNode({ type: brand("TestValue"), value: changeValue });
 		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
 		return branch.getHead().revision;
 	}

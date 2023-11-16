@@ -40,6 +40,7 @@ import {
 	IRuntime,
 	ReadOnlyInfo,
 	isFluidCodeDetails,
+	IGetPendingLocalStateProps,
 } from "@fluidframework/container-definitions";
 import {
 	IDocumentService,
@@ -133,6 +134,8 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
+
+const hasBlobsSummaryTree = ".hasAttachmentBlobs";
 
 /**
  * @internal
@@ -473,7 +476,11 @@ export class Container
 			container.mc.logger,
 			{ eventName: "RehydrateDetachedFromSnapshot" },
 			async (_event) => {
-				const deserializedSummary = JSON.parse(snapshot) as ISummaryTree;
+				const deserializedSummary = JSON.parse(snapshot);
+				if (!isCombinedAppAndProtocolSummary(deserializedSummary, hasBlobsSummaryTree)) {
+					throw new UsageError("Cannot rehydrate detached container. Incorrect format");
+				}
+
 				await container.rehydrateDetachedFromSnapshot(deserializedSummary);
 				return container;
 			},
@@ -580,6 +587,7 @@ export class Container
 	private readonly savedOps: ISequencedDocumentMessage[] = [];
 	private baseSnapshot?: ISnapshotTree;
 	private baseSnapshotBlobs?: ISerializableBlobContents;
+	private readonly _containerId: string;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -815,6 +823,8 @@ export class Container
 		const clientType = `${interactive ? "interactive" : "noninteractive"}${
 			type !== undefined && type !== "" ? `/${type}` : ""
 		}`;
+
+		this._containerId = uuid();
 		// Need to use the property getter for docId because for detached flow we don't have the docId initially.
 		// We assign the id later so property getter is used.
 		this.subLogger = createChildLogger({
@@ -822,7 +832,7 @@ export class Container
 			properties: {
 				all: {
 					clientType, // Differentiating summarizer container from main container
-					containerId: uuid(),
+					containerId: this._containerId,
 					docId: () => this.resolvedUrl?.id,
 					containerAttachState: () => this._attachState,
 					containerLifecycleState: () => this._lifecycleState,
@@ -1103,12 +1113,17 @@ export class Container
 		}
 	}
 
-	public async closeAndGetPendingLocalState(): Promise<string> {
+	public async closeAndGetPendingLocalState(
+		stopBlobAttachingSignal?: AbortSignal,
+	): Promise<string> {
 		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
 		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
 		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
 		this.disconnectInternal({ text: "closeAndGetPendingLocalState" }); // TODO https://dev.azure.com/fluidframework/internal/_workitems/edit/5127
-		const pendingState = await this.getPendingLocalStateCore({ notifyImminentClosure: true });
+		const pendingState = await this.getPendingLocalStateCore({
+			notifyImminentClosure: true,
+			stopBlobAttachingSignal,
+		});
 		this.close();
 		return pendingState;
 	}
@@ -1117,7 +1132,7 @@ export class Container
 		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
 	}
 
-	private async getPendingLocalStateCore(props: { notifyImminentClosure: boolean }) {
+	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps) {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{
@@ -1178,7 +1193,7 @@ export class Container
 		const combinedSummary = combineAppAndProtocolSummary(appSummary, protocolSummary);
 
 		if (this.detachedBlobStorage && this.detachedBlobStorage.size > 0) {
-			combinedSummary.tree[".hasAttachmentBlobs"] = {
+			combinedSummary.tree[hasBlobsSummaryTree] = {
 				type: SummaryType.Blob,
 				content: "true",
 			};
@@ -1264,7 +1279,7 @@ export class Container
 							}, // progress
 						);
 					}
-					await this.storageAdapter.connectToService(this.service);
+					this.storageAdapter.connectToService(this.service);
 
 					if (hasAttachmentBlobs) {
 						// upload blobs to storage
@@ -1574,14 +1589,7 @@ export class Container
 			this.connectToDeltaStream(connectionArgs);
 		}
 
-		if (!pendingLocalState) {
-			await this.storageAdapter.connectToService(this.service);
-		} else {
-			// if we have pendingLocalState we can load without storage; don't wait for connection
-			this.storageAdapter.connectToService(this.service).catch((error) => {
-				this.close(error);
-			});
-		}
+		this.storageAdapter.connectToService(this.service);
 
 		this._attachState = AttachState.Attached;
 
@@ -1710,7 +1718,10 @@ export class Container
 		// replay saved ops
 		if (pendingLocalState) {
 			for (const message of pendingLocalState.savedOps) {
-				this.processRemoteMessage(message);
+				this.processRemoteMessage({
+					...message,
+					metadata: { ...(message.metadata as Record<string, unknown>), savedOp: true },
+				});
 
 				// allow runtime to apply stashed ops at this op's sequence number
 				await this.runtime.notifyOpReplay?.(message);
@@ -1815,12 +1826,13 @@ export class Container
 	}
 
 	private async rehydrateDetachedFromSnapshot(detachedContainerSnapshot: ISummaryTree) {
-		if (detachedContainerSnapshot.tree[".hasAttachmentBlobs"] !== undefined) {
+		if (detachedContainerSnapshot.tree[hasBlobsSummaryTree] !== undefined) {
 			assert(
 				!!this.detachedBlobStorage && this.detachedBlobStorage.size > 0,
 				0x250 /* "serialized container with attachment blobs must be rehydrated with detached blob storage" */,
 			);
-			delete detachedContainerSnapshot.tree[".hasAttachmentBlobs"];
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete detachedContainerSnapshot.tree[hasBlobsSummaryTree];
 		}
 
 		const snapshotTree = getSnapshotTreeFromSerializedContainer(detachedContainerSnapshot);
@@ -2007,6 +2019,7 @@ export class Container
 		client.details.environment = [
 			client.details.environment,
 			` loaderVersion:${pkgVersion}`,
+			` containerId:${this._containerId}`,
 		].join(";");
 		return client;
 	}
@@ -2335,8 +2348,8 @@ export class Container
 		this.emit("op", message);
 	}
 
-	private submitSignal(message: any) {
-		this._deltaManager.submitSignal(JSON.stringify(message));
+	private submitSignal(content: any, targetClientId?: string) {
+		this._deltaManager.submitSignal(JSON.stringify(content), targetClientId);
 	}
 
 	private processSignal(message: ISignalMessage) {
@@ -2430,7 +2443,7 @@ export class Container
 				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
-			(message) => this.submitSignal(message),
+			(content, targetClientId) => this.submitSignal(content, targetClientId),
 			(error?: ICriticalContainerError) => this.dispose(error),
 			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
@@ -2513,7 +2526,7 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
- * @experimental
+ * @alpha
  */
 export interface IContainerExperimental extends IContainer {
 	/**
@@ -2521,7 +2534,7 @@ export interface IContainerExperimental extends IContainer {
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
 	 * @returns serialized blob that can be passed to Loader.resolve()
-	 * @experimental misuse of this API can result in duplicate op submission and potential document corruption
+	 * @alpha misuse of this API can result in duplicate op submission and potential document corruption
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
 	getPendingLocalState?(): Promise<string>;
@@ -2529,8 +2542,8 @@ export interface IContainerExperimental extends IContainer {
 	/**
 	 * Closes the container and returns serialized local state intended to be
 	 * given to a newly loaded container.
-	 * @experimental
+	 * @alpha
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/loader/container-loader/closeAndGetPendingLocalState.md}
 	 */
-	closeAndGetPendingLocalState?(): Promise<string>;
+	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

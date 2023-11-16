@@ -16,7 +16,7 @@
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
 		"build:compile": "npm run tsc && npm run typetests:gen",
 		"build:genver": "gen-version",
-		"clean": "rimraf --glob 'dist' 'lib' '*.tsbuildinfo' '*.build.log'",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -36,14 +36,14 @@
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@types/nconf": "^0.10.2",
 		"@types/node": "^18.17.1",
-		"debug": "^4.1.1",
+		"debug": "^4.3.4",
 		"events": "^3.1.0",
 		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.25.0",
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.25.0",
+		"@fluid-tools/build-cli": "^0.26.1",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "^0.26.1",
 		"@fluidframework/eslint-config-fluid": "^2.0.0",
 		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@2.0.0",
 		"concurrently": "^8.2.1",
@@ -86,6 +86,14 @@
 			"InterfaceDeclaration_IOrdererConnection": {
 				"forwardCompat": false,
 				"backCompat": true
+			},
+			"ClassDeclaration_CheckpointService": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"InterfaceDeclaration_ICheckpointService": {
+				"forwardCompat": false,
+				"backCompat": false
 			}
 		}
 	}

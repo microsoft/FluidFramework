@@ -7,41 +7,34 @@
 // Since "type" and "interface" type check slightly different, this file needs to create types when the linter recommends interfaces.
 /* eslint-disable @typescript-eslint/consistent-type-definitions */
 
-import { strict as assert } from "assert";
 import {
 	ApiMode,
 	AllowedTypesToTypedTrees,
 	TypedNode,
-	EditableField,
 	TypedField,
 	TypeArrayToTypedTreeArray,
 	TypedFields,
 	UnbrandedName,
-	downCast,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-aware/schemaAware";
 
-import { AllowedUpdateType, TreeSchemaIdentifier, ValueSchema } from "../../../core";
+import { TreeNodeSchemaIdentifier } from "../../../core";
 import { areSafelyAssignable, requireAssignableTo, requireTrue } from "../../../util";
 import {
 	valueSymbol,
 	FieldKinds,
 	typeNameSymbol,
 	ContextuallyTypedNodeDataObject,
-	UntypedTreeCore,
-	SchemaBuilder,
-	TreeSchema,
-	FieldSchema,
+	TreeNodeSchema,
+	TreeFieldSchema,
 	AllowedTypes,
 	InternalTypedSchemaTypes,
-	isEditableTree,
 } from "../../../feature-libraries";
-import { createSharedTreeView } from "../../../shared-tree";
-import { SimpleNodeDataFor } from "./schemaAwareSimple";
+import { leaf, SchemaBuilder } from "../../../domains";
 
 // Test UnbrandedName
 {
-	type BrandedName = "X" & TreeSchemaIdentifier;
+	type BrandedName = TreeNodeSchemaIdentifier<"X">;
 	type Unbranded = UnbrandedName<BrandedName>;
 	type _check = requireTrue<areSafelyAssignable<Unbranded, "X">>;
 }
@@ -51,21 +44,21 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const { optional, required, sequence } = FieldKinds;
 
 	// Example Schema:
-	const builder = new SchemaBuilder("Schema Aware tests");
+	const builder = new SchemaBuilder({ scope: "SchemaAwareTests" });
 
 	// Declare a simple type which just holds a number.
-	const numberSchema = builder.leaf("number", ValueSchema.Number);
+	const numberSchema = leaf.number;
 
 	// Check the various ways to refer to child types produce the same results
 	{
-		const numberField1 = SchemaBuilder.field(required, numberSchema);
-		const numberField2 = SchemaBuilder.fieldRequired(numberSchema);
-		const numberField3 = SchemaBuilder.fieldRecursive(required, numberSchema);
+		const numberField1 = TreeFieldSchema.create(required, [numberSchema]);
+		const numberField2 = SchemaBuilder.required(numberSchema);
+		const numberField3 = TreeFieldSchema.createUnsafe(required, [numberSchema]);
 		type check1_ = requireAssignableTo<typeof numberField1, typeof numberField2>;
 		type check2_ = requireAssignableTo<typeof numberField2, typeof numberField3>;
 		type check3_ = requireAssignableTo<typeof numberField3, typeof numberField1>;
 
-		const numberFieldLazy = SchemaBuilder.field(required, () => numberSchema);
+		const numberFieldLazy = TreeFieldSchema.create(required, [() => numberSchema]);
 		type NonLazy = InternalTypedSchemaTypes.FlexListToNonLazyArray<
 			typeof numberFieldLazy.allowedTypes
 		>;
@@ -74,26 +67,26 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// Simple object
 	{
-		const simpleObject = builder.struct("simple", {
-			x: SchemaBuilder.fieldRequired(numberSchema),
+		const simpleObject = builder.object("simple", {
+			x: builder.required(numberSchema),
 		});
 	}
 
-	const ballSchema = builder.struct("ball", {
+	const ballSchema = builder.object("ball", {
 		// Test schema objects in as well as lazy functions
-		x: SchemaBuilder.fieldRequired(numberSchema),
-		y: SchemaBuilder.fieldRequired(() => numberSchema),
-		size: SchemaBuilder.fieldOptional(numberSchema),
+		x: numberSchema,
+		y: [() => numberSchema],
+		size: builder.optional(numberSchema),
 	});
 
 	// Recursive case:
-	const boxSchema = builder.structRecursive("box", {
-		children: SchemaBuilder.fieldRecursive(sequence, ballSchema, () => boxSchema),
+	const boxSchema = builder.objectRecursive("box", {
+		children: TreeFieldSchema.createUnsafe(sequence, [ballSchema, () => boxSchema]),
 	});
 
 	{
 		// Recursive objects don't get this type checking automatically, so confirm it
-		type _check = requireAssignableTo<typeof boxSchema, TreeSchema>;
+		type _check = requireAssignableTo<typeof boxSchema, TreeNodeSchema>;
 	}
 
 	type x = typeof numberSchema.name;
@@ -112,12 +105,17 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const n1: NumberTree = 5;
 	const n2: NumberTree = { [valueSymbol]: 5 };
 	const n3: NumberTree = { [typeNameSymbol]: numberSchema.name, [valueSymbol]: 5 };
-	const n4: NumberTree = { [typeNameSymbol]: "number", [valueSymbol]: 5 };
+	const n4: NumberTree = { [typeNameSymbol]: "com.fluidframework.leaf.number", [valueSymbol]: 5 };
 
 	const b1: BallTree = { x: 1, y: 2, size: 10 };
 	const b1x: BallTree = { x: 1, y: 2, size: undefined }; // TODO: restore ability to omit optional fields.
 	const b2: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, y: 2, size: undefined };
-	const b4: BallTree = { [typeNameSymbol]: "ball", x: 1, y: n3, size: undefined };
+	const b4: BallTree = {
+		[typeNameSymbol]: "SchemaAwareTests.ball",
+		x: 1,
+		y: n3,
+		size: undefined,
+	};
 	const b6: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1, y: n3, size: undefined };
 
 	// This is type safe, so we can only access fields that are in the schema.
@@ -128,7 +126,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	const b7: BallTree = { [typeNameSymbol]: ballSchema.name, x: 1 };
 
 	{
-		type XField = (typeof ballSchema)["structFieldsObject"]["x"];
+		type XField = (typeof ballSchema)["objectNodeFieldsObject"]["x"];
 		type XMultiplicity = XField["kind"]["multiplicity"];
 		type XContent = TypedField<XField, ApiMode.Simple>;
 		type XChild = XField["allowedTypes"];
@@ -140,9 +138,9 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	{
 		// A concrete example for the "x" field:
-		type BallXFieldInfo = typeof ballSchema.structFieldsObject.x;
+		type BallXFieldInfo = typeof ballSchema.objectNodeFieldsObject.x;
 		type BallXFieldTypes = BallXFieldInfo["allowedTypes"];
-		type check_ = requireAssignableTo<BallXFieldTypes, [typeof numberSchema]>;
+		type check_ = requireAssignableTo<BallXFieldTypes, readonly [typeof numberSchema]>;
 
 		type Child = AllowedTypesToTypedTrees<ApiMode.Flexible, BallXFieldTypes>;
 
@@ -157,30 +155,26 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	type FlexNumber =
 		| number
 		| {
-				[typeNameSymbol]?: "number";
+				[typeNameSymbol]?: "com.fluidframework.leaf.number";
 				[valueSymbol]: number;
 		  };
 
 	// Test terminal cases:
 	{
 		type F = TypedNode<typeof numberSchema, ApiMode.Flexible>;
-		type E = TypedNode<typeof numberSchema>;
-		type Eu = TypedNode<typeof numberSchema, ApiMode.EditableUnwrapped>;
 		type S = TypedNode<typeof numberSchema, ApiMode.Simple>;
 		type _check1 = requireTrue<areSafelyAssignable<F, FlexNumber>>;
-		type _check2 = requireAssignableTo<E, UntypedTreeCore>;
-		type _check3 = requireTrue<areSafelyAssignable<Eu, number>>;
 		type _check4 = requireTrue<areSafelyAssignable<S, number>>;
 	}
 
 	interface FlexBall {
-		[typeNameSymbol]?: "ball";
+		[typeNameSymbol]?: "SchemaAwareTests.ball";
 		x: FlexNumber;
 		y: FlexNumber;
 		size: FlexNumber | undefined;
 	}
 
-	interface EditableBall extends UntypedTreeCore {
+	interface EditableBall {
 		[typeNameSymbol]: typeof ballSchema.name;
 		x: number;
 		y: number;
@@ -189,7 +183,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 	// This type type checks differently if its an interface, which breaks.
 	type SimpleBall = {
-		[typeNameSymbol]?: "ball";
+		[typeNameSymbol]?: "SchemaAwareTests.ball";
 		x: number;
 		y: number;
 		size: number | undefined;
@@ -198,51 +192,46 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 	// Test non recursive cases:
 	{
 		type F = TypedNode<typeof ballSchema, ApiMode.Flexible>;
-		type E = TypedNode<typeof ballSchema>;
-		type Eu = TypedNode<typeof ballSchema, ApiMode.EditableUnwrapped>;
 		type S = TypedNode<typeof ballSchema, ApiMode.Simple>;
 		type _check1 = requireTrue<areSafelyAssignable<F, FlexBall>>;
-		type _check2 = requireAssignableTo<E, SimpleBall & UntypedTreeCore>;
-		type _check3 = requireAssignableTo<Eu, SimpleBall & UntypedTreeCore>;
 		type _check4 = requireTrue<areSafelyAssignable<S, SimpleBall>>;
-		type _check5 = requireTrue<areSafelyAssignable<Eu, E>>;
 	}
 
 	// Test polymorphic cases:
 	{
-		const builder2 = new SchemaBuilder("Schema Aware polymorphic");
-		const bool = builder2.leaf("bool", ValueSchema.Boolean);
-		const str = builder2.leaf("str", ValueSchema.String);
-		const parentField = SchemaBuilder.fieldRequired(str, bool);
-		const parent = builder2.struct("parent", { child: parentField });
+		const builder2 = new SchemaBuilder({ scope: "SchemaAwarePolymorphicTest" });
+		const bool = leaf.boolean;
+		const str = leaf.string;
+		const parentField = SchemaBuilder.required([str, bool]);
+		const parent = builder2.object("parent", { child: parentField });
 
 		type FlexBool =
 			| boolean
 			| {
-					[typeNameSymbol]?: "bool";
+					[typeNameSymbol]?: UnbrandedName<typeof leaf.boolean.name>;
 					[valueSymbol]: boolean;
 			  };
 
 		type FlexStr =
 			| string
 			| {
-					[typeNameSymbol]?: "str";
+					[typeNameSymbol]?: UnbrandedName<typeof leaf.string.name>;
 					[valueSymbol]: string;
 			  };
 		interface FlexParent {
-			[typeNameSymbol]?: "parent";
+			[typeNameSymbol]?: "SchemaAwarePolymorphicTest.parent";
 			child: FlexBool | FlexStr;
 		}
 
 		interface SimpleParent {
-			[typeNameSymbol]?: "parent";
+			[typeNameSymbol]?: "SchemaAwarePolymorphicTest.parent";
 			child: boolean | string;
 		}
 
 		// Check child handling
 		{
 			type ChildSchema = typeof parentField;
-			type ChildSchemaTypes = ChildSchema extends FieldSchema<any, infer Types>
+			type ChildSchemaTypes = ChildSchema extends TreeFieldSchema<any, infer Types>
 				? Types
 				: never;
 			type AllowedChildTypes = ChildSchema["allowedTypes"];
@@ -251,7 +240,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
 			type _check4 = requireAssignableTo<
 				ChildSchemaTypes,
-				InternalTypedSchemaTypes.FlexList<TreeSchema>
+				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 			>;
 			type NormalizedChildSchemaTypes =
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
@@ -264,31 +253,26 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 		{
 			type F = TypedNode<typeof parent, ApiMode.Flexible>;
-			type E = TypedNode<typeof parent>;
-			type Eu = TypedNode<typeof parent, ApiMode.EditableUnwrapped>;
 			type S = TypedNode<typeof parent, ApiMode.Simple>;
 			type _check1 = requireTrue<areSafelyAssignable<F, FlexParent>>;
-			type _check2 = requireAssignableTo<E, SimpleParent & UntypedTreeCore>;
-			type _check3 = requireAssignableTo<Eu, SimpleParent & UntypedTreeCore>;
 			type _check4 = requireTrue<areSafelyAssignable<S, SimpleParent>>;
-			type _check5 = requireTrue<areSafelyAssignable<Eu, E>>;
 		}
 	}
 
 	// Test simple recursive cases:
 	{
-		const builder2 = new SchemaBuilder("Schema Aware recursive");
-		const rec = builder2.structRecursive("rec", {
-			x: SchemaBuilder.fieldRecursive(optional, () => rec),
+		const builder2 = new SchemaBuilder({ scope: "SchemaAwareRecursiveTest" });
+		const rec = builder2.objectRecursive("rec", {
+			x: TreeFieldSchema.createUnsafe(optional, [() => rec]),
 		});
 
 		type RecObjectSchema = typeof rec;
-		type RecFieldSchema = typeof rec.structFieldsObject.x;
+		type RecFieldSchema = typeof rec.objectNodeFieldsObject.x;
 
 		{
 			// Recursive objects don't get this type checking automatically, so confirm it
-			type _check1 = requireAssignableTo<RecObjectSchema, TreeSchema>;
-			type _check2 = requireAssignableTo<RecFieldSchema, FieldSchema>;
+			type _check1 = requireAssignableTo<RecObjectSchema, TreeNodeSchema>;
+			type _check2 = requireAssignableTo<RecFieldSchema, TreeFieldSchema>;
 		}
 
 		// Confirm schema's recursive type is correct.
@@ -301,12 +285,12 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		// Check generated schema aware types
 		{
 			type ExpectedFlexible = {
-				[typeNameSymbol]?: "rec";
+				[typeNameSymbol]?: "SchemaAwareRecursiveTest.rec";
 				x: ExpectedFlexible | undefined;
 			};
 
 			type ExpectedSimple = {
-				[typeNameSymbol]?: "rec";
+				[typeNameSymbol]?: "SchemaAwareRecursiveTest.rec";
 				x: ExpectedSimple | undefined;
 			};
 
@@ -315,9 +299,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			};
 
 			type Flexible = TypedNode<typeof rec, ApiMode.Flexible>;
-			type Edit = TypedNode<typeof rec>;
 			type Simple = TypedNode<typeof rec, ApiMode.Simple>;
-			type Simple2 = SimpleNodeDataFor<typeof rec>;
 
 			// Check Simple's field type unit tests
 			{
@@ -335,26 +317,23 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			type _check1 = requireTrue<areSafelyAssignable<Flexible, ExpectedFlexible>>;
 			// type _check2 = requireTrue<areSafelyAssignable<XB, EditableParent>>;
 			type _check3 = requireTrue<areSafelyAssignable<Simple, ExpectedSimple>>;
-			type _check4 = requireTrue<areSafelyAssignable<Simple2, ExpectedSimple2>>;
 		}
 	}
 
 	// Test recursive cases:
 	{
 		type F = TypedNode<typeof boxSchema, ApiMode.Flexible>;
-		type E = TypedNode<typeof boxSchema>;
-		type Eu = TypedNode<typeof boxSchema, ApiMode.EditableUnwrapped>;
 		type S = TypedNode<typeof boxSchema, ApiMode.Simple>;
 
 		interface FlexBox {
-			[typeNameSymbol]?: "box";
+			[typeNameSymbol]?: "SchemaAwareTests.box";
 			children: (FlexBall | FlexBox)[];
 		}
 
 		// Check child handling
 		{
-			type ChildSchema = typeof boxSchema.structFieldsObject.children;
-			type ChildSchemaTypes = ChildSchema extends FieldSchema<any, infer Types>
+			type ChildSchema = typeof boxSchema.objectNodeFieldsObject.children;
+			type ChildSchemaTypes = ChildSchema extends TreeFieldSchema<any, infer Types>
 				? Types
 				: never;
 			type AllowedChildTypes = ChildSchema["allowedTypes"];
@@ -363,7 +342,7 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 			type _check3 = requireAssignableTo<ChildSchemaTypes, AllowedTypes>;
 			type _check4 = requireAssignableTo<
 				ChildSchemaTypes,
-				InternalTypedSchemaTypes.FlexList<TreeSchema>
+				InternalTypedSchemaTypes.FlexList<TreeNodeSchema>
 			>;
 			type NormalizedChildSchemaTypes =
 				InternalTypedSchemaTypes.FlexListToNonLazyArray<ChildSchemaTypes>;
@@ -386,11 +365,11 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 
 					type BoxChildTypeFields = TypedFields<
 						ApiMode.Flexible,
-						typeof boxSchema.structFieldsObject
+						typeof boxSchema.objectNodeFieldsObject
 					>;
 
 					type BoxChildTypeField = TypedField<
-						typeof boxSchema.structFieldsObject.children,
+						typeof boxSchema.objectNodeFieldsObject.children,
 						ApiMode.Flexible
 					>;
 				}
@@ -406,11 +385,6 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		}
 
 		type _check1 = requireTrue<areSafelyAssignable<F, FlexBox>>;
-		interface NormalizedBox extends UntypedTreeCore {
-			[typeNameSymbol]: typeof boxSchema.name;
-			children: EditableField<EditableBall | NormalizedBox>;
-		}
-		type _check2 = requireAssignableTo<E, NormalizedBox>;
 
 		{
 			const child: F = {
@@ -450,33 +424,3 @@ import { SimpleNodeDataFor } from "./schemaAwareSimple";
 		}
 	}
 }
-
-describe("SchemaAware Editing", () => {
-	it("Use a sequence field", () => {
-		const builder = new SchemaBuilder("SchemaAware");
-		const stringSchema = builder.leaf("string", ValueSchema.String);
-		const rootNodeSchema = builder.struct("Test", {
-			children: SchemaBuilder.fieldSequence(stringSchema),
-		});
-		const schema = builder.intoDocumentSchema(
-			SchemaBuilder.field(FieldKinds.required, rootNodeSchema),
-		);
-		const view = createSharedTreeView().schematize({
-			schema,
-			allowedSchemaModifications: AllowedUpdateType.None,
-			initialTree: { children: [] },
-		});
-		const root = view.root;
-		assert(isEditableTree(root));
-		assert(downCast(rootNodeSchema, root));
-		const field = root.children;
-		assert.deepEqual([...field], []);
-
-		field.insertNodes(0, ["foo", "bar"]);
-		assert.deepEqual([...field], ["foo", "bar"]);
-		field.moveNodes(0, 1, 1);
-		assert.deepEqual([...field], ["bar", "foo"]);
-		field.remove();
-		assert.deepEqual([...field], []);
-	});
-});

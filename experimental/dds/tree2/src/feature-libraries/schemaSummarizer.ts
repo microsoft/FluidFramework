@@ -23,17 +23,17 @@ import {
 	Dependent,
 	ICachedValue,
 	recordDependency,
-	FieldStoredSchema,
-	SchemaData,
-	StoredSchemaRepository,
+	TreeFieldStoredSchema,
 	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	StoredSchemaRepository,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	schemaDataIsEmpty,
 	SchemaEvents,
 } from "../core";
 import { Summarizable, SummaryElementParser, SummaryElementStringifier } from "../shared-tree-core";
-import { isJsonObject, JsonCompatibleReadOnly } from "../util";
-import { makeSchemaCodec, Format } from "./schemaIndexFormat";
+import { isJsonObject, JsonCompatible, JsonCompatibleReadOnly } from "../util";
+import { makeSchemaCodec, Format, encodeRepo } from "./schemaIndexFormat";
 
 /**
  * The storage key for the blob in the summary containing schema data
@@ -49,7 +49,7 @@ export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
 	private readonly schemaBlob: ICachedValue<Promise<IFluidHandle<ArrayBufferLike>>>;
-	private readonly codec: IJsonCodec<SchemaData, Format>;
+	private readonly codec: IJsonCodec<TreeStoredSchema, Format>;
 
 	public constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
@@ -145,7 +145,7 @@ interface SchemaOp {
 export class SchemaEditor<TRepository extends StoredSchemaRepository>
 	implements StoredSchemaRepository
 {
-	private readonly codec: IJsonCodec<SchemaData, Format, unknown>;
+	private readonly codec: IJsonCodec<TreeStoredSchema, Format, unknown>;
 	private readonly formatValidator: SchemaValidationFunction<typeof Format>;
 	public constructor(
 		public readonly inner: TRepository,
@@ -191,7 +191,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		if (isJsonObject(op) && op.type === "SchemaOp") {
 			assert(
 				this.formatValidator.check(op.data),
-				"unexpected format for resubmitted schema op",
+				0x79b /* unexpected format for resubmitted schema op */,
 			);
 			const schemaOp: SchemaOp = {
 				type: op.type,
@@ -203,7 +203,7 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return false;
 	}
 
-	public update(newSchema: SchemaData): void {
+	public update(newSchema: TreeStoredSchema): void {
 		const op: SchemaOp = { type: "SchemaOp", data: this.codec.encode(newSchema) };
 		this.submit(op);
 		this.inner.update(newSchema);
@@ -225,19 +225,36 @@ export class SchemaEditor<TRepository extends StoredSchemaRepository>
 		return this.inner.listDependees?.bind(this.inner);
 	}
 
-	public get rootFieldSchema(): FieldStoredSchema {
+	public get rootFieldSchema(): TreeFieldStoredSchema {
 		return this.inner.rootFieldSchema;
 	}
 
-	public get treeSchema(): ReadonlyMap<TreeSchemaIdentifier, TreeStoredSchema> {
-		return this.inner.treeSchema;
+	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
+		return this.inner.nodeSchema;
 	}
 
-	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): SchemaData | undefined {
+	private tryDecodeOp(encodedOp: JsonCompatibleReadOnly): TreeStoredSchema | undefined {
 		if (isJsonObject(encodedOp) && encodedOp.type === "SchemaOp") {
 			return this.codec.decode(encodedOp.data);
 		}
 
 		return undefined;
 	}
+}
+
+/**
+ * Dumps schema into a deterministic JSON compatible semi-human readable but unspecified format.
+ *
+ * @remarks
+ * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
+ *
+ * This format may change across major versions of this package: such changes are considered breaking.
+ * Beyond that, no compatibility guarantee is provided for this format: it should never be relied upon to load data, it should only be used for comparing outputs from this function.
+ * @privateRemarks
+ * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
+ * This intentionally does not leak the format types in the API.
+ * @alpha
+ */
+export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
+	return encodeRepo(schema);
 }

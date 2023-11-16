@@ -1,5 +1,44 @@
 # @fluidframework/sequence
 
+## 2.0.0-internal.7.2.0
+
+### Minor Changes
+
+-   sequence: SharedString.findTile is now deprecated ([#17832](https://github.com/microsoft/FluidFramework/issues/17832)) [428234a2fb](https://github.com/microsoft/FluidFramework/commits/428234a2fb8c7a7c0bcdc9370a6632cd007c8a07)
+
+    findTile was previously deprecated on client and mergeTree, but was not on SharedString. Usage is mostly the same, with the exception that the parameter 'startPos' must be a number and cannot be undefined.
+
+## 2.0.0-internal.7.1.0
+
+### Minor Changes
+
+-   sequence: IntervalCollection.add's intervalType is now deprecated ([#17165](https://github.com/microsoft/FluidFramework/issues/17165)) [a8ea26c9d6](https://github.com/microsoft/FluidFramework/commits/a8ea26c9d61e4938f10c87a8757734f8772fbce6)
+
+    The `intervalType` parameter is being removed from `IntervalCollection.add`. The new usage requires calling add with an object containing each of the desired parameters.
+    Example: `add({start: 0, end: 1, props: { a: b }})`
+
+    The signature of `IntervalCollection.change` is also being updated to an object containing the desired parameters,
+    instead of the existing list of parameters. In addition, `changeProperties` will be removed, so in order to change the
+    properties of an interval, the `change` method (with the updated signature) will be used. The id of the interval is not
+    included in the object passed to `change`, but is instead passed as the first parameter to `change`.
+
+    Examples:
+
+    -   Change interval endpoints: `change(intervalId, { start: 3, end: 4 })`
+    -   Change interval properties: `change(intervalId, { props: { a: c } })`
+
+-   merge-tree: Deprecate IntervalType.Nest, internedSpaces, RangeStackMap, refGetRangeLabels, refHasRangeLabel, and refHasRangeLabels ([#17555](https://github.com/microsoft/FluidFramework/issues/17555)) [e4c11874ef](https://github.com/microsoft/FluidFramework/commits/e4c11874ef7c62b7cde7c282bc7997519d35fbbc)
+
+    The following classes and functions have been deprecated. The functionality has poor test coverage and is largely
+    unused. They will be removed in a future release.
+
+    -   IntervalType.Nest
+    -   internedSpaces
+    -   RangeStackMap
+    -   refGetRangeLabels
+    -   refHasRangeLabel
+    -   refHasRangeLabels
+
 ## 2.0.0-internal.7.0.0
 
 ### Major Changes

@@ -10,7 +10,10 @@ import { IContainer, IHostLoader, LoaderHeader } from "@fluidframework/container
 import { IRequest, IResponse, IRequestHeader } from "@fluidframework/core-interfaces";
 import { createAndAttachContainer, ITestObjectProvider } from "@fluidframework/test-utils";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { describeNoCompat } from "@fluid-internal/test-version-utils";
+import {
+	describeNoCompat,
+	itSkipsFailureOnSpecificDrivers,
+} from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
 import {
@@ -210,46 +213,50 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("loaded container is paused using loader pause flags", async () => {
-		// load the container paused
-		const headers: IRequestHeader = {
-			[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
-		};
-		const url = await container.getAbsoluteUrl("");
-		assert(url, "url is undefined");
-		const container2 = await loader.resolve({ url, headers });
+	itSkipsFailureOnSpecificDrivers(
+		"loaded container is paused using loader pause flags",
+		["odsp"],
+		async () => {
+			// load the container paused
+			const headers: IRequestHeader = {
+				[LoaderHeader.loadMode]: { deltaConnection: "delayed" },
+			};
+			const url = await container.getAbsoluteUrl("");
+			assert(url, "url is undefined");
+			const container2 = await loader.resolve({ url, headers });
 
-		// create a new data store using the original container
-		const newDataStore = await testSharedDataObjectFactory2.createInstance(
-			dataStore1._context.containerRuntime,
-		);
-		// this binds newDataStore to dataStore1
-		dataStore1._root.set("key", newDataStore.handle);
+			// create a new data store using the original container
+			const newDataStore = await testSharedDataObjectFactory2.createInstance(
+				dataStore1._context.containerRuntime,
+			);
+			// this binds newDataStore to dataStore1
+			dataStore1._root.set("key", newDataStore.handle);
 
-		// the dataStore3 shouldn't exist in container2 yet (because the loader isn't caching the container)
-		let success = true;
-		try {
-			await requestFluidObject(container2, {
-				url: newDataStore.id,
-				headers: { wait: false }, // data store load default wait to true currently
-			});
-			success = false;
-		} catch (e) {}
-		assert(success, "Loader pause flags doesn't pause container op processing");
+			// the dataStore3 shouldn't exist in container2 yet (because the loader isn't caching the container)
+			let success = true;
+			try {
+				await requestFluidObject(container2, {
+					url: newDataStore.id,
+					headers: { wait: false }, // data store load default wait to true currently
+				});
+				success = false;
+			} catch (e) {}
+			assert(success, "Loader pause flags doesn't pause container op processing");
 
-		container2.connect();
+			container2.connect();
 
-		// Flush all the ops
-		await provider.ensureSynchronized();
+			// Flush all the ops
+			await provider.ensureSynchronized();
 
-		const newDataStore2 = await requestFluidObject(container2, { url: newDataStore.id });
-		assert(
-			newDataStore2 instanceof TestSharedDataObject2,
-			"requestFromLoader returns the wrong type for object2",
-		);
-	});
+			const newDataStore2 = await requestFluidObject(container2, { url: newDataStore.id });
+			assert(
+				newDataStore2 instanceof TestSharedDataObject2,
+				"requestFromLoader returns the wrong type for object2",
+			);
+		},
+	);
 
-	it("can handle url with query params", async () => {
+	itSkipsFailureOnSpecificDrivers("can handle url with query params", ["odsp"], async () => {
 		const url = await container.getAbsoluteUrl("");
 		assert(url, "url is undefined");
 		const testUrl = `${url}${

@@ -5,10 +5,10 @@
 
 import { unreachableCase } from "@fluidframework/core-utils";
 import {
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	ITreeCursorSynchronous,
-	SchemaData,
-	TreeSchemaIdentifier,
+	StoredSchemaCollection,
+	TreeNodeSchemaIdentifier,
 	ValueSchema,
 } from "../../../core";
 import { FieldKind, FullSchemaPolicy, Multiplicity } from "../../modular-schema";
@@ -31,26 +31,27 @@ import { NodeShape } from "./nodeShape";
  * Encode data from `cursor` in into an `EncodedChunk`.
  *
  * Optimized for encoded size and encoding performance.
+ * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
  */
 export function schemaCompressedEncode(
-	schema: SchemaData,
+	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	cursor: ITreeCursorSynchronous,
 ): EncodedChunk {
 	return compressedEncode(cursor, buildCache(schema, policy));
 }
 
-export function buildCache(schema: SchemaData, policy: FullSchemaPolicy): EncoderCache {
+export function buildCache(schema: StoredSchemaCollection, policy: FullSchemaPolicy): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
-		(fieldHandler: FieldShaper, schemaName: TreeSchemaIdentifier) =>
+		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
 			treeShaper(schema, policy, fieldHandler, schemaName),
-		(treeHandler: TreeShaper, field: FieldStoredSchema) =>
+		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache),
 	);
 	return cache;
 }
 
-export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
+export function getFieldKind(fieldSchema: TreeFieldStoredSchema): FieldKind {
 	// TODO:
 	// This module currently is assuming use of defaultFieldKinds.
 	// The field kinds should instead come from a view schema registry thats provided somewhere.
@@ -62,7 +63,7 @@ export function getFieldKind(fieldSchema: FieldStoredSchema): FieldKind {
  */
 export function fieldShaper(
 	treeHandler: TreeShaper,
-	field: FieldStoredSchema,
+	field: TreeFieldStoredSchema,
 	cache: EncoderCache,
 ): FieldEncoder {
 	const kind = getFieldKind(field);
@@ -80,26 +81,26 @@ export function fieldShaper(
  * Selects shapes to use to encode trees.
  */
 export function treeShaper(
-	fullSchema: SchemaData,
+	fullSchema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	fieldHandler: FieldShaper,
-	schemaName: TreeSchemaIdentifier,
+	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShape {
-	const schema = fullSchema.treeSchema.get(schemaName) ?? fail("missing schema");
+	const schema = fullSchema.nodeSchema.get(schemaName) ?? fail("missing schema");
 
 	// TODO:Performance:
 	// consider moving some optional and sequence fields to extra fields if they are commonly empty
 	// to reduce encoded size.
 
-	const structFields: KeyedFieldEncoder[] = [];
-	for (const [key, field] of schema.structFields ?? []) {
-		structFields.push({ key, shape: fieldHandler.shapeFromField(field) });
+	const objectNodeFields: KeyedFieldEncoder[] = [];
+	for (const [key, field] of schema.objectNodeFields ?? []) {
+		objectNodeFields.push({ key, shape: fieldHandler.shapeFromField(field) });
 	}
 
 	const shape = new NodeShape(
 		schemaName,
 		valueShapeFromSchema(schema.leafValue),
-		structFields,
+		objectNodeFields,
 		schema.mapFields === undefined ? undefined : fieldHandler.shapeFromField(schema.mapFields),
 	);
 	return shape;
@@ -126,6 +127,8 @@ function valueShapeFromSchema(schema: ValueSchema | undefined): undefined | Enco
 		case ValueSchema.Boolean:
 		case ValueSchema.FluidHandle:
 			return true;
+		case ValueSchema.Null:
+			return [null];
 		default:
 			unreachableCase(schema);
 	}

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
 	Historian,
@@ -109,7 +110,11 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
-				password: generateToken(tenantId, documentId, key, null),
+				password: generateToken(tenantId, documentId, key, [
+					ScopeType.DocWrite,
+					ScopeType.DocRead,
+					ScopeType.SummaryWrite,
+				]),
 				user: tenantId,
 			};
 			const headers: RawAxiosRequestHeaders = {
@@ -139,12 +144,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			getDefaultHeaders,
 			getCorrelationId,
 		);
-		const historian = new Historian(
-			`${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`,
-			true,
-			false,
-			tenantRestWrapper,
-		);
+		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
 
 		return gitManager;

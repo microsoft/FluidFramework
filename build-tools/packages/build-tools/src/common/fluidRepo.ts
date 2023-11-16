@@ -12,11 +12,12 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { getFluidBuildConfig } from "./fluidUtils";
-import { Logger, defaultLogger } from "./logging";
 import { MonoRepo } from "./monoRepo";
 import { Package, Packages } from "./npmPackage";
 import { ExecAsyncResult } from "./utils";
 import { TaskDefinitionsOnDisk } from "./fluidTaskDefinitions";
+import registerDebug from "debug";
+const traceInit = registerDebug("fluid-build:init");
 
 /**
  * Fluid build configuration that is expected in the repo-root package.json.
@@ -31,20 +32,20 @@ export interface IFluidBuildConfig {
 	 * A mapping of package or release group names to metadata about the package or release group. This can only be
 	 * configured in the repo-wide Fluid build config (the repo-root package.json).
 	 */
-	repoPackages: {
+	repoPackages?: {
 		[name: string]: IFluidRepoPackageEntry;
 	};
-
-	/**
-	 * @deprecated
-	 */
-	generatorName?: string;
 
 	/**
 	 * Policy configuration for the `check:policy` command. This can only be configured in the rrepo-wide Fluid build
 	 * config (the repo-root package.json).
 	 */
 	policy?: PolicyConfig;
+
+	/**
+	 * Configuration for assert tagging.
+	 */
+	assertTagging?: AssertTaggingConfig;
 
 	/**
 	 * A mapping of branch names to previous version baseline styles. The type test generator takes this information
@@ -160,6 +161,16 @@ export interface PolicyConfig {
 	packageNames?: PackageNamePolicyConfig;
 }
 
+export interface AssertTaggingConfig {
+	assertionFunctions: { [functionName: string]: number };
+
+	/**
+	 * An array of paths under which assert tagging applies to. If this setting is provided, only packages whose paths
+	 * match the regular expressions in this setting will be assert-tagged.
+	 */
+	enabledPaths?: RegExp[];
+}
+
 /**
  * Configuration for package naming and publication policies.
  */
@@ -263,10 +274,7 @@ export class FluidRepo {
 
 	public readonly packages: Packages;
 
-	constructor(
-		public readonly resolvedRoot: string,
-		log: Logger = defaultLogger,
-	) {
+	constructor(public readonly resolvedRoot: string) {
 		const packageManifest = getFluidBuildConfig(resolvedRoot);
 
 		// Expand to full IFluidRepoPackage and full path
@@ -277,7 +285,7 @@ export class FluidRepo {
 				return item.map((entry) => normalizeEntry(entry) as IFluidRepoPackage);
 			}
 			if (typeof item === "string") {
-				log?.verbose(
+				traceInit(
 					`No defaultInterdependencyRange setting found for '${item}'. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
 				);
 				return {
@@ -306,7 +314,7 @@ export class FluidRepo {
 				}
 				continue;
 			}
-			const monoRepo = MonoRepo.load(group, item, log);
+			const monoRepo = MonoRepo.load(group, item);
 			if (monoRepo) {
 				this.releaseGroups.set(group, monoRepo);
 				loadedPackages.push(...monoRepo.packages);
@@ -325,29 +333,24 @@ export class FluidRepo {
 		this.packages.packages.forEach((pkg) => pkg.reload());
 	}
 
-	public static async ensureInstalled(packages: Package[], check: boolean = true) {
+	public static async ensureInstalled(packages: Package[]) {
 		const installedMonoRepo = new Set<MonoRepo>();
 		const installPromises: Promise<ExecAsyncResult>[] = [];
 		for (const pkg of packages) {
-			if (!check || !(await pkg.checkInstall(false))) {
-				if (pkg.monoRepo) {
-					if (!installedMonoRepo.has(pkg.monoRepo)) {
-						installedMonoRepo.add(pkg.monoRepo);
-						installPromises.push(pkg.monoRepo.install());
-					}
-				} else {
-					installPromises.push(pkg.install());
+			if (pkg.monoRepo) {
+				if (!installedMonoRepo.has(pkg.monoRepo)) {
+					installedMonoRepo.add(pkg.monoRepo);
+					installPromises.push(pkg.monoRepo.install());
 				}
+			} else {
+				installPromises.push(pkg.install());
 			}
 		}
 		const rets = await Promise.all(installPromises);
 		return !rets.some((ret) => ret.error);
 	}
 
-	public async install(nohoist: boolean = false) {
-		if (nohoist) {
-			return this.packages.noHoistInstall(this.resolvedRoot);
-		}
+	public async install() {
 		return FluidRepo.ensureInstalled(this.packages.packages);
 	}
 
@@ -358,7 +361,8 @@ export class FluidRepo {
 	 * @returns the relative path.
 	 */
 	public relativeToRepo(p: string): string {
-		return path.relative(this.resolvedRoot, p);
+		// Replace \ in result with / in case OS is Windows.
+		return path.relative(this.resolvedRoot, p).replace(/\\/g, "/");
 	}
 }
 

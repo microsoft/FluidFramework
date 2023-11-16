@@ -6,7 +6,6 @@
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
 import { JsonCompatibleReadOnly, Mutable } from "../../util";
-import { jsonableTreeFromCursor, singleTextCursor } from "../treeTextCursor";
 import type { NodeChangeset } from "../modular-schema";
 import type { NodeUpdate, OptionalChangeset, OptionalFieldChange } from "./defaultFieldChangeTypes";
 import { EncodedOptionalChangeset, EncodedNodeUpdate } from "./defaultFieldChangeFormat";
@@ -87,13 +86,8 @@ function makeNodeUpdateCodec(
 		encode: (update: NodeUpdate) => {
 			const encoded: EncodedNodeUpdate<TAnySchema> =
 				"revert" in update
-					? {
-							revert: jsonableTreeFromCursor(update.revert),
-							changeId: update.changeId,
-					  }
-					: {
-							set: update.set,
-					  };
+					? { revert: update.revert }
+					: { set: update.set, buildId: update.buildId };
 
 			if (update.changes !== undefined) {
 				encoded.changes = childCodec.encode(update.changes);
@@ -104,11 +98,8 @@ function makeNodeUpdateCodec(
 		decode: (encoded: EncodedNodeUpdate<TAnySchema>) => {
 			const decoded: NodeUpdate =
 				"revert" in encoded
-					? {
-							revert: singleTextCursor(encoded.revert),
-							changeId: encoded.changeId,
-					  }
-					: { set: encoded.set };
+					? { revert: encoded.revert }
+					: { set: encoded.set, buildId: encoded.buildId };
 
 			if (encoded.changes !== undefined) {
 				decoded.changes = childCodec.decode(encoded.changes);

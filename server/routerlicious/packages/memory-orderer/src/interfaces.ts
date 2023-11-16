@@ -69,7 +69,7 @@ export interface INodeMessage {
 
 export interface ILocalOrdererSetup {
 	/**
-	 * @deprecated - use documentRepositoryP() instead
+	 * @deprecated use documentRepositoryP() instead
 	 */
 	documentCollectionP(): Promise<ICollection<IDocument>>;
 	documentP(): Promise<IDocumentDetails>;

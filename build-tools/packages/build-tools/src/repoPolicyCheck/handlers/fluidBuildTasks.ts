@@ -7,7 +7,10 @@ import path from "path";
 import * as JSON5 from "json5";
 import * as semver from "semver";
 import { Package, PackageJson, updatePackageJsonFile } from "../../common/npmPackage";
-import { getTaskDefinitions } from "../../common/fluidTaskDefinitions";
+import {
+	normalizeGlobalTaskDefinitions,
+	getTaskDefinitions,
+} from "../../common/fluidTaskDefinitions";
 import { getEsLintConfigFilePath } from "../../common/taskUtils";
 import { FluidRepo } from "../../common/fluidRepo";
 import { getFluidBuildConfig } from "../../common/fluidUtils";
@@ -89,6 +92,26 @@ function findScript(json: PackageJson, command: string) {
 }
 
 /**
+ * Find the script name for the tsc-multi command in a npm package.json
+ *
+ * @param json - the package.json content to search script in
+ * @param config - the tsc-multi config to check for
+ * @returns  first script name found to match the command
+ *
+ * @remarks
+ */
+function findTscMultiScript(json: PackageJson, config: string) {
+	for (const script in json.scripts) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const scriptCommand = json.scripts[script]!;
+
+		if (scriptCommand.startsWith("tsc-multi") && scriptCommand.includes(config)) {
+			return script;
+		}
+	}
+}
+
+/**
  * By default, all `tsc*` script task will depend on "build:genver", and "^tsc",
  * So all the files that it depends on are in place.
  *
@@ -122,7 +145,7 @@ function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
 			continue;
 		}
 		const satisfied =
-			version!.startsWith("workspace:") || semver.satisfies(depPackage.version, version!);
+			version.startsWith("workspace:") || semver.satisfies(depPackage.version, version);
 		if (!satisfied) {
 			continue;
 		}
@@ -143,9 +166,9 @@ function getDefaultTscTaskDependencies(root: string, json: PackageJson) {
 
 function findTscScript(json: PackageJson, project: string) {
 	if (project === "./tsconfig.json") {
-		return findScript(json, "tsc");
+		return findScript(json, "tsc") || findTscMultiScript(json, "tsc-multi.cjs.json");
 	}
-	return findScript(json, `tsc --project ${project}`);
+	return findScript(json, `tsc --project ${project}`) || findTscMultiScript(json, project);
 }
 /**
  * Get a list of build script names that the eslint depends on, based on .eslintrc file.
@@ -181,7 +204,7 @@ function eslintGetScriptDependencies(
 				throw new Error(`Exports not found in ${eslintConfig}`);
 			}
 		}
-	} catch (e: any) {
+	} catch (e) {
 		throw new Error(`Unable to load eslint config file ${eslintConfig}. ${e}`);
 	}
 
@@ -229,7 +252,8 @@ function isFluidBuildEnabled(root: string, json: PackageJson) {
  */
 function hasTaskDependency(root: string, json: PackageJson, taskName: string, searchDep: string) {
 	const rootConfig = getFluidBuildConfig(root);
-	const taskDefinitions = getTaskDefinitions(json, rootConfig?.tasks);
+	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
+	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
 	const seenDep = new Set<string>();
 	const pending: string[] = [];
 	if (taskDefinitions[taskName]) {
@@ -237,6 +261,7 @@ function hasTaskDependency(root: string, json: PackageJson, taskName: string, se
 	}
 
 	while (pending.length !== 0) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		const dep = pending.pop()!;
 		if (seenDep.has(dep)) {
 			// This could be repeats or circular dependency (which we are not trying to detect)
@@ -292,13 +317,20 @@ function patchTaskDeps(root: string, json: PackageJson, taskName: string, taskDe
 	if (missingTaskDependencies.length > 0) {
 		const fileDep = json.fluidBuild?.tasks?.[taskName];
 		if (fileDep === undefined) {
-			if (json.fluidBuild === undefined) {
-				(json as any).fluidBuild = {};
+			let tasks: any;
+			if (json.fluidBuild !== undefined) {
+				if (json.fluidBuild.tasks !== undefined) {
+					tasks = json.fluidBuild.tasks;
+				} else {
+					tasks = {};
+					json.fluidBuild.tasks = tasks;
+				}
+			} else {
+				tasks = {};
+				json.fluidBuild = { tasks };
 			}
-			if (json.fluidBuild!.tasks === undefined) {
-				json.fluidBuild!.tasks = {};
-			}
-			json.fluidBuild!.tasks[taskName] = taskDeps;
+
+			tasks[taskName] = taskDeps;
 		} else {
 			let depArray: string[];
 			if (Array.isArray(fileDep)) {
@@ -375,7 +407,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-eslint",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json;
 			try {
 				json = JSON.parse(readFile(file));
@@ -415,7 +447,7 @@ export const handlers: Handler[] = [
 	{
 		name: "fluid-build-tasks-tsc",
 		match,
-		handler: (file, root) => {
+		handler: async (file, root) => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file));
@@ -434,8 +466,14 @@ export const handlers: Handler[] = [
 			const deps = getDefaultTscTaskDependencies(root, json);
 			const ignore = getFluidBuildTasksTscIgnore(root);
 			for (const script in json.scripts) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const command = json.scripts[script]!;
-				if (command.startsWith("tsc") && !ignore.has(script)) {
+				if (
+					// This clause ensures we don't match commands that are prefixed with "tsc", like "tsc-multi". The exception
+					// is when the whole command is "tsc".
+					(command.startsWith("tsc ") || command === "tsc") &&
+					!ignore.has(script)
+				) {
 					try {
 						const checkDeps = getTscCommandDependencies(
 							packageDir,
@@ -467,8 +505,14 @@ export const handlers: Handler[] = [
 				const deps = getDefaultTscTaskDependencies(root, json);
 				const ignore = getFluidBuildTasksTscIgnore(root);
 				for (const script in json.scripts) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const command = json.scripts[script]!;
-					if (command.startsWith("tsc") && !ignore.has(script)) {
+					if (
+						command.startsWith("tsc") &&
+						// tsc --watch tasks are long-running processes and don't need the standard task deps
+						!command.includes("--watch") &&
+						!ignore.has(script)
+					) {
 						try {
 							const checkDeps = getTscCommandDependencies(
 								packageDir,

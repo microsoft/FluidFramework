@@ -1,5 +1,38 @@
 # @fluidframework/merge-tree
 
+## 2.0.0-internal.7.2.0
+
+Dependency updates only.
+
+## 2.0.0-internal.7.1.0
+
+### Minor Changes
+
+-   merge-tree: Deprecate Stack, clone, combine, createMap, extend, extendIfUndefined, and matchProperties ([#17650](https://github.com/microsoft/FluidFramework/issues/17650)) [2b12bc7e59](https://github.com/microsoft/FluidFramework/commits/2b12bc7e59f7825a222ad33b7faff17477d0fa66)
+
+    The following classes and functions have been deprecated. They were not intended for public export and will be removed
+    in a future release.
+
+    -   Stack
+    -   clone
+    -   combine
+    -   createMap
+    -   extend
+    -   extendIfUndefined
+    -   matchProperties
+
+-   merge-tree: Deprecate IntervalType.Nest, internedSpaces, RangeStackMap, refGetRangeLabels, refHasRangeLabel, and refHasRangeLabels ([#17555](https://github.com/microsoft/FluidFramework/issues/17555)) [e4c11874ef](https://github.com/microsoft/FluidFramework/commits/e4c11874ef7c62b7cde7c282bc7997519d35fbbc)
+
+    The following classes and functions have been deprecated. The functionality has poor test coverage and is largely
+    unused. They will be removed in a future release.
+
+    -   IntervalType.Nest
+    -   internedSpaces
+    -   RangeStackMap
+    -   refGetRangeLabels
+    -   refHasRangeLabel
+    -   refHasRangeLabels
+
 ## 2.0.0-internal.7.0.0
 
 ### Major Changes

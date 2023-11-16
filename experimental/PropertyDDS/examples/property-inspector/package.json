@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/property-inspector",
-	"version": "2.0.0-internal.7.1.0",
+	"version": "2.0.0-internal.7.3.0",
 	"private": true,
 	"description": "TreeTable representation for property-dds which allow browsing, editing and searching.",
 	"homepage": "https://fluidframework.com",
@@ -16,7 +16,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:webpack": "npm run webpack",
 		"build:webpack:dev": "webpack --env.clean",
-		"clean": "rimraf --glob 'dist' '*.tsbuildinfo' '*.build.log' 'nyc'",
+		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -28,7 +28,7 @@
 		"start": "webpack serve --open",
 		"start:server": "tinylicious",
 		"start:test": "webpack serve --config webpack.test.js",
-		"start:tinylicious": "concurrently \"npm:start:server\" \"npm:start\"",
+		"start:tinylicious": "concurrently npm:start:server npm:start",
 		"test": "npm run test:jest",
 		"test:jest": "jest",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
@@ -78,8 +78,8 @@
 		"react-virtualized-auto-sizer": "^1.0.6"
 	},
 	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.0",
-		"@fluidframework/build-tools": "^0.25.0",
+		"@fluidframework/build-common": "^2.0.3",
+		"@fluidframework/build-tools": "0.28.0-210888",
 		"@types/expect-puppeteer": "2.2.1",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "2.2.0",

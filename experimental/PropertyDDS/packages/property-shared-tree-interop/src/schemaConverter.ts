@@ -7,15 +7,15 @@ import { assert } from "@fluidframework/core-utils";
 import {
 	fail,
 	FieldKinds,
-	FieldSchema,
-	ValueSchema,
+	TreeFieldSchema,
 	SchemaBuilder,
 	FieldKind,
 	Any,
-	TreeSchema,
-	LazyTreeSchema,
+	TreeNodeSchema,
+	LazyTreeNodeSchema,
 	brand,
 	Brand,
+	leaf,
 } from "@fluid-experimental/tree2";
 import { PropertyFactory } from "@fluid-experimental/property-properties";
 import { TypeIdHelper } from "@fluid-experimental/property-changeset";
@@ -27,6 +27,7 @@ const basePropertyType = "BaseProperty";
 const booleanType = "Bool";
 const stringType = "String";
 const enumType = "Enum";
+const numberType = "Float64";
 const numberTypes = new Set<string>([
 	"Int8",
 	"Int16",
@@ -37,7 +38,7 @@ const numberTypes = new Set<string>([
 	"Uint32",
 	"Uint64",
 	"Float32",
-	"Float64",
+	numberType,
 	enumType,
 ]);
 const primitiveTypes = new Set([...numberTypes, booleanType, stringType, referenceType]);
@@ -78,12 +79,12 @@ function getAllInheritingChildrenTypes(): InheritingChildrenByType {
 	return inheritingChildrenByType;
 }
 
-function buildTreeSchema(
+function buildTreeNodeSchema(
 	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, LazyTreeSchema>,
+	nodeSchemaMap: Map<string, LazyTreeNodeSchema>,
 	allChildrenByType: InheritingChildrenByType,
 	type: string,
-): LazyTreeSchema {
+): LazyTreeNodeSchema {
 	assert(type !== basePropertyType, 0x6ff /* "BaseProperty" shall not be used in schemas. */);
 	const { typeid, context, isEnum } = TypeIdHelper.extractContext(type);
 	if (!isPropertyContext(context)) {
@@ -92,53 +93,53 @@ function buildTreeSchema(
 	if (context === singleContext) {
 		const typeidAsArray = TypeIdHelper.createSerializationTypeId(typeid, arrayContext, isEnum);
 		const typeidAsMap = TypeIdHelper.createSerializationTypeId(typeid, mapContext, isEnum);
-		if (!treeSchemaMap.has(typeidAsArray)) {
-			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeidAsArray);
+		if (!nodeSchemaMap.has(typeidAsArray)) {
+			buildTreeNodeSchema(builder, nodeSchemaMap, allChildrenByType, typeidAsArray);
 		}
-		if (!treeSchemaMap.has(typeidAsMap)) {
-			buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeidAsMap);
+		if (!nodeSchemaMap.has(typeidAsMap)) {
+			buildTreeNodeSchema(builder, nodeSchemaMap, allChildrenByType, typeidAsMap);
 		}
 		// There must be no difference between `type` and `typeid` within the rest of this block
 		// except that `type` keeps `enum<>` pattern whereas `typeid` is a "pure" type.
 		// Since SharedTree does not support enums yet, they are considered to be just primitives.
 		// In all other cases `type` and `typeid` should be exactly the same.
 		// TODO: adapt the code when enums will become supported.
-		const treeSchema = treeSchemaMap.get(type);
-		if (treeSchema) {
-			return treeSchema;
+		const nodeSchema = nodeSchemaMap.get(type);
+		if (nodeSchema) {
+			return nodeSchema;
 		}
 		if (TypeIdHelper.isPrimitiveType(type)) {
-			return buildPrimitiveSchema(builder, treeSchemaMap, type, isEnum);
+			return buildPrimitiveSchema(builder, nodeSchemaMap, type, isEnum);
 		} else {
 			assert(type === typeid, 0x700 /* Unexpected typeid discrepancy */);
-			const cache: { treeSchema?: TreeSchema } = {};
-			treeSchemaMap.set(typeid, () => cache.treeSchema ?? fail("missing schema"));
-			const fields = new Map<string, FieldSchema>();
-			buildLocalFields(builder, treeSchemaMap, allChildrenByType, typeid, fields);
+			const cache: { nodeSchema?: TreeNodeSchema } = {};
+			nodeSchemaMap.set(typeid, () => cache.nodeSchema ?? fail("missing schema"));
+			const fields = new Map<string, TreeFieldSchema>();
+			buildLocalFields(builder, nodeSchemaMap, allChildrenByType, typeid, fields);
 			const inheritanceChain = PropertyFactory.getAllParentsForTemplate(typeid);
 			for (const inheritanceType of inheritanceChain) {
 				buildLocalFields(
 					builder,
-					treeSchemaMap,
+					nodeSchemaMap,
 					allChildrenByType,
 					inheritanceType,
 					fields,
 				);
 			}
 			if (typeid === nodePropertyType) {
-				cache.treeSchema = nodePropertySchema;
-				return cache.treeSchema;
+				cache.nodeSchema = nodePropertySchema;
+				return cache.nodeSchema;
 			}
 			if (PropertyFactory.inheritsFrom(typeid, nodePropertyType)) {
 				assert(
 					!fields.has(nodePropertyField),
 					0x712 /* name collision for nodePropertyField */,
 				);
-				fields.set(nodePropertyField, SchemaBuilder.fieldRequired(nodePropertySchema));
+				fields.set(nodePropertyField, SchemaBuilder.required(nodePropertySchema));
 			}
 			const fieldsObject = mapToObject(fields);
-			cache.treeSchema = builder.struct(typeid, fieldsObject);
-			return cache.treeSchema;
+			cache.nodeSchema = builder.object(typeid, fieldsObject);
+			return cache.nodeSchema;
 		}
 	} else {
 		// `typeid === basePropertyType` is only allowed to happen if type is omitted from a generic typeid (e.g. "array<>").
@@ -153,28 +154,28 @@ function buildTreeSchema(
 			context,
 			isEnum,
 		);
-		const treeSchema = treeSchemaMap.get(currentTypeid);
-		if (treeSchema) {
-			return treeSchema;
+		const nodeSchema = nodeSchemaMap.get(currentTypeid);
+		if (nodeSchema) {
+			return nodeSchema;
 		}
 		const fieldKind = context === arrayContext ? FieldKinds.sequence : FieldKinds.optional;
-		const cache: { treeSchema?: TreeSchema } = {};
-		treeSchemaMap.set(currentTypeid, () => cache.treeSchema ?? fail("missing schema"));
+		const cache: { nodeSchema?: TreeNodeSchema } = {};
+		nodeSchemaMap.set(currentTypeid, () => cache.nodeSchema ?? fail("missing schema"));
 		const fieldSchema = buildFieldSchema(
 			builder,
-			treeSchemaMap,
+			nodeSchemaMap,
 			allChildrenByType,
 			fieldKind,
 			isAnyType ? Any : isEnum ? `enum<${typeid}>` : typeid,
 		);
 		switch (context) {
 			case mapContext: {
-				cache.treeSchema = builder.map(currentTypeid, fieldSchema);
-				return cache.treeSchema;
+				cache.nodeSchema = builder.map(currentTypeid, fieldSchema);
+				return cache.nodeSchema;
 			}
 			case arrayContext: {
-				cache.treeSchema = builder.fieldNode(currentTypeid, fieldSchema);
-				return cache.treeSchema;
+				cache.nodeSchema = builder.fieldNode(currentTypeid, fieldSchema);
+				return cache.nodeSchema;
 			}
 			default:
 				fail(`Context "${context}" is not supported yet`);
@@ -201,10 +202,10 @@ function mapToObject<MapValue>(map: Map<string, MapValue>): Record<string, MapVa
  */
 function buildLocalFields(
 	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, LazyTreeSchema>,
+	treeSchemaMap: Map<string, LazyTreeNodeSchema>,
 	allChildrenByType: InheritingChildrenByType,
 	typeid: string,
-	local: Map<string, FieldSchema>,
+	local: Map<string, TreeFieldSchema>,
 ): void {
 	const schemaTemplate = PropertyFactory.getTemplate(typeid);
 	if (schemaTemplate === undefined) {
@@ -214,7 +215,7 @@ function buildLocalFields(
 	// e.g., for a "parent -> child -> parent" inheritance chain, so that
 	// a) the result of this call can't be used here to get the inherited fields and
 	// b) that's why templates are used below instead.
-	buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeid);
+	buildTreeNodeSchema(builder, treeSchemaMap, allChildrenByType, typeid);
 	if (schemaTemplate.properties !== undefined) {
 		for (const property of schemaTemplate.properties) {
 			if (property.properties && !isIgnoreNestedProperties(property.typeid)) {
@@ -251,70 +252,75 @@ function buildLocalFields(
 
 function buildPrimitiveSchema(
 	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, LazyTreeSchema>,
+	treeSchemaMap: Map<string, LazyTreeNodeSchema>,
 	typeid: string,
 	isEnum?: boolean,
-): TreeSchema {
-	let valueSchema: ValueSchema;
-	if (
-		typeid === stringType ||
-		typeid.startsWith(referenceGenericTypePrefix) ||
-		typeid === referenceType
-	) {
-		valueSchema = ValueSchema.String;
+): TreeNodeSchema {
+	let nodeSchema: TreeNodeSchema;
+	if (typeid === stringType) {
+		nodeSchema = leaf.string;
+	} else if (typeid.startsWith(referenceGenericTypePrefix) || typeid === referenceType) {
+		// Strongly typed wrapper around a string
+		nodeSchema = builder.fieldNode(typeid, leaf.string);
 	} else if (typeid === booleanType) {
-		valueSchema = ValueSchema.Boolean;
+		nodeSchema = leaf.boolean;
+	} else if (typeid === numberType) {
+		nodeSchema = leaf.number;
 	} else if (numberTypes.has(typeid) || isEnum) {
-		valueSchema = ValueSchema.Number;
+		// Strongly typed wrapper around a number
+		nodeSchema = builder.fieldNode(typeid, leaf.number);
 	} else {
 		// If this case occurs, there is definetely a problem with the ajv template,
 		// as unknown primitives should be issued there otherwise.
 		fail(`Unknown primitive typeid "${typeid}"`);
 	}
-	const treeSchema = builder.leaf(typeid, valueSchema);
-	treeSchemaMap.set(typeid, treeSchema);
-	return treeSchema;
+	treeSchemaMap.set(typeid, nodeSchema);
+	return nodeSchema;
 }
 
 function buildFieldSchema<Kind extends FieldKind = FieldKind>(
 	builder: SchemaBuilder,
-	treeSchemaMap: Map<string, LazyTreeSchema>,
+	treeSchemaMap: Map<string, LazyTreeNodeSchema>,
 	allChildrenByType: InheritingChildrenByType,
 	fieldKind: Kind,
 	...fieldTypes: readonly string[]
-): FieldSchema<Kind> {
-	const allowedTypes: Set<LazyTreeSchema> = new Set();
+): TreeFieldSchema<Kind> {
+	const allowedTypes: Set<LazyTreeNodeSchema> = new Set();
 	let isAny = false;
 	for (const typeid of fieldTypes) {
 		if (typeid === Any) {
 			isAny = true;
 			continue;
 		}
-		allowedTypes.add(buildTreeSchema(builder, treeSchemaMap, allChildrenByType, typeid));
+		allowedTypes.add(buildTreeNodeSchema(builder, treeSchemaMap, allChildrenByType, typeid));
 		const inheritingTypes = allChildrenByType.get(typeid) ?? new Set();
 		for (const inheritingType of inheritingTypes) {
 			allowedTypes.add(
-				buildTreeSchema(builder, treeSchemaMap, allChildrenByType, inheritingType),
+				buildTreeNodeSchema(builder, treeSchemaMap, allChildrenByType, inheritingType),
 			);
 		}
 	}
 	return isAny
 		? SchemaBuilder.field(fieldKind, Any)
-		: SchemaBuilder.field(fieldKind, ...allowedTypes);
+		: SchemaBuilder.field(fieldKind, [...allowedTypes]);
 }
 
-const builtinBuilder = new SchemaBuilder("PropertyDDS to SharedTree builtin schema builder");
+const builtinBuilder = new SchemaBuilder({
+	scope: "com.fluidframework.PropertyDDSBuiltIn",
+	name: "PropertyDDS to SharedTree builtin schema builder",
+	libraries: [leaf.library],
+});
 // TODO:
 // It might make sense for all builtins (not specific to the particular schema being processed),
 // to be put into one library like this.
 export const nodePropertySchema = builtinBuilder.map(
 	nodePropertyType,
-	SchemaBuilder.fieldOptional(Any),
+	builtinBuilder.optional(Any),
 );
 const builtinLibrary = builtinBuilder.intoLibrary();
 
 /**
- * Creates a TypedSchemaCollection out of PropertyDDS schema templates.
+ * Creates a TreeSchema out of PropertyDDS schema templates.
  * The templates must be registered beforehand using {@link PropertyFactory.register}.
  * @param rootFieldKind - The kind of the root field.
  * @param allowedRootTypes - The types of children nodes allowed for the root field.
@@ -327,22 +333,22 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = Field
 	allowedRootTypes: Any | ReadonlySet<string>,
 	extraTypes?: ReadonlySet<string>,
 ) {
-	const builder = new SchemaBuilder(
-		"PropertyDDS to SharedTree schema builder",
-		{},
-		builtinLibrary,
-	);
+	const builder = new SchemaBuilder({
+		scope: "converted",
+		name: "PropertyDDS to SharedTree schema builder",
+		libraries: [builtinLibrary],
+	});
 	const allChildrenByType = getAllInheritingChildrenTypes();
-	const treeSchemaMap: Map<string, LazyTreeSchema> = new Map();
+	const treeSchemaMap: Map<string, LazyTreeNodeSchema> = new Map();
 
 	primitiveTypes.forEach((primitiveType) =>
-		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, primitiveType),
+		buildTreeNodeSchema(builder, treeSchemaMap, allChildrenByType, primitiveType),
 	);
 	// That's enough to just add "NodeProperty" type as all other
 	// dependent built-in types will be added through inheritances.
-	buildTreeSchema(builder, treeSchemaMap, allChildrenByType, nodePropertyType);
+	buildTreeNodeSchema(builder, treeSchemaMap, allChildrenByType, nodePropertyType);
 	extraTypes?.forEach((extraType) =>
-		buildTreeSchema(builder, treeSchemaMap, allChildrenByType, extraType),
+		buildTreeNodeSchema(builder, treeSchemaMap, allChildrenByType, extraType),
 	);
 
 	const allowedTypes = allowedRootTypes === Any ? [Any] : [...allowedRootTypes];
@@ -353,5 +359,5 @@ export function convertPropertyToSharedTreeSchema<Kind extends FieldKind = Field
 		rootFieldKind,
 		...allowedTypes,
 	);
-	return builder.intoDocumentSchema(rootSchema);
+	return builder.intoSchema(rootSchema);
 }

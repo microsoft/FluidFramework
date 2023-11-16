@@ -8,15 +8,14 @@ import {
 	ChangesetLocalId,
 	mintRevisionTag,
 	RevisionTag,
-	TreeSchemaIdentifier,
+	TreeNodeSchemaIdentifier,
 } from "../../../core";
 import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
-import { fakeTaggedRepair as fakeRepair } from "../../utils";
 import { MarkMaker as Mark } from "./testEdits";
 
 const dummyMark = Mark.delete(1, brand(0));
-const type: TreeSchemaIdentifier = brand("Node");
+const type: TreeNodeSchemaIdentifier = brand("Node");
 const detachedBy: RevisionTag = mintRevisionTag();
 
 describe("SequenceField - MarkListFactory", () => {
@@ -78,11 +77,32 @@ describe("SequenceField - MarkListFactory", () => {
 
 	it("Can merge consecutive deletes", () => {
 		const factory = new SF.MarkListFactory();
-		const delete1 = Mark.delete(1, brand(0));
-		const delete2 = Mark.delete(1, brand(1));
+		const delete1 = Mark.delete(1, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		const delete2 = Mark.delete(1, brand(1), {
+			detachIdOverride: { revision: detachedBy, localId: brand(11) },
+		});
 		factory.pushContent(delete1);
 		factory.pushContent(delete2);
-		assert.deepStrictEqual(factory.list, [Mark.delete(2, brand(0))]);
+		assert.deepStrictEqual(factory.list, [
+			Mark.delete(2, brand(0), {
+				detachIdOverride: { revision: detachedBy, localId: brand(10) },
+			}),
+		]);
+	});
+
+	it("Does not merge consecutive deletes with discontinuous detach overrides", () => {
+		const factory = new SF.MarkListFactory();
+		const delete1 = Mark.delete(1, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		const delete2 = Mark.delete(1, brand(1), {
+			detachIdOverride: { revision: detachedBy, localId: brand(42) },
+		});
+		factory.pushContent(delete1);
+		factory.pushContent(delete2);
+		assert.deepStrictEqual(factory.list, [delete1, delete2]);
 	});
 
 	it("Can merge adjacent moves ", () => {
@@ -129,17 +149,17 @@ describe("SequenceField - MarkListFactory", () => {
 
 	it("Can merge consecutive revives", () => {
 		const factory = new SF.MarkListFactory();
-		const revive1 = Mark.revive(fakeRepair(detachedBy, 0, 1), {
+		const revive1 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
-		const revive2 = Mark.revive(fakeRepair(detachedBy, 1, 1), {
+		const revive2 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(1),
 		});
 		factory.pushContent(revive1);
 		factory.pushContent(revive2);
-		const expected = Mark.revive(fakeRepair(detachedBy, 0, 2), {
+		const expected = Mark.revive(2, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
@@ -165,13 +185,42 @@ describe("SequenceField - MarkListFactory", () => {
 		assert.deepStrictEqual(factory.list, [expected]);
 	});
 
+	it("Can merge consecutive return-from", () => {
+		const factory = new SF.MarkListFactory();
+		const return1 = Mark.returnFrom(1, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		const return2 = Mark.returnFrom(2, brand(1), {
+			detachIdOverride: { revision: detachedBy, localId: brand(11) },
+		});
+		factory.pushContent(return1);
+		factory.pushContent(return2);
+		const expected = Mark.returnFrom(3, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		assert.deepStrictEqual(factory.list, [expected]);
+	});
+
+	it("Does not merge consecutive return-from with discontinuous detach overrides", () => {
+		const factory = new SF.MarkListFactory();
+		const return1 = Mark.returnFrom(1, brand(0), {
+			detachIdOverride: { revision: detachedBy, localId: brand(10) },
+		});
+		const return2 = Mark.returnFrom(2, brand(1), {
+			detachIdOverride: { revision: detachedBy, localId: brand(42) },
+		});
+		factory.pushContent(return1);
+		factory.pushContent(return2);
+		assert.deepStrictEqual(factory.list, [return1, return2]);
+	});
+
 	it("Does not merge revives with gaps", () => {
 		const factory = new SF.MarkListFactory();
-		const revive1 = Mark.revive(fakeRepair(detachedBy, 0, 1), {
+		const revive1 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(0),
 		});
-		const revive2 = Mark.revive(fakeRepair(detachedBy, 2, 1), {
+		const revive2 = Mark.revive(1, {
 			revision: detachedBy,
 			localId: brand(2),
 		});

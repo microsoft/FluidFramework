@@ -14,13 +14,13 @@ import {
 	FieldKey,
 	UpPath,
 	TaggedChange,
-	ReadonlyRepairDataStore,
 	RevisionTag,
 	tagChange,
 	makeAnonChange,
 	ChangeFamilyEditor,
 	FieldUpPath,
 	ChangesetLocalId,
+	isEmptyFieldChanges,
 } from "../../core";
 import {
 	brand,
@@ -31,7 +31,6 @@ import {
 	idAllocatorFromState,
 	Mutable,
 } from "../../util";
-import { dummyRepairDataStore } from "../fakeRepairDataStore";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
@@ -287,11 +286,7 @@ export class ModularChangeFamily
 	 * performing a sandwich rebase.
 	 * @param repairStore - The store to query for repair data.
 	 */
-	public invert(
-		change: TaggedChange<ModularChangeset>,
-		isRollback: boolean,
-		repairStore?: ReadonlyRepairDataStore,
-	): ModularChangeset {
+	public invert(change: TaggedChange<ModularChangeset>, isRollback: boolean): ModularChangeset {
 		// Return an empty inverse for changes with constraint violations
 		if ((change.change.constraintViolationCount ?? 0) > 0) {
 			return makeModularChangeset(new Map());
@@ -303,30 +298,30 @@ export class ModularChangeFamily
 		// TODO: add a getMax function to IdAllocator to make for a clearer contract.
 		const genId: IdAllocator = idAllocatorFromState(idState);
 		const crossFieldTable = newCrossFieldTable<InvertData>();
-		const resolvedRepairStore = repairStore ?? dummyRepairDataStore;
+
+		const { revInfos } = getRevInfoFromTaggedChanges([change]);
+		const revisionMetadata = revisionMetadataSourceFromInfo(revInfos);
 
 		const invertedFields = this.invertFieldMap(
 			tagChange(change.change.fieldChanges, change.revision),
 			genId,
-			resolvedRepairStore,
-			undefined,
 			crossFieldTable,
+			revisionMetadata,
 		);
 
 		if (crossFieldTable.invalidatedFields.size > 0) {
 			const fieldsToUpdate = crossFieldTable.invalidatedFields;
 			crossFieldTable.invalidatedFields = new Set();
-			for (const { fieldKey, fieldChange, path, originalRevision } of fieldsToUpdate) {
+			for (const { fieldChange, originalRevision } of fieldsToUpdate) {
 				const amendedChange = getChangeHandler(
 					this.fieldKinds,
 					fieldChange.fieldKind,
 				).rebaser.amendInvert(
 					fieldChange.change,
 					originalRevision,
-					(revision: RevisionTag, index: number, count: number): Delta.ProtoNode[] =>
-						resolvedRepairStore.getNodes(revision, path, fieldKey, index, count),
 					genId,
 					newCrossFieldManager(crossFieldTable),
+					revisionMetadata,
 				);
 				fieldChange.change = brand(amendedChange);
 			}
@@ -354,20 +349,13 @@ export class ModularChangeFamily
 	private invertFieldMap(
 		changes: TaggedChange<FieldChangeMap>,
 		genId: IdAllocator,
-		repairStore: ReadonlyRepairDataStore,
-		path: UpPath | undefined,
 		crossFieldTable: CrossFieldTable<InvertData>,
+		revisionMetadata: RevisionMetadataSource,
 	): FieldChangeMap {
 		const invertedFields: FieldChangeMap = new Map();
 
 		for (const [field, fieldChange] of changes.change) {
 			const { revision } = fieldChange.revision !== undefined ? fieldChange : changes;
-
-			const reviver = (
-				revisionTag: RevisionTag,
-				index: number,
-				count: number,
-			): Delta.ProtoNode[] => repairStore.getNodes(revisionTag, path, field, index, count);
 
 			const manager = newCrossFieldManager(crossFieldTable);
 			const invertedChange = getChangeHandler(
@@ -375,23 +363,16 @@ export class ModularChangeFamily
 				fieldChange.fieldKind,
 			).rebaser.invert(
 				{ revision, change: fieldChange.change },
-				(childChanges, index) =>
+				(childChanges) =>
 					this.invertNodeChange(
 						{ revision, change: childChanges },
 						genId,
 						crossFieldTable,
-						repairStore,
-						index === undefined
-							? undefined
-							: {
-									parent: path,
-									parentField: field,
-									parentIndex: index,
-							  },
+						revisionMetadata,
 					),
-				reviver,
 				genId,
 				manager,
+				revisionMetadata,
 			);
 
 			const invertedFieldChange: FieldChange = {
@@ -403,7 +384,6 @@ export class ModularChangeFamily
 			const invertData: InvertData = {
 				fieldKey: field,
 				fieldChange: invertedFieldChange,
-				path,
 				originalRevision: changes.revision,
 			};
 
@@ -417,8 +397,7 @@ export class ModularChangeFamily
 		change: TaggedChange<NodeChangeset>,
 		genId: IdAllocator,
 		crossFieldTable: CrossFieldTable<InvertData>,
-		repairStore: ReadonlyRepairDataStore,
-		path?: UpPath,
+		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
@@ -426,9 +405,8 @@ export class ModularChangeFamily
 			inverse.fieldChanges = this.invertFieldMap(
 				{ ...change, change: change.change.fieldChanges },
 				genId,
-				repairStore,
-				path,
 				crossFieldTable,
+				revisionMetadata,
 			);
 		}
 
@@ -718,14 +696,14 @@ export class ModularChangeFamily
 		return rebasedChange;
 	}
 
-	public intoDelta(change: ModularChangeset): Delta.Root {
+	public intoDelta({ change, revision }: TaggedChange<ModularChangeset>): Delta.Root {
 		// Return an empty delta for changes with constraint violations
 		if ((change.constraintViolationCount ?? 0) > 0) {
 			return new Map();
 		}
 
 		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-		return this.intoDeltaImpl(change.fieldChanges, undefined, idAllocator);
+		return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 	}
 
 	/**
@@ -739,16 +717,18 @@ export class ModularChangeFamily
 		revision: RevisionTag | undefined,
 		idAllocator: MemoizedIdRangeAllocator,
 	): Delta.Root {
-		const delta: Map<FieldKey, Delta.MarkList> = new Map();
+		const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
 		for (const [field, fieldChange] of change) {
 			const fieldRevision = fieldChange.revision ?? revision;
 			const deltaField = getChangeHandler(this.fieldKinds, fieldChange.fieldKind).intoDelta(
 				tagChange(fieldChange.change, fieldRevision),
-				(childChange): Delta.Modify =>
+				(childChange): Delta.FieldMap =>
 					this.deltaFromNodeChange(tagChange(childChange, fieldRevision), idAllocator),
 				idAllocator,
 			);
-			delta.set(field, deltaField);
+			if (!isEmptyFieldChanges(deltaField)) {
+				delta.set(field, deltaField);
+			}
 		}
 		return delta;
 	}
@@ -756,16 +736,12 @@ export class ModularChangeFamily
 	private deltaFromNodeChange(
 		{ change, revision }: TaggedChange<NodeChangeset>,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.Modify {
-		const modify: Mutable<Delta.Modify> = {
-			type: Delta.MarkType.Modify,
-		};
-
+	): Delta.FieldMap {
 		if (change.fieldChanges !== undefined) {
-			modify.fields = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+			return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
 		}
-
-		return modify;
+		// TODO: update the API to allow undefined to be returned here
+		return new Map();
 	}
 
 	public buildEditor(changeReceiver: (change: ModularChangeset) => void): ModularEditBuilder {
@@ -779,15 +755,23 @@ export class ModularChangeFamily
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
-	const getIndex = (revision: RevisionTag): number => {
+	const getIndex = (revision: RevisionTag): number | undefined => {
 		const index = revInfos.findIndex((revInfo) => revInfo.revision === revision);
-		assert(index !== -1, 0x5a0 /* Unable to index unknown revision */);
-		return index;
+		return index >= 0 ? index : undefined;
 	};
-	const getInfo = (revision: RevisionTag): RevisionInfo => {
-		return revInfos[getIndex(revision)];
+	const tryGetInfo = (revision: RevisionTag | undefined): RevisionInfo | undefined => {
+		if (revision === undefined) {
+			return undefined;
+		}
+		const index = getIndex(revision);
+		return index === undefined ? undefined : revInfos[index];
 	};
-	return { getIndex, getInfo };
+
+	const getRevisions = (): RevisionTag[] => {
+		return revInfos.map((info) => info.revision);
+	};
+
+	return { getIndex, tryGetInfo, getRevisions };
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
@@ -861,7 +845,6 @@ interface InvertData {
 	originalRevision: RevisionTag | undefined;
 	fieldKey: FieldKey;
 	fieldChange: FieldChange;
-	path: UpPath | undefined;
 }
 
 type ComposeData = FieldChange;
@@ -901,24 +884,20 @@ function newCrossFieldManager<T>(crossFieldTable: CrossFieldTable<T>): CrossFiel
 						? crossFieldTable.srcDependents
 						: crossFieldTable.dstDependents;
 
-				let dependentEntry = getFirstFromCrossFieldMap(dependentsMap, revision, id, count);
-
 				const lastChangedId = (id as number) + count - 1;
-				while (dependentEntry !== undefined) {
-					crossFieldTable.invalidatedFields.add(dependentEntry.value);
-					const lastEntryId = dependentEntry.start + dependentEntry.length - 1;
-					const numChangedIdsAfterEntry = lastChangedId - lastEntryId;
-					if (numChangedIdsAfterEntry > 0) {
-						dependentEntry = getFirstFromCrossFieldMap(
-							dependentsMap,
-							revision,
-							brand(lastEntryId + 1),
-							numChangedIdsAfterEntry,
-						);
-					} else {
-						// We have found the last entry for the changed ID range.
-						break;
+				let firstId = id;
+				while (firstId <= lastChangedId) {
+					const dependentEntry = getFirstFromCrossFieldMap(
+						dependentsMap,
+						revision,
+						firstId,
+						lastChangedId - firstId + 1,
+					);
+					if (dependentEntry.value !== undefined) {
+						crossFieldTable.invalidatedFields.add(dependentEntry.value);
 					}
+
+					firstId = brand(firstId + dependentEntry.length);
 				}
 
 				if (
@@ -1063,7 +1042,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public generateId(count?: number): ChangesetLocalId {
-		return brand(this.idAllocator(count));
+		return brand(this.idAllocator.allocate(count));
 	}
 
 	private buildChangeMap(

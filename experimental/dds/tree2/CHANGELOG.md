@@ -1,5 +1,87 @@
 # @fluid-experimental/tree2
 
+## 2.0.0-internal.7.2.0
+
+### Minor Changes
+
+-   tree2: Rename DocumentSchema and toDocumentSchema ([#17854](https://github.com/microsoft/FluidFramework/issues/17854)) [0b5944050d](https://github.com/microsoft/FluidFramework/commits/0b5944050d3bc4470a87de4a4332235d37cb719c)
+
+    The following APIs have been renamed:
+
+    -   `DocumentSchema` is now `TreeSchema`
+    -   `toDocumentSchema` is now `intoSchema`
+
+-   tree2: Rename SchemaData, FieldSchema, and FieldStoredSchema ([#17888](https://github.com/microsoft/FluidFramework/issues/17888)) [27f5a5e24d](https://github.com/microsoft/FluidFramework/commits/27f5a5e24dda81eafe5678742d68cd7d8afdc060)
+
+    The following APIs have been renamed:
+
+    -   `SchemaData` is now `TreeStoredSchema`
+    -   `FieldSchema` is now `TreeFieldSchema`
+    -   `FieldStoredSchema` is now `TreeFieldStoredSchema`
+
+-   tree2: Add `null` to allowed leaf types ([#17781](https://github.com/microsoft/FluidFramework/issues/17781)) [040e28f3ab](https://github.com/microsoft/FluidFramework/commits/040e28f3aba415e086fe2661e97d984c97b85045)
+
+    Replaced the jsonNull schema with a new null leaf schema, and added support for leaf values which are null.
+
+-   tree2: Rename TreeSchema ([#17845](https://github.com/microsoft/FluidFramework/issues/17845)) [908ee8921e](https://github.com/microsoft/FluidFramework/commits/908ee8921eb8d7fc21f64eee88a12c678e9756dd)
+
+    The following APIs have been renamed:
+
+    -   `TreeSchema` is now `TreeNodeSchema`
+
+-   tree2: Rename Struct ([#17899](https://github.com/microsoft/FluidFramework/issues/17899)) [d90af254fe](https://github.com/microsoft/FluidFramework/commits/d90af254fe4224dd6391908e88055f3c98cc1d18)
+
+    The following APIs have been renamed:
+
+    -   `Struct` is now `ObjectNode`
+
+## 2.0.0-internal.7.1.0
+
+### Major Changes
+
+-   tree2: Regressions and new node removal model ([#17304](https://github.com/microsoft/FluidFramework/issues/17304)) [935bae84a5](https://github.com/microsoft/FluidFramework/commits/935bae84a513c7184025784e485ad64d23514f92)
+
+    Regression 1: All changes are atomized by the `visitDelta` function. This means that, if you insert/remove/move 2 contiguous nodes, the `visitDelta` function will call the `DeltaVisitor` twice (once for each node) instead of once for both nodes. Anything that sits downstream from the `DeltaVisitor` will therefore also see those changes as atomized.
+
+    Regression 2: The forest never forgets removed content so the memory will grow unbounded.
+
+    Removed nodes are preserved as detached in the forest instead of deleted. Anchors to removed nodes remain valid.
+
+    Change notification for node replacement in optional and required fields are now atomic.
+
+    Updated `PathVisitor` API.
+
+    Forest and AnchorSet are now updated in lockstep.
+
+### Minor Changes
+
+-   tree2: Allow ImplicitFieldSchema for non-recursive schema building ([#17683](https://github.com/microsoft/FluidFramework/issues/17683)) [c11e1ce593](https://github.com/microsoft/FluidFramework/commits/c11e1ce59310c820117d06e4065bf42bed6b823d)
+
+    SchemaBuilder now accepts `ImplicitFieldSchema` in many places which used to require `FieldSchema`.
+    This allows `Required` fields to be implicitly specified from just their AllowedTypes.
+    Additionally in these cases the AllowedTypes can be implicitly specified from a single `Any` or `TreeSchema`.
+
+-   Remove SchemaBuilder.leaf ([#17773](https://github.com/microsoft/FluidFramework/issues/17773)) [674565130f](https://github.com/microsoft/FluidFramework/commits/674565130ffdcf8d23dae858273b303d123587c4)
+
+    Custom schema should use the predefined leaf domain, or wrap its leaf types instead of defining new leaf schema.
+
+-   tree2: Forest summaries now include detached fields ([#17391](https://github.com/microsoft/FluidFramework/issues/17391)) [5b6bc74ca8](https://github.com/microsoft/FluidFramework/commits/5b6bc74ca85470783c6f48c061385f128f4fc6f9)
+
+    Forest summaries now include detached fields. This breaks existing documents.
+
+-   tree2: Rename "Value" Multiplicity and FieldKind ([#17622](https://github.com/microsoft/FluidFramework/issues/17622)) [bb68aeb30c](https://github.com/microsoft/FluidFramework/commits/bb68aeb30cfb3d4e0e82f04f1771ad4cb69e23af)
+
+    `Multiplicity.Value` has been renamed to `Multiplicity.Single` and `FieldKinds.value` has been renamed to `FieldKinds.required`.
+
+-   tree2: SharedTreeFactory type changed ([#17588](https://github.com/microsoft/FluidFramework/issues/17588)) [7ebe2b7a79](https://github.com/microsoft/FluidFramework/commits/7ebe2b7a7962e4b9a87c305cc48ffc00b1e57583)
+
+    The 'type' field for @fluid-experimental/tree2's exported `IChannelFactory`s has been changed to not overlap with @fluid-experimental/tree's channel type.
+    This breaks existing tree2 documents: upon loading them, an error with message "Channel Factory SharedTree not registered" will be thrown.
+    If using the typed-tree API, the message will instead be "Channel Factory SharedTree:<subtype> not registered" where <subtype> is the subtype used by
+    the application when constructing their `TypedTreeFactory`.
+
+    Applications which want to support such documents could add an explicit registry entry to their `ISharedObjectRegistry` which maps the type shown in the error message to a factory producing @fluid-experimental/tree2.
+
 ## 2.0.0-internal.7.0.0
 
 ### Major Changes

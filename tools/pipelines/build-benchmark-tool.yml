@@ -35,6 +35,7 @@ trigger:
     - lts
   paths:
     include:
+    - .prettierignore
     - tools/benchmark
     - tools/pipelines/build-benchmark-tool.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -45,7 +46,8 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-log-test-failures.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
 
 pr:
   branches:
@@ -56,6 +58,7 @@ pr:
     - release/*
   paths:
     include:
+    - .prettierignore
     - tools/benchmark
     - tools/pipelines/build-benchmark-tool.yml
     - tools/pipelines/templates/build-npm-package.yml
@@ -63,7 +66,8 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-log-test-failures.yml
+    - tools/pipelines/templates/include-process-test-results.yml
+    - scripts/*
 
 extends:
   template: templates/build-npm-package.yml

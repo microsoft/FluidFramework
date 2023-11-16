@@ -7,12 +7,12 @@ import { ObjectOptions, Static, Type } from "@sinclair/typebox";
 import { assert } from "@fluidframework/core-utils";
 import {
 	FieldKindIdentifierSchema,
-	FieldStoredSchema,
+	TreeFieldStoredSchema,
 	FieldKey,
 	FieldKeySchema,
-	SchemaData,
 	TreeStoredSchema,
-	TreeSchemaIdentifier,
+	TreeNodeStoredSchema,
+	TreeNodeSchemaIdentifier,
 	TreeSchemaIdentifierSchema,
 	ValueSchema,
 } from "../core";
@@ -40,12 +40,12 @@ const NamedFieldSchemaFormat = Type.Composite(
 	noAdditionalProps,
 );
 
-const TreeSchemaFormat = Type.Object(
+const TreeNodeSchemaFormat = Type.Object(
 	{
 		name: TreeSchemaIdentifierSchema,
-		structFields: Type.Array(NamedFieldSchemaFormat),
+		objectNodeFields: Type.Array(NamedFieldSchemaFormat),
 		mapFields: Type.Optional(FieldSchemaFormat),
-		// TODO: don't use external type here.
+		// TODO: don't use external type here!
 		leafValue: Type.Optional(Type.Enum(ValueSchema)),
 	},
 	noAdditionalProps,
@@ -63,7 +63,7 @@ const TreeSchemaFormat = Type.Object(
 export const Format = Type.Object(
 	{
 		version: Type.Literal(version),
-		treeSchema: Type.Array(TreeSchemaFormat),
+		nodeSchema: Type.Array(TreeNodeSchemaFormat),
 		rootFieldSchema: FieldSchemaFormat,
 	},
 	noAdditionalProps,
@@ -71,7 +71,7 @@ export const Format = Type.Object(
 
 export type Format = Static<typeof Format>;
 type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
-type TreeSchemaFormat = Static<typeof TreeSchemaFormat>;
+type TreeNodeSchemaFormat = Static<typeof TreeNodeSchemaFormat>;
 type NamedFieldSchemaFormat = Static<typeof NamedFieldSchemaFormat>;
 
 const Versioned = Type.Object({
@@ -79,16 +79,16 @@ const Versioned = Type.Object({
 });
 type Versioned = Static<typeof Versioned>;
 
-function encodeRepo(repo: SchemaData): Format {
-	const treeSchema: TreeSchemaFormat[] = [];
+export function encodeRepo(repo: TreeStoredSchema): Format {
+	const treeNodeSchema: TreeNodeSchemaFormat[] = [];
 	const rootFieldSchema = encodeField(repo.rootFieldSchema);
-	for (const [name, schema] of repo.treeSchema) {
-		treeSchema.push(encodeTree(name, schema));
+	for (const [name, schema] of repo.nodeSchema) {
+		treeNodeSchema.push(encodeTree(name, schema));
 	}
-	treeSchema.sort(compareNamed);
+	treeNodeSchema.sort(compareNamed);
 	return {
 		version,
-		treeSchema,
+		nodeSchema: treeNodeSchema,
 		rootFieldSchema,
 	};
 }
@@ -103,11 +103,14 @@ function compareNamed(a: Named<string>, b: Named<string>) {
 	return 0;
 }
 
-function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeSchemaFormat {
-	const out: TreeSchemaFormat = {
+function encodeTree(
+	name: TreeNodeSchemaIdentifier,
+	schema: TreeNodeStoredSchema,
+): TreeNodeSchemaFormat {
+	const out: TreeNodeSchemaFormat = {
 		name,
 		mapFields: schema.mapFields === undefined ? undefined : encodeField(schema.mapFields),
-		structFields: [...schema.structFields]
+		objectNodeFields: [...schema.objectNodeFields]
 			.map(([k, v]) => encodeNamedField(k, v))
 			.sort(compareNamed),
 		leafValue: schema.leafValue,
@@ -115,7 +118,7 @@ function encodeTree(name: TreeSchemaIdentifier, schema: TreeStoredSchema): TreeS
 	return out;
 }
 
-function encodeField(schema: FieldStoredSchema): FieldSchemaFormat {
+function encodeField(schema: TreeFieldStoredSchema): FieldSchemaFormat {
 	const out: FieldSchemaFormat = {
 		kind: schema.kind.identifier,
 	};
@@ -125,26 +128,26 @@ function encodeField(schema: FieldStoredSchema): FieldSchemaFormat {
 	return out;
 }
 
-function encodeNamedField<T>(name: T, schema: FieldStoredSchema): FieldSchemaFormat & Named<T> {
+function encodeNamedField<T>(name: T, schema: TreeFieldStoredSchema): FieldSchemaFormat & Named<T> {
 	return {
 		...encodeField(schema),
 		name,
 	};
 }
 
-function decode(f: Format): SchemaData {
-	const treeSchema: Map<TreeSchemaIdentifier, TreeStoredSchema> = new Map();
-	for (const tree of f.treeSchema) {
-		treeSchema.set(brand(tree.name), decodeTree(tree));
+function decode(f: Format): TreeStoredSchema {
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
+	for (const tree of f.nodeSchema) {
+		nodeSchema.set(brand(tree.name), decodeTree(tree));
 	}
 	return {
 		rootFieldSchema: decodeField(f.rootFieldSchema),
-		treeSchema,
+		nodeSchema,
 	};
 }
 
-function decodeField(schema: FieldSchemaFormat): FieldStoredSchema {
-	const out: FieldStoredSchema = {
+function decodeField(schema: FieldSchemaFormat): TreeFieldStoredSchema {
+	const out: TreeFieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: { identifier: schema.kind },
 		types: schema.types === undefined ? undefined : new Set(schema.types),
@@ -152,11 +155,11 @@ function decodeField(schema: FieldSchemaFormat): FieldStoredSchema {
 	return out;
 }
 
-function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
-	const out: TreeStoredSchema = {
+function decodeTree(schema: TreeNodeSchemaFormat): TreeNodeStoredSchema {
+	const out: TreeNodeStoredSchema = {
 		mapFields: schema.mapFields === undefined ? undefined : decodeField(schema.mapFields),
-		structFields: new Map(
-			schema.structFields.map((field): [FieldKey, FieldStoredSchema] => [
+		objectNodeFields: new Map(
+			schema.objectNodeFields.map((field): [FieldKey, TreeFieldStoredSchema] => [
 				brand(field.name),
 				decodeField(field),
 			]),
@@ -173,11 +176,11 @@ function decodeTree(schema: TreeSchemaFormat): TreeStoredSchema {
  */
 export function makeSchemaCodec({
 	jsonValidator: validator,
-}: ICodecOptions): IJsonCodec<SchemaData, Format> {
+}: ICodecOptions): IJsonCodec<TreeStoredSchema, Format> {
 	const versionedValidator = validator.compile(Versioned);
 	const formatValidator = validator.compile(Format);
 	return {
-		encode: (data: SchemaData) => {
+		encode: (data: TreeStoredSchema) => {
 			const encoded = encodeRepo(data);
 			assert(
 				versionedValidator.check(encoded),

@@ -14,10 +14,12 @@ import {
 	ChangeFamilyEditor,
 	FieldKey,
 	emptyDelta,
+	RevisionTag,
+	deltaForSet,
 } from "../core";
 import { IJsonCodec, makeCodecFamily, makeValueCodec } from "../codec";
 import { RecursiveReadonly, brand } from "../util";
-import { singleTextCursor } from "../feature-libraries";
+import { cursorForJsonableTreeNode } from "../feature-libraries";
 import { deepFreeze } from "./utils";
 
 export interface NonEmptyTestChange {
@@ -162,30 +164,28 @@ function checkChangeList(
 	assert.deepEqual(intentionsSeen, intentions);
 }
 
-function toDelta(change: TestChange): Delta.Modify {
+function toDelta({ change, revision }: TaggedChange<TestChange>): Delta.FieldMap {
 	if (change.intentions.length > 0) {
-		return {
-			type: Delta.MarkType.Modify,
-			fields: new Map([
-				[
-					brand("foo"),
-					[
-						{ type: Delta.MarkType.Delete, count: 1 },
-						{
-							type: Delta.MarkType.Insert,
-							content: [
-								singleTextCursor({
-									type: brand("test"),
-									value: change.intentions.map(String).join("|"),
-								}),
-							],
-						},
-					],
-				],
-			]),
-		};
+		const hasMajor: { major?: RevisionTag } = {};
+		if (revision !== undefined) {
+			hasMajor.major = revision;
+		}
+		const buildId = { ...hasMajor, minor: 424243 };
+		return new Map([
+			[
+				brand("foo"),
+				deltaForSet(
+					cursorForJsonableTreeNode({
+						type: brand("test"),
+						value: change.intentions.map(String).join("|"),
+					}),
+					buildId,
+					{ ...hasMajor, minor: 424242 },
+				),
+			],
+		]);
 	}
-	return { type: Delta.MarkType.Modify };
+	return new Map();
 }
 
 export interface AnchorRebaseData {
@@ -276,12 +276,14 @@ const rootKey: FieldKey = brand("root");
 
 /**
  * This is a hack to encode arbitrary information (the intentions) into a Delta.
- * The resulting Delta does note represent a concrete change to a document tree.
+ * The resulting Delta does not represent a concrete change to a document tree.
  * It is instead used as composite value in deep comparisons that verify that `EditManager` calls
  * `ChangeFamily.intoDelta` with the expected change.
  */
 export function asDelta(intentions: number[]): Delta.Root {
-	return intentions.length === 0 ? emptyDelta : new Map([[rootKey, intentions]]);
+	return intentions.length === 0
+		? emptyDelta
+		: new Map([[rootKey, { local: intentions.map((i) => ({ count: i })) }]]);
 }
 
 export function testChangeFamilyFactory(
@@ -294,7 +296,7 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
-		intoDelta: (change: TestChange): Delta.Root => asDelta(change.intentions),
+		intoDelta: ({ change }: TaggedChange<TestChange>): Delta.Root => asDelta(change.intentions),
 	};
 	return family;
 }

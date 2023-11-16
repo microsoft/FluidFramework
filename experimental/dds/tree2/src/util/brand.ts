@@ -4,7 +4,7 @@
  */
 
 import { TUnsafe, Type } from "@sinclair/typebox";
-import { Invariant, isAny } from "./typeCheck";
+import { Covariant, isAny } from "./typeCheck";
 
 /**
  * Constructs a "Branded" type, adding a type-checking only field to `ValueType`.
@@ -12,7 +12,8 @@ import { Invariant, isAny } from "./typeCheck";
  * Two usages of `Brand` should never use the same `Name`.
  * If they do, the resulting types will be assignable which defeats the point of this type.
  *
- * This type is constructed such that the first line of type errors when assigning mismatched branded types will be:
+ * This type is constructed such that the first line of type errors when assigning
+ * mismatched branded types will be:
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
@@ -23,8 +24,8 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
 /**
  * Helper for {@link Brand}.
  * This is split out into its own as that's the only way to:
- * - have doc comments for the field.
- * - make the field protected (so you don't accidentally try and read it).
+ * - have doc comments for the member.
+ * - make the member protected (so you don't accidentally try and read it).
  * - get nominal typing (so types produced without using this class can never be assignable to it).
  * - allow use as {@link Opaque} branded type (not assignable to `ValueType`, but captures `ValueType`).
  *
@@ -33,17 +34,26 @@ export type Brand<ValueType, Name extends string> = ValueType & BrandedType<Valu
  * Do not use this class with `instanceof`: this will always be false at runtime,
  * but the compiler may think it's true in some cases.
  *
+ * @remarks
+ * This is covariant over ValueType.
+ * This is suitable for when ValueType is immutable (like string or number),
+ * which is the common use-case for branding.
+ *
  * @sealed
  * @alpha
  */
-export abstract class BrandedType<ValueType, Name extends string> {
-	protected _typeCheck?: Invariant<ValueType>;
+export abstract class BrandedType<out ValueType, Name extends string> {
+	protected _typeCheck?: Covariant<ValueType>;
 	/**
 	 * Compile time only marker to make type checking more strict.
-	 * This field will not exist at runtime and accessing it is invalid.
+	 * This method will not exist at runtime and accessing it is invalid.
 	 * See {@link Brand} for details.
+	 *
+	 * @privateRemarks
+	 * `Name` is used as the return type of a method rather than a a simple readonly member as this allows types with two brands to be intersected without getting `never`.
+	 * The method takes in never to help emphasize that its not callable.
 	 */
-	protected readonly _type_brand!: Name;
+	protected abstract brand(dummy: never): Name;
 
 	/**
 	 * This class should never exist at runtime, so make it un-constructable.

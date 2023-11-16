@@ -4,8 +4,6 @@
  */
 
 export {
-	Attach,
-	NewAttach,
 	Changeset,
 	Delete,
 	Detach,
@@ -20,17 +18,16 @@ export {
 	CellCount as NodeCount,
 	MoveId,
 	ProtoNode,
-	Reattach,
+	Attach,
 	ReturnFrom,
-	ReturnTo,
-	Revive,
 	NoopMark,
 	LineageEvent,
-	HasReattachFields,
 	CellId,
 	HasMarkFields,
 	HasLineage,
 	IdRange,
+	CellMark,
+	AttachAndDetach,
 } from "./format";
 export {
 	SequenceFieldChangeHandler,
@@ -48,18 +45,14 @@ export {
 	areComposable,
 	areRebasable,
 	getInputLength,
-	isDetachMark,
-	isReattach,
+	isDetach,
 	DetachedNodeTracker,
 	newCrossFieldTable,
 	newMoveEffectTable,
 	CrossFieldTable,
 	cloneMark,
+	extractMarkEffect,
 } from "./utils";
-export {
-	isMoveMark,
-	MoveMark,
-	MoveEffectTable,
-	MoveEffect,
-	PairedMarkUpdate,
-} from "./moveEffectTable";
+export { isMoveMark, MoveMark, MoveEffectTable, MoveEffect } from "./moveEffectTable";
+
+export { relevantRemovedTrees } from "./relevantRemovedTrees";

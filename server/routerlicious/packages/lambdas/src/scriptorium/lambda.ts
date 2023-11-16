@@ -38,6 +38,7 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	private current = new Map<string, ISequencedOperationMessage[]>();
 	private readonly clientFacadeRetryEnabled: boolean;
 	private readonly telemetryEnabled: boolean;
+	private readonly shouldLogInitialSuccessVerbose: boolean;
 	private pendingMetric: Lumber<LumberEventName.ScriptoriumProcessBatch> | undefined;
 	private readonly maxDbBatchSize: number;
 	private readonly restartOnCheckpointFailure: boolean;
@@ -49,6 +50,8 @@ export class ScriptoriumLambda implements IPartitionLambda {
 	) {
 		this.clientFacadeRetryEnabled = isRetryEnabled(this.opCollection);
 		this.telemetryEnabled = this.providerConfig?.enableTelemetry;
+		this.shouldLogInitialSuccessVerbose =
+			this.providerConfig?.shouldLogInitialSuccessVerbose ?? false;
 		this.maxDbBatchSize = this.providerConfig?.maxDbBatchSize ?? 1000;
 		this.restartOnCheckpointFailure = this.providerConfig?.restartOnCheckpointFailure;
 	}
@@ -256,11 +259,14 @@ export class ScriptoriumLambda implements IPartitionLambda {
 				...getLumberBaseProperties(documentId, tenantId),
 				...{ sequenceNumberRanges, insertBatchSize, scriptoriumMetricId },
 			},
-			(error) => error.code === 11000,
+			(error) =>
+				error.code === 11000 ||
+				error.message?.toString()?.indexOf("E11000 duplicate key") >= 0,
 			(error) => !this.clientFacadeRetryEnabled /* shouldRetry */,
 			undefined /* calculateIntervalMs */,
 			undefined /* onErrorFn */,
 			this.telemetryEnabled,
+			this.shouldLogInitialSuccessVerbose,
 		);
 	}
 }

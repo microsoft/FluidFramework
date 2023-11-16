@@ -37,15 +37,23 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	}),
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change, deltaFromChild: ToDelta): Delta.MarkList => [],
+	intoDelta: (change, deltaFromChild: ToDelta): Delta.FieldChanges => ({}),
+	relevantRemovedTrees: (change): Iterable<Delta.DetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
 };
 
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
+	 * @param newContent - the new content for the field
+	 * @param changeId - the ID associated with the replacement of the current content.
+	 * @param buildId - the ID associated with the creation of the `newContent`.
 	 */
-	set(newValue: ITreeCursor, id: ChangesetLocalId): OptionalChangeset;
+	set(
+		newContent: ITreeCursor,
+		changeId: ChangesetLocalId,
+		buildId: ChangesetLocalId,
+	): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -65,8 +73,11 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (newContent: ITreeCursor, id: ChangesetLocalId): OptionalChangeset =>
-		optionalFieldEditor.set(newContent, false, id),
+	set: (
+		newContent: ITreeCursor,
+		setId: ChangesetLocalId,
+		buildId: ChangesetLocalId,
+	): OptionalChangeset => optionalFieldEditor.set(newContent, false, setId, buildId),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {
