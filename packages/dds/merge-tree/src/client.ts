@@ -162,8 +162,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @param consensusCallback - The callback called when consensus is reached
 	 * @returns The annotate op if valid, otherwise undefined
 	 *
-	 * @deprecated This functionality lacks test coverage and is largely unused. It
-	 * will be removed in a future release.
+	 * @deprecated We no longer intend to support this functionality and it will
+	 * be removed in a future release. There is no replacement for this
+	 * functionality.
 	 */
 	public annotateMarkerNotifyConsensus(
 		marker: Marker,
