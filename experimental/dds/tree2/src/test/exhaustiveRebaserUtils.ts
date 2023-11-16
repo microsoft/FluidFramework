@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { RevisionTag, TaggedChange } from "../../core";
-import { RevisionMetadataSource } from "../../feature-libraries";
+import { RevisionTag, TaggedChange } from "../core";
+import { RevisionMetadataSource } from "../feature-libraries";
 
 /**
  * Given a state tree, constructs the sequence of edits which led to that state.
@@ -129,6 +129,11 @@ function* depthFirstWalk<TContent, TChangeset>(
 	}
 }
 
+export function makeIntentionMinter(): () => number {
+	let intent = 0;
+	return () => intent++;
+}
+
 /**
  * Generates all possible sequences of edits of a fixed length.
  * Revision tags will be prefixed with the provided `tagPrefix`.
@@ -138,16 +143,14 @@ export function* generatePossibleSequenceOfEdits<TContent, TChangeset>(
 	generateChildStates: ChildStateGenerator<TContent, TChangeset>,
 	numberOfEdits: number,
 	tagPrefix: string,
-	initialId = 0,
+	intentionMinter?: () => number,
 ): Iterable<NamedChangeset<TChangeset>[]> {
-	let intent = initialId;
-	const mintIntention = () => intent++;
 	for (const state of depthFirstWalk(
 		initialState,
 		generateChildStates,
 		numberOfEdits,
 		(intention: number) => `${tagPrefix}${intention}` as RevisionTag,
-		mintIntention,
+		intentionMinter ?? makeIntentionMinter(),
 	)) {
 		const edits: NamedChangeset<TChangeset>[] = [];
 		for (

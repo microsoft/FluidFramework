@@ -167,7 +167,7 @@ describe("Editing", () => {
 			const expectedState = [
 				{
 					foo: ["a"],
-					bar: ["d", "b", "e"],
+					bar: ["d", "b", "c", "e"],
 				},
 			];
 
@@ -787,14 +787,15 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const sequence = tree.editor.sequenceField(rootField);
-
 			// Delete source's ancestor concurrently
-			sequence.delete(0, 1);
+			tree.editor.sequenceField(rootField).delete(0, 1);
+			expectJsonTree(tree, [{}]);
 			// Revive source's ancestor
 			undoStack.pop()?.revert();
-			// Delete "a"
+			expectJsonTree(tree, [{ foo: ["a"] }, {}]);
+			// Delete ["a"]
 			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
+			expectJsonTree(tree, [{}, {}]);
 
 			tree2.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -807,7 +808,7 @@ describe("Editing", () => {
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], [{}, {}]);
+			expectJsonTree([tree, tree2], [{}, { bar: ["a"] }]);
 			unsubscribe();
 		});
 
@@ -883,7 +884,7 @@ describe("Editing", () => {
 			unsubscribe();
 		});
 
-		it.skip("node being concurrently moved and revived with source ancestor deleted", () => {
+		it("node being concurrently moved and revived with source ancestor deleted", () => {
 			const tree = makeTreeFromJson([{ foo: ["a"] }, {}]);
 			const tree2 = tree.fork();
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
@@ -900,14 +901,15 @@ describe("Editing", () => {
 				parentField: rootFieldKey,
 			};
 
-			const sequence = tree.editor.sequenceField(rootField);
-
-			// Delete "a"
+			// Delete ["a"]
 			tree.editor.sequenceField({ parent: first, field: brand("foo") }).delete(0, 1);
-			// Revive "a"
+			expectJsonTree(tree, [{}, {}]);
+			// Revive ["a"]
 			undoStack.pop()?.revert();
+			expectJsonTree(tree, [{ foo: ["a"] }, {}]);
 			// Delete source's ancestor concurrently
-			sequence.delete(0, 1);
+			tree.editor.sequenceField(rootField).delete(0, 1);
+			expectJsonTree(tree, [{}]);
 
 			tree2.editor.move(
 				{ parent: first, field: brand("foo") },
@@ -920,7 +922,7 @@ describe("Editing", () => {
 			tree.merge(tree2, false);
 			tree2.rebaseOnto(tree);
 
-			expectJsonTree([tree, tree2], [{}]);
+			expectJsonTree([tree, tree2], [{ bar: ["a"] }]);
 			unsubscribe();
 		});
 
@@ -1560,6 +1562,7 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, { baz: "b" }] }]);
 		});
 
+		// Skipped because we don't currently support undoing edits from a parent branch
 		it.skip("undo restores a removed node even when that node was never present on the branch", () => {
 			const tree = makeTreeFromJson([]);
 			const tree2 = tree.fork();

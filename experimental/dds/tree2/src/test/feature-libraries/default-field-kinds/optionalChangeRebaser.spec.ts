@@ -34,18 +34,14 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-field-kinds/optionalField";
 // eslint-disable-next-line import/no-internal-modules
-import {
-	ContentId,
-	OptionalChangeset,
-} from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
+import { OptionalChangeset } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 import {
 	FieldStateTree,
 	getSequentialEdits,
 	generatePossibleSequenceOfEdits,
 	ChildStateGenerator,
-	NamedChangeset,
-} from "../exhaustiveRebaserUtils";
-import { runExhaustiveComposeRebaseSuite } from "../rebaserAxiomaticTests";
+} from "../../exhaustiveRebaserUtils";
+import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
 import { assertEqual } from "./optionalFieldUtils";
 
 type RevisionTagMinter = () => RevisionTag;
@@ -357,11 +353,11 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
  */
 function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 	const singleTestChangesA = () =>
-		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, "A", 0);
+		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, "A");
 
 	// Number here is arbitrary
 	const singleTestChangesB = () =>
-		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, "B", 10000);
+		generatePossibleSequenceOfEdits(initialState, generateChildStates, 1, "B");
 
 	/**
 	 * This test simulates rebasing over an do-inverse pair.
@@ -460,6 +456,11 @@ describe("OptionalField - Rebaser Axioms", () => {
 			[{ content: undefined }, { content: "A" }],
 			generateChildStates,
 			{ rebase, rebaseComposed, compose, invert, assertEqual },
+			{
+				numberOfEditsToRebase: 3,
+				numberOfEditsToRebaseOver: 3,
+				numberOfEditsToVerifyAssociativity: 4,
+			},
 		);
 	});
 });

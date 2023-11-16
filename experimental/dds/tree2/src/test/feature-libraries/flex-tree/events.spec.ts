@@ -10,11 +10,9 @@ import { FieldKinds } from "../../../feature-libraries";
 import { ForestType, SharedTreeFactory } from "../../../shared-tree";
 import { typeboxValidator } from "../../../external-utilities";
 import { AllowedUpdateType, SchemaBuilder, leaf } from "../../..";
-import { viewWithContent } from "../../utils";
+import { flexTreeViewWithContent } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
-import { getEditNode } from "../../../feature-libraries/simple-tree/editNode";
-// eslint-disable-next-line import/no-internal-modules
-import { onNextChange } from "../../../feature-libraries/flex-tree/editableTreeTypes";
+import { onNextChange } from "../../../feature-libraries/flex-tree/flexTreeTypes";
 
 describe("beforeChange/afterChange events", () => {
 	const builder = new SchemaBuilder({
@@ -667,8 +665,8 @@ describe("onNextChange event", () => {
 	const initialTree = { content: 3 };
 
 	it("fires exactly once after a change", () => {
-		const view = viewWithContent({ schema, initialTree });
-		const editNode = getEditNode(view.root);
+		const view = flexTreeViewWithContent({ schema, initialTree });
+		const editNode = view.editableTree.content;
 		let onNextChangeCount = 0;
 		editNode[onNextChange](() => (onNextChangeCount += 1));
 		assert(editNode.is(object));
@@ -679,16 +677,16 @@ describe("onNextChange event", () => {
 	});
 
 	it("can have at most one listener at a time", () => {
-		const view = viewWithContent({ schema, initialTree });
-		const editNode = getEditNode(view.root);
+		const view = flexTreeViewWithContent({ schema, initialTree });
+		const editNode = view.editableTree.content;
 		let onNextChangeEventCount = 0;
 		editNode[onNextChange](() => (onNextChangeEventCount += 1));
 		assert.throws(() => editNode[onNextChange](() => (onNextChangeEventCount += 1)));
 	});
 
 	it("can be subscribed to again after throwing and catching an error", () => {
-		const view = viewWithContent({ schema, initialTree });
-		const editNode = getEditNode(view.root);
+		const view = flexTreeViewWithContent({ schema, initialTree });
+		const editNode = view.editableTree.content;
 		assert(editNode.is(object));
 		editNode[onNextChange](() => {
 			throw new Error();
@@ -698,8 +696,8 @@ describe("onNextChange event", () => {
 	});
 
 	it("can be unsubscribed from", () => {
-		const view = viewWithContent({ schema, initialTree });
-		const editNode = getEditNode(view.root);
+		const view = flexTreeViewWithContent({ schema, initialTree });
+		const editNode = view.editableTree.content;
 		assert(editNode.is(object));
 		let onNextChangeEventFired = false;
 		const off = editNode[onNextChange](() => {
@@ -711,8 +709,8 @@ describe("onNextChange event", () => {
 	});
 
 	it("unsubscription has no effect if the event has already fired", () => {
-		const view = viewWithContent({ schema, initialTree });
-		const editNode = getEditNode(view.root);
+		const view = flexTreeViewWithContent({ schema, initialTree });
+		const editNode = view.editableTree.content;
 		assert(editNode.is(object));
 		const off = editNode[onNextChange](() => {});
 		editNode.content = 7;

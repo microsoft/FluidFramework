@@ -68,7 +68,7 @@ import { Context, getTreeContext } from "../../../feature-libraries/flex-tree/co
 import { TreeContent } from "../../../shared-tree";
 import { leaf as leafDomain, SchemaBuilder } from "../../../domains";
 import { testTrees, treeContentFromTestTree } from "../../testTrees";
-import { forestWithContent, viewWithContent } from "../../utils";
+import { forestWithContent, flexTreeViewWithContent } from "../../utils";
 import { contextWithContentReadonly } from "./utils";
 
 function collectPropertyNames(obj: object): Set<string> {
@@ -405,7 +405,7 @@ describe("LazyMap", () => {
 	});
 
 	it("set", () => {
-		const view = viewWithContent({ schema, initialTree: {} });
+		const view = flexTreeViewWithContent({ schema, initialTree: {} });
 		const mapNode = view.editableTree.content;
 		assert(mapNode.is(mapNodeSchema));
 
@@ -422,7 +422,7 @@ describe("LazyMap", () => {
 	});
 
 	it("getBoxed empty", () => {
-		const view = viewWithContent({ schema, initialTree: {} });
+		const view = flexTreeViewWithContent({ schema, initialTree: {} });
 		const mapNode = view.editableTree.content;
 		assert(mapNode.is(mapNodeSchema));
 

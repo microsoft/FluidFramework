@@ -10,10 +10,11 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils";
-import { ISharedTree, ITreeView, SharedTree, SharedTreeFactory } from "../../shared-tree";
+import { ISharedTree, SharedTree, SharedTreeFactory, TreeView } from "../../shared-tree";
 import { typeboxValidator } from "../../external-utilities";
 import { SchemaBuilder } from "../../domains";
 import { AllowedUpdateType } from "../../core";
+import { TreeField } from "../../simple-tree";
 
 const builder = new SchemaBuilder({ scope: "test" });
 const someType = builder.object("foo", {
@@ -28,13 +29,13 @@ const someType = builder.object("foo", {
 
 const schema = builder.intoSchema(SchemaBuilder.required(someType));
 
-function getNewTreeView(tree: ISharedTree): ITreeView<typeof schema.rootFieldSchema> {
-	return tree.schematizeInternal({
+function getNewTreeView(tree: ISharedTree): TreeView<TreeField<typeof schema.rootFieldSchema>> {
+	return tree.schematize({
 		initialTree: {
-			handles: [],
+			handles: { "": [] },
 			nested: undefined,
 			bump: undefined,
-		} as any,
+		},
 		allowedSchemaModifications: AllowedUpdateType.None,
 		schema,
 	});

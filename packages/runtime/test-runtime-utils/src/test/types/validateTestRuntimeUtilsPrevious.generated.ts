@@ -29,7 +29,7 @@ type TypeOnly<T> = T extends number
 declare function get_old_InterfaceDeclaration_IInsecureUser():
     TypeOnly<old.IInsecureUser>;
 declare function use_current_InterfaceDeclaration_IInsecureUser(
-    use: TypeOnly<current.IInsecureUser>);
+    use: TypeOnly<current.IInsecureUser>): void;
 use_current_InterfaceDeclaration_IInsecureUser(
     get_old_InterfaceDeclaration_IInsecureUser());
 
@@ -41,7 +41,7 @@ use_current_InterfaceDeclaration_IInsecureUser(
 declare function get_current_InterfaceDeclaration_IInsecureUser():
     TypeOnly<current.IInsecureUser>;
 declare function use_old_InterfaceDeclaration_IInsecureUser(
-    use: TypeOnly<old.IInsecureUser>);
+    use: TypeOnly<old.IInsecureUser>): void;
 use_old_InterfaceDeclaration_IInsecureUser(
     get_current_InterfaceDeclaration_IInsecureUser());
 
@@ -53,7 +53,7 @@ use_old_InterfaceDeclaration_IInsecureUser(
 declare function get_old_InterfaceDeclaration_IMockContainerRuntimeOptions():
     TypeOnly<old.IMockContainerRuntimeOptions>;
 declare function use_current_InterfaceDeclaration_IMockContainerRuntimeOptions(
-    use: TypeOnly<current.IMockContainerRuntimeOptions>);
+    use: TypeOnly<current.IMockContainerRuntimeOptions>): void;
 use_current_InterfaceDeclaration_IMockContainerRuntimeOptions(
     get_old_InterfaceDeclaration_IMockContainerRuntimeOptions());
 
@@ -65,7 +65,7 @@ use_current_InterfaceDeclaration_IMockContainerRuntimeOptions(
 declare function get_current_InterfaceDeclaration_IMockContainerRuntimeOptions():
     TypeOnly<current.IMockContainerRuntimeOptions>;
 declare function use_old_InterfaceDeclaration_IMockContainerRuntimeOptions(
-    use: TypeOnly<old.IMockContainerRuntimeOptions>);
+    use: TypeOnly<old.IMockContainerRuntimeOptions>): void;
 use_old_InterfaceDeclaration_IMockContainerRuntimeOptions(
     get_current_InterfaceDeclaration_IMockContainerRuntimeOptions());
 
@@ -77,7 +77,7 @@ use_old_InterfaceDeclaration_IMockContainerRuntimeOptions(
 declare function get_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage():
     TypeOnly<old.IMockContainerRuntimePendingMessage>;
 declare function use_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
-    use: TypeOnly<current.IMockContainerRuntimePendingMessage>);
+    use: TypeOnly<current.IMockContainerRuntimePendingMessage>): void;
 use_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
     get_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage());
 
@@ -89,7 +89,7 @@ use_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
 declare function get_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage():
     TypeOnly<current.IMockContainerRuntimePendingMessage>;
 declare function use_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
-    use: TypeOnly<old.IMockContainerRuntimePendingMessage>);
+    use: TypeOnly<old.IMockContainerRuntimePendingMessage>): void;
 use_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
     get_current_InterfaceDeclaration_IMockContainerRuntimePendingMessage());
 
@@ -101,7 +101,7 @@ use_old_InterfaceDeclaration_IMockContainerRuntimePendingMessage(
 declare function get_old_ClassDeclaration_InsecureTokenProvider():
     TypeOnly<old.InsecureTokenProvider>;
 declare function use_current_ClassDeclaration_InsecureTokenProvider(
-    use: TypeOnly<current.InsecureTokenProvider>);
+    use: TypeOnly<current.InsecureTokenProvider>): void;
 use_current_ClassDeclaration_InsecureTokenProvider(
     get_old_ClassDeclaration_InsecureTokenProvider());
 
@@ -113,7 +113,7 @@ use_current_ClassDeclaration_InsecureTokenProvider(
 declare function get_current_ClassDeclaration_InsecureTokenProvider():
     TypeOnly<current.InsecureTokenProvider>;
 declare function use_old_ClassDeclaration_InsecureTokenProvider(
-    use: TypeOnly<old.InsecureTokenProvider>);
+    use: TypeOnly<old.InsecureTokenProvider>): void;
 use_old_ClassDeclaration_InsecureTokenProvider(
     get_current_ClassDeclaration_InsecureTokenProvider());
 
@@ -125,7 +125,7 @@ use_old_ClassDeclaration_InsecureTokenProvider(
 declare function get_old_ClassDeclaration_MockContainerRuntime():
     TypeOnly<old.MockContainerRuntime>;
 declare function use_current_ClassDeclaration_MockContainerRuntime(
-    use: TypeOnly<current.MockContainerRuntime>);
+    use: TypeOnly<current.MockContainerRuntime>): void;
 use_current_ClassDeclaration_MockContainerRuntime(
     get_old_ClassDeclaration_MockContainerRuntime());
 
@@ -137,7 +137,7 @@ use_current_ClassDeclaration_MockContainerRuntime(
 declare function get_current_ClassDeclaration_MockContainerRuntime():
     TypeOnly<current.MockContainerRuntime>;
 declare function use_old_ClassDeclaration_MockContainerRuntime(
-    use: TypeOnly<old.MockContainerRuntime>);
+    use: TypeOnly<old.MockContainerRuntime>): void;
 use_old_ClassDeclaration_MockContainerRuntime(
     get_current_ClassDeclaration_MockContainerRuntime());
 
@@ -149,7 +149,7 @@ use_old_ClassDeclaration_MockContainerRuntime(
 declare function get_old_ClassDeclaration_MockContainerRuntimeFactory():
     TypeOnly<old.MockContainerRuntimeFactory>;
 declare function use_current_ClassDeclaration_MockContainerRuntimeFactory(
-    use: TypeOnly<current.MockContainerRuntimeFactory>);
+    use: TypeOnly<current.MockContainerRuntimeFactory>): void;
 use_current_ClassDeclaration_MockContainerRuntimeFactory(
     get_old_ClassDeclaration_MockContainerRuntimeFactory());
 
@@ -161,7 +161,7 @@ use_current_ClassDeclaration_MockContainerRuntimeFactory(
 declare function get_current_ClassDeclaration_MockContainerRuntimeFactory():
     TypeOnly<current.MockContainerRuntimeFactory>;
 declare function use_old_ClassDeclaration_MockContainerRuntimeFactory(
-    use: TypeOnly<old.MockContainerRuntimeFactory>);
+    use: TypeOnly<old.MockContainerRuntimeFactory>): void;
 use_old_ClassDeclaration_MockContainerRuntimeFactory(
     get_current_ClassDeclaration_MockContainerRuntimeFactory());
 
@@ -173,7 +173,7 @@ use_old_ClassDeclaration_MockContainerRuntimeFactory(
 declare function get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection():
     TypeOnly<old.MockContainerRuntimeFactoryForReconnection>;
 declare function use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
-    use: TypeOnly<current.MockContainerRuntimeFactoryForReconnection>);
+    use: TypeOnly<current.MockContainerRuntimeFactoryForReconnection>): void;
 use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
     get_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection());
 
@@ -185,7 +185,7 @@ use_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
 declare function get_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection():
     TypeOnly<current.MockContainerRuntimeFactoryForReconnection>;
 declare function use_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
-    use: TypeOnly<old.MockContainerRuntimeFactoryForReconnection>);
+    use: TypeOnly<old.MockContainerRuntimeFactoryForReconnection>): void;
 use_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
     get_current_ClassDeclaration_MockContainerRuntimeFactoryForReconnection());
 
@@ -197,7 +197,7 @@ use_old_ClassDeclaration_MockContainerRuntimeFactoryForReconnection(
 declare function get_old_ClassDeclaration_MockContainerRuntimeForReconnection():
     TypeOnly<old.MockContainerRuntimeForReconnection>;
 declare function use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
-    use: TypeOnly<current.MockContainerRuntimeForReconnection>);
+    use: TypeOnly<current.MockContainerRuntimeForReconnection>): void;
 use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
     get_old_ClassDeclaration_MockContainerRuntimeForReconnection());
 
@@ -209,7 +209,7 @@ use_current_ClassDeclaration_MockContainerRuntimeForReconnection(
 declare function get_current_ClassDeclaration_MockContainerRuntimeForReconnection():
     TypeOnly<current.MockContainerRuntimeForReconnection>;
 declare function use_old_ClassDeclaration_MockContainerRuntimeForReconnection(
-    use: TypeOnly<old.MockContainerRuntimeForReconnection>);
+    use: TypeOnly<old.MockContainerRuntimeForReconnection>): void;
 use_old_ClassDeclaration_MockContainerRuntimeForReconnection(
     get_current_ClassDeclaration_MockContainerRuntimeForReconnection());
 
@@ -221,7 +221,7 @@ use_old_ClassDeclaration_MockContainerRuntimeForReconnection(
 declare function get_old_ClassDeclaration_MockDeltaConnection():
     TypeOnly<old.MockDeltaConnection>;
 declare function use_current_ClassDeclaration_MockDeltaConnection(
-    use: TypeOnly<current.MockDeltaConnection>);
+    use: TypeOnly<current.MockDeltaConnection>): void;
 use_current_ClassDeclaration_MockDeltaConnection(
     get_old_ClassDeclaration_MockDeltaConnection());
 
@@ -233,7 +233,7 @@ use_current_ClassDeclaration_MockDeltaConnection(
 declare function get_current_ClassDeclaration_MockDeltaConnection():
     TypeOnly<current.MockDeltaConnection>;
 declare function use_old_ClassDeclaration_MockDeltaConnection(
-    use: TypeOnly<old.MockDeltaConnection>);
+    use: TypeOnly<old.MockDeltaConnection>): void;
 use_old_ClassDeclaration_MockDeltaConnection(
     get_current_ClassDeclaration_MockDeltaConnection());
 
@@ -245,7 +245,7 @@ use_old_ClassDeclaration_MockDeltaConnection(
 declare function get_old_ClassDeclaration_MockDeltaManager():
     TypeOnly<old.MockDeltaManager>;
 declare function use_current_ClassDeclaration_MockDeltaManager(
-    use: TypeOnly<current.MockDeltaManager>);
+    use: TypeOnly<current.MockDeltaManager>): void;
 use_current_ClassDeclaration_MockDeltaManager(
     get_old_ClassDeclaration_MockDeltaManager());
 
@@ -257,7 +257,7 @@ use_current_ClassDeclaration_MockDeltaManager(
 declare function get_current_ClassDeclaration_MockDeltaManager():
     TypeOnly<current.MockDeltaManager>;
 declare function use_old_ClassDeclaration_MockDeltaManager(
-    use: TypeOnly<old.MockDeltaManager>);
+    use: TypeOnly<old.MockDeltaManager>): void;
 use_old_ClassDeclaration_MockDeltaManager(
     get_current_ClassDeclaration_MockDeltaManager());
 
@@ -269,7 +269,7 @@ use_old_ClassDeclaration_MockDeltaManager(
 declare function get_old_ClassDeclaration_MockDeltaQueue():
     TypeOnly<old.MockDeltaQueue<any>>;
 declare function use_current_ClassDeclaration_MockDeltaQueue(
-    use: TypeOnly<current.MockDeltaQueue<any>>);
+    use: TypeOnly<current.MockDeltaQueue<any>>): void;
 use_current_ClassDeclaration_MockDeltaQueue(
     get_old_ClassDeclaration_MockDeltaQueue());
 
@@ -281,7 +281,7 @@ use_current_ClassDeclaration_MockDeltaQueue(
 declare function get_current_ClassDeclaration_MockDeltaQueue():
     TypeOnly<current.MockDeltaQueue<any>>;
 declare function use_old_ClassDeclaration_MockDeltaQueue(
-    use: TypeOnly<old.MockDeltaQueue<any>>);
+    use: TypeOnly<old.MockDeltaQueue<any>>): void;
 use_old_ClassDeclaration_MockDeltaQueue(
     get_current_ClassDeclaration_MockDeltaQueue());
 
@@ -293,7 +293,7 @@ use_old_ClassDeclaration_MockDeltaQueue(
 declare function get_old_ClassDeclaration_MockEmptyDeltaConnection():
     TypeOnly<old.MockEmptyDeltaConnection>;
 declare function use_current_ClassDeclaration_MockEmptyDeltaConnection(
-    use: TypeOnly<current.MockEmptyDeltaConnection>);
+    use: TypeOnly<current.MockEmptyDeltaConnection>): void;
 use_current_ClassDeclaration_MockEmptyDeltaConnection(
     get_old_ClassDeclaration_MockEmptyDeltaConnection());
 
@@ -305,7 +305,7 @@ use_current_ClassDeclaration_MockEmptyDeltaConnection(
 declare function get_current_ClassDeclaration_MockEmptyDeltaConnection():
     TypeOnly<current.MockEmptyDeltaConnection>;
 declare function use_old_ClassDeclaration_MockEmptyDeltaConnection(
-    use: TypeOnly<old.MockEmptyDeltaConnection>);
+    use: TypeOnly<old.MockEmptyDeltaConnection>): void;
 use_old_ClassDeclaration_MockEmptyDeltaConnection(
     get_current_ClassDeclaration_MockEmptyDeltaConnection());
 
@@ -317,7 +317,7 @@ use_old_ClassDeclaration_MockEmptyDeltaConnection(
 declare function get_old_ClassDeclaration_MockFluidDataStoreContext():
     TypeOnly<old.MockFluidDataStoreContext>;
 declare function use_current_ClassDeclaration_MockFluidDataStoreContext(
-    use: TypeOnly<current.MockFluidDataStoreContext>);
+    use: TypeOnly<current.MockFluidDataStoreContext>): void;
 use_current_ClassDeclaration_MockFluidDataStoreContext(
     get_old_ClassDeclaration_MockFluidDataStoreContext());
 
@@ -329,7 +329,7 @@ use_current_ClassDeclaration_MockFluidDataStoreContext(
 declare function get_current_ClassDeclaration_MockFluidDataStoreContext():
     TypeOnly<current.MockFluidDataStoreContext>;
 declare function use_old_ClassDeclaration_MockFluidDataStoreContext(
-    use: TypeOnly<old.MockFluidDataStoreContext>);
+    use: TypeOnly<old.MockFluidDataStoreContext>): void;
 use_old_ClassDeclaration_MockFluidDataStoreContext(
     get_current_ClassDeclaration_MockFluidDataStoreContext());
 
@@ -341,7 +341,7 @@ use_old_ClassDeclaration_MockFluidDataStoreContext(
 declare function get_old_ClassDeclaration_MockFluidDataStoreRuntime():
     TypeOnly<old.MockFluidDataStoreRuntime>;
 declare function use_current_ClassDeclaration_MockFluidDataStoreRuntime(
-    use: TypeOnly<current.MockFluidDataStoreRuntime>);
+    use: TypeOnly<current.MockFluidDataStoreRuntime>): void;
 use_current_ClassDeclaration_MockFluidDataStoreRuntime(
     get_old_ClassDeclaration_MockFluidDataStoreRuntime());
 
@@ -353,7 +353,7 @@ use_current_ClassDeclaration_MockFluidDataStoreRuntime(
 declare function get_current_ClassDeclaration_MockFluidDataStoreRuntime():
     TypeOnly<current.MockFluidDataStoreRuntime>;
 declare function use_old_ClassDeclaration_MockFluidDataStoreRuntime(
-    use: TypeOnly<old.MockFluidDataStoreRuntime>);
+    use: TypeOnly<old.MockFluidDataStoreRuntime>): void;
 use_old_ClassDeclaration_MockFluidDataStoreRuntime(
     get_current_ClassDeclaration_MockFluidDataStoreRuntime());
 
@@ -365,7 +365,7 @@ use_old_ClassDeclaration_MockFluidDataStoreRuntime(
 declare function get_old_ClassDeclaration_MockHandle():
     TypeOnly<old.MockHandle<any>>;
 declare function use_current_ClassDeclaration_MockHandle(
-    use: TypeOnly<current.MockHandle<any>>);
+    use: TypeOnly<current.MockHandle<any>>): void;
 use_current_ClassDeclaration_MockHandle(
     get_old_ClassDeclaration_MockHandle());
 
@@ -377,7 +377,7 @@ use_current_ClassDeclaration_MockHandle(
 declare function get_current_ClassDeclaration_MockHandle():
     TypeOnly<current.MockHandle<any>>;
 declare function use_old_ClassDeclaration_MockHandle(
-    use: TypeOnly<old.MockHandle<any>>);
+    use: TypeOnly<old.MockHandle<any>>): void;
 use_old_ClassDeclaration_MockHandle(
     get_current_ClassDeclaration_MockHandle());
 
@@ -389,7 +389,7 @@ use_old_ClassDeclaration_MockHandle(
 declare function get_old_ClassDeclaration_MockObjectStorageService():
     TypeOnly<old.MockObjectStorageService>;
 declare function use_current_ClassDeclaration_MockObjectStorageService(
-    use: TypeOnly<current.MockObjectStorageService>);
+    use: TypeOnly<current.MockObjectStorageService>): void;
 use_current_ClassDeclaration_MockObjectStorageService(
     get_old_ClassDeclaration_MockObjectStorageService());
 
@@ -401,7 +401,7 @@ use_current_ClassDeclaration_MockObjectStorageService(
 declare function get_current_ClassDeclaration_MockObjectStorageService():
     TypeOnly<current.MockObjectStorageService>;
 declare function use_old_ClassDeclaration_MockObjectStorageService(
-    use: TypeOnly<old.MockObjectStorageService>);
+    use: TypeOnly<old.MockObjectStorageService>): void;
 use_old_ClassDeclaration_MockObjectStorageService(
     get_current_ClassDeclaration_MockObjectStorageService());
 
@@ -413,7 +413,7 @@ use_old_ClassDeclaration_MockObjectStorageService(
 declare function get_old_ClassDeclaration_MockQuorumClients():
     TypeOnly<old.MockQuorumClients>;
 declare function use_current_ClassDeclaration_MockQuorumClients(
-    use: TypeOnly<current.MockQuorumClients>);
+    use: TypeOnly<current.MockQuorumClients>): void;
 use_current_ClassDeclaration_MockQuorumClients(
     get_old_ClassDeclaration_MockQuorumClients());
 
@@ -425,7 +425,7 @@ use_current_ClassDeclaration_MockQuorumClients(
 declare function get_current_ClassDeclaration_MockQuorumClients():
     TypeOnly<current.MockQuorumClients>;
 declare function use_old_ClassDeclaration_MockQuorumClients(
-    use: TypeOnly<old.MockQuorumClients>);
+    use: TypeOnly<old.MockQuorumClients>): void;
 use_old_ClassDeclaration_MockQuorumClients(
     get_current_ClassDeclaration_MockQuorumClients());
 
@@ -437,7 +437,7 @@ use_old_ClassDeclaration_MockQuorumClients(
 declare function get_old_ClassDeclaration_MockSharedObjectServices():
     TypeOnly<old.MockSharedObjectServices>;
 declare function use_current_ClassDeclaration_MockSharedObjectServices(
-    use: TypeOnly<current.MockSharedObjectServices>);
+    use: TypeOnly<current.MockSharedObjectServices>): void;
 use_current_ClassDeclaration_MockSharedObjectServices(
     get_old_ClassDeclaration_MockSharedObjectServices());
 
@@ -449,7 +449,7 @@ use_current_ClassDeclaration_MockSharedObjectServices(
 declare function get_current_ClassDeclaration_MockSharedObjectServices():
     TypeOnly<current.MockSharedObjectServices>;
 declare function use_old_ClassDeclaration_MockSharedObjectServices(
-    use: TypeOnly<old.MockSharedObjectServices>);
+    use: TypeOnly<old.MockSharedObjectServices>): void;
 use_old_ClassDeclaration_MockSharedObjectServices(
     get_current_ClassDeclaration_MockSharedObjectServices());
 
@@ -461,7 +461,7 @@ use_old_ClassDeclaration_MockSharedObjectServices(
 declare function get_old_ClassDeclaration_MockStorage():
     TypeOnly<old.MockStorage>;
 declare function use_current_ClassDeclaration_MockStorage(
-    use: TypeOnly<current.MockStorage>);
+    use: TypeOnly<current.MockStorage>): void;
 use_current_ClassDeclaration_MockStorage(
     get_old_ClassDeclaration_MockStorage());
 
@@ -473,7 +473,7 @@ use_current_ClassDeclaration_MockStorage(
 declare function get_current_ClassDeclaration_MockStorage():
     TypeOnly<current.MockStorage>;
 declare function use_old_ClassDeclaration_MockStorage(
-    use: TypeOnly<old.MockStorage>);
+    use: TypeOnly<old.MockStorage>): void;
 use_old_ClassDeclaration_MockStorage(
     get_current_ClassDeclaration_MockStorage());
 
@@ -485,7 +485,7 @@ use_old_ClassDeclaration_MockStorage(
 declare function get_old_FunctionDeclaration_validateAssertionError():
     TypeOnly<typeof old.validateAssertionError>;
 declare function use_current_FunctionDeclaration_validateAssertionError(
-    use: TypeOnly<typeof current.validateAssertionError>);
+    use: TypeOnly<typeof current.validateAssertionError>): void;
 use_current_FunctionDeclaration_validateAssertionError(
     get_old_FunctionDeclaration_validateAssertionError());
 
@@ -497,6 +497,6 @@ use_current_FunctionDeclaration_validateAssertionError(
 declare function get_current_FunctionDeclaration_validateAssertionError():
     TypeOnly<typeof current.validateAssertionError>;
 declare function use_old_FunctionDeclaration_validateAssertionError(
-    use: TypeOnly<typeof old.validateAssertionError>);
+    use: TypeOnly<typeof old.validateAssertionError>): void;
 use_old_FunctionDeclaration_validateAssertionError(
     get_current_FunctionDeclaration_validateAssertionError());

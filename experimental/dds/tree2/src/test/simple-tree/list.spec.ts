@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../../domains";
-import { viewWithContent } from "../../utils";
+import { leaf, SchemaBuilder } from "../../domains";
+import { treeViewWithContent } from "../utils";
 import { pretty } from "./utils";
 
 const builder = new SchemaBuilder({ scope: "test" });
@@ -59,7 +59,7 @@ describe("List", () => {
 	/** Helper that creates a new SharedTree with the test schema and returns the root proxy. */
 	function createTree() {
 		// Consider 'readonlyTreeWithContent' for readonly tests?
-		const view = viewWithContent({
+		const view = treeViewWithContent({
 			schema,
 			initialTree: { numbers: { "": [] }, strings: { "": [] } },
 		});
