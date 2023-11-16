@@ -14,11 +14,13 @@ import {
 	FieldKindIdentifier,
 } from "../../core";
 import { Mutable } from "../../util";
-import { FieldKindWithEditor } from "./fieldKind";
-import { ModularChangeFamily } from "./modularChangeFamily";
-import { ModularChangeset } from "./modularChangeTypes";
-import { SchemaChangeFamily } from "./schemaChangeFamily";
-import { SchemaChange } from "./schemaChangeTypes";
+import {
+	SchemaChange,
+	FieldKindWithEditor,
+	ModularChangeFamily,
+	ModularChangeset,
+	SchemaChangeFamily,
+} from "../modular-schema";
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs";
 import { SharedTreeChange } from "./sharedTreeChangeTypes";
 
