@@ -23,6 +23,7 @@ import {
 	ModularEditBuilder,
 	FieldChangeset,
 	ModularChangeset,
+	FieldEditDescription,
 } from "../modular-schema";
 import { fieldKinds, optional, sequence, required as valueFieldKind } from "./defaultFieldKinds";
 
@@ -226,11 +227,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			this.modularBuilder.submitChanges(
 				[
 					{
+						type: "field",
 						field: sourceField,
 						fieldKind: sequence.identifier,
 						change: brand(moveOut),
 					},
 					{
+						type: "field",
 						field: adjustedAttachField,
 						fieldKind: sequence.identifier,
 						change: brand(moveIn),
@@ -251,13 +254,18 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				}
 
 				const firstId = this.modularBuilder.generateId(length);
+				const build = this.modularBuilder.buildTrees(firstId, content);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, content, firstId),
+					sequence.changeHandler.editor.insert(index, length, firstId),
 				);
-				this.modularBuilder.submitChange(
+				const attach: FieldEditDescription = {
+					type: "field",
 					field,
-					sequence.identifier,
+					fieldKind: sequence.identifier,
 					change,
+				};
+				this.modularBuilder.submitChanges(
+					[build, attach],
 					brand((firstId as number) + length - 1),
 				);
 			},

@@ -144,8 +144,8 @@ describe("SequenceField - Compose", () => {
 		const insert = Change.insert(0, 2);
 		const modify = Change.modify(0, TestChange.mint([], 42));
 		const expected = [
-			Mark.insert([{ type, value: 0 }], brand(0), { changes: TestChange.mint([], 42) }),
-			Mark.insert([{ type, value: 1 }], brand(1)),
+			Mark.insert(1, brand(0), { changes: TestChange.mint([], 42) }),
+			Mark.insert(1, brand(1)),
 		];
 		const actual = compose([makeAnonChange(insert), makeAnonChange(modify)]);
 		assert.deepEqual(actual, expected);
@@ -215,16 +215,12 @@ describe("SequenceField - Compose", () => {
 			makeAnonChange(childChangeB),
 		]);
 		const insert = [
-			Mark.insert(
-				[{ type, value: 1 }],
-				{ localId: defaultInsertId, revision: tag1 },
-				{ changes: childChangeA },
-			),
+			Mark.insert(1, { localId: defaultInsertId, revision: tag1 }, { changes: childChangeA }),
 		];
 		const modify = Change.modify(0, childChangeB);
 		const expected = [
 			Mark.insert(
-				[{ type, value: 1 }],
+				1,
 				{ localId: defaultInsertId, revision: tag1 },
 				{ changes: childChangeAB },
 			),
@@ -338,136 +334,85 @@ describe("SequenceField - Compose", () => {
 	});
 
 	it("insert ○ delete (within insert)", () => {
-		const insert = tagChange(Change.insert(0, 3, 1), tag1);
+		const insert = tagChange(Change.insert(0, 3, brand(1)), tag1);
 		const deletion = tagChange(Change.delete(1, 1), tag2);
 		const actual = shallowCompose([insert, deletion]);
 		const expected = [
-			Mark.insert([{ type, value: 1 }], { localId: brand(1), revision: tag1 }),
+			Mark.insert(1, { localId: brand(1), revision: tag1 }),
 			Mark.transient(
-				Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag1 }),
+				Mark.insert(1, { localId: brand(2), revision: tag1 }),
 				Mark.delete(1, brand(0), { revision: tag2 }),
 			),
-			Mark.insert([{ type, value: 3 }], { localId: brand(3), revision: tag1 }),
+			Mark.insert(1, { localId: brand(3), revision: tag1 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert ○ move (within insert)", () => {
-		const insert = Change.insert(0, 3, 1);
+		const insert = Change.insert(0, 3, brand(1));
 		const move = Change.move(1, 1, 0);
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)]);
 		const expected = [
 			Mark.moveIn(1, brand(0)),
-			Mark.insert([{ type, value: 1 }], { localId: brand(1) }),
-			Mark.transient(
-				Mark.insert([{ type, value: 2 }], { localId: brand(2) }),
-				Mark.moveOut(1, brand(0)),
-			),
-			Mark.insert([{ type, value: 3 }], { localId: brand(3) }),
+			Mark.insert(1, { localId: brand(1) }),
+			Mark.transient(Mark.insert(1, { localId: brand(2) }), Mark.moveOut(1, brand(0))),
+			Mark.insert(1, { localId: brand(3) }),
 		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert ○ delete (across inserts)", () => {
 		const insert = [
-			Mark.insert(
-				[
-					{ type, value: 1 },
-					{ type, value: 2 },
-				],
-				{ localId: brand(1), revision: tag1 },
-			),
-			Mark.insert(
-				[
-					{ type, value: 3 },
-					{ type, value: 4 },
-				],
-				{ localId: brand(3), revision: tag2 },
-			),
-			Mark.insert(
-				[
-					{ type, value: 5 },
-					{ type, value: 6 },
-				],
-				{ localId: brand(5), revision: tag1 },
-			),
+			Mark.insert(2, { localId: brand(1), revision: tag1 }),
+			Mark.insert(2, { localId: brand(3), revision: tag2 }),
+			Mark.insert(2, { localId: brand(5), revision: tag1 }),
 		];
 		const deletion = tagChange(Change.delete(1, 4), tag2);
 		const actual = shallowCompose([makeAnonChange(insert), deletion], revInfos);
 		const expected = [
-			Mark.insert([{ type, value: 1 }], { localId: brand(1), revision: tag1 }),
+			Mark.insert(1, { localId: brand(1), revision: tag1 }),
 			Mark.transient(
-				Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag1 }),
+				Mark.insert(1, { localId: brand(2), revision: tag1 }),
 				Mark.delete(1, brand(0), { revision: tag2 }),
 			),
 			Mark.transient(
-				Mark.insert(
-					[
-						{ type, value: 3 },
-						{ type, value: 4 },
-					],
-					{ localId: brand(3), revision: tag2 },
-				),
+				Mark.insert(2, { localId: brand(3), revision: tag2 }),
 				Mark.delete(2, brand(1), { revision: tag2 }),
 			),
 			Mark.transient(
-				Mark.insert([{ type, value: 5 }], { localId: brand(5), revision: tag1 }),
+				Mark.insert(1, { localId: brand(5), revision: tag1 }),
 				Mark.delete(1, brand(3), { revision: tag2 }),
 			),
-			Mark.insert([{ type, value: 6 }], { localId: brand(6), revision: tag1 }),
+			Mark.insert(1, { localId: brand(6), revision: tag1 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
 
 	it("insert ○ move (across inserts)", () => {
 		const insert = [
-			Mark.insert(
-				[
-					{ type, value: 1 },
-					{ type, value: 2 },
-				],
-				{ localId: brand(1), revision: tag1 },
-			),
-			Mark.insert(
-				[
-					{ type, value: 3 },
-					{ type, value: 4 },
-				],
-				{ localId: brand(3), revision: tag2 },
-			),
-			Mark.insert(
-				[
-					{ type, value: 5 },
-					{ type, value: 6 },
-				],
-				{ localId: brand(5), revision: tag1 },
-			),
+			Mark.insert(2, { localId: brand(1), revision: tag1 }),
+			Mark.insert(2, { localId: brand(3), revision: tag2 }),
+			Mark.insert(2, { localId: brand(5), revision: tag1 }),
 		];
 		const move = Change.move(1, 4, 0);
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(move)], revInfos);
 
 		const expected = [
 			Mark.moveIn(4, brand(0)),
-			Mark.insert([{ type, value: 1 }], { localId: brand(1), revision: tag1 }),
+			Mark.insert(1, { localId: brand(1), revision: tag1 }),
 			Mark.transient(
-				Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag1 }),
+				Mark.insert(1, { localId: brand(2), revision: tag1 }),
 				Mark.moveOut(1, brand(0)),
 			),
 			Mark.transient(
-				Mark.insert(
-					[
-						{ type, value: 3 },
-						{ type, value: 4 },
-					],
-					{ localId: brand(3), revision: tag2 },
-				),
+				Mark.insert(2, { localId: brand(3), revision: tag2 }),
 				Mark.moveOut(2, brand(1)),
 			),
 			Mark.transient(
-				Mark.insert([{ type, value: 5 }], { localId: brand(5), revision: tag1 }),
+				Mark.insert(1, { localId: brand(5), revision: tag1 }),
 				Mark.moveOut(1, brand(3)),
 			),
-			Mark.insert([{ type, value: 6 }], { localId: brand(6), revision: tag1 }),
+			Mark.insert(1, { localId: brand(6), revision: tag1 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -547,18 +492,18 @@ describe("SequenceField - Compose", () => {
 	it("modify ○ insert", () => {
 		const childChange = TestChange.mint([0, 1], 2);
 		const modify = Change.modify(0, childChange);
-		const insert = Change.insert(0, 1, 2);
-		const expected = [Mark.insert([{ type, value: 2 }], brand(2)), Mark.modify(childChange)];
+		const insert = Change.insert(0, 1, brand(2));
+		const expected = [Mark.insert(1, brand(2)), Mark.modify(childChange)];
 		const actual = shallowCompose([makeAnonChange(modify), makeAnonChange(insert)]);
 		assert.deepEqual(actual, expected);
 	});
 
 	it("delete ○ insert", () => {
 		const deletion = Change.delete(0, 3);
-		const insert = Change.insert(0, 1, 2);
+		const insert = Change.insert(0, 1, brand(2));
 		// TODO: test with merge-right policy as well
 		const expected = [
-			Mark.insert([{ type, value: 2 }], { localId: brand(2), revision: tag2 }),
+			Mark.insert(1, { localId: brand(2), revision: tag2 }),
 			Mark.delete(3, brand(0), { revision: tag1 }),
 		];
 		const actual = shallowCompose([tagChange(deletion, tag1), tagChange(insert, tag2)]);
@@ -567,10 +512,10 @@ describe("SequenceField - Compose", () => {
 
 	it("revive ○ insert", () => {
 		const revive = Change.revive(0, 5, { revision: tag1, localId: brand(0) });
-		const insert = Change.insert(0, 1, 2);
+		const insert = Change.insert(0, 1, brand(2));
 		// TODO: test with merge-right policy as well
 		const expected = [
-			Mark.insert([{ type, value: 2 }], brand(2)),
+			Mark.insert(1, brand(2)),
 			Mark.revive(5, { revision: tag1, localId: brand(0) }),
 		];
 		const actual = shallowCompose([makeAnonChange(revive), makeAnonChange(insert)]);
@@ -579,31 +524,24 @@ describe("SequenceField - Compose", () => {
 
 	it("insert ○ insert", () => {
 		const insertA = [
-			Mark.insert([{ type, value: 1 }], brand(1), { revision: tag1 }),
+			Mark.insert(1, brand(1), { revision: tag1 }),
 			{ count: 2 },
-			Mark.insert(
-				[
-					{ type, value: 2 },
-					{ type, value: 3 },
-				],
-				brand(2),
-				{ revision: tag2 },
-			),
+			Mark.insert(2, brand(2), { revision: tag2 }),
 		];
 
 		const insertB = [
-			Mark.insert([{ type, value: 4 }], brand(4), { revision: tag3 }),
+			Mark.insert(1, brand(4), { revision: tag3 }),
 			{ count: 4 },
-			Mark.insert([{ type, value: 5 }], brand(5), { revision: tag4 }),
+			Mark.insert(1, brand(5), { revision: tag4 }),
 		];
 		const actual = shallowCompose([makeAnonChange(insertA), makeAnonChange(insertB)], revInfos);
 		const expected = [
-			Mark.insert([{ type, value: 4 }], brand(4), { revision: tag3 }),
-			Mark.insert([{ type, value: 1 }], brand(1), { revision: tag1 }),
+			Mark.insert(1, brand(4), { revision: tag3 }),
+			Mark.insert(1, brand(1), { revision: tag1 }),
 			{ count: 2 },
-			Mark.insert([{ type, value: 2 }], brand(2), { revision: tag2 }),
-			Mark.insert([{ type, value: 5 }], brand(5), { revision: tag4 }),
-			Mark.insert([{ type, value: 3 }], brand(3), { revision: tag2 }),
+			Mark.insert(1, brand(2), { revision: tag2 }),
+			Mark.insert(1, brand(5), { revision: tag4 }),
+			Mark.insert(1, brand(3), { revision: tag2 }),
 		];
 		assert.deepEqual(actual, expected);
 	});
@@ -755,16 +693,9 @@ describe("SequenceField - Compose", () => {
 
 	it("insert ○ revive", () => {
 		const insert = [
-			Mark.insert([{ type, value: 1 }], brand(1), { revision: tag1 }),
+			Mark.insert(1, brand(1), { revision: tag1 }),
 			{ count: 2 },
-			Mark.insert(
-				[
-					{ type, value: 2 },
-					{ type, value: 3 },
-				],
-				brand(2),
-				{ revision: tag2 },
-			),
+			Mark.insert(2, brand(2), { revision: tag2 }),
 		];
 		const revive = [
 			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag3 }),
@@ -774,11 +705,11 @@ describe("SequenceField - Compose", () => {
 		const actual = shallowCompose([makeAnonChange(insert), makeAnonChange(revive)], revInfos);
 		const expected = [
 			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag3 }),
-			Mark.insert([{ type, value: 1 }], brand(1), { revision: tag1 }),
+			Mark.insert(1, brand(1), { revision: tag1 }),
 			{ count: 2 },
-			Mark.insert([{ type, value: 2 }], brand(2), { revision: tag2 }),
+			Mark.insert(1, brand(2), { revision: tag2 }),
 			Mark.revive(1, { revision: tag1, localId: brand(0) }, { revision: tag4 }),
-			Mark.insert([{ type, value: 3 }], brand(3), { revision: tag2 }),
+			Mark.insert(1, brand(3), { revision: tag2 }),
 		];
 		assert.deepEqual(actual, expected);
 	});

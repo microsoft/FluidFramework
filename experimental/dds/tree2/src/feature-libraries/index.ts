@@ -97,7 +97,7 @@ export { SequenceField };
 export {
 	isNeverField,
 	ModularEditBuilder,
-	EditDescription,
+	FieldEditDescription as EditDescription,
 	FieldChangeHandler,
 	FieldChangeRebaser,
 	FieldEditor,

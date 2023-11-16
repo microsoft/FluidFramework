@@ -105,19 +105,19 @@ describe("SequenceField - Rebase", () => {
 
 	it("insert ↷ delete", () => {
 		const insert = composeAnonChanges([
-			Change.insert(0, 1, 1),
-			Change.insert(3, 1, 2),
-			Change.insert(8, 1, 3),
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+			Change.insert(8, 1, brand(3)),
 		]);
 		const deletion = Change.delete(1, 3);
 		const actual = rebase(insert, deletion);
 		const expected = composeAnonChanges([
 			// Earlier insert is unaffected
-			Change.insert(0, 1, 1),
+			Change.insert(0, 1, brand(1)),
 			// Overlapping insert has its index reduced
-			Change.insert(2, 1, 2),
+			Change.insert(2, 1, brand(2)),
 			// Later insert has its index reduced
-			Change.insert(5, 1, 3),
+			Change.insert(5, 1, brand(3)),
 		]);
 		checkDeltaEquality(actual, expected);
 	});
@@ -254,7 +254,7 @@ describe("SequenceField - Rebase", () => {
 			Change.modify(0, TestChange.mint([0], 1)),
 			Change.modify(3, TestChange.mint([0], 2)),
 		]);
-		const insert = Change.insert(2, 1, 2);
+		const insert = Change.insert(2, 1, brand(2));
 		const expected = composeAnonChanges([
 			// Modify at earlier index is unaffected
 			Change.modify(0, TestChange.mint([0], 1)),
@@ -273,7 +273,7 @@ describe("SequenceField - Rebase", () => {
 			Change.delete(2, 1, brand(3)),
 		]);
 		// Inserts between C and D
-		const insert = Change.insert(3, 1, 2);
+		const insert = Change.insert(3, 1, brand(2));
 		const expected = composeAnonChanges([
 			// Delete with earlier index is unaffected
 			Change.delete(0, 1, brand(0)),
@@ -288,10 +288,16 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("insert ↷ insert", () => {
-		const insertA = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
-		const insertB = Change.insert(1, 1, 3);
+		const insertA = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+		]);
+		const insertB = Change.insert(1, 1, brand(3));
 		const actual = rebase(insertA, insertB);
-		const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
+		const expected = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(4, 1, brand(2)),
+		]);
 		assert.deepEqual(actual, expected);
 	});
 
@@ -362,10 +368,16 @@ describe("SequenceField - Rebase", () => {
 	});
 
 	it("insert ↷ revive", () => {
-		const insert = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(3, 1, 2)]);
+		const insert = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(3, 1, brand(2)),
+		]);
 		const revive = Change.revive(1, 1, { revision: tag1, localId: brand(0) });
 		const actual = rebase(insert, revive);
-		const expected = composeAnonChanges([Change.insert(0, 1, 1), Change.insert(4, 1, 2)]);
+		const expected = composeAnonChanges([
+			Change.insert(0, 1, brand(1)),
+			Change.insert(4, 1, brand(2)),
+		]);
 		assert.deepEqual(actual, expected);
 	});
 

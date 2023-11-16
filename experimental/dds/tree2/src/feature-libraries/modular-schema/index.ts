@@ -52,5 +52,7 @@ export {
 	ModularChangeFamily,
 	ModularEditBuilder,
 	EditDescription,
+	GlobalEditDescription,
+	FieldEditDescription,
 	revisionMetadataSourceFromInfo,
 } from "./modularChangeFamily";

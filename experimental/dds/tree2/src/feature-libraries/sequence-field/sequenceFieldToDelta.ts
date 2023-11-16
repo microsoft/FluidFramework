@@ -135,16 +135,6 @@ export function sequenceFieldToDelta<TNodeChange>(
 						global.push({ id: buildId, fields: deltaMark.fields });
 						delete deltaMark.fields;
 					}
-					if (isNewAttach(mark)) {
-						assert(
-							mark.content !== undefined,
-							0x7dc /* New insert must have content */,
-						);
-						build.push({
-							id: buildId,
-							trees: mark.content.map(cursorForJsonableTreeNode),
-						});
-					}
 					local.push(deltaMark);
 					break;
 				}

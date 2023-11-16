@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceField as SF, cursorForJsonableTreeNode } from "../../../feature-libraries";
+import { SequenceField as SF } from "../../../feature-libraries";
 import { brand } from "../../../util";
 import {
 	ChangeAtomId,
 	ChangesetLocalId,
-	JsonableTree,
 	mintRevisionTag,
 	RevisionTag,
 	TreeNodeSchemaIdentifier,
@@ -33,10 +32,10 @@ export const cases: {
 	transient_insert: TestChangeset;
 } = {
 	no_change: [],
-	insert: createInsertChangeset(1, 2, 1),
+	insert: createInsertChangeset(1, 2, brand(1)),
 	modify: SF.sequenceFieldEditor.buildChildChange(0, TestChange.mint([], 1)),
 	modify_insert: composeAnonChanges([
-		createInsertChangeset(1, 1, 1),
+		createInsertChangeset(1, 1, brand(1)),
 		createModifyChangeset(1, TestChange.mint([], 2)),
 	]),
 	delete: createDeleteChangeset(1, 3),
@@ -51,24 +50,10 @@ export const cases: {
 
 function createInsertChangeset(
 	index: number,
-	size: number,
-	startingValue: number = 0,
+	count: number,
 	id?: ChangesetLocalId,
 ): SF.Changeset<never> {
-	const content = generateJsonables(size, startingValue);
-	return SF.sequenceFieldEditor.insert(
-		index,
-		content.map(cursorForJsonableTreeNode),
-		id ?? brand(startingValue),
-	);
-}
-
-function generateJsonables(size: number, startingValue: number = 0) {
-	const content = [];
-	while (content.length < size) {
-		content.push({ type, value: startingValue + content.length });
-	}
-	return content;
+	return SF.sequenceFieldEditor.insert(index, count, id ?? brand(0));
 }
 
 function createDeleteChangeset(
@@ -145,25 +130,20 @@ function createModifyDetachedChangeset<TNodeChange>(
 }
 
 /**
- * @param countOrContent - The content to insert.
- * If a number is passed, that many dummy nodes will be generated.
+ * @param count - The number of nodes inserted.
  * @param cellId - The first cell to insert the content into (potentially includes lineage information).
  * Also defines the ChangeAtomId to associate with the mark.
  * @param overrides - Any additional properties to add to the mark.
  */
 function createInsertMark<TChange = never>(
-	countOrContent: number | JsonableTree[],
+	count: number,
 	cellId: ChangesetLocalId | SF.CellId,
 	overrides?: Partial<SF.CellMark<SF.Insert, TChange>>,
 ): SF.CellMark<SF.Insert, TChange> {
-	const content = Array.isArray(countOrContent)
-		? countOrContent
-		: generateJsonables(countOrContent);
 	const cellIdObject: SF.CellId = typeof cellId === "object" ? cellId : { localId: cellId };
 	const mark: SF.CellMark<SF.Insert, TChange> = {
 		type: "Insert",
-		content,
-		count: content.length,
+		count,
 		cellId: cellIdObject,
 	};
 	if (cellIdObject.revision !== undefined) {

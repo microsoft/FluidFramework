@@ -110,11 +110,20 @@ const EncodedRevisionInfo = Type.Object(
 	noAdditionalProps,
 );
 
+export const EncodedBuilds = Type.Array(
+	Type.Union([
+		Type.Tuple([ChangesetLocalIdSchema, Type.Any()]),
+		Type.Tuple([RevisionTagSchema, ChangesetLocalIdSchema, Type.Any()]),
+	]),
+);
+export type EncodedBuilds = Static<typeof EncodedBuilds>;
+
 export const EncodedModularChangeset = Type.Object(
 	{
 		maxId: Type.Optional(ChangesetLocalIdSchema),
 		changes: EncodedFieldChangeMap,
 		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
+		builds: Type.Optional(EncodedBuilds),
 	},
 	noAdditionalProps,
 );

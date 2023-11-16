@@ -21,16 +21,23 @@ import {
 	FieldUpPath,
 	ChangesetLocalId,
 	isEmptyFieldChanges,
+	ITreeCursor,
+	ChangeAtomIdMap,
+	JsonableTree,
 } from "../../core";
 import {
 	brand,
+	forEachInNestedMap,
 	getOrAddEmptyToMap,
+	getOrAddInMap,
 	IdAllocationState,
 	IdAllocator,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
+	isReadonlyArray,
 	Mutable,
 } from "../../util";
+import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator";
 import {
 	CrossFieldManager,
@@ -173,7 +180,19 @@ export class ModularChangeFamily
 			crossFieldTable.invalidatedFields.size === 0,
 			0x59b /* Should not need more than one amend pass. */,
 		);
-		return makeModularChangeset(composedFields, idState.maxId, revInfos);
+		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		for (const { revision, change } of changes) {
+			if (change.builds) {
+				for (const [revisionKey, innerMap] of change.builds) {
+					const setRevisionKey = revisionKey ?? revision;
+					const innerDstMap = getOrAddInMap(builds, setRevisionKey, new Map());
+					for (const [id, tree] of innerMap) {
+						innerDstMap.set(id, tree);
+					}
+				}
+			}
+		}
+		return makeModularChangeset(composedFields, idState.maxId, revInfos, undefined, builds);
 	}
 
 	private composeFieldMaps(
@@ -481,6 +500,7 @@ export class ModularChangeFamily
 			idState.maxId,
 			change.revisions,
 			constraintState.violationCount,
+			change.builds,
 		);
 
 		return amendedChangeset;
@@ -703,7 +723,18 @@ export class ModularChangeFamily
 		}
 
 		const idAllocator = MemoizedIdRangeAllocator.fromNextId();
-		return this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+		const rootDelta = this.intoDeltaImpl(change.fieldChanges, revision, idAllocator);
+		if (change.builds && change.builds.size > 0) {
+			const build: Delta.DetachedNodeBuild[] = [];
+			forEachInNestedMap(change.builds, (tree, major, minor) => {
+				build.push({
+					id: { major, minor },
+					trees: [cursorForJsonableTreeNode(tree)],
+				});
+			});
+			rootDelta.set(brand("--build--"), { build });
+		}
+		return rootDelta;
 	}
 
 	/**
@@ -716,7 +747,7 @@ export class ModularChangeFamily
 		change: FieldChangeMap,
 		revision: RevisionTag | undefined,
 		idAllocator: MemoizedIdRangeAllocator,
-	): Delta.Root {
+	): Map<FieldKey, Delta.FieldChanges> {
 		const delta: Map<FieldKey, Delta.FieldChanges> = new Map();
 		for (const [field, fieldChange] of change) {
 			const fieldRevision = fieldChange.revision ?? revision;
@@ -964,6 +995,7 @@ function makeModularChangeset(
 	maxId: number = -1,
 	revisions: readonly RevisionInfo[] | undefined = undefined,
 	constraintViolationCount: number | undefined = undefined,
+	builds?: ChangeAtomIdMap<JsonableTree>,
 ): ModularChangeset {
 	const changeset: Mutable<ModularChangeset> = { fieldChanges: changes };
 	if (revisions !== undefined && revisions.length > 0) {
@@ -974,6 +1006,9 @@ function makeModularChangeset(
 	}
 	if (constraintViolationCount !== undefined && constraintViolationCount > 0) {
 		changeset.constraintViolationCount = constraintViolationCount;
+	}
+	if (builds !== undefined && builds.size > 0) {
+		changeset.builds = builds;
 	}
 	return changeset;
 }
@@ -1009,6 +1044,32 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.applyChange(change);
 	}
 
+	public buildTrees(
+		firstId: ChangesetLocalId,
+		newContent: ITreeCursor | readonly ITreeCursor[],
+	): GlobalEditDescription {
+		const content = isReadonlyArray(newContent) ? newContent : [newContent];
+		const length = content.length;
+		if (length === 0) {
+			return { type: "global" };
+		}
+		const builds: ChangeAtomIdMap<JsonableTree> = new Map();
+		const innerMap = new Map();
+		builds.set(undefined, innerMap);
+		let id = firstId;
+		for (const tree of content.map(jsonableTreeFromCursor)) {
+			// Tree creation is idempotent, with the first tree being preferred
+			if (!innerMap.has(id)) {
+				innerMap.set(id, tree);
+			}
+			id = brand((id as number) + 1);
+		}
+		return {
+			type: "global",
+			builds,
+		};
+	}
+
 	/**
 	 * Adds a change to the edit builder
 	 * @param field - the field which is being edited
@@ -1029,9 +1090,17 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public submitChanges(changes: EditDescription[], maxId: ChangesetLocalId = brand(-1)) {
 		const changeMaps = changes.map((change) =>
 			makeAnonChange(
-				makeModularChangeset(
-					this.buildChangeMap(change.field, change.fieldKind, change.change),
-				),
+				change.type === "global"
+					? makeModularChangeset(
+							new Map(),
+							undefined,
+							undefined,
+							undefined,
+							change.builds,
+					  )
+					: makeModularChangeset(
+							this.buildChangeMap(change.field, change.fieldKind, change.change),
+					  ),
 			),
 		);
 		const composedChange = this.changeFamily.rebaser.compose(changeMaps);
@@ -1090,11 +1159,25 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 /**
  * @alpha
  */
-export interface EditDescription {
+export interface FieldEditDescription {
+	type: "field";
 	field: FieldUpPath;
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }
+
+/**
+ * @alpha
+ */
+export interface GlobalEditDescription {
+	type: "global";
+	builds?: ChangeAtomIdMap<JsonableTree>;
+}
+
+/**
+ * @alpha
+ */
+export type EditDescription = FieldEditDescription | GlobalEditDescription;
 
 function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]): {
 	revInfos: RevisionInfo[];

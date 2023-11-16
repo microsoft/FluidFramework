@@ -24,7 +24,7 @@ import {
 	SequenceField as SF,
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries";
-import { brand, makeArray } from "../../../util";
+import { brand } from "../../../util";
 import { TestChange } from "../../testChange";
 import { assertFieldChangesEqual, deepFreeze } from "../../utils";
 import { ChangeMaker as Change, MarkMaker as Mark, TestChangeset } from "./testEdits";
@@ -33,7 +33,6 @@ import { composeAnonChanges, toDelta } from "./utils";
 const type: TreeNodeSchemaIdentifier = brand("Node");
 const nodeX = { type, value: 0 };
 const nodeY = { type, value: 1 };
-const content = [nodeX];
 const content2 = [nodeX, nodeY];
 const contentCursor: ITreeCursorSynchronous = cursorForJsonableTreeNode(nodeX);
 const contentCursor2: ITreeCursorSynchronous[] = content2.map((node) =>
@@ -45,12 +44,6 @@ const tag: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const fooField = brand<FieldKey>("foo");
-
-const DUMMY_REVIVED_NODE_TYPE: TreeNodeSchemaIdentifier = brand("DummyRevivedNode");
-
-function fakeRepairData(_revision: RevisionTag, _index: number, count: number): Delta.ProtoNode[] {
-	return makeArray(count, () => cursorForJsonableTreeNode({ type: DUMMY_REVIVED_NODE_TYPE }));
-}
 
 function toDeltaShallow(change: TestChangeset): Delta.FieldChanges {
 	deepFreeze(change);
@@ -312,7 +305,7 @@ describe("SequenceField - toDelta", () => {
 		const nodeChange = {
 			fieldChanges: new Map([[fooField, nestedChange]]),
 		};
-		const changeset = [Mark.insert(content, brand(0), { changes: nodeChange })];
+		const changeset = [Mark.insert(1, brand(0), { changes: nodeChange })];
 		const nestedMoveDelta = new Map([
 			[fooField, { local: [{ attach: { minor: moveId }, count: 42 }] }],
 		]);
@@ -343,9 +336,7 @@ describe("SequenceField - toDelta", () => {
 	describe("Transient changes", () => {
 		// TODO: Should test revives and returns in addition to inserts and moves
 		it("insert & delete", () => {
-			const changeset = [
-				Mark.transient(Mark.insert(content2, brand(0)), Mark.delete(2, brand(2))),
-			];
+			const changeset = [Mark.transient(Mark.insert(2, brand(0)), Mark.delete(2, brand(2)))];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
 			const expected: Delta.FieldChanges = {
@@ -357,7 +348,7 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move", () => {
 			const changeset = [
-				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.transient(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
 				Mark.moveIn(2, brand(2)),
 			];
@@ -390,7 +381,7 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move & delete", () => {
 			const changeset = [
-				Mark.transient(Mark.insert(content2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.transient(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
 				Mark.transient(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
 			];
