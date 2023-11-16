@@ -158,6 +158,7 @@ module.exports = {
 				"^azure/packages/azure-client/package.json",
 				"^azure/packages/azure-service-utils/package.json",
 				"^packages/dds/.*/package.json",
+				"^packages/drivers/.*/package.json",
 				"^packages/framework/.*/package.json",
 				"^packages/loader/container-loader/package.json",
 			],

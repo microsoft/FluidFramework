@@ -12,7 +12,7 @@ import {
 	IForestSubscription,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { IDefaultEditBuilder } from "../default-field-kinds";
+import { IDefaultEditBuilder } from "../default-schema";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { TreeSchema } from "../typed-schema";

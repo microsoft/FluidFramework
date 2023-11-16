@@ -24,7 +24,7 @@ import {
 // TODO:
 // This module currently is assuming use of default-field-kinds.
 // The field kinds should instead come from a view schema registry thats provided somewhere.
-import { fieldKinds } from "./default-field-kinds";
+import { fieldKinds } from "./default-schema";
 import { FieldKind, Multiplicity } from "./modular-schema";
 import {
 	AllowedTypes,
