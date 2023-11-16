@@ -176,6 +176,7 @@ export class SharedTree
 			schema,
 			defaultSchemaPolicy,
 			options.summaryEncodeType,
+			options,
 		);
 		const removedTreesSummarizer = new DetachedFieldIndexSummarizer(removedTrees);
 		const changeFamily = new DefaultChangeFamily(options);
