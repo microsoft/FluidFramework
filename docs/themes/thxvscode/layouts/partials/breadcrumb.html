@@ -1,3 +1,11 @@
+{{/* 
+  Purpose: To generate breadcrumb navigation for documentation pages. The script processes the current page's URL to extract package names and 
+           section identifiers, mapping them to human-readable names. It constructs a hierarchical breadcrumb trail, indicating the current page's 
+           position within the site's documentation structure.
+  Inputs: The current page's URL and site data (e.g., package names, API details).
+  Output: An HTML paragraph (<p>) containing the breadcrumb links.
+*/}}
+
 {{ $concept := "Packages" }}
 {{ $leafSegment := "" }}
 {{ $leafNodeWithCapitalization := "" }}
