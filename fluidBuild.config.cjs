@@ -159,6 +159,7 @@ module.exports = {
 				"^azure/packages/azure-service-utils/package.json",
 				"^packages/drivers/.*/package.json",
 				"^packages/framework/.*/package.json",
+				"^packages/loader/.*/package.json",
 			],
 			"html-copyright-file-header": [
 				// Tests generate HTML "snapshot" artifacts
