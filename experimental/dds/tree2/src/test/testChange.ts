@@ -90,11 +90,7 @@ function compose(changes: TaggedChange<TestChange>[], verify: boolean = true): T
 			inputContext ??= change.inputContext;
 			if (verify && outputContext !== undefined) {
 				// The input context should match the output context of the previous change.
-				try {
-					assert.deepEqual(change.inputContext, outputContext);
-				} catch (error) {
-					throw error;
-				}
+				assert.deepEqual(change.inputContext, outputContext);
 			}
 			outputContext = composeIntentions(outputContext ?? inputContext, change.intentions);
 			intentions = composeIntentions(intentions, change.intentions);
@@ -136,11 +132,8 @@ function rebase(
 	if (isNonEmptyChange(change)) {
 		if (isNonEmptyChange(over)) {
 			// Rebasing should only occur between two changes with the same input context
-			try {
-				assert.deepEqual(change.inputContext, over.inputContext);
-			} catch (error) {
-				throw error;
-			}
+			assert.deepEqual(change.inputContext, over.inputContext);
+
 			return {
 				inputContext: over.outputContext,
 				outputContext: composeIntentions(over.outputContext, change.intentions),

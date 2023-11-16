@@ -181,6 +181,7 @@ describe("optionalField", () => {
 					[{ localId: brand(42), revision: change2.revision }, "self", "nodeTargeting"],
 				],
 				childChanges: [[{ localId: brand(2), revision: change2.revision }, nodeChange1]],
+				reservedDetachId: { localId: brand(1), revision: change1.revision },
 			};
 
 			assertEqual(makeAnonChange(composed), makeAnonChange(change1And2));

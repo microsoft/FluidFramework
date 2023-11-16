@@ -92,12 +92,8 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 			);
 		}
 
-		try {
-			assertDeepEqual(leftPartialCompositions.at(-1), singlyComposed);
-			assertDeepEqual(rightPartialCompositions.at(-1), singlyComposed);
-		} catch (error) {
-			throw error;
-		}
+		assertDeepEqual(leftPartialCompositions.at(-1), singlyComposed);
+		assertDeepEqual(rightPartialCompositions.at(-1), singlyComposed);
 	}
 	// To limit combinatorial explosion, we test 'rebasing over a compose is equivalent to rebasing over the individual edits'
 	// by:
@@ -157,14 +153,11 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 								edit.change,
 								...editsToRebaseOver,
 							);
-							try {
-								assertDeepEqual(
-									tagChange(rebaseWithCompose, undefined),
-									tagChange(rebaseWithoutCompose, undefined),
-								);
-							} catch (error) {
-								throw error;
-							}
+
+							assertDeepEqual(
+								tagChange(rebaseWithCompose, undefined),
+								tagChange(rebaseWithoutCompose, undefined),
+							);
 						});
 					}
 				}
@@ -256,14 +249,10 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							}
 
 							for (let i = 0; i < rebasedEditsWithoutCompose.length; i++) {
-								try {
-									assertDeepEqual(
-										rebasedEditsWithoutCompose[i],
-										rebasedEditsWithCompose[i],
-									);
-								} catch (error) {
-									throw error;
-								}
+								assertDeepEqual(
+									rebasedEditsWithoutCompose[i],
+									rebasedEditsWithCompose[i],
+								);
 							}
 
 							verifyComposeAssociativity(allTaggedEdits);

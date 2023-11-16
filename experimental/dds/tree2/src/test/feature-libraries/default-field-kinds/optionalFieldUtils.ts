@@ -11,7 +11,7 @@ import {
 	OptionalChangeset,
 } from "../../../feature-libraries/default-field-kinds/defaultFieldChangeTypes";
 
-// Optional changesets may be equivalent but not evaluate to be deep-equal, as the order of moves is irrelevant.
+// Optional changesets may be equivalent but not evaluate to be deep-equal, as some ordering is irrelevant.
 export function assertEqual(
 	a: TaggedChange<OptionalChangeset> | undefined,
 	b: TaggedChange<OptionalChangeset> | undefined,
@@ -36,7 +36,10 @@ export function assertEqual(
 	aCopy.change.build.sort((a, b) => compareRegisterIds(a.id, b.id));
 	bCopy.change.build.sort((a, b) => compareRegisterIds(a.id, b.id));
 
-	// TODO: This shouldn't be necessary. might be causing correctness issues.
+	assert.equal(
+		aCopy.change.reservedDetachId !== undefined,
+		bCopy.change.reservedDetachId !== undefined,
+	);
 	delete aCopy.change.reservedDetachId;
 	delete bCopy.change.reservedDetachId;
 	assert.deepEqual(aCopy, bCopy);
