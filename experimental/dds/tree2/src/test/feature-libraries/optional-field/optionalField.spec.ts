@@ -29,7 +29,7 @@ import {
 	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
-import { assertEqual } from "../default-field-kinds/optionalFieldUtils";
+import { assertEqual } from "./optionalFieldUtils";
 import { changesetForChild, fooKey, testTree, testTreeCursor } from "../fieldKindTestUtils";
 
 /**

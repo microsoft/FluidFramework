@@ -41,7 +41,7 @@ import {
 	ChildStateGenerator,
 } from "../../exhaustiveRebaserUtils";
 import { runExhaustiveComposeRebaseSuite } from "../../rebaserAxiomaticTests";
-import { assertEqual } from "../default-field-kinds/optionalFieldUtils";
+import { assertEqual } from "./optionalFieldUtils";
 
 type RevisionTagMinter = () => RevisionTag;
 
