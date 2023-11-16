@@ -8,6 +8,10 @@ import { ISharedObject } from "@fluidframework/shared-object-base";
 
 /**
  * Defines a set of functions to be passed to the GC test runner.
+<<<<<<< HEAD
+=======
+ *
+>>>>>>> f8020fffce531116b2b535a7c8dde28d01239000
  * @internal
  */
 export interface IGCTestProvider {
@@ -37,8 +41,10 @@ export interface IGCTestProvider {
 	addNestedHandles(): Promise<void>;
 }
 
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Runs a series of GC tests for DDSes to verify that they have correctly implemented GC.
+ * The DDSes should store handles and generate the expected GC Data.
+ *
  * @internal
  */
 export const runGCTests = (ctor: new () => IGCTestProvider): void => {

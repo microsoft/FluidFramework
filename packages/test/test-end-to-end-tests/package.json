@@ -144,6 +144,20 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"compile": {
+				"dependsOn": [
+					"...",
+					"^build:esnext"
+				],
+				"script": false
+			},
+			"ci:build": {
+				"dependsOn": [
+					"...",
+					"^build:esnext"
+				],
+				"script": false
+			},
 			"build:test": [
 				"...",
 				"@fluidframework/container-runtime#build:test"

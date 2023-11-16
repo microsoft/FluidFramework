@@ -87,10 +87,16 @@ export interface ChangeConnectionState {
 	connected: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface Attach {
 	type: "attach";
 }
 
+/**
+ * @internal
+ */
 export interface TriggerRebase {
 	type: "rebase";
 }
@@ -111,6 +117,9 @@ export interface Synchronize {
 	clients?: string[];
 }
 
+/**
+ * @internal
+ */
 interface HasWorkloadName {
 	workloadName: string;
 }
@@ -174,7 +183,12 @@ function getSaveInfo(
  *     validateConsistency: (a, b) => { assert.equal(a.getText(), b.getText()); }
  * }
  * ```
+<<<<<<< HEAD
  * This model can be used directly to create a suite of fuzz tests with {@link createDDSFuzzSuite}
+=======
+ * This model can be used directly to create a suite of fuzz tests with {@link (createDDSFuzzSuite:function)}
+ *
+>>>>>>> f8020fffce531116b2b535a7c8dde28d01239000
  * @internal
  */
 export interface DDSFuzzModel<
@@ -188,7 +202,7 @@ export interface DDSFuzzModel<
 	 * For example, SharedString might fuzz test several different workloads--some involving intervals,
 	 * some without, some that never delete text, etc.
 	 * This name should also be relatively friendly for file system; if the "save to disk" option of
-	 * {@link createDDSFuzzSuite} is enabled, it will be kebab cased for failure files.
+	 * {@link (createDDSFuzzSuite:function)} is enabled, it will be kebab cased for failure files.
 	 */
 	workloadName: string;
 
@@ -385,7 +399,7 @@ export interface DDSFuzzSuiteOptions {
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.only` syntax works. See {@link createDDSFuzzSuite.only}.
+	 * If you prefer, a variant of the standard `.only` syntax works. See {@link (createDDSFuzzSuite:namespace).only}.
 	 */
 	only: Iterable<number>;
 
@@ -400,7 +414,7 @@ export interface DDSFuzzSuiteOptions {
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link createDDSFuzzSuite.skip}.
+	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link (createDDSFuzzSuite:namespace).skip}.
 	 */
 	skip: Iterable<number>;
 
@@ -413,7 +427,7 @@ export interface DDSFuzzSuiteOptions {
 	saveFailures: false | { directory: string };
 
 	/**
-	 * Options to be provided to the underlying container runtimes {@link IMockContainerRuntimeOptions}.
+	 * Options to be provided to the underlying container runtimes {@link @fluidframework/test-runtime-utils#IMockContainerRuntimeOptions}.
 	 * By default nothing will be provided, which means that the runtimes will:
 	 * - use FlushMode.Immediate, which means that all ops will be sent as soon as they are produced,
 	 * therefore all batches have a single op.
@@ -842,7 +856,7 @@ const isClientSpec = (op: unknown): op is ClientSpec => (op as ClientSpec).clien
 /**
  * Mixes in the ability to select a client to perform an operation on.
  * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}
- * and {@link DDSFuzzTestState.channel}.
+ * and {@link  @fluid-private/test-dds-utils#DDSFuzzTestState.channel}.
  *
  * @remarks This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -1119,8 +1133,14 @@ function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOpt
 	return options.only instanceof Set && options.skip instanceof Set;
 }
 
+<<<<<<< HEAD
 // eslint-disable-next-line jsdoc/require-description
 /**
+=======
+/**
+ * Performs the test again to verify if the DDS still fails with the same error message.
+ *
+>>>>>>> f8020fffce531116b2b535a7c8dde28d01239000
  * @internal
  */
 export async function replayTest<
@@ -1233,43 +1253,51 @@ const getFullModel = <TChannelFactory extends IChannelFactory, TOperation extend
 	);
 
 /**
- * Runs only the provided seeds.
- *
- * @example
- *
- * ```typescript
- * // Runs only seed 42 for the given model.
- * createDDSFuzzSuite.only(42)(model);
- * ```
+ * {@inheritDoc (createDDSFuzzSuite:function)}
+ * @internal
  */
-createDDSFuzzSuite.only =
-	(...seeds: number[]) =>
-	<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-		ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
-		providedOptions?: Partial<DDSFuzzSuiteOptions>,
-	): void =>
-		createDDSFuzzSuite(ddsModel, {
-			...providedOptions,
-			only: [...seeds, ...(providedOptions?.only ?? [])],
-		});
+// Explicit usage of namespace needed for api-extractor.
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export namespace createDDSFuzzSuite {
+	/**
+	 * Runs only the provided seeds.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * // Runs only seed 42 for the given model.
+	 * createDDSFuzzSuite.only(42)(model);
+	 * ```
+	 */
+	export const only =
+		(...seeds: number[]) =>
+		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+			ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+			providedOptions?: Partial<DDSFuzzSuiteOptions>,
+		): void =>
+			createDDSFuzzSuite(ddsModel, {
+				...providedOptions,
+				only: [...seeds, ...(providedOptions?.only ?? [])],
+			});
 
-/**
- * Skips the provided seeds.
- *
- * @example
- *
- * ```typescript
- * // Skips seed 42 for the given model.
- * createDDSFuzzSuite.skip(42)(model);
- * ```
- */
-createDDSFuzzSuite.skip =
-	(...seeds: number[]) =>
-	<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-		ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
-		providedOptions?: Partial<DDSFuzzSuiteOptions>,
-	): void =>
-		createDDSFuzzSuite(ddsModel, {
-			...providedOptions,
-			skip: [...seeds, ...(providedOptions?.skip ?? [])],
-		});
+	/**
+	 * Skips the provided seeds.
+	 *
+	 * @example
+	 *
+	 * ```typescript
+	 * // Skips seed 42 for the given model.
+	 * createDDSFuzzSuite.skip(42)(model);
+	 * ```
+	 */
+	export const skip =
+		(...seeds: number[]) =>
+		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
+			ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+			providedOptions?: Partial<DDSFuzzSuiteOptions>,
+		): void =>
+			createDDSFuzzSuite(ddsModel, {
+				...providedOptions,
+				skip: [...seeds, ...(providedOptions?.skip ?? [])],
+			});
+}

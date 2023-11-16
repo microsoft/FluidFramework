@@ -150,7 +150,10 @@ function rebaseMarkList<TNodeChange>(
 		// an older detach which cells should already have any necessary lineage for.
 		if ((markEmptiesCells(baseMark) || isCellRename(baseMark)) && !isInverseAttach(baseMark)) {
 			const detachId = getOutputCellId(baseMark, baseRevision, metadata);
-			assert(detachId !== undefined, "Mark which empties cells should have a detach ID");
+			assert(
+				detachId !== undefined,
+				0x816 /* Mark which empties cells should have a detach ID */,
+			);
 			assert(detachId.revision !== undefined, 0x74a /* Detach ID should have a revision */);
 			addIdRange(getOrAddEmptyToMap(detachBlocks, detachId.revision), {
 				id: detachId.localId,
@@ -167,7 +170,7 @@ function rebaseMarkList<TNodeChange>(
 
 			assert(
 				areInputCellsEmpty(rebasedMark) && rebasedMark.cellId.revision !== undefined,
-				"Mark should have empty input cells after rebasing over a cell-emptying mark",
+				0x817 /* Mark should have empty input cells after rebasing over a cell-emptying mark */,
 			);
 
 			setMarkAdjacentCells(rebasedMark, detachBlocks.get(rebasedMark.cellId.revision) ?? []);
@@ -360,7 +363,7 @@ function fuseMarks<T>(newMark: Mark<T>, movedMark: Mark<T>): Mark<T> {
 	}
 	// The only case we expect for two marks from the same changeset to overlap is when one is a move source
 	// and the other is a move destination bringing the nodes back into place.
-	assert(false, "Unexpected combination of moved and new marks");
+	assert(false, 0x818 /* Unexpected combination of moved and new marks */);
 }
 
 /**
@@ -414,7 +417,10 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 
 		if (isMoveSource(baseMark)) {
 			assert(isMoveMark(baseMark), 0x6f0 /* Only move marks have move IDs */);
-			assert(!isNewAttach(currMark), "New attaches should not be rebased over moves");
+			assert(
+				!isNewAttach(currMark),
+				0x819 /* New attaches should not be rebased over moves */,
+			);
 			const { remains, follows } = separateEffectsForMove(currMark);
 			if (follows !== undefined || currMark.changes !== undefined) {
 				sendMarkToDest(
@@ -434,7 +440,10 @@ function rebaseMarkIgnoreChild<TNodeChange>(
 			? withNodeChange({ ...currMark.detach, count: currMark.count }, currMark.changes)
 			: withCellId(currMark, undefined);
 	} else if (isAttachAndDetachEffect(baseMark)) {
-		assert(baseMark.cellId !== undefined, "AttachAndDetach mark should target an empty cell");
+		assert(
+			baseMark.cellId !== undefined,
+			0x81a /* AttachAndDetach mark should target an empty cell */,
+		);
 		const halfRebasedMark = rebaseMarkIgnoreChild(
 			currMark,
 			{ ...baseMark.attach, cellId: cloneCellId(baseMark.cellId), count: baseMark.count },
@@ -789,7 +798,7 @@ function getAttachRevisionIndex(
 	}
 
 	if (markFillsCells(baseMark)) {
-		assert(isAttach(baseMark), "Only attach marks can fill cells");
+		assert(isAttach(baseMark), 0x81b /* Only attach marks can fill cells */);
 		return getRevisionIndex(
 			metadata,
 			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
@@ -816,7 +825,7 @@ function getDetachRevisionIndex(
 	}
 
 	if (markEmptiesCells(baseMark)) {
-		assert(isDetach(baseMark), "Only detach marks can empty cells");
+		assert(isDetach(baseMark), 0x81c /* Only detach marks can empty cells */);
 		return getRevisionIndex(
 			metadata,
 			baseMark.revision ?? baseRevision ?? fail("Mark must have revision"),
@@ -1004,11 +1013,13 @@ function compareCellPositions(
 		0x6a1 /* Lineage should determine order of marks unless one is a new attach */,
 	);
 
-	// BUG 5351: The following assumption is incorrect as `newMark` may be targeting cells which were created on its branch,
-	// which will come after `baseMark` in the final sequence order.
 	// `newMark` points to cells which were emptied before `baseMark` was created.
 	// We use `baseMark`'s tiebreak policy as if `newMark`'s cells were created concurrently and before `baseMark`.
 	// TODO: Use specified tiebreak instead of always tiebreaking left.
+	// BUG 5351: The above assumption is incorrect as `newMark` may be targeting cells which were created on its branch,
+	// in revisions that are sequenced after the base changeset.
+	// When that's the case, we should use the tiebreak of the mark that creates the cells instead.
+	// This will be a challenge as `newMark` does not carry the tiebreak information of the mark that created its cells.
 	return -Infinity;
 }
 
