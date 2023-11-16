@@ -172,7 +172,7 @@ function composeMarks<TNodeChange>(
 				isMoveDestination(newAttachAndDetach.attach) &&
 				isMoveSource(newAttachAndDetach.detach)
 			) {
-				assert(isMoveSource(baseMark), "Unexpected mark type");
+				assert(isMoveSource(baseMark), 0x808 /* Unexpected mark type */);
 
 				// The base changeset and new changeset both move these nodes.
 				// Call the original position of the nodes A, the position after the base changeset is applied B,
@@ -241,7 +241,7 @@ function composeMarks<TNodeChange>(
 				isMoveDestination(baseAttachAndDetach.attach) &&
 				isMoveSource(baseAttachAndDetach.detach)
 			) {
-				assert(isMoveDestination(newMark), "Unexpected mark type");
+				assert(isMoveDestination(newMark), 0x809 /* Unexpected mark type */);
 				setEndpoint(
 					moveEffects,
 					CrossFieldTarget.Source,
@@ -270,7 +270,7 @@ function composeMarks<TNodeChange>(
 			// Other mark types have been handled by previous conditional branches.
 			assert(
 				newMark.type === NoopMarkType || newMark.type === "Placeholder",
-				"Unexpected mark type",
+				0x80a /* Unexpected mark type */,
 			);
 			return withNodeChange(baseMark, nodeChange);
 		}
@@ -763,7 +763,7 @@ function setEndpoint(
 	endpoint: ChangeAtomId,
 ) {
 	const effect = getMoveEffect(moveEffects, target, revision, id, count);
-	assert(effect.length === count, "Expected effect to cover entire mark");
+	assert(effect.length === count, 0x80b /* Expected effect to cover entire mark */);
 	const newEffect = effect.value !== undefined ? { ...effect.value, endpoint } : { endpoint };
 
 	setMoveEffect(moveEffects, target, revision, id, count, newEffect);

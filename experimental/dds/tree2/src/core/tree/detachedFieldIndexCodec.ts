@@ -28,9 +28,9 @@ export function makeDetachedNodeToFieldCodec({
 			};
 			assert(
 				versionedValidator.check(encoded),
-				"Encoded detachedNodeToField data should be versioned",
+				0x7ff /* Encoded detachedNodeToField data should be versioned */,
 			);
-			assert(formatValidator.check(encoded), "Encoded schema should validate");
+			assert(formatValidator.check(encoded), 0x800 /* Encoded schema should validate */);
 			return JSON.stringify(encoded);
 		},
 		decode: (data: string): DetachedFieldSummaryData => {
