@@ -14,7 +14,6 @@ import {
 	Serializable,
 	IChannelAttributes,
 } from "@fluidframework/datastore-definitions";
-import { isFileNotFoundOrAccessDeniedError } from "@fluidframework/driver-utils";
 import {
 	IFluidSerializer,
 	ISharedObjectEvents,
@@ -47,7 +46,6 @@ const enum SnapshotPath {
 	rows = "rows",
 	cols = "cols",
 	cells = "cells",
-	setCellConflictResolutionPolicyIsFWW = "setCellConflictResolutionPolicyIsFWW",
 }
 
 interface ISetOp<T> {
@@ -77,12 +75,11 @@ interface ISetCellChangePolicyOp {
  */
 export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 	/**
-	 * Emitted when there is a conflict when this client tries to set a cell value in the {@link SharedMatrix}.
-	 * It could be due to race condition between different clients where this client set op loses or when
-	 * the client tries to set again before its previous set is acked.
-	 * Race Condition: It means we did not know about the Set op from other client when we sent the set op, but
-	 * we received the remote Op and set that value for the cell. Now when we get our local op back, we can not
-	 * overwrite the value due to FWW and need to resolve conflict.
+	 * This event is only emitted when the SetCell Resolution Policy is First Write Win(FWW).
+	 * This is emitted when two clients race and send changes without observing each other changes,
+	 * the changes that gets sequenced last would be rejected, and only client who's changes rejected
+	 * would be notified via this event, with expectation that it will merge its changes back by
+	 * accounting new information (state from winner of the race).
 	 *
 	 * @remarks Listener parameters:
 	 *
@@ -92,7 +89,7 @@ export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 	 *
 	 * - `currentValue` - The current value of the cell.
 	 *
-	 * - `ignoredValue` - The value that this client tried to set in the cell and got ignored due to conflict.
+	 * - `conflictingValue` - The value that this client tried to set in the cell and got ignored due to conflict.
 	 *
 	 * - `target` - The {@link SharedMatrix} itself.
 	 */
@@ -102,7 +99,7 @@ export interface ISharedMatrixEvents<T> extends ISharedObjectEvents {
 			row: number,
 			col: number,
 			currentValue: MatrixItem<T>,
-			ignoredValue: MatrixItem<T>,
+			conflictingValue: MatrixItem<T>,
 			target: IEventThisPlaceHolder,
 		) => void,
 	);
@@ -158,7 +155,7 @@ export class SharedMatrix<T = any>
 	private pending = new SparseArray2D<number>(); // Tracks pending writes.
 	private cellLastWriteTracker = new SparseArray2D<CellLastWriteTrackerItem>(); // Tracks last writes sequence numner in a cell.
 	// Tracks the seq number of Op at which policy switch happens from Last Write Win to First Write Win.
-	private setCellPolicySwitchOpSeqNumber = -1;
+	private setCellPolicySwitchOpSeqNumber: number;
 
 	/**
 	 * Constructor for the Shared Matrix
@@ -176,10 +173,8 @@ export class SharedMatrix<T = any>
 	) {
 		super(id, runtime, attributes, "fluid_matrix_");
 
-		if (_isSetCellConflictResolutionPolicyFWW === true) {
-			this.setCellPolicySwitchOpSeqNumber = 0;
-		}
-
+		this.setCellPolicySwitchOpSeqNumber =
+			_isSetCellConflictResolutionPolicyFWW === true ? 0 : -1;
 		this.rows = new PermutationVector(
 			SnapshotPath.rows,
 			this.logger,
@@ -509,13 +504,10 @@ export class SharedMatrix<T = any>
 					this.cells.snapshot(),
 					this.pending.snapshot(),
 					this.cellLastWriteTracker.snapshot(),
+					this.setCellPolicySwitchOpSeqNumber,
 				],
 				this.handle,
 			),
-		);
-		builder.addBlob(
-			SnapshotPath.setCellConflictResolutionPolicyIsFWW,
-			serializer.stringify(this.setCellPolicySwitchOpSeqNumber, this.handle),
 		);
 		return builder.getSummaryTree();
 	}
@@ -727,35 +719,24 @@ export class SharedMatrix<T = any>
 				new ObjectStoragePartition(storage, SnapshotPath.cols),
 				this.serializer,
 			);
-			const [cellData, pendingCliSeqData, cellLastWriteTracker] = await deserializeBlob(
-				storage,
-				SnapshotPath.cells,
-				this.serializer,
-			);
+			const [
+				cellData,
+				pendingCliSeqData,
+				cellLastWriteTracker,
+				setCellPolicySwitchOpSeqNumber,
+			] = await deserializeBlob(storage, SnapshotPath.cells, this.serializer);
 
 			this.cells = SparseArray2D.load(cellData);
 			this.pending = SparseArray2D.load(pendingCliSeqData);
 			// Old summaries will not have this info, so check that.
 			if (cellLastWriteTracker !== undefined) {
+				assert(
+					setCellPolicySwitchOpSeqNumber !== undefined,
+					"Both tracker and seq number should be present",
+				);
 				this.cellLastWriteTracker = SparseArray2D.load(cellLastWriteTracker);
+				this.setCellPolicySwitchOpSeqNumber = setCellPolicySwitchOpSeqNumber;
 			}
-
-			this.setCellPolicySwitchOpSeqNumber = await deserializeBlob(
-				storage,
-				SnapshotPath.setCellConflictResolutionPolicyIsFWW,
-				this.serializer,
-			).catch((error) => {
-				// Older Snapshot or summaries taken by older clients will not have this blob.
-				if (isFileNotFoundOrAccessDeniedError(error) === true) {
-					this.logger.sendTelemetryEvent(
-						{
-							eventName: "MatrixLoadFromOldFormatSummary",
-						},
-						error,
-					);
-					return -1;
-				}
-			});
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
 		}
