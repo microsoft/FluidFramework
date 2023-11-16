@@ -47,6 +47,7 @@ import {
 	SharedObject,
 	ISharedObjectEvents,
 	SummarySerializer,
+	parseHandles,
 } from "@fluidframework/shared-object-base";
 import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISummaryTreeWithStats, ITelemetryContext } from "@fluidframework/runtime-definitions";
@@ -640,7 +641,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 								})}`,
 							);
 						}
-						this.processMergeTreeMsg(m);
+						this.processMergeTreeMsg(parseHandles(m, this.serializer));
 					});
 					this.loadFinished();
 				})

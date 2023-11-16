@@ -21,6 +21,7 @@ import {
 	createSingleBlobSummary,
 	type IFluidSerializer,
 	SharedObject,
+	parseHandles,
 } from "@fluidframework/shared-object-base";
 import { CellFactory } from "./cellFactory";
 import {
@@ -229,7 +230,8 @@ export class SharedCell<T = any>
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<ICellValue>(storage, snapshotFileName);
 
-		this.data = this.decode(content);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		this.data = parseHandles(content.value, this.serializer);
 		this.attribution = content.attribution;
 	}
 
