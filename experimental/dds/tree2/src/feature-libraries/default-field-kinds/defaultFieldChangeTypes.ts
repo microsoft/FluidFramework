@@ -7,54 +7,60 @@ import { ChangeAtomId, JsonableTree } from "../../core";
 import { NodeChangeset } from "../modular-schema";
 
 /**
- * TL;DR:
+ * Uniquely identifies a register within the scope of this changeset.
+ * The sentinel value "self" is used for the active register, which is a universally shared register
+ * (as in, any changeset referring to "self" refers to the register containing the active value of the field).
  *
- * The general representation here needs to be closed under composition of optional changesets (though this shouldn't typically go over the wire, though
- * there are some complications with transactions that I haven't thought through).
- *
- * A single optional change comprises a (maybe) change to the root field, and a (maybe) change to the child of the existing fields' contents.
- *
- * Since the format must support rebasing such a change over other changes faithfully as well as composing it with other changes (and inverses),
- * this leads to a representation where an optional changeset specifies:
- *
- * - A sequence of changes to the root field (implies ordered) which were applied in succession
+ * See the model description in {@link OptionalChangeset} for more details.
  */
+export type RegisterId = ChangeAtomId | "self";
 
 /**
- * TODO: update this whole doc.
- * Id which identifies a piece of content within an optional field.
- * If "start", represents the node occupying the field in the input context of the change
- * If "end", represents the node occupying the field in the output context of the change
- * Otherwise, a ChangeAtomId which identifies the node *removed* by that change.
+ * Changes to an optional field.
  *
- * Note that for a given changeset, multiple ids may correspond to the same piece of content.
- * For example, if an optional field has two edits "set A" and "set B", the node A can be referred to by either { type: "before", id: <revision of 'set B'> } OR { type: "after", id: <revision of 'set A'> }.
- * For a change to the child without a corresponding field change, { type: "before", id: "this" } and { type: "after", id: "this" } will both refer to the node currently occupying the field.
- * Generally, change rebaser functions should take care to normalize their output to refer to the most recent change.
- *
- * @remarks - Using a ChangeAtomId associated with the removal of some node rather than the one that inserted that node is necessary to support rebase.
- * Consider rebasing an OptionalChangeset with changes to the 'start' node over one which also has a fieldChange. This would require naming the
- * original base revision (as 'start' no longer semantically refers to the correct place).
- *
- * // { type: "before", id: "this" } represents the node occupying the optional field in the input context of the change
- * // similarly for everything else
- */
-export type ContentId = ChangeAtomId | "self";
-
-// Fill
-// Clear
-// Set = [Fill, Clear]
-
-/**
- * @privateRemarks - This type is used to represent changes to an optional field.
- * Because the same type is reused for singular changes (e.g. "set content to Foo") and compositions of several changes,
- * the format is a bit awkward. TODO: rewrite in more informative terms.
+ * The model used is that optional field consists of a collection of "registers" with one designated as the "active" register.
+ * In a given change input or output context, registers may hold 0 or 1 nodes.
+ * Each register is identified using a {@link RegisterId}.
+ * The active register holds the current value of the field, and other registers hold detached roots.
  */
 export interface OptionalChangeset {
+	/**
+	 * Detached trees to build.
+	 */
 	build: { set: JsonableTree; id: ChangeAtomId }[];
-	moves: (readonly [src: ContentId, dst: ContentId, kind: "nodeTargeting" | "cellTargeting"])[];
 
-	childChanges: [register: ContentId, childChange: NodeChangeset][];
+	/**
+	 * Each entry signifies the intent to move a node from `src` to `dst`.
+	 *
+	 * These entries should not be interpreted as "applied one after the other", but rather as "applied simultaneously".
+	 * As such, changesets should not contain duplicated src or dst entries (lest they populate the same register twice,
+	 * or try to move a node to two different places).
+	 *
+	 * The third entry specifies whether the "intent" of the move is to target a specific register ("cellTargeting") OR to
+	 * target the node that currently happens to occupy some register ("nodeTargeting").
+	 * This is relevant when considering how changes should be rebased.
+	 *
+	 * Rebasing logic should only generate moves whose `src` is an occupied register.
+	 */
+	moves: (readonly [src: RegisterId, dst: RegisterId, kind: "nodeTargeting" | "cellTargeting"])[];
 
-	reservedDetachId?: ContentId;
+	/**
+	 * Nested changes to nodes that occupy registers.
+	 *
+	 * Nodes are identified by the register they occupy in the *output* context of the changeset.
+	 * Note that this is different from the delta format.
+	 * Switching this to be consistent is tracked by AB#6296.
+	 */
+	childChanges: [register: RegisterId, childChange: NodeChangeset][];
+
+	/**
+	 * Set iff:
+	 * 1. This change intends to populate a register (call it `foo`)
+	 * 2. That register is currently unoccupied
+	 *
+	 * In such cases, this changeset should not include a move with source `foo`, since `foo` is not empty.
+	 * However, if this changeset is then rebased over a change which populates `foo`, the rebased changeset must now empty `foo`.
+	 * This reserved id is used as the destination of that emptying move.
+	 */
+	reservedDetachId?: RegisterId;
 }

@@ -33,18 +33,18 @@ import {
 	FieldChangeHandler,
 	RemovedTreesFromChild,
 } from "../modular-schema";
-import { ContentId, OptionalChangeset } from "./defaultFieldChangeTypes";
+import { RegisterId, OptionalChangeset } from "./defaultFieldChangeTypes";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
 import { makeOptionalFieldCodecFamily } from "./defaultFieldChangeCodecs";
 import { DetachedNodeBuild, DetachedNodeChanges, DetachedNodeRename } from "../../core/tree/delta";
 
 interface IChildChangeMap<T> {
-	set(id: ContentId, childChange: T): void;
-	get(id: ContentId): T | undefined;
-	delete(id: ContentId): boolean;
-	keys(): Iterable<ContentId>;
+	set(id: RegisterId, childChange: T): void;
+	get(id: RegisterId): T | undefined;
+	delete(id: RegisterId): boolean;
+	keys(): Iterable<RegisterId>;
 	values(): Iterable<T>;
-	entries(): Iterable<[ContentId, T]>;
+	entries(): Iterable<[RegisterId, T]>;
 	readonly size: number;
 }
 
@@ -63,7 +63,7 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 		return clone;
 	}
 
-	public set(id: ContentId, childChange: T): void {
+	public set(id: RegisterId, childChange: T): void {
 		if (id === "self") {
 			this.nestedMapData.set("self", undefined, childChange);
 		} else {
@@ -71,24 +71,24 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 		}
 	}
 
-	public get(id: ContentId): T | undefined {
+	public get(id: RegisterId): T | undefined {
 		return id === "self"
 			? this.nestedMapData.tryGet(id, undefined)
 			: this.nestedMapData.tryGet(id.localId, id.revision);
 	}
 
-	public has(id: ContentId): boolean {
+	public has(id: RegisterId): boolean {
 		return this.get(id) !== undefined;
 	}
 
-	public delete(id: ContentId): boolean {
+	public delete(id: RegisterId): boolean {
 		return id === "self"
 			? this.nestedMapData.delete("self", undefined)
 			: this.nestedMapData.delete(id.localId, id.revision);
 	}
 
-	public keys(): Iterable<ContentId> {
-		const changeIds: ContentId[] = [];
+	public keys(): Iterable<RegisterId> {
+		const changeIds: RegisterId[] = [];
 		for (const [localId, nestedMap] of this.nestedMapData) {
 			if (localId === "self") {
 				changeIds.push("self");
@@ -108,8 +108,8 @@ class ChildChangeMap<T> implements IChildChangeMap<T> {
 	public values(): Iterable<T> {
 		return this.nestedMapData.values();
 	}
-	public entries(): Iterable<[ContentId, T]> {
-		const entries: [ContentId, T][] = [];
+	public entries(): Iterable<[RegisterId, T]> {
+		const entries: [RegisterId, T][] = [];
 		for (const changeId of this.keys()) {
 			if (changeId === "self") {
 				const entry = this.nestedMapData.tryGet("self", undefined);
@@ -146,13 +146,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const getBidirectionalMaps = (
 			moves: OptionalChangeset["moves"],
 		): {
-			srcToDst: ChildChangeMap<[dst: ContentId, target: "nodeTargeting" | "cellTargeting"]>;
-			dstToSrc: ChildChangeMap<ContentId>;
+			srcToDst: ChildChangeMap<[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]>;
+			dstToSrc: ChildChangeMap<RegisterId>;
 		} => {
 			const srcToDst = new ChildChangeMap<
-				[dst: ContentId, target: "nodeTargeting" | "cellTargeting"]
+				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
 			>();
-			const dstToSrc = new ChildChangeMap<ContentId>();
+			const dstToSrc = new ChildChangeMap<RegisterId>();
 			for (const [src, dst, target] of moves) {
 				srcToDst.set(src, [dst, target]);
 				dstToSrc.set(dst, src);
@@ -160,7 +160,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			return { srcToDst, dstToSrc };
 		};
 
-		let latestReservedDetachId: ContentId | undefined = undefined;
+		let latestReservedDetachId: RegisterId | undefined = undefined;
 		let isInputContextEmpty: boolean | undefined;
 
 		const builds: OptionalChangeset["build"] = [];
@@ -178,7 +178,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				// Note that this block isn't entered for child-only changes.
 				isInputContextEmpty = change.reservedDetachId !== undefined;
 			}
-			const withIntention = (id: ContentId): ContentId => {
+			const withIntention = (id: RegisterId): RegisterId => {
 				if (id === "self") {
 					return id;
 				}
@@ -198,9 +198,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				}
 			}
 			const nextSrcToDst = new ChildChangeMap<
-				[dst: ContentId, target: "nodeTargeting" | "cellTargeting"]
+				[dst: RegisterId, target: "nodeTargeting" | "cellTargeting"]
 			>();
-			const nextDstToSrc = new ChildChangeMap<ContentId>();
+			const nextDstToSrc = new ChildChangeMap<RegisterId>();
 
 			if (change.reservedDetachId !== undefined) {
 				latestReservedDetachId = withIntention(change.reservedDetachId);
@@ -214,7 +214,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					const [dst2, existingTarget] =
 						current.srcToDst.get(originalSrc) ?? fail("expected backward mapping");
 					assert(
-						areEqualContentIds(dst2, withIntention(src)),
+						areEqualRegisterIds(dst2, withIntention(src)),
 						"expected consistent backward mapping",
 					);
 					currentTarget = existingTarget;
@@ -223,7 +223,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				}
 				nextSrcToDst.set(originalSrc, [
 					withIntention(dst),
-					// Is this targeting composition sufficient? seems weird.
 					target === "nodeTargeting" || currentTarget === "nodeTargeting"
 						? "nodeTargeting"
 						: "cellTargeting",
@@ -282,8 +281,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		genId: IdAllocator,
 	): OptionalChangeset => {
 		const { moves, childChanges } = change;
-		const invertIdMap = new ChildChangeMap<ContentId>();
-		const withIntention = (id: ContentId): ContentId => {
+		const invertIdMap = new ChildChangeMap<RegisterId>();
+		const withIntention = (id: RegisterId): RegisterId => {
 			if (id === "self") {
 				return id;
 			}
@@ -294,14 +293,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		const rebasedMoves: typeof change.moves = [];
-		for (const [src, dst, target] of moves) {
-			// TODO: This assert can reasonably fail for transactions, meaning we have litte test coverage there.
+		for (const [src, dst] of moves) {
+			// TODO:AB#6298: This assert can legitimately fail for transactions, meaning we have litte test coverage there.
 			assert(
 				src === "self" || dst === "self",
 				"Only inverses for single-register attached sets are supported.",
 			);
 			if (dst === "self" && src !== "self") {
-				rebasedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]); // not sure this is right
+				rebasedMoves.push([withIntention(dst), withIntention(src), "cellTargeting"]);
 			} else {
 				rebasedMoves.push([withIntention(dst), withIntention(src), "nodeTargeting"]);
 			}
@@ -329,7 +328,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		revisionMetadata: RevisionMetadataSource,
 		existenceState?: NodeExistenceState,
 	): OptionalChangeset => {
-		const withIntention = (id: ContentId): ContentId => {
+		const withIntention = (id: RegisterId): RegisterId => {
 			if (id === "self") {
 				return id;
 			}
@@ -341,8 +340,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const { change: overChange } = overTagged;
 		const rebasedMoves: typeof moves = [];
 
-		const overDstToSrc = new ChildChangeMap<ContentId>();
-		const overSrcToDst = new ChildChangeMap<ContentId>();
+		const overDstToSrc = new ChildChangeMap<RegisterId>();
+		const overSrcToDst = new ChildChangeMap<RegisterId>();
 		for (const [src, dst] of overChange.moves) {
 			const srcTagged = withIntention(src);
 			const dstTagged = withIntention(dst);
@@ -350,7 +349,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			overDstToSrc.set(dstTagged, srcTagged);
 		}
 
-		const renamedDsts = new ChildChangeMap<ContentId>();
+		const renamedDsts = new ChildChangeMap<RegisterId>();
 		for (const [_, dst] of moves) {
 			renamedDsts.set(dst, dst);
 		}
@@ -360,9 +359,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			}
 		}
 
-		let reservedDetachId: ContentId | undefined = change.reservedDetachId;
-		const changeDstToSrc = new ChildChangeMap<ContentId>();
-		const changeSrcToDst = new ChildChangeMap<ContentId>();
+		let reservedDetachId: RegisterId | undefined = change.reservedDetachId;
+		const changeDstToSrc = new ChildChangeMap<RegisterId>();
+		const changeSrcToDst = new ChildChangeMap<RegisterId>();
 		for (const [src, dst] of moves) {
 			changeSrcToDst.set(src, dst);
 			changeDstToSrc.set(dst, src);
@@ -371,11 +370,11 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		for (const [src, dst, target] of moves) {
 			if (target === "cellTargeting") {
 				// TODO: Should we drop cell targeting / node targeting and just special-case 'self'? Might be simpler to understand.
+				// Holding off on making a call until AB#6298 is addressed (possibly support for rebasing transactions makes the
+				// answer to this more obvious).
 				if (
 					overSrcToDst.get(src) !== undefined &&
 					overDstToSrc.get(src) === undefined &&
-					// TODO: This might need to be explicit, previously there was a childChanges.length === 0 check here, which is obviously bogus for transactions.
-					//  Similarly audit cases where we add an entry.
 					reservedDetachId === undefined
 				) {
 					// Over removed the content occupying this cell and didn't fill it with other content.
@@ -396,8 +395,6 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 		// We rebased a fill from an empty state over another edit which also sets this field.
 		// We need to make sure that we also empty the field.
-
-		// TODO: This might need to be explicit.
 		const overFillsEmptyField = !overSrcToDst.has("self") && overDstToSrc.has("self");
 		if (overFillsEmptyField && reservedDetachId !== undefined) {
 			rebasedMoves.push(["self", reservedDetachId, "cellTargeting"]);
@@ -444,7 +441,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		overTagged: TaggedChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
 	) => {
-		// TODO :p
+		// TODO
 		return change;
 	},
 };
@@ -533,7 +530,7 @@ export function optionalFieldIntoDelta(
 		delta.build = builds;
 	}
 
-	const dstToSrc = new ChildChangeMap<ContentId>();
+	const dstToSrc = new ChildChangeMap<RegisterId>();
 
 	let markIsANoop = true;
 	const mark: Mutable<Delta.Mark> = { count: 1 };
@@ -604,7 +601,7 @@ export const optionalChangeHandler: FieldChangeHandler<OptionalChangeset, Option
 };
 
 // Note: assumes normalization! Two content ids might be semantically equivalent (e.g. 'after fieldChange 1' and 'before fieldChange 2'), but won't be counted as equal here.
-function areEqualContentIds(a: ContentId, b: ContentId): boolean {
+function areEqualRegisterIds(a: RegisterId, b: RegisterId): boolean {
 	if (typeof a === "string" || typeof b === "string") {
 		return a === b;
 	}
@@ -616,7 +613,7 @@ function* relevantRemovedTrees(
 	change: OptionalChangeset,
 	removedTreesFromChild: RemovedTreesFromChild,
 ): Iterable<Delta.DetachedNodeId> {
-	const dstToSrc = new ChildChangeMap<ContentId>();
+	const dstToSrc = new ChildChangeMap<RegisterId>();
 	const alreadyYieldedOrNewlyBuilt = new ChildChangeMap<boolean>();
 	for (const { id } of change.build) {
 		alreadyYieldedOrNewlyBuilt.set(id, true);

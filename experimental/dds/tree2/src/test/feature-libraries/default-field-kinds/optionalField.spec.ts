@@ -385,7 +385,7 @@ describe("optionalField", () => {
 					build: [
 						{ id: { localId: brand(41) }, set: { type: brand("value"), value: "X" } },
 					],
-					// TODO: This test case demonstrates a problem with rebasing transactions:
+					// TODO:AB#6298: This test case demonstrates a problem with rebasing transactions:
 					// we don't realize that { localId: brand(1) } no longer refers to the right node
 					// because we rebased over a change that detaches that node. We either need to augment
 					// this with a move from { localId: brand(0), revision: taggedBaseChange.revision } => { localId: brand(1) }

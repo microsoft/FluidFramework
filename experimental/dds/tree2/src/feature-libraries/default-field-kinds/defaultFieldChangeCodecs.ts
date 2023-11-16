@@ -6,10 +6,10 @@
 import { TAnySchema, Type } from "@sinclair/typebox";
 import { ICodecFamily, IJsonCodec, makeCodecFamily, unitCodec } from "../../codec";
 import type { NodeChangeset } from "../modular-schema";
-import type { ContentId, OptionalChangeset } from "./defaultFieldChangeTypes";
+import type { RegisterId, OptionalChangeset } from "./defaultFieldChangeTypes";
 import {
 	EncodedBuild,
-	EncodedContentId,
+	EncodedRegisterId,
 	EncodedOptionalChangeset,
 } from "./defaultFieldChangeFormat";
 
@@ -19,20 +19,20 @@ export const makeOptionalFieldCodecFamily = (
 	childCodec: IJsonCodec<NodeChangeset>,
 ): ICodecFamily<OptionalChangeset> => makeCodecFamily([[0, makeOptionalFieldCodec(childCodec)]]);
 
-const contentIdCodec: IJsonCodec<ContentId, EncodedContentId> = {
-	encode: (contentId: ContentId) => {
-		if (contentId === "self") {
+const registerIdCodec: IJsonCodec<RegisterId, EncodedRegisterId> = {
+	encode: (registerId: RegisterId) => {
+		if (registerId === "self") {
 			return 0;
 		}
 
-		return { ...contentId };
+		return { ...registerId };
 	},
-	decode: (contentId: EncodedContentId) => {
-		if (contentId === 0) {
+	decode: (registerId: EncodedRegisterId) => {
+		if (registerId === 0) {
 			return "self";
 		}
 
-		return { ...contentId };
+		return { ...registerId };
 	},
 };
 
@@ -57,8 +57,8 @@ function makeOptionalFieldCodec(
 				encoded.m = [];
 				for (const [src, dst, type] of change.moves) {
 					encoded.m.push([
-						contentIdCodec.encode(src),
-						contentIdCodec.encode(dst),
+						registerIdCodec.encode(src),
+						registerIdCodec.encode(dst),
 						// TODO: omit sometimes
 						type === "nodeTargeting",
 					]);
@@ -68,12 +68,12 @@ function makeOptionalFieldCodec(
 			if (change.childChanges.length > 0) {
 				encoded.c = [];
 				for (const [id, childChange] of change.childChanges) {
-					encoded.c.push([contentIdCodec.encode(id), childCodec.encode(childChange)]);
+					encoded.c.push([registerIdCodec.encode(id), childCodec.encode(childChange)]);
 				}
 			}
 
 			if (change.reservedDetachId !== undefined) {
-				encoded.d = contentIdCodec.encode(change.reservedDetachId);
+				encoded.d = registerIdCodec.encode(change.reservedDetachId);
 			}
 
 			return encoded;
@@ -84,23 +84,23 @@ function makeOptionalFieldCodec(
 				encoded.m?.map(
 					([src, dst, type]) =>
 						[
-							contentIdCodec.decode(src),
-							contentIdCodec.decode(dst),
+							registerIdCodec.decode(src),
+							registerIdCodec.decode(dst),
 							type ? ("nodeTargeting" as const) : ("cellTargeting" as const),
 						] as const,
 				) ?? [];
 			const decoded: OptionalChangeset = {
-				build: encoded.b ?? [], // TODO: worth it to copy here?
+				build: encoded.b ?? [],
 				moves,
 				childChanges:
 					encoded.c?.map(([id, encodedChange]) => [
-						contentIdCodec.decode(id),
+						registerIdCodec.decode(id),
 						childCodec.decode(encodedChange),
 					]) ?? [],
 			};
 
 			if (encoded.d !== undefined) {
-				decoded.reservedDetachId = contentIdCodec.decode(encoded.d);
+				decoded.reservedDetachId = registerIdCodec.decode(encoded.d);
 			}
 			return decoded;
 		},
