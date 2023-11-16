@@ -4,6 +4,9 @@
  */
 
 import { browser } from "../Globals";
+/* eslint-disable import/no-internal-modules */
+import { initializePopupView } from "../devtools/InitializePopupView";
+/* eslint-enable import/no-internal-modules */
 
 /**
  * This module is the extensions "pop-up" script.
@@ -24,8 +27,9 @@ browser.tabs.query({ active: true, currentWindow: true }, (tab) => {
 	popupElement.id = "fluid-devtools-popup";
 	popupElement.style.height = "100%";
 	popupElement.style.width = "100%";
-	popupElement.textContent =
-		'To use the Fluid Devtools, open the browser Devtools pane (F12) and click the "Fluid Developer Tools" tab.';
+	// popupElement.textContent =
+	// 	'To use the Fluid Devtools, open the browser Devtools pane (F12) and click the "Fluid Developer Tools" tab.';
 
 	document.body.append(popupElement);
+	initializePopupView(popupElement).then(() => {}, console.error);
 });
