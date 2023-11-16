@@ -42,6 +42,7 @@ ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 	valid: [
 		{
 			code: validCodeWithJSDoc,
+			// Valid import
 			options: [
 				{
 					tags: ["@internal", "@alpha"],
@@ -50,6 +51,7 @@ ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 		},
 		{
 			code: validCode2WithJSDoc,
+			// Restricted tag imported from exception
 			options: [
 				{
 					tags: ["@internal", "@alpha"],
@@ -62,6 +64,7 @@ ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 	invalid: [
 		{
 			code: invalidCodeWithJSDoc,
+			// Import with restricted tag
 			options: [
 				{
 					tags: ["@internal", "@alpha"],
