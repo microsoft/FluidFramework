@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
-import lodashPkg from "lodash";
-// eslint-disable-next-line @typescript-eslint/unbound-method
-const { merge } = lodashPkg;
-
 import { v4 as uuid } from "uuid";
 import { assert, unreachableCase } from "@fluidframework/core-utils";
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
@@ -2016,7 +2011,14 @@ export class Container
 				  };
 
 		if (this.clientDetailsOverride !== undefined) {
-			merge(client.details, this.clientDetailsOverride);
+			client.details = {
+				...client.details,
+				...this.clientDetailsOverride,
+				capabilities: {
+					...client.details.capabilities,
+					...this.clientDetailsOverride.capabilities,
+				},
+			};
 		}
 		client.details.environment = [
 			client.details.environment,
