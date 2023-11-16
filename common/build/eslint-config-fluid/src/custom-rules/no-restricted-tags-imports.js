@@ -2,13 +2,14 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+const { TSDocParser } = require("@microsoft/tsdoc");
 
 module.exports = {
 	meta: {
 		type: "problem",
 		docs: {
 			description:
-				"This rule restricts imports from internal or non-public APIs. This to prevent accidental dependencies on internal, unstable or undocumented parts of the codebase.",
+				"This rule restricts imports from specified tags or non-public APIs. This to prevent accidental dependencies on internal, unstable or undocumented parts of the codebase.",
 			category: "Best Practices",
 		},
 		fixable: "code",
@@ -31,16 +32,28 @@ module.exports = {
 			},
 		],
 		messages: {
-			restrictedImport: "Import ",
+			importWithRestrictedTag: "Import with restricted tag found.",
 		},
 	},
 	create(context) {
 		const options = context.options[0] || {};
-		const restrictedTags = new Set(options.tags || []);
+		// Get restricted tags and throw error if not formatted correctly, ie: start with '@'
+		const restrictedTags = new Set(
+			(options.tags || []).map((tag) => {
+				if (!tag.startsWith("@")) {
+					context.report({
+						loc: { line: 1, column: 0 },
+						message: `Invalid tag format in rule configuration: '{${tag}}'. Tags should start with '@'.`,
+						data: { tag },
+					});
+					invalidTags = true;
+				}
+				return tag;
+			}),
+		);
 		const exceptions = new Set(options.exceptions || []);
 		return {
 			ImportDeclaration(node) {
-				console.log(node.source);
 				const isException = exceptions.has(node.source.value);
 				if (isException) {
 					return; // Skip further checks for this import
@@ -54,14 +67,17 @@ module.exports = {
 						if (comment.type !== "Block") {
 							return;
 						}
-						// Use a JSDoc parser to parse the comments for each imported item.
-						const jsDoc = require("doctrine").parse(comment.value, { unwrap: true });
-						jsDoc.tags.forEach((tag) => {
-							console.log(tag);
-							if (restrictedTags.has(tag.title)) {
+						// Add supplementary warnings like we don't have guidance for @label. Plz don't use it. Add some default error.
+						const tsdocParser = new TSDocParser();
+						// The leading and trailing new line characters were trimmed so we need to readd them for tsdoc to parse the comment correctly.
+						let x = `/**\n` + comment.value + `\n */`;
+						const parserContext = tsdocParser.parseString(x);
+						// const parsedContext = jsDoc.parse(comment.value, { unwrap: true });
+						restrictedTags.forEach((tag) => {
+							if (parserContext.docComment.modifierTagSet.hasTagName(tag)) {
 								context.report({
 									node,
-									messageId: "restrictedImport",
+									messageId: "importWithRestrictedTag",
 									data: {
 										name: variable.name,
 										tag: tag.title,

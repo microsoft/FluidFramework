@@ -8,9 +8,6 @@ const noRestrictedTagsImports = require("../custom-rules/no-restricted-tags-impo
 
 const ruleTester = new RuleTester({
 	parser: require.resolve("@typescript-eslint/parser"),
-	ecmaFeatures: {
-		jsx: true,
-	},
 });
 
 const validCodeWithJSDoc = `
@@ -47,7 +44,7 @@ ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 			code: validCodeWithJSDoc,
 			options: [
 				{
-					tags: ["internal", "alpha"],
+					tags: ["@internal", "@alpha"],
 				},
 			],
 		},
@@ -55,7 +52,7 @@ ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 			code: validCode2WithJSDoc,
 			options: [
 				{
-					tags: ["internal", "alpha"],
+					tags: ["@internal", "@alpha"],
 					exceptions: ["./foo"],
 				},
 			],
@@ -67,7 +64,7 @@ ruleTester.run("no-restricted-tags-imports", noRestrictedTagsImports, {
 			code: invalidCodeWithJSDoc,
 			options: [
 				{
-					tags: ["internal", "alpha"],
+					tags: ["@internal", "@alpha"],
 					exceptions: ["./foo", "bar"],
 				},
 			],
