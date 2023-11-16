@@ -1,29 +1,41 @@
-# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
-# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-npm-package-deployment
+
 parameters:
 - name: namespace
   type: boolean
+
 - name: feedKind
   type: string
+
 - name: feedUrl
   type: string
+
 - name: environment
   type: string
+
 - name: publishNonScopedPackages
   type: boolean
   default: false
+
 - name: pool
   type: object
   default: Small
+
 - name: publishFlags
   type: string
-  default: ''
+  default:
+
 - name: customEndPoint
   type: string
-  default: ''
+  default:
+
 - name: tagName
   type: string
-  default: ''
+  default:
+
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   displayName: Publish ${{ parameters.environment }}
@@ -36,28 +48,28 @@ jobs:
     isLatest: $[ stageDependencies.build.build.outputs['SetVersion.isLatest']]
   strategy:
     runOnce:
-      deploy:
-        steps:
-        - download: current
-          artifact: pack
-        - template: /tools/pipelines/templates/include-use-node-version.yml@self
-        - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
-          parameters:
-            namespace: ${{ parameters.namespace }}
-            artifactPath: scoped
-            feedUrl: ${{ parameters.feedUrl }}
-            customEndPoint: ${{ parameters.customEndPoint }}
-            feedKind: ${{ parameters.feedKind }}
-            publishFlags: ${{ parameters.publishFlags }}
-        - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
+        deploy:
+          steps:
+          - download: current
+            artifact: pack
+          - template: /tools/pipelines/templates/include-use-node-version.yml@self
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
-              namespace: false
-              artifactPath: non-scoped
+              namespace: ${{ parameters.namespace }}
+              artifactPath: scoped
               feedUrl: ${{ parameters.feedUrl }}
-              feedKind: ${{ parameters.feedKind }}
               customEndPoint: ${{ parameters.customEndPoint }}
+              feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
-        - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
-          parameters:
-            tagName: ${{ parameters.tagName }}
+          - ${{ if eq(parameters.publishNonScopedPackages, true) }}:
+            - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
+              parameters:
+                namespace: false
+                artifactPath: non-scoped
+                feedUrl: ${{ parameters.feedUrl }}
+                feedKind: ${{ parameters.feedKind }}
+                customEndPoint: ${{ parameters.customEndPoint }}
+                publishFlags: ${{ parameters.publishFlags }}
+          - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+            parameters:
+              tagName: ${{ parameters.tagName }}
