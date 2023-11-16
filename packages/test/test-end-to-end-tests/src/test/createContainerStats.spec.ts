@@ -19,6 +19,7 @@ import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 
@@ -133,7 +134,7 @@ describeFullCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 
 		// Create and set up a container for the first client.
 		mainContainer = await provider.createContainer(runtimeFactory, { logger: mockLogger });
-		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
+		mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(mainContainer);
 		// Create and setup a summary collection that will be used to track and wait for summaries.
 		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 
@@ -220,7 +221,7 @@ describeFullCompat("Generate Summary Stats", (getTestObjectProvider, apis) => {
 
 		// Load and set up a new main container with the above summary and validate that it loads with summaryNumber 2.
 		mainContainer = await loadContainer(summaryVersion);
-		mainDataStore = (await mainContainer.getEntryPoint()) as TestDataObject;
+		mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(mainContainer);
 		// Create and setup a summary collection that will be used to track and wait for summaries.
 		summaryCollection = new SummaryCollection(mainContainer.deltaManager, createChildLogger());
 		validateLoadStats(2, 1, 1, "Second container should load with correct data store stats");

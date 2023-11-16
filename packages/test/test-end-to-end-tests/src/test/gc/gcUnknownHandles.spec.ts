@@ -8,7 +8,11 @@ import { IContainer } from "@fluidframework/container-definitions";
 import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { FluidObjectHandle } from "@fluidframework/datastore";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
-import { ITestObjectProvider, waitForContainerConnection } from "@fluidframework/test-utils";
+import {
+	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils";
 import { describeFullCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import {
 	IFluidHandle,
@@ -94,7 +98,7 @@ describeFullCompat("GC unknown handles", (getTestObjectProvider) => {
 		}
 
 		mainContainer = await provider.makeTestContainer(defaultGCConfig);
-		dataStoreA = (await mainContainer.getEntryPoint()) as ITestDataObject;
+		dataStoreA = await getContainerEntryPointBackCompat<ITestDataObject>(mainContainer);
 		await waitForContainerConnection(mainContainer);
 
 		const summarizerContainer = await provider.loadTestContainer(defaultGCConfig);

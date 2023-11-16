@@ -15,6 +15,7 @@ import {
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	ITestFluidObject,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
@@ -39,15 +40,15 @@ describeFullCompat("SharedMap", (getTestObjectProvider) => {
 
 	beforeEach(async () => {
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);
 
 		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedMap3 = await dataObject3.getSharedObject<SharedMap>(mapId);
 
 		sharedMap1.set("testKey1", "testValue");
@@ -405,7 +406,7 @@ describeFullCompat("SharedMap orderSequentially", (getTestObjectProvider) => {
 		};
 
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 		clearEventCount = 0;

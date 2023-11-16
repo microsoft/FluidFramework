@@ -837,7 +837,6 @@ describeNoCompat("stashed ops", (getTestObjectProvider) => {
 		await waitForContainerConnection(container2);
 
 		// get new datastore from first container
-		// !!! TODO: use an alias??
 		const dataStore2 = await requestFluidObject<ITestFluidObject>(container1, id);
 		const map2 = await requestFluidObject<SharedMap>(dataStore2.runtime, newMapId);
 		await provider.ensureSynchronized();

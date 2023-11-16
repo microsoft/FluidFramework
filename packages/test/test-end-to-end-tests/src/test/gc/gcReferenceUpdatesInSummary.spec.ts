@@ -15,6 +15,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestObjectProvider,
 	createContainerRuntimeFactoryWithDefaultDataStore,
+	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
@@ -160,7 +161,7 @@ describeFullCompat("GC reference updates in local summary", (getTestObjectProvid
 		}
 
 		const container = await createContainer();
-		mainDataStore = (await container.getEntryPoint()) as TestDataObject;
+		mainDataStore = await getContainerEntryPointBackCompat<TestDataObject>(container);
 		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 		await waitForContainerConnection(container);
 	});

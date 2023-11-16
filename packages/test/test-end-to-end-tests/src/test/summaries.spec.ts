@@ -27,6 +27,7 @@ import {
 	createSummarizerFromFactory,
 	summarizeNow,
 	createSummarizer,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
 	describeNoCompat,
@@ -232,9 +233,8 @@ describeNoCompat("Summaries", (getTestObjectProvider) => {
 		const readOnlyContainer1 = dsContainer1._context.deltaManager.readOnlyInfo.readonly;
 		assert(readOnlyContainer1 !== true, "Non-summarizer container 1 should not be readonly");
 
-		const { container: summarizerContainer } = await createSummarizer(provider, container1);
-		const dsSummarizer = (await summarizerContainer.getEntryPoint()) as ITestDataObject;
-		const readOnlySummarizer = dsSummarizer._context.deltaManager.readOnlyInfo.readonly;
+		const { summarizer } = await createSummarizer(provider, container1);
+		const readOnlySummarizer = (summarizer as any).runtime.deltaManager.readOnlyInfo.readonly;
 		assert(readOnlySummarizer === true, "Summarizer should be readonly");
 	});
 	it("should generate summary tree", async () => {
@@ -442,7 +442,8 @@ describeFullCompat("Summaries", (getTestObjectProvider) => {
 		async () => {
 			const mockLogger = new MockLogger();
 			const container = await createContainer(provider, {}, mockLogger);
-			const defaultDataStore = (await container.getEntryPoint()) as ITestDataObject;
+			const defaultDataStore =
+				await getContainerEntryPointBackCompat<ITestDataObject>(container);
 			const containerRuntime = defaultDataStore._context.containerRuntime as ContainerRuntime;
 			await provider.ensureSynchronized();
 

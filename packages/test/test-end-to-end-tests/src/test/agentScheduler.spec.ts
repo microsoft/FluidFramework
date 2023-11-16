@@ -11,7 +11,11 @@ import {
 } from "@fluidframework/agent-scheduler";
 import { IContainer, IProvideRuntimeFactory } from "@fluidframework/container-definitions";
 
-import { ITestObjectProvider, createTestContainerRuntimeFactory } from "@fluidframework/test-utils";
+import {
+	ITestObjectProvider,
+	createTestContainerRuntimeFactory,
+	getContainerEntryPointBackCompat,
+} from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { rootDataStoreRequestHandler } from "@fluidframework/request-handler";
 
@@ -43,7 +47,7 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 
 	const loadContainer = async (): Promise<IContainer> => provider.loadContainer(runtimeFactory);
 	const getAgentScheduler = async (container: IContainer): Promise<IAgentScheduler> => {
-		const scheduler = (await container.getEntryPoint()) as IAgentScheduler;
+		const scheduler = await getContainerEntryPointBackCompat<IAgentScheduler>(container);
 		await forceWriteMode(scheduler);
 		return scheduler;
 	};
@@ -251,10 +255,10 @@ describeFullCompat("AgentScheduler", (getTestObjectProvider, apis) => {
 
 		beforeEach(async () => {
 			container1 = await createContainer();
-			scheduler1 = (await container1.getEntryPoint()) as IAgentScheduler;
+			scheduler1 = await getContainerEntryPointBackCompat<IAgentScheduler>(container1);
 
 			container2 = await loadContainer();
-			scheduler2 = (await container2.getEntryPoint()) as IAgentScheduler;
+			scheduler2 = await getContainerEntryPointBackCompat<IAgentScheduler>(container2);
 		});
 
 		it("Tasks picked while in read mode are assigned after switching to write mode", async () => {

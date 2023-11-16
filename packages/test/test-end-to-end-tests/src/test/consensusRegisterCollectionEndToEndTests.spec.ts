@@ -18,6 +18,7 @@ import {
 	DataObjectFactoryType,
 	ITestFluidObject,
 	ChannelFactoryRegistry,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
 
@@ -53,17 +54,17 @@ function generate(name: string, ctor: ISharedObjectConstructor<IConsensusRegiste
 		beforeEach(async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			const dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 			sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 		});
 
@@ -300,7 +301,7 @@ describeNoCompat("ConsensusRegisterCollection grouped batching", (getTestObjectP
 
 	it("grouped batching doesn't hit 0x071", async () => {
 		const container = await provider.makeTestContainer(groupedBatchingContainerConfig);
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		const sharedMap = await dataObject.getSharedObject<SharedMap>(mapId);
 
 		const collection = ConsensusRegisterCollection.create(dataObject.runtime);

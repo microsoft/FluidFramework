@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 import {
+	ContainerRuntime,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
@@ -100,8 +101,13 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 	let opCount = 0;
 	// Sends a unique op that's guaranteed to change the DDS for this specific container.
 	// This can also be used to transition a client to write mode.
-	const sendOpToUpdateSummaryTimestampToNow = async (container: IContainer) => {
-		const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
+	const sendOpToUpdateSummaryTimestampToNow = async (summarizer: ISummarizer) => {
+		const runtime = (summarizer as any).runtime as ContainerRuntime;
+		const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+		if (entryPoint === undefined) {
+			throw new Error("default dataStore must exist");
+		}
+		const defaultDataObject = (await entryPoint.get()) as ITestDataObject;
 		defaultDataObject._root.set("send a", `op ${opCount++}`);
 	};
 
@@ -151,7 +157,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			summarizingContainer2,
 			testDataObject.handle.absolutePath,
 		);
-		await sendOpToUpdateSummaryTimestampToNow(summarizingContainer2);
+		await sendOpToUpdateSummaryTimestampToNow(summarizer2);
 
 		return {
 			unreferencedId,
@@ -248,7 +254,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 				// The datastore should be swept now
 				const { summaryVersion } = await summarize(summarizer);
@@ -278,10 +284,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				);
 
 				// This request fails since the datastore is swept
-				const entryPoint2 = (await summarizingContainer.getEntryPoint()) as ITestDataObject;
-				const summarizerResponse = await (
-					entryPoint2._context.containerRuntime as any
-				).resolveHandle({
+				const summarizerResponse = await (summarizer as any).runtime.resolveHandle({
 					url: unreferencedId,
 				});
 				assert.equal(
@@ -329,7 +332,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
 				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
 				const response = await (entryPoint._context.containerRuntime as any).resolveHandle({
@@ -386,7 +389,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 					summarizer,
 					summaryVersion: unreferencedSummaryVersion,
 				} = await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 				const sendingContainer = await loadContainer(unreferencedSummaryVersion);
 				const entryPoint = (await sendingContainer.getEntryPoint()) as ITestDataObject;
 				const response = await (entryPoint._context.containerRuntime as any).resolveHandle({
@@ -465,7 +468,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 			const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+			await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 			// The datastore should be swept now
 			const summary2 = await summarize(summarizer);
@@ -489,7 +492,7 @@ describeNoCompat("GC data store sweep tests", (getTestObjectProvider) => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
 				const sweepReadyDataStoreNodePath = `/${unreferencedId}`;
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizer);
 
 				// The datastore should NOT be swept here.
 				// We need to do fullTree because the GC data won't change (since it's not swept).

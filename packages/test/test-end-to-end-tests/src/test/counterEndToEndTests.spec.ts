@@ -11,6 +11,7 @@ import {
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	ITestFluidObject,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, itExpects } from "@fluid-private/test-version-utils";
 import { ContainerErrorType, IContainer } from "@fluidframework/container-definitions";
@@ -38,17 +39,17 @@ describeFullCompat("SharedCounter", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedCounter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedCounter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 
 		// Load the Container that was created by the first client.
 		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
 
 		await provider.ensureSynchronized();
@@ -189,8 +190,8 @@ describeFullCompat("SharedCounter orderSequentially", (getTestObjectProvider) =>
 			},
 		};
 		container = await provider.makeTestContainer(configWithFeatureGates);
-		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		dataStore = (await container.getEntryPoint()) as ITestFluidObject;
+		dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
 		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
 	});

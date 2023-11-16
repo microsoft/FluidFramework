@@ -115,10 +115,17 @@ async function loadSummarizer(
 		);
 	});
 
-	// !!! TODO: This won't work
-	const defaultDataStore = (await summarizerContainer.getEntryPoint()) as TestDataObject1;
+	// entryPoint of a summarizer container is the Summarizer object
+	const summarizer = await summarizerContainer.getEntryPoint();
+	// The runtime prop is private to the Summarizer class
+	const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint("default");
+	if (entryPoint === undefined) {
+		throw new Error("default dataStore must exist");
+	}
 	return {
-		containerRuntime: defaultDataStore._context.containerRuntime as ContainerRuntime,
+		containerRuntime,
+		entryPoint: entryPoint.get(),
 		summaryCollection,
 	};
 }
@@ -222,7 +229,7 @@ class TestDataObject1 extends DataObject implements SearchContent {
 /**
  * Validates whether or not a GC Tree Summary Handle should be written to the summary.
  */
-describeNoCompat.only("Prepare for Summary with Search Blobs", (getTestObjectProvider) => {
+describeNoCompat("Prepare for Summary with Search Blobs", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	const dataStoreFactory1 = new DataObjectFactory(
 		TestDataObjectType1,
@@ -241,9 +248,6 @@ describeNoCompat.only("Prepare for Summary with Search Blobs", (getTestObjectPro
 		createDataStoreRuntime(),
 	);
 	const runtimeOptions: IContainerRuntimeOptions = {
-		summaryOptions: {
-			summaryConfigOverrides: { state: "disabled" },
-		},
 		gcOptions: { gcAllowed: true },
 	};
 	const innerRequestHandler = async (request: IRequest, runtime: IContainerRuntimeBase) =>
@@ -432,7 +436,7 @@ describeNoCompat.only("Prepare for Summary with Search Blobs", (getTestObjectPro
 			});
 		});
 
-		it.only("Data store with GC data realized after summarize", async () => {
+		it("Data store with GC data realized after summarize", async () => {
 			// Create a summarizer client.
 			const { summarizer: summarizer1 } = await createSummarizerFromFactory(
 				provider,
@@ -471,9 +475,7 @@ describeNoCompat.only("Prepare for Summary with Search Blobs", (getTestObjectPro
 			// Before refresh is called, request the second data store in the summarizer. This will create summarizer
 			// nodes for its child DDSes. The data store's summarizer node should update the pending used routes
 			// of the child's summarizer node.
-			// !!! TODO: This won't work
-			const ds2MainDataStore =
-				(await summarizer2.containerRuntime.getEntryPoint()) as TestDataObject1;
+			const ds2MainDataStore = (await summarizer2.entryPoint) as TestDataObject1;
 			const ds2MainDataStoreHandle =
 				ds2MainDataStore._root.get<IFluidHandle<TestDataObject2>>("dataStore2");
 			assert(

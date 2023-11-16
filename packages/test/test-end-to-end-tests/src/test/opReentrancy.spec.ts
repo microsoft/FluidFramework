@@ -13,6 +13,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, itExpects } from "@fluid-private/test-version-utils";
 import { SharedString } from "@fluidframework/sequence";
@@ -67,8 +68,8 @@ describeFullCompat("Concurrent op processing via DDS event handlers", (getTestOb
 		container1 = await provider.makeTestContainer(configWithFeatureGates);
 		container2 = await provider.loadTestContainer(configWithFeatureGates);
 
-		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 
 		sharedMap1 = await dataObject1.getSharedObject<SharedMap>(mapId);
 		sharedMap2 = await dataObject2.getSharedObject<SharedMap>(mapId);

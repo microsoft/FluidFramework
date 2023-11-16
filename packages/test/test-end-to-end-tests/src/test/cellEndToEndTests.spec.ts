@@ -12,6 +12,7 @@ import {
 	DataObjectFactoryType,
 	ITestFluidObject,
 	ChannelFactoryRegistry,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat, describeNoCompat } from "@fluid-private/test-version-utils";
 
@@ -44,17 +45,17 @@ describeFullCompat("SharedCell", (getTestObjectProvider) => {
 	beforeEach(async () => {
 		// Create a Container for the first client.
 		const container1 = await provider.makeTestContainer(testContainerConfig);
-		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedCell1 = await dataObject1.getSharedObject<SharedCell>(cellId);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedCell2 = await dataObject2.getSharedObject<SharedCell>(cellId);
 
 		// Load the Container that was created by the first client.
 		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataObject3 = (await container3.getEntryPoint()) as ITestFluidObject;
+		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedCell3 = await dataObject3.getSharedObject<SharedCell>(cellId);
 
 		// Set a starting value in the cell

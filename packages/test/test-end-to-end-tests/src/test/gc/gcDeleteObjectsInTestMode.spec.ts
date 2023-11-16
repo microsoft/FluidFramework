@@ -14,6 +14,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -216,7 +217,7 @@ describeFullCompat("GC delete objects in test mode", (getTestObjectProvider) => 
 				},
 			};
 			const container = await provider.makeTestContainer(testContainerConfig);
-			mainDataStore = (await container.getEntryPoint()) as ITestDataObject;
+			mainDataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 			containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
 
 			// Send an op before GC runs. GC needs current timestamp to work with which is retrieved from ops. Without

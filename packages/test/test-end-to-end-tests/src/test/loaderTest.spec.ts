@@ -15,13 +15,11 @@ import {
 } from "@fluid-private/test-version-utils";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 import { RuntimeHeaders } from "@fluidframework/container-runtime";
-import {
-	requestResolvedObjectFromContainer,
-	waitContainerToCatchUp,
-} from "@fluidframework/container-loader";
+import { requestResolvedObjectFromContainer } from "@fluidframework/container-loader";
 import { requestFluidObject } from "@fluidframework/runtime-utils";
 
 // REVIEW: enable compat testing?
+// TODO: Remove this file when request is removed from Loader AB#4991
 describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 	const {
 		dataRuntime: { DataObject, DataObjectFactory },
@@ -319,40 +317,6 @@ describeNoCompat("Loader.request", (getTestObjectProvider, apis) => {
 		};
 		// Request to the newly created data store with headers.
 		const response = await container2.request({ url: dataStoreWithRequestHeaders.id, headers });
-
-		assert.strictEqual(response.status, 200, "Did not return the correct status");
-		assert.strictEqual(
-			response.mimeType,
-			"request/headers",
-			"Did not get the correct mimeType",
-		);
-		assert.deepStrictEqual(
-			response.value,
-			headers,
-			"Did not get the correct headers in the response",
-		);
-	});
-
-	it("requestResolvedObjectFromContainer can handle requests with headers", async () => {
-		const dataStoreWithRequestHeaders = await testFactoryWithRequestHeaders.createInstance(
-			dataStore1._context.containerRuntime,
-		);
-		dataStore1._root.set("key", dataStoreWithRequestHeaders.handle);
-
-		// Flush all the ops
-		await provider.ensureSynchronized();
-
-		const url = await container.getAbsoluteUrl(dataStoreWithRequestHeaders.id);
-		assert(url, "Container should return absolute url");
-
-		const headers = { wait: false, [RuntimeHeaders.viaHandle]: true };
-		// Request to the newly created data store with headers.
-		const newLoader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory]]);
-		const resolvedContainer = await newLoader.resolve({ url });
-		await waitContainerToCatchUp(resolvedContainer);
-		await provider.ensureSynchronized();
-
-		const response = await requestResolvedObjectFromContainer(resolvedContainer, headers);
 
 		assert.strictEqual(response.status, 200, "Did not return the correct status");
 		assert.strictEqual(

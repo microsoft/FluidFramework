@@ -18,6 +18,7 @@ import { describeNoCompat, ITestDataObject, itExpects } from "@fluid-private/tes
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions";
+import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import { blobsTreeName } from "@fluidframework/container-runtime/dist/summary/index.js";
 import {
@@ -63,10 +64,14 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 		container: IContainer,
 		blobNodePath: string,
 		messagePrefix: string,
+		isSummarizerContainer = false,
 	) {
 		const blobId = blobNodePath.split("/")[2];
 		const entryPoint = (await container.getEntryPoint()) as ITestDataObject;
-		const response = await (entryPoint._context.containerRuntime as any).resolveHandle({
+		const runtime = isSummarizerContainer
+			? ((entryPoint as any).runtime as IContainerRuntimeBase)
+			: entryPoint._context.containerRuntime;
+		const response = await (runtime as any).resolveHandle({
 			url: blobNodePath,
 		});
 		assert.strictEqual(response?.status, 404, `${messagePrefix}: Expecting a 404 response`);
@@ -168,6 +173,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 					summarizerContainer,
 					blobHandle.absolutePath,
 					"Summarizer: Blob1",
+					true,
 				);
 			},
 		);
@@ -247,11 +253,13 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 					summarizerContainer,
 					blobHandle1.absolutePath,
 					"Summarizer: Blob1",
+					true,
 				);
 				await validateBlobRetrievalFails(
 					summarizerContainer,
 					blobHandle2.absolutePath,
 					"Summarizer: Blob2",
+					true,
 				);
 			},
 		);
@@ -429,6 +437,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 					summarizerContainer,
 					blobHandle.absolutePath,
 					"Summarizer: Blob1",
+					true,
 				);
 			},
 		);
@@ -536,11 +545,13 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 					summarizerContainer,
 					blobHandle1.absolutePath,
 					"Summarizer: Blob1",
+					true,
 				);
 				await validateBlobRetrievalFails(
 					summarizerContainer,
 					blobHandle2.absolutePath,
 					"Summarizer: Blob2",
+					true,
 				);
 			},
 		);
@@ -661,6 +672,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 					summarizerContainer,
 					blobHandle1.absolutePath,
 					"Summarizer: Blob1",
+					true,
 				);
 			},
 		);
@@ -768,6 +780,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 					summarizerContainer,
 					blobHandle.absolutePath,
 					"Summarizer: Blob1",
+					true,
 				);
 			},
 		);
@@ -864,11 +877,13 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 					summarizerContainer,
 					blobHandle1.absolutePath,
 					"Summarizer: Blob1",
+					true,
 				);
 				await validateBlobRetrievalFails(
 					summarizerContainer,
 					blobHandle2.absolutePath,
 					"Summarizer: Blob2",
+					true,
 				);
 			},
 		);
@@ -976,6 +991,7 @@ describeNoCompat("GC attachment blob sweep tests", (getTestObjectProvider) => {
 					summarizerContainer,
 					blobHandle1.absolutePath,
 					"Summarizer: Blob1",
+					true,
 				);
 			},
 		);

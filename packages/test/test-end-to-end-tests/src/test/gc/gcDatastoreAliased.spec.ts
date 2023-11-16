@@ -9,6 +9,7 @@ import { ContainerRuntime } from "@fluidframework/container-runtime";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions";
 import {
 	createSummarizer,
+	getContainerEntryPointBackCompat,
 	ITestObjectProvider,
 	summarizeNow,
 	waitForContainerConnection,
@@ -33,7 +34,7 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 	});
 
 	async function waitForSummary(container: IContainer) {
-		const dataStore = (await container.getEntryPoint()) as ITestDataObject;
+		const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 		return (dataStore._context.containerRuntime as ContainerRuntime).summarize({
 			runGC: true,
 			trackState: false,
@@ -43,8 +44,8 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 	it("An unreferenced datastore when aliased becomes referenced.", async () => {
 		const container1 = await provider.makeTestContainer(defaultGCConfig);
 		const container2 = await provider.loadTestContainer(defaultGCConfig);
-		const mainDataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
-		const mainDataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
+		const mainDataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
+		const mainDataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
 		await waitForContainerConnection(container1);
 		await waitForContainerConnection(container2);
 

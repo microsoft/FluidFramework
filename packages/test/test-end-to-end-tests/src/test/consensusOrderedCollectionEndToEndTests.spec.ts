@@ -20,6 +20,7 @@ import {
 	ITestContainerConfig,
 	ITestObjectProvider,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 
@@ -58,12 +59,12 @@ function generate(
 		beforeEach(async () => {
 			// Create a Container for the first client.
 			const container1 = await provider.makeTestContainer(testContainerConfig);
-			dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
+			dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataStore1.getSharedObject<SharedMap>(mapId);
 
 			// Load the Container that was created by the first client.
 			const container2 = await provider.loadTestContainer(testContainerConfig);
-			dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+			dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 			sharedMap2 = await dataStore2.getSharedObject<SharedMap>(mapId);
 			closeContainer2 = () => {
 				container2.close();
@@ -72,7 +73,7 @@ function generate(
 
 			// Load the Container that was created by the first client.
 			const container3 = await provider.loadTestContainer(testContainerConfig);
-			const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+			const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 			sharedMap3 = await dataStore3.getSharedObject<SharedMap>(mapId);
 		});
 

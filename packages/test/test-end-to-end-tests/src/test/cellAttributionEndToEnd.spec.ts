@@ -17,6 +17,7 @@ import {
 	DataObjectFactoryType,
 	ChannelFactoryRegistry,
 	ITestFluidObject,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
@@ -90,7 +91,7 @@ describeFullCompat("Attributor for SharedCell", (getTestObjectProvider) => {
 	});
 
 	const sharedCellFromContainer = async (container: IContainer) => {
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		return dataObject.getSharedObject<SharedCell>(cellId);
 	};
 

@@ -354,9 +354,12 @@ describeNoCompat("Summarizer with local changes", (getTestObjectProvider) => {
 				mockLogger,
 			);
 
-			// !!! TODO: This won't work
-			const defaultDataStore1 =
-				(await summarizerContainer.getEntryPoint()) as ITestDataObject;
+			const runtime = (summarizer as any).runtime as ContainerRuntime;
+			const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+			if (entryPoint === undefined) {
+				throw new Error("default dataStore must exist");
+			}
+			const defaultDataStore1 = (await entryPoint.get()) as ITestDataObject;
 
 			// Pause op processing and send ops so there are pending ops in the summarizer.
 			const pendingOpCount = 10;

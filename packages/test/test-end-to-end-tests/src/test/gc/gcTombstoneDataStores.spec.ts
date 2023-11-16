@@ -192,8 +192,19 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 	let opCount = 0;
 	// Sends a unique op that's guaranteed to change the DDS for this specific container.
 	// This can also be used to transition a client to write mode.
-	const sendOpToUpdateSummaryTimestampToNow = async (container: IContainer) => {
-		const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
+	const sendOpToUpdateSummaryTimestampToNow = async (
+		container: IContainer,
+		isSummarizerContainer = false,
+	) => {
+		let defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
+		if (isSummarizerContainer) {
+			const runtime = (defaultDataObject as any).runtime as ContainerRuntime;
+			const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+			if (entryPoint === undefined) {
+				throw new Error("default dataStore must exist");
+			}
+			defaultDataObject = (await entryPoint.get()) as ITestDataObject;
+		}
 		defaultDataObject._root.set("send a", `op ${opCount++}`);
 	};
 
@@ -460,7 +471,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 						sweepTimeoutMs,
 						/* includeDds */ true,
 					);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
@@ -517,12 +528,8 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				);
 
 				// This request succeeds because the summarizer never fails for tombstones
-				// !!! TODO: This won't work as summarizer's entryPoint is the Summarizer object
-				const summarizerEntryPoint =
-					(await summarizingContainer.getEntryPoint()) as ITestDataObject;
-				const summarizerResponse = await (
-					summarizerEntryPoint._context.containerRuntime as any
-				).resolveHandle({
+				const summarizerRuntime = (summarizer as any).runtime as ContainerRuntime;
+				const summarizerResponse = await (summarizerRuntime as any).resolveHandle({
 					url: unreferencedId,
 				});
 				assert.equal(
@@ -552,7 +559,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
@@ -602,7 +609,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// Note: The Summarizers in this test don't use the "future" GC option - it only matters for the interactive client
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
@@ -655,7 +662,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			async () => {
 				const { unreferencedId, summarizingContainer, summarizer } =
 					await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
@@ -754,7 +761,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 				// Wait enough time so that the datastore is sweep ready
 				await delay(remainingTimeUntilSweepMs);
 
-				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+				await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 				// The datastore should be tombstoned now
 				const { summaryVersion } = await summarize(summarizer);
@@ -851,7 +858,7 @@ describeNoCompat("GC data store tombstone tests", (getTestObjectProvider) => {
 			settings["Fluid.GarbageCollection.ThrowOnTombstoneUsage"] = false;
 			const { unreferencedId, summarizingContainer, summarizer } =
 				await summarizationWithUnreferencedDataStoreAfterTime(sweepTimeoutMs);
-			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer);
+			await sendOpToUpdateSummaryTimestampToNow(summarizingContainer, true);
 
 			// The datastore should be tombstoned now
 			const { summaryVersion } = await summarize(summarizer);

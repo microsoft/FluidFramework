@@ -78,13 +78,12 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 		summarizer1.close();
 
 		// Load a summarizer that hasn't realized the datastore yet
-		const { container: summarizingContainer2, summarizer: summarizer2 } =
-			await createSummarizer(
-				provider,
-				container1,
-				{ loaderProps: { configProvider: mockConfigProvider(settings) } },
-				summaryVersion1,
-			);
+		const { summarizer: summarizer2 } = await createSummarizer(
+			provider,
+			container1,
+			{ loaderProps: { configProvider: mockConfigProvider(settings) } },
+			summaryVersion1,
+		);
 
 		// Override the submit summary function to realize a datastore before receiving an ack
 		const summarizerRuntime = (summarizer2 as any).runtime as ContainerRuntime;
@@ -92,9 +91,12 @@ describeNoCompat("Summarization edge cases", (getTestObjectProvider) => {
 		const func = async (options: ISubmitSummaryOptions) => {
 			const submitSummaryFuncBound = submitSummaryFunc.bind(summarizerRuntime);
 			const result = await submitSummaryFuncBound(options);
-			// !!! TODO: This won't work
-			const defaultDatastore2 =
-				(await summarizingContainer2.getEntryPoint()) as ITestDataObject;
+
+			const entryPoint = await summarizerRuntime.getAliasedDataStoreEntryPoint("default");
+			if (entryPoint === undefined) {
+				throw new Error("default dataStore must exist");
+			}
+			const defaultDatastore2 = (await entryPoint.get()) as ITestDataObject;
 			const handle2 = defaultDatastore2._root.get("handle");
 			// this realizes the datastore before we get the ack
 			await handle2.get();

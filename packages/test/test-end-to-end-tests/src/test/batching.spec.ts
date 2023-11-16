@@ -21,6 +21,7 @@ import {
 	ITestObjectProvider,
 	ITestContainerConfig,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import { describeFullCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions";
@@ -124,13 +125,13 @@ describeFullCompat("Flushing ops", (getTestObjectProvider) => {
 
 		// Create a Container for the first client.
 		container1 = await provider.makeTestContainer(configCopy);
-		dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		dataObject1map1 = await dataObject1.getSharedObject<SharedMap>(map1Id);
 		dataObject1map2 = await dataObject1.getSharedObject<SharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
 		const container2 = await provider.loadTestContainer(configCopy);
-		dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		dataObject2map1 = await dataObject2.getSharedObject<SharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<SharedMap>(map2Id);
 

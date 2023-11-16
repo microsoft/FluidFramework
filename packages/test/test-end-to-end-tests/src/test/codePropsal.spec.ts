@@ -14,6 +14,7 @@ import {
 import {
 	createAndAttachContainer,
 	createDocumentId,
+	getContainerEntryPointBackCompat,
 	ITestFluidObject,
 	ITestObjectProvider,
 	SupportedExportInterfaces,
@@ -192,7 +193,8 @@ describeFullCompat("CodeProposal.EndToEnd", (getTestObjectProvider) => {
 		const maps: ISharedMap[] = [];
 		for (const container of containers) {
 			if (!container.closed) {
-				const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+				const dataObject =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 				const map = await dataObject.getSharedObject<ISharedMap>("map");
 				const key = createDocumentId();
 				map.set(key, key);

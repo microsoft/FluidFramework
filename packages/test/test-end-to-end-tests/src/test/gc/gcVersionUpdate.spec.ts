@@ -113,10 +113,10 @@ describeNoCompat("GC version update", (getTestObjectProvider, apis) => {
 	 * running different GC versions.
 	 */
 	async function setupGCVersionUpdateInMetadata(container: IContainer, gcVersionDiff: number) {
-		const ds = (await container.getEntryPoint()) as ITestFluidObject;
+		const summarizer = await container.getEntryPoint();
 
 		// Override the getMetadata function in GarbageCollector to update the gcFeature property.
-		const containerRuntime = ds.context.containerRuntime as IContainerRuntimeWithPrivates;
+		const containerRuntime = (summarizer as any).runtime as IContainerRuntimeWithPrivates;
 		let getMetadataFunc = containerRuntime.garbageCollector.getMetadata;
 		const getMetadataOverride = () => {
 			getMetadataFunc = getMetadataFunc.bind(containerRuntime.garbageCollector);

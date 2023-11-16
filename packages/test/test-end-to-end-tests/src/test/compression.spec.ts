@@ -12,6 +12,7 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
+	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
@@ -41,11 +42,13 @@ const compressionSuite = (getProvider) => {
 			provider = await getProvider();
 
 			const localContainer = await provider.makeTestContainer(testContainerConfig);
-			const localDataObject = (await localContainer.getEntryPoint()) as ITestFluidObject;
+			const localDataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
 			localMap = await localDataObject.getSharedObject<SharedMap>("mapKey");
 
 			const remoteContainer = await provider.loadTestContainer(testContainerConfig);
-			const remoteDataObject = (await remoteContainer.getEntryPoint()) as ITestFluidObject;
+			const remoteDataObject =
+				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
 			remoteMap = await remoteDataObject.getSharedObject<SharedMap>("mapKey");
 		});
 
