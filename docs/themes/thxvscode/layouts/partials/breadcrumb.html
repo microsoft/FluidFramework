@@ -15,6 +15,7 @@
 {{ $fullURL := trim .Page.RelPermalink "/" }}
 {{ $urlSegments := split $fullURL "/" }}
 {{ $packageName := index $urlSegments 2 }}
+
 {{ if $packageName }}
   {{ $packageDisplayName := index $.Site.Data.displayToPackageName $packageName }}
 
