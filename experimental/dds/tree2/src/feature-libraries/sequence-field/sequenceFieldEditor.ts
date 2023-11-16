@@ -61,6 +61,7 @@ export const sequenceFieldEditor = {
 	insert: (index: number, count: number, firstId: ChangesetLocalId): Changeset<never> => {
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
+			id: firstId,
 			count,
 			cellId: { localId: firstId },
 		};
@@ -73,6 +74,7 @@ export const sequenceFieldEditor = {
 		assert(detachEvent.revision !== undefined, 0x724 /* Detach event must have a revision */);
 		const mark: CellMark<Insert, never> = {
 			type: "Insert",
+			id: detachEvent.localId,
 			count,
 			cellId: detachEvent,
 		};

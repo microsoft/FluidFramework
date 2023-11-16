@@ -86,7 +86,7 @@
                                 "type": "Delete",
                                 "id": 0,
                                 "cellId": {
-                                  "revision": "beefbeef-beef-4000-8000-00000000002b",
+                                  "revision": "beefbeef-beef-4000-8000-00000000002c",
                                   "localId": 0,
                                   "adjacentCells": [
                                     {
@@ -304,7 +304,7 @@
                     }
                   ],
                   [
-                    "repair-4",
+                    "repair-6",
                     {
                       "version": 1,
                       "identifiers": [],
@@ -348,12 +348,12 @@
                   "version": 1,
                   "data": [
                     [
-                      "beefbeef-beef-4000-8000-00000000002b",
+                      "beefbeef-beef-4000-8000-00000000002d",
                       0,
-                      4
+                      6
                     ]
                   ],
-                  "maxId": 4
+                  "maxId": 6
                 },
                 "encoding": "utf-8"
               }

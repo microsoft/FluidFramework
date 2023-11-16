@@ -44,6 +44,8 @@ const tag: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const fooField = brand<FieldKey>("foo");
+const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+const deltaNodeId: Delta.DetachedNodeId = { major: cellId.revision, minor: cellId.localId };
 
 function toDeltaShallow(change: TestChangeset): Delta.FieldChanges {
 	deepFreeze(change);
@@ -240,7 +242,7 @@ describe("SequenceField - toDelta", () => {
 		};
 		const ins: Delta.Mark = {
 			count: 1,
-			attach: { minor: 52 },
+			attach: { major: tag, minor: 52 },
 		};
 		const markList: Delta.Mark[] = [
 			del,
@@ -250,7 +252,7 @@ describe("SequenceField - toDelta", () => {
 			{ count: 1, fields: childChange1Delta },
 		];
 		const expected: Delta.FieldChanges = {
-			build: [{ id: { minor: 52 }, trees: [contentCursor] }],
+			build: [{ id: { major: tag, minor: 52 }, trees: [contentCursor] }],
 			local: markList,
 		};
 		const actual = toDelta(changeset, tag);
@@ -259,7 +261,7 @@ describe("SequenceField - toDelta", () => {
 
 	it("insert and modify => insert", () => {
 		const changeset = composeAnonChanges([Change.insert(0, 1), Change.modify(0, childChange1)]);
-		const buildId = { minor: 0 };
+		const buildId = { major: tag, minor: 0 };
 		const expected: Delta.FieldChanges = {
 			build: [
 				{
@@ -336,7 +338,9 @@ describe("SequenceField - toDelta", () => {
 	describe("Transient changes", () => {
 		// TODO: Should test revives and returns in addition to inserts and moves
 		it("insert & delete", () => {
-			const changeset = [Mark.transient(Mark.insert(2, brand(0)), Mark.delete(2, brand(2)))];
+			const changeset = [
+				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.delete(2, brand(2))),
+			];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
 			const expected: Delta.FieldChanges = {
@@ -348,7 +352,7 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move", () => {
 			const changeset = [
-				Mark.transient(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
 				Mark.moveIn(2, brand(2)),
 			];
@@ -367,7 +371,7 @@ describe("SequenceField - toDelta", () => {
 			const changeset = [
 				Mark.moveOut(2, brand(0)),
 				{ count: 1 },
-				Mark.transient(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(0)), Mark.delete(2, brand(2))),
 			];
 			const delta = toDelta(changeset);
 
@@ -381,9 +385,9 @@ describe("SequenceField - toDelta", () => {
 
 		it("insert & move & delete", () => {
 			const changeset = [
-				Mark.transient(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(Mark.insert(2, brand(0)), Mark.moveOut(2, brand(2))),
 				{ count: 1 },
-				Mark.transient(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.delete(2, brand(4))),
 			];
 			const delta = toDelta(changeset);
 			const buildId = { minor: 0 };
@@ -403,8 +407,8 @@ describe("SequenceField - toDelta", () => {
 			const changeset = [
 				Mark.moveOut(2, brand(0), { finalEndpoint: { localId: brand(4) } }),
 				{ count: 1 },
-				Mark.transient(Mark.moveIn(2, brand(0)), Mark.moveOut(2, brand(2))),
-				Mark.transient(Mark.moveIn(2, brand(2)), Mark.moveOut(2, brand(4))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(0)), Mark.moveOut(2, brand(2))),
+				Mark.attachAndDetach(Mark.moveIn(2, brand(2)), Mark.moveOut(2, brand(4))),
 				{ count: 1 },
 				Mark.moveIn(2, brand(4), { finalEndpoint: { localId: brand(0) } }),
 			];
@@ -423,24 +427,51 @@ describe("SequenceField - toDelta", () => {
 		});
 	});
 
-	describe("Muted changes", () => {
-		const cellId = { revision: tag1, localId: brand<ChangesetLocalId>(0) };
+	it("move removed node", () => {
+		const move = [
+			Mark.moveIn(1, brand(0)),
+			{ count: 1 },
+			Mark.moveOut(1, brand(0), { cellId }),
+		];
 
+		const actual = toDelta(move);
+		const expected: Delta.FieldChanges = {
+			rename: [{ count: 1, oldId: deltaNodeId, newId: { minor: 0 } }],
+			local: [{ count: 1, attach: { minor: 0 } }],
+		};
+		assertFieldChangesEqual(actual, expected);
+	});
+
+	describe("Idempotent changes", () => {
 		it("delete", () => {
-			const deletion = [Mark.onEmptyCell(cellId, Mark.delete(2, brand(0)))];
-			const actual = toDelta(deletion);
-			assertFieldChangesEqual(actual, {});
+			const deletion = [Mark.delete(1, brand(0), { cellId })];
+			const actual = toDelta(deletion, tag);
+			const expected: Delta.FieldChanges = {
+				rename: [
+					{
+						count: 1,
+						oldId: deltaNodeId,
+						newId: { major: tag, minor: 0 },
+					},
+				],
+			};
+			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("modify and delete", () => {
-			const deletion = [
-				Mark.onEmptyCell(cellId, Mark.delete(2, brand(0), { changes: childChange1 })),
-			];
+			const deletion = [Mark.delete(1, brand(0), { cellId, changes: childChange1 })];
 			const actual = toDelta(deletion, tag);
 			const expected: Delta.FieldChanges = {
+				rename: [
+					{
+						count: 1,
+						oldId: deltaNodeId,
+						newId: { major: tag, minor: 0 },
+					},
+				],
 				global: [
 					{
-						id: { major: cellId.revision, minor: cellId.localId },
+						id: deltaNodeId,
 						fields: childChange1Delta,
 					},
 				],
@@ -448,21 +479,10 @@ describe("SequenceField - toDelta", () => {
 			assertFieldChangesEqual(actual, expected);
 		});
 
-		it("move", () => {
-			const move = [
-				Mark.moveIn(1, brand(0), { isSrcConflicted: true }),
-				{ count: 1 },
-				Mark.onEmptyCell(cellId, Mark.moveOut(1, brand(0))),
-			];
-
-			const actual = toDelta(move);
-			assertFieldChangesEqual(actual, {});
-		});
-
 		it("redundant revive", () => {
 			const changeset = [
-				Mark.revive(1),
-				Mark.revive(1, undefined, { changes: childChange1 }),
+				Mark.pin(1, brand(0)),
+				Mark.pin(1, brand(1), { changes: childChange1 }),
 			];
 			const actual = toDelta(changeset, tag);
 			const expected: Delta.FieldChanges = {
