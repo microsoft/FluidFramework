@@ -21,7 +21,7 @@ const reservedIntervalIdKey = "intervalId";
 
 /**
  * Serializable interval whose endpoints are plain-old numbers.
- * @public
+ * @internal
  */
 export class Interval implements ISerializableInterval {
 	/**

@@ -14,7 +14,7 @@ import { NonRetryableError } from ".";
 /**
  * Interface describing an object passed to various network APIs.
  * It allows caller to control cancellation, as well as learn about any delays.
- * @public
+ * @internal
  */
 export interface IProgress {
 	/**
@@ -45,7 +45,7 @@ export interface IProgress {
 }
 
 /**
- * @public
+ * @internal
  */
 export async function runWithRetry<T>(
 	api: (cancel?: AbortSignal) => Promise<T>,
@@ -149,7 +149,7 @@ const MaxReconnectDelayInMsWhenEndpointIsNotReachable = 8000;
  * to when endpoint is reachable in which case it is 60s.
  * @param error - error based on which we decide max wait time.
  * @returns Max wait time.
- * @public
+ * @internal
  */
 export function calculateMaxWaitTime(error: unknown): number {
 	return isFluidError(error) && error.getTelemetryProperties().endpointReached === true

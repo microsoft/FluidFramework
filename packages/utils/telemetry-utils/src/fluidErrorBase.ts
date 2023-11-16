@@ -15,6 +15,7 @@ import { ITelemetryProperties } from "@fluidframework/core-interfaces";
  * It features the members of {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error | Error}
  * made readonly, as well as  {@link IFluidErrorBase.errorType} and {@link IFluidErrorBase.errorInstanceId}.
  * It also features getters and setters for telemetry props to be included when the error is logged.
+ * @internal
  */
 export interface IFluidErrorBase extends Error {
 	/**
@@ -73,12 +74,14 @@ const hasTelemetryPropFunctions = (x: unknown): boolean =>
 
 /**
  * Type guard for error data containing the {@link IFluidErrorBase.errorInstanceId} property.
+ * @internal
  */
 export const hasErrorInstanceId = (x: unknown): x is { errorInstanceId: string } =>
 	typeof (x as Partial<{ errorInstanceId: string }>)?.errorInstanceId === "string";
 
 /**
  * Type guard for {@link IFluidErrorBase}.
+ * @internal
  */
 export function isFluidError(error: unknown): error is IFluidErrorBase {
 	return (
@@ -91,6 +94,7 @@ export function isFluidError(error: unknown): error is IFluidErrorBase {
 
 /**
  * Type guard for old standard of valid/known errors.
+ * @internal
  */
 export function isValidLegacyError(
 	error: unknown,

@@ -30,6 +30,7 @@ export type XSaddCtor = new (
  * if the bits are reversed due to weakness in the lower bits.
  *
  * See: http://www.math.sci.hiroshima-u.ac.jp/m-mat/MT/XSADD/
+ * @internal
  */
 export const XSadd: XSaddCtor = function (...seed: number[]): Random {
 	// eslint-disable-next-line no-param-reassign

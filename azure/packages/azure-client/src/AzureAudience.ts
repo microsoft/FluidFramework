@@ -12,8 +12,7 @@ import { type AzureMember, type AzureUser, type IAzureAudience } from "./interfa
  * Azure-specific {@link @fluidframework/fluid-static#ServiceAudience} implementation.
  *
  * @remarks Operates in terms of {@link AzureMember}s.
- *
- * @public
+ * @internal
  */
 export class AzureAudience extends ServiceAudience<AzureMember> implements IAzureAudience {
 	/**

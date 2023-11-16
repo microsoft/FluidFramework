@@ -146,6 +146,7 @@ const rootDataStoreId = "rootDOId";
  *
  * This data object is dynamically customized (registry and initial objects) based on the schema provided.
  * to the container runtime factory.
+ * @internal
  */
 export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<

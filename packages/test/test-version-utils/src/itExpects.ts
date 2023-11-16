@@ -10,6 +10,9 @@ import { Context } from "mocha";
 import { TestDriverTypes } from "@fluidframework/test-driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils";
 
+/**
+ * @internal
+ */
 export type ExpectedEvents =
 	| ITelemetryGenericEvent[]
 	| Partial<Record<TestDriverTypes, ITelemetryGenericEvent[]>>;
@@ -46,6 +49,9 @@ export function createExpectsTest(orderedExpectedEvents: ExpectedEvents, test: M
 	};
 }
 
+/**
+ * @internal
+ */
 export type ExpectsTest = (
 	name: string,
 	orderedExpectedEvents: ExpectedEvents,
@@ -55,6 +61,7 @@ export type ExpectsTest = (
 /**
  * Similar to mocha's it function, but allow specifying expected events.
  * That must occur during the execution of the test.
+ * @internal
  */
 export const itExpects: ExpectsTest & Record<"only" | "skip", ExpectsTest> = (
 	name: string,

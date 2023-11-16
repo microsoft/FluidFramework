@@ -419,6 +419,9 @@ export interface ClientSeq {
 	clientId: string;
 }
 
+/**
+ * @internal
+ */
 export interface IMergeTreeOptions {
 	catchUpBlobName?: string;
 	/**
@@ -427,8 +430,6 @@ export interface IMergeTreeOptions {
 	 * the end of the string.
 	 *
 	 * This is primarily useful in the case of interval stickiness.
-	 *
-	 * @alpha
 	 */
 	mergeTreeReferencesCanSlideToEndpoint?: boolean;
 	mergeTreeSnapshotChunkSize?: number;
@@ -457,6 +458,9 @@ export interface IMergeTreeOptions {
 	attribution?: IMergeTreeAttributionOptions;
 }
 
+/**
+ * @internal
+ */
 export interface IMergeTreeAttributionOptions {
 	/**
 	 * If enabled, segments will store attribution keys which can be used with the runtime to determine
@@ -466,7 +470,6 @@ export interface IMergeTreeAttributionOptions {
 	 * are tracked is determined by the presence of existing attribution keys in the snapshot.
 	 *
 	 * default: false
-	 * @alpha
 	 */
 	track?: boolean;
 
@@ -475,15 +478,14 @@ export interface IMergeTreeAttributionOptions {
 	 * This option must be provided if either:
 	 * - `track` is set to true
 	 * - a document containing existing attribution information is loaded
-	 * @alpha
 	 */
 	policyFactory?: () => AttributionPolicy;
 }
 
 /**
  * Implements policy dictating which kinds of operations should be attributed and how.
- * @alpha
  * @sealed
+ * @internal
  */
 export interface AttributionPolicy {
 	/**

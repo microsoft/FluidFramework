@@ -15,6 +15,7 @@ import { createChildLogger } from "@fluidframework/telemetry-utils";
  * Checks if the error is location redirection error.
  * @param error - error whose type is to be determined.
  * @returns `true` is the error is location redirection error, otherwise `false`.
+ * @internal
  */
 export function isLocationRedirectionError(error: any): error is ILocationRedirectionError {
 	return (
@@ -31,6 +32,7 @@ export function isLocationRedirectionError(error: any): error is ILocationRedire
  * @param urlResolver - resolver used to resolve the url.
  * @param logger - logger to send events.
  * @returns Response from the API call.
+ * @internal
  */
 export async function resolveWithLocationRedirectionHandling<T>(
 	api: (request: IRequest) => Promise<T>,

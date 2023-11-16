@@ -12,8 +12,7 @@ import { type IUser } from "@fluidframework/protocol-definitions";
  * Defines the necessary properties that will be applied to all containers
  * created by an OdspClient instance. This includes callbacks for the authentication tokens
  * required for ODSP.
- *
- * @alpha
+ * @internal
  */
 export interface OdspConnectionConfig {
 	/**
@@ -38,7 +37,7 @@ export interface OdspConnectionConfig {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface OdspClientProps {
 	/**
@@ -63,8 +62,7 @@ export interface OdspClientProps {
  * FluidContainer is persisted in the backend and consumed by users. Any functionality regarding
  * how the data is handled within the FluidContainer itself, i.e. which data objects or DDSes to
  * use, will not be included here but rather on the FluidContainer class itself.
- *
- * @alpha
+ * @internal
  */
 export interface OdspContainerServices {
 	/**
@@ -85,7 +83,7 @@ export interface OdspContainerServices {
 
 /**
  * Represents attributes specific to Fluid container.
- * @alpha
+ * @internal
  */
 export interface OdspContainerAttributes {
 	/**
@@ -123,7 +121,7 @@ export interface OdspUser extends IUser {
  * Since ODSP provides user names and email for all of its members, we extend the
  * {@link @fluidframework/protocol-definitions#IMember} interface to include this service-specific value.
  * It will be returned for all audience members connected.
- * @alpha
+ * @internal
  */
 export interface OdspMember extends IMember {
 	name: string;
@@ -132,6 +130,6 @@ export interface OdspMember extends IMember {
 
 /**
  * Audience object for ODSP containers
- * @alpha
+ * @internal
  */
 export type IOdspAudience = IServiceAudience<OdspMember>;

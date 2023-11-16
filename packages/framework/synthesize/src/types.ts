@@ -14,6 +14,7 @@ import { IFluidDependencySynthesizer } from ".";
  * ```typescript
  * { IFoo: "IFoo" }
  * ```
+ * @internal
  */
 export type FluidObjectSymbolProvider<T> = {
 	[P in keyof T]?: P;
@@ -23,6 +24,7 @@ export type FluidObjectSymbolProvider<T> = {
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type mapped to an object that implements
  * the property.
+ * @internal
  */
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
@@ -34,6 +36,7 @@ export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
  * This is a condensed version of Record that requires the object has all
  * the FluidObject properties as its type, mapped to an object that implements
  * the property or undefined.
+ * @internal
  */
 export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
@@ -43,12 +46,14 @@ export type AsyncOptionalFluidObjectProvider<T> = T extends undefined
 
 /**
  * Combined type for Optional and Required Async Fluid object Providers
+ * @internal
  */
 export type AsyncFluidObjectProvider<O, R = undefined> = AsyncOptionalFluidObjectProvider<O> &
 	AsyncRequiredFluidObjectProvider<R>;
 
 /**
  * Multiple ways to provide a Fluid object.
+ * @internal
  */
 export type FluidObjectProvider<T> =
 	| NonNullable<T>

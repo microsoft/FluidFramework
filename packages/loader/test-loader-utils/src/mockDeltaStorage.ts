@@ -9,6 +9,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions"
 
 /**
  * Mock Document Delta Storage Service for testing
+ * @internal
  */
 export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(private readonly messages: ISequencedDocumentMessage[]) {

@@ -63,7 +63,7 @@ const placeholderClientId = "placeholder";
  * {@inheritDoc ITaskManager}
  *
  * @sealed
- * @public
+ * @internal
  */
 export class TaskManager extends SharedObject<ITaskManagerEvents> implements ITaskManager {
 	/**

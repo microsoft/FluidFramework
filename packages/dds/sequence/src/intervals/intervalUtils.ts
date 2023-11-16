@@ -17,7 +17,7 @@ import { SequencePlace, Side } from "../intervalCollection";
 
 /**
  * Basic interval abstraction
- * @public
+ * @internal
  */
 export interface IInterval {
 	/**
@@ -72,7 +72,7 @@ export interface IInterval {
 
 /**
  * Values are used in persisted formats (ops) and revertibles.
- * @alpha
+ * @internal
  */
 export const IntervalOpType = {
 	ADD: "add",
@@ -83,7 +83,7 @@ export const IntervalOpType = {
 } as const;
 
 /**
- * @public
+ * @internal
  */
 export enum IntervalType {
 	Simple = 0x0,
@@ -138,7 +138,7 @@ export interface ISerializedInterval {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
@@ -202,7 +202,7 @@ export type CompressedSerializedInterval =
 /**
  * @sealed
  * @deprecated The methods within have substitutions
- * @public
+ * @internal
  */
 export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
 	/**

@@ -29,6 +29,7 @@ const DefaultServiceConfiguration: IClientConfiguration = {
 
 /**
  * Mock Document Delta Connection for testing
+ * @internal
  */
 export class MockDocumentDeltaConnection
 	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>

@@ -17,7 +17,7 @@ import { SharedSummaryBlock } from "./sharedSummaryBlock";
  * The factory that defines the shared summary block.
  *
  * @sealed
- * @public
+ * @internal
  */
 export class SharedSummaryBlockFactory implements IChannelFactory {
 	/**

@@ -35,12 +35,18 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { unreachableCase } from "@fluidframework/core-utils";
 import { FuzzTestMinimizer, MinimizationTransform } from "./minification";
 
+/**
+ * @internal
+ */
 export interface Client<TChannelFactory extends IChannelFactory> {
 	channel: ReturnType<TChannelFactory["create"]>;
 	dataStoreRuntime: MockFluidDataStoreRuntime;
 	containerRuntime: MockContainerRuntimeForReconnection;
 }
 
+/**
+ * @internal
+ */
 export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForReconnection;
@@ -59,14 +65,23 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
 	isDetached: boolean;
 }
 
+/**
+ * @internal
+ */
 export interface ClientSpec {
 	clientId: string;
 }
 
+/**
+ * @internal
+ */
 export interface BaseOperation {
 	type: number | string;
 }
 
+/**
+ * @internal
+ */
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
@@ -80,11 +95,17 @@ export interface TriggerRebase {
 	type: "rebase";
 }
 
+/**
+ * @internal
+ */
 export interface AddClient {
 	type: "addClient";
 	addedClientId: string;
 }
 
+/**
+ * @internal
+ */
 export interface Synchronize {
 	type: "synchronize";
 	clients?: string[];
@@ -154,6 +175,7 @@ function getSaveInfo(
  * }
  * ```
  * This model can be used directly to create a suite of fuzz tests with {@link createDDSFuzzSuite}
+ * @internal
  */
 export interface DDSFuzzModel<
 	TChannelFactory extends IChannelFactory,
@@ -208,6 +230,9 @@ export interface DDSFuzzModel<
 	minimizationTransforms?: MinimizationTransform<TOperation>[];
 }
 
+/**
+ * @internal
+ */
 export interface DDSFuzzHarnessEvents {
 	/**
 	 * Raised for each non-summarizer client created during fuzz test execution.
@@ -225,6 +250,9 @@ export interface DDSFuzzHarnessEvents {
 	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
 }
 
+/**
+ * @internal
+ */
 export interface DDSFuzzSuiteOptions {
 	/**
 	 * Number of tests to generate for correctness modes (which are run in the PR gate).
@@ -407,6 +435,9 @@ export interface DDSFuzzSuiteOptions {
 	skipMinimization?: boolean;
 }
 
+/**
+ * @internal
+ */
 export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
@@ -1088,6 +1119,10 @@ function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOpt
 	return options.only instanceof Set && options.skip instanceof Set;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export async function replayTest<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
@@ -1118,6 +1153,7 @@ export async function replayTest<
 
 /**
  * Creates a suite of eventual consistency tests for a particular DDS model.
+ * @internal
  */
 export function createDDSFuzzSuite<
 	TChannelFactory extends IChannelFactory,

@@ -43,6 +43,7 @@ export interface PerformanceWithMemory extends IsomorphicPerformance {
 /**
  * Broad classifications to be applied to individual properties as they're prepared to be logged to telemetry.
  * Please do not modify existing entries for backwards compatibility.
+ * @internal
  */
 export enum TelemetryDataTag {
 	/**
@@ -55,11 +56,20 @@ export enum TelemetryDataTag {
 	UserData = "UserData",
 }
 
+/**
+ * @internal
+ */
 export type TelemetryEventPropertyTypes = ITelemetryBaseProperties[string];
 
+/**
+ * @internal
+ */
 export interface ITelemetryLoggerPropertyBag {
 	[index: string]: TelemetryEventPropertyTypes | (() => TelemetryEventPropertyTypes);
 }
+/**
+ * @internal
+ */
 export interface ITelemetryLoggerPropertyBags {
 	all?: ITelemetryLoggerPropertyBag;
 	error?: ITelemetryLoggerPropertyBag;
@@ -70,6 +80,7 @@ export interface ITelemetryLoggerPropertyBags {
  * If fails,returns original string.
  * Used to make telemetry data typed (and support math operations, like comparison),
  * in places where we do expect numbers (like contentsize/duration property in http header)
+ * @internal
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export function numberFromString(str: string | null | undefined): string | number | undefined {
@@ -80,10 +91,17 @@ export function numberFromString(str: string | null | undefined): string | numbe
 	return Number.isNaN(num) ? str : num;
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export function formatTick(tick: number): number {
 	return Math.floor(tick);
 }
 
+/**
+ * @internal
+ */
 export const eventNamespaceSeparator = ":" as const;
 
 /**
@@ -286,6 +304,7 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
  * @deprecated 0.56, remove TaggedLoggerAdapter once its usage is removed from
  * container-runtime. Issue: #8191
  * TaggedLoggerAdapter class can add tag handling to your logger.
+ * @internal
  */
 export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 	public constructor(private readonly logger: ITelemetryBaseLogger) {}
@@ -341,6 +360,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
  *
  * @remarks
  * Passing in no props object (i.e. undefined) will return a logger that is effectively a no-op.
+ * @internal
  */
 export function createChildLogger(props?: {
 	logger?: ITelemetryBaseLogger;
@@ -452,6 +472,7 @@ export class ChildLogger extends TelemetryLogger {
  * Create a logger which logs to multiple other loggers based on the provided props object
  * @param props - loggers are the base loggers that will logged to after it's processing, namespace will be prefixed to all event names, properties are default properties that will be applied events.
  * tryInheritProperties will attempted to copy those loggers properties to this loggers if they are of a known type e.g. one from this package
+ * @internal
  */
 export function createMultiSinkLogger(props: {
 	namespace?: string;
@@ -555,6 +576,7 @@ export class MultiSinkLogger extends TelemetryLogger {
  * By default, all events are logged, but client can override this behavior
  * For example, there is rarely a need to record start event, as we really after
  * success / failure tracking, including duration (on success).
+ * @internal
  */
 export interface IPerformanceEventMarkers {
 	start?: true;
@@ -564,6 +586,7 @@ export interface IPerformanceEventMarkers {
 
 /**
  * Helper class to log performance events
+ * @internal
  */
 export class PerformanceEvent {
 	/**
@@ -784,6 +807,7 @@ export class PerformanceEvent {
  * For internal use within the FluidFramework codebase, use {@link createChildLogger} with no arguments instead.
  * For external consumers we recommend writing a trivial implementation of {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
  * where the send() method does nothing and using that.
+ * @internal
  */
 export class TelemetryNullLogger implements ITelemetryLoggerExt {
 	public send(event: ITelemetryBaseEvent): void {}
@@ -853,6 +877,10 @@ function convertToBasePropertyTypeUntagged(
 	}
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export const tagData = <
 	T extends TelemetryDataTag,
 	V extends Record<
@@ -897,6 +925,7 @@ export const tagData = <
 /**
  * Helper function to tag telemetry properties as CodeArtifacts. It supports properties of type
  * TelemetryBaseEventPropertyType as well as getters that return TelemetryBaseEventPropertyType.
+ * @internal
  */
 export const tagCodeArtifacts = <
 	T extends Record<

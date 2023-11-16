@@ -75,7 +75,7 @@ export interface IAttributionCollectionSerializer {
 }
 
 /**
- * @alpha
+ * @internal
  */
 export interface IAttributionCollection<T> {
 	/**

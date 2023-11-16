@@ -65,6 +65,9 @@ export interface InstalledPackage {
 	modulePath: string;
 }
 
+/**
+ * @internal
+ */
 export const ensurePackageInstalled = async (
 	baseVersion: string,
 	version: number | string,
@@ -282,6 +285,9 @@ function throwNotFound(layer: string, version: string): never {
 	throw new Error(`${layer}@${version} not found. Missing install step?`);
 }
 
+/**
+ * @internal
+ */
 export function getLoaderApi(baseVersion: string, requested?: number | string): typeof LoaderApi {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
 
@@ -295,6 +301,9 @@ export function getLoaderApi(baseVersion: string, requested?: number | string): 
 	return loaderApi ?? throwNotFound("Loader", version);
 }
 
+/**
+ * @internal
+ */
 export function getContainerRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
@@ -307,6 +316,9 @@ export function getContainerRuntimeApi(
 	return containerRuntimeCache.get(version) ?? throwNotFound("ContainerRuntime", version);
 }
 
+/**
+ * @internal
+ */
 export function getDataRuntimeApi(
 	baseVersion: string,
 	requested?: number | string,
@@ -319,6 +331,9 @@ export function getDataRuntimeApi(
 	return dataRuntimeCache.get(version) ?? throwNotFound("DataRuntime", version);
 }
 
+/**
+ * @internal
+ */
 export function getDriverApi(baseVersion: string, requested?: number | string): typeof DriverApi {
 	const requestedStr = getRequestedVersion(baseVersion, requested);
 
@@ -331,6 +346,9 @@ export function getDriverApi(baseVersion: string, requested?: number | string): 
 	return driverCache.get(version) ?? throwNotFound("Driver", version);
 }
 
+/**
+ * @internal
+ */
 export interface CompatApis {
 	containerRuntime: ReturnType<typeof getContainerRuntimeApi>;
 	dataRuntime: ReturnType<typeof getDataRuntimeApi>;

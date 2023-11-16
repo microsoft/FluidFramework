@@ -77,6 +77,7 @@ export function extractLogSafeErrorProperties(
 
 /**
  * type guard for ILoggingError interface
+ * @internal
  */
 export const isILoggingError = (x: unknown): x is ILoggingError =>
 	typeof (x as Partial<ILoggingError>)?.getTelemetryProperties === "function";
@@ -340,6 +341,7 @@ export function isExternalError(error: unknown): boolean {
 
 /**
  * Type guard to identify if a particular telemetry property appears to be a tagged telemetry property
+ * @internal
  */
 export function isTaggedTelemetryPropertyValue(
 	x: Tagged<TelemetryEventPropertyTypeExt> | TelemetryEventPropertyTypeExt,

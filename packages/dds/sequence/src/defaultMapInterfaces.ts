@@ -52,7 +52,7 @@ export interface IMapMessageLocalMetadata {
 
 /**
  * Optional flags that configure options for sequence DDSs
- * @public
+ * @internal
  */
 export interface SequenceOptions {
 	/**

@@ -22,7 +22,7 @@ import {
 import { RuntimeHeaderData } from "../containerRuntime";
 
 /**
- * @public
+ * @internal
  */
 export type GCVersion = number;
 
@@ -94,7 +94,7 @@ export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 
 /**
  * @see IGCMetadata.gcFeatureMatrix
- * @public
+ * @internal
  */
 export interface GCFeatureMatrix {
 	/**
@@ -112,7 +112,7 @@ export interface GCFeatureMatrix {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IGCMetadata {
 	/**
@@ -152,7 +152,7 @@ export interface IGCMetadata {
 
 /**
  * The statistics of the system state after a garbage collection run.
- * @public
+ * @internal
  */
 export interface IGCStats {
 	/** The number of nodes in the container. */
@@ -177,7 +177,7 @@ export interface IGCStats {
 
 /**
  * The types of GC nodes in the GC reference graph.
- * @public
+ * @internal
  */
 export const GCNodeType = {
 	// Nodes that are for data stores.
@@ -191,7 +191,7 @@ export const GCNodeType = {
 };
 
 /**
- * @public
+ * @internal
  */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
@@ -297,7 +297,7 @@ export interface IGarbageCollectorCreateParams {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface IGCRuntimeOptions {
 	/**

@@ -13,6 +13,9 @@ import {
 	getOdspUrlParts,
 } from "@fluidframework/odsp-driver";
 
+/**
+ * @internal
+ */
 export class OdspUrlResolver implements IUrlResolver {
 	public async resolve(request: IRequest): Promise<IResolvedUrl | undefined> {
 		if (isOdspUrl(request.url)) {
@@ -36,6 +39,10 @@ export class OdspUrlResolver implements IUrlResolver {
 	}
 }
 
+// eslint-disable-next-line jsdoc/require-description
+/**
+ * @internal
+ */
 export const isOdspUrl = (url: string): boolean => {
 	return isSpoUrl(url) || isOdcUrl(url);
 };

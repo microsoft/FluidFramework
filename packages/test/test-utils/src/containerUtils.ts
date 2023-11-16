@@ -27,6 +27,7 @@ import { PromiseExecutor, timeoutPromise, TimeoutWithError } from "./timeoutUtil
  * - Rejects if failOnContainerClose === true and the container emits a 'closed' event before a 'connected' event.
  * - Rejects after timeoutOptions.durationMs if timeoutOptions !== undefined and the container does not emit relevant
  * events, within that timeframe.
+ * @internal
  */
 export async function waitForContainerConnection(
 	container: IContainer,

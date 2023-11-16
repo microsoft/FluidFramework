@@ -52,6 +52,7 @@ interface Measurements {
  * number of executions is reached (or when the class is disposed). The `duration` field in the telemetry event is
  * the duration of the latest execution (sample) of the specified function. See the documentation of the
  * `includeAggregateMetrics` parameter for additional details that can be included.
+ * @internal
  */
 export class SampledTelemetryHelper implements IDisposable {
 	disposed: boolean = false;

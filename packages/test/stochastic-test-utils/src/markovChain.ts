@@ -67,6 +67,9 @@ export enum WordSpacing {
 	Unknown,
 }
 
+/**
+ * @internal
+ */
 export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	chain: Record<string, [string, number][]>;
 	readonly random: IRandom;
@@ -202,6 +205,9 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
 	}
 }
 
+/**
+ * @internal
+ */
 export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
 	readonly chain: Record<string, string[]>;
 	readonly random: IRandom;

@@ -146,6 +146,7 @@ type DescribeWithVersions = DescribeSuiteWithVersions &
  * @param timeoutMs - the timeout for the tests in milliseconds, as package installation is time consuming.
  * If unspecified, the timeout is 20000 ms.
  * @returns A mocha test suite
+ * @internal
  */
 export function describeInstallVersions(
 	requestedVersions?: IRequestedFluidVersions,

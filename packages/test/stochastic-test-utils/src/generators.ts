@@ -38,6 +38,7 @@ import {
  *     [{ type: "delete" }, 1, (state) => state.list.length > 0]
  * ]);
  * ```
+ * @internal
  */
 export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 	weights: Weights<T, TState>,
@@ -87,6 +88,7 @@ export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(
 
 /**
  * Higher-order generator operator which creates a new generator producing the first `n` elements of `generator`.
+ * @internal
  */
 export function take<T, TState>(n: number, generator: Generator<T, TState>): Generator<T, TState> {
 	let count = 0;
@@ -101,6 +103,7 @@ export function take<T, TState>(n: number, generator: Generator<T, TState>): Gen
 
 /**
  * @returns a deterministic generator that always returns the items of `contents` in order.
+ * @internal
  */
 export function generatorFromArray<T, TAdditionalState>(
 	contents: T[],
@@ -117,6 +120,7 @@ export function generatorFromArray<T, TAdditionalState>(
 
 /**
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
+ * @internal
  */
 export function chain<T, TState>(...generators: Generator<T, TState>[]): Generator<T, TState> {
 	let currentIndex = 0;
@@ -136,6 +140,7 @@ export function chain<T, TState>(...generators: Generator<T, TState>[]): Generat
 
 /**
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
+ * @internal
  */
 export function chainIterables<T, TState>(
 	generators: Generator<Generator<T, TState>, void>,
@@ -157,6 +162,7 @@ export function chainIterables<T, TState>(
 
 /**
  * Controls exit behavior for {@link interleave}.
+ * @internal
  */
 export enum ExitBehavior {
 	OnBothExhausted,
@@ -183,6 +189,7 @@ export enum ExitBehavior {
  * interleave(gen1, take(3, gen2), 2, 3) // 1, 2, a, b, c, 3, 4
  * interleave(gen1, take(2, gen2), 2, 3) // 1, 2, a, b
  * ```
+ * @internal
  */
 export function interleave<T, TState>(
 	generator1: Generator<T, TState>,
@@ -251,6 +258,7 @@ export function interleave<T, TState>(
 /**
  * Creates a generator for an infinite stream of `t`s.
  * @param t - Output value to repeatedly generate.
+ * @internal
  */
 export function repeat<T, TState = void>(t: T): Generator<T, TState> {
 	return () => t;
@@ -281,6 +289,7 @@ export function repeat<T, TState = void>(t: T): Generator<T, TState> {
  *     [{ type: "delete" }, 1, (state) => state.list.length > 0]
  * ]);
  * ```
+ * @internal
  */
 export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(
 	weights: AsyncWeights<T, TState>,
@@ -331,6 +340,7 @@ export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState
 
 /**
  * Higher-order generator operator which creates a new generator producing the first `n` elements of `generator`.
+ * @internal
  */
 export function takeAsync<T, TState>(
 	n: number,
@@ -348,6 +358,7 @@ export function takeAsync<T, TState>(
 
 /**
  * @returns a deterministic generator that always returns the items of `contents` in order.
+ * @internal
  */
 export function asyncGeneratorFromArray<T, TAdditionalState>(
 	contents: T[],
@@ -358,6 +369,7 @@ export function asyncGeneratorFromArray<T, TAdditionalState>(
 
 /**
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
+ * @internal
  */
 export function chainAsync<T, TState>(
 	...generators: AsyncGenerator<T, TState>[]
@@ -379,6 +391,7 @@ export function chainAsync<T, TState>(
 
 /**
  * Higher-order generator operator which exhausts each input generator sequentially before moving on to the next.
+ * @internal
  */
 export function chainAsyncIterables<T, TState>(
 	generators: AsyncGenerator<AsyncGenerator<T, TState>, void>,
@@ -402,6 +415,7 @@ export function chainAsyncIterables<T, TState>(
 
 /**
  * AsyncGenerator variant of {@link interleave}.
+ * @internal
  */
 export function interleaveAsync<T, TState>(
 	generator1: AsyncGenerator<T, TState>,
@@ -452,6 +466,7 @@ export function interleaveAsync<T, TState>(
 /**
  * Creates a generator for an infinite stream of `t`s.
  * @param t - Output value to repeatedly generate.
+ * @internal
  */
 export function repeatAsync<T, TState = void>(t: T): AsyncGenerator<T, TState> {
 	return async () => t;

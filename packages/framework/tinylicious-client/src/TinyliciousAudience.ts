@@ -10,8 +10,7 @@ import { ITinyliciousAudience, TinyliciousMember, TinyliciousUser } from "./inte
 
 /**
  * {@inheritDoc ITinyliciousAudience}
- *
- * @public
+ * @internal
  */
 export class TinyliciousAudience
 	extends ServiceAudience<TinyliciousMember>

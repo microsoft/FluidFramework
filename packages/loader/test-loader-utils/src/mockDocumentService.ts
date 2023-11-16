@@ -16,6 +16,7 @@ import { MockDocumentDeltaConnection } from "./mockDocumentDeltaConnection";
 
 /**
  * Mock Document Service for testing
+ * @internal
  */
 export class MockDocumentService implements IDocumentService {
 	public get deltaStorageMessages() {

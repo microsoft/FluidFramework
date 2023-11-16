@@ -51,6 +51,7 @@ export type SkippedErrorExpectingTestWithDriverType = (
 /**
  * Similar to mocha's it function, but allow skipping for some if the error
  * happens on the specific drivers
+ * @internal
  */
 export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
 	name: string,
@@ -61,6 +62,7 @@ export const itSkipsFailureOnSpecificDrivers: SkippedTestWithDriverType = (
 /**
  * Similar to the ItExpects function, but allow skipping for some if the error
  * happens on the specific drivers
+ * @internal
  */
 export const itExpectsSkipsFailureOnSpecificDrivers: SkippedErrorExpectingTestWithDriverType = (
 	name: string,

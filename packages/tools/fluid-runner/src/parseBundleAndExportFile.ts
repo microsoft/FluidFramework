@@ -18,6 +18,7 @@ const clientArgsValidationError = "Client_ArgsValidationError";
 /**
  * Parse a provided JS bundle, execute code on Container based on ODSP snapshot, and write result to file
  * @param codeLoader - path to provided JS bundle that implements ICodeLoaderBundle (see codeLoaderBundle.ts)
+ * @internal
  */
 export async function parseBundleAndExportFile(
 	codeLoader: string,

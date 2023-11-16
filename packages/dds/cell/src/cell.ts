@@ -60,8 +60,7 @@ const snapshotFileName = "header";
 
 /**
  * {@inheritDoc ISharedCell}
- *
- * @public
+ * @internal
  */
 // TODO: use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -187,7 +186,6 @@ export class SharedCell<T = any>
 
 	/**
 	 * {@inheritDoc ISharedCell.getAttribution}
-	 * @alpha
 	 */
 	public getAttribution(): AttributionKey | undefined {
 		return this.attribution;

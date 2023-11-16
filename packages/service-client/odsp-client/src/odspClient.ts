@@ -41,8 +41,8 @@ import { OdspAudience } from "./odspAudience";
 
 /**
  * OdspClient provides the ability to have a Fluid object backed by the ODSP service within the context of Microsoft 365 (M365) tenants.
- *
- * @alpha @sealed
+ * @sealed
+ * @internal
  */
 export class OdspClient {
 	private readonly documentServiceFactory: IDocumentServiceFactory;

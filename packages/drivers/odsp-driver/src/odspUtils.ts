@@ -51,7 +51,7 @@ export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRep
 export const getOrigin = (url: string) => new URL(url).origin;
 
 /**
- * @public
+ * @internal
  */
 export interface IOdspResponse<T> {
 	content: T;
