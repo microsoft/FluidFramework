@@ -68,10 +68,8 @@ const OptionalChange = {
 		return optionalFieldEditor.set(cursorForJsonableTreeNode({ type, value }), wasEmpty, ids);
 	},
 
-	// TODO: Add coverage in this file for clear(true, id).
-	// This was only caught by more e2e tests.
-	clear(id: ChangesetLocalId) {
-		return optionalFieldEditor.clear(false, id);
+	clear(wasEmpty: boolean, id: ChangesetLocalId) {
+		return optionalFieldEditor.clear(wasEmpty, id);
 	},
 
 	buildChildChange(childChange: TestChange) {
@@ -218,7 +216,6 @@ function computeChildChangeInputContext(state: OptionalFieldTestState): number[]
 		states.push(current);
 	}
 	states.reverse();
-	const initialContent: string | undefined = states[0].content;
 	const finalContent = states.at(-1)?.content;
 	assert(
 		finalContent !== undefined,
@@ -278,7 +275,23 @@ const generateChildStates: ChildStateGenerator<string | undefined, OptionalChang
 			content: undefined,
 			mostRecentEdit: {
 				changeset: tagChange(
-					OptionalChange.clear(mintId()),
+					OptionalChange.clear(false, mintId()),
+					tagFromIntention(setUndefinedIntention),
+				),
+				intention: setUndefinedIntention,
+				description: "Delete",
+			},
+			parent: state,
+		};
+	} else {
+		// Even if there is no content, optional field supports an explicit clear operation with LWW semantics,
+		// as a concurrent set operation may populate the field.
+		const setUndefinedIntention = mintIntention();
+		yield {
+			content: undefined,
+			mostRecentEdit: {
+				changeset: tagChange(
+					OptionalChange.clear(true, mintId()),
 					tagFromIntention(setUndefinedIntention),
 				),
 				intention: setUndefinedIntention,
