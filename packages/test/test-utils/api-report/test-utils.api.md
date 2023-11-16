@@ -204,6 +204,7 @@ export interface ITestObjectProvider {
     opProcessingController: IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): any;
+    type: "TestObjectProvider" | "TestObjectProviderWithVersionedLoad";
     updateDocumentId(url: IResolvedUrl | undefined): void;
     urlResolver: IUrlResolver;
 }
@@ -316,6 +317,7 @@ export class TestObjectProvider implements ITestObjectProvider {
     get opProcessingController(): IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    readonly type = "TestObjectProvider";
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     get urlResolver(): IUrlResolver;
 }
@@ -339,6 +341,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
     get opProcessingController(): IOpProcessingController;
     reset(): void;
     resetLoaderContainerTracker(syncSummarizerClients?: boolean): void;
+    readonly type = "TestObjectProviderWithVersionedLoad";
     updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void;
     get urlResolver(): IUrlResolver;
 }

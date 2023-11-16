@@ -369,6 +369,7 @@ declare function get_old_ClassDeclaration_TestObjectProvider():
 declare function use_current_ClassDeclaration_TestObjectProvider(
     use: TypeOnly<current.TestObjectProvider>): void;
 use_current_ClassDeclaration_TestObjectProvider(
+    // @ts-expect-error compatibility expected to be broken
     get_old_ClassDeclaration_TestObjectProvider());
 
 /*

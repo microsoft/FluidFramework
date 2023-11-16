@@ -48,6 +48,11 @@ export interface IOpProcessingController {
 
 export interface ITestObjectProvider {
 	/**
+	 * Indicates which type of test object provider is being used.
+	 */
+	type: "TestObjectProvider" | "TestObjectProviderWithVersionedLoad";
+
+	/**
 	 * The document id to retrieve or create containers
 	 */
 	documentId: string;
@@ -336,6 +341,10 @@ export class EventAndErrorTrackingLogger implements ITelemetryBaseLogger {
  * Shared base class for test object provider.  Contain code for loader and container creation and loading
  */
 export class TestObjectProvider implements ITestObjectProvider {
+	/**
+	 * {@inheritDoc ITestObjectProvider."type"}
+	 */
+	public readonly type = "TestObjectProvider";
 	private _loaderContainerTracker = new LoaderContainerTracker();
 	private _documentServiceFactory: IDocumentServiceFactory | undefined;
 	private _urlResolver: IUrlResolver | undefined;
@@ -600,6 +609,10 @@ export class TestObjectProvider implements ITestObjectProvider {
  * Implements {@link ITestObjectProvider}, but uses different versions to create and load containers.
  */
 export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider {
+	/**
+	 * {@inheritDoc ITestObjectProvider."type"}
+	 */
+	public readonly type = "TestObjectProviderWithVersionedLoad";
 	private _loaderContainerTracker = new LoaderContainerTracker();
 	private _logger: EventAndErrorTrackingLogger | undefined;
 	private readonly _documentIdStrategy: IDocumentIdStrategy;

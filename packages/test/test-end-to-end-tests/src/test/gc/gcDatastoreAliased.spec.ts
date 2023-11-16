@@ -12,7 +12,6 @@ import {
 	createSummarizer,
 	ITestObjectProvider,
 	summarizeNow,
-	TestObjectProviderWithVersionedLoad,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils";
 import {
@@ -42,11 +41,10 @@ describeFullCompat("GC Data Store Aliased Full Compat", (getTestObjectProvider) 
 		});
 	}
 
-	it("An unreferenced datastore when aliased becomes referenced.", async () => {
+	it("An unreferenced datastore when aliased becomes referenced.", async function () {
 		// TODO: Re-enable after cross version compat bugs are fixed.
-		if (provider instanceof TestObjectProviderWithVersionedLoad) {
-			// this.skip() doesn't work here
-			return;
+		if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			this.skip();
 		}
 		const container1 = await provider.makeTestContainer(defaultGCConfig);
 		const container2 = await provider.loadTestContainer(defaultGCConfig);

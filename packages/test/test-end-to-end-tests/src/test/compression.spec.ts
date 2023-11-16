@@ -13,7 +13,6 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	TestObjectProviderWithVersionedLoad,
 } from "@fluidframework/test-utils";
 import {
 	describeFullCompat,
@@ -61,11 +60,10 @@ const compressionSuite = (getProvider) => {
 			provider.reset();
 		});
 
-		it("Can compress and process compressed op", async () => {
+		it("Can compress and process compressed op", async function () {
 			// TODO: Re-enable after cross version compat bugs are fixed.
-			if (provider instanceof TestObjectProviderWithVersionedLoad) {
-				// this.skip() doesn't work here
-				return;
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
 			}
 			const values = [
 				generateRandomStringOfSize(100),
@@ -84,11 +82,10 @@ const compressionSuite = (getProvider) => {
 			}
 		});
 
-		it("Processes ops that weren't worth compressing", async () => {
+		it("Processes ops that weren't worth compressing", async function () {
 			// TODO: Re-enable after cross version compat bugs are fixed.
-			if (provider instanceof TestObjectProviderWithVersionedLoad) {
-				// this.skip() doesn't work here
-				return;
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				this.skip();
 			}
 			const value = generateRandomStringOfSize(5);
 			localMap.set("testKey", value);

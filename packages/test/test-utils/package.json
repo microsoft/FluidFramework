@@ -114,7 +114,8 @@
 				"forwardCompat": false
 			},
 			"ClassDeclaration_TestObjectProvider": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		}
 	}
