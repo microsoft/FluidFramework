@@ -35,7 +35,6 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * The fuzz tests should validate that the clients do not crash and that their document states do not diverge.
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
-// TODO: Note that before this works I will need to fix the codec. :P
 describe("Fuzz - Top-Level", () => {
 	const runsPerBatch = 20;
 	const opsPerRun = 20;
@@ -76,7 +75,6 @@ describe("Fuzz - Top-Level", () => {
 				maxNumberOfClients: 3,
 			},
 			reconnectProbability: 0,
-			// skipMinimization: true,
 		};
 		createDDSFuzzSuite(model, options);
 	});

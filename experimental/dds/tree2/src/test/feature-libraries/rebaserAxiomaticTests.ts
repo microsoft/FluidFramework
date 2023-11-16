@@ -169,13 +169,6 @@ export function runExhaustiveComposeRebaseSuite<TContent, TChangeset>(
 							namedSourceEdits.map(({ description }) => description),
 						)} over ${name}`;
 
-						if (
-							title !==
-							'Rebase ["Delete","Undo:Delete","Undo:Undo:Delete","Undo:Undo:Undo:Delete"] over SetA,0'
-						) {
-							continue;
-						}
-
 						it(title, () => {
 							const editToRebaseOver = namedEditToRebaseOver;
 							const sourceEdits = namedSourceEdits.map(({ changeset }) => changeset);
