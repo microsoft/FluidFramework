@@ -13,7 +13,7 @@ import {
 	RevisionTag,
 	areEqualChangeAtomIds,
 } from "../../core";
-import { fail, Mutable, IdAllocator, SizedNestedMap, brand } from "../../util";
+import { fail, Mutable, IdAllocator, SizedNestedMap } from "../../util";
 import { cursorForJsonableTreeNode, jsonableTreeFromCursor } from "../treeTextCursor";
 import {
 	ToDelta,
@@ -31,7 +31,6 @@ import {
 	RemovedTreesFromChild,
 } from "../modular-schema";
 import { nodeIdFromChangeAtom } from "../deltaUtils";
-import { DetachedNodeBuild, DetachedNodeChanges, DetachedNodeRename } from "../../core/tree/delta";
 import { RegisterId, OptionalChangeset } from "./optionalFieldChangeTypes";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs";
 
@@ -157,15 +156,15 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			return { srcToDst, dstToSrc };
 		};
 
-		let latestReservedDetachId: RegisterId | undefined = undefined;
+		let latestReservedDetachId: RegisterId | undefined;
 		let isInputContextEmpty: boolean | undefined;
 
 		const builds: OptionalChangeset["build"] = [];
-		let childChangesByOriginalId = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
+		const childChangesByOriginalId = new ChildChangeMap<TaggedChange<NodeChangeset>[]>();
 		// TODO: It might be possible to compose moves in place rather than repeatedly copy.
 		// Additionally, working out a 'register allocation' strategy which enables frequent cancellation of noop moves
 		// for sandwich rebases would help with cloning if in-place proves too difficult
-		let current = getBidirectionalMaps([]);
+		const current = getBidirectionalMaps([]);
 		for (const { change, revision } of changes) {
 			if (
 				isInputContextEmpty === undefined &&
@@ -399,8 +398,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		const overChildChangesBySrc = new ChildChangeMap<NodeChangeset>();
-		for (const [id, change] of overChange.childChanges ?? []) {
-			overChildChangesBySrc.set(overDstToSrc.get(withIntention(id)) ?? id, change);
+		for (const [id, childChange] of overChange.childChanges ?? []) {
+			overChildChangesBySrc.set(overDstToSrc.get(withIntention(id)) ?? id, childChange);
 		}
 		const rebasedChildChanges: typeof childChanges = [];
 		for (const [id, childChange] of childChanges) {
@@ -423,7 +422,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			overBuilds.set(withIntention(id), true);
 		}
 		const rebased: OptionalChangeset = {
-			build: build.filter((build) => !overBuilds.has(build.id)),
+			build: build.filter(({ id }) => !overBuilds.has(id)),
 			moves: rebasedMoves,
 			childChanges: rebasedChildChanges,
 		};
@@ -517,7 +516,7 @@ export function optionalFieldIntoDelta(
 	const delta: Mutable<Delta.FieldChanges> = {};
 
 	if (change.build.length > 0) {
-		const builds: DetachedNodeBuild[] = [];
+		const builds: Delta.DetachedNodeBuild[] = [];
 		for (const build of change.build) {
 			builds.push({
 				id: { major: build.id.revision ?? revision, minor: build.id.localId },
@@ -533,7 +532,7 @@ export function optionalFieldIntoDelta(
 	const mark: Mutable<Delta.Mark> = { count: 1 };
 
 	if (change.moves.length > 0) {
-		const renames: DetachedNodeRename[] = [];
+		const renames: Delta.DetachedNodeRename[] = [];
 		for (const [src, dst] of change.moves) {
 			dstToSrc.set(dst, src);
 			if (src === "self" && dst !== "self") {
@@ -557,7 +556,7 @@ export function optionalFieldIntoDelta(
 	}
 
 	if (change.childChanges.length > 0) {
-		const globals: DetachedNodeChanges[] = [];
+		const globals: Delta.DetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const srcId = dstToSrc.get(id) ?? id;
 			const childDelta = deltaFromChild(childChange);

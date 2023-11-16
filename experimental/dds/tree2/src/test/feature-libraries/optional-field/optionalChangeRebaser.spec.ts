@@ -206,14 +206,14 @@ function compose(
 
 type OptionalFieldTestState = FieldStateTree<string | undefined, OptionalChangeset>;
 
-function computeChildChangeInputContext(state: OptionalFieldTestState): number[] {
+function computeChildChangeInputContext(inputState: OptionalFieldTestState): number[] {
 	// This is effectively a filter of the intentions from all edits such that it only includes
 	// intentions for edits which modify the same child as the final one in the changeset.
 	// Note: this takes a dependency on the fact that `generateChildStates` doesn't set matching string
 	// content for what are meant to represent different nodes.
 	const states: OptionalFieldTestState[] = [];
 	for (
-		let current: OptionalFieldTestState | undefined = state;
+		let current: OptionalFieldTestState | undefined = inputState;
 		current !== undefined;
 		current = current.parent
 	) {

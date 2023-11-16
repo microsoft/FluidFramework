@@ -26,7 +26,6 @@ import {
 	remove,
 	insert,
 	expectJsonTree,
-	toJsonTree,
 	createTestUndoRedoStacks,
 } from "../utils";
 import { ITreeCheckout } from "../../shared-tree";

@@ -5,8 +5,8 @@
 
 import { strict as assert } from "assert";
 import { makeAnonChange, RevisionTag, tagChange, TaggedChange, tagRollbackInverse } from "../core";
+import { fail } from "../util";
 import { defaultRevisionMetadataFromChanges } from "./utils";
-
 import {
 	FieldStateTree,
 	generatePossibleSequenceOfEdits,
@@ -14,7 +14,6 @@ import {
 	BoundFieldChangeRebaser,
 	makeIntentionMinter,
 } from "./exhaustiveRebaserUtils";
-import { fail } from "../util";
 
 interface ExhaustiveSuiteOptions {
 	skipRebaseOverCompose?: boolean;

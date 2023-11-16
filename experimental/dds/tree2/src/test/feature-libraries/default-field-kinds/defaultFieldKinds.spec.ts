@@ -12,18 +12,13 @@ import {
 	// Allow import from file being tested.
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/defaultFieldKinds";
-import {
-	makeAnonChange,
-	TaggedChange,
-	mintRevisionTag,
-	tagChange,
-	ChangesetLocalId,
-} from "../../../core";
+import { makeAnonChange, TaggedChange, mintRevisionTag, tagChange } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
 import { defaultRevisionMetadataFromChanges } from "../../utils";
 // eslint-disable-next-line import/no-internal-modules
 import { OptionalChangeset } from "../../../feature-libraries/optional-field";
 import { changesetForChild, testTree, testTreeCursor } from "../fieldKindTestUtils";
+// eslint-disable-next-line import/no-internal-modules
 import { assertEqual } from "../optional-field/optionalFieldUtils";
 
 /**

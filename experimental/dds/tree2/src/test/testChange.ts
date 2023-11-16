@@ -133,7 +133,6 @@ function rebase(
 		if (isNonEmptyChange(over)) {
 			// Rebasing should only occur between two changes with the same input context
 			assert.deepEqual(change.inputContext, over.inputContext);
-
 			return {
 				inputContext: over.outputContext,
 				outputContext: composeIntentions(over.outputContext, change.intentions),

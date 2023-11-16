@@ -20,7 +20,6 @@ import {
 	FieldKey,
 } from "../../../core";
 import { brand, fakeIdAllocator } from "../../../util";
-import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import {
 	optionalChangeHandler,
 	optionalChangeRebaser,
@@ -29,8 +28,9 @@ import {
 	OptionalChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field";
-import { assertEqual } from "./optionalFieldUtils";
+import { assertFieldChangesEqual, defaultRevisionMetadataFromChanges } from "../../utils";
 import { changesetForChild, fooKey, testTree, testTreeCursor } from "../fieldKindTestUtils";
+import { assertEqual } from "./optionalFieldUtils";
 
 /**
  * A change to a child encoding as a simple placeholder string.

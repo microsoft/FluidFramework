@@ -6,10 +6,7 @@
 import { strict as assert } from "assert";
 import { TaggedChange } from "../../../core";
 // eslint-disable-next-line import/no-internal-modules
-import {
-	RegisterId,
-	OptionalChangeset,
-} from "../../../feature-libraries/optional-field/optionalFieldChangeTypes";
+import { RegisterId, OptionalChangeset } from "../../../feature-libraries/optional-field";
 
 // Optional changesets may be equivalent but not evaluate to be deep-equal, as some ordering is irrelevant.
 export function assertEqual(
@@ -26,15 +23,15 @@ export function assertEqual(
 		}
 		return `r${registerId.revision}id${registerId.localId}`;
 	};
-	const compareRegisterIds = (a: RegisterId, b: RegisterId) =>
-		normalizeRegisterId(a).localeCompare(normalizeRegisterId(b));
+	const compareRegisterIds = (c: RegisterId, d: RegisterId) =>
+		normalizeRegisterId(c).localeCompare(normalizeRegisterId(d));
 	// The composed rebase implementation deep-freezes.
 	const aCopy = { ...a, change: { ...a.change, moves: [...a.change.moves] } };
 	const bCopy = { ...b, change: { ...b.change, moves: [...b.change.moves] } };
-	aCopy.change.moves.sort(([a], [b]) => compareRegisterIds(a, b));
-	bCopy.change.moves.sort(([a], [b]) => compareRegisterIds(a, b));
-	aCopy.change.build.sort((a, b) => compareRegisterIds(a.id, b.id));
-	bCopy.change.build.sort((a, b) => compareRegisterIds(a.id, b.id));
+	aCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
+	bCopy.change.moves.sort(([c], [d]) => compareRegisterIds(c, d));
+	aCopy.change.build.sort((c, d) => compareRegisterIds(c.id, d.id));
+	bCopy.change.build.sort((c, d) => compareRegisterIds(c.id, d.id));
 
 	assert.equal(
 		aCopy.change.reservedDetachId !== undefined,
