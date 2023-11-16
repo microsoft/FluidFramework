@@ -1,20 +1,29 @@
-# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
-# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-publish-npm-package-steps template to publish NPM packages/projects
+
 parameters:
 - name: namespace
   type: boolean
+
 - name: feedUrl
   type: string
+
 - name: feedKind
   type: string
+
 - name: artifactPath
   type: string
+
 - name: publishFlags
   type: string
-  default: ''
+  default:
+
 - name: customEndPoint
   type: string
-  default: ''
+  default:
+
 steps:
 - task: Bash@3
   displayName: Generate .npmrc for ${{ parameters.artifactPath }}
@@ -34,6 +43,8 @@ steps:
           echo "always-auth=true" >> ./.npmrc
           cat .npmrc
       ${{ if eq(parameters.feedKind, 'public') }}:
+        # The official feed excludes @fluid-example and @fluid-private. While earlier steps should also exclude these
+        # packages, excluding those scopes here is an additional defense.
         script: |
           echo Generating .npmrc for ${{ parameters.feedUrl }}
           echo "@fluidframework:registry=${{ parameters.feedUrl }}" >> ./.npmrc
@@ -88,6 +99,7 @@ steps:
           for i in $( seq 1 $maximumRetryIfNetworkError )
           do
             npm publish $f $tag ${{ parameters.publishFlags }} 2>&1 | tee publish_log
+
             if grep -q "npm ERR!" "publish_log"
             then
                 if grep -q "code ENOTFOUND" "publish_log"
@@ -124,8 +136,10 @@ steps:
                 fi
             else
               feedId=$(grep -oP '_packaging/\K[^/]+(?=/npm/)' publish_log)
+
               if [[ $release == "release" && $feedId == "build" ]]; then
                 packageVersion=$(grep -oP 'npm notice version:\s+\K[^\s]+' publish_log)
+
                 if [ "${{ parameters.artifactPath }}" == "scoped" ]; then
                   scopes=("fluidframework" "fluid-tools" "fluid-internal" "fluid-experimental")
                   for scope in "${scopes[@]}"; do
@@ -134,8 +148,10 @@ steps:
                       fi
                   done
                 fi
+
                 baseURL="${${{ parameters.feedUrl }}%/registry/}"
                 feedPromotionUrl="${baseURL/_packaging/_apis/packaging/feeds}"
+
                 response=$(curl -f -s -X PATCH \
                   -H "Content-Type: application/json" \
                   -H "Accept: application/json" \
@@ -149,7 +165,9 @@ steps:
                       }' \
                       "$feedPromotionUrl"
                   )
+
                 curlExitStatus=$?
+
                 if echo "$response" | grep -q '"success":"false"'; then
                   reason="${response#*\"reason\":\"}"
                   reason="${reason%%\"*}"
@@ -161,6 +179,7 @@ steps:
                   exit 1
                 fi
               fi
+
               rm publish_log
               break
             fi
