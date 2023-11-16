@@ -65,6 +65,7 @@ export {
 	normalizeNewFieldContent,
 	NewFieldContent,
 	assertAllowedValue,
+	isFluidHandle,
 } from "./contextuallyTyped";
 
 export { ForestSummarizer } from "./forestSummarizer";
@@ -141,8 +142,8 @@ export {
 	ViewSchema,
 	SchemaLintConfiguration,
 	FieldNodeSchema,
-	LeafSchema,
-	MapSchema,
+	LeafNodeSchema,
+	MapNodeSchema,
 	ObjectNodeSchema,
 	schemaIsFieldNode,
 	schemaIsLeaf,
@@ -156,6 +157,7 @@ export {
 	markEager,
 	MapFieldSchema,
 	SchemaCollection,
+	TreeNodeSchemaBase,
 } from "./typed-schema";
 
 export {
@@ -201,7 +203,7 @@ export {
 	FieldKinds,
 	Required,
 	Optional,
-	Sequence as SequenceFieldKind,
+	Sequence,
 	NodeKeyFieldKind,
 	Forbidden,
 	DefaultChangeset,
@@ -212,54 +214,40 @@ export {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	defaultSchemaPolicy,
-} from "./default-field-kinds";
-
-export { TreeEvent, EditableTreeEvents } from "./untypedTree";
+} from "./default-schema";
 
 export {
 	AssignableFieldKinds,
-	FieldNode,
+	FlexTreeFieldNode,
 	FlexibleFieldContent,
 	FlexibleNodeContent,
 	InternalEditableTreeTypes,
-	Leaf,
-	MapNode,
-	OptionalField,
-	RequiredField,
-	Sequence,
+	FlexTreeLeafNode,
+	FlexTreeMapNode,
+	FlexTreeOptionalField,
+	FlexTreeRequiredField,
+	FlexTreeSequenceField,
 	Skip,
-	ObjectNode,
-	ObjectNodeTyped,
-	TreeContext,
-	TypedField,
-	TypedNode,
-	TypedNodeUnion,
-	TreeEntity,
-	TreeField,
-	TreeNode,
+	FlexTreeObjectNode,
+	FlexTreeObjectNodeTyped,
+	FlexTreeContext,
+	FlexTreeTypedField,
+	FlexTreeTypedNode,
+	FlexTreeTypedNodeUnion,
+	FlexTreeEntity,
+	FlexTreeField,
+	FlexTreeNode,
 	getTreeContext,
 	boxedIterator,
 	CheckTypesOverlap,
 	TreeStatus,
-	getProxyForField,
-	ObjectFields,
-	ProxyField,
-	ProxyFieldInner,
-	ProxyNode,
-	ProxyNodeUnion,
-	SharedTreeList,
-	SharedTreeMap,
-	SharedTreeObject,
-	ProxyRoot,
-	Tree,
-	TreeApi,
-	SharedTreeNode,
-	Typed,
-	SharedTreeObjectFactory,
-	FactoryTreeSchema,
-	addFactory,
+	FlexTreeTyped,
 	Context,
-} from "./editable-tree-2";
+	TreeEvent,
+	EditableTreeEvents,
+	FlexTreeUnknownUnboxed,
+	onNextChange,
+} from "./flex-tree";
 
 export { treeSchemaFromStoredSchema } from "./storedToViewSchema";
 
