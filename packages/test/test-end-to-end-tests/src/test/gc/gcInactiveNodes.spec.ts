@@ -15,8 +15,8 @@ import {
 import {
 	IFluidHandle,
 	IFluidHandleContext,
-	IResponse,
 	IRequest,
+	IResponse,
 } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions";
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions";
