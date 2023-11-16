@@ -1,20 +1,28 @@
-# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
-# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# common variables
+
 parameters:
 - name: publishOverride
   type: string
   default: default
+
 - name: releaseBuildOverride
   type: string
   default: none
+
 - name: releaseImage
   type: boolean
   default: false
+
 - name: nonScopedPackages
   type: object
   default: []
+
 - name: buildNumberInPatch
   type: string
+
 variables:
 - group: prague-key-vault
 - name: skipComponentGovernanceDetection
@@ -22,21 +30,67 @@ variables:
 - name: testBuild
   value: ${{ lower(startsWith(variables['Build.SourceBranch'], 'refs/heads/test/')) }}
 - name: shouldPublish
-  value: ${{ and( and( ne(variables['Build.Reason'], 'PullRequest'), ne(variables['System.TeamProject'], 'public') ), or( and( ne(parameters.buildNumberInPatch, true), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/') ), eq(variables['Build.SourceBranch'], 'refs/heads/main'), variables.testBuild ) )}}
+  value: ${{
+    and(
+      and(
+        ne(variables['Build.Reason'], 'PullRequest'),
+        ne(variables['System.TeamProject'], 'public')
+      ),
+      or(
+        and(
+          ne(parameters.buildNumberInPatch, true),
+          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+        ),
+        eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+        variables.testBuild
+      )
+    )}}
 - name: canRelease
-  value: ${{ or( eq(parameters.publishOverride, 'force'), or( and( eq(parameters.buildNumberInPatch, true), eq(variables['Build.SourceBranch'], 'refs/heads/main') ), and( ne(parameters.buildNumberInPatch, true), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/') ) ) )}}
+  value: ${{
+    or(
+      eq(parameters.publishOverride, 'force'),
+      or(
+        and(
+          eq(parameters.buildNumberInPatch, true),
+          eq(variables['Build.SourceBranch'], 'refs/heads/main')
+        ),
+        and(
+          ne(parameters.buildNumberInPatch, true),
+          startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')
+        )
+      )
+    )}}
 - name: publish
-  value: ${{ or( eq(parameters.publishOverride, 'force'), and( ne(parameters.publishOverride, 'skip'), eq(variables.shouldPublish, true) ) )}}
+  value: ${{
+    or(
+      eq(parameters.publishOverride, 'force'),
+      and(
+        ne(parameters.publishOverride, 'skip'),
+        eq(variables.shouldPublish, true)
+      )
+    )}}
 - name: componentDetection
   value: ${{ variables.publish }}
 - name: pushImage
   value: ${{ variables.publish }}
 - name: releaseImage
-  value: ${{ and( eq(variables.pushImage, true), eq(parameters.releaseImage, true) )}}
+  value: ${{
+    and(
+      eq(variables.pushImage, true),
+      eq(parameters.releaseImage, true)
+    )}}
 - name: publishNonScopedPackages
-  value: ${{ ne( length(parameters.nonScopedPackages), 0 )}}
+  value: ${{
+    ne(
+      length(parameters.nonScopedPackages),
+      0
+    )}}
+
+# Forbids occurrences of `.only` through @fluidframework/mocha-test-setup common config
 - name: fluid.test.forbid.only
   value: true
+
+# compute the release variable
 - ${{ if eq(parameters.releaseBuildOverride, 'none') }}:
   - ${{ if eq(variables.shouldPublish, true) }}:
     - name: release
