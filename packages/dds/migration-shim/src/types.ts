@@ -11,9 +11,12 @@ import {
 	type IChannelServices,
 	type IDeltaHandler,
 } from "@fluidframework/datastore-definitions";
+import { type IMigrationOp } from "./migrationShim.js";
 
 /**
  * An interface for a shim delta handler intercepts another delta handler.
+ *
+ * @internal
  */
 export interface IShimDeltaHandler extends IDeltaHandler {
 	/**
@@ -34,11 +37,32 @@ export interface IShimDeltaHandler extends IDeltaHandler {
 }
 
 /**
- * An interface for interrogating ops to see if they are stamped or not so that we can choose to drop them.
+ * A v1 op or a v2 unstamped op
+ */
+export interface IUnstampedContents {
+	fluidMigrationStamp?: IChannelAttributes;
+	[key: string | number]: unknown;
+}
+
+/**
+ * A v2 op will have a `fluidMigrationStamp` property. This is a type guard to check if the op is a v2 op.
  */
 export interface IStampedContents {
-	fluidMigrationStamp?: IChannelAttributes;
+	fluidMigrationStamp: IChannelAttributes;
+	[key: string | number]: unknown;
 }
+
+/**
+ * A type for interrogating ops to see if they are v2 stamped ops or migrate ops. Otherwise, we try not to care
+ * what the contents of the op are. The contents could be of type `any` or `unknown`.
+ *
+ * If `type` specifically === "barrier", then we know we are dealing with a barrier op
+ *
+ * If `fluidMigrationStamp` is present, then we know we are dealing with a v2 op
+ *
+ * @internal
+ */
+export type IOpContents = IStampedContents | IUnstampedContents | IMigrationOp;
 
 /**
  * An interface for a shim channel that intercepts a LegacySharedTree or new SharedTree DDS.

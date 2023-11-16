@@ -58,7 +58,7 @@ import {
 	FlexibleFieldContent,
 	FlexibleNodeContent,
 	onNextChange,
-} from "./editableTreeTypes";
+} from "./flexTreeTypes";
 import { LazyNodeKeyField, makeField } from "./lazyField";
 import {
 	LazyEntity,

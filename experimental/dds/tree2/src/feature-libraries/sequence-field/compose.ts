@@ -40,10 +40,8 @@ import {
 	withNodeChange,
 	withRevision,
 	markEmptiesCells,
-	isTransientEffect,
 	areOverlappingIdRanges,
 	isNewAttach,
-	isReattach,
 	getInputCellId,
 	isAttach,
 	getOutputCellId,
@@ -52,6 +50,9 @@ import {
 	getEndpoint,
 	areEqualCellIds,
 	addRevision,
+	normalizeCellRename,
+	asAttachAndDetach,
+	isCellRename,
 } from "./utils";
 import { EmptyInputCellMark } from "./helperTypes";
 
@@ -163,11 +164,14 @@ function composeMarks<TNodeChange>(
 	revisionMetadata: RevisionMetadataSource,
 ): Mark<TNodeChange> {
 	const nodeChange = composeChildChanges(baseMark.changes, newMark.changes, newRev, composeChild);
-
-	if (isTransientEffect(newMark)) {
-		const newDetachRevision = newMark.detach.revision ?? newRev;
+	if (isCellRename(newMark)) {
+		const newAttachAndDetach = asAttachAndDetach(newMark);
+		const newDetachRevision = newAttachAndDetach.detach.revision ?? newRev;
 		if (markEmptiesCells(baseMark)) {
-			if (isMoveDestination(newMark.attach) && isMoveSource(newMark.detach)) {
+			if (
+				isMoveDestination(newAttachAndDetach.attach) &&
+				isMoveSource(newAttachAndDetach.detach)
+			) {
 				assert(isMoveSource(baseMark), "Unexpected mark type");
 
 				// The base changeset and new changeset both move these nodes.
@@ -186,38 +190,39 @@ function composeMarks<TNodeChange>(
 					CrossFieldTarget.Destination,
 					getEndpoint(baseMark, undefined),
 					baseMark.count,
-					{ revision: newDetachRevision, localId: newMark.detach.id },
+					{ revision: newDetachRevision, localId: newAttachAndDetach.detach.id },
 				);
 			}
 
-			// baseMark is a detach which cancels with the attach portion of the transient,
-			// so we are just left with the detach portion of the transient.
+			// baseMark is a detach which cancels with the attach portion of the AttachAndDetach,
+			// so we are just left with the detach portion of the AttachAndDetach.
 			return withRevision(
-				withNodeChange({ ...newMark.detach, count: baseMark.count }, nodeChange),
+				withNodeChange({ ...newAttachAndDetach.detach, count: baseMark.count }, nodeChange),
 				newDetachRevision,
 			);
 		}
 
-		if (isTransientEffect(baseMark)) {
-			// TODO: Cancel marks even when there are node changes
-			if (
-				nodeChange === undefined &&
-				areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
-			) {
-				return { count: baseMark.count, cellId: baseMark.cellId };
+		if (isCellRename(baseMark)) {
+			const baseAttachAndDetach = asAttachAndDetach(baseMark);
+			const newOutputId = getOutputCellId(newAttachAndDetach, newRev, revisionMetadata);
+			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
+				return withNodeChange(
+					{ count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId },
+					nodeChange,
+				);
 			}
 
 			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
-			const originalAttach = { ...baseMark.attach };
-			const finalDetach = { ...newMark.detach };
+			const originalAttach = { ...baseAttachAndDetach.attach };
+			const finalDetach = { ...newAttachAndDetach.detach };
 			const detachRevision = finalDetach.revision ?? newRev;
 			if (detachRevision !== undefined) {
 				finalDetach.revision = detachRevision;
 			}
 
-			return withNodeChange(
+			return normalizeCellRename(
 				{
-					type: "Transient",
+					type: "AttachAndDetach",
 					cellId: baseMark.cellId,
 					count: baseMark.count,
 					attach: originalAttach,
@@ -227,62 +232,48 @@ function composeMarks<TNodeChange>(
 			);
 		}
 
-		return withRevision(withNodeChange(newMark, nodeChange), newRev);
+		return withRevision(normalizeCellRename(newAttachAndDetach, nodeChange), newRev);
 	}
-	if (isTransientEffect(baseMark)) {
+	if (isCellRename(baseMark)) {
+		const baseAttachAndDetach = asAttachAndDetach(baseMark);
 		if (markFillsCells(newMark)) {
-			if (isMoveDestination(baseMark.attach) && isMoveSource(baseMark.detach)) {
+			if (
+				isMoveDestination(baseAttachAndDetach.attach) &&
+				isMoveSource(baseAttachAndDetach.detach)
+			) {
 				assert(isMoveDestination(newMark), "Unexpected mark type");
 				setEndpoint(
 					moveEffects,
 					CrossFieldTarget.Source,
 					getEndpoint(newMark, newRev),
-					baseMark.count,
-					{ revision: baseMark.attach.revision, localId: baseMark.attach.id },
+					baseAttachAndDetach.count,
+					{
+						revision: baseAttachAndDetach.attach.revision,
+						localId: baseAttachAndDetach.attach.id,
+					},
 				);
 			}
 
 			const originalAttach = withRevision(
 				withNodeChange(
-					{ ...baseMark.attach, cellId: baseMark.cellId, count: baseMark.count },
+					{
+						...baseAttachAndDetach.attach,
+						cellId: baseAttachAndDetach.cellId,
+						count: baseAttachAndDetach.count,
+					},
 					nodeChange,
 				),
-				baseMark.attach.revision,
+				baseAttachAndDetach.attach.revision,
 			);
-
-			// TODO: This assumes that the original attach was successful.
-			// We should probably treat a muted transient effect as a noop.
 			return originalAttach;
-		}
-		// Noop and Placeholder marks must be muted because the node they target has been deleted.
-		// Detach marks must be muted because the cell is empty.
-		if (newMark.type === NoopMarkType || newMark.type === "Placeholder" || isDetach(newMark)) {
+		} else {
+			// Other mark types have been handled by previous conditional branches.
 			assert(
-				newMark.cellId !== undefined,
-				0x718 /* Invalid node-targeting mark after transient */,
+				newMark.type === NoopMarkType || newMark.type === "Placeholder",
+				"Unexpected mark type",
 			);
-			return baseMark;
+			return withNodeChange(baseMark, nodeChange);
 		}
-		if (newMark.type === "MoveIn" && isReattach(newMark)) {
-			// It's possible for ReturnTo to occur after a transient, but only if muted ReturnTo.
-			// Why possible: if the transient is a revive, then it's possible that the newMark comes from a client that
-			// knew about the node, and tried to move it out and return it.
-			// Why muted: until we support replacing a node within a cell, only a single specific node will ever occupy
-			// a given cell. The presence of a transient mark tells us that node just got deleted. Return marks that
-			// attempt to move a deleted node end up being muted.
-			assert(
-				newMark.isSrcConflicted ?? false,
-				0x719 /* Invalid active ReturnTo mark after transient */,
-			);
-			return baseMark;
-		}
-		// Because of the rebase sandwich, it is possible for a MoveIn mark to target an already existing cell.
-		// This occurs when a branch with a move get rebased over some other branch.
-		// However, the branch being rebased over can't be targeting the cell that the MoveIn is targeting,
-		// because no concurrent change has the ability to refer to such a cell.
-		// Therefore, a MoveIn mark cannot occur after a transient.
-		assert(newMark.type !== "MoveIn", 0x71a /* Invalid MoveIn after transient */);
-		return baseMark;
 	}
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
@@ -338,23 +329,19 @@ function composeMarks<TNodeChange>(
 				finalSource,
 			);
 
-			// The `finalEndpoint` field of transient move effect pairs is not used,
+			// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
 			// so we remove it as a normalization.
 			delete attach.finalEndpoint;
 			delete detach.finalEndpoint;
 		}
 
-		// TODO: Cancel marks even when there are node changes
-		if (
-			localNodeChange === undefined &&
-			areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)
-		) {
+		if (areEqualCellIds(getOutputCellId(newMark, newRev, revisionMetadata), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
-			return { count: baseMark.count, cellId: baseMark.cellId };
+			return withNodeChange({ count: baseMark.count, cellId: baseMark.cellId }, nodeChange);
 		}
-		return withNodeChange(
+		return normalizeCellRename(
 			{
-				type: "Transient",
+				type: "AttachAndDetach",
 				cellId: baseMark.cellId,
 				count: baseMark.count,
 				attach,

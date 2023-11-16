@@ -4,8 +4,8 @@
  */
 
 import { strict as assert } from "assert";
-import { leaf, SchemaBuilder } from "../../../domains";
-import { treeViewWithContent } from "../../utils";
+import { leaf, SchemaBuilder } from "../../domains";
+import { treeViewWithContent } from "../utils";
 import { pretty } from "./utils";
 
 const builder = new SchemaBuilder({ scope: "test" });

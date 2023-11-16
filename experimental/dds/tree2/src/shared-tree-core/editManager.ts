@@ -19,7 +19,6 @@ import {
 	SessionId,
 	SimpleDependee,
 } from "../core";
-import { createEmitter, ISubscribable } from "../events";
 import { getChangeReplaceType, onForkTransitive, SharedTreeBranch } from "./branch";
 import {
 	Commit,
@@ -37,27 +36,16 @@ const minimumPossibleSequenceId: SequenceId = {
 	sequenceNumber: minimumPossibleSequenceNumber,
 };
 
-export interface EditManagerEvents<TChangeset> {
-	/**
-	 * Fired every time that a new commit is added to the trunk
-	 * @param newHead - the new head of the trunk
-	 */
-	newTrunkHead(newHead: GraphCommit<TChangeset>): void;
-}
-
 /**
  * Represents a local branch of a document and interprets the effect on the document of adding sequenced changes,
  * which were based on a given session's branch, to the document history
  */
 // TODO: Try to reduce this to a single type parameter
 export class EditManager<
-		TEditor extends ChangeFamilyEditor,
-		TChangeset,
-		TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
-	>
-	extends SimpleDependee
-	implements ISubscribable<EditManagerEvents<TChangeset>>
-{
+	TEditor extends ChangeFamilyEditor,
+	TChangeset,
+	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
+> extends SimpleDependee {
 	/** The "trunk" branch. The trunk represents the list of received sequenced changes. */
 	private readonly trunk: SharedTreeBranch<TEditor, TChangeset>;
 
@@ -122,15 +110,6 @@ export class EditManager<
 	 * Each time trunk eviction occurs, the most recent evicted commit becomes the new `trunkBase`.
 	 */
 	private trunkBase: GraphCommit<TChangeset>;
-
-	private readonly events = createEmitter<EditManagerEvents<TChangeset>>();
-
-	public on<K extends keyof EditManagerEvents<TChangeset>>(
-		eventName: K,
-		listener: EditManagerEvents<TChangeset>[K],
-	): () => void {
-		return this.events.on(eventName, listener);
-	}
 
 	/**
 	 * @param changeFamily - the change family of changes on the trunk and local branch
@@ -599,7 +578,6 @@ export class EditManager<
 		const trunkHead = this.trunk.getHead();
 		this.sequenceMap.set(sequenceId, trunkHead);
 		this.trunkMetadata.set(trunkHead.revision, { sequenceId, sessionId: commit.sessionId });
-		this.events.emit("newTrunkHead", trunkHead);
 	}
 
 	/**

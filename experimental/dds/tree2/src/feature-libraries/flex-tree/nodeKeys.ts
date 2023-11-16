@@ -4,7 +4,7 @@
  */
 
 import { LocalNodeKey, NodeKeyIndex, NodeKeyManager, StableNodeKey } from "../node-key";
-import { FlexTreeObjectNode } from "./editableTreeTypes";
+import { FlexTreeObjectNode } from "./flexTreeTypes";
 
 /**
  * A collection of utilities for managing {@link StableNodeKey}s.
