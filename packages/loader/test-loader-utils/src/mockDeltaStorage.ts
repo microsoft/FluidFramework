@@ -8,9 +8,7 @@ import { streamFromMessages } from "@fluidframework/driver-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
- * Mock Document Delta Storage Service for testing.
- *
- * @internal
+ * Mock Document Delta Storage Service for testing
  */
 export class MockDocumentDeltaStorageService implements IDocumentDeltaStorageService {
 	constructor(private readonly messages: ISequencedDocumentMessage[]) {
