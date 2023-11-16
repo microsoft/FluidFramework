@@ -4,15 +4,19 @@
  */
 
 import { strict as assert } from "assert";
+
+import { MockHandle } from "@fluidframework/test-runtime-utils";
+
+import { SchemaBuilder, leaf } from "../../../domains";
 // eslint-disable-next-line import/no-internal-modules
 import { toMapTree } from "../../../feature-libraries/simple-tree/toMapTree";
-import { SchemaBuilder, leaf } from "../../../domains";
 import { brand } from "../../../util";
 import { EmptyKey, FieldKey, type MapTree } from "../../../core";
 
-// Note: the behaviors here are more heavily tested by `proxies.spec.ts`.
-// This adds some basic unit test for the generated cursor adapter, but since the adapter is an implementation
-// detail of the proxy API, deep coverage at this level was not prioritized.
+// TODOs:
+// - Fluid handle
+// - null
+
 describe.only("toMapTree", () => {
 	it("string", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
@@ -31,9 +35,41 @@ describe.only("toMapTree", () => {
 		assert.deepEqual(actual, expected);
 	});
 
+	it("null", () => {
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
+		const schema = schemaBuilder.intoSchema(schemaBuilder.null);
+
+		const actual = toMapTree(null, { schema }, schema.rootFieldSchema.types);
+
+		const expected: MapTree = {
+			type: leaf.null.name,
+			value: null,
+			fields: new Map(),
+		};
+
+		assert.deepEqual(actual, expected);
+	});
+
+	it("handle", () => {
+		const schemaBuilder = new SchemaBuilder({ scope: "test" });
+		const schema = schemaBuilder.intoSchema(schemaBuilder.string);
+
+		const tree = new MockHandle<string>("mock-fluid-handle");
+
+		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
+
+		const expected: MapTree = {
+			type: leaf.handle.name,
+			value: tree,
+			fields: new Map(),
+		};
+
+		assert.deepEqual(actual, expected);
+	});
+
 	it("list", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
-		const rootSchema = schemaBuilder.list("list", [schemaBuilder.number]);
+		const rootSchema = schemaBuilder.list("list", [schemaBuilder.number, schemaBuilder.handle]);
 		const schema = schemaBuilder.intoSchema(rootSchema);
 
 		const tree = [42, 37, -1];
@@ -62,17 +98,17 @@ describe.only("toMapTree", () => {
 		const rootSchema = schemaBuilder.map("map", [
 			schemaBuilder.number,
 			schemaBuilder.string,
-			schemaBuilder.boolean,
+			schemaBuilder.null,
 		]);
 		const schema = schemaBuilder.intoSchema(rootSchema);
 
-		const entries: [string, boolean | number | string | undefined][] = [
+		const entries: [string, number | string | null | undefined][] = [
 			["a", 42],
 			["b", "Hello world"],
-			["c", false],
+			["c", null],
 			["d", undefined], // Should be skipped in output
 		];
-		const tree = new Map<string, boolean | number | string | undefined>(entries);
+		const tree = new Map<string, number | string | null | undefined>(entries);
 
 		const actual = toMapTree(tree, { schema }, schema.rootFieldSchema.types);
 
@@ -81,7 +117,7 @@ describe.only("toMapTree", () => {
 			fields: new Map<FieldKey, MapTree[]>([
 				[brand("a"), [{ type: leaf.number.name, value: 42, fields: new Map() }]],
 				[brand("b"), [{ type: leaf.string.name, value: "Hello world", fields: new Map() }]],
-				[brand("c"), [{ type: leaf.boolean.name, value: false, fields: new Map() }]],
+				[brand("c"), [{ type: leaf.null.name, value: null, fields: new Map() }]],
 			]),
 		};
 
@@ -123,13 +159,15 @@ describe.only("toMapTree", () => {
 		const schemaBuilder = new SchemaBuilder({ scope: "test" });
 		const rootSchema = schemaBuilder.object("complex-object", {
 			a: schemaBuilder.string,
-			b: schemaBuilder.list(schemaBuilder.number),
+			b: schemaBuilder.list([schemaBuilder.number, schemaBuilder.handle, schemaBuilder.null]),
 			c: schemaBuilder.map([schemaBuilder.string, schemaBuilder.number]),
 		});
 		const schema = schemaBuilder.intoSchema(rootSchema);
 
+		const handle = new MockHandle<boolean>(true);
+
 		const a = "Hello world";
-		const b = [42, 37, -1];
+		const b = [42, null, 37, handle];
 		const cEntries: [string, string | number][] = [
 			["foo", 0],
 			["bar", "1"],
@@ -153,14 +191,21 @@ describe.only("toMapTree", () => {
 					brand("b"),
 					[
 						{
-							type: brand('test.List<["com.fluidframework.leaf.number"]>'),
+							type: brand(
+								'test.List<["com.fluidframework.leaf.handle","com.fluidframework.leaf.null","com.fluidframework.leaf.number"]>',
+							),
 							fields: new Map<FieldKey, MapTree[]>([
 								[
 									EmptyKey,
 									[
 										{ type: leaf.number.name, value: 42, fields: new Map() },
+										{ type: leaf.null.name, value: null, fields: new Map() },
 										{ type: leaf.number.name, value: 37, fields: new Map() },
-										{ type: leaf.number.name, value: -1, fields: new Map() },
+										{
+											type: leaf.handle.name,
+											value: handle,
+											fields: new Map(),
+										},
 									],
 								],
 							]),
