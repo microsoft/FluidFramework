@@ -25,6 +25,7 @@
                             "change": [
                               {
                                 "type": "Insert",
+                                "id": 0,
                                 "count": 1,
                                 "content": [
                                   {
@@ -189,65 +190,68 @@
               "type": "blob",
               "ForestTree": {
                 "type": "blob",
-                "content": [
-                  [
-                    "rootFieldKey",
-                    {
-                      "version": 1,
-                      "identifiers": [],
-                      "shapes": [
-                        {
-                          "c": {
-                            "extraFields": 1,
-                            "fields": []
+                "content": {
+                  "version": 1,
+                  "data": [
+                    [
+                      "rootFieldKey",
+                      {
+                        "version": 1,
+                        "identifiers": [],
+                        "shapes": [
+                          {
+                            "c": {
+                              "extraFields": 1,
+                              "fields": []
+                            }
+                          },
+                          {
+                            "a": 0
                           }
-                        },
-                        {
-                          "a": 0
-                        }
-                      ],
-                      "data": [
-                        1,
-                        [
-                          "Node",
-                          false,
+                        ],
+                        "data": [
+                          1,
                           [
-                            "foo",
+                            "Node",
+                            false,
                             [
-                              "Node",
-                              true,
-                              "a",
-                              []
-                            ],
-                            "bar",
-                            [
-                              "Node",
-                              true,
-                              "d",
-                              [],
-                              "Node",
-                              true,
-                              "b",
-                              [],
-                              "Node",
-                              true,
-                              "c",
-                              [],
-                              "Node",
-                              true,
-                              "e",
-                              [],
-                              "Node",
-                              true,
-                              "f",
-                              []
+                              "foo",
+                              [
+                                "Node",
+                                true,
+                                "a",
+                                []
+                              ],
+                              "bar",
+                              [
+                                "Node",
+                                true,
+                                "d",
+                                [],
+                                "Node",
+                                true,
+                                "b",
+                                [],
+                                "Node",
+                                true,
+                                "c",
+                                [],
+                                "Node",
+                                true,
+                                "e",
+                                [],
+                                "Node",
+                                true,
+                                "f",
+                                []
+                              ]
                             ]
                           ]
                         ]
-                      ]
-                    }
+                      }
+                    ]
                   ]
-                ],
+                },
                 "encoding": "utf-8"
               }
             }

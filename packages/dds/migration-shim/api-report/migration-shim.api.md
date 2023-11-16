@@ -4,6 +4,7 @@
 
 ```ts
 
+import { EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils';
 import { IChannel } from '@fluidframework/datastore-definitions';
 import { IChannelAttributes } from '@fluidframework/datastore-definitions';
 import { IChannelFactory } from '@fluidframework/datastore-definitions';
@@ -20,7 +21,6 @@ import { ITelemetryContext } from '@fluidframework/runtime-definitions';
 import { SharedTree } from '@fluid-experimental/tree';
 import { SharedTreeFactory } from '@fluid-experimental/tree';
 import { SharedTreeFactory as SharedTreeFactory_2 } from '@fluid-experimental/tree2';
-import { TypedEventEmitter } from '@fluid-internal/client-utils';
 
 // @internal
 export interface IMigrationEvent extends IEvent {
@@ -38,7 +38,7 @@ export interface IShim extends IChannel {
 }
 
 // @internal
-export class MigrationShim extends TypedEventEmitter<IMigrationEvent> implements IShim {
+export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent> implements IShim {
     constructor(id: string, runtime: IFluidDataStoreRuntime, legacyTreeFactory: SharedTreeFactory, newTreeFactory: SharedTreeFactory_2, populateNewSharedObjectFn: (legacyTree: SharedTree, newTree: ISharedTree) => void);
     // (undocumented)
     get attributes(): IChannelAttributes;

@@ -8,11 +8,9 @@ import {
 	TreeFieldSchema,
 	TreeSchema,
 	FlexTreeTypedField,
-	ProxyField,
 	FlexTreeContext,
 	NodeKeyManager,
 	getTreeContext,
-	getProxyForField,
 	Context,
 } from "../feature-libraries";
 import { IDisposable, disposeSymbol } from "../util";
@@ -26,14 +24,9 @@ import { ITreeCheckoutFork, ITreeCheckout } from "./treeCheckout";
  * 2. This object should be combined with or accessible from the TreeContext to allow easy access to thinks like branching.
  * @alpha
  */
-export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
+export interface FlexTreeView<in out TRoot extends TreeFieldSchema> extends IDisposable {
 	/**
-	 * The current root of the tree.
-	 */
-	readonly root: ProxyField<TRoot>;
-
-	/**
-	 * Context for controlling the EditableTree nodes produced from {@link ITreeView.editableTree}.
+	 * Context for controlling the EditableTree nodes produced from {@link FlexTreeView.editableTree}.
 	 *
 	 * @remarks
 	 * This is an owning reference: disposing of this view disposes its context.
@@ -63,20 +56,20 @@ export interface ITreeView<in out TRoot extends TreeFieldSchema> extends IDispos
 /**
  * Branch (like in a version control system) of SharedTree.
  *
- * {@link ITreeView} that has forked off of the main trunk/branch.
+ * {@link FlexTreeView} that has forked off of the main trunk/branch.
  * @alpha
  */
-export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends ITreeView<TRoot> {
+export interface ITreeViewFork<in out TRoot extends TreeFieldSchema> extends FlexTreeView<TRoot> {
 	readonly checkout: ITreeCheckoutFork;
 }
 
 /**
- * Implementation of ITreeView wrapping a ITreeCheckout.
+ * Implementation of FlexTreeView wrapping a ITreeCheckout.
  */
-export class CheckoutView<
+export class CheckoutFlexTreeView<
 	in out TRoot extends TreeFieldSchema,
 	out TCheckout extends ITreeCheckout = ITreeCheckout,
-> implements ITreeView<TRoot>
+> implements FlexTreeView<TRoot>
 {
 	public readonly context: Context;
 	public readonly editableTree: FlexTreeTypedField<TRoot>;
@@ -102,12 +95,13 @@ export class CheckoutView<
 		this.onDispose?.();
 	}
 
-	public get root(): ProxyField<TRoot> {
-		return getProxyForField(this.editableTree);
-	}
-
-	public fork(): CheckoutView<TRoot, ITreeCheckoutFork> {
+	public fork(): CheckoutFlexTreeView<TRoot, ITreeCheckoutFork> {
 		const branch = this.checkout.fork();
-		return new CheckoutView(branch, this.schema, this.nodeKeyManager, this.nodeKeyFieldKey);
+		return new CheckoutFlexTreeView(
+			branch,
+			this.schema,
+			this.nodeKeyManager,
+			this.nodeKeyFieldKey,
+		);
 	}
 }

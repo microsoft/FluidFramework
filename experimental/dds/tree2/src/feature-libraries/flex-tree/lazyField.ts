@@ -26,7 +26,7 @@ import {
 	OptionalFieldEditBuilder,
 	SequenceFieldEditBuilder,
 	ValueFieldEditBuilder,
-} from "../default-field-kinds";
+} from "../default-schema";
 import { assertValidIndex, assertValidRangeIndices, brand, disposeSymbol, fail } from "../../util";
 import { AllowedTypes, TreeFieldSchema } from "../typed-schema";
 import { LocalNodeKey, StableNodeKey, nodeKeyTreeIdentifier } from "../node-key";
@@ -46,7 +46,7 @@ import {
 	TreeStatus,
 	FlexTreeNodeKeyField,
 	FlexibleNodeSubSequence,
-} from "./editableTreeTypes";
+} from "./flexTreeTypes";
 import { makeTree } from "./lazyNode";
 import {
 	LazyEntity,
@@ -562,6 +562,6 @@ function prepareFieldCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCurso
 function prepareNodeCursorForInsert(cursor: ITreeCursorSynchronous): ITreeCursorSynchronous[] {
 	// TODO: optionally validate content against schema.
 
-	assert(cursor.mode === CursorLocationType.Nodes, "should be in nodes mode");
+	assert(cursor.mode === CursorLocationType.Nodes, 0x805 /* should be in nodes mode */);
 	return [cursor];
 }
