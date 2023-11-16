@@ -1,17 +1,24 @@
-# This Yaml Document has been converted by ESAI Yaml Pipeline Conversion Tool.
-# Please make sure to check all the converted content, it is your team's responsibility to make sure that the pipeline is still valid and functions as expected.
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-build-lint template for the Build and Lint step in client build and test stability pipeline
+
 parameters:
 - name: taskBuild
   type: string
   default: ci:build
+
 - name: taskLint
   type: boolean
   default: true
+
 - name: taskLintName
   type: string
   default: lint
+
 - name: buildDirectory
   type: string
+
 steps:
 - ${{ if ne(parameters.taskBuild, 'false') }}:
   - task: Npm@1
@@ -20,6 +27,7 @@ steps:
       command: 'custom'
       workingDir: ${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskBuild }}'
+
 - ${{ if ne(parameters.taskLint, false) }}:
   - task: Npm@1
     displayName: npm run ${{ parameters.taskLintName }}
