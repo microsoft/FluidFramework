@@ -12,7 +12,7 @@ import {
 	IForestSubscription,
 } from "../../core";
 import { ISubscribable } from "../../events";
-import { IDefaultEditBuilder } from "../default-field-kinds";
+import { IDefaultEditBuilder } from "../default-schema";
 import { NodeKeyIndex, NodeKeyManager } from "../node-key";
 import { FieldGenerator } from "../contextuallyTyped";
 import { TreeSchema } from "../typed-schema";
@@ -84,7 +84,7 @@ export class Context implements FlexTreeContext, IDisposable {
 	 * Clears all cursors so editing can proceed.
 	 */
 	private prepareForEdit(): void {
-		assert(this.disposed === false, "use after dispose");
+		assert(this.disposed === false, 0x802 /* use after dispose */);
 		for (const target of this.withCursors) {
 			target[prepareForEditSymbol]();
 		}
@@ -92,7 +92,7 @@ export class Context implements FlexTreeContext, IDisposable {
 	}
 
 	public [disposeSymbol](): void {
-		assert(this.disposed === false, "double dispose");
+		assert(this.disposed === false, 0x803 /* double dispose */);
 		this.disposed = true;
 		this.clear();
 		for (const unregister of this.eventUnregister) {
@@ -116,7 +116,7 @@ export class Context implements FlexTreeContext, IDisposable {
 	}
 
 	public get root(): FlexTreeField {
-		assert(this.disposed === false, "use after dispose");
+		assert(this.disposed === false, 0x804 /* use after dispose */);
 		const cursor = this.forest.allocateCursor();
 		moveToDetachedField(this.forest, cursor);
 		const field = makeField(this, this.schema.rootFieldSchema, cursor);

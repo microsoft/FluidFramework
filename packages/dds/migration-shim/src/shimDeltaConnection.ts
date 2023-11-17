@@ -85,7 +85,7 @@ export class StampDeltaConnection implements IDeltaConnection {
 	public submit(messageContent: IUnstampedContents, localOpMetadata: unknown): void {
 		assert(
 			messageContent.fluidMigrationStamp === undefined,
-			"Should not be stamping ops twice!",
+			0x835 /* Should not be stamping ops twice! */,
 		);
 		messageContent.fluidMigrationStamp = {
 			...this.attributes,
