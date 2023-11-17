@@ -551,7 +551,7 @@ describe("Branches", () => {
 
 		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily);
 		if (onChange !== undefined) {
-			branch.on("change", onChange);
+			branch.on("afterChange", onChange);
 		}
 
 		return branch;

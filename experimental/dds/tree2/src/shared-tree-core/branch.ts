@@ -93,7 +93,7 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	 * Fired anytime the head of this branch changes.
 	 * @param change - the change to this branch's state and commits
 	 */
-	change(change: SharedTreeBranchChange<TChange>): void;
+	afterChange(change: SharedTreeBranchChange<TChange>): void;
 
 	/**
 	 * Fired when a revertible change is made to this branch.
@@ -183,7 +183,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.emit("revertible", this.makeSharedTreeRevertible(this.head, revertibleKind));
 		}
 
-		this.emit("change", {
+		this.emit("afterChange", {
 			type: "append",
 			change: tagChange(change, revision),
 			newCommits: [this.head],
@@ -257,7 +257,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			);
 		}
 
-		this.emit("change", {
+		this.emit("afterChange", {
 			type: "replace",
 			change: undefined,
 			removedCommits: commits,
@@ -293,7 +293,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 		const change =
 			inverses.length > 0 ? this.changeFamily.rebaser.compose(inverses) : undefined;
 
-		this.emit("change", {
+		this.emit("afterChange", {
 			type: "remove",
 			change: change === undefined ? undefined : makeAnonChange(change),
 			removedCommits: commits,
@@ -462,7 +462,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 			this.updateRevertibleCommit(commit);
 		});
 
-		this.emit("change", {
+		this.emit("afterChange", {
 			type: "replace",
 			change: change === undefined ? undefined : makeAnonChange(change),
 			removedCommits: deletedSourceCommits,
@@ -502,7 +502,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> exten
 
 		this.head = newHead;
 		const change = this.changeFamily.rebaser.compose(sourceCommits);
-		this.emit("change", {
+		this.emit("afterChange", {
 			type: "append",
 			change: makeAnonChange(change),
 			newCommits: sourceCommits,

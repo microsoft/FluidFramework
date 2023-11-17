@@ -272,7 +272,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			HasListeners<CheckoutEvents>,
 		private readonly removedTrees: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 	) {
-		branch.on("change", (event) => {
+		branch.on("afterChange", (event) => {
 			if (event.change !== undefined) {
 				const delta = this.changeFamily.intoDelta(event.change);
 				const anchorVisitor = this.forest.anchors.acquireVisitor();
