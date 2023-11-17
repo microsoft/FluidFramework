@@ -22,7 +22,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small
+  default: Small-1ES
 
 - name: publishFlags
   type: string
