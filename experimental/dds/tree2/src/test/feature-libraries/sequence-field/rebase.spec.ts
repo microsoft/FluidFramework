@@ -728,8 +728,7 @@ describe("SequenceField - Rebase", () => {
 		assert.deepEqual(rebased, expected);
 	});
 
-	// TODO: Re-enable when BUG 6202 is fixed
-	it.skip("move ↷ move and delete", () => {
+	it("move ↷ move and delete", () => {
 		const moveAndDelete = [
 			{ count: 1 },
 			Mark.attachAndDetach(Mark.moveIn(1, brand(0)), Mark.delete(1, brand(1))),
