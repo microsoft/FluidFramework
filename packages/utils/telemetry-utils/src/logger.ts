@@ -923,7 +923,24 @@ function convertToBasePropertyTypeUntagged(
 }
 
 /**
- * TODO
+ * Tags all given `values` with the same `tag`.
+ *
+ * @param tag - The tag with which all `values` will be annotated.
+ * @param values - The values to be tagged.
+ *
+ * @remarks
+ * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
+ * as well as callbacks that return that type.
+ *
+ * @example Sample usage
+ * ```typescript
+ * {
+ * 	// ...Other properties being added to a telemetry event
+ * 	...tagData("someTag", {foo: 1, bar: 2}),
+ * 	// ...
+ * }
+ * ```
+ * This will result in `foo` and `bar` added to the event with their values tagged.
  *
  * @internal
  */
@@ -969,11 +986,25 @@ export const tagData = <
 		}, {}) as ReturnType<typeof tagData>;
 
 /**
- * Helper function to tag telemetry properties as CodeArtifacts.
+ * Tags all provided `values` as {@link TelemetryDataTag.CodeArtifact}.
+ *
+ * @param values - The values to be tagged.
  *
  * @remarks
  * It supports properties of type {@link @fluidframework/core-interfaces#TelemetryBaseEventPropertyType},
  * as well as callbacks that return that type.
+ *
+ * @example Sample usage
+ * ```typescript
+ * {
+ * 	// ...Other properties being added to a telemetry event
+ * 	...tagCodeArtifacts("someTag", {foo: 1, bar: 2}),
+ * 	// ...
+ * }
+ * ```
+ * This will result in `foo` and `bar` added to the event with their values tagged as {@link TelemetryDataTag.CodeArtifact}.
+ *
+ * @see {@link tagData}
  *
  * @internal
  */
