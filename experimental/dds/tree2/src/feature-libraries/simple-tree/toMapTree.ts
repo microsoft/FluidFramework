@@ -7,18 +7,18 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils";
 
 import {
-	TreeTypeSet,
+	type TreeTypeSet,
 	type FieldKey,
 	type MapTree,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
-	TreeNodeStoredSchema,
+	type TreeNodeStoredSchema,
 } from "../../core";
 import { brand, fail } from "../../util";
 import {
-	ContextuallyTypedNodeData,
-	PrimitiveValue,
-	TreeDataContext,
+	type ContextuallyTypedNodeData,
+	type PrimitiveValue,
+	type TreeDataContext,
 	allowsValue,
 	getFieldKind,
 	getFieldSchema,
@@ -27,8 +27,8 @@ import {
 	isFluidHandle,
 } from "../contextuallyTyped";
 import { Multiplicity } from "../modular-schema";
-import { TreeFieldSchema, type TreeNodeSchema } from "../typed-schema";
-import { TypedNode, TreeField } from "./types";
+import { type TreeFieldSchema, type TreeNodeSchema } from "../typed-schema";
+import { type TypedNode, type TreeField } from "./types";
 
 /**
  * Transforms an input {@link TypedNode} tree to a {@link MapTree}.
