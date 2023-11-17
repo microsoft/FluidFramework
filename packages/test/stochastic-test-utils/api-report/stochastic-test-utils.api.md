@@ -8,45 +8,45 @@
 
 import { Random } from 'best-random';
 
-// @public (undocumented)
+// @internal (undocumented)
 export type AcceptanceCondition<TState> = (state: TState) => boolean;
 
-// @public
+// @internal
 type AsyncGenerator_2<TOut, TState> = (state: TState) => Promise<TOut | typeof done>;
 export { AsyncGenerator_2 as AsyncGenerator }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function asyncGeneratorFromArray<T, TAdditionalState>(contents: T[]): AsyncGenerator_2<T, TAdditionalState>;
 
-// @public
+// @internal
 export type AsyncReducer<TOp, TState> = (state: TState, operation: TOp) => Promise<TState | void>;
 
-// @public
+// @internal
 export type AsyncWeights<TOp, TState> = [
 TOp | AsyncGenerator_2<TOp, TState>,
 number,
 AcceptanceCondition<TState>?
 ][];
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface BaseFuzzTestState {
     // (undocumented)
     random: IRandom;
 }
 
-// @public
+// @internal
 export function chain<T, TState>(...generators: Generator_2<T, TState>[]): Generator_2<T, TState>;
 
-// @public
+// @internal
 export function chainAsync<T, TState>(...generators: AsyncGenerator_2<T, TState>[]): AsyncGenerator_2<T, TState>;
 
-// @public
+// @internal
 export function chainAsyncIterables<T, TState>(generators: AsyncGenerator_2<AsyncGenerator_2<T, TState>, void>): AsyncGenerator_2<T, TState>;
 
-// @public
+// @internal
 export function chainIterables<T, TState>(generators: Generator_2<Generator_2<T, TState>, void>): Generator_2<T, TState>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function combineReducers<TOperation extends {
     type: string | number;
 }, TState extends BaseFuzzTestState>(reducerMap: {
@@ -55,7 +55,7 @@ export function combineReducers<TOperation extends {
     }>, TState>;
 }): Reducer<TOperation, TState>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function combineReducersAsync<TOperation extends {
     type: string | number;
 }, TState extends BaseFuzzTestState>(reducerMap: {
@@ -64,31 +64,31 @@ export function combineReducersAsync<TOperation extends {
     }>, TState>;
 }): AsyncReducer<TOperation, TState>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz;
 
-// @public
+// @internal
 export function createWeightedAsyncGenerator<T, TState extends BaseFuzzTestState>(weights: AsyncWeights<T, TState>): AsyncGenerator_2<T, TState>;
 
-// @public
+// @internal
 export function createWeightedGenerator<T, TState extends BaseFuzzTestState>(weights: Weights<T, TState>): Generator_2<T, TState>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const defaultOptions: Required<FuzzDescribeOptions>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type DescribeFuzz = DescribeFuzzSuite & Record<"skip" | "only", DescribeFuzzSuite>;
 
-// @public
+// @internal
 export const describeFuzz: DescribeFuzz;
 
-// @public (undocumented)
+// @internal (undocumented)
 export type DescribeFuzzSuite = (name: string, tests: (this: Mocha.Suite, args: FuzzSuiteArguments) => void) => Mocha.Suite | void;
 
-// @public (undocumented)
+// @internal (undocumented)
 export const done: unique symbol;
 
-// @public
+// @internal
 export enum ExitBehavior {
     // (undocumented)
     OnBothExhausted = 0,
@@ -96,32 +96,32 @@ export enum ExitBehavior {
     OnEitherExhausted = 1
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface FuzzDescribeOptions {
     // (undocumented)
     defaultTestCount?: number;
 }
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface FuzzSuiteArguments {
     isStress: boolean;
     testCount: number;
 }
 
-// @public
+// @internal
 type Generator_2<TOut, TState> = (state: TState) => TOut | typeof done;
 export { Generator_2 as Generator }
 
-// @public (undocumented)
+// @internal (undocumented)
 export function generatorFromArray<T, TAdditionalState>(contents: T[]): Generator_2<T, TAdditionalState>;
 
-// @public
+// @internal
 export function interleave<T, TState>(generator1: Generator_2<T, TState>, generator2: Generator_2<T, TState>, numOps1?: number, numOps2?: number, exitBehavior?: ExitBehavior): Generator_2<T, TState>;
 
-// @public
+// @internal
 export function interleaveAsync<T, TState>(generator1: AsyncGenerator_2<T, TState>, generator2: AsyncGenerator_2<T, TState>, numOps1?: number, numOps2?: number, exitBehavior?: ExitBehavior): AsyncGenerator_2<T, TState>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface IRandom {
     bool(probability?: number): boolean;
     integer(min: number, max: number): number;
@@ -133,10 +133,26 @@ export interface IRandom {
     uuid4(): string;
 }
 
-// @public
+// @internal
 export function makeRandom(...seed: [] | [number] | [number, number] | [number, number, number] | [number, number, number, number]): IRandom;
 
-// @public (undocumented)
+// @internal (undocumented)
+export abstract class MarkovChain<PredictionPointType, OutputType> {
+    // (undocumented)
+    protected static assumeWordLanguageWordSpacing(word: string): WordSpacing;
+    // (undocumented)
+    abstract generateData(...args: any): OutputType;
+    // (undocumented)
+    protected static getCharacaterWordSpacing(character: string): WordSpacing;
+    // (undocumented)
+    abstract initialize(predicitionPoints: PredictionPointType[][]): void;
+    // (undocumented)
+    static readonly MARKOV_SENTENCE_BEGIN_KEY = "MARKOV_SENTENCE_BEGIN_KEY_01$#@%^#";
+    // (undocumented)
+    static readonly MARKOV_SENTENCE_END_KEY = "MARKOV_SENTENCE_END_KEY_01$#@%^#";
+}
+
+// @internal (undocumented)
 export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
     constructor(random?: IRandom, chain?: Record<string, string[]>);
     // (undocumented)
@@ -147,12 +163,12 @@ export class PerformanceWordMarkovChain extends MarkovChain<string, string> {
     readonly random: IRandom;
 }
 
-// @public
+// @internal
 export function performFuzzActions<TOperation extends {
     type: string | number;
 }, TState extends BaseFuzzTestState>(generator: Generator_2<TOperation, TState>, reducer: Reducer<TOperation, TState>, initialState: TState, saveInfo?: SaveInfo): TState;
 
-// @public
+// @internal
 export function performFuzzActions<TOperation extends {
     type: string | number;
 }, TState extends BaseFuzzTestState>(generator: Generator_2<TOperation, TState>, reducerMap: {
@@ -161,12 +177,12 @@ export function performFuzzActions<TOperation extends {
     }>, TState>;
 }, initialState: TState, saveInfo?: SaveInfo): TState;
 
-// @public
+// @internal
 export function performFuzzActionsAsync<TOperation extends {
     type: string | number;
 }, TState extends BaseFuzzTestState>(generator: AsyncGenerator_2<TOperation, TState>, reducer: AsyncReducer<TOperation, TState>, initialState: TState, saveInfo?: SaveInfo): Promise<TState>;
 
-// @public
+// @internal
 export function performFuzzActionsAsync<TOperation extends {
     type: string | number;
 }, TState extends BaseFuzzTestState>(generator: AsyncGenerator_2<TOperation, TState>, reducerMap: {
@@ -175,16 +191,16 @@ export function performFuzzActionsAsync<TOperation extends {
     }>, TState>;
 }, initialState: TState, saveInfo?: SaveInfo): Promise<TState>;
 
-// @public
+// @internal
 export type Reducer<TOp, TState> = (state: TState, operation: TOp) => TState | void;
 
-// @public
+// @internal
 export function repeat<T, TState = void>(t: T): Generator_2<T, TState>;
 
-// @public
+// @internal
 export function repeatAsync<T, TState = void>(t: T): AsyncGenerator_2<T, TState>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export interface SaveInfo {
     filepath: string;
     // (undocumented)
@@ -193,12 +209,12 @@ export interface SaveInfo {
     saveOnSuccess?: boolean;
 }
 
-// @public
+// @internal
 export function saveOpsToFile(filepath: string, operations: {
     type: string | number;
 }[]): Promise<void>;
 
-// @public (undocumented)
+// @internal (undocumented)
 export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
     constructor(random?: IRandom, chain?: Record<string, [string, number][]>);
     // (undocumented)
@@ -209,21 +225,34 @@ export class SpaceEfficientWordMarkovChain extends MarkovChain<string, string> {
     readonly random: IRandom;
 }
 
-// @public
+// @internal
 export function take<T, TState>(n: number, generator: Generator_2<T, TState>): Generator_2<T, TState>;
 
-// @public
+// @internal
 export function takeAsync<T, TState>(n: number, generator: AsyncGenerator_2<T, TState>): AsyncGenerator_2<T, TState>;
 
-// @public
+// @internal
 export type Weights<TOp, TState> = [
 TOp | Generator_2<TOp, TState>,
 number,
 AcceptanceCondition<TState>?
 ][];
 
-// @public
+// @internal (undocumented)
+export enum WordSpacing {
+    // (undocumented)
+    Spaced = 0,
+    // (undocumented)
+    Unknown = 2,
+    // (undocumented)
+    Unspaced = 1
+}
+
+// @internal
 export const XSadd: XSaddCtor;
+
+// @internal
+export type XSaddCtor = new (seed0?: number, seed1?: number, seed2?: number, seed3?: number) => Random;
 
 // (No @packageDocumentation comment for this package)
 
